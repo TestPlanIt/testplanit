@@ -7,6 +7,7 @@ import {
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import { AUDIT_LOG_QUEUE_NAME } from "../lib/queues";
+import { SYSTEM_ACTOR_ID } from "../lib/auditContextConstants";
 import type { AuditLogJobData } from "../lib/services/auditLog";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -34,8 +35,35 @@ const processor = async (job: Job<AuditLogJobData>) => {
   try {
     // Merge user info from event (explicit) and context (request-level)
     const userId = event.userId || context?.userId || null;
-    const userEmail = event.userEmail || context?.userEmail || null;
-    const userName = event.userName || context?.userName || null;
+    let userEmail = event.userEmail || context?.userEmail || null;
+    let userName = event.userName || context?.userName || null;
+
+    // Backfill the actor's display fields from the user record when only an id
+    // made it onto the event. This happens whenever a caller invokes
+    // captureAuditEvent() with just `userId` outside of a withAuditContext()
+    // request (e.g. some API routes and background jobs that carry only the
+    // actor id) — without this the row would persist with a blank User/Email.
+    // Best-effort and skipped for the system sentinel: a lookup failure or a
+    // since-deleted user must never block the audit write. A plain id lookup
+    // (no soft-delete filter) intentionally still resolves names for users
+    // removed after the event so historical rows stay attributable.
+    if (userId && userId !== SYSTEM_ACTOR_ID && (!userEmail || !userName)) {
+      try {
+        const actor = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { email: true, name: true },
+        });
+        if (actor) {
+          userEmail = userEmail || actor.email || null;
+          userName = userName || actor.name || null;
+        }
+      } catch (lookupError) {
+        console.warn(
+          `[AuditLogWorker] Could not backfill actor details for user ${userId}:`,
+          lookupError
+        );
+      }
+    }
 
     // Build metadata combining context and event metadata
     const metadata: Record<string, unknown> = {

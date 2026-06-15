@@ -276,6 +276,17 @@ function extractEntityName(
       .join(":");
   }
 
+  // Support dot-notation for nested relation fields (e.g. "llmIntegration.name")
+  if (typeof field === "string" && field.includes(".")) {
+    const [rel, nestedField] = field.split(".", 2);
+    const nested = result[rel];
+    if (nested && typeof nested === "object") {
+      const nestedValue = (nested as Record<string, unknown>)[nestedField];
+      return nestedValue != null ? String(nestedValue) : undefined;
+    }
+    return undefined;
+  }
+
   const value = result[field];
 
   // WR-08: ApiToken.name is nullable in the schema. When a token row is

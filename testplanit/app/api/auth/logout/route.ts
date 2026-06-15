@@ -143,10 +143,13 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     });
 
     // Audit successful logout
-    await auditAuthEvent("LOGOUT", session.user.id, session.user.email || "", {
-      authMethod: user.authMethod,
-      hasSsoAccounts: ssoAccounts.length > 0,
-    });
+    await auditAuthEvent(
+      "LOGOUT",
+      session.user.id,
+      session.user.email || "",
+      { authMethod: user.authMethod, hasSsoAccounts: ssoAccounts.length > 0 },
+      session.user.name
+    );
 
     // If we have SSO logout URLs, include them in the response
     if (logoutUrls.length > 0) {

@@ -5458,4 +5458,5 @@ model AuditLog {
     @@deny('all', !auth())
     @@deny('update, delete', true)
     @@allow('read', auth().access == 'ADMIN')
+    @@allow('read', auth().id == userId)
 }

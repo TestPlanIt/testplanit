@@ -76,6 +76,9 @@ export const ENTITY_NAME_FIELDS: Record<string, string | string[]> = {
   FieldOptions: "name",
   MilestoneTypes: "name",
   Groups: "name",
+  Integration: "name",
+  DataSet: "name",
+  PromptConfig: "name",
   LlmIntegration: "name",
   CodeRepository: "name",
   SamlConfiguration: "issuer",
@@ -90,8 +93,12 @@ export const ENTITY_NAME_FIELDS: Record<string, string | string[]> = {
   ProjectWorkflowAssignment: ["workflowId", "projectId"],
   ProjectConfigurationAssignment: ["configurationId", "projectId"],
   MilestoneTypesAssignment: ["milestoneTypeId", "projectId"],
-  ProjectLlmIntegration: ["llmIntegrationId", "projectId"],
+  ProjectLlmIntegration: "llmIntegration.name",
   ProjectCodeRepositoryConfig: ["repositoryId", "projectId"],
+  // Issue-integration link + test-run case link: named from their related
+  // entity (see buildEntityAuditHooks / ENTITY_AUDIT_MODELS in entityAuditHooks).
+  ProjectIntegration: "integration.name",
+  TestRunCases: "repositoryCase.name",
 };
 
 /**
@@ -384,6 +391,17 @@ export function extractEntityName(
     return parts.length > 0 ? parts.join(":") : undefined;
   }
 
+  // Support dot-notation for nested relation fields (e.g. "llmIntegration.name")
+  if (fieldConfig.includes(".")) {
+    const [rel, field] = fieldConfig.split(".", 2);
+    const nested = entity[rel];
+    if (nested && typeof nested === "object") {
+      const value = (nested as Record<string, unknown>)[field];
+      return value !== null && value !== undefined ? String(value) : undefined;
+    }
+    return undefined;
+  }
+
   const value = entity[fieldConfig];
   return value !== null && value !== undefined ? String(value) : undefined;
 }
@@ -566,7 +584,11 @@ export async function auditUpdate(
     action: "UPDATE",
     entityType,
     entityId,
-    entityName: extractEntityName(entityType, newEntity),
+    // newEntity may be a partial result (caller passed a select that omitted
+    // the name field). Fall back to oldEntity so entityName is never blank.
+    entityName:
+      extractEntityName(entityType, newEntity) ??
+      extractEntityName(entityType, oldEntity ?? {}),
     changes,
     projectId,
   });
@@ -593,6 +615,58 @@ export async function auditDelete(
     entityId,
     entityName: extractEntityName(entityType, entity),
     changes: calculateDiff(entity, null),
+    projectId,
+  });
+}
+
+/**
+ * Capture a CREATE/UPDATE/DELETE audit event with a caller-resolved display
+ * name and pre-split old/new rows. Unlike auditCreate/auditUpdate/auditDelete
+ * (which derive the name from the row via extractEntityName), this primitive
+ * accepts an explicit entityName so callers can name join/link rows from a
+ * related entity that is not part of the diffed scalar set — and so they can
+ * still supply a name on the ZenStack RPC path, where the mutation result is a
+ * partial `{ id }` row. UPDATE no-ops when nothing changed, matching
+ * auditUpdate(); honors the request-level entity-audit suppression flag.
+ */
+export async function auditEntity(params: {
+  action: "CREATE" | "UPDATE" | "DELETE";
+  entityType: string;
+  entityId: string;
+  entityName?: string;
+  oldRow?: Record<string, unknown> | null;
+  newRow?: Record<string, unknown> | null;
+  projectId?: number;
+}): Promise<void> {
+  if (isEntityAuditSuppressed()) return;
+  const {
+    action,
+    entityType,
+    entityId,
+    entityName,
+    oldRow,
+    newRow,
+    projectId,
+  } = params;
+
+  const changes =
+    action === "CREATE"
+      ? calculateDiff(null, newRow)
+      : action === "DELETE"
+        ? calculateDiff(oldRow, null)
+        : calculateDiff(oldRow, newRow);
+
+  // Match auditUpdate(): never persist a no-op UPDATE row.
+  if (action === "UPDATE" && (!changes || Object.keys(changes).length === 0)) {
+    return;
+  }
+
+  await captureAuditEvent({
+    action,
+    entityType,
+    entityId,
+    entityName,
+    changes,
     projectId,
   });
 }
@@ -671,7 +745,8 @@ export async function auditAuthEvent(
     | "ACCOUNT_UNLOCKED",
   userId: string | null,
   userEmail: string,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
+  userName?: string | null
 ): Promise<void> {
   await captureAuditEvent({
     action,
@@ -680,6 +755,7 @@ export async function auditAuthEvent(
     entityName: userEmail,
     userId: userId || undefined,
     userEmail,
+    userName: userName || undefined,
     metadata,
   });
 }
@@ -690,7 +766,8 @@ export async function auditAuthEvent(
 export async function auditPasswordChange(
   userId: string,
   userEmail: string,
-  isReset: boolean = false
+  isReset: boolean = false,
+  userName?: string | null
 ): Promise<void> {
   await captureAuditEvent({
     action: isReset ? "PASSWORD_RESET" : "PASSWORD_CHANGED",
@@ -699,6 +776,7 @@ export async function auditPasswordChange(
     entityName: userEmail,
     userId,
     userEmail,
+    userName: userName || undefined,
   });
 }
 

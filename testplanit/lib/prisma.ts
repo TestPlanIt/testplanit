@@ -24,6 +24,10 @@ import {
   AUDITED_CONFIG_MODELS,
 } from "./services/auditLog";
 import { buildConfigAuditHooks } from "./services/configAuditHooks";
+import {
+  buildEntityAuditHooks,
+  ENTITY_AUDIT_MODELS,
+} from "./services/entityAuditHooks";
 import { invalidateApiTokenCache } from "./api-token-cache";
 // Plan 02-05 — outbound webhook emitters spliced alongside the existing
 // audit/ES-sync calls. Each emit is bound to a Prisma.TransactionClient
@@ -78,10 +82,31 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
     ])
   );
 
+  // Generic re-read audit hooks for the entity models whose ZenStack RPC
+  // mutation result is a partial { id } row (Integration, PromptConfig and the
+  // ProjectIntegration / TestRunCases link models). The factory resolves a
+  // human display name + full diff on every write path (RPC and direct Prisma),
+  // using only pre-reads / committed FK lookups so it is correct inside
+  // interactive transactions. The driving list lives in ENTITY_AUDIT_MODELS
+  // (lib/services/entityAuditHooks.ts) and is validated against the datamodel
+  // in tests, mirroring the configAuditHooks pattern above.
+  const entityAuditHooks: Record<string, unknown> = Object.fromEntries(
+    ENTITY_AUDIT_MODELS.map((cfg) => [
+      cfg.accessor,
+      buildEntityAuditHooks(cfg, {
+        self: (baseClient as any)[cfg.accessor],
+        related: cfg.relatedAccessor
+          ? (baseClient as any)[cfg.relatedAccessor]
+          : undefined,
+      }),
+    ])
+  );
+
   // Add Elasticsearch sync using client extensions
   const client = baseClient.$extends({
     query: {
       ...configAuditHooks,
+      ...entityAuditHooks,
       repositoryCases: {
         // Plan 02-05 Blocker 3 — wrap entity write + emit in an explicit
         // baseClient.$transaction so both commit-or-rollback atomically.
@@ -1127,108 +1152,10 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
       },
       // =============================================================================
-      // Phase 62: Integrations, Prompt Configurations, Test Run Cases
+      // Phase 62: Prompt Configuration prompts
+      // Integration, ProjectIntegration, PromptConfig and TestRunCases are
+      // audited via buildEntityAuditHooks (ENTITY_AUDIT_MODELS) wired above.
       // =============================================================================
-      integration: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("Integration", result);
-          }
-          return result;
-        },
-        async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.integration.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            await auditUpdate("Integration", oldEntity, result);
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.integration.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("Integration", oldEntity);
-          }
-          return result;
-        },
-      },
-      projectIntegration: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("ProjectIntegration", result, result.projectId);
-          }
-          return result;
-        },
-        async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.projectIntegration.findUnique({
-                where: args.where,
-              })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            await auditUpdate(
-              "ProjectIntegration",
-              oldEntity,
-              result,
-              result.projectId
-            );
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.projectIntegration.findUnique({
-                where: args.where,
-              })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete(
-              "ProjectIntegration",
-              oldEntity,
-              oldEntity.projectId
-            );
-          }
-          return result;
-        },
-      },
-      promptConfig: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("PromptConfig", result);
-          }
-          return result;
-        },
-        async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.promptConfig.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            await auditUpdate("PromptConfig", oldEntity, result);
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.promptConfig.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("PromptConfig", oldEntity);
-          }
-          return result;
-        },
-      },
       promptConfigPrompt: {
         async create({ args, query }: any) {
           const result = await query(args);
@@ -1258,35 +1185,6 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           const result = await query(args);
           if (oldEntity) {
             await auditDelete("PromptConfigPrompt", oldEntity);
-          }
-          return result;
-        },
-      },
-      testRunCases: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("TestRunCases", result);
-          }
-          return result;
-        },
-        async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.testRunCases.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            await auditUpdate("TestRunCases", oldEntity, result);
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.testRunCases.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("TestRunCases", oldEntity);
           }
           return result;
         },

@@ -2363,6 +2363,21 @@
           "passwordChanged": "Пароль успешно сменён."
         }
       },
+      "auditLog": {
+        "title": "Audit Log",
+        "description": "Actions performed by this user",
+        "noEntries": "No activity recorded yet.",
+        "loadMore": "Loading",
+        "viewDetails": "Просмотреть подробности",
+        "columnAction": "Действие",
+        "columnEntityType": "Тип",
+        "columnEntityName": "Имя",
+        "columnTimestamp": "Отметка времени",
+        "allActions": "Все действия",
+        "allTypes": "All Types",
+        "noMatchingEntries": "No entries match the selected filters.",
+        "showing": "{loaded} of {total} entries"
+      },
       "mentionedComments": {
         "title": "Упомянуто в комментариях",
         "description": "Комментарии, в которых вас упоминают.",

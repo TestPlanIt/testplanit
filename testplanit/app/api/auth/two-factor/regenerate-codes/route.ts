@@ -79,9 +79,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       "TWO_FACTOR_CODES_REGENERATED",
       session.user.id,
       session.user.email ?? "",
-      {
-        count: plainCodes.length,
-      }
+      { count: plainCodes.length },
+      session.user.name
     );
 
     return NextResponse.json({
