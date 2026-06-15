@@ -1,3 +1,9 @@
+## [0.38.3](https://github.com/TestPlanIt/testplanit/compare/v0.38.2...v0.38.3) (2026-06-15)
+
+### Bug Fixes
+
+* **llm:** generate test case names in the configured prompt language ([#440](https://github.com/TestPlanIt/testplanit/issues/440)) ([8c236fb](https://github.com/TestPlanIt/testplanit/commit/8c236fb5a4297ceddf98e3e4eb63257b1cf1b128))
+
 ## [0.38.2](https://github.com/TestPlanIt/testplanit/compare/v0.38.1...v0.38.2) (2026-06-14)
 
 ### Enhancements
