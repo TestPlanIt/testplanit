@@ -11,6 +11,7 @@ import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { Filter } from "@/components/tables/Filter";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
@@ -24,8 +25,12 @@ import {
 } from "@/components/ui/select";
 import { AuditAction } from "@prisma/client";
 import { endOfDay, format, startOfDay, subDays } from "date-fns";
-import { Download, ShieldCheck } from "lucide-react";
+import { Download, ShieldCheck, Users } from "lucide-react";
 import type { Session } from "next-auth";
+import {
+  AuditLogUserOption,
+  searchAuditLogUsers,
+} from "~/app/actions/searchAuditLogUsers";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 import {
@@ -92,7 +97,10 @@ function AuditLogsContent({ session }: { session: Session }) {
   const debouncedSearchString = useDebounce(searchString, 500);
   const [actionFilter, setActionFilter] = useState<AuditAction | "all">("all");
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
-  const [userFilter, setUserFilter] = useState<string>("all");
+  const [selectedUser, setSelectedUser] = useState<AuditLogUserOption | null>(
+    null
+  );
+  const userFilter = selectedUser?.userId ?? "all";
   // Default to the last 7 days so an unfiltered page load never scans the full
   // audit history. Admins can widen the window (or pick a custom range) via the
   // date-range picker.
@@ -229,30 +237,12 @@ function AuditLogsContent({ session }: { session: Session }) {
     orderBy: { entityType: "asc" },
   });
 
-  // Distinct users that actually appear in the audit log — drives the user
-  // filter dropdown (mirrors the entity-type filter rather than loading the
-  // full user table).
-  const { data: auditUsers } = useFindManyAuditLog({
-    select: { userId: true, userName: true, userEmail: true },
-    distinct: ["userId"],
-    orderBy: { userName: "asc" },
-  });
-
-  const userOptions = useMemo(
-    () =>
-      (auditUsers ?? [])
-        .filter((u) => !!u.userId)
-        .map((u) => {
-          const userId = u.userId as string;
-          return {
-            userId,
-            label:
-              userId === SYSTEM_ACTOR_ID
-                ? t("systemActor")
-                : u.userName || u.userEmail || userId,
-          };
-        }),
-    [auditUsers, t]
+  // Distinct actors in the audit log, paginated and searched server-side —
+  // the table can hold far more users than a plain select can list.
+  const fetchUserOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchAuditLogUsers(query, page, pageSize),
+    []
   );
 
   const handleViewDetails = useCallback((log: { id: string }) => {
@@ -546,21 +536,42 @@ function AuditLogsContent({ session }: { session: Session }) {
                 </Select>
               </div>
 
-              <div className="w-[200px]">
+              <div className="w-[260px]">
                 <Label className="sr-only">{tCommon("access.user")}</Label>
-                <Select value={userFilter} onValueChange={setUserFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("allUsers")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("allUsers")}</SelectItem>
-                    {userOptions.map((u) => (
-                      <SelectItem key={u.userId} value={u.userId}>
-                        {u.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <AsyncCombobox<AuditLogUserOption>
+                  className="w-full"
+                  value={selectedUser}
+                  onValueChange={setSelectedUser}
+                  fetchOptions={fetchUserOptions}
+                  getOptionValue={(u) => u.userId}
+                  placeholder={tCommon("searchUsers")}
+                  showTotal
+                  showUnassigned
+                  unassignedLabel={t("allUsers")}
+                  unassignedIcon={<Users className="mr-2 h-4 w-4" />}
+                  renderOption={(u) => {
+                    const isSystem = u.userId === SYSTEM_ACTOR_ID;
+                    const primary = isSystem
+                      ? t("systemActor")
+                      : u.userName || u.userEmail || u.userId;
+                    const secondary =
+                      !isSystem && u.userName && u.userEmail
+                        ? u.userEmail
+                        : null;
+                    return (
+                      <div className="flex min-w-0 flex-col">
+                        <span className="truncate text-sm font-medium">
+                          {primary}
+                        </span>
+                        {secondary && (
+                          <span className="truncate text-xs text-muted-foreground">
+                            {secondary}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  }}
+                />
               </div>
             </div>
 
