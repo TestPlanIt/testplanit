@@ -82,7 +82,10 @@ const genericallyAuditedEntityTypes = new Set<string>([
 // ENTITY_NAME_FIELDS entry (TestRunResults: named two relations away via
 // resolveTestRunResultAuditScope; ReviewRequest: the writable RPC path is the
 // CANCELLED status flip, which carries no natural display name).
-const NAME_VIA_SPECIAL_RESOLUTION = new Set(["TestRunResults", "ReviewRequest"]);
+const NAME_VIA_SPECIAL_RESOLUTION = new Set([
+  "TestRunResults",
+  "ReviewRequest",
+]);
 
 describe("RPC audit wiring guard", () => {
   it("exposes a non-empty accessor list incl. the previously-broken types", () => {
@@ -180,7 +183,10 @@ describe("ENTITY_NAME_FIELDS reference real model columns", () => {
     "%s name field(s) exist on the model",
     (entityType, field) => {
       const fields = modelFields.get(entityType);
-      expect(fields, `model ${entityType} not found in schema.zmodel`).toBeDefined();
+      expect(
+        fields,
+        `model ${entityType} not found in schema.zmodel`
+      ).toBeDefined();
       const members = Array.isArray(field) ? field : [field];
       for (const member of members) {
         // Dot-notation ("relation.field") names from a related row; the relation

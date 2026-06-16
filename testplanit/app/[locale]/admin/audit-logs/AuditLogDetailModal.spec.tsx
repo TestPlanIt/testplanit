@@ -225,8 +225,6 @@ describe("AuditLogDetailModal", () => {
     render(
       <AuditLogDetailModal logId="log-001" open={true} onClose={vi.fn()} />
     );
-    expect(
-      screen.queryByTestId("audit-log-source-scim-badge")
-    ).toBeNull();
+    expect(screen.queryByTestId("audit-log-source-scim-badge")).toBeNull();
   });
 });

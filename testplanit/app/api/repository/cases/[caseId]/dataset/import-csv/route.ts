@@ -211,7 +211,11 @@ export async function POST(
           entityName: dataset.name,
           projectId: testCase.projectId,
           userId: session.user.id,
-          metadata: { isShared: false, ownerCaseId: caseId, source: "csv-import" },
+          metadata: {
+            isShared: false,
+            ownerCaseId: caseId,
+            source: "csv-import",
+          },
         }).catch(() => {
           // Audit is best-effort.
         });

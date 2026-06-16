@@ -1569,12 +1569,16 @@ async function innerHandler(
             // affected count and lift projectId from the request payload
             // (createMany: the first row; updateMany/deleteMany: the where
             // filter) so a bulk admin action reads like its per-row counterpart.
-            if (auditAction.startsWith("BULK_") && typeof data.count === "number") {
+            if (
+              auditAction.startsWith("BULK_") &&
+              typeof data.count === "number"
+            ) {
               entityName = `${data.count} ${mappedEntityType}`;
               if (typeof projectId !== "number") {
                 const payloadProjectId = Array.isArray(requestBody?.data)
                   ? requestBody?.data?.[0]?.projectId
-                  : requestBody?.data?.projectId ?? requestBody?.where?.projectId;
+                  : (requestBody?.data?.projectId ??
+                    requestBody?.where?.projectId);
                 if (typeof payloadProjectId === "number") {
                   projectId = payloadProjectId;
                 }
@@ -1635,7 +1639,10 @@ async function innerHandler(
             try {
               if (parsedPath.operation === "create") {
                 auditChanges = calculateDiff(null, data);
-              } else if (parsedPath.operation === "update" && auditPreSnapshot) {
+              } else if (
+                parsedPath.operation === "update" &&
+                auditPreSnapshot
+              ) {
                 const afterRow = resolvedWhere
                   ? await (prisma as any)[parsedPath.model].findUnique({
                       where: resolvedWhere,

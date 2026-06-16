@@ -683,7 +683,11 @@ export async function resolveAuditEntityScope(
   // parent-derived projectId. Scalar fields (own `name`, own `projectId`) are
   // returned by findUnique without an explicit include.
   const include: Record<string, unknown> = {};
-  if (canResolveName && typeof nameConfig === "string" && nameConfig.includes(".")) {
+  if (
+    canResolveName &&
+    typeof nameConfig === "string" &&
+    nameConfig.includes(".")
+  ) {
     const [rel, field] = nameConfig.split(".", 2);
     include[rel] = { select: { [field]: true } };
   }

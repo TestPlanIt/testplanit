@@ -253,7 +253,8 @@ export function VirtualizedDataTable({
   // When a flex column is configured, the table stretches to fill its container
   // (and the flex column soaks up the slack) instead of sitting at its natural
   // content width with empty space trailing the last column.
-  const hasFlex = !!flexColumnId && leafColumns.some((c) => c.id === flexColumnId);
+  const hasFlex =
+    !!flexColumnId && leafColumns.some((c) => c.id === flexColumnId);
   const tableWidth = hasFlex ? "100%" : totalWidth;
 
   // Reset scroll + measurements when the *result set identity* changes (sort,

@@ -342,16 +342,20 @@ describe("AuditLog Service", () => {
       projectId?: number | null;
       caseName?: string | null;
     }) {
-      const testRunsFindUnique = vi.fn().mockResolvedValue(
-        overrides?.projectId === undefined
-          ? { projectId: 42 }
-          : { projectId: overrides.projectId }
-      );
-      const testRunCasesFindUnique = vi.fn().mockResolvedValue(
-        overrides?.caseName === undefined
-          ? { repositoryCase: { name: "Login smoke test" } }
-          : { repositoryCase: { name: overrides.caseName } }
-      );
+      const testRunsFindUnique = vi
+        .fn()
+        .mockResolvedValue(
+          overrides?.projectId === undefined
+            ? { projectId: 42 }
+            : { projectId: overrides.projectId }
+        );
+      const testRunCasesFindUnique = vi
+        .fn()
+        .mockResolvedValue(
+          overrides?.caseName === undefined
+            ? { repositoryCase: { name: "Login smoke test" } }
+            : { repositoryCase: { name: overrides.caseName } }
+        );
       return {
         client: {
           testRuns: { findUnique: testRunsFindUnique },
@@ -436,10 +440,15 @@ describe("AuditLog Service", () => {
         repositoryCase: { name: "Checkout flow" },
         testRun: { projectId: 3 },
       });
-      const scope = await resolveAuditEntityScope(client, "TestRunCases", "88", {
-        needName: true,
-        needProjectId: true,
-      });
+      const scope = await resolveAuditEntityScope(
+        client,
+        "TestRunCases",
+        "88",
+        {
+          needName: true,
+          needProjectId: true,
+        }
+      );
       expect(scope).toEqual({ entityName: "Checkout flow", projectId: 3 });
       expect(findUnique).toHaveBeenCalledWith({
         where: { id: 88 },
@@ -826,7 +835,9 @@ describe("AuditLog Service", () => {
 
       expect(mocks.mockQueue.add).toHaveBeenCalledTimes(1);
       const jobData = mocks.mockQueue.add.mock.calls[0][1];
-      expect(jobData.event.metadata).toMatchObject({ parent: { sessionId: 384 } });
+      expect(jobData.event.metadata).toMatchObject({
+        parent: { sessionId: 384 },
+      });
     });
 
     it("auditCreate leaves metadata unset when none is supplied (back-compat)", async () => {
