@@ -2363,6 +2363,21 @@
           "passwordChanged": "Şifre başarıyla değiştirildi."
         }
       },
+      "auditLog": {
+        "title": "Audit Log",
+        "description": "Actions performed by this user",
+        "noEntries": "No activity recorded yet.",
+        "loadMore": "Loading",
+        "viewDetails": "Ayrıntıları görüntüle",
+        "columnAction": "Aksiyon",
+        "columnEntityType": "Tip",
+        "columnEntityName": "İsim",
+        "columnTimestamp": "Zaman damgası",
+        "allActions": "Tüm Eylemler",
+        "allTypes": "All Types",
+        "noMatchingEntries": "No entries match the selected filters.",
+        "showing": "{loaded} of {total} entries"
+      },
       "mentionedComments": {
         "title": "Yorumlarda bahsedildi",
         "description": "Adınızın geçtiği yorumlar",
@@ -5606,7 +5621,8 @@
       "filterEntityType": "Varlık Türü",
       "allActions": "Tüm Eylemler",
       "allEntityTypes": "Tüm Varlık Türleri",
-      "showing": "{start} ile {end} arası {total} giriş gösteriliyor.",
+      "allUsers": "All Users",
+      "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "Ayrıntıları Görüntüle",
       "detailTitle": "Denetim Günlüğü Ayrıntıları",
       "userInfo": "Kullanıcı Bilgileri",

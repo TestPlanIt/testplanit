@@ -2363,6 +2363,21 @@
           "passwordChanged": "Mot de passe modifié avec succès."
         }
       },
+      "auditLog": {
+        "title": "Audit Log",
+        "description": "Actions performed by this user",
+        "noEntries": "No activity recorded yet.",
+        "loadMore": "Loading",
+        "viewDetails": "View details",
+        "columnAction": "Action",
+        "columnEntityType": "Type",
+        "columnEntityName": "Name",
+        "columnTimestamp": "Timestamp",
+        "allActions": "All Actions",
+        "allTypes": "All Types",
+        "noMatchingEntries": "No entries match the selected filters.",
+        "showing": "{loaded} of {total} entries"
+      },
       "mentionedComments": {
         "title": "Mentionné dans les commentaires",
         "description": "Commentaires où vous êtes mentionné",
@@ -5606,7 +5621,8 @@
       "filterEntityType": "Type d'entité",
       "allActions": "Toutes les actions",
       "allEntityTypes": "Tous les types d'entités",
-      "showing": "Affichage des entrées {start} à {end} sur {total}",
+      "allUsers": "All Users",
+      "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "Voir les détails",
       "detailTitle": "Détails du journal d'audit",
       "userInfo": "Informations utilisateur",

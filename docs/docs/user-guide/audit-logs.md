@@ -18,14 +18,20 @@ The audit log system automatically captures:
 
 ## Accessing Audit Logs
 
-To access the audit logs:
+To access the system-wide audit log viewer:
 
 1. Navigate to **Admin** in the top navigation bar
 2. Click on **Audit Logs** in the admin sidebar
 
 :::note
-Only users with administrative privileges can access the audit log viewer.
+The system-wide viewer is available only to users with administrative privileges.
 :::
+
+### Viewing your own activity
+
+You don't need administrator access to review your own audit history. Open your profile (**user menu → View Profile**) and expand the **Audit Log** section. This view is automatically scoped to your own actions, so the user filter is omitted; the search box and the action, entity-type, and date-range filters work just like the system-wide viewer.
+
+Administrators can review any user's activity the same way by opening that user's profile.
 
 ## Tracked Actions
 

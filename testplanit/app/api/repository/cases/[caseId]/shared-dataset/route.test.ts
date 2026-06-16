@@ -102,11 +102,16 @@ describe("PUT /api/repository/cases/[caseId]/shared-dataset", () => {
 
   it("upserts the assignment with valid payload (Amendment A: no owner-dataset refusal)", async () => {
     (getServerSession as any).mockResolvedValue(session);
-    mocks.repositoryCasesFindFirst.mockResolvedValue({ id: 10, projectId: 1 });
+    mocks.repositoryCasesFindFirst.mockResolvedValue({
+      id: 10,
+      projectId: 1,
+      name: "Login case",
+    });
     mocks.dataSetFindFirst.mockResolvedValue({
       id: 7,
       projectId: 1,
       isShared: true,
+      name: "Credentials dataset",
     });
     mocks.dataSetVersionFindFirst.mockResolvedValue({
       id: 50,
@@ -286,11 +291,16 @@ describe("PUT /api/repository/cases/[caseId]/shared-dataset", () => {
 
   it("emits an audit event with mappingColumns (KEYS only — never values)", async () => {
     (getServerSession as any).mockResolvedValue(session);
-    mocks.repositoryCasesFindFirst.mockResolvedValue({ id: 10, projectId: 1 });
+    mocks.repositoryCasesFindFirst.mockResolvedValue({
+      id: 10,
+      projectId: 1,
+      name: "Login case",
+    });
     mocks.dataSetFindFirst.mockResolvedValue({
       id: 7,
       projectId: 1,
       isShared: true,
+      name: "Credentials dataset",
     });
     mocks.dataSetVersionFindFirst.mockResolvedValue({
       id: 50,
@@ -321,6 +331,7 @@ describe("PUT /api/repository/cases/[caseId]/shared-dataset", () => {
     expect(event).toMatchObject({
       action: "UPDATE",
       entityType: "CaseSharedDataSetAssignment",
+      entityName: "Login case → Credentials dataset",
       projectId: 1,
       userId: "user-1",
       metadata: {
@@ -358,7 +369,8 @@ describe("DELETE /api/repository/cases/[caseId]/shared-dataset", () => {
       id: 99,
       sharedDataSetId: 7,
       pinnedVersionId: 50,
-      case: { projectId: 1 },
+      case: { projectId: 1, name: "Login case" },
+      sharedDataSet: { name: "Credentials dataset" },
     });
 
     const [req, ctx] = buildDelete("10");
@@ -375,6 +387,7 @@ describe("DELETE /api/repository/cases/[caseId]/shared-dataset", () => {
       action: "DELETE",
       entityType: "CaseSharedDataSetAssignment",
       entityId: "99",
+      entityName: "Login case → Credentials dataset",
       projectId: 1,
       userId: "user-1",
       metadata: {

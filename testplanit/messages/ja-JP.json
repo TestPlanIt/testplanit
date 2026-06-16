@@ -2363,6 +2363,21 @@
           "passwordChanged": "パスワードが正常に変更されました。"
         }
       },
+      "auditLog": {
+        "title": "Audit Log",
+        "description": "Actions performed by this user",
+        "noEntries": "No activity recorded yet.",
+        "loadMore": "Loading",
+        "viewDetails": "View details",
+        "columnAction": "Action",
+        "columnEntityType": "Type",
+        "columnEntityName": "Name",
+        "columnTimestamp": "Timestamp",
+        "allActions": "All Actions",
+        "allTypes": "All Types",
+        "noMatchingEntries": "No entries match the selected filters.",
+        "showing": "{loaded} of {total} entries"
+      },
       "mentionedComments": {
         "title": "コメントで言及",
         "description": "あなたが言及されているコメント",
@@ -5606,7 +5621,8 @@
       "filterEntityType": "エンティティタイプ",
       "allActions": "すべてのアクション",
       "allEntityTypes": "すべてのエンティティタイプ",
-      "showing": "{total} 件中 {start} ～ {end} 件を表示しています",
+      "allUsers": "All Users",
+      "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "詳細を表示",
       "detailTitle": "監査ログの詳細",
       "userInfo": "ユーザー情報",

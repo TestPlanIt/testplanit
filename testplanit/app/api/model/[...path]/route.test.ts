@@ -2,7 +2,9 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AUDITED_CONFIG_MODELS,
+  AUDITED_RPC_ENTITY_ACCESSORS,
   ENTITY_NAME_FIELDS,
+  RPC_ENTITY_TYPE_MAP,
 } from "~/lib/services/auditLog";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -122,29 +124,13 @@ vi.mock("@zenstackhq/server/next", () => ({
 // we'll test the audit interception logic by replicating the pure functions
 // and testing the integration through mocks
 
-// Replicate AUDITED_ENTITIES for testing
+// Replicate AUDITED_ENTITIES exactly as route.ts builds it: spread the shared
+// source-of-truth lists so the test cannot drift from the route (and so the
+// singular/plural accessor typo class — `issues`/`sharedStepGroups` — can never
+// silently reappear here).
 const AUDITED_ENTITIES = new Set([
-  "repositoryCases",
-  "testRuns",
-  "sessions",
-  "sharedStepGroups",
-  "issues",
-  "milestones",
-  "projects",
-  "user",
-  "userProjectPermission",
-  "groupProjectPermission",
-  "ssoProvider",
-  "allowedEmailDomain",
-  "appConfig",
-  "userIntegrationAuth",
-  "testRunResults",
-  "comment",
-  "attachment",
-  "apiToken",
-  // Admin-config catalog + access models — mirror the route, which spreads the
-  // shared source so the two cannot drift. Guards that every config model is
-  // audited canonically on the RPC path.
+  ...AUDITED_RPC_ENTITY_ACCESSORS,
+  // Admin-config catalog + access models — audited canonically on the RPC path.
   ...AUDITED_CONFIG_MODELS.map((c) => c.accessor),
 ]);
 
@@ -180,13 +166,13 @@ function extractEntityName(
   const nameFields: Record<string, string | string[]> = {
     repositoryCases: "name",
     testRuns: "name",
-    sessions: "title",
+    sessions: "name",
     projects: "name",
     milestones: "name",
-    sharedStepGroups: "name",
-    issues: "title",
+    sharedStepGroup: "name",
+    issue: "title",
     user: "email",
-    ssoProvider: "type",
+    ssoProvider: "name",
     allowedEmailDomain: "domain",
     appConfig: "key",
     apiToken: "name",
@@ -225,26 +211,10 @@ function parseZenStackPath(
   return null;
 }
 
-// Entity type map
+// Entity type map — built from the shared source (mirrors route.ts) so the
+// accessor -> PascalCase entity-type mapping cannot drift from auditLog.ts.
 const entityTypeMap: Record<string, string> = {
-  repositoryCases: "RepositoryCases",
-  testRuns: "TestRuns",
-  sessions: "Sessions",
-  sharedStepGroups: "SharedStepGroup",
-  issues: "Issue",
-  milestones: "Milestones",
-  projects: "Projects",
-  user: "User",
-  userProjectPermission: "UserProjectPermission",
-  groupProjectPermission: "GroupProjectPermission",
-  ssoProvider: "SsoProvider",
-  allowedEmailDomain: "AllowedEmailDomain",
-  appConfig: "AppConfig",
-  userIntegrationAuth: "UserIntegrationAuth",
-  testRunResult: "TestRunResult",
-  comment: "Comment",
-  attachment: "Attachment",
-  apiToken: "ApiToken",
+  ...RPC_ENTITY_TYPE_MAP,
   ...Object.fromEntries(
     AUDITED_CONFIG_MODELS.map((c) => [c.accessor, c.entityType])
   ),
@@ -258,7 +228,13 @@ describe("ZenStack API Route Audit Interception", () => {
       expect(AUDITED_ENTITIES.has("sessions")).toBe(true);
       expect(AUDITED_ENTITIES.has("projects")).toBe(true);
       expect(AUDITED_ENTITIES.has("user")).toBe(true);
-      expect(AUDITED_ENTITIES.has("issues")).toBe(true);
+      // Real Prisma accessor is singular (`issue`); the plural `issues` typo
+      // silently disabled issue auditing until the wiring was corrected.
+      expect(AUDITED_ENTITIES.has("issue")).toBe(true);
+      expect(AUDITED_ENTITIES.has("issues")).toBe(false);
+      // Shared step groups likewise audit under the singular accessor.
+      expect(AUDITED_ENTITIES.has("sharedStepGroup")).toBe(true);
+      expect(AUDITED_ENTITIES.has("sharedStepGroups")).toBe(false);
     });
 
     it("should include permission entities", () => {
@@ -401,16 +377,24 @@ describe("ZenStack API Route Audit Interception", () => {
       ).toBe("Sprint 1 Run");
     });
 
-    it("should extract title for sessions", () => {
+    it("should extract name for sessions", () => {
+      // The Sessions display column is `name` (there is no `title` column); a
+      // prior `title` mapping silently produced null entityName for sessions.
       expect(
-        extractEntityName("sessions", { id: 1, title: "Exploratory Session" })
+        extractEntityName("sessions", { id: 1, name: "Exploratory Session" })
       ).toBe("Exploratory Session");
     });
 
-    it("should extract title for issues", () => {
-      expect(extractEntityName("issues", { id: 1, title: "Bug Report" })).toBe(
+    it("should extract title for issue", () => {
+      expect(extractEntityName("issue", { id: 1, title: "Bug Report" })).toBe(
         "Bug Report"
       );
+    });
+
+    it("should extract name for sharedStepGroup", () => {
+      expect(
+        extractEntityName("sharedStepGroup", { id: 1, name: "Login Steps" })
+      ).toBe("Login Steps");
     });
 
     it("should extract name for projects", () => {
@@ -425,10 +409,14 @@ describe("ZenStack API Route Audit Interception", () => {
       ).toBe("user@example.com");
     });
 
-    it("should extract type for ssoProvider", () => {
-      expect(extractEntityName("ssoProvider", { id: 1, type: "SAML" })).toBe(
-        "SAML"
-      );
+    it("should extract name for ssoProvider", () => {
+      expect(
+        extractEntityName("ssoProvider", {
+          id: 1,
+          name: "saml-okta",
+          type: "SAML",
+        })
+      ).toBe("saml-okta");
     });
 
     it("should extract domain for allowedEmailDomain", () => {
@@ -475,8 +463,10 @@ describe("ZenStack API Route Audit Interception", () => {
       expect(
         extractEntityName("comment", { id: 1, content: "Test comment" })
       ).toBeUndefined();
+      // Attachments audit solely via the dedicated lib/prisma.ts hook, so the
+      // RPC shim has no name mapping for them (real accessor is `attachments`).
       expect(
-        extractEntityName("attachment", { id: 1, filename: "test.pdf" })
+        extractEntityName("attachments", { id: 1, filename: "test.pdf" })
       ).toBeUndefined();
     });
 
@@ -520,8 +510,11 @@ describe("ZenStack API Route Audit Interception", () => {
       expect(entityTypeMap["repositoryCases"]).toBe("RepositoryCases");
       expect(entityTypeMap["testRuns"]).toBe("TestRuns");
       expect(entityTypeMap["sessions"]).toBe("Sessions");
-      expect(entityTypeMap["sharedStepGroups"]).toBe("SharedStepGroup");
-      expect(entityTypeMap["issues"]).toBe("Issue");
+      expect(entityTypeMap["sharedStepGroup"]).toBe("SharedStepGroup");
+      expect(entityTypeMap["issue"]).toBe("Issue");
+      // The dead plural accessors must not map to anything.
+      expect(entityTypeMap["sharedStepGroups"]).toBeUndefined();
+      expect(entityTypeMap["issues"]).toBeUndefined();
     });
 
     it("should map permission models correctly", () => {
@@ -569,9 +562,17 @@ describe("ZenStack API Route Audit Interception", () => {
 
       const entityId =
         data.id || data.key || `${parsedPath.operation}-fallback`;
-      const entityName = extractEntityName(parsedPath.model, data);
+      const mappedEntityType =
+        entityTypeMap[parsedPath.model] || parsedPath.model;
+      let entityName = extractEntityName(parsedPath.model, data);
       const projectId =
         typeof data.projectId === "number" ? data.projectId : undefined;
+
+      // Mirror the route's bulk-op naming: a `{ count }` aggregate has no row
+      // to name, so the entry is named after the affected count + entity type.
+      if (auditAction.startsWith("BULK_") && typeof data.count === "number") {
+        entityName = `${data.count} ${mappedEntityType}`;
+      }
 
       // Special handling for API token operations - use specific audit actions
       let finalAuditAction = auditAction;
@@ -586,7 +587,7 @@ describe("ZenStack API Route Audit Interception", () => {
 
       return {
         action: finalAuditAction,
-        entityType: entityTypeMap[parsedPath.model] || parsedPath.model,
+        entityType: mappedEntityType,
         entityId: String(entityId),
         entityName,
         projectId,
@@ -663,7 +664,7 @@ describe("ZenStack API Route Audit Interception", () => {
         action: "BULK_CREATE",
         entityType: "RepositoryCases",
         entityId: "createMany-fallback",
-        entityName: undefined,
+        entityName: "10 RepositoryCases",
         projectId: undefined,
         metadata: { operation: "createMany", count: 10 },
       });
@@ -797,7 +798,7 @@ describe("ZenStack API Route Audit Interception", () => {
         action: "BULK_DELETE",
         entityType: "RepositoryCases",
         entityId: "deleteMany-fallback",
-        entityName: undefined,
+        entityName: "5 RepositoryCases",
         projectId: undefined,
         metadata: { operation: "deleteMany", count: 5 },
       });
@@ -1714,6 +1715,251 @@ describe("ZenStack chokepoint SessionResults required-field gate", () => {
 // the ZenStack handler (and the DB), matching the normalize-on-use path in
 // createSAMLClient.
 // ─────────────────────────────────────────────────────────────────────────────
+describe("ZenStack chokepoint audit before/after diff capture", () => {
+  function makeRequest(
+    model: string,
+    operation: string,
+    body: unknown
+  ): NextRequest {
+    const headers = new Headers();
+    headers.set("content-type", "application/json");
+    const method =
+      operation === "create"
+        ? "POST"
+        : operation === "delete"
+          ? "DELETE"
+          : "PATCH";
+    // ZenStack RPC carries a delete's `where` in the ?q= query param with no
+    // request body — mirror that so the shim's deleted-row capture is exercised.
+    const isDelete = operation === "delete";
+    const url = isDelete
+      ? `http://localhost:3000/api/model/${model}/${operation}?q=${encodeURIComponent(
+          JSON.stringify(body)
+        )}`
+      : `http://localhost:3000/api/model/${model}/${operation}`;
+    const json = isDelete ? "" : JSON.stringify(body);
+    return {
+      method,
+      headers,
+      url,
+      clone() {
+        return this;
+      },
+      async text() {
+        return json;
+      },
+    } as unknown as NextRequest;
+  }
+
+  async function run(
+    model: string,
+    operation: string,
+    body: unknown,
+    responseData: unknown
+  ) {
+    const route = await import("./route");
+    const handler =
+      operation === "create"
+        ? route.POST
+        : operation === "delete"
+          ? route.DELETE
+          : route.PATCH;
+    baseHandlerMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ data: responseData }), { status: 200 })
+    );
+    return handler(makeRequest(model, operation, body), {
+      params: Promise.resolve({ path: [model, operation] }),
+    });
+  }
+
+  let captureAuditEvent: ReturnType<typeof vi.fn>;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "user-1", email: "u@e.com", name: "U", access: "ADMIN" },
+    });
+    const { extractBearerToken } = await import("~/lib/api-token-auth");
+    (extractBearerToken as any).mockReturnValue(null);
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).user.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "u@e.com",
+      name: "U",
+      access: "ADMIN",
+    });
+    const auditLog = await import("~/lib/services/auditLog");
+    captureAuditEvent = auditLog.captureAuditEvent as ReturnType<typeof vi.fn>;
+  });
+
+  it("records the changed fields for a real UPDATE", async () => {
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).tags = {
+      findUnique: vi
+        .fn()
+        .mockResolvedValueOnce({ id: 1, name: "Old Name" }) // pre-snapshot
+        .mockResolvedValueOnce({ id: 1, name: "New Name" }), // after-read
+    };
+
+    const res = await run(
+      "tags",
+      "update",
+      { where: { id: 1 }, data: { name: "New Name" } },
+      { id: 1 }
+    );
+
+    expect(res.status).toBe(200);
+    expect(captureAuditEvent).toHaveBeenCalledTimes(1);
+    expect(captureAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "UPDATE",
+        entityType: "Tags",
+        changes: { name: { old: "Old Name", new: "New Name" } },
+      })
+    );
+  });
+
+  it("suppresses a no-op UPDATE (empty diff) instead of logging an empty row", async () => {
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).tags = {
+      findUnique: vi
+        .fn()
+        .mockResolvedValueOnce({ id: 1, name: "Same" }) // pre-snapshot
+        .mockResolvedValueOnce({ id: 1, name: "Same" }), // after-read (unchanged)
+    };
+
+    const res = await run(
+      "tags",
+      "update",
+      { where: { id: 1 }, data: { name: "Same" } },
+      { id: 1 }
+    );
+
+    expect(res.status).toBe(200);
+    expect(captureAuditEvent).not.toHaveBeenCalled();
+  });
+
+  it("diffs a BigInt column on UPDATE without throwing it away", async () => {
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).ollamaModelRegistry = {
+      findUnique: vi
+        .fn()
+        .mockResolvedValueOnce({ id: 1, modelSize: 100n })
+        .mockResolvedValueOnce({ id: 1, modelSize: 200n }),
+    };
+
+    const res = await run(
+      "ollamaModelRegistry",
+      "update",
+      { where: { id: 1 }, data: { modelSize: "200" } },
+      { id: 1 }
+    );
+
+    expect(res.status).toBe(200);
+    expect(captureAuditEvent).toHaveBeenCalledTimes(1);
+    expect(captureAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "UPDATE",
+        changes: { modelSize: { old: "100", new: "200" } },
+      })
+    );
+  });
+
+  it("records created field values for a CREATE", async () => {
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).tags = { findUnique: vi.fn() };
+
+    const res = await run(
+      "tags",
+      "create",
+      { data: { name: "Created Tag" } },
+      { id: 9, name: "Created Tag", isDeleted: false }
+    );
+
+    expect(res.status).toBe(200);
+    expect(captureAuditEvent).toHaveBeenCalledTimes(1);
+    const event = (captureAuditEvent.mock.calls[0] as unknown[])[0] as any;
+    expect(event.action).toBe("CREATE");
+    expect(event.entityType).toBe("Tags");
+    expect(event.changes.name).toEqual({ old: null, new: "Created Tag" });
+    expect(event.changes.id).toEqual({ old: null, new: 9 });
+  });
+
+  it("emits SSO_CONFIG_CHANGED named from the provider name on an ssoProvider write", async () => {
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).ssoProvider = { findUnique: vi.fn() };
+
+    const res = await run(
+      "ssoProvider",
+      "create",
+      { data: { name: "saml-okta", type: "SAML" } },
+      { id: "sso-1", name: "saml-okta", type: "SAML" }
+    );
+
+    expect(res.status).toBe(200);
+    expect(captureAuditEvent).toHaveBeenCalledTimes(1);
+    expect(captureAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "SSO_CONFIG_CHANGED",
+        entityType: "SsoProvider",
+        entityName: "saml-okta",
+      })
+    );
+  });
+
+  it("emits SYSTEM_CONFIG_CHANGED on an appConfig write", async () => {
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).appConfig = { findUnique: vi.fn() };
+
+    const res = await run(
+      "appConfig",
+      "create",
+      { data: { key: "FEATURE_X", value: true } },
+      { key: "FEATURE_X", value: true }
+    );
+
+    expect(res.status).toBe(200);
+    expect(captureAuditEvent).toHaveBeenCalledTimes(1);
+    expect(captureAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "SYSTEM_CONFIG_CHANGED",
+        entityType: "AppConfig",
+        entityName: "FEATURE_X",
+      })
+    );
+  });
+
+  it("captures the removed row's values on a hard DELETE (where from ?q=)", async () => {
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).tags = {
+      findUnique: vi.fn().mockResolvedValueOnce({ id: 1, name: "ToDelete" }),
+    };
+
+    const res = await run(
+      "tags",
+      "delete",
+      { where: { id: 1 } },
+      { id: 1, name: "ToDelete" }
+    );
+
+    expect(res.status).toBe(200);
+    expect((prisma as any).tags.findUnique).toHaveBeenCalledWith({
+      where: { id: 1 },
+    });
+    expect(captureAuditEvent).toHaveBeenCalledTimes(1);
+    expect(captureAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "DELETE",
+        entityType: "Tags",
+        changes: expect.objectContaining({
+          name: { old: "ToDelete", new: null },
+        }),
+      })
+    );
+  });
+});
+
 describe("ZenStack chokepoint SamlConfiguration cert normalization", () => {
   // 48 raw bytes → exactly 64 base64 chars (one PEM line).
   const CERT_BODY = Buffer.from("x".repeat(48)).toString("base64");

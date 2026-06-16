@@ -2363,6 +2363,21 @@
           "passwordChanged": "Password changed successfully."
         }
       },
+      "auditLog": {
+        "title": "Audit Log",
+        "description": "Actions performed by this user",
+        "noEntries": "No activity recorded yet.",
+        "loadMore": "Loading",
+        "viewDetails": "View details",
+        "columnAction": "Action",
+        "columnEntityType": "Type",
+        "columnEntityName": "Name",
+        "columnTimestamp": "Timestamp",
+        "allActions": "All Actions",
+        "allTypes": "All Types",
+        "noMatchingEntries": "No entries match the selected filters.",
+        "showing": "{loaded} of {total} entries"
+      },
       "mentionedComments": {
         "title": "Mentioned in Comments",
         "description": "Comments where you are mentioned",
@@ -5606,7 +5621,8 @@
       "filterEntityType": "Entity Type",
       "allActions": "All Actions",
       "allEntityTypes": "All Entity Types",
-      "showing": "Showing {start} to {end} of {total} entries",
+      "allUsers": "All Users",
+      "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "View Details",
       "detailTitle": "Audit Log Details",
       "userInfo": "User Information",

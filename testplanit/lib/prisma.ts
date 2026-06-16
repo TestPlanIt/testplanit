@@ -12,6 +12,7 @@ import {
   auditCreate,
   auditUpdate,
   auditDelete,
+  auditEntity,
   auditRoleChange,
   auditPermissionGrant,
   auditPermissionRevoke,
@@ -21,9 +22,15 @@ import {
   auditBulkUpdate,
   auditBulkDelete,
   captureAuditEvent,
+  isEntityAuditSuppressed,
+  resolveTestRunResultAuditScope,
   AUDITED_CONFIG_MODELS,
 } from "./services/auditLog";
 import { buildConfigAuditHooks } from "./services/configAuditHooks";
+import {
+  buildEntityAuditHooks,
+  ENTITY_AUDIT_MODELS,
+} from "./services/entityAuditHooks";
 import { invalidateApiTokenCache } from "./api-token-cache";
 // Plan 02-05 — outbound webhook emitters spliced alongside the existing
 // audit/ES-sync calls. Each emit is bound to a Prisma.TransactionClient
@@ -49,6 +56,40 @@ import {
   emitCaseDeleted,
   emitCaseUpdated,
 } from "./webhooks/event-emitters/caseEvents";
+
+// An attachment hangs off exactly one of several optional parents (a case,
+// session, run, or one of their results). It has no scalar projectId column and
+// no single relation chain to a project, so it is intentionally absent from the
+// audit project-scope backfill. To keep attachment events traceable to their
+// owning context, record whichever parent FK is set on the audit row's metadata
+// (read from the committed row on delete, or the create payload on the partial
+// ZenStack RPC create path). Returns undefined for an orphan attachment so no
+// empty `parent` object is stamped.
+const ATTACHMENT_PARENT_FKS = [
+  "testCaseId",
+  "sessionId",
+  "sessionResultsId",
+  "testRunsId",
+  "testRunResultsId",
+  "testRunStepResultId",
+  "junitTestResultId",
+] as const;
+function attachmentParentMetadata(
+  ...sources: Array<Record<string, unknown> | null | undefined>
+): Record<string, unknown> | undefined {
+  const parent: Record<string, unknown> = {};
+  for (const key of ATTACHMENT_PARENT_FKS) {
+    if (key in parent) continue;
+    for (const source of sources) {
+      const value = source?.[key];
+      if (value != null) {
+        parent[key] = value;
+        break;
+      }
+    }
+  }
+  return Object.keys(parent).length > 0 ? { parent } : undefined;
+}
 
 // Declare global types
 declare global {
@@ -78,10 +119,31 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
     ])
   );
 
+  // Generic re-read audit hooks for the entity models whose ZenStack RPC
+  // mutation result is a partial { id } row (Integration, PromptConfig and the
+  // ProjectIntegration / TestRunCases link models). The factory resolves a
+  // human display name + full diff on every write path (RPC and direct Prisma),
+  // using only pre-reads / committed FK lookups so it is correct inside
+  // interactive transactions. The driving list lives in ENTITY_AUDIT_MODELS
+  // (lib/services/entityAuditHooks.ts) and is validated against the datamodel
+  // in tests, mirroring the configAuditHooks pattern above.
+  const entityAuditHooks: Record<string, unknown> = Object.fromEntries(
+    ENTITY_AUDIT_MODELS.map((cfg) => [
+      cfg.accessor,
+      buildEntityAuditHooks(cfg, {
+        self: (baseClient as any)[cfg.accessor],
+        related: cfg.relatedAccessor
+          ? (baseClient as any)[cfg.relatedAccessor]
+          : undefined,
+      }),
+    ])
+  );
+
   // Add Elasticsearch sync using client extensions
   const client = baseClient.$extends({
     query: {
       ...configAuditHooks,
+      ...entityAuditHooks,
       repositoryCases: {
         // Plan 02-05 Blocker 3 — wrap entity write + emit in an explicit
         // baseClient.$transaction so both commit-or-rollback atomically.
@@ -483,7 +545,11 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
       },
-      sharedStepGroups: {
+      // Keyed to the Prisma client field `sharedStepGroup` (singular). A prior
+      // `sharedStepGroups:` (plural) key never matched the delegate, so the
+      // audit + ES-sync side effects below were dead on every shared-step-group
+      // mutation — the same class of bug fixed for `issue` below.
+      sharedStepGroup: {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
@@ -890,17 +956,21 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
       },
+      // On the ZenStack RPC path the route's shim emits the canonical
+      // SSO_CONFIG_CHANGED row, so these hooks gate on suppression to avoid a
+      // second, partial row. They still fire for non-RPC writes (workers,
+      // custom routes, direct prisma).
       ssoProvider: {
         async create({ args, query }: any) {
           const result = await query(args);
-          if (result?.id) {
+          if (result?.id && !isEntityAuditSuppressed()) {
             await auditSsoConfigChange("CREATE", result);
           }
           return result;
         },
         async update({ args, query }: any) {
           const result = await query(args);
-          if (result?.id) {
+          if (result?.id && !isEntityAuditSuppressed()) {
             await auditSsoConfigChange("UPDATE", result);
           }
           return result;
@@ -910,7 +980,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             ? await baseClient.ssoProvider.findUnique({ where: args.where })
             : null;
           const result = await query(args);
-          if (oldEntity) {
+          if (oldEntity && !isEntityAuditSuppressed()) {
             await auditSsoConfigChange("DELETE", oldEntity);
           }
           return result;
@@ -940,10 +1010,13 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
       },
+      // On the ZenStack RPC path the route's shim emits the canonical
+      // SYSTEM_CONFIG_CHANGED row, so these hooks gate on suppression to avoid a
+      // second, partial row. They still fire for non-RPC writes.
       appConfig: {
         async create({ args, query }: any) {
           const result = await query(args);
-          if (result?.key) {
+          if (result?.key && !isEntityAuditSuppressed()) {
             await auditSystemConfigChange(result.key, null, result.value);
           }
           return result;
@@ -953,7 +1026,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             ? await baseClient.appConfig.findUnique({ where: args.where })
             : null;
           const result = await query(args);
-          if (result?.key) {
+          if (result?.key && !isEntityAuditSuppressed()) {
             await auditSystemConfigChange(
               result.key,
               oldEntity?.value,
@@ -967,7 +1040,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             ? await baseClient.appConfig.findUnique({ where: args.where })
             : null;
           const result = await query(args);
-          if (oldEntity) {
+          if (oldEntity && !isEntityAuditSuppressed()) {
             await auditSystemConfigChange(oldEntity.key, oldEntity.value, null);
           }
           return result;
@@ -1012,17 +1085,30 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       // =============================================================================
       // Phase 3: Core Data - Test Execution & Content
       // =============================================================================
-      // Plan 02-05 Rule-1 fix: this hook block was previously keyed
-      // `testRunResult:` (singular) which never matched the Prisma client
-      // field `prisma.testRunResults` (plural). Audit calls were dead.
-      // Renaming to the correct plural key activates the audit calls AND
-      // the new webhook emit for TestRunResults.
+      // A test run result is audited under the plural model name
+      // `TestRunResults` (matching every other entityType) regardless of which
+      // path mutated it. It carries no projectId or name column of its own, so
+      // both are resolved from its parents (run -> projectId, case ->
+      // repository case name) via resolveTestRunResultAuditScope. auditEntity
+      // diffs the scalar row while taking the resolved name/projectId
+      // explicitly, so the nested relations never leak into the change set.
       testRunResults: {
         async create({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
             const result = await query(args);
             if (result?.id) {
-              await auditCreate("TestRunResult", result);
+              const scope = await resolveTestRunResultAuditScope(
+                baseClient,
+                result
+              );
+              await auditEntity({
+                action: "CREATE",
+                entityType: "TestRunResults",
+                entityId: String(result.id),
+                entityName: scope.entityName,
+                newRow: result,
+                projectId: scope.projectId,
+              });
               if (result.testRunId !== undefined) {
                 await emitTestRunResultAdded(result, tx);
               }
@@ -1036,7 +1122,19 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (result?.id) {
-            await auditUpdate("TestRunResult", oldEntity, result);
+            const scope = await resolveTestRunResultAuditScope(
+              baseClient,
+              result
+            );
+            await auditEntity({
+              action: "UPDATE",
+              entityType: "TestRunResults",
+              entityId: String(result.id),
+              entityName: scope.entityName,
+              oldRow: oldEntity,
+              newRow: result,
+              projectId: scope.projectId,
+            });
           }
           return result;
         },
@@ -1044,9 +1142,20 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           const oldEntity = args.where
             ? await baseClient.testRunResults.findUnique({ where: args.where })
             : null;
+          // Resolve scope while the row (and its FKs) still exists.
+          const scope = oldEntity
+            ? await resolveTestRunResultAuditScope(baseClient, oldEntity)
+            : null;
           const result = await query(args);
           if (oldEntity) {
-            await auditDelete("TestRunResult", oldEntity);
+            await auditEntity({
+              action: "DELETE",
+              entityType: "TestRunResults",
+              entityId: String(oldEntity.id),
+              entityName: scope?.entityName,
+              oldRow: oldEntity,
+              projectId: scope?.projectId,
+            });
           }
           return result;
         },
@@ -1104,14 +1213,29 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
       },
-      // Audit parity exempt: attachment.update is not hooked because attachments
-      // are immutable once uploaded (no in-place mutation path). Matches the
-      // lastActiveAt precedent at lib/prisma.ts:693-701.
-      attachment: {
+      // Keyed to the Prisma client field `attachments` (the model is named
+      // `Attachments`); a prior `attachment:` (singular) key never matched the
+      // delegate, so attachment audit was dead on every upload/delete.
+      // Audit parity exempt: attachments.update is not hooked because
+      // attachments are immutable once uploaded (no in-place mutation path).
+      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
+      attachments: {
         async create({ args, query }: any) {
           const result = await query(args);
           if (result?.id) {
-            await auditCreate("Attachment", result);
+            // The RPC create result is a partial { id }, so the display name
+            // must come from the create payload (the file name the client
+            // sent); fall back to the result on the direct-Prisma path. Resolve
+            // it here rather than leaning on the worker re-read so the name is
+            // never lost, and pass only id + name to keep the BigInt `size`
+            // column out of the serialized diff. The owning parent FK rides
+            // along in metadata for project traceability.
+            await auditCreate(
+              "Attachments",
+              { id: result.id, name: args?.data?.name ?? result.name },
+              undefined,
+              attachmentParentMetadata(result, args?.data)
+            );
           }
           return result;
         },
@@ -1121,114 +1245,21 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            await auditDelete("Attachment", oldEntity);
-          }
-          return result;
-        },
-      },
-      // =============================================================================
-      // Phase 62: Integrations, Prompt Configurations, Test Run Cases
-      // =============================================================================
-      integration: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("Integration", result);
-          }
-          return result;
-        },
-        async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.integration.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            await auditUpdate("Integration", oldEntity, result);
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.integration.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("Integration", oldEntity);
-          }
-          return result;
-        },
-      },
-      projectIntegration: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("ProjectIntegration", result, result.projectId);
-          }
-          return result;
-        },
-        async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.projectIntegration.findUnique({
-                where: args.where,
-              })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            await auditUpdate(
-              "ProjectIntegration",
-              oldEntity,
-              result,
-              result.projectId
-            );
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.projectIntegration.findUnique({
-                where: args.where,
-              })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
             await auditDelete(
-              "ProjectIntegration",
-              oldEntity,
-              oldEntity.projectId
+              "Attachments",
+              { id: oldEntity.id, name: oldEntity.name },
+              undefined,
+              attachmentParentMetadata(oldEntity)
             );
           }
           return result;
         },
       },
-      promptConfig: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("PromptConfig", result);
-          }
-          return result;
-        },
-        async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.promptConfig.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            await auditUpdate("PromptConfig", oldEntity, result);
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.promptConfig.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("PromptConfig", oldEntity);
-          }
-          return result;
-        },
-      },
+      // =============================================================================
+      // Phase 62: Prompt Configuration prompts
+      // Integration, ProjectIntegration, PromptConfig and TestRunCases are
+      // audited via buildEntityAuditHooks (ENTITY_AUDIT_MODELS) wired above.
+      // =============================================================================
       promptConfigPrompt: {
         async create({ args, query }: any) {
           const result = await query(args);
@@ -1262,35 +1293,6 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
       },
-      testRunCases: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("TestRunCases", result);
-          }
-          return result;
-        },
-        async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.testRunCases.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            await auditUpdate("TestRunCases", oldEntity, result);
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.testRunCases.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("TestRunCases", oldEntity);
-          }
-          return result;
-        },
-      },
       // =============================================================================
       // API Tokens - Security audit logging
       // =============================================================================
@@ -1312,17 +1314,22 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (oldEntity) {
-            await captureAuditEvent({
-              action: "API_KEY_DELETED",
-              entityType: "ApiToken",
-              entityId: oldEntity.id,
-              entityName: oldEntity.name,
-              metadata: {
-                tokenPrefix: oldEntity.tokenPrefix,
-                tokenOwnerId: oldEntity.userId,
-                tokenOwnerEmail: oldEntity.user?.email,
-              },
-            });
+            // The RPC route's shim maps apiToken delete to API_KEY_DELETED;
+            // gate here so we don't emit a duplicate on that path. Cache
+            // eviction below must run regardless of audit suppression.
+            if (!isEntityAuditSuppressed()) {
+              await captureAuditEvent({
+                action: "API_KEY_DELETED",
+                entityType: "ApiToken",
+                entityId: oldEntity.id,
+                entityName: oldEntity.name,
+                metadata: {
+                  tokenPrefix: oldEntity.tokenPrefix,
+                  tokenOwnerId: oldEntity.userId,
+                  tokenOwnerEmail: oldEntity.user?.email,
+                },
+              });
+            }
             // Evict the short-TTL auth cache so the token is rejected immediately.
             invalidateApiTokenCache(oldEntity.token).catch((error: any) => {
               console.error(
@@ -1344,12 +1351,15 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               })
             : null;
           const result = await query(args);
-          // Check if token was revoked (isActive changed from true to false)
+          // Check if token was revoked (isActive changed from true to false).
+          // The RPC route's shim maps the revoke update to API_KEY_REVOKED, so
+          // gate here to avoid a duplicate on that path.
           if (
             oldEntity &&
             result &&
             oldEntity.isActive === true &&
-            result.isActive === false
+            result.isActive === false &&
+            !isEntityAuditSuppressed()
           ) {
             await captureAuditEvent({
               action: "API_KEY_REVOKED",

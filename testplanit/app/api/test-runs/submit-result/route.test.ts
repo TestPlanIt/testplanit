@@ -39,6 +39,18 @@ vi.mock("~/services/repositoryCaseSync", () => ({
   syncRepositoryCaseToElasticsearch: vi.fn().mockResolvedValue(true),
 }));
 
+// Spy on updateAuditContext while keeping the rest of the module real so the
+// withAuditContext wrapper (runWithAuditContext / extractAuditContextFromHeaders)
+// still works. Lets us assert the acting user is stamped onto the audit-context
+// frame so the request's audit rows are attributed (and not "System").
+const { updateAuditContext } = vi.hoisted(() => ({
+  updateAuditContext: vi.fn(),
+}));
+vi.mock("~/lib/auditContext", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("~/lib/auditContext")>();
+  return { ...actual, updateAuditContext };
+});
+
 import { getServerSession } from "next-auth";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
@@ -212,6 +224,25 @@ describe("Submit Result API Route", () => {
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
+  });
+
+  it("stamps the authenticated user onto the audit context so result audit rows are attributed", async () => {
+    await POST(createRequest(validBody));
+
+    expect(updateAuditContext).toHaveBeenCalledWith({ userId: "user-1" });
+  });
+
+  it("does not stamp an actor when authentication fails", async () => {
+    (getServerSession as any).mockResolvedValue(null);
+    (authenticateRequest as any).mockResolvedValue({
+      authenticated: false,
+      error: "Unauthorized",
+      status: 401,
+    });
+
+    await POST(createRequest(validBody));
+
+    expect(updateAuditContext).not.toHaveBeenCalled();
   });
 
   it("returns 400 for invalid payload", async () => {

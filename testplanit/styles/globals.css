@@ -56,8 +56,8 @@
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 222.2 84% 4.9%; /* Adjusted for dark mode */
     --muted-foreground: 210 40% 75%; /* Reduced brightness for dark mode */
-    --accent: 210 40% 82%; /* Reduced brightness for dark mode */
-    --accent-foreground: 222.2 47.4% 11.2%; /* Adjusted for dark mode */
+    --accent: 217.2 32.6% 20%;
+    --accent-foreground: 210 40% 82%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 82%;
     --warning: 38 80% 40%;

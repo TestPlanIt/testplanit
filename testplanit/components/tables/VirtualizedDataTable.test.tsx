@@ -2,7 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "~/test/test-utils";
-import { VirtualizedReportTable } from "./VirtualizedReportTable";
+import { VirtualizedDataTable } from "./VirtualizedDataTable";
 
 // The real hook owns TanStack Virtual + an IntersectionObserver, neither of
 // which produces layout (or fires) under jsdom. Replace it with a pass-through
@@ -72,9 +72,9 @@ const baseColumns: ColumnDef<RowShape, any>[] = [
 ];
 
 function renderTable(
-  overrides: Partial<React.ComponentProps<typeof VirtualizedReportTable>> = {}
+  overrides: Partial<React.ComponentProps<typeof VirtualizedDataTable>> = {}
 ) {
-  const props: React.ComponentProps<typeof VirtualizedReportTable> = {
+  const props: React.ComponentProps<typeof VirtualizedDataTable> = {
     columns: baseColumns as ColumnDef<any, any>[],
     data: [
       { id: 1, name: "Alpha", count: 10 },
@@ -85,10 +85,10 @@ function renderTable(
     onSortChange: vi.fn(),
     ...overrides,
   };
-  return { props, ...render(<VirtualizedReportTable {...props} />) };
+  return { props, ...render(<VirtualizedDataTable {...props} />) };
 }
 
-describe("VirtualizedReportTable", () => {
+describe("VirtualizedDataTable", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     hookMock.lastOnLoadMore = null;
@@ -129,13 +129,15 @@ describe("VirtualizedReportTable", () => {
 
   it("shows the load-more indicator while appending a page", () => {
     renderTable({ hasMore: true, isLoading: true });
-    expect(screen.getByTestId("report-table-loading-more")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("virtualized-table-loading-more")
+    ).toBeInTheDocument();
   });
 
   it("surfaces a retry control when a load-more fetch failed", () => {
     const onRetryLoadMore = vi.fn();
     renderTable({ loadMoreError: true, onRetryLoadMore });
-    const retry = screen.getByTestId("report-table-load-more-retry");
+    const retry = screen.getByTestId("virtualized-table-load-more-retry");
     fireEvent.click(retry);
     expect(onRetryLoadMore).toHaveBeenCalledTimes(1);
   });

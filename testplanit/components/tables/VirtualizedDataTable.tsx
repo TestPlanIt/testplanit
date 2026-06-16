@@ -31,15 +31,19 @@ import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { cn } from "~/utils";
 
 /**
- * Virtualized, infinite-scrolling table for the reports results panel.
+ * Virtualized, infinite-scrolling table.
  *
- * A reports-specific alternative to the shared `DataTable` — it deliberately
- * does NOT replicate that component's look or its column resize/pinning (no
- * report column opts into either). It keeps the table features reports rely on
- * (sorting, grouping, expansion, sub-rows, column visibility) by driving a
- * TanStack `useReactTable` instance and rendering its flattened row model
- * (`getRowModel().rows`) through `useVirtualizedInfiniteList`, so an arbitrarily
- * large result set scrolls as one continuous list with no page seam.
+ * A lighter-weight alternative to the shared `DataTable` for surfaces that need
+ * to render an arbitrarily large result set as one continuous, page-seam-free
+ * list. It deliberately does NOT replicate `DataTable`'s column resize / pinning
+ * / drag-reorder; it keeps the table features that scroll well (sorting,
+ * grouping, expansion, sub-rows, column visibility) by driving a TanStack
+ * `useReactTable` instance and rendering its flattened row model
+ * (`getRowModel().rows`) through `useVirtualizedInfiniteList`.
+ *
+ * Consumed by the reports results panel and the admin audit-log table; both
+ * converge on the same scroll model. Per-surface chrome (empty-state copy,
+ * test-id prefixes) is parameterized.
  *
  * Layout: an outer horizontal-scroll container holds a flex column whose width
  * is the summed column width; a non-scrolling header row sits on top and a
@@ -48,16 +52,16 @@ import { cn } from "~/utils";
  * while the whole table scrolls horizontally as a unit.
  *
  * Pagination modes:
- *   - Full-set (most reports): caller passes the entire array with
- *     `hasMore=false`; the list virtualizes it.
- *   - Fetch-on-scroll (execution-log): caller supplies `hasMore`/`isLoading`/
- *     `onLoadMore`; the sentinel pulls and the caller appends.
+ *   - Full-set: caller passes the entire array with `hasMore=false`; the list
+ *     virtualizes it.
+ *   - Fetch-on-scroll: caller supplies `hasMore`/`isLoading`/`onLoadMore`; the
+ *     sentinel pulls and the caller appends.
  */
 
 const EXPANDER_WIDTH = 24;
 const ESTIMATED_ROW_HEIGHT = 44;
 
-interface VirtualizedReportTableProps {
+interface VirtualizedDataTableProps {
   columns: ColumnDef<any, any>[];
   data: any[];
 
@@ -75,6 +79,15 @@ interface VirtualizedReportTableProps {
   getSubRows?: (row: any, index: number) => any[] | undefined;
   subRowsLabel?: string;
 
+  /**
+   * Id of a column that should flex to absorb any horizontal space left over
+   * once the other (fixed-width) columns are laid out — so a table wider than
+   * its content doesn't leave a gap after the last column. The column never
+   * shrinks below its declared `size`; when the content is wider than the
+   * viewport the table falls back to horizontal scroll.
+   */
+  flexColumnId?: string;
+
   // Infinite scroll (defaults keep the table in full-set / client mode).
   hasMore?: boolean;
   isLoading?: boolean;
@@ -82,10 +95,23 @@ interface VirtualizedReportTableProps {
   loadMoreError?: boolean;
   onRetryLoadMore?: () => void;
 
+  /**
+   * Shown when the result set is empty and not loading. Defaults to the generic
+   * "no results" label so consumers only override when they want surface copy.
+   */
+  emptyMessage?: ReactNode;
+  /**
+   * Extra signal folded into the scroll/measure reset key. The table already
+   * resets on sort / grouping / column-set changes; pass this when the result
+   * set identity also changes for reasons the table can't see (e.g. external
+   * filters) so the scroll returns to the top on those changes too.
+   */
+  resetKey?: unknown;
+  testIdPrefix?: string;
   rowTestIdPrefix?: string;
 }
 
-export function VirtualizedReportTable({
+export function VirtualizedDataTable({
   columns,
   data,
   columnVisibility,
@@ -98,21 +124,25 @@ export function VirtualizedReportTable({
   onExpandedChange,
   getSubRows,
   subRowsLabel,
+  flexColumnId,
   hasMore = false,
   isLoading = false,
   onLoadMore,
   loadMoreError = false,
   onRetryLoadMore,
-  rowTestIdPrefix = "report-row",
-}: VirtualizedReportTableProps) {
+  emptyMessage,
+  resetKey: externalResetKey,
+  testIdPrefix = "virtualized-table",
+  rowTestIdPrefix = "virtualized-row",
+}: VirtualizedDataTableProps) {
   const t = useTranslations("common.table");
   const tActions = useTranslations("common.actions");
   const tLabels = useTranslations("common.labels");
   const tAria = useTranslations("common.aria");
   const tErrors = useTranslations("search.errors");
 
-  // Convert the report's sortConfig into TanStack's controlled sorting state,
-  // ignoring a stale sort that points at a column the current report lacks
+  // Convert the caller's sortConfig into TanStack's controlled sorting state,
+  // ignoring a stale sort that points at a column the current set lacks
   // (mirrors DataTable's guard).
   const sorting: SortingState = useMemo(() => {
     if (!sortConfig) return [];
@@ -220,17 +250,26 @@ export function VirtualizedReportTable({
   const leafColumns = table.getVisibleLeafColumns();
   const totalWidth = leafColumns.reduce((sum, c) => sum + c.getSize(), 0);
 
+  // When a flex column is configured, the table stretches to fill its container
+  // (and the flex column soaks up the slack) instead of sitting at its natural
+  // content width with empty space trailing the last column.
+  const hasFlex =
+    !!flexColumnId && leafColumns.some((c) => c.id === flexColumnId);
+  const tableWidth = hasFlex ? "100%" : totalWidth;
+
   // Reset scroll + measurements when the *result set identity* changes (sort,
-  // grouping, or report type via the column set) — but NOT when a page is
-  // appended (that would defeat infinite scroll).
+  // grouping, the column set, or a caller-supplied external signal such as a
+  // filter) — but NOT when a page is appended (that would defeat infinite
+  // scroll).
   const resetKey = useMemo(
     () =>
       JSON.stringify({
         sort: sortConfig ?? null,
         grouping: grouping ?? null,
         cols: columns.map((c) => c.id),
+        external: externalResetKey ?? null,
       }),
-    [sortConfig, grouping, columns]
+    [sortConfig, grouping, columns, externalResetKey]
   );
 
   const { scrollRef, sentinelRef, virtualItems, totalSize, measureElement } =
@@ -250,11 +289,11 @@ export function VirtualizedReportTable({
   return (
     <div
       className="h-full overflow-x-auto rounded-lg border-2 border-primary/10"
-      data-testid="report-table"
+      data-testid={testIdPrefix}
     >
       <div
         className="flex h-full min-h-0 flex-col"
-        style={{ width: totalWidth, minWidth: "100%" }}
+        style={{ width: tableWidth, minWidth: hasFlex ? totalWidth : "100%" }}
       >
         {/* Header — stays put vertically (lives above the scroll body) and
             scrolls horizontally with the body via the outer container. */}
@@ -271,12 +310,20 @@ export function VirtualizedReportTable({
               const direction = isActiveSort
                 ? sortConfig?.direction
                 : undefined;
+              const isFlex = hasFlex && column.id === flexColumnId;
               return (
                 <div
                   key={header.id}
                   role="columnheader"
-                  className="flex shrink-0 select-none items-center gap-1 border-r px-3 py-2 text-xs font-medium last:border-r-0"
-                  style={{ width: column.getSize() }}
+                  className={cn(
+                    "flex select-none items-center gap-1 border-r px-3 py-2 text-xs font-medium last:border-r-0",
+                    isFlex ? "min-w-0" : "shrink-0"
+                  )}
+                  style={
+                    isFlex
+                      ? { flex: "1 1 0%", minWidth: column.getSize() }
+                      : { width: column.getSize() }
+                  }
                 >
                   {column.getCanGroup() && onGroupingChange ? (
                     <button
@@ -324,20 +371,20 @@ export function VirtualizedReportTable({
         </div>
 
         {/* Body — the virtualizer's scroll element. CSS-bounded height
-            (flex-1) so it works inside the resizable report panel. */}
+            (flex-1) so it works inside a bounded panel or card. */}
         <div
           ref={scrollRef}
           className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
-          data-testid="report-table-scroll"
+          data-testid={`${testIdPrefix}-scroll`}
         >
           {rows.length === 0 && !isLoading ? (
             <div className="py-12 text-center text-sm text-muted-foreground">
-              {tLabels("noResults")}
+              {emptyMessage ?? tLabels("noResults")}
             </div>
           ) : (
             <div
               className="relative"
-              style={{ height: totalSize, width: totalWidth }}
+              style={{ height: totalSize, width: tableWidth }}
             >
               {virtualItems.map((vItem) => {
                 const row = rows[vItem.index];
@@ -365,7 +412,7 @@ export function VirtualizedReportTable({
                           : "hover:bg-muted/50"
                     )}
                     style={{
-                      width: totalWidth,
+                      width: tableWidth,
                       transform: `translateY(${vItem.start}px)`,
                     }}
                   >
@@ -417,12 +464,20 @@ export function VirtualizedReportTable({
                           cell.getContext()
                         );
                       }
+                      const isFlex = hasFlex && column.id === flexColumnId;
                       return (
                         <div
                           key={column.id}
                           role="cell"
-                          className="flex min-w-0 shrink-0 items-center overflow-hidden border-r px-3 py-2 text-sm last:border-r-0"
-                          style={{ width: column.getSize() }}
+                          className={cn(
+                            "flex min-w-0 items-center overflow-hidden border-r px-3 py-2 text-sm last:border-r-0",
+                            !isFlex && "shrink-0"
+                          )}
+                          style={
+                            isFlex
+                              ? { flex: "1 1 0%", minWidth: column.getSize() }
+                              : { width: column.getSize() }
+                          }
                         >
                           {content}
                         </div>
@@ -435,18 +490,18 @@ export function VirtualizedReportTable({
           )}
 
           {/* Sentinel — when it nears the viewport and there's more, the hook
-              fetches the next page (execution-log only). */}
+              fetches the next page (fetch-on-scroll mode only). */}
           <div
             ref={sentinelRef}
             aria-hidden
             className="h-px w-full"
-            data-testid="report-table-sentinel"
+            data-testid={`${testIdPrefix}-sentinel`}
           />
 
           {isLoading && data.length > 0 && (
             <div
               className="space-y-2 px-3 py-3"
-              data-testid="report-table-loading-more"
+              data-testid={`${testIdPrefix}-loading-more`}
             >
               <Skeleton className="h-8 w-full" />
             </div>
@@ -458,7 +513,7 @@ export function VirtualizedReportTable({
                 variant="outline"
                 size="sm"
                 onClick={onRetryLoadMore}
-                data-testid="report-table-load-more-retry"
+                data-testid={`${testIdPrefix}-load-more-retry`}
               >
                 {tErrors("tryAgain")}
               </Button>

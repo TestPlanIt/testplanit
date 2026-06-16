@@ -4,7 +4,7 @@ import { AutomationCandidatesReportPreset } from "@/components/automationCandida
 import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DateFormatter } from "@/components/DateFormatter";
 import { MatrixReportPreset } from "@/components/matrix/MatrixReportPreset";
-import { VirtualizedReportTable } from "@/components/reports/VirtualizedReportTable";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -519,7 +519,7 @@ export function ReportRenderer({
             </div>
           </CardHeader>
           <CardContent className="h-[calc(100%-4rem)] p-6 pt-0">
-            <VirtualizedReportTable
+            <VirtualizedDataTable
               columns={columns as ColumnDef<any>[]}
               data={results}
               columnVisibility={columnVisibility}

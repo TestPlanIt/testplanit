@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { captureAuditEvent } from "~/lib/services/auditLog";
 import { redactValues } from "~/lib/services/parameterRedaction";
 import { authOptions } from "~/server/auth";
 
@@ -211,6 +212,19 @@ export async function POST(
         createdById: session.user.id,
       },
     });
+
+    captureAuditEvent({
+      action: "CREATE",
+      entityType: "DataSet",
+      entityId: String(created.id),
+      entityName: created.name,
+      projectId: testCase.projectId,
+      userId: session.user.id,
+      metadata: { isShared: false, ownerCaseId: caseId },
+    }).catch(() => {
+      // Audit is best-effort.
+    });
+
     return NextResponse.json({ dataset: created });
   } catch (err) {
     console.error("[dataset POST]", err);
