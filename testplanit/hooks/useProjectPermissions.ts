@@ -61,7 +61,7 @@ export function useProjectPermissions(
   isLoading: boolean;
   error: Error | null;
 } {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const userId = session?.user?.id;
   const numericProjectId =
     typeof projectId === "string" ? parseInt(projectId, 10) : projectId; // Added radix 10
@@ -124,11 +124,14 @@ export function useProjectPermissions(
     retry: 1, // Retry once on failure
   });
 
-  // If query is disabled, return default permissions immediately
+  // Query disabled: return all-false defaults, but keep reporting "loading"
+  // while the NextAuth session is still resolving. Otherwise consumers briefly
+  // see isLoading=false + all-false permissions before userId arrives and treat
+  // "session not loaded yet" as "access denied" (e.g. redirecting away).
   if (!isEnabled) {
     return {
       permissions: getDefaultPermissions(area),
-      isLoading: false,
+      isLoading: sessionStatus === "loading",
       error: null,
     };
   }
