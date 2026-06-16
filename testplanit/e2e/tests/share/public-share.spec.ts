@@ -157,7 +157,7 @@ test.describe("Public Share Flow", () => {
       );
 
       // Verify the report content is displayed (table should be visible)
-      const reportTable = incognitoPage.locator("table").first();
+      const reportTable = incognitoPage.locator("[role='table']").first();
       await expect(reportTable).toBeVisible({ timeout: 30000 });
 
       // Verify test cases are in the report

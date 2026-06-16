@@ -35,11 +35,11 @@ test.describe("Audit Log Management - Page Display", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify header row contains expected columns
-    const headerRow = page.locator("thead tr").first();
+    const headerRow = page.getByRole("row").first();
     await expect(headerRow).toBeVisible({ timeout: 10000 });
 
     // Check at least one column header is visible
-    const headers = page.locator("th");
+    const headers = page.getByRole("columnheader");
     expect(await headers.count()).toBeGreaterThan(0);
   });
 
@@ -48,11 +48,11 @@ test.describe("Audit Log Management - Page Display", () => {
     await page.waitForLoadState("networkidle");
 
     // The table body should be present (may be empty or have rows)
-    const tableBody = page.locator("tbody");
+    const tableBody = page.getByRole("table");
     await expect(tableBody).toBeVisible({ timeout: 10000 });
 
     // If rows exist, verify first row is visible
-    const rows = page.locator("tbody tr");
+    const rows = page.getByRole("row");
     const rowCount = await rows.count();
     if (rowCount > 0) {
       await expect(rows.first()).toBeVisible();
@@ -168,14 +168,14 @@ test.describe("Audit Log Management - Detail Modal", () => {
     // The DataTable renders a "No Results" row when empty — detect actual data rows
     // by checking whether any tbody row has a button (data rows have action buttons)
     const dataRows = page
-      .locator("tbody tr")
+      .getByRole("row")
       .filter({ has: page.getByRole("button") });
     const dataRowCount = await dataRows.count();
 
     if (dataRowCount === 0) {
       // No audit data available (queue worker not running in E2E env).
       // Verify the empty state renders correctly and the table is still functional.
-      const tableBody = page.locator("tbody");
+      const tableBody = page.getByRole("table");
       await expect(tableBody).toBeVisible({ timeout: 10000 });
       return;
     }
@@ -221,7 +221,7 @@ test.describe("Audit Log Management - CSV Export", () => {
 
     // Check if there are actual data rows (rows with action buttons, not the "No Results" row)
     const dataRows = page
-      .locator("tbody tr")
+      .getByRole("row")
       .filter({ has: page.getByRole("button") });
     const dataRowCount = await dataRows.count();
 

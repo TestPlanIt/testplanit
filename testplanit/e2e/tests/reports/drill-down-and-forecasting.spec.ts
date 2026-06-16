@@ -52,7 +52,7 @@ test.describe("Report Builder - Drill-Down", () => {
     await expect(
       page
         .locator(
-          "table, [data-testid='no-results'], :text-matches('No results|No data|0 results', 'i')"
+          "[role='table'], [data-testid='no-results'], :text-matches('No results|No data|0 results', 'i')"
         )
         .first()
     ).toBeVisible({ timeout: 30_000 });
@@ -92,12 +92,14 @@ test.describe("Report Builder - Drill-Down", () => {
     await runReport(page);
 
     // Wait for table to be visible - this means data exists
-    const table = page.locator("table").first();
+    const table = page.locator("[role='table']").first();
     await expect(table).toBeVisible({ timeout: 10000 });
 
     // Look for a clickable metric cell (cursor-pointer span in a table cell)
     // The metric cells render as <span class="... cursor-pointer ..."> when drill-down is available
-    const clickableMetricCell = table.locator("td span.cursor-pointer").first();
+    const clickableMetricCell = table
+      .locator("[role='cell'] span.cursor-pointer")
+      .first();
 
     const isCellClickable = await clickableMetricCell
       .isVisible()
