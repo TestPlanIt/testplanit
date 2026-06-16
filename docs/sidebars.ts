@@ -309,6 +309,7 @@ const sidebars: SidebarsConfig = {
                     'user-guide/projects/reports/report-builder',
                   ],
                 },
+                'user-guide/projects/audit-log', // Project-scoped audit trail (ADMIN + assigned PROJECTADMIN)
               ],
             },
             // Settings

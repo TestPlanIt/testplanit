@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/tooltip";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
+import { RepositoryCaseAuditLogSheet } from "@/components/repositories/RepositoryCaseAuditLogSheet";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { VersionSelect } from "@/components/VersionSelect";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
@@ -1931,13 +1932,16 @@ export default function TestCaseDetails() {
                 )}
                 <div className="flex items-center space-x-2 w-fit">
                   {!isEditMode && (
-                    <VersionSelect
-                      versions={versions || []}
-                      currentVersion={testcase.currentVersion.toString()}
-                      onVersionChange={viewVersion}
-                      userDateFormat={session?.user.preferences?.dateFormat}
-                      userTimeFormat={session?.user.preferences?.timeFormat}
-                    />
+                    <>
+                      <VersionSelect
+                        versions={versions || []}
+                        currentVersion={testcase.currentVersion.toString()}
+                        onVersionChange={viewVersion}
+                        userDateFormat={session?.user.preferences?.dateFormat}
+                        userTimeFormat={session?.user.preferences?.timeFormat}
+                      />
+                      <RepositoryCaseAuditLogSheet caseId={testcase.id} />
+                    </>
                   )}
                   {isEditMode && !isSubmitting ? (
                     <div className="space-y-2 w-full">

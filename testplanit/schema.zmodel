@@ -5459,4 +5459,5 @@ model AuditLog {
     @@deny('update, delete', true)
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read', auth().id == userId)
+    @@allow('read', project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
 }

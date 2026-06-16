@@ -1,8 +1,7 @@
 "use client";
 
-import { useDebounce } from "@/components/Debounce";
-import { Filter } from "@/components/tables/Filter";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,9 +11,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { AuditAction } from "@prisma/client";
 import type { VisibilityState } from "@tanstack/react-table";
 import { endOfDay, startOfDay } from "date-fns";
+import { History } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
@@ -34,12 +42,50 @@ import {
 } from "~/lib/hooks";
 
 const PAGE_SIZE = 50;
+const ENTITY_TYPE = "RepositoryCases";
 
-interface UserAuditLogProps {
-  userId: string;
+interface RepositoryCaseAuditLogSheetProps {
+  caseId: number;
 }
 
-export function UserAuditLog({ userId }: UserAuditLogProps) {
+export function RepositoryCaseAuditLogSheet({
+  caseId,
+}: RepositoryCaseAuditLogSheetProps) {
+  const { data: session } = useSession();
+  const t = useTranslations("repository.auditLog");
+  const [open, setOpen] = useState(false);
+
+  // Audit-log reads are limited to system admins and project admins, so only
+  // surface the entry point to them (mirrors the project audit-log gating).
+  const canViewAuditLogs =
+    session?.user?.access === "ADMIN" ||
+    session?.user?.access === "PROJECTADMIN";
+
+  if (!canViewAuditLogs) {
+    return null;
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button type="button" variant="outline">
+          <History className="h-4 w-4" />
+          {t("trigger")}
+        </Button>
+      </SheetTrigger>
+      <SheetContent className="w-full sm:max-w-3xl">
+        <SheetHeader>
+          <SheetTitle>{t("title")}</SheetTitle>
+          <SheetDescription>{t("description")}</SheetDescription>
+        </SheetHeader>
+        {/* Mount the table only while open so audit data loads on demand. */}
+        {open && <CaseAuditLogContent caseId={caseId} />}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function CaseAuditLogContent({ caseId }: { caseId: number }) {
   const { data: session } = useSession();
   const t = useTranslations("admin.auditLogs");
   const tCommon = useTranslations("common");
@@ -51,11 +97,7 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     column: string;
     direction: "asc" | "desc";
   }>({ column: "timestamp", direction: "desc" });
-  const [searchString, setSearchString] = useState("");
-  const debouncedSearchString = useDebounce(searchString, 500);
   const [actionFilter, setActionFilter] = useState<AuditAction | "all">("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [projectFilter, setProjectFilter] = useState<string>("all");
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const dateForm = useForm<{ dateRange: DateRange | undefined }>({
@@ -63,42 +105,16 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
   });
   const dateRange = useWatch({ control: dateForm.control, name: "dateRange" });
 
-  // Always hard-scoped to this user; the admin-style user filter is omitted.
+  // Hard-scoped to this single test case. Case versions are intentionally
+  // excluded — their field changes are already captured on the case itself.
   const whereClause = useMemo(() => {
-    const conditions: any[] = [{ userId }];
-
-    if (debouncedSearchString) {
-      conditions.push({
-        OR: [
-          {
-            entityName: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
-          },
-          {
-            entityType: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
-          },
-          {
-            entityId: { contains: debouncedSearchString, mode: "insensitive" },
-          },
-        ],
-      });
-    }
+    const conditions: any[] = [
+      { entityType: ENTITY_TYPE },
+      { entityId: String(caseId) },
+    ];
 
     if (actionFilter !== "all") {
       conditions.push({ action: actionFilter });
-    }
-
-    if (typeFilter !== "all") {
-      conditions.push({ entityType: typeFilter });
-    }
-
-    if (projectFilter !== "all") {
-      conditions.push({ projectId: parseInt(projectFilter, 10) });
     }
 
     if (dateRange?.from) {
@@ -111,14 +127,7 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     }
 
     return { AND: conditions };
-  }, [
-    userId,
-    debouncedSearchString,
-    actionFilter,
-    typeFilter,
-    projectFilter,
-    dateRange,
-  ]);
+  }, [caseId, actionFilter, dateRange]);
 
   const baseArgs = {
     where: whereClause,
@@ -160,37 +169,14 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
 
   const { data: totalCount } = useCountAuditLog({ where: whereClause });
 
-  // Filter options come from the distinct values this user has actually
-  // generated, so each dropdown lists only relevant actions/types.
+  // Action options come from the distinct actions recorded for this case, so
+  // the dropdown lists only relevant actions.
   const { data: actionRows } = useFindManyAuditLog({
-    where: { userId },
+    where: { entityType: ENTITY_TYPE, entityId: String(caseId) },
     select: { action: true },
     distinct: ["action"],
     orderBy: { action: "asc" },
   });
-  const { data: typeRows } = useFindManyAuditLog({
-    where: { userId },
-    select: { entityType: true },
-    distinct: ["entityType"],
-    orderBy: { entityType: "asc" },
-  });
-  const { data: projectRows } = useFindManyAuditLog({
-    where: { userId, projectId: { not: null } },
-    select: { projectId: true, project: { select: { name: true } } },
-    distinct: ["projectId"],
-    orderBy: { projectId: "asc" },
-  });
-
-  const projectOptions = useMemo(() => {
-    const options = (projectRows ?? [])
-      .filter(
-        (row): row is { projectId: number; project: { name: string } } =>
-          row.projectId != null && !!row.project?.name
-      )
-      .map((row) => ({ id: row.projectId, name: row.project.name }));
-    options.sort((a, b) => a.name.localeCompare(b.name));
-    return options;
-  }, [projectRows]);
 
   const handleViewDetails = useCallback((log: { id: string }) => {
     setDetailId(log.id);
@@ -211,8 +197,8 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     [dateFormat, timezone]
   );
 
-  // Reuse the admin audit-log columns, but drop the user column — every row
-  // belongs to the same user here.
+  // Reuse the admin audit-log columns, but drop the columns that are constant
+  // for a single case: project, entity type, and entity name.
   const allColumns = useColumns(
     userPreferences,
     handleViewDetails,
@@ -221,30 +207,19 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     tUserMenu
   );
   const columns = useMemo(
-    () => allColumns.filter((c) => c.id !== "userEmail"),
+    () =>
+      allColumns.filter(
+        (c) => !["project", "entityType", "entityName"].includes(c.id as string)
+      ),
     [allColumns]
   );
 
-  const hasFilter =
-    !!debouncedSearchString ||
-    actionFilter !== "all" ||
-    typeFilter !== "all" ||
-    projectFilter !== "all" ||
-    !!dateRange?.from;
+  const hasFilter = actionFilter !== "all" || !!dateRange?.from;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mt-4 flex flex-col gap-4">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="min-w-[260px] flex-1">
-          <Filter
-            key="user-audit-log-filter"
-            placeholder={t("filterPlaceholder")}
-            initialSearchString={searchString}
-            onSearchChange={setSearchString}
-          />
-        </div>
-
         <div className="w-[240px]">
           <Label className="sr-only">{t("timeRange")}</Label>
           <Form {...dateForm}>
@@ -273,44 +248,10 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
             </SelectContent>
           </Select>
         </div>
-
-        <div className="w-[170px]">
-          <Label className="sr-only">{t("filterEntityType")}</Label>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder={t("allEntityTypes")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allEntityTypes")}</SelectItem>
-              {typeRows?.map((row) => (
-                <SelectItem key={row.entityType} value={row.entityType}>
-                  {row.entityType}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="w-[170px]">
-          <Label className="sr-only">{tCommon("fields.project")}</Label>
-          <Select value={projectFilter} onValueChange={setProjectFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder={t("allProjects")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allProjects")}</SelectItem>
-              {projectOptions.map((project) => (
-                <SelectItem key={project.id} value={project.id.toString()}>
-                  {project.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       {/* Data Table — virtualized, infinite scroll. */}
-      <div className="h-96">
+      <div className="h-[calc(100vh-16rem)] min-h-[320px] w-full">
         <VirtualizedDataTable
           columns={columns as any}
           data={rows as any}
@@ -318,21 +259,21 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
           onSortChange={handleSortChange}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
-          flexColumnId="entityName"
+          flexColumnId="userEmail"
           hasMore={!!hasNextPage}
           isLoading={isLoading || isFetchingNextPage}
           onLoadMore={fetchNextPage}
           emptyMessage={
             hasFilter ? tProfile("noMatchingEntries") : tProfile("noEntries")
           }
-          resetKey={`${debouncedSearchString}|${actionFilter}|${typeFilter}|${projectFilter}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
-          testIdPrefix="user-audit-log-table"
-          rowTestIdPrefix="user-audit-log-row"
+          resetKey={`${actionFilter}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
+          testIdPrefix="case-audit-log-table"
+          rowTestIdPrefix="case-audit-log-row"
         />
       </div>
 
       {rows.length > 0 && (
-        <p className="text-xs text-muted-foreground text-right">
+        <p className="text-right text-xs text-muted-foreground">
           {tProfile("showing", {
             loaded: rows.length.toLocaleString(),
             total: (totalCount ?? rows.length).toLocaleString(),

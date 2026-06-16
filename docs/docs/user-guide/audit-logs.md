@@ -29,9 +29,15 @@ The system-wide viewer is available only to users with administrative privileges
 
 ### Viewing your own activity
 
-You don't need administrator access to review your own audit history. Open your profile (**user menu → View Profile**) and expand the **Audit Log** section. This view is automatically scoped to your own actions, so the user filter is omitted; the search box and the action, entity-type, and date-range filters work just like the system-wide viewer.
+You don't need administrator access to review your own audit history. Open your profile (**user menu → View Profile**) and expand the **Audit Log** section. This view is automatically scoped to your own actions, so the user filter is omitted; the search box and the action, entity-type, project, and date-range filters work just like the system-wide viewer.
 
 Administrators can review any user's activity the same way by opening that user's profile.
+
+### Viewing a project's activity
+
+Project administrators don't need system-wide access to audit a single project. Open the project and choose **Audit Logs** from the project menu to see the audit trail scoped to that project.
+
+This view is available to system administrators and to Project Administrators assigned to the project. It works like the system-wide viewer — the search box and the action, entity-type, user, and date-range filters all behave the same — but every entry belongs to the current project, so the Project column and Project filter are omitted. The menu entry appears for any Project Administrator, but it shows entries only for the projects they are assigned to.
 
 ## Tracked Actions
 

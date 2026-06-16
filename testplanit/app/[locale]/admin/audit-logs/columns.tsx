@@ -19,6 +19,22 @@ export interface ExtendedAuditLog extends AuditLog {
   } | null;
 }
 
+export interface AuditLogSort {
+  column: string;
+  direction: "asc" | "desc";
+}
+
+/**
+ * Translate a sort selection into a Prisma `orderBy`. The project column sorts
+ * by the related project's name; every other column is a scalar field.
+ */
+export function buildAuditLogOrderBy(sort: AuditLogSort): Record<string, any> {
+  if (sort.column === "project") {
+    return { project: { name: sort.direction } };
+  }
+  return { [sort.column]: sort.direction };
+}
+
 /**
  * Get badge variant based on action type
  */
@@ -192,9 +208,12 @@ export const useColumns = (
       },
       {
         id: "project",
-        accessorKey: "project",
+        // A string accessor (the related project's name) so the table's
+        // client-side sort of loaded rows agrees with the server orderBy
+        // (`{ project: { name } }`); a relation accessor can't be sorted.
+        accessorFn: (row) => row.project?.name ?? "",
         header: tCommon("fields.project"),
-        enableSorting: false,
+        enableSorting: true,
         size: 150,
         cell: ({ row }) => {
           const project = row.original.project;

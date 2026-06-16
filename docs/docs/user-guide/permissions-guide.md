@@ -60,6 +60,7 @@ Every user has a system-wide access level that determines their baseline permiss
 - Create and delete projects
 - Assign roles within their projects
 - Full access to content within assigned projects
+- View the [audit log](./audit-logs.md#viewing-a-projects-activity) for assigned projects
 
 **Use Cases**:
 
