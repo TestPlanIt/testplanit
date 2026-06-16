@@ -74,7 +74,7 @@ test.describe("Report Builder - Multiple Report Types", () => {
     await expect(
       page
         .locator(
-          "table, [data-testid='no-results'], text=/No results|No data|0 results/i"
+          "[role='table'], [data-testid='no-results'], :text-matches('No results|No data|0 results', 'i')"
         )
         .first()
     ).toBeVisible({ timeout: 30_000 });
@@ -88,7 +88,7 @@ test.describe("Report Builder - Multiple Report Types", () => {
   ) {
     // Accept either a results table, a visualization, or a no-results message
     const hasTable = await page
-      .locator("table")
+      .locator("[role='table']")
       .first()
       .isVisible()
       .catch(() => false);
@@ -212,7 +212,7 @@ test.describe("Report Builder - Multiple Report Types", () => {
     await runReport(page);
 
     // Should show results table (project has folders with test cases)
-    const table = page.locator("table").first();
+    const table = page.locator("[role='table']").first();
     await expect(table).toBeVisible({ timeout: 10000 });
   });
 
@@ -261,7 +261,7 @@ test.describe("Report Builder - Multiple Report Types", () => {
     await page.waitForLoadState("networkidle");
 
     // Report should auto-run with persisted params
-    const table = page.locator("table").first();
+    const table = page.locator("[role='table']").first();
     await expect(table).toBeVisible({ timeout: 10000 });
   });
 });

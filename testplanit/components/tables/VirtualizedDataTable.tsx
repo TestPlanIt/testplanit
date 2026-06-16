@@ -289,6 +289,7 @@ export function VirtualizedDataTable({
   return (
     <div
       className="h-full overflow-x-auto rounded-lg border-2 border-primary/10"
+      role="table"
       data-testid={testIdPrefix}
     >
       <div

@@ -157,7 +157,7 @@ test.describe("Password-Protected Share Flow", () => {
       );
 
       // Verify test cases are shown
-      const reportTable = incognitoPage.locator("table").first();
+      const reportTable = incognitoPage.locator("[role='table']").first();
       await expect(reportTable).toBeVisible({ timeout: 30000 });
     } finally {
       await incognitoPage.close();

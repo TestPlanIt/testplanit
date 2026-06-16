@@ -1130,7 +1130,7 @@ test.describe("User Profile Access Control", () => {
 
       // Wait for save to complete
       await expect(
-        page.getByRole("button", { name: /edit profile|edit/i })
+        page.getByRole("button", { name: "Edit Profile" })
       ).toBeVisible({ timeout: 10000 });
 
       // Verify name was updated

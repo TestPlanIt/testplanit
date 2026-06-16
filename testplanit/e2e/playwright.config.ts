@@ -32,9 +32,17 @@ export default defineConfig({
   // overwhelming majority of false failures. Real bugs still fail twice.
   retries: isCI ? 2 : useProdBuild ? 1 : 0,
 
-  // Limit workers for stability (dev server can get overwhelmed)
-  // Production build can handle more workers than dev server
-  workers: isCI ? 2 : useProdBuild ? 8 : 1,
+  // Limit workers for stability. High local parallelism against a single
+  // shared DB / Elasticsearch / Valkey / Next instance produces deadlocks and
+  // mutation-then-read races, so the prod-build suite defaults to a calmer 4
+  // (was 8). Override with E2E_WORKERS=N to tune for your hardware.
+  workers: process.env.E2E_WORKERS
+    ? Number(process.env.E2E_WORKERS)
+    : isCI
+      ? 2
+      : useProdBuild
+        ? 4
+        : 1,
 
   // Reporter configuration
   reporter: [

@@ -259,6 +259,48 @@ async function clearAuthSession() {
   }
 }
 
+async function reindexElasticsearch() {
+  // setup-db truncates Postgres but Elasticsearch lives outside the DB, so it
+  // drifts unless we reset it here too. Rebuild the indices (with mappings) and
+  // index the freshly seeded data; per-test data is indexed live by the Prisma
+  // middleware. Reuses scripts/reindexAllEntities.ts --fresh.
+  if (!process.env.ELASTICSEARCH_NODE) {
+    console.warn(
+      "\n⚠️  ELASTICSEARCH_NODE is not set — skipping Elasticsearch reindex."
+    );
+    console.warn(
+      "   Report, search, and share specs query Elasticsearch; without it the"
+    );
+    console.warn(
+      "   ES client no-ops and those specs return empty results and fail."
+    );
+    console.warn("   Set ELASTICSEARCH_NODE in .env.e2e to enable them.\n");
+    return;
+  }
+
+  console.log("🔎 Resetting + reindexing Elasticsearch (--fresh)...");
+  const { execSync } = await import("child_process");
+  try {
+    execSync("npx tsx scripts/reindexAllEntities.ts --fresh", {
+      cwd: process.cwd(),
+      stdio: "inherit",
+      env: process.env,
+    });
+    console.log("   Elasticsearch reindex complete");
+  } catch (error) {
+    // Non-fatal: ES-backed specs will fail, but the rest of the suite can run.
+    console.warn(
+      "\n⚠️  Elasticsearch reindex failed — search-backed specs will fail."
+    );
+    console.warn(
+      `   Is the ES node reachable at ${process.env.ELASTICSEARCH_NODE}?`
+    );
+    console.warn(
+      `   ${error instanceof Error ? error.message : String(error)}\n`
+    );
+  }
+}
+
 async function main() {
   console.log("\n🚀 E2E Test Database Setup\n");
   console.log("=" + "=".repeat(50) + "\n");
@@ -289,6 +331,10 @@ async function main() {
 
     // Step 3: Ensure admin user with correct settings
     await ensureAdminUser();
+
+    // Step 3.5: Reset + reindex Elasticsearch so search-backed specs (reports,
+    // search, share) see the seeded data. Non-fatal if ES is unset/unreachable.
+    await reindexElasticsearch();
 
     // Step 4: Clear stale auth session (so global-setup will regenerate)
     await clearAuthSession();

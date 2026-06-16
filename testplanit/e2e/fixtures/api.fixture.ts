@@ -1372,23 +1372,29 @@ export class ApiHelper {
     } else if (statusType === "failed") {
       whereClause.isFailure = true;
     } else if (statusType === "blocked") {
-      whereClause.isBlocked = true;
+      // Status has no isBlocked column — the blocked state is seeded with
+      // systemName "blocked" (isSuccess/isFailure/isCompleted all false).
+      whereClause.systemName = "blocked";
     }
 
-    const response = await this.request.get(
-      `${this.baseURL}/api/model/status/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: whereClause,
-            take: 1,
-          }),
-        },
-      }
-    );
+    // The model API's per-request auth lookup can transiently fail under
+    // parallel E2E load (ZenStack user-fetch deadlock → policy denial), so
+    // retry a few times and surface the real HTTP status if it ultimately fails.
+    const fetchStatuses = () =>
+      this.request.get(`${this.baseURL}/api/model/status/findMany`, {
+        params: { q: JSON.stringify({ where: whereClause, take: 1 }) },
+      });
+    let response = await fetchStatuses();
+    for (let attempt = 0; attempt < 3 && !response.ok(); attempt++) {
+      await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
+      response = await fetchStatuses();
+    }
 
     if (!response.ok()) {
-      throw new Error("Failed to fetch statuses");
+      const body = await response.text().catch(() => "");
+      throw new Error(
+        `Failed to fetch statuses (HTTP ${response.status()}): ${body.slice(0, 300)}`
+      );
     }
 
     const result = await response.json();

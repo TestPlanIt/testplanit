@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { PromptConfigurationsPage } from "../../../page-objects/admin/prompt-configurations.page";
+import { LLM_FEATURES } from "~/lib/llm/constants";
 
 /**
  * Prompt LLM Selector E2E Tests
@@ -10,18 +11,9 @@ import { PromptConfigurationsPage } from "../../../page-objects/admin/prompt-con
  * Covers TEST-03: E2E coverage for admin prompt editor LLM selector workflow.
  */
 
-const features = [
-  "markdown_parsing",
-  "test_case_generation",
-  "magic_select_cases",
-  "editor_assistant",
-  "llm_test",
-  "export_code_generation",
-  "auto_tag",
-  "duplicate_detection",
-  "generate_from_url",
-  "generate_from_url_app",
-];
+// Derive from LLM_FEATURES (the source of truth the edit form validates
+// against) so adding a new feature never silently breaks the save flow.
+const features = Object.values(LLM_FEATURES);
 
 /**
  * Creates a prompt config with all features via the API.

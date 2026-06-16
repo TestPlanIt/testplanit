@@ -152,7 +152,7 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     await expect(
       page
         .locator(
-          "table, [data-testid='no-results'], text=/No results|No data|0 results/i"
+          "[role='table'], [data-testid='no-results'], :text-matches('No results|No data|0 results', 'i')"
         )
         .first()
     ).toBeVisible({ timeout: 30_000 });
@@ -217,7 +217,7 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     await expect(resultsCard.first()).toBeVisible({ timeout: 10000 });
 
     // The table should show the test cases
-    const table = page.locator("table").first();
+    const table = page.locator("[role='table']").first();
     await expect(table).toBeVisible({ timeout: 10000 });
   });
 
@@ -245,7 +245,7 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     await runReport(page);
 
     // Wait for the table to be visible
-    const table = page.locator("table").first();
+    const table = page.locator("[role='table']").first();
     await expect(table).toBeVisible({ timeout: 10000 });
 
     // The table should contain the test case names
@@ -281,12 +281,14 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     await runReport(page);
 
     // Verify results are displayed
-    const table = page.locator("table").first();
+    const table = page.locator("[role='table']").first();
     await expect(table).toBeVisible({ timeout: 10000 });
 
     // Table should have both Test Case and Template columns
     // Check that both dimension columns are present
-    const headers = await table.locator("th").allTextContents();
+    const headers = await table
+      .locator("[role='columnheader']")
+      .allTextContents();
     const hasTestCaseDimension = headers.some(
       (h) => /test\s*case/i.test(h) && !h.toLowerCase().includes("count")
     );
@@ -320,13 +322,13 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     await runReport(page);
 
     // Verify results table has columns for both metrics
-    const table = page.locator("table").first();
+    const table = page.locator("[role='table']").first();
     await expect(table).toBeVisible({ timeout: 10000 });
 
     // Check that metric columns are present
     await expect(
       table.locator(
-        'th:has-text("Test Cases Count"), th:has-text("Test Cases")'
+        '[role="columnheader"]:has-text("Test Cases Count"), [role="columnheader"]:has-text("Test Cases")'
       )
     ).toBeVisible({ timeout: 5000 });
   });
@@ -405,7 +407,7 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     await runReport(page);
 
     // Verify results are displayed (test cases created within the date range)
-    const table = page.locator("table").first();
+    const table = page.locator("[role='table']").first();
     await expect(table).toBeVisible({ timeout: 10000 });
   });
 
@@ -456,7 +458,7 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     await runReport(page);
 
     // Wait for results to load
-    const table = page.locator("table").first();
+    const table = page.locator("[role='table']").first();
     await expect(table).toBeVisible({ timeout: 10000 });
 
     // Verify URL contains dimensions parameter
