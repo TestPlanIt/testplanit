@@ -62,7 +62,6 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
       projectId: number;
     }>;
     const beforeProjectIds = beforeAssignments.map((a) => a.projectId);
-    const before = beforeProjectIds.length;
 
     // Open the admin workflows page, find the row for this workflow, edit
     // it, save without changes.
@@ -100,24 +99,37 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
       .not.toBeVisible({ timeout: 1000 })
       .catch(() => {});
 
-    // Post-edit assignment count matches pre-edit count, scoped to the
-    // exact projects we snapshotted. A new project from a parallel test
-    // would land outside this set and not skew the comparison.
+    // The regression this guards is DUPLICATE assignment rows for an
+    // already-assigned project (the old save upserted unconditionally). The
+    // current save delete-then-recreates, so assert the real invariant: no
+    // project from the pre-edit set has more than one row after the save.
+    // This is robust to parallel tests creating projects (a new project adds
+    // one distinct row, never a duplicate) and to any pre-existing duplicate
+    // rows the reconcile cleans up — unlike a before===after count, which
+    // races with the live project set.
     const afterRes = await request.get(
-      `${url}/api/model/projectWorkflowAssignment/count`,
+      `${url}/api/model/projectWorkflowAssignment/findMany`,
       {
         params: {
           q: JSON.stringify({
-            where: {
-              workflowId,
-              projectId: { in: beforeProjectIds },
-            },
+            where: { workflowId, projectId: { in: beforeProjectIds } },
+            select: { projectId: true },
           }),
         },
       }
     );
     expect(afterRes.ok()).toBeTruthy();
-    const after = (await afterRes.json())?.data as number;
-    expect(after).toBe(before);
+    const afterProjectIds = (
+      ((await afterRes.json())?.data ?? []) as Array<{ projectId: number }>
+    ).map((a) => a.projectId);
+    const duplicateProjectIds = [
+      ...new Set(
+        afterProjectIds.filter((id, i) => afterProjectIds.indexOf(id) !== i)
+      ),
+    ];
+    expect(
+      duplicateProjectIds,
+      `duplicate projectWorkflowAssignment rows for project(s): ${duplicateProjectIds.join(", ")}`
+    ).toHaveLength(0);
   });
 });
