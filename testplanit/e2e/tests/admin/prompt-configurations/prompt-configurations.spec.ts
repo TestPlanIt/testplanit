@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { PromptConfigurationsPage } from "../../../page-objects/admin/prompt-configurations.page";
+import { LLM_FEATURES } from "~/lib/llm/constants";
 
 /**
  * Prompt Configurations CRUD Operations Tests
@@ -169,18 +170,9 @@ test.describe("Prompt Configurations - Edit Operations", () => {
     // The edit form validates that each feature has a non-empty systemPrompt,
     // so we must create PromptConfigPrompts for every feature.
     const apiBase = baseURL || "http://localhost:3002";
-    const features = [
-      "markdown_parsing",
-      "test_case_generation",
-      "magic_select_cases",
-      "editor_assistant",
-      "llm_test",
-      "export_code_generation",
-      "auto_tag",
-      "duplicate_detection",
-      "generate_from_url",
-      "generate_from_url_app",
-    ];
+    // Derive from LLM_FEATURES (the source of truth the edit form validates
+    // against) so adding a new feature never silently breaks the save flow.
+    const features = Object.values(LLM_FEATURES);
 
     const response = await api["request"].post(
       `${apiBase}/api/model/promptConfig/create`,
