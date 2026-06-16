@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { AuditAction, AuditLog } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Cog, Eye, ShieldCheck } from "lucide-react";
+import { Cog, Eye } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
@@ -107,23 +107,35 @@ export const useColumns = (
         accessorKey: "entityType",
         header: t("filterEntityType"),
         enableSorting: true,
-        size: 150,
-        cell: ({ getValue }) => (
-          <span className="font-mono text-sm">{getValue() as string}</span>
-        ),
+        cell: ({ getValue }) => {
+          const entityType = getValue() as string;
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="font-mono text-sm truncate max-w-[130px] block">
+                  {entityType}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{entityType}</p>
+              </TooltipContent>
+            </Tooltip>
+          );
+        },
       },
       {
         id: "entityName",
         accessorKey: "entityName",
         header: t("columns.entityName"),
         enableSorting: false,
-        size: 200,
+        size: 300,
+        minSize: 150,
         cell: ({ getValue }) => {
           const name = getValue() as string | null;
           return name ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="truncate max-w-[200px] block">{name}</span>
+                <span className="truncate block w-full">{name}</span>
               </TooltipTrigger>
               <TooltipContent>
                 <p>{name}</p>
@@ -140,6 +152,7 @@ export const useColumns = (
         header: tCommon("access.user"),
         enableSorting: true,
         size: 200,
+        minSize: 150,
         cell: ({ row }) => {
           const userId = row.original.userId;
           const email = row.original.userEmail;
@@ -178,33 +191,6 @@ export const useColumns = (
         },
       },
       {
-        id: "source",
-        accessorKey: "metadata",
-        header: "",
-        enableSorting: false,
-        size: 100,
-        cell: ({ row }) => {
-          const metadata = row.original.metadata as Record<
-            string,
-            unknown
-          > | null;
-          const source = metadata?.source as string | undefined;
-          if (source === "scim") {
-            return (
-              <Badge
-                variant="outline"
-                className="gap-1 font-mono"
-                data-testid="audit-log-source-scim-badge"
-              >
-                <ShieldCheck className="size-3" aria-hidden="true" />
-                {t("sourceScim")}
-              </Badge>
-            );
-          }
-          return null;
-        },
-      },
-      {
         id: "project",
         accessorKey: "project",
         header: tCommon("fields.project"),
@@ -222,7 +208,9 @@ export const useColumns = (
       {
         id: "actions",
         header: "",
-        size: 50,
+        enableSorting: false,
+        size: 55,
+        minSize: 55,
         cell: ({ row }) => (
           <Button
             variant="ghost"

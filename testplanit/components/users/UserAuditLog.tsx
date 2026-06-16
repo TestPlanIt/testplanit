@@ -1,8 +1,10 @@
 "use client";
-/* eslint-disable react-hooks/incompatible-library -- TanStack Virtual's useVirtualizer() returns unstable function references by design; same pattern as UnifiedSearch / MatrixGrid. */
 
-import { DateFormatter } from "@/components/DateFormatter";
-import { Badge } from "@/components/ui/badge";
+import { useDebounce } from "@/components/Debounce";
+import { Filter } from "@/components/tables/Filter";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { Form } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -11,11 +13,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AuditAction } from "@prisma/client";
+import type { VisibilityState } from "@tanstack/react-table";
+import { endOfDay, startOfDay } from "date-fns";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { DateRange } from "react-day-picker";
+import { useForm, useWatch } from "react-hook-form";
 import { AuditLogDetailModal } from "~/app/[locale]/admin/audit-logs/AuditLogDetailModal";
-import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
+import {
+  ExtendedAuditLog,
+  useColumns,
+} from "~/app/[locale]/admin/audit-logs/columns";
+import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import {
   useCountAuditLog,
   useFindManyAuditLog,
@@ -24,49 +34,95 @@ import {
 
 const PAGE_SIZE = 50;
 
-function getActionBadgeVariant(
-  action: AuditAction
-): "default" | "secondary" | "destructive" | "outline" {
-  switch (action) {
-    case "CREATE":
-    case "BULK_CREATE":
-    case "API_KEY_CREATED":
-      return "default";
-    case "DELETE":
-    case "BULK_DELETE":
-    case "API_KEY_DELETED":
-    case "API_KEY_REVOKED":
-    case "LOGIN_FAILED":
-      return "destructive";
-    case "UPDATE":
-    case "BULK_UPDATE":
-    case "API_KEY_REGENERATED":
-      return "secondary";
-    default:
-      return "outline";
-  }
-}
-
 interface UserAuditLogProps {
   userId: string;
-  total?: number | null;
 }
 
-export function UserAuditLog({ userId, total }: UserAuditLogProps) {
+export function UserAuditLog({ userId }: UserAuditLogProps) {
   const { data: session } = useSession();
-  const t = useTranslations("users.profile.auditLog");
+  const t = useTranslations("admin.auditLogs");
+  const tCommon = useTranslations("common");
+  const tUserMenu = useTranslations("userMenu");
+  const tProfile = useTranslations("users.profile.auditLog");
+
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    column: string;
+    direction: "asc" | "desc";
+  }>({ column: "timestamp", direction: "desc" });
+  const [searchString, setSearchString] = useState("");
+  const debouncedSearchString = useDebounce(searchString, 500);
   const [actionFilter, setActionFilter] = useState<AuditAction | "all">("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
-  const where = {
-    userId,
-    ...(actionFilter !== "all" ? { action: actionFilter } : {}),
-    ...(typeFilter !== "all" ? { entityType: typeFilter } : {}),
-  };
+  const dateForm = useForm<{ dateRange: DateRange | undefined }>({
+    defaultValues: { dateRange: undefined },
+  });
+  const dateRange = useWatch({ control: dateForm.control, name: "dateRange" });
+
+  // Always hard-scoped to this user; the admin-style user filter is omitted.
+  const whereClause = useMemo(() => {
+    const conditions: any[] = [{ userId }];
+
+    if (debouncedSearchString) {
+      conditions.push({
+        OR: [
+          {
+            entityName: {
+              contains: debouncedSearchString,
+              mode: "insensitive",
+            },
+          },
+          {
+            entityType: {
+              contains: debouncedSearchString,
+              mode: "insensitive",
+            },
+          },
+          {
+            entityId: { contains: debouncedSearchString, mode: "insensitive" },
+          },
+        ],
+      });
+    }
+
+    if (actionFilter !== "all") {
+      conditions.push({ action: actionFilter });
+    }
+
+    if (typeFilter !== "all") {
+      conditions.push({ entityType: typeFilter });
+    }
+
+    if (dateRange?.from) {
+      conditions.push({
+        timestamp: {
+          gte: startOfDay(dateRange.from),
+          lte: endOfDay(dateRange.to ?? dateRange.from),
+        },
+      });
+    }
+
+    return { AND: conditions };
+  }, [userId, debouncedSearchString, actionFilter, typeFilter, dateRange]);
+
   const baseArgs = {
-    where,
-    orderBy: { timestamp: "desc" as const },
+    where: whereClause,
+    orderBy: { [sortConfig.column]: sortConfig.direction },
+    select: {
+      id: true,
+      timestamp: true,
+      action: true,
+      entityType: true,
+      entityId: true,
+      entityName: true,
+      userId: true,
+      userEmail: true,
+      userName: true,
+      projectId: true,
+      project: { select: { name: true } },
+    },
     take: PAGE_SIZE,
   };
 
@@ -84,13 +140,15 @@ export function UserAuditLog({ userId, total }: UserAuditLogProps) {
         skip: allPages.flat().length,
       };
     },
+    refetchOnWindowFocus: false,
   });
 
-  const rows = pages?.pages.flat() ?? [];
+  const rows = (pages?.pages.flat() ?? []) as ExtendedAuditLog[];
+
+  const { data: totalCount } = useCountAuditLog({ where: whereClause });
 
   // Filter options come from the distinct values this user has actually
-  // generated, so each dropdown lists only relevant actions/types rather than
-  // the full AuditAction enum or every entity in the system.
+  // generated, so each dropdown lists only relevant actions/types.
   const { data: actionRows } = useFindManyAuditLog({
     where: { userId },
     select: { action: true },
@@ -104,172 +162,132 @@ export function UserAuditLog({ userId, total }: UserAuditLogProps) {
     orderBy: { entityType: "asc" },
   });
 
-  // When a filter is active the parent's unfiltered `total` no longer matches
-  // what's shown, so count the filtered set instead (skipped otherwise).
-  const hasFilter = actionFilter !== "all" || typeFilter !== "all";
-  const { data: filteredCount } = useCountAuditLog(
-    { where },
-    { enabled: hasFilter }
+  const handleViewDetails = useCallback((log: { id: string }) => {
+    setDetailId(log.id);
+  }, []);
+
+  const handleSortChange = (column: string) => {
+    const direction =
+      sortConfig.column === column && sortConfig.direction === "asc"
+        ? "desc"
+        : "asc";
+    setSortConfig({ column, direction });
+  };
+
+  const dateFormat = session?.user?.preferences?.dateFormat;
+  const timezone = session?.user?.preferences?.timezone;
+  const userPreferences = useMemo(
+    () => ({ user: { preferences: { dateFormat, timezone } } }),
+    [dateFormat, timezone]
   );
-  const effectiveTotal = hasFilter ? filteredCount : total;
 
-  const { scrollRef, sentinelRef, virtualItems, totalSize, measureElement } =
-    useVirtualizedInfiniteList({
-      count: rows.length,
-      estimateSize: 40,
-      overscan: 8,
-      hasMore: !!hasNextPage,
-      isLoading: isLoading || isFetchingNextPage,
-      onLoadMore: fetchNextPage,
-      boundToViewport: false,
-      resetKey: `${actionFilter}|${typeFilter}`,
-    });
+  // Reuse the admin audit-log columns, but drop the user column — every row
+  // belongs to the same user here.
+  const allColumns = useColumns(
+    userPreferences,
+    handleViewDetails,
+    t,
+    tCommon,
+    tUserMenu
+  );
+  const columns = useMemo(
+    () => allColumns.filter((c) => c.id !== "userEmail"),
+    [allColumns]
+  );
 
-  // Only collapse to the bare empty state when the user has no audit history at
-  // all. With a filter applied we keep the controls mounted so an empty result
-  // can be cleared.
-  if (!hasFilter && !isLoading && rows.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground py-2">{t("noEntries")}</p>
-    );
-  }
-
-  const showEmpty = !isLoading && rows.length === 0;
-
-  const dateFormat =
-    session?.user.preferences?.dateFormat &&
-    session?.user.preferences?.timeFormat
-      ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
-      : session?.user.preferences?.dateFormat;
+  const hasFilter =
+    !!debouncedSearchString ||
+    actionFilter !== "all" ||
+    typeFilter !== "all" ||
+    !!dateRange?.from;
 
   return (
-    <>
+    <div className="flex flex-col gap-4">
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2 pb-2">
-        <Select
-          value={actionFilter}
-          onValueChange={(value) =>
-            setActionFilter(value as AuditAction | "all")
-          }
-        >
-          <SelectTrigger
-            className="h-8 w-[170px] text-xs"
-            aria-label={t("columnAction")}
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("allActions")}</SelectItem>
-            {actionRows?.map((row) => (
-              <SelectItem key={row.action} value={row.action}>
-                {row.action.replace(/_/g, " ")}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger
-            className="h-8 w-[170px] text-xs"
-            aria-label={t("columnEntityType")}
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("allTypes")}</SelectItem>
-            {typeRows?.map((row) => (
-              <SelectItem key={row.entityType} value={row.entityType}>
-                {row.entityType}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Column headers */}
-      <div className="grid grid-cols-[140px_120px_1fr_140px] gap-2 px-2 pb-1 border-b text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        <span>{t("columnAction")}</span>
-        <span>{t("columnEntityType")}</span>
-        <span>{t("columnEntityName")}</span>
-        <span className="text-right">{t("columnTimestamp")}</span>
-      </div>
-
-      {showEmpty ? (
-        <p className="text-sm text-muted-foreground py-2">
-          {t("noMatchingEntries")}
-        </p>
-      ) : (
-        <div
-          ref={scrollRef}
-          className="h-80 overflow-y-auto"
-          style={{ overflowAnchor: "none" }}
-        >
-          <div style={{ height: totalSize, position: "relative" }}>
-            {virtualItems.map((vItem) => {
-              const log = rows[vItem.index];
-              if (!log) return null;
-              return (
-                <div
-                  key={log.id}
-                  data-index={vItem.index}
-                  ref={measureElement}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    transform: `translateY(${vItem.start}px)`,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setDetailId(log.id)}
-                    className="w-full grid grid-cols-[140px_120px_1fr_140px] gap-2 items-center py-1.5 px-2 text-left hover:bg-accent transition-colors border-b border-border/40 last:border-0"
-                  >
-                    <span>
-                      <Badge
-                        variant={getActionBadgeVariant(log.action)}
-                        className="text-xs"
-                      >
-                        {log.action.replace(/_/g, " ")}
-                      </Badge>
-                    </span>
-                    <span className="text-xs text-muted-foreground truncate">
-                      {log.entityType}
-                    </span>
-                    <span className="text-sm truncate">
-                      {log.entityName ?? (
-                        <span className="text-muted-foreground">{"—"}</span>
-                      )}
-                    </span>
-                    <span className="text-xs text-muted-foreground text-right">
-                      <DateFormatter
-                        date={log.timestamp}
-                        formatString={dateFormat}
-                        timezone={session?.user.preferences?.timezone}
-                      />
-                    </span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-          <div ref={sentinelRef} style={{ height: 1 }} />
-          {isFetchingNextPage && (
-            <div className="py-2 text-center text-xs text-muted-foreground">
-              {t("loadMore")}
-              {"…"}
-            </div>
-          )}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-[260px] flex-1">
+          <Filter
+            key="user-audit-log-filter"
+            placeholder={t("filterPlaceholder")}
+            initialSearchString={searchString}
+            onSearchChange={setSearchString}
+          />
         </div>
-      )}
 
-      {/* Footer: loaded / total */}
+        <div className="w-[240px]">
+          <Label className="sr-only">{t("timeRange")}</Label>
+          <Form {...dateForm}>
+            <DateRangePickerField control={dateForm.control} name="dateRange" />
+          </Form>
+        </div>
+
+        <div className="w-[170px]">
+          <Label className="sr-only">{t("filterAction")}</Label>
+          <Select
+            value={actionFilter}
+            onValueChange={(value) =>
+              setActionFilter(value as AuditAction | "all")
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={t("allActions")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allActions")}</SelectItem>
+              {actionRows?.map((row) => (
+                <SelectItem key={row.action} value={row.action}>
+                  {row.action.replace(/_/g, " ")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-[170px]">
+          <Label className="sr-only">{t("filterEntityType")}</Label>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder={t("allEntityTypes")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allEntityTypes")}</SelectItem>
+              {typeRows?.map((row) => (
+                <SelectItem key={row.entityType} value={row.entityType}>
+                  {row.entityType}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Data Table — virtualized, infinite scroll. */}
+      <div className="h-96">
+        <VirtualizedDataTable
+          columns={columns as any}
+          data={rows as any}
+          sortConfig={sortConfig}
+          onSortChange={handleSortChange}
+          columnVisibility={columnVisibility}
+          onColumnVisibilityChange={setColumnVisibility}
+          flexColumnId="entityName"
+          hasMore={!!hasNextPage}
+          isLoading={isLoading || isFetchingNextPage}
+          onLoadMore={fetchNextPage}
+          emptyMessage={
+            hasFilter ? tProfile("noMatchingEntries") : tProfile("noEntries")
+          }
+          resetKey={`${debouncedSearchString}|${actionFilter}|${typeFilter}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
+          testIdPrefix="user-audit-log-table"
+          rowTestIdPrefix="user-audit-log-row"
+        />
+      </div>
+
       {rows.length > 0 && (
-        <p className="pt-1 text-xs text-muted-foreground text-right">
-          {t("showing", {
+        <p className="text-xs text-muted-foreground text-right">
+          {tProfile("showing", {
             loaded: rows.length.toLocaleString(),
-            total: (effectiveTotal ?? rows.length).toLocaleString(),
+            total: (totalCount ?? rows.length).toLocaleString(),
           })}
         </p>
       )}
@@ -279,6 +297,6 @@ export function UserAuditLog({ userId, total }: UserAuditLogProps) {
         open={!!detailId}
         onClose={() => setDetailId(null)}
       />
-    </>
+    </div>
   );
 }

@@ -3,20 +3,17 @@
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
+import { DateRange } from "react-day-picker";
+import { useForm, useWatch } from "react-hook-form";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -26,22 +23,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AuditAction } from "@prisma/client";
-import { format } from "date-fns";
+import { endOfDay, format, startOfDay, subDays } from "date-fns";
 import { Download, ShieldCheck } from "lucide-react";
 import type { Session } from "next-auth";
-import { useCountAuditLog, useFindManyAuditLog } from "~/lib/hooks";
+import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
+import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
+import {
+  useCountAuditLog,
+  useFindManyAuditLog,
+  useInfiniteFindManyAuditLog,
+} from "~/lib/hooks";
 import { logDataExport } from "~/lib/services/auditClient";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
 import { ExtendedAuditLog, useColumns } from "./columns";
 
-type PageSizeOption = number | "All";
+const PAGE_SIZE = 50;
 
 export default function AuditLogsPage() {
-  return (
-    <PaginationProvider>
-      <AuditLogsGuard />
-    </PaginationProvider>
-  );
+  return <AuditLogsGuard />;
 }
 
 /**
@@ -81,17 +80,6 @@ function AuditLogsContent({ session }: { session: Session }) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const tUserMenu = useTranslations("userMenu");
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
 
   const [sortConfig, setSortConfig] = useState<{
     column: string;
@@ -104,34 +92,24 @@ function AuditLogsContent({ session }: { session: Session }) {
   const debouncedSearchString = useDebounce(searchString, 500);
   const [actionFilter, setActionFilter] = useState<AuditAction | "all">("all");
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
-  // Default to last 7 days so an unfiltered page load never scans the full
-  // audit history. Admins can widen via the dropdown.
-  const [timeRangeFilter, setTimeRangeFilter] = useState<
-    "24h" | "7d" | "30d" | "90d" | "all"
-  >("7d");
+  const [userFilter, setUserFilter] = useState<string>("all");
+  // Default to the last 7 days so an unfiltered page load never scans the full
+  // audit history. Admins can widen the window (or pick a custom range) via the
+  // date-range picker.
+  const [defaultDateRange] = useState<DateRange>(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return { from: subDays(today, 6), to: today };
+  });
+  const dateForm = useForm<{ dateRange: DateRange | undefined }>({
+    defaultValues: { dateRange: defaultDateRange },
+  });
+  const dateRange = useWatch({
+    control: dateForm.control,
+    name: "dateRange",
+  });
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-
-  const timeRangeCutoff = useMemo(() => {
-    const now = Date.now();
-    switch (timeRangeFilter) {
-      case "24h":
-        return new Date(now - 24 * 60 * 60 * 1000);
-      case "7d":
-        return new Date(now - 7 * 24 * 60 * 60 * 1000);
-      case "30d":
-        return new Date(now - 30 * 24 * 60 * 60 * 1000);
-      case "90d":
-        return new Date(now - 90 * 24 * 60 * 60 * 1000);
-      case "all":
-        return null;
-    }
-  }, [timeRangeFilter]);
-
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems || 100;
-  const skip = (currentPage - 1) * effectivePageSize;
 
   // Build where clause
   const whereClause = useMemo(() => {
@@ -173,58 +151,76 @@ function AuditLogsContent({ session }: { session: Session }) {
       conditions.push({ entityType: entityTypeFilter });
     }
 
-    if (timeRangeCutoff) {
-      conditions.push({ timestamp: { gte: timeRangeCutoff } });
+    if (userFilter !== "all") {
+      conditions.push({ userId: userFilter });
+    }
+
+    if (dateRange?.from) {
+      conditions.push({
+        timestamp: {
+          gte: startOfDay(dateRange.from),
+          lte: endOfDay(dateRange.to ?? dateRange.from),
+        },
+      });
     }
 
     return conditions.length > 0 ? { AND: conditions } : {};
-  }, [debouncedSearchString, actionFilter, entityTypeFilter, timeRangeCutoff]);
+  }, [
+    debouncedSearchString,
+    actionFilter,
+    entityTypeFilter,
+    userFilter,
+    dateRange,
+  ]);
 
-  // Get total count
+  // Total count for the filtered set — drives the "loaded of total" footer and
+  // gates the export button.
   const { data: totalCount } = useCountAuditLog({ where: whereClause });
 
-  // Update total items in pagination context
-  useEffect(() => {
-    if (typeof totalCount === "number") {
-      setTotalItems(totalCount);
-    }
-  }, [totalCount, setTotalItems]);
-
-  // Fetch audit logs — list view only needs columns the table renders.
-  // Excludes `changes` (Json column) which can be very large for CREATE /
-  // UPDATE events on entities with rich payloads (e.g. test cases with
-  // Tiptap step content). `metadata` is selected (small map carrying
-  // `source` / `scimTokenId` / `ipAddress` / `userAgent`) so the source
-  // column can render the SCIM badge without a per-row roundtrip. The
-  // full `changes` payload is still fetched on demand in
-  // AuditLogDetailModal via useFindUniqueAuditLog.
-  const { data: auditLogs, isLoading } = useFindManyAuditLog(
-    {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { timestamp: "desc" },
-      select: {
-        id: true,
-        timestamp: true,
-        action: true,
-        entityType: true,
-        entityId: true,
-        entityName: true,
-        userId: true,
-        userEmail: true,
-        userName: true,
-        metadata: true,
-        projectId: true,
-        project: { select: { name: true } },
-      },
-      where: whereClause,
-      take: effectivePageSize,
-      skip: skip,
+  // Fetch audit logs as an infinite, virtualized stream — the list only needs
+  // the columns the table renders. Excludes the `changes` and `metadata` Json
+  // columns, which can be large for CREATE / UPDATE events on entities with
+  // rich payloads (e.g. test cases with Tiptap step content); both are fetched
+  // on demand in AuditLogDetailModal via useFindUniqueAuditLog.
+  const baseArgs = {
+    where: whereClause,
+    orderBy: sortConfig
+      ? { [sortConfig.column]: sortConfig.direction }
+      : { timestamp: "desc" as const },
+    select: {
+      id: true,
+      timestamp: true,
+      action: true,
+      entityType: true,
+      entityId: true,
+      entityName: true,
+      userId: true,
+      userEmail: true,
+      userName: true,
+      projectId: true,
+      project: { select: { name: true } },
     },
-    {
-      refetchOnWindowFocus: false,
-    }
-  );
+    take: PAGE_SIZE,
+  };
+
+  const {
+    data: pages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteFindManyAuditLog(baseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return {
+        ...baseArgs,
+        skip: allPages.flat().length,
+      };
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  const rows = (pages?.pages.flat() ?? []) as ExtendedAuditLog[];
 
   // Get unique entity types for filter
   const { data: entityTypes } = useFindManyAuditLog({
@@ -233,26 +229,31 @@ function AuditLogsContent({ session }: { session: Session }) {
     orderBy: { entityType: "asc" },
   });
 
-  // Hard cap at 100 rows per page — removing "All" prevents an admin from
-  // requesting an unbounded row count against a table that can grow into the
-  // billions.
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => [25, 50, 100], []);
+  // Distinct users that actually appear in the audit log — drives the user
+  // filter dropdown (mirrors the entity-type filter rather than loading the
+  // full user table).
+  const { data: auditUsers } = useFindManyAuditLog({
+    select: { userId: true, userName: true, userEmail: true },
+    distinct: ["userId"],
+    orderBy: { userName: "asc" },
+  });
 
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [
-    searchString,
-    actionFilter,
-    entityTypeFilter,
-    timeRangeFilter,
-    setCurrentPage,
-  ]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
+  const userOptions = useMemo(
+    () =>
+      (auditUsers ?? [])
+        .filter((u) => !!u.userId)
+        .map((u) => {
+          const userId = u.userId as string;
+          return {
+            userId,
+            label:
+              userId === SYSTEM_ACTOR_ID
+                ? t("systemActor")
+                : u.userName || u.userEmail || userId,
+          };
+        }),
+    [auditUsers, t]
+  );
 
   const handleViewDetails = useCallback((log: { id: string }) => {
     setSelectedLogId(log.id);
@@ -303,7 +304,7 @@ function AuditLogsContent({ session }: { session: Session }) {
       ];
 
       // Convert logs to CSV rows
-      const rows = logs.map((log: ExtendedAuditLog) => {
+      const csvRows = logs.map((log: ExtendedAuditLog) => {
         const timestamp = log.timestamp
           ? format(new Date(log.timestamp), "yyyy-MM-dd HH:mm:ss")
           : "";
@@ -342,13 +343,13 @@ function AuditLogsContent({ session }: { session: Session }) {
 
       const csvContent = [
         headers.map(escapeCsvValue).join(","),
-        ...rows.map((row) =>
+        ...csvRows.map((row) =>
           row.map((cell) => escapeCsvValue(String(cell))).join(",")
         ),
       ].join("\n");
 
       // Create and download file
-      const blob = new Blob(["\uFEFF" + csvContent], {
+      const blob = new Blob(["﻿" + csvContent], {
         type: "text/csv;charset=utf-8;",
       });
       const link = document.createElement("a");
@@ -371,6 +372,9 @@ function AuditLogsContent({ session }: { session: Session }) {
           search: debouncedSearchString || undefined,
           action: actionFilter !== "all" ? actionFilter : undefined,
           entityType: entityTypeFilter !== "all" ? entityTypeFilter : undefined,
+          user: userFilter !== "all" ? userFilter : undefined,
+          dateFrom: dateRange?.from?.toISOString(),
+          dateTo: dateRange?.to?.toISOString(),
         },
       });
     } catch (error) {
@@ -385,6 +389,8 @@ function AuditLogsContent({ session }: { session: Session }) {
     debouncedSearchString,
     actionFilter,
     entityTypeFilter,
+    userFilter,
+    dateRange,
   ]);
 
   // Extract stable primitives from session to avoid column remounts when session object changes
@@ -407,6 +413,8 @@ function AuditLogsContent({ session }: { session: Session }) {
     Record<string, boolean>
   >({});
 
+  // Toggle sort direction on the clicked column; the new orderBy restarts the
+  // infinite query from the first page.
   const handleSortChange = (column: string) => {
     const direction =
       sortConfig &&
@@ -415,7 +423,6 @@ function AuditLogsContent({ session }: { session: Session }) {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
   };
 
   // All audit actions for filter
@@ -462,98 +469,21 @@ function AuditLogsContent({ session }: { session: Session }) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
-            {/* Filters Row */}
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="min-w-[350px]">
-                  <Filter
-                    key="audit-logs-filter"
-                    placeholder={t("filterPlaceholder")}
-                    initialSearchString={searchString}
-                    onSearchChange={setSearchString}
-                  />
-                </div>
-
-                <div className="w-[160px]">
-                  <Label className="sr-only">{t("timeRange")}</Label>
-                  <Select
-                    value={timeRangeFilter}
-                    onValueChange={(value) =>
-                      setTimeRangeFilter(
-                        value as "24h" | "7d" | "30d" | "90d" | "all"
-                      )
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="24h">
-                        {t("timeRangeOptions.last24h")}
-                      </SelectItem>
-                      <SelectItem value="7d">
-                        {t("timeRangeOptions.last7d")}
-                      </SelectItem>
-                      <SelectItem value="30d">
-                        {t("timeRangeOptions.last30d")}
-                      </SelectItem>
-                      <SelectItem value="90d">
-                        {t("timeRangeOptions.last90d")}
-                      </SelectItem>
-                      <SelectItem value="all">
-                        {t("timeRangeOptions.allTime")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="w-[180px]">
-                  <Label className="sr-only">{t("filterAction")}</Label>
-                  <Select
-                    value={actionFilter}
-                    onValueChange={(value) =>
-                      setActionFilter(value as AuditAction | "all")
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("allActions")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("allActions")}</SelectItem>
-                      {auditActions.map((action) => (
-                        <SelectItem key={action} value={action}>
-                          {action.replace(/_/g, " ")}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="w-[180px]">
-                  <Label className="sr-only">{t("filterEntityType")}</Label>
-                  <Select
-                    value={entityTypeFilter}
-                    onValueChange={setEntityTypeFilter}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("allEntityTypes")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("allEntityTypes")}</SelectItem>
-                      {entityTypes?.map((et) => (
-                        <SelectItem key={et.entityType} value={et.entityType}>
-                          {et.entityType}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            {/* Search + Export Row */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="min-w-[350px]">
+                <Filter
+                  key="audit-logs-filter"
+                  placeholder={t("filterPlaceholder")}
+                  initialSearchString={searchString}
+                  onSearchChange={setSearchString}
+                />
               </div>
 
               <Button
                 variant="outline"
                 onClick={handleExportCsv}
-                disabled={isExporting || totalItems === 0}
+                disabled={isExporting || !totalCount}
               >
                 <Download className="h-4 w-4" />
                 {isExporting
@@ -562,50 +492,116 @@ function AuditLogsContent({ session }: { session: Session }) {
               </Button>
             </div>
 
-            {/* Pagination Row */}
-            <div className="flex justify-between items-center">
-              <div>
-                <ColumnSelection
-                  key="audit-logs-column-selection"
-                  storageKey="admin-audit-logs"
-                  columns={columns}
-                  onVisibilityChange={setColumnVisibility}
-                />
+            {/* Filters Row */}
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="w-[260px]">
+                <Label className="sr-only">{t("timeRange")}</Label>
+                <Form {...dateForm}>
+                  <DateRangePickerField
+                    control={dateForm.control}
+                    name="dateRange"
+                  />
+                </Form>
               </div>
 
-              {totalItems > 0 && (
-                <div className="flex flex-col items-end">
-                  <PaginationInfo
-                    key="audit-logs-pagination-info"
-                    startIndex={startIndex}
-                    endIndex={endIndex}
-                    totalRows={totalItems}
-                    searchString={searchString}
-                    pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                    pageSizeOptions={pageSizeOptions}
-                    handlePageSizeChange={(size) => setPageSize(size)}
-                  />
-                  <PaginationComponent
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                </div>
+              <div className="w-[180px]">
+                <Label className="sr-only">{t("filterAction")}</Label>
+                <Select
+                  value={actionFilter}
+                  onValueChange={(value) =>
+                    setActionFilter(value as AuditAction | "all")
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("allActions")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allActions")}</SelectItem>
+                    {auditActions.map((action) => (
+                      <SelectItem key={action} value={action}>
+                        {action.replace(/_/g, " ")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="w-[180px]">
+                <Label className="sr-only">{t("filterEntityType")}</Label>
+                <Select
+                  value={entityTypeFilter}
+                  onValueChange={setEntityTypeFilter}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("allEntityTypes")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allEntityTypes")}</SelectItem>
+                    {entityTypes?.map((et) => (
+                      <SelectItem key={et.entityType} value={et.entityType}>
+                        {et.entityType}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="w-[200px]">
+                <Label className="sr-only">{tCommon("access.user")}</Label>
+                <Select value={userFilter} onValueChange={setUserFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("allUsers")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allUsers")}</SelectItem>
+                    {userOptions.map((u) => (
+                      <SelectItem key={u.userId} value={u.userId}>
+                        {u.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Controls Row */}
+            <div className="flex justify-between items-center">
+              <ColumnSelection
+                key="audit-logs-column-selection"
+                storageKey="admin-audit-logs"
+                columns={columns}
+                onVisibilityChange={setColumnVisibility}
+              />
+
+              {rows.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {t("showing", {
+                    loaded: rows.length.toLocaleString(),
+                    total: (totalCount ?? rows.length).toLocaleString(),
+                  })}
+                </p>
               )}
             </div>
           </div>
 
-          {/* Data Table */}
-          <div className="mt-4">
-            <DataTable
+          {/* Data Table — virtualized, infinite scroll. The container sets an
+              explicit height so the virtualizer's CSS-bounded scroll body has
+              something to fill. */}
+          <div className="mt-4 h-[calc(100vh-20rem)] min-h-[400px] w-full">
+            <VirtualizedDataTable
               columns={columns as any}
-              data={(auditLogs || []) as any}
-              onSortChange={handleSortChange}
+              data={rows as any}
               sortConfig={sortConfig}
+              onSortChange={handleSortChange}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              pageSize={typeof pageSize === "number" ? pageSize : totalItems}
-              isLoading={isLoading}
+              flexColumnId="entityName"
+              hasMore={!!hasNextPage}
+              isLoading={isLoading || isFetchingNextPage}
+              onLoadMore={fetchNextPage}
+              resetKey={`${debouncedSearchString}|${actionFilter}|${entityTypeFilter}|${userFilter}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
+              testIdPrefix="audit-logs-table"
+              rowTestIdPrefix="audit-log-row"
             />
           </div>
         </CardContent>

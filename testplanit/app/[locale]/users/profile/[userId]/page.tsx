@@ -72,11 +72,7 @@ import * as React from "react";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import {
-  useFindFirstUser,
-  useFindUniqueAppConfig,
-  useCountAuditLog,
-} from "~/lib/hooks";
+import { useFindFirstUser, useFindUniqueAppConfig } from "~/lib/hooks";
 import { UserAuditLog } from "~/components/users/UserAuditLog";
 import { SCIM_SCHEMAS } from "~/lib/scim/constants";
 import { languageNames } from "~/i18n/navigation";
@@ -183,11 +179,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
   const isOwnProfile = user?.id === session?.user?.id;
   const isAdmin = session?.user?.access === "ADMIN";
-
-  const { data: auditLogTotal } = useCountAuditLog(
-    { where: { userId } },
-    { enabled: !!(isOwnProfile || isAdmin) && !!userId }
-  );
 
   // SCIM-provisioned users have their name + email + active state managed by
   // the IdP. ZenStack denies writes to those columns when scimGivenName is
@@ -1611,10 +1602,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                         </AccordionTrigger>
                         <AccordionContent>
                           <div className="px-4">
-                            <UserAuditLog
-                              userId={userId}
-                              total={auditLogTotal}
-                            />
+                            <UserAuditLog userId={userId} />
                           </div>
                         </AccordionContent>
                       </AccordionItem>
