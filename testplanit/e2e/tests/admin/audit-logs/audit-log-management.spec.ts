@@ -165,11 +165,12 @@ test.describe("Audit Log Management - Detail Modal", () => {
     await page.goto("/en-US/admin/audit-logs");
     await page.waitForLoadState("networkidle");
 
-    // The DataTable renders a "No Results" row when empty — detect actual data rows
-    // by checking whether any tbody row has a button (data rows have action buttons)
+    // The DataTable renders a "No Results" row when empty — detect actual data
+    // rows by requiring a cell (the header row has columnheaders + sort buttons,
+    // so filtering by button alone would wrongly match the header).
     const dataRows = page
       .getByRole("row")
-      .filter({ has: page.getByRole("button") });
+      .filter({ has: page.getByRole("cell") });
     const dataRowCount = await dataRows.count();
 
     if (dataRowCount === 0) {
@@ -219,10 +220,11 @@ test.describe("Audit Log Management - CSV Export", () => {
     });
     await expect(exportButton).toBeVisible({ timeout: 10000 });
 
-    // Check if there are actual data rows (rows with action buttons, not the "No Results" row)
+    // Check if there are actual data rows (a cell distinguishes data rows from
+    // the header row, which has columnheaders + sort buttons)
     const dataRows = page
       .getByRole("row")
-      .filter({ has: page.getByRole("button") });
+      .filter({ has: page.getByRole("cell") });
     const dataRowCount = await dataRows.count();
 
     if (dataRowCount === 0) {
