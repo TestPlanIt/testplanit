@@ -1372,7 +1372,9 @@ export class ApiHelper {
     } else if (statusType === "failed") {
       whereClause.isFailure = true;
     } else if (statusType === "blocked") {
-      whereClause.isBlocked = true;
+      // Status has no isBlocked column — the blocked state is seeded with
+      // systemName "blocked" (isSuccess/isFailure/isCompleted all false).
+      whereClause.systemName = "blocked";
     }
 
     // The model API's per-request auth lookup can transiently fail under
