@@ -1,3 +1,9 @@
+## [0.38.5](https://github.com/TestPlanIt/testplanit/compare/v0.38.4...v0.38.5) (2026-06-16)
+
+### Bug Fixes
+
+* add table role to virtualized tables (a11y) + avoid spurious redirect on cold-session loads ([#442](https://github.com/TestPlanIt/testplanit/issues/442)) ([d31b9a7](https://github.com/TestPlanIt/testplanit/commit/d31b9a739786d07d6faac3e4b0b3f4043d0a0443)), closes [#441](https://github.com/TestPlanIt/testplanit/issues/441)
+
 ## [0.38.4](https://github.com/TestPlanIt/testplanit/compare/v0.38.3...v0.38.4) (2026-06-16)
 
 ### Enhancements
