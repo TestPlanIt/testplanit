@@ -106,10 +106,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       "TWO_FACTOR_VERIFIED",
       session.user.id,
       session.user.email ?? "",
-      {
-        provider: "sso",
-        method: usedBackupCode ? "recovery-code" : "totp",
-      }
+      { provider: "sso", method: usedBackupCode ? "recovery-code" : "totp" },
+      session.user.name
     );
 
     return NextResponse.json({

@@ -2363,6 +2363,21 @@
           "passwordChanged": "Password modificata con successo."
         }
       },
+      "auditLog": {
+        "title": "Audit Log",
+        "description": "Actions performed by this user",
+        "noEntries": "No activity recorded yet.",
+        "loadMore": "Loading",
+        "viewDetails": "View details",
+        "columnAction": "Action",
+        "columnEntityType": "Type",
+        "columnEntityName": "Name",
+        "columnTimestamp": "Timestamp",
+        "allActions": "All Actions",
+        "allTypes": "All Types",
+        "noMatchingEntries": "No entries match the selected filters.",
+        "showing": "{loaded} of {total} entries"
+      },
       "mentionedComments": {
         "title": "Citato nei commenti",
         "description": "Commenti in cui vieni menzionato",
@@ -5606,7 +5621,8 @@
       "filterEntityType": "Tipo di entità",
       "allActions": "Tutte le azioni",
       "allEntityTypes": "Tutti i tipi di entità",
-      "showing": "Visualizzazione delle voci da {start} a {end} di {total}",
+      "allUsers": "All Users",
+      "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "Visualizza i dettagli",
       "detailTitle": "Dettagli del registro di controllo",
       "userInfo": "Informazioni utente",

@@ -206,4 +206,25 @@ describe("AuditLogDetailModal", () => {
     );
     expect(screen.getByTestId("date-formatter")).toBeInTheDocument();
   });
+
+  test("renders a SCIM badge when metadata.source is scim", () => {
+    setHookData({
+      ...baseLog,
+      metadata: { source: "scim", scimTokenId: "tok-1" } as any,
+    });
+    render(
+      <AuditLogDetailModal logId="log-001" open={true} onClose={vi.fn()} />
+    );
+    expect(
+      screen.getByTestId("audit-log-source-scim-badge")
+    ).toBeInTheDocument();
+  });
+
+  test("does not render a SCIM badge for non-scim sources", () => {
+    setHookData({ ...baseLog, metadata: { source: "api" } as any });
+    render(
+      <AuditLogDetailModal logId="log-001" open={true} onClose={vi.fn()} />
+    );
+    expect(screen.queryByTestId("audit-log-source-scim-badge")).toBeNull();
+  });
 });

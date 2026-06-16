@@ -396,6 +396,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
                   authMethod: true,
                   isActive: true,
                   email: true,
+                  name: true,
                 },
               })
             : null;
@@ -460,9 +461,13 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
               });
             }
             // Audit successful OAuth/SSO login
-            auditAuthEvent("LOGIN", dbUser.id, dbUser.email, {
-              provider: account?.provider,
-            }).catch(console.error);
+            auditAuthEvent(
+              "LOGIN",
+              dbUser.id,
+              dbUser.email,
+              { provider: account?.provider },
+              dbUser.name
+            ).catch(console.error);
           } else {
             // New user via OAuth - will be created by adapter
             // Audit will happen when user is created via Prisma extension
@@ -1078,10 +1083,13 @@ function authorize(prisma: PrismaClient) {
         }
 
         // Audit successful login with 2FA
-        auditAuthEvent("LOGIN", user.id, user.email, {
-          provider: "credentials",
-          twoFactor: true,
-        }).catch(console.error);
+        auditAuthEvent(
+          "LOGIN",
+          user.id,
+          user.email,
+          { provider: "credentials", twoFactor: true },
+          user.name
+        ).catch(console.error);
 
         return {
           id: user.id,
@@ -1269,9 +1277,13 @@ function authorize(prisma: PrismaClient) {
     }
 
     // Audit successful login
-    auditAuthEvent("LOGIN", maybeUser.id, maybeUser.email, {
-      provider: "credentials",
-    }).catch(console.error);
+    auditAuthEvent(
+      "LOGIN",
+      maybeUser.id,
+      maybeUser.email,
+      { provider: "credentials" },
+      maybeUser.name
+    ).catch(console.error);
     return {
       id: maybeUser.id,
       email: maybeUser.email,

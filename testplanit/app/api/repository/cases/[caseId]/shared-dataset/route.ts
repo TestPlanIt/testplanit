@@ -167,7 +167,7 @@ export async function PUT(
     // surface a precise 404.
     const testCase = await db.repositoryCases.findFirst({
       where: { id: caseId, isDeleted: false },
-      select: { id: true, projectId: true },
+      select: { id: true, projectId: true, name: true },
     });
     if (!testCase) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -175,7 +175,7 @@ export async function PUT(
 
     const sharedDataSet = await db.dataSet.findFirst({
       where: { id: sharedDataSetId, isDeleted: false },
-      select: { id: true, projectId: true, isShared: true },
+      select: { id: true, projectId: true, isShared: true, name: true },
     });
     if (!sharedDataSet) {
       return NextResponse.json(
@@ -318,6 +318,9 @@ export async function PUT(
       action: "UPDATE",
       entityType: "CaseSharedDataSetAssignment",
       entityId: String(assignment.id),
+      // Join row carries no name of its own; identify it by the case it
+      // belongs to and the shared dataset it points at.
+      entityName: `${testCase.name} → ${sharedDataSet.name}`,
       projectId: testCase.projectId,
       userId: session.user.id,
       metadata: {
@@ -362,7 +365,8 @@ export async function DELETE(
     const existing = await db.caseSharedDataSetAssignment.findUnique({
       where: { caseId },
       include: {
-        case: { select: { projectId: true } },
+        case: { select: { projectId: true, name: true } },
+        sharedDataSet: { select: { name: true } },
       },
     });
     if (!existing) {
@@ -377,6 +381,9 @@ export async function DELETE(
       action: "DELETE",
       entityType: "CaseSharedDataSetAssignment",
       entityId: String(existing.id),
+      // Join row carries no name of its own; identify it by the case it
+      // belonged to and the shared dataset it pointed at.
+      entityName: `${existing.case.name} → ${existing.sharedDataSet.name}`,
       projectId: existing.case.projectId,
       userId: session.user.id,
       metadata: {

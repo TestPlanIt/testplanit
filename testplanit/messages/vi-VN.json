@@ -2363,6 +2363,21 @@
           "passwordChanged": "Mật khẩu đã được thay đổi thành công."
         }
       },
+      "auditLog": {
+        "title": "Audit Log",
+        "description": "Actions performed by this user",
+        "noEntries": "No activity recorded yet.",
+        "loadMore": "Loading",
+        "viewDetails": "View details",
+        "columnAction": "Action",
+        "columnEntityType": "Type",
+        "columnEntityName": "Name",
+        "columnTimestamp": "Timestamp",
+        "allActions": "All Actions",
+        "allTypes": "All Types",
+        "noMatchingEntries": "No entries match the selected filters.",
+        "showing": "{loaded} of {total} entries"
+      },
       "mentionedComments": {
         "title": "Được đề cập trong phần bình luận",
         "description": "Những bình luận có nhắc đến bạn",
@@ -5606,7 +5621,8 @@
       "filterEntityType": "Loại thực thể",
       "allActions": "Tất cả các hành động",
       "allEntityTypes": "Tất cả các loại thực thể",
-      "showing": "Hiển thị các mục từ {start} đến {end} trong tổng số {total} mục",
+      "allUsers": "All Users",
+      "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "Xem chi tiết",
       "detailTitle": "Chi tiết nhật ký kiểm toán",
       "userInfo": "Thông tin người dùng",

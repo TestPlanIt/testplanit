@@ -1,3 +1,9 @@
+## [0.38.4](https://github.com/TestPlanIt/testplanit/compare/v0.38.3...v0.38.4) (2026-06-16)
+
+### Enhancements
+
+* **audit:** per-user activity view, shared virtualized table, and searchable filters ([#441](https://github.com/TestPlanIt/testplanit/issues/441)) ([360eeea](https://github.com/TestPlanIt/testplanit/commit/360eeea593313b42dfb2212dac760c27c140a307))
+
 ## [0.38.3](https://github.com/TestPlanIt/testplanit/compare/v0.38.2...v0.38.3) (2026-06-15)
 
 ### Bug Fixes

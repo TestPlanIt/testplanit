@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { ShieldCheck } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useFindUniqueAuditLog } from "~/lib/hooks";
@@ -56,6 +57,16 @@ export function AuditLogDetailModal({
             {t("detailTitle")}
             {log && (
               <Badge variant="outline">{log.action.replace(/_/g, " ")}</Badge>
+            )}
+            {metadata?.source === "scim" && (
+              <Badge
+                variant="outline"
+                className="gap-1 font-mono"
+                data-testid="audit-log-source-scim-badge"
+              >
+                <ShieldCheck className="size-3" aria-hidden="true" />
+                {t("sourceScim")}
+              </Badge>
             )}
           </DialogTitle>
         </DialogHeader>
@@ -152,7 +163,11 @@ export function AuditLogDetailModal({
                           key={field}
                           className="bg-muted rounded-md p-3 text-sm"
                         >
-                          <div className="font-medium mb-1">{field}</div>
+                          <div className="mb-2">
+                            <code className="text-xs font-mono bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                              {field}
+                            </code>
+                          </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <div className="overflow-hidden">
                               <span className="text-muted-foreground text-xs">

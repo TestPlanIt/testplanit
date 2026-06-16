@@ -2363,6 +2363,21 @@
           "passwordChanged": "密碼已成功更改。"
         }
       },
+      "auditLog": {
+        "title": "Audit Log",
+        "description": "Actions performed by this user",
+        "noEntries": "No activity recorded yet.",
+        "loadMore": "Loading",
+        "viewDetails": "View details",
+        "columnAction": "Action",
+        "columnEntityType": "Type",
+        "columnEntityName": "Name",
+        "columnTimestamp": "Timestamp",
+        "allActions": "All Actions",
+        "allTypes": "All Types",
+        "noMatchingEntries": "No entries match the selected filters.",
+        "showing": "{loaded} of {total} entries"
+      },
       "mentionedComments": {
         "title": "評論中提到",
         "description": "在提及你的評論中",
@@ -5606,7 +5621,8 @@
       "filterEntityType": "實體類型",
       "allActions": "所有操作",
       "allEntityTypes": "所有實體類型",
-      "showing": "顯示 {start} 到 {end} 共 {total} 筆記錄",
+      "allUsers": "All Users",
+      "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "看詳情",
       "detailTitle": "審計日誌詳情",
       "userInfo": "使用者資訊",

@@ -109,7 +109,8 @@ export const POST = withAuditContext(
       await auditPasswordChange(
         userId,
         user.email || session.user.email || "",
-        false
+        false,
+        user.name
       );
 
       return NextResponse.json(

@@ -2363,6 +2363,21 @@
           "passwordChanged": "비밀번호가 성공적으로 변경되었습니다."
         }
       },
+      "auditLog": {
+        "title": "Audit Log",
+        "description": "Actions performed by this user",
+        "noEntries": "No activity recorded yet.",
+        "loadMore": "Loading",
+        "viewDetails": "View details",
+        "columnAction": "Action",
+        "columnEntityType": "Type",
+        "columnEntityName": "Name",
+        "columnTimestamp": "Timestamp",
+        "allActions": "All Actions",
+        "allTypes": "All Types",
+        "noMatchingEntries": "No entries match the selected filters.",
+        "showing": "{loaded} of {total} entries"
+      },
       "mentionedComments": {
         "title": "댓글에서 언급됨",
         "description": "당신이 언급된 댓글",
@@ -5606,7 +5621,8 @@
       "filterEntityType": "엔티티 유형",
       "allActions": "모든 작업",
       "allEntityTypes": "모든 엔티티 유형",
-      "showing": "{start} 부터 {end} 까지의 {total} 개 항목을 표시합니다.",
+      "allUsers": "All Users",
+      "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "상세 정보 보기",
       "detailTitle": "감사 로그 세부 정보",
       "userInfo": "사용자 정보",

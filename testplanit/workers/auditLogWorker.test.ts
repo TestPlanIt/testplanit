@@ -47,6 +47,16 @@ const mockPrisma = {
   projects: {
     findUnique: vi.fn(),
   },
+  user: {
+    findUnique: vi.fn(),
+  },
+  // Delegates re-read by the post-commit scope backfill in tests below.
+  sessions: {
+    findUnique: vi.fn(),
+  },
+  testRunCases: {
+    findUnique: vi.fn(),
+  },
   $disconnect: vi.fn(),
 };
 
@@ -69,6 +79,12 @@ describe("AuditLogWorker", () => {
     vi.resetModules();
     // By default, mock projects.findUnique to return a valid project
     mockPrisma.projects.findUnique.mockResolvedValue({ id: 1 });
+    // By default no backfill match; tests that exercise the actor backfill
+    // override this.
+    mockPrisma.user.findUnique.mockResolvedValue(null);
+    // Scope-backfill delegates resolve nothing unless a test overrides them.
+    mockPrisma.sessions.findUnique.mockResolvedValue(null);
+    mockPrisma.testRunCases.findUnique.mockResolvedValue(null);
   });
 
   describe("processor", () => {
@@ -358,6 +374,146 @@ describe("AuditLogWorker", () => {
       });
     });
 
+    it("should backfill userEmail/userName from the user record when only userId is on the event", async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        email: "backfilled@example.com",
+        name: "Backfilled User",
+      });
+
+      const jobData: AuditLogJobData = {
+        event: {
+          action: "UPDATE",
+          entityType: "CaseSharedDataSetAssignment",
+          entityId: "92",
+          projectId: 1,
+          userId: "user-only-id",
+          metadata: { caseId: 106780, sharedDataSetId: 396 },
+        },
+        // No request-level context (route not wrapped in withAuditContext).
+        context: null,
+        queuedAt: new Date().toISOString(),
+      };
+
+      mockPrisma.auditLog.create.mockResolvedValue({ id: "audit-bf-1" });
+
+      const { processor } = await import("./auditLogWorker");
+
+      await processor({
+        id: "job-bf-1",
+        name: "audit-event",
+        data: jobData,
+      } as Job<AuditLogJobData>);
+
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: "user-only-id" },
+        select: { email: true, name: true },
+      });
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: "user-only-id",
+          userEmail: "backfilled@example.com",
+          userName: "Backfilled User",
+        }),
+      });
+    });
+
+    it("should not look up the user when email and name are already present", async () => {
+      const jobData: AuditLogJobData = {
+        event: {
+          action: "UPDATE",
+          entityType: "RepositoryCases",
+          entityId: "123",
+          projectId: 1,
+          changes: { name: { old: "a", new: "b" } },
+        },
+        context: {
+          userId: "user-123",
+          userEmail: "test@example.com",
+          userName: "Test User",
+        },
+        queuedAt: new Date().toISOString(),
+      };
+
+      mockPrisma.auditLog.create.mockResolvedValue({ id: "audit-bf-2" });
+
+      const { processor } = await import("./auditLogWorker");
+
+      await processor({
+        id: "job-bf-2",
+        name: "audit-event",
+        data: jobData,
+      } as Job<AuditLogJobData>);
+
+      expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("should not look up the system sentinel actor", async () => {
+      const { SYSTEM_ACTOR_ID } = await import("../lib/auditContextConstants");
+
+      const jobData: AuditLogJobData = {
+        event: {
+          action: "UPDATE",
+          entityType: "AppConfig",
+          entityId: "some.key",
+          userId: SYSTEM_ACTOR_ID,
+          metadata: { systemReason: "scheduled-recompute" },
+        },
+        context: null,
+        queuedAt: new Date().toISOString(),
+      };
+
+      mockPrisma.auditLog.create.mockResolvedValue({ id: "audit-bf-3" });
+
+      const { processor } = await import("./auditLogWorker");
+
+      await processor({
+        id: "job-bf-3",
+        name: "audit-event",
+        data: jobData,
+      } as Job<AuditLogJobData>);
+
+      expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("should still write the audit row when the actor backfill lookup fails", async () => {
+      mockPrisma.user.findUnique.mockRejectedValue(new Error("db down"));
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
+
+      const jobData: AuditLogJobData = {
+        event: {
+          action: "DELETE",
+          entityType: "CaseSharedDataSetAssignment",
+          entityId: "92",
+          projectId: 1,
+          userId: "user-only-id",
+        },
+        context: null,
+        queuedAt: new Date().toISOString(),
+      };
+
+      mockPrisma.auditLog.create.mockResolvedValue({ id: "audit-bf-4" });
+
+      const { processor } = await import("./auditLogWorker");
+
+      await processor({
+        id: "job-bf-4",
+        name: "audit-event",
+        data: jobData,
+      } as Job<AuditLogJobData>);
+
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: "user-only-id",
+          userEmail: null,
+          userName: null,
+        }),
+      });
+      expect(consoleWarnSpy).toHaveBeenCalled();
+      consoleWarnSpy.mockRestore();
+    });
+
     it("should handle database errors and rethrow", async () => {
       const jobData: AuditLogJobData = {
         event: {
@@ -540,6 +696,147 @@ describe("AuditLogWorker", () => {
             count: 10,
             originalProjectId: 999,
           }),
+        }),
+      });
+    });
+
+    it("should backfill a missing entityName and projectId from a committed re-read", async () => {
+      // A ZenStack RPC create whose result was a partial `{ id }`: the event
+      // reaches the worker with no name and no project scope.
+      mockPrisma.sessions.findUnique.mockResolvedValue({
+        id: 77,
+        name: "Exploratory session",
+        projectId: 4,
+      });
+
+      const jobData: AuditLogJobData = {
+        event: {
+          action: "CREATE",
+          entityType: "Sessions",
+          entityId: "77",
+        },
+        context: { userId: "user-123", userEmail: "test@example.com" },
+        queuedAt: new Date().toISOString(),
+      };
+
+      const { processor } = await import("./auditLogWorker");
+      await processor({
+        id: "job-bf1",
+        name: "audit-event",
+        data: jobData,
+      } as Job<AuditLogJobData>);
+
+      expect(mockPrisma.sessions.findUnique).toHaveBeenCalledWith({
+        where: { id: 77 },
+      });
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          entityType: "Sessions",
+          entityId: "77",
+          entityName: "Exploratory session",
+          projectId: 4,
+        }),
+      });
+    });
+
+    it("should backfill projectId through a parent relation", async () => {
+      // TestRunCases has no scalar projectId — it is scoped through its run.
+      mockPrisma.testRunCases.findUnique.mockResolvedValue({
+        id: 88,
+        repositoryCase: { name: "Checkout flow" },
+        testRun: { projectId: 6 },
+      });
+
+      const jobData: AuditLogJobData = {
+        event: {
+          action: "CREATE",
+          entityType: "TestRunCases",
+          entityId: "88",
+        },
+        context: { userId: "user-123", userEmail: "test@example.com" },
+        queuedAt: new Date().toISOString(),
+      };
+
+      const { processor } = await import("./auditLogWorker");
+      await processor({
+        id: "job-bf2",
+        name: "audit-event",
+        data: jobData,
+      } as Job<AuditLogJobData>);
+
+      expect(mockPrisma.testRunCases.findUnique).toHaveBeenCalledWith({
+        where: { id: 88 },
+        include: {
+          repositoryCase: { select: { name: true } },
+          testRun: { select: { projectId: true } },
+        },
+      });
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          entityType: "TestRunCases",
+          entityId: "88",
+          entityName: "Checkout flow",
+          projectId: 6,
+        }),
+      });
+    });
+
+    it("should not re-read when name and projectId are already present", async () => {
+      const jobData: AuditLogJobData = {
+        event: {
+          action: "UPDATE",
+          entityType: "Sessions",
+          entityId: "77",
+          entityName: "Already named",
+          projectId: 4,
+        },
+        context: { userId: "user-123", userEmail: "test@example.com" },
+        queuedAt: new Date().toISOString(),
+      };
+
+      const { processor } = await import("./auditLogWorker");
+      await processor({
+        id: "job-bf3",
+        name: "audit-event",
+        data: jobData,
+      } as Job<AuditLogJobData>);
+
+      expect(mockPrisma.sessions.findUnique).not.toHaveBeenCalled();
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          entityName: "Already named",
+          projectId: 4,
+        }),
+      });
+    });
+
+    it("should still write the audit row when the scope backfill lookup fails", async () => {
+      mockPrisma.sessions.findUnique.mockRejectedValue(new Error("db down"));
+
+      const jobData: AuditLogJobData = {
+        event: {
+          action: "CREATE",
+          entityType: "Sessions",
+          entityId: "77",
+        },
+        context: { userId: "user-123", userEmail: "test@example.com" },
+        queuedAt: new Date().toISOString(),
+      };
+
+      const { processor } = await import("./auditLogWorker");
+      await processor({
+        id: "job-bf4",
+        name: "audit-event",
+        data: jobData,
+      } as Job<AuditLogJobData>);
+
+      // The re-read threw, but the row is still persisted with the gap intact.
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          entityType: "Sessions",
+          entityId: "77",
+          entityName: null,
+          projectId: null,
         }),
       });
     });

@@ -7,6 +7,7 @@ import {
   buildRowSchemaFromParameters,
   type ParameterShape,
 } from "~/lib/schemas/datasetRowSchema";
+import { captureAuditEvent } from "~/lib/services/auditLog";
 import { updateHasParameters } from "~/lib/services/parameterMaintenance";
 import { authOptions } from "~/server/auth";
 
@@ -201,6 +202,22 @@ export async function POST(
             isShared: false,
             createdById: session.user.id,
           },
+        });
+
+        captureAuditEvent({
+          action: "CREATE",
+          entityType: "DataSet",
+          entityId: String(dataset.id),
+          entityName: dataset.name,
+          projectId: testCase.projectId,
+          userId: session.user.id,
+          metadata: {
+            isShared: false,
+            ownerCaseId: caseId,
+            source: "csv-import",
+          },
+        }).catch(() => {
+          // Audit is best-effort.
         });
       }
 
