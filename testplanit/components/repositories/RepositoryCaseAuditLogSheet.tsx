@@ -51,26 +51,24 @@ interface RepositoryCaseAuditLogSheetProps {
 export function RepositoryCaseAuditLogSheet({
   caseId,
 }: RepositoryCaseAuditLogSheetProps) {
-  const { data: session } = useSession();
   const t = useTranslations("repository.auditLog");
   const [open, setOpen] = useState(false);
 
-  // Audit-log reads are limited to system admins and project admins, so only
-  // surface the entry point to them (mirrors the project audit-log gating).
-  const canViewAuditLogs =
-    session?.user?.access === "ADMIN" ||
-    session?.user?.access === "PROJECTADMIN";
-
-  if (!canViewAuditLogs) {
-    return null;
-  }
-
+  // Visibility is enforced by the AuditLog read policy, which grants test-case
+  // audit access to anyone who can read the case. Reaching this page already
+  // means the case is readable, so the entry point is shown to all viewers.
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button type="button" variant="outline">
-          <History className="h-4 w-4" />
-          {t("trigger")}
+        <Button
+          type="button"
+          variant="outline"
+          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+        >
+          <History className="h-4 w-4 shrink-0" />
+          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+            {t("trigger")}
+          </span>
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-3xl">

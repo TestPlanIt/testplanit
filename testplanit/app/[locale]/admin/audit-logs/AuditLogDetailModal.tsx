@@ -29,6 +29,13 @@ export function AuditLogDetailModal({
   const tGlobal = useTranslations();
   const { data: session } = useSession();
 
+  // Metadata can carry sensitive request details (IP address, user agent), so
+  // the section is only surfaced to administrators. The case-scoped audit sheet
+  // is shown to any viewer who can read the case, where this gate matters most.
+  const canViewMetadata =
+    session?.user?.access === "ADMIN" ||
+    session?.user?.access === "PROJECTADMIN";
+
   // Fetch the full record (changes + metadata JSON) only when the modal opens.
   // The list query deliberately omits these columns to keep the page light at
   // scale — a single import can produce 100+ rows whose `changes` payload each
@@ -194,7 +201,7 @@ export function AuditLogDetailModal({
               )}
 
               {/* Metadata */}
-              {metadata && Object.keys(metadata).length > 0 && (
+              {canViewMetadata && metadata && Object.keys(metadata).length > 0 && (
                 <>
                   <Separator />
                   <div className="min-w-0">

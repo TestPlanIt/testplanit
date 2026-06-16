@@ -5457,7 +5457,33 @@ model AuditLog {
 
     @@deny('all', !auth())
     @@deny('update, delete', true)
+
+    // Test-case audit entries inherit the test case's own read restrictions, so
+    // audit visibility tracks exactly who can view the case (mirrors the
+    // RepositoryCases NONE / NO_ACCESS denies, scoped through the project).
+    @@deny('read', entityType == 'RepositoryCases' && auth().access == 'NONE')
+    @@deny('read', entityType == 'RepositoryCases' && project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read', auth().id == userId)
     @@allow('read', project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
+
+    // Anyone who can read a test case can read that case's audit trail. This
+    // mirrors the RepositoryCases read policy, resolved through the audit log's
+    // denormalized project relation.
+    @@allow('read',
+        entityType == 'RepositoryCases' && (
+            project.creator == auth() ||
+            project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+            project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+            project.groupPermissions?[
+                group.assignedUsers?[user == auth()] &&
+                ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+                 (accessType == 'GLOBAL_ROLE' && auth().role != null))
+            ] ||
+            (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+            (project.assignedUsers?[user == auth()] &&
+             project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+        )
+    )
 }

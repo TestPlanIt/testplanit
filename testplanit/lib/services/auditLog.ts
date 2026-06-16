@@ -100,6 +100,9 @@ export const ENTITY_NAME_FIELDS: Record<string, string | string[]> = {
   // entity (see buildEntityAuditHooks / ENTITY_AUDIT_MODELS in entityAuditHooks).
   ProjectIntegration: "integration.name",
   TestRunCases: "repositoryCase.name",
+  // Custom field value on a test case: named from its field definition's
+  // display name (see ENTITY_AUDIT_MODELS in entityAuditHooks).
+  CaseFieldValues: "field.displayName",
 };
 
 /**
@@ -112,6 +115,7 @@ export const PROJECT_SCOPE_PARENTS: Record<string, string> = {
   TestRunCases: "testRun",
   TestRunResults: "testRun",
   TestRunCaseIteration: "testRunCase.testRun",
+  CaseFieldValues: "testCase",
 };
 
 /**
@@ -146,6 +150,7 @@ export const PROJECT_SCOPED_ENTITY_TYPES: ReadonlySet<string> = new Set([
   "TestRunCases",
   "TestRunResults",
   "TestRunCaseIteration",
+  "CaseFieldValues",
 ]);
 
 /**

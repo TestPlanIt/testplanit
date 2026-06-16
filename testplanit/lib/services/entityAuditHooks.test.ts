@@ -204,6 +204,62 @@ describe("entity audit hooks", () => {
     });
   });
 
+  describe("child model (CaseFieldValues)", () => {
+    it("create resolves the field name by FK and records the value", async () => {
+      const related: EntityAuditDelegate = {
+        findUnique: vi.fn().mockResolvedValue({ displayName: "Priority" }),
+      };
+      const hooks = buildEntityAuditHooks(cfgOf("CaseFieldValues"), {
+        self: forbiddenSelf,
+        related,
+      });
+      await hooks.create({
+        args: { data: { testCaseId: 12, fieldId: 3, value: "High" } },
+        query: async () => ({ id: 99, testCaseId: 12, fieldId: 3, value: "High" }),
+      });
+      const ev = lastEvent();
+      expect(ev.action).toBe("CREATE");
+      expect(ev.entityType).toBe("CaseFieldValues");
+      expect(ev.entityId).toBe("99");
+      expect(ev.entityName).toBe("Priority");
+      expect(ev.changes?.value.new).toBe("High");
+      expect(related.findUnique).toHaveBeenCalledWith({
+        where: { id: 3 },
+        select: { displayName: true },
+      });
+      // The just-created row is never re-read (invisible in-tx).
+      expect(forbiddenSelf.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("update on the RPC partial row diffs the value and names from the field", async () => {
+      const self: EntityAuditDelegate = {
+        findUnique: vi.fn().mockResolvedValue({
+          id: 99,
+          testCaseId: 12,
+          fieldId: 3,
+          value: "Low",
+          field: { displayName: "Priority" },
+        }),
+      };
+      const hooks = buildEntityAuditHooks(cfgOf("CaseFieldValues"), {
+        self,
+        related: { findUnique: vi.fn() },
+      });
+      await hooks.update({
+        args: { where: { id: 99 }, data: { value: "High" } },
+        query: async () => ({ id: 99 }),
+      });
+      const ev = lastEvent();
+      expect(ev.action).toBe("UPDATE");
+      expect(ev.entityName).toBe("Priority");
+      expect(ev.changes?.value).toEqual({ old: "Low", new: "High" });
+      // The included `field` relation is stripped from the scalar diff.
+      expect(ev.changes?.field).toBeUndefined();
+      // projectId is left for the worker to backfill via the testCase parent.
+      expect(ev.projectId).toBeUndefined();
+    });
+  });
+
   describe("join model (ProjectIntegration)", () => {
     it("create resolves the name from the related integration by FK", async () => {
       const related: EntityAuditDelegate = {
