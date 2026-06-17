@@ -228,6 +228,20 @@ export interface RepositoryCase {
 }
 
 /**
+ * Authored step on a test case.
+ * `step`/`expectedResult` hold a TipTap rich-text document (matching the
+ * in-app step editor).
+ */
+export interface Step {
+  id: number;
+  testCaseId: number;
+  step?: unknown;
+  expectedResult?: unknown;
+  order: number;
+  isDeleted: boolean;
+}
+
+/**
  * Test case linked to a test run
  */
 export interface TestRunCase {
@@ -507,6 +521,21 @@ export interface CreateTestCaseOptions {
   automated?: boolean;
   stateId?: number;
   estimate?: number;
+}
+
+/**
+ * Options for creating an authored step on a test case.
+ * Plain-text `step`/`expectedResult` are stored as TipTap rich-text documents
+ * so they render in the in-app step editor.
+ */
+export interface CreateStepOptions {
+  testCaseId: number;
+  /** Step instruction (plain text). */
+  step: string;
+  /** Expected result (plain text). Omitted when empty. */
+  expectedResult?: string;
+  /** Zero-based position of the step within the case. */
+  order: number;
 }
 
 /**

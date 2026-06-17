@@ -328,6 +328,60 @@ describe('TestPlanItClient', () => {
     });
   });
 
+  describe('createStep', () => {
+    it('wraps the step text in a TipTap doc and posts to the steps model', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 7, testCaseId: 42, order: 0 }));
+
+      const result = await client.createStep({ testCaseId: 42, step: 'Click login', order: 0 });
+
+      expect(result).toEqual({ id: 7, testCaseId: 42, order: 0 });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://testplanit.example.com/api/model/steps/create',
+        expect.objectContaining({ method: 'POST' })
+      );
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.data.testCase).toEqual({ connect: { id: 42 } });
+      expect(body.data.order).toBe(0);
+      // step is a stringified TipTap document
+      expect(JSON.parse(body.data.step)).toEqual({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Click login' }] }],
+      });
+      // expectedResult omitted when not provided
+      expect(body.data.expectedResult).toBeUndefined();
+    });
+
+    it('includes expectedResult when provided', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ id: 8 }));
+
+      await client.createStep({ testCaseId: 42, step: 'Act', expectedResult: 'Outcome', order: 1 });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(JSON.parse(body.data.expectedResult)).toEqual({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Outcome' }] }],
+      });
+    });
+  });
+
+  describe('softDeleteCaseSteps', () => {
+    it('soft-deletes a case\'s active steps via updateMany and returns the count', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ count: 4 }));
+
+      const count = await client.softDeleteCaseSteps(42);
+
+      expect(count).toBe(4);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://testplanit.example.com/api/model/steps/updateMany',
+        expect.objectContaining({ method: 'PATCH' })
+      );
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.where).toEqual({ testCaseId: 42, isDeleted: false });
+      expect(body.data).toEqual({ isDeleted: true });
+    });
+  });
+
   describe('addTestCaseToRun', () => {
     it('should add a test case to a run', async () => {
       const mockResponse = {

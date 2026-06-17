@@ -17,6 +17,8 @@ import type {
   CreateTestRunOptions,
   UpdateTestRunOptions,
   CreateTestCaseOptions,
+  CreateStepOptions,
+  Step,
   CreateTagOptions,
   CreateFolderOptions,
   AddTestCaseToRunOptions,
@@ -1440,6 +1442,54 @@ export class TestPlanItClient {
       create: createData,
     });
     return { testCase: createdCase, action: 'created' };
+  }
+
+  /**
+   * Wrap plain text in a minimal TipTap (ProseMirror) document so it renders
+   * in the in-app step editor. Empty text produces an empty paragraph (an
+   * empty text node is invalid in ProseMirror).
+   */
+  private tipTapDoc(text: string): string {
+    const trimmed = text.trim();
+    return JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: trimmed ? [{ type: "text", text: trimmed }] : [],
+        },
+      ],
+    });
+  }
+
+  /**
+   * Create an authored step on a test case.
+   * `step` and `expectedResult` are stored as TipTap rich-text documents to
+   * match the in-app step editor.
+   */
+  async createStep(options: CreateStepOptions): Promise<Step> {
+    const data: Record<string, unknown> = {
+      testCase: { connect: { id: options.testCaseId } },
+      step: this.tipTapDoc(options.step),
+      order: options.order,
+    };
+    if (options.expectedResult !== undefined && options.expectedResult !== "") {
+      data.expectedResult = this.tipTapDoc(options.expectedResult);
+    }
+    return this.zenstack<Step>("steps", "create", { data });
+  }
+
+  /**
+   * Soft-delete every active step on a test case (sets `isDeleted: true`).
+   * Used to replace a case's steps when syncing them from automation.
+   * Returns the number of steps that were soft-deleted.
+   */
+  async softDeleteCaseSteps(testCaseId: number): Promise<number> {
+    const result = await this.zenstack<{ count: number }>("steps", "updateMany", {
+      where: { testCaseId, isDeleted: false },
+      data: { isDeleted: true },
+    });
+    return result?.count ?? 0;
   }
 
   // ============================================================================
