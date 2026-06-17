@@ -69,6 +69,13 @@ var TestPlanItClient = class {
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         const response = await fetch(url.toString(), fetchOptions);
+        if (response.status === 429 && attempt < this.maxRetries) {
+          const retryAfter = response.headers.get("retry-after");
+          const seconds = retryAfter ? Number(retryAfter) : NaN;
+          const waitMs = Number.isFinite(seconds) ? Math.min(seconds * 1e3, 6e4) : this.retryDelay * (attempt + 1);
+          await this.sleep(waitMs);
+          continue;
+        }
         if (!response.ok) {
           const errorBody = await response.text();
           let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -1104,6 +1111,27 @@ var TestPlanItClient = class {
       data.expectedResult = this.tipTapDoc(options.expectedResult);
     }
     return this.zenstack("steps", "create", { data });
+  }
+  /**
+   * Create many authored steps on a test case in a single request.
+   * Preferred over repeated {@link createStep} calls when seeding a case's
+   * steps — one `createMany` instead of N creates keeps the call count (and
+   * rate-limit pressure) low when reporting large suites. Uses the scalar
+   * `testCaseId` FK because `createMany` does not accept nested relations.
+   */
+  async createSteps(options) {
+    const data = options.steps.map((s) => {
+      const row = {
+        testCaseId: options.testCaseId,
+        step: this.tipTapDoc(s.step),
+        order: s.order
+      };
+      if (s.expectedResult !== void 0 && s.expectedResult !== "") {
+        row.expectedResult = this.tipTapDoc(s.expectedResult);
+      }
+      return row;
+    });
+    return this.zenstack("steps", "createMany", { data });
   }
   /**
    * Soft-delete every active step on a test case (sets `isDeleted: true`).

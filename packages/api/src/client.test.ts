@@ -382,6 +382,55 @@ describe('TestPlanItClient', () => {
     });
   });
 
+  describe('createSteps', () => {
+    it('batches steps into one createMany with scalar testCaseId + TipTap docs', async () => {
+      mockFetch.mockResolvedValueOnce(zenStackResponse({ count: 2 }));
+
+      const result = await client.createSteps({
+        testCaseId: 42,
+        steps: [
+          { step: 'First', order: 0 },
+          { step: 'Second', order: 1 },
+        ],
+      });
+
+      expect(result).toEqual({ count: 2 });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://testplanit.example.com/api/model/steps/createMany',
+        expect.objectContaining({ method: 'POST' })
+      );
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(Array.isArray(body.data)).toBe(true);
+      expect(body.data).toHaveLength(2);
+      // createMany requires scalar FK (no nested connect)
+      expect(body.data[0].testCaseId).toBe(42);
+      expect(body.data[0].order).toBe(0);
+      expect(JSON.parse(body.data[0].step)).toEqual({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'First' }] }],
+      });
+    });
+  });
+
+  describe('429 rate-limit handling', () => {
+    it('honors Retry-After and retries the request', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 429,
+          statusText: 'Too Many Requests',
+          headers: { get: (h: string) => (h.toLowerCase() === 'retry-after' ? '0' : null) },
+          text: async () => 'rate limited',
+        })
+        .mockResolvedValueOnce(zenStackResponse({ id: 7, name: 'After backoff' }));
+
+      const result = await client.getProject(1);
+
+      expect(result).toEqual({ id: 7, name: 'After backoff' });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('addTestCaseToRun', () => {
     it('should add a test case to a run', async () => {
       const mockResponse = {

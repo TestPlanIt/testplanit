@@ -16,6 +16,7 @@ const clientMock = vi.hoisted(() => ({
   uploadJUnitAttachment: vi.fn(),
   findOrCreateTestCase: vi.fn(),
   createStep: vi.fn(),
+  createSteps: vi.fn(),
   softDeleteCaseSteps: vi.fn(),
   findOrCreateFolderPath: vi.fn(),
   findTestRunByName: vi.fn(),
@@ -56,6 +57,7 @@ function applyBaseImpls() {
   clientMock.uploadJUnitAttachment.mockImplementation(async () => ({ id: 1 }));
   clientMock.findOrCreateTestCase.mockImplementation(async () => ({ testCase: { id: 4567, name: 'TC' }, action: 'created' }));
   clientMock.createStep.mockImplementation(async () => ({ id: 1 }));
+  clientMock.createSteps.mockImplementation(async (o: any) => ({ count: o?.steps?.length ?? 0 }));
   clientMock.softDeleteCaseSteps.mockImplementation(async () => 3);
   clientMock.findOrCreateFolderPath.mockImplementation(async () => ({ id: 77, name: 'Folder' }));
   clientMock.findTestRunByName.mockImplementation(async () => ({ id: 555, name: 'By Name' }));
@@ -450,16 +452,23 @@ describe('TestPlanItReporter (Playwright)', () => {
 
   // -------------------------------------------------------------------------
   describe('capturing test.step() as authored steps', () => {
-    it('seeds ordered steps on a newly created case', async () => {
+    // Steps are written with a single batched createSteps() call per case.
+    const stepTexts = (callIdx = 0): string[] =>
+      (lastArg(clientMock.createSteps, callIdx)?.steps ?? []).map((s: any) => s.step);
+
+    it('seeds ordered steps on a newly created case in one batched call', async () => {
       const r = new TestPlanItReporter({ ...autoOptions });
       const result = makeResult({ steps: [makeStep('Open login page'), makeStep('Submit credentials')] });
       await run(r, makeTest('logs in', buildParent({ project: 'chromium', describes: ['Auth'] })), result);
 
-      expect(clientMock.createStep).toHaveBeenCalledTimes(2);
-      expect(calls(clientMock.createStep).map((c) => c[0])).toEqual([
-        { testCaseId: 4567, step: 'Open login page', order: 0 },
-        { testCaseId: 4567, step: 'Submit credentials', order: 1 },
-      ]);
+      expect(clientMock.createSteps).toHaveBeenCalledTimes(1);
+      expect(lastArg(clientMock.createSteps)).toEqual({
+        testCaseId: 4567,
+        steps: [
+          { step: 'Open login page', order: 0 },
+          { step: 'Submit credentials', order: 1 },
+        ],
+      });
       expect(r.getState().stats.testStepsCreated).toBe(2);
     });
 
@@ -474,12 +483,7 @@ describe('TestPlanItReporter (Playwright)', () => {
       });
       await run(r, makeTest('nested', buildParent({ project: 'chromium' })), result);
 
-      expect(calls(clientMock.createStep).map((c) => c[0].step)).toEqual([
-        'Parent',
-        '› Child',
-        '› › Grandchild',
-        '› Sibling child',
-      ]);
+      expect(stepTexts()).toEqual(['Parent', '› Child', '› › Grandchild', '› Sibling child']);
     });
 
     it('ignores non-test.step categories but descends through them', async () => {
@@ -494,7 +498,7 @@ describe('TestPlanItReporter (Playwright)', () => {
       });
       await run(r, makeTest('mixed', buildParent({ project: 'chromium' })), result);
 
-      expect(calls(clientMock.createStep).map((c) => c[0].step)).toEqual(['Real user step']);
+      expect(stepTexts()).toEqual(['Real user step']);
     });
 
     it('skips untitled steps but keeps their children at the same depth', async () => {
@@ -509,11 +513,7 @@ describe('TestPlanItReporter (Playwright)', () => {
       });
       await run(r, makeTest('untitled', buildParent({ project: 'chromium' })), result);
 
-      expect(calls(clientMock.createStep).map((c) => c[0].step)).toEqual([
-        'Orphaned child',
-        'Real parent',
-        '› Real child',
-      ]);
+      expect(stepTexts()).toEqual(['Orphaned child', 'Real parent', '› Real child']);
     });
 
     it('skips fixture-category steps', async () => {
@@ -522,26 +522,26 @@ describe('TestPlanItReporter (Playwright)', () => {
         steps: [makeStep('worker fixture', { category: 'fixture' }), makeStep('Actual step')],
       });
       await run(r, makeTest('fixtures', buildParent({ project: 'chromium' })), result);
-      expect(calls(clientMock.createStep).map((c) => c[0].step)).toEqual(['Actual step']);
+      expect(stepTexts()).toEqual(['Actual step']);
     });
 
     it('does not create steps for found or moved cases', async () => {
       clientMock.findOrCreateTestCase.mockResolvedValueOnce({ testCase: { id: 1, name: 'a' }, action: 'found' });
       const r = new TestPlanItReporter({ ...autoOptions });
       await run(r, makeTest('existing', buildParent({ project: 'chromium' })), makeResult({ steps: [makeStep('Step')] }));
-      expect(clientMock.createStep).not.toHaveBeenCalled();
+      expect(clientMock.createSteps).not.toHaveBeenCalled();
     });
 
     it('does not create steps when captureSteps is disabled', async () => {
       const r = new TestPlanItReporter({ ...autoOptions, captureSteps: false });
       await run(r, makeTest('no capture', buildParent({ project: 'chromium' })), makeResult({ steps: [makeStep('Step')] }));
-      expect(clientMock.createStep).not.toHaveBeenCalled();
+      expect(clientMock.createSteps).not.toHaveBeenCalled();
     });
 
     it('does not create steps for linked (non-auto-created) cases', async () => {
       // Default options: no autoCreateTestCases, case linked via the title.
       await run(reporter, makeTest('[1234] linked', buildParent({ project: 'chromium' })), makeResult({ steps: [makeStep('Step')] }));
-      expect(clientMock.createStep).not.toHaveBeenCalled();
+      expect(clientMock.createSteps).not.toHaveBeenCalled();
       expect(clientMock.findOrCreateTestCase).not.toHaveBeenCalled();
     });
 
@@ -552,12 +552,12 @@ describe('TestPlanItReporter (Playwright)', () => {
       r.onTestEnd(makeTest('flaky', parent), makeResult({ status: 'passed', retry: 1, steps: [makeStep('Step')] }));
       await r.onEnd(FULL_RESULT);
       expect(clientMock.findOrCreateTestCase).toHaveBeenCalledTimes(1);
-      expect(clientMock.createStep).toHaveBeenCalledTimes(1);
+      expect(clientMock.createSteps).toHaveBeenCalledTimes(1);
     });
 
     it('still reports the result when step creation fails', async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
-      clientMock.createStep.mockRejectedValueOnce(new Error('boom'));
+      clientMock.createSteps.mockRejectedValueOnce(new Error('boom'));
       const r = new TestPlanItReporter({ ...autoOptions });
       await run(r, makeTest('resilient', buildParent({ project: 'chromium' })), makeResult({ steps: [makeStep('Step')] }));
       expect(clientMock.createJUnitTestResult).toHaveBeenCalledTimes(1);
@@ -572,12 +572,15 @@ describe('TestPlanItReporter (Playwright)', () => {
       const result = makeResult({ steps: [makeStep('New step A'), makeStep('New step B')] });
       await run(r, makeTest('[1234] linked', buildParent({ project: 'chromium' })), result);
 
-      // Existing steps cleared first, then the new ones written in order.
+      // Existing steps cleared first, then the new ones written in one batch.
       expect(clientMock.softDeleteCaseSteps).toHaveBeenCalledWith(1234);
-      expect(calls(clientMock.createStep).map((c) => c[0])).toEqual([
-        { testCaseId: 1234, step: 'New step A', order: 0 },
-        { testCaseId: 1234, step: 'New step B', order: 1 },
-      ]);
+      expect(lastArg(clientMock.createSteps)).toEqual({
+        testCaseId: 1234,
+        steps: [
+          { step: 'New step A', order: 0 },
+          { step: 'New step B', order: 1 },
+        ],
+      });
     });
 
     it('overwrites steps on an auto-create match (found)', async () => {
@@ -585,20 +588,20 @@ describe('TestPlanItReporter (Playwright)', () => {
       const r = new TestPlanItReporter({ ...autoOptions, overwriteSteps: true });
       await run(r, makeTest('existing', buildParent({ project: 'chromium' })), makeResult({ steps: [makeStep('S')] }));
       expect(clientMock.softDeleteCaseSteps).toHaveBeenCalledWith(99);
-      expect(lastArg(clientMock.createStep).testCaseId).toBe(99);
+      expect(lastArg(clientMock.createSteps).testCaseId).toBe(99);
     });
 
     it('does not touch existing steps when overwriteSteps is off (default)', async () => {
       await run(reporter, makeTest('[1234] linked', buildParent({ project: 'chromium' })), makeResult({ steps: [makeStep('S')] }));
       expect(clientMock.softDeleteCaseSteps).not.toHaveBeenCalled();
-      expect(clientMock.createStep).not.toHaveBeenCalled();
+      expect(clientMock.createSteps).not.toHaveBeenCalled();
     });
 
     it('never clears steps when the test has no test.step() calls', async () => {
       const r = new TestPlanItReporter({ ...defaultOptions, overwriteSteps: true });
       await run(r, makeTest('[1234] no steps', buildParent({ project: 'chromium' })), makeResult({ steps: [] }));
       expect(clientMock.softDeleteCaseSteps).not.toHaveBeenCalled();
-      expect(clientMock.createStep).not.toHaveBeenCalled();
+      expect(clientMock.createSteps).not.toHaveBeenCalled();
     });
 
     it('syncs a linked case once across retries', async () => {
@@ -608,7 +611,7 @@ describe('TestPlanItReporter (Playwright)', () => {
       r.onTestEnd(makeTest('[1234] flaky', parent), makeResult({ status: 'passed', retry: 1, steps: [makeStep('S')] }));
       await r.onEnd(FULL_RESULT);
       expect(clientMock.softDeleteCaseSteps).toHaveBeenCalledTimes(1);
-      expect(clientMock.createStep).toHaveBeenCalledTimes(1);
+      expect(clientMock.createSteps).toHaveBeenCalledTimes(1);
     });
 
     it('skips creating steps (no duplicates) when clearing fails, but still reports', async () => {
@@ -616,7 +619,7 @@ describe('TestPlanItReporter (Playwright)', () => {
       clientMock.softDeleteCaseSteps.mockRejectedValueOnce(new Error('boom'));
       const r = new TestPlanItReporter({ ...defaultOptions, overwriteSteps: true });
       await run(r, makeTest('[1234] linked', buildParent({ project: 'chromium' })), makeResult({ steps: [makeStep('S')] }));
-      expect(clientMock.createStep).not.toHaveBeenCalled();
+      expect(clientMock.createSteps).not.toHaveBeenCalled();
       expect(clientMock.createJUnitTestResult).toHaveBeenCalledTimes(1);
     });
   });

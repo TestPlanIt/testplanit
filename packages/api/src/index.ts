@@ -73,6 +73,7 @@ export type {
   UpdateTestRunOptions,
   CreateTestCaseOptions,
   CreateStepOptions,
+  CreateStepsOptions,
   CreateTagOptions,
   CreateFolderOptions,
   AddTestCaseToRunOptions,

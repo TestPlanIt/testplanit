@@ -381,15 +381,14 @@ ${error.stack}` : "";
           return;
         }
       }
-      for (let order = 0; order < stepTitles.length; order++) {
-        try {
-          await this.client.createStep({ testCaseId, step: stepTitles[order], order });
-          this.state.stats.testStepsCreated++;
-        } catch (error) {
-          this.logError(`Failed to create step on case ${testCaseId}:`, error);
-        }
+      try {
+        const steps = stepTitles.map((step, order) => ({ step, order }));
+        await this.client.createSteps({ testCaseId, steps });
+        this.state.stats.testStepsCreated += stepTitles.length;
+        this.log(`${replace ? "Replaced" : "Created"} ${stepTitles.length} step(s) on case:`, testCaseId);
+      } catch (error) {
+        this.logError(`Failed to create steps on case ${testCaseId}:`, error);
       }
-      this.log(`${replace ? "Replaced" : "Created"} ${stepTitles.length} step(s) on case:`, testCaseId);
     })();
     this.state.caseStepsMap.set(testCaseId, promise);
     promise.catch(() => this.state.caseStepsMap.delete(testCaseId));

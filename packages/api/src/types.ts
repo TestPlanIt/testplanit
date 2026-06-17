@@ -539,6 +539,22 @@ export interface CreateStepOptions {
 }
 
 /**
+ * Options for creating multiple authored steps on a test case in one request.
+ * Each step's plain-text `step`/`expectedResult` is stored as a TipTap doc.
+ */
+export interface CreateStepsOptions {
+  testCaseId: number;
+  steps: Array<{
+    /** Step instruction (plain text). */
+    step: string;
+    /** Expected result (plain text). Omitted when empty. */
+    expectedResult?: string;
+    /** Zero-based position of the step within the case. */
+    order: number;
+  }>;
+}
+
+/**
  * Result of findOrCreateTestCase with metadata
  */
 export interface FindOrCreateTestCaseResult {
