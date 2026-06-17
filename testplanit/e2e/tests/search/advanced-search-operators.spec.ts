@@ -555,7 +555,7 @@ test.describe("Advanced Search Operators", () => {
       await page.waitForTimeout(2000);
     });
 
-    await test.step('Search complex query \'+"login" -automated name:*auth*\'', async () => {
+    await test.step("Search complex query '+\"login\" -automated name:*auth*'", async () => {
       // Complex query: '+"login" -automated name:*auth*'
       await unifiedSearch.open();
       await unifiedSearch.search('+"login" -automated name:*auth*');

@@ -78,10 +78,7 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
       await page.goto("/en-US/admin/workflows");
       await page.waitForLoadState("networkidle");
 
-      const row = page
-        .locator("tr")
-        .filter({ hasText: workflowName! })
-        .first();
+      const row = page.locator("tr").filter({ hasText: workflowName! }).first();
       await expect(row).toBeVisible({ timeout: 10000 });
 
       // The action column renders an icon-only SquarePen button (no

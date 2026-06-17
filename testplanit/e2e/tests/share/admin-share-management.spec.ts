@@ -182,19 +182,23 @@ test.describe("Admin Share Management", () => {
     let project2Id: number | undefined;
     await test.step("Create two projects with test cases", async () => {
       // Create two projects
-      project1Id = await api.createProject(
-        `Admin View Project 1 ${timestamp}`
-      );
-      project2Id = await api.createProject(
-        `Admin View Project 2 ${timestamp}`
-      );
+      project1Id = await api.createProject(`Admin View Project 1 ${timestamp}`);
+      project2Id = await api.createProject(`Admin View Project 2 ${timestamp}`);
 
       // Create test data for both projects
       const rootFolder1 = await api.getRootFolderId(project1Id);
       const rootFolder2 = await api.getRootFolderId(project2Id);
 
-      await api.createTestCase(project1Id, rootFolder1, `Test Case ${timestamp}`);
-      await api.createTestCase(project2Id, rootFolder2, `Test Case ${timestamp}`);
+      await api.createTestCase(
+        project1Id,
+        rootFolder1,
+        `Test Case ${timestamp}`
+      );
+      await api.createTestCase(
+        project2Id,
+        rootFolder2,
+        `Test Case ${timestamp}`
+      );
     });
 
     await test.step("Create a share for project 1", async () => {
@@ -243,16 +247,16 @@ test.describe("Admin Share Management", () => {
       await expect(pageTitle).toBeVisible({ timeout: 5000 });
 
       // Verify both shares are listed
-      await expect(page.locator(`text=Project 1 Share ${timestamp}`)).toBeVisible(
-        {
-          timeout: 5000,
-        }
-      );
-      await expect(page.locator(`text=Project 2 Share ${timestamp}`)).toBeVisible(
-        {
-          timeout: 5000,
-        }
-      );
+      await expect(
+        page.locator(`text=Project 1 Share ${timestamp}`)
+      ).toBeVisible({
+        timeout: 5000,
+      });
+      await expect(
+        page.locator(`text=Project 2 Share ${timestamp}`)
+      ).toBeVisible({
+        timeout: 5000,
+      });
 
       // Verify project column is displayed
       await expect(page.locator('th:has-text("Project")')).toBeVisible();

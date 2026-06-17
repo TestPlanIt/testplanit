@@ -567,9 +567,7 @@ test.describe("Field Options - Validation", () => {
       await page.waitForTimeout(500);
 
       // Either: dialog remains open (duplicate names rejected) or dialog closes (duplicates allowed)
-      isDialogOpen = await templatesPage.dialog
-        .isVisible()
-        .catch(() => false);
+      isDialogOpen = await templatesPage.dialog.isVisible().catch(() => false);
     });
 
     await test.step("Resolve based on whether duplicates were rejected", async () => {

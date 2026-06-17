@@ -22,7 +22,9 @@ test.describe("Session Multi-Configuration Creation", () => {
 
     let projectId: number | undefined;
     await test.step("Create a project with one configuration", async () => {
-      projectId = await api.createProject(`E2E MultiConfig Session ${Date.now()}`);
+      projectId = await api.createProject(
+        `E2E MultiConfig Session ${Date.now()}`
+      );
       await api.createConfiguration(configName, projectId);
     });
 
@@ -99,7 +101,9 @@ test.describe("Session Multi-Configuration Creation", () => {
       await configCombobox.click();
 
       // Select first config
-      const option1 = page.locator(`[role="option"]:has-text("${config1Name}")`);
+      const option1 = page.locator(
+        `[role="option"]:has-text("${config1Name}")`
+      );
       await expect(option1).toBeVisible({ timeout: 10000 });
       await option1.click({ force: true });
 
@@ -108,7 +112,9 @@ test.describe("Session Multi-Configuration Creation", () => {
 
       // Re-open and select second config
       await configCombobox.click();
-      const option2 = page.locator(`[role="option"]:has-text("${config2Name}")`);
+      const option2 = page.locator(
+        `[role="option"]:has-text("${config2Name}")`
+      );
       await expect(option2).toBeVisible({ timeout: 10000 });
       await option2.click({ force: true });
 

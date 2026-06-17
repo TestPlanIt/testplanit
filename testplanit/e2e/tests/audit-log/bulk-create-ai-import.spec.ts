@@ -97,7 +97,9 @@ test.describe("Audit Log BULK_CREATE - AI import", () => {
     }
 
     // Row exists — confirm it references RepositoryCases on the same row.
-    const rowWithEntity = bulkCreateRow!.filter({ hasText: /RepositoryCases/i });
+    const rowWithEntity = bulkCreateRow!.filter({
+      hasText: /RepositoryCases/i,
+    });
     const entityRowCount = await rowWithEntity.count();
 
     if (entityRowCount === 0) {

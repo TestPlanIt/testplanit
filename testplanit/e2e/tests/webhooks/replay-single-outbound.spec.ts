@@ -81,11 +81,11 @@ test.describe("Webhook delivery replay — single outbound", () => {
       }
 
       await page.getByTestId("webhook-outbound-create-submit").click();
-      await expect(
-        page.getByTestId("webhook-outbound-add-button")
-      ).toBeVisible({
-        timeout: 10_000,
-      });
+      await expect(page.getByTestId("webhook-outbound-add-button")).toBeVisible(
+        {
+          timeout: 10_000,
+        }
+      );
     });
 
     await test.step("Trigger a test_run.completed event so the stub returns 500 and seeds a failed delivery row", async () => {

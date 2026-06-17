@@ -25,7 +25,9 @@ test.describe("RepositoryCases CRUD", () => {
 
     await test.step("Create a fresh project and test case", async () => {
       // Create a fresh project for isolation
-      projectId = await api.createProject(`E2E RC Create Project ${Date.now()}`);
+      projectId = await api.createProject(
+        `E2E RC Create Project ${Date.now()}`
+      );
       folderId = await api.getRootFolderId(projectId);
 
       // Create a test case using the api fixture
@@ -77,7 +79,9 @@ test.describe("RepositoryCases CRUD", () => {
 
     await test.step("Create a fresh project and test case", async () => {
       // Create a fresh project for isolation
-      projectId = await api.createProject(`E2E RC Update Project ${Date.now()}`);
+      projectId = await api.createProject(
+        `E2E RC Update Project ${Date.now()}`
+      );
       folderId = await api.getRootFolderId(projectId);
       caseId = await api.createTestCase(projectId, folderId, originalName);
     });
@@ -129,7 +133,9 @@ test.describe("RepositoryCases CRUD", () => {
 
     await test.step("Create a fresh project and test case", async () => {
       // Create a fresh project for isolation
-      projectId = await api.createProject(`E2E RC Delete Project ${Date.now()}`);
+      projectId = await api.createProject(
+        `E2E RC Delete Project ${Date.now()}`
+      );
       folderId = await api.getRootFolderId(projectId);
       caseId = await api.createTestCase(projectId, folderId, uniqueName);
     });

@@ -245,11 +245,11 @@ test.describe("Configuration Management - Category CRUD", () => {
         // Edit dialog opens with title "Edit"
         const dialog = page.getByRole("dialog");
         await expect(dialog).toBeVisible({ timeout: 10000 });
-        await expect(
-          dialog.getByRole("heading", { name: "Edit" })
-        ).toBeVisible({
-          timeout: 5000,
-        });
+        await expect(dialog.getByRole("heading", { name: "Edit" })).toBeVisible(
+          {
+            timeout: 5000,
+          }
+        );
 
         // Verify the dialog opened with the original name
         const nameInput = dialog.getByRole("textbox").first();
@@ -647,9 +647,7 @@ test.describe("Configuration Management - Configuration Groups", () => {
         await page.waitForLoadState("networkidle");
       });
 
-      let variantDialog:
-        | ReturnType<typeof page.getByRole>
-        | undefined;
+      let variantDialog: ReturnType<typeof page.getByRole> | undefined;
 
       await test.step("Open the configuration wizard", async () => {
         // Open the wizard — "Add Configuration" button

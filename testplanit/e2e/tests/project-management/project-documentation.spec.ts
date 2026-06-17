@@ -109,9 +109,11 @@ test.describe("Project Documentation Editor", () => {
       await page.getByRole("button", { name: /Save/i }).click();
 
       // Edit mode should end (Save button disappears)
-      await expect(page.getByRole("button", { name: /Save/i })).not.toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.getByRole("button", { name: /Save/i })).not.toBeVisible(
+        {
+          timeout: 10000,
+        }
+      );
     });
 
     await test.step("Reload and verify the saved content persists", async () => {
@@ -159,9 +161,11 @@ test.describe("Project Documentation Editor", () => {
       await page.getByRole("button", { name: /Cancel/i }).click();
 
       // Edit mode should end — Save button should not be visible
-      await expect(page.getByRole("button", { name: /Save/i })).not.toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.getByRole("button", { name: /Save/i })).not.toBeVisible(
+        {
+          timeout: 10000,
+        }
+      );
 
       // The discarded text should not appear in the readonly content
       await expect(page.getByText("Content to be discarded")).not.toBeVisible({

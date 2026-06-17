@@ -228,9 +228,7 @@ test.describe("Report Builder - Drill-Down", () => {
     // E2E server runs on port 3002
     const e2eBaseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
 
-    let incognitoContext:
-      | import("@playwright/test").BrowserContext
-      | undefined;
+    let incognitoContext: import("@playwright/test").BrowserContext | undefined;
     let incognitoPage: import("@playwright/test").Page | undefined;
 
     await test.step("Create unauthenticated incognito context", async () => {

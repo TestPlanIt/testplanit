@@ -244,20 +244,17 @@ test.describe("LLM API Endpoints", () => {
     }) => {
       let response: Awaited<ReturnType<typeof request.post>> | undefined;
       await test.step("Send magic-select-cases request with missing name", async () => {
-        response = await request.post(
-          `${baseURL}/api/llm/magic-select-cases`,
-          {
-            data: {
-              projectId: 1,
-              testRunMetadata: {
-                // name is missing (required by Zod schema)
-                description: null,
-                docs: null,
-                linkedIssueIds: [],
-              },
+        response = await request.post(`${baseURL}/api/llm/magic-select-cases`, {
+          data: {
+            projectId: 1,
+            testRunMetadata: {
+              // name is missing (required by Zod schema)
+              description: null,
+              docs: null,
+              linkedIssueIds: [],
             },
-          }
-        );
+          },
+        });
       });
 
       await test.step("Verify 400 Invalid request with details", async () => {
@@ -274,20 +271,17 @@ test.describe("LLM API Endpoints", () => {
     }) => {
       let response: Awaited<ReturnType<typeof request.post>> | undefined;
       await test.step("Send magic-select-cases request with missing projectId", async () => {
-        response = await request.post(
-          `${baseURL}/api/llm/magic-select-cases`,
-          {
-            data: {
-              // projectId is missing
-              testRunMetadata: {
-                name: "Test Run",
-                description: null,
-                docs: null,
-                linkedIssueIds: [],
-              },
+        response = await request.post(`${baseURL}/api/llm/magic-select-cases`, {
+          data: {
+            // projectId is missing
+            testRunMetadata: {
+              name: "Test Run",
+              description: null,
+              docs: null,
+              linkedIssueIds: [],
             },
-          }
-        );
+          },
+        });
       });
 
       await test.step("Verify 400 Invalid request", async () => {
@@ -303,20 +297,17 @@ test.describe("LLM API Endpoints", () => {
     }) => {
       let response: Awaited<ReturnType<typeof request.post>> | undefined;
       await test.step("Send magic-select-cases request for a non-existent project", async () => {
-        response = await request.post(
-          `${baseURL}/api/llm/magic-select-cases`,
-          {
-            data: {
-              projectId: 99999999,
-              testRunMetadata: {
-                name: "Test Run",
-                description: null,
-                docs: null,
-                linkedIssueIds: [],
-              },
+        response = await request.post(`${baseURL}/api/llm/magic-select-cases`, {
+          data: {
+            projectId: 99999999,
+            testRunMetadata: {
+              name: "Test Run",
+              description: null,
+              docs: null,
+              linkedIssueIds: [],
             },
-          }
-        );
+          },
+        });
       });
 
       await test.step("Verify 404 Project not found or access denied", async () => {
@@ -340,20 +331,17 @@ test.describe("LLM API Endpoints", () => {
 
       let response: Awaited<ReturnType<typeof request.post>> | undefined;
       await test.step("Send full-analysis magic-select-cases request", async () => {
-        response = await request.post(
-          `${baseURL}/api/llm/magic-select-cases`,
-          {
-            data: {
-              projectId,
-              testRunMetadata: {
-                name: "Sprint 1 Regression",
-                description: null,
-                docs: null,
-                linkedIssueIds: [],
-              },
+        response = await request.post(`${baseURL}/api/llm/magic-select-cases`, {
+          data: {
+            projectId,
+            testRunMetadata: {
+              name: "Sprint 1 Regression",
+              description: null,
+              docs: null,
+              linkedIssueIds: [],
             },
-          }
-        );
+          },
+        });
       });
 
       await test.step("Verify 410 moved to background processing", async () => {
@@ -377,21 +365,18 @@ test.describe("LLM API Endpoints", () => {
 
       let response: Awaited<ReturnType<typeof request.post>> | undefined;
       await test.step("Send countOnly magic-select-cases request", async () => {
-        response = await request.post(
-          `${baseURL}/api/llm/magic-select-cases`,
-          {
-            data: {
-              projectId,
-              testRunMetadata: {
-                name: "Sprint 1",
-                description: null,
-                docs: null,
-                linkedIssueIds: [],
-              },
-              countOnly: true,
+        response = await request.post(`${baseURL}/api/llm/magic-select-cases`, {
+          data: {
+            projectId,
+            testRunMetadata: {
+              name: "Sprint 1",
+              description: null,
+              docs: null,
+              linkedIssueIds: [],
             },
-          }
-        );
+            countOnly: true,
+          },
+        });
       });
 
       await test.step("Verify count response shape or no-integration error", async () => {
@@ -515,9 +500,7 @@ test.describe("LLM API Endpoints", () => {
     }) => {
       let projectId: number | undefined;
       await test.step("Create a project with no LLM integration", async () => {
-        projectId = await api.createProject(
-          `E2E LLM Chat Test ${Date.now()}`
-        );
+        projectId = await api.createProject(`E2E LLM Chat Test ${Date.now()}`);
       });
 
       let response: Awaited<ReturnType<typeof request.post>> | undefined;

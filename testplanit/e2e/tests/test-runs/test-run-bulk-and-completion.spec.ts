@@ -123,7 +123,10 @@ test.describe("Test Run Bulk Operations and Completion", () => {
 
     await test.step("Create project, case, and run", async () => {
       projectId = await api.createProject(`E2E Complete ${ts}`);
-      const folderId = await api.createFolder(projectId, "RunCompletion Folder");
+      const folderId = await api.createFolder(
+        projectId,
+        "RunCompletion Folder"
+      );
       const caseId = await api.createTestCase(
         projectId,
         folderId,
@@ -136,9 +139,8 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     let completeButton: ReturnType<typeof page.locator> | undefined;
     let isCompleteButtonVisible: boolean | undefined;
 
-    const earlyReturn = await test.step(
-      "Open the run detail page and locate the Complete button",
-      async () => {
+    const earlyReturn =
+      await test.step("Open the run detail page and locate the Complete button", async () => {
         // Navigate to the run detail page
         await page.goto(`/en-US/projects/runs/${projectId}/${runId}`);
         await page.waitForLoadState("load");
@@ -207,8 +209,7 @@ test.describe("Test Run Bulk Operations and Completion", () => {
         }
 
         return false;
-      }
-    );
+      });
 
     if (earlyReturn) {
       return;
@@ -393,11 +394,11 @@ test.describe("Test Run Bulk Operations and Completion", () => {
       await page.waitForLoadState("load");
 
       // The "Configurations:" label and combobox appear for multi-config runs.
-      await expect(
-        page.locator('span:has-text("Configurations")')
-      ).toBeVisible({
-        timeout: 15000,
-      });
+      await expect(page.locator('span:has-text("Configurations")')).toBeVisible(
+        {
+          timeout: 15000,
+        }
+      );
 
       // Find the config combobox by locating it near the "Configurations:" text.
       // The structure renders the span and combobox button as siblings in the same flex container.

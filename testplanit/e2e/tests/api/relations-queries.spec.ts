@@ -145,7 +145,9 @@ test.describe("Filter, OrderBy, Pagination, and Count", () => {
     let page2Names: string[] | undefined;
 
     await test.step("Create a project with five ordered cases", async () => {
-      projectId = await api.createProject(`E2E Pagination Project ${Date.now()}`);
+      projectId = await api.createProject(
+        `E2E Pagination Project ${Date.now()}`
+      );
       folderId = await api.getRootFolderId(projectId);
 
       await api.createTestCase(projectId, folderId, `${prefix}-01`);
@@ -323,7 +325,9 @@ test.describe("Filter, OrderBy, Pagination, and Count", () => {
     let projectId: number | undefined;
 
     await test.step("Create a project with three test runs under the prefix", async () => {
-      projectId = await api.createProject(`E2E Count Runs Project ${Date.now()}`);
+      projectId = await api.createProject(
+        `E2E Count Runs Project ${Date.now()}`
+      );
 
       await api.createTestRun(projectId, `${prefix}-A`);
       await api.createTestRun(projectId, `${prefix}-B`);

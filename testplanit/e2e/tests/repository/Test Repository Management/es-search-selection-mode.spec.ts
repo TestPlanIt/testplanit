@@ -115,10 +115,7 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
       await page.goto(`/en-US/projects/runs/${projectId}`);
       await page.waitForLoadState("load");
 
-      dialog = await openModalAndGoToStep2(
-        page,
-        `ES Search Run ${Date.now()}`
-      );
+      dialog = await openModalAndGoToStep2(page, `ES Search Run ${Date.now()}`);
     });
 
     await test.step("Verify the ES search input appears in selection mode", async () => {

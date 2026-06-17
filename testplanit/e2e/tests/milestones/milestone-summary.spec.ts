@@ -7,7 +7,9 @@ test.describe("Milestone Summary API – statusOrder field", () => {
   }) => {
     const ts = Date.now();
 
-    let milestoneId: Awaited<ReturnType<typeof api.createMilestone>> | undefined;
+    let milestoneId:
+      | Awaited<ReturnType<typeof api.createMilestone>>
+      | undefined;
 
     await test.step("Create project, milestone, and a passed test run case", async () => {
       const projectId = await api.createProject(`MilestoneSummary ${ts}`);
@@ -61,10 +63,14 @@ test.describe("Milestone Summary API – statusOrder field", () => {
   }) => {
     const ts = Date.now();
 
-    let milestoneId: Awaited<ReturnType<typeof api.createMilestone>> | undefined;
+    let milestoneId:
+      | Awaited<ReturnType<typeof api.createMilestone>>
+      | undefined;
 
     await test.step("Create project, milestone, and a session", async () => {
-      const projectId = await api.createProject(`MilestoneSummarySession ${ts}`);
+      const projectId = await api.createProject(
+        `MilestoneSummarySession ${ts}`
+      );
       milestoneId = await api.createMilestone(
         projectId,
         `Session Sort Milestone ${ts}`

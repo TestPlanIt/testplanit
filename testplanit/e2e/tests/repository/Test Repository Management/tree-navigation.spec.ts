@@ -476,11 +476,11 @@ test.describe("Tree Navigation", () => {
       ).toBeVisible({
         timeout: 10000,
       });
-      await expect(
-        page.locator(`text="${childCaseName}"`).first()
-      ).toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.locator(`text="${childCaseName}"`).first()).toBeVisible(
+        {
+          timeout: 10000,
+        }
+      );
 
       // Child case should show a folder badge
       const childCaseRow = page

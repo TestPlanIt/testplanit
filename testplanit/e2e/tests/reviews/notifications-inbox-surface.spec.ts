@@ -125,7 +125,7 @@ test.describe("Notification surfaces", () => {
         entityType: "CASE",
         entityId: caseId!,
         fromStateId: currentStateId!,
-        toStateId: gatedWorkflowId,
+        toStateId: gatedWorkflowId!,
         requestedByUserId: requester.data.id,
         assigneeUserId: adminUserId,
       });

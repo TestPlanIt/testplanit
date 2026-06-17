@@ -321,7 +321,8 @@ test.describe("Sort toggle – statusOrder field", () => {
         for (const detail of summary.caseDetails) {
           expect(detail).toHaveProperty("statusOrder");
           expect(
-            detail.statusOrder === null || typeof detail.statusOrder === "number"
+            detail.statusOrder === null ||
+              typeof detail.statusOrder === "number"
           ).toBe(true);
         }
       }

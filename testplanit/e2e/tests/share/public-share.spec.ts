@@ -145,7 +145,7 @@ test.describe("Public Share Flow", () => {
     try {
       // Navigate to the share URL
       console.log(`[TEST] Navigating to share URL: ${shareUrl}`);
-      await incognitoPage.goto(shareUrl);
+      await incognitoPage.goto(shareUrl!);
       await incognitoPage.waitForLoadState("networkidle");
 
       // Log current URL for debugging

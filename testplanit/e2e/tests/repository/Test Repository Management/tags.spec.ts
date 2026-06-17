@@ -31,9 +31,11 @@ test.describe("Tags", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on the tags page
-      await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible(
+        {
+          timeout: 10000,
+        }
+      );
     });
 
     await test.step("Open the add tag dialog", async () => {
@@ -353,9 +355,11 @@ test.describe("Tags", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on the tags page
-      await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible(
+        {
+          timeout: 10000,
+        }
+      );
     });
 
     await test.step("Filter to find the tag and open its edit dialog", async () => {
@@ -426,9 +430,11 @@ test.describe("Tags", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on the tags page
-      await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible(
+        {
+          timeout: 10000,
+        }
+      );
     });
 
     await test.step("Filter to find the tag and click its delete button", async () => {
@@ -910,11 +916,11 @@ test.describe("Tags", () => {
       // Verify the global tag is now displayed on the test case
       const tagsDisplaySection = page.locator("#tags-display").first();
       await expect(tagsDisplaySection).toBeVisible({ timeout: 10000 });
-      await expect(
-        page.locator(`text="${globalTagName}"`).first()
-      ).toBeVisible({
-        timeout: 5000,
-      });
+      await expect(page.locator(`text="${globalTagName}"`).first()).toBeVisible(
+        {
+          timeout: 5000,
+        }
+      );
     });
   });
 
@@ -934,16 +940,16 @@ test.describe("Tags", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on the tags page
-      await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible(
+        {
+          timeout: 10000,
+        }
+      );
     });
 
     await test.step("Create the lowercase tag", async () => {
       // Click the add tag button
-      addTagButton = page
-        .locator("button:has(svg.lucide-circle-plus)")
-        .first();
+      addTagButton = page.locator("button:has(svg.lucide-circle-plus)").first();
       await expect(addTagButton).toBeVisible({ timeout: 5000 });
       await addTagButton.click();
 
@@ -1155,9 +1161,11 @@ test.describe("Tags", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on the tags page
-      await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible(
+        {
+          timeout: 10000,
+        }
+      );
 
       // Click the add tag button
       const addTagButton = page
@@ -1230,9 +1238,11 @@ test.describe("Tags", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on the tags page
-      await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible(
+        {
+          timeout: 10000,
+        }
+      );
 
       // Filter to find our tag
       const filterInput = page.locator('input[placeholder*="Filter"]').first();

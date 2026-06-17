@@ -919,7 +919,9 @@ test.describe("Markdown Export & Import", () => {
         const targetOption = folderOptions.filter({
           hasText: targetFolderName,
         });
-        if (await targetOption.isVisible({ timeout: 2000 }).catch(() => false)) {
+        if (
+          await targetOption.isVisible({ timeout: 2000 }).catch(() => false)
+        ) {
           await targetOption.click();
         } else {
           // Fall back to first option

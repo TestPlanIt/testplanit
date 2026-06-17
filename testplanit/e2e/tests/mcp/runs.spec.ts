@@ -341,9 +341,7 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     request,
     baseURL,
   }) => {
-    let list:
-      | Awaited<ReturnType<typeof callTool>>
-      | undefined;
+    let list: Awaited<ReturnType<typeof callTool>> | undefined;
 
     // Invoke the testplanit_test_runs_list tool equivalent
     await test.step("Invoke testplanit_test_runs_list tool", async () => {
@@ -504,8 +502,7 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     // Verify the rollup counts sum to the total (R3 invariant)
     await test.step("Assert rollup counts sum to total", async () => {
       const total = groups!.reduce((s, g) => s + g._count.id, 0);
-      const untested =
-        groups!.find((g) => g.statusId === null)?._count.id ?? 0;
+      const untested = groups!.find((g) => g.statusId === null)?._count.id ?? 0;
       const statusCounts = groups!
         .filter((g) => g.statusId !== null)
         .map((g) => ({ id: g.statusId as number, count: g._count.id }));

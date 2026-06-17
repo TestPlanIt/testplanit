@@ -198,61 +198,61 @@ test.describe("Field-Based Filtering", () => {
         const headers = await columnHeaders;
 
         for (const header of headers) {
-        const headerText = await header.textContent();
+          const headerText = await header.textContent();
 
-        // Skip system columns
-        if (
-          !headerText ||
-          headerText.match(
-            /^(#|Actions|Select|☰|Name|Template|State|Creator|Folder)$/i
-          )
-        ) {
-          continue;
-        }
-
-        await header.click();
-        await page.waitForTimeout(300);
-
-        // Look for Has Value / No Value options
-        const hasValueOption = page.locator("text=/Has.*Value/i").first();
-        const noValueOption = page.locator("text=/No.*Value/i").first();
-
-        const hasValueVisible = await hasValueOption
-          .isVisible({ timeout: 1000 })
-          .catch(() => false);
-        const noValueVisible = await noValueOption
-          .isVisible({ timeout: 1000 })
-          .catch(() => false);
-
-        if (hasValueVisible || noValueVisible) {
-          // Try clicking No Value to filter
-          if (noValueVisible) {
-            await noValueOption.click();
-            await page.waitForLoadState("networkidle");
-            await page.waitForTimeout(500);
-
-            // Check if filter was applied (chip should appear or count should change)
-            const filterChip = page
-              .locator('[class*="filter"], [class*="chip"], [class*="badge"]')
-              .filter({
-                hasText: /No.*Value|Empty|None/i,
-              });
-
-            const chipVisible = await filterChip
-              .isVisible({ timeout: 2000 })
-              .catch(() => false);
-
-            // If chip appeared, try to clear it
-            if (chipVisible) {
-              const clearButton = filterChip
-                .locator('button, [role="button"]')
-                .first();
-              await clearButton.click();
-              await page.waitForLoadState("networkidle");
-            }
+          // Skip system columns
+          if (
+            !headerText ||
+            headerText.match(
+              /^(#|Actions|Select|☰|Name|Template|State|Creator|Folder)$/i
+            )
+          ) {
+            continue;
           }
-          break;
-        }
+
+          await header.click();
+          await page.waitForTimeout(300);
+
+          // Look for Has Value / No Value options
+          const hasValueOption = page.locator("text=/Has.*Value/i").first();
+          const noValueOption = page.locator("text=/No.*Value/i").first();
+
+          const hasValueVisible = await hasValueOption
+            .isVisible({ timeout: 1000 })
+            .catch(() => false);
+          const noValueVisible = await noValueOption
+            .isVisible({ timeout: 1000 })
+            .catch(() => false);
+
+          if (hasValueVisible || noValueVisible) {
+            // Try clicking No Value to filter
+            if (noValueVisible) {
+              await noValueOption.click();
+              await page.waitForLoadState("networkidle");
+              await page.waitForTimeout(500);
+
+              // Check if filter was applied (chip should appear or count should change)
+              const filterChip = page
+                .locator('[class*="filter"], [class*="chip"], [class*="badge"]')
+                .filter({
+                  hasText: /No.*Value|Empty|None/i,
+                });
+
+              const chipVisible = await filterChip
+                .isVisible({ timeout: 2000 })
+                .catch(() => false);
+
+              // If chip appeared, try to clear it
+              if (chipVisible) {
+                const clearButton = filterChip
+                  .locator('button, [role="button"]')
+                  .first();
+                await clearButton.click();
+                await page.waitForLoadState("networkidle");
+              }
+            }
+            break;
+          }
         }
       });
     });
@@ -270,68 +270,71 @@ test.describe("Field-Based Filtering", () => {
       });
 
       await test.step("Select Between operator on a numeric column and validate the range inputs", async () => {
-      // Look for numeric field columns (like Priority, Estimate, etc.)
-      const columnHeaders = page.locator("th").all();
-      const headers = await columnHeaders;
+        // Look for numeric field columns (like Priority, Estimate, etc.)
+        const columnHeaders = page.locator("th").all();
+        const headers = await columnHeaders;
 
-      for (const header of headers) {
-        const headerText = await header.textContent();
+        for (const header of headers) {
+          const headerText = await header.textContent();
 
-        // Look for columns that might be numeric
-        if (headerText && headerText.match(/Priority|Estimate|Number|Count/i)) {
-          await header.click();
-          await page.waitForTimeout(300);
-
-          // Look for Between operator
-          const betweenOption = page.locator("text=/Between/i").first();
-          const betweenVisible = await betweenOption
-            .isVisible({ timeout: 1000 })
-            .catch(() => false);
-
-          if (betweenVisible) {
-            await betweenOption.click();
+          // Look for columns that might be numeric
+          if (
+            headerText &&
+            headerText.match(/Priority|Estimate|Number|Count/i)
+          ) {
+            await header.click();
             await page.waitForTimeout(300);
 
-            // Verify two number inputs appear
-            const numberInputs = page.locator('input[type="number"]');
-            const inputCount = await numberInputs.count();
+            // Look for Between operator
+            const betweenOption = page.locator("text=/Between/i").first();
+            const betweenVisible = await betweenOption
+              .isVisible({ timeout: 1000 })
+              .catch(() => false);
 
-            if (inputCount >= 2) {
-              // Enter invalid range (first > second)
-              await numberInputs.nth(0).fill("10");
-              await numberInputs.nth(1).fill("5");
-              await page.waitForTimeout(500);
+            if (betweenVisible) {
+              await betweenOption.click();
+              await page.waitForTimeout(300);
 
-              // Look for validation error or disabled apply button
-              const applyButton = page
-                .locator(
-                  'button:has-text("Apply"), button[aria-label*="Apply"]'
-                )
-                .first();
-              const isDisabled = await applyButton
-                .isDisabled()
-                .catch(() => false);
+              // Verify two number inputs appear
+              const numberInputs = page.locator('input[type="number"]');
+              const inputCount = await numberInputs.count();
 
-              expect(isDisabled).toBe(true);
+              if (inputCount >= 2) {
+                // Enter invalid range (first > second)
+                await numberInputs.nth(0).fill("10");
+                await numberInputs.nth(1).fill("5");
+                await page.waitForTimeout(500);
 
-              // Fix the range
-              await numberInputs.nth(0).fill("3");
-              await numberInputs.nth(1).fill("8");
-              await page.waitForTimeout(500);
+                // Look for validation error or disabled apply button
+                const applyButton = page
+                  .locator(
+                    'button:has-text("Apply"), button[aria-label*="Apply"]'
+                  )
+                  .first();
+                const isDisabled = await applyButton
+                  .isDisabled()
+                  .catch(() => false);
 
-              // Apply button should be enabled now
-              const isEnabledNow = await applyButton
-                .isEnabled()
-                .catch(() => true);
-              expect(isEnabledNow).toBe(true);
+                expect(isDisabled).toBe(true);
+
+                // Fix the range
+                await numberInputs.nth(0).fill("3");
+                await numberInputs.nth(1).fill("8");
+                await page.waitForTimeout(500);
+
+                // Apply button should be enabled now
+                const isEnabledNow = await applyButton
+                  .isEnabled()
+                  .catch(() => true);
+                expect(isEnabledNow).toBe(true);
+              }
+
+              // Close dropdown
+              await page.keyboard.press("Escape");
+              break;
             }
-
-            // Close dropdown
-            await page.keyboard.press("Escape");
-            break;
           }
         }
-      }
       });
     });
 
@@ -345,74 +348,74 @@ test.describe("Field-Based Filtering", () => {
       });
 
       await test.step("Open the Name column Contains filter, apply it, and clear the chip", async () => {
-      // Use the Name column for text filtering
-      const nameHeader = page
-        .locator('th:has-text("Name"), th:has-text("Title")')
-        .first();
-      await nameHeader.click();
-      await page.waitForTimeout(300);
-
-      // Look for Contains operator
-      const containsOption = page.locator("text=/Contains/i").first();
-      const containsVisible = await containsOption
-        .isVisible({ timeout: 1000 })
-        .catch(() => false);
-
-      if (containsVisible) {
-        await containsOption.click();
+        // Use the Name column for text filtering
+        const nameHeader = page
+          .locator('th:has-text("Name"), th:has-text("Title")')
+          .first();
+        await nameHeader.click();
         await page.waitForTimeout(300);
 
-        // Type search term
-        const textInput = page
-          .locator('input[type="text"], input[type="search"]')
-          .filter({
-            hasNotText: "",
-          })
-          .first();
-
-        const inputVisible = await textInput
+        // Look for Contains operator
+        const containsOption = page.locator("text=/Contains/i").first();
+        const containsVisible = await containsOption
           .isVisible({ timeout: 1000 })
           .catch(() => false);
 
-        if (inputVisible) {
-          await textInput.fill("test");
+        if (containsVisible) {
+          await containsOption.click();
           await page.waitForTimeout(300);
 
-          // Apply filter
-          const applyButton = page
-            .locator('button:has-text("Apply"), button[aria-label*="Apply"]')
+          // Type search term
+          const textInput = page
+            .locator('input[type="text"], input[type="search"]')
+            .filter({
+              hasNotText: "",
+            })
             .first();
-          const buttonVisible = await applyButton
+
+          const inputVisible = await textInput
             .isVisible({ timeout: 1000 })
             .catch(() => false);
 
-          if (buttonVisible) {
-            await applyButton.click();
-            await page.waitForLoadState("networkidle");
-            await page.waitForTimeout(500);
+          if (inputVisible) {
+            await textInput.fill("test");
+            await page.waitForTimeout(300);
 
-            // Look for filter chip
-            const filterChip = page
-              .locator('[class*="filter"], [class*="chip"], [class*="badge"]')
-              .filter({
-                hasText: /contains|test/i,
-              });
-
-            const chipVisible = await filterChip
-              .isVisible({ timeout: 2000 })
+            // Apply filter
+            const applyButton = page
+              .locator('button:has-text("Apply"), button[aria-label*="Apply"]')
+              .first();
+            const buttonVisible = await applyButton
+              .isVisible({ timeout: 1000 })
               .catch(() => false);
 
-            // If chip visible, clear it
-            if (chipVisible) {
-              const clearButton = filterChip
-                .locator('button, [role="button"]')
-                .first();
-              await clearButton.click();
+            if (buttonVisible) {
+              await applyButton.click();
               await page.waitForLoadState("networkidle");
+              await page.waitForTimeout(500);
+
+              // Look for filter chip
+              const filterChip = page
+                .locator('[class*="filter"], [class*="chip"], [class*="badge"]')
+                .filter({
+                  hasText: /contains|test/i,
+                });
+
+              const chipVisible = await filterChip
+                .isVisible({ timeout: 2000 })
+                .catch(() => false);
+
+              // If chip visible, clear it
+              if (chipVisible) {
+                const clearButton = filterChip
+                  .locator('button, [role="button"]')
+                  .first();
+                await clearButton.click();
+                await page.waitForLoadState("networkidle");
+              }
             }
           }
         }
-      }
       });
     });
   });
@@ -431,83 +434,85 @@ test.describe("Field-Based Filtering", () => {
       });
 
       await test.step("Apply Name contains test filter and add a second Has Value filter", async () => {
-      // Apply first filter (Name contains "test")
-      const nameHeader = page.locator('th:has-text("Name")').first();
-      await nameHeader.click();
-      await page.waitForTimeout(300);
+        // Apply first filter (Name contains "test")
+        const nameHeader = page.locator('th:has-text("Name")').first();
+        await nameHeader.click();
+        await page.waitForTimeout(300);
 
-      const containsOption = page.locator("text=/Contains/i").first();
-      if (
-        await containsOption.isVisible({ timeout: 1000 }).catch(() => false)
-      ) {
-        await containsOption.click();
-        await page.waitForTimeout(200);
+        const containsOption = page.locator("text=/Contains/i").first();
+        if (
+          await containsOption.isVisible({ timeout: 1000 }).catch(() => false)
+        ) {
+          await containsOption.click();
+          await page.waitForTimeout(200);
 
-        const textInput = page.locator('input[type="text"]').first();
-        await textInput.fill("test");
-        await page.waitForTimeout(200);
+          const textInput = page.locator('input[type="text"]').first();
+          await textInput.fill("test");
+          await page.waitForTimeout(200);
 
-        const applyButton1 = page.locator('button:has-text("Apply")').first();
-        await applyButton1.click();
-        await page.waitForLoadState("networkidle");
+          const applyButton1 = page.locator('button:has-text("Apply")').first();
+          await applyButton1.click();
+          await page.waitForLoadState("networkidle");
 
-        // Verify first filter chip appears
-        const filterChip1 = page
-          .locator('[class*="filter"], [class*="chip"]')
-          .filter({
-            hasText: /contains|test/i,
-          });
-        await expect(filterChip1.first()).toBeVisible({ timeout: 3000 });
+          // Verify first filter chip appears
+          const filterChip1 = page
+            .locator('[class*="filter"], [class*="chip"]')
+            .filter({
+              hasText: /contains|test/i,
+            });
+          await expect(filterChip1.first()).toBeVisible({ timeout: 3000 });
 
-        // Try to apply a second filter
-        const headers = await page.locator("th").all();
+          // Try to apply a second filter
+          const headers = await page.locator("th").all();
 
-        for (const header of headers) {
-          const headerText = await header.textContent();
+          for (const header of headers) {
+            const headerText = await header.textContent();
 
-          // Skip the name column we just filtered
-          if (!headerText || headerText.match(/Name|Title/i)) {
-            continue;
-          }
-
-          await header.click();
-          await page.waitForTimeout(300);
-
-          // Look for Has Value option
-          const hasValueOption = page.locator("text=/Has.*Value/i").first();
-          if (
-            await hasValueOption.isVisible({ timeout: 1000 }).catch(() => false)
-          ) {
-            await hasValueOption.click();
-            await page.waitForLoadState("networkidle");
-
-            // Check if second chip appeared
-            const filterChips = page.locator(
-              '[class*="filter"], [class*="chip"]'
-            );
-            const chipCount = await filterChips.count();
-
-            if (chipCount >= 2) {
-              // Success - two filters applied
-              // Clear all filters
-              const clearAllButton = page
-                .locator(
-                  'button:has-text("Clear all"), button:has-text("Clear filters")'
-                )
-                .first();
-              if (
-                await clearAllButton
-                  .isVisible({ timeout: 1000 })
-                  .catch(() => false)
-              ) {
-                await clearAllButton.click();
-                await page.waitForLoadState("networkidle");
-              }
+            // Skip the name column we just filtered
+            if (!headerText || headerText.match(/Name|Title/i)) {
+              continue;
             }
-            break;
+
+            await header.click();
+            await page.waitForTimeout(300);
+
+            // Look for Has Value option
+            const hasValueOption = page.locator("text=/Has.*Value/i").first();
+            if (
+              await hasValueOption
+                .isVisible({ timeout: 1000 })
+                .catch(() => false)
+            ) {
+              await hasValueOption.click();
+              await page.waitForLoadState("networkidle");
+
+              // Check if second chip appeared
+              const filterChips = page.locator(
+                '[class*="filter"], [class*="chip"]'
+              );
+              const chipCount = await filterChips.count();
+
+              if (chipCount >= 2) {
+                // Success - two filters applied
+                // Clear all filters
+                const clearAllButton = page
+                  .locator(
+                    'button:has-text("Clear all"), button:has-text("Clear filters")'
+                  )
+                  .first();
+                if (
+                  await clearAllButton
+                    .isVisible({ timeout: 1000 })
+                    .catch(() => false)
+                ) {
+                  await clearAllButton.click();
+                  await page.waitForLoadState("networkidle");
+                }
+              }
+              break;
+            }
           }
         }
-      }
       });
     });
   });
@@ -523,55 +528,55 @@ test.describe("Field-Based Filtering", () => {
       });
 
       await test.step("Apply Name contains filter, navigate away and back, verify the chip persists", async () => {
-      // Apply a filter
-      const nameHeader = page.locator('th:has-text("Name")').first();
-      await nameHeader.click();
-      await page.waitForTimeout(300);
+        // Apply a filter
+        const nameHeader = page.locator('th:has-text("Name")').first();
+        await nameHeader.click();
+        await page.waitForTimeout(300);
 
-      const containsOption = page.locator("text=/Contains/i").first();
-      if (
-        await containsOption.isVisible({ timeout: 1000 }).catch(() => false)
-      ) {
-        await containsOption.click();
-        await page.waitForTimeout(200);
+        const containsOption = page.locator("text=/Contains/i").first();
+        if (
+          await containsOption.isVisible({ timeout: 1000 }).catch(() => false)
+        ) {
+          await containsOption.click();
+          await page.waitForTimeout(200);
 
-        const textInput = page.locator('input[type="text"]').first();
-        await textInput.fill("test");
-        await page.waitForTimeout(200);
+          const textInput = page.locator('input[type="text"]').first();
+          await textInput.fill("test");
+          await page.waitForTimeout(200);
 
-        const applyButton = page.locator('button:has-text("Apply")').first();
-        await applyButton.click();
-        await page.waitForLoadState("networkidle");
-
-        // Verify filter chip appears
-        const filterChip = page
-          .locator('[class*="filter"], [class*="chip"]')
-          .filter({
-            hasText: /contains|test/i,
-          });
-        await expect(filterChip.first()).toBeVisible({ timeout: 3000 });
-
-        // Navigate to a test case (click first row)
-        const firstRow = page
-          .locator('tbody tr, [role="row"]')
-          .filter({
-            has: page.locator('td, [role="cell"]'),
-          })
-          .first();
-
-        if (await firstRow.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await firstRow.click();
-          await page.waitForLoadState("networkidle");
-          await page.waitForTimeout(500);
-
-          // Navigate back
-          await page.goBack();
+          const applyButton = page.locator('button:has-text("Apply")').first();
+          await applyButton.click();
           await page.waitForLoadState("networkidle");
 
-          // Verify filter chip still visible
+          // Verify filter chip appears
+          const filterChip = page
+            .locator('[class*="filter"], [class*="chip"]')
+            .filter({
+              hasText: /contains|test/i,
+            });
           await expect(filterChip.first()).toBeVisible({ timeout: 3000 });
+
+          // Navigate to a test case (click first row)
+          const firstRow = page
+            .locator('tbody tr, [role="row"]')
+            .filter({
+              has: page.locator('td, [role="cell"]'),
+            })
+            .first();
+
+          if (await firstRow.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await firstRow.click();
+            await page.waitForLoadState("networkidle");
+            await page.waitForTimeout(500);
+
+            // Navigate back
+            await page.goBack();
+            await page.waitForLoadState("networkidle");
+
+            // Verify filter chip still visible
+            await expect(filterChip.first()).toBeVisible({ timeout: 3000 });
+          }
         }
-      }
       });
     });
   });
@@ -587,43 +592,43 @@ test.describe("Field-Based Filtering", () => {
       });
 
       await test.step("Apply a non-matching filter and verify the empty state", async () => {
-      // Apply filter with no matching results
-      const nameHeader = page.locator('th:has-text("Name")').first();
-      await nameHeader.click();
-      await page.waitForTimeout(300);
+        // Apply filter with no matching results
+        const nameHeader = page.locator('th:has-text("Name")').first();
+        await nameHeader.click();
+        await page.waitForTimeout(300);
 
-      const containsOption = page.locator("text=/Contains/i").first();
-      if (
-        await containsOption.isVisible({ timeout: 1000 }).catch(() => false)
-      ) {
-        await containsOption.click();
-        await page.waitForTimeout(200);
+        const containsOption = page.locator("text=/Contains/i").first();
+        if (
+          await containsOption.isVisible({ timeout: 1000 }).catch(() => false)
+        ) {
+          await containsOption.click();
+          await page.waitForTimeout(200);
 
-        const textInput = page.locator('input[type="text"]').first();
-        await textInput.fill("NOMATCHPOSSIBLE123XYZ");
-        await page.waitForTimeout(200);
+          const textInput = page.locator('input[type="text"]').first();
+          await textInput.fill("NOMATCHPOSSIBLE123XYZ");
+          await page.waitForTimeout(200);
 
-        const applyButton = page.locator('button:has-text("Apply")').first();
-        await applyButton.click();
-        await page.waitForLoadState("networkidle");
-        await page.waitForTimeout(500);
+          const applyButton = page.locator('button:has-text("Apply")').first();
+          await applyButton.click();
+          await page.waitForLoadState("networkidle");
+          await page.waitForTimeout(500);
 
-        // Look for empty state message
-        const emptyState = page
-          .locator("text=/No.*test cases|No.*results|No.*matches|No.*found/i")
-          .first();
-        const emptyStateVisible = await emptyState
-          .isVisible({ timeout: 3000 })
-          .catch(() => false);
+          // Look for empty state message
+          const emptyState = page
+            .locator("text=/No.*test cases|No.*results|No.*matches|No.*found/i")
+            .first();
+          const emptyStateVisible = await emptyState
+            .isVisible({ timeout: 3000 })
+            .catch(() => false);
 
-        // Either empty state appears OR no rows in the table
-        const tableRows = page.locator('tbody tr, [role="row"]').filter({
-          has: page.locator('td, [role="cell"]'),
-        });
-        const rowCount = await tableRows.count();
+          // Either empty state appears OR no rows in the table
+          const tableRows = page.locator('tbody tr, [role="row"]').filter({
+            has: page.locator('td, [role="cell"]'),
+          });
+          const rowCount = await tableRows.count();
 
-        expect(emptyStateVisible || rowCount === 0).toBe(true);
-      }
+          expect(emptyStateVisible || rowCount === 0).toBe(true);
+        }
       });
     });
   });

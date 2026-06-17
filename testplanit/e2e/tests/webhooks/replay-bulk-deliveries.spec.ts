@@ -98,9 +98,11 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
         await completedCheckbox.check();
       }
       await page.getByTestId("webhook-outbound-create-submit").click();
-      await expect(page.getByTestId("webhook-outbound-add-button")).toBeVisible({
-        timeout: 10_000,
-      });
+      await expect(page.getByTestId("webhook-outbound-add-button")).toBeVisible(
+        {
+          timeout: 10_000,
+        }
+      );
 
       const outboundConfig = await prisma.webhookConfig.findFirst({
         where: { projectId, direction: "OUTBOUND" },

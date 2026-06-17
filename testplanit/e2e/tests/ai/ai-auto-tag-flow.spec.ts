@@ -72,7 +72,9 @@ test.describe("Auto-Tag Flow", () => {
 
     await test.step("Seed project, LLM integration, folder, and case", async () => {
       projectId = await api.createProject(`E2E AutoTag Mock ${ts}`);
-      const llmId = await api.createLlmIntegration(`E2E LLM AutoTag Mock ${ts}`);
+      const llmId = await api.createLlmIntegration(
+        `E2E LLM AutoTag Mock ${ts}`
+      );
       await api.linkLlmToProject(projectId, llmId);
       folderId = await api.createFolder(projectId, `Mock Folder ${ts}`);
       caseId = await api.createTestCase(

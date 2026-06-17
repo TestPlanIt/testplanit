@@ -623,7 +623,9 @@ test.describe("Result Creation - Multi-Select Fields", () => {
 
     await test.step("Verify Multi-Select field renders and submit", async () => {
       // Multi-Select falls through to the default case and renders as a plain input
-      const fieldLabel = modal!.getByText(displayName, { exact: false }).first();
+      const fieldLabel = modal!
+        .getByText(displayName, { exact: false })
+        .first();
       await expect(fieldLabel).toBeVisible({ timeout: 5000 });
 
       await submitAndExpectSuccess(modal!);
@@ -660,7 +662,9 @@ test.describe("Result Creation - Checkbox Fields", () => {
     await test.step("Verify Checkbox field renders and submit", async () => {
       // Checkbox falls through to the default case in renderDynamicField
       // and renders as a plain input element
-      const fieldLabel = modal!.getByText(displayName, { exact: false }).first();
+      const fieldLabel = modal!
+        .getByText(displayName, { exact: false })
+        .first();
       await expect(fieldLabel).toBeVisible({ timeout: 5000 });
 
       await submitAndExpectSuccess(modal!);

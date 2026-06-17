@@ -304,9 +304,7 @@ test.describe("Steps Display", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify we're on the test case detail page by checking for the test case name in the header
-      await expect(
-        page.locator(`text="${testCaseName}"`).first()
-      ).toBeVisible({
+      await expect(page.locator(`text="${testCaseName}"`).first()).toBeVisible({
         timeout: 10000,
       });
 
@@ -427,7 +425,7 @@ test.describe("Steps Display", () => {
       // Create a test run with this case
       const testRunName = `E2E Test Run ${uniqueId}`;
       const testRunId = await api.createTestRun(projectId, testRunName);
-      await api.addTestCaseToTestRun(testRunId, testCaseId);
+      await api.addTestCaseToTestRun(testRunId, testCaseId!);
 
       // Navigate to test run execution page
       await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);
@@ -468,9 +466,7 @@ test.describe("Steps Display", () => {
     let testCaseId: number | undefined;
     const editButton = page.locator('[data-testid="edit-test-case-button"]');
     const addStepButton = page.locator('[data-testid="add-step-button"]');
-    let versionDropdown:
-      | ReturnType<typeof page.locator>
-      | undefined;
+    let versionDropdown: ReturnType<typeof page.locator> | undefined;
 
     await test.step("Create test case and open it in edit mode", async () => {
       const folderName = `Diff Steps Folder ${uniqueId}`;
@@ -745,7 +741,7 @@ test.describe("Steps Display", () => {
       // Create a test run with this case
       const testRunName = `E2E Result Modal Run ${uniqueId}`;
       const testRunId = await api.createTestRun(projectId, testRunName);
-      await api.addTestCaseToTestRun(testRunId, testCaseId);
+      await api.addTestCaseToTestRun(testRunId, testCaseId!);
 
       // Navigate to test run execution page
       await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);

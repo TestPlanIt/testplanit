@@ -131,12 +131,9 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     const page = await bOnlyCtx.newPage();
     try {
       await test.step("Navigate to Project A's webhooks page as B-only PROJECTADMIN", async () => {
-        await page.goto(
-          `${baseURL}/projects/settings/${projectAId}/webhooks`,
-          {
-            waitUntil: "load",
-          }
-        );
+        await page.goto(`${baseURL}/projects/settings/${projectAId}/webhooks`, {
+          waitUntil: "load",
+        });
       });
 
       // Page-level gate calls notFound() when project is not visible OR when
@@ -152,9 +149,9 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
         await expect(page.getByTestId("webhooks-tab-deliveries")).toHaveCount(
           0
         );
-        await expect(
-          page.getByTestId("webhook-inbound-card-jira")
-        ).toHaveCount(0);
+        await expect(page.getByTestId("webhook-inbound-card-jira")).toHaveCount(
+          0
+        );
       });
     } finally {
       await page.close();
@@ -181,9 +178,9 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
             timeout: 10_000,
           }
         );
-        await expect(
-          page.getByTestId("webhook-deliveries-table")
-        ).toHaveCount(0);
+        await expect(page.getByTestId("webhook-deliveries-table")).toHaveCount(
+          0
+        );
       });
     } finally {
       await page.close();
@@ -261,12 +258,9 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     const page = await bOnlyCtx.newPage();
     try {
       await test.step("Navigate to Project B's webhooks page as B-only PROJECTADMIN", async () => {
-        await page.goto(
-          `${baseURL}/projects/settings/${projectBId}/webhooks`,
-          {
-            waitUntil: "load",
-          }
-        );
+        await page.goto(`${baseURL}/projects/settings/${projectBId}/webhooks`, {
+          waitUntil: "load",
+        });
       });
       await test.step("Assert the webhook form and inbound tab are visible", async () => {
         await expect(page.getByTestId("webhook-config-form")).toBeVisible({

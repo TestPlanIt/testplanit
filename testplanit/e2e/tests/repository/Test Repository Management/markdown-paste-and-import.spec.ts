@@ -454,90 +454,94 @@ test.describe("Markdown Paste & Import", () => {
     });
 
     await test.step("Verify each imported case stores the expected TipTap structure", async () => {
-    // Now verify via API that each case's Description is TipTap JSON
-    // with appropriate structure for the markdown content
+      // Now verify via API that each case's Description is TipTap JSON
+      // with appropriate structure for the markdown content
 
-    // Helper to get a case by name and check its Description
-    async function verifyCaseDescription(
-      caseName: string,
-      checks: {
-        hasNodeType?: string;
-        hasMarkType?: string;
-        isDoc?: boolean;
-      }
-    ) {
-      const caseResponse = await request.get(
-        `${baseURL}/api/model/repositoryCases/findFirst`,
-        {
-          params: {
-            q: JSON.stringify({
-              where: { name: caseName, projectId: projectId!, isDeleted: false },
-              select: { id: true },
-            }),
-          },
+      // Helper to get a case by name and check its Description
+      async function verifyCaseDescription(
+        caseName: string,
+        checks: {
+          hasNodeType?: string;
+          hasMarkType?: string;
+          isDoc?: boolean;
         }
-      );
-      expect(caseResponse.ok()).toBeTruthy();
-      const importedCase = (await caseResponse.json()).data;
-      expect(importedCase).toBeTruthy();
+      ) {
+        const caseResponse = await request.get(
+          `${baseURL}/api/model/repositoryCases/findFirst`,
+          {
+            params: {
+              q: JSON.stringify({
+                where: {
+                  name: caseName,
+                  projectId: projectId!,
+                  isDeleted: false,
+                },
+                select: { id: true },
+              }),
+            },
+          }
+        );
+        expect(caseResponse.ok()).toBeTruthy();
+        const importedCase = (await caseResponse.json()).data;
+        expect(importedCase).toBeTruthy();
 
-      const parsedValue = await getDescriptionFieldValue(
-        request,
-        baseURL!,
-        importedCase.id
-      );
-      expect(parsedValue).toBeTruthy();
+        const parsedValue = await getDescriptionFieldValue(
+          request,
+          baseURL!,
+          importedCase.id
+        );
+        expect(parsedValue).toBeTruthy();
 
-      if (checks.isDoc !== false) {
-        expect(parsedValue.type).toBe("doc");
-        expect(parsedValue.content).toBeDefined();
-        expect(parsedValue.content.length).toBeGreaterThan(0);
+        if (checks.isDoc !== false) {
+          expect(parsedValue.type).toBe("doc");
+          expect(parsedValue.content).toBeDefined();
+          expect(parsedValue.content.length).toBeGreaterThan(0);
+        }
+
+        const jsonStr = JSON.stringify(parsedValue);
+
+        if (checks.hasNodeType) {
+          const hasNode = jsonStr.includes(`"type":"${checks.hasNodeType}"`);
+          expect(
+            hasNode,
+            `Expected "${caseName}" to contain node type "${checks.hasNodeType}" in: ${jsonStr.substring(0, 500)}`
+          ).toBe(true);
+        }
+
+        if (checks.hasMarkType) {
+          const hasMark = jsonStr.includes(`"type":"${checks.hasMarkType}"`);
+          expect(
+            hasMark,
+            `Expected "${caseName}" to contain mark type "${checks.hasMarkType}" in: ${jsonStr.substring(0, 500)}`
+          ).toBe(true);
+        }
       }
 
-      const jsonStr = JSON.stringify(parsedValue);
-
-      if (checks.hasNodeType) {
-        const hasNode = jsonStr.includes(`"type":"${checks.hasNodeType}"`);
-        expect(
-          hasNode,
-          `Expected "${caseName}" to contain node type "${checks.hasNodeType}" in: ${jsonStr.substring(0, 500)}`
-        ).toBe(true);
-      }
-
-      if (checks.hasMarkType) {
-        const hasMark = jsonStr.includes(`"type":"${checks.hasMarkType}"`);
-        expect(
-          hasMark,
-          `Expected "${caseName}" to contain mark type "${checks.hasMarkType}" in: ${jsonStr.substring(0, 500)}`
-        ).toBe(true);
-      }
-    }
-
-    // Verify each imported case has the expected TipTap structure
-    await verifyCaseDescription("MD - Headings", { hasNodeType: "heading" });
-    await verifyCaseDescription("MD - Emphasis & Inline", {
-      hasMarkType: "bold",
-    });
-    // Note: "MD - Blockquotes" only contains blockquotes (a weak pattern),
-    // which alone doesn't trigger markdown detection (needs 2+ weak patterns).
-    // So it's stored as plain text. Just verify it's a valid doc.
-    await verifyCaseDescription("MD - Blockquotes", {});
-    await verifyCaseDescription("MD - Unordered Lists", {
-      hasNodeType: "bulletList",
-    });
-    await verifyCaseDescription("MD - Ordered Lists", {
-      hasNodeType: "orderedList",
-    });
-    await verifyCaseDescription("MD - Code Blocks", {
-      hasNodeType: "codeBlock",
-    });
-    await verifyCaseDescription("MD - Mixed Rich Content", {
-      hasNodeType: "heading",
-    });
-    // Also check that Mixed Rich Content has bold
-    await verifyCaseDescription("MD - Mixed Rich Content", {
-      hasMarkType: "bold",
-    });
+      // Verify each imported case has the expected TipTap structure
+      await verifyCaseDescription("MD - Headings", { hasNodeType: "heading" });
+      await verifyCaseDescription("MD - Emphasis & Inline", {
+        hasMarkType: "bold",
+      });
+      // Note: "MD - Blockquotes" only contains blockquotes (a weak pattern),
+      // which alone doesn't trigger markdown detection (needs 2+ weak patterns).
+      // So it's stored as plain text. Just verify it's a valid doc.
+      await verifyCaseDescription("MD - Blockquotes", {});
+      await verifyCaseDescription("MD - Unordered Lists", {
+        hasNodeType: "bulletList",
+      });
+      await verifyCaseDescription("MD - Ordered Lists", {
+        hasNodeType: "orderedList",
+      });
+      await verifyCaseDescription("MD - Code Blocks", {
+        hasNodeType: "codeBlock",
+      });
+      await verifyCaseDescription("MD - Mixed Rich Content", {
+        hasNodeType: "heading",
+      });
+      // Also check that Mixed Rich Content has bold
+      await verifyCaseDescription("MD - Mixed Rich Content", {
+        hasMarkType: "bold",
+      });
     });
   });
 });

@@ -74,18 +74,15 @@ test.describe("Result flip justification", () => {
     });
 
     await test.step("Submit an outcome flip to Failed without a justification", async () => {
-      response = await request.post(
-        `${baseURL}/api/test-runs/submit-result`,
-        {
-          data: {
-            testRunId: runId!,
-            testRunCaseId,
-            statusId: failedId!,
-            attempt: 2,
-            testRunCaseVersion: 1,
-          },
-        }
-      );
+      response = await request.post(`${baseURL}/api/test-runs/submit-result`, {
+        data: {
+          testRunId: runId!,
+          testRunCaseId,
+          statusId: failedId!,
+          attempt: 2,
+          testRunCaseVersion: 1,
+        },
+      });
     });
 
     await test.step("Verify the flip is rejected with JUSTIFICATION_REQUIRED", async () => {
@@ -115,19 +112,16 @@ test.describe("Result flip justification", () => {
     });
 
     await test.step("Submit an outcome flip to Failed with a justification", async () => {
-      response = await request.post(
-        `${baseURL}/api/test-runs/submit-result`,
-        {
-          data: {
-            testRunId: runId!,
-            testRunCaseId,
-            statusId: failedId!,
-            attempt: 2,
-            testRunCaseVersion: 1,
-            notes: noteDoc("Overrode after re-running on a fixed environment"),
-          },
-        }
-      );
+      response = await request.post(`${baseURL}/api/test-runs/submit-result`, {
+        data: {
+          testRunId: runId!,
+          testRunCaseId,
+          statusId: failedId!,
+          attempt: 2,
+          testRunCaseVersion: 1,
+          notes: noteDoc("Overrode after re-running on a fixed environment"),
+        },
+      });
     });
 
     await test.step("Verify the flip is accepted and a result is returned", async () => {
@@ -156,18 +150,15 @@ test.describe("Result flip justification", () => {
     });
 
     await test.step("Re-submit the same Passed outcome without a justification", async () => {
-      response = await request.post(
-        `${baseURL}/api/test-runs/submit-result`,
-        {
-          data: {
-            testRunId: runId!,
-            testRunCaseId,
-            statusId: passedId!,
-            attempt: 2,
-            testRunCaseVersion: 1,
-          },
-        }
-      );
+      response = await request.post(`${baseURL}/api/test-runs/submit-result`, {
+        data: {
+          testRunId: runId!,
+          testRunCaseId,
+          statusId: passedId!,
+          attempt: 2,
+          testRunCaseVersion: 1,
+        },
+      });
     });
 
     await test.step("Verify the same-outcome re-submission is accepted", async () => {
@@ -194,18 +185,15 @@ test.describe("Result flip justification", () => {
 
     await test.step("Submit the first result as Failed without a justification", async () => {
       // No prior attempt → the first result needs no justification, even Failed.
-      response = await request.post(
-        `${baseURL}/api/test-runs/submit-result`,
-        {
-          data: {
-            testRunId: runId!,
-            testRunCaseId,
-            statusId: failedId!,
-            attempt: 1,
-            testRunCaseVersion: 1,
-          },
-        }
-      );
+      response = await request.post(`${baseURL}/api/test-runs/submit-result`, {
+        data: {
+          testRunId: runId!,
+          testRunCaseId,
+          statusId: failedId!,
+          attempt: 1,
+          testRunCaseVersion: 1,
+        },
+      });
     });
 
     await test.step("Verify the first result is accepted", async () => {
@@ -237,18 +225,15 @@ test.describe("Result flip justification", () => {
     await test.step("Submit an outcome flip to Failed without a justification", async () => {
       // A different-outcome flip with no notes is accepted because the
       // project has not opted into mandatory justification.
-      response = await request.post(
-        `${baseURL}/api/test-runs/submit-result`,
-        {
-          data: {
-            testRunId: runId!,
-            testRunCaseId,
-            statusId: failedId!,
-            attempt: 2,
-            testRunCaseVersion: 1,
-          },
-        }
-      );
+      response = await request.post(`${baseURL}/api/test-runs/submit-result`, {
+        data: {
+          testRunId: runId!,
+          testRunCaseId,
+          statusId: failedId!,
+          attempt: 2,
+          testRunCaseVersion: 1,
+        },
+      });
     });
 
     await test.step("Verify the flip is accepted when justification is not required", async () => {

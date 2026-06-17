@@ -90,9 +90,7 @@ test.describe("Admin Security Settings", () => {
       // Value should have changed
       const minLengthLabel = page.getByText("Minimum Password Length");
       const minLengthRow = minLengthLabel.locator("..");
-      newValue = await minLengthRow
-        .locator("span.tabular-nums")
-        .textContent();
+      newValue = await minLengthRow.locator("span.tabular-nums").textContent();
       expect(Number(newValue)).toBeGreaterThan(Number(initialValue));
     });
 

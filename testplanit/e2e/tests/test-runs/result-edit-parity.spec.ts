@@ -189,7 +189,7 @@ test("edit-result enforces the edit window for non-admins; admin bypasses", asyn
     });
     await api.giveUserProjectAccess({
       userId: userResult.data.id,
-      projectId,
+      projectId: projectId!,
       accessType: "GLOBAL_ROLE",
     });
     await api.updateUserPreferences({

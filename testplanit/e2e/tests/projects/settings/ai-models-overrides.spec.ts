@@ -36,11 +36,11 @@ test.describe("Project AI Models - Feature Overrides Table", () => {
       ];
 
       for (const name of featureNames) {
-        await expect(
-          page.locator("td", { hasText: name }).first()
-        ).toBeVisible({
-          timeout: 10000,
-        });
+        await expect(page.locator("td", { hasText: name }).first()).toBeVisible(
+          {
+            timeout: 10000,
+          }
+        );
       }
     });
   });
@@ -68,9 +68,7 @@ test.describe("Project AI Models - Assign Per-Feature Override", () => {
       const lastTable = page.locator("table").last();
 
       // Find the row for "Test Case Generation"
-      row = lastTable
-        .locator("tr")
-        .filter({ hasText: "Test Case Generation" });
+      row = lastTable.locator("tr").filter({ hasText: "Test Case Generation" });
     });
 
     await test.step("Assign the LLM integration as the feature override", async () => {
@@ -149,9 +147,7 @@ test.describe("Project AI Models - Clear Per-Feature Override", () => {
       const lastTable = page.locator("table").last();
 
       // Find the "Test Case Generation" row
-      row = lastTable
-        .locator("tr")
-        .filter({ hasText: "Test Case Generation" });
+      row = lastTable.locator("tr").filter({ hasText: "Test Case Generation" });
 
       // Verify the row shows "Project Override" badge (the override is set)
       await expect(row.getByText("Project Override")).toBeVisible({

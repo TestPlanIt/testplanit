@@ -95,7 +95,9 @@ test.describe("Milestone Export API", () => {
         childCaseId,
       ]);
       await api.setTestRunCaseStatus(childTrc, passed);
-      await api.createTestResult(childRunId, childTrc, passed, { elapsed: 800 });
+      await api.createTestResult(childRunId, childTrc, passed, {
+        elapsed: 800,
+      });
     });
 
     await test.step("Add a session and a linked issue under the parent", async () => {

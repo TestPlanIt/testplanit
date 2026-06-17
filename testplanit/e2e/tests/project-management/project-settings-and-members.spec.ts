@@ -127,7 +127,10 @@ test.describe("Project Settings Pages", () => {
       // ShareLinkList renders within the Card's CardContent area
       // Even with no shares, the component renders (empty state or table headers)
       // The shares page CardContent doesn't have space-y-6; use the main Card structure
-      const cardContent = page.locator("main").locator("[class*='p-6']").first();
+      const cardContent = page
+        .locator("main")
+        .locator("[class*='p-6']")
+        .first();
       await expect(cardContent).toBeVisible({ timeout: 15000 });
     });
   });

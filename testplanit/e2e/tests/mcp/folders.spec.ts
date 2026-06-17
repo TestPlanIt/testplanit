@@ -95,7 +95,14 @@ test.describe("MCP folder CRUD lifecycle (Phase 6)", () => {
     baseURL,
   }) => {
     const name = `MCP-Root-${Date.now()}`;
-    let created: { id: number; name: string; parentId: number | null; isDeleted: boolean } | undefined;
+    let created:
+      | {
+          id: number;
+          name: string;
+          parentId: number | null;
+          isDeleted: boolean;
+        }
+      | undefined;
 
     await test.step("Create root folder with null parent via REST", async () => {
       const r = await request.post(
@@ -130,7 +137,9 @@ test.describe("MCP folder CRUD lifecycle (Phase 6)", () => {
     baseURL,
   }) => {
     const name = `MCP-Child-${Date.now()}`;
-    let created: { id: number; parentId: number | null; isDeleted: boolean } | undefined;
+    let created:
+      | { id: number; parentId: number | null; isDeleted: boolean }
+      | undefined;
 
     await test.step("Create child folder under root via REST", async () => {
       const r = await request.post(
@@ -179,7 +188,15 @@ test.describe("MCP folder CRUD lifecycle (Phase 6)", () => {
         },
       })
     );
-    let body: { data: Array<{ id: number; _count?: unknown; children: Array<{ id: number }> }> } | undefined;
+    let body:
+      | {
+          data: Array<{
+            id: number;
+            _count?: unknown;
+            children: Array<{ id: number }>;
+          }>;
+        }
+      | undefined;
 
     await test.step("Fetch folder tree with case counts via REST", async () => {
       const r = await request.get(
@@ -192,7 +209,9 @@ test.describe("MCP folder CRUD lifecycle (Phase 6)", () => {
 
     await test.step("Verify root folder includes counts and child", async () => {
       expect(body!.data.length).toBeGreaterThan(0);
-      const root = body!.data.find((f: { id: number }) => f.id === rootFolderId);
+      const root = body!.data.find(
+        (f: { id: number }) => f.id === rootFolderId
+      );
       expect(root).toBeDefined();
       expect(root!._count).toBeDefined();
       expect(

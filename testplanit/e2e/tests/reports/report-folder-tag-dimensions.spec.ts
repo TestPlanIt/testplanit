@@ -41,7 +41,11 @@ test("test-execution report groups results by folder, flat and rolled up", async
     parentId = await api.createFolder(projectId, `Parent ${ts}`, rootId);
     childId = await api.createFolder(projectId, `Child ${ts}`, parentId);
 
-    const parentCase = await api.createTestCase(projectId, parentId, `PC ${ts}`);
+    const parentCase = await api.createTestCase(
+      projectId,
+      parentId,
+      `PC ${ts}`
+    );
     const childCase = await api.createTestCase(projectId, childId, `CC ${ts}`);
 
     const runId = await api.createTestRun(projectId, `FolderRun ${ts}`);
@@ -110,11 +114,7 @@ test("test-execution report groups results by tag with fan-out and a None group"
   await test.step("Create a tagged and an untagged case", async () => {
     projectId = await api.createProject(`E2E TagDim ${ts}`);
     const rootId = await api.getRootFolderId(projectId);
-    taggedCase = await api.createTestCase(
-      projectId,
-      rootId,
-      `Tagged ${ts}`
-    );
+    taggedCase = await api.createTestCase(projectId, rootId, `Tagged ${ts}`);
     untaggedCase = await api.createTestCase(
       projectId,
       rootId,
@@ -142,7 +142,10 @@ test("test-execution report groups results by tag with fan-out and a None group"
   await test.step("Run both cases and record passing results", async () => {
     const runId = await api.createTestRun(projectId!, `TagRun ${ts}`);
     const taggedRunCase = await api.addTestCaseToTestRun(runId, taggedCase!);
-    const untaggedRunCase = await api.addTestCaseToTestRun(runId, untaggedCase!);
+    const untaggedRunCase = await api.addTestCaseToTestRun(
+      runId,
+      untaggedCase!
+    );
     const passedId = await api.getStatusId("passed");
     await api.createTestResult(runId, taggedRunCase, passedId);
     await api.createTestResult(runId, untaggedRunCase, passedId);

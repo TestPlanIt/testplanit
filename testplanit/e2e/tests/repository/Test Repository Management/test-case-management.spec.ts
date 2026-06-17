@@ -80,9 +80,7 @@ test.describe("Test Case Management", () => {
 
     await test.step("Verify the test case row and its detail link", async () => {
       // Find the test case row - it should be visible in the table
-      const testCaseRow = page
-        .locator(`[data-row-id="${testCaseId}"]`)
-        .first();
+      const testCaseRow = page.locator(`[data-row-id="${testCaseId}"]`).first();
       await expect(testCaseRow).toBeVisible({ timeout: 10000 });
 
       // Get the link in the Name column
@@ -172,9 +170,7 @@ test.describe("Test Case Management", () => {
 
     await test.step("Verify the test case row has action buttons", async () => {
       // Find the test case row
-      const testCaseRow = page
-        .locator(`[data-row-id="${testCaseId}"]`)
-        .first();
+      const testCaseRow = page.locator(`[data-row-id="${testCaseId}"]`).first();
       await expect(testCaseRow).toBeVisible({ timeout: 10000 });
 
       // The row should have action buttons (at least 1 button in Actions column)
@@ -279,9 +275,7 @@ test.describe("Test Case Management", () => {
 
     await test.step("Open the row actions menu and choose Delete", async () => {
       // Wait for the test case row to be visible
-      const testCaseRow = page
-        .locator(`[data-row-id="${testCaseId}"]`)
-        .first();
+      const testCaseRow = page.locator(`[data-row-id="${testCaseId}"]`).first();
       await expect(testCaseRow).toBeVisible({ timeout: 10000 });
 
       // Open the actions dropdown menu (three-dot button) to access the delete option

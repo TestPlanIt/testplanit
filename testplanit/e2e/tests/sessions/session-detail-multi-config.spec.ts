@@ -24,15 +24,20 @@ test.describe("Session Detail Multi-Config Selector", () => {
 
     await test.step("Create a multi-configuration session group", async () => {
       const projectId = await api.createProject(`E2E SessMultiCfg ${ts}`);
-      const config1Id = await api.createConfiguration(`Chrome ${ts}`, projectId);
-      const config2Id = await api.createConfiguration(`Firefox ${ts}`, projectId);
+      const config1Id = await api.createConfiguration(
+        `Chrome ${ts}`,
+        projectId
+      );
+      const config2Id = await api.createConfiguration(
+        `Firefox ${ts}`,
+        projectId
+      );
 
       const groupId = randomUUID();
-      session1Id = await api.createSession(
-        projectId,
-        `Chrome Session ${ts}`,
-        { configId: config1Id, configurationGroupId: groupId }
-      );
+      session1Id = await api.createSession(projectId, `Chrome Session ${ts}`, {
+        configId: config1Id,
+        configurationGroupId: groupId,
+      });
       await api.createSession(projectId, `Firefox Session ${ts}`, {
         configId: config2Id,
         configurationGroupId: groupId,
@@ -123,16 +128,14 @@ test.describe("Session Detail Multi-Config Selector", () => {
       const config2Id = await api.createConfiguration(config2Name, projectId);
 
       const groupId = randomUUID();
-      session1Id = await api.createSession(
-        projectId,
-        `Safari Session ${ts}`,
-        { configId: config1Id, configurationGroupId: groupId }
-      );
-      session2Id = await api.createSession(
-        projectId,
-        `Edge Session ${ts}`,
-        { configId: config2Id, configurationGroupId: groupId }
-      );
+      session1Id = await api.createSession(projectId, `Safari Session ${ts}`, {
+        configId: config1Id,
+        configurationGroupId: groupId,
+      });
+      session2Id = await api.createSession(projectId, `Edge Session ${ts}`, {
+        configId: config2Id,
+        configurationGroupId: groupId,
+      });
 
       // Navigate to session1
       await page.goto(`/en-US/projects/sessions/${projectId}/${session1Id}`);

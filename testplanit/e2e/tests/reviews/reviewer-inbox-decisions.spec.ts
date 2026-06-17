@@ -142,14 +142,17 @@ test.describe("Reviewer inbox decisions", () => {
 
     await test.step("Verify the request persisted as APPROVED", async () => {
       // Verify the DB row flipped to APPROVED.
-      const res = await request.get(`${url}/api/model/reviewRequest/findFirst`, {
-        params: {
-          q: JSON.stringify({
-            where: { id: reviewRequestId },
-            select: { status: true, decidedAt: true },
-          }),
-        },
-      });
+      const res = await request.get(
+        `${url}/api/model/reviewRequest/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: reviewRequestId },
+              select: { status: true, decidedAt: true },
+            }),
+          },
+        }
+      );
       const result = await res.json();
       expect(result?.data?.status).toBe("APPROVED");
       expect(result?.data?.decidedAt).toBeTruthy();
@@ -231,22 +234,25 @@ test.describe("Reviewer inbox decisions", () => {
         entityId: number,
         status: "APPROVED" | "REJECTED" | "CANCELLED"
       ): Promise<string> => {
-        const res = await request.post(`${url}/api/model/reviewRequest/create`, {
-          data: {
+        const res = await request.post(
+          `${url}/api/model/reviewRequest/create`,
+          {
             data: {
-              projectId,
-              entityType: "CASE",
-              entityId,
-              fromStateId: currentStateId,
-              toStateId: gatedWorkflowId!,
-              requestedByUserId: requester.data.id,
-              assigneeUserId: adminUserId,
-              status,
-              decidedAt: new Date().toISOString(),
-              decidedByUserId: status === "CANCELLED" ? null : adminUserId,
+              data: {
+                projectId,
+                entityType: "CASE",
+                entityId,
+                fromStateId: currentStateId,
+                toStateId: gatedWorkflowId!,
+                requestedByUserId: requester.data.id,
+                assigneeUserId: adminUserId,
+                status,
+                decidedAt: new Date().toISOString(),
+                decidedByUserId: status === "CANCELLED" ? null : adminUserId,
+              },
             },
-          },
-        });
+          }
+        );
         const j = await res.json();
         const id = j?.data?.id as string;
         pendingRequestIds.push(id);

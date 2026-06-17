@@ -96,11 +96,11 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
 
       // After submit the page returns to the list view with a card per config;
       // the create form unmounts and the add button becomes visible again.
-      await expect(
-        page.getByTestId("webhook-outbound-add-button")
-      ).toBeVisible({
-        timeout: 10_000,
-      });
+      await expect(page.getByTestId("webhook-outbound-add-button")).toBeVisible(
+        {
+          timeout: 10_000,
+        }
+      );
     });
 
     await test.step("Create and complete a test run to fire test_run.completed", async () => {
@@ -124,8 +124,8 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
         (c) =>
           c.some(
             (capt) =>
-              typeof (capt.parsedBody as { eventName?: unknown })
-                ?.eventName === "string" &&
+              typeof (capt.parsedBody as { eventName?: unknown })?.eventName ===
+                "string" &&
               (capt.parsedBody as { eventName: string }).eventName ===
                 "test_run.completed"
           ),

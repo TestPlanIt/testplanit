@@ -83,17 +83,14 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
     });
 
     await test.step("POST the oversize body and expect HTTP 413", async () => {
-      response = await request.post(
-        `${baseURL}/api/webhooks/${configToken!}`,
-        {
-          data: oversizeBody!,
-          headers: {
-            "content-type": "application/json",
-            "x-hub-signature-256": "sha256=" + "0".repeat(64),
-          },
-          timeout: 30000,
-        }
-      );
+      response = await request.post(`${baseURL}/api/webhooks/${configToken!}`, {
+        data: oversizeBody!,
+        headers: {
+          "content-type": "application/json",
+          "x-hub-signature-256": "sha256=" + "0".repeat(64),
+        },
+        timeout: 30000,
+      });
 
       expect(response.status()).toBe(413);
     });

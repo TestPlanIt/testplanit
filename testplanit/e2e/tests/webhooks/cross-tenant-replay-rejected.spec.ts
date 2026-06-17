@@ -226,9 +226,9 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
             timeout: 10_000,
           }
         );
-        await expect(
-          page.getByTestId("webhook-deliveries-table")
-        ).toHaveCount(0);
+        await expect(page.getByTestId("webhook-deliveries-table")).toHaveCount(
+          0
+        );
         await expect(
           page.getByTestId("webhook-bulk-replay-button")
         ).toHaveCount(0);

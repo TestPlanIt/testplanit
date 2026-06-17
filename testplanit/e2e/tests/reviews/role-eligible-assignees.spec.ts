@@ -111,9 +111,7 @@ test.describe("Role-eligible assignees", () => {
 
     await test.step("Confirm role is absent from the picker with no project-eligible holder", async () => {
       // 1) No holder yet — the role should NOT appear in the assignee popover.
-      await page.goto(
-        `/en-US/projects/repository/${projectId}/${caseId}`
-      );
+      await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
       await page.waitForLoadState("networkidle");
       await page.getByTestId("request-review-button").click();
       await page.getByTestId("assignee-combobox").click();
@@ -134,7 +132,7 @@ test.describe("Role-eligible assignees", () => {
         email: `ra-user-${Date.now()}@example.com`,
         password: "S3cure!password",
         access: "USER",
-        roleId: createdRoleId,
+        roleId: createdRoleId!,
         isActive: true,
         emailVerified: true,
       });

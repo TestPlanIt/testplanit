@@ -597,8 +597,12 @@ test.describe("Drag-drop modifier-aware UX", () => {
     const target = page
       .locator(`[data-testid="folder-node-${targetFolderId}"]`)
       .first();
-    let targetBox: { x: number; y: number; width: number; height: number } | null =
-      null;
+    let targetBox: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    } | null = null;
     let copyModifier: "Alt" | "Control" | undefined;
 
     await test.step("Open repository and select the root folder", async () => {

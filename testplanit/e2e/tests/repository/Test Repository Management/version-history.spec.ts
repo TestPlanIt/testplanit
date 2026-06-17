@@ -46,9 +46,7 @@ test.describe("Version History", () => {
 
     await test.step("Open the test case detail page", async () => {
       // Navigate to the test case detail page
-      await page.goto(
-        `/en-US/projects/repository/${projectId}/${testCaseId}`
-      );
+      await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
       await page.waitForLoadState("networkidle");
 
       // Wait for page to fully load
@@ -98,9 +96,7 @@ test.describe("Version History", () => {
 
     await test.step("Open the test case detail page", async () => {
       // Navigate to test case detail page
-      await page.goto(
-        `/en-US/projects/repository/${projectId}/${testCaseId}`
-      );
+      await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
       await page.waitForLoadState("networkidle");
 
       await expect(editButton).toBeVisible({ timeout: 15000 });
@@ -259,10 +255,7 @@ test.describe("Version History", () => {
       );
 
       // Create version 2 via API
-      await api.updateTestCaseName(
-        testCaseId,
-        `Back Link Case V2 ${uniqueId}`
-      );
+      await api.updateTestCaseName(testCaseId, `Back Link Case V2 ${uniqueId}`);
     });
 
     await test.step("Open the version 1 page", async () => {
@@ -314,10 +307,7 @@ test.describe("Version History", () => {
       );
 
       // Create version 2 via API
-      await api.updateTestCaseName(
-        testCaseId,
-        `Timestamp Case V2 ${uniqueId}`
-      );
+      await api.updateTestCaseName(testCaseId, `Timestamp Case V2 ${uniqueId}`);
     });
 
     await test.step("Open the version page and confirm the creation timestamp", async () => {
@@ -516,9 +506,7 @@ test.describe("Version History", () => {
 
     await test.step("Open the test case detail page", async () => {
       // Navigate to test case
-      await page.goto(
-        `/en-US/projects/repository/${projectId}/${testCaseId}`
-      );
+      await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
       await page.waitForLoadState("networkidle");
 
       await expect(editButton).toBeVisible({ timeout: 15000 });

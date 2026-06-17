@@ -222,11 +222,11 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
       }
 
       await page.getByTestId("webhook-outbound-create-submit").click();
-      await expect(
-        page.getByTestId("webhook-outbound-add-button")
-      ).toBeVisible({
-        timeout: 10_000,
-      });
+      await expect(page.getByTestId("webhook-outbound-add-button")).toBeVisible(
+        {
+          timeout: 10_000,
+        }
+      );
     });
 
     await test.step("Submit iteration 1 result and assert it is delivered to the stub", async () => {

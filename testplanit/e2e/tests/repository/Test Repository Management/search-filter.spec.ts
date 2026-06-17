@@ -180,9 +180,7 @@ test.describe("Search & Filter", () => {
       });
 
       // Verify the non-matching case is NOT visible
-      await expect(
-        page.locator(`text="${nonMatchingName}"`)
-      ).not.toBeVisible({
+      await expect(page.locator(`text="${nonMatchingName}"`)).not.toBeVisible({
         timeout: 5000,
       });
     });
@@ -509,9 +507,7 @@ test.describe("Search & Filter", () => {
       await expect(page.locator(`text="${case3Name}"`).first()).toBeVisible();
 
       // Non-matching case should not be visible
-      await expect(
-        page.locator(`text="${nonMatchingName}"`)
-      ).not.toBeVisible({
+      await expect(page.locator(`text="${nonMatchingName}"`)).not.toBeVisible({
         timeout: 3000,
       });
     });
@@ -557,9 +553,7 @@ test.describe("Search & Filter", () => {
       ).toBeVisible({ timeout: 10000 });
 
       // Normal case should not be visible
-      await expect(
-        page.locator(`text="${normalCaseName}"`)
-      ).not.toBeVisible({
+      await expect(page.locator(`text="${normalCaseName}"`)).not.toBeVisible({
         timeout: 3000,
       });
     });
@@ -690,7 +684,11 @@ test.describe("Search & Filter", () => {
       // Create 15 test cases - only 3 have the unique search term
       searchTerm = `UniqueTarget${uniqueId}`;
       for (let i = 0; i < 3; i++) {
-        await api.createTestCase(projectId, folderId, `${searchTerm} Case ${i}`);
+        await api.createTestCase(
+          projectId,
+          folderId,
+          `${searchTerm} Case ${i}`
+        );
       }
       for (let i = 0; i < 12; i++) {
         await api.createTestCase(

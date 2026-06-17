@@ -425,12 +425,9 @@ test.describe("Shared Steps Management", () => {
 
     await test.step("Open the test case and enter edit mode", async () => {
       // Navigate to test case detail page
-      await page.goto(
-        `/en-US/projects/repository/${projectId}/${testCaseId}`,
-        {
-          waitUntil: "networkidle",
-        }
-      );
+      await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`, {
+        waitUntil: "networkidle",
+      });
 
       // Wait for the Edit button to confirm the page loaded
       editButton = page.getByTestId("edit-test-case-button");

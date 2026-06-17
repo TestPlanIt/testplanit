@@ -46,7 +46,9 @@ test.describe("Shared datasets - owner + shared coexistence (Amendment A) @share
       await page.waitForLoadState("load");
 
       await page.getByTestId("configure-parameters-button").click();
-      await expect(page.getByTestId("configure-parameters-sheet")).toBeVisible();
+      await expect(
+        page.getByTestId("configure-parameters-sheet")
+      ).toBeVisible();
       for (const name of ["email", "password"]) {
         await page.getByTestId("parameter-form-name").fill(name);
         await page.getByTestId("parameter-form-submit").click();
@@ -106,7 +108,9 @@ test.describe("Shared datasets - owner + shared coexistence (Amendment A) @share
         page.getByTestId("assign-shared-dataset-dialog")
       ).toBeVisible();
       // Amendment A regression guard.
-      await expect(page.getByTestId("assign-shared-owner-banner")).toBeVisible();
+      await expect(
+        page.getByTestId("assign-shared-owner-banner")
+      ).toBeVisible();
     });
 
     await test.step("Pick the shared dataset and save the assignment", async () => {
@@ -133,12 +137,16 @@ test.describe("Shared datasets - owner + shared coexistence (Amendment A) @share
     await test.step("Verify the coexistence banner shows in both Shared and Local views", async () => {
       // After save, the page is in Shared mode and the coexistence banner
       // should be visible.
-      await expect(page.getByTestId("dataset-owner-shared-banner")).toBeVisible();
+      await expect(
+        page.getByTestId("dataset-owner-shared-banner")
+      ).toBeVisible();
 
       // Switch back to Local and verify the coexistence banner is also
       // present there (the owner-wins messaging).
       await page.getByTestId("dataset-source-local").click();
-      await expect(page.getByTestId("dataset-owner-shared-banner")).toBeVisible();
+      await expect(
+        page.getByTestId("dataset-owner-shared-banner")
+      ).toBeVisible();
     });
   });
 });

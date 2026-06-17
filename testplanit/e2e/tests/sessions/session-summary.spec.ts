@@ -50,9 +50,7 @@ test.describe("Session Summary API", () => {
 
     await test.step("Call the summary API and verify a successful 200 response", async () => {
       // Call the summary API endpoint
-      summaryResponse = await request.get(
-        `/api/sessions/${sessionId}/summary`
-      );
+      summaryResponse = await request.get(`/api/sessions/${sessionId}/summary`);
 
       // Verify the API responds successfully (not hanging indefinitely)
       expect(summaryResponse.ok()).toBeTruthy();

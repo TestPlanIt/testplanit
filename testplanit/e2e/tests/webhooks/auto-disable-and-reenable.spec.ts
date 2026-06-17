@@ -92,9 +92,11 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
         await completedCheckbox.check();
       }
       await page.getByTestId("webhook-outbound-create-submit").click();
-      await expect(page.getByTestId("webhook-outbound-add-button")).toBeVisible({
-        timeout: 10_000,
-      });
+      await expect(page.getByTestId("webhook-outbound-add-button")).toBeVisible(
+        {
+          timeout: 10_000,
+        }
+      );
 
       const config = await prisma.webhookConfig.findFirst({
         where: { projectId, direction: "OUTBOUND" },

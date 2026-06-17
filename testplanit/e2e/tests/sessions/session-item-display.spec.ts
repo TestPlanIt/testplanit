@@ -84,8 +84,14 @@ test.describe("Session Item Display", () => {
 
     await test.step("Create a project with two configs and two grouped sessions", async () => {
       const projectId = await api.createProject(`E2E ItemMulti ${ts}`);
-      const config1Id = await api.createConfiguration(`Multi1 ${ts}`, projectId);
-      const config2Id = await api.createConfiguration(`Multi2 ${ts}`, projectId);
+      const config1Id = await api.createConfiguration(
+        `Multi1 ${ts}`,
+        projectId
+      );
+      const config2Id = await api.createConfiguration(
+        `Multi2 ${ts}`,
+        projectId
+      );
 
       session1Id = await api.createSession(projectId, `Multi Session 1 ${ts}`, {
         configId: config1Id,

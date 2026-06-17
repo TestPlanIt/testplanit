@@ -78,7 +78,10 @@ test.describe("Test Case Execution", () => {
 
     await test.step("Seed a project, folder, case, and run with the case added", async () => {
       projectId = await api.createProject(`E2E Execution Details ${ts}`);
-      const folderId = await api.createFolder(projectId, `Details Folder ${ts}`);
+      const folderId = await api.createFolder(
+        projectId,
+        `Details Folder ${ts}`
+      );
       caseId = await api.createTestCase(projectId, folderId, caseName);
       runId = await api.createTestRun(projectId, `Details Run ${ts}`);
       await api.addTestCaseToTestRun(runId, caseId);
@@ -180,7 +183,9 @@ test.describe("Test Case Execution", () => {
       if (statusDropdownOpened) {
         // Look for status options in the dropdown menu
         const dropdownMenu = page.locator('[role="menu"]');
-        if (await dropdownMenu.isVisible({ timeout: 5000 }).catch(() => false)) {
+        if (
+          await dropdownMenu.isVisible({ timeout: 5000 }).catch(() => false)
+        ) {
           // Click the first status option (e.g., "Passed" or whatever is available)
           const firstStatusOption = dropdownMenu
             .locator('[role="menuitem"]')
@@ -329,7 +334,9 @@ test.describe("Test Case Execution", () => {
         .locator('button[aria-label*="next" i], button[aria-label*="Next" i]')
         .first();
 
-      if (await nextCaseButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+      if (
+        await nextCaseButton.isVisible({ timeout: 5000 }).catch(() => false)
+      ) {
         await nextCaseButton.click();
 
         // Wait for transition

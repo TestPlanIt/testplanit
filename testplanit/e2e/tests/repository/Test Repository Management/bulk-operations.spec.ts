@@ -42,7 +42,11 @@ test.describe("Bulk Operations", () => {
         folderId,
         `Bulk Edit 2 ${Date.now()}`
       );
-      await api.createTestCase(projectId, folderId, `Bulk Edit 3 ${Date.now()}`);
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Bulk Edit 3 ${Date.now()}`
+      );
 
       await repositoryPage.goto(projectId);
 
@@ -234,7 +238,9 @@ test.describe("Bulk Operations", () => {
       await deleteButton.click();
 
       // Wait for the popover to appear (it renders in a portal outside the dialog)
-      const popoverContent = page.locator("[data-radix-popper-content-wrapper]");
+      const popoverContent = page.locator(
+        "[data-radix-popper-content-wrapper]"
+      );
       await expect(popoverContent).toBeVisible({ timeout: 5000 });
 
       // The confirm delete button is inside the popover and has destructive variant with Trash2 icon

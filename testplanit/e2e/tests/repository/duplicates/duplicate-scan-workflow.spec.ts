@@ -25,11 +25,12 @@ test.describe("Duplicate Scan Workflow", () => {
       projectId = await api.createProject(
         `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
       );
-      folderId = await api.createFolder(
+      folderId = await api.createFolder(projectId!, `Dup Folder ${Date.now()}`);
+      await api.createTestCase(
         projectId!,
-        `Dup Folder ${Date.now()}`
+        folderId!,
+        "Login form validation test"
       );
-      await api.createTestCase(projectId!, folderId!, "Login form validation test");
       await api.createTestCase(
         projectId!,
         folderId!,
@@ -69,27 +70,20 @@ test.describe("Duplicate Scan Workflow", () => {
       projectId = await api.createProject(
         `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
       );
-      folderId = await api.createFolder(
-        projectId!,
-        `Dup Folder ${Date.now()}`
-      );
-      caseAId = await api.createTestCase(
-        projectId!,
-        folderId!,
-        "Login test A"
-      );
-      caseBId = await api.createTestCase(
-        projectId!,
-        folderId!,
-        "Login test B"
-      );
+      folderId = await api.createFolder(projectId!, `Dup Folder ${Date.now()}`);
+      caseAId = await api.createTestCase(projectId!, folderId!, "Login test A");
+      caseBId = await api.createTestCase(projectId!, folderId!, "Login test B");
     });
 
     await test.step("Create a duplicate scan result directly", async () => {
       // Create a DuplicateScanResult directly — no ES dependency
-      await api.createDuplicateScanResult(projectId!, caseAId!, caseBId!, 0.92, [
-        "name",
-      ]);
+      await api.createDuplicateScanResult(
+        projectId!,
+        caseAId!,
+        caseBId!,
+        0.92,
+        ["name"]
+      );
     });
 
     await test.step("Navigate to the duplicates page", async () => {
@@ -119,10 +113,7 @@ test.describe("Duplicate Scan Workflow", () => {
       projectId = await api.createProject(
         `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
       );
-      folderId = await api.createFolder(
-        projectId!,
-        `Dup Folder ${Date.now()}`
-      );
+      folderId = await api.createFolder(projectId!, `Dup Folder ${Date.now()}`);
       caseAId = await api.createTestCase(
         projectId!,
         folderId!,
@@ -136,9 +127,13 @@ test.describe("Duplicate Scan Workflow", () => {
     });
 
     await test.step("Create a duplicate scan result and open the duplicates page", async () => {
-      await api.createDuplicateScanResult(projectId!, caseAId!, caseBId!, 0.88, [
-        "name",
-      ]);
+      await api.createDuplicateScanResult(
+        projectId!,
+        caseAId!,
+        caseBId!,
+        0.88,
+        ["name"]
+      );
 
       await page.goto(`/en-US/projects/repository/${projectId}/duplicates`);
       await page.waitForLoadState("networkidle");
@@ -181,10 +176,7 @@ test.describe("Duplicate Scan Workflow", () => {
       projectId = await api.createProject(
         `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
       );
-      folderId = await api.createFolder(
-        projectId!,
-        `Dup Folder ${Date.now()}`
-      );
+      folderId = await api.createFolder(projectId!, `Dup Folder ${Date.now()}`);
       caseAId = await api.createTestCase(
         projectId!,
         folderId!,
@@ -198,9 +190,13 @@ test.describe("Duplicate Scan Workflow", () => {
     });
 
     await test.step("Create a duplicate scan result and open the duplicates page", async () => {
-      await api.createDuplicateScanResult(projectId!, caseAId!, caseBId!, 0.85, [
-        "name",
-      ]);
+      await api.createDuplicateScanResult(
+        projectId!,
+        caseAId!,
+        caseBId!,
+        0.85,
+        ["name"]
+      );
 
       await page.goto(`/en-US/projects/repository/${projectId}/duplicates`);
       await page.waitForLoadState("networkidle");

@@ -70,9 +70,7 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
   }) => {
     const externalKey = "DEEP-J-1";
     let seededIssue: Awaited<ReturnType<typeof seedLinkedIssue>> | undefined;
-    let seededConfig:
-      | Awaited<ReturnType<typeof seedInboundConfig>>
-      | undefined;
+    let seededConfig: Awaited<ReturnType<typeof seedInboundConfig>> | undefined;
 
     await test.step("Seed linked Jira issue and inbound webhook config", async () => {
       seededIssue = await seedLinkedIssue(prisma, {
@@ -146,9 +144,7 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
   }) => {
     const externalKey = "octocat/L02-Deep#42";
     let seededIssue: Awaited<ReturnType<typeof seedLinkedIssue>> | undefined;
-    let seededConfig:
-      | Awaited<ReturnType<typeof seedInboundConfig>>
-      | undefined;
+    let seededConfig: Awaited<ReturnType<typeof seedInboundConfig>> | undefined;
 
     await test.step("Seed linked GitHub issue and inbound webhook config", async () => {
       seededIssue = await seedLinkedIssue(prisma, {
@@ -217,9 +213,7 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
   }) => {
     const externalKey = "297";
     let seededIssue: Awaited<ReturnType<typeof seedLinkedIssue>> | undefined;
-    let seededConfig:
-      | Awaited<ReturnType<typeof seedInboundConfig>>
-      | undefined;
+    let seededConfig: Awaited<ReturnType<typeof seedInboundConfig>> | undefined;
 
     await test.step("Seed linked ADO issue and inbound webhook config", async () => {
       seededIssue = await seedLinkedIssue(prisma, {

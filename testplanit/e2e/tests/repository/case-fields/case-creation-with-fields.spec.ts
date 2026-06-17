@@ -1155,7 +1155,10 @@ test.describe("Case Creation - Link Fields", () => {
       const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
       await nameInput.fill(`Test Case ${Date.now()}`);
 
-      await repositoryPage.fillCaseField(systemName, "https://example.com/test");
+      await repositoryPage.fillCaseField(
+        systemName,
+        "https://example.com/test"
+      );
 
       await repositoryPage.submitAddCase();
       await expect(

@@ -278,7 +278,9 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
       await expect(qsDialog).toBeVisible({ timeout: 10000 });
 
       // Verify dialog renders the template selector
-      const templateSelect = qsDialog.getByTestId("quickscript-template-select");
+      const templateSelect = qsDialog.getByTestId(
+        "quickscript-template-select"
+      );
       await expect(templateSelect).toBeVisible({ timeout: 5000 });
     });
   });
@@ -449,7 +451,9 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
       await expect(qsDialog).toBeVisible({ timeout: 10000 });
 
       // The dialog should render with template selector visible (fallback path)
-      const templateSelect = qsDialog.getByTestId("quickscript-template-select");
+      const templateSelect = qsDialog.getByTestId(
+        "quickscript-template-select"
+      );
       await expect(templateSelect).toBeVisible({ timeout: 5000 });
     });
   });

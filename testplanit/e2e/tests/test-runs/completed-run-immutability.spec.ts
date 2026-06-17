@@ -35,16 +35,8 @@ test("completed runs structurally reject composition and result changes", async 
   await test.step("Create project, folder, cases, run and resolve passed status", async () => {
     projectId = await api.createProject(`E2E CompletedLock ${ts}`);
     folderId = await api.createFolder(projectId, `CL Folder ${ts}`);
-    case1 = await api.createTestCase(
-      projectId!,
-      folderId!,
-      `CL Case A ${ts}`
-    );
-    case2 = await api.createTestCase(
-      projectId!,
-      folderId!,
-      `CL Case B ${ts}`
-    );
+    case1 = await api.createTestCase(projectId!, folderId!, `CL Case A ${ts}`);
+    case2 = await api.createTestCase(projectId!, folderId!, `CL Case B ${ts}`);
     runId = await api.createTestRun(projectId!, `CL Run ${ts}`);
     passedId = await api.getStatusId("passed");
   });
@@ -57,13 +49,16 @@ test("completed runs structurally reject composition and result changes", async 
 
   await test.step("Complete the run", async () => {
     // Complete the run.
-    const complete = await request.patch(`${baseURL}/api/model/testRuns/update`, {
-      headers: sameOrigin,
-      data: {
-        where: { id: runId },
-        data: { isCompleted: true, completedAt: new Date().toISOString() },
-      },
-    });
+    const complete = await request.patch(
+      `${baseURL}/api/model/testRuns/update`,
+      {
+        headers: sameOrigin,
+        data: {
+          where: { id: runId },
+          data: { isCompleted: true, completedAt: new Date().toISOString() },
+        },
+      }
+    );
     expect(complete.status(), await complete.text()).toBeLessThan(300);
   });
 
@@ -95,19 +90,24 @@ test("completed runs structurally reject composition and result changes", async 
     // Results are frozen -------------------------------------------------------
 
     // Recording a result via the model API → policy-denied.
-    await expect(api.createTestResult(runId!, trc1!, passedId!)).rejects.toThrow();
+    await expect(
+      api.createTestResult(runId!, trc1!, passedId!)
+    ).rejects.toThrow();
 
     // Recording via the submit-result route → 409 RUN_COMPLETED.
-    const submit = await request.post(`${baseURL}/api/test-runs/submit-result`, {
-      headers: sameOrigin,
-      data: {
-        testRunId: runId,
-        testRunCaseId: trc1,
-        statusId: passedId,
-        attempt: 2,
-        testRunCaseVersion: 1,
-      },
-    });
+    const submit = await request.post(
+      `${baseURL}/api/test-runs/submit-result`,
+      {
+        headers: sameOrigin,
+        data: {
+          testRunId: runId,
+          testRunCaseId: trc1,
+          statusId: passedId,
+          attempt: 2,
+          testRunCaseVersion: 1,
+        },
+      }
+    );
     expect(submit.status()).toBe(409);
     expect((await submit.json())?.code).toBe("RUN_COMPLETED");
   });

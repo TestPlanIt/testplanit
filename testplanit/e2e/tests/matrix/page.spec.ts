@@ -32,9 +32,13 @@ test.describe("Matrix view — happy path @matrix", () => {
         `Matrix-Export-Cfg-${Date.now()}`,
         projectId
       );
-      const testRunId = await api.createTestRun(projectId, "Matrix Export Run", {
-        configId,
-      });
+      const testRunId = await api.createTestRun(
+        projectId,
+        "Matrix Export Run",
+        {
+          configId,
+        }
+      );
       await api.addTestCaseToTestRun(testRunId, caseId, { order: 0 });
     });
 

@@ -544,11 +544,11 @@ test.describe("View Switching", () => {
       const options = page.locator('[role="option"]');
 
       // Check for Folders option
-      await expect(
-        options.filter({ hasText: /Folders/i }).first()
-      ).toBeVisible({
-        timeout: 3000,
-      });
+      await expect(options.filter({ hasText: /Folders/i }).first()).toBeVisible(
+        {
+          timeout: 3000,
+        }
+      );
 
       // Check for Template option
       await expect(
@@ -692,9 +692,7 @@ test.describe("View Switching", () => {
 
     await test.step("Verify the test case row shows a state badge", async () => {
       // Find the test case row
-      const testCaseRow = page
-        .locator(`[data-row-id="${testCaseId}"]`)
-        .first();
+      const testCaseRow = page.locator(`[data-row-id="${testCaseId}"]`).first();
       await expect(testCaseRow).toBeVisible({ timeout: 10000 });
 
       // The row should contain a state badge (default state is usually "New" or "Draft")

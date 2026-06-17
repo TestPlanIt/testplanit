@@ -226,9 +226,11 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
         .getByRole("button", { name: /^configure parameters$/i })
         .first()
         .click();
-      await expect(page.getByTestId("addcase-inline-dataset-root")).toBeVisible({
-        timeout: 5000,
-      });
+      await expect(page.getByTestId("addcase-inline-dataset-root")).toBeVisible(
+        {
+          timeout: 5000,
+        }
+      );
 
       await page.getByTestId("addcase-inline-dataset-add-parameter").click();
       const nameInput = page.getByTestId(
@@ -241,7 +243,9 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
       await page
         .getByTestId("addcase-inline-dataset-row-label-0")
         .fill("happy path");
-      await page.getByTestId("addcase-inline-dataset-row-0-col-0").fill("alice");
+      await page
+        .getByTestId("addcase-inline-dataset-row-0-col-0")
+        .fill("alice");
     });
 
     await test.step("Close the Sheet with Escape and confirm the parameter count badge", async () => {

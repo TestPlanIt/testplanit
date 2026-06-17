@@ -748,7 +748,7 @@ test.describe("Case Fields - Validation", () => {
       // Try to create another field with the same system name
       await templatesPage.clickAddCaseField();
       await templatesPage.fillCaseFieldDisplayName(
-        `Another Field ${Date.now()}`,
+        `Another Field ${Date.now()}`
       );
       await templatesPage.selectCaseFieldType("Text String");
       await templatesPage.fillCaseFieldSystemName(systemName);

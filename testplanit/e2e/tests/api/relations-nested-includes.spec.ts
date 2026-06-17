@@ -150,7 +150,9 @@ test.describe("Nested Includes Regression Tests", () => {
       // Assert tags are returned correctly
       expect(Array.isArray(matchingCase.tags)).toBe(true);
       expect(matchingCase.tags.length).toBe(1);
-      expect(matchingCase.tags[0].name).toContain(`E2E NestedIncludes Tag ${ts}`);
+      expect(matchingCase.tags[0].name).toContain(
+        `E2E NestedIncludes Tag ${ts}`
+      );
 
       // Assert template is returned correctly (cases always have a template)
       expect(matchingCase.template).toBeTruthy();

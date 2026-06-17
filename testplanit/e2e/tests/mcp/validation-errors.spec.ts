@@ -131,24 +131,21 @@ test.describe("CASE-12 — validation error surfaces at the REST API layer", () 
       await test.step("Attempt to create a case with the required template relation omitted", async () => {
         // Omit `template: { connect: { id } }` — a required non-nullable FK.
         // The host should reject this with an error response (422 or 400).
-        r = await request.post(
-          `${baseURL}/api/model/repositoryCases/create`,
-          {
-            headers: ctx.headers,
+        r = await request.post(`${baseURL}/api/model/repositoryCases/create`, {
+          headers: ctx.headers,
+          data: {
             data: {
-              data: {
-                name: `CASE12-Missing-Template-${Date.now()}`,
-                source: "MANUAL",
-                automated: false,
-                project: { connect: { id: ctx.projectId } },
-                repository: { connect: { id: ctx.repositoryId } },
-                folder: { connect: { id: ctx.folderId } },
-                // template intentionally omitted — CASE-12 trigger
-                state: { connect: { id: ctx.stateId } },
-              },
+              name: `CASE12-Missing-Template-${Date.now()}`,
+              source: "MANUAL",
+              automated: false,
+              project: { connect: { id: ctx.projectId } },
+              repository: { connect: { id: ctx.repositoryId } },
+              folder: { connect: { id: ctx.folderId } },
+              // template intentionally omitted — CASE-12 trigger
+              state: { connect: { id: ctx.stateId } },
             },
-          }
-        );
+          },
+        });
       });
 
       await test.step("Verify the host rejects with a non-2xx status and an error body", async () => {

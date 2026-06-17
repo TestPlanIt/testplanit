@@ -91,7 +91,9 @@ test.describe("Tag Detail Page Filters", () => {
       await expect(
         page.getByTestId("hide-completed-sessions-switch")
       ).toBeVisible();
-      await expect(page.getByTestId("hide-completed-runs-switch")).toBeVisible();
+      await expect(
+        page.getByTestId("hide-completed-runs-switch")
+      ).toBeVisible();
     });
   });
 

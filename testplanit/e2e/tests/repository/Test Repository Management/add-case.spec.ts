@@ -58,7 +58,9 @@ test.describe("Add Case — Inline Row", () => {
     const caseName = `Inline Case ${Date.now()}`;
 
     const nameInput = page.getByTestId("inline-case-name-input");
-    let duplicateScanPromise: ReturnType<typeof page.waitForRequest> | undefined;
+    let duplicateScanPromise:
+      | ReturnType<typeof page.waitForRequest>
+      | undefined;
 
     await test.step("Open the folder and wait for the inline form", async () => {
       await repositoryPage.goto(projectId);

@@ -77,7 +77,9 @@ test.describe("Prompt Configurations - Navigation and Display", () => {
         .locator("[data-radix-collection-item]")
         .first();
       // Check if the section content is visible by looking for any link inside
-      if (!(await promptsLink.isVisible({ timeout: 1000 }).catch(() => false))) {
+      if (
+        !(await promptsLink.isVisible({ timeout: 1000 }).catch(() => false))
+      ) {
         await toolsTrigger.click();
       }
     });

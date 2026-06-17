@@ -24,15 +24,9 @@ test.describe("Parameters - PARAM-07 invariant @parameters", () => {
     let caseId: number | undefined;
 
     await test.step("Create a non-parameterized test case", async () => {
-      projectId = await api.createProject(
-        `E2E Param Invariant ${Date.now()}`
-      );
+      projectId = await api.createProject(`E2E Param Invariant ${Date.now()}`);
       folderId = await api.createFolder(projectId, "Invariant");
-      caseId = await api.createTestCase(
-        projectId,
-        folderId,
-        "Non-Param Case"
-      );
+      caseId = await api.createTestCase(projectId, folderId, "Non-Param Case");
     });
 
     await test.step("Open the case detail page", async () => {

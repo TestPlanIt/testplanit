@@ -81,7 +81,7 @@ test.describe("Folder Edit", () => {
       expect(response.ok()).toBe(true);
 
       // Wait for modal to close
-      await expect(editDialog).not.toBeVisible({ timeout: 10000 });
+      await expect(editDialog!).not.toBeVisible({ timeout: 10000 });
       await page.waitForLoadState("networkidle");
     });
 
@@ -141,7 +141,7 @@ test.describe("Folder Edit", () => {
       await saveButton.click();
 
       // Wait for modal to close
-      await expect(editDialog).not.toBeVisible({ timeout: 10000 });
+      await expect(editDialog!).not.toBeVisible({ timeout: 10000 });
       await page.waitForLoadState("networkidle");
     });
 

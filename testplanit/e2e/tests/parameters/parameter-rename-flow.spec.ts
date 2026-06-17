@@ -56,9 +56,7 @@ test.describe("Parameters - rename flow @parameters", () => {
       // Either the rename confirmation AlertDialog appears (when refs > 0) OR
       // the silent zero-refs path fires the rename inline. Cover both.
       const renameDialog = page.getByTestId("parameter-rename-dialog");
-      if (
-        await renameDialog.isVisible({ timeout: 2000 }).catch(() => false)
-      ) {
+      if (await renameDialog.isVisible({ timeout: 2000 }).catch(() => false)) {
         await page.getByTestId("parameter-rename-dialog-confirm").click();
       }
     });

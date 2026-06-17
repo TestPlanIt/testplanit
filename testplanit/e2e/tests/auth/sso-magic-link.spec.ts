@@ -121,22 +121,22 @@ test.describe("SSO and Magic Link", () => {
     const testEmail = `sso-google-${timestamp}@${TEST_EMAIL_DOMAIN}`;
     const testPassword = "Password123!";
 
-    let providerResult: { id: string; created: boolean } | null = null;
     let userId: string | undefined;
 
-    await test.step("Sign in as admin and create Google SSO provider", async () => {
-      // Sign in as admin to get authenticated context for API calls
-      const _adminCookies = await signInAsAdmin(page, baseURL!);
+    const providerResult: { id: string; created: boolean } | null =
+      await test.step("Sign in as admin and create Google SSO provider", async () => {
+        // Sign in as admin to get authenticated context for API calls
+        const _adminCookies = await signInAsAdmin(page, baseURL!);
 
-      // Create Google SSO provider using the admin-authenticated page.request
-      providerResult = await ensureSsoProvider(
-        page,
-        baseURL!,
-        "GOOGLE",
-        `Test Google SSO ${timestamp}`,
-        { clientId: "test-client-id", clientSecret: "test-client-secret" }
-      );
-    });
+        // Create Google SSO provider using the admin-authenticated page.request
+        return await ensureSsoProvider(
+          page,
+          baseURL!,
+          "GOOGLE",
+          `Test Google SSO ${timestamp}`,
+          { clientId: "test-client-id", clientSecret: "test-client-secret" }
+        );
+      });
 
     if (!providerResult) {
       test.skip(true, "Could not create Google SSO provider for test");
@@ -240,25 +240,25 @@ test.describe("SSO and Magic Link", () => {
     const testEmail = `sso-ms-${timestamp}@${TEST_EMAIL_DOMAIN}`;
     const testPassword = "Password123!";
 
-    let providerResult: { id: string; created: boolean } | null = null;
     let userId: string | undefined;
 
-    await test.step("Sign in as admin and create Microsoft SSO provider", async () => {
-      // Sign in as admin for provider setup
-      await signInAsAdmin(page, baseURL!);
+    const providerResult: { id: string; created: boolean } | null =
+      await test.step("Sign in as admin and create Microsoft SSO provider", async () => {
+        // Sign in as admin for provider setup
+        await signInAsAdmin(page, baseURL!);
 
-      providerResult = await ensureSsoProvider(
-        page,
-        baseURL!,
-        "MICROSOFT",
-        `Test Microsoft SSO ${timestamp}`,
-        {
-          clientId: "test-ms-client-id",
-          clientSecret: "test-ms-client-secret",
-          tenantId: "common",
-        }
-      );
-    });
+        return await ensureSsoProvider(
+          page,
+          baseURL!,
+          "MICROSOFT",
+          `Test Microsoft SSO ${timestamp}`,
+          {
+            clientId: "test-ms-client-id",
+            clientSecret: "test-ms-client-secret",
+            tenantId: "common",
+          }
+        );
+      });
 
     if (!providerResult) {
       test.skip(true, "Could not create Microsoft SSO provider for test");
@@ -614,23 +614,23 @@ test.describe("SSO and Magic Link", () => {
   }) => {
     const timestamp = Date.now();
 
-    let providerResult: { id: string; created: boolean } | null = null;
+    const providerResult: { id: string; created: boolean } | null =
+      await test.step("Sign in as admin, create Magic Link provider, then sign out", async () => {
+        // Sign in as admin to create the Magic Link SSO provider
+        await signInAsAdmin(page, baseURL!);
 
-    await test.step("Sign in as admin, create Magic Link provider, then sign out", async () => {
-      // Sign in as admin to create the Magic Link SSO provider
-      await signInAsAdmin(page, baseURL!);
+        const result = await ensureSsoProvider(
+          page,
+          baseURL!,
+          "MAGIC_LINK",
+          "Magic Link",
+          {}
+        );
 
-      providerResult = await ensureSsoProvider(
-        page,
-        baseURL!,
-        "MAGIC_LINK",
-        "Magic Link",
-        {}
-      );
-
-      // Clear cookies to test as unauthenticated user
-      await page.context().clearCookies();
-    });
+        // Clear cookies to test as unauthenticated user
+        await page.context().clearCookies();
+        return result;
+      });
 
     try {
       const dialog = page.locator('[role="dialog"]').first();

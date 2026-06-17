@@ -376,7 +376,9 @@ test.describe("Drag & Drop", () => {
       }).toPass({ timeout: 5000 });
 
       // Scroll elements into view
-      await testCaseRow.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      await testCaseRow.evaluate((el) =>
+        el.scrollIntoView({ block: "center" })
+      );
       await targetFolderElement.evaluate((el) =>
         el.scrollIntoView({ block: "center" })
       );
@@ -482,7 +484,9 @@ test.describe("Drag & Drop", () => {
       await expect(targetFolderElement).toBeVisible({ timeout: 5000 });
 
       // Scroll elements into view
-      await selectedRow.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      await selectedRow.evaluate((el) =>
+        el.scrollIntoView({ block: "center" })
+      );
       await targetFolderElement.evaluate((el) =>
         el.scrollIntoView({ block: "center" })
       );

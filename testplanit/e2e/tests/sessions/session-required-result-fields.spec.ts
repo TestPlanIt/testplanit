@@ -108,9 +108,7 @@ test.describe("Sessions — required result-field enforcement", () => {
     let statusId: number | undefined;
 
     await test.step("Create project, template with a required result field, and session", async () => {
-      projectId = await api.createProject(
-        `E2E Session Required RF OK ${ts}`
-      );
+      projectId = await api.createProject(`E2E Session Required RF OK ${ts}`);
 
       templateId = await api.createTemplate({
         name: `Required RF Template OK ${ts}`,
@@ -187,9 +185,7 @@ test.describe("Sessions — required result-field enforcement", () => {
     let statusId: number | undefined;
 
     await test.step("Create project and session with no required fields", async () => {
-      projectId = await api.createProject(
-        `E2E Session No Required RF ${ts}`
-      );
+      projectId = await api.createProject(`E2E Session No Required RF ${ts}`);
 
       // No required fields — the guard should be a no-op even though the
       // payload omits `resultFieldValues` entirely.

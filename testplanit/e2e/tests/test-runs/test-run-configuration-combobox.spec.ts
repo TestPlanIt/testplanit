@@ -466,7 +466,9 @@ test.describe("Test Run Configuration Combobox", () => {
     let projectId: number | undefined;
 
     await test.step("Create project and configuration", async () => {
-      projectId = await api.createProject(`E2E Config Pagination ${Date.now()}`);
+      projectId = await api.createProject(
+        `E2E Config Pagination ${Date.now()}`
+      );
       await api.createConfiguration(configName, projectId);
     });
 
