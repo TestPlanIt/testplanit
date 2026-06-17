@@ -5487,3 +5487,57 @@ model AuditLog {
         )
     )
 }
+
+// Append-only change-data-capture substrate. The generic audit_row_change()
+// trigger (prisma/audit_row_change.sql) writes one row here per
+// INSERT/UPDATE/DELETE on every allowlisted table; a downstream correlation
+// worker reads it via the raw prismaBase client.
+//
+// COLUMN-NAME RECONCILIATION (load-bearing): every field is @map-ed so the
+// Postgres columns this model produces match EXACTLY the snake_case/reserved
+// columns the trigger INSERTs into:
+//   "table", op, pk, changed_cols, actor, operation_id, tenant, txid, ts,
+//   processed, seq
+// If any column drifts (e.g. Prisma emits "changedCols" instead of
+// "changed_cols"), the trigger's INSERT targets a non-existent column and
+// every capture fails at runtime.
+model DataChangeLog {
+    // Stable row identity (BIGSERIAL PK).
+    id          BigInt   @id @default(autoincrement())
+    // Monotonic worker cursor (separate BIGSERIAL — column "seq").
+    seq         BigInt   @default(autoincrement())
+
+    // What changed.
+    tableName   String   @map("table") @db.VarChar(100) // column "table" (reserved word; field renamed)
+    op          String   @db.Char(1)                    // 'I' | 'U' | 'D'
+    pk          String   @db.Text                        // PK value as string (handles Int + cuid)
+    changedCols Json?    @map("changed_cols")            // { col: { old, new } }
+
+    // Actor context from the app.audit_context GUC (null = context unset:
+    // completeness over attribution).
+    actor       String?  @db.Text
+    operationId String?  @map("operation_id") @db.Text
+    tenant      String?  @db.Text
+
+    // DB-level metadata.
+    txid        BigInt
+    ts          DateTime @default(now()) @db.Timestamptz(6)
+
+    // Worker cursor flag.
+    processed   Boolean  @default(false)
+
+    // Worker poll hot path (the WHERE processed = false partial-index clause is
+    // applied by scripts/apply-triggers.ts in 13-03 — plain @@index here).
+    @@index([seq], map: "dcl_unprocessed_seq")
+    @@index([tableName, pk], map: "dcl_table_pk")
+    @@index([ts], map: "dcl_ts")
+
+    // Fully locked at the ZenStack policy layer — no application access. The
+    // worker reads via the raw prismaBase client (bypasses policy by design);
+    // INSERT is governed by the DB-role GRANT applied in 13-03. The explicit
+    // update/delete denials are defense-in-depth for the append-only invariant
+    // (SPIKE-04 Decision 5 / SAF-03).
+    @@deny('all', true)
+    @@deny('update', true)
+    @@deny('delete', true)
+}

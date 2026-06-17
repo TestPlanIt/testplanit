@@ -4,6 +4,7 @@ import { runWithAuditContext } from "../lib/auditContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
 import {
   disconnectAllTenantClients,
+  getCurrentTenantId,
   getPrismaClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
@@ -589,6 +590,19 @@ const processor = async (
         );
 
         const newCaseId = await prisma.$transaction(async (tx: any) => {
+          // Phase 13 CTX-02 — stamp the actor GUC as the FIRST statement inside
+          // this existing per-case transaction so trigger-captured rows for the
+          // copied RepositoryCases/Steps/CaseFieldValues carry the originating
+          // user/tenant. SET LOCAL only inside a $transaction (Pitfall A); we
+          // inject here rather than wrapping the processor (Pitfall H).
+          await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
+            {
+              userId: job.data?.userId ?? null,
+              requestId: null,
+              source: "worker",
+              tenantId: job.data?.tenantId ?? getCurrentTenantId() ?? null,
+            }
+          )}, true)`;
           // a. Create-or-restore the target RepositoryCases row. A prior
           //    soft-deleted case at the same (projectId, name, className,
           //    source) tuple (e.g. the user previously deleted a copy

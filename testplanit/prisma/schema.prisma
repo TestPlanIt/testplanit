@@ -2790,3 +2790,22 @@ model AuditLog {
   @@index([timestamp])
   @@index([action])
 }
+
+model DataChangeLog {
+  id          BigInt   @id() @default(autoincrement())
+  seq         BigInt   @default(autoincrement())
+  tableName   String   @map("table") @db.VarChar(100)
+  op          String   @db.Char(1)
+  pk          String   @db.Text()
+  changedCols Json?    @map("changed_cols")
+  actor       String?  @db.Text()
+  operationId String?  @map("operation_id") @db.Text()
+  tenant      String?  @db.Text()
+  txid        BigInt
+  ts          DateTime @default(now()) @db.Timestamptz(6)
+  processed   Boolean  @default(false)
+
+  @@index([seq], map: "dcl_unprocessed_seq")
+  @@index([tableName, pk], map: "dcl_table_pk")
+  @@index([ts], map: "dcl_ts")
+}

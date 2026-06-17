@@ -32,6 +32,11 @@ import {
   ENTITY_AUDIT_MODELS,
 } from "./services/entityAuditHooks";
 import { invalidateApiTokenCache } from "./api-token-cache";
+// Phase 13 CTX-01 — inject the app.audit_context GUC as the first statement
+// inside each mutating hook's $transaction so trigger-captured DataChangeLog
+// rows carry the originating request's actor/tenant/requestId. SET LOCAL is
+// only ever issued inside a transaction (Pitfall A / SPIKE Decision 1).
+import { injectAuditGuc } from "~/lib/audit/gucContext";
 // Plan 02-05 — outbound webhook emitters spliced alongside the existing
 // audit/ES-sync calls. Each emit is bound to a Prisma.TransactionClient
 // constructed inside an explicit baseClient.$transaction wrapper (Blocker 3
@@ -152,6 +157,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         // binding for their own correctness).
         async create({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const result = await query(args);
             if (result?.id) {
               syncRepositoryCaseToElasticsearch(result.id).catch(
@@ -172,6 +178,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
         async update({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             // Fetch old state for audit diff
             const oldEntity = args.where
               ? await tx.repositoryCases.findUnique({ where: args.where })
@@ -238,6 +245,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
         async upsert({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const oldEntity = args.where
               ? await tx.repositoryCases.findUnique({ where: args.where })
               : null;
@@ -273,6 +281,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
         async delete({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const oldEntity = args.where
               ? await tx.repositoryCases.findUnique({ where: args.where })
               : null;
@@ -333,6 +342,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       testRuns: {
         async create({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const result = await query(args);
             if (result?.id) {
               syncTestRunToElasticsearch(result.id).catch((error: any) => {
@@ -351,6 +361,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
         async update({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const oldEntity = args.where
               ? await tx.testRuns.findUnique({ where: args.where })
               : null;
@@ -428,6 +439,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       sessions: {
         async create({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const result = await query(args);
             if (result?.id) {
               syncSessionToElasticsearch(result.id).catch((error: any) => {
@@ -446,6 +458,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
         async update({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const oldEntity = args.where
               ? await tx.sessions.findUnique({ where: args.where })
               : null;
@@ -472,6 +485,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
         async upsert({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const oldEntity = args.where
               ? await tx.sessions.findUnique({ where: args.where })
               : null;
@@ -611,6 +625,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       issue: {
         async create({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const result = await query(args);
             if (result?.id) {
               syncIssueToElasticsearch(result.id).catch((error: any) => {
@@ -629,6 +644,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
         async update({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const oldEntity = args.where
               ? await tx.issue.findUnique({ where: args.where })
               : null;
@@ -656,6 +672,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           // create a duplicate row) — without this hook, audit + emit were
           // silently skipped.
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const oldEntity = args.where
               ? await tx.issue.findUnique({ where: args.where })
               : null;
@@ -684,6 +701,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
         async delete({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const oldEntity = args.where
               ? await tx.issue.findUnique({ where: args.where })
               : null;
@@ -1095,6 +1113,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       testRunResults: {
         async create({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const result = await query(args);
             if (result?.id) {
               const scope = await resolveTestRunResultAuditScope(
@@ -1167,6 +1186,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       sessionResults: {
         async create({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
+            await injectAuditGuc(tx);
             const result = await query(args);
             if (result?.id && result.sessionId !== undefined) {
               await emitSessionResultAdded(result, tx);

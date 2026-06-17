@@ -1,0 +1,99 @@
+/**
+ * Trigger registry — the single source of truth for which Postgres tables receive
+ * the generic audit_row_change() trigger, their primary-key column, and the per-table
+ * column denylist. Consumed by scripts/apply-triggers.ts (attaches the triggers) and by
+ * the drift test (computes the expected trigger count).
+ *
+ * Coverage:
+ *   COV-01 — Cases / Runs / Sessions families + every child/value table.
+ *   COV-02 — implicit many-to-many join tables linking Tags/Issue to those entities.
+ *   SAF-02 — per-table denylist: camelCase timestamps (where the table has them) + named
+ *            TipTap rich-text columns (Steps.step/expectedResult, Sessions.note/mission,
+ *            SessionVersions.note/mission).
+ *   SAF-04 — credential/token tables are deliberately ABSENT (see the exclusion block below);
+ *            DataChangeLog/AuditLog can never appear (REGISTRY_PROHIBITED + assertRegistrySafe).
+ */
+
+export interface TriggerConfig {
+  /** Postgres table name (exact case, no quotes — the apply script quotes it). */
+  table: string;
+  /** Primary-key column name. Default 'id'. Join tables have no id — their composite PK is (A,B), so pkCol is 'A'. */
+  pkCol?: string;
+  /** Columns excluded from the captured diff. Default DEFAULT_DENYLIST. */
+  denylist?: string[];
+}
+
+/** Default denylist applied to a table when its entry omits `denylist`. */
+export const DEFAULT_DENYLIST = ["createdAt", "updatedAt"];
+
+export const TRIGGER_REGISTRY: TriggerConfig[] = [
+  // ── Cases family ──────────────────────────────────────────────────────────
+  { table: "RepositoryCases", denylist: ["createdAt"] }, // NOTE: no updatedAt column on this table (Finding C)
+  { table: "CaseFieldValues", denylist: [] }, // no timestamps
+  { table: "Steps", denylist: ["createdAt", "updatedAt", "step", "expectedResult"] }, // step/expectedResult are TipTap
+  { table: "TestCaseParameter", denylist: ["createdAt", "updatedAt"] },
+
+  // Cases implicit m2m join tables (no timestamps; composite (A,B) PK → pkCol 'A')
+  { table: "_RepositoryCasesToTags", pkCol: "A", denylist: [] },
+  { table: "_IssueToRepositoryCases", pkCol: "A", denylist: [] },
+
+  // ── Runs family ───────────────────────────────────────────────────────────
+  { table: "TestRuns", denylist: ["createdAt", "updatedAt"] },
+  { table: "TestRunCases", denylist: ["createdAt", "updatedAt"] },
+  { table: "TestRunResults", denylist: ["createdAt", "updatedAt"] },
+  { table: "TestRunStepResults", denylist: ["createdAt", "updatedAt"] },
+  { table: "TestRunCaseIteration", denylist: ["createdAt", "updatedAt"] },
+  { table: "ResultFieldValues", denylist: [] }, // no timestamps
+
+  // Runs implicit m2m join tables
+  { table: "_IssueToTestRuns", pkCol: "A", denylist: [] },
+  { table: "_IssueToTestRunResults", pkCol: "A", denylist: [] },
+  { table: "_IssueToTestRunStepResults", pkCol: "A", denylist: [] },
+
+  // ── Sessions family ───────────────────────────────────────────────────────
+  { table: "Sessions", denylist: ["createdAt", "updatedAt", "note", "mission"] }, // note/mission are TipTap
+  { table: "SessionResults", denylist: ["createdAt", "updatedAt"] },
+  { table: "SessionFieldValues", denylist: [] }, // no timestamps
+  { table: "SessionVersions", denylist: ["createdAt", "updatedAt", "note", "mission"] }, // note/mission are TipTap
+
+  // Sessions implicit m2m join tables
+  { table: "_IssueToSessions", pkCol: "A", denylist: [] },
+  { table: "_IssueToSessionResults", pkCol: "A", denylist: [] },
+  { table: "_SessionsToTags", pkCol: "A", denylist: [] }, // [VERIFIED] live spike DB (Tags↔Sessions)
+  { table: "_TagsToTestRuns", pkCol: "A", denylist: [] }, // [VERIFIED] live spike DB (Tags↔TestRuns)
+];
+
+/**
+ * Tables that must NEVER appear in TRIGGER_REGISTRY. assertRegistrySafe() enforces this so a
+ * future mistake fails fast instead of attaching the generic audit trigger to the log itself
+ * (DataChangeLog gets only the dedicated tpl_dcl_* append-only enforcement triggers).
+ */
+export const REGISTRY_PROHIBITED = [
+  "DataChangeLog", // append-only audit substrate — recursion + tamper risk
+  "AuditLog", // semantic audit log (app-layer captureAuditEvent)
+  // BullMQ job tables are managed by BullMQ, not the application schema, and are likewise excluded.
+];
+
+/*
+ * SAF-04 — credential/token tables deliberately EXCLUDED from the registry (absence is the
+ * control; they are covered by semantic captureAuditEvent calls, never by row triggers):
+ *   ApiToken, ScimToken, VerificationToken, PasswordHistory, Account,
+ *   UserIntegrationAuth, WebhookConfigSecret, SsoProvider.
+ * Do not add any of these to TRIGGER_REGISTRY.
+ */
+
+/**
+ * Fail fast if any registry entry names a prohibited table. Called by the apply script
+ * before connecting so a bad registry never reaches the database.
+ */
+export function assertRegistrySafe(): void {
+  const offenders = TRIGGER_REGISTRY.filter((entry) =>
+    REGISTRY_PROHIBITED.includes(entry.table),
+  ).map((entry) => entry.table);
+  if (offenders.length > 0) {
+    throw new Error(
+      `TRIGGER_REGISTRY contains prohibited table(s): ${offenders.join(", ")}. ` +
+        `These must never receive the generic audit trigger (REGISTRY_PROHIBITED).`,
+    );
+  }
+}

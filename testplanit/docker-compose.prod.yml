@@ -48,7 +48,7 @@ services:
       [
         "sh",
         "-c",
-        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh ${POSTGRES_HOST:-postgres} ${POSTGRES_PORT:-5432} -- echo 'DB ready, pushing schema...' && pnpm prisma db push --accept-data-loss && echo 'Schema pushed, seeding...' && pnpm tsx prisma/seed.ts && echo 'DB initialized and seeded.'",
+        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh ${POSTGRES_HOST:-postgres} ${POSTGRES_PORT:-5432} -- echo 'DB ready, pushing schema...' && pnpm prisma db push --accept-data-loss && echo 'Applying audit triggers...' && pnpm tsx scripts/apply-triggers.ts && echo 'Schema pushed, seeding...' && pnpm tsx prisma/seed.ts && echo 'DB initialized and seeded.'",
       ]
     networks:
       - testplanit-net
