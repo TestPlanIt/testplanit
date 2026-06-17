@@ -70,46 +70,52 @@ test.describe("Issue Operations - SIMPLE_URL Full Cycle", () => {
     request,
     baseURL,
   }) => {
-    // Get admin user ID for createdBy
-    const userResponse = await request.get(
-      `${baseURL}/api/model/user/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { access: "ADMIN", isDeleted: false },
-            select: { id: true },
-          }),
-        },
-      }
-    );
-    expect(userResponse.status()).toBe(200);
-    const userResult = await userResponse.json();
-    const adminUserId = userResult.data?.id;
-    expect(adminUserId).toBeTruthy();
+    let adminUserId: number | undefined;
 
-    // Create an issue via ZenStack create endpoint
-    // ZenStack v3 requires relation connect syntax (no scalar FKs for relation fields)
-    const createResponse = await request.post(
-      `${baseURL}/api/model/issue/create`,
-      {
-        data: {
-          data: {
-            name: `E2E-ISSUE-${uniqueId}`,
-            title: `E2E Test Issue ${uniqueId}`,
-            externalId: `EXT-${uniqueId}`,
-            integration: { connect: { id: integrationId } },
-            project: { connect: { id: projectId } },
-            createdBy: { connect: { id: adminUserId } },
+    await test.step("Look up the admin user ID", async () => {
+      // Get admin user ID for createdBy
+      const userResponse = await request.get(
+        `${baseURL}/api/model/user/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { access: "ADMIN", isDeleted: false },
+              select: { id: true },
+            }),
           },
-        },
-      }
-    );
+        }
+      );
+      expect(userResponse.status()).toBe(200);
+      const userResult = await userResponse.json();
+      adminUserId = userResult.data?.id;
+      expect(adminUserId).toBeTruthy();
+    });
 
-    expect([200, 201].includes(createResponse.status())).toBe(true);
-    const createResult = await createResponse.json();
-    issueId = createResult.data?.id;
-    expect(issueId).toBeTruthy();
-    expect(createResult.data.externalId).toBe(`EXT-${uniqueId}`);
+    await test.step("Create an issue linked to the integration", async () => {
+      // Create an issue via ZenStack create endpoint
+      // ZenStack v3 requires relation connect syntax (no scalar FKs for relation fields)
+      const createResponse = await request.post(
+        `${baseURL}/api/model/issue/create`,
+        {
+          data: {
+            data: {
+              name: `E2E-ISSUE-${uniqueId}`,
+              title: `E2E Test Issue ${uniqueId}`,
+              externalId: `EXT-${uniqueId}`,
+              integration: { connect: { id: integrationId } },
+              project: { connect: { id: projectId } },
+              createdBy: { connect: { id: adminUserId } },
+            },
+          },
+        }
+      );
+
+      expect([200, 201].includes(createResponse.status())).toBe(true);
+      const createResult = await createResponse.json();
+      issueId = createResult.data?.id;
+      expect(issueId).toBeTruthy();
+      expect(createResult.data.externalId).toBe(`EXT-${uniqueId}`);
+    });
   });
 
   test("Can link the issue to a test case via POST /api/issues/{id}/link", async ({
@@ -118,19 +124,21 @@ test.describe("Issue Operations - SIMPLE_URL Full Cycle", () => {
   }) => {
     expect(issueId).toBeTruthy();
 
-    const response = await request.post(
-      `${baseURL}/api/issues/${issueId}/link`,
-      {
-        data: {
-          entityType: "testCase",
-          entityId: String(testCaseId),
-        },
-      }
-    );
+    await test.step("Link the issue to the test case", async () => {
+      const response = await request.post(
+        `${baseURL}/api/issues/${issueId}/link`,
+        {
+          data: {
+            entityType: "testCase",
+            entityId: String(testCaseId),
+          },
+        }
+      );
 
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(body).toHaveProperty("id");
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+      expect(body).toHaveProperty("id");
+    });
   });
 
   test("Linked issue appears in test case's issues query", async ({
@@ -139,21 +147,26 @@ test.describe("Issue Operations - SIMPLE_URL Full Cycle", () => {
   }) => {
     expect(issueId).toBeTruthy();
 
-    const response = await request.get(`${baseURL}/api/model/issue/findFirst`, {
-      params: {
-        q: JSON.stringify({
-          where: {
-            id: issueId,
-            repositoryCases: { some: { id: testCaseId } },
+    await test.step("Query the test case's issues and confirm the link", async () => {
+      const response = await request.get(
+        `${baseURL}/api/model/issue/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: {
+                id: issueId,
+                repositoryCases: { some: { id: testCaseId } },
+              },
+            }),
           },
-        }),
-      },
-    });
+        }
+      );
 
-    expect(response.status()).toBe(200);
-    const result = await response.json();
-    expect(result.data).toBeTruthy();
-    expect(result.data.id).toBe(issueId);
+      expect(response.status()).toBe(200);
+      const result = await response.json();
+      expect(result.data).toBeTruthy();
+      expect(result.data.id).toBe(issueId);
+    });
   });
 
   test("Can unlink the issue from the test case via POST /api/issues/{id}/unlink", async ({
@@ -162,19 +175,21 @@ test.describe("Issue Operations - SIMPLE_URL Full Cycle", () => {
   }) => {
     expect(issueId).toBeTruthy();
 
-    const response = await request.post(
-      `${baseURL}/api/issues/${issueId}/unlink`,
-      {
-        data: {
-          entityType: "testCase",
-          entityId: String(testCaseId),
-        },
-      }
-    );
+    await test.step("Unlink the issue from the test case", async () => {
+      const response = await request.post(
+        `${baseURL}/api/issues/${issueId}/unlink`,
+        {
+          data: {
+            entityType: "testCase",
+            entityId: String(testCaseId),
+          },
+        }
+      );
 
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(body).toHaveProperty("id");
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+      expect(body).toHaveProperty("id");
+    });
   });
 
   test("After unlink, issue is no longer associated with test case", async ({
@@ -183,21 +198,26 @@ test.describe("Issue Operations - SIMPLE_URL Full Cycle", () => {
   }) => {
     expect(issueId).toBeTruthy();
 
-    const response = await request.get(`${baseURL}/api/model/issue/findFirst`, {
-      params: {
-        q: JSON.stringify({
-          where: {
-            id: issueId,
-            repositoryCases: { some: { id: testCaseId } },
+    await test.step("Query the test case's issues and confirm no association", async () => {
+      const response = await request.get(
+        `${baseURL}/api/model/issue/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: {
+                id: issueId,
+                repositoryCases: { some: { id: testCaseId } },
+              },
+            }),
           },
-        }),
-      },
-    });
+        }
+      );
 
-    expect(response.status()).toBe(200);
-    const result = await response.json();
-    // Should be null since we unlinked
-    expect(result.data).toBeNull();
+      expect(response.status()).toBe(200);
+      const result = await response.json();
+      // Should be null since we unlinked
+      expect(result.data).toBeNull();
+    });
   });
 
   test.afterAll(async ({ request, baseURL }) => {
@@ -252,72 +272,80 @@ test.describe("Issue Operations - External Provider Error Handling", () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations/${githubIntegrationId}/create-issue`,
-      {
-        data: {
-          // Missing required 'title' and 'projectId' fields
-          description: "A description without a title",
-        },
-      }
-    );
+    await test.step("Post create-issue with a missing title and projectId", async () => {
+      const response = await request.post(
+        `${baseURL}/api/integrations/${githubIntegrationId}/create-issue`,
+        {
+          data: {
+            // Missing required 'title' and 'projectId' fields
+            description: "A description without a title",
+          },
+        }
+      );
 
-    expect(response.status()).toBe(400);
-    const body = await response.json();
-    expect(body).toHaveProperty("error");
-    // Should include validation details
-    expect(body.error).toMatch(/invalid|validation/i);
+      expect(response.status()).toBe(400);
+      const body = await response.json();
+      expect(body).toHaveProperty("error");
+      // Should include validation details
+      expect(body.error).toMatch(/invalid|validation/i);
+    });
   });
 
   test("POST /api/integrations/{id}/create-issue with valid body returns error (no real GitHub)", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations/${githubIntegrationId}/create-issue`,
-      {
-        data: {
-          title: "E2E Test Issue - Should Fail At Adapter",
-          projectId: "owner/repo",
-          description: "This will fail because no real GitHub is configured",
-        },
-      }
-    );
+    await test.step("Post create-issue with a valid body and confirm an adapter error", async () => {
+      const response = await request.post(
+        `${baseURL}/api/integrations/${githubIntegrationId}/create-issue`,
+        {
+          data: {
+            title: "E2E Test Issue - Should Fail At Adapter",
+            projectId: "owner/repo",
+            description: "This will fail because no real GitHub is configured",
+          },
+        }
+      );
 
-    // Adapter will fail to reach GitHub (fake token) — expect error response
-    expect([401, 404, 500].includes(response.status())).toBe(true);
-    const body = await response.json();
-    expect(body).toHaveProperty("error");
+      // Adapter will fail to reach GitHub (fake token) — expect error response
+      expect([401, 404, 500].includes(response.status())).toBe(true);
+      const body = await response.json();
+      expect(body).toHaveProperty("error");
+    });
   });
 
   test("GET /api/integrations/{id}/search without query param returns 400", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.get(
-      `${baseURL}/api/integrations/${githubIntegrationId}/search`
-    );
+    await test.step("Get search with no query param and confirm a 400", async () => {
+      const response = await request.get(
+        `${baseURL}/api/integrations/${githubIntegrationId}/search`
+      );
 
-    expect(response.status()).toBe(400);
-    const body = await response.json();
-    expect(body).toHaveProperty("error");
+      expect(response.status()).toBe(400);
+      const body = await response.json();
+      expect(body).toHaveProperty("error");
+    });
   });
 
   test("GET /api/integrations/{id}/search with query returns error from adapter (no real service)", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.get(
-      `${baseURL}/api/integrations/${githubIntegrationId}/search`,
-      {
-        params: { q: "test issue" },
-      }
-    );
+    await test.step("Get search with a query and confirm an adapter error", async () => {
+      const response = await request.get(
+        `${baseURL}/api/integrations/${githubIntegrationId}/search`,
+        {
+          params: { q: "test issue" },
+        }
+      );
 
-    // Adapter will fail to reach GitHub — accept any error status
-    expect([401, 404, 500].includes(response.status())).toBe(true);
-    const body = await response.json();
-    expect(body).toHaveProperty("error");
+      // Adapter will fail to reach GitHub — accept any error status
+      expect([401, 404, 500].includes(response.status())).toBe(true);
+      const body = await response.json();
+      expect(body).toHaveProperty("error");
+    });
   });
 
   test.afterAll(async ({ request, baseURL }) => {
@@ -400,11 +428,13 @@ test.describe("Issue Operations - Sync Endpoint", () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post(`${baseURL}/api/issues/999999/sync`);
+    await test.step("Post sync for a non-existent issue and confirm a 404", async () => {
+      const response = await request.post(`${baseURL}/api/issues/999999/sync`);
 
-    expect(response.status()).toBe(404);
-    const body = await response.json();
-    expect(body).toHaveProperty("error");
+      expect(response.status()).toBe(404);
+      const body = await response.json();
+      expect(body).toHaveProperty("error");
+    });
   });
 
   test("POST /api/issues/{id}/sync with existing issue returns error (no real external service)", async ({
@@ -416,17 +446,19 @@ test.describe("Issue Operations - Sync Endpoint", () => {
       return;
     }
 
-    const response = await request.post(
-      `${baseURL}/api/issues/${issueId}/sync`
-    );
+    await test.step("Post sync for the existing issue and confirm a non-crash shape", async () => {
+      const response = await request.post(
+        `${baseURL}/api/issues/${issueId}/sync`
+      );
 
-    // Sync will fail because SIMPLE_URL doesn't support sync in the adapter
-    // but it should NOT return an unexpected crash shape
-    expect([200, 400, 500].includes(response.status())).toBe(true);
-    const body = await response.json();
-    // Either success or proper error shape — no undefined/crash
-    expect(typeof body).toBe("object");
-    expect(body).not.toBeNull();
+      // Sync will fail because SIMPLE_URL doesn't support sync in the adapter
+      // but it should NOT return an unexpected crash shape
+      expect([200, 400, 500].includes(response.status())).toBe(true);
+      const body = await response.json();
+      // Either success or proper error shape — no undefined/crash
+      expect(typeof body).toBe("object");
+      expect(body).not.toBeNull();
+    });
   });
 
   test.afterAll(async ({ request, baseURL }) => {

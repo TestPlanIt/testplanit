@@ -78,165 +78,215 @@ test.describe("Tag Detail Page Filters", () => {
   });
 
   test("should display filter bar with all controls", async ({ page }) => {
-    await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
-    await page.waitForLoadState("networkidle");
-
-    // Filter bar should be visible
-    await expect(page.getByTestId("case-type-filter-select")).toBeVisible({
-      timeout: 10000,
+    await test.step("Open the tag detail page", async () => {
+      await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
+      await page.waitForLoadState("networkidle");
     });
-    await expect(
-      page.getByTestId("hide-completed-sessions-switch")
-    ).toBeVisible();
-    await expect(page.getByTestId("hide-completed-runs-switch")).toBeVisible();
+
+    await test.step("Verify all filter controls are visible", async () => {
+      // Filter bar should be visible
+      await expect(page.getByTestId("case-type-filter-select")).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(
+        page.getByTestId("hide-completed-sessions-switch")
+      ).toBeVisible();
+      await expect(page.getByTestId("hide-completed-runs-switch")).toBeVisible();
+    });
   });
 
   test("should filter test cases by type", async ({ page }) => {
-    // Mark the automated case
-    const response = await page.request.patch(
-      `/api/model/repositoryCases/update`,
-      {
-        data: {
-          where: { id: automatedCaseId },
-          data: { automated: true },
-        },
-      }
-    );
-    expect(response.ok()).toBeTruthy();
+    let casesTab: ReturnType<typeof page.getByRole> | undefined;
 
-    await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
-    await page.waitForLoadState("load");
+    await test.step("Mark the automated case via API", async () => {
+      // Mark the automated case
+      const response = await page.request.patch(
+        `/api/model/repositoryCases/update`,
+        {
+          data: {
+            where: { id: automatedCaseId },
+            data: { automated: true },
+          },
+        }
+      );
+      expect(response.ok()).toBeTruthy();
+    });
 
-    // Should show both cases by default (tab count = 2)
-    const casesTab = page.getByRole("tab", { name: /Test Cases/ });
-    await expect(casesTab).toBeVisible({ timeout: 10000 });
-    await expect(casesTab).toContainText("(2)");
+    await test.step("Open the tag detail page and confirm both cases show", async () => {
+      await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
+      await page.waitForLoadState("load");
 
-    // Filter to Manual only
-    await page.getByTestId("case-type-filter-select").click();
-    await page.getByRole("option", { name: "Manual" }).click();
+      // Should show both cases by default (tab count = 2)
+      casesTab = page.getByRole("tab", { name: /Test Cases/ });
+      await expect(casesTab).toBeVisible({ timeout: 10000 });
+      await expect(casesTab).toContainText("(2)");
+    });
 
-    // Count should update to 1
-    await expect(casesTab).toContainText("(1)");
+    await test.step("Filter to Manual only and confirm count is 1", async () => {
+      // Filter to Manual only
+      await page.getByTestId("case-type-filter-select").click();
+      await page.getByRole("option", { name: "Manual" }).click();
 
-    // Filter to Automated only
-    await page.getByTestId("case-type-filter-select").click();
-    await page.getByRole("option", { name: "Automated" }).click();
+      // Count should update to 1
+      await expect(casesTab!).toContainText("(1)");
+    });
 
-    await expect(casesTab).toContainText("(1)");
+    await test.step("Filter to Automated only and confirm count is 1", async () => {
+      // Filter to Automated only
+      await page.getByTestId("case-type-filter-select").click();
+      await page.getByRole("option", { name: "Automated" }).click();
 
-    // Back to All
-    await page.getByTestId("case-type-filter-select").click();
-    await page.getByRole("option", { name: "All" }).click();
+      await expect(casesTab!).toContainText("(1)");
+    });
 
-    await expect(casesTab).toContainText("(2)");
+    await test.step("Reset to All and confirm both cases show", async () => {
+      // Back to All
+      await page.getByTestId("case-type-filter-select").click();
+      await page.getByRole("option", { name: "All" }).click();
+
+      await expect(casesTab!).toContainText("(2)");
+    });
   });
 
   test("should hide completed sessions", async ({ page }) => {
-    await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
-    await page.waitForLoadState("load");
+    let sessionsTab: ReturnType<typeof page.getByRole> | undefined;
 
-    // Click sessions tab
-    const sessionsTab = page.getByRole("tab", { name: /Sessions/ });
-    await expect(sessionsTab).toBeVisible({ timeout: 10000 });
-    await expect(sessionsTab).toContainText("(2)");
+    await test.step("Open the tag detail page and confirm the Sessions tab shows 2", async () => {
+      await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
+      await page.waitForLoadState("load");
 
-    // Toggle hide completed sessions
-    await page.getByTestId("hide-completed-sessions-switch").click();
+      // Click sessions tab
+      sessionsTab = page.getByRole("tab", { name: /Sessions/ });
+      await expect(sessionsTab).toBeVisible({ timeout: 10000 });
+      await expect(sessionsTab).toContainText("(2)");
+    });
 
-    // Count should drop to 1
-    await expect(sessionsTab).toContainText("(1)");
+    await test.step("Hide completed sessions and confirm count drops to 1", async () => {
+      // Toggle hide completed sessions
+      await page.getByTestId("hide-completed-sessions-switch").click();
 
-    // Toggle back
-    await page.getByTestId("hide-completed-sessions-switch").click();
-    await expect(sessionsTab).toContainText("(2)");
+      // Count should drop to 1
+      await expect(sessionsTab!).toContainText("(1)");
+    });
+
+    await test.step("Toggle the filter back off and confirm count returns to 2", async () => {
+      // Toggle back
+      await page.getByTestId("hide-completed-sessions-switch").click();
+      await expect(sessionsTab!).toContainText("(2)");
+    });
   });
 
   test("should hide completed test runs", async ({ page }) => {
-    await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
-    await page.waitForLoadState("load");
+    let runsTab: ReturnType<typeof page.getByRole> | undefined;
 
-    // Check test runs tab
-    const runsTab = page.getByRole("tab", { name: /Test Runs/ });
-    await expect(runsTab).toBeVisible({ timeout: 10000 });
-    await expect(runsTab).toContainText("(2)");
+    await test.step("Open the tag detail page and confirm the Test Runs tab shows 2", async () => {
+      await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
+      await page.waitForLoadState("load");
 
-    // Toggle hide completed runs
-    await page.getByTestId("hide-completed-runs-switch").click();
+      // Check test runs tab
+      runsTab = page.getByRole("tab", { name: /Test Runs/ });
+      await expect(runsTab).toBeVisible({ timeout: 10000 });
+      await expect(runsTab).toContainText("(2)");
+    });
 
-    // Count should drop to 1
-    await expect(runsTab).toContainText("(1)");
+    await test.step("Hide completed runs and confirm count drops to 1", async () => {
+      // Toggle hide completed runs
+      await page.getByTestId("hide-completed-runs-switch").click();
 
-    // Toggle back
-    await page.getByTestId("hide-completed-runs-switch").click();
-    await expect(runsTab).toContainText("(2)");
+      // Count should drop to 1
+      await expect(runsTab!).toContainText("(1)");
+    });
+
+    await test.step("Toggle the filter back off and confirm count returns to 2", async () => {
+      // Toggle back
+      await page.getByTestId("hide-completed-runs-switch").click();
+      await expect(runsTab!).toContainText("(2)");
+    });
   });
 
   test("should show active filter count and allow clearing", async ({
     page,
   }) => {
-    await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
-    await page.waitForLoadState("load");
+    let clearButton: ReturnType<typeof page.getByTestId> | undefined;
 
-    // No clear button initially
-    await expect(page.getByTestId("clear-all-filters")).not.toBeVisible({
-      timeout: 10000,
+    await test.step("Open the tag detail page with no active filters", async () => {
+      await page.goto(`/en-US/projects/tags/${projectId}/${tagId}`);
+      await page.waitForLoadState("load");
+
+      // No clear button initially
+      await expect(page.getByTestId("clear-all-filters")).not.toBeVisible({
+        timeout: 10000,
+      });
     });
 
-    // Enable a filter
-    await page.getByTestId("hide-completed-sessions-switch").click();
+    await test.step("Enable a filter and confirm the clear badge shows 1", async () => {
+      // Enable a filter
+      await page.getByTestId("hide-completed-sessions-switch").click();
 
-    // Badge with count should appear
-    const clearButton = page.getByTestId("clear-all-filters");
-    await expect(clearButton).toBeVisible();
-    await expect(clearButton).toContainText("1");
+      // Badge with count should appear
+      clearButton = page.getByTestId("clear-all-filters");
+      await expect(clearButton).toBeVisible();
+      await expect(clearButton).toContainText("1");
+    });
 
-    // Enable another filter
-    await page.getByTestId("hide-completed-runs-switch").click();
-    await expect(clearButton).toContainText("2");
+    await test.step("Enable a second filter and confirm the badge shows 2", async () => {
+      // Enable another filter
+      await page.getByTestId("hide-completed-runs-switch").click();
+      await expect(clearButton!).toContainText("2");
+    });
 
-    // Clear all filters
-    await clearButton.click();
+    await test.step("Clear all filters and confirm counts return to full", async () => {
+      // Clear all filters
+      await clearButton!.click();
 
-    // Filters should be reset
-    await expect(page.getByTestId("clear-all-filters")).not.toBeVisible();
+      // Filters should be reset
+      await expect(page.getByTestId("clear-all-filters")).not.toBeVisible();
 
-    // Counts should be back to full
-    const sessionsTab = page.getByRole("tab", { name: /Sessions/ });
-    await expect(sessionsTab).toContainText("(2)");
-    const runsTab = page.getByRole("tab", { name: /Test Runs/ });
-    await expect(runsTab).toContainText("(2)");
+      // Counts should be back to full
+      const sessionsTab = page.getByRole("tab", { name: /Sessions/ });
+      await expect(sessionsTab).toContainText("(2)");
+      const runsTab = page.getByRole("tab", { name: /Test Runs/ });
+      await expect(runsTab).toContainText("(2)");
+    });
   });
 
   test("should show empty state when all items filtered out", async ({
     page,
     api,
   }) => {
-    // Create a tag with only completed sessions
-    const emptyTagId = await api.createTag(
-      `empty-filter-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    );
-    const completedSessionId = await api.createSession(
-      projectId,
-      `Only Completed ${Date.now()}`,
-      { isCompleted: true }
-    );
-    await api.addTagToSession(completedSessionId, emptyTagId);
+    let emptyTagId: number | undefined;
 
-    await page.goto(`/en-US/projects/tags/${projectId}/${emptyTagId}`);
-    await page.waitForLoadState("load");
+    await test.step("Create a tag with only a completed session", async () => {
+      // Create a tag with only completed sessions
+      emptyTagId = await api.createTag(
+        `empty-filter-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      );
+      const completedSessionId = await api.createSession(
+        projectId,
+        `Only Completed ${Date.now()}`,
+        { isCompleted: true }
+      );
+      await api.addTagToSession(completedSessionId, emptyTagId);
+    });
 
-    // Click sessions tab
-    const sessionsTab = page.getByRole("tab", { name: /Sessions/ });
-    await expect(sessionsTab).toBeVisible({ timeout: 10000 });
-    await sessionsTab.click();
+    await test.step("Open the tag detail page and switch to the Sessions tab", async () => {
+      await page.goto(`/en-US/projects/tags/${projectId}/${emptyTagId!}`);
+      await page.waitForLoadState("load");
 
-    // Toggle hide completed sessions
-    await page.getByTestId("hide-completed-sessions-switch").click();
+      // Click sessions tab
+      const sessionsTab = page.getByRole("tab", { name: /Sessions/ });
+      await expect(sessionsTab).toBeVisible({ timeout: 10000 });
+      await sessionsTab.click();
+    });
 
-    // Should show filtered empty state
-    await expect(
-      page.getByText("No items match the current filters")
-    ).toBeVisible();
+    await test.step("Hide completed sessions and confirm the filtered empty state", async () => {
+      // Toggle hide completed sessions
+      await page.getByTestId("hide-completed-sessions-switch").click();
+
+      // Should show filtered empty state
+      await expect(
+        page.getByText("No items match the current filters")
+      ).toBeVisible();
+    });
   });
 });

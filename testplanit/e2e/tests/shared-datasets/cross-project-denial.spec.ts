@@ -32,51 +32,63 @@ test.describe("Shared datasets - cross-project denial @shared-datasets", () => {
     request,
     baseURL,
   }) => {
-    // Project A: contains the case the assignment will target.
-    const projectAId = await api.createProject(
-      `E2E Cross-project A ${Date.now()}`
-    );
-    const folderAId = await api.createFolder(projectAId, "A");
-    const caseAId = await api.createTestCase(
-      projectAId,
-      folderAId,
-      "Login (case A)"
-    );
+    let caseAId: number | undefined;
+    let dataSet: { id: number } | undefined;
 
-    // Project B: contains the shared dataset the cross-project assign
-    // attempt will reference.
-    const projectBId = await api.createProject(
-      `E2E Cross-project B ${Date.now()}`
-    );
+    // Create project A with a target case
+    await test.step("Create project A with a target case", async () => {
+      // Project A: contains the case the assignment will target.
+      const projectAId = await api.createProject(
+        `E2E Cross-project A ${Date.now()}`
+      );
+      const folderAId = await api.createFolder(projectAId, "A");
+      caseAId = await api.createTestCase(
+        projectAId,
+        folderAId,
+        "Login (case A)"
+      );
+    });
 
-    // Create a shared dataset directly under project B via the
-    // project-scoped POST endpoint (the same endpoint the UI uses).
-    const createRes = await request.post(
-      `${baseURL}/api/projects/${projectBId}/datasets`,
-      {
-        data: { name: `Project B users ${Date.now()}` },
-      }
-    );
-    expect(createRes.status()).toBe(200);
-    const { dataSet } = await createRes.json();
-    expect(dataSet?.id).toBeGreaterThan(0);
+    // Create project B with a shared dataset
+    await test.step("Create project B with a shared dataset", async () => {
+      // Project B: contains the shared dataset the cross-project assign
+      // attempt will reference.
+      const projectBId = await api.createProject(
+        `E2E Cross-project B ${Date.now()}`
+      );
 
-    // Cross-project assignment attempt — point project A's case at
-    // project B's shared dataset. The route enforces the
-    // `sharedDataSet.projectId !== case.projectId` guard and returns
-    // 422 with `error: "cross_project"`.
-    const assignRes = await request.put(
-      `${baseURL}/api/repository/cases/${caseAId}/shared-dataset`,
-      {
-        data: {
-          sharedDataSetId: dataSet.id,
-          pinnedVersionId: null,
-          mappingJson: {},
-        },
-      }
-    );
-    expect(assignRes.status()).toBe(422);
-    const body = await assignRes.json();
-    expect(body.error).toBe("cross_project");
+      // Create a shared dataset directly under project B via the
+      // project-scoped POST endpoint (the same endpoint the UI uses).
+      const createRes = await request.post(
+        `${baseURL}/api/projects/${projectBId}/datasets`,
+        {
+          data: { name: `Project B users ${Date.now()}` },
+        }
+      );
+      expect(createRes.status()).toBe(200);
+      ({ dataSet } = await createRes.json());
+      expect(dataSet?.id).toBeGreaterThan(0);
+    });
+
+    // Attempt the cross-project assignment and expect 422 cross_project
+    await test.step("Attempt the cross-project assignment and expect 422 cross_project", async () => {
+      // Cross-project assignment attempt — point project A's case at
+      // project B's shared dataset. The route enforces the
+      // `sharedDataSet.projectId !== case.projectId` guard and returns
+      // 422 with `error: "cross_project"`.
+      const assignRes = await request.put(
+        `${baseURL}/api/repository/cases/${caseAId}/shared-dataset`,
+        {
+          data: {
+            sharedDataSetId: dataSet!.id,
+            pinnedVersionId: null,
+            mappingJson: {},
+          },
+        }
+      );
+      expect(assignRes.status()).toBe(422);
+      const body = await assignRes.json();
+      expect(body.error).toBe("cross_project");
+    });
   });
 });

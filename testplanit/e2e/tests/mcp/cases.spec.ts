@@ -121,9 +121,10 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
     baseURL,
   }) => {
     const name = `MCP-E2E-${Date.now()}`;
-    const r = await request.post(
-      `${baseURL}/api/model/repositoryCases/create`,
-      {
+    let r: Awaited<ReturnType<typeof request.post>> | undefined;
+
+    await test.step("Create a test case via REST", async () => {
+      r = await request.post(`${baseURL}/api/model/repositoryCases/create`, {
         headers: ctx.headers,
         data: {
           data: {
@@ -137,70 +138,87 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
             state: { connect: { id: ctx.stateId } },
           },
         },
-      }
-    );
-    expect(
-      r.status(),
-      `create body=${await r.text().catch(() => "")}`
-    ).toBeLessThan(300);
-    const body = await r.json();
-    const created = body.data ?? body;
-    expect(created.id).toBeGreaterThan(0);
-    expect(created.name).toBe(name);
-    expect(created.isDeleted).toBe(false);
-    createdCaseId = created.id;
+      });
+    });
+
+    await test.step("Verify the created case and capture its id", async () => {
+      expect(
+        r!.status(),
+        `create body=${await r!.text().catch(() => "")}`
+      ).toBeLessThan(300);
+      const body = await r!.json();
+      const created = body.data ?? body;
+      expect(created.id).toBeGreaterThan(0);
+      expect(created.name).toBe(name);
+      expect(created.isDeleted).toBe(false);
+      createdCaseId = created.id;
+    });
   });
 
   test("CASE-01 — list includes the new case (mirrors testplanit_cases_list)", async ({
     request,
     baseURL,
   }) => {
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: {
-          projectId: ctx.projectId,
-          isDeleted: false,
-          id: createdCaseId,
-        },
-        take: 1,
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/repositoryCases/findMany?q=${q}`,
-      { headers: ctx.headers }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(body.data).toHaveLength(1);
-    expect(body.data[0].id).toBe(createdCaseId);
+    let r: Awaited<ReturnType<typeof request.get>> | undefined;
+
+    await test.step("List cases filtered to the new case id", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: {
+            projectId: ctx.projectId,
+            isDeleted: false,
+            id: createdCaseId,
+          },
+          take: 1,
+        })
+      );
+      r = await request.get(
+        `${baseURL}/api/model/repositoryCases/findMany?q=${q}`,
+        { headers: ctx.headers }
+      );
+    });
+
+    await test.step("Verify the list includes the new case", async () => {
+      expect(r!.status()).toBe(200);
+      const body = await r!.json();
+      expect(body.data).toHaveLength(1);
+      expect(body.data[0].id).toBe(createdCaseId);
+    });
   });
 
   test("CASE-02 — fetch full detail via findUnique (mirrors testplanit_cases_get)", async ({
     request,
     baseURL,
   }) => {
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: { id: createdCaseId },
-        include: {
-          project: { select: { id: true, name: true } },
-          folder: { select: { id: true, name: true, parentId: true } },
-          state: { select: { id: true, name: true } },
-          creator: { select: { id: true, name: true, email: true } },
-        },
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/repositoryCases/findUnique?q=${q}`,
-      { headers: ctx.headers }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(body.data).not.toBeNull();
-    expect(body.data.project.id).toBe(ctx.projectId);
-    expect(body.data.folder.id).toBe(ctx.folderId);
-    expect(body.data.state.id).toBe(ctx.stateId);
-    expect(body.data.creator.email).toBeTruthy();
+    let r: Awaited<ReturnType<typeof request.get>> | undefined;
+
+    await test.step("Fetch full case detail via findUnique", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: { id: createdCaseId },
+          include: {
+            project: { select: { id: true, name: true } },
+            folder: { select: { id: true, name: true, parentId: true } },
+            state: { select: { id: true, name: true } },
+            creator: { select: { id: true, name: true, email: true } },
+          },
+        })
+      );
+      r = await request.get(
+        `${baseURL}/api/model/repositoryCases/findUnique?q=${q}`,
+        { headers: ctx.headers }
+      );
+    });
+
+    await test.step("Verify the case relations and creator", async () => {
+      expect(r!.status()).toBe(200);
+      const body = await r!.json();
+      expect(body.data).not.toBeNull();
+      expect(body.data.project.id).toBe(ctx.projectId);
+      expect(body.data.folder.id).toBe(ctx.folderId);
+      expect(body.data.state.id).toBe(ctx.stateId);
+      expect(body.data.creator.email).toBeTruthy();
+    });
   });
 
   test("CASE-04 — update name via PATCH (mirrors testplanit_cases_update)", async ({
@@ -208,55 +226,70 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
     baseURL,
   }) => {
     const newName = `Renamed-${Date.now()}`;
-    const r = await request.patch(
-      `${baseURL}/api/model/repositoryCases/update`,
-      {
+    let r: Awaited<ReturnType<typeof request.patch>> | undefined;
+
+    await test.step("Update the case name via PATCH", async () => {
+      r = await request.patch(`${baseURL}/api/model/repositoryCases/update`, {
         headers: ctx.headers,
         data: { where: { id: createdCaseId }, data: { name: newName } },
-      }
-    );
-    expect(r.status()).toBeLessThan(300);
-    const body = await r.json();
-    expect((body.data ?? body).name).toBe(newName);
+      });
+    });
+
+    await test.step("Verify the name was updated", async () => {
+      expect(r!.status()).toBeLessThan(300);
+      const body = await r!.json();
+      expect((body.data ?? body).name).toBe(newName);
+    });
   });
 
   test("CASE-05 — soft-delete via PATCH update isDeleted=true (mirrors testplanit_cases_delete)", async ({
     request,
     baseURL,
   }) => {
-    const r = await request.patch(
-      `${baseURL}/api/model/repositoryCases/update`,
-      {
+    let r: Awaited<ReturnType<typeof request.patch>> | undefined;
+
+    await test.step("Soft-delete the case via PATCH isDeleted=true", async () => {
+      r = await request.patch(`${baseURL}/api/model/repositoryCases/update`, {
         headers: ctx.headers,
         data: { where: { id: createdCaseId }, data: { isDeleted: true } },
-      }
-    );
-    expect(r.status()).toBeLessThan(300);
-    const body = await r.json();
-    expect((body.data ?? body).isDeleted).toBe(true);
+      });
+    });
+
+    await test.step("Verify the case is marked deleted", async () => {
+      expect(r!.status()).toBeLessThan(300);
+      const body = await r!.json();
+      expect((body.data ?? body).isDeleted).toBe(true);
+    });
   });
 
   test("CASE-05 — soft-deleted case is hidden from subsequent list", async ({
     request,
     baseURL,
   }) => {
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: {
-          projectId: ctx.projectId,
-          isDeleted: false,
-          id: createdCaseId,
-        },
-        take: 1,
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/repositoryCases/findMany?q=${q}`,
-      { headers: ctx.headers }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(body.data).toHaveLength(0);
+    let r: Awaited<ReturnType<typeof request.get>> | undefined;
+
+    await test.step("List non-deleted cases filtered to the case id", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: {
+            projectId: ctx.projectId,
+            isDeleted: false,
+            id: createdCaseId,
+          },
+          take: 1,
+        })
+      );
+      r = await request.get(
+        `${baseURL}/api/model/repositoryCases/findMany?q=${q}`,
+        { headers: ctx.headers }
+      );
+    });
+
+    await test.step("Verify the soft-deleted case is hidden", async () => {
+      expect(r!.status()).toBe(200);
+      const body = await r!.json();
+      expect(body.data).toHaveLength(0);
+    });
   });
 
   // -- Phase 8 REPO-02 maintenance smoke -------------------------------------
@@ -268,19 +301,28 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
     request,
     baseURL,
   }) => {
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: { projectId: ctx.projectId, isDeleted: false, automated: true },
-        orderBy: [{ id: "asc" }],
-        take: 5,
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/repositoryCases/findMany?q=${q}`,
-      { headers: ctx.headers }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
+    let r: Awaited<ReturnType<typeof request.get>> | undefined;
+
+    await test.step("List cases filtered by automated: true", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: {
+            projectId: ctx.projectId,
+            isDeleted: false,
+            automated: true,
+          },
+          orderBy: [{ id: "asc" }],
+          take: 5,
+        })
+      );
+      r = await request.get(
+        `${baseURL}/api/model/repositoryCases/findMany?q=${q}`,
+        { headers: ctx.headers }
+      );
+    });
+
+    expect(r!.status()).toBe(200);
+    const body = await r!.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
       console.warn(

@@ -61,105 +61,118 @@ test.describe("Role-eligible assignees", () => {
     api,
   }) => {
     const url = baseURL!;
-    const projectId = await api.createProject(
-      `Reviews-RoleVisible ${Date.now()}`
-    );
-    const ids = await getProjectWorkflowIds(
-      request,
-      url,
-      projectId,
-      "CASES",
-      5
-    );
-    const currentStateId = ids[0];
-    await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    const gated = await createGatedTestWorkflow(
-      request,
-      url,
-      projectId,
-      "CASES"
-    );
-    gatedWorkflowId = gated.id;
+    let projectId: number | undefined;
+    let currentStateId: number | undefined;
+    let caseId: number | undefined;
+    let newUser: Awaited<ReturnType<typeof api.createUser>> | undefined;
 
-    const roleName = `RA-Role-${Date.now()}`;
-    createdRoleId = await api.createRole(roleName);
-    // Phase 7 added a per-area `canApprove` gate on the reviewer picker;
-    // without this grant the role would be excluded by the canApprove filter
-    // even when a project-eligible holder exists, masking the holder-only
-    // filter this test asserts.
-    await api.setRolePermission({
-      roleId: createdRoleId,
-      area: "TestCaseRepository",
-      canApprove: true,
+    await test.step("Set up gated review project, role, and test case", async () => {
+      projectId = await api.createProject(`Reviews-RoleVisible ${Date.now()}`);
+      const ids = await getProjectWorkflowIds(
+        request,
+        url,
+        projectId,
+        "CASES",
+        5
+      );
+      currentStateId = ids[0];
+      await setProjectReviewWorkflowEnabled(request, url, projectId, true);
+      const gated = await createGatedTestWorkflow(
+        request,
+        url,
+        projectId,
+        "CASES"
+      );
+      gatedWorkflowId = gated.id;
+
+      const roleName = `RA-Role-${Date.now()}`;
+      createdRoleId = await api.createRole(roleName);
+      // Phase 7 added a per-area `canApprove` gate on the reviewer picker;
+      // without this grant the role would be excluded by the canApprove filter
+      // even when a project-eligible holder exists, masking the holder-only
+      // filter this test asserts.
+      await api.setRolePermission({
+        roleId: createdRoleId,
+        area: "TestCaseRepository",
+        canApprove: true,
+      });
+
+      const folderId = await api.createFolder(
+        projectId,
+        `RoleEligibility ${Date.now()}`
+      );
+      caseId = await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        `Eligibility case ${Date.now()}`,
+        currentStateId
+      );
     });
 
-    const folderId = await api.createFolder(
-      projectId,
-      `RoleEligibility ${Date.now()}`
-    );
-    const caseId = await api.createTestCaseWithState(
-      projectId,
-      folderId,
-      `Eligibility case ${Date.now()}`,
-      currentStateId
-    );
-
-    // 1) No holder yet — the role should NOT appear in the assignee popover.
-    await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
-    await page.waitForLoadState("networkidle");
-    await page.getByTestId("request-review-button").click();
-    await page.getByTestId("assignee-combobox").click();
-    await expect(
-      page.getByTestId(`assignee-option-role-${createdRoleId}`)
-    ).toHaveCount(0);
-    await page.keyboard.press("Escape");
-    // Close the sheet too so re-opening reuses fresh data.
-    await page.keyboard.press("Escape");
-    await page.waitForLoadState("networkidle");
-
-    // 2) Create a USER with that role + give them project access, then
-    //    the role should appear.
-    const newUser = await api.createUser({
-      name: `RA-User ${Date.now()}`,
-      email: `ra-user-${Date.now()}@example.com`,
-      password: "S3cure!password",
-      access: "USER",
-      roleId: createdRoleId,
-      isActive: true,
-      emailVerified: true,
+    await test.step("Confirm role is absent from the picker with no project-eligible holder", async () => {
+      // 1) No holder yet — the role should NOT appear in the assignee popover.
+      await page.goto(
+        `/en-US/projects/repository/${projectId}/${caseId}`
+      );
+      await page.waitForLoadState("networkidle");
+      await page.getByTestId("request-review-button").click();
+      await page.getByTestId("assignee-combobox").click();
+      await expect(
+        page.getByTestId(`assignee-option-role-${createdRoleId}`)
+      ).toHaveCount(0);
+      await page.keyboard.press("Escape");
+      // Close the sheet too so re-opening reuses fresh data.
+      await page.keyboard.press("Escape");
+      await page.waitForLoadState("networkidle");
     });
-    createdUserIds.push(newUser.data.id);
 
-    // Assign user to the project AND create the GLOBAL_ROLE
-    // UserProjectPermission row that getProjectEligibleRoles path 2
-    // looks for. A bare projectAssignment grants access but no role-
-    // eligibility under any of the four union paths.
-    await request.post(`${url}/api/model/projectAssignment/create`, {
-      data: {
+    await test.step("Create a role-holder user with project access", async () => {
+      // 2) Create a USER with that role + give them project access, then
+      //    the role should appear.
+      newUser = await api.createUser({
+        name: `RA-User ${Date.now()}`,
+        email: `ra-user-${Date.now()}@example.com`,
+        password: "S3cure!password",
+        access: "USER",
+        roleId: createdRoleId,
+        isActive: true,
+        emailVerified: true,
+      });
+      createdUserIds.push(newUser.data.id);
+
+      // Assign user to the project AND create the GLOBAL_ROLE
+      // UserProjectPermission row that getProjectEligibleRoles path 2
+      // looks for. A bare projectAssignment grants access but no role-
+      // eligibility under any of the four union paths.
+      await request.post(`${url}/api/model/projectAssignment/create`, {
         data: {
-          project: { connect: { id: projectId } },
-          user: { connect: { id: newUser.data.id } },
+          data: {
+            project: { connect: { id: projectId } },
+            user: { connect: { id: newUser.data.id } },
+          },
         },
-      },
-    });
-    await request.post(`${url}/api/model/userProjectPermission/create`, {
-      data: {
+      });
+      await request.post(`${url}/api/model/userProjectPermission/create`, {
         data: {
-          projectId,
-          userId: newUser.data.id,
-          accessType: "GLOBAL_ROLE",
+          data: {
+            projectId,
+            userId: newUser.data.id,
+            accessType: "GLOBAL_ROLE",
+          },
         },
-      },
+      });
     });
 
-    // Reload and re-open the sheet.
-    await page.reload();
-    await page.waitForLoadState("networkidle");
-    await page.getByTestId("request-review-button").click();
-    await page.getByTestId("assignee-combobox").click();
-    await expect(
-      page.getByTestId(`assignee-option-role-${createdRoleId}`)
-    ).toBeVisible({ timeout: 5000 });
+    await test.step("Reload and verify the role now appears in the picker", async () => {
+      // Reload and re-open the sheet.
+      await page.reload();
+      await page.waitForLoadState("networkidle");
+      await page.getByTestId("request-review-button").click();
+      await page.getByTestId("assignee-combobox").click();
+      await expect(
+        page.getByTestId(`assignee-option-role-${createdRoleId}`)
+      ).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("second decide on a role-assigned request returns already-decided", async ({
@@ -169,96 +182,109 @@ test.describe("Role-eligible assignees", () => {
     adminUserId,
   }) => {
     const url = baseURL!;
-    const projectId = await api.createProject(
-      `Reviews-RoleDecide ${Date.now()}`
-    );
-    const ids = await getProjectWorkflowIds(
-      request,
-      url,
-      projectId,
-      "CASES",
-      5
-    );
-    const currentStateId = ids[0];
-    await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    const decideGated = await createGatedTestWorkflow(
-      request,
-      url,
-      projectId,
-      "CASES"
-    );
-    gatedWorkflowId = decideGated.id;
+    let reviewRequestId: string | undefined;
 
-    const roleName = `RA-Two-${Date.now()}`;
-    createdRoleId = await api.createRole(roleName);
-    // Phase 7 canApprove gate: this role must hold canApprove on the entity's
-    // area (TestCaseRepository, since the request below is on a CASE) so its
-    // holders pass the reviewer-eligibility filter.
-    await api.setRolePermission({
-      roleId: createdRoleId,
-      area: "TestCaseRepository",
-      canApprove: true,
+    await test.step("Set up gated project, role with two holders, and a role-assigned review request", async () => {
+      const projectId = await api.createProject(
+        `Reviews-RoleDecide ${Date.now()}`
+      );
+      const ids = await getProjectWorkflowIds(
+        request,
+        url,
+        projectId,
+        "CASES",
+        5
+      );
+      const currentStateId = ids[0];
+      await setProjectReviewWorkflowEnabled(request, url, projectId, true);
+      const decideGated = await createGatedTestWorkflow(
+        request,
+        url,
+        projectId,
+        "CASES"
+      );
+      gatedWorkflowId = decideGated.id;
+
+      const roleName = `RA-Two-${Date.now()}`;
+      createdRoleId = await api.createRole(roleName);
+      // Phase 7 canApprove gate: this role must hold canApprove on the entity's
+      // area (TestCaseRepository, since the request below is on a CASE) so its
+      // holders pass the reviewer-eligibility filter.
+      await api.setRolePermission({
+        roleId: createdRoleId,
+        area: "TestCaseRepository",
+        canApprove: true,
+      });
+
+      // Two role holders, both project members. Admin user is already eligible
+      // via global access. We add admin to the role too, and create a second
+      // role holder for the project.
+      await request.patch(`${url}/api/model/user/update`, {
+        data: {
+          where: { id: adminUserId },
+          data: { roleId: createdRoleId },
+        },
+      });
+
+      const folderId = await api.createFolder(
+        projectId,
+        `RoleDecide ${Date.now()}`
+      );
+      const caseId = await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        `RoleDecide case ${Date.now()}`,
+        currentStateId
+      );
+      reviewRequestId = await createReviewRequest(request, url, {
+        projectId,
+        entityType: "CASE",
+        entityId: caseId,
+        fromStateId: currentStateId,
+        toStateId: gatedWorkflowId,
+        requestedByUserId: adminUserId,
+        assigneeRoleId: createdRoleId,
+      });
+      createdReviewIds.push(reviewRequestId);
     });
 
-    // Two role holders, both project members. Admin user is already eligible
-    // via global access. We add admin to the role too, and create a second
-    // role holder for the project.
-    await request.patch(`${url}/api/model/user/update`, {
-      data: {
-        where: { id: adminUserId },
-        data: { roleId: createdRoleId },
-      },
+    await test.step("Submit the first decision (approve) and expect success", async () => {
+      // First decision (approve) — should succeed.
+      const r1 = await request.post(
+        `${url}/api/reviews/${reviewRequestId}/decide`,
+        { data: { decision: "APPROVED" } }
+      );
+      expect(r1.ok()).toBe(true);
     });
 
-    const folderId = await api.createFolder(
-      projectId,
-      `RoleDecide ${Date.now()}`
-    );
-    const caseId = await api.createTestCaseWithState(
-      projectId,
-      folderId,
-      `RoleDecide case ${Date.now()}`,
-      currentStateId
-    );
-    const reviewRequestId = await createReviewRequest(request, url, {
-      projectId,
-      entityType: "CASE",
-      entityId: caseId,
-      fromStateId: currentStateId,
-      toStateId: gatedWorkflowId,
-      requestedByUserId: adminUserId,
-      assigneeRoleId: createdRoleId,
+    await test.step("Submit a second decision and expect an already-decided response", async () => {
+      // Second decision attempt (request changes) — must NOT silently succeed.
+      const r2 = await request.post(
+        `${url}/api/reviews/${reviewRequestId}/decide`,
+        { data: { decision: "CHANGES_REQUESTED", comment: "race" } }
+      );
+      expect(r2.ok()).toBe(false);
+      const body2 = await r2.json().catch(() => null);
+      const code = body2?.error?.code ?? body2?.error;
+      expect(String(code ?? "").toUpperCase()).toMatch(
+        /ALREADY_DECIDED|ALREADY|CONFLICT/i
+      );
     });
-    createdReviewIds.push(reviewRequestId);
 
-    // First decision (approve) — should succeed.
-    const r1 = await request.post(
-      `${url}/api/reviews/${reviewRequestId}/decide`,
-      { data: { decision: "APPROVED" } }
-    );
-    expect(r1.ok()).toBe(true);
-
-    // Second decision attempt (request changes) — must NOT silently succeed.
-    const r2 = await request.post(
-      `${url}/api/reviews/${reviewRequestId}/decide`,
-      { data: { decision: "CHANGES_REQUESTED", comment: "race" } }
-    );
-    expect(r2.ok()).toBe(false);
-    const body2 = await r2.json().catch(() => null);
-    const code = body2?.error?.code ?? body2?.error;
-    expect(String(code ?? "").toUpperCase()).toMatch(
-      /ALREADY_DECIDED|ALREADY|CONFLICT/i
-    );
-
-    // Verify final DB state remains APPROVED (winner stays).
-    const get = await request.get(`${url}/api/model/reviewRequest/findFirst`, {
-      params: {
-        q: JSON.stringify({
-          where: { id: reviewRequestId },
-          select: { status: true },
-        }),
-      },
+    await test.step("Verify the final review status remains APPROVED", async () => {
+      // Verify final DB state remains APPROVED (winner stays).
+      const get = await request.get(
+        `${url}/api/model/reviewRequest/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: reviewRequestId },
+              select: { status: true },
+            }),
+          },
+        }
+      );
+      expect((await get.json())?.data?.status).toBe("APPROVED");
     });
-    expect((await get.json())?.data?.status).toBe("APPROVED");
   });
 });

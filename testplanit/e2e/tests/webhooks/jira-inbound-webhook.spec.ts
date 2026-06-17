@@ -41,47 +41,61 @@ test.describe("Jira inbound webhook — admin form + send-test self-loop", () =>
     page,
     baseURL,
   }) => {
-    await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
-
-    // Form is mounted on the dedicated /webhooks page — sibling to
-    // /integrations (webhooks are a transport-layer concern, not nested
-    // under any specific feature integration).
-    const form = page.getByTestId("webhook-config-form");
-    await expect(form).toBeVisible();
-
-    // 1:1 inbound model: the Add button skips the chooser entirely
-    // and creates inline against the project's active integration
-    // adapter (JIRA, set up in beforeAll).
-    await page.getByTestId("webhook-inbound-add-button").click();
-
-    // Scope to the JIRA card after creation. URL + secret revealed once.
     const jiraCard = page.getByTestId("webhook-inbound-card-jira");
-    await expect(jiraCard).toBeVisible();
-    await expect(jiraCard.getByTestId("webhook-url")).toBeVisible();
-    await expect(jiraCard.getByTestId("webhook-secret")).toBeVisible();
-    const url = await jiraCard.getByTestId("webhook-url").textContent();
-    expect(url).toMatch(/whk_[0-9a-f]{64}/);
+    let result: ReturnType<typeof page.getByTestId> | undefined;
 
-    // Reload — URL is now redacted, secret is masked.
-    await page.reload();
-    await expect(jiraCard.getByTestId("webhook-url")).toBeVisible();
-    const reloadedUrl = await jiraCard.getByTestId("webhook-url").textContent();
-    expect(reloadedUrl).toContain("[redacted]");
-    // Full 64-hex token must NOT be visible at-a-glance after reload.
-    expect(reloadedUrl).not.toMatch(/[0-9a-f]{64}/);
+    await test.step("Open the project webhooks settings page", async () => {
+      await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
 
-    // FIRST send-test click — full pipeline runs synthetically; service
-    // writes WebhookEventDedup row + WebhookDelivery row.
-    await jiraCard.getByTestId("webhook-send-test-button").click();
-    const result = jiraCard.getByTestId("webhook-test-result");
-    await expect(result).toContainText("200", { timeout: 5000 });
-    await expect(result).toContainText("synthetic");
+      // Form is mounted on the dedicated /webhooks page — sibling to
+      // /integrations (webhooks are a transport-layer concern, not nested
+      // under any specific feature integration).
+      const form = page.getByTestId("webhook-config-form");
+      await expect(form).toBeVisible();
+    });
 
-    // SECOND send-test click: SYNTHETIC_PAYLOAD is byte-identical → same
-    // payloadDigest → dedup INSERT throws P2002 → fresh WebhookDelivery row
-    // written with error='duplicate' → server action forwards outcome.
-    await jiraCard.getByTestId("webhook-send-test-button").click();
-    await expect(result).toContainText("200", { timeout: 5000 });
-    await expect(result).toContainText("duplicate");
+    await test.step("Add the inbound webhook and verify URL + secret are revealed once", async () => {
+      // 1:1 inbound model: the Add button skips the chooser entirely
+      // and creates inline against the project's active integration
+      // adapter (JIRA, set up in beforeAll).
+      await page.getByTestId("webhook-inbound-add-button").click();
+
+      // Scope to the JIRA card after creation. URL + secret revealed once.
+      await expect(jiraCard).toBeVisible();
+      await expect(jiraCard.getByTestId("webhook-url")).toBeVisible();
+      await expect(jiraCard.getByTestId("webhook-secret")).toBeVisible();
+      const url = await jiraCard.getByTestId("webhook-url").textContent();
+      expect(url).toMatch(/whk_[0-9a-f]{64}/);
+    });
+
+    await test.step("Reload and verify the URL is redacted and the token is hidden", async () => {
+      // Reload — URL is now redacted, secret is masked.
+      await page.reload();
+      await expect(jiraCard.getByTestId("webhook-url")).toBeVisible();
+      const reloadedUrl = await jiraCard
+        .getByTestId("webhook-url")
+        .textContent();
+      expect(reloadedUrl).toContain("[redacted]");
+      // Full 64-hex token must NOT be visible at-a-glance after reload.
+      expect(reloadedUrl).not.toMatch(/[0-9a-f]{64}/);
+    });
+
+    await test.step("Send the first test webhook and expect a synthetic outcome", async () => {
+      // FIRST send-test click — full pipeline runs synthetically; service
+      // writes WebhookEventDedup row + WebhookDelivery row.
+      await jiraCard.getByTestId("webhook-send-test-button").click();
+      result = jiraCard.getByTestId("webhook-test-result");
+      await expect(result).toContainText("200", { timeout: 5000 });
+      await expect(result).toContainText("synthetic");
+    });
+
+    await test.step("Send the test webhook again and expect a duplicate outcome", async () => {
+      // SECOND send-test click: SYNTHETIC_PAYLOAD is byte-identical → same
+      // payloadDigest → dedup INSERT throws P2002 → fresh WebhookDelivery row
+      // written with error='duplicate' → server action forwards outcome.
+      await jiraCard.getByTestId("webhook-send-test-button").click();
+      await expect(result!).toContainText("200", { timeout: 5000 });
+      await expect(result!).toContainText("duplicate");
+    });
   });
 });

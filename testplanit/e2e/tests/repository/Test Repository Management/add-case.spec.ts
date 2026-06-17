@@ -36,13 +36,17 @@ test.describe("Add Case — Inline Row", () => {
   }) => {
     const { projectId, folderId } = await setupProjectAndFolder(api);
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
+    await test.step("Open the empty folder in the repository", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
+    });
 
-    // The inline add row must be visible even when the folder has no cases yet.
-    // This was a bug fixed as part of the importGeneratedTestCases refactor.
-    await expect(page.getByTestId("inline-case-name-input")).toBeVisible({
-      timeout: 10000,
+    await test.step("Verify the inline add row is visible in the empty folder", async () => {
+      // The inline add row must be visible even when the folder has no cases yet.
+      // This was a bug fixed as part of the importGeneratedTestCases refactor.
+      await expect(page.getByTestId("inline-case-name-input")).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 
@@ -53,35 +57,43 @@ test.describe("Add Case — Inline Row", () => {
     const { projectId, folderId } = await setupProjectAndFolder(api);
     const caseName = `Inline Case ${Date.now()}`;
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-
-    // Wait for inline form to appear
     const nameInput = page.getByTestId("inline-case-name-input");
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
+    let duplicateScanPromise: ReturnType<typeof page.waitForRequest> | undefined;
 
-    // Listen for the duplicate-scan request BEFORE triggering submission
-    const duplicateScanPromise = page.waitForRequest(
-      (req) =>
-        req.url().includes("/api/duplicate-scan/check-new") &&
-        req.method() === "POST",
-      { timeout: 10000 }
-    );
+    await test.step("Open the folder and wait for the inline form", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
 
-    // Type and submit via Enter key
-    await nameInput.fill(caseName);
-    await page.keyboard.press("Enter");
-
-    // Case should appear in the cases table
-    await expect(repositoryPage.getTestCaseByName(caseName)).toBeVisible({
-      timeout: 15000,
+      // Wait for inline form to appear
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
     });
 
-    // Input should regain focus so the user can immediately type the next case
-    await expect(nameInput).toBeFocused({ timeout: 5000 });
+    await test.step("Type the case name and submit via Enter key", async () => {
+      // Listen for the duplicate-scan request BEFORE triggering submission
+      duplicateScanPromise = page.waitForRequest(
+        (req) =>
+          req.url().includes("/api/duplicate-scan/check-new") &&
+          req.method() === "POST",
+        { timeout: 10000 }
+      );
 
-    // Duplicate-scan advisory check must have fired
-    await duplicateScanPromise;
+      // Type and submit via Enter key
+      await nameInput.fill(caseName);
+      await page.keyboard.press("Enter");
+    });
+
+    await test.step("Verify the case is created, input refocuses, and duplicate-scan fired", async () => {
+      // Case should appear in the cases table
+      await expect(repositoryPage.getTestCaseByName(caseName)).toBeVisible({
+        timeout: 15000,
+      });
+
+      // Input should regain focus so the user can immediately type the next case
+      await expect(nameInput).toBeFocused({ timeout: 5000 });
+
+      // Duplicate-scan advisory check must have fired
+      await duplicateScanPromise!;
+    });
   });
 
   test("Creates a case via the submit button click @smoke", async ({
@@ -97,18 +109,24 @@ test.describe("Add Case — Inline Row", () => {
     );
     const caseName = `Button Case ${Date.now()}`;
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
+    await test.step("Open the folder and type the case name", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
 
-    const nameInput = page.getByTestId("inline-case-name-input");
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
-    await nameInput.fill(caseName);
+      const nameInput = page.getByTestId("inline-case-name-input");
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
+      await nameInput.fill(caseName);
+    });
 
-    await page.getByTestId("inline-add-case-button").click();
-    await page.waitForLoadState("networkidle");
+    await test.step("Submit via the inline add case button", async () => {
+      await page.getByTestId("inline-add-case-button").click();
+      await page.waitForLoadState("networkidle");
+    });
 
-    await expect(repositoryPage.getTestCaseByName(caseName)).toBeVisible({
-      timeout: 15000,
+    await test.step("Verify the case appears in the cases table", async () => {
+      await expect(repositoryPage.getTestCaseByName(caseName)).toBeVisible({
+        timeout: 15000,
+      });
     });
   });
 
@@ -121,28 +139,37 @@ test.describe("Add Case — Inline Row", () => {
     const firstName = `First Case ${ts}`;
     const secondName = `Second Case ${ts}`;
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-
     const nameInput = page.getByTestId("inline-case-name-input");
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
 
-    // Submit first case
-    await nameInput.fill(firstName);
-    await page.keyboard.press("Enter");
-    await expect(repositoryPage.getTestCaseByName(firstName)).toBeVisible({
-      timeout: 15000,
+    await test.step("Open the folder and wait for the inline form", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
+
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
     });
 
-    // Input should be empty and focused — ready for the second case
-    await expect(nameInput).toHaveValue("", { timeout: 5000 });
-    await expect(nameInput).toBeFocused({ timeout: 5000 });
+    await test.step("Submit the first case", async () => {
+      // Submit first case
+      await nameInput.fill(firstName);
+      await page.keyboard.press("Enter");
+      await expect(repositoryPage.getTestCaseByName(firstName)).toBeVisible({
+        timeout: 15000,
+      });
+    });
 
-    // Submit second case without re-focusing
-    await nameInput.fill(secondName);
-    await page.keyboard.press("Enter");
-    await expect(repositoryPage.getTestCaseByName(secondName)).toBeVisible({
-      timeout: 15000,
+    await test.step("Verify the input clears and refocuses for the next case", async () => {
+      // Input should be empty and focused — ready for the second case
+      await expect(nameInput).toHaveValue("", { timeout: 5000 });
+      await expect(nameInput).toBeFocused({ timeout: 5000 });
+    });
+
+    await test.step("Submit a second case without re-focusing", async () => {
+      // Submit second case without re-focusing
+      await nameInput.fill(secondName);
+      await page.keyboard.press("Enter");
+      await expect(repositoryPage.getTestCaseByName(secondName)).toBeVisible({
+        timeout: 15000,
+      });
     });
   });
 });
@@ -161,34 +188,41 @@ test.describe("Add Case — Modal", () => {
     const { projectId, folderId } = await setupProjectAndFolder(api);
     const caseName = `Modal Case ${Date.now()}`;
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-
-    // Open the Add Case modal via the toolbar button
-    const addCaseButton = page.getByTestId("add-case-button");
-    await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
-    await addCaseButton.click();
-
     const dialog = page.getByTestId("add-case-dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // Wait for template and state dropdowns to populate
-    const nameInput = dialog.getByTestId("case-name-input");
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
+    await test.step("Open the folder and launch the Add Case modal", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
 
-    await nameInput.fill(caseName);
+      // Open the Add Case modal via the toolbar button
+      const addCaseButton = page.getByTestId("add-case-button");
+      await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
+      await addCaseButton.click();
 
-    // Submit
-    const submitButton = page.getByTestId("case-submit-button");
-    await expect(submitButton).toBeEnabled({ timeout: 5000 });
-    await submitButton.click();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
-    // Dialog closes on success
-    await expect(dialog).not.toBeVisible({ timeout: 15000 });
+    await test.step("Fill the case name and submit the modal", async () => {
+      // Wait for template and state dropdowns to populate
+      const nameInput = dialog.getByTestId("case-name-input");
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
 
-    // Case must appear in the table
-    await expect(repositoryPage.getTestCaseByName(caseName)).toBeVisible({
-      timeout: 15000,
+      await nameInput.fill(caseName);
+
+      // Submit
+      const submitButton = page.getByTestId("case-submit-button");
+      await expect(submitButton).toBeEnabled({ timeout: 5000 });
+      await submitButton.click();
+    });
+
+    await test.step("Verify the modal closes and the case appears", async () => {
+      // Dialog closes on success
+      await expect(dialog).not.toBeVisible({ timeout: 15000 });
+
+      // Case must appear in the table
+      await expect(repositoryPage.getTestCaseByName(caseName)).toBeVisible({
+        timeout: 15000,
+      });
     });
   });
 
@@ -199,34 +233,41 @@ test.describe("Add Case — Modal", () => {
     const { projectId, folderId } = await setupProjectAndFolder(api);
     const caseName = `Detail Case ${Date.now()}`;
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-
-    const addCaseButton = page.getByTestId("add-case-button");
-    await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
-    await addCaseButton.click();
-
     const dialog = page.getByTestId("add-case-dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    const nameInput = dialog.getByTestId("case-name-input");
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
-    await nameInput.fill(caseName);
+    await test.step("Open the folder and launch the Add Case modal", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
 
-    const submitButton = page.getByTestId("case-submit-button");
-    await expect(submitButton).toBeEnabled({ timeout: 5000 });
-    await submitButton.click();
-    await expect(dialog).not.toBeVisible({ timeout: 15000 });
+      const addCaseButton = page.getByTestId("add-case-button");
+      await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
+      await addCaseButton.click();
 
-    // Click the case row — this opens the case in the right-side detail panel
-    const caseRow = repositoryPage.getTestCaseByName(caseName);
-    await expect(caseRow).toBeVisible({ timeout: 15000 });
-    await caseRow.click();
-    await page.waitForLoadState("networkidle");
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
-    // The case name must be visible in the detail panel
-    await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
-      timeout: 10000,
+    await test.step("Fill the case name and submit the modal", async () => {
+      const nameInput = dialog.getByTestId("case-name-input");
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
+      await nameInput.fill(caseName);
+
+      const submitButton = page.getByTestId("case-submit-button");
+      await expect(submitButton).toBeEnabled({ timeout: 5000 });
+      await submitButton.click();
+      await expect(dialog).not.toBeVisible({ timeout: 15000 });
+    });
+
+    await test.step("Open the case and verify its name in the detail panel", async () => {
+      // Click the case row — this opens the case in the right-side detail panel
+      const caseRow = repositoryPage.getTestCaseByName(caseName);
+      await expect(caseRow).toBeVisible({ timeout: 15000 });
+      await caseRow.click();
+      await page.waitForLoadState("networkidle");
+
+      // The case name must be visible in the detail panel
+      await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 
@@ -234,27 +275,34 @@ test.describe("Add Case — Modal", () => {
     const { projectId, folderId } = await setupProjectAndFolder(api);
     const caseName = `Cancelled Case ${Date.now()}`;
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-
-    const addCaseButton = page.getByTestId("add-case-button");
-    await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
-    await addCaseButton.click();
-
     const dialog = page.getByTestId("add-case-dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    const nameInput = dialog.getByTestId("case-name-input");
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
-    await nameInput.fill(caseName);
+    await test.step("Open the folder and launch the Add Case modal", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
 
-    // Cancel instead of submitting
-    await page.getByTestId("case-cancel-button").click();
-    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+      const addCaseButton = page.getByTestId("add-case-button");
+      await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
+      await addCaseButton.click();
 
-    // The case must NOT appear in the table
-    await expect(repositoryPage.getTestCaseByName(caseName)).not.toBeVisible({
-      timeout: 3000,
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Fill the case name then cancel the modal", async () => {
+      const nameInput = dialog.getByTestId("case-name-input");
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
+      await nameInput.fill(caseName);
+
+      // Cancel instead of submitting
+      await page.getByTestId("case-cancel-button").click();
+      await expect(dialog).not.toBeVisible({ timeout: 5000 });
+    });
+
+    await test.step("Verify the cancelled case was not created", async () => {
+      // The case must NOT appear in the table
+      await expect(repositoryPage.getTestCaseByName(caseName)).not.toBeVisible({
+        timeout: 3000,
+      });
     });
   });
 });

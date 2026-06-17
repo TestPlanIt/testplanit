@@ -23,80 +23,101 @@ test("completed runs structurally reject composition and result changes", async 
   baseURL,
 }) => {
   const ts = Date.now();
-  const projectId = await api.createProject(`E2E CompletedLock ${ts}`);
-  const folderId = await api.createFolder(projectId, `CL Folder ${ts}`);
-  const case1 = await api.createTestCase(
-    projectId,
-    folderId,
-    `CL Case A ${ts}`
-  );
-  const case2 = await api.createTestCase(
-    projectId,
-    folderId,
-    `CL Case B ${ts}`
-  );
-  const runId = await api.createTestRun(projectId, `CL Run ${ts}`);
-  const passedId = await api.getStatusId("passed");
 
-  // Before completion: adding a case and recording a result both work.
-  const trc1 = await api.addTestCaseToTestRun(runId, case1);
-  await api.createTestResult(runId, trc1, passedId);
+  let projectId: number | undefined;
+  let folderId: number | undefined;
+  let case1: number | undefined;
+  let case2: number | undefined;
+  let runId: number | undefined;
+  let passedId: number | undefined;
+  let trc1: number | undefined;
 
-  // Complete the run.
-  const complete = await request.patch(`${baseURL}/api/model/testRuns/update`, {
-    headers: sameOrigin,
-    data: {
-      where: { id: runId },
-      data: { isCompleted: true, completedAt: new Date().toISOString() },
-    },
+  await test.step("Create project, folder, cases, run and resolve passed status", async () => {
+    projectId = await api.createProject(`E2E CompletedLock ${ts}`);
+    folderId = await api.createFolder(projectId, `CL Folder ${ts}`);
+    case1 = await api.createTestCase(
+      projectId!,
+      folderId!,
+      `CL Case A ${ts}`
+    );
+    case2 = await api.createTestCase(
+      projectId!,
+      folderId!,
+      `CL Case B ${ts}`
+    );
+    runId = await api.createTestRun(projectId!, `CL Run ${ts}`);
+    passedId = await api.getStatusId("passed");
   });
-  expect(complete.status(), await complete.text()).toBeLessThan(300);
 
-  // Composition is frozen ----------------------------------------------------
+  await test.step("Before completion, add a case and record a result", async () => {
+    // Before completion: adding a case and recording a result both work.
+    trc1 = await api.addTestCaseToTestRun(runId!, case1!);
+    await api.createTestResult(runId!, trc1!, passedId!);
+  });
 
-  // Add a case (model API create) → policy-denied.
-  await expect(api.addTestCaseToTestRun(runId, case2)).rejects.toThrow();
-
-  // Reorder a case (update order) → policy-denied.
-  const reorder = await request.patch(
-    `${baseURL}/api/model/testRunCases/update`,
-    { headers: sameOrigin, data: { where: { id: trc1 }, data: { order: 5 } } }
-  );
-  expect(reorder.status()).toBeGreaterThanOrEqual(400);
-
-  // Remove a case (soft-delete) → policy-denied.
-  const remove = await request.patch(
-    `${baseURL}/api/model/testRunCases/update`,
-    {
+  await test.step("Complete the run", async () => {
+    // Complete the run.
+    const complete = await request.patch(`${baseURL}/api/model/testRuns/update`, {
       headers: sameOrigin,
-      data: { where: { id: trc1 }, data: { isDeleted: true } },
-    }
-  );
-  expect(remove.status()).toBeGreaterThanOrEqual(400);
-
-  // Results are frozen -------------------------------------------------------
-
-  // Recording a result via the model API → policy-denied.
-  await expect(api.createTestResult(runId, trc1, passedId)).rejects.toThrow();
-
-  // Recording via the submit-result route → 409 RUN_COMPLETED.
-  const submit = await request.post(`${baseURL}/api/test-runs/submit-result`, {
-    headers: sameOrigin,
-    data: {
-      testRunId: runId,
-      testRunCaseId: trc1,
-      statusId: passedId,
-      attempt: 2,
-      testRunCaseVersion: 1,
-    },
+      data: {
+        where: { id: runId },
+        data: { isCompleted: true, completedAt: new Date().toISOString() },
+      },
+    });
+    expect(complete.status(), await complete.text()).toBeLessThan(300);
   });
-  expect(submit.status()).toBe(409);
-  expect((await submit.json())?.code).toBe("RUN_COMPLETED");
 
-  // Completing-related lifecycle still works: the run can still be deleted.
-  const del = await request.patch(`${baseURL}/api/model/testRuns/update`, {
-    headers: sameOrigin,
-    data: { where: { id: runId }, data: { isDeleted: true } },
+  await test.step("Verify composition is frozen: add, reorder and remove are rejected", async () => {
+    // Composition is frozen ----------------------------------------------------
+
+    // Add a case (model API create) → policy-denied.
+    await expect(api.addTestCaseToTestRun(runId!, case2!)).rejects.toThrow();
+
+    // Reorder a case (update order) → policy-denied.
+    const reorder = await request.patch(
+      `${baseURL}/api/model/testRunCases/update`,
+      { headers: sameOrigin, data: { where: { id: trc1 }, data: { order: 5 } } }
+    );
+    expect(reorder.status()).toBeGreaterThanOrEqual(400);
+
+    // Remove a case (soft-delete) → policy-denied.
+    const remove = await request.patch(
+      `${baseURL}/api/model/testRunCases/update`,
+      {
+        headers: sameOrigin,
+        data: { where: { id: trc1 }, data: { isDeleted: true } },
+      }
+    );
+    expect(remove.status()).toBeGreaterThanOrEqual(400);
   });
-  expect(del.status(), await del.text()).toBeLessThan(300);
+
+  await test.step("Verify results are frozen: model API and submit-result route are rejected", async () => {
+    // Results are frozen -------------------------------------------------------
+
+    // Recording a result via the model API → policy-denied.
+    await expect(api.createTestResult(runId!, trc1!, passedId!)).rejects.toThrow();
+
+    // Recording via the submit-result route → 409 RUN_COMPLETED.
+    const submit = await request.post(`${baseURL}/api/test-runs/submit-result`, {
+      headers: sameOrigin,
+      data: {
+        testRunId: runId,
+        testRunCaseId: trc1,
+        statusId: passedId,
+        attempt: 2,
+        testRunCaseVersion: 1,
+      },
+    });
+    expect(submit.status()).toBe(409);
+    expect((await submit.json())?.code).toBe("RUN_COMPLETED");
+  });
+
+  await test.step("Verify a completed run can still be deleted", async () => {
+    // Completing-related lifecycle still works: the run can still be deleted.
+    const del = await request.patch(`${baseURL}/api/model/testRuns/update`, {
+      headers: sameOrigin,
+      data: { where: { id: runId }, data: { isDeleted: true } },
+    });
+    expect(del.status(), await del.text()).toBeLessThan(300);
+  });
 });

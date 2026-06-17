@@ -26,38 +26,49 @@ test.describe("User Management Gaps", () => {
       });
 
       try {
-        await page.goto("/en-US/admin/users");
-        await page.waitForLoadState("networkidle");
-
-        // Enable "Show Inactive" so deactivated users remain visible
-        const showInactiveSwitch = page.getByRole("switch", {
-          name: "Show Inactive",
-        });
-        const showInactiveState =
-          await showInactiveSwitch.getAttribute("data-state");
-        if (showInactiveState !== "checked") {
-          await showInactiveSwitch.click();
-          await page.waitForLoadState("networkidle");
-        }
-
-        // Find the test user row and the active toggle
-        const userRow = page.locator("tr").filter({ hasText: testEmail });
-        await expect(userRow).toBeVisible();
-
         const activeSwitch = page.getByTestId(
           `user-active-toggle-${testUser.data.id}`
         );
-        await expect(activeSwitch).toBeVisible();
 
-        // Verify toggle is currently checked (user is active)
-        await expect(activeSwitch).toHaveAttribute("data-state", "checked");
+        await test.step("Open admin users list with inactive users shown", async () => {
+          await page.goto("/en-US/admin/users");
+          await page.waitForLoadState("networkidle");
 
-        // Deactivate the user by toggling the switch off
-        await activeSwitch.click();
+          // Enable "Show Inactive" so deactivated users remain visible
+          const showInactiveSwitch = page.getByRole("switch", {
+            name: "Show Inactive",
+          });
+          const showInactiveState =
+            await showInactiveSwitch.getAttribute("data-state");
+          if (showInactiveState !== "checked") {
+            await showInactiveSwitch.click();
+            await page.waitForLoadState("networkidle");
+          }
+        });
 
-        // Wait for the UI to update
-        await expect(activeSwitch).toHaveAttribute("data-state", "unchecked", {
-          timeout: 15000,
+        await test.step("Locate test user row and confirm active toggle", async () => {
+          // Find the test user row and the active toggle
+          const userRow = page.locator("tr").filter({ hasText: testEmail });
+          await expect(userRow).toBeVisible();
+
+          await expect(activeSwitch).toBeVisible();
+
+          // Verify toggle is currently checked (user is active)
+          await expect(activeSwitch).toHaveAttribute("data-state", "checked");
+        });
+
+        await test.step("Deactivate the user", async () => {
+          // Deactivate the user by toggling the switch off
+          await activeSwitch.click();
+
+          // Wait for the UI to update
+          await expect(activeSwitch).toHaveAttribute(
+            "data-state",
+            "unchecked",
+            {
+              timeout: 15000,
+            }
+          );
         });
 
         // Verify deactivated user cannot sign in using a separate browser context
@@ -65,46 +76,50 @@ test.describe("User Management Gaps", () => {
           storageState: undefined,
         });
         try {
-          const unauthPage = await unauthContext.newPage();
-          await unauthPage.goto("/en-US/signin");
-          await unauthPage.waitForLoadState("networkidle");
+          await test.step("Confirm deactivated user cannot sign in", async () => {
+            const unauthPage = await unauthContext.newPage();
+            await unauthPage.goto("/en-US/signin");
+            await unauthPage.waitForLoadState("networkidle");
 
-          // Fill in sign-in credentials
-          const emailInput = unauthPage.locator('input[name="email"]');
-          const passwordInput = unauthPage.locator('input[name="password"]');
-          await expect(emailInput).toBeVisible({ timeout: 5000 });
-          await emailInput.fill(testEmail);
-          await passwordInput.fill(testPassword);
+            // Fill in sign-in credentials
+            const emailInput = unauthPage.locator('input[name="email"]');
+            const passwordInput = unauthPage.locator('input[name="password"]');
+            await expect(emailInput).toBeVisible({ timeout: 5000 });
+            await emailInput.fill(testEmail);
+            await passwordInput.fill(testPassword);
 
-          // Use the testid — `name: /sign in/i` also matches the "Sign in
-          // with Magic Link" buttons, which triggers a strict-mode violation.
-          const signInButton = unauthPage.getByTestId("signin-button");
-          await signInButton.click();
-          await unauthPage.waitForLoadState("networkidle");
+            // Use the testid — `name: /sign in/i` also matches the "Sign in
+            // with Magic Link" buttons, which triggers a strict-mode violation.
+            const signInButton = unauthPage.getByTestId("signin-button");
+            await signInButton.click();
+            await unauthPage.waitForLoadState("networkidle");
 
-          // Deactivated user should not reach the home page — expect error or stay on signin
-          const currentUrl = unauthPage.url();
-          const isStillOnSignIn =
-            currentUrl.includes("signin") ||
-            currentUrl.includes("error") ||
-            currentUrl.includes("deactivated");
+            // Deactivated user should not reach the home page — expect error or stay on signin
+            const currentUrl = unauthPage.url();
+            const isStillOnSignIn =
+              currentUrl.includes("signin") ||
+              currentUrl.includes("error") ||
+              currentUrl.includes("deactivated");
 
-          // Also check if an error message is displayed
-          const errorVisible = await unauthPage
-            .getByText(/deactivated|inactive|not allowed|account.*disabled/i)
-            .isVisible()
-            .catch(() => false);
+            // Also check if an error message is displayed
+            const errorVisible = await unauthPage
+              .getByText(/deactivated|inactive|not allowed|account.*disabled/i)
+              .isVisible()
+              .catch(() => false);
 
-          // Should either stay on signin or show an error
-          expect(isStillOnSignIn || errorVisible).toBe(true);
+            // Should either stay on signin or show an error
+            expect(isStillOnSignIn || errorVisible).toBe(true);
+          });
         } finally {
           await unauthContext.close();
         }
 
-        // Re-activate the user
-        await activeSwitch.click();
-        await expect(activeSwitch).toHaveAttribute("data-state", "checked", {
-          timeout: 15000,
+        await test.step("Re-activate the user", async () => {
+          // Re-activate the user
+          await activeSwitch.click();
+          await expect(activeSwitch).toHaveAttribute("data-state", "checked", {
+            timeout: 15000,
+          });
         });
       } finally {
         await api.updateUser({
@@ -127,35 +142,44 @@ test.describe("User Management Gaps", () => {
       });
 
       try {
-        await page.goto("/en-US/admin/users");
-        await page.waitForLoadState("networkidle");
-
-        // Show inactive users too
-        const showInactiveSwitch = page.getByRole("switch", {
-          name: "Show Inactive",
-        });
-        const showInactiveState =
-          await showInactiveSwitch.getAttribute("data-state");
-        if (showInactiveState !== "checked") {
-          await showInactiveSwitch.click();
-          await page.waitForLoadState("networkidle");
-        }
-
         const activeSwitch = page.getByTestId(
           `user-active-toggle-${testUser.data.id}`
         );
-        await expect(activeSwitch).toBeVisible();
 
-        // Toggle OFF (deactivate)
-        await activeSwitch.click();
-        await expect(activeSwitch).toHaveAttribute("data-state", "unchecked", {
-          timeout: 15000,
+        await test.step("Open admin users list with inactive users shown", async () => {
+          await page.goto("/en-US/admin/users");
+          await page.waitForLoadState("networkidle");
+
+          // Show inactive users too
+          const showInactiveSwitch = page.getByRole("switch", {
+            name: "Show Inactive",
+          });
+          const showInactiveState =
+            await showInactiveSwitch.getAttribute("data-state");
+          if (showInactiveState !== "checked") {
+            await showInactiveSwitch.click();
+            await page.waitForLoadState("networkidle");
+          }
+
+          await expect(activeSwitch).toBeVisible();
         });
 
-        // Toggle ON (reactivate)
-        await activeSwitch.click();
-        await expect(activeSwitch).toHaveAttribute("data-state", "checked", {
-          timeout: 15000,
+        await test.step("Toggle user inactive then active again", async () => {
+          // Toggle OFF (deactivate)
+          await activeSwitch.click();
+          await expect(activeSwitch).toHaveAttribute(
+            "data-state",
+            "unchecked",
+            {
+              timeout: 15000,
+            }
+          );
+
+          // Toggle ON (reactivate)
+          await activeSwitch.click();
+          await expect(activeSwitch).toHaveAttribute("data-state", "checked", {
+            timeout: 15000,
+          });
         });
       } finally {
         await api.updateUser({
@@ -180,41 +204,45 @@ test.describe("User Management Gaps", () => {
       });
 
       try {
-        // Navigate to the user's profile page as admin
-        await page.goto(`/en-US/users/profile/${testUser.data.id}`);
-        await page.waitForLoadState("networkidle");
+        await test.step("Open the user profile page as admin", async () => {
+          // Navigate to the user's profile page as admin
+          await page.goto(`/en-US/users/profile/${testUser.data.id}`);
+          await page.waitForLoadState("networkidle");
 
-        // Admin viewing another user's profile should see 2FA status as read-only switch
-        // The TwoFactorSettings component renders a disabled switch when !isOwnProfile
-        const _twoFactorSection = page
-          .locator('[data-testid="two-factor-settings"]')
-          .or(page.getByText(/two.factor|2fa/i).first());
+          // Admin viewing another user's profile should see 2FA status as read-only switch
+          // The TwoFactorSettings component renders a disabled switch when !isOwnProfile
+          const _twoFactorSection = page
+            .locator('[data-testid="two-factor-settings"]')
+            .or(page.getByText(/two.factor|2fa/i).first());
 
-        // Verify we can at least navigate to the profile page
-        await expect(page).toHaveURL(/users\/profile/);
+          // Verify we can at least navigate to the profile page
+          await expect(page).toHaveURL(/users\/profile/);
+        });
 
-        // Look for the security section with 2FA info
-        const securityContent = page
-          .locator('section, [role="region"], .card, main')
-          .filter({ hasText: /two.factor|2fa|security/i })
-          .first();
-
-        if (await securityContent.isVisible()) {
-          // The 2FA switch should be visible (but disabled since admin is viewing another user's profile)
-          const twoFactorSwitch = securityContent
-            .locator('[role="switch"]')
+        await test.step("Verify 2FA status renders read-only for admin view", async () => {
+          // Look for the security section with 2FA info
+          const securityContent = page
+            .locator('section, [role="region"], .card, main')
+            .filter({ hasText: /two.factor|2fa|security/i })
             .first();
-          if (await twoFactorSwitch.isVisible()) {
-            // Switch should be present but disabled for non-own-profile admin view
-            const isDisabled =
-              (await twoFactorSwitch.getAttribute("disabled")) !== null ||
-              (await twoFactorSwitch.getAttribute("data-disabled")) !== null;
-            expect(isDisabled).toBe(true);
-          }
-        }
 
-        // The page loaded successfully - that's the key assertion
-        await expect(page).not.toHaveURL(/error|404/);
+          if (await securityContent.isVisible()) {
+            // The 2FA switch should be visible (but disabled since admin is viewing another user's profile)
+            const twoFactorSwitch = securityContent
+              .locator('[role="switch"]')
+              .first();
+            if (await twoFactorSwitch.isVisible()) {
+              // Switch should be present but disabled for non-own-profile admin view
+              const isDisabled =
+                (await twoFactorSwitch.getAttribute("disabled")) !== null ||
+                (await twoFactorSwitch.getAttribute("data-disabled")) !== null;
+              expect(isDisabled).toBe(true);
+            }
+          }
+
+          // The page loaded successfully - that's the key assertion
+          await expect(page).not.toHaveURL(/error|404/);
+        });
       } finally {
         await api.updateUser({
           userId: testUser.data.id,
@@ -238,55 +266,65 @@ test.describe("User Management Gaps", () => {
       });
 
       try {
-        // Create an API token for the test user via API (use page.request which has baseURL)
-        const tokenResponse = await page.request.post("/api/api-tokens", {
-          data: {
-            name: `Test Token ${Date.now()}`,
-          },
+        let tokenResponse:
+          | Awaited<ReturnType<typeof page.request.post>>
+          | undefined;
+
+        await test.step("Create an API token for the test user", async () => {
+          // Create an API token for the test user via API (use page.request which has baseURL)
+          tokenResponse = await page.request.post("/api/api-tokens", {
+            data: {
+              name: `Test Token ${Date.now()}`,
+            },
+          });
         });
 
-        // Navigate to user's profile page
-        await page.goto(`/en-US/users/profile/${testUser.data.id}`);
-        await page.waitForLoadState("networkidle");
+        await test.step("Open the user profile page as admin", async () => {
+          // Navigate to user's profile page
+          await page.goto(`/en-US/users/profile/${testUser.data.id}`);
+          await page.waitForLoadState("networkidle");
+        });
 
-        // Look for the API tokens section
-        const apiTokensSection = page.getByText(/api.token/i).first();
-        if (await apiTokensSection.isVisible()) {
-          // The admin should see the user's API tokens section
-          const tokenSection = page
-            .locator("section, [role='region'], .card, main")
-            .filter({ hasText: /api.token/i })
-            .first();
+        await test.step("Revoke the user's API token", async () => {
+          // Look for the API tokens section
+          const apiTokensSection = page.getByText(/api.token/i).first();
+          if (await apiTokensSection.isVisible()) {
+            // The admin should see the user's API tokens section
+            const tokenSection = page
+              .locator("section, [role='region'], .card, main")
+              .filter({ hasText: /api.token/i })
+              .first();
 
-          if (await tokenSection.isVisible()) {
-            // Look for any token row with a delete/revoke button
-            const deleteButtons = tokenSection.locator(
-              'button[aria-label*="delete" i], button[aria-label*="revoke" i], button:has(svg)'
-            );
-            const deleteButtonCount = await deleteButtons.count();
+            if (await tokenSection.isVisible()) {
+              // Look for any token row with a delete/revoke button
+              const deleteButtons = tokenSection.locator(
+                'button[aria-label*="delete" i], button[aria-label*="revoke" i], button:has(svg)'
+              );
+              const deleteButtonCount = await deleteButtons.count();
 
-            // If tokens exist, try to delete one
-            if (deleteButtonCount > 0 && tokenResponse.ok()) {
-              const firstDeleteButton = deleteButtons.first();
-              if (await firstDeleteButton.isVisible()) {
-                await firstDeleteButton.click();
+              // If tokens exist, try to delete one
+              if (deleteButtonCount > 0 && tokenResponse!.ok()) {
+                const firstDeleteButton = deleteButtons.first();
+                if (await firstDeleteButton.isVisible()) {
+                  await firstDeleteButton.click();
 
-                // Confirm deletion if a dialog appears
-                const alertDialog = page.locator('[role="alertdialog"]');
-                if (await alertDialog.isVisible({ timeout: 2000 })) {
-                  const confirmButton = alertDialog
-                    .locator('button[class*="destructive"]')
-                    .last();
-                  await confirmButton.click();
-                  await page.waitForLoadState("networkidle");
+                  // Confirm deletion if a dialog appears
+                  const alertDialog = page.locator('[role="alertdialog"]');
+                  if (await alertDialog.isVisible({ timeout: 2000 })) {
+                    const confirmButton = alertDialog
+                      .locator('button[class*="destructive"]')
+                      .last();
+                    await confirmButton.click();
+                    await page.waitForLoadState("networkidle");
+                  }
                 }
               }
             }
           }
-        }
 
-        // Page loaded and navigated to profile without errors
-        await expect(page).not.toHaveURL(/\/error|\/404/);
+          // Page loaded and navigated to profile without errors
+          await expect(page).not.toHaveURL(/\/error|\/404/);
+        });
       } finally {
         await api.updateUser({
           userId: testUser.data.id,

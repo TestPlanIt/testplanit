@@ -14,30 +14,35 @@ test.describe("Project AI Models - Feature Overrides Table", () => {
     page,
     api,
   }) => {
-    // Create a fresh project so we have a valid projectId
-    const projectId = await api.createProject(
-      `E2E AI Models Features ${Date.now()}`
-    );
+    await test.step("Open the AI Models page for a fresh project", async () => {
+      // Create a fresh project so we have a valid projectId
+      const projectId = await api.createProject(
+        `E2E AI Models Features ${Date.now()}`
+      );
 
-    await page.goto(`/en-US/projects/settings/${projectId}/ai-models`);
-    await page.waitForLoadState("networkidle");
+      await page.goto(`/en-US/projects/settings/${projectId}/ai-models`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Verify all 7 LLM features are listed in the table
-    const featureNames = [
-      "Markdown Test Case Parsing",
-      "Test Case Generation",
-      "Smart Test Case Selection",
-      "Editor Writing Assistant",
-      "LLM Connection Test",
-      "Export Code Generation",
-      "AI Tag Suggestions",
-    ];
+    await test.step("Verify all 7 LLM features are listed in the table", async () => {
+      const featureNames = [
+        "Markdown Test Case Parsing",
+        "Test Case Generation",
+        "Smart Test Case Selection",
+        "Editor Writing Assistant",
+        "LLM Connection Test",
+        "Export Code Generation",
+        "AI Tag Suggestions",
+      ];
 
-    for (const name of featureNames) {
-      await expect(page.locator("td", { hasText: name }).first()).toBeVisible({
-        timeout: 10000,
-      });
-    }
+      for (const name of featureNames) {
+        await expect(
+          page.locator("td", { hasText: name }).first()
+        ).toBeVisible({
+          timeout: 10000,
+        });
+      }
+    });
   });
 });
 
@@ -46,41 +51,51 @@ test.describe("Project AI Models - Assign Per-Feature Override", () => {
     const ts = Date.now();
     const llmName = `E2E Override ${ts}`;
 
-    // Create a fresh project and LLM integration
-    const projectId = await api.createProject(`E2E AI Override ${ts}`);
-    const llmId = await api.createLlmIntegration(llmName);
-    await api.linkLlmToProject(projectId, llmId);
+    let row: ReturnType<ReturnType<typeof page.locator>["filter"]> | undefined;
 
-    await page.goto(`/en-US/projects/settings/${projectId}/ai-models`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Create a project with a linked LLM integration", async () => {
+      // Create a fresh project and LLM integration
+      const projectId = await api.createProject(`E2E AI Override ${ts}`);
+      const llmId = await api.createLlmIntegration(llmName);
+      await api.linkLlmToProject(projectId, llmId);
 
-    // Find the Feature Overrides table — it's the last table on the page
-    const lastTable = page.locator("table").last();
+      await page.goto(`/en-US/projects/settings/${projectId}/ai-models`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Find the row for "Test Case Generation"
-    const row = lastTable
-      .locator("tr")
-      .filter({ hasText: "Test Case Generation" });
+    await test.step("Locate the Test Case Generation row in the overrides table", async () => {
+      // Find the Feature Overrides table — it's the last table on the page
+      const lastTable = page.locator("table").last();
 
-    // Click the override Select trigger in that row
-    const selectTrigger = row.locator('button[role="combobox"]');
-    await selectTrigger.scrollIntoViewIfNeeded();
-    await selectTrigger.click();
+      // Find the row for "Test Case Generation"
+      row = lastTable
+        .locator("tr")
+        .filter({ hasText: "Test Case Generation" });
+    });
 
-    // Select the created integration from the portal dropdown
-    const option = page.getByRole("option", { name: llmName });
-    await option.click();
+    await test.step("Assign the LLM integration as the feature override", async () => {
+      // Click the override Select trigger in that row
+      const selectTrigger = row!.locator('button[role="combobox"]');
+      await selectTrigger.scrollIntoViewIfNeeded();
+      await selectTrigger.click();
 
-    // Wait for the mutation to complete
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
+      // Select the created integration from the portal dropdown
+      const option = page.getByRole("option", { name: llmName });
+      await option.click();
 
-    // Verify the "Effective LLM" column shows the integration name
-    await expect(row).toContainText(llmName);
+      // Wait for the mutation to complete
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(1000);
+    });
 
-    // Verify the "Source" column shows "Project Override" badge text
-    await expect(row.getByText("Project Override")).toBeVisible({
-      timeout: 5000,
+    await test.step("Verify the override is applied with a Project Override source", async () => {
+      // Verify the "Effective LLM" column shows the integration name
+      await expect(row!).toContainText(llmName);
+
+      // Verify the "Source" column shows "Project Override" badge text
+      await expect(row!.getByText("Project Override")).toBeVisible({
+        timeout: 5000,
+      });
     });
   });
 });
@@ -95,65 +110,77 @@ test.describe("Project AI Models - Clear Per-Feature Override", () => {
     const llmName = `E2E Override Clear ${ts}`;
     const apiBase = baseURL || "http://localhost:3002";
 
-    // Create a fresh project and LLM integration
-    const projectId = await api.createProject(`E2E AI Clear ${ts}`);
-    const llmId = await api.createLlmIntegration(llmName);
-    await api.linkLlmToProject(projectId, llmId);
+    let row: ReturnType<ReturnType<typeof page.locator>["filter"]> | undefined;
 
-    // Pre-assign override via API by creating an LlmFeatureConfig
-    const featureConfigResponse = await api["request"].post(
-      `${apiBase}/api/model/llmFeatureConfig/create`,
-      {
-        data: {
+    await test.step("Create a project with a pre-assigned feature override", async () => {
+      // Create a fresh project and LLM integration
+      const projectId = await api.createProject(`E2E AI Clear ${ts}`);
+      const llmId = await api.createLlmIntegration(llmName);
+      await api.linkLlmToProject(projectId, llmId);
+
+      // Pre-assign override via API by creating an LlmFeatureConfig
+      const featureConfigResponse = await api["request"].post(
+        `${apiBase}/api/model/llmFeatureConfig/create`,
+        {
           data: {
-            projectId,
-            feature: "test_case_generation",
-            llmIntegrationId: llmId,
-            enabled: true,
+            data: {
+              projectId,
+              feature: "test_case_generation",
+              llmIntegrationId: llmId,
+              enabled: true,
+            },
           },
-        },
-      }
-    );
-
-    if (!featureConfigResponse.ok()) {
-      const errorText = await featureConfigResponse.text();
-      throw new Error(
-        `Failed to create feature config: ${featureConfigResponse.status()} - ${errorText}`
+        }
       );
-    }
 
-    await page.goto(`/en-US/projects/settings/${projectId}/ai-models`);
-    await page.waitForLoadState("networkidle");
+      if (!featureConfigResponse.ok()) {
+        const errorText = await featureConfigResponse.text();
+        throw new Error(
+          `Failed to create feature config: ${featureConfigResponse.status()} - ${errorText}`
+        );
+      }
 
-    // Find the Feature Overrides table (last table on the page)
-    const lastTable = page.locator("table").last();
-
-    // Find the "Test Case Generation" row
-    const row = lastTable
-      .locator("tr")
-      .filter({ hasText: "Test Case Generation" });
-
-    // Verify the row shows "Project Override" badge (the override is set)
-    await expect(row.getByText("Project Override")).toBeVisible({
-      timeout: 10000,
+      await page.goto(`/en-US/projects/settings/${projectId}/ai-models`);
+      await page.waitForLoadState("networkidle");
     });
 
-    // Click the Select to open the dropdown and choose "No override" to clear
-    const selectTrigger = row.locator('button[role="combobox"]');
-    await selectTrigger.scrollIntoViewIfNeeded();
-    await selectTrigger.click();
+    await test.step("Verify the Test Case Generation row shows a Project Override", async () => {
+      // Find the Feature Overrides table (last table on the page)
+      const lastTable = page.locator("table").last();
 
-    // Select "No override" to clear the override
-    const noOverrideOption = page.getByRole("option", { name: "No override" });
-    await noOverrideOption.click();
+      // Find the "Test Case Generation" row
+      row = lastTable
+        .locator("tr")
+        .filter({ hasText: "Test Case Generation" });
 
-    // Wait for mutation to complete
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
+      // Verify the row shows "Project Override" badge (the override is set)
+      await expect(row.getByText("Project Override")).toBeVisible({
+        timeout: 10000,
+      });
+    });
 
-    // Verify the "Project Override" badge is gone from the Source column
-    await expect(row.getByText("Project Override")).not.toBeVisible({
-      timeout: 5000,
+    await test.step("Clear the override by choosing No override", async () => {
+      // Click the Select to open the dropdown and choose "No override" to clear
+      const selectTrigger = row!.locator('button[role="combobox"]');
+      await selectTrigger.scrollIntoViewIfNeeded();
+      await selectTrigger.click();
+
+      // Select "No override" to clear the override
+      const noOverrideOption = page.getByRole("option", {
+        name: "No override",
+      });
+      await noOverrideOption.click();
+
+      // Wait for mutation to complete
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(1000);
+    });
+
+    await test.step("Verify the Project Override badge is gone", async () => {
+      // Verify the "Project Override" badge is gone from the Source column
+      await expect(row!.getByText("Project Override")).not.toBeVisible({
+        timeout: 5000,
+      });
     });
   });
 });

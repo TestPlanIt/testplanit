@@ -80,31 +80,35 @@ test("Repository AddFolder modal resets between opens", async ({
     `E2E Modal Reset Folder ${Date.now()}-${Math.random().toString(36).substring(7)}`
   );
   const repositoryPage = new RepositoryPage(page);
-  await repositoryPage.goto(projectId);
 
   const addFolderButton = page.getByTestId("add-folder-button");
   const folderNameInput = page.getByTestId("folder-name-input");
   const folderCancelButton = page.getByTestId("folder-cancel-button");
 
-  await expect(addFolderButton).toBeVisible({ timeout: 10000 });
+  await test.step("Open the project repository", async () => {
+    await repositoryPage.goto(projectId);
+    await expect(addFolderButton).toBeVisible({ timeout: 10000 });
+  });
 
-  // --- First open: fill name, cancel ---
-  await addFolderButton.click();
-  await expect(folderNameInput).toBeVisible({ timeout: 5000 });
+  await test.step("Fill the Add Folder name field and cancel", async () => {
+    await addFolderButton.click();
+    await expect(folderNameInput).toBeVisible({ timeout: 5000 });
 
-  const uniqueName = `Leak Folder ${Date.now()}`;
-  await folderNameInput.fill(uniqueName);
-  await expect(folderNameInput).toHaveValue(uniqueName);
+    const uniqueName = `Leak Folder ${Date.now()}`;
+    await folderNameInput.fill(uniqueName);
+    await expect(folderNameInput).toHaveValue(uniqueName);
 
-  await folderCancelButton.click();
-  await expect(folderNameInput).not.toBeVisible({ timeout: 5000 });
+    await folderCancelButton.click();
+    await expect(folderNameInput).not.toBeVisible({ timeout: 5000 });
+  });
 
-  // --- Second open: name field must be empty ---
-  await addFolderButton.click();
-  await expect(folderNameInput).toBeVisible({ timeout: 5000 });
-  await expect(folderNameInput).toHaveValue("");
+  await test.step("Reopen Add Folder and verify the name field is empty", async () => {
+    await addFolderButton.click();
+    await expect(folderNameInput).toBeVisible({ timeout: 5000 });
+    await expect(folderNameInput).toHaveValue("");
 
-  await folderCancelButton.click();
+    await folderCancelButton.click();
+  });
 });
 
 // ---- Repository: AddCase -------------------------------------------------
@@ -114,35 +118,39 @@ test("Repository AddCase modal resets between opens", async ({ page, api }) => {
   const projectId = await api.createProject(
     `E2E Modal Reset Case ${Date.now()}-${Math.random().toString(36).substring(7)}`
   );
-  await api.createFolder(projectId, `Leak Case Folder ${Date.now()}`);
 
   const repositoryPage = new RepositoryPage(page);
-  await repositoryPage.goto(projectId);
 
   const addCaseButton = page.getByTestId("add-case-button");
-  await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
-
   const dialog = page.getByTestId("add-case-dialog");
   const caseNameInput = dialog.getByTestId("case-name-input");
   const caseCancelButton = page.getByTestId("case-cancel-button");
 
-  // --- First open: fill name, cancel ---
-  await addCaseButton.click();
-  await expect(caseNameInput).toBeVisible({ timeout: 5000 });
+  await test.step("Create a folder and open the project repository", async () => {
+    await api.createFolder(projectId, `Leak Case Folder ${Date.now()}`);
+    await repositoryPage.goto(projectId);
+    await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
+  });
 
-  const uniqueName = `Leak Case ${Date.now()}`;
-  await caseNameInput.fill(uniqueName);
-  await expect(caseNameInput).toHaveValue(uniqueName);
+  await test.step("Fill the Add Case name field and cancel", async () => {
+    await addCaseButton.click();
+    await expect(caseNameInput).toBeVisible({ timeout: 5000 });
 
-  await caseCancelButton.click();
-  await expect(caseNameInput).not.toBeVisible({ timeout: 5000 });
+    const uniqueName = `Leak Case ${Date.now()}`;
+    await caseNameInput.fill(uniqueName);
+    await expect(caseNameInput).toHaveValue(uniqueName);
 
-  // --- Second open: name field must be empty ---
-  await addCaseButton.click();
-  await expect(caseNameInput).toBeVisible({ timeout: 5000 });
-  await expect(caseNameInput).toHaveValue("");
+    await caseCancelButton.click();
+    await expect(caseNameInput).not.toBeVisible({ timeout: 5000 });
+  });
 
-  await caseCancelButton.click();
+  await test.step("Reopen Add Case and verify the name field is empty", async () => {
+    await addCaseButton.click();
+    await expect(caseNameInput).toBeVisible({ timeout: 5000 });
+    await expect(caseNameInput).toHaveValue("");
+
+    await caseCancelButton.click();
+  });
 });
 
 // ---- Project Milestones: AddMilestone ------------------------------------
@@ -155,36 +163,41 @@ test("Project Milestones AddMilestone modal resets between opens", async ({
     `E2E Modal Reset Milestone ${Date.now()}-${Math.random().toString(36).substring(7)}`
   );
 
-  await page.goto(`/en-US/projects/milestones/${projectId}`);
-  await page.waitForLoadState("networkidle");
-
   const addMilestoneButton = page.getByTestId("new-milestone-button");
-  await expect(addMilestoneButton).toBeVisible({ timeout: 10000 });
+  let dialog: Locator | undefined;
 
-  // --- First open: fill the name field, cancel ---
-  await addMilestoneButton.click();
-  let dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible({ timeout: 5000 });
+  await test.step("Open the project milestones page", async () => {
+    await page.goto(`/en-US/projects/milestones/${projectId}`);
+    await page.waitForLoadState("networkidle");
+    await expect(addMilestoneButton).toBeVisible({ timeout: 10000 });
+  });
 
-  const firstField = defaultNameField(dialog);
-  await expect(firstField).toBeVisible({ timeout: 5000 });
+  await test.step("Fill the Add Milestone name field and cancel", async () => {
+    await addMilestoneButton.click();
+    dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 5000 });
 
-  const uniqueValue = `Leak Milestone ${Date.now()}`;
-  await firstField.fill(uniqueValue);
-  await expect(firstField).toHaveValue(uniqueValue);
+    const firstField = defaultNameField(dialog);
+    await expect(firstField).toBeVisible({ timeout: 5000 });
 
-  await closeDialog(page);
+    const uniqueValue = `Leak Milestone ${Date.now()}`;
+    await firstField.fill(uniqueValue);
+    await expect(firstField).toHaveValue(uniqueValue);
 
-  // --- Second open: name field must be empty ---
-  await addMilestoneButton.click();
-  dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible({ timeout: 5000 });
+    await closeDialog(page);
+  });
 
-  const firstFieldAgain = defaultNameField(dialog);
-  await expect(firstFieldAgain).toBeVisible({ timeout: 5000 });
-  await expect(firstFieldAgain).toHaveValue("");
+  await test.step("Reopen Add Milestone and verify the name field is empty", async () => {
+    await addMilestoneButton.click();
+    dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 5000 });
 
-  await closeDialog(page);
+    const firstFieldAgain = defaultNameField(dialog);
+    await expect(firstFieldAgain).toBeVisible({ timeout: 5000 });
+    await expect(firstFieldAgain).toHaveValue("");
+
+    await closeDialog(page);
+  });
 });
 
 // ---- Project Sessions: AddSessionModal -----------------------------------
@@ -197,36 +210,41 @@ test("Project Sessions AddSessionModal resets between opens", async ({
     `E2E Modal Reset Session ${Date.now()}-${Math.random().toString(36).substring(7)}`
   );
 
-  await page.goto(`/en-US/projects/sessions/${projectId}`);
-  await page.waitForLoadState("networkidle");
-
   const addSessionButton = page.getByTestId("new-session-button");
-  await expect(addSessionButton).toBeVisible({ timeout: 10000 });
+  let dialog: Locator | undefined;
 
-  // --- First open: fill the name field, cancel ---
-  await addSessionButton.click();
-  let dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible({ timeout: 5000 });
+  await test.step("Open the project sessions page", async () => {
+    await page.goto(`/en-US/projects/sessions/${projectId}`);
+    await page.waitForLoadState("networkidle");
+    await expect(addSessionButton).toBeVisible({ timeout: 10000 });
+  });
 
-  const firstField = defaultNameField(dialog);
-  await expect(firstField).toBeVisible({ timeout: 5000 });
+  await test.step("Fill the Add Session name field and cancel", async () => {
+    await addSessionButton.click();
+    dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 5000 });
 
-  const uniqueValue = `Leak Session ${Date.now()}`;
-  await firstField.fill(uniqueValue);
-  await expect(firstField).toHaveValue(uniqueValue);
+    const firstField = defaultNameField(dialog);
+    await expect(firstField).toBeVisible({ timeout: 5000 });
 
-  await closeDialog(page);
+    const uniqueValue = `Leak Session ${Date.now()}`;
+    await firstField.fill(uniqueValue);
+    await expect(firstField).toHaveValue(uniqueValue);
 
-  // --- Second open: name field must be empty ---
-  await addSessionButton.click();
-  dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible({ timeout: 5000 });
+    await closeDialog(page);
+  });
 
-  const firstFieldAgain = defaultNameField(dialog);
-  await expect(firstFieldAgain).toBeVisible({ timeout: 5000 });
-  await expect(firstFieldAgain).toHaveValue("");
+  await test.step("Reopen Add Session and verify the name field is empty", async () => {
+    await addSessionButton.click();
+    dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 5000 });
 
-  await closeDialog(page);
+    const firstFieldAgain = defaultNameField(dialog);
+    await expect(firstFieldAgain).toBeVisible({ timeout: 5000 });
+    await expect(firstFieldAgain).toHaveValue("");
+
+    await closeDialog(page);
+  });
 });
 
 // ---- Project Test Runs: AddTestRunModal ----------------------------------
@@ -239,34 +257,39 @@ test("Project Test Runs AddTestRunModal resets between opens", async ({
     `E2E Modal Reset Run ${Date.now()}-${Math.random().toString(36).substring(7)}`
   );
 
-  await page.goto(`/en-US/projects/runs/${projectId}`);
-  await page.waitForLoadState("networkidle");
-
   const addRunButton = page.getByTestId("new-run-button");
-  await expect(addRunButton).toBeVisible({ timeout: 10000 });
 
   // AddTestRunModal uses a dedicated testid for its name field; prefer it
   // over the defaultNameField helper since the run dialog has many inputs.
   const nameInput = page.getByTestId("run-name-input");
+  let dialog: Locator | undefined;
 
-  // --- First open: fill the name field, cancel ---
-  await addRunButton.click();
-  let dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible({ timeout: 5000 });
-  await expect(nameInput).toBeVisible({ timeout: 5000 });
+  await test.step("Open the project test runs page", async () => {
+    await page.goto(`/en-US/projects/runs/${projectId}`);
+    await page.waitForLoadState("networkidle");
+    await expect(addRunButton).toBeVisible({ timeout: 10000 });
+  });
 
-  const uniqueValue = `Leak Run ${Date.now()}`;
-  await nameInput.fill(uniqueValue);
-  await expect(nameInput).toHaveValue(uniqueValue);
+  await test.step("Fill the Add Test Run name field and cancel", async () => {
+    await addRunButton.click();
+    dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await expect(nameInput).toBeVisible({ timeout: 5000 });
 
-  await closeDialog(page);
+    const uniqueValue = `Leak Run ${Date.now()}`;
+    await nameInput.fill(uniqueValue);
+    await expect(nameInput).toHaveValue(uniqueValue);
 
-  // --- Second open: name field must be empty ---
-  await addRunButton.click();
-  dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible({ timeout: 5000 });
-  await expect(nameInput).toBeVisible({ timeout: 5000 });
-  await expect(nameInput).toHaveValue("");
+    await closeDialog(page);
+  });
 
-  await closeDialog(page);
+  await test.step("Reopen Add Test Run and verify the name field is empty", async () => {
+    await addRunButton.click();
+    dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await expect(nameInput).toBeVisible({ timeout: 5000 });
+    await expect(nameInput).toHaveValue("");
+
+    await closeDialog(page);
+  });
 });

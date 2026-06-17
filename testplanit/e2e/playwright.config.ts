@@ -10,6 +10,47 @@ const recordVideo = process.env.E2E_VIDEO === "on";
 // Set E2E_PROD=on to run against production build (faster, more stable)
 const useProdBuild = process.env.E2E_PROD === "on";
 
+// Optionally report results to a TestPlanIt instance via the local reporter.
+// Inert unless TPI_DOMAIN + TPI_TOKEN + TPI_PROJECT_ID are set, so normal E2E
+// runs are unaffected. Used to dogfood @testplanit/playwright-reporter: with
+// TPI_AUTOCREATE=1 it creates a case per test (named by describe path + title)
+// and captures each test.step() as that case's steps.
+const tpiTemplate = process.env.TPI_TEMPLATE;
+const tpiReporter: [string, Record<string, unknown>][] =
+  process.env.TPI_DOMAIN && process.env.TPI_TOKEN && process.env.TPI_PROJECT_ID
+    ? [
+        [
+          path.resolve(
+            __dirname,
+            "../../packages/playwright-testplanit-reporter/dist/index.js"
+          ),
+          {
+            domain: process.env.TPI_DOMAIN,
+            apiToken: process.env.TPI_TOKEN,
+            projectId: Number(process.env.TPI_PROJECT_ID),
+            runName: "E2E Suite - {date} {time}",
+            verbose: process.env.TPI_VERBOSE === "1",
+            ...(process.env.TPI_AUTOCREATE === "1"
+              ? {
+                  autoCreateTestCases: true,
+                  createFolderHierarchy: true,
+                  parentFolderId: process.env.TPI_PARENT_FOLDER || "E2E Suite",
+                  // Template ID or name; needs a Steps field for clean rendering.
+                  templateId:
+                    tpiTemplate && Number.isNaN(Number(tpiTemplate))
+                      ? tpiTemplate
+                      : tpiTemplate
+                        ? Number(tpiTemplate)
+                        : undefined,
+                }
+              : {}),
+            // Keep created cases' steps in sync with the spec on every run.
+            overwriteSteps: process.env.TPI_OVERWRITE_STEPS === "1",
+          },
+        ],
+      ]
+    : [];
+
 export default defineConfig({
   testDir: "./tests",
 
@@ -49,6 +90,7 @@ export default defineConfig({
     ["list"],
     ["html", { outputFolder: "playwright-report", open: "never" }],
     ["junit", { outputFile: "test-results/junit.xml" }],
+    ...tpiReporter,
   ],
 
   // Global setup for authentication

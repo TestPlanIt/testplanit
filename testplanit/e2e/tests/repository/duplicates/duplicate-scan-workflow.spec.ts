@@ -18,167 +18,218 @@ test.describe("Duplicate Scan Workflow", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    );
-    const folderId = await api.createFolder(
-      projectId,
-      `Dup Folder ${Date.now()}`
-    );
-    await api.createTestCase(projectId, folderId, "Login form validation test");
-    await api.createTestCase(
-      projectId,
-      folderId,
-      "Login form validation test copy"
-    );
+    let projectId: number | undefined;
+    let folderId: number | undefined;
 
-    await page.goto(`/en-US/projects/repository/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Seed project with two similar test cases", async () => {
+      projectId = await api.createProject(
+        `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      );
+      folderId = await api.createFolder(
+        projectId!,
+        `Dup Folder ${Date.now()}`
+      );
+      await api.createTestCase(projectId!, folderId!, "Login form validation test");
+      await api.createTestCase(
+        projectId!,
+        folderId!,
+        "Login form validation test copy"
+      );
+    });
 
-    // Find and click the scan trigger button
-    const findDuplicatesBtn = page.locator(
-      '[data-testid="find-duplicates-button"]'
-    );
-    await expect(findDuplicatesBtn).toBeVisible({ timeout: 10000 });
-    await findDuplicatesBtn.click();
+    await test.step("Open the repository page", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Scan should be in progress or complete almost immediately
-    const scanIndicator = page.locator(
-      '[data-testid="scan-progress"],[data-testid="view-duplicates-button"]'
-    );
-    await expect(scanIndicator).toBeVisible({ timeout: 15000 });
+    await test.step("Find and click the scan trigger button", async () => {
+      const findDuplicatesBtn = page.locator(
+        '[data-testid="find-duplicates-button"]'
+      );
+      await expect(findDuplicatesBtn).toBeVisible({ timeout: 10000 });
+      await findDuplicatesBtn.click();
+    });
+
+    await test.step("Verify scan is in progress or complete", async () => {
+      // Scan should be in progress or complete almost immediately
+      const scanIndicator = page.locator(
+        '[data-testid="scan-progress"],[data-testid="view-duplicates-button"]'
+      );
+      await expect(scanIndicator).toBeVisible({ timeout: 15000 });
+    });
   });
 
   test("View duplicate scan results page", async ({ api, page }) => {
-    const projectId = await api.createProject(
-      `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    );
-    const folderId = await api.createFolder(
-      projectId,
-      `Dup Folder ${Date.now()}`
-    );
-    const caseAId = await api.createTestCase(
-      projectId,
-      folderId,
-      "Login test A"
-    );
-    const caseBId = await api.createTestCase(
-      projectId,
-      folderId,
-      "Login test B"
-    );
+    let projectId: number | undefined;
+    let folderId: number | undefined;
+    let caseAId: number | undefined;
+    let caseBId: number | undefined;
 
-    // Create a DuplicateScanResult directly — no ES dependency
-    await api.createDuplicateScanResult(projectId, caseAId, caseBId, 0.92, [
-      "name",
-    ]);
+    await test.step("Seed project, folder, and two test cases", async () => {
+      projectId = await api.createProject(
+        `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      );
+      folderId = await api.createFolder(
+        projectId!,
+        `Dup Folder ${Date.now()}`
+      );
+      caseAId = await api.createTestCase(
+        projectId!,
+        folderId!,
+        "Login test A"
+      );
+      caseBId = await api.createTestCase(
+        projectId!,
+        folderId!,
+        "Login test B"
+      );
+    });
 
-    // Navigate to the duplicates page
-    await page.goto(`/en-US/projects/repository/${projectId}/duplicates`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Create a duplicate scan result directly", async () => {
+      // Create a DuplicateScanResult directly — no ES dependency
+      await api.createDuplicateScanResult(projectId!, caseAId!, caseBId!, 0.92, [
+        "name",
+      ]);
+    });
 
-    // The duplicates table should be visible
-    const table = page.locator('[data-testid="duplicates-table"]');
-    await expect(table).toBeVisible({ timeout: 10000 });
+    await test.step("Navigate to the duplicates page", async () => {
+      // Navigate to the duplicates page
+      await page.goto(`/en-US/projects/repository/${projectId}/duplicates`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // At least one row should be visible
-    const firstRow = page.locator('[data-testid^="case-row-"]').first();
-    await expect(firstRow).toBeVisible({ timeout: 10000 });
+    await test.step("Verify the duplicates table and a result row are visible", async () => {
+      // The duplicates table should be visible
+      const table = page.locator('[data-testid="duplicates-table"]');
+      await expect(table).toBeVisible({ timeout: 10000 });
+
+      // At least one row should be visible
+      const firstRow = page.locator('[data-testid^="case-row-"]').first();
+      await expect(firstRow).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Dismiss a duplicate pair", async ({ api, page }) => {
-    const projectId = await api.createProject(
-      `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    );
-    const folderId = await api.createFolder(
-      projectId,
-      `Dup Folder ${Date.now()}`
-    );
-    const caseAId = await api.createTestCase(
-      projectId,
-      folderId,
-      "Dismissable test A"
-    );
-    const caseBId = await api.createTestCase(
-      projectId,
-      folderId,
-      "Dismissable test B"
-    );
+    let projectId: number | undefined;
+    let folderId: number | undefined;
+    let caseAId: number | undefined;
+    let caseBId: number | undefined;
 
-    await api.createDuplicateScanResult(projectId, caseAId, caseBId, 0.88, [
-      "name",
-    ]);
+    await test.step("Seed project, folder, and two test cases", async () => {
+      projectId = await api.createProject(
+        `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      );
+      folderId = await api.createFolder(
+        projectId!,
+        `Dup Folder ${Date.now()}`
+      );
+      caseAId = await api.createTestCase(
+        projectId!,
+        folderId!,
+        "Dismissable test A"
+      );
+      caseBId = await api.createTestCase(
+        projectId!,
+        folderId!,
+        "Dismissable test B"
+      );
+    });
 
-    await page.goto(`/en-US/projects/repository/${projectId}/duplicates`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Create a duplicate scan result and open the duplicates page", async () => {
+      await api.createDuplicateScanResult(projectId!, caseAId!, caseBId!, 0.88, [
+        "name",
+      ]);
 
-    // Click the first row to open the comparison dialog
-    const firstRow = page.locator('[data-testid^="case-row-"]').first();
-    await expect(firstRow).toBeVisible({ timeout: 10000 });
-    await firstRow.click();
+      await page.goto(`/en-US/projects/repository/${projectId}/duplicates`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Wait for the comparison dialog to appear
-    const dialog = page.locator('[data-testid="comparison-dialog"]');
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    await test.step("Open the comparison dialog for the first pair", async () => {
+      // Click the first row to open the comparison dialog
+      const firstRow = page.locator('[data-testid^="case-row-"]').first();
+      await expect(firstRow).toBeVisible({ timeout: 10000 });
+      await firstRow.click();
 
-    // Click dismiss
-    const dismissButton = page.locator('[data-testid="dismiss-button"]');
-    await expect(dismissButton).toBeVisible({ timeout: 10000 });
-    await dismissButton.click();
+      // Wait for the comparison dialog to appear
+      const dialog = page.locator('[data-testid="comparison-dialog"]');
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
-    // Dialog should close
-    await expect(dialog).not.toBeVisible({ timeout: 10000 });
+    await test.step("Dismiss the pair and verify the dialog closes with a success toast", async () => {
+      // Click dismiss
+      const dismissButton = page.locator('[data-testid="dismiss-button"]');
+      await expect(dismissButton).toBeVisible({ timeout: 10000 });
+      await dismissButton.click();
 
-    // Success toast should appear
-    const toast = page.locator("[data-sonner-toast]");
-    await expect(toast).toBeVisible({ timeout: 10000 });
+      // Dialog should close
+      const dialog = page.locator('[data-testid="comparison-dialog"]');
+      await expect(dialog).not.toBeVisible({ timeout: 10000 });
+
+      // Success toast should appear
+      const toast = page.locator("[data-sonner-toast]");
+      await expect(toast).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Link two duplicate cases as related", async ({ api, page }) => {
-    const projectId = await api.createProject(
-      `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    );
-    const folderId = await api.createFolder(
-      projectId,
-      `Dup Folder ${Date.now()}`
-    );
-    const caseAId = await api.createTestCase(
-      projectId,
-      folderId,
-      "Linkable test A"
-    );
-    const caseBId = await api.createTestCase(
-      projectId,
-      folderId,
-      "Linkable test B"
-    );
+    let projectId: number | undefined;
+    let folderId: number | undefined;
+    let caseAId: number | undefined;
+    let caseBId: number | undefined;
 
-    await api.createDuplicateScanResult(projectId, caseAId, caseBId, 0.85, [
-      "name",
-    ]);
+    await test.step("Seed project, folder, and two test cases", async () => {
+      projectId = await api.createProject(
+        `E2E Duplicates Project ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      );
+      folderId = await api.createFolder(
+        projectId!,
+        `Dup Folder ${Date.now()}`
+      );
+      caseAId = await api.createTestCase(
+        projectId!,
+        folderId!,
+        "Linkable test A"
+      );
+      caseBId = await api.createTestCase(
+        projectId!,
+        folderId!,
+        "Linkable test B"
+      );
+    });
 
-    await page.goto(`/en-US/projects/repository/${projectId}/duplicates`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Create a duplicate scan result and open the duplicates page", async () => {
+      await api.createDuplicateScanResult(projectId!, caseAId!, caseBId!, 0.85, [
+        "name",
+      ]);
 
-    // Click the first row to open the comparison dialog
-    const firstRow = page.locator('[data-testid^="case-row-"]').first();
-    await expect(firstRow).toBeVisible({ timeout: 10000 });
-    await firstRow.click();
+      await page.goto(`/en-US/projects/repository/${projectId}/duplicates`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Wait for the comparison dialog to appear
-    const dialog = page.locator('[data-testid="comparison-dialog"]');
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    await test.step("Open the comparison dialog for the first pair", async () => {
+      // Click the first row to open the comparison dialog
+      const firstRow = page.locator('[data-testid^="case-row-"]').first();
+      await expect(firstRow).toBeVisible({ timeout: 10000 });
+      await firstRow.click();
 
-    // Click link
-    const linkButton = page.locator('[data-testid="link-button"]');
-    await expect(linkButton).toBeVisible({ timeout: 10000 });
-    await linkButton.click();
+      // Wait for the comparison dialog to appear
+      const dialog = page.locator('[data-testid="comparison-dialog"]');
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
-    // Dialog should close
-    await expect(dialog).not.toBeVisible({ timeout: 10000 });
+    await test.step("Link the pair and verify the dialog closes with a success toast", async () => {
+      // Click link
+      const linkButton = page.locator('[data-testid="link-button"]');
+      await expect(linkButton).toBeVisible({ timeout: 10000 });
+      await linkButton.click();
 
-    // Success toast should appear
-    const toast = page.locator("[data-sonner-toast]");
-    await expect(toast).toBeVisible({ timeout: 10000 });
+      // Dialog should close
+      const dialog = page.locator('[data-testid="comparison-dialog"]');
+      await expect(dialog).not.toBeVisible({ timeout: 10000 });
+
+      // Success toast should appear
+      const toast = page.locator("[data-sonner-toast]");
+      await expect(toast).toBeVisible({ timeout: 10000 });
+    });
   });
 });

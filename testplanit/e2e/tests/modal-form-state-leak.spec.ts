@@ -37,49 +37,55 @@ test.describe("Modal form state leak regression", () => {
     // Highest-sensitivity case: the original PR #181 bug. Before the fix,
     // filling in a password, cancelling, and reopening would show the prior
     // password still in the field.
-    await page.goto("/en-US/admin/users");
-    await page.waitForLoadState("networkidle");
-
     const addButton = page.getByRole("button", { name: /add/i }).first();
-    await expect(addButton).toBeVisible({ timeout: 10000 });
+    let dialog: Locator | undefined;
 
-    // --- First open: fill password + name, cancel ---
-    await addButton.click();
-    let dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await test.step("Open the Add User page", async () => {
+      await page.goto("/en-US/admin/users");
+      await page.waitForLoadState("networkidle");
 
-    const nameInput = dialog.getByPlaceholder(/^name$/i);
-    const passwordInputs = dialog.locator('input[type="password"]');
-    // There are two password fields: password and confirmPassword.
-    const passwordInput = passwordInputs.first();
-    const confirmPasswordInput = passwordInputs.nth(1);
+      await expect(addButton).toBeVisible({ timeout: 10000 });
+    });
 
-    const uniqueName = `Leak Test ${Date.now()}`;
-    await nameInput.fill(uniqueName);
-    await passwordInput.fill("Secret123!");
-    await confirmPasswordInput.fill("Secret123!");
+    await test.step("Fill in name and password, then cancel", async () => {
+      await addButton.click();
+      dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible({ timeout: 5000 });
 
-    await expect(nameInput).toHaveValue(uniqueName);
-    await expect(passwordInput).toHaveValue("Secret123!");
-    await expect(confirmPasswordInput).toHaveValue("Secret123!");
+      const nameInput = dialog.getByPlaceholder(/^name$/i);
+      const passwordInputs = dialog.locator('input[type="password"]');
+      // There are two password fields: password and confirmPassword.
+      const passwordInput = passwordInputs.first();
+      const confirmPasswordInput = passwordInputs.nth(1);
 
-    await dialog.getByRole("button", { name: /^cancel$/i }).click();
-    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+      const uniqueName = `Leak Test ${Date.now()}`;
+      await nameInput.fill(uniqueName);
+      await passwordInput.fill("Secret123!");
+      await confirmPasswordInput.fill("Secret123!");
 
-    // --- Second open: name, password, confirmPassword must all be empty ---
-    await addButton.click();
-    dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 5000 });
+      await expect(nameInput).toHaveValue(uniqueName);
+      await expect(passwordInput).toHaveValue("Secret123!");
+      await expect(confirmPasswordInput).toHaveValue("Secret123!");
 
-    const nameInputAgain = dialog.getByPlaceholder(/^name$/i);
-    const passwordInputsAgain = dialog.locator('input[type="password"]');
+      await dialog.getByRole("button", { name: /^cancel$/i }).click();
+      await expect(dialog).not.toBeVisible({ timeout: 5000 });
+    });
 
-    await expect(nameInputAgain).toHaveValue("");
-    await expect(passwordInputsAgain.first()).toHaveValue("");
-    await expect(passwordInputsAgain.nth(1)).toHaveValue("");
+    await test.step("Reopen the dialog and verify all fields are empty", async () => {
+      await addButton.click();
+      dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible({ timeout: 5000 });
 
-    // Clean up by closing the dialog.
-    await dialog.getByRole("button", { name: /^cancel$/i }).click();
+      const nameInputAgain = dialog.getByPlaceholder(/^name$/i);
+      const passwordInputsAgain = dialog.locator('input[type="password"]');
+
+      await expect(nameInputAgain).toHaveValue("");
+      await expect(passwordInputsAgain.first()).toHaveValue("");
+      await expect(passwordInputsAgain.nth(1)).toHaveValue("");
+
+      // Clean up by closing the dialog.
+      await dialog.getByRole("button", { name: /^cancel$/i }).click();
+    });
   });
 
   test("AddTemplate form fields are cleared between open cycles", async ({
@@ -89,35 +95,41 @@ test.describe("Modal form state leak regression", () => {
     // a multi-field react-hook-form, all of which persisted. This test only
     // exercises the name field (simplest observable field), but the
     // unmount-based fix cleans up everything at once.
-    await page.goto("/en-US/admin/fields");
-    await page.waitForLoadState("networkidle");
-
     const addButton = page.getByTestId("add-template-button");
-    await expect(addButton).toBeVisible({ timeout: 10000 });
+    let dialog: Locator | undefined;
 
-    // --- First open: fill name, cancel ---
-    await addButton.click();
-    let dialog = page.getByTestId("template-dialog");
-    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await test.step("Open the Add Template page", async () => {
+      await page.goto("/en-US/admin/fields");
+      await page.waitForLoadState("networkidle");
 
-    const nameInput = page.getByTestId("template-name-input");
-    const uniqueName = `Leak Test Template ${Date.now()}`;
-    await nameInput.fill(uniqueName);
-    await expect(nameInput).toHaveValue(uniqueName);
+      await expect(addButton).toBeVisible({ timeout: 10000 });
+    });
 
-    await page.getByTestId("template-cancel-button").click();
-    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+    await test.step("Fill in the template name, then cancel", async () => {
+      await addButton.click();
+      dialog = page.getByTestId("template-dialog");
+      await expect(dialog).toBeVisible({ timeout: 5000 });
 
-    // --- Second open: name must be empty ---
-    await addButton.click();
-    dialog = page.getByTestId("template-dialog");
-    await expect(dialog).toBeVisible({ timeout: 5000 });
+      const nameInput = page.getByTestId("template-name-input");
+      const uniqueName = `Leak Test Template ${Date.now()}`;
+      await nameInput.fill(uniqueName);
+      await expect(nameInput).toHaveValue(uniqueName);
 
-    const nameInputAgain = page.getByTestId("template-name-input");
-    await expect(nameInputAgain).toHaveValue("");
+      await page.getByTestId("template-cancel-button").click();
+      await expect(dialog).not.toBeVisible({ timeout: 5000 });
+    });
 
-    // Clean up.
-    await page.getByTestId("template-cancel-button").click();
+    await test.step("Reopen the dialog and verify the name is empty", async () => {
+      await addButton.click();
+      dialog = page.getByTestId("template-dialog");
+      await expect(dialog).toBeVisible({ timeout: 5000 });
+
+      const nameInputAgain = page.getByTestId("template-name-input");
+      await expect(nameInputAgain).toHaveValue("");
+
+      // Clean up.
+      await page.getByTestId("template-cancel-button").click();
+    });
   });
 
   test("EditAvatar is freshly mounted on each open", async ({
@@ -138,44 +150,50 @@ test.describe("Modal form state leak regression", () => {
     // the submit button's `isSubmitting` state or any leftover error message
     // would leak into the next cycle. On the current tier-3 refactor, every
     // open produces a clean dialog.
-    await page.goto(`/en-US/users/profile/${adminUserId}`);
-    await page.waitForLoadState("networkidle");
-
     const changeAvatarButton = page.getByRole("button", {
       name: /change profile picture/i,
     });
-    await expect(changeAvatarButton).toBeVisible({ timeout: 10000 });
+    let dialog: Locator | undefined;
 
-    // --- First open: verify fresh state, cancel ---
-    await changeAvatarButton.click();
-    let dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await test.step("Open the profile page", async () => {
+      await page.goto(`/en-US/users/profile/${adminUserId}`);
+      await page.waitForLoadState("networkidle");
 
-    const firstSubmit = dialog.getByRole("button", { name: /^submit$/i });
-    await expect(firstSubmit).toBeVisible();
-    await expect(firstSubmit).toBeEnabled();
-    // No preview image on first open (nothing uploaded yet).
-    await expect(dialog.locator('img[alt="Preview"]')).toHaveCount(0);
+      await expect(changeAvatarButton).toBeVisible({ timeout: 10000 });
+    });
 
-    await dialog.getByRole("button", { name: /^cancel$/i }).click();
-    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+    await test.step("Open the Change Avatar dialog and verify fresh state, then cancel", async () => {
+      await changeAvatarButton.click();
+      dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible({ timeout: 5000 });
 
-    // --- Second open: same fresh state ---
-    await changeAvatarButton.click();
-    dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 5000 });
+      const firstSubmit = dialog.getByRole("button", { name: /^submit$/i });
+      await expect(firstSubmit).toBeVisible();
+      await expect(firstSubmit).toBeEnabled();
+      // No preview image on first open (nothing uploaded yet).
+      await expect(dialog.locator('img[alt="Preview"]')).toHaveCount(0);
 
-    const secondSubmit = dialog.getByRole("button", { name: /^submit$/i });
-    await expect(secondSubmit).toBeEnabled();
-    // Submit button is NOT in its "Submitting..." state — proves that
-    // `isSubmitting` did not leak from the previous cycle.
-    await expect(secondSubmit).not.toHaveText(/submitting/i);
-    // Still no preview image — the UploadAvatar child unmounted and remounted
-    // along with the parent.
-    await expect(dialog.locator('img[alt="Preview"]')).toHaveCount(0);
+      await dialog.getByRole("button", { name: /^cancel$/i }).click();
+      await expect(dialog).not.toBeVisible({ timeout: 5000 });
+    });
 
-    // Clean up.
-    await dialog.getByRole("button", { name: /^cancel$/i }).click();
+    await test.step("Reopen the dialog and verify the same fresh state", async () => {
+      await changeAvatarButton.click();
+      dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible({ timeout: 5000 });
+
+      const secondSubmit = dialog.getByRole("button", { name: /^submit$/i });
+      await expect(secondSubmit).toBeEnabled();
+      // Submit button is NOT in its "Submitting..." state — proves that
+      // `isSubmitting` did not leak from the previous cycle.
+      await expect(secondSubmit).not.toHaveText(/submitting/i);
+      // Still no preview image — the UploadAvatar child unmounted and remounted
+      // along with the parent.
+      await expect(dialog.locator('img[alt="Preview"]')).toHaveCount(0);
+
+      // Clean up.
+      await dialog.getByRole("button", { name: /^cancel$/i }).click();
+    });
   });
 });
 
@@ -351,38 +369,43 @@ for (const tc of adminCases) {
   test(`${tc.label}: Add modal form state resets between opens`, async ({
     page,
   }) => {
-    await page.goto(tc.url);
-    await page.waitForLoadState("networkidle");
-
     const addButton = tc.addButton(page);
-    await expect(addButton).toBeVisible({ timeout: 10000 });
-
     const nameField = tc.nameFieldInAdd ?? defaultNameField;
+    let dialog: Locator | undefined;
 
-    // --- First open: fill first field, cancel ---
-    await addButton.click();
-    let dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await test.step("Open the admin page", async () => {
+      await page.goto(tc.url);
+      await page.waitForLoadState("networkidle");
 
-    const firstField = nameField(dialog);
-    await expect(firstField).toBeVisible({ timeout: 5000 });
+      await expect(addButton).toBeVisible({ timeout: 10000 });
+    });
 
-    const uniqueValue = `Leak-${tc.label.replace(/\s+/g, "-")}-${Date.now()}`;
-    await firstField.fill(uniqueValue);
-    await expect(firstField).toHaveValue(uniqueValue);
+    await test.step("Open the Add dialog, fill the first field, then cancel", async () => {
+      await addButton.click();
+      dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible({ timeout: 5000 });
 
-    await closeDialog(page);
+      const firstField = nameField(dialog);
+      await expect(firstField).toBeVisible({ timeout: 5000 });
 
-    // --- Second open: first field must be empty ---
-    await addButton.click();
-    dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 5000 });
+      const uniqueValue = `Leak-${tc.label.replace(/\s+/g, "-")}-${Date.now()}`;
+      await firstField.fill(uniqueValue);
+      await expect(firstField).toHaveValue(uniqueValue);
 
-    const firstFieldAgain = nameField(dialog);
-    await expect(firstFieldAgain).toBeVisible({ timeout: 5000 });
-    await expect(firstFieldAgain).toHaveValue("");
+      await closeDialog(page);
+    });
 
-    await closeDialog(page);
+    await test.step("Reopen the dialog and verify the first field is empty", async () => {
+      await addButton.click();
+      dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible({ timeout: 5000 });
+
+      const firstFieldAgain = nameField(dialog);
+      await expect(firstFieldAgain).toBeVisible({ timeout: 5000 });
+      await expect(firstFieldAgain).toHaveValue("");
+
+      await closeDialog(page);
+    });
   });
 }
 
@@ -394,56 +417,63 @@ for (const tc of adminCases) {
   test(`${tc.label}: Edit modal shows correct data when switching rows`, async ({
     page,
   }) => {
-    await page.goto(tc.url);
-    await page.waitForLoadState("networkidle");
-    await waitForTableRows(page, 2);
-
     const offset = tc.editRowOffset ?? 0;
     const rowA = offset;
     const rowB = offset + 1;
-
-    const rowAName = await readRowName(page, rowA);
-    const rowBName = await readRowName(page, rowB);
-
-    // Sanity: the two rows must have different names, otherwise the
-    // test is meaningless (form-state-leak can't be distinguished from
-    // correct behavior).
-    expect(rowAName).not.toBe(rowBName);
-    expect(rowAName.length).toBeGreaterThan(0);
-    expect(rowBName.length).toBeGreaterThan(0);
-
     const nameField = tc.nameFieldInEdit ?? defaultNameField;
+    let rowAName: string | undefined;
+    let rowBName: string | undefined;
+    let poisonedValue: string | undefined;
+    let dialog: Locator | undefined;
 
-    // --- Open Edit on row A, modify the field, cancel ---
-    await clickRowEditButton(page, rowA);
-    let dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await test.step("Open the admin page and read the two row names", async () => {
+      await page.goto(tc.url);
+      await page.waitForLoadState("networkidle");
+      await waitForTableRows(page, 2);
 
-    const firstFieldA = nameField(dialog);
-    await expect(firstFieldA).toBeVisible({ timeout: 5000 });
-    // The edit form should be pre-filled with row A's name.
-    await expect(firstFieldA).toHaveValue(rowAName);
+      rowAName = await readRowName(page, rowA);
+      rowBName = await readRowName(page, rowB);
 
-    const poisonedValue = `POISONED-${Date.now()}`;
-    await firstFieldA.fill(poisonedValue);
-    await expect(firstFieldA).toHaveValue(poisonedValue);
+      // Sanity: the two rows must have different names, otherwise the
+      // test is meaningless (form-state-leak can't be distinguished from
+      // correct behavior).
+      expect(rowAName).not.toBe(rowBName);
+      expect(rowAName.length).toBeGreaterThan(0);
+      expect(rowBName.length).toBeGreaterThan(0);
+    });
 
-    await closeDialog(page);
+    await test.step("Edit row A, poison the field, then cancel", async () => {
+      await clickRowEditButton(page, rowA);
+      dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible({ timeout: 5000 });
 
-    // --- Open Edit on row B ---
-    // This is the critical assertion: under the pre-fix bug, the form
-    // would still contain `poisonedValue` because the modal never
-    // unmounted. After the migration, every open is a fresh mount.
-    await clickRowEditButton(page, rowB);
-    dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 5000 });
+      const firstFieldA = nameField(dialog);
+      await expect(firstFieldA).toBeVisible({ timeout: 5000 });
+      // The edit form should be pre-filled with row A's name.
+      await expect(firstFieldA).toHaveValue(rowAName!);
 
-    const firstFieldB = nameField(dialog);
-    await expect(firstFieldB).toBeVisible({ timeout: 5000 });
-    await expect(firstFieldB).toHaveValue(rowBName);
-    // Extra strictness: explicitly assert the poisoned value did NOT leak.
-    await expect(firstFieldB).not.toHaveValue(poisonedValue);
+      poisonedValue = `POISONED-${Date.now()}`;
+      await firstFieldA.fill(poisonedValue);
+      await expect(firstFieldA).toHaveValue(poisonedValue);
 
-    await closeDialog(page);
+      await closeDialog(page);
+    });
+
+    await test.step("Edit row B and verify it shows row B's value, not the poisoned value", async () => {
+      // This is the critical assertion: under the pre-fix bug, the form
+      // would still contain `poisonedValue` because the modal never
+      // unmounted. After the migration, every open is a fresh mount.
+      await clickRowEditButton(page, rowB);
+      dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible({ timeout: 5000 });
+
+      const firstFieldB = nameField(dialog);
+      await expect(firstFieldB).toBeVisible({ timeout: 5000 });
+      await expect(firstFieldB).toHaveValue(rowBName!);
+      // Extra strictness: explicitly assert the poisoned value did NOT leak.
+      await expect(firstFieldB).not.toHaveValue(poisonedValue!);
+
+      await closeDialog(page);
+    });
   });
 }

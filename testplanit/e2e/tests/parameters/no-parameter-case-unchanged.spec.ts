@@ -19,54 +19,74 @@ test.describe("Parameters - PARAM-07 invariant @parameters", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Param Invariant ${Date.now()}`
-    );
-    const folderId = await api.createFolder(projectId, "Invariant");
-    const caseId = await api.createTestCase(
-      projectId,
-      folderId,
-      "Non-Param Case"
-    );
+    let projectId: number | undefined;
+    let folderId: number | undefined;
+    let caseId: number | undefined;
 
-    await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
-    await page.waitForLoadState("load");
+    await test.step("Create a non-parameterized test case", async () => {
+      projectId = await api.createProject(
+        `E2E Param Invariant ${Date.now()}`
+      );
+      folderId = await api.createFolder(projectId, "Invariant");
+      caseId = await api.createTestCase(
+        projectId,
+        folderId,
+        "Non-Param Case"
+      );
+    });
 
-    // The Configure parameters button IS visible (UI-SPEC Surface A — the
-    // only sanctioned addition for editable cases).
-    await expect(page.getByTestId("configure-parameters-button")).toBeVisible();
+    await test.step("Open the case detail page", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId!}/${caseId!}`);
+      await page.waitForLoadState("load");
+    });
 
-    // Switch into edit mode if the page exposes a separate Edit affordance.
-    const editButton = page
-      .locator('[data-testid="edit-case-button"]')
-      .or(page.getByRole("button", { name: /^Edit$/ }))
-      .first();
-    if (await editButton.isVisible().catch(() => false)) {
-      await editButton.click();
-    }
-
-    // The Steps editor toolbar must NOT contain the parameter button.
-    await expect(
-      page.getByTestId("tiptap-insert-parameter-button")
-    ).not.toBeVisible();
-
-    // Typing `@anything` in a step editor must NOT trigger the
-    // parameter-mention autocomplete (extension is not mounted when
-    // parameters list is empty).
-    const stepEditor = page
-      .locator('[data-testid="step-editor-0"] [contenteditable="true"]')
-      .first();
-    if (await stepEditor.isVisible().catch(() => false)) {
-      await stepEditor.click();
-      await stepEditor.type("@anything");
+    await test.step("Confirm the Configure parameters button is the only sanctioned addition", async () => {
+      // The Configure parameters button IS visible (UI-SPEC Surface A — the
+      // only sanctioned addition for editable cases).
       await expect(
-        page.getByTestId("parameter-mention-suggestion")
-      ).not.toBeVisible();
-    }
+        page.getByTestId("configure-parameters-button")
+      ).toBeVisible();
+    });
 
-    // No undeclared-parameter warning ribbon either.
-    await expect(
-      page.getByTestId("tiptap-undeclared-parameter-warning")
-    ).not.toBeVisible();
+    await test.step("Enter edit mode if a separate Edit affordance exists", async () => {
+      // Switch into edit mode if the page exposes a separate Edit affordance.
+      const editButton = page
+        .locator('[data-testid="edit-case-button"]')
+        .or(page.getByRole("button", { name: /^Edit$/ }))
+        .first();
+      if (await editButton.isVisible().catch(() => false)) {
+        await editButton.click();
+      }
+    });
+
+    await test.step("Verify the Steps toolbar has no insert-parameter button", async () => {
+      // The Steps editor toolbar must NOT contain the parameter button.
+      await expect(
+        page.getByTestId("tiptap-insert-parameter-button")
+      ).not.toBeVisible();
+    });
+
+    await test.step("Verify typing @anything does not trigger the parameter-mention autocomplete", async () => {
+      // Typing `@anything` in a step editor must NOT trigger the
+      // parameter-mention autocomplete (extension is not mounted when
+      // parameters list is empty).
+      const stepEditor = page
+        .locator('[data-testid="step-editor-0"] [contenteditable="true"]')
+        .first();
+      if (await stepEditor.isVisible().catch(() => false)) {
+        await stepEditor.click();
+        await stepEditor.type("@anything");
+        await expect(
+          page.getByTestId("parameter-mention-suggestion")
+        ).not.toBeVisible();
+      }
+    });
+
+    await test.step("Verify no undeclared-parameter warning ribbon is rendered", async () => {
+      // No undeclared-parameter warning ribbon either.
+      await expect(
+        page.getByTestId("tiptap-undeclared-parameter-warning")
+      ).not.toBeVisible();
+    });
   });
 });

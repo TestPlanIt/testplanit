@@ -145,88 +145,98 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
     }
 
     // ---- Call 1: cases_list({issueId}) — front-half (D7-03) ---------------
-    const casesQ = encodeURIComponent(
-      JSON.stringify({
-        where: {
-          projectId: ctx.projectId,
-          isDeleted: false,
-          issues: { some: { id: ctx.issueId, isDeleted: false } },
-        },
-        include: { project: { select: { id: true, name: true } } },
-        orderBy: [{ id: "asc" }],
-        take: 26,
-      })
-    );
-    const casesR = await request.get(
-      `${baseURL}/api/model/repositoryCases/findMany?q=${casesQ}`,
-      { headers: ctx.headers }
-    );
-    expect(casesR.status()).toBe(200);
-    const casesBody = await casesR.json();
-    expect(Array.isArray(casesBody.data)).toBe(true);
+    let casesBody: { data: Array<{ id: number }> } | undefined;
+    await test.step("List RepositoryCases linked to the issue", async () => {
+      const casesQ = encodeURIComponent(
+        JSON.stringify({
+          where: {
+            projectId: ctx.projectId,
+            isDeleted: false,
+            issues: { some: { id: ctx.issueId, isDeleted: false } },
+          },
+          include: { project: { select: { id: true, name: true } } },
+          orderBy: [{ id: "asc" }],
+          take: 26,
+        })
+      );
+      const casesR = await request.get(
+        `${baseURL}/api/model/repositoryCases/findMany?q=${casesQ}`,
+        { headers: ctx.headers }
+      );
+      expect(casesR.status()).toBe(200);
+      casesBody = await casesR.json();
+      expect(Array.isArray(casesBody!.data)).toBe(true);
+    });
 
-    if (casesBody.data.length === 0) {
+    if (casesBody!.data.length === 0) {
       console.warn(
         "EXEC-06 partial: issue has 0 linked RepositoryCases (access policy may have filtered)"
       );
       return;
     }
-    const caseIds: number[] = casesBody.data.map((c: { id: number }) => c.id);
-    expect(caseIds.length).toBeGreaterThanOrEqual(1);
 
-    // ---- Call 2: test_run_results_list({caseIds}) — back-half (D7-01) -----
-    // Filter shape: where.testRunCase = { repositoryCaseId: { in: caseIds } }.
-    // This is the ONLY spelling that matches the schema relation chain
-    // TestRunResults.testRunCase -> TestRunCases.repositoryCase -> RepositoryCases.
-    const resultsQ = encodeURIComponent(
-      JSON.stringify({
-        where: {
-          isDeleted: false,
-          testRunCase: { repositoryCaseId: { in: caseIds } },
-        },
-        include: {
-          status: { select: { id: true, name: true } },
-          executedBy: { select: { id: true, name: true, email: true } },
-          testRunCase: {
-            select: {
-              id: true,
-              repositoryCaseId: true,
-              repositoryCase: {
-                select: { id: true, name: true, source: true },
+    let caseIds: number[] | undefined;
+    let resultsBody: { data: Array<Record<string, any>> } | undefined;
+    await test.step("Fetch latest TestRunResults for the linked cases", async () => {
+      caseIds = casesBody!.data.map((c: { id: number }) => c.id);
+      expect(caseIds.length).toBeGreaterThanOrEqual(1);
+
+      // ---- Call 2: test_run_results_list({caseIds}) — back-half (D7-01) -----
+      // Filter shape: where.testRunCase = { repositoryCaseId: { in: caseIds } }.
+      // This is the ONLY spelling that matches the schema relation chain
+      // TestRunResults.testRunCase -> TestRunCases.repositoryCase -> RepositoryCases.
+      const resultsQ = encodeURIComponent(
+        JSON.stringify({
+          where: {
+            isDeleted: false,
+            testRunCase: { repositoryCaseId: { in: caseIds } },
+          },
+          include: {
+            status: { select: { id: true, name: true } },
+            executedBy: { select: { id: true, name: true, email: true } },
+            testRunCase: {
+              select: {
+                id: true,
+                repositoryCaseId: true,
+                repositoryCase: {
+                  select: { id: true, name: true, source: true },
+                },
+                testRun: { select: { id: true, name: true } },
               },
-              testRun: { select: { id: true, name: true } },
             },
           },
-        },
-        orderBy: [{ executedAt: "desc" }, { id: "desc" }],
-        take: 26,
-      })
-    );
-    const resultsR = await request.get(
-      `${baseURL}/api/model/testRunResults/findMany?q=${resultsQ}`,
-      { headers: ctx.headers }
-    );
-    expect(resultsR.status()).toBe(200);
-    const resultsBody = await resultsR.json();
-    expect(Array.isArray(resultsBody.data)).toBe(true);
+          orderBy: [{ executedAt: "desc" }, { id: "desc" }],
+          take: 26,
+        })
+      );
+      const resultsR = await request.get(
+        `${baseURL}/api/model/testRunResults/findMany?q=${resultsQ}`,
+        { headers: ctx.headers }
+      );
+      expect(resultsR.status()).toBe(200);
+      resultsBody = await resultsR.json();
+      expect(Array.isArray(resultsBody!.data)).toBe(true);
+    });
 
-    if (resultsBody.data.length === 0) {
+    if (resultsBody!.data.length === 0) {
       console.warn(
         "EXEC-06 partial: linked cases have 0 TestRunResults yet — chain shape verified but executedBy assertion skipped"
       );
       return;
     }
 
-    // executedBy populated on the most recent result (D7-02 — orderBy
-    // executedAt DESC matches the (testRunCaseId, executedAt(sort: Desc))
-    // schema index).
-    const latest = resultsBody.data[0];
-    expect(latest.executedBy).not.toBeNull();
-    expect(typeof latest.executedBy.id).toBe("string");
-    expect(latest.executedBy.email).toBeTruthy();
-    expect(typeof latest.executedAt).toBe("string");
-    // The chain anchor: each row's testRunCase carries the repositoryCaseId
-    // matching one of the input caseIds.
-    expect(caseIds).toContain(latest.testRunCase.repositoryCaseId);
+    await test.step("Verify executedBy is populated on the latest result", async () => {
+      // executedBy populated on the most recent result (D7-02 — orderBy
+      // executedAt DESC matches the (testRunCaseId, executedAt(sort: Desc))
+      // schema index).
+      const latest = resultsBody!.data[0];
+      expect(latest.executedBy).not.toBeNull();
+      expect(typeof latest.executedBy.id).toBe("string");
+      expect(latest.executedBy.email).toBeTruthy();
+      expect(typeof latest.executedAt).toBe("string");
+      // The chain anchor: each row's testRunCase carries the repositoryCaseId
+      // matching one of the input caseIds.
+      expect(caseIds).toContain(latest.testRunCase.repositoryCaseId);
+    });
   });
 });

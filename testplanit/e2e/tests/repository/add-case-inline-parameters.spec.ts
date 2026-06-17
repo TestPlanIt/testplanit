@@ -164,35 +164,41 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
     page,
   }) => {
     const { projectId, folderId } = await setupProjectAndFolder(api);
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-
-    const addCaseButton = page.getByTestId("add-case-button");
-    await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
-    await addCaseButton.click();
 
     const dialog = page.getByTestId("add-case-dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // The seeded "Default Template" has a Steps field, so the button
-    // renders by default. Label is "Configure parameters" when the
-    // editor has nothing authored yet.
-    const configureBtn = dialog
-      .getByRole("button", { name: /^configure parameters$/i })
-      .first();
-    await expect(configureBtn).toBeVisible({ timeout: 10000 });
-    await configureBtn.click();
+    await test.step("Open the Add Case dialog in the target folder", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
 
-    // The Sheet renders the editor with its add-parameter affordance
-    // and the dataset Add-row button disabled until a parameter exists.
-    const editorRoot = page.getByTestId("addcase-inline-dataset-root");
-    await expect(editorRoot).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.getByTestId("addcase-inline-dataset-add-parameter")
-    ).toBeVisible();
-    await expect(
-      page.getByTestId("addcase-inline-dataset-add-row")
-    ).toBeDisabled();
+      const addCaseButton = page.getByTestId("add-case-button");
+      await expect(addCaseButton).toBeEnabled({ timeout: 10000 });
+      await addCaseButton.click();
+
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Click Configure parameters and confirm the editor Sheet opens wired up", async () => {
+      // The seeded "Default Template" has a Steps field, so the button
+      // renders by default. Label is "Configure parameters" when the
+      // editor has nothing authored yet.
+      const configureBtn = dialog
+        .getByRole("button", { name: /^configure parameters$/i })
+        .first();
+      await expect(configureBtn).toBeVisible({ timeout: 10000 });
+      await configureBtn.click();
+
+      // The Sheet renders the editor with its add-parameter affordance
+      // and the dataset Add-row button disabled until a parameter exists.
+      const editorRoot = page.getByTestId("addcase-inline-dataset-root");
+      await expect(editorRoot).toBeVisible({ timeout: 5000 });
+      await expect(
+        page.getByTestId("addcase-inline-dataset-add-parameter")
+      ).toBeVisible();
+      await expect(
+        page.getByTestId("addcase-inline-dataset-add-row")
+      ).toBeDisabled();
+    });
   });
 
   test("Inline parameters and a dataset row persist on save (full round-trip)", async ({
@@ -202,67 +208,78 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
     const { projectId, folderId } = await setupProjectAndFolder(api);
     const caseName = `Inline Params ${Date.now()}`;
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-
-    await page.getByTestId("add-case-button").click();
     const dialog = page.getByTestId("add-case-dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    await dialog.getByTestId("case-name-input").fill(caseName);
+    await test.step("Open the Add Case dialog and name the case", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
 
-    // Open the Configure Parameters sheet, author a single column + row.
-    await dialog
-      .getByRole("button", { name: /^configure parameters$/i })
-      .first()
-      .click();
-    await expect(page.getByTestId("addcase-inline-dataset-root")).toBeVisible({
-      timeout: 5000,
+      await page.getByTestId("add-case-button").click();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+
+      await dialog.getByTestId("case-name-input").fill(caseName);
     });
 
-    await page.getByTestId("addcase-inline-dataset-add-parameter").click();
-    const nameInput = page.getByTestId(
-      "addcase-inline-dataset-parameter-name-0"
-    );
-    await expect(nameInput).toHaveValue("param", { timeout: 5000 });
-    await nameInput.fill("user");
+    await test.step("Author one parameter column and one dataset row in the Sheet", async () => {
+      // Open the Configure Parameters sheet, author a single column + row.
+      await dialog
+        .getByRole("button", { name: /^configure parameters$/i })
+        .first()
+        .click();
+      await expect(page.getByTestId("addcase-inline-dataset-root")).toBeVisible({
+        timeout: 5000,
+      });
 
-    await page.getByTestId("addcase-inline-dataset-add-row").click();
-    await page
-      .getByTestId("addcase-inline-dataset-row-label-0")
-      .fill("happy path");
-    await page.getByTestId("addcase-inline-dataset-row-0-col-0").fill("alice");
+      await page.getByTestId("addcase-inline-dataset-add-parameter").click();
+      const nameInput = page.getByTestId(
+        "addcase-inline-dataset-parameter-name-0"
+      );
+      await expect(nameInput).toHaveValue("param", { timeout: 5000 });
+      await nameInput.fill("user");
 
-    // Close the Sheet via Escape — Dialog must stay open and the button
-    // label updates to reflect the new column count.
-    await page.keyboard.press("Escape");
-    await expect(
-      page.getByTestId("addcase-inline-dataset-root")
-    ).not.toBeVisible({ timeout: 5000 });
-    await expect(
-      dialog.getByRole("button", { name: /^parameters \(1\)$/i })
-    ).toBeVisible({ timeout: 5000 });
+      await page.getByTestId("addcase-inline-dataset-add-row").click();
+      await page
+        .getByTestId("addcase-inline-dataset-row-label-0")
+        .fill("happy path");
+      await page.getByTestId("addcase-inline-dataset-row-0-col-0").fill("alice");
+    });
 
-    await page.getByTestId("case-submit-button").click();
-    await expect(dialog).not.toBeVisible({ timeout: 15000 });
+    await test.step("Close the Sheet with Escape and confirm the parameter count badge", async () => {
+      // Close the Sheet via Escape — Dialog must stay open and the button
+      // label updates to reflect the new column count.
+      await page.keyboard.press("Escape");
+      await expect(
+        page.getByTestId("addcase-inline-dataset-root")
+      ).not.toBeVisible({ timeout: 5000 });
+      await expect(
+        dialog.getByRole("button", { name: /^parameters \(1\)$/i })
+      ).toBeVisible({ timeout: 5000 });
+    });
 
-    // Case must appear in the table, and the DB row must have its
-    // parameter + dataset + dataset version + dataset row all written
-    // in the single atomic save.
-    const caseRow = repositoryPage.getTestCaseByName(caseName);
-    await expect(caseRow).toBeVisible({ timeout: 15000 });
+    await test.step("Submit the case and confirm it appears in the table", async () => {
+      await page.getByTestId("case-submit-button").click();
+      await expect(dialog).not.toBeVisible({ timeout: 15000 });
 
-    const caseId = await findCaseIdByName(api, folderId, caseName);
-    expect(caseId).not.toBeNull();
-    const snapshot = await getCaseSnapshot(api, caseId!);
-    expect(snapshot.hasParameters).toBe(true);
-    expect(snapshot.parameterCount).toBe(1);
-    expect(snapshot.firstParamName).toBe("user");
-    expect(snapshot.datasetCount).toBe(1);
-    expect(snapshot.datasetVersionCount).toBe(1);
-    expect(snapshot.datasetRowCount).toBe(1);
-    expect(snapshot.firstRowLabel).toBe("happy path");
-    expect(snapshot.firstRowValues).toEqual({ user: "alice" });
+      // Case must appear in the table, and the DB row must have its
+      // parameter + dataset + dataset version + dataset row all written
+      // in the single atomic save.
+      const caseRow = repositoryPage.getTestCaseByName(caseName);
+      await expect(caseRow).toBeVisible({ timeout: 15000 });
+    });
+
+    await test.step("Verify parameter, dataset, version, and row all persisted atomically", async () => {
+      const caseId = await findCaseIdByName(api, folderId, caseName);
+      expect(caseId).not.toBeNull();
+      const snapshot = await getCaseSnapshot(api, caseId!);
+      expect(snapshot.hasParameters).toBe(true);
+      expect(snapshot.parameterCount).toBe(1);
+      expect(snapshot.firstParamName).toBe("user");
+      expect(snapshot.datasetCount).toBe(1);
+      expect(snapshot.datasetVersionCount).toBe(1);
+      expect(snapshot.datasetRowCount).toBe(1);
+      expect(snapshot.firstRowLabel).toBe("happy path");
+      expect(snapshot.firstRowValues).toEqual({ user: "alice" });
+    });
   });
 
   test("Plain submit without opening the Sheet creates a non-parameterized case (regression guard) @smoke", async ({
@@ -272,31 +289,38 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
     const { projectId, folderId } = await setupProjectAndFolder(api);
     const caseName = `Plain Case ${Date.now()}`;
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-
-    await page.getByTestId("add-case-button").click();
     const dialog = page.getByTestId("add-case-dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-    await dialog.getByTestId("case-name-input").fill(caseName);
 
-    // The Configure Parameters button is present (Default Template has
-    // Steps) but we never click it. This is the most common user path —
-    // a quick case creation with no parameter authoring.
-    await page.getByTestId("case-submit-button").click();
-    await expect(dialog).not.toBeVisible({ timeout: 15000 });
+    await test.step("Open the Add Case dialog and name the case", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
 
-    const caseRow = repositoryPage.getTestCaseByName(caseName);
-    await expect(caseRow).toBeVisible({ timeout: 15000 });
+      await page.getByTestId("add-case-button").click();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+      await dialog.getByTestId("case-name-input").fill(caseName);
+    });
 
-    const caseId = await findCaseIdByName(api, folderId, caseName);
-    expect(caseId).not.toBeNull();
-    const snapshot = await getCaseSnapshot(api, caseId!);
-    expect(snapshot.hasParameters).toBe(false);
-    expect(snapshot.parameterCount).toBe(0);
-    expect(snapshot.datasetCount).toBe(0);
-    expect(snapshot.datasetVersionCount).toBe(0);
-    expect(snapshot.datasetRowCount).toBe(0);
+    await test.step("Submit without opening the Sheet and confirm the case appears", async () => {
+      // The Configure Parameters button is present (Default Template has
+      // Steps) but we never click it. This is the most common user path —
+      // a quick case creation with no parameter authoring.
+      await page.getByTestId("case-submit-button").click();
+      await expect(dialog).not.toBeVisible({ timeout: 15000 });
+
+      const caseRow = repositoryPage.getTestCaseByName(caseName);
+      await expect(caseRow).toBeVisible({ timeout: 15000 });
+    });
+
+    await test.step("Verify the saved case is non-parameterized", async () => {
+      const caseId = await findCaseIdByName(api, folderId, caseName);
+      expect(caseId).not.toBeNull();
+      const snapshot = await getCaseSnapshot(api, caseId!);
+      expect(snapshot.hasParameters).toBe(false);
+      expect(snapshot.parameterCount).toBe(0);
+      expect(snapshot.datasetCount).toBe(0);
+      expect(snapshot.datasetVersionCount).toBe(0);
+      expect(snapshot.datasetRowCount).toBe(0);
+    });
   });
 
   /**
@@ -314,87 +338,99 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
     const { projectId, folderId } = await setupProjectAndFolder(api);
     const caseName = `Switch Test ${Date.now()}`;
 
-    // Build a sibling template with no Steps field and assign it to the
-    // test project. `Priority` is a seeded standard field that's not Steps.
-    const priorityFieldId = await api.getCaseFieldId("Priority");
-    expect(priorityFieldId).not.toBeNull();
-    const noStepsTemplateName = `No Steps Template ${Date.now()}`;
-    await api.createTemplate({
-      name: noStepsTemplateName,
-      isEnabled: true,
-      isDefault: false,
-      caseFieldIds: [priorityFieldId!],
-      projectIds: [projectId],
-    });
-
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-
-    await page.getByTestId("add-case-button").click();
     const dialog = page.getByTestId("add-case-dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    // Default Template has Steps → button is visible. Author a parameter.
-    const configureBtnInitial = dialog
-      .getByRole("button", { name: /^configure parameters$/i })
-      .first();
-    await expect(configureBtnInitial).toBeVisible({ timeout: 10000 });
-    await configureBtnInitial.click();
-    await page.getByTestId("addcase-inline-dataset-add-parameter").click();
-    await expect(
-      page.getByTestId("addcase-inline-dataset-parameter-name-0")
-    ).toHaveValue("param", { timeout: 5000 });
-    await page.keyboard.press("Escape");
-    await expect(
-      dialog.getByRole("button", { name: /^parameters \(1\)$/i })
-    ).toBeVisible({ timeout: 5000 });
-
-    // Switch to the no-Steps template via the dialog's template select.
-    // The Configure Parameters button must disappear because the
-    // templateHasSteps memo flips to false.
     const templateTrigger = dialog.getByRole("combobox").first();
-    await templateTrigger.click();
-    await page
-      .getByRole("option", { name: noStepsTemplateName })
-      .first()
-      .click();
-    await expect(templateTrigger).toHaveText(noStepsTemplateName, {
-      timeout: 5000,
+    let noStepsTemplateName: string | undefined;
+
+    await test.step("Create a sibling no-Steps template assigned to the project", async () => {
+      // Build a sibling template with no Steps field and assign it to the
+      // test project. `Priority` is a seeded standard field that's not Steps.
+      const priorityFieldId = await api.getCaseFieldId("Priority");
+      expect(priorityFieldId).not.toBeNull();
+      noStepsTemplateName = `No Steps Template ${Date.now()}`;
+      await api.createTemplate({
+        name: noStepsTemplateName,
+        isEnabled: true,
+        isDefault: false,
+        caseFieldIds: [priorityFieldId!],
+        projectIds: [projectId],
+      });
     });
-    await expect(
-      dialog.getByRole("button", {
-        name: /configure parameters|parameters \(/i,
-      })
-    ).toHaveCount(0, { timeout: 5000 });
 
-    // Switch BACK to Default Template. Button returns and label resets to
-    // "Configure parameters" (count = 0) — proves the clear effect ran.
-    await templateTrigger.click();
-    await page
-      .getByRole("option", { name: "Default Template" })
-      .first()
-      .click();
-    await expect(templateTrigger).toHaveText("Default Template", {
-      timeout: 5000,
+    await test.step("Open the Add Case dialog and author a parameter on the Default Template", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
+
+      await page.getByTestId("add-case-button").click();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+
+      // Default Template has Steps → button is visible. Author a parameter.
+      const configureBtnInitial = dialog
+        .getByRole("button", { name: /^configure parameters$/i })
+        .first();
+      await expect(configureBtnInitial).toBeVisible({ timeout: 10000 });
+      await configureBtnInitial.click();
+      await page.getByTestId("addcase-inline-dataset-add-parameter").click();
+      await expect(
+        page.getByTestId("addcase-inline-dataset-parameter-name-0")
+      ).toHaveValue("param", { timeout: 5000 });
+      await page.keyboard.press("Escape");
+      await expect(
+        dialog.getByRole("button", { name: /^parameters \(1\)$/i })
+      ).toBeVisible({ timeout: 5000 });
     });
-    await expect(
-      dialog.getByRole("button", { name: /^configure parameters$/i })
-    ).toBeVisible({ timeout: 5000 });
 
-    // Submit and verify the saved case has zero parameters — the authored
-    // param was discarded by the clear effect, not carried over silently.
-    await dialog.getByTestId("case-name-input").fill(caseName);
-    await page.getByTestId("case-submit-button").click();
-    await expect(dialog).not.toBeVisible({ timeout: 15000 });
+    await test.step("Switch to the no-Steps template and confirm the Configure button disappears", async () => {
+      // Switch to the no-Steps template via the dialog's template select.
+      // The Configure Parameters button must disappear because the
+      // templateHasSteps memo flips to false.
+      await templateTrigger.click();
+      await page
+        .getByRole("option", { name: noStepsTemplateName! })
+        .first()
+        .click();
+      await expect(templateTrigger).toHaveText(noStepsTemplateName!, {
+        timeout: 5000,
+      });
+      await expect(
+        dialog.getByRole("button", {
+          name: /configure parameters|parameters \(/i,
+        })
+      ).toHaveCount(0, { timeout: 5000 });
+    });
 
-    const caseRow = repositoryPage.getTestCaseByName(caseName);
-    await expect(caseRow).toBeVisible({ timeout: 15000 });
-    const caseId = await findCaseIdByName(api, folderId, caseName);
-    expect(caseId).not.toBeNull();
-    const snapshot = await getCaseSnapshot(api, caseId!);
-    expect(snapshot.hasParameters).toBe(false);
-    expect(snapshot.parameterCount).toBe(0);
-    expect(snapshot.datasetCount).toBe(0);
+    await test.step("Switch back to the Default Template and confirm the label reset to zero", async () => {
+      // Switch BACK to Default Template. Button returns and label resets to
+      // "Configure parameters" (count = 0) — proves the clear effect ran.
+      await templateTrigger.click();
+      await page
+        .getByRole("option", { name: "Default Template" })
+        .first()
+        .click();
+      await expect(templateTrigger).toHaveText("Default Template", {
+        timeout: 5000,
+      });
+      await expect(
+        dialog.getByRole("button", { name: /^configure parameters$/i })
+      ).toBeVisible({ timeout: 5000 });
+    });
+
+    await test.step("Submit and verify the saved case has zero parameters", async () => {
+      // Submit and verify the saved case has zero parameters — the authored
+      // param was discarded by the clear effect, not carried over silently.
+      await dialog.getByTestId("case-name-input").fill(caseName);
+      await page.getByTestId("case-submit-button").click();
+      await expect(dialog).not.toBeVisible({ timeout: 15000 });
+
+      const caseRow = repositoryPage.getTestCaseByName(caseName);
+      await expect(caseRow).toBeVisible({ timeout: 15000 });
+      const caseId = await findCaseIdByName(api, folderId, caseName);
+      expect(caseId).not.toBeNull();
+      const snapshot = await getCaseSnapshot(api, caseId!);
+      expect(snapshot.hasParameters).toBe(false);
+      expect(snapshot.parameterCount).toBe(0);
+      expect(snapshot.datasetCount).toBe(0);
+    });
   });
 
   /**
@@ -411,29 +447,35 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
     page,
   }) => {
     const { projectId, folderId } = await setupProjectAndFolder(api);
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
 
-    await page.getByTestId("add-case-button").click();
     const dialog = page.getByTestId("add-case-dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
     const configureBtn = dialog
       .getByRole("button", { name: /^configure parameters$/i })
       .first();
-    await expect(configureBtn).toBeVisible({ timeout: 10000 });
-
-    // The Steps field renderer surfaces an `Add Step` affordance below
-    // the button. Both must be in the same scrollable region (the left
-    // ResizablePanel), and the button's bounding box must be above the
-    // Steps section's bounding box.
     const stepsHeading = dialog.getByText("Steps", { exact: true }).first();
-    await expect(stepsHeading).toBeVisible({ timeout: 10000 });
 
-    const btnBox = await configureBtn.boundingBox();
-    const stepsBox = await stepsHeading.boundingBox();
-    expect(btnBox).not.toBeNull();
-    expect(stepsBox).not.toBeNull();
-    expect(btnBox!.y + btnBox!.height).toBeLessThan(stepsBox!.y);
+    await test.step("Open the Add Case dialog and confirm the Configure button and Steps field render", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
+
+      await page.getByTestId("add-case-button").click();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+
+      await expect(configureBtn).toBeVisible({ timeout: 10000 });
+
+      // The Steps field renderer surfaces an `Add Step` affordance below
+      // the button. Both must be in the same scrollable region (the left
+      // ResizablePanel), and the button's bounding box must be above the
+      // Steps section's bounding box.
+      await expect(stepsHeading).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Assert the Configure button sits above the Steps field in DOM order", async () => {
+      const btnBox = await configureBtn.boundingBox();
+      const stepsBox = await stepsHeading.boundingBox();
+      expect(btnBox).not.toBeNull();
+      expect(stepsBox).not.toBeNull();
+      expect(btnBox!.y + btnBox!.height).toBeLessThan(stepsBox!.y);
+    });
   });
 });

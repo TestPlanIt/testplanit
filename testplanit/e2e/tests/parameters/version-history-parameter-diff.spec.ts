@@ -16,54 +16,62 @@ test.describe("Parameters - version-history snapshot @parameters", () => {
     request,
     baseURL,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Param Version ${Date.now()}`
-    );
-    const folderId = await api.createFolder(projectId, "Version");
-    const caseId = await api.createTestCase(
-      projectId,
-      folderId,
-      "Param Version Case"
-    );
+    let projectId: number | undefined;
+    let caseId: number | undefined;
 
-    await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
-    await page.waitForLoadState("load");
+    await test.step("Create a project, folder, and test case", async () => {
+      projectId = await api.createProject(`E2E Param Version ${Date.now()}`);
+      const folderId = await api.createFolder(projectId, "Version");
+      caseId = await api.createTestCase(
+        projectId,
+        folderId,
+        "Param Version Case"
+      );
+    });
 
-    // Add a parameter via the Sheet to trigger a version bump.
-    await page.getByTestId("configure-parameters-button").click();
-    await expect(page.getByTestId("configure-parameters-sheet")).toBeVisible();
-    await page.getByTestId("parameter-form-name").fill("env");
-    await page.getByTestId("parameter-form-submit").click();
-    await expect(page.getByText("@env").first()).toBeVisible();
+    await test.step("Open the test case in the repository", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
+      await page.waitForLoadState("load");
+    });
 
-    // Query the versions endpoint and confirm the latest version's snapshot
-    // includes the new parameter.
-    const url = `${baseURL || "http://localhost:3000"}/api/model/repositoryCaseVersions/findMany?q=${encodeURIComponent(
-      JSON.stringify({
-        where: {
-          repositoryCaseId: caseId,
-          isDeleted: false,
-        },
-        orderBy: { version: "desc" },
-        take: 1,
-      })
-    )}`;
-    const resp = await request.get(url);
-    expect(resp.ok()).toBeTruthy();
-    const json = await resp.json();
-    const latest = (json.data?.[0] || json[0]) as {
-      version: number;
-      parameters?: unknown;
-    };
-    expect(latest).toBeDefined();
-    // Latest version should be at least 2 (initial = 1, +1 after add).
-    expect(latest.version).toBeGreaterThanOrEqual(2);
+    await test.step("Add a parameter via the Sheet to trigger a version bump", async () => {
+      await page.getByTestId("configure-parameters-button").click();
+      await expect(
+        page.getByTestId("configure-parameters-sheet")
+      ).toBeVisible();
+      await page.getByTestId("parameter-form-name").fill("env");
+      await page.getByTestId("parameter-form-submit").click();
+      await expect(page.getByText("@env").first()).toBeVisible();
+    });
 
-    // PARAM-06: the parameters array snapshot lives on the version's
-    // top-level `parameters` Json column (RepositoryCaseVersions.parameters
-    // per schema.zmodel).
-    const params = latest.parameters as Array<{ name: string }> | undefined;
-    expect(Array.isArray(params)).toBe(true);
-    expect(params!.some((p) => p.name === "env")).toBe(true);
+    await test.step("Query the versions endpoint and confirm the latest version snapshot includes the new parameter", async () => {
+      const url = `${baseURL || "http://localhost:3000"}/api/model/repositoryCaseVersions/findMany?q=${encodeURIComponent(
+        JSON.stringify({
+          where: {
+            repositoryCaseId: caseId,
+            isDeleted: false,
+          },
+          orderBy: { version: "desc" },
+          take: 1,
+        })
+      )}`;
+      const resp = await request.get(url);
+      expect(resp.ok()).toBeTruthy();
+      const json = await resp.json();
+      const latest = (json.data?.[0] || json[0]) as {
+        version: number;
+        parameters?: unknown;
+      };
+      expect(latest).toBeDefined();
+      // Latest version should be at least 2 (initial = 1, +1 after add).
+      expect(latest.version).toBeGreaterThanOrEqual(2);
+
+      // PARAM-06: the parameters array snapshot lives on the version's
+      // top-level `parameters` Json column (RepositoryCaseVersions.parameters
+      // per schema.zmodel).
+      const params = latest.parameters as Array<{ name: string }> | undefined;
+      expect(Array.isArray(params)).toBe(true);
+      expect(params!.some((p) => p.name === "env")).toBe(true);
+    });
   });
 });

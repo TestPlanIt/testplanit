@@ -27,156 +27,190 @@ test.describe("Integration Setup - Admin CRUD via API", () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post(`${baseURL}/api/integrations`, {
-      data: {
-        name: `E2E Jira Integration ${uniqueId}`,
-        type: "JIRA",
-        authType: "API_KEY",
-        config: {
-          email: "test@example.com",
-          apiToken: "fake-api-token-for-e2e",
-          baseUrl: "https://example.atlassian.net",
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Create a Jira integration via API", async () => {
+      response = await request.post(`${baseURL}/api/integrations`, {
+        data: {
+          name: `E2E Jira Integration ${uniqueId}`,
+          type: "JIRA",
+          authType: "API_KEY",
+          config: {
+            email: "test@example.com",
+            apiToken: "fake-api-token-for-e2e",
+            baseUrl: "https://example.atlassian.net",
+          },
         },
-      },
+      });
     });
 
-    expect(response.status()).toBe(201);
-    const body = await response.json();
-    expect(body).toHaveProperty("id");
-    expect(body.provider).toBe("JIRA");
-    expect(body.authType).toBe("API_KEY");
-    expect(body.status).toBe("ACTIVE");
-    _jiraIntegrationId = body.id;
+    await test.step("Verify the Jira integration was created with API_KEY auth", async () => {
+      expect(response!.status()).toBe(201);
+      const body = await response!.json();
+      expect(body).toHaveProperty("id");
+      expect(body.provider).toBe("JIRA");
+      expect(body.authType).toBe("API_KEY");
+      expect(body.status).toBe("ACTIVE");
+      _jiraIntegrationId = body.id;
+    });
   });
 
   test("Admin can create a GitHub integration with PERSONAL_ACCESS_TOKEN auth", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.post(`${baseURL}/api/integrations`, {
-      data: {
-        name: `E2E GitHub Integration ${uniqueId}`,
-        type: "GITHUB",
-        authType: "PERSONAL_ACCESS_TOKEN",
-        config: {
-          personalAccessToken: "ghp_fakePATforE2Etesting1234567890",
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Create a GitHub integration via API", async () => {
+      response = await request.post(`${baseURL}/api/integrations`, {
+        data: {
+          name: `E2E GitHub Integration ${uniqueId}`,
+          type: "GITHUB",
+          authType: "PERSONAL_ACCESS_TOKEN",
+          config: {
+            personalAccessToken: "ghp_fakePATforE2Etesting1234567890",
+          },
         },
-      },
+      });
     });
 
-    expect(response.status()).toBe(201);
-    const body = await response.json();
-    expect(body).toHaveProperty("id");
-    expect(body.provider).toBe("GITHUB");
-    expect(body.authType).toBe("PERSONAL_ACCESS_TOKEN");
-    _githubIntegrationId = body.id;
+    await test.step("Verify the GitHub integration was created with PERSONAL_ACCESS_TOKEN auth", async () => {
+      expect(response!.status()).toBe(201);
+      const body = await response!.json();
+      expect(body).toHaveProperty("id");
+      expect(body.provider).toBe("GITHUB");
+      expect(body.authType).toBe("PERSONAL_ACCESS_TOKEN");
+      _githubIntegrationId = body.id;
+    });
   });
 
   test("Admin can create an Azure DevOps integration with PERSONAL_ACCESS_TOKEN auth", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.post(`${baseURL}/api/integrations`, {
-      data: {
-        name: `E2E Azure Integration ${uniqueId}`,
-        type: "AZURE_DEVOPS",
-        authType: "PERSONAL_ACCESS_TOKEN",
-        config: {
-          personalAccessToken: "fake-azure-pat-for-e2e-testing",
-          organizationUrl: "https://dev.azure.com/fakeorg",
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Create an Azure DevOps integration via API", async () => {
+      response = await request.post(`${baseURL}/api/integrations`, {
+        data: {
+          name: `E2E Azure Integration ${uniqueId}`,
+          type: "AZURE_DEVOPS",
+          authType: "PERSONAL_ACCESS_TOKEN",
+          config: {
+            personalAccessToken: "fake-azure-pat-for-e2e-testing",
+            organizationUrl: "https://dev.azure.com/fakeorg",
+          },
         },
-      },
+      });
     });
 
-    expect(response.status()).toBe(201);
-    const body = await response.json();
-    expect(body).toHaveProperty("id");
-    expect(body.provider).toBe("AZURE_DEVOPS");
-    expect(body.authType).toBe("PERSONAL_ACCESS_TOKEN");
-    _azureIntegrationId = body.id;
+    await test.step("Verify the Azure DevOps integration was created with PERSONAL_ACCESS_TOKEN auth", async () => {
+      expect(response!.status()).toBe(201);
+      const body = await response!.json();
+      expect(body).toHaveProperty("id");
+      expect(body.provider).toBe("AZURE_DEVOPS");
+      expect(body.authType).toBe("PERSONAL_ACCESS_TOKEN");
+      _azureIntegrationId = body.id;
+    });
   });
 
   test("Admin can create a SIMPLE_URL integration", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.post(`${baseURL}/api/integrations`, {
-      data: {
-        name: `E2E SimpleURL Integration ${uniqueId}`,
-        type: "SIMPLE_URL",
-        authType: "NONE",
-        config: {
-          baseUrl: "https://issues.example.com/{issueId}",
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Create a SIMPLE_URL integration via API", async () => {
+      response = await request.post(`${baseURL}/api/integrations`, {
+        data: {
+          name: `E2E SimpleURL Integration ${uniqueId}`,
+          type: "SIMPLE_URL",
+          authType: "NONE",
+          config: {
+            baseUrl: "https://issues.example.com/{issueId}",
+          },
         },
-      },
+      });
     });
 
-    expect(response.status()).toBe(201);
-    const body = await response.json();
-    expect(body).toHaveProperty("id");
-    expect(body.provider).toBe("SIMPLE_URL");
-    _simpleUrlIntegrationId = body.id;
+    await test.step("Verify the SIMPLE_URL integration was created", async () => {
+      expect(response!.status()).toBe(201);
+      const body = await response!.json();
+      expect(body).toHaveProperty("id");
+      expect(body.provider).toBe("SIMPLE_URL");
+      _simpleUrlIntegrationId = body.id;
+    });
   });
 
   test("Each integration is retrievable via GET", async ({
     request,
     baseURL,
   }) => {
-    // Retrieve the list of integrations
-    const response = await request.get(`${baseURL}/api/integrations`);
-    expect(response.status()).toBe(200);
-    const integrations = await response.json();
-    expect(Array.isArray(integrations)).toBe(true);
+    let integrations: { name: string }[] | undefined;
+    await test.step("Retrieve the list of integrations", async () => {
+      const response = await request.get(`${baseURL}/api/integrations`);
+      expect(response.status()).toBe(200);
+      integrations = await response.json();
+      expect(Array.isArray(integrations)).toBe(true);
+    });
 
-    const names = integrations.map((i: { name: string }) => i.name);
-    expect(names).toContain(`E2E Jira Integration ${uniqueId}`);
-    expect(names).toContain(`E2E GitHub Integration ${uniqueId}`);
-    expect(names).toContain(`E2E Azure Integration ${uniqueId}`);
-    expect(names).toContain(`E2E SimpleURL Integration ${uniqueId}`);
+    await test.step("Verify each created integration is present in the list", async () => {
+      const names = integrations!.map((i: { name: string }) => i.name);
+      expect(names).toContain(`E2E Jira Integration ${uniqueId}`);
+      expect(names).toContain(`E2E GitHub Integration ${uniqueId}`);
+      expect(names).toContain(`E2E Azure Integration ${uniqueId}`);
+      expect(names).toContain(`E2E SimpleURL Integration ${uniqueId}`);
+    });
   });
 
   test("GET /api/integrations/{id} returns integration detail", async ({
     request,
     baseURL,
   }) => {
-    // Look up the SIMPLE_URL integration by listing then finding it
-    const listResponse = await request.get(`${baseURL}/api/integrations`);
-    expect(listResponse.status()).toBe(200);
-    const integrations = await listResponse.json();
-    const simpleUrl = integrations.find(
-      (i: { name: string }) =>
-        i.name === `E2E SimpleURL Integration ${uniqueId}`
-    );
-    expect(simpleUrl).toBeTruthy();
+    let simpleUrl: { id: number; name: string } | undefined;
+    await test.step("Look up the SIMPLE_URL integration by listing then finding it", async () => {
+      const listResponse = await request.get(`${baseURL}/api/integrations`);
+      expect(listResponse.status()).toBe(200);
+      const integrations = await listResponse.json();
+      simpleUrl = integrations.find(
+        (i: { name: string }) =>
+          i.name === `E2E SimpleURL Integration ${uniqueId}`
+      );
+      expect(simpleUrl).toBeTruthy();
+    });
 
-    const detailResponse = await request.get(
-      `${baseURL}/api/integrations/${simpleUrl.id}`
-    );
-    expect(detailResponse.status()).toBe(200);
-    const detail = await detailResponse.json();
-    expect(detail.id).toBe(simpleUrl.id);
-    expect(detail.provider).toBe("SIMPLE_URL");
+    await test.step("Fetch the integration detail by id and verify its provider", async () => {
+      const detailResponse = await request.get(
+        `${baseURL}/api/integrations/${simpleUrl!.id}`
+      );
+      expect(detailResponse.status()).toBe(200);
+      const detail = await detailResponse.json();
+      expect(detail.id).toBe(simpleUrl!.id);
+      expect(detail.provider).toBe("SIMPLE_URL");
+    });
   });
 
   test("Creating integration with duplicate name returns 400", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.post(`${baseURL}/api/integrations`, {
-      data: {
-        name: `E2E Jira Integration ${uniqueId}`,
-        type: "JIRA",
-        authType: "API_KEY",
-        config: {
-          email: "other@example.com",
-          apiToken: "another-fake-token",
-          baseUrl: "https://other.atlassian.net",
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Attempt to create an integration with a duplicate name", async () => {
+      response = await request.post(`${baseURL}/api/integrations`, {
+        data: {
+          name: `E2E Jira Integration ${uniqueId}`,
+          type: "JIRA",
+          authType: "API_KEY",
+          config: {
+            email: "other@example.com",
+            apiToken: "another-fake-token",
+            baseUrl: "https://other.atlassian.net",
+          },
         },
-      },
+      });
     });
-    expect(response.status()).toBe(400);
-    const body = await response.json();
-    expect(body).toHaveProperty("error");
+
+    await test.step("Verify the duplicate name is rejected with 400 and an error", async () => {
+      expect(response!.status()).toBe(400);
+      const body = await response!.json();
+      expect(body).toHaveProperty("error");
+    });
   });
 
   test.afterAll(async ({ request, baseURL }) => {
@@ -199,146 +233,176 @@ test.describe("Integration Setup - Test Connection Endpoint", () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations/test-connection`,
-      {
-        data: {
-          provider: "SIMPLE_URL",
-          credentials: {},
-          settings: {
-            baseUrl: "https://tracker.example.com/issues/{issueId}",
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Test connection for a SIMPLE_URL with a valid URL pattern", async () => {
+      response = await request.post(
+        `${baseURL}/api/integrations/test-connection`,
+        {
+          data: {
+            provider: "SIMPLE_URL",
+            credentials: {},
+            settings: {
+              baseUrl: "https://tracker.example.com/issues/{issueId}",
+            },
           },
-        },
-      }
-    );
+        }
+      );
+    });
 
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(body).toHaveProperty("success");
-    expect(body.success).toBe(true);
+    await test.step("Verify the connection test reports success", async () => {
+      expect(response!.status()).toBe(200);
+      const body = await response!.json();
+      expect(body).toHaveProperty("success");
+      expect(body.success).toBe(true);
+    });
   });
 
   test("SIMPLE_URL without {issueId} placeholder returns success:false", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations/test-connection`,
-      {
-        data: {
-          provider: "SIMPLE_URL",
-          credentials: {},
-          settings: {
-            baseUrl: "https://tracker.example.com/issues/123",
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Test connection for a SIMPLE_URL missing the {issueId} placeholder", async () => {
+      response = await request.post(
+        `${baseURL}/api/integrations/test-connection`,
+        {
+          data: {
+            provider: "SIMPLE_URL",
+            credentials: {},
+            settings: {
+              baseUrl: "https://tracker.example.com/issues/123",
+            },
           },
-        },
-      }
-    );
+        }
+      );
+    });
 
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(body.success).toBe(false);
-    expect(body).toHaveProperty("error");
-    expect(typeof body.error).toBe("string");
+    await test.step("Verify the connection test reports failure with an error string", async () => {
+      expect(response!.status()).toBe(200);
+      const body = await response!.json();
+      expect(body.success).toBe(false);
+      expect(body).toHaveProperty("error");
+      expect(typeof body.error).toBe("string");
+    });
   });
 
   test("Test-connection with missing provider returns 400", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations/test-connection`,
-      {
-        data: {
-          credentials: {},
-          settings: {},
-        },
-      }
-    );
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Test connection with a missing provider", async () => {
+      response = await request.post(
+        `${baseURL}/api/integrations/test-connection`,
+        {
+          data: {
+            credentials: {},
+            settings: {},
+          },
+        }
+      );
+    });
 
-    expect(response.status()).toBe(400);
-    const body = await response.json();
-    expect(body).toHaveProperty("success");
-    expect(body.success).toBe(false);
+    await test.step("Verify the request is rejected with 400 and success:false", async () => {
+      expect(response!.status()).toBe(400);
+      const body = await response!.json();
+      expect(body).toHaveProperty("success");
+      expect(body.success).toBe(false);
+    });
   });
 
   test("Jira test-connection with fake credentials returns error shape (not crash)", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations/test-connection`,
-      {
-        data: {
-          provider: "JIRA",
-          authType: "API_KEY",
-          credentials: {
-            email: "fake@example.com",
-            apiToken: "fake-token",
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Test Jira connection with fake credentials", async () => {
+      response = await request.post(
+        `${baseURL}/api/integrations/test-connection`,
+        {
+          data: {
+            provider: "JIRA",
+            authType: "API_KEY",
+            credentials: {
+              email: "fake@example.com",
+              apiToken: "fake-token",
+            },
+            settings: {
+              baseUrl: "https://nonexistent.atlassian.net",
+            },
           },
-          settings: {
-            baseUrl: "https://nonexistent.atlassian.net",
-          },
-        },
-      }
-    );
+        }
+      );
+    });
 
-    // Must return a valid JSON response (not crash with 500)
-    expect([200, 500].includes(response.status())).toBe(true);
-    const body = await response.json();
-    // Whether 200 (with success:false) or 500, must have the error shape
-    expect(body).toHaveProperty("success");
-    expect(body.success).toBe(false);
-    expect(body).toHaveProperty("error");
+    await test.step("Verify the response returns an error shape instead of crashing", async () => {
+      // Must return a valid JSON response (not crash with 500)
+      expect([200, 500].includes(response!.status())).toBe(true);
+      const body = await response!.json();
+      // Whether 200 (with success:false) or 500, must have the error shape
+      expect(body).toHaveProperty("success");
+      expect(body.success).toBe(false);
+      expect(body).toHaveProperty("error");
+    });
   });
 
   test("GitHub test-connection with fake PAT returns error shape (not crash)", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations/test-connection`,
-      {
-        data: {
-          provider: "GITHUB",
-          credentials: {
-            personalAccessToken: "ghp_fakePATthatWillFailGitHubAuth",
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Test GitHub connection with a fake PAT", async () => {
+      response = await request.post(
+        `${baseURL}/api/integrations/test-connection`,
+        {
+          data: {
+            provider: "GITHUB",
+            credentials: {
+              personalAccessToken: "ghp_fakePATthatWillFailGitHubAuth",
+            },
           },
-        },
-      }
-    );
+        }
+      );
+    });
 
-    expect([200, 500].includes(response.status())).toBe(true);
-    const body = await response.json();
-    expect(body).toHaveProperty("success");
-    expect(body.success).toBe(false);
-    expect(body).toHaveProperty("error");
+    await test.step("Verify the response returns an error shape instead of crashing", async () => {
+      expect([200, 500].includes(response!.status())).toBe(true);
+      const body = await response!.json();
+      expect(body).toHaveProperty("success");
+      expect(body.success).toBe(false);
+      expect(body).toHaveProperty("error");
+    });
   });
 
   test("Azure DevOps test-connection with fake PAT returns error shape (not crash)", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/integrations/test-connection`,
-      {
-        data: {
-          provider: "AZURE_DEVOPS",
-          credentials: {
-            personalAccessToken: "fake-azure-pat",
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Test Azure DevOps connection with a fake PAT", async () => {
+      response = await request.post(
+        `${baseURL}/api/integrations/test-connection`,
+        {
+          data: {
+            provider: "AZURE_DEVOPS",
+            credentials: {
+              personalAccessToken: "fake-azure-pat",
+            },
+            settings: {
+              organizationUrl: "https://dev.azure.com/nonexistent-org",
+            },
           },
-          settings: {
-            organizationUrl: "https://dev.azure.com/nonexistent-org",
-          },
-        },
-      }
-    );
+        }
+      );
+    });
 
-    expect([200, 500].includes(response.status())).toBe(true);
-    const body = await response.json();
-    expect(body).toHaveProperty("success");
-    expect(body.success).toBe(false);
-    expect(body).toHaveProperty("error");
+    await test.step("Verify the response returns an error shape instead of crashing", async () => {
+      expect([200, 500].includes(response!.status())).toBe(true);
+      const body = await response!.json();
+      expect(body).toHaveProperty("success");
+      expect(body.success).toBe(false);
+      expect(body).toHaveProperty("error");
+    });
   });
 });
 
@@ -376,50 +440,60 @@ test.describe("Integration Setup - Project Integration Linking", () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/model/projectIntegration/create`,
-      {
-        data: {
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Link the SIMPLE_URL integration to the project", async () => {
+      response = await request.post(
+        `${baseURL}/api/model/projectIntegration/create`,
+        {
           data: {
-            project: { connect: { id: projectId } },
-            integration: { connect: { id: integrationId } },
-            isActive: true,
+            data: {
+              project: { connect: { id: projectId } },
+              integration: { connect: { id: integrationId } },
+              isActive: true,
+            },
           },
-        },
-      }
-    );
+        }
+      );
+    });
 
-    expect(response.status()).toBe(201);
-    const body = await response.json();
-    expect(body.data).toHaveProperty("id");
-    expect(body.data.projectId).toBe(projectId);
-    expect(body.data.integrationId).toBe(integrationId);
-    expect(body.data.isActive).toBe(true);
-    projectIntegrationId = body.data.id;
+    await test.step("Verify the link was created and is active", async () => {
+      expect(response!.status()).toBe(201);
+      const body = await response!.json();
+      expect(body.data).toHaveProperty("id");
+      expect(body.data.projectId).toBe(projectId);
+      expect(body.data.integrationId).toBe(integrationId);
+      expect(body.data.isActive).toBe(true);
+      projectIntegrationId = body.data.id;
+    });
   });
 
   test("Linked integration appears in project integrations query", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.get(
-      `${baseURL}/api/model/projectIntegration/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { projectId, integrationId },
-            include: { integration: true },
-          }),
-        },
-      }
-    );
+    let response: Awaited<ReturnType<typeof request.get>> | undefined;
+    await test.step("Query the project integrations for the linked integration", async () => {
+      response = await request.get(
+        `${baseURL}/api/model/projectIntegration/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { projectId, integrationId },
+              include: { integration: true },
+            }),
+          },
+        }
+      );
+    });
 
-    expect(response.status()).toBe(200);
-    const result = await response.json();
-    expect(Array.isArray(result.data)).toBe(true);
-    expect(result.data.length).toBeGreaterThan(0);
-    expect(result.data[0].integrationId).toBe(integrationId);
-    expect(result.data[0].isActive).toBe(true);
+    await test.step("Verify the linked integration is returned and active", async () => {
+      expect(response!.status()).toBe(200);
+      const result = await response!.json();
+      expect(Array.isArray(result.data)).toBe(true);
+      expect(result.data.length).toBeGreaterThan(0);
+      expect(result.data[0].integrationId).toBe(integrationId);
+      expect(result.data[0].isActive).toBe(true);
+    });
   });
 
   test.afterAll(async ({ request, baseURL }) => {
@@ -467,58 +541,68 @@ test.describe("Integration Setup - Code Repository Integration (INTG-03)", () =>
     request,
     baseURL,
   }) => {
-    const response = await request.post(
-      `${baseURL}/api/model/projectIntegration/create`,
-      {
-        data: {
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Link the GitHub code repo integration to the project", async () => {
+      response = await request.post(
+        `${baseURL}/api/model/projectIntegration/create`,
+        {
           data: {
-            project: { connect: { id: projectId } },
-            integration: { connect: { id: githubIntegrationId } },
-            isActive: true,
+            data: {
+              project: { connect: { id: projectId } },
+              integration: { connect: { id: githubIntegrationId } },
+              isActive: true,
+            },
           },
-        },
-      }
-    );
+        }
+      );
+    });
 
-    expect(response.status()).toBe(201);
-    const body = await response.json();
-    expect(body.data.integrationId).toBe(githubIntegrationId);
-    expect(body.data.projectId).toBe(projectId);
-    projectIntegrationId = body.data.id;
+    await test.step("Verify the GitHub integration is linked to the project", async () => {
+      expect(response!.status()).toBe(201);
+      const body = await response!.json();
+      expect(body.data.integrationId).toBe(githubIntegrationId);
+      expect(body.data.projectId).toBe(projectId);
+      projectIntegrationId = body.data.id;
+    });
   });
 
   test("Code repo integration is accessible from project settings", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.get(
-      `${baseURL}/api/model/projectIntegration/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { projectId, integrationId: githubIntegrationId },
-            include: {
-              integration: {
-                select: {
-                  id: true,
-                  name: true,
-                  provider: true,
-                  authType: true,
-                  status: true,
+    let response: Awaited<ReturnType<typeof request.get>> | undefined;
+    await test.step("Query the project integrations including integration detail", async () => {
+      response = await request.get(
+        `${baseURL}/api/model/projectIntegration/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { projectId, integrationId: githubIntegrationId },
+              include: {
+                integration: {
+                  select: {
+                    id: true,
+                    name: true,
+                    provider: true,
+                    authType: true,
+                    status: true,
+                  },
                 },
               },
-            },
-          }),
-        },
-      }
-    );
+            }),
+          },
+        }
+      );
+    });
 
-    expect(response.status()).toBe(200);
-    const result = await response.json();
-    expect(result.data.length).toBeGreaterThan(0);
-    const linked = result.data[0];
-    expect(linked.integration.provider).toBe("GITHUB");
-    expect(linked.integration.authType).toBe("PERSONAL_ACCESS_TOKEN");
+    await test.step("Verify the linked integration is a GitHub PAT integration", async () => {
+      expect(response!.status()).toBe(200);
+      const result = await response!.json();
+      expect(result.data.length).toBeGreaterThan(0);
+      const linked = result.data[0];
+      expect(linked.integration.provider).toBe("GITHUB");
+      expect(linked.integration.authType).toBe("PERSONAL_ACCESS_TOKEN");
+    });
   });
 
   test.afterAll(async ({ request, baseURL }) => {
@@ -549,10 +633,12 @@ test.describe("Integration Setup - Unauthenticated Access Denied", () => {
     const incognitoPage = await incognitoContext.newPage();
 
     try {
-      const response = await incognitoPage.request.get(
-        `${e2eBaseURL}/api/integrations`
-      );
-      expect(response.status()).toBe(401);
+      await test.step("GET /api/integrations unauthenticated and verify 401", async () => {
+        const response = await incognitoPage.request.get(
+          `${e2eBaseURL}/api/integrations`
+        );
+        expect(response.status()).toBe(401);
+      });
     } finally {
       await incognitoPage.close();
       await incognitoContext.close();
@@ -572,18 +658,20 @@ test.describe("Integration Setup - Unauthenticated Access Denied", () => {
     const incognitoPage = await incognitoContext.newPage();
 
     try {
-      const response = await incognitoPage.request.post(
-        `${e2eBaseURL}/api/integrations`,
-        {
-          data: {
-            name: "Unauthorized Integration",
-            type: "SIMPLE_URL",
-            authType: "NONE",
-            config: { baseUrl: "https://example.com/{issueId}" },
-          },
-        }
-      );
-      expect(response.status()).toBe(401);
+      await test.step("POST /api/integrations unauthenticated and verify 401", async () => {
+        const response = await incognitoPage.request.post(
+          `${e2eBaseURL}/api/integrations`,
+          {
+            data: {
+              name: "Unauthorized Integration",
+              type: "SIMPLE_URL",
+              authType: "NONE",
+              config: { baseUrl: "https://example.com/{issueId}" },
+            },
+          }
+        );
+        expect(response.status()).toBe(401);
+      });
     } finally {
       await incognitoPage.close();
       await incognitoContext.close();
@@ -603,16 +691,18 @@ test.describe("Integration Setup - Unauthenticated Access Denied", () => {
     const incognitoPage = await incognitoContext.newPage();
 
     try {
-      const response = await incognitoPage.request.post(
-        `${e2eBaseURL}/api/integrations/test-connection`,
-        {
-          data: {
-            provider: "SIMPLE_URL",
-            settings: { baseUrl: "https://example.com/{issueId}" },
-          },
-        }
-      );
-      expect(response.status()).toBe(401);
+      await test.step("POST /api/integrations/test-connection unauthenticated and verify 401", async () => {
+        const response = await incognitoPage.request.post(
+          `${e2eBaseURL}/api/integrations/test-connection`,
+          {
+            data: {
+              provider: "SIMPLE_URL",
+              settings: { baseUrl: "https://example.com/{issueId}" },
+            },
+          }
+        );
+        expect(response.status()).toBe(401);
+      });
     } finally {
       await incognitoPage.close();
       await incognitoContext.close();

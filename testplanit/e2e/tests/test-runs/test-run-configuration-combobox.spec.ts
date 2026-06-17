@@ -78,58 +78,73 @@ test.describe("Test Run Configuration Combobox", () => {
     api,
     page,
   }) => {
-    // Setup: Create project and configurations
-    const projectId = await api.createProject(
-      `E2E Config Combobox ${Date.now()}`
-    );
     const configName1 = `Config Alpha ${Date.now()}`;
     const configName2 = `Config Beta ${Date.now()}`;
-    await api.createConfiguration(configName1, projectId);
-    await api.createConfiguration(configName2, projectId);
+    let projectId: number | undefined;
 
-    // Navigate to test runs page
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
+    await test.step("Create project and configurations", async () => {
+      projectId = await api.createProject(`E2E Config Combobox ${Date.now()}`);
+      await api.createConfiguration(configName1, projectId);
+      await api.createConfiguration(configName2, projectId);
+    });
 
-    const { configCombobox } = await openModalAndGetConfigCombobox(page);
-    await openComboboxDropdown(page, configCombobox);
+    let configCombobox: any;
 
-    // Verify configurations appear in the dropdown
-    await expect(
-      page.locator(`[role="option"]:has-text("${configName1}")`)
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.locator(`[role="option"]:has-text("${configName2}")`)
-    ).toBeVisible();
+    await test.step("Open the new test run modal configurations combobox", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
+
+      ({ configCombobox } = await openModalAndGetConfigCombobox(page));
+      await openComboboxDropdown(page, configCombobox);
+    });
+
+    await test.step("Verify both configurations appear in the dropdown", async () => {
+      await expect(
+        page.locator(`[role="option"]:has-text("${configName1}")`)
+      ).toBeVisible({ timeout: 5000 });
+      await expect(
+        page.locator(`[role="option"]:has-text("${configName2}")`)
+      ).toBeVisible();
+    });
   });
 
   test("should select and display configuration as badge", async ({
     api,
     page,
   }) => {
-    const projectId = await api.createProject(`E2E Config Badge ${Date.now()}`);
     const configName = `Badge Config ${Date.now()}`;
-    await api.createConfiguration(configName, projectId);
+    let projectId: number | undefined;
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
+    await test.step("Create project and configuration", async () => {
+      projectId = await api.createProject(`E2E Config Badge ${Date.now()}`);
+      await api.createConfiguration(configName, projectId);
+    });
 
-    const { configCombobox } = await openModalAndGetConfigCombobox(page);
-    await openComboboxDropdown(page, configCombobox);
+    let configCombobox: any;
 
-    // Select a configuration
-    const configOption = page.locator(
-      `[role="option"]:has-text("${configName}")`
-    );
-    await expect(configOption).toBeVisible({ timeout: 5000 });
-    await configOption.click();
+    await test.step("Open the new test run modal configurations combobox", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
 
-    // Close the popover so the combobox trigger shows the selected badge
-    await page.keyboard.press("Escape");
+      ({ configCombobox } = await openModalAndGetConfigCombobox(page));
+      await openComboboxDropdown(page, configCombobox);
+    });
 
-    // Verify the selected configuration appears inside the combobox trigger
-    await expect(configCombobox).toContainText(configName, {
-      timeout: 5000,
+    await test.step("Select the configuration and close the popover", async () => {
+      const configOption = page.locator(
+        `[role="option"]:has-text("${configName}")`
+      );
+      await expect(configOption).toBeVisible({ timeout: 5000 });
+      await configOption.click();
+
+      // Close the popover so the combobox trigger shows the selected badge
+      await page.keyboard.press("Escape");
+    });
+
+    await test.step("Verify the selected configuration appears in the combobox trigger", async () => {
+      await expect(configCombobox).toContainText(configName, {
+        timeout: 5000,
+      });
     });
   });
 
@@ -137,44 +152,53 @@ test.describe("Test Run Configuration Combobox", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Config Remove ${Date.now()}`
-    );
     const configName = `Remove Config ${Date.now()}`;
-    await api.createConfiguration(configName, projectId);
+    let projectId: number | undefined;
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
-
-    const { configCombobox } = await openModalAndGetConfigCombobox(page);
-    await openComboboxDropdown(page, configCombobox);
-
-    // Select a configuration
-    const configOption = page.locator(
-      `[role="option"]:has-text("${configName}")`
-    );
-    await expect(configOption).toBeVisible({ timeout: 5000 });
-    await configOption.click();
-
-    // Close the popover
-    await page.keyboard.press("Escape");
-
-    // Verify config is shown in combobox trigger
-    await expect(configCombobox).toContainText(configName, {
-      timeout: 5000,
+    await test.step("Create project and configuration", async () => {
+      projectId = await api.createProject(`E2E Config Remove ${Date.now()}`);
+      await api.createConfiguration(configName, projectId);
     });
 
-    // Click the X button on the badge to remove it
-    // The badge contains the config name and has a [role="button"] span with the X icon
-    const badge = configCombobox
-      .locator(`div:has-text("${configName}")`)
-      .first();
-    const removeButton = badge.locator('[role="button"]');
-    await removeButton.click({ force: true });
+    let configCombobox: any;
 
-    // Verify config is no longer in combobox trigger
-    await expect(configCombobox).not.toContainText(configName, {
-      timeout: 3000,
+    await test.step("Open the new test run modal configurations combobox", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
+
+      ({ configCombobox } = await openModalAndGetConfigCombobox(page));
+      await openComboboxDropdown(page, configCombobox);
+    });
+
+    await test.step("Select the configuration and confirm it shows in the trigger", async () => {
+      const configOption = page.locator(
+        `[role="option"]:has-text("${configName}")`
+      );
+      await expect(configOption).toBeVisible({ timeout: 5000 });
+      await configOption.click();
+
+      // Close the popover
+      await page.keyboard.press("Escape");
+
+      // Verify config is shown in combobox trigger
+      await expect(configCombobox).toContainText(configName, {
+        timeout: 5000,
+      });
+    });
+
+    await test.step("Remove the configuration via the badge X button", async () => {
+      // Click the X button on the badge to remove it
+      // The badge contains the config name and has a [role="button"] span with the X icon
+      const badge = configCombobox
+        .locator(`div:has-text("${configName}")`)
+        .first();
+      const removeButton = badge.locator('[role="button"]');
+      await removeButton.click({ force: true });
+
+      // Verify config is no longer in combobox trigger
+      await expect(configCombobox).not.toContainText(configName, {
+        timeout: 3000,
+      });
     });
   });
 
@@ -182,45 +206,56 @@ test.describe("Test Run Configuration Combobox", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Config Search ${Date.now()}`
-    );
     const ts = Date.now();
     const configNameMatch = `Searchable Config ${ts}`;
     const configNameNoMatch = `Other Widget ${ts}`;
-    await api.createConfiguration(configNameMatch, projectId);
-    await api.createConfiguration(configNameNoMatch, projectId);
+    let projectId: number | undefined;
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
+    await test.step("Create project and two configurations", async () => {
+      projectId = await api.createProject(`E2E Config Search ${Date.now()}`);
+      await api.createConfiguration(configNameMatch, projectId);
+      await api.createConfiguration(configNameNoMatch, projectId);
+    });
 
-    const { configCombobox } = await openModalAndGetConfigCombobox(page);
-    await openComboboxDropdown(page, configCombobox);
+    let configCombobox: any;
 
-    // Search for the timestamp to find only our test's configs (avoids pagination issues)
+    await test.step("Open the new test run modal configurations combobox", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
+
+      ({ configCombobox } = await openModalAndGetConfigCombobox(page));
+      await openComboboxDropdown(page, configCombobox);
+    });
+
     const searchInput = page.locator("[cmdk-input]").first();
-    await searchInput.fill(String(ts));
-    await page.waitForTimeout(500);
 
-    // Both configs should be visible when filtered by timestamp
-    await expect(
-      page.locator(`[role="option"]:has-text("${configNameMatch}")`)
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.locator(`[role="option"]:has-text("${configNameNoMatch}")`)
-    ).toBeVisible();
+    await test.step("Filter by timestamp and verify both configs are visible", async () => {
+      // Search for the timestamp to find only our test's configs (avoids pagination issues)
+      await searchInput.fill(String(ts));
+      await page.waitForTimeout(500);
 
-    // Now filter further with "Searchable" to narrow results
-    await searchInput.fill("Searchable");
-    await page.waitForTimeout(500);
+      // Both configs should be visible when filtered by timestamp
+      await expect(
+        page.locator(`[role="option"]:has-text("${configNameMatch}")`)
+      ).toBeVisible({ timeout: 5000 });
+      await expect(
+        page.locator(`[role="option"]:has-text("${configNameNoMatch}")`)
+      ).toBeVisible();
+    });
 
-    // Matching config should be visible, non-matching should not
-    await expect(
-      page.locator(`[role="option"]:has-text("${configNameMatch}")`)
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.locator(`[role="option"]:has-text("${configNameNoMatch}")`)
-    ).not.toBeVisible({ timeout: 3000 });
+    await test.step("Narrow the search and verify only the matching config remains", async () => {
+      // Now filter further with "Searchable" to narrow results
+      await searchInput.fill("Searchable");
+      await page.waitForTimeout(500);
+
+      // Matching config should be visible, non-matching should not
+      await expect(
+        page.locator(`[role="option"]:has-text("${configNameMatch}")`)
+      ).toBeVisible({ timeout: 5000 });
+      await expect(
+        page.locator(`[role="option"]:has-text("${configNameNoMatch}")`)
+      ).not.toBeVisible({ timeout: 3000 });
+    });
   });
 
   test("only shows configurations assigned to the current project", async ({
@@ -231,149 +266,195 @@ test.describe("Test Run Configuration Combobox", () => {
     // must show A's config and must NOT show B's (configurations are
     // project-scoped).
     const ts = Date.now();
-    const projectAId = await api.createProject(`E2E Scope A ${ts}`);
-    const projectBId = await api.createProject(`E2E Scope B ${ts}`);
     const configInA = `ScopedToA ${ts}`;
     const configInB = `ScopedToB ${ts}`;
-    await api.createConfiguration(configInA, projectAId);
-    await api.createConfiguration(configInB, projectBId);
+    let projectAId: number | undefined;
 
-    await page.goto(`/en-US/projects/runs/${projectAId}`);
-    await page.waitForLoadState("load");
+    await test.step("Create two projects each with its own configuration", async () => {
+      projectAId = await api.createProject(`E2E Scope A ${ts}`);
+      const projectBId = await api.createProject(`E2E Scope B ${ts}`);
+      await api.createConfiguration(configInA, projectAId);
+      await api.createConfiguration(configInB, projectBId);
+    });
 
-    const { configCombobox } = await openModalAndGetConfigCombobox(page);
-    await openComboboxDropdown(page, configCombobox);
+    let configCombobox: any;
 
-    // Search by the shared timestamp so both candidate configs would match by
-    // name; only the project-assigned one should actually appear.
-    const searchInput = page.locator("[cmdk-input]").first();
-    await searchInput.fill(String(ts));
-    await page.waitForTimeout(500);
+    await test.step("Open the new test run modal configurations combobox for project A", async () => {
+      await page.goto(`/en-US/projects/runs/${projectAId}`);
+      await page.waitForLoadState("load");
 
-    await expect(
-      page.locator(`[role="option"]:has-text("${configInA}")`)
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.locator(`[role="option"]:has-text("${configInB}")`)
-    ).not.toBeVisible({ timeout: 3000 });
+      ({ configCombobox } = await openModalAndGetConfigCombobox(page));
+      await openComboboxDropdown(page, configCombobox);
+    });
+
+    await test.step("Verify only the project-assigned configuration appears", async () => {
+      // Search by the shared timestamp so both candidate configs would match by
+      // name; only the project-assigned one should actually appear.
+      const searchInput = page.locator("[cmdk-input]").first();
+      await searchInput.fill(String(ts));
+      await page.waitForTimeout(500);
+
+      await expect(
+        page.locator(`[role="option"]:has-text("${configInA}")`)
+      ).toBeVisible({ timeout: 5000 });
+      await expect(
+        page.locator(`[role="option"]:has-text("${configInB}")`)
+      ).not.toBeVisible({ timeout: 3000 });
+    });
   });
 
   test("should select multiple configurations", async ({ api, page }) => {
-    const projectId = await api.createProject(`E2E Multi Config ${Date.now()}`);
     const ts = Date.now();
     const config1 = `Multi A ${ts}`;
     const config2 = `Multi B ${ts}`;
     const config3 = `Multi C ${ts}`;
-    await api.createConfiguration(config1, projectId);
-    await api.createConfiguration(config2, projectId);
-    await api.createConfiguration(config3, projectId);
+    let projectId: number | undefined;
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
-
-    const { configCombobox } = await openModalAndGetConfigCombobox(page);
-    await openComboboxDropdown(page, configCombobox);
-
-    // Select first configuration
-    await page.locator(`[role="option"]:has-text("${config1}")`).click();
-
-    // The MultiAsyncCombobox stays open after selection with hideSelected=true
-    // The selected option is hidden from the list
-    await expect(
-      page.locator(`[role="option"]:has-text("${config1}")`)
-    ).not.toBeVisible({ timeout: 3000 });
-
-    // Select second configuration
-    await page.locator(`[role="option"]:has-text("${config2}")`).click();
-
-    // Close the popover by pressing Escape
-    await page.keyboard.press("Escape");
-
-    // Verify both configurations appear in the combobox trigger
-    await expect(configCombobox).toContainText(config1, {
-      timeout: 5000,
+    await test.step("Create project and three configurations", async () => {
+      projectId = await api.createProject(`E2E Multi Config ${Date.now()}`);
+      await api.createConfiguration(config1, projectId);
+      await api.createConfiguration(config2, projectId);
+      await api.createConfiguration(config3, projectId);
     });
-    await expect(configCombobox).toContainText(config2);
+
+    let configCombobox: any;
+
+    await test.step("Open the new test run modal configurations combobox", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
+
+      ({ configCombobox } = await openModalAndGetConfigCombobox(page));
+      await openComboboxDropdown(page, configCombobox);
+    });
+
+    await test.step("Select the first configuration and confirm it hides from the list", async () => {
+      // Select first configuration
+      await page.locator(`[role="option"]:has-text("${config1}")`).click();
+
+      // The MultiAsyncCombobox stays open after selection with hideSelected=true
+      // The selected option is hidden from the list
+      await expect(
+        page.locator(`[role="option"]:has-text("${config1}")`)
+      ).not.toBeVisible({ timeout: 3000 });
+    });
+
+    await test.step("Select the second configuration and close the popover", async () => {
+      // Select second configuration
+      await page.locator(`[role="option"]:has-text("${config2}")`).click();
+
+      // Close the popover by pressing Escape
+      await page.keyboard.press("Escape");
+    });
+
+    await test.step("Verify both configurations appear in the combobox trigger", async () => {
+      await expect(configCombobox).toContainText(config1, {
+        timeout: 5000,
+      });
+      await expect(configCombobox).toContainText(config2);
+    });
   });
 
   test("should use Select All to bulk select configurations", async ({
     api,
     page,
   }) => {
-    const projectId = await api.createProject(`E2E Select All ${Date.now()}`);
     const ts = Date.now();
     const config1 = `SelectAll A ${ts}`;
     const config2 = `SelectAll B ${ts}`;
-    await api.createConfiguration(config1, projectId);
-    await api.createConfiguration(config2, projectId);
+    let projectId: number | undefined;
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
-
-    const { configCombobox } = await openModalAndGetConfigCombobox(page);
-    await openComboboxDropdown(page, configCombobox);
-
-    // Search for the timestamp to filter to only our test's configs
-    // (avoids pagination issues when other tests create configs in parallel)
-    const searchInput = page.locator("[cmdk-input]").first();
-    await searchInput.fill(`SelectAll`);
-    await page.waitForTimeout(500);
-
-    // Wait for our options to load
-    await expect(
-      page.locator(`[role="option"]:has-text("${config1}")`)
-    ).toBeVisible({ timeout: 5000 });
-
-    // Click "Select All" option (selects all visible matching configs)
-    const selectAllOption = page.locator(
-      '[role="option"][data-value="__select_all__"]'
-    );
-    await expect(selectAllOption).toBeVisible({ timeout: 3000 });
-    await selectAllOption.click();
-
-    // Close the popover
-    await page.keyboard.press("Escape");
-
-    // Verify both configurations are selected (shown in combobox trigger)
-    await expect(configCombobox).toContainText(config1, {
-      timeout: 5000,
+    await test.step("Create project and two configurations", async () => {
+      projectId = await api.createProject(`E2E Select All ${Date.now()}`);
+      await api.createConfiguration(config1, projectId);
+      await api.createConfiguration(config2, projectId);
     });
-    await expect(configCombobox).toContainText(config2);
+
+    let configCombobox: any;
+
+    await test.step("Open the new test run modal configurations combobox", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
+
+      ({ configCombobox } = await openModalAndGetConfigCombobox(page));
+      await openComboboxDropdown(page, configCombobox);
+    });
+
+    await test.step("Filter to this test's configs and click Select All", async () => {
+      // Search for the timestamp to filter to only our test's configs
+      // (avoids pagination issues when other tests create configs in parallel)
+      const searchInput = page.locator("[cmdk-input]").first();
+      await searchInput.fill(`SelectAll`);
+      await page.waitForTimeout(500);
+
+      // Wait for our options to load
+      await expect(
+        page.locator(`[role="option"]:has-text("${config1}")`)
+      ).toBeVisible({ timeout: 5000 });
+
+      // Click "Select All" option (selects all visible matching configs)
+      const selectAllOption = page.locator(
+        '[role="option"][data-value="__select_all__"]'
+      );
+      await expect(selectAllOption).toBeVisible({ timeout: 3000 });
+      await selectAllOption.click();
+
+      // Close the popover
+      await page.keyboard.press("Escape");
+    });
+
+    await test.step("Verify both configurations are selected", async () => {
+      await expect(configCombobox).toContainText(config1, {
+        timeout: 5000,
+      });
+      await expect(configCombobox).toContainText(config2);
+    });
   });
 
   test("should show Clear All link when configurations are selected", async ({
     api,
     page,
   }) => {
-    const projectId = await api.createProject(`E2E Clear All ${Date.now()}`);
     const configName = `ClearAll Config ${Date.now()}`;
-    await api.createConfiguration(configName, projectId);
+    let projectId: number | undefined;
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
-
-    const { dialog, configCombobox } =
-      await openModalAndGetConfigCombobox(page);
-    await openComboboxDropdown(page, configCombobox);
-
-    await page.locator(`[role="option"]:has-text("${configName}")`).click();
-
-    // Close popover
-    await page.keyboard.press("Escape");
-
-    // Verify config is shown in combobox trigger
-    await expect(configCombobox).toContainText(configName, {
-      timeout: 5000,
+    await test.step("Create project and configuration", async () => {
+      projectId = await api.createProject(`E2E Clear All ${Date.now()}`);
+      await api.createConfiguration(configName, projectId);
     });
 
-    // Click "Clear All" link (force: true for dialog overlay)
-    const clearAll = dialog.locator('span:has-text("Clear All")');
-    await expect(clearAll).toBeVisible();
-    await clearAll.click({ force: true });
+    let dialog: any;
+    let configCombobox: any;
 
-    // Verify config is no longer in combobox trigger
-    await expect(configCombobox).not.toContainText(configName, {
-      timeout: 3000,
+    await test.step("Open the new test run modal configurations combobox", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
+
+      ({ dialog, configCombobox } = await openModalAndGetConfigCombobox(page));
+      await openComboboxDropdown(page, configCombobox);
+    });
+
+    await test.step("Select the configuration and confirm it shows in the trigger", async () => {
+      await page.locator(`[role="option"]:has-text("${configName}")`).click();
+
+      // Close popover
+      await page.keyboard.press("Escape");
+
+      // Verify config is shown in combobox trigger
+      await expect(configCombobox).toContainText(configName, {
+        timeout: 5000,
+      });
+    });
+
+    await test.step("Click Clear All and verify the configuration is removed", async () => {
+      // Click "Clear All" link (force: true for dialog overlay)
+      const clearAll = dialog.locator('span:has-text("Clear All")');
+      await expect(clearAll).toBeVisible();
+      await clearAll.click({ force: true });
+
+      // Verify config is no longer in combobox trigger
+      await expect(configCombobox).not.toContainText(configName, {
+        timeout: 3000,
+      });
     });
   });
 
@@ -381,77 +462,93 @@ test.describe("Test Run Configuration Combobox", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Config Pagination ${Date.now()}`
-    );
-
     const configName = `Paginated Config ${Date.now()}`;
-    await api.createConfiguration(configName, projectId);
+    let projectId: number | undefined;
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
-
-    const { configCombobox } = await openModalAndGetConfigCombobox(page);
-    await openComboboxDropdown(page, configCombobox);
-
-    // Wait for options to appear
-    await expect(
-      page.locator(`[role="option"]:has-text("${configName}")`)
-    ).toBeVisible({ timeout: 5000 });
-
-    // Verify pagination footer is visible with Previous/Next buttons
-    // Scope to the combobox popover to avoid matching the dialog's wizard "Next" button
-    const comboboxPopover = page.locator("[cmdk-list]").first().locator("..");
-    const prevButton = comboboxPopover.getByRole("button", {
-      name: "Previous",
+    await test.step("Create project and configuration", async () => {
+      projectId = await api.createProject(`E2E Config Pagination ${Date.now()}`);
+      await api.createConfiguration(configName, projectId);
     });
-    const nextButton = comboboxPopover.getByRole("button", { name: "Next" });
-    await expect(prevButton).toBeVisible();
-    await expect(nextButton).toBeVisible();
 
-    // Previous should be disabled on first page
-    await expect(prevButton).toBeDisabled();
+    let configCombobox: any;
+
+    await test.step("Open the new test run modal configurations combobox", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
+
+      ({ configCombobox } = await openModalAndGetConfigCombobox(page));
+      await openComboboxDropdown(page, configCombobox);
+
+      // Wait for options to appear
+      await expect(
+        page.locator(`[role="option"]:has-text("${configName}")`)
+      ).toBeVisible({ timeout: 5000 });
+    });
+
+    await test.step("Verify pagination footer shows Previous/Next with Previous disabled", async () => {
+      // Verify pagination footer is visible with Previous/Next buttons
+      // Scope to the combobox popover to avoid matching the dialog's wizard "Next" button
+      const comboboxPopover = page.locator("[cmdk-list]").first().locator("..");
+      const prevButton = comboboxPopover.getByRole("button", {
+        name: "Previous",
+      });
+      const nextButton = comboboxPopover.getByRole("button", { name: "Next" });
+      await expect(prevButton).toBeVisible();
+      await expect(nextButton).toBeVisible();
+
+      // Previous should be disabled on first page
+      await expect(prevButton).toBeDisabled();
+    });
   });
 
   test("should proceed to step 2 with selected configurations", async ({
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Config Next Step ${Date.now()}`
-    );
     const configName = `NextStep Config ${Date.now()}`;
-    await api.createConfiguration(configName, projectId);
+    let projectId: number | undefined;
 
-    // Create a folder and test case so step 2 has cases to show
-    const folderId = await api.createFolder(projectId, "Test Folder");
-    await api.createTestCase(projectId, folderId, `Test Case ${Date.now()}`);
+    await test.step("Create project, configuration, folder, and test case", async () => {
+      projectId = await api.createProject(`E2E Config Next Step ${Date.now()}`);
+      await api.createConfiguration(configName, projectId);
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
+      // Create a folder and test case so step 2 has cases to show
+      const folderId = await api.createFolder(projectId!, "Test Folder");
+      await api.createTestCase(projectId!, folderId, `Test Case ${Date.now()}`);
+    });
 
-    const { dialog, configCombobox } =
-      await openModalAndGetConfigCombobox(page);
+    let dialog: any;
+    let configCombobox: any;
 
-    // Fill in required name field
-    const nameInput = dialog.getByTestId("run-name-input");
-    await nameInput.fill(`Test Run ${Date.now()}`);
+    await test.step("Open the new test run modal and fill in the run name", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
 
-    // Select a configuration
-    await openComboboxDropdown(page, configCombobox);
+      ({ dialog, configCombobox } = await openModalAndGetConfigCombobox(page));
 
-    await page.locator(`[role="option"]:has-text("${configName}")`).click();
+      // Fill in required name field
+      const nameInput = dialog.getByTestId("run-name-input");
+      await nameInput.fill(`Test Run ${Date.now()}`);
+    });
 
-    await page.keyboard.press("Escape");
+    await test.step("Select a configuration", async () => {
+      await openComboboxDropdown(page, configCombobox);
 
-    // Click "Next" to go to step 2 (use dispatchEvent to bypass dialog overlay)
-    const nextButton = dialog.getByTestId("run-next-button");
-    await expect(nextButton).toBeVisible({ timeout: 10000 });
-    await nextButton.dispatchEvent("click");
+      await page.locator(`[role="option"]:has-text("${configName}")`).click();
 
-    // Verify step 2 is shown (test case selection with repository)
-    await expect(dialog.getByTestId("run-save-button")).toBeVisible({
-      timeout: 10000,
+      await page.keyboard.press("Escape");
+    });
+
+    await test.step("Click Next and verify step 2 is shown", async () => {
+      // Click "Next" to go to step 2 (use dispatchEvent to bypass dialog overlay)
+      const nextButton = dialog.getByTestId("run-next-button");
+      await expect(nextButton).toBeVisible({ timeout: 10000 });
+      await nextButton.dispatchEvent("click");
+
+      // Verify step 2 is shown (test case selection with repository)
+      await expect(dialog.getByTestId("run-save-button")).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 });

@@ -20,26 +20,33 @@ test.describe("Milestone details — Edit action", () => {
     page,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`MilestoneEditGuard ${ts}`);
-    const milestoneId = await api.createMilestone(
-      projectId,
-      `Edit Guard ${ts}`
-    );
-
-    await page.goto(`/en-US/projects/milestones/${projectId}/${milestoneId}`);
-    await page.waitForLoadState("networkidle");
-
-    // Count any milestone update calls triggered by clicking Edit.
     let updateCount = 0;
-    page.on("request", (req) => {
-      if (isMilestoneUpdate(req.url(), req.method())) updateCount++;
+
+    await test.step("Open the milestone details page", async () => {
+      const projectId = await api.createProject(`MilestoneEditGuard ${ts}`);
+      const milestoneId = await api.createMilestone(
+        projectId,
+        `Edit Guard ${ts}`
+      );
+
+      await page.goto(`/en-US/projects/milestones/${projectId}/${milestoneId}`);
+      await page.waitForLoadState("networkidle");
     });
 
-    await page.getByTestId("milestone-edit").click();
+    await test.step("Click Edit while watching for update calls", async () => {
+      // Count any milestone update calls triggered by clicking Edit.
+      page.on("request", (req) => {
+        if (isMilestoneUpdate(req.url(), req.method())) updateCount++;
+      });
 
-    // We should be in edit mode (Save visible) and NO update should have fired.
-    await expect(page.getByTestId("milestone-save")).toBeVisible();
-    expect(updateCount).toBe(0);
+      await page.getByTestId("milestone-edit").click();
+    });
+
+    await test.step("Confirm edit mode is active without a stray update", async () => {
+      // We should be in edit mode (Save visible) and NO update should have fired.
+      await expect(page.getByTestId("milestone-save")).toBeVisible();
+      expect(updateCount).toBe(0);
+    });
   });
 
   test("saving in edit mode persists via exactly one update", async ({
@@ -47,24 +54,33 @@ test.describe("Milestone details — Edit action", () => {
     page,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`MilestoneEditSave ${ts}`);
-    const milestoneId = await api.createMilestone(projectId, `Save ${ts}`);
-
-    await page.goto(`/en-US/projects/milestones/${projectId}/${milestoneId}`);
-    await page.waitForLoadState("networkidle");
-
-    await page.getByTestId("milestone-edit").click();
-    await expect(page.getByTestId("milestone-save")).toBeVisible();
-
     let updateCount = 0;
-    page.on("request", (req) => {
-      if (isMilestoneUpdate(req.url(), req.method())) updateCount++;
+
+    await test.step("Open the milestone details page", async () => {
+      const projectId = await api.createProject(`MilestoneEditSave ${ts}`);
+      const milestoneId = await api.createMilestone(projectId, `Save ${ts}`);
+
+      await page.goto(`/en-US/projects/milestones/${projectId}/${milestoneId}`);
+      await page.waitForLoadState("networkidle");
     });
 
-    await page.getByTestId("milestone-save").click();
+    await test.step("Enter edit mode", async () => {
+      await page.getByTestId("milestone-edit").click();
+      await expect(page.getByTestId("milestone-save")).toBeVisible();
+    });
 
-    // Returns to view mode (Edit visible again) after exactly one update.
-    await expect(page.getByTestId("milestone-edit")).toBeVisible();
-    expect(updateCount).toBe(1);
+    await test.step("Save while watching for update calls", async () => {
+      page.on("request", (req) => {
+        if (isMilestoneUpdate(req.url(), req.method())) updateCount++;
+      });
+
+      await page.getByTestId("milestone-save").click();
+    });
+
+    await test.step("Confirm view mode returns after exactly one update", async () => {
+      // Returns to view mode (Edit visible again) after exactly one update.
+      await expect(page.getByTestId("milestone-edit")).toBeVisible();
+      expect(updateCount).toBe(1);
+    });
   });
 });

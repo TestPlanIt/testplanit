@@ -54,126 +54,138 @@ test.describe("Webhook delivery replay — single outbound", () => {
     baseURL,
     api,
   }) => {
-    // 1. Configure outbound webhook pointing at the stub.
-    await page.goto(`${baseURL}/en-US/projects/settings/${projectId}/webhooks`);
-    await expect(page.getByTestId("webhooks-tab-inbound")).toBeVisible({
-      timeout: 30_000,
-    });
-    await page.getByTestId("webhooks-tab-outbound").click();
-    await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
-      timeout: 15_000,
-    });
+    await test.step("Configure outbound webhook pointing at the stub", async () => {
+      await page.goto(
+        `${baseURL}/en-US/projects/settings/${projectId}/webhooks`
+      );
+      await expect(page.getByTestId("webhooks-tab-inbound")).toBeVisible({
+        timeout: 30_000,
+      });
+      await page.getByTestId("webhooks-tab-outbound").click();
+      await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
+        timeout: 15_000,
+      });
 
-    await page.getByTestId("webhook-outbound-add-button").click();
-    await page
-      .getByTestId("webhook-outbound-name-input")
-      .fill("E2E Replay Stub");
-    await page.getByTestId("webhook-outbound-url-input").fill(stub.url);
+      await page.getByTestId("webhook-outbound-add-button").click();
+      await page
+        .getByTestId("webhook-outbound-name-input")
+        .fill("E2E Replay Stub");
+      await page.getByTestId("webhook-outbound-url-input").fill(stub.url);
 
-    const completedCheckbox = page.getByTestId(
-      "webhook-outbound-subs-event-test_run.completed"
-    );
-    await expect(completedCheckbox).toBeVisible();
-    if (!(await completedCheckbox.isChecked())) {
-      await completedCheckbox.check();
-    }
+      const completedCheckbox = page.getByTestId(
+        "webhook-outbound-subs-event-test_run.completed"
+      );
+      await expect(completedCheckbox).toBeVisible();
+      if (!(await completedCheckbox.isChecked())) {
+        await completedCheckbox.check();
+      }
 
-    await page.getByTestId("webhook-outbound-create-submit").click();
-    await expect(page.getByTestId("webhook-outbound-add-button")).toBeVisible({
-      timeout: 10_000,
-    });
-
-    // 2. Trigger one outbound event. First attempt hits the stub which returns
-    //    500 (per failNTimes: 1) → dispatcher writes a failed delivery row.
-    const testRunId = await api.createTestRun(
-      projectId,
-      `E2E replay run ${uniqueId}`
-    );
-    await api.completeTestRunViaStateChange(testRunId, projectId);
-
-    // 3. Wait for the failed delivery row to land in the DB.
-    const failedRows = await waitForDelivery(prisma, {
-      projectId,
-      where: {
-        direction: "OUTBOUND",
-        eventType: "test_run.completed",
-        error: { not: null },
-        replayedFromDeliveryId: null,
-      },
-      timeoutMs: 60_000,
-    });
-    expect(failedRows.length).toBeGreaterThanOrEqual(1);
-    const failed = failedRows[0];
-    originalDeliveryId = failed.id;
-    // Schema (Plan 04-08 SetNull): webhookConfigId is nullable on the row,
-    // but a freshly dispatched failure row from this seeded config has the
-    // FK populated. Narrow with a runtime guard so the local non-null
-    // variable stays type-safe.
-    expect(failed.webhookConfigId).not.toBeNull();
-    webhookConfigId = failed.webhookConfigId as string;
-    expect(failed.statusCode).toBe(500);
-    expect(failed.error).not.toBeNull();
-    expect(failed.eventId).not.toBeNull();
-
-    // 4. Open the Deliveries tab and click the failed row.
-    await page.goto(
-      `${baseURL}/en-US/projects/settings/${projectId}/webhooks?tab=deliveries`
-    );
-    await page.waitForLoadState("networkidle");
-    await expect(page.getByTestId("webhooks-tab-deliveries")).toBeVisible({
-      timeout: 20_000,
-    });
-    await page.getByTestId("webhooks-tab-deliveries").click();
-    await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByTestId("webhook-deliveries-table")).toBeVisible({
-      timeout: 10_000,
+      await page.getByTestId("webhook-outbound-create-submit").click();
+      await expect(
+        page.getByTestId("webhook-outbound-add-button")
+      ).toBeVisible({
+        timeout: 10_000,
+      });
     });
 
-    const failedRow = page.getByTestId(
-      `webhook-delivery-row-${originalDeliveryId}`
-    );
-    await expect(failedRow).toBeVisible({ timeout: 10_000 });
-    // Drawer now opens via the per-row "View details" Eye icon, not the
-    // row itself (D-17a follow-up — explicit affordance).
-    await page
-      .getByTestId(`webhook-delivery-view-details-${originalDeliveryId}`)
-      .click();
-
-    // 5. Drawer renders the OUTBOUND contract.
-    const drawer = page.getByTestId("webhook-delivery-drawer");
-    await expect(drawer).toBeVisible();
-    await expect(drawer.getByTestId("webhook-drawer-event-id")).toBeVisible();
-
-    // 6. Click Replay → AlertDialog → confirm.
-    await drawer.getByTestId("webhook-drawer-replay-button").click();
-    const dialog = page.getByTestId("webhook-replay-dialog");
-    await expect(dialog).toBeVisible();
-    await page.getByTestId("webhook-replay-dialog-confirm").click();
-
-    // 7. Toast confirms the replay was queued.
-    await expect(page.getByText(/Replay queued/i)).toBeVisible({
-      timeout: 10_000,
+    await test.step("Trigger a test_run.completed event so the stub returns 500 and seeds a failed delivery row", async () => {
+      const testRunId = await api.createTestRun(
+        projectId,
+        `E2E replay run ${uniqueId}`
+      );
+      await api.completeTestRunViaStateChange(testRunId, projectId);
     });
 
-    // 8. Wait for the replay row to land in the DB. The replay re-dispatches
-    //    against the stub which now returns 200 (failNTimes was 1).
-    const replayRows = await waitForDelivery(prisma, {
-      projectId,
-      where: {
-        direction: "OUTBOUND",
-        replayedFromDeliveryId: originalDeliveryId,
-      },
-      timeoutMs: 60_000,
+    await test.step("Wait for the failed delivery row and verify its fields", async () => {
+      const failedRows = await waitForDelivery(prisma, {
+        projectId,
+        where: {
+          direction: "OUTBOUND",
+          eventType: "test_run.completed",
+          error: { not: null },
+          replayedFromDeliveryId: null,
+        },
+        timeoutMs: 60_000,
+      });
+      expect(failedRows.length).toBeGreaterThanOrEqual(1);
+      const failed = failedRows[0];
+      originalDeliveryId = failed.id;
+      // Schema (Plan 04-08 SetNull): webhookConfigId is nullable on the row,
+      // but a freshly dispatched failure row from this seeded config has the
+      // FK populated. Narrow with a runtime guard so the local non-null
+      // variable stays type-safe.
+      expect(failed.webhookConfigId).not.toBeNull();
+      webhookConfigId = failed.webhookConfigId as string;
+      expect(failed.statusCode).toBe(500);
+      expect(failed.error).not.toBeNull();
+      expect(failed.eventId).not.toBeNull();
     });
-    expect(replayRows.length).toBeGreaterThanOrEqual(1);
-    const replay = replayRows[0];
-    expect(replay.replayedFromDeliveryId).toBe(originalDeliveryId);
-    expect(replay.attempt).toBe(1);
-    expect(replay.webhookConfigId).toBe(webhookConfigId);
-    expect(replay.statusCode).toBe(200);
-    expect(replay.error).toBeNull();
+
+    await test.step("Open the Deliveries tab and view the failed delivery details", async () => {
+      await page.goto(
+        `${baseURL}/en-US/projects/settings/${projectId}/webhooks?tab=deliveries`
+      );
+      await page.waitForLoadState("networkidle");
+      await expect(page.getByTestId("webhooks-tab-deliveries")).toBeVisible({
+        timeout: 20_000,
+      });
+      await page.getByTestId("webhooks-tab-deliveries").click();
+      await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect(page.getByTestId("webhook-deliveries-table")).toBeVisible({
+        timeout: 10_000,
+      });
+
+      const failedRow = page.getByTestId(
+        `webhook-delivery-row-${originalDeliveryId}`
+      );
+      await expect(failedRow).toBeVisible({ timeout: 10_000 });
+      // Drawer now opens via the per-row "View details" Eye icon, not the
+      // row itself (D-17a follow-up — explicit affordance).
+      await page
+        .getByTestId(`webhook-delivery-view-details-${originalDeliveryId}`)
+        .click();
+    });
+
+    await test.step("Verify the drawer renders the OUTBOUND contract and confirm the replay", async () => {
+      // Drawer renders the OUTBOUND contract.
+      const drawer = page.getByTestId("webhook-delivery-drawer");
+      await expect(drawer).toBeVisible();
+      await expect(drawer.getByTestId("webhook-drawer-event-id")).toBeVisible();
+
+      // Click Replay → AlertDialog → confirm.
+      await drawer.getByTestId("webhook-drawer-replay-button").click();
+      const dialog = page.getByTestId("webhook-replay-dialog");
+      await expect(dialog).toBeVisible();
+      await page.getByTestId("webhook-replay-dialog-confirm").click();
+    });
+
+    await test.step("Verify the replay-queued toast appears", async () => {
+      await expect(page.getByText(/Replay queued/i)).toBeVisible({
+        timeout: 10_000,
+      });
+    });
+
+    await test.step("Wait for the replay delivery row and verify it links back to the original and succeeded", async () => {
+      // The replay re-dispatches against the stub which now returns 200
+      // (failNTimes was 1).
+      const replayRows = await waitForDelivery(prisma, {
+        projectId,
+        where: {
+          direction: "OUTBOUND",
+          replayedFromDeliveryId: originalDeliveryId,
+        },
+        timeoutMs: 60_000,
+      });
+      expect(replayRows.length).toBeGreaterThanOrEqual(1);
+      const replay = replayRows[0];
+      expect(replay.replayedFromDeliveryId).toBe(originalDeliveryId);
+      expect(replay.attempt).toBe(1);
+      expect(replay.webhookConfigId).toBe(webhookConfigId);
+      expect(replay.statusCode).toBe(200);
+      expect(replay.error).toBeNull();
+    });
   });
 });
 

@@ -155,29 +155,40 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
       );
       return;
     }
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: {
-          externalKey: ctx.issueExternalKey,
-          integration: { provider: ctx.issueExternalSystem },
-          projectId: ctx.projectId,
-          isDeleted: false,
-        },
-        include: {
-          integration: { select: { id: true, name: true, provider: true } },
-        },
-      })
-    );
-    const r = await request.get(`${baseURL}/api/model/issue/findFirst?q=${q}`, {
-      headers: ctx.headers,
+
+    let body: { data: Record<string, any> } | undefined;
+
+    await test.step("Find issue by externalKey, integration.provider, and projectId", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: {
+            externalKey: ctx.issueExternalKey,
+            integration: { provider: ctx.issueExternalSystem },
+            projectId: ctx.projectId,
+            isDeleted: false,
+          },
+          include: {
+            integration: { select: { id: true, name: true, provider: true } },
+          },
+        })
+      );
+      const r = await request.get(
+        `${baseURL}/api/model/issue/findFirst?q=${q}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(r.status()).toBe(200);
+      body = await r.json();
     });
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(body.data).not.toBeNull();
-    expect(body.data.id).toBe(ctx.issueId);
-    expect(body.data.externalKey).toBe(ctx.issueExternalKey);
-    expect(body.data.integration?.provider).toBe(ctx.issueExternalSystem);
-    expect(body.data.projectId).toBe(ctx.projectId);
+
+    await test.step("Verify returned issue matches the seed issue", async () => {
+      expect(body!.data).not.toBeNull();
+      expect(body!.data.id).toBe(ctx.issueId);
+      expect(body!.data.externalKey).toBe(ctx.issueExternalKey);
+      expect(body!.data.integration?.provider).toBe(ctx.issueExternalSystem);
+      expect(body!.data.projectId).toBe(ctx.projectId);
+    });
   });
 
   // -- ISSUE-02: project-scoped list with deterministic createdAt-desc order --
@@ -186,34 +197,45 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     request,
     baseURL,
   }) => {
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: { projectId: ctx.projectId, isDeleted: false },
-        include: {
-          integration: { select: { id: true, name: true, provider: true } },
-        },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: 26,
-      })
-    );
-    const r = await request.get(`${baseURL}/api/model/issue/findMany?q=${q}`, {
-      headers: ctx.headers,
+    let body: { data: any[] } | undefined;
+
+    await test.step("List issues filtered by projectId, ordered by createdAt desc", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: { projectId: ctx.projectId, isDeleted: false },
+          include: {
+            integration: { select: { id: true, name: true, provider: true } },
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 26,
+        })
+      );
+      const r = await request.get(
+        `${baseURL}/api/model/issue/findMany?q=${q}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(r.status()).toBe(200);
+      body = await r.json();
+      expect(Array.isArray(body!.data)).toBe(true);
     });
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    if (body.data.length === 0) {
+
+    if (body!.data.length === 0) {
       console.warn(
         "ISSUE-02: seed project has 0 Issues — order assertion skipped"
       );
       return;
     }
-    // Verify orderBy applied: each createdAt >= the next.
-    for (let i = 1; i < body.data.length; i++) {
-      const prev = new Date(body.data[i - 1].createdAt as string).getTime();
-      const curr = new Date(body.data[i].createdAt as string).getTime();
-      expect(prev).toBeGreaterThanOrEqual(curr);
-    }
+
+    await test.step("Verify each createdAt is greater than or equal to the next", async () => {
+      // Verify orderBy applied: each createdAt >= the next.
+      for (let i = 1; i < body!.data.length; i++) {
+        const prev = new Date(body!.data[i - 1].createdAt as string).getTime();
+        const curr = new Date(body!.data[i].createdAt as string).getTime();
+        expect(prev).toBeGreaterThanOrEqual(curr);
+      }
+    });
   });
 
   // -- ISSUE-03: get with full ISSUE_DETAIL_INCLUDE and overflow probe --------
@@ -226,70 +248,78 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
       console.warn("ISSUE-03 skipped: seed has 0 Issues in project");
       return;
     }
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: { id: ctx.issueId },
-        include: {
-          integration: { select: { id: true, name: true, provider: true } },
-          createdBy: { select: { id: true, name: true, email: true } },
-          _count: { select: { repositoryCases: true } },
-          // D8-06 / D7-12: each linked-array sub-include declares take:101 so
-          // the get handler can detect overflow and stamp truncated.<key>:true.
-          repositoryCases: {
-            where: { isDeleted: false },
-            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-            take: 101,
-            select: { id: true, name: true, source: true, automated: true },
-          },
-          sessions: {
-            where: { isDeleted: false },
-            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-            take: 101,
-            select: {
-              id: true,
-              name: true,
-              mission: true,
-              isCompleted: true,
-              state: { select: { id: true, name: true } },
+
+    let data: Record<string, any> | undefined;
+
+    await test.step("Get issue with full ISSUE_DETAIL_INCLUDE and 3 inline arrays capped at 101", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: { id: ctx.issueId },
+          include: {
+            integration: { select: { id: true, name: true, provider: true } },
+            createdBy: { select: { id: true, name: true, email: true } },
+            _count: { select: { repositoryCases: true } },
+            // D8-06 / D7-12: each linked-array sub-include declares take:101 so
+            // the get handler can detect overflow and stamp truncated.<key>:true.
+            repositoryCases: {
+              where: { isDeleted: false },
+              orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+              take: 101,
+              select: { id: true, name: true, source: true, automated: true },
+            },
+            sessions: {
+              where: { isDeleted: false },
+              orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+              take: 101,
+              select: {
+                id: true,
+                name: true,
+                mission: true,
+                isCompleted: true,
+                state: { select: { id: true, name: true } },
+              },
+            },
+            testRuns: {
+              where: { isDeleted: false },
+              orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+              take: 101,
+              select: {
+                id: true,
+                name: true,
+                isCompleted: true,
+                completedAt: true,
+              },
             },
           },
-          testRuns: {
-            where: { isDeleted: false },
-            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-            take: 101,
-            select: {
-              id: true,
-              name: true,
-              isCompleted: true,
-              completedAt: true,
-            },
-          },
-        },
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/issue/findUnique?q=${q}`,
-      {
-        headers: ctx.headers,
-      }
-    );
-    expect(r.status()).toBe(200);
-    const data = (await r.json()).data;
-    expect(data).not.toBeNull();
-    expect(data.id).toBe(ctx.issueId);
-    expect(Array.isArray(data.repositoryCases)).toBe(true);
-    expect(Array.isArray(data.sessions)).toBe(true);
-    expect(Array.isArray(data.testRuns)).toBe(true);
-    expect(data.repositoryCases.length).toBeLessThanOrEqual(101);
-    expect(data.sessions.length).toBeLessThanOrEqual(101);
-    expect(data.testRuns.length).toBeLessThanOrEqual(101);
-    // Overflow detection probe: if any one array is exactly 101 the MCP tool
-    // would surface truncated:true. We document it but do not require it.
-    if (data.repositoryCases.length === 101) {
-      console.warn(
-        "ISSUE-03: linkedCases overflow probe HIT (>= 100 — MCP would surface truncated)"
+        })
       );
-    }
+      const r = await request.get(
+        `${baseURL}/api/model/issue/findUnique?q=${q}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(r.status()).toBe(200);
+      data = (await r.json()).data;
+    });
+
+    await test.step("Verify header and that each inline array is present and capped at 101", async () => {
+      expect(data).not.toBeNull();
+      expect(data!.id).toBe(ctx.issueId);
+      expect(Array.isArray(data!.repositoryCases)).toBe(true);
+      expect(Array.isArray(data!.sessions)).toBe(true);
+      expect(Array.isArray(data!.testRuns)).toBe(true);
+      expect(data!.repositoryCases.length).toBeLessThanOrEqual(101);
+      expect(data!.sessions.length).toBeLessThanOrEqual(101);
+      expect(data!.testRuns.length).toBeLessThanOrEqual(101);
+      // Overflow detection probe: if any one array is exactly 101 the MCP tool
+      // would surface truncated:true. We document it but do not require it.
+      if (data!.repositoryCases.length === 101) {
+        console.warn(
+          "ISSUE-03: linkedCases overflow probe HIT (>= 100 — MCP would surface truncated)"
+        );
+      }
+    });
   });
 
   // -- ISSUE-04: outbound + inbound junction traversal -----------------------
@@ -302,30 +332,33 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
       console.warn("ISSUE-04 outbound skipped: seed has 0 Issues");
       return;
     }
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: {
-          isDeleted: false,
-          issues: { some: { id: ctx.issueId, isDeleted: false } },
-        },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: 26,
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/repositoryCases/findMany?q=${q}`,
-      {
-        headers: ctx.headers,
-      }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    if (body.data.length === 0) {
-      console.warn(
-        "ISSUE-04 outbound: issue has 0 linked cases (or filtered by access policy)"
+
+    await test.step("List cases linked to the issue via Issue.repositoryCases", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: {
+            isDeleted: false,
+            issues: { some: { id: ctx.issueId, isDeleted: false } },
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 26,
+        })
       );
-    }
+      const r = await request.get(
+        `${baseURL}/api/model/repositoryCases/findMany?q=${q}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(r.status()).toBe(200);
+      const body = await r.json();
+      expect(Array.isArray(body.data)).toBe(true);
+      if (body.data.length === 0) {
+        console.warn(
+          "ISSUE-04 outbound: issue has 0 linked cases (or filtered by access policy)"
+        );
+      }
+    });
   });
 
   test("ISSUE-04 — inbound: issues linked to a case via Issue.repositoryCases.some", async ({
@@ -338,28 +371,34 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
       );
       return;
     }
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: {
-          isDeleted: false,
-          repositoryCases: {
-            some: { id: ctx.caseIdLinkedToAnyIssue, isDeleted: false },
+
+    await test.step("List issues linked to the case via Issue.repositoryCases.some", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: {
+            isDeleted: false,
+            repositoryCases: {
+              some: { id: ctx.caseIdLinkedToAnyIssue, isDeleted: false },
+            },
           },
-        },
-        include: {
-          integration: { select: { id: true, name: true, provider: true } },
-        },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: 26,
-      })
-    );
-    const r = await request.get(`${baseURL}/api/model/issue/findMany?q=${q}`, {
-      headers: ctx.headers,
+          include: {
+            integration: { select: { id: true, name: true, provider: true } },
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 26,
+        })
+      );
+      const r = await request.get(
+        `${baseURL}/api/model/issue/findMany?q=${q}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(r.status()).toBe(200);
+      const body = await r.json();
+      expect(Array.isArray(body.data)).toBe(true);
+      expect(body.data.length).toBeGreaterThanOrEqual(1);
     });
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    expect(body.data.length).toBeGreaterThanOrEqual(1);
   });
 
   // -- Chain proof: find_by_key → cases_list({issueId}) in 2 REST calls ------
@@ -379,52 +418,58 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
       return;
     }
 
-    // ---- Call 1: find_by_key ------------------------------------------------
-    const findQ = encodeURIComponent(
-      JSON.stringify({
-        where: {
-          externalKey: ctx.issueExternalKey,
-          integration: { provider: ctx.issueExternalSystem },
-          projectId: ctx.projectId,
-          isDeleted: false,
-        },
-      })
-    );
-    const findR = await request.get(
-      `${baseURL}/api/model/issue/findFirst?q=${findQ}`,
-      {
-        headers: ctx.headers,
-      }
-    );
-    expect(findR.status()).toBe(200);
-    const findBody = await findR.json();
-    expect(findBody.data).not.toBeNull();
-    const issueId = findBody.data.id as number;
-    expect(issueId).toBe(ctx.issueId);
+    let issueId: number | undefined;
 
-    // ---- Call 2: cases_list({ issueId }) -----------------------------------
-    const casesQ = encodeURIComponent(
-      JSON.stringify({
-        where: {
-          projectId: ctx.projectId,
-          isDeleted: false,
-          issues: { some: { id: issueId, isDeleted: false } },
-        },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: 26,
-      })
-    );
-    const casesR = await request.get(
-      `${baseURL}/api/model/repositoryCases/findMany?q=${casesQ}`,
-      { headers: ctx.headers }
-    );
-    expect(casesR.status()).toBe(200);
-    const casesBody = await casesR.json();
-    expect(Array.isArray(casesBody.data)).toBe(true);
-    if (casesBody.data.length === 0) {
-      console.warn(
-        "ISSUE chain partial: issue has 0 linked RepositoryCases — chain shape verified, non-empty assertion skipped"
+    await test.step("Call 1: resolve issue id via find_by_key", async () => {
+      // ---- Call 1: find_by_key ------------------------------------------------
+      const findQ = encodeURIComponent(
+        JSON.stringify({
+          where: {
+            externalKey: ctx.issueExternalKey,
+            integration: { provider: ctx.issueExternalSystem },
+            projectId: ctx.projectId,
+            isDeleted: false,
+          },
+        })
       );
-    }
+      const findR = await request.get(
+        `${baseURL}/api/model/issue/findFirst?q=${findQ}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(findR.status()).toBe(200);
+      const findBody = await findR.json();
+      expect(findBody.data).not.toBeNull();
+      issueId = findBody.data.id as number;
+      expect(issueId).toBe(ctx.issueId);
+    });
+
+    await test.step("Call 2: list cases for the resolved issueId", async () => {
+      // ---- Call 2: cases_list({ issueId }) -----------------------------------
+      const casesQ = encodeURIComponent(
+        JSON.stringify({
+          where: {
+            projectId: ctx.projectId,
+            isDeleted: false,
+            issues: { some: { id: issueId, isDeleted: false } },
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 26,
+        })
+      );
+      const casesR = await request.get(
+        `${baseURL}/api/model/repositoryCases/findMany?q=${casesQ}`,
+        { headers: ctx.headers }
+      );
+      expect(casesR.status()).toBe(200);
+      const casesBody = await casesR.json();
+      expect(Array.isArray(casesBody.data)).toBe(true);
+      if (casesBody.data.length === 0) {
+        console.warn(
+          "ISSUE chain partial: issue has 0 linked RepositoryCases — chain shape verified, non-empty assertion skipped"
+        );
+      }
+    });
   });
 });

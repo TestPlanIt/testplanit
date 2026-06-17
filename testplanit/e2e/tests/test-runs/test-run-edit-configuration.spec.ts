@@ -87,69 +87,91 @@ test.describe("Test Run Edit Configuration", () => {
     api,
     page,
   }) => {
-    // Setup: Create project, configuration, and test run
-    const projectId = await api.createProject(`E2E EditCfg ${Date.now()}`);
     const configName = `EditCfg Config ${Date.now()}`;
-    await api.createConfiguration(configName, projectId);
 
-    // Create a test run
-    const testRunId = await api.createTestRun(
-      projectId,
-      `Config Run ${Date.now()}`
-    );
+    let testRunId: number | undefined;
+    let projectId: number | undefined;
+    await test.step("Create project, configuration, and test run", async () => {
+      projectId = await api.createProject(`E2E EditCfg ${Date.now()}`);
+      await api.createConfiguration(configName, projectId);
 
-    // Navigate directly to test run detail page in edit mode
-    await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}?edit=true`);
-    await page.waitForLoadState("load");
+      testRunId = await api.createTestRun(
+        projectId,
+        `Config Run ${Date.now()}`
+      );
+    });
 
-    const configCombobox = await getConfigCombobox(page);
+    let configCombobox: any;
+    await test.step("Open test run in edit mode and open the configuration combobox", async () => {
+      // Navigate directly to test run detail page in edit mode
+      await page.goto(
+        `/en-US/projects/runs/${projectId}/${testRunId}?edit=true`
+      );
+      await page.waitForLoadState("load");
 
-    // Open the combobox
-    await openComboboxAndWait(page, configCombobox);
+      configCombobox = await getConfigCombobox(page);
 
-    // Verify the configuration appears in the dropdown
-    await expect(
-      page.locator(`[role="option"]:has-text("${configName}")`)
-    ).toBeVisible({ timeout: 10000 });
+      // Open the combobox
+      await openComboboxAndWait(page, configCombobox);
+    });
 
-    // Verify pagination controls are present
-    const prevButton = page.getByRole("button", { name: "Previous" });
-    await expect(prevButton).toBeVisible();
+    await test.step("Verify the configuration and pagination controls appear", async () => {
+      // Verify the configuration appears in the dropdown
+      await expect(
+        page.locator(`[role="option"]:has-text("${configName}")`)
+      ).toBeVisible({ timeout: 10000 });
+
+      // Verify pagination controls are present
+      const prevButton = page.getByRole("button", { name: "Previous" });
+      await expect(prevButton).toBeVisible();
+    });
   });
 
   test("should change configuration via combobox in edit mode", async ({
     api,
     page,
   }) => {
-    const projectId = await api.createProject(`E2E ChangeCfg ${Date.now()}`);
     const ts = Date.now();
     const config1Name = `Original Config ${ts}`;
     const config2Name = `New Config ${ts}`;
-    await api.createConfiguration(config1Name, projectId);
-    await api.createConfiguration(config2Name, projectId);
 
-    const testRunId = await api.createTestRun(
-      projectId,
-      `Change Config Run ${Date.now()}`
-    );
+    let testRunId: number | undefined;
+    let projectId: number | undefined;
+    await test.step("Create project, two configurations, and a test run", async () => {
+      projectId = await api.createProject(`E2E ChangeCfg ${Date.now()}`);
+      await api.createConfiguration(config1Name, projectId);
+      await api.createConfiguration(config2Name, projectId);
 
-    // Navigate directly in edit mode
-    await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}?edit=true`);
-    await page.waitForLoadState("load");
+      testRunId = await api.createTestRun(
+        projectId,
+        `Change Config Run ${Date.now()}`
+      );
+    });
 
-    const configCombobox = await getConfigCombobox(page);
-    await openComboboxAndWait(page, configCombobox);
+    let configCombobox: any;
+    await test.step("Open test run in edit mode and open the configuration combobox", async () => {
+      // Navigate directly in edit mode
+      await page.goto(
+        `/en-US/projects/runs/${projectId}/${testRunId}?edit=true`
+      );
+      await page.waitForLoadState("load");
 
-    // Select config2
-    const config2Option = page.locator(
-      `[role="option"]:has-text("${config2Name}")`
-    );
-    await expect(config2Option).toBeVisible({ timeout: 10000 });
-    await config2Option.click();
+      configCombobox = await getConfigCombobox(page);
+      await openComboboxAndWait(page, configCombobox);
+    });
 
-    // Verify combobox shows the new config
-    await expect(configCombobox).toContainText(config2Name, {
-      timeout: 5000,
+    await test.step("Select the new configuration and verify the combobox updates", async () => {
+      // Select config2
+      const config2Option = page.locator(
+        `[role="option"]:has-text("${config2Name}")`
+      );
+      await expect(config2Option).toBeVisible({ timeout: 10000 });
+      await config2Option.click();
+
+      // Verify combobox shows the new config
+      await expect(configCombobox).toContainText(config2Name, {
+        timeout: 5000,
+      });
     });
   });
 
@@ -157,37 +179,48 @@ test.describe("Test Run Edit Configuration", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(`E2E SearchCfg ${Date.now()}`);
     const ts = Date.now();
     const configMatch = `Searchable Edit ${ts}`;
     const configNoMatch = `Other Edit ${ts}`;
-    await api.createConfiguration(configMatch, projectId);
-    await api.createConfiguration(configNoMatch, projectId);
 
-    const testRunId = await api.createTestRun(
-      projectId,
-      `Search Edit Run ${Date.now()}`
-    );
+    let testRunId: number | undefined;
+    let projectId: number | undefined;
+    await test.step("Create project, two configurations, and a test run", async () => {
+      projectId = await api.createProject(`E2E SearchCfg ${Date.now()}`);
+      await api.createConfiguration(configMatch, projectId);
+      await api.createConfiguration(configNoMatch, projectId);
 
-    // Navigate directly in edit mode
-    await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}?edit=true`);
-    await page.waitForLoadState("load");
+      testRunId = await api.createTestRun(
+        projectId,
+        `Search Edit Run ${Date.now()}`
+      );
+    });
 
-    const configCombobox = await getConfigCombobox(page);
-    await openComboboxAndWait(page, configCombobox);
+    await test.step("Open test run in edit mode and open the configuration combobox", async () => {
+      // Navigate directly in edit mode
+      await page.goto(
+        `/en-US/projects/runs/${projectId}/${testRunId}?edit=true`
+      );
+      await page.waitForLoadState("load");
 
-    // Type in search — the Command input inside the popover
-    const searchInput = page.locator("[cmdk-input]").first();
-    await searchInput.fill("Searchable");
+      const configCombobox = await getConfigCombobox(page);
+      await openComboboxAndWait(page, configCombobox);
+    });
 
-    await page.waitForTimeout(500);
+    await test.step("Search and verify only the matching configuration is shown", async () => {
+      // Type in search — the Command input inside the popover
+      const searchInput = page.locator("[cmdk-input]").first();
+      await searchInput.fill("Searchable");
 
-    // Verify filtering
-    await expect(
-      page.locator(`[role="option"]:has-text("${configMatch}")`)
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.locator(`[role="option"]:has-text("${configNoMatch}")`)
-    ).not.toBeVisible({ timeout: 3000 });
+      await page.waitForTimeout(500);
+
+      // Verify filtering
+      await expect(
+        page.locator(`[role="option"]:has-text("${configMatch}")`)
+      ).toBeVisible({ timeout: 5000 });
+      await expect(
+        page.locator(`[role="option"]:has-text("${configNoMatch}")`)
+      ).not.toBeVisible({ timeout: 3000 });
+    });
   });
 });

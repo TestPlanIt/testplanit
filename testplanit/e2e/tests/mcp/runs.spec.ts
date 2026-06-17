@@ -304,73 +304,97 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
         take: 26, // limit+1 probe, mirrors the MCP tool default of 25
       })
     );
-    const r = await request.get(
-      `${baseURL}/api/model/testRuns/findMany?q=${q}`,
-      {
-        headers: ctx.headers,
-      }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    if (body.data.length === 0) {
+
+    let body: { data: Array<Record<string, unknown>> } | undefined;
+
+    // Request test runs via the RPC findMany endpoint and confirm a 200 array
+    await test.step("Request test runs via testRuns.findMany", async () => {
+      const r = await request.get(
+        `${baseURL}/api/model/testRuns/findMany?q=${q}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(r.status()).toBe(200);
+      body = await r.json();
+      expect(Array.isArray(body!.data)).toBe(true);
+    });
+
+    if (body!.data.length === 0) {
       console.warn(
         "EXEC-01 part A: seed project has 0 TestRuns — RPC accepts the query shape but returned empty"
       );
       return;
     }
-    const row = body.data[0];
-    expect(row.id).toBeGreaterThan(0);
-    expect(typeof row.name).toBe("string");
-    expect(row.projectId).toBe(ctx.projectId);
-    expect(typeof row.createdAt).toBe("string");
+
+    // Verify the first row carries the expected scalar fields
+    await test.step("Verify first run row shape", async () => {
+      const row = body!.data[0];
+      expect(row.id).toBeGreaterThan(0);
+      expect(typeof row.name).toBe("string");
+      expect(row.projectId).toBe(ctx.projectId);
+      expect(typeof row.createdAt).toBe("string");
+    });
   });
 
   test("EXEC-01 part B — testplanit_test_runs_list returns inline statusCounts SUM-to-total (D7-06)", async ({
     request,
     baseURL,
   }) => {
-    const list = await callTool(
-      "testplanit_test_runs_list",
-      { projectId: ctx.projectId, limit: 5 },
-      { request, baseURL: baseURL!, headers: ctx.headers, token: ctx.token }
-    );
+    let list:
+      | Awaited<ReturnType<typeof callTool>>
+      | undefined;
 
-    if (list.data.length === 0) {
+    // Invoke the testplanit_test_runs_list tool equivalent
+    await test.step("Invoke testplanit_test_runs_list tool", async () => {
+      list = await callTool(
+        "testplanit_test_runs_list",
+        { projectId: ctx.projectId, limit: 5 },
+        { request, baseURL: baseURL!, headers: ctx.headers, token: ctx.token }
+      );
+    });
+
+    if (list!.data.length === 0) {
       console.warn(
         "EXEC-01 list-row statusCounts assertion skipped: seed project has 0 runs"
       );
       return;
     }
 
-    const row = list.data[0];
-    expect(Array.isArray(row.statusCounts)).toBe(true);
-    expect(typeof row.untested).toBe("number");
-    expect(typeof row.total).toBe("number");
-    // R3 + D7-06 invariant: counts SUM to total, fetched via the SAME arithmetic
-    // the MCP tool surfaces to agents (computeStatusRollup mirrored above).
-    const sum = row.statusCounts.reduce((s, c) => s + c.count, 0);
-    expect(sum + row.untested).toBe(row.total);
+    // Assert inline statusCounts sum to total (R3 + D7-06 invariant)
+    await test.step("Assert statusCounts sum to total", async () => {
+      const row = list!.data[0];
+      expect(Array.isArray(row.statusCounts)).toBe(true);
+      expect(typeof row.untested).toBe("number");
+      expect(typeof row.total).toBe("number");
+      // R3 + D7-06 invariant: counts SUM to total, fetched via the SAME arithmetic
+      // the MCP tool surfaces to agents (computeStatusRollup mirrored above).
+      const sum = row.statusCounts.reduce((s, c) => s + c.count, 0);
+      expect(sum + row.untested).toBe(row.total);
+    });
   });
 
   test("EXEC-01 sanity — host accepts take:100 (T-07-06 boundary; MCP enforces cap at zod)", async ({
     request,
     baseURL,
   }) => {
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: { projectId: ctx.projectId, isDeleted: false },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: 100,
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/testRuns/findMany?q=${q}`,
-      {
-        headers: ctx.headers,
-      }
-    );
-    expect(r.status()).toBe(200);
+    // Confirm the host accepts a take:100 boundary query
+    await test.step("Request test runs with take:100 boundary", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: { projectId: ctx.projectId, isDeleted: false },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 100,
+        })
+      );
+      const r = await request.get(
+        `${baseURL}/api/model/testRuns/findMany?q=${q}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(r.status()).toBe(200);
+    });
   });
 
   // -- EXEC-02: get test run with statusCounts equivalence -------------------
@@ -383,98 +407,113 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
       console.warn("EXEC-02 skipped: seed project has 0 TestRuns");
       return;
     }
+
+    let groups:
+      | Array<{ statusId: number | null; _count: { id: number } }>
+      | undefined;
+
     // 1. findUnique on the run with the same denormalized shape the tool uses.
-    const detailQ = encodeURIComponent(
-      JSON.stringify({
-        where: { id: ctx.runId },
-        include: {
-          project: { select: { id: true, name: true } },
-          state: { select: { id: true, name: true } },
-          createdBy: { select: { id: true, name: true, email: true } },
-          configuration: { select: { id: true, name: true } },
-          milestone: { select: { id: true, name: true } },
-          tags: { select: { id: true, name: true } },
-          issues: {
-            select: {
-              id: true,
-              externalKey: true,
-              title: true,
-              externalStatus: true,
-              integration: { select: { provider: true } },
-            },
-          },
-          testCases: {
-            take: 50,
-            orderBy: [{ order: "asc" }, { id: "asc" }],
-            include: {
-              repositoryCase: {
-                select: { id: true, name: true, source: true },
+    await test.step("Get run detail via findUnique with denormalized includes", async () => {
+      const detailQ = encodeURIComponent(
+        JSON.stringify({
+          where: { id: ctx.runId },
+          include: {
+            project: { select: { id: true, name: true } },
+            state: { select: { id: true, name: true } },
+            createdBy: { select: { id: true, name: true, email: true } },
+            configuration: { select: { id: true, name: true } },
+            milestone: { select: { id: true, name: true } },
+            tags: { select: { id: true, name: true } },
+            issues: {
+              select: {
+                id: true,
+                externalKey: true,
+                title: true,
+                externalStatus: true,
+                integration: { select: { provider: true } },
               },
-              assignedTo: { select: { id: true, name: true, email: true } },
-              status: { select: { id: true, name: true } },
-              results: {
-                take: 1,
-                orderBy: [{ executedAt: "desc" }, { id: "desc" }],
-                where: { isDeleted: false },
-                select: {
-                  id: true,
-                  status: { select: { id: true, name: true } },
-                  executedBy: { select: { id: true, name: true, email: true } },
-                  executedAt: true,
+            },
+            testCases: {
+              take: 50,
+              orderBy: [{ order: "asc" }, { id: "asc" }],
+              include: {
+                repositoryCase: {
+                  select: { id: true, name: true, source: true },
+                },
+                assignedTo: { select: { id: true, name: true, email: true } },
+                status: { select: { id: true, name: true } },
+                results: {
+                  take: 1,
+                  orderBy: [{ executedAt: "desc" }, { id: "desc" }],
+                  where: { isDeleted: false },
+                  select: {
+                    id: true,
+                    status: { select: { id: true, name: true } },
+                    executedBy: {
+                      select: { id: true, name: true, email: true },
+                    },
+                    executedAt: true,
+                  },
                 },
               },
             },
           },
-        },
-      })
-    );
-    const detailR = await request.get(
-      `${baseURL}/api/model/testRuns/findUnique?q=${detailQ}`,
-      {
-        headers: ctx.headers,
-      }
-    );
-    expect(detailR.status()).toBe(200);
-    const detail = (await detailR.json()).data;
-    expect(detail).not.toBeNull();
-    expect(detail.id).toBe(ctx.runId);
+        })
+      );
+      const detailR = await request.get(
+        `${baseURL}/api/model/testRuns/findUnique?q=${detailQ}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(detailR.status()).toBe(200);
+      const detail = (await detailR.json()).data;
+      expect(detail).not.toBeNull();
+      expect(detail.id).toBe(ctx.runId);
+    });
 
     // 2. Status rollup via groupBy.
-    const groupQ = encodeURIComponent(
-      JSON.stringify({
-        by: ["statusId"],
-        where: { testRunId: ctx.runId, isDeleted: false },
-        _count: { id: true },
-      })
-    );
-    const groupR = await request.get(
-      `${baseURL}/api/model/testRunCases/groupBy?q=${groupQ}`,
-      {
-        headers: ctx.headers,
-      }
-    );
-    expect(groupR.status()).toBe(200);
-    const groups: Array<{ statusId: number | null; _count: { id: number } }> =
-      ((await groupR.json()).data ?? []) as Array<{
+    await test.step("Fetch status rollup via groupBy", async () => {
+      const groupQ = encodeURIComponent(
+        JSON.stringify({
+          by: ["statusId"],
+          where: { testRunId: ctx.runId, isDeleted: false },
+          _count: { id: true },
+        })
+      );
+      const groupR = await request.get(
+        `${baseURL}/api/model/testRunCases/groupBy?q=${groupQ}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(groupR.status()).toBe(200);
+      groups = ((await groupR.json()).data ?? []) as Array<{
         statusId: number | null;
         _count: { id: number };
       }>;
-    if (groups.length === 0) {
+    });
+
+    if (groups!.length === 0) {
       console.warn(
         "EXEC-02 partial: run has 0 TestRunCases — rollup assertion skipped"
       );
       return;
     }
 
-    const total = groups.reduce((s, g) => s + g._count.id, 0);
-    const untested = groups.find((g) => g.statusId === null)?._count.id ?? 0;
-    const statusCounts = groups
-      .filter((g) => g.statusId !== null)
-      .map((g) => ({ id: g.statusId as number, count: g._count.id }));
-    const sum = statusCounts.reduce((s, c) => s + c.count, 0);
-    // R3 invariant: counts SUM to total — the same arithmetic computeStatusRollup
-    // applies in 07-01 runs/shared.ts.
-    expect(sum + untested).toBe(total);
+    // Verify the rollup counts sum to the total (R3 invariant)
+    await test.step("Assert rollup counts sum to total", async () => {
+      const total = groups!.reduce((s, g) => s + g._count.id, 0);
+      const untested =
+        groups!.find((g) => g.statusId === null)?._count.id ?? 0;
+      const statusCounts = groups!
+        .filter((g) => g.statusId !== null)
+        .map((g) => ({ id: g.statusId as number, count: g._count.id }));
+      const sum = statusCounts.reduce((s, c) => s + c.count, 0);
+      // R3 invariant: counts SUM to total — the same arithmetic computeStatusRollup
+      // applies in 07-01 runs/shared.ts.
+      expect(sum + untested).toBe(total);
+    });
   });
 
   // -- EXEC-03: list testRunCases for a run ----------------------------------
@@ -487,34 +526,45 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
       console.warn("EXEC-03 skipped: seed project has 0 TestRuns");
       return;
     }
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: { testRunId: ctx.runId, isDeleted: false },
-        orderBy: [{ order: "asc" }, { id: "asc" }],
-        take: 26,
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/testRunCases/findMany?q=${q}`,
-      {
-        headers: ctx.headers,
-      }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    if (body.data.length === 0) {
+
+    let body: { data: Array<Record<string, unknown>> } | undefined;
+
+    // List testRunCases for the run via findMany and confirm a 200 array
+    await test.step("List testRunCases for the run", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: { testRunId: ctx.runId, isDeleted: false },
+          orderBy: [{ order: "asc" }, { id: "asc" }],
+          take: 26,
+        })
+      );
+      const r = await request.get(
+        `${baseURL}/api/model/testRunCases/findMany?q=${q}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(r.status()).toBe(200);
+      body = await r.json();
+      expect(Array.isArray(body!.data)).toBe(true);
+    });
+
+    if (body!.data.length === 0) {
       console.warn(
         "EXEC-03 partial: run has 0 TestRunCases — row-shape assertion skipped"
       );
       return;
     }
-    const row = body.data[0];
-    expect(typeof row.id).toBe("number");
-    expect(row.testRunId).toBe(ctx.runId);
-    expect(typeof row.repositoryCaseId).toBe("number");
-    expect(typeof row.order).toBe("number");
-    expect(row.isDeleted).toBe(false);
+
+    // Verify the first testRunCase row shape
+    await test.step("Verify first testRunCase row shape", async () => {
+      const row = body!.data[0];
+      expect(typeof row.id).toBe("number");
+      expect(row.testRunId).toBe(ctx.runId);
+      expect(typeof row.repositoryCaseId).toBe("number");
+      expect(typeof row.order).toBe("number");
+      expect(row.isDeleted).toBe(false);
+    });
   });
 
   // -- EXEC-04: list testRunResults filtered by runId ------------------------
@@ -527,34 +577,45 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
       console.warn("EXEC-04 skipped: seed project has 0 TestRuns");
       return;
     }
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: { isDeleted: false, testRunId: ctx.runId },
-        orderBy: [{ executedAt: "desc" }, { id: "desc" }],
-        take: 26,
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/testRunResults/findMany?q=${q}`,
-      {
-        headers: ctx.headers,
-      }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    if (body.data.length === 0) {
+
+    let body: { data: Array<Record<string, unknown>> } | undefined;
+
+    // List testRunResults filtered by runId and confirm a 200 array
+    await test.step("List testRunResults for the run", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: { isDeleted: false, testRunId: ctx.runId },
+          orderBy: [{ executedAt: "desc" }, { id: "desc" }],
+          take: 26,
+        })
+      );
+      const r = await request.get(
+        `${baseURL}/api/model/testRunResults/findMany?q=${q}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(r.status()).toBe(200);
+      body = await r.json();
+      expect(Array.isArray(body!.data)).toBe(true);
+    });
+
+    if (body!.data.length === 0) {
       console.warn(
         "EXEC-04 partial: run has 0 TestRunResults — row-shape assertion skipped"
       );
       return;
     }
-    const row = body.data[0];
-    expect(typeof row.id).toBe("number");
-    expect(typeof row.testRunCaseId).toBe("number");
-    expect(typeof row.executedAt === "string" || row.executedAt === null).toBe(
-      true
-    );
+
+    // Verify the first testRunResult row shape
+    await test.step("Verify first testRunResult row shape", async () => {
+      const row = body!.data[0];
+      expect(typeof row.id).toBe("number");
+      expect(typeof row.testRunCaseId).toBe("number");
+      expect(
+        typeof row.executedAt === "string" || row.executedAt === null
+      ).toBe(true);
+    });
   });
 
   // -- EXEC-05: get a single testRunResult with stepResults inlined ----------
@@ -567,83 +628,96 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
       console.warn("EXEC-05 skipped: seed has 0 TestRunResults");
       return;
     }
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: { id: ctx.testRunResultId },
-        include: {
-          status: { select: { id: true, name: true } },
-          executedBy: { select: { id: true, name: true, email: true } },
-          stepResults: {
-            where: { isDeleted: false },
-            orderBy: [{ stepId: "asc" }, { id: "asc" }],
-            select: {
-              id: true,
-              stepStatus: { select: { id: true, name: true } }, // R2: NOT `status`
-              stepId: true,
-              notes: true,
-              evidence: true,
-              executedAt: true,
-              elapsed: true,
-              step: {
-                select: {
-                  id: true,
-                  order: true,
-                  step: true,
-                  expectedResult: true,
+
+    let data:
+      | { id: number; stepResults: Array<Record<string, unknown>> }
+      | undefined;
+
+    // Get the single testRunResult with stepResults inlined
+    await test.step("Get testRunResult with stepResults inlined", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: { id: ctx.testRunResultId },
+          include: {
+            status: { select: { id: true, name: true } },
+            executedBy: { select: { id: true, name: true, email: true } },
+            stepResults: {
+              where: { isDeleted: false },
+              orderBy: [{ stepId: "asc" }, { id: "asc" }],
+              select: {
+                id: true,
+                stepStatus: { select: { id: true, name: true } }, // R2: NOT `status`
+                stepId: true,
+                notes: true,
+                evidence: true,
+                executedAt: true,
+                elapsed: true,
+                step: {
+                  select: {
+                    id: true,
+                    order: true,
+                    step: true,
+                    expectedResult: true,
+                  },
                 },
-              },
-              attachments: { select: { id: true, name: true, url: true } },
-              issues: {
-                select: {
-                  id: true,
-                  externalKey: true,
-                  title: true,
-                  externalStatus: true,
-                  integration: { select: { provider: true } },
+                attachments: { select: { id: true, name: true, url: true } },
+                issues: {
+                  select: {
+                    id: true,
+                    externalKey: true,
+                    title: true,
+                    externalStatus: true,
+                    integration: { select: { provider: true } },
+                  },
                 },
               },
             },
-          },
-          attachments: { select: { id: true, name: true, url: true } },
-          issues: {
-            select: {
-              id: true,
-              externalKey: true,
-              title: true,
-              externalStatus: true,
-              integration: { select: { provider: true } },
+            attachments: { select: { id: true, name: true, url: true } },
+            issues: {
+              select: {
+                id: true,
+                externalKey: true,
+                title: true,
+                externalStatus: true,
+                integration: { select: { provider: true } },
+              },
             },
           },
-        },
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/testRunResults/findUnique?q=${q}`,
-      {
-        headers: ctx.headers,
-      }
-    );
-    expect(r.status()).toBe(200);
-    const data = (await r.json()).data;
-    expect(data).not.toBeNull();
-    expect(data.id).toBe(ctx.testRunResultId);
-    expect(Array.isArray(data.stepResults)).toBe(true);
-    if (data.stepResults.length === 0) {
+        })
+      );
+      const r = await request.get(
+        `${baseURL}/api/model/testRunResults/findUnique?q=${q}`,
+        {
+          headers: ctx.headers,
+        }
+      );
+      expect(r.status()).toBe(200);
+      data = (await r.json()).data;
+      expect(data).not.toBeNull();
+      expect(data!.id).toBe(ctx.testRunResultId);
+      expect(Array.isArray(data!.stepResults)).toBe(true);
+    });
+
+    if (data!.stepResults.length === 0) {
       console.warn(
         "EXEC-05 partial: result has 0 stepResults — R2/D7-08 assertions skipped"
       );
       return;
     }
-    const sr0 = data.stepResults[0];
-    // R2 / Pitfall 2: TestRunStepResults relation to Status is `stepStatus`,
-    // NOT `status`. The select uses `stepStatus`; reading it back proves the
-    // host honors the schema relation name.
-    expect(sr0.stepStatus === null || typeof sr0.stepStatus === "object").toBe(
-      true
-    );
-    // D7-08: evidence is a Json? field surfaced AS-IS by the MCP tool. The host
-    // returns whatever shape was written — the assertion below only checks the
-    // key is present (may be null, object, array, or primitive).
-    expect(sr0).toHaveProperty("evidence");
+
+    // Verify the first stepResult exposes stepStatus and evidence (R2, D7-08)
+    await test.step("Verify stepResult stepStatus and evidence fields", async () => {
+      const sr0 = data!.stepResults[0];
+      // R2 / Pitfall 2: TestRunStepResults relation to Status is `stepStatus`,
+      // NOT `status`. The select uses `stepStatus`; reading it back proves the
+      // host honors the schema relation name.
+      expect(
+        sr0.stepStatus === null || typeof sr0.stepStatus === "object"
+      ).toBe(true);
+      // D7-08: evidence is a Json? field surfaced AS-IS by the MCP tool. The host
+      // returns whatever shape was written — the assertion below only checks the
+      // key is present (may be null, object, array, or primitive).
+      expect(sr0).toHaveProperty("evidence");
+    });
   });
 });

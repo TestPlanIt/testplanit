@@ -54,95 +54,106 @@ test.describe("Reviewer inbox decisions", () => {
     adminUserId,
   }) => {
     const url = baseURL!;
-    const projectId = await api.createProject(
-      `Reviews-InboxApprove ${Date.now()}`
-    );
-    const ids = await getProjectWorkflowIds(
-      request,
-      url,
-      projectId,
-      "CASES",
-      5
-    );
-    const currentStateId = ids[0];
+    let currentStateId: number | undefined;
+    let reviewRequestId: string | undefined;
 
-    await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    {
-      const gated = await createGatedTestWorkflow(
+    await test.step("Create project and enable gated review workflow", async () => {
+      const projectId = await api.createProject(
+        `Reviews-InboxApprove ${Date.now()}`
+      );
+      const ids = await getProjectWorkflowIds(
         request,
         url,
         projectId,
-        "CASES"
+        "CASES",
+        5
       );
-      gatedWorkflowId = gated.id;
-    }
+      currentStateId = ids[0];
 
-    // Admin is the assignee/reviewer; create a separate requester so the
-    // schema's "assignee != requester" validate doesn't reject the seed.
-    const requester = await api.createUser({
-      name: `IA-Req ${Date.now()}`,
-      email: `ia-req-${Date.now()}@example.com`,
-      password: "S3cure!password",
-      access: "USER",
-      isActive: true,
-      emailVerified: true,
+      await setProjectReviewWorkflowEnabled(request, url, projectId, true);
+      {
+        const gated = await createGatedTestWorkflow(
+          request,
+          url,
+          projectId,
+          "CASES"
+        );
+        gatedWorkflowId = gated.id;
+      }
+
+      // Admin is the assignee/reviewer; create a separate requester so the
+      // schema's "assignee != requester" validate doesn't reject the seed.
+      const requester = await api.createUser({
+        name: `IA-Req ${Date.now()}`,
+        email: `ia-req-${Date.now()}@example.com`,
+        password: "S3cure!password",
+        access: "USER",
+        isActive: true,
+        emailVerified: true,
+      });
+      createdUserIds.push(requester.data.id);
+
+      const folderId = await api.createFolder(
+        projectId,
+        `Inbox-Approve ${Date.now()}`
+      );
+      const caseId = await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        `Inbox-Approve case ${Date.now()}`,
+        currentStateId!
+      );
+      reviewRequestId = await createReviewRequest(request, url, {
+        projectId,
+        entityType: "CASE",
+        entityId: caseId,
+        fromStateId: currentStateId!,
+        toStateId: gatedWorkflowId,
+        requestedByUserId: requester.data.id,
+        assigneeUserId: adminUserId,
+      });
+      pendingRequestIds.push(reviewRequestId!);
     });
-    createdUserIds.push(requester.data.id);
 
-    const folderId = await api.createFolder(
-      projectId,
-      `Inbox-Approve ${Date.now()}`
-    );
-    const caseId = await api.createTestCaseWithState(
-      projectId,
-      folderId,
-      `Inbox-Approve case ${Date.now()}`,
-      currentStateId
-    );
-    const reviewRequestId = await createReviewRequest(request, url, {
-      projectId,
-      entityType: "CASE",
-      entityId: caseId,
-      fromStateId: currentStateId,
-      toStateId: gatedWorkflowId,
-      requestedByUserId: requester.data.id,
-      assigneeUserId: adminUserId,
+    await test.step("Open the reviewer inbox and confirm the pending request", async () => {
+      await page.goto("/en-US/reviews");
+      await page.waitForLoadState("networkidle");
+
+      // Badge reflects the pending count (>= 1).
+      const badge = page.getByTestId("review-inbox-count-badge");
+      await expect(badge).toBeVisible({ timeout: 10000 });
+
+      // Pending tab is the default — find our row.
+      await expect(page.getByTestId("reviews-inbox-page")).toBeVisible();
     });
-    pendingRequestIds.push(reviewRequestId);
 
-    await page.goto("/en-US/reviews");
-    await page.waitForLoadState("networkidle");
+    await test.step("Approve the request from the inbox", async () => {
+      const approveBtn = page.getByTestId(
+        `reviews-inbox-approve-${reviewRequestId}`
+      );
+      await expect(approveBtn).toBeVisible({ timeout: 10000 });
+      await approveBtn.click();
 
-    // Badge reflects the pending count (>= 1).
-    const badge = page.getByTestId("review-inbox-count-badge");
-    await expect(badge).toBeVisible({ timeout: 10000 });
-
-    // Pending tab is the default — find our row.
-    await expect(page.getByTestId("reviews-inbox-page")).toBeVisible();
-
-    const approveBtn = page.getByTestId(
-      `reviews-inbox-approve-${reviewRequestId}`
-    );
-    await expect(approveBtn).toBeVisible({ timeout: 10000 });
-    await approveBtn.click();
-
-    const dialog = page.getByTestId("approve-dialog");
-    await expect(dialog).toBeVisible();
-    await page.getByTestId("approve-confirm").click();
-    await expect(dialog).not.toBeVisible({ timeout: 10000 });
-
-    // Verify the DB row flipped to APPROVED.
-    const res = await request.get(`${url}/api/model/reviewRequest/findFirst`, {
-      params: {
-        q: JSON.stringify({
-          where: { id: reviewRequestId },
-          select: { status: true, decidedAt: true },
-        }),
-      },
+      const dialog = page.getByTestId("approve-dialog");
+      await expect(dialog).toBeVisible();
+      await page.getByTestId("approve-confirm").click();
+      await expect(dialog).not.toBeVisible({ timeout: 10000 });
     });
-    const result = await res.json();
-    expect(result?.data?.status).toBe("APPROVED");
-    expect(result?.data?.decidedAt).toBeTruthy();
+
+    await test.step("Verify the request persisted as APPROVED", async () => {
+      // Verify the DB row flipped to APPROVED.
+      const res = await request.get(`${url}/api/model/reviewRequest/findFirst`, {
+        params: {
+          q: JSON.stringify({
+            where: { id: reviewRequestId },
+            select: { status: true, decidedAt: true },
+          }),
+        },
+      });
+      const result = await res.json();
+      expect(result?.data?.status).toBe("APPROVED");
+      expect(result?.data?.decidedAt).toBeTruthy();
+    });
   });
 
   test("Decided tab excludes CANCELLED requests", async ({
@@ -153,110 +164,120 @@ test.describe("Reviewer inbox decisions", () => {
     adminUserId,
   }) => {
     const url = baseURL!;
-    const projectId = await api.createProject(
-      `Reviews-InboxDecided ${Date.now()}`
-    );
-    const ids = await getProjectWorkflowIds(
-      request,
-      url,
-      projectId,
-      "CASES",
-      5
-    );
-    const currentStateId = ids[0];
+    let approvedId: string | undefined;
+    let rejectedId: string | undefined;
+    let cancelledId: string | undefined;
 
-    await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    {
-      const gated = await createGatedTestWorkflow(
+    await test.step("Create project and enable gated review workflow", async () => {
+      const projectId = await api.createProject(
+        `Reviews-InboxDecided ${Date.now()}`
+      );
+      const ids = await getProjectWorkflowIds(
         request,
         url,
         projectId,
-        "CASES"
+        "CASES",
+        5
       );
-      gatedWorkflowId = gated.id;
-    }
+      const currentStateId = ids[0];
 
-    const requester = await api.createUser({
-      name: `ID-Req ${Date.now()}`,
-      email: `id-req-${Date.now()}@example.com`,
-      password: "S3cure!password",
-      access: "USER",
-      isActive: true,
-      emailVerified: true,
-    });
-    createdUserIds.push(requester.data.id);
+      await setProjectReviewWorkflowEnabled(request, url, projectId, true);
+      {
+        const gated = await createGatedTestWorkflow(
+          request,
+          url,
+          projectId,
+          "CASES"
+        );
+        gatedWorkflowId = gated.id;
+      }
 
-    const folderId = await api.createFolder(
-      projectId,
-      `Inbox-Decided ${Date.now()}`
-    );
-    // Three cases: one approved, one rejected, one cancelled. Decided tab
-    // must show two rows (the cancelled one stays hidden).
-    const approvedCaseId = await api.createTestCaseWithState(
-      projectId,
-      folderId,
-      `Decided-A ${Date.now()}`,
-      currentStateId
-    );
-    const rejectedCaseId = await api.createTestCaseWithState(
-      projectId,
-      folderId,
-      `Decided-R ${Date.now()}`,
-      currentStateId
-    );
-    const cancelledCaseId = await api.createTestCaseWithState(
-      projectId,
-      folderId,
-      `Decided-X ${Date.now()}`,
-      currentStateId
-    );
-
-    const seedDecided = async (
-      entityId: number,
-      status: "APPROVED" | "REJECTED" | "CANCELLED"
-    ): Promise<string> => {
-      const res = await request.post(`${url}/api/model/reviewRequest/create`, {
-        data: {
-          data: {
-            projectId,
-            entityType: "CASE",
-            entityId,
-            fromStateId: currentStateId,
-            toStateId: gatedWorkflowId!,
-            requestedByUserId: requester.data.id,
-            assigneeUserId: adminUserId,
-            status,
-            decidedAt: new Date().toISOString(),
-            decidedByUserId: status === "CANCELLED" ? null : adminUserId,
-          },
-        },
+      const requester = await api.createUser({
+        name: `ID-Req ${Date.now()}`,
+        email: `id-req-${Date.now()}@example.com`,
+        password: "S3cure!password",
+        access: "USER",
+        isActive: true,
+        emailVerified: true,
       });
-      const j = await res.json();
-      const id = j?.data?.id as string;
-      pendingRequestIds.push(id);
-      return id;
-    };
+      createdUserIds.push(requester.data.id);
 
-    const approvedId = await seedDecided(approvedCaseId, "APPROVED");
-    const rejectedId = await seedDecided(rejectedCaseId, "REJECTED");
-    const cancelledId = await seedDecided(cancelledCaseId, "CANCELLED");
+      const folderId = await api.createFolder(
+        projectId,
+        `Inbox-Decided ${Date.now()}`
+      );
+      // Three cases: one approved, one rejected, one cancelled. Decided tab
+      // must show two rows (the cancelled one stays hidden).
+      const approvedCaseId = await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        `Decided-A ${Date.now()}`,
+        currentStateId
+      );
+      const rejectedCaseId = await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        `Decided-R ${Date.now()}`,
+        currentStateId
+      );
+      const cancelledCaseId = await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        `Decided-X ${Date.now()}`,
+        currentStateId
+      );
 
-    await page.goto("/en-US/reviews");
-    await page.waitForLoadState("networkidle");
+      const seedDecided = async (
+        entityId: number,
+        status: "APPROVED" | "REJECTED" | "CANCELLED"
+      ): Promise<string> => {
+        const res = await request.post(`${url}/api/model/reviewRequest/create`, {
+          data: {
+            data: {
+              projectId,
+              entityType: "CASE",
+              entityId,
+              fromStateId: currentStateId,
+              toStateId: gatedWorkflowId!,
+              requestedByUserId: requester.data.id,
+              assigneeUserId: adminUserId,
+              status,
+              decidedAt: new Date().toISOString(),
+              decidedByUserId: status === "CANCELLED" ? null : adminUserId,
+            },
+          },
+        });
+        const j = await res.json();
+        const id = j?.data?.id as string;
+        pendingRequestIds.push(id);
+        return id;
+      };
 
-    await page.getByTestId("reviews-inbox-tab-decided").click();
-    await page.waitForLoadState("networkidle");
+      approvedId = await seedDecided(approvedCaseId, "APPROVED");
+      rejectedId = await seedDecided(rejectedCaseId, "REJECTED");
+      cancelledId = await seedDecided(cancelledCaseId, "CANCELLED");
+    });
 
-    // Approved + rejected rows visible.
-    await expect(
-      page.locator(`[data-testid="reviews-inbox-row-${approvedId}"]`)
-    ).toBeVisible({ timeout: 10000 });
-    await expect(
-      page.locator(`[data-testid="reviews-inbox-row-${rejectedId}"]`)
-    ).toBeVisible();
-    // Cancelled row absent.
-    await expect(
-      page.locator(`[data-testid="reviews-inbox-row-${cancelledId}"]`)
-    ).toHaveCount(0);
+    await test.step("Open the reviewer inbox Decided tab", async () => {
+      await page.goto("/en-US/reviews");
+      await page.waitForLoadState("networkidle");
+
+      await page.getByTestId("reviews-inbox-tab-decided").click();
+      await page.waitForLoadState("networkidle");
+    });
+
+    await test.step("Verify Decided tab shows approved and rejected but not cancelled", async () => {
+      // Approved + rejected rows visible.
+      await expect(
+        page.locator(`[data-testid="reviews-inbox-row-${approvedId}"]`)
+      ).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.locator(`[data-testid="reviews-inbox-row-${rejectedId}"]`)
+      ).toBeVisible();
+      // Cancelled row absent.
+      await expect(
+        page.locator(`[data-testid="reviews-inbox-row-${cancelledId}"]`)
+      ).toHaveCount(0);
+    });
   });
 });

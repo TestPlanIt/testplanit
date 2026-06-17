@@ -25,16 +25,22 @@ test.describe("Performance", () => {
   test("Repository Loading Performance", async ({ api }) => {
     const projectId = await getTestProjectId(api);
 
-    // Measure time to load repository
-    const startTime = Date.now();
+    let loadTime: number | undefined;
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.waitForRepositoryLoad();
+    await test.step("Load the repository and measure elapsed time", async () => {
+      // Measure time to load repository
+      const startTime = Date.now();
 
-    const loadTime = Date.now() - startTime;
+      await repositoryPage.goto(projectId);
+      await repositoryPage.waitForRepositoryLoad();
 
-    // Repository should load within reasonable time (5 seconds)
-    // Note: In CI environments, load times can vary due to resource contention
-    expect(loadTime).toBeLessThan(5000);
+      loadTime = Date.now() - startTime;
+    });
+
+    await test.step("Verify the repository loads within 5 seconds", async () => {
+      // Repository should load within reasonable time (5 seconds)
+      // Note: In CI environments, load times can vary due to resource contention
+      expect(loadTime!).toBeLessThan(5000);
+    });
   });
 });

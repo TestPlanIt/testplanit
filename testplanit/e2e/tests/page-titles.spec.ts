@@ -68,13 +68,17 @@ test.describe("Page Titles", () => {
     });
 
     test("overview has project-specific title", async ({ page }) => {
-      await page.goto(`/projects/overview/${projectId}`);
-      await page.waitForLoadState("load");
-      // Dynamic title from fetchPageMetadata, should contain project name
-      await expect(page).toHaveTitle(/.*\|.*TestPlanIt/);
-      // Should NOT be the default generic title
-      const title = await page.title();
-      expect(title).not.toBe("TestPlanIt - Modern Test Management Platform");
+      await test.step("Open the project overview and verify the dynamic project title", async () => {
+        await page.goto(`/projects/overview/${projectId}`);
+        await page.waitForLoadState("load");
+        // Dynamic title from fetchPageMetadata, should contain project name
+        await expect(page).toHaveTitle(/.*\|.*TestPlanIt/);
+      });
+
+      await test.step("Confirm the title is not the default generic title", async () => {
+        const title = await page.title();
+        expect(title).not.toBe("TestPlanIt - Modern Test Management Platform");
+      });
     });
 
     const projectSections = [

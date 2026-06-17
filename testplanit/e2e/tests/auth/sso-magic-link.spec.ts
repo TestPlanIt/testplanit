@@ -121,97 +121,112 @@ test.describe("SSO and Magic Link", () => {
     const testEmail = `sso-google-${timestamp}@${TEST_EMAIL_DOMAIN}`;
     const testPassword = "Password123!";
 
-    // Sign in as admin to get authenticated context for API calls
-    const _adminCookies = await signInAsAdmin(page, baseURL!);
+    let providerResult: { id: string; created: boolean } | null = null;
+    let userId: string | undefined;
 
-    // Create Google SSO provider using the admin-authenticated page.request
-    const providerResult = await ensureSsoProvider(
-      page,
-      baseURL!,
-      "GOOGLE",
-      `Test Google SSO ${timestamp}`,
-      { clientId: "test-client-id", clientSecret: "test-client-secret" }
-    );
+    await test.step("Sign in as admin and create Google SSO provider", async () => {
+      // Sign in as admin to get authenticated context for API calls
+      const _adminCookies = await signInAsAdmin(page, baseURL!);
+
+      // Create Google SSO provider using the admin-authenticated page.request
+      providerResult = await ensureSsoProvider(
+        page,
+        baseURL!,
+        "GOOGLE",
+        `Test Google SSO ${timestamp}`,
+        { clientId: "test-client-id", clientSecret: "test-client-secret" }
+      );
+    });
 
     if (!providerResult) {
       test.skip(true, "Could not create Google SSO provider for test");
       return;
     }
 
-    // Create a test user
-    const userResult = await api.createUser({
-      name: `Google SSO User ${timestamp}`,
-      email: testEmail,
-      password: testPassword,
+    await test.step("Create test user", async () => {
+      // Create a test user
+      const userResult = await api.createUser({
+        name: `Google SSO User ${timestamp}`,
+        email: testEmail,
+        password: testPassword,
+      });
+      userId = userResult.data.id;
     });
-    const userId = userResult.data.id;
 
     try {
-      // Sign in as the test user to get their session cookies
-      // (The admin was already logged in — first clear cookies, then sign in as test user)
-      await page.context().clearCookies();
-      const signinPage = new SigninPage(page);
-      await signinPage.goto();
-      await signinPage.fillCredentials(testEmail, testPassword);
-      await signinPage.submit();
-      await page.waitForURL((url) => !url.pathname.includes("/signin"), {
-        timeout: 30000,
+      let savedCookies: import("@playwright/test").Cookie[] = [];
+
+      await test.step("Sign in as test user and capture session cookies", async () => {
+        // Sign in as the test user to get their session cookies
+        // (The admin was already logged in — first clear cookies, then sign in as test user)
+        await page.context().clearCookies();
+        const signinPage = new SigninPage(page);
+        await signinPage.goto();
+        await signinPage.fillCredentials(testEmail, testPassword);
+        await signinPage.submit();
+        await page.waitForURL((url) => !url.pathname.includes("/signin"), {
+          timeout: 30000,
+        });
+
+        savedCookies = await page.context().cookies();
+        await page.context().clearCookies();
       });
 
-      const savedCookies = await page.context().cookies();
-      await page.context().clearCookies();
+      await test.step("Mock Google OAuth redirect and callback", async () => {
+        // Intercept Google OAuth redirect and NextAuth callback
+        await page.route("**/accounts.google.com/**", async (route) => {
+          await route.fulfill({
+            status: 302,
+            headers: {
+              Location: `${baseURL}/api/auth/callback/google?code=mock-code&state=mock-state`,
+            },
+          });
+        });
 
-      // Intercept Google OAuth redirect and NextAuth callback
-      await page.route("**/accounts.google.com/**", async (route) => {
-        await route.fulfill({
-          status: 302,
-          headers: {
-            Location: `${baseURL}/api/auth/callback/google?code=mock-code&state=mock-state`,
-          },
+        await page.route("**/api/auth/callback/google**", async (route) => {
+          const sessionCookies = savedCookies.filter((c) =>
+            c.name.includes("session-token")
+          );
+          const setCookieHeaders = sessionCookies.map(
+            (c) =>
+              `${c.name}=${c.value}; Path=${c.path ?? "/"}; ${c.secure ? "Secure; " : ""}${c.httpOnly ? "HttpOnly; " : ""}SameSite=Lax`
+          );
+          await route.fulfill({
+            status: 302,
+            headers: {
+              Location: `${baseURL}/en-US`,
+              ...(setCookieHeaders.length > 0
+                ? { "Set-Cookie": setCookieHeaders[0] }
+                : {}),
+            },
+          });
         });
       });
 
-      await page.route("**/api/auth/callback/google**", async (route) => {
-        const sessionCookies = savedCookies.filter((c) =>
-          c.name.includes("session-token")
-        );
-        const setCookieHeaders = sessionCookies.map(
-          (c) =>
-            `${c.name}=${c.value}; Path=${c.path ?? "/"}; ${c.secure ? "Secure; " : ""}${c.httpOnly ? "HttpOnly; " : ""}SameSite=Lax`
-        );
-        await route.fulfill({
-          status: 302,
-          headers: {
-            Location: `${baseURL}/en-US`,
-            ...(setCookieHeaders.length > 0
-              ? { "Set-Cookie": setCookieHeaders[0] }
-              : {}),
-          },
+      await test.step("Sign in via Google SSO button and verify landing on home", async () => {
+        // Navigate to signin and click Google SSO button
+        await page.goto(`${baseURL}/en-US/signin`);
+        await page.waitForLoadState("networkidle");
+
+        const googleButton = page
+          .getByRole("button", { name: /google/i })
+          .first();
+        await expect(googleButton).toBeVisible({ timeout: 10000 });
+        await googleButton.click();
+
+        // Route interception redirects to home with session cookies restored
+        await page.waitForURL((url) => url.pathname.includes("/en-US"), {
+          timeout: 15000,
         });
+        expect(page.url()).toContain("/en-US");
       });
-
-      // Navigate to signin and click Google SSO button
-      await page.goto(`${baseURL}/en-US/signin`);
-      await page.waitForLoadState("networkidle");
-
-      const googleButton = page
-        .getByRole("button", { name: /google/i })
-        .first();
-      await expect(googleButton).toBeVisible({ timeout: 10000 });
-      await googleButton.click();
-
-      // Route interception redirects to home with session cookies restored
-      await page.waitForURL((url) => url.pathname.includes("/en-US"), {
-        timeout: 15000,
-      });
-      expect(page.url()).toContain("/en-US");
     } finally {
-      await api.deleteUser(userId);
-      if (providerResult.created) {
+      await api.deleteUser(userId!);
+      if (providerResult!.created) {
         // Sign in as admin again to delete the provider
         await page.context().clearCookies();
         await signInAsAdmin(page, baseURL!);
-        await deleteSsoProvider(page, baseURL!, providerResult.id);
+        await deleteSsoProvider(page, baseURL!, providerResult!.id);
       }
     }
   });
@@ -225,95 +240,110 @@ test.describe("SSO and Magic Link", () => {
     const testEmail = `sso-ms-${timestamp}@${TEST_EMAIL_DOMAIN}`;
     const testPassword = "Password123!";
 
-    // Sign in as admin for provider setup
-    await signInAsAdmin(page, baseURL!);
+    let providerResult: { id: string; created: boolean } | null = null;
+    let userId: string | undefined;
 
-    const providerResult = await ensureSsoProvider(
-      page,
-      baseURL!,
-      "MICROSOFT",
-      `Test Microsoft SSO ${timestamp}`,
-      {
-        clientId: "test-ms-client-id",
-        clientSecret: "test-ms-client-secret",
-        tenantId: "common",
-      }
-    );
+    await test.step("Sign in as admin and create Microsoft SSO provider", async () => {
+      // Sign in as admin for provider setup
+      await signInAsAdmin(page, baseURL!);
+
+      providerResult = await ensureSsoProvider(
+        page,
+        baseURL!,
+        "MICROSOFT",
+        `Test Microsoft SSO ${timestamp}`,
+        {
+          clientId: "test-ms-client-id",
+          clientSecret: "test-ms-client-secret",
+          tenantId: "common",
+        }
+      );
+    });
 
     if (!providerResult) {
       test.skip(true, "Could not create Microsoft SSO provider for test");
       return;
     }
 
-    const userResult = await api.createUser({
-      name: `Microsoft SSO User ${timestamp}`,
-      email: testEmail,
-      password: testPassword,
+    await test.step("Create test user", async () => {
+      const userResult = await api.createUser({
+        name: `Microsoft SSO User ${timestamp}`,
+        email: testEmail,
+        password: testPassword,
+      });
+      userId = userResult.data.id;
     });
-    const userId = userResult.data.id;
 
     try {
-      // Sign in as test user to get their session cookies
-      await page.context().clearCookies();
-      const signinPage = new SigninPage(page);
-      await signinPage.goto();
-      await signinPage.fillCredentials(testEmail, testPassword);
-      await signinPage.submit();
-      await page.waitForURL((url) => !url.pathname.includes("/signin"), {
-        timeout: 30000,
+      let savedCookies: import("@playwright/test").Cookie[] = [];
+
+      await test.step("Sign in as test user and capture session cookies", async () => {
+        // Sign in as test user to get their session cookies
+        await page.context().clearCookies();
+        const signinPage = new SigninPage(page);
+        await signinPage.goto();
+        await signinPage.fillCredentials(testEmail, testPassword);
+        await signinPage.submit();
+        await page.waitForURL((url) => !url.pathname.includes("/signin"), {
+          timeout: 30000,
+        });
+
+        savedCookies = await page.context().cookies();
+        await page.context().clearCookies();
       });
 
-      const savedCookies = await page.context().cookies();
-      await page.context().clearCookies();
+      await test.step("Mock Microsoft OAuth redirect and callback", async () => {
+        // Intercept Microsoft OAuth and callback
+        await page.route("**/login.microsoftonline.com/**", async (route) => {
+          await route.fulfill({
+            status: 302,
+            headers: {
+              Location: `${baseURL}/api/auth/callback/azure-ad?code=mock-ms-code&state=mock-state`,
+            },
+          });
+        });
 
-      // Intercept Microsoft OAuth and callback
-      await page.route("**/login.microsoftonline.com/**", async (route) => {
-        await route.fulfill({
-          status: 302,
-          headers: {
-            Location: `${baseURL}/api/auth/callback/azure-ad?code=mock-ms-code&state=mock-state`,
-          },
+        await page.route("**/api/auth/callback/azure-ad**", async (route) => {
+          const sessionCookies = savedCookies.filter((c) =>
+            c.name.includes("session-token")
+          );
+          const setCookieHeaders = sessionCookies.map(
+            (c) =>
+              `${c.name}=${c.value}; Path=${c.path ?? "/"}; ${c.secure ? "Secure; " : ""}${c.httpOnly ? "HttpOnly; " : ""}SameSite=Lax`
+          );
+          await route.fulfill({
+            status: 302,
+            headers: {
+              Location: `${baseURL}/en-US`,
+              ...(setCookieHeaders.length > 0
+                ? { "Set-Cookie": setCookieHeaders[0] }
+                : {}),
+            },
+          });
         });
       });
 
-      await page.route("**/api/auth/callback/azure-ad**", async (route) => {
-        const sessionCookies = savedCookies.filter((c) =>
-          c.name.includes("session-token")
-        );
-        const setCookieHeaders = sessionCookies.map(
-          (c) =>
-            `${c.name}=${c.value}; Path=${c.path ?? "/"}; ${c.secure ? "Secure; " : ""}${c.httpOnly ? "HttpOnly; " : ""}SameSite=Lax`
-        );
-        await route.fulfill({
-          status: 302,
-          headers: {
-            Location: `${baseURL}/en-US`,
-            ...(setCookieHeaders.length > 0
-              ? { "Set-Cookie": setCookieHeaders[0] }
-              : {}),
-          },
+      await test.step("Sign in via Microsoft SSO button and verify landing on home", async () => {
+        await page.goto(`${baseURL}/en-US/signin`);
+        await page.waitForLoadState("networkidle");
+
+        const microsoftButton = page
+          .getByRole("button", { name: /microsoft/i })
+          .first();
+        await expect(microsoftButton).toBeVisible({ timeout: 10000 });
+        await microsoftButton.click();
+
+        await page.waitForURL((url) => url.pathname.includes("/en-US"), {
+          timeout: 15000,
         });
+        expect(page.url()).toContain("/en-US");
       });
-
-      await page.goto(`${baseURL}/en-US/signin`);
-      await page.waitForLoadState("networkidle");
-
-      const microsoftButton = page
-        .getByRole("button", { name: /microsoft/i })
-        .first();
-      await expect(microsoftButton).toBeVisible({ timeout: 10000 });
-      await microsoftButton.click();
-
-      await page.waitForURL((url) => url.pathname.includes("/en-US"), {
-        timeout: 15000,
-      });
-      expect(page.url()).toContain("/en-US");
     } finally {
-      await api.deleteUser(userId);
-      if (providerResult.created) {
+      await api.deleteUser(userId!);
+      if (providerResult!.created) {
         await page.context().clearCookies();
         await signInAsAdmin(page, baseURL!);
-        await deleteSsoProvider(page, baseURL!, providerResult.id);
+        await deleteSsoProvider(page, baseURL!, providerResult!.id);
       }
     }
   });
@@ -392,57 +422,65 @@ test.describe("SSO and Magic Link", () => {
     const userId = userResult.data.id;
 
     try {
-      // Sign in as test user to get their session cookies
-      await page.context().clearCookies();
-      const signinPage = new SigninPage(page);
-      await signinPage.goto();
-      await signinPage.fillCredentials(testEmail, testPassword);
-      await signinPage.submit();
-      await page.waitForURL((url) => !url.pathname.includes("/signin"), {
-        timeout: 30000,
+      let savedCookies: import("@playwright/test").Cookie[] = [];
+
+      await test.step("Sign in as test user and capture session cookies", async () => {
+        // Sign in as test user to get their session cookies
+        await page.context().clearCookies();
+        const signinPage = new SigninPage(page);
+        await signinPage.goto();
+        await signinPage.fillCredentials(testEmail, testPassword);
+        await signinPage.submit();
+        await page.waitForURL((url) => !url.pathname.includes("/signin"), {
+          timeout: 30000,
+        });
+
+        savedCookies = await page.context().cookies();
+        await page.context().clearCookies();
       });
 
-      const savedCookies = await page.context().cookies();
-      await page.context().clearCookies();
-
-      // Intercept the mock IdP redirect — bypass SAML assertion validation entirely
-      await page.route("**/mock-idp-test.example.com/**", async (route) => {
-        const sessionCookies = savedCookies.filter((c) =>
-          c.name.includes("session-token")
-        );
-        const setCookieHeaders = sessionCookies.map(
-          (c) =>
-            `${c.name}=${c.value}; Path=${c.path ?? "/"}; ${c.secure ? "Secure; " : ""}${c.httpOnly ? "HttpOnly; " : ""}SameSite=Lax`
-        );
-        await route.fulfill({
-          status: 302,
-          headers: {
-            Location: `${baseURL}/en-US`,
-            ...(setCookieHeaders.length > 0
-              ? { "Set-Cookie": setCookieHeaders[0] }
-              : {}),
-          },
+      await test.step("Mock IdP redirect to bypass SAML assertion validation", async () => {
+        // Intercept the mock IdP redirect — bypass SAML assertion validation entirely
+        await page.route("**/mock-idp-test.example.com/**", async (route) => {
+          const sessionCookies = savedCookies.filter((c) =>
+            c.name.includes("session-token")
+          );
+          const setCookieHeaders = sessionCookies.map(
+            (c) =>
+              `${c.name}=${c.value}; Path=${c.path ?? "/"}; ${c.secure ? "Secure; " : ""}${c.httpOnly ? "HttpOnly; " : ""}SameSite=Lax`
+          );
+          await route.fulfill({
+            status: 302,
+            headers: {
+              Location: `${baseURL}/en-US`,
+              ...(setCookieHeaders.length > 0
+                ? { "Set-Cookie": setCookieHeaders[0] }
+                : {}),
+            },
+          });
         });
       });
 
-      await page.goto(`${baseURL}/en-US/signin`);
-      await page.waitForLoadState("networkidle");
+      await test.step("Sign in via SAML provider button and verify landing on home", async () => {
+        await page.goto(`${baseURL}/en-US/signin`);
+        await page.waitForLoadState("networkidle");
 
-      // Find and click the SAML provider button by its name
-      const samlButton = page
-        .getByRole("button", {
-          name: new RegExp(`Test SAML IdP ${timestamp}`, "i"),
-        })
-        .first();
-      await expect(samlButton).toBeVisible({ timeout: 10000 });
-      await samlButton.click();
+        // Find and click the SAML provider button by its name
+        const samlButton = page
+          .getByRole("button", {
+            name: new RegExp(`Test SAML IdP ${timestamp}`, "i"),
+          })
+          .first();
+        await expect(samlButton).toBeVisible({ timeout: 10000 });
+        await samlButton.click();
 
-      // SAML flow: signin page -> /api/auth/saml/login/{id} -> SAML route sets cookies and redirects
-      // to mock IdP entryPoint (intercepted) -> session restored -> home page
-      await page.waitForURL((url) => url.pathname.includes("/en-US"), {
-        timeout: 15000,
+        // SAML flow: signin page -> /api/auth/saml/login/{id} -> SAML route sets cookies and redirects
+        // to mock IdP entryPoint (intercepted) -> session restored -> home page
+        await page.waitForURL((url) => url.pathname.includes("/en-US"), {
+          timeout: 15000,
+        });
+        expect(page.url()).toContain("/en-US");
       });
-      expect(page.url()).toContain("/en-US");
     } finally {
       await api.deleteUser(userId);
       // Clean up SAML configuration and provider
@@ -512,51 +550,59 @@ test.describe("SSO and Magic Link", () => {
         return;
       }
 
-      // Generate a known token pair
-      const plainToken = randomBytes(32).toString("hex");
-      const hashedToken = createHash("sha256")
-        .update(plainToken + secret)
-        .digest("hex");
+      let plainToken: string | undefined;
 
-      // Insert the hashed token into the verificationToken table via admin API
-      const tokenRes = await page.request.post(
-        `${baseURL}/api/model/verificationToken/create`,
-        {
-          data: {
+      await test.step("Generate and insert a verification token via admin API", async () => {
+        // Generate a known token pair
+        plainToken = randomBytes(32).toString("hex");
+        const hashedToken = createHash("sha256")
+          .update(plainToken + secret)
+          .digest("hex");
+
+        // Insert the hashed token into the verificationToken table via admin API
+        const tokenRes = await page.request.post(
+          `${baseURL}/api/model/verificationToken/create`,
+          {
             data: {
-              identifier: testEmail,
-              token: hashedToken,
-              expires: new Date(Date.now() + 86400000).toISOString(),
+              data: {
+                identifier: testEmail,
+                token: hashedToken,
+                expires: new Date(Date.now() + 86400000).toISOString(),
+              },
             },
-          },
-        }
-      );
-      expect(tokenRes.ok()).toBeTruthy();
-
-      // Clear admin session cookies before navigating to the magic link callback
-      await page.context().clearCookies();
-
-      // Navigate to the NextAuth email callback URL with the plain token
-      await page.goto(
-        `${baseURL}/api/auth/callback/email?token=${plainToken}&email=${encodeURIComponent(testEmail)}&callbackUrl=${encodeURIComponent(baseURL + "/en-US")}`
-      );
-
-      await page.waitForURL((url) => !url.pathname.startsWith("/api/auth"), {
-        timeout: 15000,
+          }
+        );
+        expect(tokenRes.ok()).toBeTruthy();
       });
 
-      // Assert user is authenticated. Don't constrain on a specific locale
-      // prefix — NextAuth's callbackUrl handling can land on `/` (no locale)
-      // and middleware doesn't always rewrite client-side URLs immediately.
-      // The only meaningful signal here is "not redirected back to signin"
-      // and "the session cookie resolves to a real user".
-      const currentUrl = page.url();
-      expect(currentUrl).not.toContain("/signin");
+      await test.step("Visit the magic link callback and verify authenticated session", async () => {
+        // Clear admin session cookies before navigating to the magic link callback
+        await page.context().clearCookies();
 
-      const sessionRes = await page.request.get(`${baseURL}/api/auth/session`);
-      expect(sessionRes.ok()).toBeTruthy();
-      const session = await sessionRes.json();
-      expect(session?.user?.email).toBe(testEmail);
+        // Navigate to the NextAuth email callback URL with the plain token
+        await page.goto(
+          `${baseURL}/api/auth/callback/email?token=${plainToken}&email=${encodeURIComponent(testEmail)}&callbackUrl=${encodeURIComponent(baseURL + "/en-US")}`
+        );
+
+        await page.waitForURL((url) => !url.pathname.startsWith("/api/auth"), {
+          timeout: 15000,
+        });
+
+        // Assert user is authenticated. Don't constrain on a specific locale
+        // prefix — NextAuth's callbackUrl handling can land on `/` (no locale)
+        // and middleware doesn't always rewrite client-side URLs immediately.
+        // The only meaningful signal here is "not redirected back to signin"
+        // and "the session cookie resolves to a real user".
+        const currentUrl = page.url();
+        expect(currentUrl).not.toContain("/signin");
+
+        const sessionRes = await page.request.get(
+          `${baseURL}/api/auth/session`
+        );
+        expect(sessionRes.ok()).toBeTruthy();
+        const session = await sessionRes.json();
+        expect(session?.user?.email).toBe(testEmail);
+      });
     } finally {
       await api.deleteUser(userId);
     }
@@ -566,54 +612,66 @@ test.describe("SSO and Magic Link", () => {
     page,
     baseURL,
   }) => {
-    // Sign in as admin to create the Magic Link SSO provider
-    await signInAsAdmin(page, baseURL!);
-
     const timestamp = Date.now();
-    const providerResult = await ensureSsoProvider(
-      page,
-      baseURL!,
-      "MAGIC_LINK",
-      "Magic Link",
-      {}
-    );
 
-    // Clear cookies to test as unauthenticated user
-    await page.context().clearCookies();
+    let providerResult: { id: string; created: boolean } | null = null;
+
+    await test.step("Sign in as admin, create Magic Link provider, then sign out", async () => {
+      // Sign in as admin to create the Magic Link SSO provider
+      await signInAsAdmin(page, baseURL!);
+
+      providerResult = await ensureSsoProvider(
+        page,
+        baseURL!,
+        "MAGIC_LINK",
+        "Magic Link",
+        {}
+      );
+
+      // Clear cookies to test as unauthenticated user
+      await page.context().clearCookies();
+    });
 
     try {
-      // Navigate to signin page (unauthenticated)
-      await page.goto(`${baseURL}/en-US/signin`);
-      await page.waitForLoadState("networkidle");
-
-      // Find and click the Magic Link button
-      const magicLinkButton = page
-        .getByRole("button", { name: /magic.*link|passwordless/i })
-        .first();
-      await expect(magicLinkButton).toBeVisible({ timeout: 10000 });
-      await magicLinkButton.click();
-
-      // A dialog opens with an email input
       const dialog = page.locator('[role="dialog"]').first();
-      await expect(dialog).toBeVisible({ timeout: 5000 });
 
-      // Enter an email address
-      const emailInput = dialog
-        .locator('input[type="email"], input[name="email"]')
-        .first();
-      await emailInput.fill(`test-magic-${timestamp}@${TEST_EMAIL_DOMAIN}`);
+      await test.step("Open the Magic Link dialog from the signin page", async () => {
+        // Navigate to signin page (unauthenticated)
+        await page.goto(`${baseURL}/en-US/signin`);
+        await page.waitForLoadState("networkidle");
 
-      // Click the send button
-      const sendButton = dialog
-        .getByRole("button", { name: /send.*link|send/i })
-        .first();
-      await sendButton.click();
+        // Find and click the Magic Link button
+        const magicLinkButton = page
+          .getByRole("button", { name: /magic.*link|passwordless/i })
+          .first();
+        await expect(magicLinkButton).toBeVisible({ timeout: 10000 });
+        await magicLinkButton.click();
 
-      // Assert success message appears
-      // The app always shows success to prevent email enumeration
-      await expect(
-        dialog.getByText(/check.*email|sent|magic.*link/i).first()
-      ).toBeVisible({ timeout: 10000 });
+        // A dialog opens with an email input
+        await expect(dialog).toBeVisible({ timeout: 5000 });
+      });
+
+      await test.step("Enter email and send the magic link", async () => {
+        // Enter an email address
+        const emailInput = dialog
+          .locator('input[type="email"], input[name="email"]')
+          .first();
+        await emailInput.fill(`test-magic-${timestamp}@${TEST_EMAIL_DOMAIN}`);
+
+        // Click the send button
+        const sendButton = dialog
+          .getByRole("button", { name: /send.*link|send/i })
+          .first();
+        await sendButton.click();
+      });
+
+      await test.step("Verify the success message appears", async () => {
+        // Assert success message appears
+        // The app always shows success to prevent email enumeration
+        await expect(
+          dialog.getByText(/check.*email|sent|magic.*link/i).first()
+        ).toBeVisible({ timeout: 10000 });
+      });
     } finally {
       if (providerResult?.created) {
         await page.context().clearCookies();

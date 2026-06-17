@@ -125,67 +125,84 @@ test.describe("Share Management", () => {
     page,
   }) => {
     const timestamp = Date.now();
-    const projectId = await api.createProject(`Share List Test ${timestamp}`);
+    let projectId: number | undefined;
+    let shareKey1: string | undefined;
+    let shareKey2: string | undefined;
+    let shareKey3: string | undefined;
 
-    // Create test data
-    const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Test Case ${timestamp}`);
+    await test.step("Create project and seed a test case", async () => {
+      projectId = await api.createProject(`Share List Test ${timestamp}`);
 
-    // Navigate to report builder and run report
-    await navigateToRepositoryStatsReport(page, projectId);
-    await runReport(page);
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Test Case ${timestamp}`
+      );
+    });
 
-    // Create multiple shares
-    const shareKey1 = await createShare(
-      page,
-      "PUBLIC",
-      `Public Share 1 ${timestamp}`
-    );
-    const shareKey2 = await createShare(
-      page,
-      "PASSWORD_PROTECTED",
-      `Password Share ${timestamp}`,
-      `TestPass${timestamp}`
-    );
-    const shareKey3 = await createShare(
-      page,
-      "AUTHENTICATED",
-      `Auth Share ${timestamp}`
-    );
+    await test.step("Open report builder and run the report", async () => {
+      await navigateToRepositoryStatsReport(page, projectId!);
+      await runReport(page);
+    });
 
-    // Track all shares for cleanup
-    for (const shareKey of [shareKey1, shareKey2, shareKey3]) {
-      const shareLinkData = await api.getShareLinkByKey(shareKey);
-      if (shareLinkData) {
-        api.trackShareLink(shareLinkData.id);
+    await test.step("Create public, password-protected, and authenticated shares", async () => {
+      shareKey1 = await createShare(
+        page,
+        "PUBLIC",
+        `Public Share 1 ${timestamp}`
+      );
+      shareKey2 = await createShare(
+        page,
+        "PASSWORD_PROTECTED",
+        `Password Share ${timestamp}`,
+        `TestPass${timestamp}`
+      );
+      shareKey3 = await createShare(
+        page,
+        "AUTHENTICATED",
+        `Auth Share ${timestamp}`
+      );
+    });
+
+    await test.step("Track all shares for cleanup", async () => {
+      for (const shareKey of [shareKey1!, shareKey2!, shareKey3!]) {
+        const shareLinkData = await api.getShareLinkByKey(shareKey);
+        if (shareLinkData) {
+          api.trackShareLink(shareLinkData.id);
+        }
       }
-    }
-
-    // Navigate to project shares settings
-    await page.goto(`/en-US/projects/settings/${projectId}/shares`);
-    await page.waitForLoadState("networkidle");
-
-    // Verify page title (CardTitle renders as div, not h1)
-    const pageTitle = page.locator('text="Manage Shares"').first();
-    await expect(pageTitle).toBeVisible({ timeout: 10000 });
-
-    // Verify all three shares are listed
-    await expect(page.locator(`text=Public Share 1 ${timestamp}`)).toBeVisible({
-      timeout: 5000,
-    });
-    await expect(page.locator(`text=Password Share ${timestamp}`)).toBeVisible({
-      timeout: 5000,
-    });
-    await expect(page.locator(`text=Auth Share ${timestamp}`)).toBeVisible({
-      timeout: 5000,
     });
 
-    // Verify mode badges are displayed
-    await expect(page.locator("text=/PUBLIC/i").first()).toBeVisible();
-    await expect(
-      page.locator("text=/PASSWORD.*PROTECTED/i").first()
-    ).toBeVisible();
-    await expect(page.locator("text=/AUTHENTICATED/i").first()).toBeVisible();
+    await test.step("Open project shares settings page", async () => {
+      await page.goto(`/en-US/projects/settings/${projectId}/shares`);
+      await page.waitForLoadState("networkidle");
+
+      const pageTitle = page.locator('text="Manage Shares"').first();
+      await expect(pageTitle).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Verify all three shares and their mode badges are listed", async () => {
+      await expect(
+        page.locator(`text=Public Share 1 ${timestamp}`)
+      ).toBeVisible({
+        timeout: 5000,
+      });
+      await expect(
+        page.locator(`text=Password Share ${timestamp}`)
+      ).toBeVisible({
+        timeout: 5000,
+      });
+      await expect(page.locator(`text=Auth Share ${timestamp}`)).toBeVisible({
+        timeout: 5000,
+      });
+
+      await expect(page.locator("text=/PUBLIC/i").first()).toBeVisible();
+      await expect(
+        page.locator("text=/PASSWORD.*PROTECTED/i").first()
+      ).toBeVisible();
+      await expect(page.locator("text=/AUTHENTICATED/i").first()).toBeVisible();
+    });
   });
 
   test("Revoke a share link", async ({ api, page, context }) => {

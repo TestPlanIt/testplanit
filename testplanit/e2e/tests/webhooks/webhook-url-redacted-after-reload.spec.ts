@@ -127,36 +127,48 @@ test.describe("Inbound webhook URL is redacted after reload across all 3 adapter
         adapter
       );
 
-      // 1. Reload — the revealed box is gone (component-local state, not
-      //    persisted), and the configured-card view kicks in. The card's
-      //    webhook-url field now shows the redacted URL.
-      await page.reload();
-      const card = page.getByTestId(`webhook-inbound-card-${adapter.cardSlug}`);
-      await expect(card).toBeVisible({ timeout: 10_000 });
-      await expect(card.getByTestId("webhook-url")).toBeVisible();
+      let html: string | undefined;
 
-      const reloadedUrlText = await card.getByTestId("webhook-url").innerText();
-      expect(reloadedUrlText).toContain("[redacted]");
-      // The full 64-hex token MUST NOT be visible in the URL field after
-      // reload — only the prefix-truncated form is allowed.
-      expect(reloadedUrlText).not.toMatch(FULL_TOKEN_RE);
+      await test.step("Reload and confirm the URL field shows the redacted token", async () => {
+        // 1. Reload — the revealed box is gone (component-local state, not
+        //    persisted), and the configured-card view kicks in. The card's
+        //    webhook-url field now shows the redacted URL.
+        await page.reload();
+        const card = page.getByTestId(
+          `webhook-inbound-card-${adapter.cardSlug}`
+        );
+        await expect(card).toBeVisible({ timeout: 10_000 });
+        await expect(card.getByTestId("webhook-url")).toBeVisible();
 
-      // 2. Defense-in-depth: the full token MUST NOT appear ANYWHERE in
-      //    the page's rendered HTML. Catches any future regression where
-      //    the token might leak via a hidden field, data-attribute,
-      //    embedded JSON snapshot, or overly-eager prefetch.
-      const html = await page.content();
-      expect(html).not.toMatch(new RegExp(fullToken));
-      expect(html).not.toMatch(FULL_TOKEN_RE);
+        const reloadedUrlText = await card
+          .getByTestId("webhook-url")
+          .innerText();
+        expect(reloadedUrlText).toContain("[redacted]");
+        // The full 64-hex token MUST NOT be visible in the URL field after
+        // reload — only the prefix-truncated form is allowed.
+        expect(reloadedUrlText).not.toMatch(FULL_TOKEN_RE);
+      });
 
-      // 3. Sanity — the redacted form is present in the HTML (otherwise
-      //    a hostile change could simply hide the URL field entirely and
-      //    pass step 2 by accident).
-      expect(html).toContain("[redacted]");
+      await test.step("Confirm the full token never appears in the rendered HTML", async () => {
+        // 2. Defense-in-depth: the full token MUST NOT appear ANYWHERE in
+        //    the page's rendered HTML. Catches any future regression where
+        //    the token might leak via a hidden field, data-attribute,
+        //    embedded JSON snapshot, or overly-eager prefetch.
+        html = await page.content();
+        expect(html).not.toMatch(new RegExp(fullToken));
+        expect(html).not.toMatch(FULL_TOKEN_RE);
+      });
 
-      // 4. Tenant-scoping sanity — the projectId is real and the page
-      //    is rendering against the right tenant.
-      expect(projectId).toBeGreaterThan(0);
+      await test.step("Confirm the redacted form is present and the tenant is correct", async () => {
+        // 3. Sanity — the redacted form is present in the HTML (otherwise
+        //    a hostile change could simply hide the URL field entirely and
+        //    pass step 2 by accident).
+        expect(html!).toContain("[redacted]");
+
+        // 4. Tenant-scoping sanity — the projectId is real and the page
+        //    is rendering against the right tenant.
+        expect(projectId).toBeGreaterThan(0);
+      });
     });
   }
 });

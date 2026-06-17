@@ -30,32 +30,37 @@ test.describe("Sign In and Sign Out", () => {
       const timestamp = Date.now();
       const testEmail = `signin-valid-${timestamp}@example.com`;
       const testPassword = "TestPassword123!";
+      const signinPage = new SigninPage(page);
 
-      const userResult = await api.createUser({
-        name: "SignIn Valid Test",
-        email: testEmail,
-        password: testPassword,
-        access: "USER",
+      let userId: string | undefined;
+      await test.step("Create an active user", async () => {
+        const userResult = await api.createUser({
+          name: "SignIn Valid Test",
+          email: testEmail,
+          password: testPassword,
+          access: "USER",
+        });
+        userId = userResult.data.id;
       });
-      const userId = userResult.data.id;
 
       try {
-        const signinPage = new SigninPage(page);
-        await signinPage.goto();
-        await signinPage.fillCredentials(testEmail, testPassword);
-        await signinPage.submit();
+        await test.step("Sign in with valid credentials", async () => {
+          await signinPage.goto();
+          await signinPage.fillCredentials(testEmail, testPassword);
+          await signinPage.submit();
+        });
 
-        // Wait for redirect away from signin page
-        await page.waitForURL(
-          /\/en-US\/?$|\/en-US\/projects|\/en-US\/verify-email/,
-          {
-            timeout: 30000,
-          }
-        );
-
-        expect(page.url()).not.toContain("/signin");
+        await test.step("Verify redirect away from the sign-in page", async () => {
+          await page.waitForURL(
+            /\/en-US\/?$|\/en-US\/projects|\/en-US\/verify-email/,
+            {
+              timeout: 30000,
+            }
+          );
+          expect(page.url()).not.toContain("/signin");
+        });
       } finally {
-        await api.deleteUser(userId);
+        if (userId) await api.deleteUser(userId);
       }
     });
 
@@ -65,28 +70,32 @@ test.describe("Sign In and Sign Out", () => {
     }) => {
       const timestamp = Date.now();
       const testEmail = `signin-invalid-pw-${timestamp}@example.com`;
+      const signinPage = new SigninPage(page);
 
-      const userResult = await api.createUser({
-        name: "SignIn Invalid PW Test",
-        email: testEmail,
-        password: "CorrectPassword123!",
-        access: "USER",
+      let userId: string | undefined;
+      await test.step("Create a user with a known password", async () => {
+        const userResult = await api.createUser({
+          name: "SignIn Invalid PW Test",
+          email: testEmail,
+          password: "CorrectPassword123!",
+          access: "USER",
+        });
+        userId = userResult.data.id;
       });
-      const userId = userResult.data.id;
 
       try {
-        const signinPage = new SigninPage(page);
-        await signinPage.goto();
-        await signinPage.fillCredentials(testEmail, "WrongPassword999!");
-        await signinPage.submit();
+        await test.step("Attempt sign-in with the wrong password", async () => {
+          await signinPage.goto();
+          await signinPage.fillCredentials(testEmail, "WrongPassword999!");
+          await signinPage.submit();
+        });
 
-        // Error message should appear
-        await signinPage.verifyErrorMessage();
-
-        // Should remain on signin page
-        expect(page.url()).toContain("/signin");
+        await test.step("Verify an error shows and we stay on the sign-in page", async () => {
+          await signinPage.verifyErrorMessage();
+          expect(page.url()).toContain("/signin");
+        });
       } finally {
-        await api.deleteUser(userId);
+        if (userId) await api.deleteUser(userId);
       }
     });
 
@@ -94,55 +103,61 @@ test.describe("Sign In and Sign Out", () => {
       page,
     }) => {
       const signinPage = new SigninPage(page);
-      await signinPage.goto();
-      await signinPage.fillCredentials(
-        `nonexistent-${Date.now()}@example.com`,
-        "AnyPassword123!"
-      );
-      await signinPage.submit();
 
-      // Error message should appear
-      await signinPage.verifyErrorMessage();
+      await test.step("Attempt sign-in with a non-existent email", async () => {
+        await signinPage.goto();
+        await signinPage.fillCredentials(
+          `nonexistent-${Date.now()}@example.com`,
+          "AnyPassword123!"
+        );
+        await signinPage.submit();
+      });
 
-      // Should remain on signin page
-      expect(page.url()).toContain("/signin");
+      await test.step("Verify an error shows and we stay on the sign-in page", async () => {
+        await signinPage.verifyErrorMessage();
+        expect(page.url()).toContain("/signin");
+      });
     });
 
     test("Session persists across page refresh", async ({ page, api }) => {
       const timestamp = Date.now();
       const testEmail = `signin-persist-${timestamp}@example.com`;
       const testPassword = "TestPassword123!";
+      const signinPage = new SigninPage(page);
 
-      const userResult = await api.createUser({
-        name: "SignIn Persist Test",
-        email: testEmail,
-        password: testPassword,
-        access: "USER",
+      let userId: string | undefined;
+      await test.step("Create an active user", async () => {
+        const userResult = await api.createUser({
+          name: "SignIn Persist Test",
+          email: testEmail,
+          password: testPassword,
+          access: "USER",
+        });
+        userId = userResult.data.id;
       });
-      const userId = userResult.data.id;
 
       try {
-        const signinPage = new SigninPage(page);
-        await signinPage.goto();
-        await signinPage.fillCredentials(testEmail, testPassword);
-        await signinPage.submit();
+        await test.step("Sign in with valid credentials", async () => {
+          await signinPage.goto();
+          await signinPage.fillCredentials(testEmail, testPassword);
+          await signinPage.submit();
+        });
 
-        // Wait for redirect away from signin
-        await page.waitForURL(
-          /\/en-US\/?$|\/en-US\/verify-email|\/en-US\/projects/,
-          { timeout: 30000 }
-        );
+        await test.step("Verify we land on an authenticated page", async () => {
+          await page.waitForURL(
+            /\/en-US\/?$|\/en-US\/verify-email|\/en-US\/projects/,
+            { timeout: 30000 }
+          );
+          expect(page.url()).not.toContain("/signin");
+        });
 
-        const urlBeforeRefresh = page.url();
-        expect(urlBeforeRefresh).not.toContain("/signin");
-
-        // Reload and verify we're still authenticated (not redirected to signin)
-        await page.reload();
-        await page.waitForLoadState("networkidle");
-
-        expect(page.url()).not.toContain("/signin");
+        await test.step("Reload and verify the session persists", async () => {
+          await page.reload();
+          await page.waitForLoadState("networkidle");
+          expect(page.url()).not.toContain("/signin");
+        });
       } finally {
-        await api.deleteUser(userId);
+        if (userId) await api.deleteUser(userId);
       }
     });
   });
@@ -154,44 +169,54 @@ test.describe("Sign In and Sign Out", () => {
       const timestamp = Date.now();
       const testEmail = `signin-inactive-${timestamp}@example.com`;
       const testPassword = "TestPassword123!";
+      const signinPage = new SigninPage(page);
 
-      const userResult = await api.createUser({
-        name: "SignIn Inactive Test",
-        email: testEmail,
-        password: testPassword,
-        access: "USER",
+      let userId: string | undefined;
+      await test.step("Create an active user", async () => {
+        const userResult = await api.createUser({
+          name: "SignIn Inactive Test",
+          email: testEmail,
+          password: testPassword,
+          access: "USER",
+        });
+        userId = userResult.data.id;
       });
-      const userId = userResult.data.id;
 
       try {
-        // Deactivate the user (requires admin session in request fixture)
-        await api.updateUser({ userId, data: { isActive: false } });
+        await test.step("Deactivate the user", async () => {
+          // Requires an admin session in the request fixture.
+          await api.updateUser({ userId: userId!, data: { isActive: false } });
+        });
 
-        // Clear browser cookies so we sign in as an unauthenticated user
-        await page.context().clearCookies();
+        await test.step("Sign in as the deactivated user from a clean session", async () => {
+          // Clear browser cookies so we sign in as an unauthenticated user.
+          await page.context().clearCookies();
+          await signinPage.goto();
+          await signinPage.fillCredentials(testEmail, testPassword);
+          await signinPage.submit();
+        });
 
-        const signinPage = new SigninPage(page);
-        await signinPage.goto();
-        await signinPage.fillCredentials(testEmail, testPassword);
-        await signinPage.submit();
+        await test.step("Verify sign-in is denied", async () => {
+          // Deactivated users are denied by the NextAuth authorize callback;
+          // wait for the page to settle before inspecting the outcome.
+          await page.waitForTimeout(3000);
+          const currentUrl = page.url();
 
-        // Deactivated users are denied by NextAuth authorize callback
-        // Wait for the page to settle
-        await page.waitForTimeout(3000);
-        const currentUrl = page.url();
+          // Either an error is shown on signin, or we were redirected with an error param.
+          const hasError =
+            currentUrl.includes("/signin") || currentUrl.includes("error=");
+          expect(hasError).toBe(true);
 
-        // Either an error is shown on signin, or we were redirected with an error param
-        const hasError =
-          currentUrl.includes("/signin") || currentUrl.includes("error=");
-
-        expect(hasError).toBe(true);
-
-        // If still on signin page without error= in URL, the error message should be shown
-        if (currentUrl.includes("/signin") && !currentUrl.includes("error=")) {
-          await signinPage.verifyErrorMessage();
-        }
+          // If still on signin without error= in the URL, the error message should be shown.
+          if (
+            currentUrl.includes("/signin") &&
+            !currentUrl.includes("error=")
+          ) {
+            await signinPage.verifyErrorMessage();
+          }
+        });
       } finally {
-        await api.deleteUser(userId);
+        if (userId) await api.deleteUser(userId);
       }
     });
   });
@@ -201,39 +226,43 @@ test.describe("Sign In and Sign Out", () => {
     test("Sign-out clears session and redirects to signin", async ({
       page,
     }) => {
-      await page.goto("/en-US/projects");
-      await page.waitForLoadState("networkidle");
+      await test.step("Open an authenticated page and confirm we're signed in", async () => {
+        await page.goto("/en-US/projects");
+        await page.waitForLoadState("networkidle");
+        expect(page.url()).not.toContain("/signin");
+        expect(page.url()).toContain("/projects");
+      });
 
-      // Confirm we're authenticated
-      expect(page.url()).not.toContain("/signin");
-      expect(page.url()).toContain("/projects");
+      await test.step("Open the user menu", async () => {
+        const userMenu = page
+          .locator(
+            'button[aria-label*="User menu" i], [data-testid="user-menu"], [data-testid="user-avatar"], button:has([data-testid="avatar"])'
+          )
+          .first();
+        await expect(userMenu).toBeVisible({ timeout: 10000 });
+        await userMenu.click();
+      });
 
-      // Find user menu button in the header
-      const userMenu = page
-        .locator(
-          'button[aria-label*="User menu" i], [data-testid="user-menu"], [data-testid="user-avatar"], button:has([data-testid="avatar"])'
-        )
-        .first();
-      await expect(userMenu).toBeVisible({ timeout: 10000 });
-      await userMenu.click();
+      await test.step("Click sign out", async () => {
+        const signOutButton = page
+          .locator(
+            '[role="menuitem"]:has-text("Sign out"), [role="menuitem"]:has-text("Sign Out"), [role="menuitem"]:has-text("Logout"), [role="menuitem"]:has-text("Log out")'
+          )
+          .first();
+        await expect(signOutButton).toBeVisible({ timeout: 5000 });
+        await signOutButton.click();
+      });
 
-      // Find sign-out button in the dropdown menu
-      const signOutButton = page
-        .locator(
-          '[role="menuitem"]:has-text("Sign out"), [role="menuitem"]:has-text("Sign Out"), [role="menuitem"]:has-text("Logout"), [role="menuitem"]:has-text("Log out")'
-        )
-        .first();
-      await expect(signOutButton).toBeVisible({ timeout: 5000 });
-      await signOutButton.click();
+      await test.step("Verify redirect to the sign-in page", async () => {
+        await page.waitForURL(/\/signin/, { timeout: 15000 });
+        expect(page.url()).toContain("/signin");
+      });
 
-      // Wait for redirect to signin page
-      await page.waitForURL(/\/signin/, { timeout: 15000 });
-      expect(page.url()).toContain("/signin");
-
-      // Verify protected page now redirects to signin
-      await page.goto("/en-US/projects");
-      await page.waitForURL(/\/signin/, { timeout: 10000 });
-      expect(page.url()).toContain("/signin");
+      await test.step("Verify protected pages now redirect to sign-in", async () => {
+        await page.goto("/en-US/projects");
+        await page.waitForURL(/\/signin/, { timeout: 10000 });
+        expect(page.url()).toContain("/signin");
+      });
     });
   });
 });

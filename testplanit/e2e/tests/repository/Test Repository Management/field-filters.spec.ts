@@ -58,44 +58,52 @@ test.describe("Field-Based Filtering", () => {
     test("1.1 - Open and close filter dropdown", async ({ api, page }) => {
       const { projectId, folderId } = await setupFilteringProject(api);
 
-      await repositoryPage.goto(projectId);
-      await repositoryPage.selectFolder(folderId);
-      await page.waitForLoadState("networkidle");
+      await test.step("Open repository folder and wait for cases table", async () => {
+        await repositoryPage.goto(projectId);
+        await repositoryPage.selectFolder(folderId);
+        await page.waitForLoadState("networkidle");
 
-      // Wait for the table to be visible
-      const casesTable = page.locator('table, [role="table"]').first();
-      await expect(casesTable).toBeVisible({ timeout: 10000 });
+        // Wait for the table to be visible
+        const casesTable = page.locator('table, [role="table"]').first();
+        await expect(casesTable).toBeVisible({ timeout: 10000 });
+      });
 
-      // Find the Name column header (should have filter capability)
-      const nameHeader = page
-        .locator('th:has-text("Name"), th:has-text("Title")')
-        .first();
-      await expect(nameHeader).toBeVisible({ timeout: 5000 });
-
-      // Click column header to open filter dropdown
-      await nameHeader.click();
-      await page.waitForTimeout(500); // Wait for animation
-
-      // Verify filter dropdown appears with filter options
       const filterDropdown = page
         .locator('[role="menu"], [role="dialog"], [role="listbox"]')
         .filter({
           hasText: /Contains|Equals|Filter/i,
         });
 
-      // Check if dropdown is visible (some columns might not have filters)
-      const isDropdownVisible = await filterDropdown
-        .isVisible({ timeout: 2000 })
-        .catch(() => false);
+      let isDropdownVisible: boolean | undefined;
 
-      if (isDropdownVisible) {
-        // Click outside to close dropdown
-        await page.locator("body").click({ position: { x: 10, y: 10 } });
-        await page.waitForTimeout(300);
+      await test.step("Click Name column header to open filter dropdown", async () => {
+        // Find the Name column header (should have filter capability)
+        const nameHeader = page
+          .locator('th:has-text("Name"), th:has-text("Title")')
+          .first();
+        await expect(nameHeader).toBeVisible({ timeout: 5000 });
 
-        // Verify dropdown closed
-        await expect(filterDropdown).not.toBeVisible({ timeout: 3000 });
-      }
+        // Click column header to open filter dropdown
+        await nameHeader.click();
+        await page.waitForTimeout(500); // Wait for animation
+
+        // Verify filter dropdown appears with filter options
+        // Check if dropdown is visible (some columns might not have filters)
+        isDropdownVisible = await filterDropdown
+          .isVisible({ timeout: 2000 })
+          .catch(() => false);
+      });
+
+      await test.step("Close dropdown by clicking outside and verify it hides", async () => {
+        if (isDropdownVisible) {
+          // Click outside to close dropdown
+          await page.locator("body").click({ position: { x: 10, y: 10 } });
+          await page.waitForTimeout(300);
+
+          // Verify dropdown closed
+          await expect(filterDropdown).not.toBeVisible({ timeout: 3000 });
+        }
+      });
     });
 
     test("1.2 - Filter operators are visible and selectable", async ({
@@ -104,85 +112,92 @@ test.describe("Field-Based Filtering", () => {
     }) => {
       const { projectId, folderId } = await setupFilteringProject(api);
 
-      await repositoryPage.goto(projectId);
-      await repositoryPage.selectFolder(folderId);
-      await page.waitForLoadState("networkidle");
+      await test.step("Open repository folder for filtering", async () => {
+        await repositoryPage.goto(projectId);
+        await repositoryPage.selectFolder(folderId);
+        await page.waitForLoadState("networkidle");
+      });
 
-      // Find any filterable column header
-      const columnHeaders = page.locator("th").all();
-      const headers = await columnHeaders;
+      await test.step("Open a filterable column and verify Has/No Value operators appear", async () => {
+        // Find any filterable column header
+        const columnHeaders = page.locator("th").all();
+        const headers = await columnHeaders;
 
-      // Try to find a column with filter capability
-      for (const header of headers) {
-        const headerText = await header.textContent();
+        // Try to find a column with filter capability
+        for (const header of headers) {
+          const headerText = await header.textContent();
 
-        // Skip system columns that don't have custom field filters
-        if (!headerText || headerText.match(/^(#|Actions|Select|☰)$/i)) {
-          continue;
-        }
+          // Skip system columns that don't have custom field filters
+          if (!headerText || headerText.match(/^(#|Actions|Select|☰)$/i)) {
+            continue;
+          }
 
-        await header.click();
-        await page.waitForTimeout(300);
+          await header.click();
+          await page.waitForTimeout(300);
 
-        // Check if filter dropdown appeared
-        const filterDropdown = page
-          .locator('[role="menu"], [role="dialog"]')
-          .filter({
-            hasText: /Contains|Equals|Has.*Value|Filter/i,
-          });
+          // Check if filter dropdown appeared
+          const filterDropdown = page
+            .locator('[role="menu"], [role="dialog"]')
+            .filter({
+              hasText: /Contains|Equals|Has.*Value|Filter/i,
+            });
 
-        const isVisible = await filterDropdown
-          .isVisible({ timeout: 1000 })
-          .catch(() => false);
-
-        if (isVisible) {
-          // Verify filter operators are present
-          // Look for common filter options
-          const hasValueOption = page.locator("text=/Has.*Value/i").first();
-          const noValueOption = page.locator("text=/No.*Value/i").first();
-
-          // At minimum, we should see these two options for most field types
-          const hasValueVisible = await hasValueOption
-            .isVisible({ timeout: 2000 })
-            .catch(() => false);
-          const noValueVisible = await noValueOption
-            .isVisible({ timeout: 2000 })
+          const isVisible = await filterDropdown
+            .isVisible({ timeout: 1000 })
             .catch(() => false);
 
-          expect(hasValueVisible || noValueVisible).toBe(true);
+          if (isVisible) {
+            // Verify filter operators are present
+            // Look for common filter options
+            const hasValueOption = page.locator("text=/Has.*Value/i").first();
+            const noValueOption = page.locator("text=/No.*Value/i").first();
 
-          // Close the dropdown
-          await page.keyboard.press("Escape");
-          await page.waitForTimeout(200);
-          break;
+            // At minimum, we should see these two options for most field types
+            const hasValueVisible = await hasValueOption
+              .isVisible({ timeout: 2000 })
+              .catch(() => false);
+            const noValueVisible = await noValueOption
+              .isVisible({ timeout: 2000 })
+              .catch(() => false);
+
+            expect(hasValueVisible || noValueVisible).toBe(true);
+
+            // Close the dropdown
+            await page.keyboard.press("Escape");
+            await page.waitForTimeout(200);
+            break;
+          }
         }
-      }
+      });
     });
 
     test("1.3 - Has Value / No Value filter options", async ({ api, page }) => {
       const { projectId, folderId } = await setupFilteringProject(api);
 
-      await repositoryPage.goto(projectId);
-      await repositoryPage.selectFolder(folderId);
-      await page.waitForLoadState("networkidle");
+      await test.step("Open repository folder and confirm seeded test cases", async () => {
+        await repositoryPage.goto(projectId);
+        await repositoryPage.selectFolder(folderId);
+        await page.waitForLoadState("networkidle");
 
-      // Wait for test cases to load - look for actual case names
-      await expect(page.locator('text="Login test case"')).toBeVisible({
-        timeout: 10000,
+        // Wait for test cases to load - look for actual case names
+        await expect(page.locator('text="Login test case"')).toBeVisible({
+          timeout: 10000,
+        });
+
+        // Count initial test cases
+        const initialRows = page.locator('tbody tr, [role="row"]').filter({
+          has: page.locator('td, [role="cell"]'),
+        });
+        const initialCount = await initialRows.count();
+        expect(initialCount).toBeGreaterThan(0);
       });
 
-      // Count initial test cases
-      const initialRows = page.locator('tbody tr, [role="row"]').filter({
-        has: page.locator('td, [role="cell"]'),
-      });
-      const initialCount = await initialRows.count();
-      expect(initialCount).toBeGreaterThan(0);
+      await test.step("Apply No Value filter on a custom field column and clear it", async () => {
+        // Find a filterable column
+        const columnHeaders = page.locator("th").all();
+        const headers = await columnHeaders;
 
-      // Find a filterable column
-      const columnHeaders = page.locator("th").all();
-      const headers = await columnHeaders;
-
-      for (const header of headers) {
+        for (const header of headers) {
         const headerText = await header.textContent();
 
         // Skip system columns
@@ -238,7 +253,8 @@ test.describe("Field-Based Filtering", () => {
           }
           break;
         }
-      }
+        }
+      });
     });
 
     test("1.4 - Numeric filter validation (between operator)", async ({
@@ -247,10 +263,13 @@ test.describe("Field-Based Filtering", () => {
     }) => {
       const { projectId, folderId } = await setupFilteringProject(api);
 
-      await repositoryPage.goto(projectId);
-      await repositoryPage.selectFolder(folderId);
-      await page.waitForLoadState("networkidle");
+      await test.step("Open repository folder for numeric filtering", async () => {
+        await repositoryPage.goto(projectId);
+        await repositoryPage.selectFolder(folderId);
+        await page.waitForLoadState("networkidle");
+      });
 
+      await test.step("Select Between operator on a numeric column and validate the range inputs", async () => {
       // Look for numeric field columns (like Priority, Estimate, etc.)
       const columnHeaders = page.locator("th").all();
       const headers = await columnHeaders;
@@ -313,15 +332,19 @@ test.describe("Field-Based Filtering", () => {
           }
         }
       }
+      });
     });
 
     test("1.5 - Text filter: Contains operator", async ({ api, page }) => {
       const { projectId, folderId } = await setupFilteringProject(api);
 
-      await repositoryPage.goto(projectId);
-      await repositoryPage.selectFolder(folderId);
-      await page.waitForLoadState("networkidle");
+      await test.step("Open repository folder for text filtering", async () => {
+        await repositoryPage.goto(projectId);
+        await repositoryPage.selectFolder(folderId);
+        await page.waitForLoadState("networkidle");
+      });
 
+      await test.step("Open the Name column Contains filter, apply it, and clear the chip", async () => {
       // Use the Name column for text filtering
       const nameHeader = page
         .locator('th:has-text("Name"), th:has-text("Title")')
@@ -390,6 +413,7 @@ test.describe("Field-Based Filtering", () => {
           }
         }
       }
+      });
     });
   });
 
@@ -400,10 +424,13 @@ test.describe("Field-Based Filtering", () => {
     }) => {
       const { projectId, folderId } = await setupFilteringProject(api);
 
-      await repositoryPage.goto(projectId);
-      await repositoryPage.selectFolder(folderId);
-      await page.waitForLoadState("networkidle");
+      await test.step("Open repository folder for multi-filter test", async () => {
+        await repositoryPage.goto(projectId);
+        await repositoryPage.selectFolder(folderId);
+        await page.waitForLoadState("networkidle");
+      });
 
+      await test.step("Apply Name contains test filter and add a second Has Value filter", async () => {
       // Apply first filter (Name contains "test")
       const nameHeader = page.locator('th:has-text("Name")').first();
       await nameHeader.click();
@@ -481,6 +508,7 @@ test.describe("Field-Based Filtering", () => {
           }
         }
       }
+      });
     });
   });
 
@@ -488,10 +516,13 @@ test.describe("Field-Based Filtering", () => {
     test("3.1 - Filter persists after navigation", async ({ api, page }) => {
       const { projectId, folderId } = await setupFilteringProject(api);
 
-      await repositoryPage.goto(projectId);
-      await repositoryPage.selectFolder(folderId);
-      await page.waitForLoadState("networkidle");
+      await test.step("Open repository folder for persistence test", async () => {
+        await repositoryPage.goto(projectId);
+        await repositoryPage.selectFolder(folderId);
+        await page.waitForLoadState("networkidle");
+      });
 
+      await test.step("Apply Name contains filter, navigate away and back, verify the chip persists", async () => {
       // Apply a filter
       const nameHeader = page.locator('th:has-text("Name")').first();
       await nameHeader.click();
@@ -541,6 +572,7 @@ test.describe("Field-Based Filtering", () => {
           await expect(filterChip.first()).toBeVisible({ timeout: 3000 });
         }
       }
+      });
     });
   });
 
@@ -548,10 +580,13 @@ test.describe("Field-Based Filtering", () => {
     test("4.1 - Empty state when no results match", async ({ api, page }) => {
       const { projectId, folderId } = await setupFilteringProject(api);
 
-      await repositoryPage.goto(projectId);
-      await repositoryPage.selectFolder(folderId);
-      await page.waitForLoadState("networkidle");
+      await test.step("Open repository folder for empty-state test", async () => {
+        await repositoryPage.goto(projectId);
+        await repositoryPage.selectFolder(folderId);
+        await page.waitForLoadState("networkidle");
+      });
 
+      await test.step("Apply a non-matching filter and verify the empty state", async () => {
       // Apply filter with no matching results
       const nameHeader = page.locator('th:has-text("Name")').first();
       await nameHeader.click();
@@ -589,6 +624,7 @@ test.describe("Field-Based Filtering", () => {
 
         expect(emptyStateVisible || rowCount === 0).toBe(true);
       }
+      });
     });
   });
 });

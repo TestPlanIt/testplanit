@@ -130,23 +130,32 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
   }) => {
     const page = await bOnlyCtx.newPage();
     try {
-      await page.goto(`${baseURL}/projects/settings/${projectAId}/webhooks`, {
-        waitUntil: "load",
+      await test.step("Navigate to Project A's webhooks page as B-only PROJECTADMIN", async () => {
+        await page.goto(
+          `${baseURL}/projects/settings/${projectAId}/webhooks`,
+          {
+            waitUntil: "load",
+          }
+        );
       });
 
       // Page-level gate calls notFound() when project is not visible OR when
       // session.user.access ∉ {ADMIN, PROJECTADMIN-assigned}. In both
       // branches the form + tabs are unmounted — assert the inverse so we
       // don't depend on the rendered 404 chrome (which has no testid contract).
-      await expect(page.getByTestId("webhook-config-form")).toHaveCount(0, {
-        timeout: 10_000,
+      await test.step("Assert no form, tabs, or webhook config cards render", async () => {
+        await expect(page.getByTestId("webhook-config-form")).toHaveCount(0, {
+          timeout: 10_000,
+        });
+        await expect(page.getByTestId("webhooks-tab-inbound")).toHaveCount(0);
+        await expect(page.getByTestId("webhooks-tab-outbound")).toHaveCount(0);
+        await expect(page.getByTestId("webhooks-tab-deliveries")).toHaveCount(
+          0
+        );
+        await expect(
+          page.getByTestId("webhook-inbound-card-jira")
+        ).toHaveCount(0);
       });
-      await expect(page.getByTestId("webhooks-tab-inbound")).toHaveCount(0);
-      await expect(page.getByTestId("webhooks-tab-outbound")).toHaveCount(0);
-      await expect(page.getByTestId("webhooks-tab-deliveries")).toHaveCount(0);
-      await expect(page.getByTestId("webhook-inbound-card-jira")).toHaveCount(
-        0
-      );
     } finally {
       await page.close();
     }
@@ -157,16 +166,25 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
   }) => {
     const page = await bOnlyCtx.newPage();
     try {
-      await page.goto(
-        `${baseURL}/projects/settings/${projectAId}/webhooks?tab=deliveries`,
-        { waitUntil: "load" }
-      );
+      await test.step("Navigate to Project A's deliveries tab as B-only PROJECTADMIN", async () => {
+        await page.goto(
+          `${baseURL}/projects/settings/${projectAId}/webhooks?tab=deliveries`,
+          { waitUntil: "load" }
+        );
+      });
       // ?tab=deliveries is irrelevant once notFound() unmounts the page —
       // the deliveries-tab + table testids must never render.
-      await expect(page.getByTestId("webhook-deliveries-tab")).toHaveCount(0, {
-        timeout: 10_000,
+      await test.step("Assert no deliveries tab or table renders", async () => {
+        await expect(page.getByTestId("webhook-deliveries-tab")).toHaveCount(
+          0,
+          {
+            timeout: 10_000,
+          }
+        );
+        await expect(
+          page.getByTestId("webhook-deliveries-table")
+        ).toHaveCount(0);
       });
-      await expect(page.getByTestId("webhook-deliveries-table")).toHaveCount(0);
     } finally {
       await page.close();
     }
@@ -181,19 +199,24 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     // assigned. Project A has none of those for this user, so the result
     // must be an empty array (200, not 422 — silent filter, per ACL-03
     // pattern).
-    const response = await bOnlyCtx.request.get(
-      `${baseURL}/api/model/webhookConfig/findMany`,
-      {
-        params: {
-          q: JSON.stringify({ where: { projectId: projectAId } }),
-        },
-      }
-    );
+    let response: Awaited<ReturnType<typeof bOnlyCtx.request.get>> | undefined;
+    await test.step("Probe webhookConfig findMany scoped to Project A", async () => {
+      response = await bOnlyCtx.request.get(
+        `${baseURL}/api/model/webhookConfig/findMany`,
+        {
+          params: {
+            q: JSON.stringify({ where: { projectId: projectAId } }),
+          },
+        }
+      );
+    });
 
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    expect(body.data).toHaveLength(0);
+    await test.step("Assert 200 with an empty data array", async () => {
+      expect(response!.status()).toBe(200);
+      const body = await response!.json();
+      expect(Array.isArray(body.data)).toBe(true);
+      expect(body.data).toHaveLength(0);
+    });
   });
 
   test("B-only PROJECTADMIN findMany webhookDelivery scoped to Project A returns empty (ZenStack read policy)", async ({
@@ -206,21 +229,26 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     // rows. We don't seed delivery rows for this assertion — the clause is
     // identical regardless of count, and the empty result is the
     // observable contract.
-    const response = await bOnlyCtx.request.get(
-      `${baseURL}/api/model/webhookDelivery/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { webhookConfig: { projectId: projectAId } },
-          }),
-        },
-      }
-    );
+    let response: Awaited<ReturnType<typeof bOnlyCtx.request.get>> | undefined;
+    await test.step("Probe webhookDelivery findMany scoped to Project A", async () => {
+      response = await bOnlyCtx.request.get(
+        `${baseURL}/api/model/webhookDelivery/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { webhookConfig: { projectId: projectAId } },
+            }),
+          },
+        }
+      );
+    });
 
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    expect(body.data).toHaveLength(0);
+    await test.step("Assert 200 with an empty data array", async () => {
+      expect(response!.status()).toBe(200);
+      const body = await response!.json();
+      expect(Array.isArray(body.data)).toBe(true);
+      expect(body.data).toHaveLength(0);
+    });
   });
 
   test("B-only PROJECTADMIN can still see their OWN project's webhooks page (positive control)", async ({
@@ -232,13 +260,20 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     // give a false sense of security.
     const page = await bOnlyCtx.newPage();
     try {
-      await page.goto(`${baseURL}/projects/settings/${projectBId}/webhooks`, {
-        waitUntil: "load",
+      await test.step("Navigate to Project B's webhooks page as B-only PROJECTADMIN", async () => {
+        await page.goto(
+          `${baseURL}/projects/settings/${projectBId}/webhooks`,
+          {
+            waitUntil: "load",
+          }
+        );
       });
-      await expect(page.getByTestId("webhook-config-form")).toBeVisible({
-        timeout: 15_000,
+      await test.step("Assert the webhook form and inbound tab are visible", async () => {
+        await expect(page.getByTestId("webhook-config-form")).toBeVisible({
+          timeout: 15_000,
+        });
+        await expect(page.getByTestId("webhooks-tab-inbound")).toBeVisible();
       });
-      await expect(page.getByTestId("webhooks-tab-inbound")).toBeVisible();
     } finally {
       await page.close();
     }

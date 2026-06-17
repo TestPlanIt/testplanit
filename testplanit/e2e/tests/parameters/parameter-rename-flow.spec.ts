@@ -25,33 +25,46 @@ test.describe("Parameters - rename flow @parameters", () => {
       "Param Rename Case"
     );
 
-    await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
-    await page.waitForLoadState("load");
+    await test.step("Open the test case in the repository", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
+      await page.waitForLoadState("load");
+    });
 
-    // Open the Sheet and declare the first parameter.
-    await page.getByTestId("configure-parameters-button").click();
-    await expect(page.getByTestId("configure-parameters-sheet")).toBeVisible();
-    await page.getByTestId("parameter-form-name").fill("username");
-    await page.getByTestId("parameter-form-submit").click();
+    await test.step("Open the Sheet and declare the first parameter", async () => {
+      await page.getByTestId("configure-parameters-button").click();
+      await expect(
+        page.getByTestId("configure-parameters-sheet")
+      ).toBeVisible();
+      await page.getByTestId("parameter-form-name").fill("username");
+      await page.getByTestId("parameter-form-submit").click();
+    });
 
-    // Click the name to enter inline rename (the pencil icon opens the
-    // full edit dialog, not inline rename).
-    await expect(page.getByText("@username").first()).toBeVisible();
-    await page.getByTestId("parameter-row-name").first().click();
+    await test.step("Enter inline rename on the parameter row", async () => {
+      // Click the name to enter inline rename (the pencil icon opens the
+      // full edit dialog, not inline rename).
+      await expect(page.getByText("@username").first()).toBeVisible();
+      await page.getByTestId("parameter-row-name").first().click();
+    });
 
-    // Inline-edit the name; commit by pressing Enter.
-    const nameInput = page.getByTestId("parameter-row-name-input");
-    await nameInput.fill("user");
-    await nameInput.press("Enter");
+    await test.step("Inline-edit the name and commit with Enter", async () => {
+      const nameInput = page.getByTestId("parameter-row-name-input");
+      await nameInput.fill("user");
+      await nameInput.press("Enter");
+    });
 
-    // Either the rename confirmation AlertDialog appears (when refs > 0) OR
-    // the silent zero-refs path fires the rename inline. Cover both.
-    const renameDialog = page.getByTestId("parameter-rename-dialog");
-    if (await renameDialog.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await page.getByTestId("parameter-rename-dialog-confirm").click();
-    }
+    await test.step("Confirm the rename dialog when references exist", async () => {
+      // Either the rename confirmation AlertDialog appears (when refs > 0) OR
+      // the silent zero-refs path fires the rename inline. Cover both.
+      const renameDialog = page.getByTestId("parameter-rename-dialog");
+      if (
+        await renameDialog.isVisible({ timeout: 2000 }).catch(() => false)
+      ) {
+        await page.getByTestId("parameter-rename-dialog-confirm").click();
+      }
+    });
 
-    // Renamed row visible.
-    await expect(page.getByText("@user").first()).toBeVisible();
+    await test.step("Verify the renamed row is visible", async () => {
+      await expect(page.getByText("@user").first()).toBeVisible();
+    });
   });
 });

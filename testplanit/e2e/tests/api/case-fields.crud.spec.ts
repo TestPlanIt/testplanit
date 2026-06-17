@@ -49,31 +49,36 @@ test.describe("CaseFields CRUD", () => {
     const displayName = `API Field ${timestamp}`;
     const systemName = `api_field_${timestamp}`;
 
-    // Use fixture helper — takes typeName string, resolves typeId internally
-    const fieldId = await api.createCaseField({
-      displayName,
-      systemName,
-      typeName: "Text String",
+    let fieldId: number | undefined;
+    await test.step("Create a case field via the fixture helper", async () => {
+      // Use fixture helper — takes typeName string, resolves typeId internally
+      fieldId = await api.createCaseField({
+        displayName,
+        systemName,
+        typeName: "Text String",
+      });
     });
 
-    // Read back via findFirst
-    const response = await request.get(
-      `${baseURL}/api/model/caseFields/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({ where: { id: fieldId } }),
-        },
-      }
-    );
+    await test.step("Read the field back and verify its attributes", async () => {
+      // Read back via findFirst
+      const response = await request.get(
+        `${baseURL}/api/model/caseFields/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({ where: { id: fieldId! } }),
+          },
+        }
+      );
 
-    expect(response.ok()).toBeTruthy();
-    const result = await response.json();
-    expect(result.data).toBeTruthy();
-    expect(result.data.displayName).toBe(displayName);
-    expect(result.data.systemName).toBe(systemName);
-    // typeId should be set (non-null)
-    expect(result.data.typeId).toBeTruthy();
-    expect(result.data.isDeleted).toBe(false);
+      expect(response.ok()).toBeTruthy();
+      const result = await response.json();
+      expect(result.data).toBeTruthy();
+      expect(result.data.displayName).toBe(displayName);
+      expect(result.data.systemName).toBe(systemName);
+      // typeId should be set (non-null)
+      expect(result.data.typeId).toBeTruthy();
+      expect(result.data.isDeleted).toBe(false);
+    });
   });
 
   test("should update a case field displayName", async ({
@@ -85,75 +90,89 @@ test.describe("CaseFields CRUD", () => {
     const originalDisplay = `API Field ${timestamp}`;
     const updatedDisplay = `Updated Field ${timestamp}`;
 
-    const fieldId = await api.createCaseField({
-      displayName: originalDisplay,
-      typeName: "Text String",
+    let fieldId: number | undefined;
+    await test.step("Create a case field", async () => {
+      fieldId = await api.createCaseField({
+        displayName: originalDisplay,
+        typeName: "Text String",
+      });
     });
 
-    // PATCH update
-    const updateResponse = await request.patch(
-      `${baseURL}/api/model/caseFields/update`,
-      {
-        data: {
-          where: { id: fieldId },
-          data: { displayName: updatedDisplay },
-        },
-      }
-    );
+    await test.step("Update the field displayName", async () => {
+      // PATCH update
+      const updateResponse = await request.patch(
+        `${baseURL}/api/model/caseFields/update`,
+        {
+          data: {
+            where: { id: fieldId! },
+            data: { displayName: updatedDisplay },
+          },
+        }
+      );
 
-    expect(updateResponse.ok()).toBeTruthy();
+      expect(updateResponse.ok()).toBeTruthy();
+    });
 
-    // Read back and assert
-    const readResponse = await request.get(
-      `${baseURL}/api/model/caseFields/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({ where: { id: fieldId } }),
-        },
-      }
-    );
+    await test.step("Read the field back and verify the new displayName", async () => {
+      // Read back and assert
+      const readResponse = await request.get(
+        `${baseURL}/api/model/caseFields/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({ where: { id: fieldId! } }),
+          },
+        }
+      );
 
-    expect(readResponse.ok()).toBeTruthy();
-    const result = await readResponse.json();
-    expect(result.data.displayName).toBe(updatedDisplay);
+      expect(readResponse.ok()).toBeTruthy();
+      const result = await readResponse.json();
+      expect(result.data.displayName).toBe(updatedDisplay);
+    });
   });
 
   test("should soft-delete a case field", async ({ request, baseURL, api }) => {
     const timestamp = Date.now();
     const displayName = `API Delete Field ${timestamp}`;
 
-    const fieldId = await api.createCaseField({
-      displayName,
-      typeName: "Text String",
+    let fieldId: number | undefined;
+    await test.step("Create a case field", async () => {
+      fieldId = await api.createCaseField({
+        displayName,
+        typeName: "Text String",
+      });
     });
 
-    // Soft delete via PATCH
-    const deleteResponse = await request.patch(
-      `${baseURL}/api/model/caseFields/update`,
-      {
-        data: {
-          where: { id: fieldId },
-          data: { isDeleted: true },
-        },
-      }
-    );
+    await test.step("Soft-delete the field via PATCH", async () => {
+      // Soft delete via PATCH
+      const deleteResponse = await request.patch(
+        `${baseURL}/api/model/caseFields/update`,
+        {
+          data: {
+            where: { id: fieldId! },
+            data: { isDeleted: true },
+          },
+        }
+      );
 
-    expect(deleteResponse.ok()).toBeTruthy();
+      expect(deleteResponse.ok()).toBeTruthy();
+    });
 
-    // Read back and verify soft-deleted
-    const readResponse = await request.get(
-      `${baseURL}/api/model/caseFields/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({ where: { id: fieldId } }),
-        },
-      }
-    );
+    await test.step("Read the field back and verify it is soft-deleted", async () => {
+      // Read back and verify soft-deleted
+      const readResponse = await request.get(
+        `${baseURL}/api/model/caseFields/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({ where: { id: fieldId! } }),
+          },
+        }
+      );
 
-    expect(readResponse.ok()).toBeTruthy();
-    const result = await readResponse.json();
-    expect(result.data).toBeTruthy();
-    expect(result.data.isDeleted).toBe(true);
+      expect(readResponse.ok()).toBeTruthy();
+      const result = await readResponse.json();
+      expect(result.data).toBeTruthy();
+      expect(result.data.isDeleted).toBe(true);
+    });
   });
 });
 
@@ -177,182 +196,217 @@ test.describe("CaseFieldValues CRUD", () => {
   }) => {
     const timestamp = Date.now();
 
-    // Create a field and a test case
-    const fieldId = await api.createCaseField({
-      displayName: `Value Field ${timestamp}`,
-      typeName: "Text String",
+    let fieldId: number | undefined;
+    let caseId: number | undefined;
+    await test.step("Create a case field and a test case", async () => {
+      // Create a field and a test case
+      fieldId = await api.createCaseField({
+        displayName: `Value Field ${timestamp}`,
+        typeName: "Text String",
+      });
+      caseId = await api.createTestCase(
+        projectId,
+        folderId,
+        `Value Test Case ${timestamp}`
+      );
     });
-    const caseId = await api.createTestCase(
-      projectId,
-      folderId,
-      `Value Test Case ${timestamp}`
-    );
 
-    // POST to create caseFieldValue — value is Json? so pass raw value
-    const createResponse = await request.post(
-      `${baseURL}/api/model/caseFieldValues/create`,
-      {
-        data: {
+    let valueId: number | undefined;
+    await test.step("Create a field value for the test case", async () => {
+      // POST to create caseFieldValue — value is Json? so pass raw value
+      const createResponse = await request.post(
+        `${baseURL}/api/model/caseFieldValues/create`,
+        {
           data: {
-            testCaseId: caseId,
-            fieldId: fieldId,
-            value: "test value",
+            data: {
+              testCaseId: caseId!,
+              fieldId: fieldId!,
+              value: "test value",
+            },
           },
-        },
-      }
-    );
+        }
+      );
 
-    expect(createResponse.ok()).toBeTruthy();
-    const createResult = await createResponse.json();
-    expect(createResult.data).toBeTruthy();
+      expect(createResponse.ok()).toBeTruthy();
+      const createResult = await createResponse.json();
+      expect(createResult.data).toBeTruthy();
 
-    const valueId = createResult.data.id;
+      valueId = createResult.data.id;
+    });
 
-    // Read back via findFirst
-    const readResponse = await request.get(
-      `${baseURL}/api/model/caseFieldValues/findFirst`,
-      {
+    await test.step("Read the field value back and verify it", async () => {
+      // Read back via findFirst
+      const readResponse = await request.get(
+        `${baseURL}/api/model/caseFieldValues/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { testCaseId: caseId!, fieldId: fieldId! },
+            }),
+          },
+        }
+      );
+
+      expect(readResponse.ok()).toBeTruthy();
+      const readResult = await readResponse.json();
+      expect(readResult.data).toBeTruthy();
+      expect(readResult.data.value).toBe("test value");
+    });
+
+    await test.step("Clean up the field value", async () => {
+      // Manual cleanup — api.cleanup() doesn't track field values
+      await request.delete(`${baseURL}/api/model/caseFieldValues/delete`, {
         params: {
-          q: JSON.stringify({
-            where: { testCaseId: caseId, fieldId: fieldId },
-          }),
+          q: JSON.stringify({ where: { id: valueId! } }),
         },
-      }
-    );
-
-    expect(readResponse.ok()).toBeTruthy();
-    const readResult = await readResponse.json();
-    expect(readResult.data).toBeTruthy();
-    expect(readResult.data.value).toBe("test value");
-
-    // Manual cleanup — api.cleanup() doesn't track field values
-    await request.delete(`${baseURL}/api/model/caseFieldValues/delete`, {
-      params: {
-        q: JSON.stringify({ where: { id: valueId } }),
-      },
+      });
     });
   });
 
   test("should update a field value", async ({ request, baseURL, api }) => {
     const timestamp = Date.now();
 
-    const fieldId = await api.createCaseField({
-      displayName: `Update Value Field ${timestamp}`,
-      typeName: "Text String",
+    let fieldId: number | undefined;
+    let caseId: number | undefined;
+    await test.step("Create a case field and a test case", async () => {
+      fieldId = await api.createCaseField({
+        displayName: `Update Value Field ${timestamp}`,
+        typeName: "Text String",
+      });
+      caseId = await api.createTestCase(
+        projectId,
+        folderId,
+        `Update Value Case ${timestamp}`
+      );
     });
-    const caseId = await api.createTestCase(
-      projectId,
-      folderId,
-      `Update Value Case ${timestamp}`
-    );
 
-    // Create the field value
-    const createResponse = await request.post(
-      `${baseURL}/api/model/caseFieldValues/create`,
-      {
-        data: {
+    let valueId: number | undefined;
+    await test.step("Create the field value", async () => {
+      // Create the field value
+      const createResponse = await request.post(
+        `${baseURL}/api/model/caseFieldValues/create`,
+        {
           data: {
-            testCaseId: caseId,
-            fieldId: fieldId,
-            value: "original value",
+            data: {
+              testCaseId: caseId!,
+              fieldId: fieldId!,
+              value: "original value",
+            },
           },
-        },
-      }
-    );
+        }
+      );
 
-    expect(createResponse.ok()).toBeTruthy();
-    const valueId = (await createResponse.json()).data.id;
+      expect(createResponse.ok()).toBeTruthy();
+      valueId = (await createResponse.json()).data.id;
+    });
 
-    // PATCH update
-    const updateResponse = await request.patch(
-      `${baseURL}/api/model/caseFieldValues/update`,
-      {
-        data: {
-          where: { id: valueId },
-          data: { value: "updated value" },
-        },
-      }
-    );
+    await test.step("Update the field value", async () => {
+      // PATCH update
+      const updateResponse = await request.patch(
+        `${baseURL}/api/model/caseFieldValues/update`,
+        {
+          data: {
+            where: { id: valueId! },
+            data: { value: "updated value" },
+          },
+        }
+      );
 
-    expect(updateResponse.ok()).toBeTruthy();
+      expect(updateResponse.ok()).toBeTruthy();
+    });
 
-    // Read back and verify
-    const readResponse = await request.get(
-      `${baseURL}/api/model/caseFieldValues/findFirst`,
-      {
+    await test.step("Read the field value back and verify the new value", async () => {
+      // Read back and verify
+      const readResponse = await request.get(
+        `${baseURL}/api/model/caseFieldValues/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({ where: { id: valueId! } }),
+          },
+        }
+      );
+
+      expect(readResponse.ok()).toBeTruthy();
+      const readResult = await readResponse.json();
+      expect(readResult.data.value).toBe("updated value");
+    });
+
+    await test.step("Clean up the field value", async () => {
+      // Cleanup
+      await request.delete(`${baseURL}/api/model/caseFieldValues/delete`, {
         params: {
-          q: JSON.stringify({ where: { id: valueId } }),
+          q: JSON.stringify({ where: { id: valueId! } }),
         },
-      }
-    );
-
-    expect(readResponse.ok()).toBeTruthy();
-    const readResult = await readResponse.json();
-    expect(readResult.data.value).toBe("updated value");
-
-    // Cleanup
-    await request.delete(`${baseURL}/api/model/caseFieldValues/delete`, {
-      params: {
-        q: JSON.stringify({ where: { id: valueId } }),
-      },
+      });
     });
   });
 
   test("should delete a field value", async ({ request, baseURL, api }) => {
     const timestamp = Date.now();
 
-    const fieldId = await api.createCaseField({
-      displayName: `Delete Value Field ${timestamp}`,
-      typeName: "Text String",
+    let fieldId: number | undefined;
+    let caseId: number | undefined;
+    await test.step("Create a case field and a test case", async () => {
+      fieldId = await api.createCaseField({
+        displayName: `Delete Value Field ${timestamp}`,
+        typeName: "Text String",
+      });
+      caseId = await api.createTestCase(
+        projectId,
+        folderId,
+        `Delete Value Case ${timestamp}`
+      );
     });
-    const caseId = await api.createTestCase(
-      projectId,
-      folderId,
-      `Delete Value Case ${timestamp}`
-    );
 
-    // Create the field value
-    const createResponse = await request.post(
-      `${baseURL}/api/model/caseFieldValues/create`,
-      {
-        data: {
+    let valueId: number | undefined;
+    await test.step("Create the field value", async () => {
+      // Create the field value
+      const createResponse = await request.post(
+        `${baseURL}/api/model/caseFieldValues/create`,
+        {
           data: {
-            testCaseId: caseId,
-            fieldId: fieldId,
-            value: "to be deleted",
+            data: {
+              testCaseId: caseId!,
+              fieldId: fieldId!,
+              value: "to be deleted",
+            },
           },
-        },
-      }
-    );
+        }
+      );
 
-    expect(createResponse.ok()).toBeTruthy();
-    const valueId = (await createResponse.json()).data.id;
+      expect(createResponse.ok()).toBeTruthy();
+      valueId = (await createResponse.json()).data.id;
+    });
 
-    // Hard DELETE via query param (ZenStack RPC reads args from ?q= not body)
-    const deleteResponse = await request.delete(
-      `${baseURL}/api/model/caseFieldValues/delete`,
-      {
-        params: {
-          q: JSON.stringify({ where: { id: valueId } }),
-        },
-      }
-    );
+    await test.step("Hard-delete the field value", async () => {
+      // Hard DELETE via query param (ZenStack RPC reads args from ?q= not body)
+      const deleteResponse = await request.delete(
+        `${baseURL}/api/model/caseFieldValues/delete`,
+        {
+          params: {
+            q: JSON.stringify({ where: { id: valueId! } }),
+          },
+        }
+      );
 
-    expect(deleteResponse.ok()).toBeTruthy();
+      expect(deleteResponse.ok()).toBeTruthy();
+    });
 
-    // Verify it's gone — findFirst should return null data
-    const readResponse = await request.get(
-      `${baseURL}/api/model/caseFieldValues/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({ where: { id: valueId } }),
-        },
-      }
-    );
+    await test.step("Verify the field value is gone", async () => {
+      // Verify it's gone — findFirst should return null data
+      const readResponse = await request.get(
+        `${baseURL}/api/model/caseFieldValues/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({ where: { id: valueId! } }),
+          },
+        }
+      );
 
-    // ZenStack returns 200 with data: null when not found
-    expect(readResponse.ok()).toBeTruthy();
-    const readResult = await readResponse.json();
-    expect(readResult.data).toBeNull();
+      // ZenStack returns 200 with data: null when not found
+      expect(readResponse.ok()).toBeTruthy();
+      const readResult = await readResponse.json();
+      expect(readResult.data).toBeNull();
+    });
   });
 });

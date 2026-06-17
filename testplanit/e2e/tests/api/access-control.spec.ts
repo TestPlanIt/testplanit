@@ -52,30 +52,33 @@ test.describe("Access Control - Admin Full Access (ACL-01)", () => {
   test("admin can update a project", async ({ request, baseURL }) => {
     const newName = `ACL Admin Project Updated ${Date.now()}`;
 
-    const updateResponse = await request.patch(
-      `${baseURL}/api/model/projects/update`,
-      {
-        data: {
-          where: { id: projectId },
-          data: { name: newName },
-        },
-      }
-    );
+    await test.step("Update the project name", async () => {
+      const updateResponse = await request.patch(
+        `${baseURL}/api/model/projects/update`,
+        {
+          data: {
+            where: { id: projectId },
+            data: { name: newName },
+          },
+        }
+      );
 
-    expect(updateResponse.status()).toBe(200);
+      expect(updateResponse.status()).toBe(200);
+    });
 
-    // Verify the update took effect
-    const findResponse = await request.get(
-      `${baseURL}/api/model/projects/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({ where: { id: projectId } }),
-        },
-      }
-    );
-    expect(findResponse.status()).toBe(200);
-    const result = await findResponse.json();
-    expect(result.data.name).toBe(newName);
+    await test.step("Verify the update took effect", async () => {
+      const findResponse = await request.get(
+        `${baseURL}/api/model/projects/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({ where: { id: projectId } }),
+          },
+        }
+      );
+      expect(findResponse.status()).toBe(200);
+      const result = await findResponse.json();
+      expect(result.data.name).toBe(newName);
+    });
   });
 
   test("admin can read RepositoryCases in project", async ({
@@ -83,31 +86,34 @@ test.describe("Access Control - Admin Full Access (ACL-01)", () => {
     baseURL,
     api,
   }) => {
-    // Create a case in the project (requires projectId, rootFolderId, name)
-    const rootFolderId = await api.getRootFolderId(projectId);
-    caseId = await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `ACL Case ${Date.now()}`
-    );
-    expect(caseId).toBeGreaterThan(0);
+    await test.step("Create a case in the project", async () => {
+      // Create a case in the project (requires projectId, rootFolderId, name)
+      const rootFolderId = await api.getRootFolderId(projectId);
+      caseId = await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `ACL Case ${Date.now()}`
+      );
+      expect(caseId).toBeGreaterThan(0);
+    });
 
-    // Read back via findMany
-    const readResponse = await request.get(
-      `${baseURL}/api/model/repositoryCases/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { projectId },
-          }),
-        },
-      }
-    );
+    await test.step("Read the case back via findMany", async () => {
+      const readResponse = await request.get(
+        `${baseURL}/api/model/repositoryCases/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { projectId },
+            }),
+          },
+        }
+      );
 
-    expect(readResponse.status()).toBe(200);
-    const result = await readResponse.json();
-    expect(Array.isArray(result.data)).toBe(true);
-    expect(result.data.length).toBeGreaterThan(0);
+      expect(readResponse.status()).toBe(200);
+      const result = await readResponse.json();
+      expect(Array.isArray(result.data)).toBe(true);
+      expect(result.data.length).toBeGreaterThan(0);
+    });
   });
 
   test("admin can read TestRuns", async ({ request, baseURL }) => {
@@ -128,27 +134,31 @@ test.describe("Access Control - Admin Full Access (ACL-01)", () => {
   });
 
   test("admin can soft-delete a project", async ({ api, request, baseURL }) => {
-    // Soft-delete the project (fire-and-forget — PATCH returns 422 RESULT_NOT_READABLE
-    // after setting isDeleted:true because the post-update policy check denies reading
-    // the deleted record back, which is expected ZenStack v3 behavior)
-    await api.deleteProject(projectId);
+    await test.step("Soft-delete the project", async () => {
+      // Soft-delete the project (fire-and-forget — PATCH returns 422 RESULT_NOT_READABLE
+      // after setting isDeleted:true because the post-update policy check denies reading
+      // the deleted record back, which is expected ZenStack v3 behavior)
+      await api.deleteProject(projectId);
 
-    // Give the delete a moment to propagate
-    await new Promise((r) => setTimeout(r, 300));
+      // Give the delete a moment to propagate
+      await new Promise((r) => setTimeout(r, 300));
+    });
 
-    // Soft-deleted projects are invisible via ZenStack's @@deny('all', isDeleted)
-    const findManyResponse = await request.get(
-      `${baseURL}/api/model/projects/findMany`,
-      {
-        params: {
-          q: JSON.stringify({ where: { id: projectId } }),
-        },
-      }
-    );
+    await test.step("Verify the soft-deleted project is no longer visible", async () => {
+      // Soft-deleted projects are invisible via ZenStack's @@deny('all', isDeleted)
+      const findManyResponse = await request.get(
+        `${baseURL}/api/model/projects/findMany`,
+        {
+          params: {
+            q: JSON.stringify({ where: { id: projectId } }),
+          },
+        }
+      );
 
-    expect(findManyResponse.status()).toBe(200);
-    const result = await findManyResponse.json();
-    expect(result.data).toHaveLength(0);
+      expect(findManyResponse.status()).toBe(200);
+      const result = await findManyResponse.json();
+      expect(result.data).toHaveLength(0);
+    });
   });
 });
 
@@ -741,105 +751,113 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
   });
 
   test("GLOBAL_ROLE member can update a Step", async ({ baseURL }) => {
-    // First create a step
-    const createResponse = await memberCtx.request.post(
-      `${baseURL}/api/model/steps/create`,
-      {
-        data: {
+    let stepId: number | undefined;
+
+    await test.step("Create a step", async () => {
+      const createResponse = await memberCtx.request.post(
+        `${baseURL}/api/model/steps/create`,
+        {
           data: {
-            testCaseId: caseId,
-            step: JSON.stringify({
-              type: "doc",
-              content: [
-                {
-                  type: "paragraph",
-                  content: [{ type: "text", text: "Original step" }],
-                },
-              ],
-            }),
-            expectedResult: JSON.stringify({
-              type: "doc",
-              content: [
-                {
-                  type: "paragraph",
-                  content: [{ type: "text", text: "Original result" }],
-                },
-              ],
-            }),
-            order: 1,
-            isDeleted: false,
+            data: {
+              testCaseId: caseId,
+              step: JSON.stringify({
+                type: "doc",
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [{ type: "text", text: "Original step" }],
+                  },
+                ],
+              }),
+              expectedResult: JSON.stringify({
+                type: "doc",
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [{ type: "text", text: "Original result" }],
+                  },
+                ],
+              }),
+              order: 1,
+              isDeleted: false,
+            },
           },
-        },
-      }
-    );
+        }
+      );
 
-    expect(createResponse.status()).toBe(201);
-    const created = await createResponse.json();
-    const stepId = created.data.id;
+      expect(createResponse.status()).toBe(201);
+      const created = await createResponse.json();
+      stepId = created.data.id;
+    });
 
-    // Now update the step
-    const updateResponse = await memberCtx.request.patch(
-      `${baseURL}/api/model/steps/update`,
-      {
-        data: {
-          where: { id: stepId },
+    await test.step("Update the step", async () => {
+      const updateResponse = await memberCtx.request.patch(
+        `${baseURL}/api/model/steps/update`,
+        {
           data: {
-            step: JSON.stringify({
-              type: "doc",
-              content: [
-                {
-                  type: "paragraph",
-                  content: [{ type: "text", text: "Updated step" }],
-                },
-              ],
-            }),
+            where: { id: stepId },
+            data: {
+              step: JSON.stringify({
+                type: "doc",
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [{ type: "text", text: "Updated step" }],
+                  },
+                ],
+              }),
+            },
           },
-        },
-      }
-    );
+        }
+      );
 
-    expect(updateResponse.status()).toBe(200);
+      expect(updateResponse.status()).toBe(200);
+    });
   });
 
   test("GLOBAL_ROLE member can soft-delete a Step", async ({ baseURL }) => {
-    // Create a step to delete
-    const createResponse = await memberCtx.request.post(
-      `${baseURL}/api/model/steps/create`,
-      {
-        data: {
+    let stepId: number | undefined;
+
+    await test.step("Create a step to delete", async () => {
+      const createResponse = await memberCtx.request.post(
+        `${baseURL}/api/model/steps/create`,
+        {
           data: {
-            testCaseId: caseId,
-            step: JSON.stringify({
-              type: "doc",
-              content: [
-                {
-                  type: "paragraph",
-                  content: [{ type: "text", text: "Step to delete" }],
-                },
-              ],
-            }),
-            order: 2,
-            isDeleted: false,
+            data: {
+              testCaseId: caseId,
+              step: JSON.stringify({
+                type: "doc",
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [{ type: "text", text: "Step to delete" }],
+                  },
+                ],
+              }),
+              order: 2,
+              isDeleted: false,
+            },
           },
-        },
-      }
-    );
+        }
+      );
 
-    expect(createResponse.status()).toBe(201);
-    const created = await createResponse.json();
-    const stepId = created.data.id;
+      expect(createResponse.status()).toBe(201);
+      const created = await createResponse.json();
+      stepId = created.data.id;
+    });
 
-    // Soft-delete the step
-    const deleteResponse = await memberCtx.request.patch(
-      `${baseURL}/api/model/steps/update`,
-      {
-        data: {
-          where: { id: stepId },
-          data: { isDeleted: true },
-        },
-      }
-    );
+    await test.step("Soft-delete the step", async () => {
+      const deleteResponse = await memberCtx.request.patch(
+        `${baseURL}/api/model/steps/update`,
+        {
+          data: {
+            where: { id: stepId },
+            data: { isDeleted: true },
+          },
+        }
+      );
 
-    expect(deleteResponse.status()).toBe(200);
+      expect(deleteResponse.status()).toBe(200);
+    });
   });
 });

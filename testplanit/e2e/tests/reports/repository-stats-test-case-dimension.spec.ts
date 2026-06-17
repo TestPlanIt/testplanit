@@ -164,24 +164,28 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
   }) => {
     const projectId = await getTestProjectId(api);
 
-    // Navigate directly to Repository Statistics report (without dimensions to test the UI)
-    const params = new URLSearchParams({
-      tab: "builder",
-      reportType: "repository-stats",
-    });
-    await page.goto(
-      `/en-US/projects/reports/${projectId}?${params.toString()}`
-    );
-    await page.waitForLoadState("networkidle");
+    await test.step("Open Repository Statistics report builder", async () => {
+      // Navigate directly to Repository Statistics report (without dimensions to test the UI)
+      const params = new URLSearchParams({
+        tab: "builder",
+        reportType: "repository-stats",
+      });
+      await page.goto(
+        `/en-US/projects/reports/${projectId}?${params.toString()}`
+      );
+      await page.waitForLoadState("networkidle");
 
-    // Open dimension selector
-    await openDimensionSelector(page);
-
-    // Look for Test Case option
-    const testCaseOption = page.locator('[class*="option"]').filter({
-      hasText: /Test Case/i,
+      // Open dimension selector
+      await openDimensionSelector(page);
     });
-    await expect(testCaseOption.first()).toBeVisible({ timeout: 5000 });
+
+    await test.step("Verify Test Case dimension option is available", async () => {
+      // Look for Test Case option
+      const testCaseOption = page.locator('[class*="option"]').filter({
+        hasText: /Test Case/i,
+      });
+      await expect(testCaseOption.first()).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("Can select Test Case dimension and run report", async ({
@@ -190,35 +194,41 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
   }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create test cases for the report
-    const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Report Test Case 1 ${Date.now()}`
-    );
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Report Test Case 2 ${Date.now()}`
-    );
-
-    // Navigate directly with dimensions and metrics
-    await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ["testCase"],
-      metrics: ["testCaseCount"],
+    await test.step("Create test cases for the report", async () => {
+      // Create test cases for the report
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Report Test Case 1 ${Date.now()}`
+      );
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Report Test Case 2 ${Date.now()}`
+      );
     });
 
-    // Run the report
-    await runReport(page);
+    await test.step("Run report with Test Case dimension", async () => {
+      // Navigate directly with dimensions and metrics
+      await navigateToRepositoryStatsReport(page, projectId, {
+        dimensions: ["testCase"],
+        metrics: ["testCaseCount"],
+      });
 
-    // Verify results are displayed
-    const resultsCard = page.locator("text=/Results/i");
-    await expect(resultsCard.first()).toBeVisible({ timeout: 10000 });
+      // Run the report
+      await runReport(page);
+    });
 
-    // The table should show the test cases
-    const table = page.locator("[role='table']").first();
-    await expect(table).toBeVisible({ timeout: 10000 });
+    await test.step("Verify results table is displayed", async () => {
+      // Verify results are displayed
+      const resultsCard = page.locator("text=/Results/i");
+      await expect(resultsCard.first()).toBeVisible({ timeout: 10000 });
+
+      // The table should show the test cases
+      const table = page.locator("[role='table']").first();
+      await expect(table).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Test Case dimension shows test case names in results", async ({
@@ -226,34 +236,40 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     page,
   }) => {
     const projectId = await getTestProjectId(api);
-
-    // Create test cases with unique names
-    const rootFolderId = await api.getRootFolderId(projectId);
     const timestamp = Date.now();
     const testCaseName1 = `Unique TC Alpha ${timestamp}`;
     const testCaseName2 = `Unique TC Beta ${timestamp}`;
-    await api.createTestCase(projectId, rootFolderId, testCaseName1);
-    await api.createTestCase(projectId, rootFolderId, testCaseName2);
 
-    // Navigate directly with dimensions and metrics
-    await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ["testCase"],
-      metrics: ["testCaseCount"],
+    await test.step("Create test cases with unique names", async () => {
+      // Create test cases with unique names
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(projectId, rootFolderId, testCaseName1);
+      await api.createTestCase(projectId, rootFolderId, testCaseName2);
     });
 
-    // Run the report
-    await runReport(page);
+    await test.step("Run report with Test Case dimension", async () => {
+      // Navigate directly with dimensions and metrics
+      await navigateToRepositoryStatsReport(page, projectId, {
+        dimensions: ["testCase"],
+        metrics: ["testCaseCount"],
+      });
 
-    // Wait for the table to be visible
-    const table = page.locator("[role='table']").first();
-    await expect(table).toBeVisible({ timeout: 10000 });
-
-    // The table should contain the test case names
-    await expect(page.locator(`text=${testCaseName1}`).first()).toBeVisible({
-      timeout: 5000,
+      // Run the report
+      await runReport(page);
     });
-    await expect(page.locator(`text=${testCaseName2}`).first()).toBeVisible({
-      timeout: 5000,
+
+    await test.step("Verify test case names appear in results", async () => {
+      // Wait for the table to be visible
+      const table = page.locator("[role='table']").first();
+      await expect(table).toBeVisible({ timeout: 10000 });
+
+      // The table should contain the test case names
+      await expect(page.locator(`text=${testCaseName1}`).first()).toBeVisible({
+        timeout: 5000,
+      });
+      await expect(page.locator(`text=${testCaseName2}`).first()).toBeVisible({
+        timeout: 5000,
+      });
     });
   });
 
@@ -263,39 +279,47 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
   }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create test cases
-    const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Combined TC ${Date.now()}`
-    );
-
-    // Navigate directly to Repository Statistics with Test Case and Template dimensions
-    await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ["testCase", "template"],
-      metrics: ["testCaseCount"],
+    await test.step("Create a test case", async () => {
+      // Create test cases
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Combined TC ${Date.now()}`
+      );
     });
 
-    // Run the report
-    await runReport(page);
+    await test.step("Run report with Test Case and Template dimensions", async () => {
+      // Navigate directly to Repository Statistics with Test Case and Template dimensions
+      await navigateToRepositoryStatsReport(page, projectId, {
+        dimensions: ["testCase", "template"],
+        metrics: ["testCaseCount"],
+      });
 
-    // Verify results are displayed
-    const table = page.locator("[role='table']").first();
-    await expect(table).toBeVisible({ timeout: 10000 });
+      // Run the report
+      await runReport(page);
+    });
 
-    // Table should have both Test Case and Template columns
-    // Check that both dimension columns are present
-    const headers = await table
-      .locator("[role='columnheader']")
-      .allTextContents();
-    const hasTestCaseDimension = headers.some(
-      (h) => /test\s*case/i.test(h) && !h.toLowerCase().includes("count")
-    );
-    const hasTemplateColumn = headers.some((h) => /^template$/i.test(h.trim()));
+    await test.step("Verify both dimension columns are present", async () => {
+      // Verify results are displayed
+      const table = page.locator("[role='table']").first();
+      await expect(table).toBeVisible({ timeout: 10000 });
 
-    expect(hasTestCaseDimension).toBeTruthy();
-    expect(hasTemplateColumn).toBeTruthy();
+      // Table should have both Test Case and Template columns
+      // Check that both dimension columns are present
+      const headers = await table
+        .locator("[role='columnheader']")
+        .allTextContents();
+      const hasTestCaseDimension = headers.some(
+        (h) => /test\s*case/i.test(h) && !h.toLowerCase().includes("count")
+      );
+      const hasTemplateColumn = headers.some((h) =>
+        /^template$/i.test(h.trim())
+      );
+
+      expect(hasTestCaseDimension).toBeTruthy();
+      expect(hasTemplateColumn).toBeTruthy();
+    });
   });
 
   test("Test Case dimension works with multiple metrics", async ({
@@ -304,33 +328,39 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
   }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create test cases
-    const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Multi Metric TC ${Date.now()}`
-    );
-
-    // Navigate directly to Repository Statistics with Test Case dimension and multiple metrics
-    await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ["testCase"],
-      metrics: ["testCaseCount", "automationRate"],
+    await test.step("Create a test case", async () => {
+      // Create test cases
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Multi Metric TC ${Date.now()}`
+      );
     });
 
-    // Run the report
-    await runReport(page);
+    await test.step("Run report with Test Case dimension and multiple metrics", async () => {
+      // Navigate directly to Repository Statistics with Test Case dimension and multiple metrics
+      await navigateToRepositoryStatsReport(page, projectId, {
+        dimensions: ["testCase"],
+        metrics: ["testCaseCount", "automationRate"],
+      });
 
-    // Verify results table has columns for both metrics
-    const table = page.locator("[role='table']").first();
-    await expect(table).toBeVisible({ timeout: 10000 });
+      // Run the report
+      await runReport(page);
+    });
 
-    // Check that metric columns are present
-    await expect(
-      table.locator(
-        '[role="columnheader"]:has-text("Test Cases Count"), [role="columnheader"]:has-text("Test Cases")'
-      )
-    ).toBeVisible({ timeout: 5000 });
+    await test.step("Verify metric columns are present", async () => {
+      // Verify results table has columns for both metrics
+      const table = page.locator("[role='table']").first();
+      await expect(table).toBeVisible({ timeout: 10000 });
+
+      // Check that metric columns are present
+      await expect(
+        table.locator(
+          '[role="columnheader"]:has-text("Test Cases Count"), [role="columnheader"]:has-text("Test Cases")'
+        )
+      ).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("Test Case dimension report shows visualization", async ({
@@ -339,31 +369,37 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
   }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create test cases
-    const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Chart TC 1 ${Date.now()}`
-    );
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Chart TC 2 ${Date.now()}`
-    );
-
-    // Navigate directly to Repository Statistics with Test Case dimension
-    await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ["testCase"],
-      metrics: ["testCaseCount"],
+    await test.step("Create test cases", async () => {
+      // Create test cases
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Chart TC 1 ${Date.now()}`
+      );
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Chart TC 2 ${Date.now()}`
+      );
     });
 
-    // Run the report
-    await runReport(page);
+    await test.step("Run report with Test Case dimension", async () => {
+      // Navigate directly to Repository Statistics with Test Case dimension
+      await navigateToRepositoryStatsReport(page, projectId, {
+        dimensions: ["testCase"],
+        metrics: ["testCaseCount"],
+      });
 
-    // Verify visualization section is displayed
-    const visualizationCard = page.locator("text=/Visualization/i");
-    await expect(visualizationCard.first()).toBeVisible({ timeout: 10000 });
+      // Run the report
+      await runReport(page);
+    });
+
+    await test.step("Verify visualization section is displayed", async () => {
+      // Verify visualization section is displayed
+      const visualizationCard = page.locator("text=/Visualization/i");
+      await expect(visualizationCard.first()).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Test Case dimension respects date range filter", async ({
@@ -372,43 +408,49 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
   }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create test cases
-    const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Date Filter TC ${Date.now()}`
-    );
-
-    // Navigate directly with dimensions and metrics
-    await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ["testCase"],
-      metrics: ["testCaseCount"],
+    await test.step("Create a test case", async () => {
+      // Create test cases
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Date Filter TC ${Date.now()}`
+      );
     });
 
-    // Click on date range picker to select a range
-    const dateRangeButton = page.locator(
-      'button:has-text("Select date range")'
-    );
-    if (await dateRangeButton.isVisible()) {
-      await dateRangeButton.click();
+    await test.step("Open report builder and apply date range filter", async () => {
+      // Navigate directly with dimensions and metrics
+      await navigateToRepositoryStatsReport(page, projectId, {
+        dimensions: ["testCase"],
+        metrics: ["testCaseCount"],
+      });
 
-      // Select "Last 30 days" preset if available
-      const last30Days = page.locator('button:has-text("Last 30 days")');
-      if (await last30Days.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await last30Days.click();
-      } else {
-        // Close the date picker
-        await page.keyboard.press("Escape");
+      // Click on date range picker to select a range
+      const dateRangeButton = page.locator(
+        'button:has-text("Select date range")'
+      );
+      if (await dateRangeButton.isVisible()) {
+        await dateRangeButton.click();
+
+        // Select "Last 30 days" preset if available
+        const last30Days = page.locator('button:has-text("Last 30 days")');
+        if (await last30Days.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await last30Days.click();
+        } else {
+          // Close the date picker
+          await page.keyboard.press("Escape");
+        }
       }
-    }
+    });
 
-    // Run the report
-    await runReport(page);
+    await test.step("Run report and verify results", async () => {
+      // Run the report
+      await runReport(page);
 
-    // Verify results are displayed (test cases created within the date range)
-    const table = page.locator("[role='table']").first();
-    await expect(table).toBeVisible({ timeout: 10000 });
+      // Verify results are displayed (test cases created within the date range)
+      const table = page.locator("[role='table']").first();
+      await expect(table).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Empty project shows no data message with Test Case dimension", async ({
@@ -418,20 +460,24 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     const projectId = await getTestProjectId(api);
     // Don't create any test cases
 
-    // Navigate directly to Repository Statistics with Test Case dimension
-    await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ["testCase"],
-      metrics: ["testCaseCount"],
+    await test.step("Run report on empty project with Test Case dimension", async () => {
+      // Navigate directly to Repository Statistics with Test Case dimension
+      await navigateToRepositoryStatsReport(page, projectId, {
+        dimensions: ["testCase"],
+        metrics: ["testCaseCount"],
+      });
+
+      // Run the report
+      await runReport(page);
     });
 
-    // Run the report
-    await runReport(page);
-
-    // Should show no results message
-    const noResultsMessage = page.locator(
-      "text=/No results found|No data|No test cases/i"
-    );
-    await expect(noResultsMessage.first()).toBeVisible({ timeout: 10000 });
+    await test.step("Verify no data message is shown", async () => {
+      // Should show no results message
+      const noResultsMessage = page.locator(
+        "text=/No results found|No data|No test cases/i"
+      );
+      await expect(noResultsMessage.first()).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Test Case dimension URL parameters persist on reload", async ({
@@ -439,36 +485,44 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     page,
   }) => {
     const projectId = await getTestProjectId(api);
+    const table = page.locator("[role='table']").first();
 
-    // Create test cases
-    const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `URL Persist TC ${Date.now()}`
-    );
-
-    // Navigate directly to Repository Statistics with Test Case dimension
-    await navigateToRepositoryStatsReport(page, projectId, {
-      dimensions: ["testCase"],
-      metrics: ["testCaseCount"],
+    await test.step("Create a test case", async () => {
+      // Create test cases
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `URL Persist TC ${Date.now()}`
+      );
     });
 
-    // Run the report
-    await runReport(page);
+    await test.step("Run report with Test Case dimension", async () => {
+      // Navigate directly to Repository Statistics with Test Case dimension
+      await navigateToRepositoryStatsReport(page, projectId, {
+        dimensions: ["testCase"],
+        metrics: ["testCaseCount"],
+      });
 
-    // Wait for results to load
-    const table = page.locator("[role='table']").first();
-    await expect(table).toBeVisible({ timeout: 10000 });
+      // Run the report
+      await runReport(page);
+    });
 
-    // Verify URL contains dimensions parameter
-    await expect(page).toHaveURL(/dimensions=testCase/);
+    await test.step("Verify results load and URL contains dimensions parameter", async () => {
+      // Wait for results to load
+      await expect(table).toBeVisible({ timeout: 10000 });
 
-    // Reload the page
-    await page.reload();
-    await page.waitForLoadState("networkidle");
+      // Verify URL contains dimensions parameter
+      await expect(page).toHaveURL(/dimensions=testCase/);
+    });
 
-    // The report should auto-run with persisted parameters
-    await expect(table).toBeVisible({ timeout: 10000 });
+    await test.step("Reload page and verify report auto-runs with persisted parameters", async () => {
+      // Reload the page
+      await page.reload();
+      await page.waitForLoadState("networkidle");
+
+      // The report should auto-run with persisted parameters
+      await expect(table).toBeVisible({ timeout: 10000 });
+    });
   });
 });

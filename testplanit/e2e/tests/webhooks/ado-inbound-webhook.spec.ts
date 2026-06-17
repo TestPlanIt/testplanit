@@ -56,26 +56,35 @@ test.describe("Azure DevOps inbound webhook — admin form + raw-POST coverage",
     page,
     baseURL,
   }) => {
-    await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
-
-    const form = page.getByTestId("webhook-config-form");
-    await expect(form).toBeVisible();
-
-    // 1:1 inbound model: Add skips the chooser and lands directly on
-    // the ADO credentials form (since ADO needs admin-typed creds).
-    await page.getByTestId("webhook-inbound-add-button").click();
-
-    // ADO create-form inputs (unscoped — only one create-form is alive at a
-    // time). Submit is the same `webhook-create-button` testid all adapters
-    // share.
-    await page.getByTestId("webhook-inbound-ado-username-input").fill(ADO_USER);
-    await page.getByTestId("webhook-inbound-ado-password-input").fill(ADO_PASS);
-    await page.getByTestId("webhook-create-button").click();
-
-    // From here on, scope to the ADO card.
     const adoCard = page.getByTestId("webhook-inbound-card-ado");
-    await expect(adoCard).toBeVisible();
-    await expect(adoCard.getByTestId("webhook-url")).toBeVisible();
+
+    await test.step("Configure ADO inbound webhook with Basic Auth credentials", async () => {
+      await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
+
+      const form = page.getByTestId("webhook-config-form");
+      await expect(form).toBeVisible();
+
+      // 1:1 inbound model: Add skips the chooser and lands directly on
+      // the ADO credentials form (since ADO needs admin-typed creds).
+      await page.getByTestId("webhook-inbound-add-button").click();
+
+      // ADO create-form inputs (unscoped — only one create-form is alive at a
+      // time). Submit is the same `webhook-create-button` testid all adapters
+      // share.
+      await page
+        .getByTestId("webhook-inbound-ado-username-input")
+        .fill(ADO_USER);
+      await page
+        .getByTestId("webhook-inbound-ado-password-input")
+        .fill(ADO_PASS);
+      await page.getByTestId("webhook-create-button").click();
+    });
+
+    await test.step("Verify the configured ADO card and webhook URL", async () => {
+      // From here on, scope to the ADO card.
+      await expect(adoCard).toBeVisible();
+      await expect(adoCard.getByTestId("webhook-url")).toBeVisible();
+    });
 
     // ADO does not reveal a plaintext secret; resolve the token via Prisma so
     // the raw-POST specs below can target the receiver directly.
@@ -96,36 +105,40 @@ test.describe("Azure DevOps inbound webhook — admin form + raw-POST coverage",
       await prisma.$disconnect();
     }
 
-    // Dedup invariant: identical synthetic payloads dedup on the second send.
-    await adoCard.getByTestId("webhook-send-test-button").click();
-    const result = adoCard.getByTestId("webhook-test-result");
-    await expect(result).toContainText("200", { timeout: 10000 });
-    await expect(result).toContainText("synthetic");
+    await test.step("Run self-test twice and confirm synthetic then duplicate outcomes", async () => {
+      // Dedup invariant: identical synthetic payloads dedup on the second send.
+      await adoCard.getByTestId("webhook-send-test-button").click();
+      const result = adoCard.getByTestId("webhook-test-result");
+      await expect(result).toContainText("200", { timeout: 10000 });
+      await expect(result).toContainText("synthetic");
 
-    await adoCard.getByTestId("webhook-send-test-button").click();
-    await expect(result).toContainText("200", { timeout: 10000 });
-    await expect(result).toContainText("duplicate");
+      await adoCard.getByTestId("webhook-send-test-button").click();
+      await expect(result).toContainText("200", { timeout: 10000 });
+      await expect(result).toContainText("duplicate");
+    });
   });
 
   test("Spec 2 auth-mismatch: wrong Basic Auth → 401, no auth-mismatch WebhookDelivery row", async ({
     request,
     baseURL,
   }) => {
-    const body = JSON.stringify({
-      eventType: "workitem.updated",
-      resource: { id: 297, fields: { "System.State": "Closed" } },
+    await test.step("POST with a wrong Basic Auth header and expect 401", async () => {
+      const body = JSON.stringify({
+        eventType: "workitem.updated",
+        resource: { id: 297, fields: { "System.State": "Closed" } },
+      });
+      const response = await request.post(
+        `${baseURL}/api/webhooks/${configToken}`,
+        {
+          data: body,
+          headers: {
+            "content-type": "application/json",
+            authorization: basicAuthHeader("wrong", "wrong"),
+          },
+        }
+      );
+      expect(response.status()).toBe(401);
     });
-    const response = await request.post(
-      `${baseURL}/api/webhooks/${configToken}`,
-      {
-        data: body,
-        headers: {
-          "content-type": "application/json",
-          authorization: basicAuthHeader("wrong", "wrong"),
-        },
-      }
-    );
-    expect(response.status()).toBe(401);
 
     const prisma = new PrismaClient();
     try {
@@ -142,21 +155,23 @@ test.describe("Azure DevOps inbound webhook — admin form + raw-POST coverage",
     request,
     baseURL,
   }) => {
-    const body = JSON.stringify({
-      eventType: "build.complete",
-      resource: { id: 999 },
+    await test.step("POST a build.complete event with valid Basic Auth and expect 200", async () => {
+      const body = JSON.stringify({
+        eventType: "build.complete",
+        resource: { id: 999 },
+      });
+      const response = await request.post(
+        `${baseURL}/api/webhooks/${configToken}`,
+        {
+          data: body,
+          headers: {
+            "content-type": "application/json",
+            authorization: basicAuthHeader(ADO_USER, ADO_PASS),
+          },
+        }
+      );
+      expect(response.status()).toBe(200);
     });
-    const response = await request.post(
-      `${baseURL}/api/webhooks/${configToken}`,
-      {
-        data: body,
-        headers: {
-          "content-type": "application/json",
-          authorization: basicAuthHeader(ADO_USER, ADO_PASS),
-        },
-      }
-    );
-    expect(response.status()).toBe(200);
 
     const prisma = new PrismaClient();
     try {

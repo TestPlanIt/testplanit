@@ -127,39 +127,45 @@ test.describe("CASE-12 — validation error surfaces at the REST API layer", () 
       request,
       baseURL,
     }) => {
-      // Omit `template: { connect: { id } }` — a required non-nullable FK.
-      // The host should reject this with an error response (422 or 400).
-      const r = await request.post(
-        `${baseURL}/api/model/repositoryCases/create`,
-        {
-          headers: ctx.headers,
-          data: {
+      let r: Awaited<ReturnType<typeof request.post>> | undefined;
+      await test.step("Attempt to create a case with the required template relation omitted", async () => {
+        // Omit `template: { connect: { id } }` — a required non-nullable FK.
+        // The host should reject this with an error response (422 or 400).
+        r = await request.post(
+          `${baseURL}/api/model/repositoryCases/create`,
+          {
+            headers: ctx.headers,
             data: {
-              name: `CASE12-Missing-Template-${Date.now()}`,
-              source: "MANUAL",
-              automated: false,
-              project: { connect: { id: ctx.projectId } },
-              repository: { connect: { id: ctx.repositoryId } },
-              folder: { connect: { id: ctx.folderId } },
-              // template intentionally omitted — CASE-12 trigger
-              state: { connect: { id: ctx.stateId } },
+              data: {
+                name: `CASE12-Missing-Template-${Date.now()}`,
+                source: "MANUAL",
+                automated: false,
+                project: { connect: { id: ctx.projectId } },
+                repository: { connect: { id: ctx.repositoryId } },
+                folder: { connect: { id: ctx.folderId } },
+                // template intentionally omitted — CASE-12 trigger
+                state: { connect: { id: ctx.stateId } },
+              },
             },
-          },
-        }
-      );
-      // Host must reject: templateId is non-nullable in schema
-      expect(r.status()).toBeGreaterThanOrEqual(400);
-      const body = await r.json();
-      // Response must have an error field (ZenStack error envelope or Next.js error)
-      const hasError =
-        body.error != null ||
-        body.message != null ||
-        body.errors != null ||
-        body.code != null;
-      expect(
-        hasError,
-        `Expected error body, got: ${JSON.stringify(body)}`
-      ).toBe(true);
+          }
+        );
+      });
+
+      await test.step("Verify the host rejects with a non-2xx status and an error body", async () => {
+        // Host must reject: templateId is non-nullable in schema
+        expect(r!.status()).toBeGreaterThanOrEqual(400);
+        const body = await r!.json();
+        // Response must have an error field (ZenStack error envelope or Next.js error)
+        const hasError =
+          body.error != null ||
+          body.message != null ||
+          body.errors != null ||
+          body.code != null;
+        expect(
+          hasError,
+          `Expected error body, got: ${JSON.stringify(body)}`
+        ).toBe(true);
+      });
     });
   });
 
@@ -220,21 +226,27 @@ test.describe("CASE-12 — validation error surfaces at the REST API layer", () 
       request,
       baseURL,
     }) => {
-      // The MCP tool testplanit_folders_delete checks case/child counts BEFORE
-      // issuing this PATCH and surfaces a CASE-12 structured error if non-empty.
-      // At the raw REST layer, the host allows soft-delete regardless of folder contents.
-      // This test documents the host contract the MCP tool relies on.
-      const r = await request.patch(
-        `${baseURL}/api/model/repositoryFolders/update`,
-        {
-          headers: ctx.headers,
-          data: { where: { id: testFolderId }, data: { isDeleted: true } },
-        }
-      );
-      // Host accepts the soft-delete: the non-empty rule is an MCP tool concern
-      expect(r.status()).toBeLessThan(300);
-      const body = await r.json();
-      expect((body.data ?? body).isDeleted).toBe(true);
+      let r: Awaited<ReturnType<typeof request.patch>> | undefined;
+      await test.step("Soft-delete the non-empty folder via a PATCH update", async () => {
+        // The MCP tool testplanit_folders_delete checks case/child counts BEFORE
+        // issuing this PATCH and surfaces a CASE-12 structured error if non-empty.
+        // At the raw REST layer, the host allows soft-delete regardless of folder contents.
+        // This test documents the host contract the MCP tool relies on.
+        r = await request.patch(
+          `${baseURL}/api/model/repositoryFolders/update`,
+          {
+            headers: ctx.headers,
+            data: { where: { id: testFolderId }, data: { isDeleted: true } },
+          }
+        );
+      });
+
+      await test.step("Verify the host accepts the soft-delete and marks the folder deleted", async () => {
+        // Host accepts the soft-delete: the non-empty rule is an MCP tool concern
+        expect(r!.status()).toBeLessThan(300);
+        const body = await r!.json();
+        expect((body.data ?? body).isDeleted).toBe(true);
+      });
     });
 
     test("cleanup — soft-delete the case that was inside the folder", async ({
