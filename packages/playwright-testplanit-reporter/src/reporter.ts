@@ -8,6 +8,7 @@ import type {
   TestCase,
   TestError,
   TestResult,
+  TestStep,
 } from '@playwright/test/reporter';
 import { TestPlanItClient } from '@testplanit/api';
 import type { JUnitResultType } from '@testplanit/api';
@@ -77,6 +78,8 @@ export default class TestPlanItReporter implements Reporter {
       caseIdPattern: /\[(\d+)\]/g,
       caseIdAnnotation: 'testplanit',
       autoCreateTestCases: false,
+      captureSteps: true,
+      overwriteSteps: false,
       createFolderHierarchy: false,
       uploadAttachments: true,
       includeStackTrace: true,
@@ -110,6 +113,7 @@ export default class TestPlanItReporter implements Reporter {
       results: new Map(),
       caseIdMap: new Map(),
       testRunCaseMap: new Map(),
+      caseStepsMap: new Map(),
       folderPathMap: new Map(),
       statusIds: {},
       initialized: false,
@@ -117,6 +121,7 @@ export default class TestPlanItReporter implements Reporter {
         testCasesFound: 0,
         testCasesCreated: 0,
         testCasesMoved: 0,
+        testStepsCreated: 0,
         foldersCreated: 0,
         resultsPassed: 0,
         resultsFailed: 0,
@@ -197,6 +202,13 @@ export default class TestPlanItReporter implements Reporter {
     // We report every attempt, so the UID is unique per (test, retry).
     const uid = `${projectName ?? ''}:${test.id}:${result.retry}`;
 
+    // Capture test.step() titles when they can be used: seeding created cases
+    // (captureSteps) or overwriting existing/linked cases (overwriteSteps).
+    const wantSteps =
+      (this.options.autoCreateTestCases === true && this.options.captureSteps !== false) ||
+      this.options.overwriteSteps === true;
+    const stepTitles = wantSteps ? this.extractStepTitles(result.steps) : undefined;
+
     const tracked: TrackedTestResult = {
       caseId: caseIds[0],
       suiteName,
@@ -217,6 +229,7 @@ export default class TestPlanItReporter implements Reporter {
       specFile,
       systemOut: this.joinOutput(result.stdout),
       systemErr: this.joinOutput(result.stderr),
+      stepTitles,
     };
 
     this.state.results.set(uid, tracked);
@@ -329,6 +342,11 @@ export default class TestPlanItReporter implements Reporter {
       let repositoryCaseId: number | undefined;
       if (caseIds.length > 0) {
         repositoryCaseId = caseIds[0];
+        // Keep an explicitly linked case's steps in sync with the script.
+        // (The auto-create path syncs inside resolveAutoCreatedCaseId.)
+        if (this.options.overwriteSteps) {
+          await this.writeCaseSteps(repositoryCaseId, result.stepTitles, true);
+        }
       } else if (this.options.autoCreateTestCases) {
         repositoryCaseId = await this.resolveAutoCreatedCaseId(result);
       }
@@ -409,12 +427,20 @@ export default class TestPlanItReporter implements Reporter {
         automated: true,
       });
 
-      if (action === 'found') {
-        this.state.stats.testCasesFound++;
-      } else if (action === 'created') {
+      if (action === 'created') {
         this.state.stats.testCasesCreated++;
-      } else if (action === 'moved') {
-        this.state.stats.testCasesMoved++;
+        // Seed authored steps on a freshly created case.
+        if (this.options.captureSteps !== false) {
+          await this.writeCaseSteps(testCase.id, result.stepTitles, false);
+        }
+      } else {
+        // 'found' or 'moved' — an existing case. Only touch its steps when
+        // overwriteSteps is enabled.
+        if (action === 'found') this.state.stats.testCasesFound++;
+        else this.state.stats.testCasesMoved++;
+        if (this.options.overwriteSteps) {
+          await this.writeCaseSteps(testCase.id, result.stepTitles, true);
+        }
       }
 
       this.log(`${action} test case:`, testCase.id, testCase.name, 'in folder:', folderId);
@@ -424,6 +450,57 @@ export default class TestPlanItReporter implements Reporter {
     this.state.caseIdMap.set(caseKey, promise);
     // Don't poison every test sharing this key if a transient error occurs.
     promise.catch(() => this.state.caseIdMap.delete(caseKey));
+    return promise;
+  }
+
+  /**
+   * Write captured `test.step()` titles as authored steps on a case (memoized
+   * so it runs once per case per run). When `replace` is set, the case's
+   * existing steps are soft-deleted first — but a test with no captured steps
+   * never clears anything, so an existing case is never accidentally emptied.
+   *
+   * Best-effort: failures are logged but never bubble up, so result reporting
+   * is never blocked by step syncing.
+   */
+  private writeCaseSteps(
+    testCaseId: number,
+    stepTitles: string[] | undefined,
+    replace: boolean,
+  ): Promise<void> {
+    if (!stepTitles || stepTitles.length === 0) return Promise.resolve();
+
+    let promise = this.state.caseStepsMap.get(testCaseId);
+    if (promise) return promise;
+
+    promise = (async () => {
+      if (replace) {
+        try {
+          const removed = await this.client.softDeleteCaseSteps(testCaseId);
+          this.log(`Cleared ${removed} existing step(s) on case:`, testCaseId);
+        } catch (error) {
+          // Don't create new steps on top of un-cleared ones — that would
+          // duplicate. Skip the sync for this case and leave it as-is.
+          this.logError(
+            `Failed to clear existing steps on case ${testCaseId}; skipping step sync:`,
+            error,
+          );
+          return;
+        }
+      }
+
+      for (let order = 0; order < stepTitles.length; order++) {
+        try {
+          await this.client.createStep({ testCaseId, step: stepTitles[order], order });
+          this.state.stats.testStepsCreated++;
+        } catch (error) {
+          this.logError(`Failed to create step on case ${testCaseId}:`, error);
+        }
+      }
+      this.log(`${replace ? 'Replaced' : 'Created'} ${stepTitles.length} step(s) on case:`, testCaseId);
+    })();
+
+    this.state.caseStepsMap.set(testCaseId, promise);
+    promise.catch(() => this.state.caseStepsMap.delete(testCaseId));
     return promise;
   }
 
@@ -813,6 +890,38 @@ export default class TestPlanItReporter implements Reporter {
     return `${suiteName}::${testName}`;
   }
 
+  /**
+   * Flatten Playwright `test.step()` calls into ordered step titles.
+   *
+   * Only user steps (`category === 'test.step'`) are kept — auto-instrumented
+   * categories (`pw:api`, `expect`, `hook`, `fixture`) are skipped, but we
+   * still descend through them so a `test.step()` nested inside one is not
+   * lost. Nested user steps are emitted in execution order and prefixed with a
+   * depth marker so the hierarchy survives as plain text.
+   */
+  private extractStepTitles(steps: TestStep[] | undefined, depth = 0): string[] {
+    if (!steps || steps.length === 0) return [];
+
+    const titles: string[] = [];
+    for (const step of steps) {
+      if (step.category === 'test.step') {
+        const title = step.title?.trim();
+        if (title) {
+          titles.push(`${'› '.repeat(depth)}${title}`);
+          // A counted step deepens the hierarchy for its children.
+          titles.push(...this.extractStepTitles(step.steps, depth + 1));
+        } else {
+          // Untitled step contributes no row; keep its children at this depth.
+          titles.push(...this.extractStepTitles(step.steps, depth));
+        }
+      } else {
+        // Skipped node: descend without consuming a depth level.
+        titles.push(...this.extractStepTitles(step.steps, depth));
+      }
+    }
+    return titles;
+  }
+
   private formatRunName(template: string): string {
     const now = new Date();
     const date = now.toISOString().split('T')[0];
@@ -884,6 +993,9 @@ export default class TestPlanItReporter implements Reporter {
       console.log(`[TestPlanIt]     Created (new):    ${stats.testCasesCreated}`);
       if (stats.testCasesMoved > 0) {
         console.log(`[TestPlanIt]     Moved (restored): ${stats.testCasesMoved}`);
+      }
+      if (stats.testStepsCreated > 0) {
+        console.log(`[TestPlanIt]     Steps created:    ${stats.testStepsCreated}`);
       }
     }
 

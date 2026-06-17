@@ -56,6 +56,8 @@ var TestPlanItReporter = class {
       caseIdPattern: /\[(\d+)\]/g,
       caseIdAnnotation: "testplanit",
       autoCreateTestCases: false,
+      captureSteps: true,
+      overwriteSteps: false,
       createFolderHierarchy: false,
       uploadAttachments: true,
       includeStackTrace: true,
@@ -86,6 +88,7 @@ var TestPlanItReporter = class {
       results: /* @__PURE__ */ new Map(),
       caseIdMap: /* @__PURE__ */ new Map(),
       testRunCaseMap: /* @__PURE__ */ new Map(),
+      caseStepsMap: /* @__PURE__ */ new Map(),
       folderPathMap: /* @__PURE__ */ new Map(),
       statusIds: {},
       initialized: false,
@@ -93,6 +96,7 @@ var TestPlanItReporter = class {
         testCasesFound: 0,
         testCasesCreated: 0,
         testCasesMoved: 0,
+        testStepsCreated: 0,
         foldersCreated: 0,
         resultsPassed: 0,
         resultsFailed: 0,
@@ -158,6 +162,8 @@ ${error.stack}` : "";
     const durationMs = result.duration ?? 0;
     const finishedAt = new Date(startedAt.getTime() + durationMs);
     const uid = `${projectName ?? ""}:${test.id}:${result.retry}`;
+    const wantSteps = this.options.autoCreateTestCases === true && this.options.captureSteps !== false || this.options.overwriteSteps === true;
+    const stepTitles = wantSteps ? this.extractStepTitles(result.steps) : void 0;
     const tracked = {
       caseId: caseIds[0],
       suiteName,
@@ -177,7 +183,8 @@ ${error.stack}` : "";
       uid,
       specFile,
       systemOut: this.joinOutput(result.stdout),
-      systemErr: this.joinOutput(result.stderr)
+      systemErr: this.joinOutput(result.stderr),
+      stepTitles
     };
     this.state.results.set(uid, tracked);
     this.log(
@@ -259,6 +266,9 @@ ${error.stack}` : "";
       let repositoryCaseId;
       if (caseIds.length > 0) {
         repositoryCaseId = caseIds[0];
+        if (this.options.overwriteSteps) {
+          await this.writeCaseSteps(repositoryCaseId, result.stepTitles, true);
+        }
       } else if (this.options.autoCreateTestCases) {
         repositoryCaseId = await this.resolveAutoCreatedCaseId(result);
       }
@@ -326,18 +336,63 @@ ${error.stack}` : "";
         source: "API",
         automated: true
       });
-      if (action === "found") {
-        this.state.stats.testCasesFound++;
-      } else if (action === "created") {
+      if (action === "created") {
         this.state.stats.testCasesCreated++;
-      } else if (action === "moved") {
-        this.state.stats.testCasesMoved++;
+        if (this.options.captureSteps !== false) {
+          await this.writeCaseSteps(testCase.id, result.stepTitles, false);
+        }
+      } else {
+        if (action === "found") this.state.stats.testCasesFound++;
+        else this.state.stats.testCasesMoved++;
+        if (this.options.overwriteSteps) {
+          await this.writeCaseSteps(testCase.id, result.stepTitles, true);
+        }
       }
       this.log(`${action} test case:`, testCase.id, testCase.name, "in folder:", folderId);
       return testCase.id;
     })();
     this.state.caseIdMap.set(caseKey, promise);
     promise.catch(() => this.state.caseIdMap.delete(caseKey));
+    return promise;
+  }
+  /**
+   * Write captured `test.step()` titles as authored steps on a case (memoized
+   * so it runs once per case per run). When `replace` is set, the case's
+   * existing steps are soft-deleted first — but a test with no captured steps
+   * never clears anything, so an existing case is never accidentally emptied.
+   *
+   * Best-effort: failures are logged but never bubble up, so result reporting
+   * is never blocked by step syncing.
+   */
+  writeCaseSteps(testCaseId, stepTitles, replace) {
+    if (!stepTitles || stepTitles.length === 0) return Promise.resolve();
+    let promise = this.state.caseStepsMap.get(testCaseId);
+    if (promise) return promise;
+    promise = (async () => {
+      if (replace) {
+        try {
+          const removed = await this.client.softDeleteCaseSteps(testCaseId);
+          this.log(`Cleared ${removed} existing step(s) on case:`, testCaseId);
+        } catch (error) {
+          this.logError(
+            `Failed to clear existing steps on case ${testCaseId}; skipping step sync:`,
+            error
+          );
+          return;
+        }
+      }
+      for (let order = 0; order < stepTitles.length; order++) {
+        try {
+          await this.client.createStep({ testCaseId, step: stepTitles[order], order });
+          this.state.stats.testStepsCreated++;
+        } catch (error) {
+          this.logError(`Failed to create step on case ${testCaseId}:`, error);
+        }
+      }
+      this.log(`${replace ? "Replaced" : "Created"} ${stepTitles.length} step(s) on case:`, testCaseId);
+    })();
+    this.state.caseStepsMap.set(testCaseId, promise);
+    promise.catch(() => this.state.caseStepsMap.delete(testCaseId));
     return promise;
   }
   /** Resolve (and cache) the folder ID for a describe path. */
@@ -655,6 +710,33 @@ ${error.stack}` : "";
   createCaseKey(suiteName, testName) {
     return `${suiteName}::${testName}`;
   }
+  /**
+   * Flatten Playwright `test.step()` calls into ordered step titles.
+   *
+   * Only user steps (`category === 'test.step'`) are kept — auto-instrumented
+   * categories (`pw:api`, `expect`, `hook`, `fixture`) are skipped, but we
+   * still descend through them so a `test.step()` nested inside one is not
+   * lost. Nested user steps are emitted in execution order and prefixed with a
+   * depth marker so the hierarchy survives as plain text.
+   */
+  extractStepTitles(steps, depth = 0) {
+    if (!steps || steps.length === 0) return [];
+    const titles = [];
+    for (const step of steps) {
+      if (step.category === "test.step") {
+        const title = step.title?.trim();
+        if (title) {
+          titles.push(`${"\u203A ".repeat(depth)}${title}`);
+          titles.push(...this.extractStepTitles(step.steps, depth + 1));
+        } else {
+          titles.push(...this.extractStepTitles(step.steps, depth));
+        }
+      } else {
+        titles.push(...this.extractStepTitles(step.steps, depth));
+      }
+    }
+    return titles;
+  }
   formatRunName(template) {
     const now = /* @__PURE__ */ new Date();
     const date = now.toISOString().split("T")[0];
@@ -713,6 +795,9 @@ ${error.stack}` : "";
       console.log(`[TestPlanIt]     Created (new):    ${stats.testCasesCreated}`);
       if (stats.testCasesMoved > 0) {
         console.log(`[TestPlanIt]     Moved (restored): ${stats.testCasesMoved}`);
+      }
+      if (stats.testStepsCreated > 0) {
+        console.log(`[TestPlanIt]     Steps created:    ${stats.testStepsCreated}`);
       }
     }
     if (this.options.uploadAttachments && (stats.attachmentsUploaded > 0 || stats.attachmentsFailed > 0)) {
