@@ -28,6 +28,7 @@ import { testRunChannel, testRunProjectChannel } from "./channels";
  *  the client only cares about "something on this run changed" + a hint
  *  to decide which queries to invalidate. */
 export type TestRunWakeUpEvent =
+  | "test_run.created"
   | "test_run.result_added"
   | "test_run.state_changed"
   | "test_run.completed"

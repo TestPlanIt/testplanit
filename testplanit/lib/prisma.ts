@@ -39,6 +39,7 @@ import { invalidateApiTokenCache } from "./api-token-cache";
 import {
   emitTestRunCreated,
   emitTestRunResultAdded,
+  emitJUnitResultAdded,
   emitTestRunUpdateEvents,
 } from "./webhooks/event-emitters/testRunEvents";
 import {
@@ -1092,6 +1093,21 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       // repository case name) via resolveTestRunResultAuditScope. auditEntity
       // diffs the scalar row while taking the resolved name/projectId
       // explicitly, so the nested relations never leak into the change set.
+      // JUnit (automation) results carry no audit/webhook semantics, but they
+      // DO need a live-update nudge: a reporter streams results in via the
+      // model API, and without this the test-run detail page stays stale until
+      // a manual refresh. The emitter resolves run/project via suite -> run.
+      jUnitTestResult: {
+        async create({ args, query }: any) {
+          return await baseClient.$transaction(async (tx) => {
+            const result = await query(args);
+            if (result?.id && result.testSuiteId !== undefined) {
+              await emitJUnitResultAdded(result, tx);
+            }
+            return result;
+          });
+        },
+      },
       testRunResults: {
         async create({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
