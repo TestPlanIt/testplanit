@@ -202,5 +202,5 @@ reporters: [
 
 ### Limitations
 
-- **Mocha and Jasmine produce no deterministic steps.** They have no native step structure, so `captureSteps`/`overwriteSteps` are silent no-ops for those frameworks. If an **LLM provider is configured for the project**, TestPlanIt's LLM enrichment can derive steps for these cases automatically — configuring a provider **is** the opt-in; no additional reporter option is required.
+- **Mocha and Jasmine produce no deterministic steps.** They have no native step structure, so `captureSteps`/`overwriteSteps` are silent no-ops for those frameworks. If an **LLM provider is configured for the project**, TestPlanIt's [LLM step derivation](../user-guide/llm-step-derivation.md) can derive steps for these cases automatically — configuring a provider **is** the opt-in; no additional reporter option is required.
 - **`scenarioLevelReporter: true` is not supported for step capture.** That Cucumber mode suppresses per-step events, so the individual Gherkin steps are not visible to the reporter. Use the default `scenarioLevelReporter: false` to capture steps.
