@@ -49,7 +49,7 @@ describeDb("captureMatrix — client/method-agnostic capture (Phase 13 success c
   //   withAuditGuc(client, payload, fn)   — opens its own $transaction, sets app.audit_context from an
   //                                          explicit payload, runs fn (worker/raw path, CTX-02).
   // runWithAuditContext(ctx, fn)          — establishes the ALS frame injectAuditGuc reads (lib/auditContext).
-  type GucPayload = { userId: string | null; requestId: string | null; source: string; tenantId: string | null };
+  type GucPayload = { userId: string | null; requestId: string | null; source: string; tenantId: string | null; operationId: string | null };
   let withAuditGuc: <T>(client: unknown, payload: GucPayload, fn: (tx: any) => Promise<T>) => Promise<T>;
   let injectAuditGuc: (tx: any) => Promise<void>;
   let runWithAuditContext: <T>(
@@ -247,7 +247,7 @@ describeDb("captureMatrix — client/method-agnostic capture (Phase 13 success c
   it("(d) worker/raw path via withAuditGuc → row stamped with payload.userId as actor (CTX-02)", async () => {
     await withAuditGuc(
       prismaBase,
-      { userId: "worker-actor-d", requestId: "req-d", source: "worker", tenantId: "tenant-d" },
+      { userId: "worker-actor-d", requestId: "req-d", source: "worker", tenantId: "tenant-d", operationId: null },
       async (tx) => {
         await tx.$executeRawUnsafe(
           `UPDATE "RepositoryCases" SET name = $1 WHERE id = $2`,

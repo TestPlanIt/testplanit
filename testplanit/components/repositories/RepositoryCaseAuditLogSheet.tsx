@@ -35,6 +35,7 @@ import {
   useColumns,
 } from "~/app/[locale]/admin/audit-logs/columns";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
+import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import {
   useCountAuditLog,
   useFindManyAuditLog,
@@ -142,6 +143,8 @@ function CaseAuditLogContent({ caseId }: { caseId: number }) {
       userName: true,
       projectId: true,
       project: { select: { name: true } },
+      operationId: true,
+      sourceTable: true,
     },
     take: PAGE_SIZE,
   };
@@ -163,7 +166,26 @@ function CaseAuditLogContent({ caseId }: { caseId: number }) {
     refetchOnWindowFocus: false,
   });
 
-  const rows = (pages?.pages.flat() ?? []) as ExtendedAuditLog[];
+  // Cast via unknown: the not-yet-regenerated Prisma client types
+  // operationId/sourceTable as never in the select payload (the columns exist in
+  // the schema), so a direct cast doesn't overlap. Memoized so the grouping pass
+  // below only reruns when the page set actually changes.
+  const rows = useMemo(
+    () => (pages?.pages.flat() ?? []) as unknown as ExtendedAuditLog[],
+    [pages]
+  );
+
+  // Collapse rows sharing an operationId into one expandable lead (COR-04) via
+  // the shared helper; flatten each group into a lead carrying its children.
+  const groupedData = useMemo(
+    () =>
+      groupAuditRows(rows).map((group) =>
+        group.children.length > 0
+          ? { ...group.lead, auditChildren: group.children }
+          : group.lead
+      ),
+    [rows]
+  );
 
   const { data: totalCount } = useCountAuditLog({ where: whereClause });
 
@@ -252,7 +274,9 @@ function CaseAuditLogContent({ caseId }: { caseId: number }) {
       <div className="h-[calc(100vh-16rem)] min-h-[320px] w-full">
         <VirtualizedDataTable
           columns={columns as any}
-          data={rows as any}
+          data={groupedData as any}
+          getSubRows={(row) => row.auditChildren}
+          subRowsLabel={t("relatedChanges")}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
           columnVisibility={columnVisibility}

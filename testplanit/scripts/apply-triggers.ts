@@ -81,6 +81,20 @@ GRANT INSERT ON "DataChangeLog" TO CURRENT_USER;
 REVOKE UPDATE, DELETE ON "DataChangeLog" FROM CURRENT_USER; -- no-op for the table owner; the tpl_dcl_* enforcement triggers are the real guarantee
 `;
 
+/**
+ * CDC idempotency: the conflict target for the worker's INSERT ... ON CONFLICT DO NOTHING.
+ * A partial unique index (WHERE operationId IS NOT NULL) makes the auditLogWorker's
+ * DataChangeLog → AuditLog materialization restart-safe — a mid-batch crash that re-reads
+ * the same unprocessed rows cannot duplicate AuditLog rows (research Pitfall A/H). Semantic
+ * events (operationId null) are excluded from the index (BullMQ handles their at-least-once).
+ * Not expressible as a Prisma @@unique (partial WHERE clause), so it lives here as raw DDL.
+ */
+const CDC_IDEMPOTENCY_INDEX_SQL = `
+CREATE UNIQUE INDEX IF NOT EXISTS audit_log_cdc_idempotency
+  ON "AuditLog" ("operationId", "sourceTable", "entityId", "action")
+  WHERE "operationId" IS NOT NULL;
+`;
+
 async function main() {
   const usingDirect = Boolean(process.env.DIRECT_DATABASE_URL);
   const connectionString = process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
@@ -122,7 +136,11 @@ async function main() {
     // 4. INSERT-only GRANT/REVOKE as documented defense-in-depth (no-op for the table owner).
     await client.query(APPEND_ONLY_GRANT_SQL);
 
-    // 5. Drift self-check: count DISTINCT tpl_audit_* triggers (the tpl_dcl_* enforcement
+    // 5. CDC idempotency partial unique index on AuditLog (CREATE ... IF NOT EXISTS — idempotent).
+    //    The drift self-check below counts only tpl_audit_* triggers, so this index does not affect it.
+    await client.query(CDC_IDEMPOTENCY_INDEX_SQL);
+
+    // 6. Drift self-check: count DISTINCT tpl_audit_* triggers (the tpl_dcl_* enforcement
     //    triggers are intentionally excluded by the tpl_audit_% prefix) and assert == registry length.
     const { rows } = await client.query<{ n: number }>(
       `SELECT count(DISTINCT trigger_name)::int AS n
@@ -151,6 +169,7 @@ async function main() {
     console.log(
       `[apply-triggers] applied audit_row_change() + ${TRIGGER_REGISTRY.length} tpl_audit_* triggers ` +
         `+ DataChangeLog append-only enforcement (tpl_dcl_no_delete/tpl_dcl_no_update) + INSERT-only GRANT ` +
+        `+ AuditLog CDC idempotency index (audit_log_cdc_idempotency) ` +
         `(idempotent, via ${usingDirect ? "DIRECT_DATABASE_URL" : "DATABASE_URL"}).`,
     );
   } finally {

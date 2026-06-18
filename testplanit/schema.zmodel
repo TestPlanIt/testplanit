@@ -5424,29 +5424,33 @@ enum AuditAction {
 }
 
 model AuditLog {
-    id         String      @id @default(cuid())
+    id          String      @id @default(cuid())
 
     // Actor information
-    userId     String?     @db.Text
-    userEmail  String?     @db.Text
-    userName   String?     @db.Text
+    userId      String?     @db.Text
+    userEmail   String?     @db.Text
+    userName    String?     @db.Text
 
     // Action details
-    action     AuditAction
-    entityType String      @db.VarChar(100)
-    entityId   String      @db.Text
-    entityName String?     @db.Text
+    action      AuditAction
+    entityType  String      @db.VarChar(100)
+    entityId    String      @db.Text
+    entityName  String?     @db.Text
 
     // Change tracking
-    changes    Json? // { field: { old: value, new: value } }
-    metadata   Json? // Additional context (IP, user agent, request ID, etc.)
+    changes     Json? // { field: { old: value, new: value } }
+    metadata    Json? // Additional context (IP, user agent, request ID, etc.)
 
     // Timestamps
-    timestamp  DateTime    @default(now()) @db.Timestamptz(6)
+    timestamp   DateTime    @default(now()) @db.Timestamptz(6)
 
     // Multi-tenant support (optional project association)
-    projectId  Int?
-    project    Projects?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+    projectId   Int?
+    project     Projects?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+    // CDC correlation — set by auditLogWorker when materializing DataChangeLog rows; null for captureAuditEvent semantic events.
+    operationId String?     @db.Text // groups multi-request logical saves in the UI
+    sourceTable String?     @db.VarChar(100) // Postgres table name for CDC-sourced rows
 
     // Indexes for efficient querying
     @@index([entityType, entityId])
@@ -5454,6 +5458,7 @@ model AuditLog {
     @@index([projectId, timestamp])
     @@index([timestamp])
     @@index([action])
+    @@index([operationId])
 
     @@deny('all', !auth())
     @@deny('update, delete', true)

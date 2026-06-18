@@ -9822,6 +9822,14 @@ const metadata: ModelMeta = {
                     isRelationOwner: true,
                     onDeleteAction: 'SetNull',
                     foreignKeyMapping: { "id": "projectId" },
+                }, operationId: {
+                    name: "operationId",
+                    type: "String",
+                    isOptional: true,
+                }, sourceTable: {
+                    name: "sourceTable",
+                    type: "String",
+                    isOptional: true,
                 },
             }, uniqueConstraints: {
                 id: {

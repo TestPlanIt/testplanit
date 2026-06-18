@@ -5656,7 +5656,9 @@
       },
       "systemActor": "System",
       "systemActorTooltip": "Action performed by the system, not a logged-in user",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {

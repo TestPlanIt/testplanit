@@ -38,6 +38,7 @@ import {
   useFindManyAuditLog,
   useInfiniteFindManyAuditLog,
 } from "~/lib/hooks";
+import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { logDataExport } from "~/lib/services/auditClient";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
 import { buildAuditLogOrderBy, ExtendedAuditLog, useColumns } from "./columns";
@@ -203,6 +204,8 @@ function AuditLogsContent({ session }: { session: Session }) {
       userName: true,
       projectId: true,
       project: { select: { name: true } },
+      operationId: true,
+      sourceTable: true,
     },
     take: PAGE_SIZE,
   };
@@ -224,7 +227,27 @@ function AuditLogsContent({ session }: { session: Session }) {
     refetchOnWindowFocus: false,
   });
 
-  const rows = (pages?.pages.flat() ?? []) as ExtendedAuditLog[];
+  // Cast via unknown: the live AuditLog columns include operationId/sourceTable
+  // (added to the schema), but the not-yet-regenerated Prisma client types them
+  // as never in the select payload, so a direct cast doesn't overlap. Memoized
+  // so the grouping pass below only reruns when the page set actually changes.
+  const rows = useMemo(
+    () => (pages?.pages.flat() ?? []) as unknown as ExtendedAuditLog[],
+    [pages]
+  );
+
+  // Collapse rows sharing an operationId into one expandable lead (COR-04). The
+  // grouping rule lives entirely in the shared helper; here we only flatten each
+  // group into a lead row carrying its children as expandable sub-rows.
+  const groupedData = useMemo(
+    () =>
+      groupAuditRows(rows).map((group) =>
+        group.children.length > 0
+          ? { ...group.lead, auditChildren: group.children }
+          : group.lead
+      ),
+    [rows]
+  );
 
   // Get unique entity types for filter
   const { data: entityTypes } = useFindManyAuditLog({
@@ -638,7 +661,9 @@ function AuditLogsContent({ session }: { session: Session }) {
           <div className="mt-4 h-[calc(100vh-20rem)] min-h-[400px] w-full">
             <VirtualizedDataTable
               columns={columns as any}
-              data={rows as any}
+              data={groupedData as any}
+              getSubRows={(row) => row.auditChildren}
+              subRowsLabel={t("relatedChanges")}
               sortConfig={sortConfig}
               onSortChange={handleSortChange}
               columnVisibility={columnVisibility}

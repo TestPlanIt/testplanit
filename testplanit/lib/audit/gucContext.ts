@@ -27,15 +27,16 @@ import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
  * the audit_row_change() trigger (`ctx->>'userId'` etc.). Consumed by 13-04
  * (lib/prisma.ts hook wrapping + worker entry points).
  *
- * Note: there is intentionally no `operationId` field here — operation
- * correlation is Phase 14. The trigger reads `operationId` defensively (NULL
- * when absent), so omitting it now is forward-compatible.
+ * Phase 14 CTX-03: `operationId` correlates all DataChangeLog rows written
+ * within one logical save (e.g. the three writes of a single case save). The
+ * trigger reads `ctx->>'operationId'` into DataChangeLog.operation_id.
  */
 export interface GucPayload {
   userId: string | null;
   requestId: string | null;
   source: string;
   tenantId: string | null;
+  operationId: string | null;
 }
 
 /**
@@ -61,6 +62,7 @@ export async function injectAuditGuc(
         ? "scim"
         : "web",
     tenantId: getCurrentTenantId() ?? null,
+    operationId: ctx?.operationId ?? null,
   };
   await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
     payload,

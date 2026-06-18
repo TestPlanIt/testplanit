@@ -17,6 +17,15 @@ export interface ExtendedAuditLog extends AuditLog {
   project?: {
     name: string;
   } | null;
+  // operationId / sourceTable are now part of the generated AuditLog (regenerated
+  // Prisma client): operationId groups multi-request logical saves in the UI and
+  // sourceTable is the Postgres table for CDC-sourced rows; both are null for
+  // legacy and semantic (captureAuditEvent) rows.
+  // Populated only on a grouped lead row (see lib/audit/groupAuditRows): the
+  // other AuditLog rows that share this lead's operationId, rendered as
+  // expandable sub-rows by VirtualizedDataTable's getSubRows. Absent on
+  // singletons.
+  auditChildren?: ExtendedAuditLog[];
 }
 
 export interface AuditLogSort {

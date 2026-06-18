@@ -328,7 +328,7 @@ export function useSuspenseCountAuditLog<TArgs extends Prisma.AuditLogCountArgs,
 }
 import type { AuditAction } from '@prisma/client';
 
-export function useCheckAuditLog<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; userId?: string; userEmail?: string; userName?: string; action?: AuditAction; entityType?: string; entityId?: string; entityName?: string; projectId?: number }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckAuditLog<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; userId?: string; userEmail?: string; userName?: string; action?: AuditAction; entityType?: string; entityId?: string; entityName?: string; projectId?: number; operationId?: string; sourceTable?: string }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('AuditLog', `${endpoint}/auditLog/check`, args, options, fetch);
 }

@@ -16,6 +16,7 @@ import {
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
+import { pollDataChangeLogs } from "../lib/audit/correlation";
 
 /**
  * Process an audit log job.
@@ -173,6 +174,15 @@ const processor = async (job: Job<AuditLogJobData>) => {
 let worker: Worker | null = null;
 
 /**
+ * Loop B (CDC consumer) lifecycle. `running` is the single stop signal flipped false by the
+ * SIGINT/SIGTERM handlers — pollDataChangeLogs checks it at each iteration boundary and exits
+ * cleanly (any half-processed batch is left processed=false for the next start; the idempotent
+ * insert handles re-materialization safely). `loopBPromise` lets shutdown await a clean stop.
+ */
+const correlationRunning = { running: false };
+let loopBPromise: Promise<void> | null = null;
+
+/**
  * Start the audit log worker.
  */
 const startWorker = async () => {
@@ -210,9 +220,32 @@ const startWorker = async () => {
     );
   }
 
+  // Loop B (CDC consumer): drains DataChangeLog → AuditLog in a restart-safe polling loop ALONGSIDE
+  // the BullMQ consumer above (Loop A). It only needs the DB (no Valkey), so it starts regardless of
+  // the Valkey branch. The raw prismaBase client (via getPrismaClientForJob with no tenant) is the
+  // sole authorized DataChangeLog reader — it bypasses the @@deny('all', true) policy by design,
+  // the same raw-client pattern the BullMQ processor uses above. Fire-and-forget against the running
+  // flag; the process stays alive on the BullMQ worker (Loop A) and/or this loop's own event loop.
+  const correlationPrisma = getPrismaClientForJob({ tenantId: undefined });
+  correlationRunning.running = true;
+  loopBPromise = pollDataChangeLogs(correlationPrisma, correlationRunning).catch(
+    (err) => {
+      console.error("[AuditLogWorker] CDC poll loop (Loop B) crashed:", err);
+    }
+  );
+  console.log(
+    "[AuditLogWorker] Started CDC poll loop (Loop B) for DataChangeLog → AuditLog materialization"
+  );
+
   // Graceful shutdown
   process.on("SIGINT", async () => {
     console.log("[AuditLogWorker] Shutting down...");
+    // Stop Loop B at its next iteration boundary, then await its clean exit (a half-processed
+    // batch is left processed=false for the next start — the idempotent insert handles re-run).
+    correlationRunning.running = false;
+    if (loopBPromise) {
+      await loopBPromise;
+    }
     if (worker) {
       await worker.close();
     }
@@ -224,6 +257,10 @@ const startWorker = async () => {
 
   process.on("SIGTERM", async () => {
     console.log("[AuditLogWorker] Received SIGTERM, shutting down...");
+    correlationRunning.running = false;
+    if (loopBPromise) {
+      await loopBPromise;
+    }
     if (worker) {
       await worker.close();
     }

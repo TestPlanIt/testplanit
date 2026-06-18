@@ -2770,25 +2770,28 @@ model CommentMention {
 }
 
 model AuditLog {
-  id         String      @id() @default(cuid())
-  userId     String?     @db.Text()
-  userEmail  String?     @db.Text()
-  userName   String?     @db.Text()
-  action     AuditAction
-  entityType String      @db.VarChar(100)
-  entityId   String      @db.Text()
-  entityName String?     @db.Text()
-  changes    Json?
-  metadata   Json?
-  timestamp  DateTime    @default(now()) @db.Timestamptz(6)
-  projectId  Int?
-  project    Projects?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  id          String      @id() @default(cuid())
+  userId      String?     @db.Text()
+  userEmail   String?     @db.Text()
+  userName    String?     @db.Text()
+  action      AuditAction
+  entityType  String      @db.VarChar(100)
+  entityId    String      @db.Text()
+  entityName  String?     @db.Text()
+  changes     Json?
+  metadata    Json?
+  timestamp   DateTime    @default(now()) @db.Timestamptz(6)
+  projectId   Int?
+  project     Projects?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  operationId String?     @db.Text()
+  sourceTable String?     @db.VarChar(100)
 
   @@index([entityType, entityId])
   @@index([userId, timestamp])
   @@index([projectId, timestamp])
   @@index([timestamp])
   @@index([action])
+  @@index([operationId])
 }
 
 model DataChangeLog {
