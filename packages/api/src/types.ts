@@ -554,6 +554,42 @@ export interface CreateStepsOptions {
   }>;
 }
 
+// ============================================================================
+// Automation Step Mapper Types
+// ============================================================================
+
+/**
+ * A single normalized automation step, produced by a per-surface adapter
+ * (the result importer, or the Playwright / WDIO reporters) and consumed by
+ * `automationStepsToCaseSteps`. Format-agnostic: native shapes (Cucumber
+ * Gherkin keywords, Playwright `TestStep` trees) are mapped to this
+ * intermediate so the shared mapper never parses a native format itself.
+ */
+export interface AutomationStep {
+  /** Plain-text step text (keyword-stripped for Gherkin). */
+  title: string;
+  /** Role of the step: Given → precondition, When → action, Then → assertion. */
+  kind: "precondition" | "action" | "assertion";
+  /** Nested steps (e.g. a Playwright `expect` nested under a `test.step`). */
+  children?: AutomationStep[];
+}
+
+/**
+ * A single derived case `Steps` row in plain-text form. The caller wraps
+ * `step`/`expectedResult` into TipTap-JSON on write via `tipTapDoc`; the
+ * mapper itself stays a pure text transform. Structurally identical to an
+ * element of {@link CreateStepsOptions.steps}, so a `CaseStepRow[]` is
+ * directly assignable to `createSteps({ testCaseId, steps })`.
+ */
+export interface CaseStepRow {
+  /** Step instruction (plain text). */
+  step: string;
+  /** Expected result (plain text). Omitted/empty when not applicable — empty is valid. */
+  expectedResult?: string;
+  /** Zero-based position of the step within the case. */
+  order: number;
+}
+
 /**
  * Result of findOrCreateTestCase with metadata
  */

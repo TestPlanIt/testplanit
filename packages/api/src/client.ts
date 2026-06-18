@@ -37,6 +37,7 @@ import type {
   CreateJUnitTestResultOptions,
   UpdateJUnitTestSuiteOptions,
 } from "./types.js";
+import { tipTapDoc } from "./tipTapDoc.js";
 
 /**
  * Custom error class for TestPlanIt API errors
@@ -1460,24 +1461,6 @@ export class TestPlanItClient {
   }
 
   /**
-   * Wrap plain text in a minimal TipTap (ProseMirror) document so it renders
-   * in the in-app step editor. Empty text produces an empty paragraph (an
-   * empty text node is invalid in ProseMirror).
-   */
-  private tipTapDoc(text: string): string {
-    const trimmed = text.trim();
-    return JSON.stringify({
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: trimmed ? [{ type: "text", text: trimmed }] : [],
-        },
-      ],
-    });
-  }
-
-  /**
    * Create an authored step on a test case.
    * `step` and `expectedResult` are stored as TipTap rich-text documents to
    * match the in-app step editor.
@@ -1485,11 +1468,11 @@ export class TestPlanItClient {
   async createStep(options: CreateStepOptions): Promise<Step> {
     const data: Record<string, unknown> = {
       testCase: { connect: { id: options.testCaseId } },
-      step: this.tipTapDoc(options.step),
+      step: tipTapDoc(options.step),
       order: options.order,
     };
     if (options.expectedResult !== undefined && options.expectedResult !== "") {
-      data.expectedResult = this.tipTapDoc(options.expectedResult);
+      data.expectedResult = tipTapDoc(options.expectedResult);
     }
     return this.zenstack<Step>("steps", "create", { data });
   }
@@ -1505,11 +1488,11 @@ export class TestPlanItClient {
     const data = options.steps.map((s) => {
       const row: Record<string, unknown> = {
         testCaseId: options.testCaseId,
-        step: this.tipTapDoc(s.step),
+        step: tipTapDoc(s.step),
         order: s.order,
       };
       if (s.expectedResult !== undefined && s.expectedResult !== "") {
-        row.expectedResult = this.tipTapDoc(s.expectedResult);
+        row.expectedResult = tipTapDoc(s.expectedResult);
       }
       return row;
     });
