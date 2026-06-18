@@ -24,6 +24,8 @@ import {
   type AccessManifest,
 } from "./access-manifest";
 import { prisma } from "./prisma";
+import { prisma as prismaBase } from "./prismaBase";
+import { buildGucPayload } from "./audit/gucContext";
 
 /**
  * Models whose access is entirely determined by a direct `project` relation.
@@ -100,10 +102,20 @@ export async function tryFastPathCreate(params: {
   if (!data) return null;
 
   try {
-    const modelAccessor = getPrismaModel(parsedPath.model);
-    if (!modelAccessor) return null;
+    if (!getPrismaModel(parsedPath.model)) return null;
 
-    const result = await modelAccessor.create({ data });
+    // The fast path skips enhance() AND the $extends injectAuditGuc hook, so
+    // set the GUC explicitly inside the create's transaction — otherwise the
+    // CDC trigger records an empty actor (→ __system__). `userId` here is the
+    // authenticated actor (session or API token) the route already resolved.
+    const payload = JSON.stringify(buildGucPayload(userId));
+    const result = await prismaBase.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
+      const accessor = (tx as unknown as Record<string, { create: (a: { data: Record<string, unknown> }) => Promise<unknown> }>)[
+        parsedPath.model
+      ];
+      return accessor.create({ data });
+    });
     return NextResponse.json({ data: result }, { status: 201 });
   } catch (err: unknown) {
     // Mirror ZenStack's error shape so clients see the same behaviour.

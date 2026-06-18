@@ -905,6 +905,9 @@ importers:
       parse-duration:
         specifier: ^2.1.6
         version: 2.1.6
+      pg:
+        specifier: ^8.21.0
+        version: 8.21.0
       prismjs:
         specifier: ^1.30.0
         version: 1.30.0
@@ -1257,9 +1260,6 @@ importers:
       pdf-parse:
         specifier: ^2.4.5
         version: 2.4.5
-      pg:
-        specifier: ^8.21.0
-        version: 8.21.0
       pm2:
         specifier: ^7.0.1
         version: 7.0.1

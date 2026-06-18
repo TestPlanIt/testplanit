@@ -39,6 +39,7 @@
  *     it grants no access. The append-only substrate is the integrity boundary, not this projection.
  * ────────────────────────────────────────────────────────────────────────────────────────────────
  */
+import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 import { ROLLUP_MAP, resolveTwoHop, type TwoHopRow } from "~/lib/audit/rollupMap";
 import {
   createHumanizeCache,
@@ -349,7 +350,10 @@ export async function pollDataChangeLogsOnce(
             entityType,
             entityId,
             action: deriveAction(row),
-            actor: row.actor,
+            // A captured row with no GUC actor (raw prismaBase writes, seeds,
+            // migrations, or any path without a session) is attributed to the
+            // system sentinel so every materialized AuditLog row answers "who".
+            actor: row.actor || SYSTEM_ACTOR_ID,
             operationId: row.operation_id,
             tenant: row.tenant,
             changes,

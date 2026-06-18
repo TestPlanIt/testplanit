@@ -49,12 +49,18 @@ export interface GucPayload {
  * `'api'` when the request carried ApiToken scopes, `'scim'` for a SCIM bearer
  * token, otherwise `'web'` (session/cookie auth).
  */
-export async function injectAuditGuc(
-  tx: Prisma.TransactionClient,
-): Promise<void> {
+/**
+ * Build the GUC payload from the request's ALS audit frame, preferring an
+ * explicit actor id when the caller already resolved it (e.g. the RPC route's
+ * unified `authenticatedUserId`, which covers web session / API token / SCIM).
+ * A null `userId` is materialized by the correlation worker as the __system__
+ * sentinel. Shared by injectAuditGuc (hooked-client $extends path), the
+ * enhanceWithAudit factory (ZenStack enhanced path), and the fast-path create.
+ */
+export function buildGucPayload(explicitUserId?: string | null): GucPayload {
   const ctx = getAuditContext();
-  const payload: GucPayload = {
-    userId: ctx?.userId ?? null,
+  return {
+    userId: explicitUserId ?? ctx?.userId ?? null,
     requestId: ctx?.requestId ?? null,
     source: ctx?.tokenScopes?.length
       ? "api"
@@ -64,6 +70,12 @@ export async function injectAuditGuc(
     tenantId: getCurrentTenantId() ?? null,
     operationId: ctx?.operationId ?? null,
   };
+}
+
+export async function injectAuditGuc(
+  tx: Prisma.TransactionClient,
+): Promise<void> {
+  const payload = buildGucPayload();
   await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
     payload,
   )}, true)`;

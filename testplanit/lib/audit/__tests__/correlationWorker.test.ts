@@ -334,4 +334,34 @@ describeDb("correlationWorker (COR-01 + CTX-03) — DataChangeLog → AuditLog m
       await direct.query(`DELETE FROM "AuditLog" WHERE "operationId" = $1`, [IDEM_OP]);
     }
   });
+
+  it("actor attribution (REC-04 'who changed this'): a captured actor becomes AuditLog.userId; a row with NO actor is recorded as the __system__ sentinel", async () => {
+    const ACTOR_OP = `op-actor-${MARKER}`;
+    // Row 1: a user-session mutation carrying a real actor (the GUC was set).
+    await direct.query(
+      `INSERT INTO "DataChangeLog" ("table", op, pk, changed_cols, actor, operation_id, txid, processed)
+       VALUES ('RepositoryCases','I','9001', $1::jsonb, $2, $3, txid_current(), false)`,
+      [JSON.stringify({ name: { old: null, new: "human-made" } }), "human-actor-xyz", ACTOR_OP],
+    );
+    // Row 2: a system path (worker/seed/migration) with NO actor — must become __system__.
+    await direct.query(
+      `INSERT INTO "DataChangeLog" ("table", op, pk, changed_cols, actor, operation_id, txid, processed)
+       VALUES ('RepositoryCases','I','9002', $1::jsonb, NULL, $2, txid_current(), false)`,
+      [JSON.stringify({ name: { old: null, new: "system-made" } }), ACTOR_OP],
+    );
+    try {
+      await pollDataChangeLogsOnce(prismaBase, { batchSize: 500 });
+      const r = await direct.query(
+        `SELECT "entityId", "userId" FROM "AuditLog" WHERE "operationId" = $1 ORDER BY "entityId"`,
+        [ACTOR_OP],
+      );
+      const byEntity = Object.fromEntries(
+        r.rows.map((x: { entityId: string; userId: string }) => [x.entityId, x.userId]),
+      );
+      expect(byEntity["9001"]).toBe("human-actor-xyz");
+      expect(byEntity["9002"]).toBe("__system__");
+    } finally {
+      await direct.query(`DELETE FROM "AuditLog" WHERE "operationId" = $1`, [ACTOR_OP]);
+    }
+  });
 });

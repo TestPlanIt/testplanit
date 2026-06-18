@@ -9,6 +9,7 @@ import {
   extractBearerToken,
 } from "~/lib/api-token-auth";
 import { getAuditContext, runWithAuditContext } from "~/lib/auditContext";
+import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import {
   enrichFromApiAuth,
   withAuditContext,
@@ -348,8 +349,9 @@ async function getPrisma() {
     }
   }
 
-  // Use prisma from lib/prisma.ts which has audit logging extensions
-  return enhance(prisma, { user: user ?? undefined });
+  // enhanceWithAudit wraps writes in a GUC-carrying transaction so trigger CDC
+  // records the actor (plain enhance() bypasses the lib/prisma $extends hook).
+  return enhanceWithAudit(user ?? undefined);
 }
 
 const baseHandler = NextRequestHandler({ getPrisma, useAppDir: true });
@@ -1018,6 +1020,12 @@ async function innerHandler(
     let response = await runWithAuditContext(
       {
         ...parentAuditCtx,
+        // Attribute the audit actor to the authenticated user so trigger-based
+        // CDC records WHO made the change (the GUC actor is read from this ALS
+        // frame by injectAuditGuc). Without this the worker-materialized
+        // AuditLog row has an empty userId. Genuine system paths have no
+        // authenticatedUserId and are recorded as __system__ downstream.
+        userId: authenticatedUserId ?? parentAuditCtx.userId ?? undefined,
         suppressWebhooks: true,
         suppressEntityAudit: auditedByShim,
       },
