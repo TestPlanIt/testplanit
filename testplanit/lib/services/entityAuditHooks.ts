@@ -51,32 +51,7 @@ export interface EntityAuditModel {
  * lookups, so it stays correct even when the mutation runs inside an
  * interactive transaction.
  */
-export const ENTITY_AUDIT_MODELS: EntityAuditModel[] = [
-  { entityType: "Integration", accessor: "integration" },
-  { entityType: "PromptConfig", accessor: "promptConfig" },
-  {
-    entityType: "ProjectIntegration",
-    accessor: "projectIntegration",
-    hasProjectId: true,
-    relatedAccessor: "integration",
-  },
-  {
-    entityType: "TestRunCases",
-    accessor: "testRunCases",
-    relatedAccessor: "repositoryCases",
-  },
-  // Custom field values on a test case. The UI case editor mutates these
-  // per-row (useCreate/useUpdateCaseFieldValues), so create/update/delete each
-  // produce a `value` before/after diff named after the field. Project scope is
-  // backfilled by the worker through the `testCase` parent (PROJECT_SCOPE_PARENTS),
-  // since the row carries no scalar projectId. NOTE: bulk import/merge paths
-  // (createMany/updateMany/deleteMany) bypass these per-row hooks.
-  {
-    entityType: "CaseFieldValues",
-    accessor: "caseFieldValues",
-    relatedAccessor: "caseFields",
-  },
-];
+export const ENTITY_AUDIT_MODELS: EntityAuditModel[] = [];
 
 interface QueryContext {
   args: any;

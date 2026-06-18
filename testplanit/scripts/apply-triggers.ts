@@ -47,12 +47,20 @@ function triggerNameFor(table: string): string {
  * ownership — they are the real SAF-03 guarantee. The BEFORE UPDATE path allows worker-cursor-
  * only updates (processed/processedAt): subtracting a not-yet-existent key from jsonb is a
  * harmless no-op, future-proofing the Phase 14 worker cursor.
+ *
+ * DELETE carve-out: unprocessed rows (processed = false) are immutable and cannot be deleted;
+ * processed rows (processed = true) may be pruned by the retention job. This is DB-enforced,
+ * not app-trust — the retention worker's WHERE processed = true is a belt, this trigger is a
+ * suspender: a bug in the worker that omits the filter still hits RAISE here.
  */
 const APPEND_ONLY_ENFORCEMENT_SQL = `
 CREATE OR REPLACE FUNCTION datachangelog_append_only() RETURNS TRIGGER AS $$
 BEGIN
   IF TG_OP = 'DELETE' THEN
-    RAISE EXCEPTION 'DataChangeLog is append-only: DELETE not permitted' USING ERRCODE = 'insufficient_privilege'; -- 42501
+    IF OLD.processed = false THEN
+      RAISE EXCEPTION 'DataChangeLog is append-only: DELETE of unprocessed rows not permitted' USING ERRCODE = 'insufficient_privilege'; -- 42501
+    END IF;
+    RETURN OLD; -- processed = true rows may be pruned by the retention job
   END IF;
   -- UPDATE: only the worker-cursor columns (processed/processedAt) may change; everything else is rejected.
   IF (to_jsonb(OLD) - 'processed' - 'processedAt') IS DISTINCT FROM (to_jsonb(NEW) - 'processed' - 'processedAt') THEN

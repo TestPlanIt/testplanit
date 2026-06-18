@@ -312,5 +312,20 @@ module.exports = {
         NODE_ENV: "production",
       },
     },
+    {
+      name: "dcl-retention-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/dataChangeLogRetentionWorker.ts"
+        : "dist/workers/dataChangeLogRetentionWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "3G",
+      node_args: "--max-old-space-size=2304",
+      env: {
+        NODE_ENV: "production",
+      },
+    },
   ],
 };

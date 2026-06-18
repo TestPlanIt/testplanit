@@ -5409,6 +5409,7 @@ enum AuditAction {
     WEBHOOK_REPLAYED
     WEBHOOK_HEALTH_CHANGED
     WEBHOOK_RETENTION_PURGED
+    DCL_RETENTION_PURGED
     DUPLICATED
     // Parameterized Test Cases — iteration audit actions
     ITERATION_VALUES_OVERRIDDEN

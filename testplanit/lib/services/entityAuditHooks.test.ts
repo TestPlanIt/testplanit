@@ -45,9 +45,32 @@ function lastEvent(): AuditEvent {
   return (calls[calls.length - 1][1] as { event: AuditEvent }).event;
 }
 
+// ENTITY_AUDIT_MODELS is now empty (DATA hook removal). Inline the configs that
+// the behavioral tests exercise so the factory logic remains covered.
+const LEGACY_CONFIGS = [
+  { entityType: "Integration", accessor: "integration" },
+  { entityType: "PromptConfig", accessor: "promptConfig" },
+  {
+    entityType: "ProjectIntegration",
+    accessor: "projectIntegration",
+    hasProjectId: true,
+    relatedAccessor: "integration",
+  },
+  {
+    entityType: "TestRunCases",
+    accessor: "testRunCases",
+    relatedAccessor: "repositoryCases",
+  },
+  {
+    entityType: "CaseFieldValues",
+    accessor: "caseFieldValues",
+    relatedAccessor: "caseFields",
+  },
+] as const;
+
 const cfgOf = (entityType: string) => {
-  const cfg = ENTITY_AUDIT_MODELS.find((c) => c.entityType === entityType);
-  if (!cfg) throw new Error(`missing entity-audit model: ${entityType}`);
+  const cfg = LEGACY_CONFIGS.find((c) => c.entityType === entityType);
+  if (!cfg) throw new Error(`missing legacy entity-audit config: ${entityType}`);
   return cfg;
 };
 

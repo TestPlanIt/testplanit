@@ -285,24 +285,13 @@ export const AUDITED_CONFIG_MODELS: AuditedConfigModel[] = [
  * intentionally absent here.
  */
 export const AUDITED_RPC_ENTITY_ACCESSORS: readonly string[] = [
-  "repositoryCases",
-  "testRuns",
-  "sessions",
-  "sharedStepGroup",
-  "issue",
-  "milestones",
-  "projects",
   "user",
   "userProjectPermission",
   "groupProjectPermission",
   "ssoProvider",
   "allowedEmailDomain",
   "appConfig",
-  "userIntegrationAuth",
-  "testRunResults",
-  "comment",
   "apiToken",
-  "reviewRequest",
 ];
 
 /**
@@ -312,24 +301,13 @@ export const AUDITED_RPC_ENTITY_ACCESSORS: readonly string[] = [
  * guarded against the datamodel in `auditLog.rpc-wiring.test.ts`.
  */
 export const RPC_ENTITY_TYPE_MAP: Record<string, string> = {
-  repositoryCases: "RepositoryCases",
-  testRuns: "TestRuns",
-  sessions: "Sessions",
-  sharedStepGroup: "SharedStepGroup",
-  issue: "Issue",
-  milestones: "Milestones",
-  projects: "Projects",
   user: "User",
   userProjectPermission: "UserProjectPermission",
   groupProjectPermission: "GroupProjectPermission",
   ssoProvider: "SsoProvider",
   allowedEmailDomain: "AllowedEmailDomain",
   appConfig: "AppConfig",
-  userIntegrationAuth: "UserIntegrationAuth",
-  testRunResults: "TestRunResults",
-  comment: "Comment",
   apiToken: "ApiToken",
-  reviewRequest: "ReviewRequest",
 };
 
 /**

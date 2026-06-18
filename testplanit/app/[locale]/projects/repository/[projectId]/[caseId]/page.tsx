@@ -54,7 +54,6 @@ import {
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { RepositoryCaseAuditLogSheet } from "@/components/repositories/RepositoryCaseAuditLogSheet";
-import { logCaseContentChange } from "~/lib/services/auditClient";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { useOperationId } from "~/hooks/useOperationId";
 import { VersionSelect } from "@/components/VersionSelect";
@@ -1726,11 +1725,6 @@ export default function TestCaseDetails() {
         }
       );
       await Promise.all(caseFieldValuesSyncPromises);
-
-      // Now that every write has landed, record a consolidated audit entry for
-      // the content changes (custom fields, steps, tags, issues, parameters)
-      // that the scalar case update doesn't capture. Best-effort; never blocks.
-      await logCaseContentChange(Number(caseId));
 
       setIsSubmitting(false);
       setIsEditMode(false);
