@@ -66,6 +66,10 @@ vi.mock("@/lib/prisma", () => {
     jUnitTestStep: {
       create: vi.fn(),
     },
+    steps: {
+      count: vi.fn().mockResolvedValue(0),
+      createMany: vi.fn().mockResolvedValue({ count: 3 }),
+    },
     status: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
@@ -222,6 +226,8 @@ describe("Test Results Import API Route", () => {
     (prisma.repositoryCases.update as any).mockResolvedValue(
       mockRepositoryCase
     );
+    (prisma.steps.count as any).mockResolvedValue(0);
+    (prisma.steps.createMany as any).mockResolvedValue({ count: 3 });
     (prisma.testRunCases.upsert as any).mockResolvedValue(mockTestRunCase);
     (prisma.testRunCases.findFirst as any).mockResolvedValue(mockTestRunCase);
     (prisma.testRunCases.update as any).mockResolvedValue(mockTestRunCase);
@@ -277,6 +283,134 @@ describe("Test Results Import API Route", () => {
         ],
       },
       errors: [],
+    });
+  });
+
+  describe("Step Derivation (Phase 2)", () => {
+    const cucumberStep = (name: string) => ({
+      name,
+      status: "passed",
+      duration: 0,
+      failure: null,
+      stack_trace: null,
+    });
+
+    const parseWithCaseSteps = (steps: unknown[]) => {
+      (parseTestResults as any).mockResolvedValue({
+        result: {
+          total: 1,
+          passed: 1,
+          failed: 0,
+          errors: 0,
+          skipped: 0,
+          duration: 1.5,
+          suites: [
+            {
+              name: "com.example.TestSuite",
+              total: 1,
+              passed: 1,
+              failed: 0,
+              errors: 0,
+              skipped: 0,
+              duration: 1.5,
+              cases: [
+                {
+                  name: "test_login",
+                  status: "passed",
+                  duration: 1.5,
+                  failure: null,
+                  stack_trace: null,
+                  attachments: [],
+                  steps,
+                },
+              ],
+            },
+          ],
+        },
+        errors: [],
+      });
+    };
+
+    const postImport = async () => {
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+      return POST(createFormDataRequest(formData));
+    };
+
+    const gherkin = [
+      cucumberStep("Given I am on the login page"),
+      cucumberStep("When I sign in"),
+      cucumberStep("Then I see the dashboard"),
+    ];
+
+    it("writes derived steps via createMany on a fresh Cucumber create", async () => {
+      parseWithCaseSteps(gherkin);
+      (prisma.steps.count as any).mockResolvedValue(0);
+
+      const response = await postImport();
+      await readSseResponse(response);
+
+      expect(prisma.steps.createMany).toHaveBeenCalledTimes(1);
+      const arg = (prisma.steps.createMany as any).mock.calls[0][0];
+      // Given→Step 0 + When→step; the Then folds into the preceding When's
+      // expectedResult (D-07 pairing) → 2 rows from 3 Gherkin steps.
+      expect(arg.data).toHaveLength(2);
+      expect(arg.data.every((r: any) => r.testCaseId === 100)).toBe(true);
+      // step is a tiptap JSON string (wrapped via tipTapDoc), not raw text.
+      expect(typeof arg.data[0].step).toBe("string");
+      expect(arg.data[0].step).toContain("paragraph");
+      // The When-step carries the Then text as its expected result.
+      expect(arg.data[1].expectedResult).toContain("dashboard");
+    });
+
+    it("is idempotent on re-import: createMany is not called when the case already has steps", async () => {
+      parseWithCaseSteps(gherkin);
+      (prisma.steps.count as any).mockResolvedValue(3);
+
+      const response = await postImport();
+      await readSseResponse(response);
+
+      expect(prisma.steps.createMany).not.toHaveBeenCalled();
+    });
+
+    it("backfills steps on a matched stepless case (name+className match path)", async () => {
+      (prisma.repositoryCases.findFirst as any).mockResolvedValue(
+        mockRepositoryCase
+      );
+      parseWithCaseSteps(gherkin);
+      (prisma.steps.count as any).mockResolvedValue(0);
+
+      const response = await postImport();
+      await readSseResponse(response);
+
+      expect(prisma.steps.createMany).toHaveBeenCalledTimes(1);
+    });
+
+    it("records a stepDerivationWarning and still completes when the write fails", async () => {
+      parseWithCaseSteps(gherkin);
+      (prisma.steps.count as any).mockResolvedValue(0);
+      (prisma.steps.createMany as any).mockRejectedValue(
+        new Error("DB constraint")
+      );
+
+      const response = await postImport();
+      const events = await readSseResponse(response);
+
+      const complete = events.find((e) => e.complete === true);
+      expect(complete).toBeDefined();
+      expect(complete.stepDerivationWarnings?.length ?? 0).toBeGreaterThan(0);
+    });
+
+    it("is a graceful no-op for a stepless (empty steps) case", async () => {
+      parseWithCaseSteps([]);
+      (prisma.steps.count as any).mockResolvedValue(0);
+
+      const response = await postImport();
+      await readSseResponse(response);
+
+      expect(prisma.steps.createMany).not.toHaveBeenCalled();
     });
   });
 
