@@ -1,5 +1,19 @@
 'use strict';
 
+// src/tipTapDoc.ts
+function tipTapDoc(text) {
+  const trimmed = text.trim();
+  return JSON.stringify({
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: trimmed ? [{ type: "text", text: trimmed }] : []
+      }
+    ]
+  });
+}
+
 // src/client.ts
 var TestPlanItError = class extends Error {
   statusCode;
@@ -1080,23 +1094,6 @@ var TestPlanItClient = class {
     return { testCase: createdCase, action: "created" };
   }
   /**
-   * Wrap plain text in a minimal TipTap (ProseMirror) document so it renders
-   * in the in-app step editor. Empty text produces an empty paragraph (an
-   * empty text node is invalid in ProseMirror).
-   */
-  tipTapDoc(text) {
-    const trimmed = text.trim();
-    return JSON.stringify({
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: trimmed ? [{ type: "text", text: trimmed }] : []
-        }
-      ]
-    });
-  }
-  /**
    * Create an authored step on a test case.
    * `step` and `expectedResult` are stored as TipTap rich-text documents to
    * match the in-app step editor.
@@ -1104,11 +1101,11 @@ var TestPlanItClient = class {
   async createStep(options) {
     const data = {
       testCase: { connect: { id: options.testCaseId } },
-      step: this.tipTapDoc(options.step),
+      step: tipTapDoc(options.step),
       order: options.order
     };
     if (options.expectedResult !== void 0 && options.expectedResult !== "") {
-      data.expectedResult = this.tipTapDoc(options.expectedResult);
+      data.expectedResult = tipTapDoc(options.expectedResult);
     }
     return this.zenstack("steps", "create", { data });
   }
@@ -1123,11 +1120,11 @@ var TestPlanItClient = class {
     const data = options.steps.map((s) => {
       const row = {
         testCaseId: options.testCaseId,
-        step: this.tipTapDoc(s.step),
+        step: tipTapDoc(s.step),
         order: s.order
       };
       if (s.expectedResult !== void 0 && s.expectedResult !== "") {
-        row.expectedResult = this.tipTapDoc(s.expectedResult);
+        row.expectedResult = tipTapDoc(s.expectedResult);
       }
       return row;
     });
@@ -1512,7 +1509,41 @@ var TestPlanItClient = class {
   }
 };
 
+// src/mapper.ts
+function automationStepsToCaseSteps(steps) {
+  const rows = [];
+  let order = 0;
+  let attachIndex = -1;
+  const appendExpected = (index, title) => {
+    if (index < 0) return;
+    const row = rows[index];
+    row.expectedResult = row.expectedResult === void 0 || row.expectedResult === "" ? title : `${row.expectedResult}
+${title}`;
+  };
+  for (const step of steps) {
+    if (step.kind === "assertion") {
+      appendExpected(attachIndex, step.title);
+      continue;
+    }
+    const row = { step: step.title, order: order++ };
+    if (step.children && step.children.length > 0) {
+      const nested = step.children.filter((child) => child.kind === "assertion").map((child) => child.title);
+      if (nested.length > 0) row.expectedResult = nested.join("\n");
+    }
+    rows.push(row);
+    attachIndex = rows.length - 1;
+  }
+  return rows;
+}
+function deriveCaseStepsIfFresh(steps, existingStepCount) {
+  if (existingStepCount >= 1) return [];
+  return automationStepsToCaseSteps(steps);
+}
+
 exports.TestPlanItClient = TestPlanItClient;
 exports.TestPlanItError = TestPlanItError;
+exports.automationStepsToCaseSteps = automationStepsToCaseSteps;
+exports.deriveCaseStepsIfFresh = deriveCaseStepsIfFresh;
+exports.tipTapDoc = tipTapDoc;
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map
