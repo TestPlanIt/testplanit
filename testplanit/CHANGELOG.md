@@ -1,3 +1,13 @@
+## [0.38.6](https://github.com/TestPlanIt/testplanit/compare/v0.38.5...v0.38.6) (2026-06-18)
+
+### Bug Fixes
+
+* **deps:** patch Dependabot security advisories ([#443](https://github.com/TestPlanIt/testplanit/issues/443)) ([f13a7b5](https://github.com/TestPlanIt/testplanit/commit/f13a7b5a371393ced51b2d52ef0811d1e1ec3ae6)), closes [package.json#pnpm](https://github.com/TestPlanIt/package.json/issues/pnpm)
+
+### Enhancements
+
+* **playwright-reporter:** capture test.step() as case steps (+ E2E conversion, test-run live-update fix) ([#444](https://github.com/TestPlanIt/testplanit/issues/444)) ([ea8f7cd](https://github.com/TestPlanIt/testplanit/commit/ea8f7cd199dc239bb105cb876bc4120dff43827e))
+
 ## [0.38.5](https://github.com/TestPlanIt/testplanit/compare/v0.38.4...v0.38.5) (2026-06-16)
 
 ### Bug Fixes
