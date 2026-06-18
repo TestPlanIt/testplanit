@@ -188,6 +188,19 @@ interface RepositoryCase {
     };
 }
 /**
+ * Authored step on a test case.
+ * `step`/`expectedResult` hold a TipTap rich-text document (matching the
+ * in-app step editor).
+ */
+interface Step {
+    id: number;
+    testCaseId: number;
+    step?: unknown;
+    expectedResult?: unknown;
+    order: number;
+    isDeleted: boolean;
+}
+/**
  * Test case linked to a test run
  */
 interface TestRunCase {
@@ -447,6 +460,35 @@ interface CreateTestCaseOptions {
     automated?: boolean;
     stateId?: number;
     estimate?: number;
+}
+/**
+ * Options for creating an authored step on a test case.
+ * Plain-text `step`/`expectedResult` are stored as TipTap rich-text documents
+ * so they render in the in-app step editor.
+ */
+interface CreateStepOptions {
+    testCaseId: number;
+    /** Step instruction (plain text). */
+    step: string;
+    /** Expected result (plain text). Omitted when empty. */
+    expectedResult?: string;
+    /** Zero-based position of the step within the case. */
+    order: number;
+}
+/**
+ * Options for creating multiple authored steps on a test case in one request.
+ * Each step's plain-text `step`/`expectedResult` is stored as a TipTap doc.
+ */
+interface CreateStepsOptions {
+    testCaseId: number;
+    steps: Array<{
+        /** Step instruction (plain text). */
+        step: string;
+        /** Expected result (plain text). Omitted when empty. */
+        expectedResult?: string;
+        /** Zero-based position of the step within the case. */
+        order: number;
+    }>;
 }
 /**
  * Result of findOrCreateTestCase with metadata
@@ -897,6 +939,34 @@ declare class TestPlanItClient {
      */
     findOrCreateTestCase(options: CreateTestCaseOptions): Promise<FindOrCreateTestCaseResult>;
     /**
+     * Wrap plain text in a minimal TipTap (ProseMirror) document so it renders
+     * in the in-app step editor. Empty text produces an empty paragraph (an
+     * empty text node is invalid in ProseMirror).
+     */
+    private tipTapDoc;
+    /**
+     * Create an authored step on a test case.
+     * `step` and `expectedResult` are stored as TipTap rich-text documents to
+     * match the in-app step editor.
+     */
+    createStep(options: CreateStepOptions): Promise<Step>;
+    /**
+     * Create many authored steps on a test case in a single request.
+     * Preferred over repeated {@link createStep} calls when seeding a case's
+     * steps — one `createMany` instead of N creates keeps the call count (and
+     * rate-limit pressure) low when reporting large suites. Uses the scalar
+     * `testCaseId` FK because `createMany` does not accept nested relations.
+     */
+    createSteps(options: CreateStepsOptions): Promise<{
+        count: number;
+    }>;
+    /**
+     * Soft-delete every active step on a test case (sets `isDeleted: true`).
+     * Used to replace a case's steps when syncing them from automation.
+     * Returns the number of steps that were soft-deleted.
+     */
+    softDeleteCaseSteps(testCaseId: number): Promise<number>;
+    /**
      * Add a test case to a test run
      */
     addTestCaseToRun(options: AddTestCaseToRunOptions): Promise<TestRunCase>;
@@ -975,4 +1045,4 @@ declare class TestPlanItClient {
     getBaseUrl(): string;
 }
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type Status, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState };
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState };

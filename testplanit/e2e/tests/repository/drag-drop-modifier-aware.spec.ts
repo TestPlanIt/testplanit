@@ -204,34 +204,39 @@ test.describe("Drag-drop modifier-aware UX", () => {
   test("setup: create project, target folder, and two source cases", async ({
     api,
   }) => {
-    projectId = await api.createProject(`Drag DnD Modifier ${Date.now()}`);
-    rootFolderId = await api.getRootFolderId(projectId);
-    targetFolderId = await api.createFolder(
-      projectId,
-      `Target Folder ${Date.now()}`
-    );
+    await test.step("Create project, target folder, and two source cases", async () => {
+      projectId = await api.createProject(`Drag DnD Modifier ${Date.now()}`);
+      rootFolderId = await api.getRootFolderId(projectId);
+      targetFolderId = await api.createFolder(
+        projectId,
+        `Target Folder ${Date.now()}`
+      );
 
-    sourceCaseId = await api.createTestCase(
-      projectId,
-      rootFolderId,
-      sourceCaseName
-    );
-    secondCaseId = await api.createTestCase(
-      projectId,
-      rootFolderId,
-      secondCaseName
-    );
+      sourceCaseId = await api.createTestCase(
+        projectId,
+        rootFolderId,
+        sourceCaseName
+      );
+      secondCaseId = await api.createTestCase(
+        projectId,
+        rootFolderId,
+        secondCaseName
+      );
+    });
 
-    expect(projectId).toBeGreaterThan(0);
-    expect(rootFolderId).toBeGreaterThan(0);
-    expect(targetFolderId).toBeGreaterThan(0);
-    expect(sourceCaseId).toBeGreaterThan(0);
-    expect(secondCaseId).toBeGreaterThan(0);
+    await test.step("Verify all resources were created", async () => {
+      expect(projectId).toBeGreaterThan(0);
+      expect(rootFolderId).toBeGreaterThan(0);
+      expect(targetFolderId).toBeGreaterThan(0);
+      expect(sourceCaseId).toBeGreaterThan(0);
+      expect(secondCaseId).toBeGreaterThan(0);
+    });
 
-    // Opt out of api fixture's auto-cleanup so resources outlive setup.
-    api.untrackProject(projectId);
-    api.untrackCase(sourceCaseId);
-    api.untrackCase(secondCaseId);
+    await test.step("Opt out of api fixture auto-cleanup so resources outlive setup", async () => {
+      api.untrackProject(projectId);
+      api.untrackCase(sourceCaseId);
+      api.untrackCase(secondCaseId);
+    });
   });
 
   test("no-modifier drop opens cursor-anchored popover; Esc dismisses without DB write", async ({
@@ -240,43 +245,51 @@ test.describe("Drag-drop modifier-aware UX", () => {
     baseURL,
   }) => {
     const repo = new RepositoryPage(page);
-    await repo.goto(projectId);
-    await repo.selectFolder(rootFolderId);
-
     const sourceRow = page
       .locator(`[data-testid="case-row-${sourceCaseId}"]`)
       .first();
     const target = page
       .locator(`[data-testid="folder-node-${targetFolderId}"]`)
       .first();
-
-    await expect(sourceRow).toBeVisible({ timeout: 15_000 });
-    await expect(target).toBeVisible({ timeout: 20_000 });
-
-    await dragWithModifier(page, sourceRow, target, null);
-
     const popover = page.getByTestId("drop-action-popover");
-    await expect(popover).toBeVisible({ timeout: 5_000 });
 
-    // Cancel is the popover focus default.
-    await expect(page.getByTestId("drop-action-cancel")).toBeFocused();
+    await test.step("Open repository and select the root folder", async () => {
+      await repo.goto(projectId);
+      await repo.selectFolder(rootFolderId);
 
-    await page.keyboard.press("Escape");
-    await expect(popover).not.toBeVisible({ timeout: 5_000 });
+      await expect(sourceRow).toBeVisible({ timeout: 15_000 });
+      await expect(target).toBeVisible({ timeout: 20_000 });
+    });
 
-    // No DB write: source case still in root folder; target folder unchanged.
-    const targetCases = await casesInFolder(
-      request,
-      baseURL!,
-      projectId,
-      targetFolderId
-    );
-    expect(targetCases.find((c) => c.id === sourceCaseId)).toBeUndefined();
+    await test.step("Drag the case onto the target folder with no modifier", async () => {
+      await dragWithModifier(page, sourceRow, target, null);
 
-    // No copy spinner ever rendered in the target row.
-    await expect(
-      page.getByTestId(`folder-row-copy-progress-${targetFolderId}`)
-    ).not.toBeVisible({ timeout: 1_000 });
+      await expect(popover).toBeVisible({ timeout: 5_000 });
+
+      // Cancel is the popover focus default.
+      await expect(page.getByTestId("drop-action-cancel")).toBeFocused();
+    });
+
+    await test.step("Press Escape to dismiss the popover", async () => {
+      await page.keyboard.press("Escape");
+      await expect(popover).not.toBeVisible({ timeout: 5_000 });
+    });
+
+    await test.step("Verify no DB write and no copy spinner occurred", async () => {
+      // No DB write: source case still in root folder; target folder unchanged.
+      const targetCases = await casesInFolder(
+        request,
+        baseURL!,
+        projectId,
+        targetFolderId
+      );
+      expect(targetCases.find((c) => c.id === sourceCaseId)).toBeUndefined();
+
+      // No copy spinner ever rendered in the target row.
+      await expect(
+        page.getByTestId(`folder-row-copy-progress-${targetFolderId}`)
+      ).not.toBeVisible({ timeout: 1_000 });
+    });
   });
 
   test("no-modifier drop → Move button moves the case via the fast path", async ({
@@ -285,43 +298,50 @@ test.describe("Drag-drop modifier-aware UX", () => {
     baseURL,
   }) => {
     const repo = new RepositoryPage(page);
-    await repo.goto(projectId);
-    await repo.selectFolder(rootFolderId);
-
     const sourceRow = page
       .locator(`[data-testid="case-row-${sourceCaseId}"]`)
       .first();
     const target = page
       .locator(`[data-testid="folder-node-${targetFolderId}"]`)
       .first();
-    await expect(sourceRow).toBeVisible({ timeout: 10_000 });
 
-    await dragWithModifier(page, sourceRow, target, null);
-    await page.getByTestId("drop-action-move").click();
+    await test.step("Open repository and select the root folder", async () => {
+      await repo.goto(projectId);
+      await repo.selectFolder(rootFolderId);
 
-    await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
-      timeout: 5_000,
+      await expect(sourceRow).toBeVisible({ timeout: 10_000 });
     });
 
-    await expect
-      .poll(
-        async () => {
-          const cases = await casesInFolder(
-            request,
-            baseURL!,
-            projectId,
-            targetFolderId
-          );
-          return cases.some((c) => c.id === sourceCaseId);
-        },
-        { timeout: 15_000 }
-      )
-      .toBe(true);
+    await test.step("Drag with no modifier and click the Move button", async () => {
+      await dragWithModifier(page, sourceRow, target, null);
+      await page.getByTestId("drop-action-move").click();
 
-    // Move is the fast ZenStack path; no async copy spinner.
-    await expect(
-      page.getByTestId(`folder-row-copy-progress-${targetFolderId}`)
-    ).not.toBeVisible({ timeout: 1_000 });
+      await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
+        timeout: 5_000,
+      });
+    });
+
+    await test.step("Verify the case moved to the target folder with no copy spinner", async () => {
+      await expect
+        .poll(
+          async () => {
+            const cases = await casesInFolder(
+              request,
+              baseURL!,
+              projectId,
+              targetFolderId
+            );
+            return cases.some((c) => c.id === sourceCaseId);
+          },
+          { timeout: 15_000 }
+        )
+        .toBe(true);
+
+      // Move is the fast ZenStack path; no async copy spinner.
+      await expect(
+        page.getByTestId(`folder-row-copy-progress-${targetFolderId}`)
+      ).not.toBeVisible({ timeout: 1_000 });
+    });
 
     // Restore source case to root for subsequent tests.
     await moveCaseToFolder(request, baseURL!, sourceCaseId, rootFolderId);
@@ -333,61 +353,72 @@ test.describe("Drag-drop modifier-aware UX", () => {
     baseURL,
   }) => {
     const repo = new RepositoryPage(page);
-    await repo.goto(projectId);
-    await repo.selectFolder(rootFolderId);
-
-    const before = await casesInFolder(
-      request,
-      baseURL!,
-      projectId,
-      targetFolderId
-    );
-    const beforeIds = new Set(before.map((c) => c.id));
-
     const sourceRow = page
       .locator(`[data-testid="case-row-${sourceCaseId}"]`)
       .first();
     const target = page
       .locator(`[data-testid="folder-node-${targetFolderId}"]`)
       .first();
-    await expect(sourceRow).toBeVisible({ timeout: 10_000 });
+    let before: Array<{ id: number; name: string }> | undefined;
+    let beforeIds: Set<number> | undefined;
 
-    await dragWithModifier(page, sourceRow, target, null);
-    await page.getByTestId("drop-action-copy").click();
+    await test.step("Open repository and capture target-folder baseline", async () => {
+      await repo.goto(projectId);
+      await repo.selectFolder(rootFolderId);
 
-    await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
-      timeout: 5_000,
+      before = await casesInFolder(
+        request,
+        baseURL!,
+        projectId,
+        targetFolderId
+      );
+      beforeIds = new Set(before.map((c) => c.id));
+
+      await expect(sourceRow).toBeVisible({ timeout: 10_000 });
     });
 
-    // Wait for the async copy job to land a new case in the target folder.
-    let newCaseId: number | undefined;
-    await expect
-      .poll(
-        async () => {
-          const cases = await casesInFolder(
-            request,
-            baseURL!,
-            projectId,
-            targetFolderId
-          );
-          const created = cases.find((c) => !beforeIds.has(c.id));
-          if (created) newCaseId = created.id;
-          return cases.length;
-        },
-        { timeout: 30_000 }
-      )
-      .toBe(before.length + 1);
+    await test.step("Drag with no modifier and click the Copy button", async () => {
+      await dragWithModifier(page, sourceRow, target, null);
+      await page.getByTestId("drop-action-copy").click();
 
-    if (newCaseId !== undefined) createdCaseIds.push(newCaseId);
+      await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
+        timeout: 5_000,
+      });
+    });
 
-    // Source still in root.
-    const rootCases = await casesInFolder(
-      request,
-      baseURL!,
-      projectId,
-      rootFolderId
-    );
-    expect(rootCases.find((c) => c.id === sourceCaseId)).toBeDefined();
+    await test.step("Wait for the async copy job to land a new case in the target folder", async () => {
+      // Wait for the async copy job to land a new case in the target folder.
+      let newCaseId: number | undefined;
+      await expect
+        .poll(
+          async () => {
+            const cases = await casesInFolder(
+              request,
+              baseURL!,
+              projectId,
+              targetFolderId
+            );
+            const created = cases.find((c) => !beforeIds!.has(c.id));
+            if (created) newCaseId = created.id;
+            return cases.length;
+          },
+          { timeout: 30_000 }
+        )
+        .toBe(before!.length + 1);
+
+      if (newCaseId !== undefined) createdCaseIds.push(newCaseId);
+    });
+
+    await test.step("Verify the source case is still in the root folder", async () => {
+      // Source still in root.
+      const rootCases = await casesInFolder(
+        request,
+        baseURL!,
+        projectId,
+        rootFolderId
+      );
+      expect(rootCases.find((c) => c.id === sourceCaseId)).toBeDefined();
+    });
   });
 
   test("copy modifier shows copy badge mid-drag and copies directly without popover", async ({
@@ -396,75 +427,86 @@ test.describe("Drag-drop modifier-aware UX", () => {
     baseURL,
   }) => {
     const repo = new RepositoryPage(page);
-    await repo.goto(projectId);
-    await repo.selectFolder(rootFolderId);
-
     const sourceRow = page
       .locator(`[data-testid="case-row-${sourceCaseId}"]`)
       .first();
     const target = page
       .locator(`[data-testid="folder-node-${targetFolderId}"]`)
       .first();
-    await expect(sourceRow).toBeVisible({ timeout: 10_000 });
+    let before: Array<{ id: number; name: string }> | undefined;
+    let beforeIds: Set<number> | undefined;
 
-    const targetBox = await target.boundingBox();
-    if (!targetBox) throw new Error("missing target boundingBox");
+    await test.step("Open repository and select the root folder", async () => {
+      await repo.goto(projectId);
+      await repo.selectFolder(rootFolderId);
 
-    const before = await casesInFolder(
-      request,
-      baseURL!,
-      projectId,
-      targetFolderId
-    );
-    const beforeIds = new Set(before.map((c) => c.id));
-
-    const targetCenterX = targetBox.x + targetBox.width / 2;
-    const targetCenterY = targetBox.y + targetBox.height / 2;
-    const copyModifier = await resolveCopyModifier(page);
-
-    // Start the drag without the modifier first so dragstart fires cleanly,
-    // then press the modifier and continue moving so the modifier-bearing
-    // dragover events propagate to the useDragModifier listener.
-    await sourceRow.hover();
-    await page.mouse.down();
-    await page.mouse.move(targetCenterX, targetCenterY, { steps: 8 });
-    await flushReactRender(page);
-
-    await page.keyboard.down(copyModifier);
-    await page.mouse.move(targetCenterX + 2, targetCenterY + 2, { steps: 20 });
-
-    await expect(page.getByTestId("drag-preview-copy-badge")).toBeVisible({
-      timeout: 5_000,
+      await expect(sourceRow).toBeVisible({ timeout: 10_000 });
     });
 
-    // Modifier held through drop so the drop branches to direct copy.
-    await page.mouse.up();
-    // Wait for the drop to settle before releasing the modifier so the drop
-    // callback observes the modifier-bearing dragover state on slow CI.
-    await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
-      timeout: 2_000,
+    await test.step("Synthesize drag with copy modifier and confirm copy badge then drop", async () => {
+      const targetBox = await target.boundingBox();
+      if (!targetBox) throw new Error("missing target boundingBox");
+
+      before = await casesInFolder(
+        request,
+        baseURL!,
+        projectId,
+        targetFolderId
+      );
+      beforeIds = new Set(before.map((c) => c.id));
+
+      const targetCenterX = targetBox.x + targetBox.width / 2;
+      const targetCenterY = targetBox.y + targetBox.height / 2;
+      const copyModifier = await resolveCopyModifier(page);
+
+      // Start the drag without the modifier first so dragstart fires cleanly,
+      // then press the modifier and continue moving so the modifier-bearing
+      // dragover events propagate to the useDragModifier listener.
+      await sourceRow.hover();
+      await page.mouse.down();
+      await page.mouse.move(targetCenterX, targetCenterY, { steps: 8 });
+      await flushReactRender(page);
+
+      await page.keyboard.down(copyModifier);
+      await page.mouse.move(targetCenterX + 2, targetCenterY + 2, {
+        steps: 20,
+      });
+
+      await expect(page.getByTestId("drag-preview-copy-badge")).toBeVisible({
+        timeout: 5_000,
+      });
+
+      // Modifier held through drop so the drop branches to direct copy.
+      await page.mouse.up();
+      // Wait for the drop to settle before releasing the modifier so the drop
+      // callback observes the modifier-bearing dragover state on slow CI.
+      await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
+        timeout: 2_000,
+      });
+      await page.keyboard.up(copyModifier);
     });
-    await page.keyboard.up(copyModifier);
 
-    let newCaseId: number | undefined;
-    await expect
-      .poll(
-        async () => {
-          const cases = await casesInFolder(
-            request,
-            baseURL!,
-            projectId,
-            targetFolderId
-          );
-          const created = cases.find((c) => !beforeIds.has(c.id));
-          if (created) newCaseId = created.id;
-          return cases.length;
-        },
-        { timeout: 30_000 }
-      )
-      .toBe(before.length + 1);
+    await test.step("Wait for the async copy job to land a new case in the target folder", async () => {
+      let newCaseId: number | undefined;
+      await expect
+        .poll(
+          async () => {
+            const cases = await casesInFolder(
+              request,
+              baseURL!,
+              projectId,
+              targetFolderId
+            );
+            const created = cases.find((c) => !beforeIds!.has(c.id));
+            if (created) newCaseId = created.id;
+            return cases.length;
+          },
+          { timeout: 30_000 }
+        )
+        .toBe(before!.length + 1);
 
-    if (newCaseId !== undefined) createdCaseIds.push(newCaseId);
+      if (newCaseId !== undefined) createdCaseIds.push(newCaseId);
+    });
   });
 
   test("move modifier shows move badge mid-drag and moves directly via fast path", async ({
@@ -473,66 +515,75 @@ test.describe("Drag-drop modifier-aware UX", () => {
     baseURL,
   }) => {
     const repo = new RepositoryPage(page);
-    await repo.goto(projectId);
-    await repo.selectFolder(rootFolderId);
-
     const sourceRow = page
       .locator(`[data-testid="case-row-${sourceCaseId}"]`)
       .first();
     const target = page
       .locator(`[data-testid="folder-node-${targetFolderId}"]`)
       .first();
-    await expect(sourceRow).toBeVisible({ timeout: 10_000 });
 
-    const targetBox = await target.boundingBox();
-    if (!targetBox) throw new Error("missing target boundingBox");
+    await test.step("Open repository and select the root folder", async () => {
+      await repo.goto(projectId);
+      await repo.selectFolder(rootFolderId);
 
-    const targetCenterX = targetBox.x + targetBox.width / 2;
-    const targetCenterY = targetBox.y + targetBox.height / 2;
-
-    // Start the drag without the modifier so dragstart fires cleanly, then
-    // press Shift mid-drag so the modifier-bearing dragovers propagate.
-    await sourceRow.hover();
-    await page.mouse.down();
-    await page.mouse.move(targetCenterX, targetCenterY, { steps: 8 });
-    await flushReactRender(page);
-
-    await page.keyboard.down("Shift");
-    await page.mouse.move(targetCenterX + 2, targetCenterY + 2, { steps: 20 });
-
-    await expect(page.getByTestId("drag-preview-move-badge")).toBeVisible({
-      timeout: 5_000,
+      await expect(sourceRow).toBeVisible({ timeout: 10_000 });
     });
 
-    // Modifier held through drop so the drop branches to direct move.
-    await page.mouse.up();
-    // Wait for the drop to settle before releasing the modifier so the drop
-    // callback observes the modifier-bearing dragover state on slow CI.
-    await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
-      timeout: 2_000,
+    await test.step("Synthesize drag with Shift modifier and confirm move badge then drop", async () => {
+      const targetBox = await target.boundingBox();
+      if (!targetBox) throw new Error("missing target boundingBox");
+
+      const targetCenterX = targetBox.x + targetBox.width / 2;
+      const targetCenterY = targetBox.y + targetBox.height / 2;
+
+      // Start the drag without the modifier so dragstart fires cleanly, then
+      // press Shift mid-drag so the modifier-bearing dragovers propagate.
+      await sourceRow.hover();
+      await page.mouse.down();
+      await page.mouse.move(targetCenterX, targetCenterY, { steps: 8 });
+      await flushReactRender(page);
+
+      await page.keyboard.down("Shift");
+      await page.mouse.move(targetCenterX + 2, targetCenterY + 2, {
+        steps: 20,
+      });
+
+      await expect(page.getByTestId("drag-preview-move-badge")).toBeVisible({
+        timeout: 5_000,
+      });
+
+      // Modifier held through drop so the drop branches to direct move.
+      await page.mouse.up();
+      // Wait for the drop to settle before releasing the modifier so the drop
+      // callback observes the modifier-bearing dragover state on slow CI.
+      await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
+        timeout: 2_000,
+      });
+      await page.keyboard.up("Shift");
     });
-    await page.keyboard.up("Shift");
 
-    // Move uses the fast path — source ends up in target folder.
-    await expect
-      .poll(
-        async () => {
-          const cases = await casesInFolder(
-            request,
-            baseURL!,
-            projectId,
-            targetFolderId
-          );
-          return cases.some((c) => c.id === sourceCaseId);
-        },
-        { timeout: 15_000 }
-      )
-      .toBe(true);
+    await test.step("Verify the case moved via the fast path with no copy spinner", async () => {
+      // Move uses the fast path — source ends up in target folder.
+      await expect
+        .poll(
+          async () => {
+            const cases = await casesInFolder(
+              request,
+              baseURL!,
+              projectId,
+              targetFolderId
+            );
+            return cases.some((c) => c.id === sourceCaseId);
+          },
+          { timeout: 15_000 }
+        )
+        .toBe(true);
 
-    // Move is the fast path; no copy spinner.
-    await expect(
-      page.getByTestId(`folder-row-copy-progress-${targetFolderId}`)
-    ).not.toBeVisible({ timeout: 1_000 });
+      // Move is the fast path; no copy spinner.
+      await expect(
+        page.getByTestId(`folder-row-copy-progress-${targetFolderId}`)
+      ).not.toBeVisible({ timeout: 1_000 });
+    });
 
     // Restore source case to root for subsequent tests.
     await moveCaseToFolder(request, baseURL!, sourceCaseId, rootFolderId);
@@ -540,59 +591,87 @@ test.describe("Drag-drop modifier-aware UX", () => {
 
   test("toggling modifiers mid-drag swaps badges live", async ({ page }) => {
     const repo = new RepositoryPage(page);
-    await repo.goto(projectId);
-    await repo.selectFolder(rootFolderId);
-
     const sourceRow = page
       .locator(`[data-testid="case-row-${sourceCaseId}"]`)
       .first();
     const target = page
       .locator(`[data-testid="folder-node-${targetFolderId}"]`)
       .first();
-    await expect(sourceRow).toBeVisible({ timeout: 10_000 });
+    let targetBox: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    } | null = null;
+    let copyModifier: "Alt" | "Control" | undefined;
 
-    const targetBox = await target.boundingBox();
-    if (!targetBox) throw new Error("missing target boundingBox");
+    await test.step("Open repository and select the root folder", async () => {
+      await repo.goto(projectId);
+      await repo.selectFolder(rootFolderId);
 
-    const copyModifier = await resolveCopyModifier(page);
+      await expect(sourceRow).toBeVisible({ timeout: 10_000 });
 
-    await sourceRow.hover();
-    await page.mouse.down();
-    // First short move triggers dragstart so react-dnd's isDragging flips true.
-    await page.mouse.move(targetBox.x + 10, targetBox.y + 10, { steps: 8 });
-    // Flush so the UnifiedDragPreview-mounted dragover listener attaches.
-    await flushReactRender(page);
+      targetBox = await target.boundingBox();
+      if (!targetBox) throw new Error("missing target boundingBox");
 
-    await page.keyboard.down(copyModifier);
-    // Nudge the mouse so fresh dragovers propagate with the new modifier state.
-    await page.mouse.move(targetBox.x + 20, targetBox.y + 20, { steps: 12 });
-    await expect(page.getByTestId("drag-preview-copy-badge")).toBeVisible({
-      timeout: 5_000,
-    });
-    await page.keyboard.up(copyModifier);
-
-    await page.keyboard.down("Shift");
-    await page.mouse.move(targetBox.x + 30, targetBox.y + 30, { steps: 12 });
-    await expect(page.getByTestId("drag-preview-move-badge")).toBeVisible({
-      timeout: 5_000,
-    });
-    await page.keyboard.up("Shift");
-
-    // Both badges should be gone when neither modifier is held.
-    await page.mouse.move(targetBox.x + 40, targetBox.y + 40, { steps: 12 });
-    await expect(page.getByTestId("drag-preview-copy-badge")).not.toBeVisible({
-      timeout: 5_000,
-    });
-    await expect(page.getByTestId("drag-preview-move-badge")).not.toBeVisible({
-      timeout: 5_000,
+      copyModifier = await resolveCopyModifier(page);
     });
 
-    // End the drag away from any drop target so canDrop returns false and no
-    // drop branch fires — the badge-swap UI smoke is the deterministic claim
-    // here; drop-branch routing for the no-modifier case is covered by the
-    // earlier popover-open / Esc-dismiss test.
-    await page.mouse.move(10, 10, { steps: 5 });
-    await page.mouse.up();
+    await test.step("Start the drag and press the copy modifier to show the copy badge", async () => {
+      await sourceRow.hover();
+      await page.mouse.down();
+      // First short move triggers dragstart so react-dnd's isDragging flips true.
+      await page.mouse.move(targetBox!.x + 10, targetBox!.y + 10, { steps: 8 });
+      // Flush so the UnifiedDragPreview-mounted dragover listener attaches.
+      await flushReactRender(page);
+
+      await page.keyboard.down(copyModifier!);
+      // Nudge the mouse so fresh dragovers propagate with the new modifier state.
+      await page.mouse.move(targetBox!.x + 20, targetBox!.y + 20, {
+        steps: 12,
+      });
+      await expect(page.getByTestId("drag-preview-copy-badge")).toBeVisible({
+        timeout: 5_000,
+      });
+      await page.keyboard.up(copyModifier!);
+    });
+
+    await test.step("Press Shift to swap to the move badge", async () => {
+      await page.keyboard.down("Shift");
+      await page.mouse.move(targetBox!.x + 30, targetBox!.y + 30, {
+        steps: 12,
+      });
+      await expect(page.getByTestId("drag-preview-move-badge")).toBeVisible({
+        timeout: 5_000,
+      });
+      await page.keyboard.up("Shift");
+    });
+
+    await test.step("Release modifiers and confirm both badges disappear", async () => {
+      // Both badges should be gone when neither modifier is held.
+      await page.mouse.move(targetBox!.x + 40, targetBox!.y + 40, {
+        steps: 12,
+      });
+      await expect(page.getByTestId("drag-preview-copy-badge")).not.toBeVisible(
+        {
+          timeout: 5_000,
+        }
+      );
+      await expect(page.getByTestId("drag-preview-move-badge")).not.toBeVisible(
+        {
+          timeout: 5_000,
+        }
+      );
+    });
+
+    await test.step("End the drag away from any drop target", async () => {
+      // End the drag away from any drop target so canDrop returns false and no
+      // drop branch fires — the badge-swap UI smoke is the deterministic claim
+      // here; drop-branch routing for the no-modifier case is covered by the
+      // earlier popover-open / Esc-dismiss test.
+      await page.mouse.move(10, 10, { steps: 5 });
+      await page.mouse.up();
+    });
   });
 
   test("multi-select copy creates N cases in one job", async ({
@@ -601,69 +680,80 @@ test.describe("Drag-drop modifier-aware UX", () => {
     baseURL,
   }) => {
     const repo = new RepositoryPage(page);
-    await repo.goto(projectId);
-    await repo.selectFolder(rootFolderId);
-
     const checkbox1 = page
       .locator(`[data-testid="case-checkbox-${sourceCaseId}"]`)
       .first();
     const checkbox2 = page
       .locator(`[data-testid="case-checkbox-${secondCaseId}"]`)
       .first();
-
-    await expect(checkbox1).toBeVisible({ timeout: 10_000 });
-    await checkbox1.click();
-    await checkbox2.click();
-
-    const before = await casesInFolder(
-      request,
-      baseURL!,
-      projectId,
-      targetFolderId
-    );
-    const beforeIds = new Set(before.map((c) => c.id));
-
     const sourceRow = page
       .locator(`[data-testid="case-row-${sourceCaseId}"]`)
       .first();
     const target = page
       .locator(`[data-testid="folder-node-${targetFolderId}"]`)
       .first();
+    let before: Array<{ id: number; name: string }> | undefined;
+    let beforeIds: Set<number> | undefined;
 
-    const copyModifier = await resolveCopyModifier(page);
-    await dragWithModifier(page, sourceRow, target, copyModifier);
+    await test.step("Open repository and select both source cases", async () => {
+      await repo.goto(projectId);
+      await repo.selectFolder(rootFolderId);
 
-    // Copy modifier held → no popover.
-    await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
-      timeout: 2_000,
+      await expect(checkbox1).toBeVisible({ timeout: 10_000 });
+      await checkbox1.click();
+      await checkbox2.click();
     });
 
-    await expect
-      .poll(
-        async () => {
-          const cases = await casesInFolder(
-            request,
-            baseURL!,
-            projectId,
-            targetFolderId
-          );
-          for (const c of cases) {
-            if (!beforeIds.has(c.id)) createdCaseIds.push(c.id);
-          }
-          return cases.length;
-        },
-        { timeout: 30_000 }
-      )
-      .toBe(before.length + 2);
+    await test.step("Capture target-folder baseline", async () => {
+      before = await casesInFolder(
+        request,
+        baseURL!,
+        projectId,
+        targetFolderId
+      );
+      beforeIds = new Set(before.map((c) => c.id));
+    });
 
-    // Originals still in root.
-    const rootCases = await casesInFolder(
-      request,
-      baseURL!,
-      projectId,
-      rootFolderId
-    );
-    expect(rootCases.find((c) => c.id === sourceCaseId)).toBeDefined();
-    expect(rootCases.find((c) => c.id === secondCaseId)).toBeDefined();
+    await test.step("Drag the selection onto the target folder with the copy modifier", async () => {
+      const copyModifier = await resolveCopyModifier(page);
+      await dragWithModifier(page, sourceRow, target, copyModifier);
+
+      // Copy modifier held → no popover.
+      await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
+        timeout: 2_000,
+      });
+    });
+
+    await test.step("Wait for the copy job to create both cases in the target folder", async () => {
+      await expect
+        .poll(
+          async () => {
+            const cases = await casesInFolder(
+              request,
+              baseURL!,
+              projectId,
+              targetFolderId
+            );
+            for (const c of cases) {
+              if (!beforeIds!.has(c.id)) createdCaseIds.push(c.id);
+            }
+            return cases.length;
+          },
+          { timeout: 30_000 }
+        )
+        .toBe(before!.length + 2);
+    });
+
+    await test.step("Verify both original cases are still in the root folder", async () => {
+      // Originals still in root.
+      const rootCases = await casesInFolder(
+        request,
+        baseURL!,
+        projectId,
+        rootFolderId
+      );
+      expect(rootCases.find((c) => c.id === sourceCaseId)).toBeDefined();
+      expect(rootCases.find((c) => c.id === secondCaseId)).toBeDefined();
+    });
   });
 });

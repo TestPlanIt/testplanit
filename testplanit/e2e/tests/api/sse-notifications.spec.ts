@@ -70,42 +70,52 @@ test.describe("SSE Notifications Stream", () => {
   test("T1: unauthenticated GET /api/notifications/stream returns 401", async ({
     baseURL,
   }) => {
-    expect(baseURL).toBeTruthy();
+    await test.step("Request the SSE stream without authentication and expect 401", async () => {
+      expect(baseURL).toBeTruthy();
 
-    const response = await fetch(`${baseURL!}/api/notifications/stream`);
+      const response = await fetch(`${baseURL!}/api/notifications/stream`);
 
-    expect(response.status).toBe(401);
-    await response.text().catch(() => {});
+      expect(response.status).toBe(401);
+      await response.text().catch(() => {});
+    });
   });
 
   test("T2: authenticated GET returns text/event-stream with sync event", async ({
     baseURL,
   }) => {
-    expect(baseURL).toBeTruthy();
     const cookieHeader = readAdminCookieHeader();
     const controller = new AbortController();
 
-    const response = await fetch(`${baseURL!}/api/notifications/stream`, {
-      headers: { cookie: cookieHeader },
-      signal: controller.signal,
+    let response: Awaited<ReturnType<typeof fetch>> | undefined;
+    await test.step("Open the authenticated SSE stream and verify event-stream headers", async () => {
+      expect(baseURL).toBeTruthy();
+
+      response = await fetch(`${baseURL!}/api/notifications/stream`, {
+        headers: { cookie: cookieHeader },
+        signal: controller.signal,
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toContain(
+        "text/event-stream"
+      );
+      expect(response.headers.get("cache-control")).toContain("no-cache");
+      expect(response.headers.get("x-accel-buffering")).toBe("no");
+      expect(response.body).toBeTruthy();
     });
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toContain("text/event-stream");
-    expect(response.headers.get("cache-control")).toContain("no-cache");
-    expect(response.headers.get("x-accel-buffering")).toBe("no");
-    expect(response.body).toBeTruthy();
-
-    const reader = response.body!.getReader();
+    const reader = response!.body!.getReader();
     const decoder = new TextDecoder();
     try {
-      const buffer = await readUntil(
-        reader,
-        decoder,
-        (b) => b.includes('"event":"sync"'),
-        5000
-      );
-      expect(buffer).toContain('data: {"event":"sync"}');
+      await test.step("Read the first message and confirm it is the sync checkpoint", async () => {
+        const buffer = await readUntil(
+          reader,
+          decoder,
+          (b) => b.includes('"event":"sync"'),
+          5000
+        );
+        expect(buffer).toContain('data: {"event":"sync"}');
+      });
     } finally {
       controller.abort();
       await reader.cancel().catch(() => {});
@@ -117,83 +127,97 @@ test.describe("SSE Notifications Stream", () => {
     browser,
     request,
   }) => {
-    expect(baseURL).toBeTruthy();
     const cookieHeader = readAdminCookieHeader();
     const controller = new AbortController();
 
-    const response = await fetch(`${baseURL!}/api/notifications/stream`, {
-      headers: { cookie: cookieHeader },
-      signal: controller.signal,
-    });
-    expect(response.status).toBe(200);
-    expect(response.body).toBeTruthy();
+    let response: Awaited<ReturnType<typeof fetch>> | undefined;
+    await test.step("Open the authenticated SSE stream", async () => {
+      expect(baseURL).toBeTruthy();
 
-    const reader = response.body!.getReader();
+      response = await fetch(`${baseURL!}/api/notifications/stream`, {
+        headers: { cookie: cookieHeader },
+        signal: controller.signal,
+      });
+      expect(response.status).toBe(200);
+      expect(response.body).toBeTruthy();
+    });
+
+    const reader = response!.body!.getReader();
     const decoder = new TextDecoder();
     let context: Awaited<ReturnType<typeof browser.newContext>> | undefined;
     const announcementTitle = `E2E SSE Test ${Date.now()}`;
 
     try {
-      const syncBuffer = await readUntil(
-        reader,
-        decoder,
-        (b) => b.includes('"event":"sync"'),
-        5000
-      );
-      expect(syncBuffer).toContain('data: {"event":"sync"}');
+      await test.step("Drain the initial sync checkpoint", async () => {
+        const syncBuffer = await readUntil(
+          reader,
+          decoder,
+          (b) => b.includes('"event":"sync"'),
+          5000
+        );
+        expect(syncBuffer).toContain('data: {"event":"sync"}');
+      });
 
-      context = await browser.newContext({ storageState: ADMIN_STORAGE_PATH });
-      const page = await context.newPage();
+      await test.step("Send a system announcement from the admin notifications page", async () => {
+        context = await browser.newContext({
+          storageState: ADMIN_STORAGE_PATH,
+        });
+        const page = await context.newPage();
 
-      await page.goto(`${baseURL!}/en-US/admin/notifications`);
-      await page
-        .getByTestId("notification-title-input")
-        .waitFor({ state: "visible", timeout: 10000 });
+        await page.goto(`${baseURL!}/en-US/admin/notifications`);
+        await page
+          .getByTestId("notification-title-input")
+          .waitFor({ state: "visible", timeout: 10000 });
 
-      await page
-        .getByTestId("notification-title-input")
-        .fill(announcementTitle);
+        await page
+          .getByTestId("notification-title-input")
+          .fill(announcementTitle);
 
-      // TipTapEditor's data-testid prop is silently dropped. Existing repo
-      // patterns (see e2e/tests/repository/.../documentation.spec.ts) target
-      // the contenteditable via `.ProseMirror` directly. This page has one
-      // editor on it, so `.first()` is unambiguous.
-      const editor = page.locator(".ProseMirror").first();
-      await expect(editor).toBeVisible({ timeout: 10000 });
-      await editor.click();
-      await page.keyboard.type("E2E SSE test message body");
+        // TipTapEditor's data-testid prop is silently dropped. Existing repo
+        // patterns (see e2e/tests/repository/.../documentation.spec.ts) target
+        // the contenteditable via `.ProseMirror` directly. This page has one
+        // editor on it, so `.first()` is unambiguous.
+        const editor = page.locator(".ProseMirror").first();
+        await expect(editor).toBeVisible({ timeout: 10000 });
+        await editor.click();
+        await page.keyboard.type("E2E SSE test message body");
 
-      await page.getByTestId("send-notification-button").click();
+        await page.getByTestId("send-notification-button").click();
 
-      await expect(page.getByTestId("notification-title-input")).toHaveValue(
-        "",
-        { timeout: 15000 }
-      );
+        await expect(page.getByTestId("notification-title-input")).toHaveValue(
+          "",
+          { timeout: 15000 }
+        );
+      });
 
-      const postSyncBuffer = await readUntil(
-        reader,
-        decoder,
-        (b) => {
-          const lines = b.split("\n");
-          return lines.some(
+      await test.step("Verify the announcement event arrives on the open SSE stream", async () => {
+        const postSyncBuffer = await readUntil(
+          reader,
+          decoder,
+          (b) => {
+            const lines = b.split("\n");
+            return lines.some(
+              (l) => l.startsWith("data:") && !l.includes('"event":"sync"')
+            );
+          },
+          15000
+        );
+
+        const dataLines = postSyncBuffer
+          .split("\n")
+          .filter(
             (l) => l.startsWith("data:") && !l.includes('"event":"sync"')
           );
-        },
-        15000
-      );
 
-      const dataLines = postSyncBuffer
-        .split("\n")
-        .filter((l) => l.startsWith("data:") && !l.includes('"event":"sync"'));
+        expect(dataLines.length).toBeGreaterThan(0);
 
-      expect(dataLines.length).toBeGreaterThan(0);
-
-      const eventBody = dataLines[0].replace(/^data:\s*/, "");
-      const event = JSON.parse(eventBody) as { id: string; event: string };
-      expect(event).toHaveProperty("id");
-      expect(event).toHaveProperty("event");
-      expect(typeof event.id).toBe("string");
-      expect(event.id.length).toBeGreaterThan(0);
+        const eventBody = dataLines[0].replace(/^data:\s*/, "");
+        const event = JSON.parse(eventBody) as { id: string; event: string };
+        expect(event).toHaveProperty("id");
+        expect(event).toHaveProperty("event");
+        expect(typeof event.id).toBe("string");
+        expect(event.id.length).toBeGreaterThan(0);
+      });
     } finally {
       controller.abort();
       await reader.cancel().catch(() => {});

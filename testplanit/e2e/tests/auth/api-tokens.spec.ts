@@ -31,41 +31,55 @@ test.describe("API Token Authentication", () => {
     baseURL,
   }) => {
     const tokenName = `Test Token ${Date.now()}`;
-    const response = await request.post(`${baseURL}/api/api-tokens`, {
-      data: { name: tokenName },
+    let body: any;
+
+    await test.step("Create an API token", async () => {
+      const response = await request.post(`${baseURL}/api/api-tokens`, {
+        data: { name: tokenName },
+      });
+
+      expect(response.status()).toBe(200);
+
+      body = await response.json();
     });
 
-    expect(response.status()).toBe(200);
-
-    const body = await response.json();
-    expect(typeof body.id).toBe("string");
-    expect(body.id.length).toBeGreaterThan(0);
-    expect(typeof body.name).toBe("string");
-    expect(body.name).toBe(tokenName);
-    expect(typeof body.token).toBe("string");
-    expect(body.token).toMatch(/^tpi_/);
-    expect(typeof body.tokenPrefix).toBe("string");
-    expect(body.tokenPrefix.length).toBeGreaterThan(0);
-    expect(body.isActive).toBe(true);
-    expect(body.expiresAt).toBeNull();
+    await test.step("Verify token response shape and tpi_ prefix", async () => {
+      expect(typeof body.id).toBe("string");
+      expect(body.id.length).toBeGreaterThan(0);
+      expect(typeof body.name).toBe("string");
+      expect(body.name).toBe(tokenName);
+      expect(typeof body.token).toBe("string");
+      expect(body.token).toMatch(/^tpi_/);
+      expect(typeof body.tokenPrefix).toBe("string");
+      expect(body.tokenPrefix.length).toBeGreaterThan(0);
+      expect(body.isActive).toBe(true);
+      expect(body.expiresAt).toBeNull();
+    });
   });
 
   /**
    * AUTH-08-1b: Token creation with expiry date
    */
   test("creates token with expiration date", async ({ request, baseURL }) => {
-    const response = await request.post(`${baseURL}/api/api-tokens`, {
-      data: {
-        name: `Expiring Token ${Date.now()}`,
-        expiresAt: "2099-12-31",
-      },
+    let body: any;
+
+    await test.step("Create an API token with an expiration date", async () => {
+      const response = await request.post(`${baseURL}/api/api-tokens`, {
+        data: {
+          name: `Expiring Token ${Date.now()}`,
+          expiresAt: "2099-12-31",
+        },
+      });
+
+      expect(response.status()).toBe(200);
+
+      body = await response.json();
     });
 
-    expect(response.status()).toBe(200);
-
-    const body = await response.json();
-    expect(body.token).toMatch(/^tpi_/);
-    expect(body.expiresAt).not.toBeNull();
+    await test.step("Verify token has tpi_ prefix and a non-null expiry", async () => {
+      expect(body.token).toMatch(/^tpi_/);
+      expect(body.expiresAt).not.toBeNull();
+    });
   });
 
   /**
@@ -81,35 +95,41 @@ test.describe("API Token Authentication", () => {
     api,
     adminUserId,
   }) => {
-    // Ensure admin user has API access enabled
-    await api.updateUser({ userId: adminUserId, data: { isApi: true } });
+    let token: string;
 
-    // Create a new API token via admin session
-    const createResponse = await request.post(`${baseURL}/api/api-tokens`, {
-      data: { name: `Auth Test Token ${Date.now()}` },
+    await test.step("Enable API access and create a token via admin session", async () => {
+      // Ensure admin user has API access enabled
+      await api.updateUser({ userId: adminUserId, data: { isApi: true } });
+
+      // Create a new API token via admin session
+      const createResponse = await request.post(`${baseURL}/api/api-tokens`, {
+        data: { name: `Auth Test Token ${Date.now()}` },
+      });
+      expect(createResponse.status()).toBe(200);
+      ({ token } = await createResponse.json());
+      expect(token).toMatch(/^tpi_/);
     });
-    expect(createResponse.status()).toBe(200);
-    const { token } = await createResponse.json();
-    expect(token).toMatch(/^tpi_/);
 
     // Create a fresh context WITHOUT session cookies to test pure Bearer token auth
     const unauthCtx = await browser.newContext({ storageState: undefined });
     try {
-      const response = await unauthCtx.request.get(
-        `${baseURL}/api/model/projects/findMany`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          params: {
-            q: JSON.stringify({ take: 1 }),
-          },
-        }
-      );
+      await test.step("Call a protected endpoint with the Bearer token", async () => {
+        const response = await unauthCtx.request.get(
+          `${baseURL}/api/model/projects/findMany`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            params: {
+              q: JSON.stringify({ take: 1 }),
+            },
+          }
+        );
 
-      expect(response.status()).toBe(200);
-      const result = await response.json();
-      expect(Array.isArray(result.data)).toBe(true);
+        expect(response.status()).toBe(200);
+        const result = await response.json();
+        expect(Array.isArray(result.data)).toBe(true);
+      });
     } finally {
       await unauthCtx.close();
     }
@@ -129,22 +149,24 @@ test.describe("API Token Authentication", () => {
     // Create context without session cookies
     const unauthCtx = await browser.newContext({ storageState: undefined });
     try {
-      // Token has wrong format (not tpi_ prefix) — middleware passes through,
-      // but API route's authenticateApiToken rejects it
-      const response = await unauthCtx.request.get(
-        `${baseURL}/api/model/projects/findMany`,
-        {
-          headers: {
-            Authorization: "Bearer tpi_invalidtoken_that_does_not_exist_xyz",
-          },
-          params: {
-            q: JSON.stringify({ take: 1 }),
-          },
-        }
-      );
+      await test.step("Call a protected endpoint with a malformed Bearer token and expect 401", async () => {
+        // Token has wrong format (not tpi_ prefix) — middleware passes through,
+        // but API route's authenticateApiToken rejects it
+        const response = await unauthCtx.request.get(
+          `${baseURL}/api/model/projects/findMany`,
+          {
+            headers: {
+              Authorization: "Bearer tpi_invalidtoken_that_does_not_exist_xyz",
+            },
+            params: {
+              q: JSON.stringify({ take: 1 }),
+            },
+          }
+        );
 
-      // Invalid token → 401
-      expect(response.status()).toBe(401);
+        // Invalid token → 401
+        expect(response.status()).toBe(401);
+      });
     } finally {
       await unauthCtx.close();
     }
@@ -162,51 +184,62 @@ test.describe("API Token Authentication", () => {
     api,
     adminUserId,
   }) => {
-    // Ensure admin user has API access enabled
-    await api.updateUser({ userId: adminUserId, data: { isApi: true } });
+    let token: string;
+    let tokenId: string;
 
-    // Create a token
-    const createResponse = await request.post(`${baseURL}/api/api-tokens`, {
-      data: { name: `Revoke Test Token ${Date.now()}` },
+    await test.step("Enable API access and create a token", async () => {
+      // Ensure admin user has API access enabled
+      await api.updateUser({ userId: adminUserId, data: { isApi: true } });
+
+      // Create a token
+      const createResponse = await request.post(`${baseURL}/api/api-tokens`, {
+        data: { name: `Revoke Test Token ${Date.now()}` },
+      });
+      expect(createResponse.status()).toBe(200);
+      ({ token, id: tokenId } = await createResponse.json());
+      expect(token).toMatch(/^tpi_/);
     });
-    expect(createResponse.status()).toBe(200);
-    const { token, id: tokenId } = await createResponse.json();
-    expect(token).toMatch(/^tpi_/);
 
     // Verify the token works first
     const unauthCtx = await browser.newContext({ storageState: undefined });
     try {
-      const validResponse = await unauthCtx.request.get(
-        `${baseURL}/api/model/projects/findMany`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { q: JSON.stringify({ take: 1 }) },
-        }
-      );
-      expect(validResponse.status()).toBe(200);
+      await test.step("Confirm the new token authenticates a protected endpoint", async () => {
+        const validResponse = await unauthCtx.request.get(
+          `${baseURL}/api/model/projects/findMany`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { q: JSON.stringify({ take: 1 }) },
+          }
+        );
+        expect(validResponse.status()).toBe(200);
+      });
 
-      // Revoke the token via ZenStack (admin session has write access to apiToken model)
-      const revokeResponse = await request.patch(
-        `${baseURL}/api/model/apiToken/update`,
-        {
-          data: {
-            where: { id: tokenId },
-            data: { isActive: false },
-          },
-        }
-      );
-      // Accept 200 or 422 — ZenStack may deny reading the revoked token back due to policy
-      expect([200, 422]).toContain(revokeResponse.status());
+      await test.step("Revoke the token by setting isActive to false", async () => {
+        // Revoke the token via ZenStack (admin session has write access to apiToken model)
+        const revokeResponse = await request.patch(
+          `${baseURL}/api/model/apiToken/update`,
+          {
+            data: {
+              where: { id: tokenId },
+              data: { isActive: false },
+            },
+          }
+        );
+        // Accept 200 or 422 — ZenStack may deny reading the revoked token back due to policy
+        expect([200, 422]).toContain(revokeResponse.status());
+      });
 
-      // Now try using the revoked token — should be rejected
-      const revokedResponse = await unauthCtx.request.get(
-        `${baseURL}/api/model/projects/findMany`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { q: JSON.stringify({ take: 1 }) },
-        }
-      );
-      expect(revokedResponse.status()).toBe(401);
+      await test.step("Confirm the revoked token is rejected with 401", async () => {
+        // Now try using the revoked token — should be rejected
+        const revokedResponse = await unauthCtx.request.get(
+          `${baseURL}/api/model/projects/findMany`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { q: JSON.stringify({ take: 1 }) },
+          }
+        );
+        expect(revokedResponse.status()).toBe(401);
+      });
     } finally {
       await unauthCtx.close();
     }
@@ -224,31 +257,37 @@ test.describe("API Token Authentication", () => {
     api,
     adminUserId,
   }) => {
-    // Ensure admin user has API access enabled
-    await api.updateUser({ userId: adminUserId, data: { isApi: true } });
+    let token: string;
 
-    // Create a token with past expiry date
-    const createResponse = await request.post(`${baseURL}/api/api-tokens`, {
-      data: {
-        name: `Expired Token ${Date.now()}`,
-        expiresAt: "2020-01-01",
-      },
+    await test.step("Enable API access and create a token with a past expiry date", async () => {
+      // Ensure admin user has API access enabled
+      await api.updateUser({ userId: adminUserId, data: { isApi: true } });
+
+      // Create a token with past expiry date
+      const createResponse = await request.post(`${baseURL}/api/api-tokens`, {
+        data: {
+          name: `Expired Token ${Date.now()}`,
+          expiresAt: "2020-01-01",
+        },
+      });
+      expect(createResponse.status()).toBe(200);
+      ({ token } = await createResponse.json());
+      expect(token).toMatch(/^tpi_/);
     });
-    expect(createResponse.status()).toBe(200);
-    const { token } = await createResponse.json();
-    expect(token).toMatch(/^tpi_/);
 
     // Try using the expired token — should be rejected
     const unauthCtx = await browser.newContext({ storageState: undefined });
     try {
-      const response = await unauthCtx.request.get(
-        `${baseURL}/api/model/projects/findMany`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { q: JSON.stringify({ take: 1 }) },
-        }
-      );
-      expect(response.status()).toBe(401);
+      await test.step("Confirm the expired token is rejected with 401", async () => {
+        const response = await unauthCtx.request.get(
+          `${baseURL}/api/model/projects/findMany`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { q: JSON.stringify({ take: 1 }) },
+          }
+        );
+        expect(response.status()).toBe(401);
+      });
     } finally {
       await unauthCtx.close();
     }
@@ -267,40 +306,48 @@ test.describe("API Token Authentication", () => {
     api,
     adminUserId,
   }) => {
-    // Ensure admin has API access first
-    await api.updateUser({ userId: adminUserId, data: { isApi: true } });
+    let token: string;
 
-    // Create a token
-    const createResponse = await request.post(`${baseURL}/api/api-tokens`, {
-      data: { name: `isApi Test Token ${Date.now()}` },
+    await test.step("Enable API access and create a token", async () => {
+      // Ensure admin has API access first
+      await api.updateUser({ userId: adminUserId, data: { isApi: true } });
+
+      // Create a token
+      const createResponse = await request.post(`${baseURL}/api/api-tokens`, {
+        data: { name: `isApi Test Token ${Date.now()}` },
+      });
+      expect(createResponse.status()).toBe(200);
+      ({ token } = await createResponse.json());
     });
-    expect(createResponse.status()).toBe(200);
-    const { token } = await createResponse.json();
 
     // Verify token works with isApi=true
     const unauthCtx = await browser.newContext({ storageState: undefined });
     try {
-      const validResponse = await unauthCtx.request.get(
-        `${baseURL}/api/model/projects/findMany`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { q: JSON.stringify({ take: 1 }) },
-        }
-      );
-      expect(validResponse.status()).toBe(200);
+      await test.step("Confirm the token authenticates while isApi is true", async () => {
+        const validResponse = await unauthCtx.request.get(
+          `${baseURL}/api/model/projects/findMany`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { q: JSON.stringify({ take: 1 }) },
+          }
+        );
+        expect(validResponse.status()).toBe(200);
+      });
 
-      // Disable API access for admin user
-      await api.updateUser({ userId: adminUserId, data: { isApi: false } });
+      await test.step("Disable API access and confirm the token is rejected with 401", async () => {
+        // Disable API access for admin user
+        await api.updateUser({ userId: adminUserId, data: { isApi: false } });
 
-      // Token should now be rejected
-      const rejectedResponse = await unauthCtx.request.get(
-        `${baseURL}/api/model/projects/findMany`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { q: JSON.stringify({ take: 1 }) },
-        }
-      );
-      expect(rejectedResponse.status()).toBe(401);
+        // Token should now be rejected
+        const rejectedResponse = await unauthCtx.request.get(
+          `${baseURL}/api/model/projects/findMany`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { q: JSON.stringify({ take: 1 }) },
+          }
+        );
+        expect(rejectedResponse.status()).toBe(401);
+      });
     } finally {
       // Always restore admin API access
       await api.updateUser({ userId: adminUserId, data: { isApi: true } });
@@ -343,53 +390,61 @@ test.describe("API Token Authentication", () => {
 
       let userToken: string;
       try {
-        const loginPage = await testUserCtx.newPage();
-        await loginPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-        await loginPage.getByTestId("email-input").fill(email);
-        await loginPage.getByTestId("password-input").fill("password123");
-        await loginPage.locator('button[type="submit"]').first().click();
-        await loginPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
-        await loginPage.close();
+        await test.step("Sign in as the test user and create a token", async () => {
+          const loginPage = await testUserCtx.newPage();
+          await loginPage.goto(`${baseURL}/en-US/signin`, {
+            waitUntil: "load",
+          });
+          await loginPage.getByTestId("email-input").fill(email);
+          await loginPage.getByTestId("password-input").fill("password123");
+          await loginPage.locator('button[type="submit"]').first().click();
+          await loginPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
+          await loginPage.close();
 
-        // Create a token as the test user
-        const createResponse = await testUserCtx.request.post(
-          `${baseURL}/api/api-tokens`,
-          {
-            data: { name: `Deactivation Test Token ${Date.now()}` },
-          }
-        );
-        expect(createResponse.status()).toBe(200);
-        const { token } = await createResponse.json();
-        userToken = token;
-        expect(userToken).toMatch(/^tpi_/);
+          // Create a token as the test user
+          const createResponse = await testUserCtx.request.post(
+            `${baseURL}/api/api-tokens`,
+            {
+              data: { name: `Deactivation Test Token ${Date.now()}` },
+            }
+          );
+          expect(createResponse.status()).toBe(200);
+          const { token } = await createResponse.json();
+          userToken = token;
+          expect(userToken).toMatch(/^tpi_/);
+        });
 
         // Verify the token works before deactivation
         const unauthCtx = await browser.newContext({ storageState: undefined });
         try {
-          const validResponse = await unauthCtx.request.get(
-            `${baseURL}/api/model/projects/findMany`,
-            {
-              headers: { Authorization: `Bearer ${userToken}` },
-              params: { q: JSON.stringify({ take: 1 }) },
-            }
-          );
-          expect(validResponse.status()).toBe(200);
-
-          // Deactivate the test user via admin session
-          await api.updateUser({
-            userId: testUserId,
-            data: { isActive: false },
+          await test.step("Confirm the token authenticates before deactivation", async () => {
+            const validResponse = await unauthCtx.request.get(
+              `${baseURL}/api/model/projects/findMany`,
+              {
+                headers: { Authorization: `Bearer ${userToken}` },
+                params: { q: JSON.stringify({ take: 1 }) },
+              }
+            );
+            expect(validResponse.status()).toBe(200);
           });
 
-          // Token should now be rejected
-          const rejectedResponse = await unauthCtx.request.get(
-            `${baseURL}/api/model/projects/findMany`,
-            {
-              headers: { Authorization: `Bearer ${userToken}` },
-              params: { q: JSON.stringify({ take: 1 }) },
-            }
-          );
-          expect(rejectedResponse.status()).toBe(401);
+          await test.step("Deactivate the user and confirm the token is rejected with 401", async () => {
+            // Deactivate the test user via admin session
+            await api.updateUser({
+              userId: testUserId,
+              data: { isActive: false },
+            });
+
+            // Token should now be rejected
+            const rejectedResponse = await unauthCtx.request.get(
+              `${baseURL}/api/model/projects/findMany`,
+              {
+                headers: { Authorization: `Bearer ${userToken}` },
+                params: { q: JSON.stringify({ take: 1 }) },
+              }
+            );
+            expect(rejectedResponse.status()).toBe(401);
+          });
         } finally {
           await unauthCtx.close();
         }
@@ -417,13 +472,17 @@ test.describe("API Token Authentication", () => {
     api,
     adminUserId,
   }) => {
-    await api.updateUser({ userId: adminUserId, data: { isApi: true } });
+    let token: string;
 
-    const createResponse = await request.post(`${baseURL}/api/api-tokens`, {
-      data: { name: `Report Auth Test Token ${Date.now()}` },
+    await test.step("Enable admin API access and create a token", async () => {
+      await api.updateUser({ userId: adminUserId, data: { isApi: true } });
+
+      const createResponse = await request.post(`${baseURL}/api/api-tokens`, {
+        data: { name: `Report Auth Test Token ${Date.now()}` },
+      });
+      expect(createResponse.status()).toBe(200);
+      ({ token } = await createResponse.json());
     });
-    expect(createResponse.status()).toBe(200);
-    const { token } = await createResponse.json();
 
     const endpoints = [
       "/api/report-builder/cross-project-automation-trends",
@@ -440,16 +499,21 @@ test.describe("API Token Authentication", () => {
 
     const unauthCtx = await browser.newContext({ storageState: undefined });
     try {
-      for (const endpoint of endpoints) {
-        const response = await unauthCtx.request.post(`${baseURL}${endpoint}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          data: body,
-        });
-        expect(
-          response.status(),
-          `${endpoint} should authenticate with admin token`
-        ).toBe(200);
-      }
+      await test.step("Confirm the admin token authenticates each cross-project report endpoint", async () => {
+        for (const endpoint of endpoints) {
+          const response = await unauthCtx.request.post(
+            `${baseURL}${endpoint}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+              data: body,
+            }
+          );
+          expect(
+            response.status(),
+            `${endpoint} should authenticate with admin token`
+          ).toBe(200);
+        }
+      });
     } finally {
       await unauthCtx.close();
     }
@@ -487,32 +551,38 @@ test.describe("API Token Authentication", () => {
 
       let userToken: string;
       try {
-        const loginPage = await testUserCtx.newPage();
-        await loginPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-        await loginPage.getByTestId("email-input").fill(email);
-        await loginPage.getByTestId("password-input").fill("password123");
-        await loginPage.locator('button[type="submit"]').first().click();
-        await loginPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
-        await loginPage.close();
+        await test.step("Sign in as the non-admin user and create a token", async () => {
+          const loginPage = await testUserCtx.newPage();
+          await loginPage.goto(`${baseURL}/en-US/signin`, {
+            waitUntil: "load",
+          });
+          await loginPage.getByTestId("email-input").fill(email);
+          await loginPage.getByTestId("password-input").fill("password123");
+          await loginPage.locator('button[type="submit"]').first().click();
+          await loginPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
+          await loginPage.close();
 
-        const createResponse = await testUserCtx.request.post(
-          `${baseURL}/api/api-tokens`,
-          { data: { name: `Non-admin Report Test Token ${Date.now()}` } }
-        );
-        expect(createResponse.status()).toBe(200);
-        const { token } = await createResponse.json();
-        userToken = token;
+          const createResponse = await testUserCtx.request.post(
+            `${baseURL}/api/api-tokens`,
+            { data: { name: `Non-admin Report Test Token ${Date.now()}` } }
+          );
+          expect(createResponse.status()).toBe(200);
+          const { token } = await createResponse.json();
+          userToken = token;
+        });
 
         const unauthCtx = await browser.newContext({ storageState: undefined });
         try {
-          const response = await unauthCtx.request.post(
-            `${baseURL}/api/report-builder/cross-project-automation-trends`,
-            {
-              headers: { Authorization: `Bearer ${userToken}` },
-              data: { dimensions: [], metrics: [], projectIds: [] },
-            }
-          );
-          expect(response.status()).toBe(401);
+          await test.step("Confirm the non-admin token is rejected from the cross-project report endpoint with 401", async () => {
+            const response = await unauthCtx.request.post(
+              `${baseURL}/api/report-builder/cross-project-automation-trends`,
+              {
+                headers: { Authorization: `Bearer ${userToken}` },
+                data: { dimensions: [], metrics: [], projectIds: [] },
+              }
+            );
+            expect(response.status()).toBe(401);
+          });
         } finally {
           await unauthCtx.close();
         }

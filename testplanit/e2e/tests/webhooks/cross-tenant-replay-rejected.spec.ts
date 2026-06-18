@@ -148,23 +148,29 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     // operate on. This is the necessary precondition for K-02: if a
     // cross-tenant caller cannot even discover A's delivery IDs via the
     // RPC surface, they cannot construct a replay request against them.
-    const response = await bOnlyCtx.request.get(
-      `${baseURL}/api/model/webhookDelivery/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: {
-              webhookConfigId: projectAOutboundConfigId,
-              error: { not: null },
-            },
-          }),
-        },
-      }
-    );
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    expect(body.data).toHaveLength(0);
+    let response: Awaited<ReturnType<typeof bOnlyCtx.request.get>> | undefined;
+    await test.step("Query Project A's failed deliveries via the RPC surface", async () => {
+      response = await bOnlyCtx.request.get(
+        `${baseURL}/api/model/webhookDelivery/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: {
+                webhookConfigId: projectAOutboundConfigId,
+                error: { not: null },
+              },
+            }),
+          },
+        }
+      );
+    });
+
+    await test.step("Assert the cross-tenant query returns an empty list", async () => {
+      expect(response!.status()).toBe(200);
+      const body = await response!.json();
+      expect(Array.isArray(body.data)).toBe(true);
+      expect(body.data).toHaveLength(0);
+    });
   });
 
   test("B-only PROJECTADMIN cannot read Project A's outbound config via ZenStack (replay button hidden)", async ({
@@ -175,18 +181,24 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     // useFindFirstProjects(A) which returns null for B-only, AND the
     // WebhookConfig read policy filters to A=invisible, there is no UI
     // surface that ever holds the deliveryId.
-    const response = await bOnlyCtx.request.get(
-      `${baseURL}/api/model/webhookConfig/findMany`,
-      {
-        params: {
-          q: JSON.stringify({ where: { projectId: projectAId } }),
-        },
-      }
-    );
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    expect(body.data).toHaveLength(0);
+    let response: Awaited<ReturnType<typeof bOnlyCtx.request.get>> | undefined;
+    await test.step("Query Project A's outbound config via the RPC surface", async () => {
+      response = await bOnlyCtx.request.get(
+        `${baseURL}/api/model/webhookConfig/findMany`,
+        {
+          params: {
+            q: JSON.stringify({ where: { projectId: projectAId } }),
+          },
+        }
+      );
+    });
+
+    await test.step("Assert the cross-tenant config query returns an empty list", async () => {
+      expect(response!.status()).toBe(200);
+      const body = await response!.json();
+      expect(Array.isArray(body.data)).toBe(true);
+      expect(body.data).toHaveLength(0);
+    });
   });
 
   test("B-only PROJECTADMIN URL-tampering to Project A deliveries tab sees no replay UI", async ({
@@ -199,24 +211,37 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     // therefore never render.
     const page = await bOnlyCtx.newPage();
     try {
-      await page.goto(
-        `${baseURL}/projects/settings/${projectAId}/webhooks` +
-          `?tab=deliveries&configIds=${projectAOutboundConfigId}&status=failed`,
-        { waitUntil: "load" }
-      );
-      await expect(page.getByTestId("webhook-deliveries-tab")).toHaveCount(0, {
-        timeout: 10_000,
+      await test.step("Navigate to Project A's deliveries tab via tampered URL", async () => {
+        await page.goto(
+          `${baseURL}/projects/settings/${projectAId}/webhooks` +
+            `?tab=deliveries&configIds=${projectAOutboundConfigId}&status=failed`,
+          { waitUntil: "load" }
+        );
       });
-      await expect(page.getByTestId("webhook-deliveries-table")).toHaveCount(0);
-      await expect(page.getByTestId("webhook-bulk-replay-button")).toHaveCount(
-        0
-      );
-      // No specific delivery row testid for A's deliveries should render.
-      for (const id of seededAOriginalDeliveryIds) {
+
+      await test.step("Assert the deliveries tab and bulk-replay button never render", async () => {
+        await expect(page.getByTestId("webhook-deliveries-tab")).toHaveCount(
+          0,
+          {
+            timeout: 10_000,
+          }
+        );
+        await expect(page.getByTestId("webhook-deliveries-table")).toHaveCount(
+          0
+        );
         await expect(
-          page.getByTestId(`webhook-delivery-row-${id}`)
+          page.getByTestId("webhook-bulk-replay-button")
         ).toHaveCount(0);
-      }
+      });
+
+      await test.step("Assert no Project A delivery rows render", async () => {
+        // No specific delivery row testid for A's deliveries should render.
+        for (const id of seededAOriginalDeliveryIds) {
+          await expect(
+            page.getByTestId(`webhook-delivery-row-${id}`)
+          ).toHaveCount(0);
+        }
+      });
     } finally {
       await page.close();
     }
@@ -230,22 +255,26 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     // enforcer; ZenStack's read filter is defence-in-depth. This
     // assertion catches a regression in either layer (e.g., if a future
     // refactor accidentally bypassed one of the gates).
-    const replayRows = await prisma.webhookDelivery.findMany({
-      where: {
-        replayedFromDeliveryId: { in: seededAOriginalDeliveryIds },
-      },
-      select: { id: true },
+    await test.step("Assert no replay rows point at Project A's seeded originals", async () => {
+      const replayRows = await prisma.webhookDelivery.findMany({
+        where: {
+          replayedFromDeliveryId: { in: seededAOriginalDeliveryIds },
+        },
+        select: { id: true },
+      });
+      expect(replayRows).toHaveLength(0);
     });
-    expect(replayRows).toHaveLength(0);
 
-    const auditRows = await prisma.auditLog.findMany({
-      where: {
-        action: "WEBHOOK_REPLAYED",
-        projectId: projectAId,
-      },
-      select: { id: true },
+    await test.step("Assert no WEBHOOK_REPLAYED audit rows exist for Project A", async () => {
+      const auditRows = await prisma.auditLog.findMany({
+        where: {
+          action: "WEBHOOK_REPLAYED",
+          projectId: projectAId,
+        },
+        select: { id: true },
+      });
+      expect(auditRows).toHaveLength(0);
     });
-    expect(auditRows).toHaveLength(0);
   });
 
   test("positive control — B-only PROJECTADMIN CAN enumerate Project B's outbound config (gate is project-scoped, not global)", async ({
@@ -254,20 +283,26 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     // Sanity check: the previous assertions would also pass if the
     // policy globally denied B-only — that would mask a bug where the
     // policy is over-broad. Project B's config must be visible.
-    const response = await bOnlyCtx.request.get(
-      `${baseURL}/api/model/webhookConfig/findMany`,
-      {
-        params: {
-          q: JSON.stringify({ where: { projectId: projectBId } }),
-        },
-      }
-    );
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    expect(body.data.length).toBeGreaterThanOrEqual(1);
-    expect(body.data.map((row: { id: string }) => row.id)).toContain(
-      projectBOutboundConfigId
-    );
+    let response: Awaited<ReturnType<typeof bOnlyCtx.request.get>> | undefined;
+    await test.step("Query Project B's outbound config via the RPC surface", async () => {
+      response = await bOnlyCtx.request.get(
+        `${baseURL}/api/model/webhookConfig/findMany`,
+        {
+          params: {
+            q: JSON.stringify({ where: { projectId: projectBId } }),
+          },
+        }
+      );
+    });
+
+    await test.step("Assert Project B's config is visible to the B-only admin", async () => {
+      expect(response!.status()).toBe(200);
+      const body = await response!.json();
+      expect(Array.isArray(body.data)).toBe(true);
+      expect(body.data.length).toBeGreaterThanOrEqual(1);
+      expect(body.data.map((row: { id: string }) => row.id)).toContain(
+        projectBOutboundConfigId
+      );
+    });
   });
 });

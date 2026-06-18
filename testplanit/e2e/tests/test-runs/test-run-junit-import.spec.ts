@@ -71,67 +71,77 @@ test.describe("JUnit XML Import API", () => {
     request,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E JUnit Import ${ts}`);
     const runName = `JUnit Run ${ts}`;
 
-    // POST JUnit XML to import endpoint with explicit format
-    const response = await request.post(`/api/test-results/import`, {
-      multipart: {
-        files: {
-          name: "results.xml",
-          mimeType: "application/xml",
-          buffer: Buffer.from(JUNIT_XML_3_CASES),
-        },
-        format: "junit",
-        projectId: String(projectId),
-        name: runName,
-      },
+    let projectId: number | undefined;
+    let createdRunId: number | undefined;
+
+    await test.step("Create a project for the import", async () => {
+      projectId = await api.createProject(`E2E JUnit Import ${ts}`);
     });
 
-    // The endpoint returns an SSE stream (status 200)
-    expect(response.status()).toBe(200);
-    expect(response.headers()["content-type"]).toContain("text/event-stream");
+    await test.step("Import JUnit XML with explicit format and confirm success", async () => {
+      // POST JUnit XML to import endpoint with explicit format
+      const response = await request.post(`/api/test-results/import`, {
+        multipart: {
+          files: {
+            name: "results.xml",
+            mimeType: "application/xml",
+            buffer: Buffer.from(JUNIT_XML_3_CASES),
+          },
+          format: "junit",
+          projectId: String(projectId),
+          name: runName,
+        },
+      });
 
-    // Read and parse the SSE stream
-    const body = await response.text();
-    const events = parseSseEvents(body);
-    expect(events.length).toBeGreaterThan(0);
+      // The endpoint returns an SSE stream (status 200)
+      expect(response.status()).toBe(200);
+      expect(response.headers()["content-type"]).toContain("text/event-stream");
 
-    const finalEvent = getFinalEvent(events);
-    expect(finalEvent).not.toBeNull();
+      // Read and parse the SSE stream
+      const body = await response.text();
+      const events = parseSseEvents(body);
+      expect(events.length).toBeGreaterThan(0);
 
-    // Final event should indicate success (complete: true) with the testRunId
-    expect(finalEvent!.error).toBeUndefined();
-    expect(finalEvent!.complete).toBe(true);
-    expect(typeof finalEvent!.testRunId).toBe("number");
+      const finalEvent = getFinalEvent(events);
+      expect(finalEvent).not.toBeNull();
 
-    const createdRunId = finalEvent!.testRunId as number;
+      // Final event should indicate success (complete: true) with the testRunId
+      expect(finalEvent!.error).toBeUndefined();
+      expect(finalEvent!.complete).toBe(true);
+      expect(typeof finalEvent!.testRunId).toBe("number");
 
-    // Verify the test run was created in the DB
-    const testRunResponse = await request.get(
-      `/api/model/testRuns/findFirst?q=${encodeURIComponent(
-        JSON.stringify({
-          where: { id: createdRunId, projectId },
-          select: { id: true, name: true },
-        })
-      )}`
-    );
-    expect(testRunResponse.ok()).toBeTruthy();
-    const testRunData = await testRunResponse.json();
-    expect(testRunData.data).not.toBeNull();
-    expect(testRunData.data.name).toBe(runName);
+      createdRunId = finalEvent!.testRunId as number;
+    });
 
-    // Verify 3 test run cases were created
-    const casesResponse = await request.get(
-      `/api/model/testRunCases/findMany?q=${encodeURIComponent(
-        JSON.stringify({
-          where: { testRunId: createdRunId },
-        })
-      )}`
-    );
-    expect(casesResponse.ok()).toBeTruthy();
-    const casesData = await casesResponse.json();
-    expect(casesData.data).toHaveLength(3);
+    await test.step("Verify the test run was created in the DB", async () => {
+      const testRunResponse = await request.get(
+        `/api/model/testRuns/findFirst?q=${encodeURIComponent(
+          JSON.stringify({
+            where: { id: createdRunId, projectId },
+            select: { id: true, name: true },
+          })
+        )}`
+      );
+      expect(testRunResponse.ok()).toBeTruthy();
+      const testRunData = await testRunResponse.json();
+      expect(testRunData.data).not.toBeNull();
+      expect(testRunData.data.name).toBe(runName);
+    });
+
+    await test.step("Verify 3 test run cases were created", async () => {
+      const casesResponse = await request.get(
+        `/api/model/testRunCases/findMany?q=${encodeURIComponent(
+          JSON.stringify({
+            where: { testRunId: createdRunId },
+          })
+        )}`
+      );
+      expect(casesResponse.ok()).toBeTruthy();
+      const casesData = await casesResponse.json();
+      expect(casesData.data).toHaveLength(3);
+    });
   });
 
   test("links results to an existing case by an ID in the name (no duplicate on rename)", async ({
@@ -139,97 +149,114 @@ test.describe("JUnit XML Import API", () => {
     request,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E Case ID Link ${ts}`);
 
-    // First import creates the cases by name.
-    const firstResponse = await request.post(`/api/test-results/import`, {
-      multipart: {
-        files: {
-          name: "results.xml",
-          mimeType: "application/xml",
-          buffer: Buffer.from(JUNIT_XML_2_CASES),
-        },
-        format: "junit",
-        projectId: String(projectId),
-        name: `Case ID Link Run A ${ts}`,
-      },
+    let projectId: number | undefined;
+    let caseId: number | undefined;
+    let renamedName: string | undefined;
+    let runBId: number | undefined;
+
+    await test.step("Create a project for the case-ID link", async () => {
+      projectId = await api.createProject(`E2E Case ID Link ${ts}`);
     });
-    expect(firstResponse.status()).toBe(200);
-    expect(
-      getFinalEvent(parseSseEvents(await firstResponse.text()))!.complete
-    ).toBe(true);
 
-    // Grab the ID of one of the created cases.
-    const caseLookup = await request.get(
-      `/api/model/repositoryCases/findFirst?q=${encodeURIComponent(
-        JSON.stringify({
-          where: { projectId, name: "testBasicSearch" },
-          select: { id: true },
-        })
-      )}`
-    );
-    expect(caseLookup.ok()).toBeTruthy();
-    const caseId = (await caseLookup.json()).data.id as number;
-    expect(typeof caseId).toBe("number");
+    await test.step("Run first import to create the cases by name", async () => {
+      // First import creates the cases by name.
+      const firstResponse = await request.post(`/api/test-results/import`, {
+        multipart: {
+          files: {
+            name: "results.xml",
+            mimeType: "application/xml",
+            buffer: Buffer.from(JUNIT_XML_2_CASES),
+          },
+          format: "junit",
+          projectId: String(projectId),
+          name: `Case ID Link Run A ${ts}`,
+        },
+      });
+      expect(firstResponse.status()).toBe(200);
+      expect(
+        getFinalEvent(parseSseEvents(await firstResponse.text()))!.complete
+      ).toBe(true);
+    });
 
-    // Second import: the test has been renamed but carries the case ID in the
-    // title. With caseMatcher=name it must link to the existing case, not
-    // create a duplicate.
-    const renamedName = `[${caseId}] basic search after a rename`;
-    const linkedXml = `<?xml version="1.0" encoding="UTF-8"?>
+    await test.step("Grab the ID of one of the created cases", async () => {
+      const caseLookup = await request.get(
+        `/api/model/repositoryCases/findFirst?q=${encodeURIComponent(
+          JSON.stringify({
+            where: { projectId, name: "testBasicSearch" },
+            select: { id: true },
+          })
+        )}`
+      );
+      expect(caseLookup.ok()).toBeTruthy();
+      caseId = (await caseLookup.json()).data.id as number;
+      expect(typeof caseId).toBe("number");
+    });
+
+    await test.step("Re-import the renamed test carrying the case ID in its title", async () => {
+      // Second import: the test has been renamed but carries the case ID in the
+      // title. With caseMatcher=name it must link to the existing case, not
+      // create a duplicate.
+      renamedName = `[${caseId}] basic search after a rename`;
+      const linkedXml = `<?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
   <testsuite name="SearchTests" tests="1" failures="0" errors="0" time="1.0">
     <testcase classname="search.SearchTests" name="${renamedName}" time="1.0"/>
   </testsuite>
 </testsuites>`;
 
-    const secondResponse = await request.post(`/api/test-results/import`, {
-      multipart: {
-        files: {
-          name: "renamed.xml",
-          mimeType: "application/xml",
-          buffer: Buffer.from(linkedXml),
+      const secondResponse = await request.post(`/api/test-results/import`, {
+        multipart: {
+          files: {
+            name: "renamed.xml",
+            mimeType: "application/xml",
+            buffer: Buffer.from(linkedXml),
+          },
+          format: "junit",
+          projectId: String(projectId),
+          name: `Case ID Link Run B ${ts}`,
+          caseMatcher: "name",
+          caseIdFormat: "brackets",
         },
-        format: "junit",
-        projectId: String(projectId),
-        name: `Case ID Link Run B ${ts}`,
-        caseMatcher: "name",
-        caseIdFormat: "brackets",
-      },
+      });
+      expect(secondResponse.status()).toBe(200);
+      const finalEvent = getFinalEvent(
+        parseSseEvents(await secondResponse.text())
+      );
+      expect(finalEvent!.error).toBeUndefined();
+      expect(finalEvent!.complete).toBe(true);
+      runBId = finalEvent!.testRunId as number;
     });
-    expect(secondResponse.status()).toBe(200);
-    const finalEvent = getFinalEvent(
-      parseSseEvents(await secondResponse.text())
-    );
-    expect(finalEvent!.error).toBeUndefined();
-    expect(finalEvent!.complete).toBe(true);
-    const runBId = finalEvent!.testRunId as number;
 
-    // Run B links exactly one case — the existing one, by ID.
-    const runBCases = await request.get(
-      `/api/model/testRunCases/findMany?q=${encodeURIComponent(
-        JSON.stringify({
-          where: { testRunId: runBId },
-          select: { repositoryCaseId: true },
-        })
-      )}`
-    );
-    expect(runBCases.ok()).toBeTruthy();
-    const runBCasesData = await runBCases.json();
-    expect(runBCasesData.data).toHaveLength(1);
-    expect(runBCasesData.data[0].repositoryCaseId).toBe(caseId);
+    await test.step("Verify Run B links the existing case by ID", async () => {
+      // Run B links exactly one case — the existing one, by ID.
+      const runBCases = await request.get(
+        `/api/model/testRunCases/findMany?q=${encodeURIComponent(
+          JSON.stringify({
+            where: { testRunId: runBId },
+            select: { repositoryCaseId: true },
+          })
+        )}`
+      );
+      expect(runBCases.ok()).toBeTruthy();
+      const runBCasesData = await runBCases.json();
+      expect(runBCasesData.data).toHaveLength(1);
+      expect(runBCasesData.data[0].repositoryCaseId).toBe(caseId);
+    });
 
-    // No duplicate case was created under the renamed title.
-    const dupLookup = await request.get(
-      `/api/model/repositoryCases/findFirst?q=${encodeURIComponent(
-        JSON.stringify({
-          where: { projectId, name: renamedName },
-          select: { id: true },
-        })
-      )}`
-    );
-    expect(dupLookup.ok()).toBeTruthy();
-    expect((await dupLookup.json()).data).toBeNull();
+    await test.step("Verify no duplicate case was created under the renamed title", async () => {
+      // No duplicate case was created under the renamed title.
+      const dupLookup = await request.get(
+        `/api/model/repositoryCases/findFirst?q=${encodeURIComponent(
+          JSON.stringify({
+            where: { projectId, name: renamedName },
+            select: { id: true },
+          })
+        )}`
+      );
+      expect(dupLookup.ok()).toBeTruthy();
+      expect((await dupLookup.json()).data).toBeNull();
+    });
   });
 
   test("should import JUnit XML with auto-detect format", async ({
@@ -237,46 +264,56 @@ test.describe("JUnit XML Import API", () => {
     request,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E JUnit AutoDetect ${ts}`);
     const runName = `AutoDetect Run ${ts}`;
 
-    // POST with format=auto — should auto-detect as JUnit
-    const response = await request.post(`/api/test-results/import`, {
-      multipart: {
-        files: {
-          name: "results.xml",
-          mimeType: "application/xml",
-          buffer: Buffer.from(JUNIT_XML_3_CASES),
-        },
-        format: "auto",
-        projectId: String(projectId),
-        name: runName,
-      },
+    let projectId: number | undefined;
+    let createdRunId: number | undefined;
+
+    await test.step("Create a project for the auto-detect import", async () => {
+      projectId = await api.createProject(`E2E JUnit AutoDetect ${ts}`);
     });
 
-    expect(response.status()).toBe(200);
+    await test.step("Import with format=auto and confirm JUnit is detected", async () => {
+      // POST with format=auto — should auto-detect as JUnit
+      const response = await request.post(`/api/test-results/import`, {
+        multipart: {
+          files: {
+            name: "results.xml",
+            mimeType: "application/xml",
+            buffer: Buffer.from(JUNIT_XML_3_CASES),
+          },
+          format: "auto",
+          projectId: String(projectId),
+          name: runName,
+        },
+      });
 
-    const body = await response.text();
-    const events = parseSseEvents(body);
-    const finalEvent = getFinalEvent(events);
+      expect(response.status()).toBe(200);
 
-    expect(finalEvent).not.toBeNull();
-    expect(finalEvent!.error).toBeUndefined();
-    expect(finalEvent!.complete).toBe(true);
+      const body = await response.text();
+      const events = parseSseEvents(body);
+      const finalEvent = getFinalEvent(events);
 
-    const createdRunId = finalEvent!.testRunId as number;
+      expect(finalEvent).not.toBeNull();
+      expect(finalEvent!.error).toBeUndefined();
+      expect(finalEvent!.complete).toBe(true);
 
-    // Verify 3 cases were imported
-    const casesResponse = await request.get(
-      `/api/model/testRunCases/findMany?q=${encodeURIComponent(
-        JSON.stringify({
-          where: { testRunId: createdRunId },
-        })
-      )}`
-    );
-    expect(casesResponse.ok()).toBeTruthy();
-    const casesData = await casesResponse.json();
-    expect(casesData.data).toHaveLength(3);
+      createdRunId = finalEvent!.testRunId as number;
+    });
+
+    await test.step("Verify 3 cases were imported", async () => {
+      // Verify 3 cases were imported
+      const casesResponse = await request.get(
+        `/api/model/testRunCases/findMany?q=${encodeURIComponent(
+          JSON.stringify({
+            where: { testRunId: createdRunId },
+          })
+        )}`
+      );
+      expect(casesResponse.ok()).toBeTruthy();
+      const casesData = await casesResponse.json();
+      expect(casesData.data).toHaveLength(3);
+    });
   });
 
   test("should import JUnit XML into an existing test run", async ({
@@ -284,69 +321,81 @@ test.describe("JUnit XML Import API", () => {
     request,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E JUnit Existing ${ts}`);
 
-    // Create a test run of JUNIT type first by importing once
-    const initialRunName = `Existing Run ${ts}`;
-    const initialResponse = await request.post(`/api/test-results/import`, {
-      multipart: {
-        files: {
-          name: "initial.xml",
-          mimeType: "application/xml",
-          buffer: Buffer.from(JUNIT_XML_3_CASES),
-        },
-        format: "junit",
-        projectId: String(projectId),
-        name: initialRunName,
-      },
+    let projectId: number | undefined;
+    let existingRunId: number | undefined;
+
+    await test.step("Create a project for the existing-run import", async () => {
+      projectId = await api.createProject(`E2E JUnit Existing ${ts}`);
     });
 
-    expect(initialResponse.status()).toBe(200);
-    const initialBody = await initialResponse.text();
-    const initialEvents = parseSseEvents(initialBody);
-    const initialFinalEvent = getFinalEvent(initialEvents);
-    expect(initialFinalEvent!.complete).toBe(true);
-
-    const existingRunId = initialFinalEvent!.testRunId as number;
-
-    // Now import a second batch of cases into the same test run
-    const appendResponse = await request.post(`/api/test-results/import`, {
-      multipart: {
-        files: {
-          name: "append.xml",
-          mimeType: "application/xml",
-          buffer: Buffer.from(JUNIT_XML_2_CASES),
+    await test.step("Create a JUnit test run by importing once", async () => {
+      // Create a test run of JUNIT type first by importing once
+      const initialRunName = `Existing Run ${ts}`;
+      const initialResponse = await request.post(`/api/test-results/import`, {
+        multipart: {
+          files: {
+            name: "initial.xml",
+            mimeType: "application/xml",
+            buffer: Buffer.from(JUNIT_XML_3_CASES),
+          },
+          format: "junit",
+          projectId: String(projectId),
+          name: initialRunName,
         },
-        format: "junit",
-        projectId: String(projectId),
-        testRunId: String(existingRunId),
-      },
+      });
+
+      expect(initialResponse.status()).toBe(200);
+      const initialBody = await initialResponse.text();
+      const initialEvents = parseSseEvents(initialBody);
+      const initialFinalEvent = getFinalEvent(initialEvents);
+      expect(initialFinalEvent!.complete).toBe(true);
+
+      existingRunId = initialFinalEvent!.testRunId as number;
     });
 
-    expect(appendResponse.status()).toBe(200);
-    const appendBody = await appendResponse.text();
-    const appendEvents = parseSseEvents(appendBody);
-    const appendFinalEvent = getFinalEvent(appendEvents);
+    await test.step("Import a second batch into the same test run", async () => {
+      // Now import a second batch of cases into the same test run
+      const appendResponse = await request.post(`/api/test-results/import`, {
+        multipart: {
+          files: {
+            name: "append.xml",
+            mimeType: "application/xml",
+            buffer: Buffer.from(JUNIT_XML_2_CASES),
+          },
+          format: "junit",
+          projectId: String(projectId),
+          testRunId: String(existingRunId),
+        },
+      });
 
-    expect(appendFinalEvent).not.toBeNull();
-    expect(appendFinalEvent!.error).toBeUndefined();
-    expect(appendFinalEvent!.complete).toBe(true);
-    // The returned testRunId should match the existing run
-    expect(appendFinalEvent!.testRunId).toBe(existingRunId);
+      expect(appendResponse.status()).toBe(200);
+      const appendBody = await appendResponse.text();
+      const appendEvents = parseSseEvents(appendBody);
+      const appendFinalEvent = getFinalEvent(appendEvents);
 
-    // Verify the run now has 5 total test cases (3 from initial + 2 from append)
-    // Note: cases are upserted, so unique (classname, name) combinations count
-    const casesResponse = await request.get(
-      `/api/model/testRunCases/findMany?q=${encodeURIComponent(
-        JSON.stringify({
-          where: { testRunId: existingRunId },
-        })
-      )}`
-    );
-    expect(casesResponse.ok()).toBeTruthy();
-    const casesData = await casesResponse.json();
-    // 3 from LoginTests + 2 from SearchTests = 5 unique cases
-    expect(casesData.data.length).toBeGreaterThanOrEqual(2);
+      expect(appendFinalEvent).not.toBeNull();
+      expect(appendFinalEvent!.error).toBeUndefined();
+      expect(appendFinalEvent!.complete).toBe(true);
+      // The returned testRunId should match the existing run
+      expect(appendFinalEvent!.testRunId).toBe(existingRunId);
+    });
+
+    await test.step("Verify both batches landed on the same run", async () => {
+      // Verify the run now has 5 total test cases (3 from initial + 2 from append)
+      // Note: cases are upserted, so unique (classname, name) combinations count
+      const casesResponse = await request.get(
+        `/api/model/testRunCases/findMany?q=${encodeURIComponent(
+          JSON.stringify({
+            where: { testRunId: existingRunId },
+          })
+        )}`
+      );
+      expect(casesResponse.ok()).toBeTruthy();
+      const casesData = await casesResponse.json();
+      // 3 from LoginTests + 2 from SearchTests = 5 unique cases
+      expect(casesData.data.length).toBeGreaterThanOrEqual(2);
+    });
   });
 
   test("should reject import with missing required fields", async ({
@@ -354,32 +403,39 @@ test.describe("JUnit XML Import API", () => {
     request,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E JUnit Missing ${ts}`);
 
-    // POST without name (required when not providing testRunId)
-    const response = await request.post(`/api/test-results/import`, {
-      multipart: {
-        files: {
-          name: "results.xml",
-          mimeType: "application/xml",
-          buffer: Buffer.from(JUNIT_XML_3_CASES),
-        },
-        format: "junit",
-        projectId: String(projectId),
-        // name is intentionally omitted
-      },
+    let projectId: number | undefined;
+
+    await test.step("Create a project for the missing-fields import", async () => {
+      projectId = await api.createProject(`E2E JUnit Missing ${ts}`);
     });
 
-    // The endpoint still returns 200 (SSE stream) but with an error event
-    expect(response.status()).toBe(200);
+    await test.step("Import without the required name and expect an error event", async () => {
+      // POST without name (required when not providing testRunId)
+      const response = await request.post(`/api/test-results/import`, {
+        multipart: {
+          files: {
+            name: "results.xml",
+            mimeType: "application/xml",
+            buffer: Buffer.from(JUNIT_XML_3_CASES),
+          },
+          format: "junit",
+          projectId: String(projectId),
+          // name is intentionally omitted
+        },
+      });
 
-    const body = await response.text();
-    const events = parseSseEvents(body);
-    const finalEvent = getFinalEvent(events);
+      // The endpoint still returns 200 (SSE stream) but with an error event
+      expect(response.status()).toBe(200);
 
-    // Should receive an error event
-    expect(finalEvent).not.toBeNull();
-    expect(finalEvent!.error).toBeDefined();
+      const body = await response.text();
+      const events = parseSseEvents(body);
+      const finalEvent = getFinalEvent(events);
+
+      // Should receive an error event
+      expect(finalEvent).not.toBeNull();
+      expect(finalEvent!.error).toBeDefined();
+    });
   });
 
   test("should import JUnit XML and verify test results with correct statuses", async ({
@@ -387,51 +443,61 @@ test.describe("JUnit XML Import API", () => {
     request,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E JUnit Statuses ${ts}`);
     const runName = `JUnit Statuses Run ${ts}`;
 
-    const response = await request.post(`/api/test-results/import`, {
-      multipart: {
-        files: {
-          name: "results.xml",
-          mimeType: "application/xml",
-          buffer: Buffer.from(JUNIT_XML_3_CASES),
-        },
-        format: "junit",
-        projectId: String(projectId),
-        name: runName,
-      },
+    let projectId: number | undefined;
+    let createdRunId: number | undefined;
+
+    await test.step("Create a project for the statuses import", async () => {
+      projectId = await api.createProject(`E2E JUnit Statuses ${ts}`);
     });
 
-    expect(response.status()).toBe(200);
-    const body = await response.text();
-    const events = parseSseEvents(body);
-    const finalEvent = getFinalEvent(events);
-    expect(finalEvent!.complete).toBe(true);
-
-    const createdRunId = finalEvent!.testRunId as number;
-
-    // Verify test cases exist and have statuses set
-    const casesResponse = await request.get(
-      `/api/model/testRunCases/findMany?q=${encodeURIComponent(
-        JSON.stringify({
-          where: { testRunId: createdRunId },
-          select: {
-            id: true,
-            isCompleted: true,
-            statusId: true,
-            repositoryCase: { select: { name: true } },
+    await test.step("Import JUnit XML and confirm success", async () => {
+      const response = await request.post(`/api/test-results/import`, {
+        multipart: {
+          files: {
+            name: "results.xml",
+            mimeType: "application/xml",
+            buffer: Buffer.from(JUNIT_XML_3_CASES),
           },
-        })
-      )}`
-    );
-    expect(casesResponse.ok()).toBeTruthy();
-    const casesData = await casesResponse.json();
-    expect(casesData.data).toHaveLength(3);
+          format: "junit",
+          projectId: String(projectId),
+          name: runName,
+        },
+      });
 
-    // All cases should be marked as completed (import sets isCompleted=true)
-    for (const tc of casesData.data) {
-      expect(tc.isCompleted).toBe(true);
-    }
+      expect(response.status()).toBe(200);
+      const body = await response.text();
+      const events = parseSseEvents(body);
+      const finalEvent = getFinalEvent(events);
+      expect(finalEvent!.complete).toBe(true);
+
+      createdRunId = finalEvent!.testRunId as number;
+    });
+
+    await test.step("Verify all imported cases are completed", async () => {
+      // Verify test cases exist and have statuses set
+      const casesResponse = await request.get(
+        `/api/model/testRunCases/findMany?q=${encodeURIComponent(
+          JSON.stringify({
+            where: { testRunId: createdRunId },
+            select: {
+              id: true,
+              isCompleted: true,
+              statusId: true,
+              repositoryCase: { select: { name: true } },
+            },
+          })
+        )}`
+      );
+      expect(casesResponse.ok()).toBeTruthy();
+      const casesData = await casesResponse.json();
+      expect(casesData.data).toHaveLength(3);
+
+      // All cases should be marked as completed (import sets isCompleted=true)
+      for (const tc of casesData.data) {
+        expect(tc.isCompleted).toBe(true);
+      }
+    });
   });
 });

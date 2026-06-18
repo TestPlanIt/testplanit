@@ -25,80 +25,97 @@ test.describe("Parameters - authoring + step mentions @parameters", () => {
       "Param Authoring Case"
     );
 
-    await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
-    await page.waitForLoadState("load");
+    await test.step("Open the test case and the Configure parameters sheet", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
+      await page.waitForLoadState("load");
 
-    // Open the Configure parameters Sheet.
-    await page.getByTestId("configure-parameters-button").click();
-    await expect(page.getByTestId("configure-parameters-sheet")).toBeVisible();
+      // Open the Configure parameters Sheet.
+      await page.getByTestId("configure-parameters-button").click();
+      await expect(
+        page.getByTestId("configure-parameters-sheet")
+      ).toBeVisible();
+    });
 
-    // Add parameter: username (STRING) — STRING is the default Type.
-    await page.getByTestId("parameter-form-name").fill("username");
-    await page.getByTestId("parameter-form-submit").click();
+    await test.step("Declare username and amount parameters", async () => {
+      // Add parameter: username (STRING) — STRING is the default Type.
+      await page.getByTestId("parameter-form-name").fill("username");
+      await page.getByTestId("parameter-form-submit").click();
 
-    // Add parameter: amount (INTEGER).
-    await page.getByTestId("parameter-form-name").fill("amount");
-    await page.getByTestId("parameter-form-type").click();
-    await page.getByRole("option", { name: /INTEGER/i }).click();
-    await page.getByTestId("parameter-form-submit").click();
+      // Add parameter: amount (INTEGER).
+      await page.getByTestId("parameter-form-name").fill("amount");
+      await page.getByTestId("parameter-form-type").click();
+      await page.getByRole("option", { name: /INTEGER/i }).click();
+      await page.getByTestId("parameter-form-submit").click();
 
-    // Close the Sheet so the case-detail editor regains focus.
-    await page.getByTestId("configure-parameters-sheet-close").click();
-    await expect(
-      page.getByTestId("configure-parameters-sheet")
-    ).not.toBeVisible();
+      // Close the Sheet so the case-detail editor regains focus.
+      await page.getByTestId("configure-parameters-sheet-close").click();
+      await expect(
+        page.getByTestId("configure-parameters-sheet")
+      ).not.toBeVisible();
+    });
 
-    // Switch the case into edit mode — StepsForm (with TipTap editor) only
-    // renders when isEditMode === true.
-    await page.getByTestId("edit-test-case-button").click();
+    // Locate the first step's contenteditable (used across later steps).
+    let stepEditor: ReturnType<typeof page.locator> | undefined;
 
-    // Fresh cases have no steps; create one so the step-editor renders.
-    await page.getByTestId("add-step-button").click();
+    await test.step("Enter edit mode and add a step", async () => {
+      // Switch the case into edit mode — StepsForm (with TipTap editor) only
+      // renders when isEditMode === true.
+      await page.getByTestId("edit-test-case-button").click();
 
-    // Locate the first step's contenteditable.
-    const stepEditor = page
-      .locator('[data-testid="step-editor-0"] [contenteditable="true"]')
-      .first();
-    await expect(stepEditor).toBeVisible();
-    await stepEditor.click();
+      // Fresh cases have no steps; create one so the step-editor renders.
+      await page.getByTestId("add-step-button").click();
 
-    // Type @us to trigger autocomplete; press Enter to insert chip.
-    await stepEditor.type("@us");
-    await expect(
-      page.getByTestId("parameter-mention-suggestion")
-    ).toBeVisible();
-    await page.keyboard.press("Enter");
-    await expect(
-      stepEditor.locator(".parameter-ref-chip").first()
-    ).toContainText("@username");
+      // Locate the first step's contenteditable.
+      stepEditor = page
+        .locator('[data-testid="step-editor-0"] [contenteditable="true"]')
+        .first();
+      await expect(stepEditor).toBeVisible();
+      await stepEditor.click();
+    });
 
-    // Use the toolbar { } button to insert @amount. The step block renders
-    // TWO TipTap editors (step text + expectedResult), each with its own
-    // tiptap-insert-parameter-button — and the Description editor on the
-    // same page renders a third one. Scope to step-editor-0 + take .first()
-    // (the step-text toolbar, rendered before the expectedResult toolbar).
-    await page
-      .locator('[data-testid="step-editor-0"]')
-      .getByTestId("tiptap-insert-parameter-button")
-      .first()
-      .click();
-    // The toolbar opens an AsyncCombobox (Radix Popover + cmdk), not a
-    // standalone Dialog — find the search input by placeholder and the
-    // option by accessible name. The previous `parameter-chooser-*`
-    // testids were from an earlier dedicated-chooser implementation.
-    const chooserSearch = page.getByPlaceholder(/search parameter/i);
-    await expect(chooserSearch).toBeVisible();
-    await chooserSearch.fill("amo");
-    await page.getByRole("option", { name: /@?amount/i }).click();
-    await expect(chooserSearch).not.toBeVisible();
+    await test.step("Insert @username chip via autocomplete", async () => {
+      // Type @us to trigger autocomplete; press Enter to insert chip.
+      await stepEditor!.type("@us");
+      await expect(
+        page.getByTestId("parameter-mention-suggestion")
+      ).toBeVisible();
+      await page.keyboard.press("Enter");
+      await expect(
+        stepEditor!.locator(".parameter-ref-chip").first()
+      ).toContainText("@username");
+    });
 
-    // Type an undeclared @foo — warning ribbon should surface below the editor.
-    await stepEditor.click();
-    await stepEditor.type(" @notDeclared");
-    // Dismiss the autocomplete that appears for unknown prefix.
-    await page.keyboard.press("Escape");
-    await expect(
-      page.getByTestId("tiptap-undeclared-parameter-warning")
-    ).toBeVisible();
+    await test.step("Insert @amount chip via the toolbar parameter chooser", async () => {
+      // Use the toolbar { } button to insert @amount. The step block renders
+      // TWO TipTap editors (step text + expectedResult), each with its own
+      // tiptap-insert-parameter-button — and the Description editor on the
+      // same page renders a third one. Scope to step-editor-0 + take .first()
+      // (the step-text toolbar, rendered before the expectedResult toolbar).
+      await page
+        .locator('[data-testid="step-editor-0"]')
+        .getByTestId("tiptap-insert-parameter-button")
+        .first()
+        .click();
+      // The toolbar opens an AsyncCombobox (Radix Popover + cmdk), not a
+      // standalone Dialog — find the search input by placeholder and the
+      // option by accessible name. The previous `parameter-chooser-*`
+      // testids were from an earlier dedicated-chooser implementation.
+      const chooserSearch = page.getByPlaceholder(/search parameter/i);
+      await expect(chooserSearch).toBeVisible();
+      await chooserSearch.fill("amo");
+      await page.getByRole("option", { name: /@?amount/i }).click();
+      await expect(chooserSearch).not.toBeVisible();
+    });
+
+    await test.step("Type an undeclared parameter and verify the warning ribbon", async () => {
+      // Type an undeclared @foo — warning ribbon should surface below the editor.
+      await stepEditor!.click();
+      await stepEditor!.type(" @notDeclared");
+      // Dismiss the autocomplete that appears for unknown prefix.
+      await page.keyboard.press("Escape");
+      await expect(
+        page.getByTestId("tiptap-undeclared-parameter-warning")
+      ).toBeVisible();
+    });
   });
 });

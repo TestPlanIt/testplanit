@@ -85,49 +85,62 @@ test.describe("Case duplication", () => {
 
   test("setup: create project with test case", async ({ api }) => {
     const ts = Date.now();
-    projectId = await api.createProject(`E2E Duplication ${ts}`);
-    rootFolderId = await api.getRootFolderId(projectId);
-    sourceCaseName = `Duplication Test Case ${ts}`;
-    sourceCaseId = await api.createTestCase(
-      projectId,
-      rootFolderId,
-      sourceCaseName
-    );
 
-    expect(projectId).toBeGreaterThan(0);
-    expect(rootFolderId).toBeGreaterThan(0);
-    expect(sourceCaseId).toBeGreaterThan(0);
+    await test.step("Create project, root folder, and source test case", async () => {
+      projectId = await api.createProject(`E2E Duplication ${ts}`);
+      rootFolderId = await api.getRootFolderId(projectId);
+      sourceCaseName = `Duplication Test Case ${ts}`;
+      sourceCaseId = await api.createTestCase(
+        projectId,
+        rootFolderId,
+        sourceCaseName
+      );
+    });
 
-    api.untrackProject(projectId);
-    api.untrackCase(sourceCaseId);
+    await test.step("Verify created IDs are valid", async () => {
+      expect(projectId).toBeGreaterThan(0);
+      expect(rootFolderId).toBeGreaterThan(0);
+      expect(sourceCaseId).toBeGreaterThan(0);
+    });
+
+    await test.step("Untrack project and case from auto-cleanup", async () => {
+      api.untrackProject(projectId);
+      api.untrackCase(sourceCaseId);
+    });
   });
 
   test("returns 503 or jobId for within-project copy request", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.post(`${baseURL}/api/repository/copy-move`, {
-      data: {
-        operation: "copy",
-        caseIds: [sourceCaseId],
-        sourceProjectId: projectId,
-        targetProjectId: projectId,
-        targetFolderId: rootFolderId,
-        conflictResolution: "rename",
-        sharedStepGroupResolution: "reuse",
-      },
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+
+    await test.step("Send within-project copy request", async () => {
+      response = await request.post(`${baseURL}/api/repository/copy-move`, {
+        data: {
+          operation: "copy",
+          caseIds: [sourceCaseId],
+          sourceProjectId: projectId,
+          targetProjectId: projectId,
+          targetFolderId: rootFolderId,
+          conflictResolution: "rename",
+          sharedStepGroupResolution: "reuse",
+        },
+      });
     });
 
-    expect([200, 503]).toContain(response.status());
-    const body = await response.json();
+    await test.step("Verify response is 503 queue-unavailable or returns a jobId", async () => {
+      expect([200, 503]).toContain(response!.status());
+      const body = await response!.json();
 
-    if (response.status() === 503) {
-      expect(body.error).toBe("Background job queue is not available");
-    } else {
-      expect(body.jobId).toBeDefined();
-      expect(typeof body.jobId).toBe("string");
-      duplicateJobId = body.jobId;
-    }
+      if (response!.status() === 503) {
+        expect(body.error).toBe("Background job queue is not available");
+      } else {
+        expect(body.jobId).toBeDefined();
+        expect(typeof body.jobId).toBe("string");
+        duplicateJobId = body.jobId;
+      }
+    });
   });
 
   test("provenance link exists after duplication (DUP-04)", async ({
@@ -139,49 +152,55 @@ test.describe("Case duplication", () => {
       "Queue unavailable — skipping data verification"
     );
 
-    const jobResult = await pollUntilDone(request, baseURL!, duplicateJobId!);
-    expect(jobResult.state).toBe("completed");
+    await test.step("Wait for the duplication job to complete", async () => {
+      const jobResult = await pollUntilDone(request, baseURL!, duplicateJobId!);
+      expect(jobResult.state).toBe("completed");
+    });
 
-    const readResponse = await request.get(
-      `${baseURL}/api/model/repositoryCases/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: {
-              projectId,
-              isDeleted: false,
-              id: { not: sourceCaseId },
-            },
-            orderBy: { createdAt: "desc" },
-          }),
-        },
-      }
-    );
-    expect(readResponse.status()).toBe(200);
-    const readBody = await readResponse.json();
-    expect(readBody.data).toBeDefined();
-    duplicatedCaseId = readBody.data.id;
-    expect(duplicatedCaseId).toBeGreaterThan(0);
+    await test.step("Read the newly created duplicate case", async () => {
+      const readResponse = await request.get(
+        `${baseURL}/api/model/repositoryCases/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: {
+                projectId,
+                isDeleted: false,
+                id: { not: sourceCaseId },
+              },
+              orderBy: { createdAt: "desc" },
+            }),
+          },
+        }
+      );
+      expect(readResponse.status()).toBe(200);
+      const readBody = await readResponse.json();
+      expect(readBody.data).toBeDefined();
+      duplicatedCaseId = readBody.data.id;
+      expect(duplicatedCaseId).toBeGreaterThan(0);
+    });
 
-    const linkResponse = await request.get(
-      `${baseURL}/api/model/repositoryCaseLink/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: {
-              caseAId: duplicatedCaseId,
-              caseBId: sourceCaseId,
-              type: "DUPLICATED_FROM",
-              isDeleted: false,
-            },
-          }),
-        },
-      }
-    );
-    expect(linkResponse.status()).toBe(200);
-    const linkData = await linkResponse.json();
-    expect(linkData.data).toBeDefined();
-    expect(linkData.data.type).toBe("DUPLICATED_FROM");
+    await test.step("Verify DUPLICATED_FROM provenance link exists", async () => {
+      const linkResponse = await request.get(
+        `${baseURL}/api/model/repositoryCaseLink/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: {
+                caseAId: duplicatedCaseId,
+                caseBId: sourceCaseId,
+                type: "DUPLICATED_FROM",
+                isDeleted: false,
+              },
+            }),
+          },
+        }
+      );
+      expect(linkResponse.status()).toBe(200);
+      const linkData = await linkResponse.json();
+      expect(linkData.data).toBeDefined();
+      expect(linkData.data.type).toBe("DUPLICATED_FROM");
+    });
   });
 
   test("DUPLICATED audit row exists for duplicated case (DUP-10)", async ({
@@ -194,56 +213,71 @@ test.describe("Case duplication", () => {
     );
 
     let auditFound = false;
-    for (let attempt = 0; attempt < 10; attempt++) {
-      const res = await request.get(`${baseURL}/api/model/auditLog/findFirst`, {
-        params: {
-          q: JSON.stringify({
-            where: {
-              action: "DUPLICATED",
-              entityType: "RepositoryCases",
-              entityId: String(duplicatedCaseId),
-            },
-          }),
-        },
-      });
-      if (res.ok()) {
-        const body = await res.json();
-        if (body.data) {
-          auditFound = true;
-          expect(body.data.action).toBe("DUPLICATED");
-          expect(body.data.metadata).toMatchObject({
-            duplicatedFromCaseId: sourceCaseId,
-          });
-          break;
-        }
-      }
-      await new Promise((r) => setTimeout(r, 1000));
-    }
 
-    if (!auditFound) {
-      console.warn(
-        "[case-duplication] No DUPLICATED audit row detected. AuditLog worker may not be running in E2E env. Degrading gracefully — unit test verifies emission shape."
-      );
-    }
+    await test.step("Poll for the DUPLICATED audit row and verify its shape", async () => {
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const res = await request.get(
+          `${baseURL}/api/model/auditLog/findFirst`,
+          {
+            params: {
+              q: JSON.stringify({
+                where: {
+                  action: "DUPLICATED",
+                  entityType: "RepositoryCases",
+                  entityId: String(duplicatedCaseId),
+                },
+              }),
+            },
+          }
+        );
+        if (res.ok()) {
+          const body = await res.json();
+          if (body.data) {
+            auditFound = true;
+            expect(body.data.action).toBe("DUPLICATED");
+            expect(body.data.metadata).toMatchObject({
+              duplicatedFromCaseId: sourceCaseId,
+            });
+            break;
+          }
+        }
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    });
+
+    await test.step("Warn and degrade gracefully if no audit row was found", async () => {
+      if (!auditFound) {
+        console.warn(
+          "[case-duplication] No DUPLICATED audit row detected. AuditLog worker may not be running in E2E env. Degrading gracefully — unit test verifies emission shape."
+        );
+      }
+    });
   });
 
   test("cross-tenant POST returns 403 (DUP-09)", async ({
     request,
     baseURL,
   }) => {
-    const response = await request.post(`${baseURL}/api/repository/copy-move`, {
-      data: {
-        operation: "copy",
-        caseIds: [sourceCaseId],
-        sourceProjectId: 999_999_999,
-        targetProjectId: projectId,
-        targetFolderId: rootFolderId,
-        conflictResolution: "rename",
-        sharedStepGroupResolution: "reuse",
-      },
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+
+    await test.step("Send copy request with an inaccessible source project", async () => {
+      response = await request.post(`${baseURL}/api/repository/copy-move`, {
+        data: {
+          operation: "copy",
+          caseIds: [sourceCaseId],
+          sourceProjectId: 999_999_999,
+          targetProjectId: projectId,
+          targetFolderId: rootFolderId,
+          conflictResolution: "rename",
+          sharedStepGroupResolution: "reuse",
+        },
+      });
     });
-    expect(response.status()).toBe(403);
-    const body = await response.json();
-    expect(body.error).toMatch(/No access to source project/);
+
+    await test.step("Verify the request is denied with 403 and access error", async () => {
+      expect(response!.status()).toBe(403);
+      const body = await response!.json();
+      expect(body.error).toMatch(/No access to source project/);
+    });
   });
 });

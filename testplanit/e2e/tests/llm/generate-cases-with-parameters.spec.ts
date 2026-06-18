@@ -99,31 +99,39 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E INT-06 Toggle ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E INT-06 LLM ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
-    const folderId = await api.createFolder(projectId, `Folder ${ts}`);
-    await api.createTestCase(projectId, folderId, `Existing Case ${ts}`);
 
-    await page.goto(`/en-US/projects/repository/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    let projectId: number | undefined;
+    await test.step("Provision project, LLM integration, folder, and seed case", async () => {
+      projectId = await api.createProject(`E2E INT-06 Toggle ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E INT-06 LLM ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+      const folderId = await api.createFolder(projectId, `Folder ${ts}`);
+      await api.createTestCase(projectId, folderId, `Existing Case ${ts}`);
+    });
 
-    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
-    await expect(folderNode).toBeVisible({ timeout: 15000 });
-    await folderNode.click();
+    await test.step("Open the repository and select the folder", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}`);
+      await page.waitForLoadState("networkidle");
 
-    await expect(
-      page.locator('[data-testid="repository-right-panel-header"]')
-    ).toBeVisible({ timeout: 10000 });
+      const folderNode = page.locator('[data-testid^="folder-node-"]').first();
+      await expect(folderNode).toBeVisible({ timeout: 15000 });
+      await folderNode.click();
 
-    const wizardTrigger = page
-      .locator("button:has(svg.lucide-sparkles)")
-      .first();
-    await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-    await wizardTrigger.click();
+      await expect(
+        page.locator('[data-testid="repository-right-panel-header"]')
+      ).toBeVisible({ timeout: 10000 });
+    });
 
     const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    await test.step("Launch the generate-cases wizard", async () => {
+      const wizardTrigger = page
+        .locator("button:has(svg.lucide-sparkles)")
+        .first();
+      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
+      await wizardTrigger.click();
+
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
     // The toggle lives on the Add Notes step (after Select Source + Select
     // Template). The E2E fixture default seed user is ADMIN, so the toggle
@@ -144,16 +152,18 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
     // wired (toggle visibility depends on isAdmin which is true for the
     // default E2E fixture user).
     const toggle = page.locator(toggleSelector);
-    // Either the toggle is already visible on this step, or it appears as
-    // the user advances. The structural test in
-    // GenerateTestCasesWizard.test.tsx already proves admin-gated rendering;
-    // this E2E confirms the wizard renders for an admin without errors.
-    await expect(dialog).toBeVisible();
+    await test.step("Confirm wizard renders and toggle defaults to unchecked", async () => {
+      // Either the toggle is already visible on this step, or it appears as
+      // the user advances. The structural test in
+      // GenerateTestCasesWizard.test.tsx already proves admin-gated rendering;
+      // this E2E confirms the wizard renders for an admin without errors.
+      await expect(dialog).toBeVisible();
 
-    // If the toggle is on this step, assert it is unchecked by default.
-    if ((await toggle.count()) > 0 && (await toggle.first().isVisible())) {
-      await expect(toggle.first()).not.toBeChecked();
-    }
+      // If the toggle is on this step, assert it is unchecked by default.
+      if ((await toggle.count()) > 0 && (await toggle.first().isVisible())) {
+        await expect(toggle.first()).not.toBeChecked();
+      }
+    });
   });
 
   test("toggle on → LLM POST body carries includeParameters=true and preview renders parameters + dataset", async ({
@@ -161,11 +171,15 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E INT-06 Body ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E INT-06 LLM ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
-    const folderId = await api.createFolder(projectId, `Folder ${ts}`);
-    await api.createTestCase(projectId, folderId, `Existing Case ${ts}`);
+
+    let projectId: number | undefined;
+    await test.step("Provision project, LLM integration, folder, and seed case", async () => {
+      projectId = await api.createProject(`E2E INT-06 Body ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E INT-06 LLM ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+      const folderId = await api.createFolder(projectId, `Folder ${ts}`);
+      await api.createTestCase(projectId, folderId, `Existing Case ${ts}`);
+    });
 
     // Capture the body the wizard POSTs to the LLM endpoints. We mock all
     // three (outline, expand, stream) because depending on the wizard's
@@ -186,41 +200,53 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
       });
     };
 
-    await page.route("**/api/llm/generate-test-cases", fulfillTestCases);
-    await page.route(
-      "**/api/llm/generate-test-cases/outline",
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            outlines: [{ title: "Login", summary: "Login flow" }],
-          }),
-        });
-      }
-    );
-    await page.route("**/api/llm/generate-test-cases/expand", fulfillTestCases);
-    await page.route("**/api/llm/generate-test-cases/stream", fulfillTestCases);
+    await test.step("Mock the LLM generate-test-cases endpoints", async () => {
+      await page.route("**/api/llm/generate-test-cases", fulfillTestCases);
+      await page.route(
+        "**/api/llm/generate-test-cases/outline",
+        async (route) => {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              outlines: [{ title: "Login", summary: "Login flow" }],
+            }),
+          });
+        }
+      );
+      await page.route(
+        "**/api/llm/generate-test-cases/expand",
+        fulfillTestCases
+      );
+      await page.route(
+        "**/api/llm/generate-test-cases/stream",
+        fulfillTestCases
+      );
+    });
 
-    await page.goto(`/en-US/projects/repository/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the repository and select the folder", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}`);
+      await page.waitForLoadState("networkidle");
 
-    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
-    await expect(folderNode).toBeVisible({ timeout: 15000 });
-    await folderNode.click();
+      const folderNode = page.locator('[data-testid^="folder-node-"]').first();
+      await expect(folderNode).toBeVisible({ timeout: 15000 });
+      await folderNode.click();
 
-    await expect(
-      page.locator('[data-testid="repository-right-panel-header"]')
-    ).toBeVisible({ timeout: 10000 });
-
-    const wizardTrigger = page
-      .locator("button:has(svg.lucide-sparkles)")
-      .first();
-    await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-    await wizardTrigger.click();
+      await expect(
+        page.locator('[data-testid="repository-right-panel-header"]')
+      ).toBeVisible({ timeout: 10000 });
+    });
 
     const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    await test.step("Launch the generate-cases wizard", async () => {
+      const wizardTrigger = page
+        .locator("button:has(svg.lucide-sparkles)")
+        .first();
+      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
+      await wizardTrigger.click();
+
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
     // Smoke check: dialog renders for an admin user without errors. The
     // detailed step-through (advancing past Select Source → Select Template
@@ -228,18 +254,20 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
     // generation suite. This spec's job is to verify the new toggle wiring;
     // we check the data-testid is present in the DOM for an admin session.
     const toggle = page.locator('[data-testid="include-parameters-toggle"]');
-    // The toggle is conditionally rendered behind the Add Notes step. If
-    // the wizard happens to land on that step (depending on prior state),
-    // exercise the full body-threading assertion; otherwise verify the
-    // data-testid is part of the application bundle by checking the
-    // wizard's component output structure exists.
-    if ((await toggle.count()) > 0 && (await toggle.first().isVisible())) {
-      await toggle.first().check();
-      await expect(toggle.first()).toBeChecked();
-    }
+    await test.step("Enable the include-parameters toggle when present", async () => {
+      // The toggle is conditionally rendered behind the Add Notes step. If
+      // the wizard happens to land on that step (depending on prior state),
+      // exercise the full body-threading assertion; otherwise verify the
+      // data-testid is part of the application bundle by checking the
+      // wizard's component output structure exists.
+      if ((await toggle.count()) > 0 && (await toggle.first().isVisible())) {
+        await toggle.first().check();
+        await expect(toggle.first()).toBeChecked();
+      }
 
-    // The dialog must remain stable (no crash on admin render).
-    await expect(dialog).toBeVisible();
+      // The dialog must remain stable (no crash on admin render).
+      await expect(dialog).toBeVisible();
+    });
   });
 
   test("dataset_truncated warning renders when the LLM emits a broken starterDataset", async ({
@@ -247,50 +275,62 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E INT-06 Trunc ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E INT-06 LLM ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
-    const folderId = await api.createFolder(projectId, `Folder ${ts}`);
-    await api.createTestCase(projectId, folderId, `Existing Case ${ts}`);
 
-    await page.route("**/api/llm/generate-test-cases", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(TRUNCATED_DATASET_RESPONSE),
+    let projectId: number | undefined;
+    await test.step("Provision project, LLM integration, folder, and seed case", async () => {
+      projectId = await api.createProject(`E2E INT-06 Trunc ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E INT-06 LLM ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+      const folderId = await api.createFolder(projectId, `Folder ${ts}`);
+      await api.createTestCase(projectId, folderId, `Existing Case ${ts}`);
+    });
+
+    await test.step("Mock the LLM endpoint with a truncated starterDataset", async () => {
+      await page.route("**/api/llm/generate-test-cases", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(TRUNCATED_DATASET_RESPONSE),
+        });
       });
     });
 
-    await page.goto(`/en-US/projects/repository/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the repository and select the folder", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}`);
+      await page.waitForLoadState("networkidle");
 
-    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
-    await expect(folderNode).toBeVisible({ timeout: 15000 });
-    await folderNode.click();
+      const folderNode = page.locator('[data-testid^="folder-node-"]').first();
+      await expect(folderNode).toBeVisible({ timeout: 15000 });
+      await folderNode.click();
 
-    await expect(
-      page.locator('[data-testid="repository-right-panel-header"]')
-    ).toBeVisible({ timeout: 10000 });
-
-    const wizardTrigger = page
-      .locator("button:has(svg.lucide-sparkles)")
-      .first();
-    await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-    await wizardTrigger.click();
+      await expect(
+        page.locator('[data-testid="repository-right-panel-header"]')
+      ).toBeVisible({ timeout: 10000 });
+    });
 
     const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    await test.step("Launch the generate-cases wizard", async () => {
+      const wizardTrigger = page
+        .locator("button:has(svg.lucide-sparkles)")
+        .first();
+      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
+      await wizardTrigger.click();
 
-    // The warning alert renders only after a generation completes — see the
-    // sibling test for the full happy-path body assertion. This spec's job
-    // is to verify the warning surface exists in the wizard's component
-    // tree for an admin session.
-    await expect(dialog).toBeVisible();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
-    // The structural test in GenerateTestCasesWizard.test.tsx asserts the
-    // `wizard-preview-warning` testid is part of the JSX. End-to-end render
-    // depends on a full wizard run-through which is out of scope for a
-    // smoke spec; the route mock above proves the response format the
-    // parser handles.
+    await test.step("Confirm the wizard stays stable for an admin session", async () => {
+      // The warning alert renders only after a generation completes — see the
+      // sibling test for the full happy-path body assertion. This spec's job
+      // is to verify the warning surface exists in the wizard's component
+      // tree for an admin session.
+      await expect(dialog).toBeVisible();
+
+      // The structural test in GenerateTestCasesWizard.test.tsx asserts the
+      // `wizard-preview-warning` testid is part of the JSX. End-to-end render
+      // depends on a full wizard run-through which is out of scope for a
+      // smoke spec; the route mock above proves the response format the
+      // parser handles.
+    });
   });
 });

@@ -165,173 +165,200 @@ test.describe("Steps CRUD", () => {
     baseURL,
     api,
   }) => {
-    // Create a test case to attach the step to
-    const caseId = await api.createTestCase(
-      sharedProjectId,
-      sharedFolderId,
-      `E2E Step Create Case ${Date.now()}`
-    );
-
     const stepContent = makeTiptapDoc("Step 1 action");
     const expectedResultContent = makeTiptapDoc("Expected result");
 
-    // Create a step via POST
-    const createResponse = await request.post(
-      `${baseURL}/api/model/steps/create`,
-      {
-        data: {
+    let caseId: number | undefined;
+    let stepId: number | undefined;
+
+    await test.step("Create a test case to attach the step to", async () => {
+      caseId = await api.createTestCase(
+        sharedProjectId,
+        sharedFolderId,
+        `E2E Step Create Case ${Date.now()}`
+      );
+    });
+
+    await test.step("Create a step via POST", async () => {
+      const createResponse = await request.post(
+        `${baseURL}/api/model/steps/create`,
+        {
           data: {
-            testCaseId: caseId,
-            step: stepContent,
-            expectedResult: expectedResultContent,
-            order: 1,
+            data: {
+              testCaseId: caseId,
+              step: stepContent,
+              expectedResult: expectedResultContent,
+              order: 1,
+            },
           },
-        },
-      }
-    );
+        }
+      );
 
-    expect(createResponse.ok()).toBe(true);
-    const createResult = await createResponse.json();
-    const stepId = createResult.data.id;
-    expect(stepId).toBeGreaterThan(0);
+      expect(createResponse.ok()).toBe(true);
+      const createResult = await createResponse.json();
+      stepId = createResult.data.id;
+      expect(stepId).toBeGreaterThan(0);
+    });
 
-    // Read back via findFirst
-    const findResponse = await request.get(
-      `${baseURL}/api/model/steps/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { id: stepId },
-          }),
-        },
-      }
-    );
+    await test.step("Read the step back via findFirst and verify its fields", async () => {
+      const findResponse = await request.get(
+        `${baseURL}/api/model/steps/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: stepId },
+            }),
+          },
+        }
+      );
 
-    expect(findResponse.ok()).toBe(true);
-    const findResult = await findResponse.json();
-    expect(findResult.data).toBeTruthy();
-    expect(findResult.data.testCaseId).toBe(caseId);
-    expect(findResult.data.order).toBe(1);
-    // Verify JSON fields are stored correctly
-    expect(findResult.data.step).toMatchObject(stepContent);
-    expect(findResult.data.expectedResult).toMatchObject(expectedResultContent);
+      expect(findResponse.ok()).toBe(true);
+      const findResult = await findResponse.json();
+      expect(findResult.data).toBeTruthy();
+      expect(findResult.data.testCaseId).toBe(caseId);
+      expect(findResult.data.order).toBe(1);
+      // Verify JSON fields are stored correctly
+      expect(findResult.data.step).toMatchObject(stepContent);
+      expect(findResult.data.expectedResult).toMatchObject(
+        expectedResultContent
+      );
+    });
 
-    // Cleanup: hard delete the step
-    await request.delete(`${baseURL}/api/model/steps/delete`, {
-      params: { q: JSON.stringify({ where: { id: stepId } }) },
+    await test.step("Clean up the step", async () => {
+      // Cleanup: hard delete the step
+      await request.delete(`${baseURL}/api/model/steps/delete`, {
+        params: { q: JSON.stringify({ where: { id: stepId } }) },
+      });
     });
   });
 
   test("should update a step", async ({ request, baseURL, api }) => {
-    // Create a test case
-    const caseId = await api.createTestCase(
-      sharedProjectId,
-      sharedFolderId,
-      `E2E Step Update Case ${Date.now()}`
-    );
-
     const originalContent = makeTiptapDoc("Original step action");
     const updatedContent = makeTiptapDoc("Updated step action");
 
-    // Create a step
-    const createResponse = await request.post(
-      `${baseURL}/api/model/steps/create`,
-      {
-        data: {
+    let caseId: number | undefined;
+    let stepId: number | undefined;
+
+    await test.step("Create a test case", async () => {
+      caseId = await api.createTestCase(
+        sharedProjectId,
+        sharedFolderId,
+        `E2E Step Update Case ${Date.now()}`
+      );
+    });
+
+    await test.step("Create a step", async () => {
+      const createResponse = await request.post(
+        `${baseURL}/api/model/steps/create`,
+        {
           data: {
-            testCaseId: caseId,
-            step: originalContent,
-            expectedResult: makeTiptapDoc("Expected result"),
-            order: 1,
+            data: {
+              testCaseId: caseId,
+              step: originalContent,
+              expectedResult: makeTiptapDoc("Expected result"),
+              order: 1,
+            },
           },
-        },
-      }
-    );
-    expect(createResponse.ok()).toBe(true);
-    const stepId = (await createResponse.json()).data.id;
+        }
+      );
+      expect(createResponse.ok()).toBe(true);
+      stepId = (await createResponse.json()).data.id;
+    });
 
-    // Update the step content
-    const updateResponse = await request.patch(
-      `${baseURL}/api/model/steps/update`,
-      {
-        data: {
-          where: { id: stepId },
-          data: { step: updatedContent },
-        },
-      }
-    );
+    await test.step("Update the step content", async () => {
+      const updateResponse = await request.patch(
+        `${baseURL}/api/model/steps/update`,
+        {
+          data: {
+            where: { id: stepId },
+            data: { step: updatedContent },
+          },
+        }
+      );
 
-    expect(updateResponse.ok()).toBe(true);
+      expect(updateResponse.ok()).toBe(true);
+    });
 
-    // Read back and verify the content changed
-    const findResponse = await request.get(
-      `${baseURL}/api/model/steps/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({ where: { id: stepId } }),
-        },
-      }
-    );
+    await test.step("Read back and verify the content changed", async () => {
+      const findResponse = await request.get(
+        `${baseURL}/api/model/steps/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({ where: { id: stepId } }),
+          },
+        }
+      );
 
-    expect(findResponse.ok()).toBe(true);
-    const findResult = await findResponse.json();
-    expect(findResult.data.step).toMatchObject(updatedContent);
+      expect(findResponse.ok()).toBe(true);
+      const findResult = await findResponse.json();
+      expect(findResult.data.step).toMatchObject(updatedContent);
+    });
 
-    // Cleanup
-    await request.delete(`${baseURL}/api/model/steps/delete`, {
-      params: { q: JSON.stringify({ where: { id: stepId } }) },
+    await test.step("Clean up the step", async () => {
+      // Cleanup
+      await request.delete(`${baseURL}/api/model/steps/delete`, {
+        params: { q: JSON.stringify({ where: { id: stepId } }) },
+      });
     });
   });
 
   test("should delete a step", async ({ request, baseURL, api }) => {
-    // Create a test case
-    const caseId = await api.createTestCase(
-      sharedProjectId,
-      sharedFolderId,
-      `E2E Step Delete Case ${Date.now()}`
-    );
+    let caseId: number | undefined;
+    let stepId: number | undefined;
 
-    // Create a step
-    const createResponse = await request.post(
-      `${baseURL}/api/model/steps/create`,
-      {
-        data: {
+    await test.step("Create a test case", async () => {
+      caseId = await api.createTestCase(
+        sharedProjectId,
+        sharedFolderId,
+        `E2E Step Delete Case ${Date.now()}`
+      );
+    });
+
+    await test.step("Create a step", async () => {
+      const createResponse = await request.post(
+        `${baseURL}/api/model/steps/create`,
+        {
           data: {
-            testCaseId: caseId,
-            step: makeTiptapDoc("Step to delete"),
-            expectedResult: makeTiptapDoc("Expected"),
-            order: 1,
+            data: {
+              testCaseId: caseId,
+              step: makeTiptapDoc("Step to delete"),
+              expectedResult: makeTiptapDoc("Expected"),
+              order: 1,
+            },
           },
-        },
-      }
-    );
-    expect(createResponse.ok()).toBe(true);
-    const stepId = (await createResponse.json()).data.id;
+        }
+      );
+      expect(createResponse.ok()).toBe(true);
+      stepId = (await createResponse.json()).data.id;
+    });
 
-    // Hard delete the step
-    // ZenStack v3 DELETE reads args from URL q param (not request body)
-    const deleteResponse = await request.delete(
-      `${baseURL}/api/model/steps/delete`,
-      {
-        params: { q: JSON.stringify({ where: { id: stepId } }) },
-      }
-    );
+    await test.step("Hard delete the step", async () => {
+      // Hard delete the step
+      // ZenStack v3 DELETE reads args from URL q param (not request body)
+      const deleteResponse = await request.delete(
+        `${baseURL}/api/model/steps/delete`,
+        {
+          params: { q: JSON.stringify({ where: { id: stepId } }) },
+        }
+      );
 
-    expect(deleteResponse.ok()).toBe(true);
+      expect(deleteResponse.ok()).toBe(true);
+    });
 
-    // Verify the step is gone
-    const findResponse = await request.get(
-      `${baseURL}/api/model/steps/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({ where: { id: stepId } }),
-        },
-      }
-    );
+    await test.step("Verify the step is gone", async () => {
+      const findResponse = await request.get(
+        `${baseURL}/api/model/steps/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({ where: { id: stepId } }),
+          },
+        }
+      );
 
-    expect(findResponse.ok()).toBe(true);
-    const findResult = await findResponse.json();
-    expect(findResult.data).toBeNull();
+      expect(findResponse.ok()).toBe(true);
+      const findResult = await findResponse.json();
+      expect(findResult.data).toBeNull();
+    });
   });
 
   test("should create multiple steps and verify order", async ({
@@ -339,66 +366,73 @@ test.describe("Steps CRUD", () => {
     baseURL,
     api,
   }) => {
-    // Create a test case
-    const caseId = await api.createTestCase(
-      sharedProjectId,
-      sharedFolderId,
-      `E2E Step Order Case ${Date.now()}`
-    );
-
     const stepIds: number[] = [];
 
-    // Create 3 steps with explicit order
-    for (let i = 1; i <= 3; i++) {
-      const createResponse = await request.post(
-        `${baseURL}/api/model/steps/create`,
-        {
-          data: {
+    let caseId: number | undefined;
+
+    await test.step("Create a test case", async () => {
+      caseId = await api.createTestCase(
+        sharedProjectId,
+        sharedFolderId,
+        `E2E Step Order Case ${Date.now()}`
+      );
+    });
+
+    await test.step("Create 3 steps with explicit order", async () => {
+      for (let i = 1; i <= 3; i++) {
+        const createResponse = await request.post(
+          `${baseURL}/api/model/steps/create`,
+          {
             data: {
-              testCaseId: caseId,
-              step: makeTiptapDoc(`Step ${i} action`),
-              expectedResult: makeTiptapDoc(`Expected result ${i}`),
-              order: i,
+              data: {
+                testCaseId: caseId,
+                step: makeTiptapDoc(`Step ${i} action`),
+                expectedResult: makeTiptapDoc(`Expected result ${i}`),
+                order: i,
+              },
             },
+          }
+        );
+        expect(createResponse.ok()).toBe(true);
+        const stepId = (await createResponse.json()).data.id;
+        stepIds.push(stepId);
+      }
+    });
+
+    await test.step("Find all steps for this case and verify order and content", async () => {
+      const findManyResponse = await request.get(
+        `${baseURL}/api/model/steps/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { testCaseId: caseId },
+              orderBy: { order: "asc" },
+            }),
           },
         }
       );
-      expect(createResponse.ok()).toBe(true);
-      const stepId = (await createResponse.json()).data.id;
-      stepIds.push(stepId);
-    }
 
-    // Find all steps for this case ordered by order asc
-    const findManyResponse = await request.get(
-      `${baseURL}/api/model/steps/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { testCaseId: caseId },
-            orderBy: { order: "asc" },
-          }),
-        },
+      expect(findManyResponse.ok()).toBe(true);
+      const result = await findManyResponse.json();
+      expect(result.data.length).toBe(3);
+
+      // Verify the order is [1, 2, 3]
+      const orders = result.data.map((s: { order: number }) => s.order);
+      expect(orders).toEqual([1, 2, 3]);
+
+      // Verify step content corresponds to order
+      expect(result.data[0].step).toMatchObject(makeTiptapDoc("Step 1 action"));
+      expect(result.data[1].step).toMatchObject(makeTiptapDoc("Step 2 action"));
+      expect(result.data[2].step).toMatchObject(makeTiptapDoc("Step 3 action"));
+    });
+
+    await test.step("Clean up all steps", async () => {
+      // Cleanup: hard delete all steps
+      for (const stepId of stepIds) {
+        await request.delete(`${baseURL}/api/model/steps/delete`, {
+          data: { where: { id: stepId } },
+        });
       }
-    );
-
-    expect(findManyResponse.ok()).toBe(true);
-    const result = await findManyResponse.json();
-    expect(result.data.length).toBe(3);
-
-    // Verify the order is [1, 2, 3]
-    const orders = result.data.map((s: { order: number }) => s.order);
-    expect(orders).toEqual([1, 2, 3]);
-
-    // Verify step content corresponds to order
-    expect(result.data[0].step).toMatchObject(makeTiptapDoc("Step 1 action"));
-    expect(result.data[1].step).toMatchObject(makeTiptapDoc("Step 2 action"));
-    expect(result.data[2].step).toMatchObject(makeTiptapDoc("Step 3 action"));
-
-    // Cleanup: hard delete all steps
-    for (const stepId of stepIds) {
-      await request.delete(`${baseURL}/api/model/steps/delete`, {
-        data: { where: { id: stepId } },
-      });
-    }
+    });
   });
 });

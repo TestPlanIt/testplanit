@@ -134,128 +134,135 @@ test.describe("Webhook admin surface — French (fr-FR) i18n key coverage (F-02)
     page,
     baseURL,
   }) => {
-    // Override the auth fixture's NEXT_LOCALE=en-US cookie so proxy.ts
-    // does not redirect /fr-FR/... back to /en-US/... before the page
-    // renders. proxy.ts:379 reads NEXT_LOCALE and redirects when the URL
-    // prefix doesn't match the cookie, so cookie + URL must agree.
-    await page.context().addCookies([
-      {
-        name: "NEXT_LOCALE",
-        value: "fr-FR",
-        url: baseURL,
-      },
-    ]);
-
-    // ─── 1. Inbound tab ──────────────────────────────────────────────
-    await page.goto(`${baseURL}/fr-FR/projects/settings/${projectId}/webhooks`);
-    await expect(page.getByTestId("webhook-config-form")).toBeVisible({
-      timeout: 15_000,
+    await test.step("Switch the session locale to French", async () => {
+      // Override the auth fixture's NEXT_LOCALE=en-US cookie so proxy.ts
+      // does not redirect /fr-FR/... back to /en-US/... before the page
+      // renders. proxy.ts:379 reads NEXT_LOCALE and redirects when the URL
+      // prefix doesn't match the cookie, so cookie + URL must agree.
+      await page.context().addCookies([
+        {
+          name: "NEXT_LOCALE",
+          value: "fr-FR",
+          url: baseURL,
+        },
+      ]);
     });
 
-    // Verify the product fix in `app/layout.tsx` (see PR for v0.23.0): the
-    // root layout now resolves <html lang> from `getLocale()` instead of
-    // hardcoding "en". Asserting fr-FR here gives a fast, specific failure
-    // if the layout regresses or the cookie override didn't take effect.
-    await expect(page.locator("html")).toHaveAttribute("lang", "fr-FR");
+    await test.step("View the Inbound tab in French", async () => {
+      await page.goto(
+        `${baseURL}/fr-FR/projects/settings/${projectId}/webhooks`
+      );
+      await expect(page.getByTestId("webhook-config-form")).toBeVisible({
+        timeout: 15_000,
+      });
 
-    await expect(page.getByTestId("webhooks-tab-inbound")).toContainText(
-      fr.inboundTab
-    );
-    await expect(page.getByTestId("webhooks-tab-outbound")).toContainText(
-      fr.outboundTab
-    );
-    await expect(page.getByTestId("webhooks-tab-deliveries")).toContainText(
-      fr.deliveriesTab
-    );
+      // Verify the product fix in `app/layout.tsx` (see PR for v0.23.0): the
+      // root layout now resolves <html lang> from `getLocale()` instead of
+      // hardcoding "en". Asserting fr-FR here gives a fast, specific failure
+      // if the layout regresses or the cookie override didn't take effect.
+      await expect(page.locator("html")).toHaveAttribute("lang", "fr-FR");
 
-    const addInbound = page.getByTestId("webhook-inbound-add-button");
-    await expect(addInbound).toContainText(fr.inboundAddButton);
-    // The 1:1 inbound model gates Add on the project's active issue
-    // integration. With no integration assigned (i18n test scope is
-    // string coverage, not flow coverage) the button is disabled and
-    // clicking it has no effect; we don't drive a creation flow here.
+      await expect(page.getByTestId("webhooks-tab-inbound")).toContainText(
+        fr.inboundTab
+      );
+      await expect(page.getByTestId("webhooks-tab-outbound")).toContainText(
+        fr.outboundTab
+      );
+      await expect(page.getByTestId("webhooks-tab-deliveries")).toContainText(
+        fr.deliveriesTab
+      );
 
-    await assertNoMissingKeyMarkers(page);
+      const addInbound = page.getByTestId("webhook-inbound-add-button");
+      await expect(addInbound).toContainText(fr.inboundAddButton);
+      // The 1:1 inbound model gates Add on the project's active issue
+      // integration. With no integration assigned (i18n test scope is
+      // string coverage, not flow coverage) the button is disabled and
+      // clicking it has no effect; we don't drive a creation flow here.
 
-    // ─── 2. Outbound tab ─────────────────────────────────────────────
-    await page.getByTestId("webhooks-tab-outbound").click();
-    await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
-      timeout: 10_000,
-    });
-    await expect(page.getByTestId("webhook-outbound-add-button")).toContainText(
-      fr.outboundAddButton
-    );
-
-    await page.getByTestId("webhook-outbound-add-button").click();
-    const outboundForm = page.getByTestId("webhook-outbound-create-form");
-    await expect(outboundForm).toBeVisible();
-    await expect(outboundForm).toContainText(fr.outboundCreateTitle);
-    await expect(outboundForm).toContainText(
-      fr.outboundCreateSubscriptionsTitle
-    );
-    await expect(
-      page.getByTestId("webhook-outbound-create-submit")
-    ).toContainText(fr.outboundCreateSubmit);
-    await expect(
-      page.getByTestId("webhook-outbound-create-cancel")
-    ).toContainText(fr.outboundCreateCancel);
-    await page.getByTestId("webhook-outbound-create-cancel").click();
-
-    const outboundCard = page.getByTestId(
-      `webhook-outbound-card-${outboundConfigId}`
-    );
-    await expect(outboundCard).toBeVisible();
-    const healthBadge = page.getByTestId(
-      `webhook-health-badge-${outboundConfigId}`
-    );
-    await expect(healthBadge).toContainText(fr.healthDisabled);
-
-    const reEnableButton = page.getByTestId(
-      `webhook-reenable-button-${outboundConfigId}`
-    );
-    await expect(reEnableButton).toContainText(fr.reEnable);
-    await reEnableButton.click();
-    const reEnableDialog = page.getByTestId("webhook-reenable-dialog");
-    await expect(reEnableDialog).toBeVisible();
-    await expect(reEnableDialog).toContainText(fr.reEnableConfirmTitle);
-    await expect(reEnableDialog).toContainText(fr.reEnableConfirm);
-    await page.getByTestId("webhook-reenable-dialog-cancel").click();
-
-    await page
-      .getByTestId(`webhook-outbound-delete-button-${outboundConfigId}`)
-      .click();
-    const deleteDialog = page.getByTestId("webhook-outbound-delete-dialog");
-    await expect(deleteDialog).toBeVisible();
-    await expect(deleteDialog).toContainText(fr.outboundDeleteConfirmTitle);
-    await expect(deleteDialog).toContainText(fr.outboundDeleteConfirm);
-    await page.getByTestId("webhook-outbound-delete-dialog-cancel").click();
-
-    await assertNoMissingKeyMarkers(page);
-    await expectAbsentText(page, en.outboundCreateTitle);
-    await expectAbsentText(page, en.reEnableConfirmTitle);
-
-    // ─── 3. Deliveries tab ───────────────────────────────────────────
-    await page.getByTestId("webhooks-tab-deliveries").click();
-    await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
-      timeout: 10_000,
+      await assertNoMissingKeyMarkers(page);
     });
 
-    await expect(
-      page.getByTestId("webhook-deliveries-filter-status")
-    ).toContainText(fr.filterStatusAll);
-    await expect(
-      page.getByTestId("webhook-deliveries-reset-top")
-    ).toContainText(fr.filterReset);
+    await test.step("View the Outbound tab in French", async () => {
+      await page.getByTestId("webhooks-tab-outbound").click();
+      await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
+        timeout: 10_000,
+      });
+      await expect(
+        page.getByTestId("webhook-outbound-add-button")
+      ).toContainText(fr.outboundAddButton);
 
-    await page.getByTestId("webhook-deliveries-filter-status").click();
-    await expect(
-      page.getByRole("option", { name: fr.filterStatusFailed })
-    ).toBeVisible();
-    await page.keyboard.press("Escape");
+      await page.getByTestId("webhook-outbound-add-button").click();
+      const outboundForm = page.getByTestId("webhook-outbound-create-form");
+      await expect(outboundForm).toBeVisible();
+      await expect(outboundForm).toContainText(fr.outboundCreateTitle);
+      await expect(outboundForm).toContainText(
+        fr.outboundCreateSubscriptionsTitle
+      );
+      await expect(
+        page.getByTestId("webhook-outbound-create-submit")
+      ).toContainText(fr.outboundCreateSubmit);
+      await expect(
+        page.getByTestId("webhook-outbound-create-cancel")
+      ).toContainText(fr.outboundCreateCancel);
+      await page.getByTestId("webhook-outbound-create-cancel").click();
 
-    await assertNoMissingKeyMarkers(page);
-    await expectAbsentText(page, en.filterReset);
-    await expectAbsentText(page, en.deliveriesTab);
+      const outboundCard = page.getByTestId(
+        `webhook-outbound-card-${outboundConfigId}`
+      );
+      await expect(outboundCard).toBeVisible();
+      const healthBadge = page.getByTestId(
+        `webhook-health-badge-${outboundConfigId}`
+      );
+      await expect(healthBadge).toContainText(fr.healthDisabled);
+
+      const reEnableButton = page.getByTestId(
+        `webhook-reenable-button-${outboundConfigId}`
+      );
+      await expect(reEnableButton).toContainText(fr.reEnable);
+      await reEnableButton.click();
+      const reEnableDialog = page.getByTestId("webhook-reenable-dialog");
+      await expect(reEnableDialog).toBeVisible();
+      await expect(reEnableDialog).toContainText(fr.reEnableConfirmTitle);
+      await expect(reEnableDialog).toContainText(fr.reEnableConfirm);
+      await page.getByTestId("webhook-reenable-dialog-cancel").click();
+
+      await page
+        .getByTestId(`webhook-outbound-delete-button-${outboundConfigId}`)
+        .click();
+      const deleteDialog = page.getByTestId("webhook-outbound-delete-dialog");
+      await expect(deleteDialog).toBeVisible();
+      await expect(deleteDialog).toContainText(fr.outboundDeleteConfirmTitle);
+      await expect(deleteDialog).toContainText(fr.outboundDeleteConfirm);
+      await page.getByTestId("webhook-outbound-delete-dialog-cancel").click();
+
+      await assertNoMissingKeyMarkers(page);
+      await expectAbsentText(page, en.outboundCreateTitle);
+      await expectAbsentText(page, en.reEnableConfirmTitle);
+    });
+
+    await test.step("View the Deliveries tab in French", async () => {
+      await page.getByTestId("webhooks-tab-deliveries").click();
+      await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
+        timeout: 10_000,
+      });
+
+      await expect(
+        page.getByTestId("webhook-deliveries-filter-status")
+      ).toContainText(fr.filterStatusAll);
+      await expect(
+        page.getByTestId("webhook-deliveries-reset-top")
+      ).toContainText(fr.filterReset);
+
+      await page.getByTestId("webhook-deliveries-filter-status").click();
+      await expect(
+        page.getByRole("option", { name: fr.filterStatusFailed })
+      ).toBeVisible();
+      await page.keyboard.press("Escape");
+
+      await assertNoMissingKeyMarkers(page);
+      await expectAbsentText(page, en.filterReset);
+      await expectAbsentText(page, en.deliveriesTab);
+    });
   });
 });
 

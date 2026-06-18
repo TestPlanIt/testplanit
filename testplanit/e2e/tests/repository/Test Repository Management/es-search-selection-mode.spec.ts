@@ -100,84 +100,95 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(`E2E ES Search ${Date.now()}`);
-    const folderId = await api.createFolder(projectId, "ES Search Folder");
-    await api.createTestCase(
-      projectId,
-      folderId,
-      `ES Search Case ${Date.now()}`
-    );
+    let dialog: import("@playwright/test").Locator | undefined;
 
-    // Navigate to test runs page and open AddTestRunModal
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
+    await test.step("Create project, folder, and a test case", async () => {
+      const projectId = await api.createProject(`E2E ES Search ${Date.now()}`);
+      const folderId = await api.createFolder(projectId, "ES Search Folder");
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `ES Search Case ${Date.now()}`
+      );
 
-    const dialog = await openModalAndGoToStep2(
-      page,
-      `ES Search Run ${Date.now()}`
-    );
+      // Navigate to test runs page and open AddTestRunModal
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
 
-    // In step 2, the ProjectRepository is rendered in selection mode
-    // The ES search input should be visible
-    const esSearchInput = dialog.locator(
-      'input[placeholder*="Search in this project"]'
-    );
-    await expect(esSearchInput).toBeVisible({ timeout: 10000 });
+      dialog = await openModalAndGoToStep2(page, `ES Search Run ${Date.now()}`);
+    });
+
+    await test.step("Verify the ES search input appears in selection mode", async () => {
+      // In step 2, the ProjectRepository is rendered in selection mode
+      // The ES search input should be visible
+      const esSearchInput = dialog!.locator(
+        'input[placeholder*="Search in this project"]'
+      );
+      await expect(esSearchInput).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("should filter test cases when searching via ES", async ({
     api,
     page,
   }) => {
-    const projectId = await api.createProject(`E2E ES Filter ${Date.now()}`);
     const folderName = `ES Filter Folder ${Date.now()}`;
-    const folderId = await api.createFolder(projectId, folderName);
     const ts = Date.now();
     const matchingCase = `UniqueLoginTest ${ts}`;
     const nonMatchingCase = `PaymentFlow ${ts}`;
-    await api.createTestCase(projectId, folderId, matchingCase);
-    await api.createTestCase(projectId, folderId, nonMatchingCase);
+    let dialog: import("@playwright/test").Locator | undefined;
+    let esSearchInput: import("@playwright/test").Locator | undefined;
 
-    // Wait for ES indexing
-    await page.waitForTimeout(2000);
+    await test.step("Create project, folder, and matching/non-matching cases", async () => {
+      const projectId = await api.createProject(`E2E ES Filter ${Date.now()}`);
+      const folderId = await api.createFolder(projectId, folderName);
+      await api.createTestCase(projectId, folderId, matchingCase);
+      await api.createTestCase(projectId, folderId, nonMatchingCase);
 
-    // Navigate to test runs page and open AddTestRunModal
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
+      // Wait for ES indexing
+      await page.waitForTimeout(2000);
 
-    const dialog = await openModalAndGoToStep2(
-      page,
-      `Filter Run ${Date.now()}`
-    );
+      // Navigate to test runs page and open AddTestRunModal
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
 
-    // Wait for step 2 to load
-    const esSearchInput = dialog.locator(
-      'input[placeholder*="Search in this project"]'
-    );
-    await expect(esSearchInput).toBeVisible({ timeout: 10000 });
-
-    // Click the folder to load its cases into the table
-    await clickFolderInDialog(page, folderName);
-
-    // Wait for cases to initially load in the table
-    await expect(dialog.locator(`text="${matchingCase}"`)).toBeVisible({
-      timeout: 10000,
+      dialog = await openModalAndGoToStep2(page, `Filter Run ${Date.now()}`);
     });
 
-    // Type in the ES search input
-    await esSearchInput.fill("UniqueLoginTest");
+    await test.step("Open the folder and confirm cases load in the table", async () => {
+      // Wait for step 2 to load
+      esSearchInput = dialog!.locator(
+        'input[placeholder*="Search in this project"]'
+      );
+      await expect(esSearchInput).toBeVisible({ timeout: 10000 });
 
-    // Wait for debounce (300ms) + ES query + render
-    await page.waitForTimeout(2000);
+      // Click the folder to load its cases into the table
+      await clickFolderInDialog(page, folderName);
 
-    // Matching case should be visible
-    await expect(dialog.locator(`text="${matchingCase}"`)).toBeVisible({
-      timeout: 10000,
+      // Wait for cases to initially load in the table
+      await expect(dialog!.locator(`text="${matchingCase}"`)).toBeVisible({
+        timeout: 10000,
+      });
     });
 
-    // Non-matching case should not be visible
-    await expect(dialog.locator(`text="${nonMatchingCase}"`)).not.toBeVisible({
-      timeout: 5000,
+    await test.step("Search via ES and verify only the matching case remains", async () => {
+      // Type in the ES search input
+      await esSearchInput!.fill("UniqueLoginTest");
+
+      // Wait for debounce (300ms) + ES query + render
+      await page.waitForTimeout(2000);
+
+      // Matching case should be visible
+      await expect(dialog!.locator(`text="${matchingCase}"`)).toBeVisible({
+        timeout: 10000,
+      });
+
+      // Non-matching case should not be visible
+      await expect(
+        dialog!.locator(`text="${nonMatchingCase}"`)
+      ).not.toBeVisible({
+        timeout: 5000,
+      });
     });
   });
 
@@ -185,70 +196,81 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(`E2E ES Clear ${Date.now()}`);
     const folderName = `ES Clear Folder ${Date.now()}`;
-    const folderId = await api.createFolder(projectId, folderName);
     const ts = Date.now();
     const case1 = `ClearTestAlpha ${ts}`;
     const case2 = `ClearTestBeta ${ts}`;
-    await api.createTestCase(projectId, folderId, case1);
-    await api.createTestCase(projectId, folderId, case2);
+    let dialog: import("@playwright/test").Locator | undefined;
+    let esSearchInput: import("@playwright/test").Locator | undefined;
 
-    await page.waitForTimeout(2000); // ES indexing
+    await test.step("Create project, folder, and two test cases", async () => {
+      const projectId = await api.createProject(`E2E ES Clear ${Date.now()}`);
+      const folderId = await api.createFolder(projectId, folderName);
+      await api.createTestCase(projectId, folderId, case1);
+      await api.createTestCase(projectId, folderId, case2);
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
+      await page.waitForTimeout(2000); // ES indexing
 
-    const dialog = await openModalAndGoToStep2(page, `Clear Run ${Date.now()}`);
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
 
-    const esSearchInput = dialog.locator(
-      'input[placeholder*="Search in this project"]'
-    );
-    await expect(esSearchInput).toBeVisible({ timeout: 10000 });
-
-    // Click the folder to load its cases into the table
-    await clickFolderInDialog(page, folderName);
-
-    // Wait for both cases to be visible
-    await expect(dialog.locator(`text="${case1}"`)).toBeVisible({
-      timeout: 10000,
+      dialog = await openModalAndGoToStep2(page, `Clear Run ${Date.now()}`);
     });
 
-    // Search for only one case
-    await esSearchInput.fill("ClearTestAlpha");
-    await page.waitForTimeout(2000);
+    await test.step("Open the folder and confirm both cases are visible", async () => {
+      esSearchInput = dialog!.locator(
+        'input[placeholder*="Search in this project"]'
+      );
+      await expect(esSearchInput).toBeVisible({ timeout: 10000 });
 
-    // Only matching case visible
-    await expect(dialog.locator(`text="${case1}"`)).toBeVisible({
-      timeout: 10000,
+      // Click the folder to load its cases into the table
+      await clickFolderInDialog(page, folderName);
+
+      // Wait for both cases to be visible
+      await expect(dialog!.locator(`text="${case1}"`)).toBeVisible({
+        timeout: 10000,
+      });
     });
-    await expect(dialog.locator(`text="${case2}"`)).not.toBeVisible({
-      timeout: 5000,
+
+    await test.step("Search for one case and verify the other is hidden", async () => {
+      // Search for only one case
+      await esSearchInput!.fill("ClearTestAlpha");
+      await page.waitForTimeout(2000);
+
+      // Only matching case visible
+      await expect(dialog!.locator(`text="${case1}"`)).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(dialog!.locator(`text="${case2}"`)).not.toBeVisible({
+        timeout: 5000,
+      });
     });
 
-    // Click the clear (X) button next to the search input
-    const clearButton = dialog
-      .locator(
-        'input[placeholder*="Search in this project"] + button, input[placeholder*="Search in this project"] ~ button'
-      )
-      .first();
+    await test.step("Clear the search and verify both cases are restored", async () => {
+      // Click the clear (X) button next to the search input
+      const clearButton = dialog!
+        .locator(
+          'input[placeholder*="Search in this project"] + button, input[placeholder*="Search in this project"] ~ button'
+        )
+        .first();
 
-    // If clear button exists, click it; otherwise clear the input
-    if (await clearButton.isVisible()) {
-      await clearButton.click();
-    } else {
-      await esSearchInput.clear();
-    }
+      // If clear button exists, click it; otherwise clear the input
+      if (await clearButton.isVisible()) {
+        await clearButton.click();
+      } else {
+        await esSearchInput!.clear();
+      }
 
-    // Wait for cases to reload
-    await page.waitForTimeout(2000);
+      // Wait for cases to reload
+      await page.waitForTimeout(2000);
 
-    // Both cases should now be visible again
-    await expect(dialog.locator(`text="${case1}"`)).toBeVisible({
-      timeout: 10000,
-    });
-    await expect(dialog.locator(`text="${case2}"`)).toBeVisible({
-      timeout: 10000,
+      // Both cases should now be visible again
+      await expect(dialog!.locator(`text="${case1}"`)).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(dialog!.locator(`text="${case2}"`)).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 
@@ -256,68 +278,80 @@ test.describe("Elasticsearch Search in Selection Mode", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(`E2E ES Select ${Date.now()}`);
     const folderName = `ES Select Folder ${Date.now()}`;
-    const folderId = await api.createFolder(projectId, folderName);
     const ts = Date.now();
     const searchableCase = `SelectableLogin ${ts}`;
     const otherCase = `OtherPayment ${ts}`;
-    await api.createTestCase(projectId, folderId, searchableCase);
-    await api.createTestCase(projectId, folderId, otherCase);
+    let dialog: import("@playwright/test").Locator | undefined;
+    let esSearchInput: import("@playwright/test").Locator | undefined;
 
-    await page.waitForTimeout(2000); // ES indexing
+    await test.step("Create project, folder, and two test cases", async () => {
+      const projectId = await api.createProject(`E2E ES Select ${Date.now()}`);
+      const folderId = await api.createFolder(projectId, folderName);
+      await api.createTestCase(projectId, folderId, searchableCase);
+      await api.createTestCase(projectId, folderId, otherCase);
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
+      await page.waitForTimeout(2000); // ES indexing
 
-    const dialog = await openModalAndGoToStep2(
-      page,
-      `Select Run ${Date.now()}`
-    );
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
 
-    const esSearchInput = dialog.locator(
-      'input[placeholder*="Search in this project"]'
-    );
-    await expect(esSearchInput).toBeVisible({ timeout: 10000 });
-
-    // Click the folder to load its cases into the table
-    await clickFolderInDialog(page, folderName);
-
-    // Wait for cases to load
-    await expect(dialog.locator(`text="${searchableCase}"`)).toBeVisible({
-      timeout: 10000,
+      dialog = await openModalAndGoToStep2(page, `Select Run ${Date.now()}`);
     });
 
-    // Search for the specific case
-    await esSearchInput.fill("SelectableLogin");
-    await page.waitForTimeout(2000);
+    await test.step("Open the folder and confirm cases load", async () => {
+      esSearchInput = dialog!.locator(
+        'input[placeholder*="Search in this project"]'
+      );
+      await expect(esSearchInput).toBeVisible({ timeout: 10000 });
 
-    // Click the checkbox/row to select the search result
-    const caseRow = dialog.locator(`tr:has-text("${searchableCase}")`).first();
-    await expect(caseRow).toBeVisible({ timeout: 5000 });
+      // Click the folder to load its cases into the table
+      await clickFolderInDialog(page, folderName);
 
-    // Click the checkbox in the row
-    const checkbox = caseRow.locator('input[type="checkbox"]').first();
-    if (await checkbox.isVisible()) {
-      await checkbox.click();
-    } else {
-      // Some tables use row click for selection
-      await caseRow.click();
-    }
+      // Wait for cases to load
+      await expect(dialog!.locator(`text="${searchableCase}"`)).toBeVisible({
+        timeout: 10000,
+      });
+    });
 
-    // Clear search
-    await esSearchInput.clear();
-    await page.waitForTimeout(2000);
+    await test.step("Search for the case and select it from the results", async () => {
+      // Search for the specific case
+      await esSearchInput!.fill("SelectableLogin");
+      await page.waitForTimeout(2000);
 
-    // The selected case should still be selected after clearing search
-    // Look for indication of selection (e.g., selected count badge, drawer count)
-    // The selected test cases drawer or count should show 1 selected
-    const selectedIndicator = dialog.locator("text=/1 (case|test|selected)/i");
-    // This is a soft check - the exact UI may vary
-    if (
-      await selectedIndicator.isVisible({ timeout: 3000 }).catch(() => false)
-    ) {
-      await expect(selectedIndicator).toBeVisible();
-    }
+      // Click the checkbox/row to select the search result
+      const caseRow = dialog!
+        .locator(`tr:has-text("${searchableCase}")`)
+        .first();
+      await expect(caseRow).toBeVisible({ timeout: 5000 });
+
+      // Click the checkbox in the row
+      const checkbox = caseRow.locator('input[type="checkbox"]').first();
+      if (await checkbox.isVisible()) {
+        await checkbox.click();
+      } else {
+        // Some tables use row click for selection
+        await caseRow.click();
+      }
+    });
+
+    await test.step("Clear the search and verify the selection persists", async () => {
+      // Clear search
+      await esSearchInput!.clear();
+      await page.waitForTimeout(2000);
+
+      // The selected case should still be selected after clearing search
+      // Look for indication of selection (e.g., selected count badge, drawer count)
+      // The selected test cases drawer or count should show 1 selected
+      const selectedIndicator = dialog!.locator(
+        "text=/1 (case|test|selected)/i"
+      );
+      // This is a soft check - the exact UI may vary
+      if (
+        await selectedIndicator.isVisible({ timeout: 3000 }).catch(() => false)
+      ) {
+        await expect(selectedIndicator).toBeVisible();
+      }
+    });
   });
 });

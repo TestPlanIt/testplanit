@@ -32,81 +32,90 @@ test.describe("Shared datasets - happy path @shared-datasets", () => {
       "Login (param)"
     );
 
-    // ---------- 1. Create the shared dataset ----------
-    await page.goto(`/en-US/projects/settings/${projectId}/datasets`);
-    await page.waitForLoadState("load");
-    await expect(page.getByTestId("dataset-create-button")).toBeVisible();
-    await page.getByTestId("dataset-create-button").click();
+    let datasetName: string | undefined;
 
-    await expect(page.getByTestId("dataset-create-dialog")).toBeVisible();
-    const datasetName = `Login users ${Date.now()}`;
-    await page.getByTestId("dataset-create-name").fill(datasetName);
-    await page
-      .getByTestId("dataset-create-description")
-      .fill("Test users for the Login flow");
-    await page.getByTestId("dataset-create-submit").click();
+    await test.step("Create the shared dataset", async () => {
+      await page.goto(`/en-US/projects/settings/${projectId}/datasets`);
+      await page.waitForLoadState("load");
+      await expect(page.getByTestId("dataset-create-button")).toBeVisible();
+      await page.getByTestId("dataset-create-button").click();
 
-    // After create, the user lands on the editor page.
-    await expect(page.getByTestId("shared-dataset-editor-grid")).toBeVisible({
-      timeout: 15_000,
+      await expect(page.getByTestId("dataset-create-dialog")).toBeVisible();
+      datasetName = `Login users ${Date.now()}`;
+      await page.getByTestId("dataset-create-name").fill(datasetName);
+      await page
+        .getByTestId("dataset-create-description")
+        .fill("Test users for the Login flow");
+      await page.getByTestId("dataset-create-submit").click();
+
+      // After create, the user lands on the editor page.
+      await expect(page.getByTestId("shared-dataset-editor-grid")).toBeVisible({
+        timeout: 15_000,
+      });
     });
 
-    // ---------- 2. First save (lazy v1 + v2) ----------
-    // Click the editor save (whatever the empty grid contains is the
-    // post-edit payload — the lazy v1 backfill captures the pre-edit
-    // baseline, the v2 row captures the post-edit payload).
-    await page.getByTestId("shared-dataset-editor-save").click();
+    await test.step("Save the first dataset version", async () => {
+      // Click the editor save (whatever the empty grid contains is the
+      // post-edit payload — the lazy v1 backfill captures the pre-edit
+      // baseline, the v2 row captures the post-edit payload).
+      await page.getByTestId("shared-dataset-editor-save").click();
 
-    // Wait for the save to land (toast + non-error state).
-    await expect(
-      page.getByTestId("shared-dataset-editor-save-error")
-    ).not.toBeVisible();
+      // Wait for the save to land (toast + non-error state).
+      await expect(
+        page.getByTestId("shared-dataset-editor-save-error")
+      ).not.toBeVisible();
+    });
 
-    // ---------- 3. Declare parameters on the case ----------
-    await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
-    await page.waitForLoadState("load");
+    await test.step("Declare matching parameters on the case", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
+      await page.waitForLoadState("load");
 
-    await page.getByTestId("configure-parameters-button").click();
-    await expect(page.getByTestId("configure-parameters-sheet")).toBeVisible();
+      await page.getByTestId("configure-parameters-button").click();
+      await expect(
+        page.getByTestId("configure-parameters-sheet")
+      ).toBeVisible();
 
-    for (const name of ["email", "password"]) {
-      await page.getByTestId("parameter-form-name").fill(name);
-      await page.getByTestId("parameter-form-submit").click();
-      await expect(page.getByText(`@${name}`).first()).toBeVisible();
-    }
+      for (const name of ["email", "password"]) {
+        await page.getByTestId("parameter-form-name").fill(name);
+        await page.getByTestId("parameter-form-submit").click();
+        await expect(page.getByText(`@${name}`).first()).toBeVisible();
+      }
+    });
 
-    // ---------- 4. Switch to Shared and assign ----------
-    await page.getByTestId("tab-dataset").click();
-    // The segmented control: Local | Shared. Switching to Shared with no
-    // assignment yet opens the AssignSharedDatasetDialog (per Plan 04-06
-    // wiring).
-    await page.getByTestId("dataset-source-shared").click();
-    await expect(
-      page.getByTestId("assign-shared-dataset-dialog")
-    ).toBeVisible();
+    await test.step("Switch the Dataset tab to Shared and assign the dataset", async () => {
+      await page.getByTestId("tab-dataset").click();
+      // The segmented control: Local | Shared. Switching to Shared with no
+      // assignment yet opens the AssignSharedDatasetDialog (per Plan 04-06
+      // wiring).
+      await page.getByTestId("dataset-source-shared").click();
+      await expect(
+        page.getByTestId("assign-shared-dataset-dialog")
+      ).toBeVisible();
 
-    // Step 2 (pin) and Step 3 (mapping) only render once a dataset is
-    // picked — open the dataset combobox first.
-    const datasetSelect = page.getByTestId("assign-shared-dataset-select");
-    await expect(datasetSelect).toBeVisible({ timeout: 10_000 });
-    await datasetSelect.click();
-    await page.getByRole("option", { name: datasetName }).click();
+      // Step 2 (pin) and Step 3 (mapping) only render once a dataset is
+      // picked — open the dataset combobox first.
+      const datasetSelect = page.getByTestId("assign-shared-dataset-select");
+      await expect(datasetSelect).toBeVisible({ timeout: 10_000 });
+      await datasetSelect.click();
+      await page.getByRole("option", { name: datasetName! }).click();
 
-    // Pin radio defaults to "current" (RESEARCH.md Pitfall 5 default).
-    await expect(page.getByTestId("assign-shared-pin-current")).toBeVisible();
+      // Pin radio defaults to "current" (RESEARCH.md Pitfall 5 default).
+      await expect(page.getByTestId("assign-shared-pin-current")).toBeVisible();
 
-    // Save the assignment. The dialog auto-maps matching column names
-    // (email, password) on mount; mapping is valid; Save enables.
-    const save = page.getByTestId("assign-shared-save");
-    await expect(save).toBeEnabled({ timeout: 10_000 });
-    await save.click();
+      // Save the assignment. The dialog auto-maps matching column names
+      // (email, password) on mount; mapping is valid; Save enables.
+      const save = page.getByTestId("assign-shared-save");
+      await expect(save).toBeEnabled({ timeout: 10_000 });
+      await save.click();
 
-    // Dialog should close on success.
-    await expect(
-      page.getByTestId("assign-shared-dataset-dialog")
-    ).not.toBeVisible({ timeout: 10_000 });
+      // Dialog should close on success.
+      await expect(
+        page.getByTestId("assign-shared-dataset-dialog")
+      ).not.toBeVisible({ timeout: 10_000 });
+    });
 
-    // ---------- 5. Verify the Dataset tab now shows the shared header ----------
-    await expect(page.getByTestId("dataset-shared-header")).toBeVisible();
+    await test.step("Verify the Dataset tab shows the shared header", async () => {
+      await expect(page.getByTestId("dataset-shared-header")).toBeVisible();
+    });
   });
 });

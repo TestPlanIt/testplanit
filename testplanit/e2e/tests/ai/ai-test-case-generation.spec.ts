@@ -14,43 +14,55 @@ test.describe("AI Test Case Generation Wizard", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E Gen Wizard ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E LLM Gen ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
-    const folderId = await api.createFolder(projectId, `Gen Folder ${ts}`);
-    await api.createTestCase(projectId, folderId, `Existing Case ${ts}`);
+    let projectId: number | undefined;
 
-    await page.goto(`/en-US/projects/repository/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Seed project, LLM integration, folder and test case", async () => {
+      projectId = await api.createProject(`E2E Gen Wizard ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E LLM Gen ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+      const folderId = await api.createFolder(projectId, `Gen Folder ${ts}`);
+      await api.createTestCase(projectId, folderId, `Existing Case ${ts}`);
+    });
 
-    // Click the folder so the right panel header renders
-    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
-    await expect(folderNode).toBeVisible({ timeout: 15000 });
-    await folderNode.click();
+    await test.step("Open the repository and select the folder", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId!}`);
+      await page.waitForLoadState("networkidle");
 
-    await expect(page.locator('[data-testid="repository-layout"]')).toBeVisible(
-      { timeout: 10000 }
-    );
+      // Click the folder so the right panel header renders
+      const folderNode = page.locator('[data-testid^="folder-node-"]').first();
+      await expect(folderNode).toBeVisible({ timeout: 15000 });
+      await folderNode.click();
 
-    await expect(
-      page.locator('[data-testid="repository-right-panel-header"]')
-    ).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.locator('[data-testid="repository-layout"]')
+      ).toBeVisible({ timeout: 10000 });
 
-    // With LLM integration configured, the Sparkles wizard trigger must be visible
-    const wizardTrigger = page
-      .locator("button:has(svg.lucide-sparkles)")
-      .first();
-    await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.locator('[data-testid="repository-right-panel-header"]')
+      ).toBeVisible({ timeout: 10000 });
+    });
 
-    // Click to open the wizard
-    await wizardTrigger.click();
+    let dialog: ReturnType<typeof page.locator> | undefined;
 
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    await test.step("Open the AI generation wizard", async () => {
+      // With LLM integration configured, the Sparkles wizard trigger must be visible
+      const wizardTrigger = page
+        .locator("button:has(svg.lucide-sparkles)")
+        .first();
+      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
 
-    // Verify first step (source type selection with tabs)
-    await expect(dialog.locator('[role="tab"]').first()).toBeVisible({
-      timeout: 5000,
+      // Click to open the wizard
+      await wizardTrigger.click();
+
+      dialog = page.locator('[role="dialog"]').first();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Verify the source type selection tabs render", async () => {
+      // Verify first step (source type selection with tabs)
+      await expect(dialog!.locator('[role="tab"]').first()).toBeVisible({
+        timeout: 5000,
+      });
     });
   });
 
@@ -59,39 +71,51 @@ test.describe("AI Test Case Generation Wizard", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E Gen Alert ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E LLM Alert ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
-    const folderId = await api.createFolder(projectId, `Alert Folder ${ts}`);
-    await api.createTestCase(projectId, folderId, `Alert Case ${ts}`);
+    let projectId: number | undefined;
 
-    await page.goto(`/en-US/projects/repository/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Seed project, LLM integration, folder and test case", async () => {
+      projectId = await api.createProject(`E2E Gen Alert ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E LLM Alert ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+      const folderId = await api.createFolder(projectId, `Alert Folder ${ts}`);
+      await api.createTestCase(projectId, folderId, `Alert Case ${ts}`);
+    });
 
-    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
-    await expect(folderNode).toBeVisible({ timeout: 15000 });
-    await folderNode.click();
+    await test.step("Open the repository and select the folder", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId!}`);
+      await page.waitForLoadState("networkidle");
 
-    await expect(
-      page.locator('[data-testid="repository-right-panel-header"]')
-    ).toBeVisible({ timeout: 10000 });
+      const folderNode = page.locator('[data-testid^="folder-node-"]').first();
+      await expect(folderNode).toBeVisible({ timeout: 15000 });
+      await folderNode.click();
 
-    const wizardTrigger = page
-      .locator("button:has(svg.lucide-sparkles)")
-      .first();
-    await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-    await wizardTrigger.click();
+      await expect(
+        page.locator('[data-testid="repository-right-panel-header"]')
+      ).toBeVisible({ timeout: 10000 });
+    });
 
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    let dialog: ReturnType<typeof page.locator> | undefined;
 
-    // The wizard renders an info Alert in the DialogHeader
-    const infoAlert = dialog.locator('[role="alert"]').first();
-    await expect(infoAlert).toBeVisible({ timeout: 5000 });
+    await test.step("Open the AI generation wizard", async () => {
+      const wizardTrigger = page
+        .locator("button:has(svg.lucide-sparkles)")
+        .first();
+      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
+      await wizardTrigger.click();
 
-    // Verify the alert contains an Info icon
-    const infoIcon = dialog.locator("svg.lucide-info").first();
-    await expect(infoIcon).toBeVisible({ timeout: 5000 });
+      dialog = page.locator('[role="dialog"]').first();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Verify the AI info alert and info icon render", async () => {
+      // The wizard renders an info Alert in the DialogHeader
+      const infoAlert = dialog!.locator('[role="alert"]').first();
+      await expect(infoAlert).toBeVisible({ timeout: 5000 });
+
+      // Verify the alert contains an Info icon
+      const infoIcon = dialog!.locator("svg.lucide-info").first();
+      await expect(infoIcon).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("should mock LLM route and handle generated test cases response", async ({
@@ -99,71 +123,88 @@ test.describe("AI Test Case Generation Wizard", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E Gen Mock LLM ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E LLM Mock ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
-    const folderId = await api.createFolder(projectId, `Mock LLM Folder ${ts}`);
-    await api.createTestCase(projectId, folderId, `Mock Case ${ts}`);
+    let projectId: number | undefined;
 
-    // Mock the LLM generate-test-cases endpoint before navigation
-    await page.route("**/api/llm/generate-test-cases", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          success: true,
-          testCases: [
-            {
-              id: "tc_1",
-              name: "Verify login with valid credentials",
-              description: "Test that users can log in successfully",
-              steps: [
-                {
-                  step: "Enter valid email",
-                  expectedResult: "Email accepted",
-                },
-              ],
-              fieldValues: {},
-              priority: "High",
-              automated: false,
-              tags: ["Smoke"],
+    await test.step("Seed project, LLM integration, folder and test case", async () => {
+      projectId = await api.createProject(`E2E Gen Mock LLM ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E LLM Mock ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+      const folderId = await api.createFolder(
+        projectId,
+        `Mock LLM Folder ${ts}`
+      );
+      await api.createTestCase(projectId, folderId, `Mock Case ${ts}`);
+    });
+
+    await test.step("Mock the generate-test-cases endpoint with a success response", async () => {
+      // Mock the LLM generate-test-cases endpoint before navigation
+      await page.route("**/api/llm/generate-test-cases", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            testCases: [
+              {
+                id: "tc_1",
+                name: "Verify login with valid credentials",
+                description: "Test that users can log in successfully",
+                steps: [
+                  {
+                    step: "Enter valid email",
+                    expectedResult: "Email accepted",
+                  },
+                ],
+                fieldValues: {},
+                priority: "High",
+                automated: false,
+                tags: ["Smoke"],
+              },
+            ],
+            metadata: {
+              issueKey: "TEST-1",
+              templateName: "Default",
+              generatedCount: 1,
+              model: "mock-model",
+              tokens: { prompt: 100, completion: 200, total: 300 },
             },
-          ],
-          metadata: {
-            issueKey: "TEST-1",
-            templateName: "Default",
-            generatedCount: 1,
-            model: "mock-model",
-            tokens: { prompt: 100, completion: 200, total: 300 },
-          },
-        }),
+          }),
+        });
       });
     });
 
-    await page.goto(`/en-US/projects/repository/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the repository and select the folder", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId!}`);
+      await page.waitForLoadState("networkidle");
 
-    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
-    await expect(folderNode).toBeVisible({ timeout: 15000 });
-    await folderNode.click();
+      const folderNode = page.locator('[data-testid^="folder-node-"]').first();
+      await expect(folderNode).toBeVisible({ timeout: 15000 });
+      await folderNode.click();
 
-    await expect(
-      page.locator('[data-testid="repository-right-panel-header"]')
-    ).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.locator('[data-testid="repository-right-panel-header"]')
+      ).toBeVisible({ timeout: 10000 });
+    });
 
-    const wizardTrigger = page
-      .locator("button:has(svg.lucide-sparkles)")
-      .first();
-    await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-    await wizardTrigger.click();
+    let dialog: ReturnType<typeof page.locator> | undefined;
 
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    await test.step("Open the AI generation wizard", async () => {
+      const wizardTrigger = page
+        .locator("button:has(svg.lucide-sparkles)")
+        .first();
+      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
+      await wizardTrigger.click();
 
-    // Verify dialog has wizard content with tabs/tabpanels
-    await expect(
-      dialog.locator('[role="tab"], [role="tabpanel"]').first()
-    ).toBeVisible({ timeout: 5000 });
+      dialog = page.locator('[role="dialog"]').first();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Verify the wizard renders its tab content", async () => {
+      // Verify dialog has wizard content with tabs/tabpanels
+      await expect(
+        dialog!.locator('[role="tab"], [role="tabpanel"]').first()
+      ).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("should mock LLM error response and handle gracefully", async ({
@@ -171,46 +212,60 @@ test.describe("AI Test Case Generation Wizard", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E Gen Error ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E LLM Error ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
-    const folderId = await api.createFolder(projectId, `Error Folder ${ts}`);
-    await api.createTestCase(projectId, folderId, `Error Case ${ts}`);
+    let projectId: number | undefined;
 
-    // Mock the LLM route to return an error
-    await page.route("**/api/llm/generate-test-cases", async (route) => {
-      await route.fulfill({
-        status: 400,
-        contentType: "application/json",
-        body: JSON.stringify({
-          error: "No active LLM integration",
-        }),
+    await test.step("Seed project, LLM integration, folder and test case", async () => {
+      projectId = await api.createProject(`E2E Gen Error ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E LLM Error ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+      const folderId = await api.createFolder(projectId, `Error Folder ${ts}`);
+      await api.createTestCase(projectId, folderId, `Error Case ${ts}`);
+    });
+
+    await test.step("Mock the generate-test-cases endpoint with an error response", async () => {
+      // Mock the LLM route to return an error
+      await page.route("**/api/llm/generate-test-cases", async (route) => {
+        await route.fulfill({
+          status: 400,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: "No active LLM integration",
+          }),
+        });
       });
     });
 
-    await page.goto(`/en-US/projects/repository/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the repository and select the folder", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId!}`);
+      await page.waitForLoadState("networkidle");
 
-    const folderNode = page.locator('[data-testid^="folder-node-"]').first();
-    await expect(folderNode).toBeVisible({ timeout: 15000 });
-    await folderNode.click();
+      const folderNode = page.locator('[data-testid^="folder-node-"]').first();
+      await expect(folderNode).toBeVisible({ timeout: 15000 });
+      await folderNode.click();
 
-    await expect(
-      page.locator('[data-testid="repository-right-panel-header"]')
-    ).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.locator('[data-testid="repository-right-panel-header"]')
+      ).toBeVisible({ timeout: 10000 });
+    });
 
-    const wizardTrigger = page
-      .locator("button:has(svg.lucide-sparkles)")
-      .first();
-    await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
-    await wizardTrigger.click();
+    let dialog: ReturnType<typeof page.locator> | undefined;
 
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    await test.step("Open the AI generation wizard", async () => {
+      const wizardTrigger = page
+        .locator("button:has(svg.lucide-sparkles)")
+        .first();
+      await expect(wizardTrigger).toBeVisible({ timeout: 10000 });
+      await wizardTrigger.click();
 
-    // Dialog is already confirmed visible above, verify it has content (wizard tabs)
-    await expect(
-      dialog.locator('[role="tab"], [role="tabpanel"], form').first()
-    ).toBeVisible({ timeout: 5000 });
+      dialog = page.locator('[role="dialog"]').first();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Verify the wizard dialog renders its content", async () => {
+      // Dialog is already confirmed visible above, verify it has content (wizard tabs)
+      await expect(
+        dialog!.locator('[role="tab"], [role="tabpanel"], form').first()
+      ).toBeVisible({ timeout: 5000 });
+    });
   });
 });

@@ -148,6 +148,13 @@ export async function emitTestRunCreated(
       actorUserId: opts.actorUserId,
     }
   );
+  // Wake the runs-list consumer so a newly created run appears without a
+  // manual refresh (the per-project channel feeds the list page).
+  publishTestRunWakeUp({
+    event: "test_run.created",
+    runId: row.id,
+    projectId: row.projectId,
+  });
 }
 
 export async function emitTestRunUpdateEvents(
@@ -409,6 +416,33 @@ export async function emitTestRunResultAdded(
     runId: run.id,
     projectId: run.projectId,
     targetId: row.testRunCaseId,
+  });
+}
+
+/**
+ * Live-update nudge for an automation (JUnit) result.
+ *
+ * Unlike manual TestRunResults, JUnit results have no webhook event — this
+ * only wakes SSE consumers so the test-run detail page (and the list-page
+ * status) refresh as automation results stream in from a reporter. The
+ * run + project are resolved through the result's suite -> run -> project
+ * chain (a JUnit result carries no projectId of its own).
+ */
+export async function emitJUnitResultAdded(
+  row: { id: number; testSuiteId: number },
+  tx: Prisma.TransactionClient
+): Promise<void> {
+  const suite = await tx.jUnitTestSuite.findUnique({
+    where: { id: row.testSuiteId },
+    select: { testRun: { select: { id: true, projectId: true } } },
+  });
+  const run = suite?.testRun;
+  if (!run) return; // suite/run deleted between insert and emit — skip.
+  publishTestRunWakeUp({
+    event: "test_run.result_added",
+    runId: run.id,
+    projectId: run.projectId,
+    targetId: row.id,
   });
 }
 

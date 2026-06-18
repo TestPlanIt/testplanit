@@ -40,40 +40,48 @@ test.describe("Sign Up with Email Verification", () => {
     const testEmail = `test-verify-${timestamp}@example.com`;
     const testPassword = "SecurePassword123!";
 
-    // Create user WITHOUT email verification (so emailVerifToken is set and emailVerified is null)
-    const userResult = await api.createUser({
-      name: `Verify Test ${timestamp}`,
-      email: testEmail,
-      password: testPassword,
-      access: "USER",
-      emailVerified: false, // Keep token so we can use it for verification
+    let userId: string | undefined;
+
+    await test.step("Create user without email verification", async () => {
+      // Create user WITHOUT email verification (so emailVerifToken is set and emailVerified is null)
+      const userResult = await api.createUser({
+        name: `Verify Test ${timestamp}`,
+        email: testEmail,
+        password: testPassword,
+        access: "USER",
+        emailVerified: false, // Keep token so we can use it for verification
+      });
+      userId = userResult.data.id;
     });
-    const userId = userResult.data.id;
 
     try {
-      // Retrieve the email verification token from the database via admin API request
-      // (request fixture uses admin session from global storageState)
       const baseURL = testInfo.project.use.baseURL || "http://localhost:3002";
-      const userResponse = await request.get(
-        `${baseURL}/api/model/user/findFirst`,
-        {
-          params: {
-            q: JSON.stringify({
-              where: { email: testEmail, isDeleted: false },
-              select: { id: true, emailVerifToken: true },
-            }),
-          },
-        }
-      );
+      let emailVerifToken: string | undefined;
 
-      expect(userResponse.ok()).toBe(true);
-      const userData = await userResponse.json();
+      await test.step("Retrieve email verification token from the database", async () => {
+        // Retrieve the email verification token from the database via admin API request
+        // (request fixture uses admin session from global storageState)
+        const userResponse = await request.get(
+          `${baseURL}/api/model/user/findFirst`,
+          {
+            params: {
+              q: JSON.stringify({
+                where: { email: testEmail, isDeleted: false },
+                select: { id: true, emailVerifToken: true },
+              }),
+            },
+          }
+        );
 
-      const fetchedUserId = userData.data?.id;
-      const emailVerifToken = userData.data?.emailVerifToken;
+        expect(userResponse.ok()).toBe(true);
+        const userData = await userResponse.json();
 
-      expect(fetchedUserId).toBeTruthy();
-      expect(emailVerifToken).toBeTruthy();
+        const fetchedUserId = userData.data?.id;
+        emailVerifToken = userData.data?.emailVerifToken;
+
+        expect(fetchedUserId).toBeTruthy();
+        expect(emailVerifToken).toBeTruthy();
+      });
 
       // Now navigate the browser (as unauthenticated context via a new page context)
       // to the REAL verification URL with the DB token.
@@ -87,39 +95,43 @@ test.describe("Sign Up with Email Verification", () => {
       const verifyPage = await context.newPage();
 
       try {
-        // Navigate to the real verification URL
-        // The VerifyEmail component auto-submits when both token and email params are present
-        await verifyPage.goto(
-          `${baseURL}/en-US/verify-email?token=${encodeURIComponent(emailVerifToken)}&email=${encodeURIComponent(testEmail)}`
-        );
+        await test.step("Verify email via the real verification URL", async () => {
+          // Navigate to the real verification URL
+          // The VerifyEmail component auto-submits when both token and email params are present
+          await verifyPage.goto(
+            `${baseURL}/en-US/verify-email?token=${encodeURIComponent(emailVerifToken!)}&email=${encodeURIComponent(testEmail)}`
+          );
 
-        // Wait for the verification to complete — the component auto-submits via useEffect
-        // and redirects to /signin on success
-        await verifyPage.waitForURL(/\/en-US\/signin/, { timeout: 30_000 });
-        expect(verifyPage.url()).toContain("/signin");
+          // Wait for the verification to complete — the component auto-submits via useEffect
+          // and redirects to /signin on success
+          await verifyPage.waitForURL(/\/en-US\/signin/, { timeout: 30_000 });
+          expect(verifyPage.url()).toContain("/signin");
+        });
 
-        // After verification, sign in to confirm emailVerified was set
-        // An unverified user would be redirected to /verify-email by the Header component
-        const signinPage = new SigninPage(verifyPage);
-        await signinPage.goto();
-        await signinPage.fillCredentials(testEmail, testPassword);
-        await signinPage.submit();
+        await test.step("Sign in and confirm the user is no longer redirected to verify-email", async () => {
+          // After verification, sign in to confirm emailVerified was set
+          // An unverified user would be redirected to /verify-email by the Header component
+          const signinPage = new SigninPage(verifyPage);
+          await signinPage.goto();
+          await signinPage.fillCredentials(testEmail, testPassword);
+          await signinPage.submit();
 
-        // Wait for redirect after login
-        await verifyPage.waitForURL(
-          /\/en-US\/?$|\/en-US\/projects|\/en-US\/verify-email/,
-          { timeout: 30000 }
-        );
+          // Wait for redirect after login
+          await verifyPage.waitForURL(
+            /\/en-US\/?$|\/en-US\/projects|\/en-US\/verify-email/,
+            { timeout: 30000 }
+          );
 
-        // Verified user should NOT be redirected to verify-email
-        // (the Header component redirects unverified users there)
-        expect(verifyPage.url()).not.toContain("/verify-email");
+          // Verified user should NOT be redirected to verify-email
+          // (the Header component redirects unverified users there)
+          expect(verifyPage.url()).not.toContain("/verify-email");
+        });
       } finally {
         await verifyPage.close();
         await context.close();
       }
     } finally {
-      await api.deleteUser(userId);
+      await api.deleteUser(userId!);
     }
   });
 
@@ -135,43 +147,51 @@ test.describe("Sign Up with Email Verification", () => {
       const testEmail = `unverified-${timestamp}@example.com`;
       const testPassword = "TestPassword123!";
 
-      // Create user with emailVerified: false
-      const userResult = await api.createUser({
-        name: `Unverified User ${timestamp}`,
-        email: testEmail,
-        password: testPassword,
-        access: "USER",
-        emailVerified: false,
+      let userId: string | undefined;
+
+      await test.step("Create an unverified user", async () => {
+        // Create user with emailVerified: false
+        const userResult = await api.createUser({
+          name: `Unverified User ${timestamp}`,
+          email: testEmail,
+          password: testPassword,
+          access: "USER",
+          emailVerified: false,
+        });
+        userId = userResult.data.id;
       });
-      const userId = userResult.data.id;
 
       try {
-        // Sign in with unverified credentials
-        const signinPage = new SigninPage(page);
-        await signinPage.goto();
-        await signinPage.fillCredentials(testEmail, testPassword);
-        await signinPage.submit();
+        await test.step("Sign in with unverified credentials", async () => {
+          const signinPage = new SigninPage(page);
+          await signinPage.goto();
+          await signinPage.fillCredentials(testEmail, testPassword);
+          await signinPage.submit();
 
-        // The Header component redirects unverified users to /verify-email
-        await page.waitForURL(/\/en-US\/verify-email|\/signin/, {
-          timeout: 30000,
+          // The Header component redirects unverified users to /verify-email
+          await page.waitForURL(/\/en-US\/verify-email|\/signin/, {
+            timeout: 30000,
+          });
         });
 
-        const currentUrl = page.url();
+        await test.step("Confirm the user lands on the verify-email page", async () => {
+          const currentUrl = page.url();
 
-        // Unverified users should be redirected to verify-email
-        // (or remain on signin if the account is somehow blocked)
-        expect(
-          currentUrl.includes("/verify-email") || currentUrl.includes("/signin")
-        ).toBe(true);
+          // Unverified users should be redirected to verify-email
+          // (or remain on signin if the account is somehow blocked)
+          expect(
+            currentUrl.includes("/verify-email") ||
+              currentUrl.includes("/signin")
+          ).toBe(true);
 
-        // If on verify-email page, confirm the page title is shown
-        if (currentUrl.includes("/verify-email")) {
-          const pageTitle = page.getByTestId("verify-email-page-title");
-          await expect(pageTitle).toBeVisible({ timeout: 5000 });
-        }
+          // If on verify-email page, confirm the page title is shown
+          if (currentUrl.includes("/verify-email")) {
+            const pageTitle = page.getByTestId("verify-email-page-title");
+            await expect(pageTitle).toBeVisible({ timeout: 5000 });
+          }
+        });
       } finally {
-        await api.deleteUser(userId);
+        await api.deleteUser(userId!);
       }
     });
 
@@ -183,28 +203,36 @@ test.describe("Sign Up with Email Verification", () => {
       const testEmail = `back-link-${timestamp}@example.com`;
       const testPassword = "TestPassword123!";
 
-      const userResult = await api.createUser({
-        name: `Back Link Test ${timestamp}`,
-        email: testEmail,
-        password: testPassword,
-        access: "USER",
-        emailVerified: false,
+      let userId: string | undefined;
+
+      await test.step("Create an unverified user", async () => {
+        const userResult = await api.createUser({
+          name: `Back Link Test ${timestamp}`,
+          email: testEmail,
+          password: testPassword,
+          access: "USER",
+          emailVerified: false,
+        });
+        userId = userResult.data.id;
       });
-      const userId = userResult.data.id;
 
       try {
-        const signinPage = new SigninPage(page);
-        await signinPage.goto();
-        await signinPage.fillCredentials(testEmail, testPassword);
-        await signinPage.submit();
+        await test.step("Sign in and reach the verify-email page", async () => {
+          const signinPage = new SigninPage(page);
+          await signinPage.goto();
+          await signinPage.fillCredentials(testEmail, testPassword);
+          await signinPage.submit();
 
-        await page.waitForURL(/\/en-US\/verify-email/, { timeout: 30000 });
+          await page.waitForURL(/\/en-US\/verify-email/, { timeout: 30000 });
+        });
 
-        const backLink = page.getByRole("link", { name: /back to sign in/i });
-        await expect(backLink).toBeVisible({ timeout: 5000 });
-        await expect(backLink).toHaveAttribute("href", /\/signin/);
+        await test.step("Confirm the back to sign in link is present and points to signin", async () => {
+          const backLink = page.getByRole("link", { name: /back to sign in/i });
+          await expect(backLink).toBeVisible({ timeout: 5000 });
+          await expect(backLink).toHaveAttribute("href", /\/signin/);
+        });
       } finally {
-        await api.deleteUser(userId);
+        await api.deleteUser(userId!);
       }
     });
 
@@ -216,32 +244,40 @@ test.describe("Sign Up with Email Verification", () => {
       const testEmail = `resend-test-${timestamp}@example.com`;
       const testPassword = "TestPassword123!";
 
-      // Create unverified user
-      const userResult = await api.createUser({
-        name: `Resend Test User ${timestamp}`,
-        email: testEmail,
-        password: testPassword,
-        access: "USER",
-        emailVerified: false,
+      let userId: string | undefined;
+
+      await test.step("Create an unverified user", async () => {
+        // Create unverified user
+        const userResult = await api.createUser({
+          name: `Resend Test User ${timestamp}`,
+          email: testEmail,
+          password: testPassword,
+          access: "USER",
+          emailVerified: false,
+        });
+        userId = userResult.data.id;
       });
-      const userId = userResult.data.id;
 
       try {
-        // Sign in to reach the verify-email page
-        const signinPage = new SigninPage(page);
-        await signinPage.goto();
-        await signinPage.fillCredentials(testEmail, testPassword);
-        await signinPage.submit();
+        await test.step("Sign in and reach the verify-email page", async () => {
+          // Sign in to reach the verify-email page
+          const signinPage = new SigninPage(page);
+          await signinPage.goto();
+          await signinPage.fillCredentials(testEmail, testPassword);
+          await signinPage.submit();
 
-        // Wait for redirect to verify-email page
-        await page.waitForURL(/\/en-US\/verify-email/, { timeout: 30000 });
-        expect(page.url()).toContain("/verify-email");
+          // Wait for redirect to verify-email page
+          await page.waitForURL(/\/en-US\/verify-email/, { timeout: 30000 });
+          expect(page.url()).toContain("/verify-email");
+        });
 
-        // Verify the resend button is present
-        const resendButton = page.getByRole("button", { name: /resend/i });
-        await expect(resendButton).toBeVisible({ timeout: 5000 });
+        await test.step("Confirm the resend verification email button is present", async () => {
+          // Verify the resend button is present
+          const resendButton = page.getByRole("button", { name: /resend/i });
+          await expect(resendButton).toBeVisible({ timeout: 5000 });
+        });
       } finally {
-        await api.deleteUser(userId);
+        await api.deleteUser(userId!);
       }
     });
   });

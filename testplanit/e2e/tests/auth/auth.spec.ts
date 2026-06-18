@@ -17,36 +17,44 @@ test.describe("Authentication", () => {
   });
 
   test("Display User Information in Header @smoke", async ({ page }) => {
-    await page.goto("/en-US/projects");
-    await page.waitForLoadState("networkidle");
+    let userDropdown: ReturnType<typeof page.locator> | undefined;
 
-    // Verify we're authenticated (not redirected to signin)
-    expect(page.url()).not.toContain("/signin");
+    await test.step("Open projects page as an authenticated user", async () => {
+      await page.goto("/en-US/projects");
+      await page.waitForLoadState("networkidle");
 
-    // Find the user menu button in the header - it's labeled "User menu" in aria
-    const userMenu = page
-      .locator(
-        'button[aria-label*="User menu" i], button:has-text("User menu"), [data-testid="user-menu"], [data-testid="user-avatar"], button:has([data-testid="avatar"])'
-      )
-      .first();
-    await expect(userMenu).toBeVisible({ timeout: 10000 });
+      // Verify we're authenticated (not redirected to signin)
+      expect(page.url()).not.toContain("/signin");
+    });
 
-    // Click to open the user menu
-    await userMenu.click();
+    await test.step("Open the user menu from the header", async () => {
+      // Find the user menu button in the header - it's labeled "User menu" in aria
+      const userMenu = page
+        .locator(
+          'button[aria-label*="User menu" i], button:has-text("User menu"), [data-testid="user-menu"], [data-testid="user-avatar"], button:has([data-testid="avatar"])'
+        )
+        .first();
+      await expect(userMenu).toBeVisible({ timeout: 10000 });
 
-    // Verify user information is displayed in the dropdown
-    const userDropdown = page
-      .locator('[role="menu"], [data-testid="user-dropdown"]')
-      .first();
-    await expect(userDropdown).toBeVisible({ timeout: 5000 });
+      // Click to open the user menu
+      await userMenu.click();
 
-    // Look for user email or name in the dropdown
-    const userInfo = userDropdown
-      .locator("text=/@|admin|user|account/i")
-      .first();
-    await expect(userInfo).toBeVisible({ timeout: 5000 });
+      // Verify user information is displayed in the dropdown
+      userDropdown = page
+        .locator('[role="menu"], [data-testid="user-dropdown"]')
+        .first();
+      await expect(userDropdown).toBeVisible({ timeout: 5000 });
+    });
 
-    // Close the dropdown
-    await page.keyboard.press("Escape");
+    await test.step("Verify user information appears in the dropdown", async () => {
+      // Look for user email or name in the dropdown
+      const userInfo = userDropdown!
+        .locator("text=/@|admin|user|account/i")
+        .first();
+      await expect(userInfo).toBeVisible({ timeout: 5000 });
+
+      // Close the dropdown
+      await page.keyboard.press("Escape");
+    });
   });
 });

@@ -18,135 +18,163 @@ test.describe("Session Configuration Combobox", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Session Config ${Date.now()}`
-    );
     const configName = `Session Config ${Date.now()}`;
-    await api.createConfiguration(configName, projectId);
 
-    // Navigate to sessions page
-    await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("load");
+    let projectId: number | undefined;
+    await test.step("Create a project with a configuration", async () => {
+      projectId = await api.createProject(`E2E Session Config ${Date.now()}`);
+      await api.createConfiguration(configName, projectId);
+    });
 
-    // Click "New Session" button
-    const newSessionButton = page.getByTestId("new-session-button");
-    await expect(newSessionButton).toBeVisible({ timeout: 15000 });
-    await newSessionButton.click();
+    await test.step("Open the New Session dialog", async () => {
+      // Navigate to sessions page
+      await page.goto(`/en-US/projects/sessions/${projectId!}`);
+      await page.waitForLoadState("load");
 
-    // Wait for dialog
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+      // Click "New Session" button
+      const newSessionButton = page.getByTestId("new-session-button");
+      await expect(newSessionButton).toBeVisible({ timeout: 15000 });
+      await newSessionButton.click();
 
-    // Find the Configurations field's combobox trigger (plural label = multi-select)
-    const configLabel = dialog.locator('label:has-text("Configurations")');
-    await expect(configLabel).toBeVisible({ timeout: 5000 });
+      // Wait for dialog
+      const dialog = page.locator('[role="dialog"]').first();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
-    const configCombobox = configLabel
-      .locator("..")
-      .locator('button[role="combobox"]');
-    await expect(configCombobox).toBeVisible({ timeout: 5000 });
+    await test.step("Open the Configurations combobox and verify the configuration is listed", async () => {
+      const dialog = page.locator('[role="dialog"]').first();
 
-    // Click to open the combobox popover
-    await configCombobox.click();
+      // Find the Configurations field's combobox trigger (plural label = multi-select)
+      const configLabel = dialog.locator('label:has-text("Configurations")');
+      await expect(configLabel).toBeVisible({ timeout: 5000 });
 
-    // Wait for options to load
-    const configOption = page.locator(
-      `[role="option"]:has-text("${configName}")`
-    );
-    await expect(configOption).toBeVisible({ timeout: 5000 });
+      const configCombobox = configLabel
+        .locator("..")
+        .locator('button[role="combobox"]');
+      await expect(configCombobox).toBeVisible({ timeout: 5000 });
+
+      // Click to open the combobox popover
+      await configCombobox.click();
+
+      // Wait for options to load
+      const configOption = page.locator(
+        `[role="option"]:has-text("${configName}")`
+      );
+      await expect(configOption).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("should select a configuration and display it as a badge", async ({
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Session Select ${Date.now()}`
-    );
     const configName = `Select Config ${Date.now()}`;
-    await api.createConfiguration(configName, projectId);
 
-    await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("load");
+    let projectId: number | undefined;
+    await test.step("Create a project with a configuration", async () => {
+      projectId = await api.createProject(`E2E Session Select ${Date.now()}`);
+      await api.createConfiguration(configName, projectId);
+    });
 
-    // Open the modal
-    const newSessionButton = page.getByTestId("new-session-button");
-    await expect(newSessionButton).toBeVisible({ timeout: 15000 });
-    await newSessionButton.click();
+    await test.step("Open the New Session dialog", async () => {
+      await page.goto(`/en-US/projects/sessions/${projectId!}`);
+      await page.waitForLoadState("load");
+
+      // Open the modal
+      const newSessionButton = page.getByTestId("new-session-button");
+      await expect(newSessionButton).toBeVisible({ timeout: 15000 });
+      await newSessionButton.click();
+
+      const dialog = page.locator('[role="dialog"]').first();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
     const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    // Open config combobox
     const configLabel = dialog.locator('label:has-text("Configurations")');
     const configCombobox = configLabel
       .locator("..")
       .locator('button[role="combobox"]');
-    await configCombobox.click();
 
-    // Select the configuration
-    await page.locator(`[role="option"]:has-text("${configName}")`).click();
+    await test.step("Select the configuration from the combobox", async () => {
+      // Open config combobox
+      await configCombobox.click();
 
-    // Close the popover
-    await page.keyboard.press("Escape");
+      // Select the configuration
+      await page.locator(`[role="option"]:has-text("${configName}")`).click();
 
-    // The label should show count "(1)"
-    await expect(configLabel).toContainText("(1)", { timeout: 5000 });
+      // Close the popover
+      await page.keyboard.press("Escape");
+    });
 
-    // The selected config should appear as a badge inside the combobox trigger
-    await expect(configCombobox).toContainText(configName, { timeout: 5000 });
+    await test.step("Verify the configuration appears as a selected badge with a count", async () => {
+      // The label should show count "(1)"
+      await expect(configLabel).toContainText("(1)", { timeout: 5000 });
+
+      // The selected config should appear as a badge inside the combobox trigger
+      await expect(configCombobox).toContainText(configName, { timeout: 5000 });
+    });
   });
 
   test("should search and filter configurations", async ({ api, page }) => {
-    const projectId = await api.createProject(
-      `E2E Session Search ${Date.now()}`
-    );
     const ts = Date.now();
     const configMatch = `Findable Config ${ts}`;
     const configNoMatch = `Hidden Widget ${ts}`;
-    await api.createConfiguration(configMatch, projectId);
-    await api.createConfiguration(configNoMatch, projectId);
 
-    await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("load");
+    let projectId: number | undefined;
+    await test.step("Create a project with matching and non-matching configurations", async () => {
+      projectId = await api.createProject(`E2E Session Search ${Date.now()}`);
+      await api.createConfiguration(configMatch, projectId);
+      await api.createConfiguration(configNoMatch, projectId);
+    });
 
-    const newSessionButton = page.getByTestId("new-session-button");
-    await expect(newSessionButton).toBeVisible({ timeout: 15000 });
-    await newSessionButton.click();
+    await test.step("Open the New Session dialog", async () => {
+      await page.goto(`/en-US/projects/sessions/${projectId!}`);
+      await page.waitForLoadState("load");
 
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+      const newSessionButton = page.getByTestId("new-session-button");
+      await expect(newSessionButton).toBeVisible({ timeout: 15000 });
+      await newSessionButton.click();
 
-    // Open config combobox
-    const configLabel = dialog.locator('label:has-text("Configurations")');
-    const configCombobox = configLabel
-      .locator("..")
-      .locator('button[role="combobox"]');
-    await expect(configCombobox).toBeVisible({ timeout: 5000 });
-    await configCombobox.click();
+      const dialog = page.locator('[role="dialog"]').first();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
-    // Wait for both to load
-    await expect(
-      page.locator(`[role="option"]:has-text("${configMatch}")`)
-    ).toBeVisible({ timeout: 5000 });
+    await test.step("Open the Configurations combobox and wait for options to load", async () => {
+      const dialog = page.locator('[role="dialog"]').first();
 
-    // Type in the search input inside the combobox command palette
-    const searchInput = page.locator("[cmdk-input]");
-    await expect(searchInput).toBeVisible({ timeout: 5000 });
-    await searchInput.fill("Findable");
+      // Open config combobox
+      const configLabel = dialog.locator('label:has-text("Configurations")');
+      const configCombobox = configLabel
+        .locator("..")
+        .locator('button[role="combobox"]');
+      await expect(configCombobox).toBeVisible({ timeout: 5000 });
+      await configCombobox.click();
 
-    // Wait for search to apply
-    await page.waitForTimeout(500);
+      // Wait for both to load
+      await expect(
+        page.locator(`[role="option"]:has-text("${configMatch}")`)
+      ).toBeVisible({ timeout: 5000 });
+    });
 
-    // Matching config should be visible
-    await expect(
-      page.locator(`[role="option"]:has-text("${configMatch}")`)
-    ).toBeVisible({ timeout: 5000 });
+    await test.step("Search by name and verify only the matching configuration remains", async () => {
+      // Type in the search input inside the combobox command palette
+      const searchInput = page.locator("[cmdk-input]");
+      await expect(searchInput).toBeVisible({ timeout: 5000 });
+      await searchInput.fill("Findable");
 
-    // Non-matching config should not be visible
-    await expect(
-      page.locator(`[role="option"]:has-text("${configNoMatch}")`)
-    ).not.toBeVisible({ timeout: 3000 });
+      // Wait for search to apply
+      await page.waitForTimeout(500);
+
+      // Matching config should be visible
+      await expect(
+        page.locator(`[role="option"]:has-text("${configMatch}")`)
+      ).toBeVisible({ timeout: 5000 });
+
+      // Non-matching config should not be visible
+      await expect(
+        page.locator(`[role="option"]:has-text("${configNoMatch}")`)
+      ).not.toBeVisible({ timeout: 3000 });
+    });
   });
 
   test("only shows configurations assigned to the current project", async ({
@@ -156,41 +184,51 @@ test.describe("Session Configuration Combobox", () => {
     // A config assigned to a different project must not appear in this
     // project's session configuration picker.
     const ts = Date.now();
-    const projectAId = await api.createProject(`E2E Session Scope A ${ts}`);
-    const projectBId = await api.createProject(`E2E Session Scope B ${ts}`);
     const configInA = `SessionScopedA ${ts}`;
     const configInB = `SessionScopedB ${ts}`;
-    await api.createConfiguration(configInA, projectAId);
-    await api.createConfiguration(configInB, projectBId);
 
-    await page.goto(`/en-US/projects/sessions/${projectAId}`);
-    await page.waitForLoadState("load");
+    let projectAId: number | undefined;
+    await test.step("Create two projects each with its own configuration", async () => {
+      projectAId = await api.createProject(`E2E Session Scope A ${ts}`);
+      const projectBId = await api.createProject(`E2E Session Scope B ${ts}`);
+      await api.createConfiguration(configInA, projectAId);
+      await api.createConfiguration(configInB, projectBId);
+    });
 
-    const newSessionButton = page.getByTestId("new-session-button");
-    await expect(newSessionButton).toBeVisible({ timeout: 15000 });
-    await newSessionButton.click();
+    await test.step("Open the New Session dialog for project A", async () => {
+      await page.goto(`/en-US/projects/sessions/${projectAId!}`);
+      await page.waitForLoadState("load");
 
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+      const newSessionButton = page.getByTestId("new-session-button");
+      await expect(newSessionButton).toBeVisible({ timeout: 15000 });
+      await newSessionButton.click();
 
-    const configLabel = dialog.locator('label:has-text("Configurations")');
-    const configCombobox = configLabel
-      .locator("..")
-      .locator('button[role="combobox"]');
-    await expect(configCombobox).toBeVisible({ timeout: 5000 });
-    await configCombobox.click();
+      const dialog = page.locator('[role="dialog"]').first();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
-    const searchInput = page.locator("[cmdk-input]");
-    await expect(searchInput).toBeVisible({ timeout: 5000 });
-    await searchInput.fill(String(ts));
-    await page.waitForTimeout(500);
+    await test.step("Search the Configurations combobox and verify only project A's configuration appears", async () => {
+      const dialog = page.locator('[role="dialog"]').first();
 
-    await expect(
-      page.locator(`[role="option"]:has-text("${configInA}")`)
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.locator(`[role="option"]:has-text("${configInB}")`)
-    ).not.toBeVisible({ timeout: 3000 });
+      const configLabel = dialog.locator('label:has-text("Configurations")');
+      const configCombobox = configLabel
+        .locator("..")
+        .locator('button[role="combobox"]');
+      await expect(configCombobox).toBeVisible({ timeout: 5000 });
+      await configCombobox.click();
+
+      const searchInput = page.locator("[cmdk-input]");
+      await expect(searchInput).toBeVisible({ timeout: 5000 });
+      await searchInput.fill(String(ts));
+      await page.waitForTimeout(500);
+
+      await expect(
+        page.locator(`[role="option"]:has-text("${configInA}")`)
+      ).toBeVisible({ timeout: 5000 });
+      await expect(
+        page.locator(`[role="option"]:has-text("${configInB}")`)
+      ).not.toBeVisible({ timeout: 3000 });
+    });
   });
 
   test("should show pagination controls with Previous/Next buttons", async ({

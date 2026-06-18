@@ -97,73 +97,79 @@ test.describe("Admin Share Management", () => {
   }) => {
     const timestamp = Date.now();
 
-    // Create two projects with test data
-    const project1Id = await api.createProject(
-      `Admin Share Project 1 ${timestamp}`
-    );
-    const project2Id = await api.createProject(
-      `Admin Share Project 2 ${timestamp}`
-    );
+    await test.step("Create two projects with test cases", async () => {
+      const project1Id = await api.createProject(
+        `Admin Share Project 1 ${timestamp}`
+      );
+      const project2Id = await api.createProject(
+        `Admin Share Project 2 ${timestamp}`
+      );
 
-    const rootFolder1 = await api.getRootFolderId(project1Id);
-    const rootFolder2 = await api.getRootFolderId(project2Id);
+      const rootFolder1 = await api.getRootFolderId(project1Id);
+      const rootFolder2 = await api.getRootFolderId(project2Id);
 
-    await api.createTestCase(
-      project1Id,
-      rootFolder1,
-      `Test Case P1 ${timestamp}`
-    );
-    await api.createTestCase(
-      project2Id,
-      rootFolder2,
-      `Test Case P2 ${timestamp}`
-    );
+      await api.createTestCase(
+        project1Id,
+        rootFolder1,
+        `Test Case P1 ${timestamp}`
+      );
+      await api.createTestCase(
+        project2Id,
+        rootFolder2,
+        `Test Case P2 ${timestamp}`
+      );
+    });
 
-    // Navigate to admin reports with pre-configured report
-    await navigateToAdminReportsWithConfig(page);
+    await test.step("Open admin reports and run a cross-project report", async () => {
+      // Navigate to admin reports with pre-configured report
+      await navigateToAdminReportsWithConfig(page);
 
-    // Run a cross-project report
-    await runCrossProjectReport(page);
+      // Run a cross-project report
+      await runCrossProjectReport(page);
+    });
 
-    // Create a share
-    const shareKey = await createShare(
-      page,
-      `Admin Cross-Project Report ${timestamp}`
-    );
-    const shareLinkData = await api.getShareLinkByKey(shareKey);
-
-    expect(shareLinkData).toBeTruthy();
-    if (shareLinkData) {
-      api.trackShareLink(shareLinkData.id);
-      expect(shareLinkData.mode).toBe("PUBLIC");
-      expect(shareLinkData.title).toContain(
+    let shareKey: string | undefined;
+    await test.step("Create a public share and verify its data", async () => {
+      shareKey = await createShare(
+        page,
         `Admin Cross-Project Report ${timestamp}`
       );
-    }
+      const shareLinkData = await api.getShareLinkByKey(shareKey);
 
-    // Verify share works by accessing it in incognito
-    const shareUrl = `http://localhost:3002/share/${shareKey}`;
-    const incognitoContext = await page
-      .context()
-      .browser()!
-      .newContext({
-        storageState: { cookies: [], origins: [] },
-      });
-    const incognitoPage = await incognitoContext.newPage();
+      expect(shareLinkData).toBeTruthy();
+      if (shareLinkData) {
+        api.trackShareLink(shareLinkData.id);
+        expect(shareLinkData.mode).toBe("PUBLIC");
+        expect(shareLinkData.title).toContain(
+          `Admin Cross-Project Report ${timestamp}`
+        );
+      }
+    });
 
-    try {
-      await incognitoPage.goto(shareUrl);
-      await incognitoPage.waitForLoadState("networkidle");
+    await test.step("Verify share is accessible in an incognito session", async () => {
+      const shareUrl = `http://localhost:3002/share/${shareKey!}`;
+      const incognitoContext = await page
+        .context()
+        .browser()!
+        .newContext({
+          storageState: { cookies: [], origins: [] },
+        });
+      const incognitoPage = await incognitoContext.newPage();
 
-      // Verify shared report viewer is displayed
-      const sharedReportViewer = incognitoPage.getByTestId(
-        "shared-report-viewer"
-      );
-      await expect(sharedReportViewer).toBeVisible({ timeout: 10000 });
-    } finally {
-      await incognitoPage.close();
-      await incognitoContext.close();
-    }
+      try {
+        await incognitoPage.goto(shareUrl);
+        await incognitoPage.waitForLoadState("networkidle");
+
+        // Verify shared report viewer is displayed
+        const sharedReportViewer = incognitoPage.getByTestId(
+          "shared-report-viewer"
+        );
+        await expect(sharedReportViewer).toBeVisible({ timeout: 10000 });
+      } finally {
+        await incognitoPage.close();
+        await incognitoContext.close();
+      }
+    });
   });
 
   test("Admin can view all shares across all projects", async ({
@@ -172,77 +178,89 @@ test.describe("Admin Share Management", () => {
   }) => {
     const timestamp = Date.now();
 
-    // Create two projects
-    const project1Id = await api.createProject(
-      `Admin View Project 1 ${timestamp}`
-    );
-    const project2Id = await api.createProject(
-      `Admin View Project 2 ${timestamp}`
-    );
+    let project1Id: number | undefined;
+    let project2Id: number | undefined;
+    await test.step("Create two projects with test cases", async () => {
+      // Create two projects
+      project1Id = await api.createProject(`Admin View Project 1 ${timestamp}`);
+      project2Id = await api.createProject(`Admin View Project 2 ${timestamp}`);
 
-    // Create test data for both projects
-    const rootFolder1 = await api.getRootFolderId(project1Id);
-    const rootFolder2 = await api.getRootFolderId(project2Id);
+      // Create test data for both projects
+      const rootFolder1 = await api.getRootFolderId(project1Id);
+      const rootFolder2 = await api.getRootFolderId(project2Id);
 
-    await api.createTestCase(project1Id, rootFolder1, `Test Case ${timestamp}`);
-    await api.createTestCase(project2Id, rootFolder2, `Test Case ${timestamp}`);
+      await api.createTestCase(
+        project1Id,
+        rootFolder1,
+        `Test Case ${timestamp}`
+      );
+      await api.createTestCase(
+        project2Id,
+        rootFolder2,
+        `Test Case ${timestamp}`
+      );
+    });
 
-    // Create a share for project 1
-    await page.goto(
-      `/en-US/projects/reports/${project1Id}?tab=builder&reportType=repository-stats&dimensions=testCase&metrics=testCaseCount`
-    );
-    await page.waitForLoadState("networkidle");
+    await test.step("Create a share for project 1", async () => {
+      await page.goto(
+        `/en-US/projects/reports/${project1Id!}?tab=builder&reportType=repository-stats&dimensions=testCase&metrics=testCaseCount`
+      );
+      await page.waitForLoadState("networkidle");
 
-    const runButton1 = page.locator('[data-testid="run-report-button"]');
-    await expect(runButton1).toBeVisible({ timeout: 5000 });
-    await runButton1.click();
-    await page.waitForLoadState("networkidle");
+      const runButton1 = page.locator('[data-testid="run-report-button"]');
+      await expect(runButton1).toBeVisible({ timeout: 5000 });
+      await runButton1.click();
+      await page.waitForLoadState("networkidle");
 
-    const shareKey1 = await createShare(page, `Project 1 Share ${timestamp}`);
-    const share1Data = await api.getShareLinkByKey(shareKey1);
-    if (share1Data) {
-      api.trackShareLink(share1Data.id);
-    }
-
-    // Create a share for project 2
-    await page.goto(
-      `/en-US/projects/reports/${project2Id}?tab=builder&reportType=repository-stats&dimensions=testCase&metrics=testCaseCount`
-    );
-    await page.waitForLoadState("networkidle");
-
-    const runButton2 = page.locator('[data-testid="run-report-button"]');
-    await expect(runButton2).toBeVisible({ timeout: 5000 });
-    await runButton2.click();
-    await page.waitForLoadState("networkidle");
-
-    const shareKey2 = await createShare(page, `Project 2 Share ${timestamp}`);
-    const share2Data = await api.getShareLinkByKey(shareKey2);
-    if (share2Data) {
-      api.trackShareLink(share2Data.id);
-    }
-
-    // Navigate to admin shares management
-    await page.goto("/en-US/admin/shares");
-    await page.waitForLoadState("networkidle");
-
-    // Verify page title
-    const pageTitle = page.locator('h1:has-text("Manage All Shares")');
-    await expect(pageTitle).toBeVisible({ timeout: 5000 });
-
-    // Verify both shares are listed
-    await expect(page.locator(`text=Project 1 Share ${timestamp}`)).toBeVisible(
-      {
-        timeout: 5000,
+      const shareKey1 = await createShare(page, `Project 1 Share ${timestamp}`);
+      const share1Data = await api.getShareLinkByKey(shareKey1);
+      if (share1Data) {
+        api.trackShareLink(share1Data.id);
       }
-    );
-    await expect(page.locator(`text=Project 2 Share ${timestamp}`)).toBeVisible(
-      {
-        timeout: 5000,
-      }
-    );
+    });
 
-    // Verify project column is displayed
-    await expect(page.locator('th:has-text("Project")')).toBeVisible();
+    await test.step("Create a share for project 2", async () => {
+      await page.goto(
+        `/en-US/projects/reports/${project2Id!}?tab=builder&reportType=repository-stats&dimensions=testCase&metrics=testCaseCount`
+      );
+      await page.waitForLoadState("networkidle");
+
+      const runButton2 = page.locator('[data-testid="run-report-button"]');
+      await expect(runButton2).toBeVisible({ timeout: 5000 });
+      await runButton2.click();
+      await page.waitForLoadState("networkidle");
+
+      const shareKey2 = await createShare(page, `Project 2 Share ${timestamp}`);
+      const share2Data = await api.getShareLinkByKey(shareKey2);
+      if (share2Data) {
+        api.trackShareLink(share2Data.id);
+      }
+    });
+
+    await test.step("Open admin shares management and verify both shares are listed", async () => {
+      // Navigate to admin shares management
+      await page.goto("/en-US/admin/shares");
+      await page.waitForLoadState("networkidle");
+
+      // Verify page title
+      const pageTitle = page.locator('h1:has-text("Manage All Shares")');
+      await expect(pageTitle).toBeVisible({ timeout: 5000 });
+
+      // Verify both shares are listed
+      await expect(
+        page.locator(`text=Project 1 Share ${timestamp}`)
+      ).toBeVisible({
+        timeout: 5000,
+      });
+      await expect(
+        page.locator(`text=Project 2 Share ${timestamp}`)
+      ).toBeVisible({
+        timeout: 5000,
+      });
+
+      // Verify project column is displayed
+      await expect(page.locator('th:has-text("Project")')).toBeVisible();
+    });
   });
 
   test("Admin can manage shares from any project", async ({ api, page }) => {

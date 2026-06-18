@@ -171,145 +171,153 @@ test.describe("Webhook admin surface — Spanish (es-ES) i18n key coverage (F-01
     page,
     baseURL,
   }) => {
-    // Override the auth fixture's NEXT_LOCALE=en-US cookie so proxy.ts
-    // does not redirect /es-ES/... back to /en-US/... before the page
-    // renders. proxy.ts:379 reads NEXT_LOCALE and redirects when the URL
-    // prefix doesn't match the cookie, so cookie + URL must agree.
-    await page.context().addCookies([
-      {
-        name: "NEXT_LOCALE",
-        value: "es-ES",
-        url: baseURL,
-      },
-    ]);
+    await test.step("Open webhooks settings in Spanish and verify the Inbound tab", async () => {
+      // Override the auth fixture's NEXT_LOCALE=en-US cookie so proxy.ts
+      // does not redirect /es-ES/... back to /en-US/... before the page
+      // renders. proxy.ts:379 reads NEXT_LOCALE and redirects when the URL
+      // prefix doesn't match the cookie, so cookie + URL must agree.
+      await page.context().addCookies([
+        {
+          name: "NEXT_LOCALE",
+          value: "es-ES",
+          url: baseURL,
+        },
+      ]);
 
-    // ─── 1. Inbound tab ──────────────────────────────────────────────
-    await page.goto(`${baseURL}/es-ES/projects/settings/${projectId}/webhooks`);
-    await expect(page.getByTestId("webhook-config-form")).toBeVisible({
-      timeout: 15_000,
+      // ─── 1. Inbound tab ──────────────────────────────────────────────
+      await page.goto(
+        `${baseURL}/es-ES/projects/settings/${projectId}/webhooks`
+      );
+      await expect(page.getByTestId("webhook-config-form")).toBeVisible({
+        timeout: 15_000,
+      });
+
+      // Verify the product fix in `app/layout.tsx` (see PR for v0.23.0): the
+      // root layout now resolves <html lang> from `getLocale()` instead of
+      // hardcoding "en". Asserting es-ES here gives a fast, specific failure
+      // if the layout regresses or the cookie override didn't take effect —
+      // otherwise downstream toContainText assertions would fail less
+      // informatively.
+      await expect(page.locator("html")).toHaveAttribute("lang", "es-ES");
+
+      // Tab triggers carry Spanish labels.
+      await expect(page.getByTestId("webhooks-tab-inbound")).toContainText(
+        es.inboundTab
+      );
+      await expect(page.getByTestId("webhooks-tab-outbound")).toContainText(
+        es.outboundTab
+      );
+      await expect(page.getByTestId("webhooks-tab-deliveries")).toContainText(
+        es.deliveriesTab
+      );
+
+      // Inbound Add button label.
+      const addInbound = page.getByTestId("webhook-inbound-add-button");
+      await expect(addInbound).toContainText(es.inboundAddButton);
+      // The 1:1 inbound model gates Add on the project's active issue
+      // integration. With no integration assigned (i18n test scope is
+      // string coverage, not flow coverage) the button is disabled and
+      // clicking it has no effect; we don't drive a creation flow here.
+
+      // The DOM that just rendered must not carry missing-key markers.
+      await assertNoMissingKeyMarkers(page);
     });
 
-    // Verify the product fix in `app/layout.tsx` (see PR for v0.23.0): the
-    // root layout now resolves <html lang> from `getLocale()` instead of
-    // hardcoding "en". Asserting es-ES here gives a fast, specific failure
-    // if the layout regresses or the cookie override didn't take effect —
-    // otherwise downstream toContainText assertions would fail less
-    // informatively.
-    await expect(page.locator("html")).toHaveAttribute("lang", "es-ES");
+    await test.step("Verify Outbound tab labels, create form, and Re-enable/Delete dialogs in Spanish", async () => {
+      // ─── 2. Outbound tab ─────────────────────────────────────────────
+      await page.getByTestId("webhooks-tab-outbound").click();
+      await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
+        timeout: 10_000,
+      });
+      await expect(
+        page.getByTestId("webhook-outbound-add-button")
+      ).toContainText(es.outboundAddButton);
 
-    // Tab triggers carry Spanish labels.
-    await expect(page.getByTestId("webhooks-tab-inbound")).toContainText(
-      es.inboundTab
-    );
-    await expect(page.getByTestId("webhooks-tab-outbound")).toContainText(
-      es.outboundTab
-    );
-    await expect(page.getByTestId("webhooks-tab-deliveries")).toContainText(
-      es.deliveriesTab
-    );
+      // Open the outbound create form so the form labels render. We assert the
+      // distinctive multi-word strings (title + subscriptions header + submit
+      // verb); generic single-word labels like "Nombre"/"URL" are skipped
+      // because their en-US originals ("Name"/"URL") collide with too many
+      // unrelated UI surfaces to make the en-fallback assertion meaningful.
+      await page.getByTestId("webhook-outbound-add-button").click();
+      const outboundForm = page.getByTestId("webhook-outbound-create-form");
+      await expect(outboundForm).toBeVisible();
+      await expect(outboundForm).toContainText(es.outboundCreateTitle);
+      await expect(outboundForm).toContainText(
+        es.outboundCreateSubscriptionsTitle
+      );
+      await expect(
+        page.getByTestId("webhook-outbound-create-submit")
+      ).toContainText(es.outboundCreateSubmit);
+      await expect(
+        page.getByTestId("webhook-outbound-create-cancel")
+      ).toContainText(es.outboundCreateCancel);
+      await page.getByTestId("webhook-outbound-create-cancel").click();
 
-    // Inbound Add button label.
-    const addInbound = page.getByTestId("webhook-inbound-add-button");
-    await expect(addInbound).toContainText(es.inboundAddButton);
-    // The 1:1 inbound model gates Add on the project's active issue
-    // integration. With no integration assigned (i18n test scope is
-    // string coverage, not flow coverage) the button is disabled and
-    // clicking it has no effect; we don't drive a creation flow here.
+      // The seeded DISABLED card carries Re-enable + Delete buttons in Spanish.
+      const outboundCard = page.getByTestId(
+        `webhook-outbound-card-${outboundConfigId}`
+      );
+      await expect(outboundCard).toBeVisible();
+      const healthBadge = page.getByTestId(
+        `webhook-health-badge-${outboundConfigId}`
+      );
+      await expect(healthBadge).toContainText(es.healthDisabled);
 
-    // The DOM that just rendered must not carry missing-key markers.
-    await assertNoMissingKeyMarkers(page);
+      // Re-enable AlertDialog — title + body in Spanish.
+      const reEnableButton = page.getByTestId(
+        `webhook-reenable-button-${outboundConfigId}`
+      );
+      await expect(reEnableButton).toContainText(es.reEnable);
+      await reEnableButton.click();
+      const reEnableDialog = page.getByTestId("webhook-reenable-dialog");
+      await expect(reEnableDialog).toBeVisible();
+      await expect(reEnableDialog).toContainText(es.reEnableConfirmTitle);
+      await expect(reEnableDialog).toContainText(es.reEnableConfirm);
+      await page.getByTestId("webhook-reenable-dialog-cancel").click();
 
-    // ─── 2. Outbound tab ─────────────────────────────────────────────
-    await page.getByTestId("webhooks-tab-outbound").click();
-    await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
-      timeout: 10_000,
-    });
-    await expect(page.getByTestId("webhook-outbound-add-button")).toContainText(
-      es.outboundAddButton
-    );
+      // Delete AlertDialog on the same card. The outbound form mounts its own
+      // delete-dialog testid (separate from the inbound form's, which uses
+      // `webhook-delete-dialog`).
+      await page
+        .getByTestId(`webhook-outbound-delete-button-${outboundConfigId}`)
+        .click();
+      const deleteDialog = page.getByTestId("webhook-outbound-delete-dialog");
+      await expect(deleteDialog).toBeVisible();
+      await expect(deleteDialog).toContainText(es.outboundDeleteConfirmTitle);
+      await expect(deleteDialog).toContainText(es.outboundDeleteConfirm);
+      await page.getByTestId("webhook-outbound-delete-dialog-cancel").click();
 
-    // Open the outbound create form so the form labels render. We assert the
-    // distinctive multi-word strings (title + subscriptions header + submit
-    // verb); generic single-word labels like "Nombre"/"URL" are skipped
-    // because their en-US originals ("Name"/"URL") collide with too many
-    // unrelated UI surfaces to make the en-fallback assertion meaningful.
-    await page.getByTestId("webhook-outbound-add-button").click();
-    const outboundForm = page.getByTestId("webhook-outbound-create-form");
-    await expect(outboundForm).toBeVisible();
-    await expect(outboundForm).toContainText(es.outboundCreateTitle);
-    await expect(outboundForm).toContainText(
-      es.outboundCreateSubscriptionsTitle
-    );
-    await expect(
-      page.getByTestId("webhook-outbound-create-submit")
-    ).toContainText(es.outboundCreateSubmit);
-    await expect(
-      page.getByTestId("webhook-outbound-create-cancel")
-    ).toContainText(es.outboundCreateCancel);
-    await page.getByTestId("webhook-outbound-create-cancel").click();
-
-    // The seeded DISABLED card carries Re-enable + Delete buttons in Spanish.
-    const outboundCard = page.getByTestId(
-      `webhook-outbound-card-${outboundConfigId}`
-    );
-    await expect(outboundCard).toBeVisible();
-    const healthBadge = page.getByTestId(
-      `webhook-health-badge-${outboundConfigId}`
-    );
-    await expect(healthBadge).toContainText(es.healthDisabled);
-
-    // Re-enable AlertDialog — title + body in Spanish.
-    const reEnableButton = page.getByTestId(
-      `webhook-reenable-button-${outboundConfigId}`
-    );
-    await expect(reEnableButton).toContainText(es.reEnable);
-    await reEnableButton.click();
-    const reEnableDialog = page.getByTestId("webhook-reenable-dialog");
-    await expect(reEnableDialog).toBeVisible();
-    await expect(reEnableDialog).toContainText(es.reEnableConfirmTitle);
-    await expect(reEnableDialog).toContainText(es.reEnableConfirm);
-    await page.getByTestId("webhook-reenable-dialog-cancel").click();
-
-    // Delete AlertDialog on the same card. The outbound form mounts its own
-    // delete-dialog testid (separate from the inbound form's, which uses
-    // `webhook-delete-dialog`).
-    await page
-      .getByTestId(`webhook-outbound-delete-button-${outboundConfigId}`)
-      .click();
-    const deleteDialog = page.getByTestId("webhook-outbound-delete-dialog");
-    await expect(deleteDialog).toBeVisible();
-    await expect(deleteDialog).toContainText(es.outboundDeleteConfirmTitle);
-    await expect(deleteDialog).toContainText(es.outboundDeleteConfirm);
-    await page.getByTestId("webhook-outbound-delete-dialog-cancel").click();
-
-    await assertNoMissingKeyMarkers(page);
-    await expectAbsentText(page, en.outboundCreateTitle);
-    await expectAbsentText(page, en.reEnableConfirmTitle);
-
-    // ─── 3. Deliveries tab ───────────────────────────────────────────
-    await page.getByTestId("webhooks-tab-deliveries").click();
-    await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
-      timeout: 10_000,
+      await assertNoMissingKeyMarkers(page);
+      await expectAbsentText(page, en.outboundCreateTitle);
+      await expectAbsentText(page, en.reEnableConfirmTitle);
     });
 
-    // Filter bar: status select labels + reset button in Spanish.
-    await expect(
-      page.getByTestId("webhook-deliveries-filter-status")
-    ).toContainText(es.filterStatusAll);
-    await expect(
-      page.getByTestId("webhook-deliveries-reset-top")
-    ).toContainText(es.filterReset);
+    await test.step("Verify the Deliveries tab filter bar in Spanish", async () => {
+      // ─── 3. Deliveries tab ───────────────────────────────────────────
+      await page.getByTestId("webhooks-tab-deliveries").click();
+      await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
+        timeout: 10_000,
+      });
 
-    // Open the status filter and assert the Spanish "Failed" option label.
-    await page.getByTestId("webhook-deliveries-filter-status").click();
-    await expect(
-      page.getByRole("option", { name: es.filterStatusFailed })
-    ).toBeVisible();
-    await page.keyboard.press("Escape");
+      // Filter bar: status select labels + reset button in Spanish.
+      await expect(
+        page.getByTestId("webhook-deliveries-filter-status")
+      ).toContainText(es.filterStatusAll);
+      await expect(
+        page.getByTestId("webhook-deliveries-reset-top")
+      ).toContainText(es.filterReset);
 
-    await assertNoMissingKeyMarkers(page);
-    await expectAbsentText(page, en.filterReset);
-    await expectAbsentText(page, en.deliveriesTab);
+      // Open the status filter and assert the Spanish "Failed" option label.
+      await page.getByTestId("webhook-deliveries-filter-status").click();
+      await expect(
+        page.getByRole("option", { name: es.filterStatusFailed })
+      ).toBeVisible();
+      await page.keyboard.press("Escape");
+
+      await assertNoMissingKeyMarkers(page);
+      await expectAbsentText(page, en.filterReset);
+      await expectAbsentText(page, en.deliveriesTab);
+    });
   });
 });
 

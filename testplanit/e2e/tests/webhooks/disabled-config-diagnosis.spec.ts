@@ -129,93 +129,108 @@ test.describe("Webhook DISABLED diagnosis surface — badge + tooltip + activity
     page,
     baseURL,
   }) => {
-    // 1. Navigate to the outbound tab — the DISABLED config renders here.
-    await page.goto(
-      `${baseURL}/projects/settings/${projectId}/webhooks?tab=outbound`
-    );
-    await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
-      timeout: 15_000,
-    });
-    await page.getByTestId("webhooks-tab-outbound").click();
-    await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
-      timeout: 15_000,
-    });
+    let badge: ReturnType<typeof page.getByTestId> | undefined;
 
-    // 2. Health badge is red (destructive variant) and reads "Disabled".
-    const badge = page.getByTestId(`webhook-health-badge-${configId}`);
-    await expect(badge).toBeVisible({ timeout: 10_000 });
-    await expect(badge).toContainText(/disabled/i);
+    await test.step("Open the outbound tab and confirm the red DISABLED badge", async () => {
+      // 1. Navigate to the outbound tab — the DISABLED config renders here.
+      await page.goto(
+        `${baseURL}/projects/settings/${projectId}/webhooks?tab=outbound`
+      );
+      await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
+        timeout: 15_000,
+      });
+      await page.getByTestId("webhooks-tab-outbound").click();
+      await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
+        timeout: 15_000,
+      });
 
-    // 3. Tooltip wiring — native title attribute carries the diagnostic
-    //    string so OS tooltip surfaces it on hover. Assert the structural
-    //    shape ("Disabled after 10 consecutive failures · …") rather than
-    //    the exact timestamp string, which depends on the seeded Date.
-    const titleAttr = await badge.getAttribute("title");
-    expect(titleAttr).not.toBeNull();
-    expect(titleAttr).toMatch(/Disabled after 10 consecutive failures/i);
-
-    // 4. Re-enable button is visible on the card (the button only renders
-    //    when endpointHealth === "DISABLED" — the very condition we just
-    //    seeded). This is the recovery affordance the diagnosis flow ends on.
-    const reenableButton = page.getByTestId(
-      `webhook-reenable-button-${configId}`
-    );
-    await expect(reenableButton).toBeVisible({ timeout: 5_000 });
-
-    // 5. Activity field group is present on the card (M-03 sibling to the
-    //    badge — admins read it before opening the Deliveries tab to gauge
-    //    how recent the failure window is).
-    await expect(
-      page.getByTestId(`webhook-delivery-activity-${configId}`)
-    ).toBeVisible();
-
-    // 6. Hop to the Deliveries tab + filter to this config to see the 11
-    //    rows. The most-recent row is the endpoint_disabled one (auto-
-    //    disable kicked in AFTER the 10 upstream failures).
-    const since = new Date();
-    since.setDate(since.getDate() - 1);
-    // Pin pageSize=50 so all 11 seeded rows fit on page 1. Default
-    // pageSize honours admin's itemsPerPage preference (often P10), which
-    // would push the oldest TIMEOUT row onto page 2.
-    const deliveriesUrl =
-      `${baseURL}/projects/settings/${projectId}/webhooks` +
-      `?tab=deliveries&configIds=${configId}&status=failed` +
-      `&since=${since.toISOString()}&pageSize=50`;
-    await page.goto(deliveriesUrl);
-    await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByTestId("webhook-deliveries-table")).toBeVisible({
-      timeout: 10_000,
+      // 2. Health badge is red (destructive variant) and reads "Disabled".
+      badge = page.getByTestId(`webhook-health-badge-${configId}`);
+      await expect(badge).toBeVisible({ timeout: 10_000 });
+      await expect(badge).toContainText(/disabled/i);
     });
 
-    // 7. The post-disable row is rendered (most-recent-first ordering means
-    //    it lands at the top of the failure history).
-    await expect(
-      page.getByTestId(`webhook-delivery-row-${endpointDisabledDeliveryId}`)
-    ).toBeVisible({ timeout: 10_000 });
-
-    // 8. A spot-check from the upstream-failure history is visible too —
-    //    proves the table shows the full window, not just the latest row.
-    const sampleFailureId = failureDeliveryIds[0]!;
-    await expect(
-      page.getByTestId(`webhook-delivery-row-${sampleFailureId}`)
-    ).toBeVisible({ timeout: 10_000 });
-
-    // 9. Data-layer truth — DB has 11 rows on this config (10 upstream +
-    //    1 endpoint_disabled). Locks the seed shape against silent drift.
-    const allRows = await prisma.webhookDelivery.findMany({
-      where: { webhookConfigId: configId, direction: "OUTBOUND" },
-      select: { id: true, error: true },
+    await test.step("Verify the badge's diagnostic tooltip", async () => {
+      // 3. Tooltip wiring — native title attribute carries the diagnostic
+      //    string so OS tooltip surfaces it on hover. Assert the structural
+      //    shape ("Disabled after 10 consecutive failures · …") rather than
+      //    the exact timestamp string, which depends on the seeded Date.
+      const titleAttr = await badge!.getAttribute("title");
+      expect(titleAttr).not.toBeNull();
+      expect(titleAttr).toMatch(/Disabled after 10 consecutive failures/i);
     });
-    expect(allRows).toHaveLength(FAILURE_HISTORY_DEPTH + 1);
-    const errorBreakdown = allRows.reduce<Record<string, number>>((acc, r) => {
-      const key = r.error ?? "null";
-      acc[key] = (acc[key] ?? 0) + 1;
-      return acc;
-    }, {});
-    expect(errorBreakdown.TIMEOUT).toBe(5);
-    expect(errorBreakdown["502_bad_gateway"]).toBe(5);
-    expect(errorBreakdown.endpoint_disabled).toBe(1);
+
+    await test.step("Confirm the Re-enable button and Activity group on the card", async () => {
+      // 4. Re-enable button is visible on the card (the button only renders
+      //    when endpointHealth === "DISABLED" — the very condition we just
+      //    seeded). This is the recovery affordance the diagnosis flow ends on.
+      const reenableButton = page.getByTestId(
+        `webhook-reenable-button-${configId}`
+      );
+      await expect(reenableButton).toBeVisible({ timeout: 5_000 });
+
+      // 5. Activity field group is present on the card (M-03 sibling to the
+      //    badge — admins read it before opening the Deliveries tab to gauge
+      //    how recent the failure window is).
+      await expect(
+        page.getByTestId(`webhook-delivery-activity-${configId}`)
+      ).toBeVisible();
+    });
+
+    await test.step("Open the Deliveries tab and verify the 11-row failure pattern", async () => {
+      // 6. Hop to the Deliveries tab + filter to this config to see the 11
+      //    rows. The most-recent row is the endpoint_disabled one (auto-
+      //    disable kicked in AFTER the 10 upstream failures).
+      const since = new Date();
+      since.setDate(since.getDate() - 1);
+      // Pin pageSize=50 so all 11 seeded rows fit on page 1. Default
+      // pageSize honours admin's itemsPerPage preference (often P10), which
+      // would push the oldest TIMEOUT row onto page 2.
+      const deliveriesUrl =
+        `${baseURL}/projects/settings/${projectId}/webhooks` +
+        `?tab=deliveries&configIds=${configId}&status=failed` +
+        `&since=${since.toISOString()}&pageSize=50`;
+      await page.goto(deliveriesUrl);
+      await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect(page.getByTestId("webhook-deliveries-table")).toBeVisible({
+        timeout: 10_000,
+      });
+
+      // 7. The post-disable row is rendered (most-recent-first ordering means
+      //    it lands at the top of the failure history).
+      await expect(
+        page.getByTestId(`webhook-delivery-row-${endpointDisabledDeliveryId}`)
+      ).toBeVisible({ timeout: 10_000 });
+
+      // 8. A spot-check from the upstream-failure history is visible too —
+      //    proves the table shows the full window, not just the latest row.
+      const sampleFailureId = failureDeliveryIds[0]!;
+      await expect(
+        page.getByTestId(`webhook-delivery-row-${sampleFailureId}`)
+      ).toBeVisible({ timeout: 10_000 });
+    });
+
+    await test.step("Assert the database holds the expected 11-row error breakdown", async () => {
+      // 9. Data-layer truth — DB has 11 rows on this config (10 upstream +
+      //    1 endpoint_disabled). Locks the seed shape against silent drift.
+      const allRows = await prisma.webhookDelivery.findMany({
+        where: { webhookConfigId: configId, direction: "OUTBOUND" },
+        select: { id: true, error: true },
+      });
+      expect(allRows).toHaveLength(FAILURE_HISTORY_DEPTH + 1);
+      const errorBreakdown = allRows.reduce<Record<string, number>>(
+        (acc, r) => {
+          const key = r.error ?? "null";
+          acc[key] = (acc[key] ?? 0) + 1;
+          return acc;
+        },
+        {}
+      );
+      expect(errorBreakdown.TIMEOUT).toBe(5);
+      expect(errorBreakdown["502_bad_gateway"]).toBe(5);
+      expect(errorBreakdown.endpoint_disabled).toBe(1);
+    });
   });
 });

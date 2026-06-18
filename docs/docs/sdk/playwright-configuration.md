@@ -34,6 +34,8 @@ reporter: [
 | `caseIdPattern` | `RegExp \| string` | `/\[(\d+)\]/g` | Regex pattern for extracting case IDs from test titles **and tags** (must include a capturing group) |
 | `autoCreateTestCases` | `boolean` | `false` | Auto-create test cases if they don't exist |
 | `createFolderHierarchy` | `boolean` | `false` | Create folder hierarchy based on `test.describe` structure (requires `autoCreateTestCases` and `parentFolderId`) |
+| `captureSteps` | `boolean` | `true` | Capture `test.step()` calls as authored steps on auto-created cases (nested steps flattened in order, prefixed by depth). Requires `autoCreateTestCases`; applies only to newly created cases. See [Capturing Steps](./playwright-test-cases.md#capturing-teststep-as-case-steps) |
+| `overwriteSteps` | `boolean` | `false` | Overwrite an existing case's steps with the captured `test.step()` calls every run (linked and auto-matched cases), keeping the case in sync as the script changes. **Destructive** — discards manual step edits; a test with no `test.step()` calls never clears existing steps. See [Keeping steps in sync](./playwright-test-cases.md#keeping-steps-in-sync) |
 | `parentFolderId` | `number \| string` | - | Folder for auto-created test cases (ID or name) |
 | `templateId` | `number \| string` | - | Template for auto-created test cases (ID or name) |
 | `tagIds` | `(number \| string)[]` | - | Tags to apply to the test run (IDs or names). Tags that don't exist are created automatically |

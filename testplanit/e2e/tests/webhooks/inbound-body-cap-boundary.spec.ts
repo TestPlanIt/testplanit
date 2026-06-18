@@ -132,17 +132,20 @@ test.describe("Inbound body-cap boundary at 5 MiB exactly (I-05)", () => {
       request,
       baseURL,
     }) => {
-      const seeded = await seedInboundConfig(prisma, {
-        projectId,
-        adapterType: adapter,
-        credentialInput:
-          adapter === "AZURE_DEVOPS"
-            ? {
-                kind: "AZURE_DEVOPS",
-                username: "tpi",
-                password: "i05-cap",
-              }
-            : undefined,
+      let seeded: Awaited<ReturnType<typeof seedInboundConfig>> | undefined;
+      await test.step(`Seed inbound ${adapter} webhook config`, async () => {
+        seeded = await seedInboundConfig(prisma, {
+          projectId,
+          adapterType: adapter,
+          credentialInput:
+            adapter === "AZURE_DEVOPS"
+              ? {
+                  kind: "AZURE_DEVOPS",
+                  username: "tpi",
+                  password: "i05-cap",
+                }
+              : undefined,
+        });
       });
 
       const headersForBody = (
@@ -158,7 +161,7 @@ test.describe("Inbound body-cap boundary at 5 MiB exactly (I-05)", () => {
           };
         }
         const sig = valid
-          ? signGitHubOrJira(body, seeded.secret)
+          ? signGitHubOrJira(body, seeded!.secret)
           : "sha256=" + "0".repeat(64);
         const headers: Record<string, string> = {
           "content-type": "application/json",
@@ -169,64 +172,72 @@ test.describe("Inbound body-cap boundary at 5 MiB exactly (I-05)", () => {
       };
 
       // 1. EXACTLY at-cap with valid signature → 200.
-      const atCapValid = buildPaddedBody(adapter, CAP);
-      expect(atCapValid.length).toBe(CAP);
-      const atCapValidResponse = await request.post(
-        `${baseURL}/api/webhooks/${seeded.token}`,
-        {
-          data: atCapValid,
-          headers: headersForBody(atCapValid, true),
-          timeout: 30_000,
-        }
-      );
-      expect(atCapValidResponse.status()).toBe(200);
+      await test.step("Post at-cap body with valid signature expecting 200", async () => {
+        const atCapValid = buildPaddedBody(adapter, CAP);
+        expect(atCapValid.length).toBe(CAP);
+        const atCapValidResponse = await request.post(
+          `${baseURL}/api/webhooks/${seeded!.token}`,
+          {
+            data: atCapValid,
+            headers: headersForBody(atCapValid, true),
+            timeout: 30_000,
+          }
+        );
+        expect(atCapValidResponse.status()).toBe(200);
+      });
 
       // 2. EXACTLY at-cap with invalid signature → 401 (cap allowed, auth
       //    failed). Proves the cap is at LEAST 5 MiB inclusive.
-      const atCapInvalid = buildPaddedBody(adapter, CAP);
-      // Vary one padding byte so the body differs from atCapValid (no
-      // dedup collision) without changing the byte count.
-      const atCapInvalidVaried = atCapInvalid.replace(/a"/, 'b"');
-      expect(atCapInvalidVaried.length).toBe(CAP);
-      const atCapInvalidResponse = await request.post(
-        `${baseURL}/api/webhooks/${seeded.token}`,
-        {
-          data: atCapInvalidVaried,
-          headers: headersForBody(atCapInvalidVaried, false),
-          timeout: 30_000,
-        }
-      );
-      expect(atCapInvalidResponse.status()).toBe(401);
+      await test.step("Post at-cap body with invalid signature expecting 401", async () => {
+        const atCapInvalid = buildPaddedBody(adapter, CAP);
+        // Vary one padding byte so the body differs from atCapValid (no
+        // dedup collision) without changing the byte count.
+        const atCapInvalidVaried = atCapInvalid.replace(/a"/, 'b"');
+        expect(atCapInvalidVaried.length).toBe(CAP);
+        const atCapInvalidResponse = await request.post(
+          `${baseURL}/api/webhooks/${seeded!.token}`,
+          {
+            data: atCapInvalidVaried,
+            headers: headersForBody(atCapInvalidVaried, false),
+            timeout: 30_000,
+          }
+        );
+        expect(atCapInvalidResponse.status()).toBe(401);
+      });
 
       // 3. EXACTLY 1 byte over cap → 413, INDEPENDENT of signature validity.
       //    Send with a valid-looking-but-still-rejected signature; the cap
       //    fires first and short-circuits the whole verification step.
-      const overCap = buildPaddedBody(adapter, CAP + 1);
-      expect(overCap.length).toBe(CAP + 1);
-      const overCapResponse = await request.post(
-        `${baseURL}/api/webhooks/${seeded.token}`,
-        {
-          data: overCap,
-          headers: headersForBody(overCap, true),
-          timeout: 30_000,
-        }
-      );
-      expect(overCapResponse.status()).toBe(413);
+      await test.step("Post 1-byte-over-cap body expecting 413", async () => {
+        const overCap = buildPaddedBody(adapter, CAP + 1);
+        expect(overCap.length).toBe(CAP + 1);
+        const overCapResponse = await request.post(
+          `${baseURL}/api/webhooks/${seeded!.token}`,
+          {
+            data: overCap,
+            headers: headersForBody(overCap, true),
+            timeout: 30_000,
+          }
+        );
+        expect(overCapResponse.status()).toBe(413);
+      });
 
       // No delivery row written for the OVER-cap request. The at-cap-VALID
       // request will have written one row (200 outcome), the at-cap-INVALID
       // and over-cap requests must not.
-      const failedRows = await prisma.webhookDelivery.findMany({
-        where: {
-          webhookConfigId: seeded.configId,
-          OR: [
-            { error: "signature-mismatch" },
-            { error: "auth-mismatch" },
-            { error: { startsWith: "413" } },
-          ],
-        },
+      await test.step("Verify no failed delivery rows were written", async () => {
+        const failedRows = await prisma.webhookDelivery.findMany({
+          where: {
+            webhookConfigId: seeded!.configId,
+            OR: [
+              { error: "signature-mismatch" },
+              { error: "auth-mismatch" },
+              { error: { startsWith: "413" } },
+            ],
+          },
+        });
+        expect(failedRows).toHaveLength(0);
       });
-      expect(failedRows).toHaveLength(0);
     });
   }
 });

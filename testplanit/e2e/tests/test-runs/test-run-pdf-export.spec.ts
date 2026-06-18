@@ -12,15 +12,23 @@ test.describe("Test Run PDF Export", () => {
     page,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E RunPdf ${ts}`);
-    const runId = await api.createTestRun(projectId, `PDF Run ${ts}`);
+    let projectId: number | undefined;
+    let runId: number | undefined;
 
-    await page.goto(`/en-US/projects/runs/${projectId}/${runId}`);
-    await page.waitForLoadState("load");
+    await test.step("Create a project and a test run", async () => {
+      projectId = await api.createProject(`E2E RunPdf ${ts}`);
+      runId = await api.createTestRun(projectId, `PDF Run ${ts}`);
+    });
 
-    // The Export PDF button should be visible in the header
-    const exportButton = page.getByRole("button", { name: /export pdf/i });
-    await expect(exportButton).toBeVisible({ timeout: 15000 });
+    await test.step("Open the test run detail page", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId!}/${runId!}`);
+      await page.waitForLoadState("load");
+    });
+
+    await test.step("Verify the Export PDF button is visible in the header", async () => {
+      const exportButton = page.getByRole("button", { name: /export pdf/i });
+      await expect(exportButton).toBeVisible({ timeout: 15000 });
+    });
   });
 
   test("should show Export PDF button on active test run detail page with test cases", async ({
@@ -28,26 +36,32 @@ test.describe("Test Run PDF Export", () => {
     page,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E RunPdfCases ${ts}`);
-    const runId = await api.createTestRun(
-      projectId,
-      `PDF Run with Cases ${ts}`
-    );
+    let projectId: number | undefined;
+    let runId: number | undefined;
 
-    // Add a test case to the run
-    const folderId = await api.createFolder(projectId, `PDF Folder ${ts}`);
-    const caseId = await api.createTestCase(
-      projectId,
-      folderId,
-      `PDF Case ${ts}`
-    );
-    await api.addTestCaseToTestRun(runId, caseId);
+    await test.step("Create a project and a test run", async () => {
+      projectId = await api.createProject(`E2E RunPdfCases ${ts}`);
+      runId = await api.createTestRun(projectId, `PDF Run with Cases ${ts}`);
+    });
 
-    await page.goto(`/en-US/projects/runs/${projectId}/${runId}`);
-    await page.waitForLoadState("load");
+    await test.step("Add a test case to the run", async () => {
+      const folderId = await api.createFolder(projectId!, `PDF Folder ${ts}`);
+      const caseId = await api.createTestCase(
+        projectId!,
+        folderId,
+        `PDF Case ${ts}`
+      );
+      await api.addTestCaseToTestRun(runId!, caseId);
+    });
 
-    // Export PDF should be available
-    const exportButton = page.getByRole("button", { name: /export pdf/i });
-    await expect(exportButton).toBeVisible({ timeout: 15000 });
+    await test.step("Open the test run detail page", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId!}/${runId!}`);
+      await page.waitForLoadState("load");
+    });
+
+    await test.step("Verify the Export PDF button is available", async () => {
+      const exportButton = page.getByRole("button", { name: /export pdf/i });
+      await expect(exportButton).toBeVisible({ timeout: 15000 });
+    });
   });
 });

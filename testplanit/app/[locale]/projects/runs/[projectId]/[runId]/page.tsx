@@ -486,6 +486,12 @@ export default function TestRunPage() {
     void queryClient.invalidateQueries({
       queryKey: ["testRunSummary", Number(runId)],
     });
+    // Automation runs render their results from JUnit suites; refresh those
+    // so reporter-streamed results appear live (the run refetch alone doesn't
+    // cover the separate suite/result query).
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", "JUnitTestSuite"],
+    });
   }, [refetchTestRun, queryClient, runId]);
   useTestRunLiveStream({
     runId: !isNaN(Number(runId)) ? Number(runId) : null,

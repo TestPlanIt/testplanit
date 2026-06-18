@@ -67,6 +67,13 @@ var TestPlanItClient = class {
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         const response = await fetch(url.toString(), fetchOptions);
+        if (response.status === 429 && attempt < this.maxRetries) {
+          const retryAfter = response.headers.get("retry-after");
+          const seconds = retryAfter ? Number(retryAfter) : NaN;
+          const waitMs = Number.isFinite(seconds) ? Math.min(seconds * 1e3, 6e4) : this.retryDelay * (attempt + 1);
+          await this.sleep(waitMs);
+          continue;
+        }
         if (!response.ok) {
           const errorBody = await response.text();
           let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -1069,6 +1076,72 @@ var TestPlanItClient = class {
       create: createData
     });
     return { testCase: createdCase, action: "created" };
+  }
+  /**
+   * Wrap plain text in a minimal TipTap (ProseMirror) document so it renders
+   * in the in-app step editor. Empty text produces an empty paragraph (an
+   * empty text node is invalid in ProseMirror).
+   */
+  tipTapDoc(text) {
+    const trimmed = text.trim();
+    return JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: trimmed ? [{ type: "text", text: trimmed }] : []
+        }
+      ]
+    });
+  }
+  /**
+   * Create an authored step on a test case.
+   * `step` and `expectedResult` are stored as TipTap rich-text documents to
+   * match the in-app step editor.
+   */
+  async createStep(options) {
+    const data = {
+      testCase: { connect: { id: options.testCaseId } },
+      step: this.tipTapDoc(options.step),
+      order: options.order
+    };
+    if (options.expectedResult !== void 0 && options.expectedResult !== "") {
+      data.expectedResult = this.tipTapDoc(options.expectedResult);
+    }
+    return this.zenstack("steps", "create", { data });
+  }
+  /**
+   * Create many authored steps on a test case in a single request.
+   * Preferred over repeated {@link createStep} calls when seeding a case's
+   * steps — one `createMany` instead of N creates keeps the call count (and
+   * rate-limit pressure) low when reporting large suites. Uses the scalar
+   * `testCaseId` FK because `createMany` does not accept nested relations.
+   */
+  async createSteps(options) {
+    const data = options.steps.map((s) => {
+      const row = {
+        testCaseId: options.testCaseId,
+        step: this.tipTapDoc(s.step),
+        order: s.order
+      };
+      if (s.expectedResult !== void 0 && s.expectedResult !== "") {
+        row.expectedResult = this.tipTapDoc(s.expectedResult);
+      }
+      return row;
+    });
+    return this.zenstack("steps", "createMany", { data });
+  }
+  /**
+   * Soft-delete every active step on a test case (sets `isDeleted: true`).
+   * Used to replace a case's steps when syncing them from automation.
+   * Returns the number of steps that were soft-deleted.
+   */
+  async softDeleteCaseSteps(testCaseId) {
+    const result = await this.zenstack("steps", "updateMany", {
+      where: { testCaseId, isDeleted: false },
+      data: { isDeleted: true }
+    });
+    return result?.count ?? 0;
   }
   // ============================================================================
   // Test Run Cases (linking cases to runs)

@@ -5,7 +5,7 @@ title: Playwright Reporter (@testplanit/playwright-reporter)
 
 # Playwright Reporter
 
-`@testplanit/playwright-reporter` is an official [Playwright](https://playwright.dev/) reporter that automatically sends test results to your TestPlanIt instance. It supports linking tests to existing test cases, automatic test case creation, attachment uploads (screenshots, videos, traces), and more.
+`@testplanit/playwright-reporter` is an official [Playwright](https://playwright.dev/) reporter that automatically sends test results to your TestPlanIt instance. It supports linking tests to existing test cases, automatic test case creation, capturing `test.step()` calls as case steps, attachment uploads (screenshots, videos, traces), and more.
 
 It's the Playwright counterpart to the [WebdriverIO Reporter](./wdio-overview.md). Because Playwright runs reporters in a single main process — and forwards events from every worker to it — there is **no separate launcher service** to configure and no worker-coordination option. One reporter instance sees every result and reports it to a single test run.
 
@@ -69,7 +69,10 @@ When `autoCreateTestCases` is enabled, additional stats are shown:
 [TestPlanIt]   Test Cases:
 [TestPlanIt]     Found (existing): 12
 [TestPlanIt]     Created (new):    6
+[TestPlanIt]     Steps created:    18
 ```
+
+Steps captured from `test.step()` calls are counted here — see [Capturing test.step() as case steps](./playwright-test-cases.md#capturing-teststep-as-case-steps).
 
 Attachment upload stats appear when attachments are uploaded:
 

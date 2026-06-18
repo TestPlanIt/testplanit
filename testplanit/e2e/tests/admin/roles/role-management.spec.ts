@@ -14,26 +14,32 @@ import { expect, test } from "../../../fixtures";
 
 test.describe("Role Management", () => {
   test("Admin can view roles list", async ({ page }) => {
-    await page.goto("/en-US/admin/roles");
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the roles admin page", async () => {
+      await page.goto("/en-US/admin/roles");
+      await page.waitForLoadState("networkidle");
 
-    // The page should render
-    await expect(page.locator("main")).toBeVisible();
+      // The page should render
+      await expect(page.locator("main")).toBeVisible();
+    });
 
-    // Should show the Roles title (CardTitle renders as a styled element)
-    const rolesTitle = page
-      .locator("h1, h2, h3, p, span, div")
-      .filter({ hasText: /^roles$/i })
-      .first();
-    await expect(rolesTitle).toBeVisible({ timeout: 10000 });
+    await test.step("Verify the roles title is shown", async () => {
+      // Should show the Roles title (CardTitle renders as a styled element)
+      const rolesTitle = page
+        .locator("h1, h2, h3, p, span, div")
+        .filter({ hasText: /^roles$/i })
+        .first();
+      await expect(rolesTitle).toBeVisible({ timeout: 10000 });
+    });
 
-    // DataTable should be rendered
-    const table = page.locator("table");
-    await expect(table).toBeVisible({ timeout: 10000 });
+    await test.step("Verify the roles table lists at least one role", async () => {
+      // DataTable should be rendered
+      const table = page.locator("table");
+      await expect(table).toBeVisible({ timeout: 10000 });
 
-    // There should be at least one role row (seeded data)
-    const roleRows = page.locator("tbody tr");
-    await expect(roleRows.first()).toBeVisible({ timeout: 10000 });
+      // There should be at least one role row (seeded data)
+      const roleRows = page.locator("tbody tr");
+      await expect(roleRows.first()).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Admin can create a new role", async ({ page }) => {

@@ -32,108 +32,121 @@ test.describe("Magic Select in Test Run Creation (AI-03)", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E Magic Select ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E LLM Magic ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
-    const folderId = await api.createFolder(projectId, `Magic Folder ${ts}`);
-    await api.createTestCase(projectId, folderId, `Magic Case 1 ${ts}`);
-    await api.createTestCase(projectId, folderId, `Magic Case 2 ${ts}`);
 
-    // Mock magic-select-cases endpoint
-    await page.route("**/api/llm/magic-select-cases", async (route) => {
-      let body: Record<string, unknown> = {};
-      try {
-        body = route.request().postDataJSON() as Record<string, unknown>;
-      } catch {
-        body = {};
-      }
+    let projectId: number | undefined;
+    let folderId: number | undefined;
 
-      if (body?.countOnly) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            success: true,
-            totalCaseCount: 2,
-            repositoryTotalCount: 2,
-            searchPreFiltered: false,
-          }),
-        });
-      } else {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            success: true,
-            suggestedCaseIds: [],
-            reasoning: "Selected based on test run context",
-            metadata: {
-              totalCasesAnalyzed: 2,
-              suggestedCount: 0,
-              model: "mock",
-              tokens: { prompt: 100, completion: 50, total: 150 },
-            },
-          }),
-        });
-      }
+    await test.step("Seed project, LLM integration, and test cases", async () => {
+      projectId = await api.createProject(`E2E Magic Select ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E LLM Magic ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+      folderId = await api.createFolder(projectId, `Magic Folder ${ts}`);
+      await api.createTestCase(projectId, folderId, `Magic Case 1 ${ts}`);
+      await api.createTestCase(projectId, folderId, `Magic Case 2 ${ts}`);
     });
 
-    // Navigate to test runs list
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
+    await test.step("Mock magic-select-cases endpoint", async () => {
+      await page.route("**/api/llm/magic-select-cases", async (route) => {
+        let body: Record<string, unknown> = {};
+        try {
+          body = route.request().postDataJSON() as Record<string, unknown>;
+        } catch {
+          body = {};
+        }
 
-    // Open create test run dialog
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
-    // Fill in run name in step 1
-    const runName = `Magic Run ${ts}`;
-    const nameInput = page.getByTestId("run-name-input").first();
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
-    await nameInput.evaluate((el: HTMLInputElement, value) => {
-      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-        window.HTMLInputElement.prototype,
-        "value"
-      )?.set;
-      nativeInputValueSetter?.call(el, value);
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    }, runName);
-
-    // Proceed to step 2
-    const nextButton = page.getByTestId("run-next-button").first();
-    await expect(nextButton).toBeVisible({ timeout: 5000 });
-    await nextButton.dispatchEvent("click");
-
-    // Step 2: Wait for test case selection modal
-    await expect(page.getByTestId("run-save-button").first()).toBeVisible({
-      timeout: 15000,
+        if (body?.countOnly) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              success: true,
+              totalCaseCount: 2,
+              repositoryTotalCount: 2,
+              searchPreFiltered: false,
+            }),
+          });
+        } else {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              success: true,
+              suggestedCaseIds: [],
+              reasoning: "Selected based on test run context",
+              metadata: {
+                totalCasesAnalyzed: 2,
+                suggestedCount: 0,
+                model: "mock",
+                tokens: { prompt: 100, completion: 50, total: 150 },
+              },
+            }),
+          });
+        }
+      });
     });
 
-    // The MagicSelectButton should appear in the "Select Test Cases" dialog
-    const selectCasesDialog = page
-      .locator('[role="dialog"]')
-      .filter({ hasText: "Select Test Cases" })
-      .last();
-    await expect(selectCasesDialog).toBeVisible({ timeout: 5000 });
+    await test.step("Open create test run dialog and fill name in step 1", async () => {
+      // Navigate to test runs list
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
 
-    // Magic Select button should be visible and enabled with LLM integration
-    const magicSelectButton = selectCasesDialog
-      .getByRole("button", { name: "Magic Select" })
-      .first();
-    await expect(magicSelectButton).toBeVisible({ timeout: 5000 });
-    await expect(magicSelectButton).toBeEnabled();
+      // Open create test run dialog
+      const newRunButton = page.getByTestId("new-run-button");
+      await expect(newRunButton).toBeVisible({ timeout: 15000 });
+      await newRunButton.click();
 
-    // Click to open the MagicSelectDialog
-    await magicSelectButton.dispatchEvent("click");
+      // Fill in run name in step 1
+      const runName = `Magic Run ${ts}`;
+      const nameInput = page.getByTestId("run-name-input").first();
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
+      await nameInput.evaluate((el: HTMLInputElement, value) => {
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLInputElement.prototype,
+          "value"
+        )?.set;
+        nativeInputValueSetter?.call(el, value);
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      }, runName);
+    });
 
-    // The magic select dialog should open
-    const magicDialog = page
-      .locator('[role="dialog"]')
-      .filter({ hasText: "Magic Select" })
-      .last();
-    await expect(magicDialog).toBeVisible({ timeout: 10000 });
+    await test.step("Proceed to step 2 case selection", async () => {
+      // Proceed to step 2
+      const nextButton = page.getByTestId("run-next-button").first();
+      await expect(nextButton).toBeVisible({ timeout: 5000 });
+      await nextButton.dispatchEvent("click");
+
+      // Step 2: Wait for test case selection modal
+      await expect(page.getByTestId("run-save-button").first()).toBeVisible({
+        timeout: 15000,
+      });
+    });
+
+    await test.step("Verify Magic Select button is visible and enabled, then open dialog", async () => {
+      // The MagicSelectButton should appear in the "Select Test Cases" dialog
+      const selectCasesDialog = page
+        .locator('[role="dialog"]')
+        .filter({ hasText: "Select Test Cases" })
+        .last();
+      await expect(selectCasesDialog).toBeVisible({ timeout: 5000 });
+
+      // Magic Select button should be visible and enabled with LLM integration
+      const magicSelectButton = selectCasesDialog
+        .getByRole("button", { name: "Magic Select" })
+        .first();
+      await expect(magicSelectButton).toBeVisible({ timeout: 5000 });
+      await expect(magicSelectButton).toBeEnabled();
+
+      // Click to open the MagicSelectDialog
+      await magicSelectButton.dispatchEvent("click");
+
+      // The magic select dialog should open
+      const magicDialog = page
+        .locator('[role="dialog"]')
+        .filter({ hasText: "Magic Select" })
+        .last();
+      await expect(magicDialog).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("should mock error response for magic select and verify error handling", async ({
@@ -141,60 +154,71 @@ test.describe("Magic Select in Test Run Creation (AI-03)", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E Magic Error ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E LLM MagicErr ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
 
-    // Mock the magic-select API to return an error
-    await page.route("**/api/llm/magic-select-cases", async (route) => {
-      await route.fulfill({
-        status: 400,
-        contentType: "application/json",
-        body: JSON.stringify({
-          error: "No active LLM integration found for this project",
-        }),
+    let projectId: number | undefined;
+
+    await test.step("Seed project and LLM integration", async () => {
+      projectId = await api.createProject(`E2E Magic Error ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E LLM MagicErr ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+    });
+
+    await test.step("Mock magic-select-cases endpoint to return an error", async () => {
+      // Mock the magic-select API to return an error
+      await page.route("**/api/llm/magic-select-cases", async (route) => {
+        await route.fulfill({
+          status: 400,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: "No active LLM integration found for this project",
+          }),
+        });
       });
     });
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
+    await test.step("Open create test run dialog and fill name in step 1", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
 
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
+      const newRunButton = page.getByTestId("new-run-button");
+      await expect(newRunButton).toBeVisible({ timeout: 15000 });
+      await newRunButton.click();
 
-    const nameInput = page.getByTestId("run-name-input").first();
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
-    await nameInput.evaluate((el: HTMLInputElement, value) => {
-      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-        window.HTMLInputElement.prototype,
-        "value"
-      )?.set;
-      nativeInputValueSetter?.call(el, value);
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    }, `Error Run ${ts}`);
-
-    const nextButton = page.getByTestId("run-next-button").first();
-    await expect(nextButton).toBeVisible({ timeout: 5000 });
-    await nextButton.dispatchEvent("click");
-
-    // Step 2 should render with save button
-    await expect(page.getByTestId("run-save-button").first()).toBeVisible({
-      timeout: 15000,
+      const nameInput = page.getByTestId("run-name-input").first();
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
+      await nameInput.evaluate((el: HTMLInputElement, value) => {
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLInputElement.prototype,
+          "value"
+        )?.set;
+        nativeInputValueSetter?.call(el, value);
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      }, `Error Run ${ts}`);
     });
 
-    // Magic Select button should still be visible (error only surfaces when clicked)
-    const selectCasesDialog = page
-      .locator('[role="dialog"]')
-      .filter({ hasText: "Select Test Cases" })
-      .last();
-    await expect(selectCasesDialog).toBeVisible({ timeout: 5000 });
+    await test.step("Proceed to step 2 and verify Magic Select button still renders", async () => {
+      const nextButton = page.getByTestId("run-next-button").first();
+      await expect(nextButton).toBeVisible({ timeout: 5000 });
+      await nextButton.dispatchEvent("click");
 
-    const magicSelectButton = selectCasesDialog
-      .getByRole("button", { name: "Magic Select" })
-      .first();
-    await expect(magicSelectButton).toBeVisible({ timeout: 5000 });
+      // Step 2 should render with save button
+      await expect(page.getByTestId("run-save-button").first()).toBeVisible({
+        timeout: 15000,
+      });
+
+      // Magic Select button should still be visible (error only surfaces when clicked)
+      const selectCasesDialog = page
+        .locator('[role="dialog"]')
+        .filter({ hasText: "Select Test Cases" })
+        .last();
+      await expect(selectCasesDialog).toBeVisible({ timeout: 5000 });
+
+      const magicSelectButton = selectCasesDialog
+        .getByRole("button", { name: "Magic Select" })
+        .first();
+      await expect(magicSelectButton).toBeVisible({ timeout: 5000 });
+    });
   });
 });
 
@@ -208,45 +232,57 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E QuickScript ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E LLM QS ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
-    await api.enableQuickScript(projectId);
-    const folderId = await api.createFolder(projectId, `QS Folder ${ts}`);
-    await api.createTestCase(projectId, folderId, `QS Case ${ts}`);
 
-    await page.goto(`/en-US/projects/repository/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    let projectId: number | undefined;
+    let folderId: number | undefined;
 
-    // Click the specific folder (not Root Folder which has no cases)
-    const folderNode = page.getByTestId(`folder-node-${folderId}`);
-    await expect(folderNode).toBeVisible({ timeout: 15000 });
-    await folderNode.click();
+    await test.step("Seed project with QuickScript enabled and a test case", async () => {
+      projectId = await api.createProject(`E2E QuickScript ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E LLM QS ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+      await api.enableQuickScript(projectId);
+      folderId = await api.createFolder(projectId, `QS Folder ${ts}`);
+      await api.createTestCase(projectId, folderId, `QS Case ${ts}`);
+    });
 
-    // Wait for actual case rows to render (not just the loading skeleton)
-    const caseCheckbox = page
-      .locator('[data-testid^="case-checkbox-"]')
-      .first();
-    await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
+    await test.step("Open folder and select all cases", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}`);
+      await page.waitForLoadState("networkidle");
 
-    // Select all cases via header checkbox
-    const headerCheckbox = page.locator('thead [role="checkbox"]').first();
-    await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
-    await headerCheckbox.click();
+      // Click the specific folder (not Root Folder which has no cases)
+      const folderNode = page.getByTestId(`folder-node-${folderId}`);
+      await expect(folderNode).toBeVisible({ timeout: 15000 });
+      await folderNode.click();
 
-    // QuickScript button should be visible
-    const qsButton = page.getByTestId("quickscript-cases-button");
-    await expect(qsButton).toBeVisible({ timeout: 10000 });
+      // Wait for actual case rows to render (not just the loading skeleton)
+      const caseCheckbox = page
+        .locator('[data-testid^="case-checkbox-"]')
+        .first();
+      await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
 
-    // Click to open the QuickScript modal
-    await qsButton.click();
+      // Select all cases via header checkbox
+      const headerCheckbox = page.locator('thead [role="checkbox"]').first();
+      await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
+      await headerCheckbox.click();
+    });
 
-    const qsDialog = page.getByTestId("quickscript-dialog");
-    await expect(qsDialog).toBeVisible({ timeout: 10000 });
+    await test.step("Open QuickScript modal and verify template selector", async () => {
+      // QuickScript button should be visible
+      const qsButton = page.getByTestId("quickscript-cases-button");
+      await expect(qsButton).toBeVisible({ timeout: 10000 });
 
-    // Verify dialog renders the template selector
-    const templateSelect = qsDialog.getByTestId("quickscript-template-select");
-    await expect(templateSelect).toBeVisible({ timeout: 5000 });
+      // Click to open the QuickScript modal
+      await qsButton.click();
+
+      const qsDialog = page.getByTestId("quickscript-dialog");
+      await expect(qsDialog).toBeVisible({ timeout: 10000 });
+
+      // Verify dialog renders the template selector
+      const templateSelect = qsDialog.getByTestId(
+        "quickscript-template-select"
+      );
+      await expect(templateSelect).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("should mock SSE stream for QuickScript AI export", async ({
@@ -254,84 +290,100 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E QS SSE ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E LLM QS SSE ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
-    await api.enableQuickScript(projectId);
-    const folderId = await api.createFolder(projectId, `QS SSE Folder ${ts}`);
-    await api.createTestCase(projectId, folderId, `QS SSE Case ${ts}`);
 
-    // Mock the SSE stream endpoint for AI export
-    await page.route("**/api/export/ai-stream", async (route) => {
-      const sseBody = [
-        `data: ${JSON.stringify({ type: "chunk", delta: "describe('Login Test'" })}\n\n`,
-        `data: ${JSON.stringify({ type: "chunk", delta: ", () => {\n  it('should login', () => {\n  });\n});" })}\n\n`,
-        `data: ${JSON.stringify({ type: "done", generatedBy: "ai", contextFiles: [] })}\n\n`,
-      ].join("");
+    let projectId: number | undefined;
+    let folderId: number | undefined;
 
-      await route.fulfill({
-        status: 200,
-        headers: {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
-        },
-        body: sseBody,
+    await test.step("Seed project with QuickScript enabled and a test case", async () => {
+      projectId = await api.createProject(`E2E QS SSE ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E LLM QS SSE ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+      await api.enableQuickScript(projectId);
+      folderId = await api.createFolder(projectId, `QS SSE Folder ${ts}`);
+      await api.createTestCase(projectId, folderId, `QS SSE Case ${ts}`);
+    });
+
+    await test.step("Mock the SSE stream endpoint for AI export", async () => {
+      // Mock the SSE stream endpoint for AI export
+      await page.route("**/api/export/ai-stream", async (route) => {
+        const sseBody = [
+          `data: ${JSON.stringify({ type: "chunk", delta: "describe('Login Test'" })}\n\n`,
+          `data: ${JSON.stringify({ type: "chunk", delta: ", () => {\n  it('should login', () => {\n  });\n});" })}\n\n`,
+          `data: ${JSON.stringify({ type: "done", generatedBy: "ai", contextFiles: [] })}\n\n`,
+        ].join("");
+
+        await route.fulfill({
+          status: 200,
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+          },
+          body: sseBody,
+        });
       });
     });
 
-    await page.goto(`/en-US/projects/repository/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open folder and select all cases", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}`);
+      await page.waitForLoadState("networkidle");
 
-    // Click the specific folder (not Root Folder which has no cases)
-    const folderNode = page.getByTestId(`folder-node-${folderId}`);
-    await expect(folderNode).toBeVisible({ timeout: 15000 });
-    await folderNode.click();
+      // Click the specific folder (not Root Folder which has no cases)
+      const folderNode = page.getByTestId(`folder-node-${folderId}`);
+      await expect(folderNode).toBeVisible({ timeout: 15000 });
+      await folderNode.click();
 
-    // Wait for actual case rows to render (not just the loading skeleton)
-    const caseCheckbox = page
-      .locator('[data-testid^="case-checkbox-"]')
-      .first();
-    await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
-
-    // Select all cases via header checkbox
-    const headerCheckbox = page.locator('thead [role="checkbox"]').first();
-    await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
-    await headerCheckbox.click();
-
-    const qsButton = page.getByTestId("quickscript-cases-button");
-    await expect(qsButton).toBeVisible({ timeout: 10000 });
-    await qsButton.click();
-
-    const qsDialog = page.getByTestId("quickscript-dialog");
-    await expect(qsDialog).toBeVisible({ timeout: 10000 });
-
-    // Check for AI export toggle
-    const aiToggle = qsDialog.getByTestId("ai-export-toggle");
-    const aiToggleVisible = await aiToggle
-      .isVisible({ timeout: 3000 })
-      .catch(() => false);
-
-    if (aiToggleVisible) {
-      // Enable AI export
-      await aiToggle.click();
-
-      // Click the QuickScript generate button
-      const qsGenerateButton = qsDialog.getByTestId("quickscript-button");
-      await expect(qsGenerateButton).toBeVisible({ timeout: 3000 });
-      await qsGenerateButton.click();
-
-      // Wait for SSE streaming to complete — preview should show generated code
-      const previewContent = qsDialog
-        .locator('[data-testid="preview-pane"], pre, code')
+      // Wait for actual case rows to render (not just the loading skeleton)
+      const caseCheckbox = page
+        .locator('[data-testid^="case-checkbox-"]')
         .first();
-      await expect(previewContent).toBeVisible({ timeout: 10000 });
-    }
+      await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
 
-    // Template selector should always be visible regardless of AI toggle
-    await expect(
-      qsDialog.getByTestId("quickscript-template-select")
-    ).toBeVisible({ timeout: 5000 });
+      // Select all cases via header checkbox
+      const headerCheckbox = page.locator('thead [role="checkbox"]').first();
+      await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
+      await headerCheckbox.click();
+    });
+
+    await test.step("Open QuickScript modal", async () => {
+      const qsButton = page.getByTestId("quickscript-cases-button");
+      await expect(qsButton).toBeVisible({ timeout: 10000 });
+      await qsButton.click();
+
+      const qsDialog = page.getByTestId("quickscript-dialog");
+      await expect(qsDialog).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Trigger AI export when toggle present and verify template selector", async () => {
+      const qsDialog = page.getByTestId("quickscript-dialog");
+
+      // Check for AI export toggle
+      const aiToggle = qsDialog.getByTestId("ai-export-toggle");
+      const aiToggleVisible = await aiToggle
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
+
+      if (aiToggleVisible) {
+        // Enable AI export
+        await aiToggle.click();
+
+        // Click the QuickScript generate button
+        const qsGenerateButton = qsDialog.getByTestId("quickscript-button");
+        await expect(qsGenerateButton).toBeVisible({ timeout: 3000 });
+        await qsGenerateButton.click();
+
+        // Wait for SSE streaming to complete — preview should show generated code
+        const previewContent = qsDialog
+          .locator('[data-testid="preview-pane"], pre, code')
+          .first();
+        await expect(previewContent).toBeVisible({ timeout: 10000 });
+      }
+
+      // Template selector should always be visible regardless of AI toggle
+      await expect(
+        qsDialog.getByTestId("quickscript-template-select")
+      ).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("should mock template-only fallback for QuickScript when no LLM available", async ({
@@ -339,60 +391,71 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E QS Fallback ${ts}`);
-    // Enable QuickScript but do NOT add LLM integration — tests fallback path
-    await api.enableQuickScript(projectId);
-    const folderId = await api.createFolder(
-      projectId,
-      `QS Fallback Folder ${ts}`
-    );
-    await api.createTestCase(projectId, folderId, `QS Fallback Case ${ts}`);
 
-    // Mock SSE stream to return fallback (template-only) response
-    await page.route("**/api/export/ai-stream", async (route) => {
-      const sseBody = [
-        `data: ${JSON.stringify({ type: "fallback", code: "// template code\ndescribe('test', () => {});", error: "No active LLM integration" })}\n\n`,
-      ].join("");
+    let projectId: number | undefined;
+    let folderId: number | undefined;
 
-      await route.fulfill({
-        status: 200,
-        headers: {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-        },
-        body: sseBody,
+    await test.step("Seed project with QuickScript enabled but no LLM integration", async () => {
+      projectId = await api.createProject(`E2E QS Fallback ${ts}`);
+      // Enable QuickScript but do NOT add LLM integration — tests fallback path
+      await api.enableQuickScript(projectId);
+      folderId = await api.createFolder(projectId, `QS Fallback Folder ${ts}`);
+      await api.createTestCase(projectId, folderId, `QS Fallback Case ${ts}`);
+    });
+
+    await test.step("Mock SSE stream to return template-only fallback response", async () => {
+      // Mock SSE stream to return fallback (template-only) response
+      await page.route("**/api/export/ai-stream", async (route) => {
+        const sseBody = [
+          `data: ${JSON.stringify({ type: "fallback", code: "// template code\ndescribe('test', () => {});", error: "No active LLM integration" })}\n\n`,
+        ].join("");
+
+        await route.fulfill({
+          status: 200,
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+          },
+          body: sseBody,
+        });
       });
     });
 
-    await page.goto(`/en-US/projects/repository/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open folder and select all cases", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}`);
+      await page.waitForLoadState("networkidle");
 
-    // Click the specific folder (not Root Folder which has no cases)
-    const folderNode = page.getByTestId(`folder-node-${folderId}`);
-    await expect(folderNode).toBeVisible({ timeout: 15000 });
-    await folderNode.click();
+      // Click the specific folder (not Root Folder which has no cases)
+      const folderNode = page.getByTestId(`folder-node-${folderId}`);
+      await expect(folderNode).toBeVisible({ timeout: 15000 });
+      await folderNode.click();
 
-    // Wait for actual case rows to render (not just the loading skeleton)
-    const caseCheckbox = page
-      .locator('[data-testid^="case-checkbox-"]')
-      .first();
-    await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
+      // Wait for actual case rows to render (not just the loading skeleton)
+      const caseCheckbox = page
+        .locator('[data-testid^="case-checkbox-"]')
+        .first();
+      await expect(caseCheckbox).toBeVisible({ timeout: 15000 });
 
-    // Select all cases via header checkbox
-    const headerCheckbox = page.locator('thead [role="checkbox"]').first();
-    await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
-    await headerCheckbox.click();
+      // Select all cases via header checkbox
+      const headerCheckbox = page.locator('thead [role="checkbox"]').first();
+      await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
+      await headerCheckbox.click();
+    });
 
-    const qsButton = page.getByTestId("quickscript-cases-button");
-    await expect(qsButton).toBeVisible({ timeout: 10000 });
-    await qsButton.click();
+    await test.step("Open QuickScript modal and verify template selector renders on fallback path", async () => {
+      const qsButton = page.getByTestId("quickscript-cases-button");
+      await expect(qsButton).toBeVisible({ timeout: 10000 });
+      await qsButton.click();
 
-    const qsDialog = page.getByTestId("quickscript-dialog");
-    await expect(qsDialog).toBeVisible({ timeout: 10000 });
+      const qsDialog = page.getByTestId("quickscript-dialog");
+      await expect(qsDialog).toBeVisible({ timeout: 10000 });
 
-    // The dialog should render with template selector visible (fallback path)
-    const templateSelect = qsDialog.getByTestId("quickscript-template-select");
-    await expect(templateSelect).toBeVisible({ timeout: 5000 });
+      // The dialog should render with template selector visible (fallback path)
+      const templateSelect = qsDialog.getByTestId(
+        "quickscript-template-select"
+      );
+      await expect(templateSelect).toBeVisible({ timeout: 5000 });
+    });
   });
 });
 
@@ -406,24 +469,33 @@ test.describe("TipTap Writing Assistant (AI-05)", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E Writing ${ts}`);
 
-    await page.goto(`/en-US/projects/documentation/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    let projectId: number | undefined;
 
-    // Enter edit mode
-    const editButton = page.getByRole("button", {
-      name: /Edit Documentation/i,
+    await test.step("Seed project", async () => {
+      projectId = await api.createProject(`E2E Writing ${ts}`);
     });
-    await expect(editButton).toBeVisible({ timeout: 15000 });
-    await editButton.click();
 
-    // TipTap toolbar should be visible
-    await expect(page.getByTestId("tiptap-bold")).toBeVisible({
-      timeout: 5000,
+    await test.step("Open documentation page and enter edit mode", async () => {
+      await page.goto(`/en-US/projects/documentation/${projectId}`);
+      await page.waitForLoadState("networkidle");
+
+      // Enter edit mode
+      const editButton = page.getByRole("button", {
+        name: /Edit Documentation/i,
+      });
+      await expect(editButton).toBeVisible({ timeout: 15000 });
+      await editButton.click();
     });
-    await expect(page.getByTestId("tiptap-italic")).toBeVisible({
-      timeout: 5000,
+
+    await test.step("Verify TipTap toolbar is visible", async () => {
+      // TipTap toolbar should be visible
+      await expect(page.getByTestId("tiptap-bold")).toBeVisible({
+        timeout: 5000,
+      });
+      await expect(page.getByTestId("tiptap-italic")).toBeVisible({
+        timeout: 5000,
+      });
     });
   });
 
@@ -432,59 +504,70 @@ test.describe("TipTap Writing Assistant (AI-05)", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E Writing AI ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E LLM Write ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
 
-    // Mock the chat API for writing assistant
-    await page.route("**/api/llm/chat", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          success: true,
-          response: {
-            content:
-              "Here is AI-generated documentation content for your project...",
-            model: "mock",
-            promptTokens: 50,
-            completionTokens: 100,
-            totalTokens: 150,
-          },
-        }),
+    let projectId: number | undefined;
+
+    await test.step("Seed project and LLM integration", async () => {
+      projectId = await api.createProject(`E2E Writing AI ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E LLM Write ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+    });
+
+    await test.step("Mock the chat API for writing assistant", async () => {
+      // Mock the chat API for writing assistant
+      await page.route("**/api/llm/chat", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            response: {
+              content:
+                "Here is AI-generated documentation content for your project...",
+              model: "mock",
+              promptTokens: 50,
+              completionTokens: 100,
+              totalTokens: 150,
+            },
+          }),
+        });
       });
     });
 
-    await page.goto(`/en-US/projects/documentation/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open documentation page and enter edit mode", async () => {
+      await page.goto(`/en-US/projects/documentation/${projectId}`);
+      await page.waitForLoadState("networkidle");
 
-    // Enter edit mode
-    const editButton = page.getByRole("button", {
-      name: /Edit Documentation/i,
+      // Enter edit mode
+      const editButton = page.getByRole("button", {
+        name: /Edit Documentation/i,
+      });
+      await expect(editButton).toBeVisible({ timeout: 15000 });
+      await editButton.click();
+
+      // Wait for editor
+      await expect(page.locator('[contenteditable="true"]')).toBeVisible({
+        timeout: 5000,
+      });
     });
-    await expect(editButton).toBeVisible({ timeout: 15000 });
-    await editButton.click();
 
-    // Wait for editor
-    await expect(page.locator('[contenteditable="true"]')).toBeVisible({
-      timeout: 5000,
+    await test.step("Verify AI writing assistant button when present", async () => {
+      // AI writing assistant button may not render if LLM integration isn't configured at instance level
+      const aiButtonCount = await page
+        .locator(
+          '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic"), button:has-text("Write")'
+        )
+        .count();
+      if (aiButtonCount > 0) {
+        await expect(
+          page
+            .locator(
+              '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic"), button:has-text("Write")'
+            )
+            .first()
+        ).toBeVisible({ timeout: 5000 });
+      }
     });
-
-    // AI writing assistant button may not render if LLM integration isn't configured at instance level
-    const aiButtonCount = await page
-      .locator(
-        '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic"), button:has-text("Write")'
-      )
-      .count();
-    if (aiButtonCount > 0) {
-      await expect(
-        page
-          .locator(
-            '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic"), button:has-text("Write")'
-          )
-          .first()
-      ).toBeVisible({ timeout: 5000 });
-    }
   });
 
   test("should invoke AI writing assistant and verify mock chat response flow", async ({
@@ -492,79 +575,92 @@ test.describe("TipTap Writing Assistant (AI-05)", () => {
     api,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E Writing Chat ${ts}`);
-    const llmId = await api.createLlmIntegration(`E2E LLM WriteChat ${ts}`);
-    await api.linkLlmToProject(projectId, llmId);
 
-    // Mock the chat API
-    await page.route("**/api/llm/chat", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          success: true,
-          response: {
-            content:
-              "Here is AI-generated documentation content. This is a comprehensive description of the project's testing strategy and coverage goals.",
-            model: "mock-model",
-            promptTokens: 75,
-            completionTokens: 120,
-            totalTokens: 195,
-          },
-        }),
+    let projectId: number | undefined;
+
+    await test.step("Seed project and LLM integration", async () => {
+      projectId = await api.createProject(`E2E Writing Chat ${ts}`);
+      const llmId = await api.createLlmIntegration(`E2E LLM WriteChat ${ts}`);
+      await api.linkLlmToProject(projectId, llmId);
+    });
+
+    await test.step("Mock the chat API", async () => {
+      // Mock the chat API
+      await page.route("**/api/llm/chat", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            response: {
+              content:
+                "Here is AI-generated documentation content. This is a comprehensive description of the project's testing strategy and coverage goals.",
+              model: "mock-model",
+              promptTokens: 75,
+              completionTokens: 120,
+              totalTokens: 195,
+            },
+          }),
+        });
       });
     });
 
-    await page.goto(`/en-US/projects/documentation/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open documentation page and enter edit mode", async () => {
+      await page.goto(`/en-US/projects/documentation/${projectId}`);
+      await page.waitForLoadState("networkidle");
 
-    await expect(
-      page.getByRole("button", { name: /Edit Documentation/i })
-    ).toBeVisible({
-      timeout: 15000,
+      await expect(
+        page.getByRole("button", { name: /Edit Documentation/i })
+      ).toBeVisible({
+        timeout: 15000,
+      });
+
+      // Enter edit mode
+      await page.getByRole("button", { name: /Edit Documentation/i }).click();
     });
 
-    // Enter edit mode
-    await page.getByRole("button", { name: /Edit Documentation/i }).click();
+    await test.step("Type content and verify TipTap toolbar", async () => {
+      // Verify editor is available
+      const editor = page.locator('[contenteditable="true"]');
+      await expect(editor).toBeVisible({ timeout: 5000 });
 
-    // Verify editor is available
-    const editor = page.locator('[contenteditable="true"]');
-    await expect(editor).toBeVisible({ timeout: 5000 });
+      // Type some content
+      await editor.click();
+      await editor.type("Testing documentation");
 
-    // Type some content
-    await editor.click();
-    await editor.type("Testing documentation");
-
-    // The TipTap toolbar should be visible with standard formatting options
-    await expect(page.getByTestId("tiptap-bold")).toBeVisible({
-      timeout: 5000,
+      // The TipTap toolbar should be visible with standard formatting options
+      await expect(page.getByTestId("tiptap-bold")).toBeVisible({
+        timeout: 5000,
+      });
     });
 
-    // AI button may not render if LLM integration isn't configured at instance level
-    const aiButtonCount = await page
-      .locator(
-        '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic")'
-      )
-      .count();
-
-    if (aiButtonCount > 0) {
-      const aiButton = page
+    await test.step("Invoke AI writing assistant when present and verify assistant UI", async () => {
+      // AI button may not render if LLM integration isn't configured at instance level
+      const aiButtonCount = await page
         .locator(
           '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic")'
         )
-        .first();
-      await expect(aiButton).toBeVisible({ timeout: 5000 });
+        .count();
 
-      // Click the AI button to invoke the writing assistant
-      await aiButton.click();
+      if (aiButtonCount > 0) {
+        const aiButton = page
+          .locator(
+            '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic")'
+          )
+          .first();
+        await expect(aiButton).toBeVisible({ timeout: 5000 });
 
-      // After clicking, the writing assistant should show a dialog, popover, or dropdown
-      const assistantUI = page
-        .locator(
-          '[role="dialog"], [role="tooltip"], [data-radix-popper-content-wrapper], [role="menu"]'
-        )
-        .first();
-      await expect(assistantUI).toBeVisible({ timeout: 5000 });
-    }
+        // Click the AI button to invoke the writing assistant
+        await aiButton.click();
+
+        // After clicking, the writing assistant should show a dialog, popover, or dropdown
+        const assistantUI = page
+          .locator(
+            '[role="dialog"], [role="tooltip"], [data-radix-popper-content-wrapper], [role="menu"]'
+          )
+          .first();
+        await expect(assistantUI).toBeVisible({ timeout: 5000 });
+      }
+    });
   });
 });

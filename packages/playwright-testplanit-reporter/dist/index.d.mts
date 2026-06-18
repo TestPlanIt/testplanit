@@ -128,6 +128,27 @@ interface TestPlanItReporterOptions {
      */
     autoCreateTestCases?: boolean;
     /**
+     * Whether to capture Playwright `test.step()` calls as authored steps on
+     * test cases that the reporter creates. Each `test.step()` title becomes a
+     * step (nested steps are flattened in execution order and prefixed to show
+     * their depth). Only applies to newly created cases — existing/linked cases
+     * are never modified. Requires `autoCreateTestCases`.
+     * @default true
+     */
+    captureSteps?: boolean;
+    /**
+     * Whether to overwrite the steps of an **existing** case with the captured
+     * `test.step()` calls every run — keeping the case in sync as the script
+     * changes. Applies to cases linked by ID and to cases matched by
+     * auto-create. Existing steps are soft-deleted and replaced.
+     *
+     * This is **destructive**: any manual edits to a case's steps are discarded
+     * on the next run. As a safeguard, a test with no `test.step()` calls never
+     * clears existing steps. Off by default.
+     * @default false
+     */
+    overwriteSteps?: boolean;
+    /**
      * Whether to create folder hierarchy based on the describe-block structure.
      * When enabled, nested `test.describe` blocks create nested folders:
      * describe('Suite A') > describe('Suite B') > test('...')
@@ -228,6 +249,12 @@ interface TrackedTestResult {
     systemErr?: string;
     /** JUnit test result ID (set after the result is created) */
     junitResultId?: number;
+    /**
+     * Flattened `test.step()` titles (in execution order, nested steps prefixed
+     * to show depth). Populated only when step capture is enabled; used to seed
+     * authored steps on auto-created cases.
+     */
+    stepTitles?: string[];
 }
 /**
  * Resolved IDs after looking up names
@@ -251,6 +278,8 @@ interface ReporterStats {
     testCasesCreated: number;
     /** Number of test cases that were moved from deleted folders */
     testCasesMoved: number;
+    /** Number of authored steps created on auto-created test cases */
+    testStepsCreated: number;
     /** Number of folders that were created for hierarchy */
     foldersCreated: number;
     /** Number of test results reported (passed) */
@@ -284,6 +313,8 @@ interface ReporterState {
     caseIdMap: Map<string, Promise<number>>;
     /** Map of test run case keys to in-flight/resolved IDs */
     testRunCaseMap: Map<string, Promise<number>>;
+    /** Map of case IDs to an in-flight/resolved step-write, so steps are written once per case per run */
+    caseStepsMap: Map<number, Promise<void>>;
     /** Map of folder paths (joined by >) to in-flight/resolved folder IDs */
     folderPathMap: Map<string, Promise<number>>;
     /** Status ID mappings */
@@ -358,6 +389,16 @@ declare class TestPlanItReporter implements Reporter {
      * creating the folder hierarchy first when enabled.
      */
     private resolveAutoCreatedCaseId;
+    /**
+     * Write captured `test.step()` titles as authored steps on a case (memoized
+     * so it runs once per case per run). When `replace` is set, the case's
+     * existing steps are soft-deleted first — but a test with no captured steps
+     * never clears anything, so an existing case is never accidentally emptied.
+     *
+     * Best-effort: failures are logged but never bubble up, so result reporting
+     * is never blocked by step syncing.
+     */
+    private writeCaseSteps;
     /** Resolve (and cache) the folder ID for a describe path. */
     private getFolderId;
     /** Add the case to the run once (memoized per case). */
@@ -392,6 +433,16 @@ declare class TestPlanItReporter implements Reporter {
     private getProjectName;
     private joinOutput;
     private createCaseKey;
+    /**
+     * Flatten Playwright `test.step()` calls into ordered step titles.
+     *
+     * Only user steps (`category === 'test.step'`) are kept — auto-instrumented
+     * categories (`pw:api`, `expect`, `hook`, `fixture`) are skipped, but we
+     * still descend through them so a `test.step()` nested inside one is not
+     * lost. Nested user steps are emitted in execution order and prefixed with a
+     * depth marker so the hierarchy survives as plain text.
+     */
+    private extractStepTitles;
     private formatRunName;
     private extForContentType;
     private printSummary;

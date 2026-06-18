@@ -14,68 +14,72 @@ test.describe("Admin SSO - Email Server Configuration", () => {
     page,
   }) => {
     // This test assumes EMAIL_SERVER_HOST and related env vars are NOT set
-    // Navigate to admin SSO page
-    await page.goto("/en-US/admin/sso");
-    await page.waitForLoadState("networkidle");
-
-    // Wait for the page to load and check email server status
-    await page.waitForTimeout(1000); // Allow time for email server status check
-
-    // Find the email verification switch
-    // Note: We need to check if the switch is disabled
     const emailVerificationSection = page
       .locator('text="Require Email Verification"')
       .locator("..");
 
-    // The switch should exist
-    await expect(emailVerificationSection).toBeVisible();
+    await test.step("Open admin SSO page and confirm the email verification setting is shown", async () => {
+      // Navigate to admin SSO page
+      await page.goto("/en-US/admin/sso");
+      await page.waitForLoadState("networkidle");
 
-    // Check if warning message is shown when email server is not configured
-    // This assumes the test environment has no email server configured
-    const warningText = page.getByText(/email server is not configured/i);
+      // Wait for the page to load and check email server status
+      await page.waitForTimeout(1000); // Allow time for email server status check
 
-    // If warning is visible, email server is not configured and switch should be disabled
-    const isWarningVisible = await warningText.isVisible().catch(() => false);
+      // Find the email verification switch
+      // Note: We need to check if the switch is disabled
+      // The switch should exist
+      await expect(emailVerificationSection).toBeVisible();
+    });
 
-    if (isWarningVisible) {
-      // Email server not configured - verify switch is disabled and off
-      const switchElement = emailVerificationSection.locator(
-        'button[role="switch"]'
-      );
-      await expect(switchElement).toBeDisabled();
-      await expect(switchElement).toHaveAttribute("data-state", "unchecked");
-    }
+    await test.step("Verify the switch is disabled and off when no email server is configured", async () => {
+      // Check if warning message is shown when email server is not configured
+      // This assumes the test environment has no email server configured
+      const warningText = page.getByText(/email server is not configured/i);
+
+      // If warning is visible, email server is not configured and switch should be disabled
+      const isWarningVisible = await warningText.isVisible().catch(() => false);
+
+      if (isWarningVisible) {
+        // Email server not configured - verify switch is disabled and off
+        const switchElement = emailVerificationSection.locator(
+          'button[role="switch"]'
+        );
+        await expect(switchElement).toBeDisabled();
+        await expect(switchElement).toHaveAttribute("data-state", "unchecked");
+      }
+    });
   });
 
   test("Warning message should be displayed when email server is not configured", async ({
     page,
   }) => {
-    await page.goto("/en-US/admin/sso");
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
+    await test.step("Open admin SSO page", async () => {
+      await page.goto("/en-US/admin/sso");
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(1000);
+    });
 
-    // Check if warning message is visible
-    const warningText = page.getByText(
-      /email server is not configured.*email verification is automatically disabled/i
-    );
+    await test.step("Verify the unconfigured-email-server warning is styled as a warning", async () => {
+      // Check if warning message is visible
+      const warningText = page.getByText(
+        /email server is not configured.*email verification is automatically disabled/i
+      );
 
-    const isWarningVisible = await warningText.isVisible().catch(() => false);
+      const isWarningVisible = await warningText.isVisible().catch(() => false);
 
-    if (isWarningVisible) {
-      // Verify warning has appropriate styling (warning theme color or amber/yellow)
-      const warningElement = warningText.locator("..");
-      const classList = await warningElement.getAttribute("class");
-      expect(classList).toMatch(/text-warning|text-amber|text-yellow/);
-    }
+      if (isWarningVisible) {
+        // Verify warning has appropriate styling (warning theme color or amber/yellow)
+        const warningElement = warningText.locator("..");
+        const classList = await warningElement.getAttribute("class");
+        expect(classList).toMatch(/text-warning|text-amber|text-yellow/);
+      }
+    });
   });
 
   test("Cannot enable email verification when email server is not configured", async ({
     page,
   }) => {
-    await page.goto("/en-US/admin/sso");
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
-
     const emailVerificationSection = page
       .locator('text="Require Email Verification"')
       .locator("..");
@@ -84,24 +88,32 @@ test.describe("Admin SSO - Email Server Configuration", () => {
       'button[role="switch"]'
     );
 
-    // Check if switch is disabled
-    const isDisabled = await switchElement.isDisabled().catch(() => false);
+    await test.step("Open admin SSO page", async () => {
+      await page.goto("/en-US/admin/sso");
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(1000);
+    });
 
-    if (isDisabled) {
-      // Try to click the disabled switch - should not change state
-      const initialState = await switchElement.getAttribute("data-state");
+    await test.step("Force-click the disabled switch and confirm it stays unchecked", async () => {
+      // Check if switch is disabled
+      const isDisabled = await switchElement.isDisabled().catch(() => false);
 
-      // Attempt to click (should have no effect)
-      await switchElement.click({ force: true }).catch(() => {});
+      if (isDisabled) {
+        // Try to click the disabled switch - should not change state
+        const initialState = await switchElement.getAttribute("data-state");
 
-      // Wait a bit to see if state changes
-      await page.waitForTimeout(500);
+        // Attempt to click (should have no effect)
+        await switchElement.click({ force: true }).catch(() => {});
 
-      // State should remain unchanged
-      const finalState = await switchElement.getAttribute("data-state");
-      expect(finalState).toBe(initialState);
-      expect(finalState).toBe("unchecked");
-    }
+        // Wait a bit to see if state changes
+        await page.waitForTimeout(500);
+
+        // State should remain unchanged
+        const finalState = await switchElement.getAttribute("data-state");
+        expect(finalState).toBe(initialState);
+        expect(finalState).toBe("unchecked");
+      }
+    });
   });
 });
 
@@ -109,56 +121,64 @@ test.describe("Admin Notifications - Email Server Configuration", () => {
   test("Email notification options should be hidden when no email server is configured", async ({
     page,
   }) => {
-    await page.goto("/en-US/admin/notifications");
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
+    await test.step("Open admin notifications page", async () => {
+      await page.goto("/en-US/admin/notifications");
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(1000);
+    });
 
-    // Check for email-based notification options by their IDs
-    const immediateEmailOption = page.locator("#in-app-email-immediate");
-    const dailyEmailOption = page.locator("#in-app-email-daily");
+    await test.step("Confirm email notification options are hidden while non-email options remain visible", async () => {
+      // Check for email-based notification options by their IDs
+      const immediateEmailOption = page.locator("#in-app-email-immediate");
+      const dailyEmailOption = page.locator("#in-app-email-daily");
 
-    // These should be hidden when no email server is configured
-    const isImmediateVisible = await immediateEmailOption
-      .isVisible()
-      .catch(() => false);
-    const isDailyVisible = await dailyEmailOption
-      .isVisible()
-      .catch(() => false);
+      // These should be hidden when no email server is configured
+      const isImmediateVisible = await immediateEmailOption
+        .isVisible()
+        .catch(() => false);
+      const isDailyVisible = await dailyEmailOption
+        .isVisible()
+        .catch(() => false);
 
-    // If they're hidden, that's correct behavior
-    if (!isImmediateVisible && !isDailyVisible) {
-      // Verify that non-email options are still visible
-      const inAppOption = page.locator("#in-app");
-      await expect(inAppOption).toBeVisible();
+      // If they're hidden, that's correct behavior
+      if (!isImmediateVisible && !isDailyVisible) {
+        // Verify that non-email options are still visible
+        const inAppOption = page.locator("#in-app");
+        await expect(inAppOption).toBeVisible();
 
-      const noneOption = page.locator("#none");
-      await expect(noneOption).toBeVisible();
-    }
+        const noneOption = page.locator("#none");
+        await expect(noneOption).toBeVisible();
+      }
+    });
   });
 
   test("Default notification mode should fallback to IN_APP when email server is not configured", async ({
     page,
   }) => {
-    await page.goto("/en-US/admin/notifications");
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
+    await test.step("Open admin notifications page", async () => {
+      await page.goto("/en-US/admin/notifications");
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(1000);
+    });
 
-    // Check if email options are hidden
-    const immediateEmailOption = page.locator("#in-app-email-immediate");
-    const isEmailVisible = await immediateEmailOption
-      .isVisible()
-      .catch(() => false);
+    await test.step("Confirm the selected mode falls back to IN_APP or NONE when email is hidden", async () => {
+      // Check if email options are hidden
+      const immediateEmailOption = page.locator("#in-app-email-immediate");
+      const isEmailVisible = await immediateEmailOption
+        .isVisible()
+        .catch(() => false);
 
-    if (!isEmailVisible) {
-      // Email server not configured
-      // Verify IN_APP or NONE is selected, not email modes
-      const inAppOption = page.locator("#in-app");
-      const noneOption = page.locator("#none");
+      if (!isEmailVisible) {
+        // Email server not configured
+        // Verify IN_APP or NONE is selected, not email modes
+        const inAppOption = page.locator("#in-app");
+        const noneOption = page.locator("#none");
 
-      const isInAppChecked = await inAppOption.isChecked().catch(() => false);
-      const isNoneChecked = await noneOption.isChecked().catch(() => false);
+        const isInAppChecked = await inAppOption.isChecked().catch(() => false);
+        const isNoneChecked = await noneOption.isChecked().catch(() => false);
 
-      expect(isInAppChecked || isNoneChecked).toBe(true);
-    }
+        expect(isInAppChecked || isNoneChecked).toBe(true);
+      }
+    });
   });
 });

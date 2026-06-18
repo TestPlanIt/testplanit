@@ -89,83 +89,110 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
   });
 
   test("dispatchWebhook returns skipped_inactive, no HTTP fired, no new delivery row", async () => {
-    const stubHitsBefore = stub.captures.length;
-    const deliveriesBefore = await prisma.webhookDelivery.count({
-      where: { webhookConfigId: configId },
+    let stubHitsBefore: number | undefined;
+    let deliveriesBefore: number | undefined;
+    let outcome: Awaited<ReturnType<typeof dispatchWebhook>> | undefined;
+
+    await test.step("Record baseline stub hits and delivery row count", async () => {
+      stubHitsBefore = stub.captures.length;
+      deliveriesBefore = await prisma.webhookDelivery.count({
+        where: { webhookConfigId: configId },
+      });
     });
 
-    const outcome = await dispatchWebhook(
-      {
-        outboxEventId,
-        webhookConfigId: configId,
-        attempt: 1,
-        tenantId: undefined,
-      },
-      prisma
-    );
-
-    // Contract — dispatcher reports the gate fired.
-    expect(outcome).toEqual({ outcome: "skipped_inactive" });
-
-    // Stub MUST NOT have been hit. The gate runs BEFORE fetch().
-    expect(stub.captures.length).toBe(stubHitsBefore);
-
-    // No new WebhookDelivery row written. The skipped_inactive path does
-    // NOT write a row (this is the documented dispatcher behavior — only
-    // the DISABLED gate writes a stub row).
-    const deliveriesAfter = await prisma.webhookDelivery.count({
-      where: { webhookConfigId: configId },
+    await test.step("Dispatch the webhook for the soft-deleted project", async () => {
+      outcome = await dispatchWebhook(
+        {
+          outboxEventId,
+          webhookConfigId: configId,
+          attempt: 1,
+          tenantId: undefined,
+        },
+        prisma
+      );
     });
-    expect(deliveriesAfter).toBe(deliveriesBefore);
+
+    await test.step("Verify gate skipped dispatch with no HTTP and no new delivery row", async () => {
+      // Contract — dispatcher reports the gate fired.
+      expect(outcome).toEqual({ outcome: "skipped_inactive" });
+
+      // Stub MUST NOT have been hit. The gate runs BEFORE fetch().
+      expect(stub.captures.length).toBe(stubHitsBefore);
+
+      // No new WebhookDelivery row written. The skipped_inactive path does
+      // NOT write a row (this is the documented dispatcher behavior — only
+      // the DISABLED gate writes a stub row).
+      const deliveriesAfter = await prisma.webhookDelivery.count({
+        where: { webhookConfigId: configId },
+      });
+      expect(deliveriesAfter).toBe(deliveriesBefore);
+    });
   });
 
   test("dispatchWebhook still returns skipped_inactive on subsequent attempts (gate is stable)", async () => {
-    // Defensive — replaying the dispatch (e.g. if BullMQ retries despite
-    // the gate firing) must not silently switch to a different code path
-    // on the second try. The gate reads `Projects.isDeleted` fresh from
-    // the DB on every call.
-    const stubHitsBefore = stub.captures.length;
-    const outcome = await dispatchWebhook(
-      {
-        outboxEventId,
-        webhookConfigId: configId,
-        attempt: 2,
-        tenantId: undefined,
-      },
-      prisma
-    );
-    expect(outcome).toEqual({ outcome: "skipped_inactive" });
-    expect(stub.captures.length).toBe(stubHitsBefore);
+    let stubHitsBefore: number | undefined;
+    let outcome: Awaited<ReturnType<typeof dispatchWebhook>> | undefined;
+
+    await test.step("Replay the dispatch on a subsequent attempt", async () => {
+      // Defensive — replaying the dispatch (e.g. if BullMQ retries despite
+      // the gate firing) must not silently switch to a different code path
+      // on the second try. The gate reads `Projects.isDeleted` fresh from
+      // the DB on every call.
+      stubHitsBefore = stub.captures.length;
+      outcome = await dispatchWebhook(
+        {
+          outboxEventId,
+          webhookConfigId: configId,
+          attempt: 2,
+          tenantId: undefined,
+        },
+        prisma
+      );
+    });
+
+    await test.step("Verify the gate stays stable with no HTTP fired", async () => {
+      expect(outcome).toEqual({ outcome: "skipped_inactive" });
+      expect(stub.captures.length).toBe(stubHitsBefore);
+    });
   });
 
   test("undeleting the project lets dispatch proceed (gate reverses cleanly)", async () => {
-    // Reverse the soft-delete. Dispatch should now reach the stub. This
-    // proves the gate is a function of CURRENT `Projects.isDeleted` rather
-    // than a one-shot decision baked at config creation time.
-    await prisma.projects.update({
-      where: { id: projectId },
-      data: { isDeleted: false },
+    let outcome: Awaited<ReturnType<typeof dispatchWebhook>> | undefined;
+
+    await test.step("Undelete the project and dispatch the webhook", async () => {
+      // Reverse the soft-delete. Dispatch should now reach the stub. This
+      // proves the gate is a function of CURRENT `Projects.isDeleted` rather
+      // than a one-shot decision baked at config creation time.
+      await prisma.projects.update({
+        where: { id: projectId },
+        data: { isDeleted: false },
+      });
+
+      outcome = await dispatchWebhook(
+        {
+          outboxEventId,
+          webhookConfigId: configId,
+          attempt: 1,
+          tenantId: undefined,
+        },
+        prisma
+      );
     });
 
-    const outcome = await dispatchWebhook(
-      {
-        outboxEventId,
-        webhookConfigId: configId,
-        attempt: 1,
-        tenantId: undefined,
-      },
-      prisma
-    );
-    expect(outcome.outcome).toBe("success");
+    await test.step("Verify dispatch succeeded and reached the stub", async () => {
+      expect(outcome!.outcome).toBe("success");
 
-    await stub.waitForCapture((c) => c.length > 0, 5_000);
-    expect(stub.captures.length).toBeGreaterThan(0);
+      await stub.waitForCapture((c) => c.length > 0, 5_000);
+      expect(stub.captures.length).toBeGreaterThan(0);
+    });
 
-    // Re-soft-delete so the auto-cleanup path runs from the same state the
-    // test left earlier (Playwright's afterAll fires after this).
-    await prisma.projects.update({
-      where: { id: projectId },
-      data: { isDeleted: true },
+    await test.step("Re-soft-delete the project to restore prior state", async () => {
+      // Re-soft-delete so the auto-cleanup path runs from the same state the
+      // test left earlier (Playwright's afterAll fires after this).
+      await prisma.projects.update({
+        where: { id: projectId },
+        data: { isDeleted: true },
+      });
     });
   });
 });

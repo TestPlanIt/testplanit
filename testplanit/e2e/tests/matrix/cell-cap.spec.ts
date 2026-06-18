@@ -36,30 +36,36 @@ test.describe("Matrix view — cell-cap refusal contract @matrix", () => {
     request,
     baseURL,
   }) => {
-    const projectId = await api.createProject(`E2E Matrix Cap ${Date.now()}`);
+    let projectId: number | undefined;
 
-    // The UI's React Query hook (`useMatrixAggregation`) parses the 422
-    // response shape:
-    //   { error: "cell_cap_exceeded", cellCount, threshold, axisCounts: {
-    //     caseCount, configCount, perCaseMaxIterations: [...] }}
-    // The MatrixCellCapNotice unit test asserts the UI renders correctly
-    // when handed that shape. This E2E verifies the route can produce a
-    // non-2xx response at all (auth + project-id resolution + Zod parsing
-    // are healthy in production-build mode).
+    await test.step("Create an empty E2E project", async () => {
+      projectId = await api.createProject(`E2E Matrix Cap ${Date.now()}`);
+    });
 
-    const goodRes = await request.post(
-      `${baseURL}/api/projects/${projectId}/matrix/aggregate`,
-      { data: { filters: {} } }
-    );
-    // Empty project: cell count is 0, well under cap. Returns 200 with an
-    // empty AxesShape.
-    expect(goodRes.status()).toBe(200);
-    const goodBody = await goodRes.json();
-    expect(goodBody).toHaveProperty("caseAxis");
-    expect(goodBody).toHaveProperty("configAxis");
-    expect(goodBody).toHaveProperty("cells");
-    expect(goodBody).toHaveProperty("cellCount");
-    expect(goodBody).toHaveProperty("statusMap");
+    await test.step("POST aggregate request and verify 200 + AxesShape", async () => {
+      // The UI's React Query hook (`useMatrixAggregation`) parses the 422
+      // response shape:
+      //   { error: "cell_cap_exceeded", cellCount, threshold, axisCounts: {
+      //     caseCount, configCount, perCaseMaxIterations: [...] }}
+      // The MatrixCellCapNotice unit test asserts the UI renders correctly
+      // when handed that shape. This E2E verifies the route can produce a
+      // non-2xx response at all (auth + project-id resolution + Zod parsing
+      // are healthy in production-build mode).
+
+      const goodRes = await request.post(
+        `${baseURL}/api/projects/${projectId!}/matrix/aggregate`,
+        { data: { filters: {} } }
+      );
+      // Empty project: cell count is 0, well under cap. Returns 200 with an
+      // empty AxesShape.
+      expect(goodRes.status()).toBe(200);
+      const goodBody = await goodRes.json();
+      expect(goodBody).toHaveProperty("caseAxis");
+      expect(goodBody).toHaveProperty("configAxis");
+      expect(goodBody).toHaveProperty("cells");
+      expect(goodBody).toHaveProperty("cellCount");
+      expect(goodBody).toHaveProperty("statusMap");
+    });
   });
 
   // The standalone /projects/{id}/matrix UI was removed when the matrix
