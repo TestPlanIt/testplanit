@@ -69,3 +69,28 @@ export function automationStepsToCaseSteps(steps: AutomationStep[]): CaseStepRow
 
   return rows;
 }
+
+/**
+ * Never-overwrite guard wrapper (CORE-01). Encodes the decision "only derive
+ * steps for a case that has none" given a caller-supplied signal — it does NOT
+ * query the database itself. The live "does this case already have steps?"
+ * fetch is the per-surface call site's job, deferred to later phases (Phase 2
+ * importer: `prisma.steps.findFirst({ where: { testCaseId, isDeleted: false } })`;
+ * Phase 3 reporter: its existing client) (D-11, D-12).
+ *
+ * When `existingStepCount >= 1` (the case already has at least one non-deleted
+ * step), returns `[]` with no side effects — derivation never clobbers
+ * existing, possibly human-edited steps. When `existingStepCount === 0`,
+ * returns the full mapped rows.
+ *
+ * This wrapper does NOT remove or bypass the reporters' explicit, opt-in
+ * `overwriteSteps` escape hatch — that destructive opt-in stays a documented
+ * caller concern (D-13).
+ */
+export function deriveCaseStepsIfFresh(
+  steps: AutomationStep[],
+  existingStepCount: number,
+): CaseStepRow[] {
+  if (existingStepCount >= 1) return [];
+  return automationStepsToCaseSteps(steps);
+}

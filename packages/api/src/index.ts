@@ -31,6 +31,10 @@
 
 export { TestPlanItClient, TestPlanItError } from './client.js';
 
+// Shared plain-text → TipTap-JSON helper and the automation-step mapper.
+export { tipTapDoc } from './tipTapDoc.js';
+export { automationStepsToCaseSteps, deriveCaseStepsIfFresh } from './mapper.js';
+
 export type {
   // Config
   TestPlanItClientConfig,
@@ -74,6 +78,8 @@ export type {
   CreateTestCaseOptions,
   CreateStepOptions,
   CreateStepsOptions,
+  AutomationStep,
+  CaseStepRow,
   CreateTagOptions,
   CreateFolderOptions,
   AddTestCaseToRunOptions,

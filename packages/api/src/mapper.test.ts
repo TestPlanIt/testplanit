@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { automationStepsToCaseSteps } from './mapper.js';
+import { automationStepsToCaseSteps, deriveCaseStepsIfFresh } from './mapper.js';
 import type { AutomationStep } from './types.js';
 
 describe('automationStepsToCaseSteps', () => {
@@ -103,5 +103,25 @@ describe('automationStepsToCaseSteps', () => {
     expect(rows).toHaveLength(5000);
     expect(rows[0]).toEqual({ step: 'action 0', order: 0 });
     expect(rows[4999]).toEqual({ step: 'action 4999', order: 4999 });
+  });
+});
+
+describe('deriveCaseStepsIfFresh (CORE-01 never-overwrite guard)', () => {
+  const fixture: AutomationStep[] = [
+    { title: 'I am logged in', kind: 'precondition' },
+    { title: 'I add an item to the cart', kind: 'action' },
+    { title: 'the cart shows 1 item', kind: 'assertion' },
+  ];
+
+  it('returns [] with no rows when the case already has 1 non-deleted step', () => {
+    expect(deriveCaseStepsIfFresh(fixture, 1)).toEqual([]);
+  });
+
+  it('returns [] when the case already has several steps', () => {
+    expect(deriveCaseStepsIfFresh(fixture, 5)).toEqual([]);
+  });
+
+  it('passes the mapped rows through when the case has zero steps', () => {
+    expect(deriveCaseStepsIfFresh(fixture, 0)).toEqual(automationStepsToCaseSteps(fixture));
   });
 });

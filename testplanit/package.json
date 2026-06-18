@@ -132,6 +132,7 @@
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.14.2",
     "@tanstack/zod-form-adapter": "^0.42.1",
+    "@testplanit/api": "workspace:*",
     "@tippyjs/react": "^4.2.6",
     "@tiptap/core": "^3.26.1",
     "@tiptap/extension-blockquote": "^3.26.1",
