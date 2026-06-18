@@ -90,6 +90,10 @@ describe("NotificationContent", () => {
         userRegisteredMessageForm:
           "{userName} ({userEmail}) has registered via the registration form",
         viewUserList: "View user list",
+        aiStepsDerivedTitle: "AI-Derived Test Steps Ready",
+        aiStepsDerivedMessage:
+          "{count} test cases were given AI-derived steps — review for accuracy.",
+        aiStepsDerivedReviewLink: "Review test run",
       };
 
       let result = translations[key] || key;
@@ -268,6 +272,53 @@ describe("NotificationContent", () => {
       expect(screen.getByText("assigned you 5 test cases")).toBeInTheDocument();
       expect(screen.getByText("Sprint 1 Tests")).toBeInTheDocument();
       expect(screen.getByText("2 cases in")).toBeInTheDocument();
+    });
+  });
+
+  describe("AI-Derived Steps", () => {
+    it("should render the run review link and the count message", () => {
+      const notification = {
+        id: "ai-1",
+        type: "AI_STEPS_DERIVED",
+        title: "AI-Derived Test Steps Ready",
+        message: "stored fallback message",
+        data: {
+          projectId: 456,
+          testRunId: 123,
+          derivedCount: 3,
+          testRunName: "Nightly CI",
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(
+        screen.getByText("AI-Derived Test Steps Ready")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/3 test cases were given AI-derived steps/)
+      ).toBeInTheDocument();
+      const link = screen.getByRole("link");
+      expect(link).toHaveAttribute("href", "/projects/runs/456/123");
+      expect(screen.getByText("Review test run")).toBeInTheDocument();
+    });
+
+    it("should fall back to the stored title/message when data is incomplete", () => {
+      const notification = {
+        id: "ai-2",
+        type: "AI_STEPS_DERIVED",
+        title: "AI-Derived Test Steps Ready",
+        message: "stored fallback message",
+        data: {},
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(
+        screen.getByText("stored fallback message")
+      ).toBeInTheDocument();
+      // No run link when projectId/testRunId are missing
+      expect(screen.queryByRole("link")).not.toBeInTheDocument();
     });
   });
 

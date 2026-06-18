@@ -66,6 +66,11 @@ import {
   deriveCaseStepsIfFresh,
   tipTapDoc,
 } from "@testplanit/api";
+import {
+  enqueueDeriveCaseSteps,
+  isLlmStepDerivationEligible,
+} from "~/lib/services/llmStepDerivation";
+import type { DeriveCaseStepsJobData } from "~/workers/deriveCaseStepsWorker";
 import { progressMessages } from "./progress-messages";
 
 // Helper function to find matching status
@@ -625,6 +630,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           className: string | null;
           error: string;
         }> = [];
+
+        // Phase 4: low-structure stepless cases collected across all suites for
+        // opt-in, background LLM step derivation (one job enqueued after the loop).
+        const llmEligibleCases: DeriveCaseStepsJobData["cases"] = [];
 
         sendProgress(
           25,
@@ -1205,6 +1214,26 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                       isDeleted: false,
                     },
                   });
+
+                  // Phase 4 (D-02): a case the deterministic path can't help —
+                  // low-structure (no parsed automation steps) AND stepless — is
+                  // eligible for opt-in background LLM derivation. Collect now;
+                  // one job is enqueued after the suite loop.
+                  if (
+                    isLlmStepDerivationEligible(
+                      automationSteps.length,
+                      existingStepCount
+                    )
+                  ) {
+                    llmEligibleCases.push({
+                      testCaseId: repositoryCase.id,
+                      name: testCase.name,
+                      className: className ?? null,
+                      failure: testCase.failure ?? null,
+                      systemOut: extendedData?.systemOut ?? null,
+                    });
+                  }
+
                   let derivedRows;
                   if (overwriteSteps) {
                     // Destructive opt-in (Phase 2.1): re-derive and replace.
@@ -1323,6 +1352,28 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             testRunId,
             fileCount: files.length,
           });
+        }
+
+        // Phase 4 (D-03/D-06/LLM-01..03): enqueue ONE background LLM step-derivation
+        // job per import for the collected low-structure stepless cases — but only
+        // when an LLM provider is configured for the project (provider-config IS the
+        // opt-in; resolve once, inert when null). Never inline (no chat() here) and
+        // wrapped so a queue/LLM hiccup can never fail an already-successful import.
+        if (llmEligibleCases.length > 0 && userId) {
+          try {
+            await enqueueDeriveCaseSteps({
+              prisma,
+              projectId,
+              testRunId,
+              userId,
+              cases: llmEligibleCases,
+            });
+          } catch (enqueueErr) {
+            console.error(
+              "Failed to enqueue derive-case-steps job (non-blocking):",
+              enqueueErr
+            );
+          }
         }
 
         // Advisory duplicate warnings — never blocks import

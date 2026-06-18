@@ -5742,7 +5742,10 @@
         "reviewReminderTitle": "Review still pending",
         "reviewReminderAction": "is still waiting on your review of",
         "reviewReminderEmailMessage": "Reminder: {actorName}'s review request on {entityLabel} \"{entityName}\" in project \"{projectName}\" has been pending for {hoursPending} hours.",
-        "reviewReminderHoursPending": "Pending for {hoursPending, plural, one {# hour} other {# hours}}"
+        "reviewReminderHoursPending": "Pending for {hoursPending, plural, one {# hour} other {# hours}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {
