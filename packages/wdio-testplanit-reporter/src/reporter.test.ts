@@ -23,9 +23,32 @@ vi.mock("@wdio/reporter", () => {
 });
 
 // Mock the API client
+// Hoisted spies so tests can drive/assert the step-write + case-create path.
+const apiMocks = vi.hoisted(() => ({
+  findOrCreateTestCase: vi.fn(async () => ({
+    testCase: { id: 456, name: "Test Case" },
+    action: "found" as "found" | "created" | "moved",
+  })),
+  createSteps: vi.fn(async (opts: { testCaseId: number; steps: unknown[] }) => ({
+    count: opts.steps.length,
+  })),
+  softDeleteCaseSteps: vi.fn(async () => 3),
+  automationStepsToCaseSteps: vi.fn((steps: { title: string; kind: string }[]) =>
+    steps.map((s, i) => ({
+      step: s.title,
+      expectedResult: s.kind === "assertion" ? s.title : undefined,
+      order: i,
+    })),
+  ),
+}));
+
 vi.mock("@testplanit/api", () => {
   return {
+    automationStepsToCaseSteps: apiMocks.automationStepsToCaseSteps,
     TestPlanItClient: class MockTestPlanItClient {
+      findOrCreateTestCase = apiMocks.findOrCreateTestCase;
+      createSteps = apiMocks.createSteps;
+      softDeleteCaseSteps = apiMocks.softDeleteCaseSteps;
       async getStatuses() {
         return [
           {
@@ -113,9 +136,6 @@ vi.mock("@testplanit/api", () => {
       async findOrCreateFolderPath() {
         return { id: 1, name: "Folder" };
       }
-      async findOrCreateTestCase() {
-        return { testCase: { id: 456, name: "Test Case" }, action: "found" };
-      }
     },
     TestPlanItError: class TestPlanItError extends Error {
       constructor(message: string) {
@@ -154,6 +174,12 @@ describe("TestPlanItReporter", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    apiMocks.findOrCreateTestCase.mockResolvedValue({
+      testCase: { id: 456, name: "Test Case" },
+      action: "found",
+    });
+    apiMocks.createSteps.mockImplementation(async (opts) => ({ count: opts.steps.length }));
+    apiMocks.softDeleteCaseSteps.mockResolvedValue(3);
     reporter = new TestPlanItReporter(defaultOptions);
   });
 
@@ -634,5 +660,84 @@ describe("service-managed mode", () => {
     reporter.onTestPass(testStats);
     const state = reporter.getState();
     expect(state.results.size).toBe(1);
+  });
+
+  describe("Cucumber scenario accumulation", () => {
+    const runner = (framework: string) =>
+      ({ cid: "0-0", config: { framework }, capabilities: {} }) as unknown as RunnerStats;
+    const featureSuite = () =>
+      ({ title: "Feature: Login", uid: "f1" }) as unknown as SuiteStats;
+    const scenarioSuite = () =>
+      ({ type: "scenario", title: "Scenario: User logs in", uid: "s1", cid: "0-0", start: new Date() }) as unknown as SuiteStats;
+    const stepTest = (title: string) =>
+      ({ type: "test", title, fullTitle: title, uid: title, cid: "0-0", state: "passed", duration: 1, start: new Date(), end: new Date(), retries: 0 }) as unknown as TestStats;
+    const cucumberReporter = (opts: Record<string, unknown> = {}) =>
+      new TestPlanItReporter({
+        ...defaultOptions,
+        autoCreateTestCases: true,
+        parentFolderId: 10,
+        templateId: 1,
+        ...opts,
+      });
+
+    // Await the async reportResult operations tracked on the reporter.
+    const flush = async (r: TestPlanItReporter) => {
+      const ops = (r as unknown as { pendingOperations: Set<Promise<void>> }).pendingOperations;
+      for (let i = 0; i < 10 && ops.size > 0; i++) {
+        await Promise.allSettled([...ops]);
+      }
+    };
+
+    const driveScenario = (r: TestPlanItReporter, framework = "cucumber") => {
+      r.onRunnerStart(runner(framework));
+      r.onSuiteStart(featureSuite());
+      r.onSuiteStart(scenarioSuite());
+      r.onTestPass(stepTest("Given I am on the homepage"));
+      r.onTestPass(stepTest("When I enter valid credentials"));
+      r.onTestPass(stepTest("Then I should see the dashboard"));
+      r.onSuiteEnd(scenarioSuite());
+    };
+
+    it("creates ONE case per scenario (not per step) and writes the Given/When/Then steps", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 456, name: "User logs in" }, action: "created" });
+      const r = cucumberReporter();
+      driveScenario(r);
+      await flush(r);
+
+      expect(apiMocks.findOrCreateTestCase).toHaveBeenCalledTimes(1);
+      expect(apiMocks.createSteps).toHaveBeenCalledTimes(1);
+      expect(apiMocks.createSteps.mock.calls[0][0].steps).toHaveLength(3);
+      expect(apiMocks.createSteps.mock.calls[0][0].testCaseId).toBe(456);
+    });
+
+    it("creates the scenario case but writes no steps when captureSteps is false", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 456, name: "x" }, action: "created" });
+      const r = cucumberReporter({ captureSteps: false });
+      driveScenario(r);
+      await flush(r);
+
+      expect(apiMocks.findOrCreateTestCase).toHaveBeenCalledTimes(1);
+      expect(apiMocks.createSteps).not.toHaveBeenCalled();
+    });
+
+    it("overwriteSteps soft-deletes existing steps then rewrites on a matched case", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 456, name: "x" }, action: "found" });
+      const r = cucumberReporter({ overwriteSteps: true });
+      driveScenario(r);
+      await flush(r);
+
+      expect(apiMocks.softDeleteCaseSteps).toHaveBeenCalledTimes(1);
+      expect(apiMocks.createSteps).toHaveBeenCalledTimes(1);
+    });
+
+    it("is a silent no-op for a Mocha run (no scenario accumulation, no steps written)", async () => {
+      const r = cucumberReporter();
+      r.onRunnerStart(runner("mocha"));
+      r.onSuiteStart(featureSuite());
+      r.onTestPass(stepTest("[123] some test"));
+      await flush(r);
+
+      expect(apiMocks.createSteps).not.toHaveBeenCalled();
+    });
   });
 });
