@@ -1,6 +1,8 @@
 import { Job } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { parseStepsFromLlmResponse } from "./deriveCaseStepsWorker";
+
 // ─── Stable mock refs via vi.hoisted() ───────────────────────────────────────
 
 const { mockResolveIntegration, mockChat, mockCreateNotification, mockTipTapDoc } =
@@ -51,6 +53,19 @@ vi.mock("../lib/llm/services/llm-manager.service", () => ({
       resolveIntegration: mockResolveIntegration,
       chat: mockChat,
     })),
+  },
+}));
+
+vi.mock("../lib/llm/services/prompt-resolver.service", () => ({
+  PromptResolver: class {
+    resolve = vi.fn(async () => ({
+      systemPrompt: "Derive readable steps.",
+      userPrompt:
+        "Test: {{TEST_NAME}} / {{CLASS_NAME}} / {{FAILURE}} / {{SYSTEM_OUT}}",
+      temperature: 0.3,
+      maxOutputTokens: 1024,
+      source: "fallback" as const,
+    }));
   },
 }));
 
@@ -209,5 +224,66 @@ describe("deriveCaseStepsWorker", () => {
     const { processor } = await loadWorker();
     await expect(processor(makeJob())).resolves.toBeUndefined();
     expect(mockPrisma.steps.createMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("parseStepsFromLlmResponse", () => {
+  it("parses a clean JSON array of {step, expectedResult}", () => {
+    expect(
+      parseStepsFromLlmResponse(
+        '[{"step":"Open the app","expectedResult":"Home screen shows"}]'
+      )
+    ).toEqual([{ step: "Open the app", expectedResult: "Home screen shows" }]);
+  });
+
+  it("extracts the array from surrounding prose (real LLM output)", () => {
+    const content =
+      'Sure! Here are the steps:\n[{"step":"Log in","expectedResult":"Dashboard"}]\nHope that helps.';
+    expect(parseStepsFromLlmResponse(content)).toEqual([
+      { step: "Log in", expectedResult: "Dashboard" },
+    ]);
+  });
+
+  it("extracts the array from a fenced ```json block", () => {
+    const content =
+      '```json\n[{"step":"Click submit","expectedResult":"Form saved"}]\n```';
+    expect(parseStepsFromLlmResponse(content)).toEqual([
+      { step: "Click submit", expectedResult: "Form saved" },
+    ]);
+  });
+
+  it("coerces a missing or non-string expectedResult to an empty string", () => {
+    expect(
+      parseStepsFromLlmResponse(
+        '[{"step":"A"},{"step":"B","expectedResult":42},{"step":"C","expectedResult":"ok"}]'
+      )
+    ).toEqual([
+      { step: "A", expectedResult: "" },
+      { step: "B", expectedResult: "" },
+      { step: "C", expectedResult: "ok" },
+    ]);
+  });
+
+  it("drops entries without a non-empty string step", () => {
+    expect(
+      parseStepsFromLlmResponse(
+        '[{"step":""},{"expectedResult":"x"},{"step":"   "},{"step":"Real step"},null,"bogus",{"step":7}]'
+      )
+    ).toEqual([{ step: "Real step", expectedResult: "" }]);
+  });
+
+  it("trims whitespace around step and expectedResult", () => {
+    expect(
+      parseStepsFromLlmResponse(
+        '[{"step":"  padded  ","expectedResult":"  result  "}]'
+      )
+    ).toEqual([{ step: "padded", expectedResult: "result" }]);
+  });
+
+  it("returns [] for malformed JSON, no array, empty, or a non-array", () => {
+    expect(parseStepsFromLlmResponse('[{"step": "x"')).toEqual([]); // malformed
+    expect(parseStepsFromLlmResponse("I cannot help with that.")).toEqual([]); // no array
+    expect(parseStepsFromLlmResponse("")).toEqual([]); // empty
+    expect(parseStepsFromLlmResponse('{"step":"x"}')).toEqual([]); // object, not array
   });
 });

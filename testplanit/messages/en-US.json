@@ -5440,7 +5440,8 @@
         "duplicate_detection": "Duplicate Detection",
         "generate_from_url": "Generate Test Cases from URL (Requirements)",
         "generate_from_url_app": "Generate Test Cases from URL (Application Testing)",
-        "automation_candidates": "Automation Candidates Report"
+        "automation_candidates": "Automation Candidates Report",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
