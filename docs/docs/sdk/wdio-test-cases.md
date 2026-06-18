@@ -173,3 +173,34 @@ parentFolderId (e.g., "Automated Tests")
 - `templateId` must be set for new test cases
 
 Folder paths are cached during the test run to avoid redundant API calls, making large test suites efficient.
+
+## Capturing Gherkin steps as case steps
+
+When you run with [`@wdio/cucumber-framework`](https://webdriver.io/docs/frameworks/) and `autoCreateTestCases: true`, the reporter creates **one case per scenario** and (with `captureSteps: true`, the default) writes the scenario's Gherkin steps as the case's **Steps**:
+
+- **`Given`** → a Precondition (a leading step with no expected result)
+- **`When`** → a Step (action)
+- **`Then`** → the **Expected Result** of the preceding `When` step
+- **`And` / `But` / `*`** inherit the role of the nearest preceding primary keyword
+
+This is the same mapping TestPlanIt uses when importing automated results, so a Cucumber scenario produces the **same** Steps whether it is imported or reported via WDIO.
+
+```javascript
+reporters: [
+  ['@testplanit/wdio-reporter', {
+    // ...domain / apiToken / projectId...
+    autoCreateTestCases: true,
+    parentFolderId: 10,
+    templateId: 1,
+    captureSteps: true,     // default
+    overwriteSteps: false,  // true re-syncs steps every run (destructive)
+  }]
+]
+```
+
+`overwriteSteps: true` soft-deletes a case's existing steps and rewrites them from the scenario every run — **destructive**: manual edits are discarded (a scenario with no steps never clears existing steps). Leave it `false` (default) to never overwrite human-edited steps.
+
+### Limitations
+
+- **Mocha and Jasmine produce no deterministic steps.** They have no native step structure, so `captureSteps`/`overwriteSteps` are silent no-ops for those frameworks. If an **LLM provider is configured for the project**, TestPlanIt's LLM enrichment can derive steps for these cases automatically — configuring a provider **is** the opt-in; no additional reporter option is required.
+- **`scenarioLevelReporter: true` is not supported for step capture.** That Cucumber mode suppresses per-step events, so the individual Gherkin steps are not visible to the reporter. Use the default `scenarioLevelReporter: false` to capture steps.

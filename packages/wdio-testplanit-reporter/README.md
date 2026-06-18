@@ -123,6 +123,8 @@ caseIdPattern: /TEST-(\d+)/g
 | `tagIds` | `(number \| string)[]` | No | - | Tags to apply (IDs or names). Non-existent tags are created automatically |
 | `caseIdPattern` | `RegExp \| string` | No | `/\[(\d+)\]/g` | Regex to extract case IDs from test titles. Must include a capturing group |
 | `autoCreateTestCases` | `boolean` | No | `false` | Auto-create test cases matched by suite name + test title |
+| `captureSteps` | `boolean` | No | `true` | Capture a Cucumber scenario's Given/When/Then as the case's Steps. Cucumber only; silent no-op for Mocha/Jasmine |
+| `overwriteSteps` | `boolean` | No | `false` | Replace an existing Cucumber case's steps on each run (destructive: discards manual edits). Cucumber only |
 | `createFolderHierarchy` | `boolean` | No | `false` | Create nested folders based on suite structure. Requires `autoCreateTestCases` and `parentFolderId` |
 | `parentFolderId` | `number \| string` | No | - | Parent folder for auto-created cases (ID or name) |
 | `templateId` | `number \| string` | No | - | Template for auto-created cases (ID or name) |
@@ -135,6 +137,43 @@ caseIdPattern: /TEST-(\d+)/g
 | `verbose` | `boolean` | No | `false` | Enable verbose logging |
 
 > **Tip:** Options like `configId`, `milestoneId`, `stateId`, `parentFolderId`, and `templateId` accept either numeric IDs or string names. When a string is provided, the system looks up the resource by exact name match.
+
+## Capturing Gherkin Steps as Case Steps
+
+When you run with [`@wdio/cucumber-framework`](https://webdriver.io/docs/frameworks/#using-cucumber) and `autoCreateTestCases: true`, the reporter creates **one case per scenario** and (with `captureSteps: true`, the default) writes the scenario's Gherkin steps as the case's **Steps**:
+
+- **`Given`** → a Precondition (leading step, no expected result)
+- **`When`** → a Step (action)
+- **`Then`** → the **Expected Result** of the preceding `When` step
+- **`And` / `But` / `*`** inherit the role of the nearest preceding primary keyword
+
+This uses the same mapping as the TestPlanIt result importer, so a Cucumber scenario yields the **same** case Steps whether it is imported or reported via WDIO.
+
+```javascript
+// wdio.conf.js
+export const config = {
+  framework: 'cucumber', // scenarioLevelReporter must be false (the default)
+  reporters: [
+    ['@testplanit/wdio-reporter', {
+      domain: 'https://testplanit.example.com',
+      apiToken: process.env.TESTPLANIT_API_TOKEN,
+      projectId: 1,
+      autoCreateTestCases: true,
+      parentFolderId: 10,
+      templateId: 1,
+      captureSteps: true,      // default — capture Given/When/Then as Steps
+      overwriteSteps: false,   // set true to re-sync steps every run (destructive)
+    }]
+  ]
+}
+```
+
+`overwriteSteps: true` soft-deletes a case's existing steps and rewrites them from the scenario every run — **destructive**: any manual edits are discarded. As a safeguard, a scenario with no steps never clears existing steps. Leave it `false` (the default) to never overwrite human-edited steps.
+
+### Limitations
+
+- **Mocha and Jasmine produce no deterministic steps.** They have no native step structure, so `captureSteps`/`overwriteSteps` are silent no-ops for those frameworks (the reporter logs a one-time notice). If an LLM provider is configured for the project, TestPlanIt's LLM enrichment can derive steps for these cases automatically — configuring a provider is the opt-in; no extra reporter option is needed.
+- **`scenarioLevelReporter: true` is not supported for step capture.** In that Cucumber mode the framework suppresses per-step events, so the reporter cannot see the individual Gherkin steps. Use the default `scenarioLevelReporter: false` to capture steps.
 
 ## Service Options
 

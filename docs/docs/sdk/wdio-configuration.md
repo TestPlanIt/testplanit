@@ -26,6 +26,8 @@ These options apply to the **reporter**. If you're using the [Launcher Service](
 | `stateId` | `number \| string` | - | Workflow state for the test run (ID or name) |
 | `caseIdPattern` | `RegExp \| string` | `/\[(\d+)\]/g` | Regex pattern for extracting case IDs from test titles |
 | `autoCreateTestCases` | `boolean` | `false` | Auto-create test cases if they don't exist |
+| `captureSteps` | `boolean` | `true` | Capture a Cucumber scenario's Given/When/Then as the case's Steps (Cucumber only; silent no-op for Mocha/Jasmine) |
+| `overwriteSteps` | `boolean` | `false` | Replace an existing Cucumber case's steps each run — destructive, discards manual edits (Cucumber only) |
 | `createFolderHierarchy` | `boolean` | `false` | Create folder hierarchy based on Mocha suite structure (requires `autoCreateTestCases` and `parentFolderId`) |
 | `parentFolderId` | `number \| string` | - | Folder for auto-created test cases (ID or name) |
 | `templateId` | `number \| string` | - | Template for auto-created test cases (ID or name) |
