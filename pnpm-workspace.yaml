@@ -50,7 +50,7 @@ overrides:
   'tmp': '^0.2.6'
   'mdast-util-to-hast': '^13.2.1'
   'content-security-policy-parser': '^0.6.0'
-  'webpack-dev-server': '^5.2.4'
+  'webpack-dev-server': '^5.2.5'
   '@sentry/browser': '^7.119.1'
   'pdfjs-dist': '^4.2.67'
   'nth-check': '^2.0.1'
