@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "audit:coverage": "tsx scripts/audit-coverage.ts",
+    "reconcile:coverage": "tsx scripts/reconcile-audit-coverage.ts",
     "generate": "zenstack format && NODE_OPTIONS='--max-old-space-size=12288' zenstack generate && node scripts/fix-zenstack-symlink.js && prisma db push && tsx scripts/apply-triggers.ts",
     "generate:dev": "zenstack format && NODE_OPTIONS='--max-old-space-size=12288' zenstack generate && node scripts/fix-zenstack-symlink.js && dotenv -e .env.development -- prisma db push && dotenv -e .env.development -- tsx scripts/apply-triggers.ts",
     "triggers:apply": "tsx scripts/apply-triggers.ts",

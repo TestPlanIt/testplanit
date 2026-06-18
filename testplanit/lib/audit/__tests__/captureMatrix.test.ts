@@ -4,8 +4,8 @@
  * Client/method-agnostic capture matrix. Proves a single database-level trigger captures EVERY
  * write path regardless of which client issues it:
  *   (a) hooked Prisma client (lib/prisma.ts)         → CTX-01 (non-null actor from injected GUC)
- *   (b) raw `$executeRaw` UPDATE bypassing all hooks → SUCCESS CRITERION #1 / COV-01
- *   (c) createMany bulk insert                       → COV-01 (bulk method coverage)
+ *   (b) raw `$executeRaw` UPDATE bypassing all hooks → SUCCESS CRITERION #1 / COV-01 / COV-03
+ *   (c) createMany bulk insert                       → COV-01 / COV-03 (client/method-agnostic capture)
  *   (d) worker/raw path via withAuditGuc()           → CTX-02 (payload.userId stamped as actor)
  *   (e) tag implicit m2m join table INSERT+DELETE    → COV-02 (tag-link pattern, pk = column "A")
  *   (e2) issue implicit m2m join table INSERT+DELETE → COV-02 (issue-link pattern, pk = column "A")
@@ -205,7 +205,7 @@ describeDb("captureMatrix — client/method-agnostic capture (Phase 13 success c
     expect(rows[0].actor).toBe("actor-a");
   });
 
-  it("(b) raw $executeRaw UPDATE bypassing all hooks → one U row with correct diff (SUCCESS CRITERION #1 / COV-01)", async () => {
+  it("(b) raw $executeRaw UPDATE bypassing all hooks → one U row with correct diff (SUCCESS CRITERION #1 / COV-01 / COV-03)", async () => {
     // The headline guarantee: a raw SQL UPDATE that NEVER touches a Prisma hook still produces a diff.
     await prismaBase.$transaction(async (tx: any) => {
       await tx.$executeRaw`SELECT set_config('app.audit_context', ${ctx({ userId: "actor-b" })}, true)`;
@@ -222,7 +222,7 @@ describeDb("captureMatrix — client/method-agnostic capture (Phase 13 success c
     expect(rows[0].changed_cols.name.new).toBe(`${MARKER}-b-raw`);
   });
 
-  it("(c) createMany on a child table (Steps) → one I row per inserted row (COV-01)", async () => {
+  it("(c) createMany on a child table (Steps) → one I row per inserted row (COV-01 / COV-03)", async () => {
     await runWithAuditContext({ userId: "actor-c", requestId: "req-c" }, () =>
       prisma.$transaction(async (tx: any) => {
         await injectAuditGuc(tx);
