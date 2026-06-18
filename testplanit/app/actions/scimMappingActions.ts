@@ -2,6 +2,7 @@
 
 import { z } from "zod/v4";
 
+import { runWithAuditContext } from "~/lib/auditContext";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getScimAccessRecomputeQueue } from "~/lib/queues";
 import { prisma } from "~/lib/prisma";
@@ -160,6 +161,7 @@ export async function saveMappingChange(
     return { success: false, error: "Invalid input" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   try {
     const oldGroup = await prisma.groups.findUnique({
       where: { id: validatedGroupId },
@@ -200,6 +202,7 @@ export async function saveMappingChange(
     console.error("[scimMappingActions] saveMappingChange failed", err);
     return { success: false, error: "Failed to save mapping" };
   }
+  }); // end runWithAuditContext
 }
 
 export async function enqueueFallbackDefaultRecompute(): Promise<{

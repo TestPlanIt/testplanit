@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { prisma } from "~/lib/prisma";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { getIterationGenerationQueue } from "~/lib/queues";
 import {
   classifyBand,
@@ -52,10 +54,10 @@ import { authOptions } from "~/server/auth";
  * gate on `TestRunCases.totalIterations > 0` before re-invoking.
  */
 
-export async function POST(
+export const POST = withAuditContext(async (
   _request: NextRequest,
   { params }: { params: Promise<{ testRunId: string }> }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -154,7 +156,7 @@ export async function POST(
     // Sync path — fan out inline. Audit emission piggy-backs the same
     // transaction so we don't audit a fan-out that rolled back.
     if (classification === "sync") {
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await auditedTransaction(async (tx) => {
         return materializeIterations(testRunId, tx);
       });
 
@@ -224,4 +226,4 @@ export async function POST(
     console.error("[generate-iterations]", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-}
+});

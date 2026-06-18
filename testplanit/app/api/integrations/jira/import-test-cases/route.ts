@@ -11,6 +11,7 @@ import {
   persistGeneratedTestCases,
   type ImportInput,
 } from "@/lib/services/testCaseImport";
+import { runWithAuditContext } from "@/lib/auditContext";
 import { NextRequest, NextResponse } from "next/server";
 
 interface IncomingCase {
@@ -169,10 +170,12 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    const result = await persistGeneratedTestCases(input, {
-      userId: auth.user.id,
-      userName: auth.user.name,
-    });
+    const result = await runWithAuditContext({ userId: auth.user.id }, () =>
+      persistGeneratedTestCases(input, {
+        userId: auth.user.id,
+        userName: auth.user.name,
+      })
+    );
 
     return NextResponse.json(result, {
       status: result.status === "error" ? 500 : 200,

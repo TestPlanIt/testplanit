@@ -1,4 +1,4 @@
-import { enhance } from "@zenstackhq/runtime";
+import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const enhancedDb = enhance(db, { user: user ?? undefined });
+    const enhancedDb = enhanceWithAudit(user ?? undefined);
 
     // Validate project access
     const project = await enhancedDb.projects.findFirst({

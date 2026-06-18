@@ -2,6 +2,8 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { updateAuditContext } from "~/lib/auditContext";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
@@ -95,19 +97,21 @@ export async function GET(
   }
 }
 
-export async function DELETE(
+export const DELETE = withAuditContext(async (
   request: NextRequest,
   {
     params,
   }: {
     params: Promise<{ projectId: string; dataSetId: string }>;
   }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    updateAuditContext({ userId: session.user.id });
 
     const { projectId: projectIdParam, dataSetId: dataSetIdParam } =
       await params;
@@ -205,4 +209,4 @@ export async function DELETE(
     console.error("[shared-dataset detail DELETE]", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-}
+});

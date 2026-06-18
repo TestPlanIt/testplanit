@@ -13,6 +13,7 @@
 
 import { LinkType } from "@prisma/client";
 import { prisma } from "~/lib/prismaBase";
+import { withAuditGuc, buildGucPayload } from "~/lib/audit/gucContext";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
 // ---------------------------------------------------------------------------
@@ -46,7 +47,7 @@ export async function mergeCases(
   victimId: number,
   userId: string
 ): Promise<MergeResult> {
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await withAuditGuc(prisma, buildGucPayload(userId), async (tx) => {
     // -----------------------------------------------------------------------
     // Step 1: Find conflicting TestRunCases rows
     // (same testRunId on both survivor and victim)

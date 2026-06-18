@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { updateAuditContext } from "~/lib/auditContext";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import {
   SKIP_MAPPING_SENTINEL,
@@ -133,15 +135,17 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export const PUT = withAuditContext(async (
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    updateAuditContext({ userId: session.user.id });
 
     const { caseId: caseIdParam } = await params;
     const caseId = parseInt(caseIdParam, 10);
@@ -340,17 +344,19 @@ export async function PUT(
     console.error("[shared-dataset PUT]", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withAuditContext(async (
   _request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    updateAuditContext({ userId: session.user.id });
 
     const { caseId: caseIdParam } = await params;
     const caseId = parseInt(caseIdParam, 10);
@@ -400,4 +406,4 @@ export async function DELETE(
     console.error("[shared-dataset DELETE]", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-}
+});

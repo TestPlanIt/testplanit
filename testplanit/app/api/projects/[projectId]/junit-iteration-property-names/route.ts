@@ -30,6 +30,8 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
+import { updateAuditContext } from "~/lib/auditContext";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
 
@@ -59,15 +61,17 @@ const putBodySchema = z.object({
     .max(16, "junitIterationPropertyNamesTooMany"),
 });
 
-export async function PUT(
+export const PUT = withAuditContext(async (
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    updateAuditContext({ userId: session.user.id });
 
     const { projectId: projectIdParam } = await params;
     const projectId = parseInt(projectIdParam);
@@ -145,4 +149,4 @@ export async function PUT(
       { status: 500 }
     );
   }
-}
+});

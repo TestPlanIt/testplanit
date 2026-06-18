@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
@@ -479,7 +480,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       projectId: number;
     };
 
-    const txOutcome = await prisma.$transaction(async (tx) => {
+    const txOutcome = await auditedTransaction(async (tx) => {
       let auditPayload: AuditPayload | null = null;
       const createdResult = await tx.testRunResults.create({
         data: {

@@ -95,11 +95,16 @@ export async function withAuditGuc<T>(
   client: { $transaction: Function },
   payload: GucPayload,
   fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  options?: {
+    maxWait?: number;
+    timeout?: number;
+    isolationLevel?: Prisma.TransactionIsolationLevel;
+  },
 ): Promise<T> {
   return client.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
       payload,
     )}, true)`;
     return fn(tx);
-  });
+  }, options);
 }

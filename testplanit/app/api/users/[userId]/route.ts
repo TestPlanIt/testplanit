@@ -9,6 +9,9 @@ import {
   Theme,
   TimeFormat,
 } from "@prisma/client";
+import { updateAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 import { invalidateSessionUserCache } from "~/lib/session-cache";
@@ -50,16 +53,18 @@ const updateUserSchema = z.object({
     .optional(),
 });
 
-export async function PATCH(
+export const PATCH = withAuditContext(async (
   req: NextRequest,
   context: { params: Promise<{ userId: string }> }
-) {
+) => {
   try {
     const session = await getServerAuthSession();
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    updateAuditContext({ userId: session.user.id });
 
     const params = await context.params;
     const { userId } = params;
@@ -143,7 +148,7 @@ export async function PATCH(
     }
 
     // Update user and preferences in a transaction
-    const updatedUser = await prisma.$transaction(async (tx) => {
+    const updatedUser = await auditedTransaction(async (tx) => {
       // Update user basic fields if any
       if (Object.keys(userUpdate).length > 0) {
         await tx.user.update({
@@ -221,4 +226,4 @@ export async function PATCH(
       { status: 500 }
     );
   }
-}
+});

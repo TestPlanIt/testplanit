@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { updateAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import {
   buildIterationOverrideSchema,
@@ -110,19 +113,21 @@ function toAuditSchema(
   }));
 }
 
-export async function PATCH(
+export const PATCH = withAuditContext(async (
   req: NextRequest,
   {
     params,
   }: {
     params: Promise<{ runId: string; caseId: string; iterId: string }>;
   }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    updateAuditContext({ userId: session.user.id });
 
     const {
       runId: runIdParam,
@@ -224,7 +229,7 @@ export async function PATCH(
       ...valuesParsed.data,
     };
 
-    await prisma.$transaction(async (tx) => {
+    await auditedTransaction(async (tx) => {
       await tx.testRunCaseIteration.update({
         where: { id: iterationId },
         data: {
@@ -265,4 +270,4 @@ export async function PATCH(
     console.error("[iteration values PATCH]", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-}
+});

@@ -4,6 +4,7 @@ import { createHmac, randomBytes } from "node:crypto";
 
 import type { AdapterType } from "@prisma/client";
 
+import { runWithAuditContext } from "~/lib/auditContext";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
@@ -171,6 +172,7 @@ export async function createOrRotateInboundWebhook(input: {
     return { success: false, error: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   // Schema denies all client writes; this server action authorizes the
   // caller explicitly (mirroring the prior @@allow policy) and writes via raw
   // `prisma` to bypass the deny.
@@ -326,6 +328,7 @@ export async function createOrRotateInboundWebhook(input: {
     console.error("[webhook-config] createOrRotate failed", err);
     return { success: false, error: "Failed to save webhook configuration" };
   }
+  }); // end runWithAuditContext
 }
 
 /**
@@ -368,6 +371,7 @@ export async function deleteInboundWebhook(input: {
     return { success: false, error: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   // Authorize before raw write. Look up the config to verify both
   // tenant scope (projectId match) AND direction (INBOUND only) before any
   // canManageWebhookConfig probe — a cross-tenant or wrong-direction
@@ -413,6 +417,7 @@ export async function deleteInboundWebhook(input: {
     console.error("[webhook-config] delete failed", err);
     return { success: false, error: "Failed to delete webhook configuration" };
   }
+  }); // end runWithAuditContext
 }
 
 /**
@@ -473,6 +478,7 @@ export async function setWebhookActive(
     return { success: false, error: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   let projectId: number;
   try {
     const config = await prisma.webhookConfig.findUnique({
@@ -509,6 +515,7 @@ export async function setWebhookActive(
     console.error("[webhook-config] setActive failed", err);
     return { success: false, error: "Failed to update webhook configuration" };
   }
+  }); // end runWithAuditContext
 }
 
 export interface SendTestWebhookResult {
@@ -817,6 +824,7 @@ export async function createOutboundWebhook(input: {
     return { success: false, error: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   // The name column is nullable on the schema for back-compat with INBOUND
   // configs that don't carry an admin label, but OUTBOUND requires it.
   // Validate trim-non-empty up front.
@@ -941,6 +949,7 @@ export async function createOutboundWebhook(input: {
     console.error("[webhook-config] createOutboundWebhook (HMAC) failed", err);
     return { success: false, error: "Failed to save webhook configuration" };
   }
+  }); // end runWithAuditContext
 }
 
 /**
@@ -957,6 +966,7 @@ export async function deleteOutboundWebhook(
     return { success: false, error: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   const config = await prisma.webhookConfig.findUnique({
     where: { id: configId },
     select: { projectId: true, direction: true },
@@ -982,6 +992,7 @@ export async function deleteOutboundWebhook(
     console.error("[webhook-config] deleteOutboundWebhook failed", err);
     return { success: false, error: "Failed to delete webhook configuration" };
   }
+  }); // end runWithAuditContext
 }
 
 /**
@@ -1003,6 +1014,7 @@ export async function updateOutboundSubscriptions(
     return { success: false, error: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   const config = await prisma.webhookConfig.findUnique({
     where: { id: configId },
     select: { projectId: true, direction: true },
@@ -1030,6 +1042,7 @@ export async function updateOutboundSubscriptions(
     console.error("[webhook-config] updateOutboundSubscriptions failed", err);
     return { success: false, error: "Failed to update subscriptions" };
   }
+  }); // end runWithAuditContext
 }
 
 // =============================================================================
@@ -1072,6 +1085,7 @@ export async function rotateOutboundSecret(
     return { success: false, error: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   const config = await prisma.webhookConfig.findUnique({
     where: { id: configId },
     select: { projectId: true, direction: true, adapterType: true },
@@ -1147,6 +1161,7 @@ export async function rotateOutboundSecret(
     console.error("[webhook-config] rotateOutboundSecret failed", err);
     return { success: false, error: "Failed to rotate secret" };
   }
+  }); // end runWithAuditContext
 }
 
 /**
@@ -1163,6 +1178,7 @@ export async function retireOutboundSecretNow(
     return { success: false, error: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   const secret = await prisma.webhookConfigSecret.findUnique({
     where: { id: secretId },
     select: {
@@ -1201,6 +1217,7 @@ export async function retireOutboundSecretNow(
     console.error("[webhook-config] retireOutboundSecretNow failed", err);
     return { success: false, error: "Failed to retire secret" };
   }
+  }); // end runWithAuditContext
 }
 
 /**
@@ -1220,6 +1237,7 @@ export async function extendRetiringSecret(
     return { success: false, error: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   const secret = await prisma.webhookConfigSecret.findUnique({
     where: { id: secretId },
     select: {
@@ -1258,6 +1276,7 @@ export async function extendRetiringSecret(
     console.error("[webhook-config] extendRetiringSecret failed", err);
     return { success: false, error: "Failed to extend secret" };
   }
+  }); // end runWithAuditContext
 }
 
 // =============================================================================
@@ -1285,6 +1304,7 @@ export async function sendTestOutboundWebhook(
     return { success: false, error: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   const config = await prisma.webhookConfig.findUnique({
     where: { id: configId },
     select: { projectId: true, direction: true },
@@ -1326,6 +1346,7 @@ export async function sendTestOutboundWebhook(
     return { success: false, error: "Failed to send test webhook" };
   }
   return { success: true, eventId: eventId ?? undefined };
+  }); // end runWithAuditContext
 }
 
 // =============================================================================
@@ -1516,6 +1537,7 @@ export async function reEnableWebhookConfig(
   const session = await getServerAuthSession();
   if (!session?.user) return { ok: false, error: "Unauthorized" };
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   let projectId: number;
   let endpointHealth: "HEALTHY" | "DEGRADED" | "DISABLED";
   try {
@@ -1580,6 +1602,7 @@ export async function reEnableWebhookConfig(
   });
 
   return { ok: true };
+  }); // end runWithAuditContext
 }
 
 /**

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z, ZodError } from "zod/v4";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { auditedEnhancedTransaction } from "~/lib/audit/auditedTransaction";
 import {
   buildRowSchemaFromParameters,
   type ParameterShape,
@@ -185,7 +186,7 @@ export async function POST(
     }
 
     // Atomic commit.
-    const result = await db.$transaction(async (tx: any) => {
+    const result = await auditedEnhancedTransaction(session, async (tx: any) => {
       let dataset = await tx.dataSet.findFirst({
         where: {
           ownerCaseId: caseId,

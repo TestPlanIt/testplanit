@@ -1,6 +1,8 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { updateAuditContext } from "~/lib/auditContext";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
 
@@ -64,15 +66,17 @@ const createVersionSchema = z.object({
 
 type _CreateVersionRequest = z.infer<typeof createVersionSchema>;
 
-export async function POST(
+export const POST = withAuditContext(async (
   request: NextRequest,
   { params }: { params: Promise<{ caseId: string }> }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    updateAuditContext({ userId: session.user.id });
 
     const { caseId: caseIdParam } = await params;
     const caseId = parseInt(caseIdParam);
@@ -260,4 +264,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});

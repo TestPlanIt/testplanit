@@ -4,6 +4,7 @@ import {
   WorkflowScope,
 } from "@prisma/client";
 import { z } from "zod/v4";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { prisma } from "~/lib/prisma";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { emptyEditorContent } from "~/app/constants/backend";
@@ -229,7 +230,7 @@ export async function persistGeneratedTestCases(
       data.fieldMappings.map((fm) => [fm.fieldName, fm])
     );
 
-    await prisma.$transaction(
+    await auditedTransaction(
       async (tx) => {
         // Upsert issue once if needed
         let sharedIssue: {

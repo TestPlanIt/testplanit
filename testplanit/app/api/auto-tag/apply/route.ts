@@ -1,6 +1,9 @@
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { updateAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
 
@@ -16,12 +19,14 @@ const applySchema = z.object({
     .min(1),
 });
 
-export async function POST(request: Request) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  updateAuditContext({ userId: session.user.id });
 
   try {
     const body = await request.json();
@@ -72,7 +77,7 @@ export async function POST(request: Request) {
     }
 
     // Connect tags to entities in a single transaction with extended timeout
-    await prisma.$transaction(
+    await auditedTransaction(
       async (tx) => {
         for (const [key, tagIds] of entityOps) {
           const [entityType, entityIdStr] = key.split(":");
@@ -133,4 +138,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+});

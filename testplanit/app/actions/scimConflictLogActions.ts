@@ -31,6 +31,7 @@
 
 import { Prisma } from "@prisma/client";
 
+import { runWithAuditContext } from "~/lib/auditContext";
 import { prisma } from "~/lib/prisma";
 import { SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
 import {
@@ -150,6 +151,7 @@ export async function reEmitScimMemberEventAction(
     return { success: false, error: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   try {
     const original = await prisma.auditLog.findUnique({
       where: { id: auditLogId },
@@ -243,4 +245,5 @@ export async function reEmitScimMemberEventAction(
     console.error("[scim/conflict-log] re-emit failed", err);
     return { success: false, error: "Re-emit failed" };
   }
+  }); // end runWithAuditContext
 }

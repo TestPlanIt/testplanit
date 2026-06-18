@@ -2,6 +2,8 @@
 
 import { ApplicationArea } from "@prisma/client";
 import { z } from "zod/v4";
+import { runWithAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { prisma } from "~/lib/prisma";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import {
@@ -50,6 +52,7 @@ export async function completeMilestoneCascade(
     return { status: "error", message: "User not authenticated" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   const parseResult = CompleteMilestoneSchema.safeParse(input);
   if (!parseResult.success) {
     return { status: "error", message: "Invalid input." };
@@ -229,7 +232,7 @@ export async function completeMilestoneCascade(
   }
 
   try {
-    await prisma.$transaction(async (tx: any) => {
+    await auditedTransaction(async (tx: any) => {
       // Resolve the system-level review-feature flag once for both the
       // testRuns and sessions blocks below. AppConfig read is cheap and
       // hoisting avoids two roundtrips inside this long-lived write tx.
@@ -466,6 +469,7 @@ export async function completeMilestoneCascade(
     }
     return { status: "error", message };
   }
+  }); // end runWithAuditContext
 }
 
 /**

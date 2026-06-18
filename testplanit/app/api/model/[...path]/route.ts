@@ -9,6 +9,7 @@ import {
   extractBearerToken,
 } from "~/lib/api-token-auth";
 import { getAuditContext, runWithAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import {
   enrichFromApiAuth,
@@ -733,7 +734,7 @@ async function innerHandler(
             // submit-result / milestone paths can hold a single tx across
             // gate + entity update + consume and don't pay this cost; the
             // auto-API path explicitly accepts it.
-            await prisma.$transaction(
+            await auditedTransaction(
               async (tx) => {
                 const gateResult = await assertReviewGatePasses(
                   tx,

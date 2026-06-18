@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod/v4";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { updateAuditContext } from "~/lib/auditContext";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { sharedDatasetCreateSchema } from "~/lib/schemas/sharedDatasetCreateSchema";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -109,15 +111,17 @@ export async function GET(
   }
 }
 
-export async function POST(
+export const POST = withAuditContext(async (
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    updateAuditContext({ userId: session.user.id });
 
     const { projectId: projectIdParam } = await params;
     const projectId = parseInt(projectIdParam, 10);
@@ -196,4 +200,4 @@ export async function POST(
     console.error("[projects datasets POST]", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-}
+});

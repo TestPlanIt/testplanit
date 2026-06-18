@@ -1,5 +1,7 @@
 "use server";
 
+import { runWithAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -44,8 +46,9 @@ export async function createPromptConfig(
     return { status: "error", message: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   try {
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await auditedTransaction(async (tx) => {
       // If setting as default, unset existing defaults first
       if (input.isDefault) {
         await tx.promptConfig.updateMany({
@@ -86,6 +89,7 @@ export async function createPromptConfig(
     const message = error?.message || "Failed to create prompt config";
     return { status: "error", message };
   }
+  }); // end runWithAuditContext
 }
 
 export async function updatePromptConfig(
@@ -96,8 +100,9 @@ export async function updatePromptConfig(
     return { status: "error", message: "Unauthorized" };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   try {
-    await prisma.$transaction(async (tx) => {
+    await auditedTransaction(async (tx) => {
       // If setting as default, unset existing defaults first
       if (input.isDefault) {
         await tx.promptConfig.updateMany({
@@ -154,4 +159,5 @@ export async function updatePromptConfig(
     const message = error?.message || "Failed to update prompt config";
     return { status: "error", message };
   }
+  }); // end runWithAuditContext
 }

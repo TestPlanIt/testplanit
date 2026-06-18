@@ -1,5 +1,7 @@
 "use server";
 
+import { runWithAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -33,6 +35,7 @@ export async function removeIntegrationProjectMapping(
     };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   const mapping = await prisma.integrationProject.findFirst({
     where: { id: integrationProjectId },
     include: {
@@ -88,7 +91,7 @@ export async function removeIntegrationProjectMapping(
     }
   }
 
-  return await prisma.$transaction(async (tx) => {
+  return await auditedTransaction(async (tx) => {
     await tx.integrationProject.update({
       where: { id: integrationProjectId },
       data: { isActive: false },
@@ -126,6 +129,7 @@ export async function removeIntegrationProjectMapping(
       inboundWebhookDeletedCount: deleted.count,
     };
   });
+  }); // end runWithAuditContext
 }
 
 /**
@@ -182,6 +186,7 @@ export async function removeProjectIntegration(
     };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   const target = await prisma.projectIntegration.findFirst({
     where: { id: projectIntegrationId },
     select: { projectId: true },
@@ -207,7 +212,7 @@ export async function removeProjectIntegration(
     };
   }
 
-  return await prisma.$transaction(async (tx) => {
+  return await auditedTransaction(async (tx) => {
     await tx.projectIntegration.delete({
       where: { id: projectIntegrationId },
     });
@@ -219,6 +224,7 @@ export async function removeProjectIntegration(
       inboundWebhookDeletedCount: deleted.count,
     };
   });
+  }); // end runWithAuditContext
 }
 
 /**
@@ -248,6 +254,7 @@ export async function switchProjectIntegration(input: {
     };
   }
 
+  return runWithAuditContext({ userId: session.user.id }, async () => {
   const authorized = await authorizeProjectIntegrationManagement(
     projectId,
     session.user.id,
@@ -275,7 +282,7 @@ export async function switchProjectIntegration(input: {
     };
   }
 
-  return await prisma.$transaction(async (tx) => {
+  return await auditedTransaction(async (tx) => {
     const priorActive = await tx.projectIntegration.findFirst({
       where: { projectId, isActive: true },
       include: { integration: { select: { provider: true } } },
@@ -316,4 +323,5 @@ export async function switchProjectIntegration(input: {
       providerChanged,
     };
   });
+  }); // end runWithAuditContext
 }

@@ -12,6 +12,8 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
+import { updateAuditContext } from "~/lib/auditContext";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -23,7 +25,7 @@ interface UploadResult {
   url?: string;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   // Authenticate user (session or API token)
   const session = await getServerAuthSession();
   let userId = session?.user?.id;
@@ -48,6 +50,8 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     );
   }
+
+  updateAuditContext({ userId });
 
   try {
     const formData = await request.formData();
@@ -190,4 +194,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

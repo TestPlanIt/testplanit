@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { updateAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import {
   computeWorstOfStatus,
@@ -91,19 +94,21 @@ function parseAuditSchema(value: unknown): ParameterSchemaEntry[] {
   return out;
 }
 
-export async function POST(
+export const POST = withAuditContext(async (
   req: NextRequest,
   {
     params,
   }: {
     params: Promise<{ runId: string; caseId: string }>;
   }
-) {
+) => {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    updateAuditContext({ userId: session.user.id });
 
     const { runId: runIdParam, caseId: caseIdParam } = await params;
     const runId = parseInt(runIdParam, 10);
@@ -201,7 +206,7 @@ export async function POST(
     };
     const auditPayloads: AuditPayload[] = [];
 
-    const skippedCount = await prisma.$transaction(async (tx) => {
+    const skippedCount = await auditedTransaction(async (tx) => {
       // Load and validate ownership of every requested iteration.
       const iterations = await tx.testRunCaseIteration.findMany({
         where: {
@@ -345,4 +350,4 @@ export async function POST(
     console.error("[iteration bulk-skip POST]", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-}
+});
