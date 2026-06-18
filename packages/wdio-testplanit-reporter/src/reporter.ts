@@ -1,7 +1,8 @@
 import WDIOReporter, { type RunnerStats, type SuiteStats, type TestStats, type AfterCommandArgs } from '@wdio/reporter';
-import { TestPlanItClient } from '@testplanit/api';
-import type { NormalizedStatus, JUnitResultType } from '@testplanit/api';
+import { TestPlanItClient, automationStepsToCaseSteps } from '@testplanit/api';
+import type { NormalizedStatus, JUnitResultType, CaseStepRow } from '@testplanit/api';
 import type { TestPlanItReporterOptions, TrackedTestResult, ReporterState } from './types.js';
+import { adaptCucumberStepTitles } from './cucumberAdapter.js';
 import {
   readSharedState,
   writeSharedStateIfAbsent,
@@ -42,6 +43,21 @@ export default class TestPlanItReporter extends WDIOReporter {
   private currentTestUid: string | null = null;
   private currentCid: string | null = null;
   private pendingScreenshots: Map<string, Buffer[]> = new Map();
+  /** Cucumber: accumulated step titles per active scenario suite uid. */
+  private pendingScenarioSteps: Map<string, string[]> = new Map();
+  /** Cucumber: uid of the scenario suite currently open (null outside a scenario). */
+  private currentScenarioUid: string | null = null;
+  /** Cucumber: in-progress plan for the open scenario, emitted once at onSuiteEnd. */
+  private currentScenarioPlan: {
+    title: string;
+    suiteName: string;
+    suitePath: string[];
+    cid: string;
+    status: 'passed' | 'failed' | 'skipped';
+    error?: Error;
+    startedAt: Date;
+  } | null = null;
+  private cucumberStepNoticeLogged = false;
   /** When true, the TestPlanItService manages the test run lifecycle */
   private managedByService = false;
 
@@ -59,6 +75,8 @@ export default class TestPlanItReporter extends WDIOReporter {
     this.reporterOptions = {
       caseIdPattern: /\[(\d+)\]/g,
       autoCreateTestCases: false,
+      captureSteps: true,
+      overwriteSteps: false,
       createFolderHierarchy: false,
       uploadScreenshots: true,
       includeStackTrace: true,
@@ -97,6 +115,7 @@ export default class TestPlanItReporter extends WDIOReporter {
       caseIdMap: new Map(),
       testRunCaseMap: new Map(),
       folderPathMap: new Map(),
+      caseStepsMap: new Map(),
       statusIds: {},
       initialized: false,
       stats: {
@@ -104,6 +123,7 @@ export default class TestPlanItReporter extends WDIOReporter {
         testCasesCreated: 0,
         testCasesMoved: 0,
         foldersCreated: 0,
+        testStepsCreated: 0,
         resultsPassed: 0,
         resultsFailed: 0,
         resultsSkipped: 0,
@@ -144,6 +164,69 @@ export default class TestPlanItReporter extends WDIOReporter {
     operation.finally(() => {
       this.pendingOperations.delete(operation);
     });
+  }
+
+  /**
+   * Decide whether to write a Cucumber scenario's captured steps to its case,
+   * and write them via the shared mapper. No-op for non-Cucumber frameworks
+   * (D-09). Writes on fresh create when captureSteps is on (D-04), or replaces
+   * existing steps when overwriteSteps is on (D-05).
+   */
+  private async writeScenarioSteps(
+    testCaseId: number,
+    action: 'found' | 'created' | 'moved',
+    result: TrackedTestResult,
+  ): Promise<void> {
+    if (this.detectedFramework !== 'cucumber') return;
+    const titles = result.cucumberStepTitles;
+    if (!titles || titles.length === 0) return;
+    const rows = automationStepsToCaseSteps(adaptCucumberStepTitles(titles));
+    if (action === 'created' && this.reporterOptions.captureSteps !== false) {
+      await this.writeCaseSteps(testCaseId, rows, false);
+    } else if (this.reporterOptions.overwriteSteps) {
+      await this.writeCaseSteps(testCaseId, rows, true);
+    }
+  }
+
+  /**
+   * Write derived case Steps for a case (ported from the Playwright reporter).
+   * Dedups in-flight writes per case id; when `replace` is set, soft-deletes
+   * existing steps first and SKIPS the create if the delete fails (never-clobber
+   * guard, CORE-01). Passes `CaseStepRow[]` directly to `createSteps` so the
+   * mapper's `expectedResult` is preserved (D-06).
+   */
+  private writeCaseSteps(
+    testCaseId: number,
+    caseStepRows: CaseStepRow[] | undefined,
+    replace: boolean,
+  ): Promise<void> {
+    if (!caseStepRows || caseStepRows.length === 0) return Promise.resolve();
+
+    const existing = this.state.caseStepsMap.get(testCaseId);
+    if (existing) return existing;
+
+    const promise = (async () => {
+      if (replace) {
+        try {
+          const removed = await this.client.softDeleteCaseSteps(testCaseId);
+          this.log(`Cleared ${removed} existing step(s) on case:`, testCaseId);
+        } catch (error) {
+          this.logError(`Failed to clear existing steps on case ${testCaseId}; skipping step write`, error);
+          return;
+        }
+      }
+      try {
+        await this.client.createSteps({ testCaseId, steps: caseStepRows });
+        this.state.stats.testStepsCreated += caseStepRows.length;
+        this.log(`Wrote ${caseStepRows.length} step(s) to case:`, testCaseId);
+      } catch (error) {
+        this.logError(`Failed to create steps on case ${testCaseId}`, error);
+      }
+    })();
+
+    this.state.caseStepsMap.set(testCaseId, promise);
+    promise.catch(() => this.state.caseStepsMap.delete(testCaseId));
+    return promise;
   }
 
   /**
@@ -596,6 +679,21 @@ export default class TestPlanItReporter extends WDIOReporter {
       this.log('Detected framework:', this.detectedFramework);
     }
 
+    // Step capture only applies to @wdio/cucumber-framework. Emit a one-time
+    // notice if captureSteps is on but the detected framework can't provide
+    // steps (Mocha/Jasmine have no native step structure — D-10).
+    if (
+      this.detectedFramework &&
+      this.detectedFramework !== 'cucumber' &&
+      this.reporterOptions.captureSteps !== false &&
+      !this.cucumberStepNoticeLogged
+    ) {
+      this.cucumberStepNoticeLogged = true;
+      this.log(
+        `captureSteps only applies to Cucumber scenarios; step capture is unavailable for framework "${this.detectedFramework}".`,
+      );
+    }
+
     // Don't initialize here - wait until we have actual test results to report
     // This avoids creating empty test runs for specs with no matching tests
   }
@@ -605,9 +703,67 @@ export default class TestPlanItReporter extends WDIOReporter {
       this.currentSuite.push(suite.title);
       this.log('Suite started:', this.getFullSuiteName());
     }
+
+    // Cucumber: a scenario is a suite with type 'scenario'. Begin accumulating
+    // its steps; the case + its Steps are emitted once at onSuiteEnd (D-01/D-12).
+    if ((suite as unknown as { type?: string }).type === 'scenario' && this.detectedFramework === 'cucumber') {
+      this.currentScenarioUid = suite.uid;
+      this.pendingScenarioSteps.set(suite.uid, []);
+      // The scenario title can carry a "Scenario:"/"Scenario Outline:" prefix.
+      const scenarioTitle = (suite.title || '').replace(/^Scenario(?: Outline)?:\s*/, '').trim();
+      this.currentScenarioPlan = {
+        title: scenarioTitle,
+        // Feature path WITHOUT this scenario (currentSuite already includes it).
+        suiteName: this.currentSuite.slice(0, -1).join(' > '),
+        suitePath: this.currentSuite.slice(0, -1),
+        cid: (suite as unknown as { cid?: string }).cid ?? '',
+        status: 'passed',
+        startedAt: suite.start ? new Date(suite.start) : new Date(),
+      };
+    }
   }
 
   onSuiteEnd(suite: SuiteStats): void {
+    // Cucumber: close the scenario — emit ONE reportResult for the whole
+    // scenario carrying the accumulated step titles (D-01/D-12).
+    if (
+      (suite as unknown as { type?: string }).type === 'scenario' &&
+      this.detectedFramework === 'cucumber' &&
+      this.currentScenarioPlan
+    ) {
+      const plan = this.currentScenarioPlan;
+      const stepTitles = this.pendingScenarioSteps.get(suite.uid) ?? [];
+      this.pendingScenarioSteps.delete(suite.uid);
+      this.currentScenarioUid = null;
+      this.currentScenarioPlan = null;
+
+      const { caseIds, cleanTitle } = this.parseCaseIds(plan.title);
+      const fullTitle = plan.suiteName ? `${plan.suiteName} > ${cleanTitle}` : cleanTitle;
+      const result: TrackedTestResult = {
+        caseId: caseIds[0],
+        suiteName: plan.suiteName,
+        suitePath: plan.suitePath,
+        testName: cleanTitle,
+        fullTitle,
+        originalTitle: plan.title,
+        status: plan.status,
+        duration: 0,
+        errorMessage: plan.error?.message,
+        stackTrace: this.reporterOptions.includeStackTrace ? plan.error?.stack : undefined,
+        startedAt: plan.startedAt,
+        finishedAt: new Date(),
+        browser: this.state.capabilities?.browserName,
+        platform: this.state.capabilities?.platformName || process.platform,
+        screenshots: [],
+        retryAttempt: 0,
+        uid: `${plan.cid}_${fullTitle}`,
+        specFile: this.currentSpec,
+        cucumberStepTitles: stepTitles,
+      };
+      this.state.results.set(result.uid, result);
+      this.trackOperation(this.reportResult(result, caseIds));
+    }
+
     if (suite.title) {
       this.log('Suite ended:', this.getFullSuiteName());
       this.currentSuite.pop();
@@ -704,6 +860,22 @@ export default class TestPlanItReporter extends WDIOReporter {
    * Handle test completion
    */
   private handleTestEnd(test: TestStats, status: 'passed' | 'failed' | 'skipped'): void {
+    // Cucumber: each Gherkin step fires as a test. Accumulate the step title
+    // under the open scenario and SUPPRESS per-step reporting — the scenario's
+    // single case + Steps are emitted at onSuiteEnd (D-01/D-12).
+    if (this.detectedFramework === 'cucumber' && this.currentScenarioUid !== null) {
+      this.pendingScenarioSteps.get(this.currentScenarioUid)?.push(test.title);
+      if (this.currentScenarioPlan) {
+        if (status === 'failed' && this.currentScenarioPlan.status !== 'failed') {
+          this.currentScenarioPlan.status = 'failed';
+          this.currentScenarioPlan.error = test.error;
+        } else if (status === 'skipped' && this.currentScenarioPlan.status === 'passed') {
+          this.currentScenarioPlan.status = 'skipped';
+        }
+      }
+      return;
+    }
+
     const { caseIds, cleanTitle } = this.parseCaseIds(test.title);
     const suiteName = this.getFullSuiteName();
     const suitePath = [...this.currentSuite]; // Copy the current suite hierarchy
@@ -808,6 +980,11 @@ export default class TestPlanItReporter extends WDIOReporter {
         // Use the provided case ID directly as repository case ID
         repositoryCaseId = caseIds[0];
         this.log('DEBUG: Using case ID from title:', repositoryCaseId);
+        // Explicitly-linked Cucumber case ([123]): the case pre-exists, so only
+        // overwriteSteps replaces its steps (never on a plain re-run — D-05).
+        if (this.reporterOptions.overwriteSteps) {
+          await this.writeScenarioSteps(caseIds[0], 'found', result);
+        }
       } else if (this.reporterOptions.autoCreateTestCases) {
         // Check cache first
         if (this.state.caseIdMap.has(caseKey)) {
@@ -877,6 +1054,10 @@ export default class TestPlanItReporter extends WDIOReporter {
           repositoryCaseId = testCase.id;
           this.state.caseIdMap.set(caseKey, repositoryCaseId);
           this.log(`${action === 'found' ? 'Found' : action === 'created' ? 'Created' : 'Moved'} test case:`, testCase.id, testCase.name, 'in folder:', folderId);
+
+          // Cucumber: write the scenario's Given/When/Then as case Steps
+          // (D-04 on create / D-05 overwrite). No-op for non-Cucumber (D-09).
+          await this.writeScenarioSteps(testCase.id, action, result);
         }
       } else {
         this.log('DEBUG: autoCreateTestCases is false, not creating test case');
