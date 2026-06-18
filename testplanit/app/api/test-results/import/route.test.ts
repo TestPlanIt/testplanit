@@ -69,6 +69,7 @@ vi.mock("@/lib/prisma", () => {
     steps: {
       count: vi.fn().mockResolvedValue(0),
       createMany: vi.fn().mockResolvedValue({ count: 3 }),
+      updateMany: vi.fn().mockResolvedValue({ count: 3 }),
     },
     status: {
       findFirst: vi.fn(),
@@ -228,6 +229,7 @@ describe("Test Results Import API Route", () => {
     );
     (prisma.steps.count as any).mockResolvedValue(0);
     (prisma.steps.createMany as any).mockResolvedValue({ count: 3 });
+    (prisma.steps.updateMany as any).mockResolvedValue({ count: 3 });
     (prisma.testRunCases.upsert as any).mockResolvedValue(mockTestRunCase);
     (prisma.testRunCases.findFirst as any).mockResolvedValue(mockTestRunCase);
     (prisma.testRunCases.update as any).mockResolvedValue(mockTestRunCase);
@@ -331,11 +333,14 @@ describe("Test Results Import API Route", () => {
       });
     };
 
-    const postImport = async () => {
+    const postImport = async (opts: { overwriteSteps?: boolean } = {}) => {
       const formData = new FormData();
       formData.append("files", createMockFile("results.xml"));
       formData.append("name", "CI Run");
       formData.append("projectId", "1");
+      if (opts.overwriteSteps) {
+        formData.append("overwriteSteps", "true");
+      }
       return POST(createFormDataRequest(formData));
     };
 
@@ -410,6 +415,43 @@ describe("Test Results Import API Route", () => {
       const response = await postImport();
       await readSseResponse(response);
 
+      expect(prisma.steps.createMany).not.toHaveBeenCalled();
+    });
+
+    it("overwriteSteps=true soft-deletes existing steps and rewrites them (Phase 2.1)", async () => {
+      parseWithCaseSteps(gherkin);
+      (prisma.steps.count as any).mockResolvedValue(3);
+
+      const response = await postImport({ overwriteSteps: true });
+      await readSseResponse(response);
+
+      // Existing steps are soft-deleted (isDeleted:true) then re-derived.
+      expect(prisma.steps.updateMany).toHaveBeenCalledTimes(1);
+      const del = (prisma.steps.updateMany as any).mock.calls[0][0];
+      expect(del.where).toMatchObject({ testCaseId: 100, isDeleted: false });
+      expect(del.data).toMatchObject({ isDeleted: true });
+      expect(prisma.steps.createMany).toHaveBeenCalledTimes(1);
+    });
+
+    it("overwriteSteps=true on a fresh case writes without soft-deleting (nothing to clear)", async () => {
+      parseWithCaseSteps(gherkin);
+      (prisma.steps.count as any).mockResolvedValue(0);
+
+      const response = await postImport({ overwriteSteps: true });
+      await readSseResponse(response);
+
+      expect(prisma.steps.updateMany).not.toHaveBeenCalled();
+      expect(prisma.steps.createMany).toHaveBeenCalledTimes(1);
+    });
+
+    it("overwriteSteps=true never clears existing steps for a stepless import (safeguard)", async () => {
+      parseWithCaseSteps([]);
+      (prisma.steps.count as any).mockResolvedValue(3);
+
+      const response = await postImport({ overwriteSteps: true });
+      await readSseResponse(response);
+
+      expect(prisma.steps.updateMany).not.toHaveBeenCalled();
       expect(prisma.steps.createMany).not.toHaveBeenCalled();
     });
   });

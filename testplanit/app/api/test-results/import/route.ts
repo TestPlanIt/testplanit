@@ -61,7 +61,11 @@ import {
 import { getServerAuthSession } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { adaptTestSteps } from "~/lib/services/automationStepAdapter";
-import { deriveCaseStepsIfFresh, tipTapDoc } from "@testplanit/api";
+import {
+  automationStepsToCaseSteps,
+  deriveCaseStepsIfFresh,
+  tipTapDoc,
+} from "@testplanit/api";
 import { progressMessages } from "./progress-messages";
 
 // Helper function to find matching status
@@ -214,6 +218,13 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         const caseIdFormat: CaseIdFormat = parseCaseIdFormat(
           formData.get("caseIdFormat") as string | null
         );
+        // Opt-in, destructive: when on, re-derived steps replace a case's
+        // existing steps every import (soft-delete + rewrite), mirroring the
+        // Playwright reporter's `overwriteSteps`. Off by default — the default
+        // path never overwrites existing (possibly human-edited) steps
+        // (CORE-01). A stepless import never clears existing steps (safeguard).
+        const overwriteSteps =
+          (formData.get("overwriteSteps") as string | null) === "true";
 
         sendProgress(5, progressMessages.validating);
 
@@ -1194,10 +1205,28 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                       isDeleted: false,
                     },
                   });
-                  const derivedRows = deriveCaseStepsIfFresh(
-                    automationSteps,
-                    existingStepCount
-                  );
+                  let derivedRows;
+                  if (overwriteSteps) {
+                    // Destructive opt-in (Phase 2.1): re-derive and replace.
+                    // Safeguard: a stepless import never clears existing steps.
+                    const mapped = automationStepsToCaseSteps(automationSteps);
+                    if (mapped.length > 0 && existingStepCount > 0) {
+                      await prisma.steps.updateMany({
+                        where: {
+                          testCaseId: repositoryCase.id,
+                          isDeleted: false,
+                        },
+                        data: { isDeleted: true },
+                      });
+                    }
+                    derivedRows = mapped;
+                  } else {
+                    // Default: never-overwrite guard (CORE-01).
+                    derivedRows = deriveCaseStepsIfFresh(
+                      automationSteps,
+                      existingStepCount
+                    );
+                  }
                   if (derivedRows.length > 0) {
                     await prisma.steps.createMany({
                       data: derivedRows.map((row) => ({
