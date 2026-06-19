@@ -59,8 +59,16 @@ test.describe("Repository cross-folder selection clears on folder switch", () =>
 
     projectId = await api.createProject(`E2E CrossFolderSel ${ts}`);
     rootFolderId = await api.getRootFolderId(projectId);
-    folderAId = await api.createFolder(projectId, `Folder A ${ts}`, rootFolderId);
-    folderBId = await api.createFolder(projectId, `Folder B ${ts}`, rootFolderId);
+    folderAId = await api.createFolder(
+      projectId,
+      `Folder A ${ts}`,
+      rootFolderId
+    );
+    folderBId = await api.createFolder(
+      projectId,
+      `Folder B ${ts}`,
+      rootFolderId
+    );
 
     folderACaseIds.push(
       await api.createTestCase(projectId, folderAId, `A1 ${ts}`)

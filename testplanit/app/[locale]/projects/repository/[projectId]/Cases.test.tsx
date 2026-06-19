@@ -785,7 +785,12 @@ describe("Cases component", () => {
       setupMocks({ data: [{ ...mockCase, id: 101, folderId: 1 }] });
 
       const { rerender } = render(
-        <Cases {...defaultProps} viewType="folders" folderId={1} filterId={null} />
+        <Cases
+          {...defaultProps}
+          viewType="folders"
+          folderId={1}
+          filterId={null}
+        />
       );
 
       fireEvent.click(await screen.findByTestId("simulate-select-first-row"));
@@ -795,7 +800,12 @@ describe("Cases component", () => {
       // scoped out the same way a folder switch is.
       setupMocks({ data: [{ ...mockCase, id: 202, folderId: 1 }] });
       rerender(
-        <Cases {...defaultProps} viewType="folders" folderId={1} filterId={[7]} />
+        <Cases
+          {...defaultProps}
+          viewType="folders"
+          folderId={1}
+          filterId={[7]}
+        />
       );
 
       await waitFor(() => {

@@ -965,7 +965,9 @@ describe("Bulk Edit API Route", () => {
         id: 1,
         issues: [],
       };
-      (prisma.repositoryCases.findMany as any).mockResolvedValue([preUpdateCase]);
+      (prisma.repositoryCases.findMany as any).mockResolvedValue([
+        preUpdateCase,
+      ]);
 
       const mockCreate = vi.fn().mockResolvedValue({ id: 1, version: 1 });
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
@@ -1020,7 +1022,9 @@ describe("Bulk Edit API Route", () => {
         stateId: 2,
         state: { name: "New State" },
       };
-      (prisma.repositoryCases.findMany as any).mockResolvedValue([preUpdateCase]);
+      (prisma.repositoryCases.findMany as any).mockResolvedValue([
+        preUpdateCase,
+      ]);
 
       const mockCreate = vi.fn().mockResolvedValue({ id: 1, version: 1 });
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
