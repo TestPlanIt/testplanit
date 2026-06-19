@@ -1,3 +1,10 @@
+## [0.38.7](https://github.com/TestPlanIt/testplanit/compare/v0.38.6...v0.38.7) (2026-06-19)
+
+### Bug Fixes
+
+* **access:** honor project default access on project-scoped child models ([#449](https://github.com/TestPlanIt/testplanit/issues/449)) ([2182e79](https://github.com/TestPlanIt/testplanit/commit/2182e795e75686fd8983a4cbf299b7e2f8c26f9c))
+* **deps:** bump multer to 2.2.0 and webpack-dev-server to 5.2.5 ([#446](https://github.com/TestPlanIt/testplanit/issues/446)) ([a107ba8](https://github.com/TestPlanIt/testplanit/commit/a107ba85232d659df5b2452e80ce5e30df7d1336)), closes [#428](https://github.com/TestPlanIt/testplanit/issues/428) [#427](https://github.com/TestPlanIt/testplanit/issues/427) [#429](https://github.com/TestPlanIt/testplanit/issues/429) [#421](https://github.com/TestPlanIt/testplanit/issues/421)
+
 ## [0.38.6](https://github.com/TestPlanIt/testplanit/compare/v0.38.5...v0.38.6) (2026-06-18)
 
 ### Bug Fixes
