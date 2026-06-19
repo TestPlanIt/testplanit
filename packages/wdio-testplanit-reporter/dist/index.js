@@ -179,7 +179,7 @@ function decrementWorkerCount(projectId) {
 }
 
 // src/reporter.ts
-var TestPlanItReporter = class extends WDIOReporter__default.default {
+var TestPlanItReporter = class _TestPlanItReporter extends WDIOReporter__default.default {
   client;
   reporterOptions;
   state;
@@ -191,6 +191,13 @@ var TestPlanItReporter = class extends WDIOReporter__default.default {
   currentTestUid = null;
   currentCid = null;
   pendingScreenshots = /* @__PURE__ */ new Map();
+  /**
+   * Low-level automation commands captured per running test uid (via
+   * onBeforeCommand), fed to AI step derivation for non-Cucumber tests so the
+   * steps reflect what the test actually did. Capped per test to bound payload.
+   */
+  testCommands = /* @__PURE__ */ new Map();
+  static MAX_COMMANDS_PER_TEST = 100;
   /** Cucumber: accumulated step titles per active scenario suite uid. */
   pendingScenarioSteps = /* @__PURE__ */ new Map();
   /**
@@ -336,7 +343,8 @@ ${error.stack}` : "";
       name: result.testName,
       className: result.suiteName || null,
       failure: result.errorMessage || null,
-      systemOut: null
+      systemOut: null,
+      ...result.commands && result.commands.length > 0 ? { commands: result.commands } : {}
     });
   }
   /**
@@ -823,6 +831,42 @@ ${error.stack}` : "";
     const fullTitle = suiteName ? `${suiteName} > ${cleanTitle}` : cleanTitle;
     this.currentTestUid = `${test.cid}_${fullTitle}`;
     this.currentCid = test.cid;
+    if (!this.testCommands.has(this.currentTestUid)) {
+      this.testCommands.set(this.currentTestUid, []);
+    }
+  }
+  /**
+   * Capture the ordered low-level automation commands a test runs. Fed to AI
+   * step derivation (non-Cucumber) so the steps mirror what the test actually
+   * did. Cheap no-op outside a test / when nothing is being captured.
+   */
+  onBeforeCommand(commandArgs) {
+    const uid = this.currentTestUid;
+    if (!uid) return;
+    const list = this.testCommands.get(uid);
+    if (!list || list.length >= _TestPlanItReporter.MAX_COMMANDS_PER_TEST) return;
+    const formatted = this.formatCommand(commandArgs);
+    if (formatted) list.push(formatted);
+  }
+  /**
+   * Render a WebdriverIO command into a compact one-line string for the LLM,
+   * e.g. `navigateTo {"url":"https://app/login"}` or `elementSendKeys {"text":"a@b.com"}`.
+   * Returns null for commands with no useful signal.
+   */
+  formatCommand(commandArgs) {
+    const name = commandArgs.command || commandArgs.endpoint || commandArgs.method;
+    if (!name) return null;
+    let body = "";
+    if (commandArgs.body !== void 0 && commandArgs.body !== null) {
+      try {
+        const json = JSON.stringify(commandArgs.body);
+        if (json && json !== "{}" && json !== "null") {
+          body = ` ${json.length > 300 ? `${json.slice(0, 300)}\u2026` : json}`;
+        }
+      } catch {
+      }
+    }
+    return `${name}${body}`;
   }
   /**
    * Capture screenshots from WebdriverIO commands
@@ -928,8 +972,10 @@ ${error.stack}` : "";
       retryAttempt: test.retries || 0,
       uid,
       specFile: this.currentSpec,
-      commandOutput
+      commandOutput,
+      commands: this.testCommands.get(uid)
     };
+    this.testCommands.delete(uid);
     this.state.results.set(uid, result);
     this.log(`Test ${status}:`, cleanTitle, caseIds.length > 0 ? `(Case IDs: ${caseIds.join(", ")})` : "");
     const reportPromise = this.reportResult(result, caseIds);

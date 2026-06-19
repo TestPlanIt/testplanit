@@ -1,4 +1,4 @@
-import WDIOReporter, { RunnerStats, SuiteStats, TestStats, AfterCommandArgs } from '@wdio/reporter';
+import WDIOReporter, { RunnerStats, SuiteStats, TestStats, BeforeCommandArgs, AfterCommandArgs } from '@wdio/reporter';
 import { Reporters } from '@wdio/types';
 export { RepositoryCase, Status, TestPlanItClient, TestPlanItError, TestRun, TestRunResult } from '@testplanit/api';
 
@@ -361,6 +361,11 @@ interface TrackedTestResult {
      * `detectedFramework === 'cucumber'`; used to derive the case's Steps.
      */
     cucumberStepTitles?: string[];
+    /**
+     * Ordered low-level automation commands the test executed (non-Cucumber),
+     * captured via onBeforeCommand and fed to AI step derivation.
+     */
+    commands?: string[];
 }
 /**
  * Resolved IDs after looking up names
@@ -475,6 +480,13 @@ declare class TestPlanItReporter extends WDIOReporter {
     private currentTestUid;
     private currentCid;
     private pendingScreenshots;
+    /**
+     * Low-level automation commands captured per running test uid (via
+     * onBeforeCommand), fed to AI step derivation for non-Cucumber tests so the
+     * steps reflect what the test actually did. Capped per test to bound payload.
+     */
+    private testCommands;
+    private static readonly MAX_COMMANDS_PER_TEST;
     /** Cucumber: accumulated step titles per active scenario suite uid. */
     private pendingScenarioSteps;
     /**
@@ -593,6 +605,18 @@ declare class TestPlanItReporter extends WDIOReporter {
     onSuiteStart(suite: SuiteStats): void;
     onSuiteEnd(suite: SuiteStats): void;
     onTestStart(test: TestStats): void;
+    /**
+     * Capture the ordered low-level automation commands a test runs. Fed to AI
+     * step derivation (non-Cucumber) so the steps mirror what the test actually
+     * did. Cheap no-op outside a test / when nothing is being captured.
+     */
+    onBeforeCommand(commandArgs: BeforeCommandArgs): void;
+    /**
+     * Render a WebdriverIO command into a compact one-line string for the LLM,
+     * e.g. `navigateTo {"url":"https://app/login"}` or `elementSendKeys {"text":"a@b.com"}`.
+     * Returns null for commands with no useful signal.
+     */
+    private formatCommand;
     /**
      * Capture screenshots from WebdriverIO commands
      */

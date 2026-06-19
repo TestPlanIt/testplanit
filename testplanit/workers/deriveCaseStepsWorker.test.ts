@@ -66,7 +66,7 @@ vi.mock("../lib/llm/services/prompt-resolver.service", () => ({
     resolve = vi.fn(async () => ({
       systemPrompt: "Derive readable steps.",
       userPrompt:
-        "Test: {{TEST_NAME}} / {{CLASS_NAME}} / {{FAILURE}} / {{SYSTEM_OUT}}",
+        "Test: {{TEST_NAME}} / {{CLASS_NAME}} / {{FAILURE}} / {{SYSTEM_OUT}} / Commands:\n{{COMMANDS}}",
       temperature: 0.3,
       maxOutputTokens: 1024,
       source: "fallback" as const,
@@ -177,6 +177,46 @@ describe("deriveCaseStepsWorker", () => {
       testRunId: 99,
       derivedCount: 1,
     });
+  });
+
+  it("feeds the captured automation commands into the LLM prompt", async () => {
+    mockResolveIntegration.mockResolvedValue({ integrationId: 5 });
+    mockChat.mockResolvedValue({ content: STEPS_JSON });
+
+    const { processor } = await loadWorker();
+    await processor(
+      makeJob({
+        cases: [
+          {
+            ...baseCase,
+            commands: ['navigateTo {"url":"/login"}', "elementClick"],
+          },
+        ],
+      } as never)
+    );
+
+    const request = mockChat.mock.calls[0][1] as {
+      messages: Array<{ role: string; content: string }>;
+    };
+    const userMsg =
+      request.messages.find((m) => m.role === "user")?.content ?? "";
+    expect(userMsg).toContain('navigateTo {"url":"/login"}');
+    expect(userMsg).toContain("elementClick");
+  });
+
+  it("renders '(none captured)' in the prompt when a case has no commands", async () => {
+    mockResolveIntegration.mockResolvedValue({ integrationId: 5 });
+    mockChat.mockResolvedValue({ content: STEPS_JSON });
+
+    const { processor } = await loadWorker();
+    await processor(makeJob()); // baseCase has no commands
+
+    const request = mockChat.mock.calls[0][1] as {
+      messages: Array<{ role: string; content: string }>;
+    };
+    const userMsg =
+      request.messages.find((m) => m.role === "user")?.content ?? "";
+    expect(userMsg).toContain("(none captured)");
   });
 
   it("re-checks CORE-01 and skips a case that gained steps after import (D-09)", async () => {

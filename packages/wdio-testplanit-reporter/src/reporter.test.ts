@@ -784,6 +784,32 @@ describe("service-managed mode", () => {
       expect(apiMocks.requestStepDerivation).not.toHaveBeenCalled();
     });
 
+    it("captures the test's commands and includes them in the derivation request", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 900, name: "x" }, action: "created" });
+      const r = cucumberReporter();
+      r.onRunnerStart(runner("mocha"));
+      r.onSuiteStart({ title: "Account", uid: "mc1" } as unknown as SuiteStats);
+      const t = stepTest("should log in with valid credentials");
+      r.onTestStart(t);
+      // Commands fire between onTestStart and the test ending.
+      r.onBeforeCommand({ command: "navigateTo", body: { url: "https://app/login" } } as never);
+      r.onBeforeCommand({ command: "elementSendKeys", body: { text: "a@b.com" } } as never);
+      r.onBeforeCommand({ command: "elementClick" } as never);
+      r.onTestPass(t);
+      await flush(r);
+      await (r as unknown as { onRunnerEnd: (rs: RunnerStats) => Promise<void> }).onRunnerEnd(runner("mocha"));
+
+      expect(apiMocks.requestStepDerivation).toHaveBeenCalledTimes(1);
+      const arg = apiMocks.requestStepDerivation.mock.calls[0][0] as {
+        cases: Array<{ commands?: string[] }>;
+      };
+      const commands = arg.cases[0].commands;
+      expect(commands).toBeDefined();
+      expect(commands).toContain('navigateTo {"url":"https://app/login"}');
+      expect(commands).toContain('elementSendKeys {"text":"a@b.com"}');
+      expect(commands).toContain("elementClick");
+    });
+
     it("creates the scenario case but writes no steps when captureSteps is false", async () => {
       apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 456, name: "x" }, action: "created" });
       const r = cucumberReporter({ captureSteps: false });

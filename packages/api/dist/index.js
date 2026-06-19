@@ -1163,7 +1163,8 @@ var TestPlanItClient = class {
             name: c.name,
             className: c.className ?? null,
             failure: c.failure ?? null,
-            systemOut: c.systemOut ?? null
+            systemOut: c.systemOut ?? null,
+            ...c.commands && c.commands.length > 0 ? { commands: c.commands } : {}
           }))
         }
       }

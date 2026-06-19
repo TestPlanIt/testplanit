@@ -28,6 +28,7 @@ const bodySchema = z.object({
         className: z.string().nullable().optional(),
         failure: z.string().nullable().optional(),
         systemOut: z.string().nullable().optional(),
+        commands: z.array(z.string()).optional(),
       })
     )
     .min(1),
@@ -92,6 +93,7 @@ export async function POST(request: NextRequest) {
       className: c.className ?? null,
       failure: c.failure ?? null,
       systemOut: c.systemOut ?? null,
+      ...(c.commands && c.commands.length > 0 ? { commands: c.commands } : {}),
     }));
 
   if (cases.length === 0) {

@@ -1,4 +1,4 @@
-import WDIOReporter, { type RunnerStats, type SuiteStats, type TestStats, type AfterCommandArgs } from '@wdio/reporter';
+import WDIOReporter, { type RunnerStats, type SuiteStats, type TestStats, type AfterCommandArgs, type BeforeCommandArgs } from '@wdio/reporter';
 import { TestPlanItClient, automationStepsToCaseSteps } from '@testplanit/api';
 import type { NormalizedStatus, JUnitResultType, CaseStepRow, RequestStepDerivationCase } from '@testplanit/api';
 import type { TestPlanItReporterOptions, TrackedTestResult, ReporterState } from './types.js';
@@ -43,6 +43,13 @@ export default class TestPlanItReporter extends WDIOReporter {
   private currentTestUid: string | null = null;
   private currentCid: string | null = null;
   private pendingScreenshots: Map<string, Buffer[]> = new Map();
+  /**
+   * Low-level automation commands captured per running test uid (via
+   * onBeforeCommand), fed to AI step derivation for non-Cucumber tests so the
+   * steps reflect what the test actually did. Capped per test to bound payload.
+   */
+  private testCommands: Map<string, string[]> = new Map();
+  private static readonly MAX_COMMANDS_PER_TEST = 100;
   /** Cucumber: accumulated step titles per active scenario suite uid. */
   private pendingScenarioSteps: Map<string, string[]> = new Map();
   /**
@@ -219,6 +226,9 @@ export default class TestPlanItReporter extends WDIOReporter {
       className: result.suiteName || null,
       failure: result.errorMessage || null,
       systemOut: null,
+      ...(result.commands && result.commands.length > 0
+        ? { commands: result.commands }
+        : {}),
     });
   }
 
@@ -840,6 +850,45 @@ export default class TestPlanItReporter extends WDIOReporter {
     const fullTitle = suiteName ? `${suiteName} > ${cleanTitle}` : cleanTitle;
     this.currentTestUid = `${test.cid}_${fullTitle}`;
     this.currentCid = test.cid;
+    if (!this.testCommands.has(this.currentTestUid)) {
+      this.testCommands.set(this.currentTestUid, []);
+    }
+  }
+
+  /**
+   * Capture the ordered low-level automation commands a test runs. Fed to AI
+   * step derivation (non-Cucumber) so the steps mirror what the test actually
+   * did. Cheap no-op outside a test / when nothing is being captured.
+   */
+  onBeforeCommand(commandArgs: BeforeCommandArgs): void {
+    const uid = this.currentTestUid;
+    if (!uid) return;
+    const list = this.testCommands.get(uid);
+    if (!list || list.length >= TestPlanItReporter.MAX_COMMANDS_PER_TEST) return;
+    const formatted = this.formatCommand(commandArgs);
+    if (formatted) list.push(formatted);
+  }
+
+  /**
+   * Render a WebdriverIO command into a compact one-line string for the LLM,
+   * e.g. `navigateTo {"url":"https://app/login"}` or `elementSendKeys {"text":"a@b.com"}`.
+   * Returns null for commands with no useful signal.
+   */
+  private formatCommand(commandArgs: BeforeCommandArgs): string | null {
+    const name = commandArgs.command || commandArgs.endpoint || commandArgs.method;
+    if (!name) return null;
+    let body = '';
+    if (commandArgs.body !== undefined && commandArgs.body !== null) {
+      try {
+        const json = JSON.stringify(commandArgs.body);
+        if (json && json !== '{}' && json !== 'null') {
+          body = ` ${json.length > 300 ? `${json.slice(0, 300)}…` : json}`;
+        }
+      } catch {
+        // non-serializable body — skip the args, keep the command name
+      }
+    }
+    return `${name}${body}`;
   }
 
   /**
@@ -988,7 +1037,9 @@ export default class TestPlanItReporter extends WDIOReporter {
       uid,
       specFile: this.currentSpec,
       commandOutput,
+      commands: this.testCommands.get(uid),
     };
+    this.testCommands.delete(uid);
 
     this.state.results.set(uid, result);
     this.log(`Test ${status}:`, cleanTitle, caseIds.length > 0 ? `(Case IDs: ${caseIds.join(', ')})` : '');

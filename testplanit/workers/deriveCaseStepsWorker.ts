@@ -26,6 +26,13 @@ export interface DeriveCaseStepsCase {
   className: string | null;
   failure: string | null;
   systemOut: string | null;
+  /**
+   * Ordered low-level automation commands the test executed (e.g. WebdriverIO
+   * `navigateTo` / `findElement` / `elementClick` / `elementSendKeys`), captured
+   * by the reporter. When present, the model derives steps from what the test
+   * ACTUALLY did instead of inferring from the name alone.
+   */
+  commands?: string[];
 }
 
 export interface DeriveCaseStepsJobData extends MultiTenantJobData {
@@ -58,7 +65,13 @@ export function fillUserPrompt(
     .replace(/\{\{TEST_NAME\}\}/g, c.name)
     .replace(/\{\{CLASS_NAME\}\}/g, c.className ?? "")
     .replace(/\{\{FAILURE\}\}/g, c.failure ?? "")
-    .replace(/\{\{SYSTEM_OUT\}\}/g, c.systemOut ?? "");
+    .replace(/\{\{SYSTEM_OUT\}\}/g, c.systemOut ?? "")
+    .replace(
+      /\{\{COMMANDS\}\}/g,
+      c.commands && c.commands.length > 0
+        ? c.commands.join("\n")
+        : "(none captured)"
+    );
 }
 
 export interface DerivedStepRow {

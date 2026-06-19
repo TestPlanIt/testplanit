@@ -501,6 +501,12 @@ interface RequestStepDerivationCase {
     failure?: string | null;
     /** Captured output from the result, if any. */
     systemOut?: string | null;
+    /**
+     * Ordered low-level automation commands the test executed (e.g. navigate,
+     * find element, click, type, assert), if captured. When present, the model
+     * derives steps from what the test actually did rather than only its name.
+     */
+    commands?: string[];
 }
 interface RequestStepDerivationOptions {
     projectId: number;

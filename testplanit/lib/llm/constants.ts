@@ -150,6 +150,11 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
       description:
         "Captured stdout/output from the result, if any (may be empty)",
     },
+    {
+      name: "COMMANDS",
+      description:
+        "Ordered low-level automation commands the test executed (navigation, clicks, input, assertions), if captured — may be empty",
+    },
   ],
 };
 

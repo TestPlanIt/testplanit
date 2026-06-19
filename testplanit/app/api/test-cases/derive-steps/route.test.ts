@@ -76,6 +76,28 @@ describe("POST /api/test-cases/derive-steps", () => {
     expect(arg.cases).toHaveLength(2);
   });
 
+  it("passes captured commands through to the worker", async () => {
+    const res = await POST(
+      makeRequest({
+        projectId: 10,
+        testRunId: 99,
+        cases: [
+          {
+            testCaseId: 1,
+            name: "should log in",
+            commands: ['navigateTo {"url":"/login"}', "elementClick"],
+          },
+        ],
+      })
+    );
+    expect(res.status).toBe(200);
+    const arg = vi.mocked(enqueueDeriveCaseSteps).mock.calls[0][0];
+    expect(arg.cases[0]).toMatchObject({
+      testCaseId: 1,
+      commands: ['navigateTo {"url":"/login"}', "elementClick"],
+    });
+  });
+
   it("authenticates via API token when there is no session", async () => {
     vi.mocked(getServerAuthSession).mockResolvedValue(null as never);
     vi.mocked(extractBearerToken).mockReturnValue("tpi_xxx");

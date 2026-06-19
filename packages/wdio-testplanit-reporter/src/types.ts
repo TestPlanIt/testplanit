@@ -397,6 +397,11 @@ export interface TrackedTestResult {
    * `detectedFramework === 'cucumber'`; used to derive the case's Steps.
    */
   cucumberStepTitles?: string[];
+  /**
+   * Ordered low-level automation commands the test executed (non-Cucumber),
+   * captured via onBeforeCommand and fed to AI step derivation.
+   */
+  commands?: string[];
 }
 
 /**
