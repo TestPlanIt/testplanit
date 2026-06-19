@@ -1,3 +1,9 @@
+## [0.38.8](https://github.com/TestPlanIt/testplanit/compare/v0.38.7...v0.38.8) (2026-06-19)
+
+### Bug Fixes
+
+* **docker:** copy pnpm patches into image build context ([#450](https://github.com/TestPlanIt/testplanit/issues/450)) ([ee26f4d](https://github.com/TestPlanIt/testplanit/commit/ee26f4d084c0163d85bc33f22846325a0f8b1a88))
+
 ## [0.38.7](https://github.com/TestPlanIt/testplanit/compare/v0.38.6...v0.38.7) (2026-06-19)
 
 ### Bug Fixes
