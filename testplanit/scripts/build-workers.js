@@ -26,6 +26,7 @@ const entryPoints = [
   "workers/elasticsearchReindexWorker.ts",
   "workers/auditLogWorker.ts",
   "workers/autoTagWorker.ts",
+  "workers/deriveCaseStepsWorker.ts",
   "workers/budgetAlertWorker.ts",
   "workers/repoCacheWorker.ts",
   "workers/copyMoveWorker.ts",
