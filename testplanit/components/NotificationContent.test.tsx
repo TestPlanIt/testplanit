@@ -314,9 +314,7 @@ describe("NotificationContent", () => {
 
       render(<NotificationContent notification={notification} />);
 
-      expect(
-        screen.getByText("stored fallback message")
-      ).toBeInTheDocument();
+      expect(screen.getByText("stored fallback message")).toBeInTheDocument();
       // No run link when projectId/testRunId are missing
       expect(screen.queryByRole("link")).not.toBeInTheDocument();
     });

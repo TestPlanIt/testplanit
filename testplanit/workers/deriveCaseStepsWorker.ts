@@ -43,7 +43,10 @@ export interface DeriveCaseStepsJobData extends MultiTenantJobData {
  * instructs the model to treat it as untrusted, not as instructions — T-04-01).
  * Variables are declared in PROMPT_FEATURE_VARIABLES[DERIVE_CASE_STEPS].
  */
-export function fillUserPrompt(template: string, c: DeriveCaseStepsCase): string {
+export function fillUserPrompt(
+  template: string,
+  c: DeriveCaseStepsCase
+): string {
   return template
     .replace(/\{\{TEST_NAME\}\}/g, c.name)
     .replace(/\{\{CLASS_NAME\}\}/g, c.className ?? "")

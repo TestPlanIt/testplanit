@@ -68,7 +68,10 @@ describe("enqueueDeriveCaseSteps", () => {
 
     expect(enqueued).toBe(true);
     // feature FIRST, projectId SECOND
-    expect(mockResolveIntegration).toHaveBeenCalledWith("derive_case_steps", 10);
+    expect(mockResolveIntegration).toHaveBeenCalledWith(
+      "derive_case_steps",
+      10
+    );
     expect(mockQueueAdd).toHaveBeenCalledTimes(1);
     const [, payload] = mockQueueAdd.mock.calls[0];
     expect(payload).toMatchObject({

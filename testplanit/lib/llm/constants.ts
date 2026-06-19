@@ -133,7 +133,10 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
     },
   ],
   [LLM_FEATURES.DERIVE_CASE_STEPS]: [
-    { name: "TEST_NAME", description: "Name of the automated test being enriched" },
+    {
+      name: "TEST_NAME",
+      description: "Name of the automated test being enriched",
+    },
     {
       name: "CLASS_NAME",
       description: "Suite/class the test belongs to (may be empty)",
@@ -144,7 +147,8 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
     },
     {
       name: "SYSTEM_OUT",
-      description: "Captured stdout/output from the result, if any (may be empty)",
+      description:
+        "Captured stdout/output from the result, if any (may be empty)",
     },
   ],
 };

@@ -27,10 +27,7 @@ describe("adaptTestSteps", () => {
   });
 
   it("inherits the prior primary kind for `And` after `When`", () => {
-    const input = [
-      step("When I fill in the form"),
-      step("And I submit it"),
-    ];
+    const input = [step("When I fill in the form"), step("And I submit it")];
     expect(adaptTestSteps(input, "cucumber")).toEqual([
       { title: "I fill in the form", kind: "action" },
       { title: "I submit it", kind: "action" },

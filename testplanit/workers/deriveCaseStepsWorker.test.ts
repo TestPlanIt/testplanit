@@ -5,13 +5,17 @@ import { parseStepsFromLlmResponse } from "./deriveCaseStepsWorker";
 
 // ─── Stable mock refs via vi.hoisted() ───────────────────────────────────────
 
-const { mockResolveIntegration, mockChat, mockCreateNotification, mockTipTapDoc } =
-  vi.hoisted(() => ({
-    mockResolveIntegration: vi.fn(),
-    mockChat: vi.fn(),
-    mockCreateNotification: vi.fn(),
-    mockTipTapDoc: vi.fn((t: string) => `tiptap:${t}`),
-  }));
+const {
+  mockResolveIntegration,
+  mockChat,
+  mockCreateNotification,
+  mockTipTapDoc,
+} = vi.hoisted(() => ({
+  mockResolveIntegration: vi.fn(),
+  mockChat: vi.fn(),
+  mockCreateNotification: vi.fn(),
+  mockTipTapDoc: vi.fn((t: string) => `tiptap:${t}`),
+}));
 
 // Minimal bullmq Worker mock (the processor under test does not use it).
 vi.mock("bullmq", async (importOriginal) => {
@@ -134,7 +138,10 @@ describe("deriveCaseStepsWorker", () => {
     await processor(makeJob());
 
     // feature FIRST, projectId SECOND
-    expect(mockResolveIntegration).toHaveBeenCalledWith("derive_case_steps", 10);
+    expect(mockResolveIntegration).toHaveBeenCalledWith(
+      "derive_case_steps",
+      10
+    );
     expect(mockChat).not.toHaveBeenCalled();
     expect(mockPrisma.steps.createMany).not.toHaveBeenCalled();
     expect(mockCreateNotification).not.toHaveBeenCalled();

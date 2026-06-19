@@ -45,7 +45,7 @@ const KIND_MAP: Record<string, AutomationStep["kind"]> = {
  */
 export function adaptTestSteps(
   steps: ITestStep[],
-  _format: TestResultFormat,
+  _format: TestResultFormat
 ): AutomationStep[] {
   if (steps.length === 0) return [];
 
