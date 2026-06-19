@@ -1140,6 +1140,33 @@ var TestPlanItClient = class {
     });
     return result?.count ?? 0;
   }
+  /**
+   * Request opt-in, background LLM step derivation for low-structure cases
+   * (e.g. Mocha/Jasmine, which have no native steps to map deterministically).
+   * Enqueues a server-side job that runs ONLY when an LLM provider is configured
+   * for the project; otherwise it is inert. With `overwrite`, cases that already
+   * have steps are re-derived (destructive). Returns whether a job was enqueued.
+   */
+  async requestStepDerivation(options) {
+    return this.request(
+      "POST",
+      "/api/test-cases/derive-steps",
+      {
+        body: {
+          projectId: options.projectId,
+          testRunId: options.testRunId,
+          overwrite: options.overwrite ?? false,
+          cases: options.cases.map((c) => ({
+            testCaseId: c.testCaseId,
+            name: c.name,
+            className: c.className ?? null,
+            failure: c.failure ?? null,
+            systemOut: c.systemOut ?? null
+          }))
+        }
+      }
+    );
+  }
   // ============================================================================
   // Test Run Cases (linking cases to runs)
   // ============================================================================

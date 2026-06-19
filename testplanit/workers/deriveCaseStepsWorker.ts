@@ -33,6 +33,13 @@ export interface DeriveCaseStepsJobData extends MultiTenantJobData {
   testRunId: number;
   userId: string;
   cases: DeriveCaseStepsCase[];
+  /**
+   * Destructive opt-in: when true, a case that already has steps is re-derived
+   * (existing steps soft-deleted, then rewritten) instead of being skipped by
+   * the CORE-01 stepless-only guard. A derivation that yields zero rows never
+   * clears existing steps (safeguard). Default false.
+   */
+  overwrite?: boolean;
 }
 
 // ─── Prompt + parser (pure) ──────────────────────────────────────────────────
@@ -92,7 +99,7 @@ export function parseStepsFromLlmResponse(content: string): DerivedStepRow[] {
 // ─── Processor ───────────────────────────────────────────────────────────────
 
 const processor = async (job: Job<DeriveCaseStepsJobData>): Promise<void> => {
-  const { projectId, testRunId, userId, cases, tenantId } = job.data;
+  const { projectId, testRunId, userId, cases, tenantId, overwrite } = job.data;
   console.log(
     `Processing derive-case-steps job ${job.id} for ${cases.length} case(s)` +
       (tenantId ? ` (tenant: ${tenantId})` : "")
@@ -149,14 +156,24 @@ const processor = async (job: Job<DeriveCaseStepsJobData>): Promise<void> => {
       });
 
       const rows = parseStepsFromLlmResponse(response.content);
+      // A derivation that yields nothing never clears existing steps (safeguard).
       if (rows.length === 0) continue;
 
-      // CORE-01 re-check: only ever write to a case that is STILL stepless.
-      // A human or the deterministic path may have added steps after import.
       const existingStepCount = await prisma.steps.count({
         where: { testCaseId: c.testCaseId, isDeleted: false },
       });
-      if (existingStepCount > 0) continue;
+      if (existingStepCount > 0) {
+        if (!overwrite) {
+          // CORE-01: never clobber steps a human (or the deterministic path)
+          // added after the case was created.
+          continue;
+        }
+        // Destructive opt-in: replace the existing steps with the re-derived set.
+        await prisma.steps.updateMany({
+          where: { testCaseId: c.testCaseId, isDeleted: false },
+          data: { isDeleted: true },
+        });
+      }
 
       await prisma.steps.createMany({
         data: rows.map((row, index) => ({

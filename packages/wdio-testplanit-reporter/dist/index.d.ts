@@ -113,6 +113,24 @@ interface TestPlanItReporterOptions extends Reporters.Options {
      */
     autoCreateTestCases?: boolean;
     /**
+     * Whether to capture a Cucumber scenario's Given/When/Then steps as the
+     * created case's Steps. Only effective with `@wdio/cucumber-framework`
+     * (`scenarioLevelReporter: false`, the default) and `autoCreateTestCases`.
+     * Given → Precondition (Step 0), When → Step, Then → Expected Result on the
+     * preceding When group. Silent no-op for Mocha/Jasmine (no native steps).
+     * @default true
+     */
+    captureSteps?: boolean;
+    /**
+     * Whether to overwrite the steps of an existing/linked Cucumber case with the
+     * scenario's captured steps every run. Existing steps are soft-deleted and
+     * replaced. This is **destructive**: any manual edits are discarded. As a
+     * safeguard, a scenario with no steps never clears existing steps. No-op for
+     * Mocha/Jasmine.
+     * @default false
+     */
+    overwriteSteps?: boolean;
+    /**
      * Whether to create folder hierarchy based on Mocha suite structure
      * When enabled, nested describe blocks create nested folders:
      * describe('Suite A') > describe('Suite B') > it('test')
@@ -337,6 +355,12 @@ interface TrackedTestResult {
     commandOutput?: string;
     /** JUnit test result ID (set after result is created, used for deferred screenshot upload) */
     junitResultId?: number;
+    /**
+     * Ordered Cucumber step titles (keyword embedded, e.g. "Given I am on the
+     * homepage") accumulated for a scenario. Set only when
+     * `detectedFramework === 'cucumber'`; used to derive the case's Steps.
+     */
+    cucumberStepTitles?: string[];
 }
 /**
  * Resolved IDs after looking up names
@@ -362,6 +386,8 @@ interface ReporterStats {
     testCasesMoved: number;
     /** Number of folders that were created for hierarchy */
     foldersCreated: number;
+    /** Number of case Steps written from captured Cucumber scenario steps */
+    testStepsCreated: number;
     /** Number of test results reported (passed) */
     resultsPassed: number;
     /** Number of test results reported (failed) */
@@ -397,6 +423,8 @@ interface ReporterState {
     testRunCaseMap: Map<string, number>;
     /** Map of folder paths (joined by >) to folder IDs for caching */
     folderPathMap: Map<string, number>;
+    /** Dedup of in-flight step writes per case id (write steps at most once per case per run) */
+    caseStepsMap: Map<number, Promise<void>>;
     /** Status ID mappings */
     statusIds: {
         passed?: number;
@@ -447,6 +475,19 @@ declare class TestPlanItReporter extends WDIOReporter {
     private currentTestUid;
     private currentCid;
     private pendingScreenshots;
+    /** Cucumber: accumulated step titles per active scenario suite uid. */
+    private pendingScenarioSteps;
+    /**
+     * Non-Cucumber cases (no deterministic steps) collected across the run for a
+     * single opt-in, batched LLM step-derivation request at onRunnerEnd. Keyed by
+     * testCaseId so a case is requested at most once per run.
+     */
+    private llmDerivationCases;
+    /** Cucumber: uid of the scenario suite currently open (null outside a scenario). */
+    private currentScenarioUid;
+    /** Cucumber: in-progress plan for the open scenario, emitted once at onSuiteEnd. */
+    private currentScenarioPlan;
+    private cucumberStepNoticeLogged;
     /** When true, the TestPlanItService manages the test run lifecycle */
     private managedByService;
     /**
@@ -469,6 +510,38 @@ declare class TestPlanItReporter extends WDIOReporter {
      * WebdriverIO checks isSynchronised and waits until all operations finish.
      */
     private trackOperation;
+    /**
+     * Decide whether to write a Cucumber scenario's captured steps to its case,
+     * and write them via the shared mapper. No-op for non-Cucumber frameworks
+     * (D-09). Writes on fresh create when captureSteps is on (D-04), or replaces
+     * existing steps when overwriteSteps is on (D-05).
+     */
+    private writeScenarioSteps;
+    /**
+     * For NON-Cucumber frameworks (Mocha/Jasmine — no deterministic steps),
+     * collect a case for opt-in, server-side LLM step derivation. Gated by
+     * `captureSteps` (the general "populate steps" switch). A newly created
+     * stepless case is always eligible; an existing/matched case is only eligible
+     * when `overwriteSteps` is on (destructive re-derive). The actual request is
+     * batched and sent once at onRunnerEnd; the server is inert if the project has
+     * no LLM provider configured.
+     */
+    private collectForLlmDerivation;
+    /**
+     * Send the single batched LLM step-derivation request for the non-Cucumber
+     * cases collected this run. Called once at onRunnerEnd. Provider-gated +
+     * inert server-side when no LLM provider is configured; wrapped so a failure
+     * never affects the run.
+     */
+    private requestLlmDerivation;
+    /**
+     * Write derived case Steps for a case (ported from the Playwright reporter).
+     * Dedups in-flight writes per case id; when `replace` is set, soft-deletes
+     * existing steps first and SKIPS the create if the delete fails (never-clobber
+     * guard, CORE-01). Passes `CaseStepRow[]` directly to `createSteps` so the
+     * mapper's `expectedResult` is preserved (D-06).
+     */
+    private writeCaseSteps;
     /**
      * Initialize the reporter (create test run, fetch statuses)
      */

@@ -78,6 +78,8 @@ export type {
   CreateTestCaseOptions,
   CreateStepOptions,
   CreateStepsOptions,
+  RequestStepDerivationOptions,
+  RequestStepDerivationCase,
   AutomationStep,
   CaseStepRow,
   CreateTagOptions,

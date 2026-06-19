@@ -490,6 +490,29 @@ interface CreateStepsOptions {
         order: number;
     }>;
 }
+/** One case to request server-side LLM step derivation for. */
+interface RequestStepDerivationCase {
+    testCaseId: number;
+    /** The automated test's name — the primary signal the LLM derives from. */
+    name: string;
+    /** Suite/class the test belongs to, if any. */
+    className?: string | null;
+    /** Failure message from the result, if any. */
+    failure?: string | null;
+    /** Captured output from the result, if any. */
+    systemOut?: string | null;
+}
+interface RequestStepDerivationOptions {
+    projectId: number;
+    /** Test run the resulting "steps ready" notification links to. */
+    testRunId: number;
+    cases: RequestStepDerivationCase[];
+    /**
+     * Destructive opt-in: re-derive cases that already have steps (replace them).
+     * Default false (only stepless cases are enriched).
+     */
+    overwrite?: boolean;
+}
 /**
  * A single normalized automation step, produced by a per-surface adapter
  * (the result importer, or the Playwright / WDIO reporters) and consumed by
@@ -991,6 +1014,16 @@ declare class TestPlanItClient {
      */
     softDeleteCaseSteps(testCaseId: number): Promise<number>;
     /**
+     * Request opt-in, background LLM step derivation for low-structure cases
+     * (e.g. Mocha/Jasmine, which have no native steps to map deterministically).
+     * Enqueues a server-side job that runs ONLY when an LLM provider is configured
+     * for the project; otherwise it is inert. With `overwrite`, cases that already
+     * have steps are re-derived (destructive). Returns whether a job was enqueued.
+     */
+    requestStepDerivation(options: RequestStepDerivationOptions): Promise<{
+        enqueued: boolean;
+    }>;
+    /**
      * Add a test case to a test run
      */
     addTestCaseToRun(options: AddTestCaseToRunOptions): Promise<TestRunCase>;
@@ -1129,4 +1162,4 @@ declare function automationStepsToCaseSteps(steps: AutomationStep[]): CaseStepRo
  */
 declare function deriveCaseStepsIfFresh(steps: AutomationStep[], existingStepCount: number): CaseStepRow[];
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, tipTapDoc };
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, tipTapDoc };

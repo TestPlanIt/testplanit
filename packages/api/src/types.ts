@@ -554,6 +554,31 @@ export interface CreateStepsOptions {
   }>;
 }
 
+/** One case to request server-side LLM step derivation for. */
+export interface RequestStepDerivationCase {
+  testCaseId: number;
+  /** The automated test's name — the primary signal the LLM derives from. */
+  name: string;
+  /** Suite/class the test belongs to, if any. */
+  className?: string | null;
+  /** Failure message from the result, if any. */
+  failure?: string | null;
+  /** Captured output from the result, if any. */
+  systemOut?: string | null;
+}
+
+export interface RequestStepDerivationOptions {
+  projectId: number;
+  /** Test run the resulting "steps ready" notification links to. */
+  testRunId: number;
+  cases: RequestStepDerivationCase[];
+  /**
+   * Destructive opt-in: re-derive cases that already have steps (replace them).
+   * Default false (only stepless cases are enriched).
+   */
+  overwrite?: boolean;
+}
+
 // ============================================================================
 // Automation Step Mapper Types
 // ============================================================================

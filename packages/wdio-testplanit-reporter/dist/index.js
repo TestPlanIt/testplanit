@@ -34,6 +34,45 @@ var path__namespace = /*#__PURE__*/_interopNamespace(path);
 var os__namespace = /*#__PURE__*/_interopNamespace(os);
 
 // src/reporter.ts
+
+// src/cucumberAdapter.ts
+var PRIMARY_KEYWORDS = {
+  Given: "precondition",
+  When: "action",
+  Then: "assertion"
+};
+var INHERITING_KEYWORDS = ["And", "But", "*"];
+function adaptCucumberStepTitles(stepTitles) {
+  const result = [];
+  let lastPrimaryKind = "action";
+  for (const raw of stepTitles) {
+    const trimmed = raw.trim();
+    let title = trimmed;
+    let kind = lastPrimaryKind;
+    let matched = false;
+    for (const kw of Object.keys(PRIMARY_KEYWORDS)) {
+      if (trimmed.startsWith(kw + " ")) {
+        title = trimmed.slice(kw.length + 1);
+        kind = PRIMARY_KEYWORDS[kw];
+        lastPrimaryKind = kind;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      for (const kw of INHERITING_KEYWORDS) {
+        if (trimmed.startsWith(kw + " ")) {
+          title = trimmed.slice(kw.length + 1);
+          kind = lastPrimaryKind;
+          matched = true;
+          break;
+        }
+      }
+    }
+    result.push({ title, kind });
+  }
+  return result;
+}
 var STALE_THRESHOLD_MS = 4 * 60 * 60 * 1e3;
 function getSharedStateFilePath(projectId) {
   const fileName = `.testplanit-reporter-${projectId}.json`;
@@ -152,6 +191,19 @@ var TestPlanItReporter = class extends WDIOReporter__default.default {
   currentTestUid = null;
   currentCid = null;
   pendingScreenshots = /* @__PURE__ */ new Map();
+  /** Cucumber: accumulated step titles per active scenario suite uid. */
+  pendingScenarioSteps = /* @__PURE__ */ new Map();
+  /**
+   * Non-Cucumber cases (no deterministic steps) collected across the run for a
+   * single opt-in, batched LLM step-derivation request at onRunnerEnd. Keyed by
+   * testCaseId so a case is requested at most once per run.
+   */
+  llmDerivationCases = /* @__PURE__ */ new Map();
+  /** Cucumber: uid of the scenario suite currently open (null outside a scenario). */
+  currentScenarioUid = null;
+  /** Cucumber: in-progress plan for the open scenario, emitted once at onSuiteEnd. */
+  currentScenarioPlan = null;
+  cucumberStepNoticeLogged = false;
   /** When true, the TestPlanItService manages the test run lifecycle */
   managedByService = false;
   /**
@@ -166,6 +218,8 @@ var TestPlanItReporter = class extends WDIOReporter__default.default {
     this.reporterOptions = {
       caseIdPattern: /\[(\d+)\]/g,
       autoCreateTestCases: false,
+      captureSteps: true,
+      overwriteSteps: false,
       createFolderHierarchy: false,
       uploadScreenshots: true,
       includeStackTrace: true,
@@ -198,6 +252,7 @@ var TestPlanItReporter = class extends WDIOReporter__default.default {
       caseIdMap: /* @__PURE__ */ new Map(),
       testRunCaseMap: /* @__PURE__ */ new Map(),
       folderPathMap: /* @__PURE__ */ new Map(),
+      caseStepsMap: /* @__PURE__ */ new Map(),
       statusIds: {},
       initialized: false,
       stats: {
@@ -205,6 +260,7 @@ var TestPlanItReporter = class extends WDIOReporter__default.default {
         testCasesCreated: 0,
         testCasesMoved: 0,
         foldersCreated: 0,
+        testStepsCreated: 0,
         resultsPassed: 0,
         resultsFailed: 0,
         resultsSkipped: 0,
@@ -243,6 +299,105 @@ ${error.stack}` : "";
     operation.finally(() => {
       this.pendingOperations.delete(operation);
     });
+  }
+  /**
+   * Decide whether to write a Cucumber scenario's captured steps to its case,
+   * and write them via the shared mapper. No-op for non-Cucumber frameworks
+   * (D-09). Writes on fresh create when captureSteps is on (D-04), or replaces
+   * existing steps when overwriteSteps is on (D-05).
+   */
+  async writeScenarioSteps(testCaseId, action, result) {
+    if (this.detectedFramework !== "cucumber") return;
+    const titles = result.cucumberStepTitles;
+    if (!titles || titles.length === 0) return;
+    const rows = api.automationStepsToCaseSteps(adaptCucumberStepTitles(titles));
+    if (action === "created" && this.reporterOptions.captureSteps !== false) {
+      await this.writeCaseSteps(testCaseId, rows, false);
+    } else if (this.reporterOptions.overwriteSteps) {
+      await this.writeCaseSteps(testCaseId, rows, true);
+    }
+  }
+  /**
+   * For NON-Cucumber frameworks (Mocha/Jasmine — no deterministic steps),
+   * collect a case for opt-in, server-side LLM step derivation. Gated by
+   * `captureSteps` (the general "populate steps" switch). A newly created
+   * stepless case is always eligible; an existing/matched case is only eligible
+   * when `overwriteSteps` is on (destructive re-derive). The actual request is
+   * batched and sent once at onRunnerEnd; the server is inert if the project has
+   * no LLM provider configured.
+   */
+  collectForLlmDerivation(testCaseId, action, result) {
+    if (this.detectedFramework === "cucumber") return;
+    if (this.reporterOptions.captureSteps === false) return;
+    const eligible = action === "created" || this.reporterOptions.overwriteSteps === true;
+    if (!eligible) return;
+    this.llmDerivationCases.set(testCaseId, {
+      testCaseId,
+      name: result.testName,
+      className: result.suiteName || null,
+      failure: result.errorMessage || null,
+      systemOut: null
+    });
+  }
+  /**
+   * Send the single batched LLM step-derivation request for the non-Cucumber
+   * cases collected this run. Called once at onRunnerEnd. Provider-gated +
+   * inert server-side when no LLM provider is configured; wrapped so a failure
+   * never affects the run.
+   */
+  async requestLlmDerivation() {
+    if (this.llmDerivationCases.size === 0) return;
+    if (!this.state.testRunId || !this.reporterOptions.projectId) return;
+    const cases = [...this.llmDerivationCases.values()];
+    this.llmDerivationCases.clear();
+    try {
+      const { enqueued } = await this.client.requestStepDerivation({
+        projectId: this.reporterOptions.projectId,
+        testRunId: this.state.testRunId,
+        overwrite: this.reporterOptions.overwriteSteps === true,
+        cases
+      });
+      if (enqueued) {
+        this.log(
+          `Requested AI step derivation for ${cases.length} low-structure case(s).`
+        );
+      }
+    } catch (error) {
+      this.logError("Failed to request AI step derivation", error);
+    }
+  }
+  /**
+   * Write derived case Steps for a case (ported from the Playwright reporter).
+   * Dedups in-flight writes per case id; when `replace` is set, soft-deletes
+   * existing steps first and SKIPS the create if the delete fails (never-clobber
+   * guard, CORE-01). Passes `CaseStepRow[]` directly to `createSteps` so the
+   * mapper's `expectedResult` is preserved (D-06).
+   */
+  writeCaseSteps(testCaseId, caseStepRows, replace) {
+    if (!caseStepRows || caseStepRows.length === 0) return Promise.resolve();
+    const existing = this.state.caseStepsMap.get(testCaseId);
+    if (existing) return existing;
+    const promise = (async () => {
+      if (replace) {
+        try {
+          const removed = await this.client.softDeleteCaseSteps(testCaseId);
+          this.log(`Cleared ${removed} existing step(s) on case:`, testCaseId);
+        } catch (error) {
+          this.logError(`Failed to clear existing steps on case ${testCaseId}; skipping step write`, error);
+          return;
+        }
+      }
+      try {
+        await this.client.createSteps({ testCaseId, steps: caseStepRows });
+        this.state.stats.testStepsCreated += caseStepRows.length;
+        this.log(`Wrote ${caseStepRows.length} step(s) to case:`, testCaseId);
+      } catch (error) {
+        this.logError(`Failed to create steps on case ${testCaseId}`, error);
+      }
+    })();
+    this.state.caseStepsMap.set(testCaseId, promise);
+    promise.catch(() => this.state.caseStepsMap.delete(testCaseId));
+    return promise;
   }
   /**
    * Initialize the reporter (create test run, fetch statuses)
@@ -596,14 +751,66 @@ ${error.stack}` : "";
       this.detectedFramework = config.framework;
       this.log("Detected framework:", this.detectedFramework);
     }
+    if (this.detectedFramework && this.detectedFramework !== "cucumber" && this.reporterOptions.captureSteps !== false && !this.cucumberStepNoticeLogged) {
+      this.cucumberStepNoticeLogged = true;
+      this.log(
+        `captureSteps only applies to Cucumber scenarios; step capture is unavailable for framework "${this.detectedFramework}".`
+      );
+    }
   }
   onSuiteStart(suite) {
     if (suite.title) {
       this.currentSuite.push(suite.title);
       this.log("Suite started:", this.getFullSuiteName());
     }
+    if (suite.type === "scenario" && this.detectedFramework === "cucumber") {
+      this.currentScenarioUid = suite.uid;
+      this.pendingScenarioSteps.set(suite.uid, []);
+      const scenarioTitle = (suite.title || "").replace(/^Scenario(?: Outline)?:\s*/, "").trim();
+      this.currentScenarioPlan = {
+        title: scenarioTitle,
+        // Feature path WITHOUT this scenario (currentSuite already includes it).
+        suiteName: this.currentSuite.slice(0, -1).join(" > "),
+        suitePath: this.currentSuite.slice(0, -1),
+        cid: suite.cid ?? "",
+        status: "passed",
+        startedAt: suite.start ? new Date(suite.start) : /* @__PURE__ */ new Date()
+      };
+    }
   }
   onSuiteEnd(suite) {
+    if (suite.type === "scenario" && this.detectedFramework === "cucumber" && this.currentScenarioPlan) {
+      const plan = this.currentScenarioPlan;
+      const stepTitles = this.pendingScenarioSteps.get(suite.uid) ?? [];
+      this.pendingScenarioSteps.delete(suite.uid);
+      this.currentScenarioUid = null;
+      this.currentScenarioPlan = null;
+      const { caseIds, cleanTitle } = this.parseCaseIds(plan.title);
+      const fullTitle = plan.suiteName ? `${plan.suiteName} > ${cleanTitle}` : cleanTitle;
+      const result = {
+        caseId: caseIds[0],
+        suiteName: plan.suiteName,
+        suitePath: plan.suitePath,
+        testName: cleanTitle,
+        fullTitle,
+        originalTitle: plan.title,
+        status: plan.status,
+        duration: 0,
+        errorMessage: plan.error?.message,
+        stackTrace: this.reporterOptions.includeStackTrace ? plan.error?.stack : void 0,
+        startedAt: plan.startedAt,
+        finishedAt: /* @__PURE__ */ new Date(),
+        browser: this.state.capabilities?.browserName,
+        platform: this.state.capabilities?.platformName || process.platform,
+        screenshots: [],
+        retryAttempt: 0,
+        uid: `${plan.cid}_${fullTitle}`,
+        specFile: this.currentSpec,
+        cucumberStepTitles: stepTitles
+      };
+      this.state.results.set(result.uid, result);
+      this.trackOperation(this.reportResult(result, caseIds));
+    }
     if (suite.title) {
       this.log("Suite ended:", this.getFullSuiteName());
       this.currentSuite.pop();
@@ -668,6 +875,18 @@ ${error.stack}` : "";
    * Handle test completion
    */
   handleTestEnd(test, status) {
+    if (this.detectedFramework === "cucumber" && this.currentScenarioUid !== null) {
+      this.pendingScenarioSteps.get(this.currentScenarioUid)?.push(test.title);
+      if (this.currentScenarioPlan) {
+        if (status === "failed" && this.currentScenarioPlan.status !== "failed") {
+          this.currentScenarioPlan.status = "failed";
+          this.currentScenarioPlan.error = test.error;
+        } else if (status === "skipped" && this.currentScenarioPlan.status === "passed") {
+          this.currentScenarioPlan.status = "skipped";
+        }
+      }
+      return;
+    }
     const { caseIds, cleanTitle } = this.parseCaseIds(test.title);
     const suiteName = this.getFullSuiteName();
     const suitePath = [...this.currentSuite];
@@ -746,6 +965,10 @@ ${error.stack}` : "";
       if (caseIds.length > 0) {
         repositoryCaseId = caseIds[0];
         this.log("DEBUG: Using case ID from title:", repositoryCaseId);
+        if (this.reporterOptions.overwriteSteps) {
+          await this.writeScenarioSteps(caseIds[0], "found", result);
+        }
+        this.collectForLlmDerivation(caseIds[0], "found", result);
       } else if (this.reporterOptions.autoCreateTestCases) {
         if (this.state.caseIdMap.has(caseKey)) {
           repositoryCaseId = this.state.caseIdMap.get(caseKey);
@@ -801,6 +1024,8 @@ ${error.stack}` : "";
           repositoryCaseId = testCase.id;
           this.state.caseIdMap.set(caseKey, repositoryCaseId);
           this.log(`${action === "found" ? "Found" : action === "created" ? "Created" : "Moved"} test case:`, testCase.id, testCase.name, "in folder:", folderId);
+          await this.writeScenarioSteps(testCase.id, action, result);
+          this.collectForLlmDerivation(testCase.id, action, result);
         }
       } else {
         this.log("DEBUG: autoCreateTestCases is false, not creating test case");
@@ -809,18 +1034,14 @@ ${error.stack}` : "";
         this.log("No repository case ID, skipping result");
         return;
       }
-      let testRunCaseId;
       const runCaseKey = `${this.state.testRunId}_${repositoryCaseId}`;
-      if (this.state.testRunCaseMap.has(runCaseKey)) {
-        testRunCaseId = this.state.testRunCaseMap.get(runCaseKey);
-      } else {
+      if (!this.state.testRunCaseMap.has(runCaseKey)) {
         const testRunCase = await this.client.findOrAddTestCaseToRun({
           testRunId: this.state.testRunId,
           repositoryCaseId
         });
-        testRunCaseId = testRunCase.id;
-        this.state.testRunCaseMap.set(runCaseKey, testRunCaseId);
-        this.log("Added case to run:", testRunCaseId);
+        this.state.testRunCaseMap.set(runCaseKey, testRunCase.id);
+        this.log("Added case to run:", testRunCase.id);
       }
       const statusId = this.state.statusIds[result.status] || this.state.statusIds.failed;
       const junitType = this.mapStatusToJUnitType(result.status);
@@ -887,6 +1108,7 @@ ${error.stack}` : "";
       this.log("No test run created, skipping summary");
       return;
     }
+    await this.requestLlmDerivation();
     if (this.reportedResultCount === 0) {
       this.log("No results were reported to TestPlanIt, skipping summary");
       return;

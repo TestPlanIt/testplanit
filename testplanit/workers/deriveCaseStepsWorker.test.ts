@@ -38,6 +38,7 @@ const mockPrisma = {
   steps: {
     count: vi.fn(),
     createMany: vi.fn(),
+    updateMany: vi.fn(),
   },
   testRuns: {
     findUnique: vi.fn(),
@@ -127,6 +128,7 @@ describe("deriveCaseStepsWorker", () => {
     vi.resetModules();
     mockPrisma.steps.count.mockResolvedValue(0);
     mockPrisma.steps.createMany.mockResolvedValue({ count: 2 });
+    mockPrisma.steps.updateMany.mockResolvedValue({ count: 3 });
     mockPrisma.testRuns.findUnique.mockResolvedValue({ name: "CI Run 42" });
     mockTipTapDoc.mockImplementation((t: string) => `tiptap:${t}`);
   });
@@ -185,6 +187,37 @@ describe("deriveCaseStepsWorker", () => {
     const { processor } = await loadWorker();
     await processor(makeJob());
 
+    expect(mockPrisma.steps.createMany).not.toHaveBeenCalled();
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+
+  it("overwrite:true re-derives a case that already has steps (soft-delete + rewrite)", async () => {
+    mockResolveIntegration.mockResolvedValue({ integrationId: 5 });
+    mockChat.mockResolvedValue({ content: STEPS_JSON });
+    mockPrisma.steps.count.mockResolvedValue(4); // already has steps
+
+    const { processor } = await loadWorker();
+    await processor(makeJob({ overwrite: true } as never));
+
+    // existing steps soft-deleted, then the re-derived set written
+    expect(mockPrisma.steps.updateMany).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.steps.updateMany.mock.calls[0][0]).toMatchObject({
+      where: { testCaseId: 1, isDeleted: false },
+      data: { isDeleted: true },
+    });
+    expect(mockPrisma.steps.createMany).toHaveBeenCalledTimes(1);
+    expect(mockCreateNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it("overwrite:true never clears existing steps when the LLM yields zero rows", async () => {
+    mockResolveIntegration.mockResolvedValue({ integrationId: 5 });
+    mockChat.mockResolvedValue({ content: "no array here" }); // 0 parsed rows
+    mockPrisma.steps.count.mockResolvedValue(4);
+
+    const { processor } = await loadWorker();
+    await processor(makeJob({ overwrite: true } as never));
+
+    expect(mockPrisma.steps.updateMany).not.toHaveBeenCalled();
     expect(mockPrisma.steps.createMany).not.toHaveBeenCalled();
     expect(mockCreateNotification).not.toHaveBeenCalled();
   });

@@ -31,8 +31,10 @@ export async function enqueueDeriveCaseSteps(params: {
   testRunId: number;
   userId: string;
   cases: DeriveCaseStepsJobData["cases"];
+  /** Destructive: re-derive cases that already have steps (default false). */
+  overwrite?: boolean;
 }): Promise<boolean> {
-  const { prisma, projectId, testRunId, userId, cases } = params;
+  const { prisma, projectId, testRunId, userId, cases, overwrite } = params;
   if (cases.length === 0) return false;
 
   const llmManager = LlmManager.getInstance(prisma);
@@ -51,6 +53,7 @@ export async function enqueueDeriveCaseSteps(params: {
     userId,
     tenantId: getCurrentTenantId(),
     cases,
+    ...(overwrite ? { overwrite: true } : {}),
   } satisfies DeriveCaseStepsJobData);
   return true;
 }
