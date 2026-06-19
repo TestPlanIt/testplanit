@@ -128,13 +128,16 @@ async function main() {
       const triggerName = triggerNameFor(entry.table);
       const pkCol = entry.pkCol ?? "id";
       const denylistCsv = (entry.denylist ?? DEFAULT_DENYLIST).join(",");
+      // Write-time name/project snapshot columns (empty string = none for this table).
+      const nameCol = entry.nameCol ?? "";
+      const projectCol = entry.projectCol ?? "";
 
       // Identifiers/args come ONLY from the static in-repo registry — no user input in this DDL.
       await client.query(`DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`);
       await client.query(
         `CREATE TRIGGER ${triggerName}
            AFTER INSERT OR UPDATE OR DELETE ON "${entry.table}"
-           FOR EACH ROW EXECUTE FUNCTION audit_row_change('${pkCol}', '${denylistCsv}');`,
+           FOR EACH ROW EXECUTE FUNCTION audit_row_change('${pkCol}', '${denylistCsv}', '${nameCol}', '${projectCol}');`,
       );
     }
 

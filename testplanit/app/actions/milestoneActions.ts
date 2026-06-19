@@ -52,7 +52,13 @@ export async function completeMilestoneCascade(
     return { status: "error", message: "User not authenticated" };
   }
 
-  return runWithAuditContext({ userId: session.user.id }, async () => {
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
   const parseResult = CompleteMilestoneSchema.safeParse(input);
   if (!parseResult.success) {
     return { status: "error", message: "Invalid input." };

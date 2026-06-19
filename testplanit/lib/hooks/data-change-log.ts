@@ -327,7 +327,7 @@ export function useSuspenseCountDataChangeLog<TArgs extends Prisma.DataChangeLog
     return useSuspenseModelQuery<TQueryFnData, TData, TError>('DataChangeLog', `${endpoint}/dataChangeLog/count`, args, options, fetch);
 }
 
-export function useCheckDataChangeLog<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; seq?: number; tableName?: string; op?: string; pk?: string; actor?: string; operationId?: string; tenant?: string; txid?: number; processed?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckDataChangeLog<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; seq?: number; tableName?: string; op?: string; pk?: string; actor?: string; operationId?: string; tenant?: string; actorName?: string; actorEmail?: string; entityName?: string; projectId?: string; txid?: number; processed?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('DataChangeLog', `${endpoint}/dataChangeLog/check`, args, options, fetch);
 }

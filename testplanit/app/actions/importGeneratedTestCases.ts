@@ -27,10 +27,16 @@ export async function importGeneratedTestCases(
   // Establish the audit actor frame so trigger-based CDC records who imported.
   // The service mutates through the hooked client; injectAuditGuc reads the
   // actor from this ALS frame, which survives into the $extends hook tx.
-  return runWithAuditContext({ userId: session.user.id }, () =>
-    persistGeneratedTestCases(input, {
+  return runWithAuditContext(
+    {
       userId: session.user.id,
-      userName: session.user.name || "Unknown User",
-    })
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    () =>
+      persistGeneratedTestCases(input, {
+        userId: session.user.id,
+        userName: session.user.name || "Unknown User",
+      })
   );
 }

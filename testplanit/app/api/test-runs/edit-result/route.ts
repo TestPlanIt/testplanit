@@ -123,6 +123,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
             repositoryCase: { select: { templateId: true } },
             testRun: {
               select: {
+                name: true,
                 createdById: true,
                 projectId: true,
                 isCompleted: true,
@@ -355,6 +356,14 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     const existingFieldValueByFieldId = new Map(
       existing.resultFieldValues.map((fv) => [fv.fieldId, fv.id])
     );
+
+    // Editing a result writes the result/child rows but not the owning TestRuns
+    // row, so stamp the run's name + project onto the audit frame (as they are
+    // now) for an immutable, lookup-free attribution.
+    updateAuditContext({
+      subjectEntityName: existing.testRunCase.testRun.name ?? undefined,
+      subjectProjectId: existing.testRunCase.testRun.projectId,
+    });
 
     const result = await auditedTransaction(async (tx) => {
       const updated = await tx.testRunResults.update({

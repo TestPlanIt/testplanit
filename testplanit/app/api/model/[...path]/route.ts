@@ -492,6 +492,14 @@ async function innerHandler(
 
     // Get the authenticated user ID (from session or API token)
     const authenticatedUserId = session?.user?.id ?? apiAuthContext?.userId;
+    // ...and their display name + email, so the audit frame carries the actor's
+    // identity (snapshotted at write time) for paths that build the GUC from the
+    // frame rather than an explicit user object — notably tryFastPathCreate,
+    // which runs BEFORE getPrisma's enrichFromApiAuth and so otherwise sees no name.
+    const authenticatedUserName =
+      session?.user?.name ?? apiAuthContext?.name ?? undefined;
+    const authenticatedUserEmail =
+      session?.user?.email ?? apiAuthContext?.email ?? undefined;
 
     // Clone the request body for audit logging and potential modification
     let requestBody: any = null;
@@ -1027,6 +1035,8 @@ async function innerHandler(
         // AuditLog row has an empty userId. Genuine system paths have no
         // authenticatedUserId and are recorded as __system__ downstream.
         userId: authenticatedUserId ?? parentAuditCtx.userId ?? undefined,
+        userName: authenticatedUserName ?? parentAuditCtx.userName ?? undefined,
+        userEmail: authenticatedUserEmail ?? parentAuditCtx.userEmail ?? undefined,
         suppressWebhooks: true,
         suppressEntityAudit: auditedByShim,
       },

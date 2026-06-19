@@ -9876,6 +9876,22 @@ const metadata: ModelMeta = {
                     name: "tenant",
                     type: "String",
                     isOptional: true,
+                }, actorName: {
+                    name: "actorName",
+                    type: "String",
+                    isOptional: true,
+                }, actorEmail: {
+                    name: "actorEmail",
+                    type: "String",
+                    isOptional: true,
+                }, entityName: {
+                    name: "entityName",
+                    type: "String",
+                    isOptional: true,
+                }, projectId: {
+                    name: "projectId",
+                    type: "String",
+                    isOptional: true,
                 }, txid: {
                     name: "txid",
                     type: "BigInt",

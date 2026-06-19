@@ -68,6 +68,10 @@ interface RawDclRow {
   pk: string;
   changed_cols: ChangedCols | null;
   actor: string | null;
+  actor_name: string | null;
+  actor_email: string | null;
+  entity_name: string | null;
+  project_id: string | null;
   operation_id: string | null;
   tenant: string | null;
   txid: bigint | number | string;
@@ -86,6 +90,11 @@ interface MaterializedRow {
   entityId: string;
   action: AuditActionLiteral;
   actor: string | null;
+  /** Write-time human-context snapshot, copied verbatim from DataChangeLog — NEVER looked up. */
+  userName: string | null;
+  userEmail: string | null;
+  entityName: string | null;
+  projectId: string | null;
   operationId: string | null;
   tenant: string | null;
   changes: HumanizedCols;
@@ -262,17 +271,21 @@ export async function writeAuditLogRows(
     // de-dupes CDC rows, so any unique id is correct here.
     const result = await tx.$executeRaw`
       INSERT INTO "AuditLog"
-        ("id", "userId", "action", "entityType", "entityId", "changes", "metadata", "operationId", "sourceTable", "timestamp")
+        ("id", "userId", "userName", "userEmail", "action", "entityType", "entityId", "entityName", "changes", "metadata", "operationId", "sourceTable", "projectId", "timestamp")
       VALUES (
         gen_random_uuid()::text,
         ${m.actor},
+        ${m.userName},
+        ${m.userEmail},
         ${m.action}::"AuditAction",
         ${m.entityType},
         ${m.entityId},
+        ${m.entityName},
         ${changesJson}::jsonb,
         ${metadataJson}::jsonb,
         ${m.operationId},
         ${m.sourceTable},
+        ${m.projectId ? Number(m.projectId) : null},
         now()
       )
       ON CONFLICT ("operationId", "sourceTable", "entityId", "action") WHERE "operationId" IS NOT NULL
@@ -339,10 +352,55 @@ export async function pollDataChangeLogsOnce(
     for (const group of groups) {
       try {
         const rolled = await applyRollupMap(group, twoHopQuery);
+
+        // Owning-entity name/project snapshot, harvested from the root row IN THIS GROUP that
+        // attributes to itself (its table === entityType and its pk === entityId). A child/value/
+        // join row that rolls up to that owner inherits the owner's write-time snapshot — so e.g.
+        // editing a case's steps shows the case's name as it was at that instant, without any
+        // lookup. (For child-only operations the owner row is absent; those rows carry the GUC
+        // subject the originating route set, captured on the row itself — see below.)
+        const ownerSnapshot = new Map<
+          string,
+          { entityName: string | null; projectId: string | null }
+        >();
+        // Pass 1 (authoritative): the owning root row's own snapshot — the row
+        // that attributes to itself (table === entityType, pk === entityId).
+        for (const { row, entityType, entityId } of rolled) {
+          if (
+            row.table === entityType &&
+            String(row.pk) === String(entityId) &&
+            (row.entity_name != null || row.project_id != null)
+          ) {
+            ownerSnapshot.set(`${entityType}:${entityId}`, {
+              entityName: row.entity_name,
+              projectId: row.project_id,
+            });
+          }
+        }
+        // Pass 2 (fallback): when the owning root row was NOT written in this
+        // operation, harvest the subject from any other row in the group that
+        // captured it for the same owner — e.g. recording a result writes the
+        // TestRunResults row (carrying the run's name/project from the GUC
+        // subject) but not the TestRuns row, and the step-result rows that share
+        // the operationId then inherit it. Never overwrites a pass-1 snapshot.
+        for (const { row, entityType, entityId } of rolled) {
+          const key = `${entityType}:${entityId}`;
+          if (
+            !ownerSnapshot.has(key) &&
+            (row.entity_name != null || row.project_id != null)
+          ) {
+            ownerSnapshot.set(key, {
+              entityName: row.entity_name,
+              projectId: row.project_id,
+            });
+          }
+        }
+
         for (const { row, entityType, entityId } of rolled) {
           const changes = row.changed_cols
             ? await humanize(cache, row.table, row.changed_cols)
             : {};
+          const owner = ownerSnapshot.get(`${entityType}:${entityId}`);
           materialized.push({
             sourceRowId: row.id,
             sourceTable: row.table,
@@ -354,6 +412,12 @@ export async function pollDataChangeLogsOnce(
             // migrations, or any path without a session) is attributed to the
             // system sentinel so every materialized AuditLog row answers "who".
             actor: row.actor || SYSTEM_ACTOR_ID,
+            // Write-time snapshot, copied straight through (no lookup): the row's own captured
+            // value (root rows, or children carrying the GUC subject) first, else the owner's.
+            userName: row.actor_name,
+            userEmail: row.actor_email,
+            entityName: row.entity_name ?? owner?.entityName ?? null,
+            projectId: row.project_id ?? owner?.projectId ?? null,
             operationId: row.operation_id,
             tenant: row.tenant,
             changes,

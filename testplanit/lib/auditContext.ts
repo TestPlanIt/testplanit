@@ -34,6 +34,18 @@ export interface AuditContext {
   /** Authenticated user name (set after auth) */
   userName?: string;
   /**
+   * Subject snapshot for child-only operations — those whose owning root row is
+   * NOT itself written, so the trigger has no row to read the name/project from
+   * (e.g. recording a test result writes TestRunResults but not the TestRuns
+   * row). The originating route sets these on the frame; buildGucPayload carries
+   * them into the GUC and the trigger uses them as the entity_name/project_id
+   * fallback. Leave unset for normal operations — the trigger reads the name/
+   * project straight off the written root row, which is more robust (it handles
+   * bulk operations row-by-row).
+   */
+  subjectEntityName?: string;
+  subjectProjectId?: number | string;
+  /**
    * Reason string stamped when a job/event has no originating human actor
    * (scheduled jobs, worker-to-worker fan-outs, infrastructure tasks).
    * Phase 64 D-14 / W5 Option A: propagated via the ALS frame so downstream

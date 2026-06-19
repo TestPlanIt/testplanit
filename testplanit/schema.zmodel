@@ -5525,6 +5525,18 @@ model DataChangeLog {
     operationId String?  @map("operation_id") @db.Text
     tenant      String?  @db.Text
 
+    // Write-time human-context snapshot (immutable). The trigger captures these
+    // AT THE MOMENT OF THE CHANGE so the readable AuditLog never has to look them
+    // up later (a later lookup would show the value as it is NOW, not as it was
+    // then). actorName/actorEmail come from the GUC; entityName/projectId are read
+    // off the changed row's name/project columns (or the GUC subject for child
+    // rows whose own table has neither). projectId stays text here and is cast to
+    // Int by the correlation worker when writing AuditLog.
+    actorName   String?  @map("actor_name") @db.Text
+    actorEmail  String?  @map("actor_email") @db.Text
+    entityName  String?  @map("entity_name") @db.Text
+    projectId   String?  @map("project_id") @db.Text
+
     // DB-level metadata.
     txid        BigInt
     ts          DateTime @default(now()) @db.Timestamptz(6)

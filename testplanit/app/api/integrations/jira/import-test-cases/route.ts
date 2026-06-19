@@ -170,11 +170,17 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    const result = await runWithAuditContext({ userId: auth.user.id }, () =>
-      persistGeneratedTestCases(input, {
+    const result = await runWithAuditContext(
+      {
         userId: auth.user.id,
-        userName: auth.user.name,
-      })
+        userName: auth.user.name ?? undefined,
+        userEmail: auth.user.email ?? undefined,
+      },
+      () =>
+        persistGeneratedTestCases(input, {
+          userId: auth.user.id,
+          userName: auth.user.name,
+        })
     );
 
     return NextResponse.json(result, {

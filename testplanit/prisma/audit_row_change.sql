@@ -37,18 +37,25 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    ctx_raw   TEXT;
-    ctx       JSONB;
-    actor_id  TEXT;
-    op_id     TEXT;
-    tenant_id TEXT;
-    pk_col    TEXT;
-    pk_val    TEXT;
-    old_json  JSONB;
-    new_json  JSONB;
-    diff      JSONB := '{}'::jsonb;
-    col_name  TEXT;
-    denylist  TEXT[];
+    ctx_raw     TEXT;
+    ctx         JSONB;
+    actor_id    TEXT;
+    actor_name  TEXT;
+    actor_email TEXT;
+    op_id       TEXT;
+    tenant_id   TEXT;
+    pk_col      TEXT;
+    pk_val      TEXT;
+    name_col    TEXT;
+    project_col TEXT;
+    entity_nm   TEXT;
+    project_id  TEXT;
+    row_json    JSONB;
+    old_json    JSONB;
+    new_json    JSONB;
+    diff        JSONB := '{}'::jsonb;
+    col_name    TEXT;
+    denylist    TEXT[];
 BEGIN
     -- Recursion guard: never cascade (DataChangeLog itself carries no trigger, so depth stays 1).
     IF pg_trigger_depth() > 1 THEN
@@ -60,18 +67,26 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    -- 1. Actor context from the GUC. 2-arg current_setting returns NULL (never raises) when unset.
+    -- 1. Actor + write-time human context from the GUC. 2-arg current_setting returns NULL
+    --    (never raises) when unset. userName/userEmail are the actor AS THEY WERE NAMED at the
+    --    moment of the change — snapshotted here so the readable AuditLog never has to look the
+    --    user up later. entityName/projectId off the GUC are the SUBJECT fallback for child rows
+    --    whose own table carries neither a name nor a project column (see step 4).
     ctx_raw := current_setting('app.audit_context', true);
     IF ctx_raw IS NOT NULL AND ctx_raw <> '' THEN
-        ctx       := ctx_raw::jsonb;
-        actor_id  := ctx->>'userId';
-        op_id     := ctx->>'operationId';
-        tenant_id := ctx->>'tenantId';
+        ctx         := ctx_raw::jsonb;
+        actor_id    := ctx->>'userId';
+        actor_name  := ctx->>'userName';
+        actor_email := ctx->>'userEmail';
+        op_id       := ctx->>'operationId';
+        tenant_id   := ctx->>'tenantId';
     END IF;
 
-    -- 2. PK column + denylist from the trigger creation args.
-    pk_col   := COALESCE(TG_ARGV[0], 'id');
-    denylist := string_to_array(COALESCE(TG_ARGV[1], ''), ',');
+    -- 2. PK column, denylist, and the name/project snapshot columns from the trigger creation args.
+    pk_col      := COALESCE(TG_ARGV[0], 'id');
+    denylist    := string_to_array(COALESCE(TG_ARGV[1], ''), ',');
+    name_col    := COALESCE(TG_ARGV[2], '');
+    project_col := COALESCE(TG_ARGV[3], '');
 
     -- 3. Changed-columns {old,new} diff via to_jsonb + IS DISTINCT FROM (NULL-safe).
     IF TG_OP = 'INSERT' THEN
@@ -115,14 +130,43 @@ BEGIN
         END IF;
     END IF;
 
+    -- 4. Write-time entity name + project snapshot (immutable). Read the configured name/project
+    --    columns straight off the row image as it is AT THIS INSTANT (NEW for insert/update, OLD
+    --    for delete) — a value read here can never drift the way a later lookup would. Root/self-
+    --    attributed entities carry these columns (name_col/project_col set in the registry) and so
+    --    snapshot their own name/project, which also makes bulk edits correct (every row carries
+    --    its own). Child/value/join tables have neither column (args empty) and fall back to the
+    --    GUC subject (entityName/projectId), set by the few child-only operations whose owning row
+    --    is not itself written (e.g. recording a run result). A missing key yields NULL, never an
+    --    error, so a wrong/absent column simply leaves the snapshot empty.
+    IF TG_OP = 'DELETE' THEN
+        row_json := old_json;
+    ELSE
+        row_json := new_json;
+    END IF;
+    IF name_col <> '' THEN
+        entity_nm := COALESCE(row_json->>name_col, ctx->>'entityName');
+    ELSE
+        entity_nm := ctx->>'entityName';
+    END IF;
+    IF project_col <> '' THEN
+        project_id := COALESCE(row_json->>project_col, ctx->>'projectId');
+    ELSE
+        project_id := ctx->>'projectId';
+    END IF;
+
     INSERT INTO "DataChangeLog"
-        ("table", op, pk, changed_cols, actor, operation_id, tenant, txid, ts)
+        ("table", op, pk, changed_cols, actor, actor_name, actor_email, entity_name, project_id, operation_id, tenant, txid, ts)
     VALUES (
         TG_TABLE_NAME,
         LEFT(TG_OP, 1),       -- 'I' | 'U' | 'D'
         pk_val,
         diff,
         actor_id,
+        actor_name,
+        actor_email,
+        entity_nm,
+        project_id,
         op_id,
         tenant_id,
         txid_current(),

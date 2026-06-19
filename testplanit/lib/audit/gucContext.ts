@@ -33,10 +33,20 @@ import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
  */
 export interface GucPayload {
   userId: string | null;
+  /** Actor display name + email, snapshotted at write time (immutable "who, as named then"). */
+  userName: string | null;
+  userEmail: string | null;
   requestId: string | null;
   source: string;
   tenantId: string | null;
   operationId: string | null;
+  /**
+   * Subject fallback for child-only operations (entityName/projectId). Normally null — the trigger
+   * reads the name/project off the written root row. Set only when the owning row is not itself
+   * written (see AuditContext.subjectEntityName).
+   */
+  entityName: string | null;
+  projectId: string | null;
 }
 
 /**
@@ -57,10 +67,20 @@ export interface GucPayload {
  * sentinel. Shared by injectAuditGuc (hooked-client $extends path), the
  * enhanceWithAudit factory (ZenStack enhanced path), and the fast-path create.
  */
-export function buildGucPayload(explicitUserId?: string | null): GucPayload {
+export function buildGucPayload(
+  explicitActor?:
+    | string
+    | { id?: string | null; name?: string | null; email?: string | null }
+    | null,
+): GucPayload {
   const ctx = getAuditContext();
+  // An explicit actor (the enhanced/worker paths that already resolved the user) wins over the ALS
+  // frame; a bare string keeps every existing `buildGucPayload(userId)` caller working unchanged.
+  const ex = typeof explicitActor === "string" ? { id: explicitActor } : explicitActor;
   return {
-    userId: explicitUserId ?? ctx?.userId ?? null,
+    userId: ex?.id ?? ctx?.userId ?? null,
+    userName: ex?.name ?? ctx?.userName ?? null,
+    userEmail: ex?.email ?? ctx?.userEmail ?? null,
     requestId: ctx?.requestId ?? null,
     source: ctx?.tokenScopes?.length
       ? "api"
@@ -69,6 +89,8 @@ export function buildGucPayload(explicitUserId?: string | null): GucPayload {
         : "web",
     tenantId: getCurrentTenantId() ?? null,
     operationId: ctx?.operationId ?? null,
+    entityName: ctx?.subjectEntityName ?? null,
+    projectId: ctx?.subjectProjectId != null ? String(ctx.subjectProjectId) : null,
   };
 }
 

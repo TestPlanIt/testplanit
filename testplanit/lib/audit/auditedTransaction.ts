@@ -63,7 +63,13 @@ export async function auditedEnhancedTransaction<T>(
   if (!user) {
     throw new Error("User not found");
   }
-  const payload = JSON.stringify(buildGucPayload(session.user.id));
+  const payload = JSON.stringify(
+    buildGucPayload({
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+    }),
+  );
   return prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
     const etx = enhance(tx as never, { user }) as unknown as Prisma.TransactionClient;

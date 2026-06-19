@@ -2805,6 +2805,10 @@ model DataChangeLog {
   actor       String?  @db.Text()
   operationId String?  @map("operation_id") @db.Text()
   tenant      String?  @db.Text()
+  actorName   String?  @map("actor_name") @db.Text()
+  actorEmail  String?  @map("actor_email") @db.Text()
+  entityName  String?  @map("entity_name") @db.Text()
+  projectId   String?  @map("project_id") @db.Text()
   txid        BigInt
   ts          DateTime @default(now()) @db.Timestamptz(6)
   processed   Boolean  @default(false)

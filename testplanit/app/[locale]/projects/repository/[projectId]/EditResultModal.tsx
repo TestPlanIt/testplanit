@@ -41,6 +41,7 @@ import {
   isPermissionDeniedSubmitResultError,
   isRequiredFieldsMissingSubmitResultError,
 } from "~/lib/test-run-result-submit";
+import { useOperationId } from "~/hooks/useOperationId";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { toHumanReadable } from "~/utils/duration";
@@ -873,6 +874,8 @@ export function EditResultModal({
     );
   };
 
+  const { beginOperation, endOperation } = useOperationId();
+
   const onSubmit = async (values: FormValues) => {
     if (!session?.user?.id || !repositoryCase?.currentVersion) return;
 
@@ -882,6 +885,9 @@ export function EditResultModal({
     }
 
     setIsSubmitting(true);
+    // One operationId for the whole edit so the edit-result write and the
+    // step-result writes group together (run name/project inherited by the steps).
+    beginOperation();
 
     try {
       // Parse elapsed time back to seconds
@@ -1036,6 +1042,7 @@ export function EditResultModal({
       }
     } finally {
       setIsSubmitting(false);
+      endOperation();
     }
   };
 
