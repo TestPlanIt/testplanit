@@ -105,6 +105,104 @@ function catalogFor(
   return CATALOG_BY_COLUMN.default[column] ?? null;
 }
 
+/**
+ * Value tables (CaseFieldValues / SessionFieldValues / ResultFieldValues) store only a generic
+ * `value` plus the `fieldId` of the field it belongs to. Rendered generically that reads as the
+ * opaque "value: 3 → 2"; instead we re-key the diff under the field's display name and resolve the
+ * value to a label ("Priority: Medium → High"). `fieldCatalog` resolves fieldId → the field's
+ * displayName; `typeCatalog` resolves fieldId → the field's type name (which decides how `value`
+ * renders). Session fields reuse the case-field catalog (SessionFieldValues.fieldId → CaseFields).
+ */
+const VALUE_TABLES: Record<string, { fieldCatalog: string; typeCatalog: string }> = {
+  CaseFieldValues: { fieldCatalog: "CaseFields", typeCatalog: "CaseFieldType" },
+  SessionFieldValues: { fieldCatalog: "CaseFields", typeCatalog: "CaseFieldType" },
+  ResultFieldValues: { fieldCatalog: "ResultFields", typeCatalog: "ResultFieldType" },
+};
+
+/** Pull the concatenated plain text out of a Tiptap doc (string- or object-encoded), truncated. */
+function tiptapToPlainText(value: unknown): string {
+  let doc: unknown = value;
+  if (typeof doc === "string") {
+    const raw = doc;
+    try {
+      doc = JSON.parse(raw);
+    } catch {
+      return raw.slice(0, 140);
+    }
+  }
+  let out = "";
+  const walk = (node: any) => {
+    if (!node || typeof node !== "object") return;
+    if (typeof node.text === "string") out += node.text;
+    if (Array.isArray(node.content)) node.content.forEach(walk);
+  };
+  walk(doc);
+  out = out.trim();
+  return out.length > 140 ? `${out.slice(0, 140)}…` : out;
+}
+
+/**
+ * Render a value-table `value` to a human label according to the field's type. Option-backed types
+ * resolve ids to their FieldOptions name; rich text is flattened; everything else is shown as-is.
+ * Never throws — an unresolved option falls back to its raw id via resolveName.
+ */
+async function renderFieldValue(
+  cache: HumanizeCache,
+  type: string | null,
+  value: number | string | boolean | null | unknown,
+): Promise<string | null> {
+  if (value === null || value === undefined) return null;
+  switch (type) {
+    case "Dropdown":
+      return resolveName(cache, "FieldOptions", "name", value as number | string);
+    case "Multi-Select": {
+      const ids = Array.isArray(value) ? value : [value];
+      const names = await Promise.all(
+        ids.map((id) => resolveName(cache, "FieldOptions", "name", id as number | string)),
+      );
+      const joined = names.filter(Boolean).join(", ");
+      return joined || String(value);
+    }
+    case "Checkbox":
+      return value ? "Checked" : "Unchecked";
+    case "Text Long":
+      return tiptapToPlainText(value) || "(empty)";
+    default:
+      return typeof value === "object" ? JSON.stringify(value) : String(value);
+  }
+}
+
+/**
+ * Re-key a value-table diff under the changed field's display name with a resolved label, e.g.
+ * { fieldId: {2}, value: {old:3,new:2} } → { Priority: { old: "Medium", new: "High" } }. The raw
+ * value/fieldId/FK columns are dropped. Returns null when fieldId is absent (no field context) so
+ * the caller can fall back to the generic path.
+ */
+async function humanizeFieldValueChange(
+  cache: HumanizeCache,
+  config: { fieldCatalog: string; typeCatalog: string },
+  changedCols: ChangedCols,
+): Promise<HumanizedCols | null> {
+  const fieldEntry = changedCols.fieldId;
+  const fieldId = fieldEntry?.new ?? fieldEntry?.old;
+  if (fieldId === null || fieldId === undefined) return null;
+  const displayName =
+    (await resolveName(cache, config.fieldCatalog, "displayName", fieldId)) ?? "Field";
+  let type: string | null = null;
+  try {
+    type = await cache.resolve(config.typeCatalog, "type", fieldId);
+  } catch {
+    type = null;
+  }
+  const valueEntry = changedCols.value ?? { old: null, new: null };
+  return {
+    [displayName]: {
+      old: await renderFieldValue(cache, type, valueEntry.old),
+      new: await renderFieldValue(cache, type, valueEntry.new),
+    },
+  };
+}
+
 /** One column's {old, new} entry inside a DataChangeLog changedCols diff. */
 export interface ChangedColEntry {
   old: number | string | null;
@@ -155,6 +253,16 @@ export async function humanize(
   tableName: string,
   changedCols: ChangedCols,
 ): Promise<HumanizedCols> {
+  // Value tables re-key their {fieldId, value} diff under the field's display name with a resolved
+  // label ("Priority: Medium → High") instead of the opaque generic "value: 3 → 2".
+  const valueTable = VALUE_TABLES[tableName];
+  if (valueTable && changedCols.value !== undefined) {
+    const rekeyed = await humanizeFieldValueChange(cache, valueTable, changedCols);
+    if (rekeyed) {
+      return rekeyed;
+    }
+  }
+
   const out: HumanizedCols = {};
   for (const [column, entry] of Object.entries(changedCols)) {
     const catalog = catalogFor(tableName, column);
@@ -183,6 +291,9 @@ export function createPrismaLookup(prisma: any): LookupFn {
   > = {
     CaseFields: { delegate: "caseFields", field: "displayName" },
     ResultFields: { delegate: "resultFields", field: "displayName" },
+    // Dropdown / Multi-Select option id → its label (Critical, High, …); shared across case,
+    // session, and result fields (all assign from FieldOptions).
+    FieldOptions: { delegate: "fieldOptions", field: "name" },
     Status: { delegate: "status", field: "name" },
     Workflows: { delegate: "workflows", field: "name" },
     // Comment attribution: the comment rolls up to whichever parent FK is set,
@@ -196,6 +307,17 @@ export function createPrismaLookup(prisma: any): LookupFn {
   };
 
   return async (table, field, id) => {
+    // Field TYPE resolution for value-table rendering: a value table's fieldId → the field's
+    // type name ("Dropdown", "Checkbox", …), one relation hop into CaseFieldTypes. Both CaseFields
+    // and ResultFields point their `type` relation at CaseFieldTypes, so the shape is identical.
+    if (table === "CaseFieldType" || table === "ResultFieldType") {
+      const delegate = table === "ResultFieldType" ? "resultFields" : "caseFields";
+      const row = await prisma[delegate].findUnique({
+        where: { id: Number(id) },
+        select: { type: { select: { type: true } } },
+      });
+      return (row?.type?.type as string | undefined) ?? null;
+    }
     const meta = delegates[table];
     if (!meta) {
       return null;

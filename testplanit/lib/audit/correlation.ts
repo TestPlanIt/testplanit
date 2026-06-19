@@ -481,10 +481,56 @@ export async function pollDataChangeLogsOnce(
           }
         }
 
+        // Pass 3 (cross-batch back-fill): a save spanning several transactions (one operationId,
+        // many txids) can have its owner root row and its child/value rows land in DIFFERENT poll
+        // batches — each txn commits separately, so a poll can cut between them. A child polled
+        // after its owner then finds no in-group snapshot above and would show a blank name. The
+        // owner's DataChangeLog row still exists (append-only) and carries the write-time name for
+        // THIS operationId, so read it from the immutable log — NOT the live entity, so the name is
+        // still as-of the change. Only runs when a real operationId is present and an owner is
+        // actually missing (txid-grouped rows share one transaction → never split across batches).
+        const opId = group.find((r) => r.operation_id)?.operation_id ?? null;
+        if (
+          opId &&
+          kept.some(
+            ({ entityType, entityId }) =>
+              !ownerSnapshot.has(`${entityType}:${entityId}`),
+          )
+        ) {
+          const backfillRows = await tx.$queryRaw<RawDclRow[]>`
+            SELECT * FROM "DataChangeLog"
+            WHERE operation_id = ${opId} AND entity_name IS NOT NULL
+          `;
+          // Roll the name-carrying rows up to their OWNING entity before keying the snapshot. A row
+          // that holds the name is often a child carrying the GUC subject (e.g. a TestRunResults row
+          // holds the run name), whose owner is TestRuns:<runId> — NOT TestRunResults:<pk>. Keying by
+          // the raw (table,pk) would never match a sibling step-result that looks up TestRuns:<runId>.
+          const backfillRolled = await applyRollupMap(backfillRows, twoHopQuery);
+          for (const { row, entityType, entityId } of backfillRolled) {
+            const key = `${entityType}:${entityId}`;
+            if (
+              !ownerSnapshot.has(key) &&
+              (row.entity_name != null || row.project_id != null)
+            ) {
+              ownerSnapshot.set(key, {
+                entityName: row.entity_name,
+                projectId: row.project_id,
+              });
+            }
+          }
+        }
+
         for (const { row, entityType, entityId } of kept) {
           const changes = row.changed_cols
             ? await humanize(cache, row.table, row.changed_cols)
             : {};
+          // The trigger injects the rollup FK (unchanged, old === new) on value-only child UPDATEs
+          // so the row can attribute to its owner; it's noise in the displayed diff, so drop it.
+          // (applyRollupMap above read the FK from the RAW changed_cols, not this humanized copy.)
+          for (const key of Object.keys(changes)) {
+            const e = changes[key] as { old?: unknown; new?: unknown };
+            if (e && e.old === e.new) delete changes[key];
+          }
           const owner = ownerSnapshot.get(`${entityType}:${entityId}`);
 
           // A captured row with no GUC actor (raw prismaBase writes, seeds,

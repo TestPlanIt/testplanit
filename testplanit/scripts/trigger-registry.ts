@@ -36,6 +36,13 @@ export interface TriggerConfig {
    * admin entities (no project) and on children (they inherit / fall back to the GUC subject).
    */
   projectCol?: string;
+  /**
+   * Extra stable identity columns the trigger captures on EVERY update even when unchanged (the
+   * rollup FK from ROLLUP_MAP is added automatically). A value table only writes its `value`, so
+   * without this the diff wouldn't say WHICH field changed — set `["fieldId"]` so correlation can
+   * render "Priority: Medium → High" rather than a bare "value: 3 → 2".
+   */
+  captureCols?: string[];
 }
 
 /** Default denylist applied to a table when its entry omits `denylist`. */
@@ -44,7 +51,7 @@ export const DEFAULT_DENYLIST = ["createdAt", "updatedAt"];
 export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // ── Cases family ──────────────────────────────────────────────────────────
   { table: "RepositoryCases", denylist: ["createdAt"], nameCol: "name", projectCol: "projectId" }, // NOTE: no updatedAt column on this table (Finding C)
-  { table: "CaseFieldValues", denylist: [] }, // no timestamps
+  { table: "CaseFieldValues", denylist: [], captureCols: ["fieldId"] }, // no timestamps; fieldId identifies which field
   { table: "Steps", denylist: ["createdAt", "updatedAt", "step", "expectedResult"] }, // step/expectedResult are TipTap
   { table: "TestCaseParameter", denylist: ["createdAt", "updatedAt"] },
 
@@ -58,7 +65,7 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   { table: "TestRunResults", denylist: ["createdAt", "updatedAt"] },
   { table: "TestRunStepResults", denylist: ["createdAt", "updatedAt"] },
   { table: "TestRunCaseIteration", denylist: ["createdAt", "updatedAt"] },
-  { table: "ResultFieldValues", denylist: [] }, // no timestamps
+  { table: "ResultFieldValues", denylist: [], captureCols: ["fieldId"] }, // no timestamps; fieldId identifies which field
 
   // Runs implicit m2m join tables
   { table: "_IssueToTestRuns", pkCol: "A", denylist: [] },
@@ -68,7 +75,7 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // ── Sessions family ───────────────────────────────────────────────────────
   { table: "Sessions", denylist: ["createdAt", "updatedAt", "note", "mission"], nameCol: "name", projectCol: "projectId" }, // note/mission are TipTap
   { table: "SessionResults", denylist: ["createdAt", "updatedAt"] },
-  { table: "SessionFieldValues", denylist: [] }, // no timestamps
+  { table: "SessionFieldValues", denylist: [], captureCols: ["fieldId"] }, // no timestamps; fieldId identifies which field
   // SessionVersions deliberately NOT audited — it is a version snapshot the app
   // writes in its own transaction on every session save, producing a redundant
   // "no-name" audit row. Mirrors RepositoryCaseVersions, which is also excluded.

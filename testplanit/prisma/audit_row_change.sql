@@ -48,6 +48,8 @@ DECLARE
     pk_val      TEXT;
     name_col    TEXT;
     project_col TEXT;
+    capture_cols TEXT[];
+    cap_col     TEXT;
     entity_nm   TEXT;
     project_id  TEXT;
     row_json    JSONB;
@@ -87,6 +89,9 @@ BEGIN
     denylist    := string_to_array(COALESCE(TG_ARGV[1], ''), ',');
     name_col    := COALESCE(TG_ARGV[2], '');
     project_col := COALESCE(TG_ARGV[3], '');
+    -- Stable identity columns to always carry on an UPDATE (rollup FK + e.g. a value table's
+    -- fieldId). Empty string → empty array → the capture loop below is a no-op.
+    capture_cols := string_to_array(NULLIF(COALESCE(TG_ARGV[4], ''), ''), ',');
 
     -- 3. Changed-columns {old,new} diff via to_jsonb + IS DISTINCT FROM (NULL-safe).
     IF TG_OP = 'INSERT' THEN
@@ -128,6 +133,19 @@ BEGIN
         IF diff = '{}'::jsonb THEN
             RETURN NULL;
         END IF;
+    END IF;
+
+    -- Always carry the configured identity columns on a (non-empty) UPDATE so the correlation worker
+    -- can attribute the row to its owner (rollup FK) and name what changed (e.g. a value table's
+    -- fieldId). A value-only child change leaves these out of the changed-column diff, so without
+    -- this they'd be lost. Added AFTER the no-op short-circuit so it never resurrects a truly empty
+    -- UPDATE; INSERT/DELETE already capture the whole row. old = new here (the column didn't change).
+    IF TG_OP = 'UPDATE' AND capture_cols IS NOT NULL THEN
+        FOREACH cap_col IN ARRAY capture_cols LOOP
+            IF cap_col <> '' AND NOT (diff ? cap_col) THEN
+                diff := diff || jsonb_build_object(cap_col, jsonb_build_object('old', old_json->cap_col, 'new', new_json->cap_col));
+            END IF;
+        END LOOP;
     END IF;
 
     -- 4. Write-time entity name + project snapshot (immutable). Read the configured name/project

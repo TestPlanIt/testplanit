@@ -31,6 +31,7 @@ import {
   DEFAULT_DENYLIST,
   assertRegistrySafe,
 } from "./trigger-registry";
+import { ROLLUP_MAP } from "../lib/audit/rollupMap";
 
 const PRISMA_DIR = join(__dirname, "..", "prisma");
 const AUDIT_FN_SQL = join(PRISMA_DIR, "audit_row_change.sql");
@@ -131,13 +132,25 @@ async function main() {
       // Write-time name/project snapshot columns (empty string = none for this table).
       const nameCol = entry.nameCol ?? "";
       const projectCol = entry.projectCol ?? "";
+      // Columns the trigger captures on EVERY update even when unchanged, so a value-only child
+      // edit still carries the ids correlation needs. The rollup FK (from ROLLUP_MAP) lets the row
+      // attribute to its owner instead of falling back to its own pk; the per-table captureCols
+      // (e.g. a value table's fieldId) say WHICH sub-entity changed so correlation can render
+      // "Priority: Medium → High" instead of a bare "value: 3 → 2". Deduped, comma-separated.
+      const captureCols = [
+        ...new Set(
+          [ROLLUP_MAP[entry.table]?.fkCol, ...(entry.captureCols ?? [])].filter(
+            (c): c is string => !!c,
+          ),
+        ),
+      ].join(",");
 
       // Identifiers/args come ONLY from the static in-repo registry — no user input in this DDL.
       await client.query(`DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`);
       await client.query(
         `CREATE TRIGGER ${triggerName}
            AFTER INSERT OR UPDATE OR DELETE ON "${entry.table}"
-           FOR EACH ROW EXECUTE FUNCTION audit_row_change('${pkCol}', '${denylistCsv}', '${nameCol}', '${projectCol}');`,
+           FOR EACH ROW EXECUTE FUNCTION audit_row_change('${pkCol}', '${denylistCsv}', '${nameCol}', '${projectCol}', '${captureCols}');`,
       );
     }
 
