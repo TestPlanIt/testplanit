@@ -86,6 +86,8 @@ async function setupFixture(): Promise<Fixture> {
   });
 
   // Negative control: not in the group, not the creator, no direct perms.
+  // The project below also grants no blanket default access (see defaultRoleId:
+  // null), so this user has NO path to the project at all.
   const outsiderCreated = await prisma.user.create({
     data: {
       email: `${RUN_TAG}-outsider@example.test`,
@@ -98,12 +100,17 @@ async function setupFixture(): Promise<Fixture> {
   const groupMember = await fetchAuthUser(groupMemberCreated.id);
   const outsider = await fetchAuthUser(outsiderCreated.id);
 
+  // defaultRoleId is null on purpose: a project whose default *is* a granting
+  // role (e.g. the seeded "user" role) confers that role's access on every
+  // authenticated user, so the "outsider" below would no longer be an outsider.
+  // A null default role grants nothing by default — access must come from the
+  // explicit group permission, which is exactly what these tests exercise.
   const project = await prisma.projects.create({
     data: {
       name: `${RUN_TAG}-project`,
       createdBy: creatorCreated.id,
       defaultAccessType: "SPECIFIC_ROLE",
-      defaultRoleId: userRole.id,
+      defaultRoleId: null,
     },
   });
 
