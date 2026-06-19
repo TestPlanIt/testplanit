@@ -17,14 +17,17 @@ There are two paths, and they complement each other:
 
 For tests whose structure is unambiguous, steps are derived **deterministically** — no AI, no configuration, identical results every time. This happens automatically when results are imported, and the same mapping is used by the [WDIO reporter](../sdk/wdio-test-cases.md) so a test produces the **same** steps whether it is imported or reported from a run.
 
-- **Cucumber / Gherkin** — `Given` → a precondition (a leading step), `When` → a step, `Then` → the **expected result** of the preceding `When`; `And` / `But` / `*` inherit the role of the nearest preceding keyword.
+- **Cucumber / Gherkin** — `Given` and `When` → steps, `Then` → the **expected result** of the step before it (the preceding `When`); `And` / `But` / `*` inherit the role of the nearest preceding keyword.
 - **Playwright** — each `test.step()` title becomes a step; a nested assertion becomes its expected result.
 
 This runs during the normal [Automated Test Results Import](../import-export.md#automated-test-results-import) — no toggle to enable.
 
 ## AI-derived steps for low-structure tests
 
-Mocha, Jasmine, and other "flat" frameworks have **no native step structure** — the deterministic path has nothing to map. For these, TestPlanIt can use an LLM to infer readable steps from the test's name (and any failure/output text), so even a `it("should reset a password via email")` case lands with sensible steps.
+Mocha, Jasmine, and other "flat" frameworks have **no native step structure** — the deterministic path has nothing to map. For these, TestPlanIt uses an LLM to write readable steps:
+
+- **From a WebdriverIO run**, the reporter captures the **actual sequence of commands** each test executed (navigation, element lookups, clicks, keystrokes, assertions) and feeds that command stream to the model — so the steps reflect what the test *actually did*.
+- **From a plain results import** (which carries only the test's name and any failure/output text), the model infers the most likely steps from the descriptive name — so even an `it("should reset a password via email")` case lands with sensible steps.
 
 This path is **opt-in and best-effort**, so the derived steps are surfaced for review rather than treated as authoritative.
 
