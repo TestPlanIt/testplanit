@@ -433,6 +433,14 @@ To delete:
 2. Click **Delete** and confirm
 3. Linked issues remain in the database but become unlinked
 
+### Re-syncing Linked Issues
+
+Each integration row exposes a **Re-sync linked issues** action (the refresh icon). It queues a background job that refreshes every issue **already linked into TestPlanIt** for that integration — pulling the latest status, priority, title, and description from the external tracker. A toast confirms the job was queued; the Issues table updates automatically when it finishes.
+
+:::info
+This action **re-syncs issues that already exist in TestPlanIt — it does not import new issues from the external tracker.** Issues enter TestPlanIt when you link them (see [Manual Linking](#manual-linking)) or when an [inbound webhook](#real-time-updates-via-inbound-webhooks) references them for the first time; a re-sync only refreshes that existing set. The action is unavailable for **Simple URL** integrations, which have no upstream API to pull from.
+:::
+
 ## Project Configuration
 
 After creating an integration, assign it to projects:
