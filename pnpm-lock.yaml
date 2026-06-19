@@ -11,8 +11,6 @@ overrides:
   form-data: ^4.0.6
   validator: ^13.15.22
   js-yaml: ^4.2.0
-  gray-matter>js-yaml: ^3.14.1
-  read-yaml-file>js-yaml: ^3.14.1
   tmp: ^0.2.6
   mdast-util-to-hast: ^13.2.1
   content-security-policy-parser: ^0.6.0
@@ -79,6 +77,10 @@ overrides:
   yaml@2: '>=2.8.3'
   defu: '>=6.1.5'
   joi: ^17.13.4
+
+patchedDependencies:
+  gray-matter@4.0.3: 82198c3ee34e2823c4e9793c5209cf97bd566d5610c3f6582dc3f044ca423d6f
+  read-yaml-file@1.1.0: 488393f543748b1b0a4fbe3524f9536a55b385493bcf9c0c7c94a2e624ebf4f6
 
 importers:
 
@@ -13718,10 +13720,6 @@ packages:
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
-
-  js-yaml@3.14.2:
-    resolution: {integrity: sha512-PMSmkqxr106Xa156c2M265Z+FTrPl+oxd/rgOQy2tijQeK5TxQ43psO1ZCwhVOSdnn+RzkzlRz/eY4BgJBYVpg==}
-    hasBin: true
 
   js-yaml@4.2.0:
     resolution: {integrity: sha512-ePWsvanv0DWuDRsW8dnt+R4jQ31SCRCQ7hhNcPXZPsoBZiemuZNYGf7adZdqX2D86j6rvKp3RpCxVTSb8WQlOw==}
@@ -28764,7 +28762,7 @@ snapshots:
       fs-extra: 11.3.5
       github-slugger: 1.5.0
       globby: 11.1.0
-      gray-matter: 4.0.3
+      gray-matter: 4.0.3(patch_hash=82198c3ee34e2823c4e9793c5209cf97bd566d5610c3f6582dc3f044ca423d6f)
       jiti: 1.21.7
       js-yaml: 4.2.0
       lodash: 4.18.1
@@ -28796,7 +28794,7 @@ snapshots:
       fs-extra: 11.3.4
       github-slugger: 1.5.0
       globby: 11.1.0
-      gray-matter: 4.0.3
+      gray-matter: 4.0.3(patch_hash=82198c3ee34e2823c4e9793c5209cf97bd566d5610c3f6582dc3f044ca423d6f)
       jiti: 1.21.7
       js-yaml: 4.2.0
       lodash: 4.18.1
@@ -30026,7 +30024,7 @@ snapshots:
       '@manypkg/find-root': 1.1.0
       fs-extra: 8.1.0
       globby: 11.1.0
-      read-yaml-file: 1.1.0
+      read-yaml-file: 1.1.0(patch_hash=488393f543748b1b0a4fbe3524f9536a55b385493bcf9c0c7c94a2e624ebf4f6)
 
   '@mdx-js/mdx@3.1.1':
     dependencies:
@@ -37986,9 +37984,9 @@ snapshots:
 
   graphql@16.14.2: {}
 
-  gray-matter@4.0.3:
+  gray-matter@4.0.3(patch_hash=82198c3ee34e2823c4e9793c5209cf97bd566d5610c3f6582dc3f044ca423d6f):
     dependencies:
-      js-yaml: 3.14.2
+      js-yaml: 4.2.0
       kind-of: 6.0.3
       section-matter: 1.0.0
       strip-bom-string: 1.0.0
@@ -38961,11 +38959,6 @@ snapshots:
   js-tokens@10.0.0: {}
 
   js-tokens@4.0.0: {}
-
-  js-yaml@3.14.2:
-    dependencies:
-      argparse: 1.0.10
-      esprima: 4.0.1
 
   js-yaml@4.2.0:
     dependencies:
@@ -42630,10 +42623,10 @@ snapshots:
       type-fest: 4.41.0
       unicorn-magic: 0.1.0
 
-  read-yaml-file@1.1.0:
+  read-yaml-file@1.1.0(patch_hash=488393f543748b1b0a4fbe3524f9536a55b385493bcf9c0c7c94a2e624ebf4f6):
     dependencies:
       graceful-fs: 4.2.11
-      js-yaml: 3.14.2
+      js-yaml: 4.2.0
       pify: 4.0.1
       strip-bom: 3.0.0
 
