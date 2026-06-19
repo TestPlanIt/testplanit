@@ -26,6 +26,9 @@ docs/.docusaurus
 forge-app/dist
 cli/dist
 packages/*/dist
+# Exception: @testplanit/api ships its built dist (committed, not regenerated
+# in-image) and the app imports it, so the image build needs it.
+!packages/api/dist
 
 # Large local data & prebuilt binaries — never needed in the image.
 testplanit/backups

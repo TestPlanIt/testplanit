@@ -30,11 +30,14 @@ COPY packages/wdio-testplanit-reporter/package.json ./packages/wdio-testplanit-r
 # frozen install reads these, so they must be present before it runs.
 COPY patches ./patches/
 
-# Install only the testplanit project's dependencies (it has no workspace deps).
+# Install testplanit's dependencies (includes the @testplanit/api workspace pkg).
 RUN pnpm install --frozen-lockfile --filter testplanit --ignore-scripts
 
-# App source.
+# App source, plus the @testplanit/api workspace package it imports. Its built
+# dist is committed (and un-ignored in .dockerignore); without it the workspace
+# symlink resolves to an empty dir and `next build` cannot resolve @testplanit/api.
 COPY testplanit/ ./testplanit/
+COPY packages/api ./packages/api/
 
 WORKDIR /app/testplanit
 # Version info: use the pre-generated file if present, else derive it.
@@ -79,6 +82,9 @@ RUN pnpm install --frozen-lockfile --filter testplanit --ignore-scripts
 # Produce a self-contained production node_modules for testplanit (no symlinks
 # pointing outside the deploy dir), suitable for copying into the final images.
 COPY testplanit/ ./testplanit/
+# @testplanit/api workspace dependency, so `pnpm deploy` bundles it into the
+# self-contained production node_modules.
+COPY packages/api ./packages/api/
 RUN pnpm --filter=testplanit deploy --prod --legacy --ignore-scripts /app/deploy
 # Rebuild native modules in the deployed tree.
 RUN cd /app/deploy && npm rebuild bcrypt sharp 2>/dev/null || true
