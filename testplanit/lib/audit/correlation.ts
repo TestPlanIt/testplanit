@@ -119,28 +119,69 @@ export interface PollOnceResult {
 }
 
 /**
- * Group raw rows by operationId. A null operationId is NOT a group key — each null-operationId row
- * is its OWN singleton group (otherwise unrelated null-op rows would collapse together). Non-null
- * operationIds group regardless of contiguity (research Pitfall G — concurrent saves can interleave
- * in seq order, so a Map keyed by operationId, not a contiguous run, is the correct grouping).
+ * Group raw rows into one logical operation. A non-null operationId is the group key (the browser
+ * minted one per logical save). When it is null — e.g. a quick-add create, a session create, a
+ * parameter add — fall back to the database transaction id (`txid`): rows written in the SAME
+ * transaction ARE one atomic write, so grouping by txid lets a parent and the children written with
+ * it share a group (so the children inherit the parent's name/project, and the UI collapses them
+ * into one entry). The synthetic `tx:<txid>` operationId is stamped on the materialized rows
+ * downstream. Non-null operationIds group regardless of contiguity (research Pitfall G).
  */
 export function groupByOperationId(rows: RawDclRow[]): RawDclRow[][] {
   const groups: RawDclRow[][] = [];
-  const byOp = new Map<string, number>(); // operationId → index in groups
+  const byKey = new Map<string, number>();
   for (const row of rows) {
-    if (row.operation_id == null) {
-      groups.push([row]); // singleton — never merged with other null-op rows
-      continue;
-    }
-    const existing = byOp.get(row.operation_id);
+    const key =
+      row.operation_id != null
+        ? `op:${row.operation_id}`
+        : `tx:${String(row.txid)}`;
+    const existing = byKey.get(key);
     if (existing === undefined) {
-      byOp.set(row.operation_id, groups.length);
+      byKey.set(key, groups.length);
       groups.push([row]);
     } else {
       groups[existing].push(row);
     }
   }
   return groups;
+}
+
+/** The synthetic operationId for a null-operationId row: its transaction id (see groupByOperationId). */
+function effectiveOperationId(row: RawDclRow): string {
+  return row.operation_id ?? `tx:${String(row.txid)}`;
+}
+
+/**
+ * COMMENT attribution. A Comment row carries the parent it is attached to via exactly one of these
+ * FKs; the comment rolls up to that entity (the audit reads as an event on that case/run/session/…)
+ * and takes its display name from it. The actor is the comment's own creatorId (the GUC actor is not
+ * set on the comment path). Order matters only in that the first populated FK wins — only one is set.
+ */
+const COMMENT_PARENT_FKS: Array<{ fk: string; entityType: string }> = [
+  { fk: "repositoryCaseId", entityType: "RepositoryCases" },
+  { fk: "sessionId", entityType: "Sessions" },
+  { fk: "testRunId", entityType: "TestRuns" },
+  { fk: "milestoneId", entityType: "Milestones" },
+  { fk: "reviewRequestId", entityType: "ReviewRequest" },
+];
+
+/** Pull a column's value (new ?? old) from a changed_cols diff. */
+function colValue(row: RawDclRow, col: string): number | string | null {
+  const entry = row.changed_cols?.[col];
+  if (!entry) return null;
+  const v = entry.new ?? entry.old;
+  return v == null ? null : (v as number | string);
+}
+
+/** Resolve a Comment row to its parent entity (entityType + entityId), or null if no parent FK is present. */
+function resolveCommentParent(
+  row: RawDclRow,
+): { entityType: string; entityId: string } | null {
+  for (const { fk, entityType } of COMMENT_PARENT_FKS) {
+    const v = colValue(row, fk);
+    if (v != null) return { entityType, entityId: String(v) };
+  }
+  return null;
 }
 
 /**
@@ -182,6 +223,12 @@ export async function applyRollupMap(
   }
 
   for (const row of group) {
+    if (row.table === "Comment") {
+      // Roll a comment up to the entity it is attached to (resolved name comes later).
+      const parent = resolveCommentParent(row);
+      out.push(parent ? { row, ...parent } : { row, entityType: row.table, entityId: row.pk });
+      continue;
+    }
     const cfg = ROLLUP_MAP[row.table];
     if (!cfg) {
       // Root entity — attributes to itself.
@@ -348,10 +395,48 @@ export async function pollDataChangeLogsOnce(
 
     const groups = groupByOperationId(rows);
     const materialized: MaterializedRow[] = [];
+    // Source ids of every row in a successfully-materialized group — including
+    // no-op rows that were cancelled (they produce no AuditLog row but ARE done,
+    // so they must still be marked processed or they would re-poll forever).
+    const processedSourceIds = new Set<string>();
 
     for (const group of groups) {
       try {
         const rolled = await applyRollupMap(group, twoHopQuery);
+
+        // No-op association churn cancel: when a save re-applies an UNCHANGED
+        // many-to-many association it writes a join-table DELETE and a CREATE of
+        // the SAME link in the one operation, netting to zero — so a rename reads
+        // as "removed tag / added tag". Drop matched DELETE+CREATE pairs per link.
+        // A genuine one-sided add or remove keeps its row (only pairs cancel).
+        const cancelled = new Set<RawDclRow>();
+        {
+          const creates = new Map<string, RawDclRow[]>();
+          const deletes = new Map<string, RawDclRow[]>();
+          for (const { row } of rolled) {
+            if (!row.table.startsWith("_")) continue;
+            const a = colValue(row, "A");
+            const b = colValue(row, "B");
+            if (a == null || b == null) continue;
+            const key = `${row.table}|${a}|${b}`;
+            const action = deriveAction(row);
+            const bucket =
+              action === "CREATE" ? creates : action === "DELETE" ? deletes : null;
+            if (!bucket) continue;
+            const list = bucket.get(key);
+            if (list) list.push(row);
+            else bucket.set(key, [row]);
+          }
+          for (const [key, cs] of creates) {
+            const ds = deletes.get(key) ?? [];
+            const n = Math.min(cs.length, ds.length);
+            for (let i = 0; i < n; i++) {
+              cancelled.add(cs[i]);
+              cancelled.add(ds[i]);
+            }
+          }
+        }
+        const kept = rolled.filter((r) => !cancelled.has(r.row));
 
         // Owning-entity name/project snapshot, harvested from the root row IN THIS GROUP that
         // attributes to itself (its table === entityType and its pk === entityId). A child/value/
@@ -365,7 +450,7 @@ export async function pollDataChangeLogsOnce(
         >();
         // Pass 1 (authoritative): the owning root row's own snapshot — the row
         // that attributes to itself (table === entityType, pk === entityId).
-        for (const { row, entityType, entityId } of rolled) {
+        for (const { row, entityType, entityId } of kept) {
           if (
             row.table === entityType &&
             String(row.pk) === String(entityId) &&
@@ -383,7 +468,7 @@ export async function pollDataChangeLogsOnce(
         // TestRunResults row (carrying the run's name/project from the GUC
         // subject) but not the TestRuns row, and the step-result rows that share
         // the operationId then inherit it. Never overwrites a pass-1 snapshot.
-        for (const { row, entityType, entityId } of rolled) {
+        for (const { row, entityType, entityId } of kept) {
           const key = `${entityType}:${entityId}`;
           if (
             !ownerSnapshot.has(key) &&
@@ -396,11 +481,37 @@ export async function pollDataChangeLogsOnce(
           }
         }
 
-        for (const { row, entityType, entityId } of rolled) {
+        for (const { row, entityType, entityId } of kept) {
           const changes = row.changed_cols
             ? await humanize(cache, row.table, row.changed_cols)
             : {};
           const owner = ownerSnapshot.get(`${entityType}:${entityId}`);
+
+          // A captured row with no GUC actor (raw prismaBase writes, seeds,
+          // migrations, or any path without a session) is attributed to the
+          // system sentinel so every materialized AuditLog row answers "who".
+          let actor = row.actor || SYSTEM_ACTOR_ID;
+          // Write-time snapshot, copied straight through (no lookup): the row's own captured
+          // value (root rows, or children carrying the GUC subject) first, else the owner's.
+          let userName = row.actor_name;
+          let entityName = row.entity_name ?? owner?.entityName ?? null;
+          const projectId = row.project_id ?? owner?.projectId ?? null;
+
+          // Comment is the one exception that needs a lookup: its row carries the
+          // creatorId (the actor) and the parent FK (the attached entity) but not
+          // their names, and the comment write path sets no GUC actor. Resolve the
+          // creator's name and the parent entity's name here.
+          if (row.table === "Comment") {
+            const creatorId = colValue(row, "creatorId");
+            if (creatorId != null) {
+              actor = String(creatorId);
+              userName =
+                (await cache.resolve("User", "name", creatorId)) ?? userName;
+            }
+            const parentName = await cache.resolve(entityType, "name", entityId);
+            if (parentName) entityName = parentName;
+          }
+
           materialized.push({
             sourceRowId: row.id,
             sourceTable: row.table,
@@ -408,21 +519,21 @@ export async function pollDataChangeLogsOnce(
             entityType,
             entityId,
             action: deriveAction(row),
-            // A captured row with no GUC actor (raw prismaBase writes, seeds,
-            // migrations, or any path without a session) is attributed to the
-            // system sentinel so every materialized AuditLog row answers "who".
-            actor: row.actor || SYSTEM_ACTOR_ID,
-            // Write-time snapshot, copied straight through (no lookup): the row's own captured
-            // value (root rows, or children carrying the GUC subject) first, else the owner's.
-            userName: row.actor_name,
+            actor,
+            userName,
             userEmail: row.actor_email,
-            entityName: row.entity_name ?? owner?.entityName ?? null,
-            projectId: row.project_id ?? owner?.projectId ?? null,
-            operationId: row.operation_id,
+            entityName,
+            projectId,
+            // Synthetic tx-based operationId when the browser minted none, so the
+            // UI groups same-transaction rows and the idempotency index covers them.
+            operationId: effectiveOperationId(row),
             tenant: row.tenant,
             changes,
           });
         }
+        // The whole group materialized successfully — mark every source row done
+        // (materialized OR cancelled) so none re-polls.
+        for (const { row } of rolled) processedSourceIds.add(String(row.id));
       } catch (err) {
         // Per-group isolation (T-14-05-04): a malformed diff in one group must not wedge the batch.
         // The group's source rows stay processed=false (we never add them to `ids` below) and are
@@ -434,11 +545,11 @@ export async function pollDataChangeLogsOnce(
     const auditLogsWritten = await writeAuditLogRows(tx, materialized);
 
     if (markProcessed) {
-      // Mark ONLY the rows whose group materialized successfully. A group that threw above never
-      // reached `materialized`, so its source ids are excluded and it will be re-polled.
-      const materializedSourceIds = new Set(materialized.map((m) => String(m.sourceRowId)));
+      // Mark ONLY the rows whose group materialized successfully (processedSourceIds includes both
+      // the written rows and the no-op-cancelled rows). A group that threw above added nothing, so
+      // its source ids are excluded and it will be re-polled.
       const ids = rows
-        .filter((r) => materializedSourceIds.has(String(r.id)))
+        .filter((r) => processedSourceIds.has(String(r.id)))
         .map((r) => BigInt(r.id));
       if (ids.length > 0) {
         await tx.$executeRaw`

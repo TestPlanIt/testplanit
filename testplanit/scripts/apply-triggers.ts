@@ -141,6 +141,31 @@ async function main() {
       );
     }
 
+    // 2b. Drop orphaned audit triggers — tables removed from the registry. Without this a removed
+    //     entry leaves its tpl_audit_* trigger live (still writing DataChangeLog) and fails the
+    //     drift self-check below. This keeps the live trigger set in exact lockstep with the registry.
+    const expectedTriggerNames = new Set(
+      TRIGGER_REGISTRY.map((e) => triggerNameFor(e.table)),
+    );
+    const { rows: liveAuditTriggers } = await client.query<{
+      trigger_name: string;
+      event_object_table: string;
+    }>(
+      `SELECT DISTINCT trigger_name, event_object_table
+         FROM information_schema.triggers
+        WHERE trigger_name LIKE 'tpl_audit_%'`,
+    );
+    for (const t of liveAuditTriggers) {
+      if (!expectedTriggerNames.has(t.trigger_name)) {
+        await client.query(
+          `DROP TRIGGER IF EXISTS ${t.trigger_name} ON "${t.event_object_table}";`,
+        );
+        console.log(
+          `[apply-triggers] dropped orphaned trigger ${t.trigger_name} on "${t.event_object_table}"`,
+        );
+      }
+    }
+
     // 3. Append-only ENFORCEMENT triggers on DataChangeLog (the real SAF-03 guarantee).
     await client.query(APPEND_ONLY_ENFORCEMENT_SQL);
 

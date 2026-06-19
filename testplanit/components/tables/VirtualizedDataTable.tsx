@@ -408,7 +408,11 @@ export function VirtualizedDataTable({
                       isGrouped
                         ? "bg-muted font-semibold text-foreground"
                         : isSubRow
-                          ? "bg-muted/5 hover:bg-muted/20"
+                          ? // Nested detail rows: a shaded block (the colored nesting
+                            // bar is drawn on the right edge of the first/indent cell
+                            // below) so the run of sub-rows reads as one group and the
+                            // next (unshaded) parent row is clearly the boundary.
+                            "bg-muted/40 hover:bg-muted/60"
                           : "hover:bg-muted/50"
                     )}
                     style={{
@@ -416,7 +420,7 @@ export function VirtualizedDataTable({
                       transform: `translateY(${vItem.start}px)`,
                     }}
                   >
-                    {row.getVisibleCells().map((cell) => {
+                    {row.getVisibleCells().map((cell, cellIndex) => {
                       const { column } = cell;
                       let content: ReactNode;
                       if (groupingActive && cell.getIsGrouped()) {
@@ -471,7 +475,13 @@ export function VirtualizedDataTable({
                           role="cell"
                           className={cn(
                             "flex min-w-0 items-center overflow-hidden border-r px-3 py-2 text-sm last:border-r-0",
-                            !isFlex && "shrink-0"
+                            !isFlex && "shrink-0",
+                            // Nesting guide: a wide colored bar on the RIGHT edge of
+                            // the first (indent) cell of a sub-row, marking where the
+                            // nested content begins.
+                            isSubRow &&
+                              cellIndex === 0 &&
+                              "border-r-4 border-r-primary"
                           )}
                           style={
                             isFlex

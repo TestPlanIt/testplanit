@@ -69,7 +69,9 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   { table: "Sessions", denylist: ["createdAt", "updatedAt", "note", "mission"], nameCol: "name", projectCol: "projectId" }, // note/mission are TipTap
   { table: "SessionResults", denylist: ["createdAt", "updatedAt"] },
   { table: "SessionFieldValues", denylist: [] }, // no timestamps
-  { table: "SessionVersions", denylist: ["createdAt", "updatedAt", "note", "mission"] }, // note/mission are TipTap
+  // SessionVersions deliberately NOT audited — it is a version snapshot the app
+  // writes in its own transaction on every session save, producing a redundant
+  // "no-name" audit row. Mirrors RepositoryCaseVersions, which is also excluded.
 
   // Sessions implicit m2m join tables
   { table: "_IssueToSessions", pkCol: "A", denylist: [] },

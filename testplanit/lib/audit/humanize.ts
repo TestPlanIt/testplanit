@@ -177,11 +177,22 @@ export async function humanize(
  * Returns null on an unknown table or a missing row (humanize() then falls back to the raw id).
  */
 export function createPrismaLookup(prisma: any): LookupFn {
-  const delegates: Record<string, { delegate: string; field: string }> = {
+  const delegates: Record<
+    string,
+    { delegate: string; field: string; stringId?: boolean }
+  > = {
     CaseFields: { delegate: "caseFields", field: "displayName" },
     ResultFields: { delegate: "resultFields", field: "displayName" },
     Status: { delegate: "status", field: "name" },
     Workflows: { delegate: "workflows", field: "name" },
+    // Comment attribution: the comment rolls up to whichever parent FK is set,
+    // and its actor is the row's creatorId — both resolved to a display name
+    // here. User/ReviewRequest ids are cuids (string), the rest are Int.
+    RepositoryCases: { delegate: "repositoryCases", field: "name" },
+    Sessions: { delegate: "sessions", field: "name" },
+    TestRuns: { delegate: "testRuns", field: "name" },
+    Milestones: { delegate: "milestones", field: "name" },
+    User: { delegate: "user", field: "name", stringId: true },
   };
 
   return async (table, field, id) => {
@@ -190,7 +201,7 @@ export function createPrismaLookup(prisma: any): LookupFn {
       return null;
     }
     const row = await prisma[meta.delegate].findUnique({
-      where: { id: Number(id) },
+      where: { id: meta.stringId ? String(id) : Number(id) },
       select: { [meta.field]: true },
     });
     return (row?.[meta.field] as string | undefined) ?? null;
