@@ -1,3 +1,9 @@
+## [0.38.9](https://github.com/TestPlanIt/testplanit/compare/v0.38.8...v0.38.9) (2026-06-19)
+
+### Bug Fixes
+
+* **docker:** include @testplanit/api dist in image build context ([#451](https://github.com/TestPlanIt/testplanit/issues/451)) ([578587c](https://github.com/TestPlanIt/testplanit/commit/578587cb10e179508d9504ebfa4904ff4669a763))
+
 ## [0.38.8](https://github.com/TestPlanIt/testplanit/compare/v0.38.7...v0.38.8) (2026-06-19)
 
 ### Bug Fixes
