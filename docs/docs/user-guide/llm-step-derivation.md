@@ -26,8 +26,12 @@ This runs during the normal [Automated Test Results Import](../import-export.md#
 
 Mocha, Jasmine, and other "flat" frameworks have **no native step structure** — the deterministic path has nothing to map. For these, TestPlanIt uses an LLM to write readable steps:
 
-- **From a WebdriverIO run**, the reporter captures the **actual sequence of commands** each test executed (navigation, element lookups, clicks, keystrokes, assertions) and feeds that command stream to the model — so the steps reflect what the test *actually did*.
-- **From a plain results import** (which carries only the test's name and any failure/output text), the model infers the most likely steps from the descriptive name — so even an `it("should reset a password via email")` case lands with sensible steps.
+Wherever possible, the steps are grounded in the **actual commands** the test executed (navigation, element lookups, clicks, keystrokes, assertions), so they reflect what the test *did* rather than a guess. Those commands reach the model two ways:
+
+- **Live, via the WebdriverIO reporter** — it captures each test's command stream during the run and sends it with the case.
+- **On import** — many result files embed a command log of their own. A WebdriverIO junit report, for example, records every command in each test's `system-out`, and the importer passes that to the model verbatim.
+
+When a result carries **no** commands — a bare junit with just names, or a plain results import — the model falls back to inferring the most likely steps from the test's descriptive name, so even an `it("should reset a password via email")` case still lands with sensible steps.
 
 This path is **opt-in and best-effort**, so the derived steps are surfaced for review rather than treated as authoritative.
 
