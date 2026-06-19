@@ -26,6 +26,10 @@ COPY packages/api/package.json ./packages/api/
 COPY packages/mcp-server/package.json ./packages/mcp-server/
 COPY packages/wdio-testplanit-reporter/package.json ./packages/wdio-testplanit-reporter/
 
+# Dependency patches referenced by pnpm-workspace.yaml#patchedDependencies; the
+# frozen install reads these, so they must be present before it runs.
+COPY patches ./patches/
+
 # Install only the testplanit project's dependencies (it has no workspace deps).
 RUN pnpm install --frozen-lockfile --filter testplanit --ignore-scripts
 
@@ -68,6 +72,9 @@ COPY cli/package.json ./cli/
 COPY packages/api/package.json ./packages/api/
 COPY packages/mcp-server/package.json ./packages/mcp-server/
 COPY packages/wdio-testplanit-reporter/package.json ./packages/wdio-testplanit-reporter/
+# Dependency patches referenced by pnpm-workspace.yaml#patchedDependencies; the
+# frozen install reads these, so they must be present before it runs.
+COPY patches ./patches/
 RUN pnpm install --frozen-lockfile --filter testplanit --ignore-scripts
 # Produce a self-contained production node_modules for testplanit (no symlinks
 # pointing outside the deploy dir), suitable for copying into the final images.
