@@ -178,99 +178,14 @@ export interface AuditedConfigModel {
   kind: "catalog" | "join";
 }
 
-export const AUDITED_CONFIG_MODELS: AuditedConfigModel[] = [
-  // Catalog / config models
-  { entityType: "Workflows", accessor: "workflows", kind: "catalog" },
-  { entityType: "Status", accessor: "status", kind: "catalog" },
-  { entityType: "Configurations", accessor: "configurations", kind: "catalog" },
-  { entityType: "ConfigVariants", accessor: "configVariants", kind: "catalog" },
-  {
-    entityType: "ConfigCategories",
-    accessor: "configCategories",
-    kind: "catalog",
-  },
-  { entityType: "Roles", accessor: "roles", kind: "catalog" },
-  { entityType: "Tags", accessor: "tags", kind: "catalog" },
-  { entityType: "Templates", accessor: "templates", kind: "catalog" },
-  {
-    entityType: "CaseExportTemplate",
-    accessor: "caseExportTemplate",
-    kind: "catalog",
-  },
-  { entityType: "CaseFields", accessor: "caseFields", kind: "catalog" },
-  { entityType: "ResultFields", accessor: "resultFields", kind: "catalog" },
-  { entityType: "FieldOptions", accessor: "fieldOptions", kind: "catalog" },
-  { entityType: "MilestoneTypes", accessor: "milestoneTypes", kind: "catalog" },
-  { entityType: "Groups", accessor: "groups", kind: "catalog" },
-  { entityType: "LlmIntegration", accessor: "llmIntegration", kind: "catalog" },
-  { entityType: "CodeRepository", accessor: "codeRepository", kind: "catalog" },
-  {
-    entityType: "SamlConfiguration",
-    accessor: "samlConfiguration",
-    kind: "catalog",
-  },
-  {
-    entityType: "LlmProviderConfig",
-    accessor: "llmProviderConfig",
-    kind: "catalog",
-  },
-  {
-    entityType: "LlmFeatureConfig",
-    accessor: "llmFeatureConfig",
-    hasProjectId: true,
-    kind: "catalog",
-  },
-  {
-    entityType: "OllamaModelRegistry",
-    accessor: "ollamaModelRegistry",
-    kind: "catalog",
-  },
-  // Join / assignment models (access control + project-scoped config links)
-  { entityType: "RolePermission", accessor: "rolePermission", kind: "join" },
-  { entityType: "GroupAssignment", accessor: "groupAssignment", kind: "join" },
-  {
-    entityType: "ProjectAssignment",
-    accessor: "projectAssignment",
-    hasProjectId: true,
-    kind: "join",
-  },
-  {
-    entityType: "ProjectStatusAssignment",
-    accessor: "projectStatusAssignment",
-    hasProjectId: true,
-    kind: "join",
-  },
-  {
-    entityType: "ProjectWorkflowAssignment",
-    accessor: "projectWorkflowAssignment",
-    hasProjectId: true,
-    kind: "join",
-  },
-  {
-    entityType: "ProjectConfigurationAssignment",
-    accessor: "projectConfigurationAssignment",
-    hasProjectId: true,
-    kind: "join",
-  },
-  {
-    entityType: "MilestoneTypesAssignment",
-    accessor: "milestoneTypesAssignment",
-    hasProjectId: true,
-    kind: "join",
-  },
-  {
-    entityType: "ProjectLlmIntegration",
-    accessor: "projectLlmIntegration",
-    hasProjectId: true,
-    kind: "join",
-  },
-  {
-    entityType: "ProjectCodeRepositoryConfig",
-    accessor: "projectCodeRepositoryConfig",
-    hasProjectId: true,
-    kind: "join",
-  },
-];
+// Decommissioned: every catalog/config/access-control model below is now covered
+// by the database CDC triggers (scripts/trigger-registry.ts), which capture the
+// same create/update/delete under the acting admin (the request GUC is set by the
+// route, not by these hooks). Keeping both layers double-audited each change, so the
+// app-layer config audit is retired here — the app layer now records only semantic /
+// security events (login, export, SSO, SCIM). The driving list is intentionally empty;
+// the factory + wiring remain a no-op so the wiring/typing tests still exercise them.
+export const AUDITED_CONFIG_MODELS: AuditedConfigModel[] = [];
 
 /**
  * Non-config entity accessors the ZenStack RPC route (`app/api/model`) audits

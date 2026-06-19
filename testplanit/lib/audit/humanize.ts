@@ -90,6 +90,15 @@ const CATALOG_BY_COLUMN: Record<
   default: {
     statusId: { table: "Status", field: "name" },
     workflowId: { table: "Workflows", field: "name" },
+    // Access-control / assignment join tables (GroupAssignment, RolePermission,
+    // Project*Assignment, …) capture only their FK ids; resolve them to names so a
+    // change reads "user: Administrator Account, group: QA" instead of raw ids.
+    userId: { table: "User", field: "name" },
+    groupId: { table: "Groups", field: "name" },
+    roleId: { table: "Roles", field: "name" },
+    projectId: { table: "Projects", field: "name" },
+    configurationId: { table: "Configurations", field: "name" },
+    milestoneTypeId: { table: "MilestoneTypes", field: "name" },
   },
 };
 
@@ -304,6 +313,12 @@ export function createPrismaLookup(prisma: any): LookupFn {
     TestRuns: { delegate: "testRuns", field: "name" },
     Milestones: { delegate: "milestones", field: "name" },
     User: { delegate: "user", field: "name", stringId: true },
+    // Access-control / assignment FK targets (see CATALOG_BY_COLUMN.default).
+    Groups: { delegate: "groups", field: "name" },
+    Roles: { delegate: "roles", field: "name" },
+    Projects: { delegate: "projects", field: "name" },
+    Configurations: { delegate: "configurations", field: "name" },
+    MilestoneTypes: { delegate: "milestoneTypes", field: "name" },
   };
 
   return async (table, field, id) => {
