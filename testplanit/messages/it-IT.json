@@ -5440,7 +5440,8 @@
         "duplicate_detection": "Rilevamento duplicati",
         "generate_from_url": "Genera casi di test da URL (requisiti)",
         "generate_from_url_app": "Genera casi di test da URL (test dell'applicazione)",
-        "automation_candidates": "Rapporto sui candidati all'automazione"
+        "automation_candidates": "Rapporto sui candidati all'automazione",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5742,7 +5743,10 @@
         "reviewReminderTitle": "Revisione ancora in corso",
         "reviewReminderAction": "è ancora in attesa della tua recensione di",
         "reviewReminderEmailMessage": "Promemoria: la richiesta di revisione di {actorName}su {entityLabel} \"{entityName}\" nel progetto \"{projectName}\" è in sospeso da {hoursPending} ore.",
-        "reviewReminderHoursPending": "In attesa da {hoursPending, plural, one {# ore} other {# ore}}"
+        "reviewReminderHoursPending": "In attesa da {hoursPending, plural, one {# ore} other {# ore}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

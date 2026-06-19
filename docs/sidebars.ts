@@ -155,6 +155,7 @@ const sidebars: SidebarsConfig = {
                     'user-guide/llm-writing-assistant', // In-editor AI writing assistant
                     'user-guide/llm-markdown-import', // AI-assisted markdown import
                     'user-guide/llm-auto-tag', // AI-powered auto tagging
+                    'user-guide/llm-step-derivation', // AI-derived test case steps from automated results
                   ],
                 },
                 'user-guide/prompt-configurations', // AI prompt configuration management

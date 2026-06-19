@@ -402,6 +402,7 @@ enum NotificationType {
     REVIEW_REJECTED
     REVIEW_CANCELLED
     REVIEW_REMINDER
+    AI_STEPS_DERIVED
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')

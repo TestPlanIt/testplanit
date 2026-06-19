@@ -23,9 +23,34 @@ vi.mock("@wdio/reporter", () => {
 });
 
 // Mock the API client
+// Hoisted spies so tests can drive/assert the step-write + case-create path.
+const apiMocks = vi.hoisted(() => ({
+  findOrCreateTestCase: vi.fn(async () => ({
+    testCase: { id: 456, name: "Test Case" },
+    action: "found" as "found" | "created" | "moved",
+  })),
+  createSteps: vi.fn(async (opts: { testCaseId: number; steps: unknown[] }) => ({
+    count: opts.steps.length,
+  })),
+  softDeleteCaseSteps: vi.fn(async () => 3),
+  requestStepDerivation: vi.fn(async (_opts: unknown) => ({ enqueued: true })),
+  automationStepsToCaseSteps: vi.fn((steps: { title: string; kind: string }[]) =>
+    steps.map((s, i) => ({
+      step: s.title,
+      expectedResult: s.kind === "assertion" ? s.title : undefined,
+      order: i,
+    })),
+  ),
+}));
+
 vi.mock("@testplanit/api", () => {
   return {
+    automationStepsToCaseSteps: apiMocks.automationStepsToCaseSteps,
     TestPlanItClient: class MockTestPlanItClient {
+      findOrCreateTestCase = apiMocks.findOrCreateTestCase;
+      createSteps = apiMocks.createSteps;
+      softDeleteCaseSteps = apiMocks.softDeleteCaseSteps;
+      requestStepDerivation = apiMocks.requestStepDerivation;
       async getStatuses() {
         return [
           {
@@ -113,9 +138,6 @@ vi.mock("@testplanit/api", () => {
       async findOrCreateFolderPath() {
         return { id: 1, name: "Folder" };
       }
-      async findOrCreateTestCase() {
-        return { testCase: { id: 456, name: "Test Case" }, action: "found" };
-      }
     },
     TestPlanItError: class TestPlanItError extends Error {
       constructor(message: string) {
@@ -154,6 +176,13 @@ describe("TestPlanItReporter", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    apiMocks.findOrCreateTestCase.mockResolvedValue({
+      testCase: { id: 456, name: "Test Case" },
+      action: "found",
+    });
+    apiMocks.createSteps.mockImplementation(async (opts) => ({ count: opts.steps.length }));
+    apiMocks.softDeleteCaseSteps.mockResolvedValue(3);
+    apiMocks.requestStepDerivation.mockResolvedValue({ enqueued: true });
     reporter = new TestPlanItReporter(defaultOptions);
   });
 
@@ -634,5 +663,181 @@ describe("service-managed mode", () => {
     reporter.onTestPass(testStats);
     const state = reporter.getState();
     expect(state.results.size).toBe(1);
+  });
+
+  describe("Cucumber scenario accumulation", () => {
+    const runner = (framework: string) =>
+      ({ cid: "0-0", config: { framework }, capabilities: {} }) as unknown as RunnerStats;
+    const featureSuite = () =>
+      ({ title: "Feature: Login", uid: "f1" }) as unknown as SuiteStats;
+    const scenarioSuite = () =>
+      ({ type: "scenario", title: "Scenario: User logs in", uid: "s1", cid: "0-0", start: new Date() }) as unknown as SuiteStats;
+    const stepTest = (title: string) =>
+      ({ type: "test", title, fullTitle: title, uid: title, cid: "0-0", state: "passed", duration: 1, start: new Date(), end: new Date(), retries: 0 }) as unknown as TestStats;
+    const cucumberReporter = (opts: Record<string, unknown> = {}) =>
+      new TestPlanItReporter({
+        ...defaultOptions,
+        autoCreateTestCases: true,
+        parentFolderId: 10,
+        templateId: 1,
+        ...opts,
+      });
+
+    // Await the async reportResult operations tracked on the reporter.
+    const flush = async (r: TestPlanItReporter) => {
+      const ops = (r as unknown as { pendingOperations: Set<Promise<void>> }).pendingOperations;
+      for (let i = 0; i < 10 && ops.size > 0; i++) {
+        await Promise.allSettled([...ops]);
+      }
+    };
+
+    const driveScenario = (r: TestPlanItReporter, framework = "cucumber") => {
+      r.onRunnerStart(runner(framework));
+      r.onSuiteStart(featureSuite());
+      r.onSuiteStart(scenarioSuite());
+      r.onTestPass(stepTest("Given I am on the homepage"));
+      r.onTestPass(stepTest("When I enter valid credentials"));
+      r.onTestPass(stepTest("Then I should see the dashboard"));
+      r.onSuiteEnd(scenarioSuite());
+    };
+
+    it("creates ONE case per scenario (not per step) and writes the Given/When/Then steps", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 456, name: "User logs in" }, action: "created" });
+      const r = cucumberReporter();
+      driveScenario(r);
+      await flush(r);
+
+      expect(apiMocks.findOrCreateTestCase).toHaveBeenCalledTimes(1);
+      expect(apiMocks.createSteps).toHaveBeenCalledTimes(1);
+      expect(apiMocks.createSteps.mock.calls[0][0].steps).toHaveLength(3);
+      expect(apiMocks.createSteps.mock.calls[0][0].testCaseId).toBe(456);
+    });
+
+    // ─── Non-Cucumber (Mocha/Jasmine) → opt-in LLM derivation ───────────────
+    const driveMochaTest = (r: TestPlanItReporter, title: string, suiteUid = "ms1") => {
+      r.onRunnerStart(runner("mocha"));
+      r.onSuiteStart({ title: "Auth", uid: suiteUid } as unknown as SuiteStats);
+      r.onTestPass(stepTest(title));
+    };
+
+    it("requests AI step derivation for non-Cucumber auto-created cases at onRunnerEnd", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 789, name: "x" }, action: "created" });
+      const r = cucumberReporter();
+      driveMochaTest(r, "should log in with valid credentials");
+      await flush(r);
+      await (r as unknown as { onRunnerEnd: (rs: RunnerStats) => Promise<void> }).onRunnerEnd(runner("mocha"));
+
+      // No deterministic steps for Mocha...
+      expect(apiMocks.createSteps).not.toHaveBeenCalled();
+      // ...but exactly one batched AI-derivation request for the created case.
+      expect(apiMocks.requestStepDerivation).toHaveBeenCalledTimes(1);
+      const arg = apiMocks.requestStepDerivation.mock.calls[0][0] as {
+        overwrite: boolean;
+        cases: Array<{ testCaseId: number; name: string }>;
+      };
+      expect(arg.overwrite).toBe(false);
+      expect(arg.cases).toHaveLength(1);
+      expect(arg.cases[0]).toMatchObject({
+        testCaseId: 789,
+        name: "should log in with valid credentials",
+      });
+    });
+
+    it("requests overwrite re-derivation for matched non-Cucumber cases when overwriteSteps is on", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 321, name: "x" }, action: "found" });
+      const r = cucumberReporter({ overwriteSteps: true });
+      driveMochaTest(r, "should do something", "ms2");
+      await flush(r);
+      await (r as unknown as { onRunnerEnd: (rs: RunnerStats) => Promise<void> }).onRunnerEnd(runner("mocha"));
+
+      expect(apiMocks.requestStepDerivation).toHaveBeenCalledTimes(1);
+      expect((apiMocks.requestStepDerivation.mock.calls[0][0] as { overwrite: boolean }).overwrite).toBe(true);
+    });
+
+    it("does NOT request AI derivation for matched cases without overwriteSteps", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 321, name: "x" }, action: "found" });
+      const r = cucumberReporter(); // overwriteSteps default false
+      driveMochaTest(r, "should do something", "ms3");
+      await flush(r);
+      await (r as unknown as { onRunnerEnd: (rs: RunnerStats) => Promise<void> }).onRunnerEnd(runner("mocha"));
+
+      expect(apiMocks.requestStepDerivation).not.toHaveBeenCalled();
+    });
+
+    it("does NOT request AI derivation when captureSteps is false", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 1, name: "x" }, action: "created" });
+      const r = cucumberReporter({ captureSteps: false });
+      driveMochaTest(r, "should x", "ms4");
+      await flush(r);
+      await (r as unknown as { onRunnerEnd: (rs: RunnerStats) => Promise<void> }).onRunnerEnd(runner("mocha"));
+
+      expect(apiMocks.requestStepDerivation).not.toHaveBeenCalled();
+    });
+
+    it("does NOT request AI derivation for Cucumber runs (deterministic path)", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 456, name: "x" }, action: "created" });
+      const r = cucumberReporter();
+      driveScenario(r);
+      await flush(r);
+      await (r as unknown as { onRunnerEnd: (rs: RunnerStats) => Promise<void> }).onRunnerEnd(runner("cucumber"));
+
+      expect(apiMocks.requestStepDerivation).not.toHaveBeenCalled();
+    });
+
+    it("captures the test's commands and includes them in the derivation request", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 900, name: "x" }, action: "created" });
+      const r = cucumberReporter();
+      r.onRunnerStart(runner("mocha"));
+      r.onSuiteStart({ title: "Account", uid: "mc1" } as unknown as SuiteStats);
+      const t = stepTest("should log in with valid credentials");
+      r.onTestStart(t);
+      // Commands fire between onTestStart and the test ending.
+      r.onBeforeCommand({ command: "navigateTo", body: { url: "https://app/login" } } as never);
+      r.onBeforeCommand({ command: "elementSendKeys", body: { text: "a@b.com" } } as never);
+      r.onBeforeCommand({ command: "elementClick" } as never);
+      r.onTestPass(t);
+      await flush(r);
+      await (r as unknown as { onRunnerEnd: (rs: RunnerStats) => Promise<void> }).onRunnerEnd(runner("mocha"));
+
+      expect(apiMocks.requestStepDerivation).toHaveBeenCalledTimes(1);
+      const arg = apiMocks.requestStepDerivation.mock.calls[0][0] as {
+        cases: Array<{ commands?: string[] }>;
+      };
+      const commands = arg.cases[0].commands;
+      expect(commands).toBeDefined();
+      expect(commands).toContain('navigateTo {"url":"https://app/login"}');
+      expect(commands).toContain('elementSendKeys {"text":"a@b.com"}');
+      expect(commands).toContain("elementClick");
+    });
+
+    it("creates the scenario case but writes no steps when captureSteps is false", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 456, name: "x" }, action: "created" });
+      const r = cucumberReporter({ captureSteps: false });
+      driveScenario(r);
+      await flush(r);
+
+      expect(apiMocks.findOrCreateTestCase).toHaveBeenCalledTimes(1);
+      expect(apiMocks.createSteps).not.toHaveBeenCalled();
+    });
+
+    it("overwriteSteps soft-deletes existing steps then rewrites on a matched case", async () => {
+      apiMocks.findOrCreateTestCase.mockResolvedValue({ testCase: { id: 456, name: "x" }, action: "found" });
+      const r = cucumberReporter({ overwriteSteps: true });
+      driveScenario(r);
+      await flush(r);
+
+      expect(apiMocks.softDeleteCaseSteps).toHaveBeenCalledTimes(1);
+      expect(apiMocks.createSteps).toHaveBeenCalledTimes(1);
+    });
+
+    it("is a silent no-op for a Mocha run (no scenario accumulation, no steps written)", async () => {
+      const r = cucumberReporter();
+      r.onRunnerStart(runner("mocha"));
+      r.onSuiteStart(featureSuite());
+      r.onTestPass(stepTest("[123] some test"));
+      await flush(r);
+
+      expect(apiMocks.createSteps).not.toHaveBeenCalled();
+    });
   });
 });

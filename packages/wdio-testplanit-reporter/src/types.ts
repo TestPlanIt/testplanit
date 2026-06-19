@@ -125,6 +125,26 @@ export interface TestPlanItReporterOptions extends Reporters.Options {
   autoCreateTestCases?: boolean;
 
   /**
+   * Whether to capture a Cucumber scenario's Given/When/Then steps as the
+   * created case's Steps. Only effective with `@wdio/cucumber-framework`
+   * (`scenarioLevelReporter: false`, the default) and `autoCreateTestCases`.
+   * Given → Precondition (Step 0), When → Step, Then → Expected Result on the
+   * preceding When group. Silent no-op for Mocha/Jasmine (no native steps).
+   * @default true
+   */
+  captureSteps?: boolean;
+
+  /**
+   * Whether to overwrite the steps of an existing/linked Cucumber case with the
+   * scenario's captured steps every run. Existing steps are soft-deleted and
+   * replaced. This is **destructive**: any manual edits are discarded. As a
+   * safeguard, a scenario with no steps never clears existing steps. No-op for
+   * Mocha/Jasmine.
+   * @default false
+   */
+  overwriteSteps?: boolean;
+
+  /**
    * Whether to create folder hierarchy based on Mocha suite structure
    * When enabled, nested describe blocks create nested folders:
    * describe('Suite A') > describe('Suite B') > it('test')
@@ -371,6 +391,17 @@ export interface TrackedTestResult {
   commandOutput?: string;
   /** JUnit test result ID (set after result is created, used for deferred screenshot upload) */
   junitResultId?: number;
+  /**
+   * Ordered Cucumber step titles (keyword embedded, e.g. "Given I am on the
+   * homepage") accumulated for a scenario. Set only when
+   * `detectedFramework === 'cucumber'`; used to derive the case's Steps.
+   */
+  cucumberStepTitles?: string[];
+  /**
+   * Ordered low-level automation commands the test executed (non-Cucumber),
+   * captured via onBeforeCommand and fed to AI step derivation.
+   */
+  commands?: string[];
 }
 
 /**
@@ -398,6 +429,8 @@ export interface ReporterStats {
   testCasesMoved: number;
   /** Number of folders that were created for hierarchy */
   foldersCreated: number;
+  /** Number of case Steps written from captured Cucumber scenario steps */
+  testStepsCreated: number;
   /** Number of test results reported (passed) */
   resultsPassed: number;
   /** Number of test results reported (failed) */
@@ -434,6 +467,8 @@ export interface ReporterState {
   testRunCaseMap: Map<string, number>;
   /** Map of folder paths (joined by >) to folder IDs for caching */
   folderPathMap: Map<string, number>;
+  /** Dedup of in-flight step writes per case id (write steps at most once per case per run) */
+  caseStepsMap: Map<number, Promise<void>>;
   /** Status ID mappings */
   statusIds: {
     passed?: number;

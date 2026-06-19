@@ -5440,7 +5440,8 @@
         "duplicate_detection": "重复检测",
         "generate_from_url": "根据 URL 生成测试用例（需求）",
         "generate_from_url_app": "从 URL 生成测试用例（应用程序测试）",
-        "automation_candidates": "自动化候选报告"
+        "automation_candidates": "自动化候选报告",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5742,7 +5743,10 @@
         "reviewReminderTitle": "审核仍在进行中",
         "reviewReminderAction": "仍在等待您的评论",
         "reviewReminderEmailMessage": "提醒： {actorName}对 {entityLabel} \"{entityName}\" 在项目 \"{projectName}\" 中的审核请求已等待 {hoursPending} 小时。",
-        "reviewReminderHoursPending": "等待 {hoursPending, plural, one {小时} other {小时}}"
+        "reviewReminderHoursPending": "等待 {hoursPending, plural, one {小时} other {小时}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

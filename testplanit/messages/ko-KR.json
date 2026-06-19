@@ -5440,7 +5440,8 @@
         "duplicate_detection": "중복 감지",
         "generate_from_url": "URL(요구사항)에서 테스트 케이스 생성",
         "generate_from_url_app": "URL에서 테스트 케이스 생성 (애플리케이션 테스트)",
-        "automation_candidates": "자동화 후보 보고서"
+        "automation_candidates": "자동화 후보 보고서",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5742,7 +5743,10 @@
         "reviewReminderTitle": "검토는 아직 진행 중입니다.",
         "reviewReminderAction": "아직 귀하의 리뷰를 기다리고 있습니다.",
         "reviewReminderEmailMessage": "알림: {actorName}님의 {entityLabel} \"{entityName}\" 프로젝트 \"{projectName}\"에 대한 검토 요청이 {hoursPending} 시간 동안 보류 중입니다.",
-        "reviewReminderHoursPending": "대기 시간: {hoursPending, plural, one {#시간} other {#시간}}"
+        "reviewReminderHoursPending": "대기 시간: {hoursPending, plural, one {#시간} other {#시간}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

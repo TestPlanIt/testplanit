@@ -5440,7 +5440,8 @@
         "duplicate_detection": "Kopya Tespiti",
         "generate_from_url": "URL'den Test Senaryoları Oluştur (Gereksinimler)",
         "generate_from_url_app": "URL'den Test Senaryoları Oluşturma (Uygulama Testi)",
-        "automation_candidates": "Otomasyon Adayları Raporu"
+        "automation_candidates": "Otomasyon Adayları Raporu",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5742,7 +5743,10 @@
         "reviewReminderTitle": "İnceleme henüz sonuçlanmadı.",
         "reviewReminderAction": "Hâlâ sizin değerlendirmenizi bekliyor.",
         "reviewReminderEmailMessage": "Hatırlatma: {actorName}'ın {entityLabel} \"{entityName}\" hakkındaki inceleme isteği, \"{projectName}\" projesinde {hoursPending} saattir beklemede.",
-        "reviewReminderHoursPending": "Beklemede {hoursPending, plural, one {saat} other {saat}}"
+        "reviewReminderHoursPending": "Beklemede {hoursPending, plural, one {saat} other {saat}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

@@ -723,6 +723,44 @@ export function NotificationContent({
     );
   }
 
+  if (notification.type === "AI_STEPS_DERIVED") {
+    if (data.projectId && data.testRunId) {
+      const runLink = `/projects/runs/${data.projectId}/${data.testRunId}`;
+      return (
+        <div className="space-y-2">
+          <h4 className="font-medium text-sm">{t("aiStepsDerivedTitle")}</h4>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p>
+              {t("aiStepsDerivedMessage", {
+                count: data.derivedCount ?? 0,
+              })}
+            </p>
+            <div className="flex items-center gap-1">
+              <Link
+                href={runLink}
+                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                {t("aiStepsDerivedReviewLink")}
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+            {data.testRunName && (
+              <p className="text-xs truncate">{data.testRunName}</p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback for notifications without complete data
+    return (
+      <div className="space-y-1">
+        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <p className="text-sm text-muted-foreground">{notification.message}</p>
+      </div>
+    );
+  }
+
   // Fallback for other notification types
   return (
     <div className="space-y-1">

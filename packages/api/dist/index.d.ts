@@ -490,6 +490,65 @@ interface CreateStepsOptions {
         order: number;
     }>;
 }
+/** One case to request server-side LLM step derivation for. */
+interface RequestStepDerivationCase {
+    testCaseId: number;
+    /** The automated test's name — the primary signal the LLM derives from. */
+    name: string;
+    /** Suite/class the test belongs to, if any. */
+    className?: string | null;
+    /** Failure message from the result, if any. */
+    failure?: string | null;
+    /** Captured output from the result, if any. */
+    systemOut?: string | null;
+    /**
+     * Ordered low-level automation commands the test executed (e.g. navigate,
+     * find element, click, type, assert), if captured. When present, the model
+     * derives steps from what the test actually did rather than only its name.
+     */
+    commands?: string[];
+}
+interface RequestStepDerivationOptions {
+    projectId: number;
+    /** Test run the resulting "steps ready" notification links to. */
+    testRunId: number;
+    cases: RequestStepDerivationCase[];
+    /**
+     * Destructive opt-in: re-derive cases that already have steps (replace them).
+     * Default false (only stepless cases are enriched).
+     */
+    overwrite?: boolean;
+}
+/**
+ * A single normalized automation step, produced by a per-surface adapter
+ * (the result importer, or the Playwright / WDIO reporters) and consumed by
+ * `automationStepsToCaseSteps`. Format-agnostic: native shapes (Cucumber
+ * Gherkin keywords, Playwright `TestStep` trees) are mapped to this
+ * intermediate so the shared mapper never parses a native format itself.
+ */
+interface AutomationStep {
+    /** Plain-text step text (keyword-stripped for Gherkin). */
+    title: string;
+    /** Role of the step: Given → precondition, When → action, Then → assertion. */
+    kind: "precondition" | "action" | "assertion";
+    /** Nested steps (e.g. a Playwright `expect` nested under a `test.step`). */
+    children?: AutomationStep[];
+}
+/**
+ * A single derived case `Steps` row in plain-text form. The caller wraps
+ * `step`/`expectedResult` into TipTap-JSON on write via `tipTapDoc`; the
+ * mapper itself stays a pure text transform. Structurally identical to an
+ * element of {@link CreateStepsOptions.steps}, so a `CaseStepRow[]` is
+ * directly assignable to `createSteps({ testCaseId, steps })`.
+ */
+interface CaseStepRow {
+    /** Step instruction (plain text). */
+    step: string;
+    /** Expected result (plain text). Omitted/empty when not applicable — empty is valid. */
+    expectedResult?: string;
+    /** Zero-based position of the step within the case. */
+    order: number;
+}
 /**
  * Result of findOrCreateTestCase with metadata
  */
@@ -939,12 +998,6 @@ declare class TestPlanItClient {
      */
     findOrCreateTestCase(options: CreateTestCaseOptions): Promise<FindOrCreateTestCaseResult>;
     /**
-     * Wrap plain text in a minimal TipTap (ProseMirror) document so it renders
-     * in the in-app step editor. Empty text produces an empty paragraph (an
-     * empty text node is invalid in ProseMirror).
-     */
-    private tipTapDoc;
-    /**
      * Create an authored step on a test case.
      * `step` and `expectedResult` are stored as TipTap rich-text documents to
      * match the in-app step editor.
@@ -966,6 +1019,16 @@ declare class TestPlanItClient {
      * Returns the number of steps that were soft-deleted.
      */
     softDeleteCaseSteps(testCaseId: number): Promise<number>;
+    /**
+     * Request opt-in, background LLM step derivation for low-structure cases
+     * (e.g. Mocha/Jasmine, which have no native steps to map deterministically).
+     * Enqueues a server-side job that runs ONLY when an LLM provider is configured
+     * for the project; otherwise it is inert. With `overwrite`, cases that already
+     * have steps are re-derived (destructive). Returns whether a job was enqueued.
+     */
+    requestStepDerivation(options: RequestStepDerivationOptions): Promise<{
+        enqueued: boolean;
+    }>;
     /**
      * Add a test case to a test run
      */
@@ -1045,4 +1108,64 @@ declare class TestPlanItClient {
     getBaseUrl(): string;
 }
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState };
+/**
+ * Wrap plain text in a minimal TipTap (ProseMirror) document so it renders
+ * in the in-app step editor. Empty (or whitespace-only) text produces a
+ * paragraph with an EMPTY content array — an empty text node
+ * (`{ type: "text", text: "" }`) is invalid in ProseMirror.
+ *
+ * Shared, pure helper (promoted from a private `TestPlanItClient` method) so
+ * both the client's step-write methods and step-derivation callers that write
+ * to the database directly produce identical TipTap docs. No imports, no side
+ * effects — uses only `JSON.stringify`.
+ */
+declare function tipTapDoc(text: string): string;
+
+/**
+ * Convert a normalized `AutomationStep[]` into ordered, plain-text case
+ * `Steps` rows. Pure, DB-free, format-agnostic, synchronous: the per-surface
+ * adapter (the result importer or the Playwright / WDIO reporters) produces
+ * the normalized input and decides what counts as a mappable step — this
+ * mapper does NO trace-filtering and trusts its input (D-02, D-15). The caller
+ * wraps each row's `step`/`expectedResult` into TipTap-JSON on write; this
+ * function itself never touches the DB or an LLM.
+ *
+ * Deterministic split rules:
+ *  - precondition (Gherkin `Given`) → a leading "Step 0" row, no expectedResult (D-08)
+ *  - action (Gherkin `When`)        → a step row (D-07)
+ *  - assertion (Gherkin `Then`)     → does NOT create a row; its title becomes the
+ *      expectedResult of the LAST step of the immediately preceding When-group.
+ *      A contiguous group of assertions CONCATENATES (joined with "\n") into that
+ *      single expectedResult — never new rows (D-07). With no preceding When it
+ *      attaches to the last emitted row, e.g. the last Given/Step-0 (D-08).
+ *  - Playwright nesting (D-09): an action whose immediate `children` include
+ *      assertion(s) takes their joined titles as its expectedResult.
+ *
+ * Steps that are not the last in a When-group keep an empty (omitted)
+ * expectedResult — one is never invented (D-07, D-10); an empty expectedResult
+ * is valid output. Returns `[]` for empty/low-structure input (D-14).
+ *
+ * Single non-recursive O(n) pass over the top-level array; `children` are
+ * inspected only one level deep, bounding stack depth and time (DoS, T-01-01).
+ */
+declare function automationStepsToCaseSteps(steps: AutomationStep[]): CaseStepRow[];
+/**
+ * Never-overwrite guard wrapper (CORE-01). Encodes the decision "only derive
+ * steps for a case that has none" given a caller-supplied signal — it does NOT
+ * query the database itself. The live "does this case already have steps?"
+ * fetch is the per-surface call site's job, deferred to later phases (Phase 2
+ * importer: `prisma.steps.findFirst({ where: { testCaseId, isDeleted: false } })`;
+ * Phase 3 reporter: its existing client) (D-11, D-12).
+ *
+ * When `existingStepCount >= 1` (the case already has at least one non-deleted
+ * step), returns `[]` with no side effects — derivation never clobbers
+ * existing, possibly human-edited steps. When `existingStepCount === 0`,
+ * returns the full mapped rows.
+ *
+ * This wrapper does NOT remove or bypass the reporters' explicit, opt-in
+ * `overwriteSteps` escape hatch — that destructive opt-in stays a documented
+ * caller concern (D-13).
+ */
+declare function deriveCaseStepsIfFresh(steps: AutomationStep[], existingStepCount: number): CaseStepRow[];
+
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, tipTapDoc };

@@ -1,7 +1,8 @@
-import WDIOReporter, { type RunnerStats, type SuiteStats, type TestStats, type AfterCommandArgs } from '@wdio/reporter';
-import { TestPlanItClient } from '@testplanit/api';
-import type { NormalizedStatus, JUnitResultType } from '@testplanit/api';
+import WDIOReporter, { type RunnerStats, type SuiteStats, type TestStats, type AfterCommandArgs, type BeforeCommandArgs } from '@wdio/reporter';
+import { TestPlanItClient, automationStepsToCaseSteps } from '@testplanit/api';
+import type { NormalizedStatus, JUnitResultType, CaseStepRow, RequestStepDerivationCase } from '@testplanit/api';
 import type { TestPlanItReporterOptions, TrackedTestResult, ReporterState } from './types.js';
+import { adaptCucumberStepTitles } from './cucumberAdapter.js';
 import {
   readSharedState,
   writeSharedStateIfAbsent,
@@ -42,6 +43,34 @@ export default class TestPlanItReporter extends WDIOReporter {
   private currentTestUid: string | null = null;
   private currentCid: string | null = null;
   private pendingScreenshots: Map<string, Buffer[]> = new Map();
+  /**
+   * Low-level automation commands captured per running test uid (via
+   * onBeforeCommand), fed to AI step derivation for non-Cucumber tests so the
+   * steps reflect what the test actually did. Capped per test to bound payload.
+   */
+  private testCommands: Map<string, string[]> = new Map();
+  private static readonly MAX_COMMANDS_PER_TEST = 100;
+  /** Cucumber: accumulated step titles per active scenario suite uid. */
+  private pendingScenarioSteps: Map<string, string[]> = new Map();
+  /**
+   * Non-Cucumber cases (no deterministic steps) collected across the run for a
+   * single opt-in, batched LLM step-derivation request at onRunnerEnd. Keyed by
+   * testCaseId so a case is requested at most once per run.
+   */
+  private llmDerivationCases: Map<number, RequestStepDerivationCase> = new Map();
+  /** Cucumber: uid of the scenario suite currently open (null outside a scenario). */
+  private currentScenarioUid: string | null = null;
+  /** Cucumber: in-progress plan for the open scenario, emitted once at onSuiteEnd. */
+  private currentScenarioPlan: {
+    title: string;
+    suiteName: string;
+    suitePath: string[];
+    cid: string;
+    status: 'passed' | 'failed' | 'skipped';
+    error?: Error;
+    startedAt: Date;
+  } | null = null;
+  private cucumberStepNoticeLogged = false;
   /** When true, the TestPlanItService manages the test run lifecycle */
   private managedByService = false;
 
@@ -59,6 +88,8 @@ export default class TestPlanItReporter extends WDIOReporter {
     this.reporterOptions = {
       caseIdPattern: /\[(\d+)\]/g,
       autoCreateTestCases: false,
+      captureSteps: true,
+      overwriteSteps: false,
       createFolderHierarchy: false,
       uploadScreenshots: true,
       includeStackTrace: true,
@@ -97,6 +128,7 @@ export default class TestPlanItReporter extends WDIOReporter {
       caseIdMap: new Map(),
       testRunCaseMap: new Map(),
       folderPathMap: new Map(),
+      caseStepsMap: new Map(),
       statusIds: {},
       initialized: false,
       stats: {
@@ -104,6 +136,7 @@ export default class TestPlanItReporter extends WDIOReporter {
         testCasesCreated: 0,
         testCasesMoved: 0,
         foldersCreated: 0,
+        testStepsCreated: 0,
         resultsPassed: 0,
         resultsFailed: 0,
         resultsSkipped: 0,
@@ -144,6 +177,128 @@ export default class TestPlanItReporter extends WDIOReporter {
     operation.finally(() => {
       this.pendingOperations.delete(operation);
     });
+  }
+
+  /**
+   * Decide whether to write a Cucumber scenario's captured steps to its case,
+   * and write them via the shared mapper. No-op for non-Cucumber frameworks
+   * (D-09). Writes on fresh create when captureSteps is on (D-04), or replaces
+   * existing steps when overwriteSteps is on (D-05).
+   */
+  private async writeScenarioSteps(
+    testCaseId: number,
+    action: 'found' | 'created' | 'moved',
+    result: TrackedTestResult,
+  ): Promise<void> {
+    if (this.detectedFramework !== 'cucumber') return;
+    const titles = result.cucumberStepTitles;
+    if (!titles || titles.length === 0) return;
+    const rows = automationStepsToCaseSteps(adaptCucumberStepTitles(titles));
+    if (action === 'created' && this.reporterOptions.captureSteps !== false) {
+      await this.writeCaseSteps(testCaseId, rows, false);
+    } else if (this.reporterOptions.overwriteSteps) {
+      await this.writeCaseSteps(testCaseId, rows, true);
+    }
+  }
+
+  /**
+   * For NON-Cucumber frameworks (Mocha/Jasmine — no deterministic steps),
+   * collect a case for opt-in, server-side LLM step derivation. Gated by
+   * `captureSteps` (the general "populate steps" switch). A newly created
+   * stepless case is always eligible; an existing/matched case is only eligible
+   * when `overwriteSteps` is on (destructive re-derive). The actual request is
+   * batched and sent once at onRunnerEnd; the server is inert if the project has
+   * no LLM provider configured.
+   */
+  private collectForLlmDerivation(
+    testCaseId: number,
+    action: 'found' | 'created' | 'moved',
+    result: TrackedTestResult,
+  ): void {
+    if (this.detectedFramework === 'cucumber') return;
+    if (this.reporterOptions.captureSteps === false) return;
+    const eligible =
+      action === 'created' || this.reporterOptions.overwriteSteps === true;
+    if (!eligible) return;
+    this.llmDerivationCases.set(testCaseId, {
+      testCaseId,
+      name: result.testName,
+      className: result.suiteName || null,
+      failure: result.errorMessage || null,
+      systemOut: null,
+      ...(result.commands && result.commands.length > 0
+        ? { commands: result.commands }
+        : {}),
+    });
+  }
+
+  /**
+   * Send the single batched LLM step-derivation request for the non-Cucumber
+   * cases collected this run. Called once at onRunnerEnd. Provider-gated +
+   * inert server-side when no LLM provider is configured; wrapped so a failure
+   * never affects the run.
+   */
+  private async requestLlmDerivation(): Promise<void> {
+    if (this.llmDerivationCases.size === 0) return;
+    if (!this.state.testRunId || !this.reporterOptions.projectId) return;
+    const cases = [...this.llmDerivationCases.values()];
+    this.llmDerivationCases.clear();
+    try {
+      const { enqueued } = await this.client.requestStepDerivation({
+        projectId: this.reporterOptions.projectId,
+        testRunId: this.state.testRunId,
+        overwrite: this.reporterOptions.overwriteSteps === true,
+        cases,
+      });
+      if (enqueued) {
+        this.log(
+          `Requested AI step derivation for ${cases.length} low-structure case(s).`,
+        );
+      }
+    } catch (error) {
+      this.logError('Failed to request AI step derivation', error);
+    }
+  }
+
+  /**
+   * Write derived case Steps for a case (ported from the Playwright reporter).
+   * Dedups in-flight writes per case id; when `replace` is set, soft-deletes
+   * existing steps first and SKIPS the create if the delete fails (never-clobber
+   * guard, CORE-01). Passes `CaseStepRow[]` directly to `createSteps` so the
+   * mapper's `expectedResult` is preserved (D-06).
+   */
+  private writeCaseSteps(
+    testCaseId: number,
+    caseStepRows: CaseStepRow[] | undefined,
+    replace: boolean,
+  ): Promise<void> {
+    if (!caseStepRows || caseStepRows.length === 0) return Promise.resolve();
+
+    const existing = this.state.caseStepsMap.get(testCaseId);
+    if (existing) return existing;
+
+    const promise = (async () => {
+      if (replace) {
+        try {
+          const removed = await this.client.softDeleteCaseSteps(testCaseId);
+          this.log(`Cleared ${removed} existing step(s) on case:`, testCaseId);
+        } catch (error) {
+          this.logError(`Failed to clear existing steps on case ${testCaseId}; skipping step write`, error);
+          return;
+        }
+      }
+      try {
+        await this.client.createSteps({ testCaseId, steps: caseStepRows });
+        this.state.stats.testStepsCreated += caseStepRows.length;
+        this.log(`Wrote ${caseStepRows.length} step(s) to case:`, testCaseId);
+      } catch (error) {
+        this.logError(`Failed to create steps on case ${testCaseId}`, error);
+      }
+    })();
+
+    this.state.caseStepsMap.set(testCaseId, promise);
+    promise.catch(() => this.state.caseStepsMap.delete(testCaseId));
+    return promise;
   }
 
   /**
@@ -596,6 +751,21 @@ export default class TestPlanItReporter extends WDIOReporter {
       this.log('Detected framework:', this.detectedFramework);
     }
 
+    // Step capture only applies to @wdio/cucumber-framework. Emit a one-time
+    // notice if captureSteps is on but the detected framework can't provide
+    // steps (Mocha/Jasmine have no native step structure — D-10).
+    if (
+      this.detectedFramework &&
+      this.detectedFramework !== 'cucumber' &&
+      this.reporterOptions.captureSteps !== false &&
+      !this.cucumberStepNoticeLogged
+    ) {
+      this.cucumberStepNoticeLogged = true;
+      this.log(
+        `captureSteps only applies to Cucumber scenarios; step capture is unavailable for framework "${this.detectedFramework}".`,
+      );
+    }
+
     // Don't initialize here - wait until we have actual test results to report
     // This avoids creating empty test runs for specs with no matching tests
   }
@@ -605,9 +775,67 @@ export default class TestPlanItReporter extends WDIOReporter {
       this.currentSuite.push(suite.title);
       this.log('Suite started:', this.getFullSuiteName());
     }
+
+    // Cucumber: a scenario is a suite with type 'scenario'. Begin accumulating
+    // its steps; the case + its Steps are emitted once at onSuiteEnd (D-01/D-12).
+    if ((suite as unknown as { type?: string }).type === 'scenario' && this.detectedFramework === 'cucumber') {
+      this.currentScenarioUid = suite.uid;
+      this.pendingScenarioSteps.set(suite.uid, []);
+      // The scenario title can carry a "Scenario:"/"Scenario Outline:" prefix.
+      const scenarioTitle = (suite.title || '').replace(/^Scenario(?: Outline)?:\s*/, '').trim();
+      this.currentScenarioPlan = {
+        title: scenarioTitle,
+        // Feature path WITHOUT this scenario (currentSuite already includes it).
+        suiteName: this.currentSuite.slice(0, -1).join(' > '),
+        suitePath: this.currentSuite.slice(0, -1),
+        cid: (suite as unknown as { cid?: string }).cid ?? '',
+        status: 'passed',
+        startedAt: suite.start ? new Date(suite.start) : new Date(),
+      };
+    }
   }
 
   onSuiteEnd(suite: SuiteStats): void {
+    // Cucumber: close the scenario — emit ONE reportResult for the whole
+    // scenario carrying the accumulated step titles (D-01/D-12).
+    if (
+      (suite as unknown as { type?: string }).type === 'scenario' &&
+      this.detectedFramework === 'cucumber' &&
+      this.currentScenarioPlan
+    ) {
+      const plan = this.currentScenarioPlan;
+      const stepTitles = this.pendingScenarioSteps.get(suite.uid) ?? [];
+      this.pendingScenarioSteps.delete(suite.uid);
+      this.currentScenarioUid = null;
+      this.currentScenarioPlan = null;
+
+      const { caseIds, cleanTitle } = this.parseCaseIds(plan.title);
+      const fullTitle = plan.suiteName ? `${plan.suiteName} > ${cleanTitle}` : cleanTitle;
+      const result: TrackedTestResult = {
+        caseId: caseIds[0],
+        suiteName: plan.suiteName,
+        suitePath: plan.suitePath,
+        testName: cleanTitle,
+        fullTitle,
+        originalTitle: plan.title,
+        status: plan.status,
+        duration: 0,
+        errorMessage: plan.error?.message,
+        stackTrace: this.reporterOptions.includeStackTrace ? plan.error?.stack : undefined,
+        startedAt: plan.startedAt,
+        finishedAt: new Date(),
+        browser: this.state.capabilities?.browserName,
+        platform: this.state.capabilities?.platformName || process.platform,
+        screenshots: [],
+        retryAttempt: 0,
+        uid: `${plan.cid}_${fullTitle}`,
+        specFile: this.currentSpec,
+        cucumberStepTitles: stepTitles,
+      };
+      this.state.results.set(result.uid, result);
+      this.trackOperation(this.reportResult(result, caseIds));
+    }
+
     if (suite.title) {
       this.log('Suite ended:', this.getFullSuiteName());
       this.currentSuite.pop();
@@ -622,6 +850,45 @@ export default class TestPlanItReporter extends WDIOReporter {
     const fullTitle = suiteName ? `${suiteName} > ${cleanTitle}` : cleanTitle;
     this.currentTestUid = `${test.cid}_${fullTitle}`;
     this.currentCid = test.cid;
+    if (!this.testCommands.has(this.currentTestUid)) {
+      this.testCommands.set(this.currentTestUid, []);
+    }
+  }
+
+  /**
+   * Capture the ordered low-level automation commands a test runs. Fed to AI
+   * step derivation (non-Cucumber) so the steps mirror what the test actually
+   * did. Cheap no-op outside a test / when nothing is being captured.
+   */
+  onBeforeCommand(commandArgs: BeforeCommandArgs): void {
+    const uid = this.currentTestUid;
+    if (!uid) return;
+    const list = this.testCommands.get(uid);
+    if (!list || list.length >= TestPlanItReporter.MAX_COMMANDS_PER_TEST) return;
+    const formatted = this.formatCommand(commandArgs);
+    if (formatted) list.push(formatted);
+  }
+
+  /**
+   * Render a WebdriverIO command into a compact one-line string for the LLM,
+   * e.g. `navigateTo {"url":"https://app/login"}` or `elementSendKeys {"text":"a@b.com"}`.
+   * Returns null for commands with no useful signal.
+   */
+  private formatCommand(commandArgs: BeforeCommandArgs): string | null {
+    const name = commandArgs.command || commandArgs.endpoint || commandArgs.method;
+    if (!name) return null;
+    let body = '';
+    if (commandArgs.body !== undefined && commandArgs.body !== null) {
+      try {
+        const json = JSON.stringify(commandArgs.body);
+        if (json && json !== '{}' && json !== 'null') {
+          body = ` ${json.length > 300 ? `${json.slice(0, 300)}…` : json}`;
+        }
+      } catch {
+        // non-serializable body — skip the args, keep the command name
+      }
+    }
+    return `${name}${body}`;
   }
 
   /**
@@ -704,6 +971,22 @@ export default class TestPlanItReporter extends WDIOReporter {
    * Handle test completion
    */
   private handleTestEnd(test: TestStats, status: 'passed' | 'failed' | 'skipped'): void {
+    // Cucumber: each Gherkin step fires as a test. Accumulate the step title
+    // under the open scenario and SUPPRESS per-step reporting — the scenario's
+    // single case + Steps are emitted at onSuiteEnd (D-01/D-12).
+    if (this.detectedFramework === 'cucumber' && this.currentScenarioUid !== null) {
+      this.pendingScenarioSteps.get(this.currentScenarioUid)?.push(test.title);
+      if (this.currentScenarioPlan) {
+        if (status === 'failed' && this.currentScenarioPlan.status !== 'failed') {
+          this.currentScenarioPlan.status = 'failed';
+          this.currentScenarioPlan.error = test.error;
+        } else if (status === 'skipped' && this.currentScenarioPlan.status === 'passed') {
+          this.currentScenarioPlan.status = 'skipped';
+        }
+      }
+      return;
+    }
+
     const { caseIds, cleanTitle } = this.parseCaseIds(test.title);
     const suiteName = this.getFullSuiteName();
     const suitePath = [...this.currentSuite]; // Copy the current suite hierarchy
@@ -754,7 +1037,9 @@ export default class TestPlanItReporter extends WDIOReporter {
       uid,
       specFile: this.currentSpec,
       commandOutput,
+      commands: this.testCommands.get(uid),
     };
+    this.testCommands.delete(uid);
 
     this.state.results.set(uid, result);
     this.log(`Test ${status}:`, cleanTitle, caseIds.length > 0 ? `(Case IDs: ${caseIds.join(', ')})` : '');
@@ -808,6 +1093,14 @@ export default class TestPlanItReporter extends WDIOReporter {
         // Use the provided case ID directly as repository case ID
         repositoryCaseId = caseIds[0];
         this.log('DEBUG: Using case ID from title:', repositoryCaseId);
+        // Explicitly-linked Cucumber case ([123]): the case pre-exists, so only
+        // overwriteSteps replaces its steps (never on a plain re-run — D-05).
+        if (this.reporterOptions.overwriteSteps) {
+          await this.writeScenarioSteps(caseIds[0], 'found', result);
+        }
+        // Non-Cucumber: collect this matched case for opt-in LLM derivation
+        // (self-gated — only with overwriteSteps, since the case pre-exists).
+        this.collectForLlmDerivation(caseIds[0], 'found', result);
       } else if (this.reporterOptions.autoCreateTestCases) {
         // Check cache first
         if (this.state.caseIdMap.has(caseKey)) {
@@ -877,6 +1170,12 @@ export default class TestPlanItReporter extends WDIOReporter {
           repositoryCaseId = testCase.id;
           this.state.caseIdMap.set(caseKey, repositoryCaseId);
           this.log(`${action === 'found' ? 'Found' : action === 'created' ? 'Created' : 'Moved'} test case:`, testCase.id, testCase.name, 'in folder:', folderId);
+
+          // Cucumber: write the scenario's Given/When/Then as case Steps
+          // (D-04 on create / D-05 overwrite). No-op for non-Cucumber (D-09).
+          await this.writeScenarioSteps(testCase.id, action, result);
+          // Non-Cucumber: collect for opt-in LLM derivation (self-gated).
+          this.collectForLlmDerivation(testCase.id, action, result);
         }
       } else {
         this.log('DEBUG: autoCreateTestCases is false, not creating test case');
@@ -993,6 +1292,10 @@ export default class TestPlanItReporter extends WDIOReporter {
       this.log('No test run created, skipping summary');
       return;
     }
+
+    // Fire the single opt-in AI step-derivation request for the non-Cucumber
+    // cases collected this run (inert server-side without an LLM provider).
+    await this.requestLlmDerivation();
 
     // If no results were actually reported to TestPlanIt, silently skip
     // This handles the case where tests ran but none had valid case IDs
