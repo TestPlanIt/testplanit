@@ -2669,6 +2669,29 @@ export default function Cases({
     setOptimisticReorder({ inProgress: false, cases: null });
   }, [currentPage, sortConfig, folderId, viewType, filterId]);
 
+  // Scope the bulk-edit selection to the current view. Switching folders (or
+  // changing the view/filter that determines which cases are shown) clears the
+  // selection so a bulk action can't silently span cases the user can no longer
+  // see. Pagination and sorting within the same view intentionally keep the
+  // selection (that is what the cross-page merge logic is for). Run-mode
+  // selection is owned by the parent and may legitimately span folders, so it
+  // is left untouched here.
+  const previousViewKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (isSelectionMode) return;
+
+    const viewKey = `${folderId}-${viewType}-${JSON.stringify(filterId)}`;
+    if (
+      previousViewKeyRef.current !== null &&
+      previousViewKeyRef.current !== viewKey
+    ) {
+      setSelectedCaseIdsForBulkEdit([]);
+      setRowSelection({});
+      setLastSelectedIndex(null);
+    }
+    previousViewKeyRef.current = viewKey;
+  }, [folderId, viewType, filterId, isSelectionMode]);
+
   // Check if we're in multi-config mode (multiple test runs selected)
   const isMultiConfigMode =
     isRunMode && selectedRunIds && selectedRunIds.length > 1;
