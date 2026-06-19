@@ -5440,7 +5440,8 @@
         "duplicate_detection": "重複検出",
         "generate_from_url": "URLからテストケースを生成する（要件）",
         "generate_from_url_app": "URLからテストケースを生成する（アプリケーションテスト）",
-        "automation_candidates": "自動化候補者レポート"
+        "automation_candidates": "自動化候補者レポート",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5742,7 +5743,10 @@
         "reviewReminderTitle": "審査はまだ保留中です",
         "reviewReminderAction": "まだレビューをお待ちしています",
         "reviewReminderEmailMessage": "リマインダー: {actorName}によるプロジェクト \"{projectName}\" の {entityLabel} \"{entityName}\" のレビュー依頼は、 {hoursPending} 時間保留されています。",
-        "reviewReminderHoursPending": "{hoursPending, plural, one {# 時間} other {# 時間}} 保留中"
+        "reviewReminderHoursPending": "{hoursPending, plural, one {# 時間} other {# 時間}} 保留中",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

@@ -5440,7 +5440,8 @@
         "duplicate_detection": "Phát hiện trùng lặp",
         "generate_from_url": "Tạo các trường hợp kiểm thử từ URL (Yêu cầu)",
         "generate_from_url_app": "Tạo trường hợp kiểm thử từ URL (Kiểm thử ứng dụng)",
-        "automation_candidates": "Báo cáo ứng viên tự động hóa"
+        "automation_candidates": "Báo cáo ứng viên tự động hóa",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5742,7 +5743,10 @@
         "reviewReminderTitle": "Đang chờ xem xét",
         "reviewReminderAction": "vẫn đang chờ đánh giá của bạn về",
         "reviewReminderEmailMessage": "Nhắc nhở: Yêu cầu xem xét của {actorName}đối với {entityLabel} \"{entityName}\" trong dự án \"{projectName}\" đã bị chờ xử lý trong {hoursPending} giờ.",
-        "reviewReminderHoursPending": "Đang chờ xử lý trong {hoursPending, plural, one {# giờ} other {# giờ}}"
+        "reviewReminderHoursPending": "Đang chờ xử lý trong {hoursPending, plural, one {# giờ} other {# giờ}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

@@ -5440,7 +5440,8 @@
         "duplicate_detection": "Detectie van duplicaten",
         "generate_from_url": "Testcases genereren vanuit URL (vereisten)",
         "generate_from_url_app": "Testcases genereren vanuit URL (applicatietesten)",
-        "automation_candidates": "Rapport over automatiseringskandidaten"
+        "automation_candidates": "Rapport over automatiseringskandidaten",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5742,7 +5743,10 @@
         "reviewReminderTitle": "Beoordeling nog in behandeling",
         "reviewReminderAction": "wacht nog steeds op uw beoordeling van",
         "reviewReminderEmailMessage": "Herinnering: Het beoordelingsverzoek van {actorName}voor {entityLabel} \"{entityName}\" in project \"{projectName}\" is al {hoursPending} uur in behandeling.",
-        "reviewReminderHoursPending": "In afwachting van {hoursPending, plural, one {# uur} other {# uur}}"
+        "reviewReminderHoursPending": "In afwachting van {hoursPending, plural, one {# uur} other {# uur}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {
