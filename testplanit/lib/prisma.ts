@@ -109,6 +109,31 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
   const client = baseClient.$extends({
     query: {
       ...configAuditHooks,
+      // WebhookConfig is trigger-audited (scripts/trigger-registry.ts) but the
+      // webhook-config server actions write it through this hooked client, which
+      // has no other reason to wrap webhookConfig. These hooks exist only to set
+      // the app.audit_context GUC (via withHookTx) so the trigger records the
+      // acting admin rather than __system__. No ES/webhook emit or before-image.
+      webhookConfig: {
+        async create({ args, query }: any) {
+          return withHookTx(
+            { query, args, accessor: "webhookConfig", op: "create" },
+            async (_tx, write) => write()
+          );
+        },
+        async update({ args, query }: any) {
+          return withHookTx(
+            { query, args, accessor: "webhookConfig", op: "update" },
+            async (_tx, write) => write()
+          );
+        },
+        async delete({ args, query }: any) {
+          return withHookTx(
+            { query, args, accessor: "webhookConfig", op: "delete" },
+            async (_tx, write) => write()
+          );
+        },
+      },
       repositoryCases: {
         async create({ args, query }: any) {
           return await withHookTx({ query, args, accessor: "repositoryCases", op: "create" }, async (tx, write) => {

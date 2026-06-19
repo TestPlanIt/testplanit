@@ -131,6 +131,13 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   { table: "ProjectIntegration", denylist: ["createdAt", "updatedAt"], projectCol: "projectId" },
   { table: "ProjectLlmIntegration", denylist: ["createdAt", "updatedAt"], projectCol: "projectId" },
   { table: "ProjectCodeRepositoryConfig", denylist: ["createdAt", "updatedAt"], projectCol: "projectId" },
+  // External-project mapping under a ProjectIntegration (projectId is two hops
+  // away via projectIntegration, so no direct projectCol — self-attributes).
+  { table: "IntegrationProject", denylist: ["createdAt", "updatedAt"], nameCol: "externalProjectName" },
+  // Webhook configuration. token + secret are credential material and are
+  // DENYLISTED so they never land in the append-only DataChangeLog (SAF-02/04);
+  // the dedicated WebhookConfigSecret table stays excluded entirely.
+  { table: "WebhookConfig", denylist: ["createdAt", "updatedAt", "token", "secret"], nameCol: "name", projectCol: "projectId" },
 
   // ── COV-04: Group F — Composite-PK permission/assignment tables ─────────────
   // These tables have @@id([colA, colB]) — no scalar id. pkCol = first column of the composite key.

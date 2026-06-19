@@ -172,7 +172,7 @@ export async function createOrRotateInboundWebhook(input: {
     return { success: false, error: "Unauthorized" };
   }
 
-  return runWithAuditContext({ userId: session.user.id }, async () => {
+  return runWithAuditContext({ userId: session.user.id, userName: session.user.name ?? undefined, userEmail: session.user.email ?? undefined }, async () => {
   // Schema denies all client writes; this server action authorizes the
   // caller explicitly (mirroring the prior @@allow policy) and writes via raw
   // `prisma` to bypass the deny.
@@ -371,7 +371,7 @@ export async function deleteInboundWebhook(input: {
     return { success: false, error: "Unauthorized" };
   }
 
-  return runWithAuditContext({ userId: session.user.id }, async () => {
+  return runWithAuditContext({ userId: session.user.id, userName: session.user.name ?? undefined, userEmail: session.user.email ?? undefined }, async () => {
   // Authorize before raw write. Look up the config to verify both
   // tenant scope (projectId match) AND direction (INBOUND only) before any
   // canManageWebhookConfig probe — a cross-tenant or wrong-direction
@@ -478,7 +478,7 @@ export async function setWebhookActive(
     return { success: false, error: "Unauthorized" };
   }
 
-  return runWithAuditContext({ userId: session.user.id }, async () => {
+  return runWithAuditContext({ userId: session.user.id, userName: session.user.name ?? undefined, userEmail: session.user.email ?? undefined }, async () => {
   let projectId: number;
   try {
     const config = await prisma.webhookConfig.findUnique({
@@ -824,7 +824,7 @@ export async function createOutboundWebhook(input: {
     return { success: false, error: "Unauthorized" };
   }
 
-  return runWithAuditContext({ userId: session.user.id }, async () => {
+  return runWithAuditContext({ userId: session.user.id, userName: session.user.name ?? undefined, userEmail: session.user.email ?? undefined }, async () => {
   // The name column is nullable on the schema for back-compat with INBOUND
   // configs that don't carry an admin label, but OUTBOUND requires it.
   // Validate trim-non-empty up front.
@@ -966,7 +966,7 @@ export async function deleteOutboundWebhook(
     return { success: false, error: "Unauthorized" };
   }
 
-  return runWithAuditContext({ userId: session.user.id }, async () => {
+  return runWithAuditContext({ userId: session.user.id, userName: session.user.name ?? undefined, userEmail: session.user.email ?? undefined }, async () => {
   const config = await prisma.webhookConfig.findUnique({
     where: { id: configId },
     select: { projectId: true, direction: true },
@@ -1014,7 +1014,7 @@ export async function updateOutboundSubscriptions(
     return { success: false, error: "Unauthorized" };
   }
 
-  return runWithAuditContext({ userId: session.user.id }, async () => {
+  return runWithAuditContext({ userId: session.user.id, userName: session.user.name ?? undefined, userEmail: session.user.email ?? undefined }, async () => {
   const config = await prisma.webhookConfig.findUnique({
     where: { id: configId },
     select: { projectId: true, direction: true },
@@ -1085,7 +1085,7 @@ export async function rotateOutboundSecret(
     return { success: false, error: "Unauthorized" };
   }
 
-  return runWithAuditContext({ userId: session.user.id }, async () => {
+  return runWithAuditContext({ userId: session.user.id, userName: session.user.name ?? undefined, userEmail: session.user.email ?? undefined }, async () => {
   const config = await prisma.webhookConfig.findUnique({
     where: { id: configId },
     select: { projectId: true, direction: true, adapterType: true },
@@ -1178,7 +1178,7 @@ export async function retireOutboundSecretNow(
     return { success: false, error: "Unauthorized" };
   }
 
-  return runWithAuditContext({ userId: session.user.id }, async () => {
+  return runWithAuditContext({ userId: session.user.id, userName: session.user.name ?? undefined, userEmail: session.user.email ?? undefined }, async () => {
   const secret = await prisma.webhookConfigSecret.findUnique({
     where: { id: secretId },
     select: {
@@ -1237,7 +1237,7 @@ export async function extendRetiringSecret(
     return { success: false, error: "Unauthorized" };
   }
 
-  return runWithAuditContext({ userId: session.user.id }, async () => {
+  return runWithAuditContext({ userId: session.user.id, userName: session.user.name ?? undefined, userEmail: session.user.email ?? undefined }, async () => {
   const secret = await prisma.webhookConfigSecret.findUnique({
     where: { id: secretId },
     select: {
@@ -1304,7 +1304,7 @@ export async function sendTestOutboundWebhook(
     return { success: false, error: "Unauthorized" };
   }
 
-  return runWithAuditContext({ userId: session.user.id }, async () => {
+  return runWithAuditContext({ userId: session.user.id, userName: session.user.name ?? undefined, userEmail: session.user.email ?? undefined }, async () => {
   const config = await prisma.webhookConfig.findUnique({
     where: { id: configId },
     select: { projectId: true, direction: true },
@@ -1537,7 +1537,7 @@ export async function reEnableWebhookConfig(
   const session = await getServerAuthSession();
   if (!session?.user) return { ok: false, error: "Unauthorized" };
 
-  return runWithAuditContext({ userId: session.user.id }, async () => {
+  return runWithAuditContext({ userId: session.user.id, userName: session.user.name ?? undefined, userEmail: session.user.email ?? undefined }, async () => {
   let projectId: number;
   let endpointHealth: "HEALTHY" | "DEGRADED" | "DISABLED";
   try {
