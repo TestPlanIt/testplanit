@@ -52,7 +52,7 @@ export function AuditLogDetailModal({
 
   const changes = (log?.changes ?? null) as Record<
     string,
-    { old: unknown; new: unknown }
+    { old: unknown; new: unknown; oldName?: unknown; newName?: unknown }
   > | null;
   const metadata = (log?.metadata ?? null) as Record<string, unknown> | null;
 
@@ -181,7 +181,7 @@ export function AuditLogDetailModal({
                                 {t("oldValue")}:
                               </span>
                               <pre className="text-xs mt-1 bg-background p-2 rounded overflow-x-auto">
-                                {formatValue(change.old)}
+                                {formatValue(change.oldName ?? change.old)}
                               </pre>
                             </div>
                             <div className="overflow-hidden">
@@ -189,7 +189,7 @@ export function AuditLogDetailModal({
                                 {t("newValue")}:
                               </span>
                               <pre className="text-xs mt-1 bg-background p-2 rounded overflow-x-auto">
-                                {formatValue(change.new)}
+                                {formatValue(change.newName ?? change.new)}
                               </pre>
                             </div>
                           </div>
