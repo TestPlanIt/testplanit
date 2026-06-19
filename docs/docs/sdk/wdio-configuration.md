@@ -26,8 +26,8 @@ These options apply to the **reporter**. If you're using the [Launcher Service](
 | `stateId` | `number \| string` | - | Workflow state for the test run (ID or name) |
 | `caseIdPattern` | `RegExp \| string` | `/\[(\d+)\]/g` | Regex pattern for extracting case IDs from test titles |
 | `autoCreateTestCases` | `boolean` | `false` | Auto-create test cases if they don't exist |
-| `captureSteps` | `boolean` | `true` | Capture a Cucumber scenario's Given/When/Then as the case's Steps (Cucumber only; silent no-op for Mocha/Jasmine) |
-| `overwriteSteps` | `boolean` | `false` | Replace an existing Cucumber case's steps each run — destructive, discards manual edits (Cucumber only) |
+| `captureSteps` | `boolean` | `true` | Populate a case's Steps. **Cucumber:** captures the scenario's Given/When/Then deterministically. **Mocha/Jasmine (and other low-structure frameworks):** requests opt-in **AI-derived** steps — but only when an LLM provider is [configured for the project](../user-guide/llm-step-derivation.md); otherwise it is a silent no-op. |
+| `overwriteSteps` | `boolean` | `false` | Re-sync steps on **every** run, replacing existing ones — **destructive** (discards manual edits). Applies to both paths: the Cucumber deterministic steps and the AI-derived steps for low-structure frameworks. |
 | `createFolderHierarchy` | `boolean` | `false` | Create folder hierarchy based on Mocha suite structure (requires `autoCreateTestCases` and `parentFolderId`) |
 | `parentFolderId` | `number \| string` | - | Folder for auto-created test cases (ID or name) |
 | `templateId` | `number \| string` | - | Template for auto-created test cases (ID or name) |

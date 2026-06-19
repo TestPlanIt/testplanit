@@ -30,17 +30,17 @@ This path is **opt-in and best-effort**, so the derived steps are surfaced for r
 
 ### How to enable it
 
-Configuring an **LLM provider for the project is the opt-in** — there is no separate per-import or per-reporter switch. If a provider is configured, low-structure cases are enriched; if none is configured, the feature is completely inert (no jobs, no calls, no effect).
+Configuring an **LLM provider for the project is the opt-in** — there is no separate "use AI" switch. If a provider is configured, low-structure cases are enriched; if none is configured, the feature is completely inert (no jobs, no calls, no effect). It works from **both** entry points: the [Automated Test Results Import](../import-export.md#automated-test-results-import) and the [WebdriverIO reporter](../sdk/wdio-test-cases.md) (for Mocha/Jasmine runs, with `captureSteps` on — the default).
 
 1. Configure an [LLM integration](./llm-integrations.md) and assign it to your project (**Project Settings → AI Models** — see [Project Assignment](./llm-integrations.md#project-assignment)).
-2. Import automated results as usual. That's it.
+2. Import automated results, or run a WebdriverIO suite with the reporter. That's it.
 
 ### What happens
 
-1. During import, any case that is **low-structure** (no deterministic steps) **and** has **no existing steps** is collected.
-2. After the import finishes, a **single background job** is queued for that import (never run inline, so large imports stay fast).
+1. When a **low-structure** case (no deterministic steps) is created or matched — by an import or by the WDIO reporter at the end of a run — it is collected.
+2. A **single background job** is queued (one per import / per run; never run inline, so large suites stay fast).
 3. The job asks the configured LLM to derive `step` / `expectedResult` rows from each test's name and output, then writes them to the cases.
-4. The person who ran the import receives an **"AI-Derived Test Steps Ready"** notification linking to the test run, prompting them to **review the steps for accuracy**.
+4. The person who ran the import / suite receives an **"AI-Derived Test Steps Ready"** notification linking to the test run, prompting them to **review the steps for accuracy**.
 
 :::note Review the results
 AI-derived steps are inferred from a test's name and output — they're a strong starting point, not a guarantee. Open the cases from the notification and adjust anything that doesn't match the real test.
@@ -48,7 +48,7 @@ AI-derived steps are inferred from a test's name and output — they're a strong
 
 ## Never overwrites your steps
 
-Both paths are **non-destructive**. Steps are only ever derived for a case that has **no steps**. Once a case has steps — whether you wrote them, edited them, or they were derived earlier — that case is the source of truth and is never overwritten by a later import or by the AI job. (Test-case authors can still opt into a destructive re-derive via the importer's `overwriteSteps` option, which is off by default.)
+By default, steps are only ever derived for a case that has **no steps**. Once a case has steps — whether you wrote them, edited them, or they were derived earlier — that case is the source of truth and is left alone. To deliberately re-sync, both the importer and the WDIO reporter expose an opt-in, **destructive** `overwriteSteps` option (off by default) that replaces a case's steps every run — including via the AI path for low-structure cases. A derivation that yields nothing never clears existing steps.
 
 ## Prerequisites
 
@@ -57,11 +57,12 @@ Both paths are **non-destructive**. Steps are only ever derived for a case that 
 
 ## Troubleshooting
 
-**A low-structure case has no steps after import.**
+**A low-structure case has no steps after an import or a WebdriverIO run.**
 
 - Confirm an LLM provider is configured for the project ([AI Models](./llm-integrations.md#project-assignment)) — without one, the AI path is intentionally inert.
+- For the WDIO reporter, make sure `captureSteps` is on (the default).
 - The job runs in the background; give it a moment and watch for the "AI-Derived Test Steps Ready" notification.
-- If the case already had steps (manual or previously derived), it is left untouched by design.
+- If the case already had steps (manual or previously derived), it is left untouched by design — use `overwriteSteps` to force a re-derive.
 
 **A structured (Cucumber/Playwright) case has no steps.**
 
