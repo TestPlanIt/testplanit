@@ -524,6 +524,73 @@ export interface CreateTestCaseOptions {
 }
 
 /**
+ * A single step on a case created via {@link TestPlanItClient.createTestCases}.
+ * Plain-text `text`/`expectedResult` are stored as TipTap rich-text documents
+ * server-side so they render in the in-app step editor.
+ */
+export interface BulkTestCaseStep {
+  /** Step instruction (plain text). */
+  text?: string;
+  /** Expected result (plain text). */
+  expectedResult?: string;
+  /** Zero-based position; inferred from array order when omitted. */
+  order?: number;
+}
+
+/** One case in a {@link TestPlanItClient.createTestCases} batch. */
+export interface BulkTestCaseInput {
+  name: string;
+  /** Override the batch folder for this case. */
+  folderId?: number;
+  /** Override the batch workflow state (by name) for this case. */
+  stateName?: string;
+  steps?: BulkTestCaseStep[];
+  /** Tag IDs (numbers) or tag names (strings, created if missing). */
+  tags?: Array<number | string>;
+  /**
+   * Custom field values keyed by display name (e.g. `{ Priority: "High" }`).
+   * Validated against the chosen template; a field not on the template is
+   * reported as a per-case error, never silently dropped.
+   */
+  customFields?: Record<string, unknown>;
+}
+
+/** Options for {@link TestPlanItClient.createTestCases} (bulk create). */
+export interface CreateTestCasesOptions {
+  projectId: number;
+  /**
+   * Default folder for the batch. Each case may override it via
+   * {@link BulkTestCaseInput.folderId}.
+   */
+  folderId: number;
+  /** Template for the batch. Defaults to the project's first enabled template. */
+  templateId?: number;
+  /** Default CASES workflow state name; each case may override it. */
+  stateName?: string;
+  cases: BulkTestCaseInput[];
+}
+
+/** Per-case outcome from {@link TestPlanItClient.createTestCases}. */
+export interface BulkTestCaseResult {
+  /** Index-based id echoing the case's position in the request (`"0"`, `"1"`, …). */
+  id: string;
+  name: string;
+  status: "success" | "error";
+  /** Present on success — the created RepositoryCase id. */
+  caseId?: number;
+  /** Present on error — the failure message for this case. */
+  error?: string;
+}
+
+/** Result of {@link TestPlanItClient.createTestCases}. */
+export interface CreateTestCasesResult {
+  success: boolean;
+  importedCount: number;
+  failedCount: number;
+  results: BulkTestCaseResult[];
+}
+
+/**
  * Options for creating an authored step on a test case.
  * Plain-text `step`/`expectedResult` are stored as TipTap rich-text documents
  * so they render in the in-app step editor.

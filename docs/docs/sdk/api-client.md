@@ -151,6 +151,26 @@ const testCase = await client.createTestCase({
   automated: true,            // Optional: whether case is automated
 });
 
+// Create many test cases in one request (with steps, tags, and custom fields).
+// Far faster than createTestCase per case; returns a per-case result so
+// partial failures are visible. Requires a TestPlanIt instance (app v0.39.0+).
+const bulk = await client.createTestCases({
+  projectId: 1,
+  folderId: 1,                // Batch default; each case may override folderId
+  templateId: 1,              // Optional: defaults to the first enabled template
+  cases: [
+    {
+      name: 'Login with valid credentials',
+      steps: [{ text: 'Open /login', expectedResult: 'Form renders' }],
+      tags: ['regression', 5], // Tag names (created if missing) or IDs
+      customFields: { Priority: 'High' }, // Validated against the template
+    },
+    { name: 'Login with invalid credentials' },
+  ],
+});
+// bulk.results: [{ id, name, status: 'success', caseId } | { ..., status: 'error', error }]
+console.log(`${bulk.importedCount} created, ${bulk.failedCount} failed`);
+
 // Get a test case by ID
 const testCase = await client.getTestCase(456);
 

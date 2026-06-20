@@ -462,6 +462,68 @@ interface CreateTestCaseOptions {
     estimate?: number;
 }
 /**
+ * A single step on a case created via {@link TestPlanItClient.createTestCases}.
+ * Plain-text `text`/`expectedResult` are stored as TipTap rich-text documents
+ * server-side so they render in the in-app step editor.
+ */
+interface BulkTestCaseStep {
+    /** Step instruction (plain text). */
+    text?: string;
+    /** Expected result (plain text). */
+    expectedResult?: string;
+    /** Zero-based position; inferred from array order when omitted. */
+    order?: number;
+}
+/** One case in a {@link TestPlanItClient.createTestCases} batch. */
+interface BulkTestCaseInput {
+    name: string;
+    /** Override the batch folder for this case. */
+    folderId?: number;
+    /** Override the batch workflow state (by name) for this case. */
+    stateName?: string;
+    steps?: BulkTestCaseStep[];
+    /** Tag IDs (numbers) or tag names (strings, created if missing). */
+    tags?: Array<number | string>;
+    /**
+     * Custom field values keyed by display name (e.g. `{ Priority: "High" }`).
+     * Validated against the chosen template; a field not on the template is
+     * reported as a per-case error, never silently dropped.
+     */
+    customFields?: Record<string, unknown>;
+}
+/** Options for {@link TestPlanItClient.createTestCases} (bulk create). */
+interface CreateTestCasesOptions {
+    projectId: number;
+    /**
+     * Default folder for the batch. Each case may override it via
+     * {@link BulkTestCaseInput.folderId}.
+     */
+    folderId: number;
+    /** Template for the batch. Defaults to the project's first enabled template. */
+    templateId?: number;
+    /** Default CASES workflow state name; each case may override it. */
+    stateName?: string;
+    cases: BulkTestCaseInput[];
+}
+/** Per-case outcome from {@link TestPlanItClient.createTestCases}. */
+interface BulkTestCaseResult {
+    /** Index-based id echoing the case's position in the request (`"0"`, `"1"`, …). */
+    id: string;
+    name: string;
+    status: "success" | "error";
+    /** Present on success — the created RepositoryCase id. */
+    caseId?: number;
+    /** Present on error — the failure message for this case. */
+    error?: string;
+}
+/** Result of {@link TestPlanItClient.createTestCases}. */
+interface CreateTestCasesResult {
+    success: boolean;
+    importedCount: number;
+    failedCount: number;
+    results: BulkTestCaseResult[];
+}
+/**
  * Options for creating an authored step on a test case.
  * Plain-text `step`/`expectedResult` are stored as TipTap rich-text documents
  * so they render in the in-app step editor.
@@ -979,6 +1041,24 @@ declare class TestPlanItClient {
      */
     createTestCase(options: CreateTestCaseOptions): Promise<RepositoryCase>;
     /**
+     * Create many test cases in a single request.
+     *
+     * POSTs to the bulk-create endpoint, which resolves shared context once and
+     * persists each case — with its steps, tags, and custom-field values — in a
+     * transaction (one per distinct folder/state group). Far faster than calling
+     * {@link createTestCase} per case, and returns a per-case result so partial
+     * failures are visible: each entry is `status: "success"` with a `caseId`, or
+     * `status: "error"` with a message (e.g. a custom field not on the template).
+     *
+     * `templateId` defaults to the project's first enabled template; resolve a
+     * specific one with {@link findTemplateByName}. Resolve `folderId` with
+     * {@link findFolderByName} / {@link findOrCreateFolderPath}.
+     *
+     * Requires a TestPlanIt instance (app v0.39.0+) exposing
+     * `/api/projects/{projectId}/cases/bulk-create`.
+     */
+    createTestCases(options: CreateTestCasesOptions): Promise<CreateTestCasesResult>;
+    /**
      * Get a test case by ID
      */
     getTestCase(caseId: number): Promise<RepositoryCase>;
@@ -1168,4 +1248,4 @@ declare function automationStepsToCaseSteps(steps: AutomationStep[]): CaseStepRo
  */
 declare function deriveCaseStepsIfFresh(steps: AutomationStep[], existingStepCount: number): CaseStepRow[];
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, tipTapDoc };
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, tipTapDoc };
