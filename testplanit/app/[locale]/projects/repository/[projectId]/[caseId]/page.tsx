@@ -914,7 +914,11 @@ export default function TestCaseDetails() {
       folderId: testcase.folderId,
       estimate: testcase.estimate ? formatSeconds(testcase.estimate) : "",
       automated: testcase.automated,
-      tags: testcase.tags?.map((tag: any) => tag.id) || [],
+      // Preserve the in-progress tag selection across re-runs of this effect (e.g. creating a tag
+      // invalidates the Tags query and refetches the case, re-firing this reset). Without this the
+      // user's edits to tags are silently reverted to the case's saved tags, like issues below.
+      tags:
+        currentValues.tags || testcase.tags?.map((tag: any) => tag.id) || [],
       // Preserve existing issues value if it's already set (from external issues)
       issues:
         currentValues.issues ||
