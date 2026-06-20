@@ -1,5 +1,16 @@
 # @testplanit/mcp-server
 
+## 0.2.0
+
+### Minor Changes
+
+- [#457](https://github.com/TestPlanIt/testplanit/pull/457) [`6d6d802`](https://github.com/TestPlanIt/testplanit/commit/6d6d802bc5f012011b3f59cd7a7b8a16d93fa0c1) Thanks [@therealbrad](https://github.com/therealbrad)! - Add bulk test-case creation and template tools:
+  - `testplanit_cases_create_many` — create many test cases in one call, with a per-case results array so partial failures are visible. Each case takes the same fields as a single create plus optional per-case `folderId`/`stateName`.
+  - `testplanit_templates_list` — list a project's enabled templates with the case fields each defines (display name, system name, type, required).
+  - `testplanit_cases_create` and `testplanit_cases_create_many` accept an optional `templateId` (defaults to the project's first enabled template). Custom fields are resolved and validated against the chosen template — and the case's own template on update — so an out-of-template field returns a clear error instead of being silently dropped.
+
+  Requires a TestPlanIt instance (app v0.39.0+) exposing the `/api/projects/{projectId}/cases/bulk-create` endpoint.
+
 ## 0.1.4
 
 ### Patch Changes
