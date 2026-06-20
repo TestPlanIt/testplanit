@@ -412,6 +412,124 @@ describe('TestPlanItClient', () => {
     });
   });
 
+  describe('createTestCases (bulk)', () => {
+    it('POSTs the batch to the bulk-create endpoint and returns per-case results', async () => {
+      const mockResult = {
+        success: true,
+        importedCount: 2,
+        failedCount: 0,
+        results: [
+          { id: '0', name: 'A', status: 'success', caseId: 101 },
+          { id: '1', name: 'B', status: 'success', caseId: 102 },
+        ],
+      };
+      mockFetch.mockResolvedValueOnce(jsonResponse(mockResult));
+
+      const result = await client.createTestCases({
+        projectId: 7,
+        folderId: 12,
+        templateId: 55,
+        cases: [
+          { name: 'A', steps: [{ text: 'do x', expectedResult: 'y' }], tags: [4, 'Regression'] },
+          { name: 'B', customFields: { Priority: 'High' } },
+        ],
+      });
+
+      expect(result).toEqual(mockResult);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      const [url, init] = mockFetch.mock.calls[0];
+      // projectId is carried in the URL path, never the body.
+      expect(url).toBe(
+        'https://testplanit.example.com/api/projects/7/cases/bulk-create'
+      );
+      expect(init.method).toBe('POST');
+      expect(init.headers).toEqual(
+        expect.objectContaining({
+          Authorization: 'Bearer tpi_test_token',
+          'Content-Type': 'application/json',
+        })
+      );
+      const body = JSON.parse(init.body);
+      expect(body).not.toHaveProperty('projectId');
+      expect(body).toMatchObject({
+        folderId: 12,
+        templateId: 55,
+        cases: [
+          { name: 'A', steps: [{ text: 'do x', expectedResult: 'y' }], tags: [4, 'Regression'] },
+          { name: 'B', customFields: { Priority: 'High' } },
+        ],
+      });
+    });
+
+    it('surfaces partial failures in the per-case results array', async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({
+          success: true,
+          importedCount: 1,
+          failedCount: 1,
+          results: [
+            { id: '0', name: 'ok', status: 'success', caseId: 5 },
+            {
+              id: '1',
+              name: 'bad',
+              status: 'error',
+              error: 'Custom field(s) not part of template "Default": Phantom.',
+            },
+          ],
+        })
+      );
+
+      const result = await client.createTestCases({
+        projectId: 7,
+        folderId: 12,
+        cases: [{ name: 'ok' }, { name: 'bad', customFields: { Phantom: 'x' } }],
+      });
+
+      expect(result.importedCount).toBe(1);
+      expect(result.failedCount).toBe(1);
+      expect(result.results[1].status).toBe('error');
+      expect(result.results[1].error).toContain('Phantom');
+    });
+
+    it('omits templateId/stateName from the body when not provided', async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ success: true, importedCount: 1, failedCount: 0, results: [] })
+      );
+
+      await client.createTestCases({
+        projectId: 7,
+        folderId: 12,
+        cases: [{ name: 'A' }],
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body).toEqual({ folderId: 12, cases: [{ name: 'A' }] });
+    });
+
+    it('throws TestPlanItError on a non-2xx response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        headers: { get: () => null },
+        text: async () =>
+          JSON.stringify({
+            error: 'Template 99 is not an enabled template assigned to project 7.',
+          }),
+      });
+
+      await expect(
+        client.createTestCases({
+          projectId: 7,
+          folderId: 12,
+          templateId: 99,
+          cases: [{ name: 'A' }],
+        })
+      ).rejects.toThrow(TestPlanItError);
+    });
+  });
+
   describe('429 rate-limit handling', () => {
     it('honors Retry-After and retries the request', async () => {
       mockFetch

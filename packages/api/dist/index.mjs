@@ -935,6 +935,31 @@ var TestPlanItClient = class {
     return this.zenstack("repositoryCases", "create", { data });
   }
   /**
+   * Create many test cases in a single request.
+   *
+   * POSTs to the bulk-create endpoint, which resolves shared context once and
+   * persists each case — with its steps, tags, and custom-field values — in a
+   * transaction (one per distinct folder/state group). Far faster than calling
+   * {@link createTestCase} per case, and returns a per-case result so partial
+   * failures are visible: each entry is `status: "success"` with a `caseId`, or
+   * `status: "error"` with a message (e.g. a custom field not on the template).
+   *
+   * `templateId` defaults to the project's first enabled template; resolve a
+   * specific one with {@link findTemplateByName}. Resolve `folderId` with
+   * {@link findFolderByName} / {@link findOrCreateFolderPath}.
+   *
+   * Requires a TestPlanIt instance (app v0.39.0+) exposing
+   * `/api/projects/{projectId}/cases/bulk-create`.
+   */
+  async createTestCases(options) {
+    const { projectId, ...body } = options;
+    return this.request(
+      "POST",
+      `/api/projects/${projectId}/cases/bulk-create`,
+      { body }
+    );
+  }
+  /**
    * Get a test case by ID
    */
   async getTestCase(caseId) {
