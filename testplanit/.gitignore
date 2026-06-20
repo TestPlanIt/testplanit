@@ -67,6 +67,9 @@ e2e/a11y/.a11y-fixtures.json
 e2e/a11y/playwright-report/
 e2e/a11y/test-results/
 
+# ZenStack v3 generated ORM client (produced by `zenstack generate` / postinstall)
+/zenstack/
+
 # DB backups
 backups/
 

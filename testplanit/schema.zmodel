@@ -1,38 +1,17 @@
-generator client {
-    provider = "prisma-client-js"
-}
-
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
 }
 
-plugin hooks {
-    provider = '@zenstackhq/tanstack-query'
-    target = 'react'
-    version = 'v5'
-    output = "./lib/hooks"
-}
-
-plugin zod {
-    provider = '@core/zod'
-    version = 'v4'
-}
-
-plugin openapi {
-    provider = '@zenstackhq/openapi'
-    output = './lib/openapi/zenstack-openapi.json'
-    title = 'TestPlanIt API'
-    version = '1.0.0'
-    description = 'Auto-generated API documentation for ZenStack data models'
-    prefix = '/api/model'
+plugin policy {
+    provider = '@zenstackhq/plugin-policy'
 }
 
 model AppConfig {
     key   String @id
     value Json
 
-    @@deny('delete, update, read', !auth())
+    @@deny('delete, update, read', auth() == null)
     @@allow ('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -56,7 +35,7 @@ model Account {
     @@unique([provider, providerAccountId])
     @@index([userId])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('create', true) // Allow creation during sign-in
     @@allow('read, update, delete', auth().id == userId || auth().access == 'ADMIN')
 }
@@ -78,7 +57,7 @@ model User {
     emailVerified                   DateTime?
     emailVerifToken                 String?
     emailTokenExpires               DateTime?
-    password                        String?                       @password @omit @length(4)
+    password                        String?                       @omit @length(4)
     image                           String?
     accounts                        Account[]
     authMethod                      AuthMethod                    @default(INTERNAL)
@@ -163,7 +142,7 @@ model User {
     @@index([isActive, isDeleted])
     @@index([access])
     @@index([accessSource])
-    @@deny('delete, update, read', !auth())
+    @@deny('delete, update, read', auth() == null)
     @@allow('create', true)
     @@allow('create, delete', (auth().access == 'ADMIN'))
     @@allow('update', (auth().access == 'ADMIN' || auth() == this))
@@ -185,7 +164,7 @@ model PasswordHistory {
     @@index([userId, createdAt])
 
     // Admin can read history (for support); system writes via direct db client
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access == 'ADMIN')
     // No allow for create/update/delete via ZenStack REST API
     // System creates/prunes via direct db client in change-password route
@@ -207,7 +186,7 @@ model UserPreferences {
     hasCompletedWelcomeTour             Boolean          @default(false)
     hasCompletedInitialPreferencesSetup Boolean          @default(false)
 
-    @@deny('delete, update, read', !auth())
+    @@deny('delete, update, read', auth() == null)
     @@allow('create', true)
     @@allow('create,update,delete', auth().id == userId || auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
@@ -231,7 +210,7 @@ model ApiToken {
     @@index([userId])
     @@index([token])
     @@index([isActive, expiresAt])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('create', auth().access != null)
     @@allow('read, update, delete', auth().id == userId || auth().access == 'ADMIN')
 }
@@ -244,7 +223,7 @@ enum IdpName {
     ONELOGIN
     OTHER
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('update', auth().access == 'ADMIN')
 }
@@ -276,7 +255,7 @@ model ScimToken {
     @@index([token])
     @@index([isActive, expiresAt])
     @@index([createdById])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
 }
 
@@ -289,7 +268,7 @@ enum Theme {
     Purple
     Accessible
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', true)
 }
@@ -301,7 +280,7 @@ enum ItemsPerPage {
     P100  @map("100")
     P250  @map("250")
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', true)
 }
@@ -323,7 +302,7 @@ enum Locale {
     ja_JP
     ko_KR
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', true) // Allow reads for signup
 }
@@ -337,7 +316,7 @@ enum DateFormat {
     MMM_D_YYYY // "MMM d, yyyy"
     D_MMM_YYYY // "d MMM yyyy"
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', true) // Allow reads for signup
 }
@@ -348,7 +327,7 @@ enum TimeFormat {
     HH_MM_Z  // "HH:mm z"
     HH_MM_Z_A  // "hh:mm z a"
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', true) // Allow reads for signup
 }
@@ -359,7 +338,7 @@ enum Access {
     PROJECTADMIN
     ADMIN
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -368,7 +347,7 @@ enum AccessSource {
     MANUAL
     GROUP_MAPPING
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -380,7 +359,7 @@ enum NotificationMode {
     IN_APP_EMAIL_DAILY
     USE_GLOBAL
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN' || auth().id == auth().id)
     @@allow('read', true) // Allow reads for signup
 }
@@ -404,7 +383,7 @@ enum NotificationType {
     REVIEW_REMINDER
     AI_STEPS_DERIVED
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -423,7 +402,7 @@ model Groups {
     assignedUsers      GroupAssignment[]
     projectPermissions GroupProjectPermission[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
     // SCIM contract: the IdP owns the lifecycle of SCIM-provisioned groups.
@@ -440,7 +419,7 @@ model GroupAssignment {
     group   Groups @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
     @@id([userId, groupId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
     // SCIM contract: membership of a SCIM-provisioned group is owned by the
@@ -461,7 +440,7 @@ model Roles {
     groupProjectPermissions  GroupProjectPermission[] @relation("GroupProjectRole")
     reviewRequestAssignments ReviewRequest[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update, create', auth().access == 'ADMIN')
     @@allow('delete', auth().access == 'ADMIN' && this.isDefault != true)
     @@allow('read', auth().access != null)
@@ -567,7 +546,7 @@ model Projects {
     // 7. Direct assignment to project with default access
     // 8. No access (if none of the above apply)
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Admin Override: System admins always have full access
@@ -577,10 +556,10 @@ model Projects {
     @@allow('all', creator == auth())
 
     // Users with explicit PROJECTADMIN role on project
-    @@allow('all', userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
+    @@allow('read,update,delete', userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
 
     // Users with PROJECTADMIN access and assigned to project
-    @@allow('all', assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
+    @@allow('read,update,delete', assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
 
     // Explicit NO_ACCESS denial (highest priority for non-admins/creators)
     @@deny('read', userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
@@ -652,7 +631,7 @@ model ProjectAssignment {
     @@id([userId, projectId])
     @@index([projectId])
     @@index([userId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -664,7 +643,7 @@ model ProjectStatusAssignment {
     project   Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
     @@id([statusId, projectId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -676,7 +655,7 @@ model ProjectConfigurationAssignment {
     project         Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
     @@id([configurationId, projectId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -688,7 +667,7 @@ model ProjectWorkflowAssignment {
     project    Projects  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
     @@id([workflowId, projectId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -727,7 +706,7 @@ model Milestones {
     @@index([isCompleted, isDeleted])
     @@index([isCompleted, automaticCompletion, completedAt])
     @@index([isCompleted, notifyDaysBefore, completedAt])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -779,7 +758,7 @@ model MilestoneTypes {
     projects   MilestoneTypesAssignment[]
     milestones Milestones[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -791,7 +770,7 @@ model MilestoneTypesAssignment {
     milestoneType   MilestoneTypes @relation(fields: [milestoneTypeId], references: [id])
 
     @@id([projectId, milestoneTypeId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -803,7 +782,7 @@ model FieldIcon {
     workflows      Workflows[]
     milestoneTypes MilestoneTypes[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('create,read', auth().access != null)
 }
@@ -816,7 +795,7 @@ model ColorFamily {
 
     @@unique([name])
     @@unique([order])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('create,read', auth().access != null)
 }
@@ -832,7 +811,7 @@ model Color {
     workflows     Workflows[]
 
     @@unique([colorFamilyId, order], name: "colorFamilyId_order")
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('create,read', auth().access != null)
 }
@@ -858,7 +837,7 @@ model CaseFields {
     caseFieldValues    CaseFieldValues[]
     sessionFieldValues SessionFieldValues[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN' || auth().access == 'PROJECTADMIN')
     @@allow('all', auth().access != null) // This is needed in case user has add/edit access to test cases
 }
@@ -883,7 +862,7 @@ model ResultFields {
     fieldOptions      ResultFieldAssignment[]
     resultFieldValues ResultFieldValues[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -902,7 +881,7 @@ model FieldOptions {
     resultFields ResultFieldAssignment[]
     order        Int                     @default(0)
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -914,7 +893,7 @@ model CaseFieldTypes {
     resultFields ResultFields[] @relation("TypeToResultFields")
     options      Json?
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -931,7 +910,7 @@ model Templates {
     repositoryCases RepositoryCases[]
     sessions        Sessions[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -943,7 +922,7 @@ model TemplateProjectAssignment {
     project    Projects  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
     @@id([templateId, projectId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     // Project admins with explicit SPECIFIC_ROLE can manage assignments for their projects
     @@allow('create,delete', project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
@@ -960,7 +939,7 @@ model TemplateCaseAssignment {
     order       Int        @default(0)
 
     @@id([caseFieldId, templateId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -973,7 +952,7 @@ model TemplateResultAssignment {
     order         Int          @default(0)
 
     @@id([resultFieldId, templateId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -997,7 +976,7 @@ model CaseExportTemplate {
     projects           CaseExportTemplateProjectAssignment[]
     defaultForProjects Projects[]                            @relation("ProjectDefaultExportTemplate")
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1009,7 +988,7 @@ model CaseExportTemplateProjectAssignment {
     project    Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
     @@id([templateId, projectId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     // Project admins with explicit SPECIFIC_ROLE can manage assignments for their projects
     @@allow('create,delete', project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
@@ -1025,7 +1004,7 @@ model CaseFieldAssignment {
     caseField     CaseFields   @relation(fields: [caseFieldId], references: [id], onDelete: Cascade)
 
     @@id([fieldOptionId, caseFieldId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1038,7 +1017,7 @@ model ResultFieldAssignment {
     order         Int          @default(0)
 
     @@id([fieldOptionId, resultFieldId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1068,7 +1047,7 @@ model Status {
 
     @@index([isDeleted, isEnabled])
     @@index([order])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1079,7 +1058,7 @@ model StatusScope {
     icon     String?
     statuses StatusScopeAssignment[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1091,7 +1070,7 @@ model StatusScopeAssignment {
     scope    StatusScope @relation(fields: [scopeId], references: [id])
 
     @@id([statusId, scopeId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1126,7 +1105,7 @@ model Workflows {
         "The default workflow state cannot require review — new entities land here and the schema gate only fires on transitions."
     )
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1136,7 +1115,7 @@ enum WorkflowType {
     IN_PROGRESS
     DONE
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1146,7 +1125,7 @@ enum WorkflowScope {
     RUNS
     SESSIONS
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1157,7 +1136,7 @@ model ConfigCategories {
     isDeleted Boolean          @default(false)
     variants  ConfigVariants[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1171,7 +1150,7 @@ model ConfigVariants {
     category       ConfigCategories             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
     configurations ConfigurationConfigVariant[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1186,7 +1165,7 @@ model Configurations {
     testRuns  TestRuns[]
     projects  ProjectConfigurationAssignment[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1198,7 +1177,7 @@ model ConfigurationConfigVariant {
     variant         ConfigVariants @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
     @@id([configurationId, variantId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -1211,7 +1190,7 @@ model Tags {
     sessions        Sessions[]
     testRuns        TestRuns[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
     @@allow('all', auth().access == 'ADMIN')
     @@allow('create,read,update,delete', auth().access != null)
@@ -1227,7 +1206,7 @@ model Repositories {
     folders    RepositoryFolders[]
     cases      RepositoryCases[]
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -1315,7 +1294,7 @@ model RepositoryFolders {
     @@index([projectId, repositoryId, isDeleted])
     @@index([parentId])
     @@index([order])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Admin override at the top
@@ -1393,7 +1372,7 @@ model RepositoryCaseLink {
     createdBy   User            @relation("UserCreatedCaseLinks", fields: [createdById], references: [id])
 
     @@unique([caseAId, caseBId, type])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Inherit access from case A's project
@@ -1477,7 +1456,7 @@ model DuplicateScanResult {
     @@index([projectId, status, isDeleted])
     @@index([scanJobId])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     @@deny('read', caseA.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
@@ -1553,7 +1532,7 @@ model StepSequenceMatch {
     @@index([projectId, status, isDeleted])
     @@index([scanJobId])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
@@ -1604,7 +1583,7 @@ model StepSequenceMatchCase {
     @@unique([matchId, caseId])
     @@index([caseId])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     @@deny('read', match.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
@@ -1715,7 +1694,7 @@ model RepositoryCases {
     @@index([automated])
     @@index([createdAt])
     @@index([hasParameters])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Inherit read access from project
@@ -1819,7 +1798,7 @@ model RepositoryCaseVersions {
     parameters             Json?
 
     @@unique([repositoryCaseId, version])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Inherit read access from project
@@ -1888,7 +1867,7 @@ model CaseFieldValues {
 
     @@index([testCaseId])
     @@index([fieldId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Inherit read access from test case's project
@@ -1952,7 +1931,7 @@ model CaseFieldVersionValues {
     field     String                 @length(1)
     value     Json?
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Inherit read access from version's project
@@ -2024,7 +2003,7 @@ model ResultFieldValues {
     @@index([testRunResultsId])
     @@index([sessionResultsId])
     @@index([fieldId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
     @@allow('create', auth() != null)
@@ -2056,7 +2035,7 @@ model Attachments {
     junitTestResultId   Int?
     junitTestResult     JUnitTestResult?    @relation(fields: [junitTestResultId], references: [id], onDelete: Cascade)
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
     @@allow('all', auth().access == 'ADMIN')
     @@allow('create, read, update', auth().access != null)
@@ -2077,7 +2056,7 @@ model Steps {
     @@index([testCaseId])
     @@index([sharedStepGroupId])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Inherit read access from test case's project
@@ -2140,7 +2119,7 @@ enum ParameterType {
     BOOLEAN
     SELECT
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
 }
 
@@ -2163,7 +2142,7 @@ model TestCaseParameter {
     @@unique([testCaseId, name])
     @@index([testCaseId])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Inherit read access from test case's project
@@ -2270,7 +2249,7 @@ model Sessions {
     @@index([stateId])
     @@index([isCompleted, createdAt])
     @@index([configurationGroupId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -2371,7 +2350,7 @@ model SessionResults {
     @@index([sessionId])
     @@index([statusId])
     @@index([createdAt])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -2500,7 +2479,7 @@ model SessionVersions {
     issues            Json?
 
     @@unique([sessionId, version])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Inherit read access from project
@@ -2569,7 +2548,7 @@ model SessionFieldValues {
 
     @@index([sessionId])
     @@index([fieldId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Inherit read access from session's project
@@ -2665,7 +2644,7 @@ model TestRuns {
     @@index([isCompleted, createdAt])
     @@index([testRunType])
     @@index([configurationGroupId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -2757,7 +2736,7 @@ enum TestRunType {
     MOCHA
     CUCUMBER
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -2795,7 +2774,7 @@ model TestRunCases {
     @@index([statusId])
     @@index([isCompleted])
     @@index([isDeleted])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Structural completion lock: once a run is completed its case set is
@@ -2927,7 +2906,7 @@ model TestRunResults {
     @@index([executedAt])
     @@index([testRunCaseId, executedAt(sort: Desc)]) // Optimize "latest result per case" queries
     @@index([iterationId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Structural completion lock: results on a completed run are frozen
@@ -3011,7 +2990,7 @@ model TestRunStepResults {
 
     @@index([sharedStepItemId])
     @@unique([testRunResultId, stepId, sharedStepItemId], map: "uq_tsr_res_step_shareditem")
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Structural completion lock: step results on a completed run are frozen.
@@ -3101,7 +3080,7 @@ model TestRunCaseIteration {
     @@index([testRunCaseId])
     @@index([statusId])
     @@index([assignedToId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -3209,7 +3188,7 @@ model TestRunCaseDataSetSnapshot {
     @@index([testRunCaseId])
     @@index([sourceDataSetId])
     @@index([sourceVersionId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -3284,7 +3263,7 @@ model Issue {
     @@index([createdById])
     @@index([projectId])
     @@index([integrationId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
     @@allow('all', auth().access == 'ADMIN')
     @@allow('create, read, update', auth().access != null)
@@ -3300,7 +3279,7 @@ enum IntegrationProvider {
     REDMINE
     MANTISBT
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3316,7 +3295,7 @@ enum AdapterType {
     REDMINE
     MANTISBT
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3325,7 +3304,7 @@ enum WebhookDirection {
     INBOUND
     OUTBOUND
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3335,7 +3314,7 @@ enum EndpointHealth {
     DEGRADED
     DISABLED
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3348,7 +3327,7 @@ enum LlmProvider {
     OLLAMA
     CUSTOM_LLM
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3359,7 +3338,7 @@ enum IntegrationAuthType {
     PERSONAL_ACCESS_TOKEN
     API_KEY
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3369,7 +3348,7 @@ enum IntegrationStatus {
     INACTIVE
     ERROR
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3381,7 +3360,7 @@ enum CodeRepositoryProvider {
     AZURE_DEVOPS
     GITEA
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3404,7 +3383,7 @@ model Integration {
 
     @@unique([name])
     @@index([provider, status])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')
 }
@@ -3427,7 +3406,7 @@ model CodeRepository {
     projectConfigs ProjectCodeRepositoryConfig[]
 
     @@index([provider, status])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')
 }
@@ -3450,7 +3429,7 @@ model ProjectCodeRepositoryConfig {
     createdAt          DateTime       @default(now())
     updatedAt          DateTime       @updatedAt
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read,update', auth().access == 'PROJECTADMIN')
     @@allow('read,update',
@@ -3484,7 +3463,7 @@ model LlmIntegration {
 
     @@unique([name])
     @@index([provider, status])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')
 }
@@ -3502,7 +3481,7 @@ model ProjectLlmIntegration {
 
     @@unique([projectId, llmIntegrationId])
     @@index([projectId, isActive])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('all', auth().access == 'ADMIN' || auth().access == 'PROJECTADMIN')
 }
@@ -3524,7 +3503,7 @@ model UserIntegrationAuth {
 
     @@unique([userId, integrationId])
     @@index([integrationId, isActive])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().id == userId || auth().access == 'ADMIN')
     @@allow('create,update,delete', auth().id == userId)
     @@allow('all', auth().access == 'ADMIN')
@@ -3552,7 +3531,7 @@ enum ApplicationArea {
     Settings
 
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3563,7 +3542,7 @@ enum ProjectAccessType {
     GLOBAL_ROLE
     SPECIFIC_ROLE
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3581,7 +3560,7 @@ model RolePermission {
     canApprove       Boolean         @default(false)
 
     @@id([roleId, area])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3598,7 +3577,7 @@ model UserProjectPermission {
     @@id([userId, projectId])
 
     // Access policies - only admins and project admins can manage explicit permissions
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
 
     // System admins have full access
     @@allow('all', auth().access == 'ADMIN')
@@ -3634,7 +3613,7 @@ model GroupProjectPermission {
     @@id([groupId, projectId])
 
     // Access policies
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
 
     // System admins have full access
     @@allow('all', auth().access == 'ADMIN')
@@ -3684,7 +3663,7 @@ model JUnitTestSuite {
 
     @@index([testRunId])
     @@index([parentId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -3736,7 +3715,7 @@ model JUnitTestResult {
     @@index([testSuiteId])
     @@index([repositoryCaseId])
     @@index([repositoryCaseId, executedAt(sort: Desc)]) // Optimize "latest result per case" queries
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial (through test suite's test run)
@@ -3775,7 +3754,7 @@ model JUnitProperty {
     createdById      String
     createdBy        User             @relation(fields: [createdById], references: [id])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial (check both possible relations)
@@ -3835,7 +3814,7 @@ model JUnitAttachment {
     createdById      String
     createdBy        User                @relation(fields: [createdById], references: [id])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -3874,7 +3853,7 @@ model JUnitTestStep {
     createdById      String
     createdBy        User            @relation(fields: [createdById], references: [id])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -3907,7 +3886,7 @@ enum JUnitResultType {
     ERROR
     SKIPPED
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3917,7 +3896,7 @@ enum JUnitAttachmentType {
     URL
     INLINE
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }
@@ -3938,7 +3917,7 @@ model SharedStepGroup {
 
     @@index([projectId])
     @@index([createdById])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Inherit read access from project
@@ -3989,7 +3968,7 @@ model SharedStepItem {
     testRunStepResults TestRunStepResults[]
 
     @@index([sharedStepGroupId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -4051,7 +4030,7 @@ model DataSet {
     @@index([projectId])
     @@index([ownerCaseId])
     @@index([createdById])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // ownerCase must be in the same project (cross-project denial at policy).
@@ -4109,7 +4088,7 @@ model DataSetRow {
 
     @@unique([dataSetId, rowIndex])
     @@index([dataSetId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -4170,7 +4149,7 @@ model DataSetVersion {
     @@index([dataSetId])
     @@index([createdById])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Inherit read access from parent DataSet's project (mirrors DataSetRow).
@@ -4233,7 +4212,7 @@ model CaseSharedDataSetAssignment {
     @@index([pinnedVersionId])
     @@index([createdById])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Cross-project denial (defense-in-depth). The shared dataset must
@@ -4313,9 +4292,10 @@ model Notification {
     @@index([userId, isRead, isDeleted])
     @@index([createdAt])
     @@index([type])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().id == userId || auth().access == 'ADMIN')
-    @@allow('update', (auth().id == userId && (future().isRead != isRead || future().isDeleted != isDeleted)) || auth().access == 'ADMIN')
+    @@allow('update', auth().id == userId || auth().access == 'ADMIN')
+    @@deny('post-update', auth().access != 'ADMIN' && isRead == before().isRead && isDeleted == before().isDeleted)
     @@allow('create', auth().access != null)
     @@allow('delete', auth().access == 'ADMIN')
 }
@@ -4327,7 +4307,7 @@ enum ReviewStatus {
     REJECTED
     CANCELLED
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', true)
 }
 
@@ -4336,7 +4316,7 @@ enum ReviewEntityType {
     RUN
     SESSION
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', true)
 }
 
@@ -4345,7 +4325,7 @@ enum CommentType {
     REVIEW_REQUEST
     REVIEW_DECISION
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', true)
 }
 
@@ -4380,7 +4360,7 @@ model ReviewRequest {
 
     // D-05 carve-out: consumedAt is the one permitted post-decision mutation.
     // Field-level @allow override flag (third arg true) carves out the model-level append-only @@deny.
-    consumedAt        DateTime?        @allow('update', status == 'APPROVED', true)
+    consumedAt        DateTime?        @allow('update', status == 'APPROVED')
 
     // Hybrid design (Phase 2 follow-up): the requester's typed prose at submit
     // time AND the reviewer's optional notes at decide time both live in the
@@ -4476,7 +4456,7 @@ enum ShareLinkMode {
     PUBLIC             // No auth required
     PASSWORD_PROTECTED // Public but requires password
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', true)
 }
 
@@ -4488,7 +4468,7 @@ enum ShareLinkEntityType {
     DASHBOARD
     SEARCH
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', true)
 }
 
@@ -4534,7 +4514,7 @@ model ShareLink {
     @@index([createdById])
 
     // Access control
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
 
     // PROJECTADMIN users can manage shares in projects they're assigned to
@@ -4581,7 +4561,7 @@ model ShareLinkAccessLog {
     @@index([accessedById])
 
     // Access control
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', shareLink.createdBy == auth())
     @@allow('create', true)
@@ -4607,7 +4587,7 @@ model ProjectIntegration {
     @@unique([projectId, integrationId])
     @@index([integrationId])
     @@index([isActive])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
 
     // Explicit NO_ACCESS denial
     @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
@@ -4663,7 +4643,7 @@ model IntegrationProject {
     @@index([isActive])
 
     // Access control — mirrors ProjectIntegration pattern
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('read', projectIntegration.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
     @@allow('read',
         projectIntegration.project.creator == auth() ||
@@ -4717,7 +4697,7 @@ model WebhookConfig {
     @@index([projectId])
     @@index([token])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
 
     @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
 
@@ -4754,7 +4734,7 @@ model WebhookDelivery {
     @@index([payloadDigest])
     @@index([replayedFromDeliveryId])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('create, update, delete', true)
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read',
@@ -4774,7 +4754,7 @@ model WebhookEventDedup {
     @@unique([webhookConfigId, payloadDigest])
     @@index([webhookConfigId, processedAt])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('create, update, delete', true)
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read',
@@ -4797,7 +4777,7 @@ model WebhookConfigSecret {
     @@index([webhookConfigId, activatedAt])
     @@index([retiredAt, autoRetireAt])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('create, update, delete', true)
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read',
@@ -4822,7 +4802,7 @@ model WebhookOutboxEvent {
     @@index([dispatchedAt, createdAt])
     @@index([projectId, eventName])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('create, update, delete', true)
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read',
@@ -4878,7 +4858,7 @@ model LlmProviderConfig {
     createdAt             DateTime        @default(now()) @db.Timestamptz(6)
     updatedAt             DateTime        @updatedAt
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')
 }
@@ -4900,7 +4880,7 @@ model PromptConfig {
     projects    Projects[]
 
     @@index([isDefault, isActive, isDeleted])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('create,update', auth().access == 'ADMIN')
     @@allow('delete', auth().access == 'ADMIN' && isDefault != true)
@@ -4925,7 +4905,7 @@ model PromptConfigPrompt {
     @@unique([promptConfigId, feature])
     @@index([feature])
     @@index([llmIntegrationId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')
 }
@@ -4957,7 +4937,7 @@ model OllamaModelRegistry {
 
     @@unique([llmIntegrationId, modelName, modelTag])
     @@index([llmIntegrationId, isInstalled])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')
 }
@@ -4995,7 +4975,7 @@ model LlmUsage {
     @@index([userId])
     @@index([feature])
     @@index([createdAt])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().id == userId || (project != null && project.assignedUsers?[user == auth()]))
     @@allow('create', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')
@@ -5031,7 +5011,7 @@ model LlmFeatureConfig {
 
     @@unique([projectId, feature])
     @@index([llmIntegrationId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', project.assignedUsers?[user == auth()])
     @@allow('create,update,delete', project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
     @@allow('all', auth().access == 'ADMIN')
@@ -5068,7 +5048,7 @@ model LlmResponseCache {
     @@index([expiresAt])
     @@index([lastAccessedAt])
     @@index([projectId, feature])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('create,delete', auth().access == 'ADMIN' || auth().access == 'PROJECTADMIN')
     @@allow('all', auth().access == 'ADMIN')
@@ -5112,7 +5092,7 @@ model LlmRateLimit {
     @@unique([scope, scopeId, feature])
     @@index([scope, isActive])
     @@index([windowStart])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('create,update,delete', auth().access == 'ADMIN')
 }
@@ -5144,7 +5124,7 @@ model LlmReportSnapshot {
     @@index([projectId, reportType, completedAt])
     @@index([projectId, isDeleted])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Soft-delete: hide rows where isDeleted is true from every non-admin path.
@@ -5274,7 +5254,7 @@ enum SsoProviderType {
     MAGIC_LINK
     MICROSOFT
 
-    @@deny('create,update,delete', !auth())
+    @@deny('create,update,delete', auth() == null)
     @@allow('read', true)
     @@allow('update', auth().access == 'ADMIN')
 }
@@ -5309,7 +5289,7 @@ enum AuthMethod {
     BOTH
     SCIM
 
-    @@deny('create,update,delete', !auth())
+    @@deny('create,update,delete', auth() == null)
     @@allow('read', true)
     @@allow('update', auth().access == 'ADMIN')
 }
@@ -5373,7 +5353,7 @@ model TestmoImportJob {
     @@index([createdById])
     @@index([status])
     @@index([createdAt])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access == 'ADMIN')
     @@allow('create,update,delete', auth().access == 'ADMIN')
 }
@@ -5393,7 +5373,7 @@ model TestmoImportDataset {
 
     @@index([jobId])
     @@index([name])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access == 'ADMIN')
     @@allow('create,update,delete', auth().access == 'ADMIN')
 }
@@ -5418,7 +5398,7 @@ model TestmoImportStaging {
     @@index([jobId, datasetName, processed])
     @@index([jobId, processed])
     @@index([jobId, datasetName, rowIndex])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
 }
 
@@ -5435,7 +5415,7 @@ model TestmoImportMapping {
     @@unique([jobId, entityType, sourceId])
     @@index([jobId, entityType])
     @@index([jobId, entityType, sourceId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
 }
 
@@ -5482,7 +5462,7 @@ model Comment {
     @@index([milestoneId, isDeleted])
     @@index([reviewRequestId])
     @@index([creatorId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
@@ -5545,7 +5525,7 @@ model CommentMention {
     @@unique([commentId, userId])
     @@index([userId, createdAt])
     @@index([commentId])
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@allow('read', auth().access != null)
     @@allow('create', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')
@@ -5645,7 +5625,7 @@ model AuditLog {
     @@index([timestamp])
     @@index([action])
 
-    @@deny('all', !auth())
+    @@deny('all', auth() == null)
     @@deny('update, delete', true)
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read', auth().id == userId)
