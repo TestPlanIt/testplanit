@@ -20,6 +20,7 @@ export async function importGeneratedTestCases(
       importedCount: 0,
       importedIds: [],
       errors: [],
+      results: [],
     };
   }
 

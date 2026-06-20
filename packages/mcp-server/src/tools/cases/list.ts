@@ -170,8 +170,11 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
             // values, so an unmatched filter surfaces an error rather than
             // returning unfiltered results. It returns exactly one entry per
             // input key or throws, so [resolved] is always defined here.
+            // Project-wide filter: no single template to scope to, so resolve
+            // against the global catalog (templateId undefined).
             const [resolved] = await resolveCustomFields(
               { [input.customField.name]: input.customField.value },
+              undefined,
               deps.env,
             );
             const canonical = resolved!.value as Prisma.InputJsonValue;

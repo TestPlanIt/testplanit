@@ -292,6 +292,48 @@ export async function resolveDefaultTemplate(
 }
 
 /**
+ * Resolve the template to use for a case create.
+ *
+ * When `templateId` is provided, verify it is an enabled, non-deleted template
+ * assigned to the project — throwing a 422 with a human-readable message when
+ * it is not, so the agent gets a clear "that template isn't available here"
+ * instead of a downstream foreign-key / policy error. When `templateId` is
+ * omitted, this falls back to `resolveDefaultTemplate` (first enabled template
+ * assigned to the project).
+ */
+export async function resolveTemplateForProject(
+  projectId: number,
+  env: EnvConfig,
+  templateId?: number,
+): Promise<number> {
+  if (templateId == null) {
+    return resolveDefaultTemplate(projectId, env);
+  }
+  const templates = await zenstack<{ id: number }[]>(
+    "templates",
+    "findMany",
+    {
+      where: {
+        id: templateId,
+        isDeleted: false,
+        isEnabled: true,
+        projects: { some: { projectId } },
+      },
+      select: { id: true },
+      take: 1,
+    },
+    env,
+  );
+  if (!templates || templates.length === 0) {
+    throw new TestPlanItHttpError(
+      `Template ${templateId} is not an enabled template assigned to project ${projectId}. Use testplanit_templates_list to see available templates.`,
+      { statusCode: 422 },
+    );
+  }
+  return templates[0].id;
+}
+
+/**
  * Resolve a workflow state for the CASES scope (NOT runs). Pass `name` to
  * select by name; omit to take the first by `order asc`.
  *

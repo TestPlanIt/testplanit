@@ -10,7 +10,7 @@ vi.mock("../../api.js", () => ({
   zenstack: vi.fn(),
   lookup: vi.fn(),
   resolveActiveRepository: vi.fn(),
-  resolveDefaultTemplate: vi.fn(),
+  resolveTemplateForProject: vi.fn(),
   resolveCaseWorkflowState: vi.fn(),
 }));
 
@@ -38,7 +38,7 @@ import { registerCasesCreate } from "./create.js";
 const zenstackMock = vi.mocked(apiModule.zenstack);
 const lookupMock = vi.mocked(apiModule.lookup);
 const resolveActiveRepositoryMock = vi.mocked(apiModule.resolveActiveRepository);
-const resolveDefaultTemplateMock = vi.mocked(apiModule.resolveDefaultTemplate);
+const resolveTemplateForProjectMock = vi.mocked(apiModule.resolveTemplateForProject);
 const resolveCaseWorkflowStateMock = vi.mocked(apiModule.resolveCaseWorkflowState);
 const resolveCustomFieldsMock = vi.mocked(customFieldsModule.resolveCustomFields);
 const writeCustomFieldValuesMock = vi.mocked(customFieldsModule.writeCustomFieldValues);
@@ -90,7 +90,7 @@ beforeEach(() => {
 
   // Default happy-path mocks
   resolveActiveRepositoryMock.mockResolvedValue(11);
-  resolveDefaultTemplateMock.mockResolvedValue(22);
+  resolveTemplateForProjectMock.mockResolvedValue(22);
   resolveCaseWorkflowStateMock.mockResolvedValue({ id: 3, name: "Draft" });
   resolveCustomFieldsMock.mockResolvedValue([]);
   writeCustomFieldValuesMock.mockResolvedValue(undefined);
@@ -181,6 +181,7 @@ describe("testplanit_cases_create", () => {
 
     expect(resolveCustomFieldsMock).toHaveBeenCalledWith(
       { Priority: "High" },
+      22,
       env,
     );
     expect(writeCustomFieldValuesMock).toHaveBeenCalledWith(
@@ -201,6 +202,104 @@ describe("testplanit_cases_create", () => {
     });
 
     expect(resolveCaseWorkflowStateMock).toHaveBeenCalledWith(7, env, "Active");
+  });
+
+  it("default template: resolveTemplateForProject called with undefined templateId when omitted", async () => {
+    await callTool({ projectId: 7, folderId: 12, name: "Default template" });
+
+    expect(resolveTemplateForProjectMock).toHaveBeenCalledWith(7, env, undefined);
+    // The create body connects the resolved (default) template id 22.
+    const createCall = zenstackMock.mock.calls.find((c) => c[1] === "create");
+    const data = (createCall![2] as { data: Record<string, unknown> }).data;
+    expect(data.template).toEqual({ connect: { id: 22 } });
+  });
+
+  it("honors an explicit templateId by passing it to resolveTemplateForProject", async () => {
+    resolveTemplateForProjectMock.mockResolvedValueOnce(55);
+
+    await callTool({
+      projectId: 7,
+      folderId: 12,
+      name: "Pick template",
+      templateId: 55,
+    });
+
+    expect(resolveTemplateForProjectMock).toHaveBeenCalledWith(7, env, 55);
+    const createCall = zenstackMock.mock.calls.find((c) => c[1] === "create");
+    const data = (createCall![2] as { data: Record<string, unknown> }).data;
+    expect(data.template).toEqual({ connect: { id: 55 } });
+  });
+
+  it("surfaces 422 when an explicit templateId is not assigned/enabled for the project", async () => {
+    resolveTemplateForProjectMock.mockRejectedValueOnce(
+      new TestPlanItHttpError(
+        "Template 99 is not an enabled template assigned to project 7.",
+        { statusCode: 422 },
+      ),
+    );
+
+    const result = await callTool({
+      projectId: 7,
+      folderId: 12,
+      name: "bad template",
+      templateId: 99,
+    });
+
+    expect(result.isError).toBe(true);
+    const text = (result.content as Array<{ type: string; text: string }>)[0]!.text;
+    expect(text).toContain("Template 99");
+  });
+
+  it("rejects a custom field not on the chosen template (template-scoped resolver throws 422, pre-write)", async () => {
+    // The template-scoped resolver rejects an out-of-template field.
+    resolveCustomFieldsMock.mockRejectedValueOnce(
+      new TestPlanItHttpError(
+        "Custom field 'Component' is not part of the selected template.",
+        { statusCode: 422 },
+      ),
+    );
+
+    const result = await callTool({
+      projectId: 7,
+      folderId: 12,
+      name: "cf not in template",
+      customFields: { Component: "x" },
+    });
+
+    expect(result.isError).toBe(true);
+    const text = (result.content as Array<{ type: string; text: string }>)[0]!.text;
+    expect(text).toContain("Component");
+    expect(text).toContain("template");
+    // The case row must NOT have been created — resolution fires pre-write.
+    expect(zenstackMock.mock.calls.find((c) => c[1] === "create")).toBeUndefined();
+  });
+
+  it("resolves custom fields against the chosen template id, then writes them", async () => {
+    resolveTemplateForProjectMock.mockResolvedValueOnce(55);
+    resolveCustomFieldsMock.mockResolvedValueOnce([
+      { fieldId: 2, value: "High", name: "Priority" },
+    ]);
+
+    const result = await callTool({
+      projectId: 7,
+      folderId: 12,
+      name: "cf in template",
+      templateId: 55,
+      customFields: { Priority: "High" },
+    });
+
+    expect(result.isError).toBeFalsy();
+    // Custom-field resolution is scoped to the resolved template id (55).
+    expect(resolveCustomFieldsMock).toHaveBeenCalledWith(
+      { Priority: "High" },
+      55,
+      env,
+    );
+    expect(writeCustomFieldValuesMock).toHaveBeenCalledWith(
+      99,
+      [{ fieldId: 2, value: "High", name: "Priority" }],
+      env,
+    );
   });
 
   it("surfaces 422 when no active repository found", async () => {

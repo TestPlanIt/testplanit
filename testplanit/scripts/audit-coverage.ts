@@ -558,17 +558,16 @@ async function enumerateWorkers(workers: string[]): Promise<InventoryItem[]> {
 }
 
 /**
- * Emit a one-line warning if either of the two known pre-Phase-62 fix
- * targets has unstaged edits. The inventory must be generated against
- * committed HEAD (RESEARCH §4); the warning signals to the operator to
- * stash or commit before running.
+ * Emit a one-line warning if the known pre-Phase-62 fix target has unstaged
+ * edits. The inventory must be generated against committed HEAD (RESEARCH §4);
+ * the warning signals to the operator to stash or commit before running.
  */
 function warnIfBaselineDirty(): void {
   try {
-    const out = execSync(
-      "git status --porcelain testplanit/lib/prisma.ts testplanit/app/api/repository/import-generated-test-cases/route.ts",
-      { cwd: REPO_ROOT, encoding: "utf8" }
-    );
+    const out = execSync("git status --porcelain testplanit/lib/prisma.ts", {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+    });
     if (out.trim().length > 0) {
       console.warn(
         "audit-coverage: WARNING — baseline files have unstaged changes; inventory reflects working tree, not committed HEAD. Stash or commit before generating the baseline."

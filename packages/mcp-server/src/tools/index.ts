@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerWhoami, type WhoamiDeps } from "./whoami.js";
 import { registerCases, type CasesDeps } from "./cases/index.js";
+import { registerTemplates, type TemplatesDeps } from "./templates/index.js";
 import { registerFolders, type FoldersDeps } from "./folders/index.js";
 import { registerTags, type TagsDeps } from "./tags/index.js";
 import { registerProjects, type ProjectsDeps } from "./projects/index.js";
@@ -29,6 +30,7 @@ import {
 export type ToolRegistryDeps =
   & WhoamiDeps
   & CasesDeps
+  & TemplatesDeps
   & FoldersDeps
   & TagsDeps
   & ProjectsDeps
@@ -42,10 +44,10 @@ export type ToolRegistryDeps =
 /**
  * Register every tool shipped by `@testplanit/mcp-server`.
  *
- * Tools are grouped by domain: whoami (debug/identity), cases, folders,
- * tags, projects (agent context disambiguation), runs, sessions,
- * code-repositories, issues, repository-case-links, and milestones
- * (milestones_list, milestones_get, milestone_types_list).
+ * Tools are grouped by domain: whoami (debug/identity), cases, templates
+ * (templates_list), folders, tags, projects (agent context disambiguation),
+ * runs, sessions, code-repositories, issues, repository-case-links, and
+ * milestones (milestones_list, milestones_get, milestone_types_list).
  */
 export function registerAll(
   server: McpServer,
@@ -53,6 +55,7 @@ export function registerAll(
 ): void {
   registerWhoami(server, deps);
   registerCases(server, deps);
+  registerTemplates(server, deps);
   registerFolders(server, deps);
   registerTags(server, deps);
   registerProjects(server, deps);
@@ -67,6 +70,7 @@ export function registerAll(
 export {
   registerWhoami,
   registerCases,
+  registerTemplates,
   registerFolders,
   registerTags,
   registerProjects,
@@ -79,6 +83,7 @@ export {
 };
 export type { WhoamiDeps } from "./whoami.js";
 export type { CasesDeps } from "./cases/index.js";
+export type { TemplatesDeps } from "./templates/index.js";
 export type { FoldersDeps } from "./folders/index.js";
 export type { TagsDeps } from "./tags/index.js";
 export type { ProjectsDeps } from "./projects/index.js";
