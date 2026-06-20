@@ -1,6 +1,5 @@
-import { JsonNull, ORMError } from "@zenstackhq/orm";
+import { JsonNull } from "@zenstackhq/orm";
 import type { JsonValue } from "@zenstackhq/orm";
-import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -20,6 +19,7 @@ import {
   isOutcomeFlip,
 } from "~/lib/services/resultGuards";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
+import { isNotFoundError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 
 /**
@@ -336,10 +336,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       }
     }
 
-    const notesInput:
-      | JsonValue
-      | Prisma.NullableJsonNullValueInput
-      | undefined =
+    const notesInput: JsonValue | typeof JsonNull | undefined =
       input.notes === undefined
         ? undefined
         : input.notes === null
@@ -407,11 +404,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     return NextResponse.json({ result });
   } catch (error) {
-    if (
-      typeof Prisma?.PrismaClientKnownRequestError === "function" &&
-      error instanceof ORMError &&
-      error.code === "P2025"
-    ) {
+    if (isNotFoundError(error)) {
       return NextResponse.json(
         { error: "Test run result not found", code: "RESULT_NOT_FOUND" },
         { status: 404 }

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { sql } from "kysely";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authenticateRequest } from "~/lib/api-token-auth";
@@ -142,20 +142,21 @@ export async function handleIssueTestCoveragePOST(
     // Build project filter
     const projectFilterSql =
       !isCrossProject && projectIdNum
-        ? Prisma.sql`AND i."projectId" = ${projectIdNum}`
-        : Prisma.empty;
+        ? sql`AND i."projectId" = ${projectIdNum}`
+        : sql``;
 
     // Build project fields for cross-project queries
     const projectSelectFields = includeProject
-      ? Prisma.sql`, p.id as project_id, p.name as project_name`
-      : Prisma.empty;
+      ? sql`, p.id as project_id, p.name as project_name`
+      : sql``;
     const projectJoin = includeProject
-      ? Prisma.sql`INNER JOIN "Projects" p ON p.id = i."projectId"`
-      : Prisma.empty;
+      ? sql`INNER JOIN "Projects" p ON p.id = i."projectId"`
+      : sql``;
 
     // Query to get issues with their linked test cases and latest status
     // We need to find the most recent execution for each test case
-    const rawResults = await prisma.$queryRaw<RawIssueTestCaseResult[]>`
+    const rawResults = (
+      await sql<RawIssueTestCaseResult>`
       WITH latest_manual_results AS (
         -- Get the latest manual test result for each repository case
         SELECT DISTINCT ON (rc.id)
@@ -268,7 +269,8 @@ export async function handleIssueTestCoveragePOST(
       WHERE i."isDeleted" = false
         ${projectFilterSql}
       ORDER BY i.id, rc.id
-    `;
+    `.execute(prisma.$qb)
+    ).rows;
 
     // First pass: Calculate issue-level summary metrics
     interface IssueSummary {

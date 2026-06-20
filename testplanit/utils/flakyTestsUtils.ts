@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { sql } from "kysely";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authenticateRequest } from "~/lib/api-token-auth";
@@ -169,8 +169,8 @@ export async function handleFlakyTestsPOST(
 
     // Build source filter SQL fragment
     const sourceFilterSql = sourceFilter
-      ? Prisma.sql`AND rc.source::text = ANY(${sourceFilter})`
-      : Prisma.empty;
+      ? sql`AND rc.source::text = ANY(${sourceFilter})`
+      : sql``;
 
     // Use raw SQL with window functions to efficiently get recent results per test case
     // Build query based on whether it's cross-project and date filters
@@ -179,17 +179,18 @@ export async function handleFlakyTestsPOST(
     if (isCrossProject) {
       // Build project fields for SELECT and PARTITION BY
       const projectSelectFields = includeProject
-        ? Prisma.sql`, p.id as project_id, p.name as project_name`
-        : Prisma.empty;
+        ? sql`, p.id as project_id, p.name as project_name`
+        : sql``;
       const projectJoin = includeProject
-        ? Prisma.sql`INNER JOIN "Projects" p ON p.id = rc."projectId"`
-        : Prisma.empty;
+        ? sql`INNER JOIN "Projects" p ON p.id = rc."projectId"`
+        : sql``;
       const partitionBy = includeProject
-        ? Prisma.sql`PARTITION BY test_case_id, project_id`
-        : Prisma.sql`PARTITION BY test_case_id`;
+        ? sql`PARTITION BY test_case_id, project_id`
+        : sql`PARTITION BY test_case_id`;
 
       if (startDateParsed && endDateParsed) {
-        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+        rawResults = (
+          await sql<RawExecutionResult>`
           WITH combined_results AS (
             SELECT
               rc.id as test_case_id,
@@ -265,14 +266,16 @@ export async function handleFlakyTestsPOST(
               is_success,
               is_failure,
               executed_at
-              ${includeProject ? Prisma.sql`, project_id, project_name` : Prisma.empty},
+              ${includeProject ? sql`, project_id, project_name` : sql``},
               ROW_NUMBER() OVER (${partitionBy} ORDER BY executed_at DESC) as row_num
             FROM combined_results
           )
-          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? Prisma.sql`, project_id` : Prisma.empty}, row_num
-        `;
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? sql`, project_id` : sql``}, row_num
+        `.execute(prisma.$qb)
+        ).rows;
       } else if (startDateParsed) {
-        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+        rawResults = (
+          await sql<RawExecutionResult>`
           WITH combined_results AS (
             SELECT
               rc.id as test_case_id,
@@ -346,14 +349,16 @@ export async function handleFlakyTestsPOST(
               is_success,
               is_failure,
               executed_at
-              ${includeProject ? Prisma.sql`, project_id, project_name` : Prisma.empty},
+              ${includeProject ? sql`, project_id, project_name` : sql``},
               ROW_NUMBER() OVER (${partitionBy} ORDER BY executed_at DESC) as row_num
             FROM combined_results
           )
-          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? Prisma.sql`, project_id` : Prisma.empty}, row_num
-        `;
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? sql`, project_id` : sql``}, row_num
+        `.execute(prisma.$qb)
+        ).rows;
       } else if (endDateParsed) {
-        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+        rawResults = (
+          await sql<RawExecutionResult>`
           WITH combined_results AS (
             SELECT
               rc.id as test_case_id,
@@ -427,14 +432,16 @@ export async function handleFlakyTestsPOST(
               is_success,
               is_failure,
               executed_at
-              ${includeProject ? Prisma.sql`, project_id, project_name` : Prisma.empty},
+              ${includeProject ? sql`, project_id, project_name` : sql``},
               ROW_NUMBER() OVER (${partitionBy} ORDER BY executed_at DESC) as row_num
             FROM combined_results
           )
-          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? Prisma.sql`, project_id` : Prisma.empty}, row_num
-        `;
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? sql`, project_id` : sql``}, row_num
+        `.execute(prisma.$qb)
+        ).rows;
       } else {
-        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+        rawResults = (
+          await sql<RawExecutionResult>`
           WITH combined_results AS (
             SELECT
               rc.id as test_case_id,
@@ -506,17 +513,19 @@ export async function handleFlakyTestsPOST(
               is_success,
               is_failure,
               executed_at
-              ${includeProject ? Prisma.sql`, project_id, project_name` : Prisma.empty},
+              ${includeProject ? sql`, project_id, project_name` : sql``},
               ROW_NUMBER() OVER (${partitionBy} ORDER BY executed_at DESC) as row_num
             FROM combined_results
           )
-          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? Prisma.sql`, project_id` : Prisma.empty}, row_num
-        `;
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? sql`, project_id` : sql``}, row_num
+        `.execute(prisma.$qb)
+        ).rows;
       }
     } else {
       // Project-specific queries
       if (startDateParsed && endDateParsed) {
-        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+        rawResults = (
+          await sql<RawExecutionResult>`
           WITH combined_results AS (
             SELECT
               rc.id as test_case_id,
@@ -594,9 +603,11 @@ export async function handleFlakyTestsPOST(
             FROM combined_results
           )
           SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
-        `;
+        `.execute(prisma.$qb)
+        ).rows;
       } else if (startDateParsed) {
-        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+        rawResults = (
+          await sql<RawExecutionResult>`
           WITH combined_results AS (
             SELECT
               rc.id as test_case_id,
@@ -672,9 +683,11 @@ export async function handleFlakyTestsPOST(
             FROM combined_results
           )
           SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
-        `;
+        `.execute(prisma.$qb)
+        ).rows;
       } else if (endDateParsed) {
-        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+        rawResults = (
+          await sql<RawExecutionResult>`
           WITH combined_results AS (
             SELECT
               rc.id as test_case_id,
@@ -750,9 +763,11 @@ export async function handleFlakyTestsPOST(
             FROM combined_results
           )
           SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
-        `;
+        `.execute(prisma.$qb)
+        ).rows;
       } else {
-        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+        rawResults = (
+          await sql<RawExecutionResult>`
           WITH combined_results AS (
             SELECT
               rc.id as test_case_id,
@@ -826,7 +841,8 @@ export async function handleFlakyTestsPOST(
             FROM combined_results
           )
           SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
-        `;
+        `.execute(prisma.$qb)
+        ).rows;
       }
     }
 

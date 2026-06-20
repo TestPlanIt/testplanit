@@ -4,7 +4,6 @@
  */
 
 import type { IssueFindManyArgs, IssueWhereInput, MilestonesFindManyArgs, MilestonesWhereInput, RepositoryCasesFindManyArgs, RepositoryCasesWhereInput, SessionResultsFindManyArgs, SessionResultsWhereInput, SessionsFindManyArgs, SessionsWhereInput, TestRunCasesFindManyArgs, TestRunCasesWhereInput, TestRunResultsFindManyArgs, TestRunResultsWhereInput, TestRunsFindManyArgs, TestRunsWhereInput } from "~/zenstack/input";
-import { Prisma } from "@prisma/client";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
 
 /**
@@ -223,7 +222,7 @@ export function buildTestExecutionQuery(
     take: limit,
     orderBy: {
       executedAt: "desc",
-    } as Prisma.TestRunResultsOrderByWithRelationInput,
+    } as NonNullable<TestRunResultsFindManyArgs["orderBy"]>,
   };
 }
 
@@ -349,7 +348,7 @@ export function buildTestRunsQuery(
     take: limit,
     orderBy: {
       createdAt: "desc",
-    } as Prisma.TestRunsOrderByWithRelationInput,
+    } as NonNullable<TestRunsFindManyArgs["orderBy"]>,
   };
 }
 
@@ -538,7 +537,7 @@ export function buildRepositoryStatsQuery(
     take: limit,
     orderBy: {
       createdAt: "desc",
-    } as Prisma.RepositoryCasesOrderByWithRelationInput,
+    } as NonNullable<RepositoryCasesFindManyArgs["orderBy"]>,
   };
 }
 
@@ -675,7 +674,7 @@ export function buildTestCasesQuery(
     take: limit,
     orderBy: {
       createdAt: "desc",
-    } as Prisma.RepositoryCasesOrderByWithRelationInput,
+    } as NonNullable<RepositoryCasesFindManyArgs["orderBy"]>,
   };
 }
 
@@ -741,7 +740,7 @@ export function buildSessionsQuery(
     take: limit,
     orderBy: {
       createdAt: "desc",
-    } as Prisma.SessionsOrderByWithRelationInput,
+    } as NonNullable<SessionsFindManyArgs["orderBy"]>,
   };
 }
 
@@ -824,7 +823,7 @@ export function buildSessionResultsQuery(
     take: limit,
     orderBy: {
       createdAt: "desc",
-    } as Prisma.SessionResultsOrderByWithRelationInput,
+    } as NonNullable<SessionResultsFindManyArgs["orderBy"]>,
   };
 }
 
@@ -890,7 +889,7 @@ export function buildIssuesQuery(
     take: limit,
     orderBy: {
       createdAt: "desc",
-    } as Prisma.IssueOrderByWithRelationInput,
+    } as NonNullable<IssueFindManyArgs["orderBy"]>,
   };
 }
 
@@ -999,7 +998,7 @@ export function buildMilestonesQuery(
     take: limit,
     orderBy: {
       createdAt: "desc",
-    } as Prisma.MilestonesOrderByWithRelationInput,
+    } as NonNullable<MilestonesFindManyArgs["orderBy"]>,
   };
 }
 
@@ -1120,7 +1119,7 @@ export function buildMilestoneCompletionQuery(
     take: limit,
     orderBy: {
       order: "asc",
-    } as Prisma.TestRunCasesOrderByWithRelationInput,
+    } as NonNullable<TestRunCasesFindManyArgs["orderBy"]>,
   };
 }
 

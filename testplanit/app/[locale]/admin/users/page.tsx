@@ -1,6 +1,5 @@
 "use client";
 
-import { Prisma } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -16,6 +15,7 @@ import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { useFindManyUser } from "~/lib/hooks";
+import type { UserFindManyArgs } from "~/zenstack/input";
 import { ExtendedUser, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -164,7 +164,7 @@ function UserList() {
   // Sort by `scimGivenName` always puts nulls last so the SCIM-managed users
   // (the non-null rows) appear at the top regardless of asc/desc direction —
   // matches the "SCIM" column UX of "click to find SCIM users."
-  const orderBy: Prisma.UserOrderByWithRelationInput =
+  const orderBy: NonNullable<UserFindManyArgs["orderBy"]> =
     sortConfig?.column === "scimGivenName"
       ? {
           scimGivenName: {

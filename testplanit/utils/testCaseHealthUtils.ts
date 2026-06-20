@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { sql } from "kysely";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authenticateRequest } from "~/lib/api-token-auth";
@@ -229,33 +229,31 @@ export async function handleTestCaseHealthPOST(
 
     // Build source filter SQL fragment
     const sourceFilterSql = sourceFilter
-      ? Prisma.sql`AND rc.source::text = ANY(${sourceFilter})`
-      : Prisma.empty;
+      ? sql`AND rc.source::text = ANY(${sourceFilter})`
+      : sql``;
 
     // Build project filter
     const projectFilterSql =
       !isCrossProject && projectIdNum
-        ? Prisma.sql`AND rc."projectId" = ${projectIdNum}`
-        : Prisma.empty;
+        ? sql`AND rc."projectId" = ${projectIdNum}`
+        : sql``;
 
     // Build project fields for cross-project queries
     const projectSelectFields = includeProject
-      ? Prisma.sql`, p.id as project_id, p.name as project_name`
-      : Prisma.empty;
+      ? sql`, p.id as project_id, p.name as project_name`
+      : sql``;
     const projectJoin = includeProject
-      ? Prisma.sql`INNER JOIN "Projects" p ON p.id = rc."projectId"`
-      : Prisma.empty;
-    const _projectGroupBy = includeProject
-      ? Prisma.sql`, p.id, p.name`
-      : Prisma.empty;
+      ? sql`INNER JOIN "Projects" p ON p.id = rc."projectId"`
+      : sql``;
+    const _projectGroupBy = includeProject ? sql`, p.id, p.name` : sql``;
 
     // Build lookback date filter (empty for "all time")
     const manualLookbackFilter = lookbackDate
-      ? Prisma.sql`AND trr."executedAt" >= ${lookbackDate}`
-      : Prisma.empty;
+      ? sql`AND trr."executedAt" >= ${lookbackDate}`
+      : sql``;
     const junitLookbackFilter = lookbackDate
-      ? Prisma.sql`AND jr."executedAt" >= ${lookbackDate}`
-      : Prisma.empty;
+      ? sql`AND jr."executedAt" >= ${lookbackDate}`
+      : sql``;
 
     // Query to get test case health data
     // We combine both manual test results (TestRunResults) and automated results (JUnitTestResult)
@@ -265,7 +263,7 @@ export async function handleTestCaseHealthPOST(
     //
     // We use INNER JOINs to get actual results (like flaky tests), then LEFT JOIN
     // from all test cases to include cases with no executions
-    const rawResults = await prisma.$queryRaw<RawHealthResult[]>`
+    const rawResultsQuery = await sql<RawHealthResult>`
       WITH execution_results AS (
         -- Manual test results (INNER JOINs to get actual executions)
         SELECT
@@ -334,8 +332,9 @@ export async function handleTestCaseHealthPOST(
         AND rc."isArchived" = false
         ${sourceFilterSql}
         ${projectFilterSql}
-      ORDER BY rc.id${includeProject ? Prisma.sql`, p.id` : Prisma.empty}
-    `;
+      ORDER BY rc.id${includeProject ? sql`, p.id` : sql``}
+    `.execute(prisma.$qb);
+    const rawResults = rawResultsQuery.rows;
 
     // Process results and calculate health metrics
     const healthResults: TestCaseHealthRow[] = rawResults.map((row) => {

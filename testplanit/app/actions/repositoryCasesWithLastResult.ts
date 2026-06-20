@@ -1,7 +1,10 @@
 "use server";
 
-import type { RepositoryCasesSelect, RepositoryCasesWhereInput } from "~/zenstack/input";
-import { Prisma } from "@prisma/client";
+import type {
+  RepositoryCasesFindManyArgs,
+  RepositoryCasesSelect,
+  RepositoryCasesWhereInput,
+} from "~/zenstack/input";
 import { prisma } from "~/lib/prisma";
 import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
 import { getServerAuthSession } from "~/server/auth";
@@ -14,7 +17,7 @@ export type { LastTestResult } from "~/lib/utils/computeLastTestResult";
  */
 export interface FetchCasesWithLastResultArgs {
   where: RepositoryCasesWhereInput;
-  orderBy?: Prisma.RepositoryCasesOrderByWithRelationInput;
+  orderBy?: NonNullable<RepositoryCasesFindManyArgs["orderBy"]>;
   skip?: number;
   take?: number;
   /** When set, sorts results by lastTestResult.executedAt instead of orderBy */

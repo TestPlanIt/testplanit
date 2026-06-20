@@ -1,10 +1,10 @@
-import {
+import type {
   Color,
   ColorFamily,
   FieldIcon,
   Milestones,
   MilestoneTypes,
-} from "@prisma/client"; // Assuming types are available
+} from "~/zenstack/models"; // Assuming types are available
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   ColorMap,

@@ -1,6 +1,7 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
+import { sql } from "kysely";
+
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -41,11 +42,12 @@ export async function searchAuditLogUsers(
 
   const trimmed = query?.trim();
   const searchClause = trimmed
-    ? Prisma.sql`AND ("userName" ILIKE ${`%${trimmed}%`} OR "userEmail" ILIKE ${`%${trimmed}%`})`
-    : Prisma.empty;
+    ? sql`AND ("userName" ILIKE ${`%${trimmed}%`} OR "userEmail" ILIKE ${`%${trimmed}%`})`
+    : sql``;
 
   try {
-    const results = await prisma.$queryRaw<AuditLogUserOption[]>(Prisma.sql`
+    const results = (
+      await sql<AuditLogUserOption>`
       SELECT "userId", "userName", "userEmail"
       FROM (
         SELECT DISTINCT ON ("userId") "userId", "userName", "userEmail"
@@ -55,13 +57,16 @@ export async function searchAuditLogUsers(
       ) s
       ORDER BY "userName" ASC NULLS LAST, "userEmail" ASC NULLS LAST
       LIMIT ${take} OFFSET ${skip}
-    `);
+    `.execute(prisma.$qb)
+    ).rows;
 
-    const countRows = await prisma.$queryRaw<{ count: number }[]>(Prisma.sql`
+    const countRows = (
+      await sql<{ count: number }>`
       SELECT COUNT(DISTINCT "userId")::int AS count
       FROM "AuditLog"
       WHERE "userId" IS NOT NULL ${searchClause}
-    `);
+    `.execute(prisma.$qb)
+    ).rows;
 
     return { results, total: countRows[0]?.count ?? 0 };
   } catch (error) {

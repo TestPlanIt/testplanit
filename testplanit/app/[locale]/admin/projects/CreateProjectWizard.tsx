@@ -3,8 +3,7 @@
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ProjectAccessType, WorkflowScope } from "~/zenstack/models";
-import type { GroupProjectPermissionUpsertArgs, UserProjectPermissionUpsertArgs } from "~/zenstack/input";
-import { Prisma } from "@prisma/client";
+import type { GroupProjectPermissionUpsertArgs, ProjectsCreateArgs, UserProjectPermissionUpsertArgs } from "~/zenstack/input";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -36,6 +35,7 @@ import {
   useUpsertUserProjectPermission,
 } from "~/lib/hooks";
 import { optionalImageUrlSchema } from "~/lib/schemas/imageUrl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
@@ -766,7 +766,7 @@ export function CreateProjectWizard({
           ? null
           : parseInt(data.defaultRoleId, 10);
 
-      const createData: Prisma.ProjectsCreateInput = {
+      const createData: ProjectsCreateArgs["data"] = {
         name: data.name,
         note: data.note || undefined,
         isCompleted: data.isCompleted,
@@ -999,7 +999,7 @@ export function CreateProjectWizard({
       console.error("Error details:", err.info || err.message);
 
       // Check for specific error types
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         toast.error(tCommon("errors.projectNameExists"));
         setError("name", {
           type: "custom",

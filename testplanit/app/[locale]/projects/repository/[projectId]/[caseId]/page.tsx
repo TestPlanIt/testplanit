@@ -59,7 +59,7 @@ import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea } from "~/zenstack/models";
 import type { Attachments } from "~/zenstack/models";
 import type { JsonValue } from "@zenstackhq/orm";
-import { Prisma } from "@prisma/client";
+import type { StepsCreateArgs, StepsUpdateArgs } from "~/zenstack/input";
 import {
   AlertCircle,
   ArrowLeft,
@@ -1278,7 +1278,7 @@ export default function TestCaseDetails() {
               const existingDatabaseStep = existingSteps.find(
                 (s) => s.id === step.originalId
               );
-              const updateData: Prisma.StepsUpdateInput = {};
+              const updateData: StepsUpdateArgs["data"] = {};
               let requiresUpdate = false;
               if (index !== existingDatabaseStep?.order) {
                 updateData.order = index;
@@ -1337,7 +1337,7 @@ export default function TestCaseDetails() {
                 });
               }
             } else {
-              const createData: Prisma.StepsCreateInput = {
+              const createData: StepsCreateArgs["data"] = {
                 order: index,
                 testCase: { connect: { id: Number(caseId) } },
               };

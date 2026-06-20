@@ -18,8 +18,9 @@
  * project-read-gate.
  */
 
+import { type RawBuilder, sql } from "kysely";
+
 import type { DbClient, TxClient } from "~/lib/zenstack";
-import { Prisma } from "@prisma/client";
 
 import {
   computeWorstOfStatus,
@@ -121,29 +122,29 @@ interface SnapshotRowShape {
 
 interface FilterFragments {
   /** Predicates that bind the run / run-case scope. */
-  scopeFragment: Prisma.Sql;
+  scopeFragment: RawBuilder<unknown>;
   /** Predicate that bounds the iteration row directly (statusIds). */
-  iterationFragment: Prisma.Sql;
+  iterationFragment: RawBuilder<unknown>;
 }
 
 function buildFilterFragments(filters: MatrixFilters): FilterFragments {
-  const scope: Prisma.Sql[] = [];
+  const scope: RawBuilder<unknown>[] = [];
 
   if (filters.configIds && filters.configIds.length > 0) {
     scope.push(
-      Prisma.sql`AND COALESCE(tr."configId", 0) = ANY(${filters.configIds}::int[])`
+      sql`AND COALESCE(tr."configId", 0) = ANY(${filters.configIds}::int[])`
     );
   }
 
   if (filters.dateFrom) {
-    scope.push(Prisma.sql`AND tr."createdAt" >= ${new Date(filters.dateFrom)}`);
+    scope.push(sql`AND tr."createdAt" >= ${new Date(filters.dateFrom)}`);
   }
   if (filters.dateTo) {
-    scope.push(Prisma.sql`AND tr."createdAt" <= ${new Date(filters.dateTo)}`);
+    scope.push(sql`AND tr."createdAt" <= ${new Date(filters.dateTo)}`);
   }
 
   if (filters.datasetIds && filters.datasetIds.length > 0) {
-    scope.push(Prisma.sql`AND EXISTS (
+    scope.push(sql`AND EXISTS (
       SELECT 1 FROM "TestRunCaseDataSetSnapshot" trcs
       WHERE trcs."testRunCaseId" = trc.id
         AND trcs."isDeleted" = false
@@ -152,12 +153,12 @@ function buildFilterFragments(filters: MatrixFilters): FilterFragments {
   }
 
   const scopeFragment =
-    scope.length === 0 ? Prisma.empty : Prisma.sql`${Prisma.join(scope, " ")}`;
+    scope.length === 0 ? sql`` : sql`${sql.join(scope, sql` `)}`;
 
   const iterationFragment =
     filters.statusIds && filters.statusIds.length > 0
-      ? Prisma.sql`AND iter."statusId" = ANY(${filters.statusIds}::int[])`
-      : Prisma.empty;
+      ? sql`AND iter."statusId" = ANY(${filters.statusIds}::int[])`
+      : sql``;
 
   return { scopeFragment, iterationFragment };
 }
@@ -169,9 +170,9 @@ function buildFilterFragments(filters: MatrixFilters): FilterFragments {
 async function fetchCaseAxis(
   prisma: PrismaLike,
   projectId: number,
-  scopeFragment: Prisma.Sql
+  scopeFragment: RawBuilder<unknown>
 ): Promise<CaseRow[]> {
-  return prisma.$queryRaw<CaseRow[]>`
+  const result = await sql<CaseRow>`
     SELECT
       rc.id,
       rc.name,
@@ -211,13 +212,14 @@ async function fetchCaseAxis(
       -- handles those.
       AND rc."hasParameters" = true
     ORDER BY rc.name ASC, rc.id ASC
-  `;
+  `.execute(prisma.$qb);
+  return result.rows;
 }
 
 async function fetchConfigAxis(
   prisma: PrismaLike,
   projectId: number,
-  scopeFragment: Prisma.Sql
+  scopeFragment: RawBuilder<unknown>
 ): Promise<ConfigRow[]> {
   // "(none)" (config_id 0) always pins to the leftmost column; everything
   // else sorts case-insensitively by name. Postgres' default collation
@@ -228,7 +230,7 @@ async function fetchConfigAxis(
   // requires every ORDER BY expression to appear literally in the SELECT
   // list when DISTINCT is in play — wrapping deduplicates first, then
   // reorders.
-  return prisma.$queryRaw<ConfigRow[]>`
+  const result = await sql<ConfigRow>`
     SELECT config_id, config_name
     FROM (
       SELECT DISTINCT
@@ -247,7 +249,8 @@ async function fetchConfigAxis(
         ${scopeFragment}
     ) configs
     ORDER BY (config_id = 0) DESC, LOWER(config_name) ASC
-  `;
+  `.execute(prisma.$qb);
+  return result.rows;
 }
 
 /**
@@ -258,10 +261,10 @@ async function fetchConfigAxis(
 async function fetchParamRowsByCaseId(
   prisma: PrismaLike,
   projectId: number,
-  scopeFragment: Prisma.Sql,
+  scopeFragment: RawBuilder<unknown>,
   viewerCanReadSensitive: boolean
 ): Promise<Map<number, ParamRowAxisItem[]>> {
-  const rows = await prisma.$queryRaw<SnapshotRow[]>`
+  const result = await sql<SnapshotRow>`
     SELECT
       trc."repositoryCaseId" AS case_id,
       trcs."rowsJson" AS rows_json,
@@ -275,7 +278,8 @@ async function fetchParamRowsByCaseId(
       AND trcs."isDeleted" = false
       ${scopeFragment}
     ORDER BY trc."repositoryCaseId" ASC, tr."createdAt" DESC, trc.id DESC
-  `;
+  `.execute(prisma.$qb);
+  const rows = result.rows;
 
   const out = new Map<number, ParamRowAxisItem[]>();
   for (const row of rows) {
@@ -346,10 +350,10 @@ async function fetchStatusMap(prisma: PrismaLike): Promise<{
 async function fetchAggregateCells(
   prisma: PrismaLike,
   projectId: number,
-  scopeFragment: Prisma.Sql,
-  iterationFragment: Prisma.Sql
+  scopeFragment: RawBuilder<unknown>,
+  iterationFragment: RawBuilder<unknown>
 ): Promise<AggregateRow[]> {
-  return prisma.$queryRaw<AggregateRow[]>`
+  const result = await sql<AggregateRow>`
     SELECT
       trc."repositoryCaseId" AS case_id,
       COALESCE(tr."configId", 0)::int AS config_id,
@@ -387,7 +391,8 @@ async function fetchAggregateCells(
       ${scopeFragment}
       ${iterationFragment}
     GROUP BY trc."repositoryCaseId", COALESCE(tr."configId", 0), iter."rowIndex"
-  `;
+  `.execute(prisma.$qb);
+  return result.rows;
 }
 
 // ---------------------------------------------------------------------------

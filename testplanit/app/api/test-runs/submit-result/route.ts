@@ -1,7 +1,6 @@
 import { ApplicationArea } from "~/zenstack/models";
-import { JsonNull, ORMError } from "@zenstackhq/orm";
+import { JsonNull } from "@zenstackhq/orm";
 import type { JsonValue } from "@zenstackhq/orm";
-import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -29,6 +28,7 @@ import { assertReviewGatePasses } from "~/lib/services/reviewGate";
 import { emitIterationResultRecorded } from "~/lib/webhooks/event-emitters/iterationEvents";
 import {
   isAlreadyPendingError,
+  isNotFoundError,
   isReviewGateError,
   ReviewGateError,
 } from "~/lib/utils/errors";
@@ -442,10 +442,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       }
     }
 
-    const notesInput:
-      | JsonValue
-      | Prisma.NullableJsonNullValueInput
-      | undefined =
+    const notesInput: JsonValue | typeof JsonNull | undefined =
       input.notes === undefined
         ? undefined
         : input.notes === null
@@ -834,16 +831,11 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       );
     }
 
-    if (
-      typeof Prisma?.PrismaClientKnownRequestError === "function" &&
-      error instanceof ORMError
-    ) {
-      if (error.code === "P2025") {
-        return NextResponse.json(
-          { error: "Test run case not found", code: "TEST_RUN_CASE_NOT_FOUND" },
-          { status: 404 }
-        );
-      }
+    if (isNotFoundError(error)) {
+      return NextResponse.json(
+        { error: "Test run case not found", code: "TEST_RUN_CASE_NOT_FOUND" },
+        { status: 404 }
+      );
     }
 
     console.error("Error submitting test run result:", error);

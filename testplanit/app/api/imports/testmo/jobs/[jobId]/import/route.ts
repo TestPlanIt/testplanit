@@ -1,6 +1,5 @@
 import { JsonNull } from "@zenstackhq/orm";
 import type { JsonArray, JsonObject, JsonValue } from "@zenstackhq/orm";
-import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
@@ -12,6 +11,7 @@ import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import { JOB_PROCESS_TESTMO_IMPORT } from "~/services/imports/testmo/constants";
 import { serializeImportJob } from "~/services/imports/testmo/jobPresenter";
+import type { TestmoImportJobUpdateArgs } from "~/zenstack/input";
 
 interface RouteContext {
   params: Promise<{
@@ -92,7 +92,7 @@ export const POST = withAuditContext(
         }
       );
 
-      const updateData: Prisma.TestmoImportJobUpdateInput = {
+      const updateData: TestmoImportJobUpdateArgs["data"] = {
         status: "RUNNING",
         phase: "IMPORTING",
         statusMessage: "Background import queued",

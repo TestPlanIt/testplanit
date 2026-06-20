@@ -41,7 +41,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { Attachments, Issue } from "~/zenstack/models";
-import { JsonValue } from "@prisma/client/runtime/library";
+import type { JsonValue } from "@zenstackhq/orm";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Bot,

@@ -10,7 +10,7 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { Issue } from "~/zenstack/models";
 import { ApplicationArea } from "~/zenstack/models";
 import type { Attachments } from "~/zenstack/models";
-import { JsonValue } from "@prisma/client/runtime/library";
+import type { JsonValue } from "@zenstackhq/orm";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bug, ListChecks, LockIcon, SearchCheck, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";

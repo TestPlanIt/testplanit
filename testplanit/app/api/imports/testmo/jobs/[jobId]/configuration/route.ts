@@ -1,8 +1,8 @@
 import { JsonNull } from "@zenstackhq/orm";
 import type { JsonValue } from "@zenstackhq/orm";
-import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
+import type { TestmoImportJobUpdateArgs } from "~/zenstack/input";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import {
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       normalizedConfiguration
     ) as JsonValue;
 
-    const updateData: Prisma.TestmoImportJobUpdateInput = {
+    const updateData: TestmoImportJobUpdateArgs["data"] = {
       configuration: serializedConfiguration,
       statusMessage: "Mapping configuration saved",
       updatedAt: new Date(),

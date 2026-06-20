@@ -1,8 +1,13 @@
 // lib/multiTenantPrisma.ts
 // Multi-tenant Prisma client factory for shared worker containers
 
-import { PrismaClient } from "@prisma/client";
+import { ZenStackClient } from "@zenstackhq/orm";
+import { PostgresDialect } from "@zenstackhq/orm/dialects/postgres";
 import * as fs from "fs";
+import { Pool } from "pg";
+
+import { type DbClient } from "~/lib/zenstack";
+import { schema } from "~/zenstack/schema";
 
 /**
  * Tenant configuration interface
@@ -44,7 +49,7 @@ export function getCurrentTenantId(): string | undefined {
  * Stores both the client and the database URL used to create it (for credential change detection)
  */
 interface CachedClient {
-  client: PrismaClient;
+  client: DbClient;
   databaseUrl: string;
 }
 const tenantClients: Map<string, CachedClient> = new Map();
@@ -196,14 +201,11 @@ export function getAllTenantIds(): string[] {
 /**
  * Create a Prisma client for a specific tenant
  */
-function createTenantPrismaClient(config: TenantConfig): PrismaClient {
-  const client = new PrismaClient({
-    datasources: {
-      db: {
-        url: config.databaseUrl,
-      },
-    },
-    errorFormat: "pretty",
+function createTenantPrismaClient(config: TenantConfig): DbClient {
+  const client = new ZenStackClient(schema, {
+    dialect: new PostgresDialect({
+      pool: new Pool({ connectionString: config.databaseUrl }),
+    }),
   });
 
   return client;
@@ -215,7 +217,7 @@ function createTenantPrismaClient(config: TenantConfig): PrismaClient {
  * Supports dynamic tenant addition by reloading configs if tenant not found
  * Automatically invalidates cached clients when credentials change
  */
-export function getTenantPrismaClient(tenantId: string): PrismaClient {
+export function getTenantPrismaClient(tenantId: string): DbClient {
   // Always reload config from file to get latest credentials
   reloadTenantConfigs();
   const config = getTenantConfig(tenantId);
@@ -260,7 +262,7 @@ export function getTenantPrismaClient(tenantId: string): PrismaClient {
  */
 export function getPrismaClientForJob(jobData: {
   tenantId?: string;
-}): PrismaClient {
+}): DbClient {
   if (!isMultiTenantMode()) {
     // Single-tenant mode: use lightweight Prisma client (no ES sync extensions)
     // Import lazily to avoid circular dependencies

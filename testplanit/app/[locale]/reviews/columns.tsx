@@ -5,7 +5,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { ReviewRequest, ReviewStatus } from "~/zenstack/models";
+import type {
+  RepositoryCaseSource,
+  ReviewRequest,
+  ReviewStatus,
+} from "~/zenstack/models";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowRight,
@@ -52,7 +56,7 @@ interface InboxWorkflowState {
 export interface InboxCaseRow {
   id: number;
   name: string;
-  source: import("@prisma/client").RepositoryCaseSource;
+  source: RepositoryCaseSource;
   automated?: boolean;
   hasParameters?: boolean;
   isDeleted?: boolean;

@@ -17,9 +17,8 @@ import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import type { RepositoryCasesGetPayload, RepositoryCasesSelect, RepositoryCasesWhereInput, TestRunCasesGetPayload, TestRunCasesWhereInput } from "~/zenstack/input";
+import type { RepositoryCasesFindManyArgs, RepositoryCasesGetPayload, RepositoryCasesSelect, RepositoryCasesWhereInput, TestRunCasesFindManyArgs, TestRunCasesGetPayload, TestRunCasesWhereInput } from "~/zenstack/input";
 import { JsonNull } from "@zenstackhq/orm";
-import { Prisma } from "@prisma/client";
 import {
   RowSelectionState,
   Updater as TableUpdater,
@@ -784,7 +783,7 @@ export default function Cases({
         {
           name: {
             contains: deferredSearchString,
-            mode: "insensitive" as Prisma.QueryMode,
+            mode: "insensitive" as "default" | "insensitive",
           },
         },
         {
@@ -1670,7 +1669,7 @@ export default function Cases({
   }, [isRunMode, viewType, filterId]);
 
   // Create orderBy for TestRunCases based on sortConfig
-  const testRunCasesOrderBy: Prisma.TestRunCasesOrderByWithRelationInput =
+  const testRunCasesOrderBy: NonNullable<TestRunCasesFindManyArgs["orderBy"]> =
     useMemo(() => {
       if (!sortConfig || isDefaultSort) {
         return { order: "asc" }; // Default to run order
@@ -1979,7 +1978,7 @@ export default function Cases({
     };
 
   // orderBy for repository cases (used in non-run mode)
-  const orderBy: Prisma.RepositoryCasesOrderByWithRelationInput =
+  const orderBy: NonNullable<RepositoryCasesFindManyArgs["orderBy"]> =
     useMemo(() => {
       if (isDefaultSort) {
         return { order: "asc" };

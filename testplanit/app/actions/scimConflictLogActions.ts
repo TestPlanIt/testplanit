@@ -29,7 +29,7 @@
  * exception messages (info disclosure defense).
  */
 
-import { Prisma } from "@prisma/client";
+import { sql } from "kysely";
 
 import { prisma } from "~/lib/prisma";
 import { SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
@@ -96,13 +96,13 @@ export async function listScimConflictsAction(
 
   const cursorFragment =
     input.cursor && input.cursor.timestamp && input.cursor.id
-      ? Prisma.sql`AND ("timestamp", "id") < (${new Date(
+      ? sql`AND ("timestamp", "id") < (${new Date(
           input.cursor.timestamp
         )}, ${input.cursor.id})`
-      : Prisma.empty;
+      : sql``;
 
   try {
-    const rows = await prisma.$queryRaw<ConflictLogRow[]>(Prisma.sql`
+    const result = await sql<ConflictLogRow>`
       SELECT
         "id",
         "userId",
@@ -131,7 +131,8 @@ export async function listScimConflictsAction(
       ORDER BY "timestamp" DESC, "id" DESC
       LIMIT ${limit}
       OFFSET ${startIndex}
-    `);
+    `.execute(prisma.$qb);
+    const rows = result.rows;
 
     const hasMore = rows.length > count;
     const items = hasMore ? rows.slice(0, count) : rows;

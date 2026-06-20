@@ -34,11 +34,10 @@
 import { hash } from "bcrypt";
 import crypto from "crypto";
 
-import type { UserWhereInput } from "~/zenstack/input";
+import type { UserUpdateArgs, UserWhereInput } from "~/zenstack/input";
 import { DbNull, JsonNull } from "@zenstackhq/orm";
 import type { JsonValue } from "@zenstackhq/orm";
 import type { TxClient } from "~/lib/zenstack";
-import { Prisma } from "@prisma/client";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
@@ -232,7 +231,7 @@ function assertWritableOnly(updates: ScimUserUpdatePayload): void {
  */
 function toJsonInput(
   value: Record<string, unknown> | null | undefined
-): Prisma.NullableJsonNullValueInput | JsonValue | undefined {
+): typeof JsonNull | typeof DbNull | JsonValue | undefined {
   if (value === undefined) return undefined;
   if (value === null) return DbNull;
   return value as JsonValue;
@@ -540,7 +539,7 @@ export async function putScimUser(
       throw new ScimNotFoundError(`User ${id} not found`);
     }
 
-    const updates: Prisma.UserUpdateInput = {};
+    const updates: UserUpdateArgs["data"] = {};
 
     // userName (always present in a PUT per RFC 7643)
     if (typeof body.userName === "string") {
@@ -715,7 +714,7 @@ export async function patchScimUser(
     const before = asScimSnapshot(current);
     const updated = await tx.user.update({
       where: { id: current.id },
-      data: updates as Prisma.UserUpdateInput,
+      data: updates as UserUpdateArgs["data"],
       include: SCIM_USER_INCLUDE,
     });
 

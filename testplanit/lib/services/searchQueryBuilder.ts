@@ -1,3 +1,4 @@
+import { ProjectAccessType } from "~/zenstack/models";
 import { CustomFieldFilter, SearchableEntityType } from "~/types/search";
 
 /**
@@ -206,7 +207,6 @@ export async function buildElasticsearchQuery(
   // Add user access control
   if (user.access !== "ADMIN") {
     const { db } = await import("~/server/db");
-    const { ProjectAccessType } = await import("@prisma/client");
 
     // Resolve the full set of projects this user can access, mirroring the
     // ZenStack access rules on the Projects model:

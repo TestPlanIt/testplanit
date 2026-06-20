@@ -1,14 +1,18 @@
 "use server";
 
-import type { RepositoryCasesGetPayload, RepositoryCasesSelect, RepositoryCasesWhereInput } from "~/zenstack/input";
-import { Prisma } from "@prisma/client";
+import type {
+  RepositoryCasesFindManyArgs,
+  RepositoryCasesGetPayload,
+  RepositoryCasesSelect,
+  RepositoryCasesWhereInput,
+} from "~/zenstack/input";
 import { prisma } from "~/lib/prisma";
 import { resolveSharedSteps } from "~/lib/utils/resolveSharedSteps";
 import { getServerAuthSession } from "~/server/auth";
 
 // Define the arguments type based on Prisma generated types
 interface FetchCasesArgs {
-  orderBy: Prisma.RepositoryCasesOrderByWithRelationInput;
+  orderBy: NonNullable<RepositoryCasesFindManyArgs["orderBy"]>;
   where: RepositoryCasesWhereInput;
   scope?: "allFiltered" | "allProject"; // Add scope indicator
   projectId?: number; // Add projectId, needed for allProject scope

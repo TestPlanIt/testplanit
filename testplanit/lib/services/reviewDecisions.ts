@@ -1,6 +1,5 @@
 import type { AuditAction, ReviewRequest } from "~/zenstack/models";
-import { ORMError } from "@zenstackhq/orm";
-import { Prisma } from "@prisma/client";
+import { ORMError, ORMErrorReason } from "@zenstackhq/orm";
 import type { JSONContent } from "@tiptap/core";
 import type { Session } from "next-auth";
 
@@ -309,10 +308,9 @@ export async function decideReviewRequest(
         select: { id: true },
       });
       if (!after) {
-        throw new ORMError(
-          "No ReviewRequest found",
-          { code: "P2025", clientVersion: Prisma.prismaVersion.client }
-        );
+        // Was Prisma P2025; v3 uses ORMError with reason NOT_FOUND.
+        // Phase 6: ensure lib/utils/errors.ts isNotFoundError() detects this.
+        throw new ORMError(ORMErrorReason.NOT_FOUND, "No ReviewRequest found");
       }
       throw new Error("Review request already decided");
     }

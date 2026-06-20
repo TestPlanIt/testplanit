@@ -2,7 +2,7 @@ import { JUnitResultType, WorkflowScope } from "~/zenstack/models";
 import type { StatusGetPayload } from "~/zenstack/input";
 import { JsonNull } from "@zenstackhq/orm";
 import type { DbClient, TxClient } from "~/lib/zenstack";
-import { Prisma } from "@prisma/client";
+import { sql } from "kysely";
 import { createTestCaseVersionInTransaction } from "../../lib/services/testCaseVersionService.js";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 import {
@@ -1563,15 +1563,15 @@ const reconcileLegacyJUnitSuiteLinks = async (
     // Only update results where testSuiteId points to a TestRun (legacy data)
     // Don't update results that already correctly point to a JUnitTestSuite
     // CRITICAL: Also check that testSuiteId is NOT already a valid JUnitTestSuite
-    await tx.$executeRaw`
+    await sql`
       UPDATE "JUnitTestResult" AS r
       SET "testSuiteId" = s."id"
       FROM "JUnitTestSuite" AS s
-      WHERE s."id" IN (${Prisma.join(chunk)})
+      WHERE s."id" IN (${sql.join(chunk)})
         AND r."testSuiteId" = s."testRunId"
         AND r."testSuiteId" IN (SELECT id FROM "TestRuns")
         AND r."testSuiteId" NOT IN (SELECT id FROM "JUnitTestSuite");
-    `;
+    `.execute(tx.$qb);
   }
 };
 

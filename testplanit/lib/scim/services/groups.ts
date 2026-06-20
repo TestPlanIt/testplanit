@@ -48,7 +48,6 @@ import type { GroupsWhereInput } from "~/zenstack/input";
 import { DbNull } from "@zenstackhq/orm";
 import type { JsonValue } from "@zenstackhq/orm";
 import type { TxClient } from "~/lib/zenstack";
-import { Prisma } from "@prisma/client";
 import { updateAuditContext } from "~/lib/auditContext";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -159,7 +158,7 @@ function parseGroupId(id: string): number | null {
 
 function toJsonInput(
   value: Record<string, unknown> | null | undefined
-): Prisma.NullableJsonNullValueInput | JsonValue | undefined {
+): typeof DbNull | JsonValue | undefined {
   if (value === undefined) return undefined;
   if (value === null) return DbNull;
   return value as JsonValue;

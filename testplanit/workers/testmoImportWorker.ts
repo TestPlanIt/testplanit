@@ -4,7 +4,11 @@ import type { TestmoImportJob } from "~/zenstack/models";
 import { JsonNull } from "@zenstackhq/orm";
 import type { JsonObject, JsonValue } from "@zenstackhq/orm";
 import type { DbClient, TxClient } from "~/lib/zenstack";
-import { Prisma } from "@prisma/client";
+import type {
+  StepsUncheckedCreateInput,
+  TestRunCasesUncheckedCreateInput,
+  TestmoImportJobUpdateArgs,
+} from "~/zenstack/input";
 import { getSchema } from "@tiptap/core";
 import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
@@ -3933,7 +3937,7 @@ const importRepositoryCases = async (
           }> = [];
           if (caseSteps.length > 0) {
             let generatedOrder = 0;
-            const stepEntries: Array<Prisma.StepsCreateManyInput> = [];
+            const stepEntries: Array<StepsUncheckedCreateInput> = [];
 
             for (const stepRecord of caseSteps) {
               const stepAction = toStringValue(stepRecord.text1);
@@ -3958,7 +3962,7 @@ const importRepositoryCases = async (
                 generatedOrder = orderValue;
               }
 
-              const stepEntry: Prisma.StepsCreateManyInput = {
+              const stepEntry: StepsUncheckedCreateInput = {
                 testCaseId: repositoryCase.id,
                 order: orderValue,
               };
@@ -4507,7 +4511,7 @@ const importTestRunCases = async (
 
     const mappedRecords: Array<{
       record: Record<string, unknown>;
-      data: Prisma.TestRunCasesCreateManyInput;
+      data: TestRunCasesUncheckedCreateInput;
       runTestSourceId: number;
     }> = [];
     let duplicateMappingsInBatch = 0;
@@ -5758,7 +5762,7 @@ async function processImportMode(
       // Calculate progress metrics
       const metrics = calculateProgressMetrics(context, plannedTotalCount);
 
-      const data: Prisma.TestmoImportJobUpdateInput = {
+      const data: TestmoImportJobUpdateArgs["data"] = {
         currentEntity: entity,
         processedCount: context.processedCount,
         totalCount: plannedTotalCount,
