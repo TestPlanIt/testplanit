@@ -1,5 +1,11 @@
 # @testplanit/api
 
+## 0.5.0
+
+### Minor Changes
+
+- [#459](https://github.com/TestPlanIt/testplanit/pull/459) [`79c4db0`](https://github.com/TestPlanIt/testplanit/commit/79c4db008dc0d021844a1aaf60c6e790f750582f) Thanks [@therealbrad](https://github.com/therealbrad)! - Add `client.createTestCases()` — bulk test-case creation in a single request, with per-case steps, tags, and custom fields, optional per-case folder/state, and a per-case success/failure result (so partial failures are visible). Backed by the `/api/projects/{projectId}/cases/bulk-create` endpoint; requires a TestPlanIt instance running app v0.39.0+.
+
 ## 0.4.0
 
 ### Minor Changes

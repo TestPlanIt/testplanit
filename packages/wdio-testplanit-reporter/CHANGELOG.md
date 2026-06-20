@@ -1,5 +1,12 @@
 # @testplanit/wdio-reporter
 
+## 0.4.3
+
+### Patch Changes
+
+- Updated dependencies [[`79c4db0`](https://github.com/TestPlanIt/testplanit/commit/79c4db008dc0d021844a1aaf60c6e790f750582f)]:
+  - @testplanit/api@0.5.0
+
 ## 0.4.2
 
 ### Patch Changes
