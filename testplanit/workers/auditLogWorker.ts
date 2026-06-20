@@ -159,6 +159,13 @@ const processor = async (job: Job<AuditLogJobData>) => {
             ? (metadata as Prisma.InputJsonValue)
             : undefined,
         projectId: validatedProjectId,
+        // Stamp the per-operation correlation id from the request's audit
+        // context so an aggregate semantic event (BULK_*, DUPLICATED,
+        // ITERATION_*) groups in the UI as the header of the CDC per-row detail
+        // rows that share the same operationId, instead of floating separately.
+        // Events with no X-Operation-Id (login, export, …) carry null and are
+        // unaffected.
+        operationId: context?.operationId ?? null,
       },
     });
 
@@ -228,11 +235,12 @@ const startWorker = async () => {
   // flag; the process stays alive on the BullMQ worker (Loop A) and/or this loop's own event loop.
   const correlationPrisma = getPrismaClientForJob({ tenantId: undefined });
   correlationRunning.running = true;
-  loopBPromise = pollDataChangeLogs(correlationPrisma, correlationRunning).catch(
-    (err) => {
-      console.error("[AuditLogWorker] CDC poll loop (Loop B) crashed:", err);
-    }
-  );
+  loopBPromise = pollDataChangeLogs(
+    correlationPrisma,
+    correlationRunning
+  ).catch((err) => {
+    console.error("[AuditLogWorker] CDC poll loop (Loop B) crashed:", err);
+  });
   console.log(
     "[AuditLogWorker] Started CDC poll loop (Loop B) for DataChangeLog → AuditLog materialization"
   );

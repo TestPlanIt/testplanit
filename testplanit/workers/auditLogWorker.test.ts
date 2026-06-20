@@ -141,10 +141,44 @@ describe("AuditLogWorker", () => {
             processedAt: expect.any(String),
           }),
           projectId: 1,
+          operationId: null,
         },
       });
       // D-18 standing enforcement (SC#4): six actor fields on persisted row.
       expectLastCreatedAuditRowComplete(mockPrisma.auditLog.create);
+    });
+
+    it("stamps operationId from the context so aggregate events group with their CDC detail rows", async () => {
+      const jobData: AuditLogJobData = {
+        event: {
+          action: "BULK_UPDATE",
+          entityType: "RepositoryCases",
+          entityId: "bulk",
+          entityName: "3 RepositoryCases",
+          projectId: 1,
+        },
+        context: {
+          userId: "user-123",
+          userEmail: "test@example.com",
+          userName: "Test User",
+          operationId: "ff031e6b-0000-4000-8000-000000000000",
+        },
+        queuedAt: new Date().toISOString(),
+      };
+      mockPrisma.auditLog.create.mockResolvedValue({ id: "audit-2" });
+      const { processor } = await import("./auditLogWorker");
+      await processor({
+        id: "job-bulk",
+        name: "audit-event",
+        data: jobData,
+      } as Job<AuditLogJobData>);
+
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          action: "BULK_UPDATE",
+          operationId: "ff031e6b-0000-4000-8000-000000000000",
+        }),
+      });
     });
 
     it("should create an audit log entry for an UPDATE action with changes", async () => {
