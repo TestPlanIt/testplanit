@@ -1462,7 +1462,7 @@ export function BulkEditModal({
             }
           }
         } else if (fieldKey === "issues") {
-          // Similar logic to tags
+          // Get all unique issue IDs from all cases
           const allCurrentIssueIds = new Set<number>();
           casesData.forEach((c) => {
             (c.issues || []).forEach((i) => allCurrentIssueIds.add(i.id));
@@ -1472,14 +1472,25 @@ export function BulkEditModal({
             ? newValue.map(Number)
             : [];
 
+          // Connect new issues that aren't currently on any case
           const issuesToConnect = newIssueIds
             .filter((id) => !allCurrentIssueIds.has(id))
             .map((id) => ({ id }));
 
-          if (newIssueIds.length > 0) {
-            payload.updates.issues = {
-              connect: issuesToConnect.length > 0 ? issuesToConnect : [],
-            };
+          // Disconnect issues that were removed (were on cases but not in new selection)
+          const issuesToDisconnect = Array.from(allCurrentIssueIds)
+            .filter((id) => !newIssueIds.includes(id))
+            .map((id) => ({ id }));
+
+          // Only update issues if there are actual changes
+          if (issuesToConnect.length > 0 || issuesToDisconnect.length > 0) {
+            payload.updates.issues = {};
+            if (issuesToConnect.length > 0) {
+              payload.updates.issues.connect = issuesToConnect;
+            }
+            if (issuesToDisconnect.length > 0) {
+              payload.updates.issues.disconnect = issuesToDisconnect;
+            }
           }
         }
       }

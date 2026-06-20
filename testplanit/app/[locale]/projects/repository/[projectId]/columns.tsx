@@ -1347,6 +1347,7 @@ const SelectAllCheckbox = React.memo(function SelectAllCheckbox({
         <TooltipTrigger asChild>
           <div className="cursor-pointer">
             <Checkbox
+              data-testid="select-all-cases-checkbox"
               checked={
                 table.getIsSomeRowsSelected()
                   ? "indeterminate"

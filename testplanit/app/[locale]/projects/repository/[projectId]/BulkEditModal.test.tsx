@@ -173,6 +173,25 @@ vi.mock("~/lib/hooks/project-llm-integration", () => ({
   }),
 }));
 
+// Stub the issue picker so tests can deterministically drive issue selection
+// without rendering the real UnifiedIssueManager (network + provider heavy).
+vi.mock("@/components/issues/UnifiedIssueManager", () => ({
+  UnifiedIssueManager: ({ linkedIssueIds, setLinkedIssueIds }: any) => (
+    <div data-testid="mock-issue-manager">
+      <span data-testid="linked-issue-ids">
+        {(linkedIssueIds ?? []).join(",")}
+      </span>
+      <button
+        type="button"
+        data-testid="clear-issues"
+        onClick={() => setLinkedIssueIds([])}
+      >
+        clear issues
+      </button>
+    </div>
+  ),
+}));
+
 // Now import everything else after the mocks
 import {
   DateFormat,
@@ -1727,6 +1746,128 @@ describe("BulkEditModal", () => {
 
           // Toast should be called
           expect(toast.success).toHaveBeenCalled();
+        },
+        { timeout: 10000 }
+      );
+    });
+
+    it("disconnects issues that are removed during bulk edit", async () => {
+      // Reproduce the reported bug: two cases linked to the same issue, then
+      // the issue is cleared in bulk edit. The payload must request a
+      // disconnect — previously it only ever sent connect, so links survived.
+      const casesSharingIssue = mockCasesWithTextFields.map((c) => ({
+        ...c,
+        issues: [mockIssuesData[0]],
+      }));
+
+      global.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
+
+        if (
+          url.includes("/api/projects/") &&
+          (url.includes("/cases/fetch-many") ||
+            url.includes("/cases/bulk-edit-fetch"))
+        ) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ cases: casesSharingIssue }),
+            status: 200,
+            statusText: "OK",
+            headers: new Headers(),
+          } as Response);
+        }
+
+        if (
+          url.includes("/api/projects/") &&
+          url.includes("/cases/bulk-edit") &&
+          !url.includes("bulk-edit-fetch") &&
+          init?.method === "POST"
+        ) {
+          const payload = init.body ? JSON.parse(init.body as string) : {};
+          bulkEditCalls.push({ url, payload });
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              success: true,
+              updatedCount: payload.caseIds?.length || 0,
+            }),
+            status: 200,
+            statusText: "OK",
+            headers: new Headers(),
+          } as Response);
+        }
+
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({}),
+          status: 200,
+          statusText: "OK",
+          headers: new Headers(),
+        } as Response);
+      }) as any;
+
+      render(
+        <BulkEditModal
+          isOpen={true}
+          onClose={vi.fn()}
+          onSaveSuccess={vi.fn()}
+          selectedCaseIds={[1, 2]}
+          projectId={1}
+        />
+      );
+
+      // Wait for loading spinner to disappear
+      await waitFor(() => {
+        const spinner = document.querySelector(".animate-spin");
+        expect(spinner).not.toBeInTheDocument();
+      });
+
+      // Enable editing for the issues field
+      const issuesCheckbox = document.getElementById(
+        "edit-issues"
+      ) as HTMLInputElement;
+      await act(async () => {
+        fireEvent.click(issuesCheckbox);
+      });
+
+      await waitFor(() => {
+        expect(issuesCheckbox).toBeChecked();
+      });
+
+      // Both cases share issue id 1, so editing starts with it selected
+      await waitFor(() => {
+        expect(screen.getByTestId("linked-issue-ids")).toHaveTextContent("1");
+      });
+
+      // Remove all linked issues
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("clear-issues"));
+      });
+
+      const saveButton = screen.getByRole("button", {
+        name: "[t]common.actions.save",
+      });
+      await waitFor(() => {
+        expect(saveButton).not.toBeDisabled();
+      });
+      await act(async () => {
+        fireEvent.click(saveButton);
+      });
+
+      await waitFor(
+        () => {
+          expect(bulkEditCalls.length).toBe(1);
+          const { payload } = bulkEditCalls[0];
+          expect(payload.caseIds).toEqual([1, 2]);
+          // The fix: removed issues are disconnected, not silently dropped
+          expect(payload.updates.issues).toEqual({
+            disconnect: [{ id: 1 }],
+          });
         },
         { timeout: 10000 }
       );

@@ -291,7 +291,8 @@ vi.mock("./columns", () => ({
 }));
 
 // ---- Imports ----
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { DataTable } from "@/components/tables/DataTable";
 import React from "react";
 import * as NextAuth from "next-auth/react";
 import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCasesByDescendants";
@@ -700,5 +701,157 @@ describe("Cases component", () => {
     const dataTable = await screen.findByTestId("data-table");
     expect(dataTable).toBeInTheDocument();
     expect(dataTable.getAttribute("data-count")).toBe("1");
+  });
+
+  // The default DataTable stub does not render interactive rows. Swap in a stub
+  // that exposes a button to drive the table's row-selection callback, so a test
+  // can simulate selecting the first visible case. Returns a restore function;
+  // afterEach's clearAllMocks does not reset implementations, so callers must
+  // restore to avoid leaking the stub into later tests.
+  function installSelectableDataTable() {
+    const dataTableMock = vi.mocked(DataTable);
+    const originalImpl = dataTableMock.getMockImplementation();
+    dataTableMock.mockImplementation(({ onRowSelectionChange }: any) => (
+      <button
+        data-testid="simulate-select-first-row"
+        onClick={() => onRowSelectionChange?.(() => ({ "0": true }))}
+      >
+        select first row
+      </button>
+    ));
+    return () => dataTableMock.mockImplementation(originalImpl!);
+  }
+
+  it("clears the bulk-edit selection when switching folders", async () => {
+    const restoreDataTable = installSelectableDataTable();
+    try {
+      setupMocks({ data: [{ ...mockCase, id: 101, folderId: 1 }] });
+
+      const { rerender } = render(
+        <Cases {...defaultProps} viewType="folders" folderId={1} />
+      );
+
+      // Selecting a case in folder 1 surfaces the bulk-edit action.
+      fireEvent.click(await screen.findByTestId("simulate-select-first-row"));
+      expect(await screen.findByTestId("bulk-edit-button")).toBeInTheDocument();
+
+      // Navigating to a different folder must clear the selection so a bulk
+      // action can't silently span cases the user can no longer see.
+      setupMocks({ data: [{ ...mockCase, id: 202, folderId: 2 }] });
+      rerender(<Cases {...defaultProps} viewType="folders" folderId={2} />);
+
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("bulk-edit-button")
+        ).not.toBeInTheDocument();
+      });
+    } finally {
+      restoreDataTable();
+    }
+  });
+
+  it("keeps the bulk-edit selection when paginating within the same folder", async () => {
+    const restoreDataTable = installSelectableDataTable();
+    try {
+      setupMocks({ data: [{ ...mockCase, id: 101, folderId: 1 }] });
+
+      const { rerender } = render(
+        <Cases {...defaultProps} viewType="folders" folderId={1} />
+      );
+
+      fireEvent.click(await screen.findByTestId("simulate-select-first-row"));
+      expect(await screen.findByTestId("bulk-edit-button")).toBeInTheDocument();
+
+      // Changing pages within the same folder must NOT clear the selection —
+      // the cross-page merge logic depends on it persisting across pages.
+      setupMocks({
+        data: [{ ...mockCase, id: 101, folderId: 1 }],
+        paginationOverrides: { currentPage: 2 },
+      });
+      rerender(<Cases {...defaultProps} viewType="folders" folderId={1} />);
+
+      // Give effects a chance to (incorrectly) clear before asserting it stayed.
+      await waitFor(() => {
+        expect(screen.getByTestId("bulk-edit-button")).toBeInTheDocument();
+      });
+    } finally {
+      restoreDataTable();
+    }
+  });
+
+  it("clears the bulk-edit selection when the filter changes", async () => {
+    const restoreDataTable = installSelectableDataTable();
+    try {
+      setupMocks({ data: [{ ...mockCase, id: 101, folderId: 1 }] });
+
+      const { rerender } = render(
+        <Cases
+          {...defaultProps}
+          viewType="folders"
+          folderId={1}
+          filterId={null}
+        />
+      );
+
+      fireEvent.click(await screen.findByTestId("simulate-select-first-row"));
+      expect(await screen.findByTestId("bulk-edit-button")).toBeInTheDocument();
+
+      // Changing the filter swaps which cases are visible, so the selection is
+      // scoped out the same way a folder switch is.
+      setupMocks({ data: [{ ...mockCase, id: 202, folderId: 1 }] });
+      rerender(
+        <Cases
+          {...defaultProps}
+          viewType="folders"
+          folderId={1}
+          filterId={[7]}
+        />
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("bulk-edit-button")
+        ).not.toBeInTheDocument();
+      });
+    } finally {
+      restoreDataTable();
+    }
+  });
+
+  it("does not clear the parent-owned selection on folder switch in selection mode", async () => {
+    const onSelectionChange = vi.fn();
+    setupMocks({ data: [{ ...mockCase, id: 101, folderId: 1 }] });
+
+    const { rerender } = render(
+      <Cases
+        {...defaultProps}
+        isSelectionMode={true}
+        selectedTestCases={[101]}
+        onSelectionChange={onSelectionChange}
+        viewType="folders"
+        folderId={1}
+      />
+    );
+
+    await screen.findByTestId("data-table");
+
+    // Run-mode selection is owned by the parent and may legitimately span
+    // folders, so switching folders must not reset it.
+    setupMocks({ data: [{ ...mockCase, id: 202, folderId: 2 }] });
+    rerender(
+      <Cases
+        {...defaultProps}
+        isSelectionMode={true}
+        selectedTestCases={[101]}
+        onSelectionChange={onSelectionChange}
+        viewType="folders"
+        folderId={2}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("data-table")).toBeInTheDocument();
+    });
+    expect(onSelectionChange).not.toHaveBeenCalledWith([]);
   });
 });
