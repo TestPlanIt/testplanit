@@ -1,3 +1,9 @@
+## [0.39.1](https://github.com/TestPlanIt/testplanit/compare/v0.39.0...v0.39.1) (2026-06-20)
+
+### Bug Fixes
+
+* **repository:** prevent test case edit crash from null dropdown option colors ([#455](https://github.com/TestPlanIt/testplanit/issues/455)) ([61a4dfe](https://github.com/TestPlanIt/testplanit/commit/61a4dfea6f2a0ebf1ebb6d4f9d7416ad617717ca))
+
 ## [0.39.0](https://github.com/TestPlanIt/testplanit/compare/v0.38.10...v0.39.0) (2026-06-20)
 
 ### Features
