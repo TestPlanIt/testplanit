@@ -1,3 +1,9 @@
+## [0.38.10](https://github.com/TestPlanIt/testplanit/compare/v0.38.9...v0.38.10) (2026-06-20)
+
+### Bug Fixes
+
+* folder-scoped case selection, bulk-edit issue unlink + version snapshots, and sync-button clarity ([#453](https://github.com/TestPlanIt/testplanit/issues/453)) ([37eda9b](https://github.com/TestPlanIt/testplanit/commit/37eda9bb8d674e58e996e3be7ce298e5c3e4ae23))
+
 ## [0.38.9](https://github.com/TestPlanIt/testplanit/compare/v0.38.8...v0.38.9) (2026-06-19)
 
 ### Bug Fixes
