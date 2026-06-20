@@ -3,7 +3,8 @@
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { badgeVariants } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Prisma, RepositoryCaseSource } from "@prisma/client";
+import type { RepositoryCaseSource } from "~/zenstack/models";
+import type { Prisma } from "@prisma/client";
 import { ListChecks } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";

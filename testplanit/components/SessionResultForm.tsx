@@ -26,7 +26,7 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import type { Attachments } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
 import { Bug, CircleCheckBig, Clock, Paperclip, Save } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";

@@ -1,4 +1,4 @@
-import { ApplicationArea, NotificationType } from "@prisma/client";
+import { ApplicationArea, NotificationType } from "~/zenstack/models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getNotificationQueue } from "../queues";
 import { NotificationService } from "./notificationService";

@@ -1,4 +1,5 @@
-import type { PrismaClient, UserPreferences } from "@prisma/client";
+import type { UserPreferences } from "~/zenstack/models";
+import type { PrismaClient } from "@prisma/client";
 import { compare } from "bcrypt";
 
 // Pre-computed bcrypt hash of a random string (cost=10).

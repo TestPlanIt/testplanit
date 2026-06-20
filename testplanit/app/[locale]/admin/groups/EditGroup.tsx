@@ -1,6 +1,6 @@
 "use client";
 import { HelpPopover } from "@/components/ui/help-popover";
-import { Groups, User } from "@prisma/client";
+import type { Groups, User } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import {

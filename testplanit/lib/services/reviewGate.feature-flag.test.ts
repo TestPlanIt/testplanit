@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ReviewEntityType } from "@prisma/client";
+import { ReviewEntityType } from "~/zenstack/models";
 import { assertReviewGatePasses } from "./reviewGate";
 
 /**

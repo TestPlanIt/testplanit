@@ -15,7 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Attachments } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
 import { filesize } from "filesize";
 import {
   CircleSlash2,

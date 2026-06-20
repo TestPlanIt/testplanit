@@ -1,4 +1,4 @@
-import { ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";

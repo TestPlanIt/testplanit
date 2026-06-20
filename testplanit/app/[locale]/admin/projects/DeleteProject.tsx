@@ -1,5 +1,5 @@
 "use client";
-import { Projects } from "@prisma/client";
+import type { Projects } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useUpdateProjects } from "~/lib/hooks";

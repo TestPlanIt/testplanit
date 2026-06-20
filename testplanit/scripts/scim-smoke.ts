@@ -39,7 +39,7 @@
  * failure leaves no live bearer behind.
  */
 
-import { IdpName } from "@prisma/client";
+import { IdpName } from "~/zenstack/models";
 
 import { prisma } from "~/lib/prisma";
 import { mintScimToken, revokeScimToken } from "~/lib/scim/tokens";

@@ -2,7 +2,7 @@ import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
-import { Tags } from "@prisma/client";
+import type { Tags } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 

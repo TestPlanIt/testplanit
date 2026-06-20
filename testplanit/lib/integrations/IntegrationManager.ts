@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prismaBase";
 import { EncryptionService, getMasterKey } from "@/utils/encryption";
-import type { Integration, IntegrationProvider } from "@prisma/client";
+import type { Integration, IntegrationProvider } from "~/zenstack/models";
 import { AuthenticationService } from "./AuthenticationService";
 import { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
 import { GiteaAdapter } from "./adapters/GiteaAdapter";

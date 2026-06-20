@@ -33,7 +33,8 @@
 // `feedback_soft_delete`); never use deleteMany / hard delete.
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { PrismaClient, WorkflowScope } from "@prisma/client";
+import { WorkflowScope } from "~/zenstack/models";
+import { PrismaClient } from "@prisma/client";
 import { enhance } from "@zenstackhq/runtime";
 
 // Live-DB gate (matches lib/services/iterationFanOut.integration.test.ts).

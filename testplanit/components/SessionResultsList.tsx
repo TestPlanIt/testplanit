@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import type { Attachments, SessionResults, User } from "@prisma/client";
+import type { Attachments, SessionResults, User } from "~/zenstack/models";
 import {
   ChevronRight,
   Clock,

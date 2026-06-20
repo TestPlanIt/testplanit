@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { IntegrationProvider } from "@prisma/client";
+import { IntegrationProvider } from "~/zenstack/models";
 
 // Supported issue tracking providers (every provider routed through
 // ManageExternalIssues — i.e. all issue trackers except SIMPLE_URL, which has

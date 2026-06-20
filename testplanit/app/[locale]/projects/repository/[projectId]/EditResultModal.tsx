@@ -7,8 +7,9 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import type { Issue } from "@prisma/client";
-import { ApplicationArea, Attachments } from "@prisma/client";
+import type { Issue } from "~/zenstack/models";
+import { ApplicationArea } from "~/zenstack/models";
+import type { Attachments } from "~/zenstack/models";
 import { JsonValue } from "@prisma/client/runtime/library";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bug, ListChecks, LockIcon, SearchCheck, Trash2 } from "lucide-react";

@@ -1,6 +1,7 @@
 "use server";
 
-import { ApplicationArea, ProjectAccessType, Roles } from "@prisma/client";
+import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
+import type { Roles } from "~/zenstack/models";
 import { Session } from "next-auth";
 import { prisma } from "~/lib/prisma";
 import { isAdmin, isProjectAdmin } from "~/utils/permissions";

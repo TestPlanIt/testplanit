@@ -1,4 +1,4 @@
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 
 /**
  * Shared constants and helpers for mapping the three review-relevant

@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Attachments } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
 import { filesize } from "filesize";
 import {
   ChevronLeft,

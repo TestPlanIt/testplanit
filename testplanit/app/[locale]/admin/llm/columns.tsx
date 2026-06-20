@@ -2,7 +2,7 @@ import { DateFormatter } from "@/components/DateFormatter";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { LlmIntegration, LlmProviderConfig } from "@prisma/client";
+import type { LlmIntegration, LlmProviderConfig } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { CheckCircle, Edit, Sparkles, Trash2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";

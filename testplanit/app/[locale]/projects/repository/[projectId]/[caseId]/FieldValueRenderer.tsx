@@ -25,7 +25,7 @@ import StepsForm from "../StepsForm";
 import { StepsDisplay } from "./StepsDisplay";
 import { StepsResults } from "./StepsResults";
 
-import { Steps as PrismaSteps } from "@prisma/client";
+import type { Steps as PrismaSteps } from "~/zenstack/models";
 import { Minus, Plus } from "lucide-react";
 import { Link } from "~/lib/navigation";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";

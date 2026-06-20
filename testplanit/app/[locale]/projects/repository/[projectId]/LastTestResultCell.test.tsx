@@ -1,11 +1,4 @@
-import {
-  DateFormat,
-  ItemsPerPage,
-  Locale,
-  NotificationMode,
-  Theme,
-  TimeFormat,
-} from "@prisma/client";
+import { DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat } from "~/zenstack/models";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";

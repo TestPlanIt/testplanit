@@ -15,7 +15,8 @@
  * `schema.zmodel:1049-1052`.
  */
 
-import { WorkflowType, type Prisma } from "@prisma/client";
+import { WorkflowType } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 
 type AnyTx = Prisma.TransactionClient | { repositoryCases: any; projects: any };
 

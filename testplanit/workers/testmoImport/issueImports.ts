@@ -1,10 +1,5 @@
-import {
-  IntegrationAuthType,
-  IntegrationProvider,
-  IntegrationStatus,
-  Prisma,
-  PrismaClient,
-} from "@prisma/client";
+import { IntegrationAuthType, IntegrationProvider, IntegrationStatus } from "~/zenstack/models";
+import { Prisma, PrismaClient } from "@prisma/client";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 import { toNumberValue, toStringValue } from "./helpers";
 import type {

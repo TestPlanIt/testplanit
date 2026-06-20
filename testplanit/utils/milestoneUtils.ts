@@ -1,10 +1,4 @@
-import {
-  Color,
-  ColorFamily,
-  FieldIcon,
-  Milestones,
-  MilestoneTypes,
-} from "@prisma/client";
+import type { Color, ColorFamily, FieldIcon, Milestones, MilestoneTypes } from "~/zenstack/models";
 import { isAfter, isBefore, parseISO } from "date-fns";
 
 type MilestoneTypesWithIcon = MilestoneTypes & {

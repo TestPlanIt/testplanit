@@ -1,4 +1,5 @@
-import { PrismaClient, ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
+import { PrismaClient } from "@prisma/client";
 
 /**
  * Narrowest acceptable interface for the helpers below. Both the singleton

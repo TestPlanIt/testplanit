@@ -4,13 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Color,
-  ColorFamily,
-  FieldIcon,
-  Milestones,
-  MilestoneTypes,
-} from "@prisma/client";
+import type { Color, ColorFamily, FieldIcon, Milestones, MilestoneTypes } from "~/zenstack/models";
 import { Milestone } from "lucide-react";
 import { useTheme } from "next-themes";
 import React, { useEffect, useState } from "react";

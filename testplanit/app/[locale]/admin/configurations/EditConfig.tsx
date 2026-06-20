@@ -1,6 +1,6 @@
 "use client";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Configurations } from "@prisma/client";
+import type { Configurations } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useState } from "react";

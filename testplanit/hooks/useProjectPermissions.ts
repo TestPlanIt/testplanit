@@ -1,4 +1,4 @@
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 

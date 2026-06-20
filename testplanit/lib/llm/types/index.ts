@@ -3,11 +3,7 @@
  */
 
 // Import all types from Prisma - it generates them for us!
-import type {
-  LlmIntegration as Integration,
-  LlmProvider,
-  LlmProviderConfig,
-} from "@prisma/client";
+import type { LlmIntegration as Integration, LlmProvider, LlmProviderConfig } from "~/zenstack/models";
 
 // Re-export the Prisma types
 export type { Integration, LlmProviderConfig, LlmProvider };

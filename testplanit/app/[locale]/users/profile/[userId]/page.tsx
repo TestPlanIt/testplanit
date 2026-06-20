@@ -46,14 +46,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { UserMentionedComments } from "@/components/UserMentionedComments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import {
-  DateFormat,
-  ItemsPerPage,
-  Locale,
-  NotificationMode,
-  Theme,
-  TimeFormat,
-} from "@prisma/client";
+import { DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Accessibility,

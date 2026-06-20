@@ -1,7 +1,7 @@
 import { DateFormatter } from "@/components/DateFormatter";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Badge } from "@/components/ui/badge";
-import { ScimToken, User } from "@prisma/client";
+import type { ScimToken, User } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { Ban, CheckCircle2, Clock, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";

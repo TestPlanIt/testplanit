@@ -39,12 +39,8 @@ import {
 } from "@/components/ui/tooltip";
 import { VersionNavigation } from "@/components/VersionNavigation";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import {
-  Attachments,
-  Prisma,
-  RepositoryCaseVersions,
-  Steps,
-} from "@prisma/client";
+import type { Attachments, RepositoryCaseVersions, Steps } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 import { ChevronLeft, LinkIcon, Minus, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";

@@ -1,11 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 
-import type {
-  AdapterType,
-  PrismaClient,
-  WebhookDelivery,
-  WebhookDirection,
-} from "@prisma/client";
+import type { AdapterType, WebhookDelivery, WebhookDirection } from "~/zenstack/models";
+import type { PrismaClient } from "@prisma/client";
 
 import { isSlackWebhookUrl } from "../../lib/webhooks/slack-url-detection";
 import { encrypt } from "../../utils/encryption";

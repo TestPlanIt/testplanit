@@ -1,4 +1,4 @@
-import { AuditAction } from "@prisma/client";
+import { AuditAction } from "~/zenstack/models";
 import bcrypt from "bcrypt";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";

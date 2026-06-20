@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Roles } from "@prisma/client";
+import type { Roles } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

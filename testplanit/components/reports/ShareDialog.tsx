@@ -27,7 +27,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { ShareLinkMode } from "@prisma/client";
+import { ShareLinkMode } from "~/zenstack/models";
 import { format } from "date-fns";
 import { Asterisk, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";

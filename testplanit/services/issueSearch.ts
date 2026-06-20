@@ -1,4 +1,5 @@
-import type { Issue, PrismaClient } from "@prisma/client";
+import type { Issue } from "~/zenstack/models";
+import type { PrismaClient } from "@prisma/client";
 import { prisma as defaultPrisma } from "~/lib/prismaBase";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";

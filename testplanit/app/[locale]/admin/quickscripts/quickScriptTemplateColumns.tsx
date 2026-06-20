@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { CaseExportTemplate } from "@prisma/client";
+import type { CaseExportTemplate } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

@@ -7,14 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type {
-  Prisma,
-  Projects,
-  Sessions,
-  TestRunCases,
-  TestRunResults,
-  TestRuns,
-} from "@prisma/client";
+import type { Projects, Sessions, TestRunCases, TestRunResults, TestRuns } from "~/zenstack/models";
+import type { Prisma } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { CirclePlay, Compass, LinkIcon, Star } from "lucide-react";
 import { useSession } from "next-auth/react";

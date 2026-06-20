@@ -11,7 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Issue } from "@prisma/client";
+import type { Issue } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import DOMPurify from "dompurify";
 import { Plug } from "lucide-react";

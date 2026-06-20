@@ -18,7 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Integration, ProjectIntegration } from "@prisma/client";
+import type { Integration, ProjectIntegration } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Loader2, Save, Star, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

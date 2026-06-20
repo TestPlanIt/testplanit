@@ -1,10 +1,6 @@
-import {
-  CaseFields,
-  CaseFieldTypes,
-  Prisma,
-  RepositoryCaseSource,
-  WorkflowScope,
-} from "@prisma/client";
+import { RepositoryCaseSource, WorkflowScope } from "~/zenstack/models";
+import type { CaseFields, CaseFieldTypes } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 import { enhance } from "@zenstackhq/runtime";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";

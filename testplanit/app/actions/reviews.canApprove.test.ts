@@ -21,7 +21,7 @@ import {
   it,
   vi,
 } from "vitest";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 
 // --- Side-effect mocks (everything past the eligibility gate) -------------
 const headersMocks = vi.hoisted(() => ({

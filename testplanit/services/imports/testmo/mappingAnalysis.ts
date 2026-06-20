@@ -1,8 +1,4 @@
-import type {
-  Access,
-  TestmoImportDataset,
-  TestmoImportJob,
-} from "@prisma/client";
+import type { Access, TestmoImportDataset, TestmoImportJob } from "~/zenstack/models";
 import { db } from "~/server/db";
 import type {
   TestmoCaseFieldType,

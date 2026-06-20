@@ -1,4 +1,4 @@
-import { ApplicationArea, NotificationType } from "@prisma/client";
+import { ApplicationArea, NotificationType } from "~/zenstack/models";
 import { JOB_CREATE_NOTIFICATION } from "../../workers/notificationWorker";
 import { getCurrentTenantId } from "../multiTenantPrisma";
 import { getNotificationQueue } from "../queues";

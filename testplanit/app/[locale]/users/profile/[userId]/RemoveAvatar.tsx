@@ -1,4 +1,4 @@
-import { User } from "@prisma/client";
+import type { User } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

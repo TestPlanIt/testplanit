@@ -1,5 +1,5 @@
 "use server";
-import type { TestRunCases } from "@prisma/client";
+import type { TestRunCases } from "~/zenstack/models";
 import { prisma } from "~/lib/prismaBase";
 
 // Define a type for the structure returned by the findMany query

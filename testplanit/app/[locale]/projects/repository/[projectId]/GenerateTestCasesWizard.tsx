@@ -56,7 +56,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,

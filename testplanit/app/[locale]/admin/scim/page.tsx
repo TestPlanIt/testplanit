@@ -63,7 +63,7 @@ import {
   previewFallbackDefaultChange,
 } from "~/app/actions/scimMappingActions";
 import { SCIM_DEFAULT_MAPPED_ACCESS_KEY } from "~/lib/scim/access/fallbackDefault";
-import type { Access } from "@prisma/client";
+import type { Access } from "~/zenstack/models";
 
 import { ConflictLogTable } from "./ConflictLogTable";
 import { MintDialog } from "./MintDialog";

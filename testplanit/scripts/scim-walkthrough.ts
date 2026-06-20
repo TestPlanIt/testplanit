@@ -30,7 +30,7 @@
  * worker process picking up the outbound webhook queue.
  */
 
-import { IdpName } from "@prisma/client";
+import { IdpName } from "~/zenstack/models";
 import { promises as fs } from "fs";
 
 import { prisma } from "~/lib/prisma";

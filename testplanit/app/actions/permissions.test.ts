@@ -1,4 +1,4 @@
-import { ApplicationArea, ProjectAccessType } from "@prisma/client";
+import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
 import type { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { checkUserPermission, getUserProjectPermissions } from "./permissions";

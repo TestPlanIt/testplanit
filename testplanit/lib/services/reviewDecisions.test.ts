@@ -30,7 +30,8 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Session } from "next-auth";
-import { ApplicationArea, type ReviewRequest } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import type { ReviewRequest } from "~/zenstack/models";
 
 import { prisma } from "~/lib/prisma";
 import { isIneligibleReviewerError } from "~/lib/utils/errors";

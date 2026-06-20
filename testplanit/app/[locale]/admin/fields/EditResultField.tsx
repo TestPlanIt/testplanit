@@ -12,7 +12,7 @@ import {
 } from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { FieldOptions } from "@prisma/client";
+import type { FieldOptions } from "~/zenstack/models";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { ExtendedResultFields } from "./resultFieldColumns";

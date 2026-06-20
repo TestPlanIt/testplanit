@@ -1,5 +1,5 @@
 "use client";
-import { Groups } from "@prisma/client";
+import type { Groups } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useUpdateGroups } from "~/lib/hooks";

@@ -1,4 +1,5 @@
-import { Prisma, type AuditAction, type ReviewRequest } from "@prisma/client";
+import type { AuditAction, ReviewRequest } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 import type { JSONContent } from "@tiptap/core";
 import type { Session } from "next-auth";
 

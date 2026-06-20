@@ -36,7 +36,7 @@ import { updateAuditContext } from "~/lib/auditContext";
 
 import { recomputeUserAccess } from "./recompute";
 
-import type { Access } from "@prisma/client";
+import type { Access } from "~/zenstack/models";
 
 interface TxLike {
   appConfig: { findUnique: ReturnType<typeof vi.fn> };

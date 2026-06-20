@@ -4,7 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CaseFields } from "@prisma/client";
+import type { CaseFields } from "~/zenstack/models";
 import { LayoutList } from "lucide-react";
 import React from "react";
 import { useFindManyCaseFields } from "~/lib/hooks";

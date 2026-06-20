@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { useUpdateStepSequenceMatch } from "~/lib/hooks/step-sequence-match";
 import { useFindManySteps } from "~/lib/hooks/steps";
-import type { RepositoryCaseSource } from "@prisma/client";
+import type { RepositoryCaseSource } from "~/zenstack/models";
 import type { StepFormField } from "@/[locale]/projects/repository/[projectId]/StepsForm";
 import StepsForm from "@/[locale]/projects/repository/[projectId]/StepsForm";
 import { emptyEditorContent } from "~/app/constants";

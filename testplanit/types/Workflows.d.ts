@@ -1,6 +1,6 @@
 // ~/types/Workflows.ts
 
-import { Workflows } from "@prisma/client";
+import type { Workflows } from "~/zenstack/models";
 
 interface DataRow {
   id: number;

@@ -1,5 +1,5 @@
 "use client";
-import { Status } from "@prisma/client";
+import type { Status } from "~/zenstack/models";
 import { useState } from "react";
 import { useUpdateStatus } from "~/lib/hooks";
 

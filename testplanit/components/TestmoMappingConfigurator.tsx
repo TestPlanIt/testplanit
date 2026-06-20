@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { WorkflowType } from "@prisma/client";
+import { WorkflowType } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { scopeDisplayData } from "~/app/constants";
@@ -39,7 +39,8 @@ import { AddResultFieldModal } from "~/app/[locale]/admin/fields/AddResultField"
 import { generateRandomPassword } from "~/utils/randomPassword";
 
 import DynamicIcon from "@/components/DynamicIcon";
-import { Access, ApplicationArea, type FieldOptions } from "@prisma/client";
+import { Access, ApplicationArea } from "~/zenstack/models";
+import type { FieldOptions } from "~/zenstack/models";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,

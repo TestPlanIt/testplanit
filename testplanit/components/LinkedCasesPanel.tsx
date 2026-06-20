@@ -31,11 +31,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  LinkType,
-  RepositoryCaseLink,
-  RepositoryCaseSource,
-} from "@prisma/client";
+import { LinkType, RepositoryCaseSource } from "~/zenstack/models";
+import type { RepositoryCaseLink } from "~/zenstack/models";
 import {
   Bot,
   Calendar,

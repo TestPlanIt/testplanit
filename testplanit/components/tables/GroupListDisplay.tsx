@@ -4,7 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Groups } from "@prisma/client";
+import type { Groups } from "~/zenstack/models";
 import { UserRoundCog, UsersRound, UsersRoundIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";

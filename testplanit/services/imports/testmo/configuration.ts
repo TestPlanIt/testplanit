@@ -1,4 +1,4 @@
-import type { Access } from "@prisma/client";
+import type { Access } from "~/zenstack/models";
 import { generateRandomPassword } from "~/utils/randomPassword";
 import type {
   TestmoConfigurationMappingConfig,

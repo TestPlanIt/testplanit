@@ -1,5 +1,5 @@
 import { Job, Worker } from "bullmq";
-import { WorkflowScope } from "@prisma/client";
+import { WorkflowScope } from "~/zenstack/models";
 import { runWithAuditContext } from "../lib/auditContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
 import {

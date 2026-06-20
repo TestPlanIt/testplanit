@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
 import {
   resolveEffectiveProjectRoleId,
   resolveEffectiveProjectRolesForUsers,

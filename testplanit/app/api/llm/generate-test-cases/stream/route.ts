@@ -3,7 +3,7 @@ import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
 import { prisma } from "@/lib/prisma";
-import { ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { IntegrationManager } from "~/lib/integrations/IntegrationManager";

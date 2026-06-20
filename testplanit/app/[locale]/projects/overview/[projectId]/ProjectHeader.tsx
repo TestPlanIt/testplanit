@@ -1,7 +1,7 @@
 import { DateFormatter } from "@/components/DateFormatter";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { CardDescription, CardTitle } from "@/components/ui/card";
-import { Projects } from "@prisma/client";
+import type { Projects } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import React from "react";
 

@@ -6,7 +6,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import { WorkflowScope } from "@prisma/client";
+import { WorkflowScope } from "~/zenstack/models";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getServerAuthSession } from "~/server/auth";

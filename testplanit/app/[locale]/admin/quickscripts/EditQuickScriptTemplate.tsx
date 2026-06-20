@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
-import { CaseExportTemplate } from "@prisma/client";
+import type { CaseExportTemplate } from "~/zenstack/models";
 import { useMemo, useRef, useState } from "react";
 import {
   useFindManyCaseExportTemplate,

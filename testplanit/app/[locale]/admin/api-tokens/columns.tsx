@@ -2,7 +2,7 @@ import { DateFormatter } from "@/components/DateFormatter";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ApiToken, User } from "@prisma/client";
+import type { ApiToken, User } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { Ban } from "lucide-react";
 import { useTranslations } from "next-intl";

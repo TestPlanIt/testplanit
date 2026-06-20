@@ -1,5 +1,6 @@
 "use client";
-import { IntegrationProvider, Issue } from "@prisma/client";
+import { IntegrationProvider } from "~/zenstack/models";
+import type { Issue } from "~/zenstack/models";
 import { useState } from "react";
 import { useFindUniqueIntegration, useUpdateIssue } from "~/lib/hooks";
 

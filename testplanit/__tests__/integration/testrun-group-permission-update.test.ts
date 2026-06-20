@@ -10,7 +10,8 @@
 //   cd testplanit && RUN_DB_INTEGRATION=1 pnpm test testrun-group-permission-update --run
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { PrismaClient, WorkflowScope } from "@prisma/client";
+import { WorkflowScope } from "~/zenstack/models";
+import { PrismaClient } from "@prisma/client";
 import { enhance } from "@zenstackhq/runtime";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";

@@ -1,4 +1,5 @@
-import { PrismaClient, TestRunType } from "@prisma/client";
+import { TestRunType } from "~/zenstack/models";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 

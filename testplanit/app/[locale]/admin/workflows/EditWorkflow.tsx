@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import { Projects, Workflows, WorkflowType } from "@prisma/client";
+import { WorkflowType } from "~/zenstack/models";
+import type { Projects, Workflows } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {

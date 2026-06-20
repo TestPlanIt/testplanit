@@ -6,7 +6,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AuditAction, AuditLog } from "@prisma/client";
+import { AuditAction } from "~/zenstack/models";
+import type { AuditLog } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { Cog, Eye } from "lucide-react";
 import { useTranslations } from "next-intl";

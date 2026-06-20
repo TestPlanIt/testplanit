@@ -1,4 +1,4 @@
-import type { Access } from "@prisma/client";
+import type { Access } from "~/zenstack/models";
 import type { Readable } from "node:stream";
 
 export type TestmoReadableSource = string | URL | Readable | (() => Readable);

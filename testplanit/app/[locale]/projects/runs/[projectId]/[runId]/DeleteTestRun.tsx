@@ -9,7 +9,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
-import { TestRuns } from "@prisma/client";
+import type { TestRuns } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";

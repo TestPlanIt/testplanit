@@ -1,4 +1,4 @@
-import { CaseFields, Projects } from "@prisma/client";
+import type { CaseFields, Projects } from "~/zenstack/models";
 import { format } from "date-fns";
 import Papa from "papaparse";
 import { useCallback, useState } from "react";

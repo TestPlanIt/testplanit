@@ -28,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ShareLinkEntityType } from "@prisma/client";
+import { ShareLinkEntityType } from "~/zenstack/models";
 import { format, isPast } from "date-fns";
 import {
   Ban,

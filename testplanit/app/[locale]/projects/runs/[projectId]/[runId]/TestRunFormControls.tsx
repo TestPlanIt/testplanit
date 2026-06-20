@@ -30,7 +30,7 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { Attachments, RepositoryCases, Tags } from "@prisma/client";
+import type { Attachments, RepositoryCases, Tags } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { IconName } from "~/types/globals";
 import { SelectedConfigurationInfo } from "./TestCasesSection";

@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
-import { ApplicationArea, RepositoryCaseSource } from "@prisma/client";
+import { ApplicationArea, RepositoryCaseSource } from "~/zenstack/models";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Loader2, Bot, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";

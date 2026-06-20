@@ -8,7 +8,7 @@
  */
 
 import { prisma as db } from "@/lib/prisma";
-import { IntegrationProvider, WorkflowScope } from "@prisma/client";
+import { IntegrationProvider, WorkflowScope } from "~/zenstack/models";
 import type { TemplateData } from "@/api/llm/generate-test-cases/shared";
 
 /** Folder the panel drops generated cases into (created on first use). */

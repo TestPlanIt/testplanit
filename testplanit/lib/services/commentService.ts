@@ -1,4 +1,4 @@
-import { NotificationType } from "@prisma/client";
+import { NotificationType } from "~/zenstack/models";
 import { JSONContent } from "@tiptap/core";
 import { extractMentionedUserIds } from "../utils/tiptapMentions";
 import { NotificationService } from "./notificationService";

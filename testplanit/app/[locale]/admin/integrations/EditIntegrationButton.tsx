@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Integration } from "@prisma/client";
+import type { Integration } from "~/zenstack/models";
 import { SquarePen } from "lucide-react";
 import { useTranslations } from "next-intl";
 

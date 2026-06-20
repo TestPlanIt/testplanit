@@ -5,13 +5,7 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Badge } from "@/components/ui/badge";
-import {
-  Attachments,
-  Color,
-  FieldIcon,
-  SessionVersions,
-  Workflows,
-} from "@prisma/client";
+import type { Attachments, Color, FieldIcon, SessionVersions, Workflows } from "~/zenstack/models";
 import { Minus, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";

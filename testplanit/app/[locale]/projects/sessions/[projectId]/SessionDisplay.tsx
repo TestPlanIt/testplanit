@@ -4,15 +4,7 @@ import { Loading } from "@/components/Loading";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Color,
-  Configurations,
-  FieldIcon,
-  Sessions,
-  Templates,
-  User,
-  Workflows,
-} from "@prisma/client";
+import type { Color, Configurations, FieldIcon, Sessions, Templates, User, Workflows } from "~/zenstack/models";
 import { CirclePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

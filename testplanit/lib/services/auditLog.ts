@@ -1,4 +1,4 @@
-import type { AuditAction } from "@prisma/client";
+import type { AuditAction } from "~/zenstack/models";
 import { getAuditContext, type AuditContext } from "~/lib/auditContext";
 import type { MultiTenantJobData } from "~/lib/multiTenantPrisma";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";

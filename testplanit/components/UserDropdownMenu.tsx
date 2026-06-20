@@ -1,4 +1,4 @@
-import { Locale, Theme } from "@prisma/client";
+import { Locale, Theme } from "~/zenstack/models";
 import {
   Accessibility,
   Check,

@@ -7,7 +7,7 @@
  * place — without it, a canAddEdit-only user could soft-delete by flipping
  * isDeleted via the model-route update.
  */
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

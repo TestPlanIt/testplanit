@@ -37,7 +37,7 @@ vi.mock("@prisma/client", () => ({
 }));
 
 // Import after mocking
-import { ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
 import {
   getBatchUserEffectiveProjectAccess,
   getUserEffectiveProjectAccess,

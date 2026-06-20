@@ -1,4 +1,5 @@
-import { ApplicationArea, PrismaClient, WorkflowScope } from "@prisma/client";
+import { ApplicationArea, WorkflowScope } from "~/zenstack/models";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import {
   SCIM_SYSTEM_USER_EMAIL,

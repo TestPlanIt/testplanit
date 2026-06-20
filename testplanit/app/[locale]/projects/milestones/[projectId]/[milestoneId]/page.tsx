@@ -29,7 +29,7 @@ import {
   CompleteSessionDialog,
 } from "@/projects/sessions/[projectId]/[sessionId]/CompleteSessionDialog";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,

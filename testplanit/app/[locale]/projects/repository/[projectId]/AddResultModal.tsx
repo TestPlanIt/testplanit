@@ -7,15 +7,8 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import {
-  ApplicationArea,
-  Attachments,
-  Color as PrismaColor,
-  SharedStepGroup as PrismaSharedStepGroup,
-  SharedStepItem as PrismaSharedStepItem,
-  Status as PrismaStatus,
-  Steps,
-} from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import type { Attachments, Color as PrismaColor, SharedStepGroup as PrismaSharedStepGroup, SharedStepItem as PrismaSharedStepItem, Status as PrismaStatus, Steps } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Bug,

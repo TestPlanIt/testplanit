@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Integration, ProjectIntegration } from "@prisma/client";
+import type { Integration, ProjectIntegration } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";

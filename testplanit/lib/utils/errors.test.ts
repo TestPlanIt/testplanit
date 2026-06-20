@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { ApplicationArea, Prisma } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 import {
   isUniqueConstraintError,
   isNotFoundError,

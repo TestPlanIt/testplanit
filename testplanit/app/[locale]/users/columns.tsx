@@ -1,7 +1,7 @@
 import { EmailCell } from "@/components/EmailDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
-import { User } from "@prisma/client";
+import type { User } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 

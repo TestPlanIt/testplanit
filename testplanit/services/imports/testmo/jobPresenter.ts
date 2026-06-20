@@ -1,4 +1,4 @@
-import type { TestmoImportDataset, TestmoImportJob } from "@prisma/client";
+import type { TestmoImportDataset, TestmoImportJob } from "~/zenstack/models";
 import type {
   TestmoAnalysisSummaryPayload,
   TestmoDatasetSummaryPayload,

@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { NotificationMode } from "@prisma/client";
+import { NotificationMode } from "~/zenstack/models";
 import { Bell, Megaphone, Send } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

@@ -1,6 +1,6 @@
 "use client";
 
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";

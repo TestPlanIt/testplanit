@@ -17,7 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
-import { Attachments, Tags } from "@prisma/client";
+import type { Attachments, Tags } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { CommentsSection } from "~/components/comments/CommentsSection";

@@ -1,7 +1,7 @@
 "use client";
 
 import { Form } from "@/components/ui/form";
-import { ConfigCategories } from "@prisma/client";
+import type { ConfigCategories } from "~/zenstack/models";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";

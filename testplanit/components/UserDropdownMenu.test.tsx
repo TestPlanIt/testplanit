@@ -1,11 +1,4 @@
-import {
-  DateFormat,
-  ItemsPerPage,
-  Locale,
-  NotificationMode,
-  Theme,
-  TimeFormat,
-} from "@prisma/client";
+import { DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat } from "~/zenstack/models";
 import userEvent from "@testing-library/user-event";
 import { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

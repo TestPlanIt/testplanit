@@ -69,12 +69,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import {
-  ApplicationArea,
-  Attachments,
-  RepositoryCases,
-  Tags,
-} from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import type { Attachments, RepositoryCases, Tags } from "~/zenstack/models";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { JSONContent } from "@tiptap/react";
 import {

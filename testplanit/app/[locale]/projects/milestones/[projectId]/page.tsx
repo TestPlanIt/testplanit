@@ -13,7 +13,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddMilestone } from "@/projects/milestones/[projectId]/AddMilestoneModal";
 import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";

@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ConfigCategories } from "@prisma/client";
+import type { ConfigCategories } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   ChevronDown,

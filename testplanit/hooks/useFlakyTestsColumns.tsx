@@ -6,7 +6,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RepositoryCaseSource } from "@prisma/client";
+import { RepositoryCaseSource } from "~/zenstack/models";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { useTranslations } from "next-intl";

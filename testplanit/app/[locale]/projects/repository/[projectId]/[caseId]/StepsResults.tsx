@@ -1,5 +1,5 @@
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { Steps as PrismaSteps } from "@prisma/client";
+import type { Steps as PrismaSteps } from "~/zenstack/models";
 import { Layers, SearchCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";

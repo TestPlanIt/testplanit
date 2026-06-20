@@ -1,13 +1,7 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import {
-  Access,
-  ApplicationArea,
-  Prisma,
-  PrismaClient,
-  WorkflowScope,
-  WorkflowType,
-  type TestmoImportJob,
-} from "@prisma/client";
+import { Access, ApplicationArea, WorkflowScope, WorkflowType } from "~/zenstack/models";
+import type { TestmoImportJob } from "~/zenstack/models";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { getSchema } from "@tiptap/core";
 import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";

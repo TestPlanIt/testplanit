@@ -1,4 +1,4 @@
-import type { Projects } from "@prisma/client";
+import type { Projects } from "~/zenstack/models";
 import { prisma as defaultPrisma } from "~/lib/prismaBase";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";

@@ -4,7 +4,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import { Color } from "@prisma/client";
+import type { Color } from "~/zenstack/models";
 import { Ellipsis } from "lucide-react";
 import React, { useState } from "react";
 import { useFindManyColor } from "~/lib/hooks";

@@ -15,7 +15,7 @@
  */
 
 import { prisma as db } from "@/lib/prisma";
-import { IntegrationProvider, ProjectAccessType } from "@prisma/client";
+import { IntegrationProvider, ProjectAccessType } from "~/zenstack/models";
 import { createHmac, timingSafeEqual } from "crypto";
 
 /** CORS headers shared by the Forge endpoints (mirrors `test-info`). */

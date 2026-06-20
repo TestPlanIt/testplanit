@@ -33,7 +33,8 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Prisma, SharedStepGroup, Steps as PrismaSteps } from "@prisma/client";
+import type { SharedStepGroup, Steps as PrismaSteps } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 import type { Editor } from "@tiptap/core";
 import {
   CircleSlash2,

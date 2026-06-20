@@ -15,7 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Configurations } from "@prisma/client";
+import type { Configurations } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   Boxes,

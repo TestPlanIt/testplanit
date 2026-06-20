@@ -1,5 +1,5 @@
 import { Job, Worker } from "bullmq";
-import { NotificationType } from "@prisma/client";
+import { NotificationType } from "~/zenstack/models";
 import { tipTapDoc } from "@testplanit/api";
 import { LlmManager } from "../lib/llm/services/llm-manager.service";
 import { PromptResolver } from "../lib/llm/services/prompt-resolver.service";

@@ -1,4 +1,4 @@
-import { AuditAction } from "@prisma/client";
+import { AuditAction } from "~/zenstack/models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { expectAuditRowComplete } from "../testing/auditAssertions";
 import {

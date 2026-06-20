@@ -8,7 +8,7 @@ import { prisma } from "~/lib/prisma";
 import { ACCESS_RANK, resolveEffectiveAccess } from "~/lib/scim/access/resolve";
 import { readScimFallbackDefault } from "~/lib/scim/access/fallbackDefault";
 import { getServerAuthSession } from "~/server/auth";
-import type { Access } from "@prisma/client";
+import type { Access } from "~/zenstack/models";
 import type { ScimAccessRecomputeJobData } from "~/workers/scimAccessRecomputeWorker";
 
 const groupIdSchema = z.number().int().positive();

@@ -1,4 +1,4 @@
-import type { AdapterType } from "@prisma/client";
+import type { AdapterType } from "~/zenstack/models";
 import { Prisma } from "@prisma/client";
 import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";

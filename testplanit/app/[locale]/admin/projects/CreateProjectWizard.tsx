@@ -2,7 +2,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Prisma, ProjectAccessType, WorkflowScope } from "@prisma/client";
+import { ProjectAccessType, WorkflowScope } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";

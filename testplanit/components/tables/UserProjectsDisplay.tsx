@@ -7,7 +7,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Projects } from "@prisma/client";
+import type { Projects } from "~/zenstack/models";
 import { BoxesIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";

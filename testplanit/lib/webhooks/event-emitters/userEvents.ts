@@ -1,4 +1,5 @@
-import type { Prisma, User } from "@prisma/client";
+import type { User } from "~/zenstack/models";
+import type { Prisma } from "@prisma/client";
 
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
 import { computeObjectDiff } from "~/lib/webhooks/diff";

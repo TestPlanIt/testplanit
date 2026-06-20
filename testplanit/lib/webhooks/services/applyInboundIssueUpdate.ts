@@ -1,4 +1,4 @@
-import type { AdapterType } from "@prisma/client";
+import type { AdapterType } from "~/zenstack/models";
 
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
 import { syncService } from "~/lib/integrations/services/SyncService";

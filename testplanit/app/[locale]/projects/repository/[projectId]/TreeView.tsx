@@ -11,7 +11,7 @@ import {
   PopoverAnchor,
   PopoverContent,
 } from "@/components/ui/popover";
-import type { RepositoryFolders } from "@prisma/client";
+import type { RepositoryFolders } from "~/zenstack/models";
 import {
   ArrowRightLeft,
   ChevronRight,

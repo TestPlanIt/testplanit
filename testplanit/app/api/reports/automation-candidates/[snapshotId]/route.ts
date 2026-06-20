@@ -20,7 +20,7 @@
  * already enforces project membership + isDeleted hiding.)
  */
 
-import { ApplicationArea, ProjectAccessType } from "@prisma/client";
+import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 

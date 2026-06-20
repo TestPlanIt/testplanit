@@ -24,7 +24,7 @@ import { hashToken } from "~/lib/api-tokens";
 import { prisma } from "~/lib/prisma";
 import { encrypt, decrypt } from "~/utils/encryption";
 import { SCIM_SYSTEM_USER_ID, SCIM_TOKEN_PREFIX } from "~/lib/scim/constants";
-import type { IdpName, ScimToken } from "@prisma/client";
+import type { IdpName, ScimToken } from "~/zenstack/models";
 
 const SCIM_TOKEN_BYTES = 32;
 

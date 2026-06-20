@@ -1,4 +1,4 @@
-import type { AuditAction, ReviewEntityType } from "@prisma/client";
+import type { AuditAction, ReviewEntityType } from "~/zenstack/models";
 import { enhance } from "@zenstackhq/runtime";
 import { NextRequestHandler } from "@zenstackhq/server/next";
 import { AsyncLocalStorage } from "async_hooks";

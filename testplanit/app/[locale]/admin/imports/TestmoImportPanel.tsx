@@ -24,7 +24,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { DurationDisplay } from "@/components/DurationDisplay";
-import { Access } from "@prisma/client";
+import { Access } from "~/zenstack/models";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";

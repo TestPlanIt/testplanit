@@ -1,4 +1,5 @@
-import { type Prisma, ReviewEntityType, WorkflowScope } from "@prisma/client";
+import { ReviewEntityType, WorkflowScope } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 
 import { ReviewGateError } from "~/lib/utils/errors";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";

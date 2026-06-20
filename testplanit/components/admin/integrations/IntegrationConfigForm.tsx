@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { IntegrationAuthType, IntegrationProvider } from "@prisma/client";
+import { IntegrationAuthType, IntegrationProvider } from "~/zenstack/models";
 import {
   AlertTriangle,
   Check,

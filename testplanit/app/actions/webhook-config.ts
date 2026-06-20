@@ -2,7 +2,7 @@
 
 import { createHmac, randomBytes } from "node:crypto";
 
-import type { AdapterType } from "@prisma/client";
+import type { AdapterType } from "~/zenstack/models";
 
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";

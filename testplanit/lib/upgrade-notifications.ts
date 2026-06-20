@@ -16,7 +16,7 @@
  * }
  */
 
-import { Access } from "@prisma/client";
+import { Access } from "~/zenstack/models";
 
 export interface UpgradeNotification {
   title: string;

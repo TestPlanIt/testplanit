@@ -1,4 +1,5 @@
-import type { EndpointHealth, Prisma, PrismaClient } from "@prisma/client";
+import type { EndpointHealth } from "~/zenstack/models";
+import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
 import { prisma as defaultPrisma } from "~/lib/prisma";

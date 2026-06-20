@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { CaseExportTemplate } from "@prisma/client";
+import type { CaseExportTemplate } from "~/zenstack/models";
 import { CirclePlus, ScrollText, Search, Trash2, Edit } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

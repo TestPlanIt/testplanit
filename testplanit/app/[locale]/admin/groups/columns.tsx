@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Groups } from "@prisma/client";
+import type { Groups } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

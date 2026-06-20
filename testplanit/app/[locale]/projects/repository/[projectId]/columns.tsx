@@ -52,22 +52,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Attachments,
-  CaseFields,
-  Color,
-  FieldIcon,
-  Issue,
-  Projects,
-  RepositoryCases,
-  RepositoryCaseSource,
-  RepositoryFolders,
-  Status,
-  Steps,
-  Tags,
-  User,
-  Workflows,
-} from "@prisma/client";
+import { RepositoryCaseSource } from "~/zenstack/models";
+import type { Attachments, CaseFields, Color, FieldIcon, Issue, Projects, RepositoryCases, RepositoryFolders, Status, Steps, Tags, User, Workflows } from "~/zenstack/models";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import {
   Activity,

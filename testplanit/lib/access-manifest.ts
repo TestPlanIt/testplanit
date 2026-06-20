@@ -20,7 +20,7 @@
  * can also be explicitly invalidated on permission mutations.
  */
 
-import type { ApplicationArea } from "@prisma/client";
+import type { ApplicationArea } from "~/zenstack/models";
 import { prisma } from "./prisma";
 import valkeyConnection from "./valkey";
 

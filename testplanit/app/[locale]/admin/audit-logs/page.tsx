@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AuditAction } from "@prisma/client";
+import { AuditAction } from "~/zenstack/models";
 import { endOfDay, format, startOfDay, subDays } from "date-fns";
 import { Download, ShieldCheck, Users } from "lucide-react";
 import type { Session } from "next-auth";

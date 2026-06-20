@@ -1,5 +1,5 @@
 "use client";
-import { Templates } from "@prisma/client";
+import type { Templates } from "~/zenstack/models";
 import { useState } from "react";
 import {
   useFindFirstTemplates,

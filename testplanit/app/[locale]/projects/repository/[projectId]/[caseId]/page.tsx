@@ -56,7 +56,9 @@ import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { VersionSelect } from "@/components/VersionSelect";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { ApplicationArea, Attachments, Prisma } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import type { Attachments } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 import {
   AlertCircle,
   ArrowLeft,

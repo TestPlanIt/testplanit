@@ -18,7 +18,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import type { TestCaseParameter } from "@prisma/client";
+import type { TestCaseParameter } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { SquareStack } from "lucide-react";
 import { useTranslations } from "next-intl";

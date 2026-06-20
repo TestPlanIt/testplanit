@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import type { DowngradedUser } from "~/app/actions/scimMappingActions";
-import type { AppConfig } from "@prisma/client";
+import type { AppConfig } from "~/zenstack/models";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({

@@ -193,15 +193,7 @@ vi.mock("@/components/issues/UnifiedIssueManager", () => ({
 }));
 
 // Now import everything else after the mocks
-import {
-  DateFormat,
-  ItemsPerPage,
-  Locale,
-  NotificationMode,
-  Theme,
-  TimeFormat,
-  WorkflowScope,
-} from "@prisma/client";
+import { DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat, WorkflowScope } from "~/zenstack/models";
 import {
   act,
   fireEvent,

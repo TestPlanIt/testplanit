@@ -1,4 +1,4 @@
-import type { AdapterType } from "@prisma/client";
+import type { AdapterType } from "~/zenstack/models";
 
 /** A successfully parsed inbound webhook payload. */
 export interface ParsedWebhookPayload {

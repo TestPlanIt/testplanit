@@ -1,5 +1,5 @@
 "use client";
-import { Workflows } from "@prisma/client";
+import type { Workflows } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useUpdateWorkflows } from "~/lib/hooks";

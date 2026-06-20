@@ -1,4 +1,4 @@
-import { AppConfig } from "@prisma/client";
+import type { AppConfig } from "~/zenstack/models";
 
 export interface AppConfigRow extends AppConfig {
   id: string;

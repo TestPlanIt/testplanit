@@ -1,4 +1,4 @@
-import { NotificationType } from "@prisma/client";
+import { NotificationType } from "~/zenstack/models";
 import { render, screen } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";

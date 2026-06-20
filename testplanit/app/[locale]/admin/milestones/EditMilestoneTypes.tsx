@@ -1,5 +1,5 @@
 "use client";
-import { MilestoneTypes } from "@prisma/client";
+import type { MilestoneTypes } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {

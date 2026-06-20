@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { decrypt, isEncrypted } from "@/utils/encryption";
-import { IntegrationProvider } from "@prisma/client";
+import { IntegrationProvider } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";

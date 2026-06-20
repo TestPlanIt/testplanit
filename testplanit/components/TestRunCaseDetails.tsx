@@ -27,7 +27,8 @@ import {
 import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal";
 import FieldValueRenderer from "@/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
-import { Attachments, Prisma, Status } from "@prisma/client";
+import type { Attachments, Status } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Check,

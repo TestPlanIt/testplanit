@@ -29,7 +29,7 @@ import {
   useDeleteIntegration,
   useFindManyIntegration,
 } from "@/lib/hooks/integration";
-import { Integration } from "@prisma/client";
+import type { Integration } from "~/zenstack/models";
 import { CirclePlus, Plug, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

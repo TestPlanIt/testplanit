@@ -1,4 +1,4 @@
-import { ShareLinkMode } from "@prisma/client";
+import { ShareLinkMode } from "~/zenstack/models";
 
 /**
  * Filters sensitive data from report results for public and password-protected shares

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Access } from "@prisma/client";
+import { Access } from "~/zenstack/models";
 import { AlertCircle, ArrowLeft, Save } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

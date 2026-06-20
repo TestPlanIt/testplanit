@@ -1,6 +1,6 @@
 "use server";
 
-import { ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
 import { prisma } from "~/lib/prisma";
 
 export interface UserEffectiveAccess {

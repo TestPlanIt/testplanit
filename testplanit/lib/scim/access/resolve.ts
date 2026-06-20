@@ -1,4 +1,4 @@
-import type { Access } from "@prisma/client";
+import type { Access } from "~/zenstack/models";
 
 export const ACCESS_RANK: Record<Access, number> = {
   NONE: 0,

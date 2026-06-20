@@ -1,6 +1,6 @@
 import { LinkFavicon } from "@/components/LinkFavicon";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { Attachments } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
 import { ExternalLink, File } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";

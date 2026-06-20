@@ -1,4 +1,4 @@
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 
 /**
  * Comprehensive permission definitions for all ApplicationAreas

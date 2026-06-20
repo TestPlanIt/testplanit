@@ -1,6 +1,6 @@
 "use client";
 
-import { CaseExportTemplate } from "@prisma/client";
+import type { CaseExportTemplate } from "~/zenstack/models";
 import { useState } from "react";
 import { useUpdateCaseExportTemplate } from "~/lib/hooks";
 

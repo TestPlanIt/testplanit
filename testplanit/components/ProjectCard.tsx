@@ -5,7 +5,7 @@ import React from "react";
 import { DateFormatter } from "@/components/DateFormatter";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { Projects } from "@prisma/client";
+import type { Projects } from "~/zenstack/models";
 
 import { MemberList } from "@/components/MemberList";
 import {

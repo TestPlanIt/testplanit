@@ -91,8 +91,8 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { VersionSelect } from "@/components/VersionSelect";
-import type { Attachments, Sessions } from "@prisma/client";
-import { ApplicationArea } from "@prisma/client";
+import type { Attachments, Sessions } from "~/zenstack/models";
+import { ApplicationArea } from "~/zenstack/models";
 import type { JSONContent } from "@tiptap/react";
 import {
   ArrowLeft,

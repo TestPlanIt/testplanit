@@ -16,7 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { RepositoryCaseSource } from "@prisma/client";
+import { RepositoryCaseSource } from "~/zenstack/models";
 import { AlertCircle, XIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

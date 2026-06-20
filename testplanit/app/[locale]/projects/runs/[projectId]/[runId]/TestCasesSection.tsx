@@ -1,5 +1,5 @@
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
-import { ApplicationArea, RepositoryCaseSource } from "@prisma/client";
+import { ApplicationArea, RepositoryCaseSource } from "~/zenstack/models";
 import { CirclePlay, Combine } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";

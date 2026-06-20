@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  Groups as PrismaGroups,
-  ProjectAccessType,
-  Roles,
-} from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
+import type { Groups as PrismaGroups, Roles } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import {
   Control,

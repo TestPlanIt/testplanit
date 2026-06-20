@@ -28,14 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import {
-  DateFormat,
-  ItemsPerPage,
-  Locale,
-  NotificationMode,
-  Theme,
-  TimeFormat,
-} from "@prisma/client";
+import { DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat } from "~/zenstack/models";
 import { Accessibility, Circle, Moon, Sun, SunMoon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

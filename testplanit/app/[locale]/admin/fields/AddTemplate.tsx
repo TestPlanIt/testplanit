@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import { Projects } from "@prisma/client";
+import type { Projects } from "~/zenstack/models";
 import { useEffect, useState } from "react";
 import {
   useCreateManyTemplateCaseAssignment,

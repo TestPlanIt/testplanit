@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { User } from "@prisma/client";
+import type { User } from "~/zenstack/models";
 import { UserRoundIcon } from "lucide-react";
 import React from "react";
 import { useFindManyUser } from "~/lib/hooks";

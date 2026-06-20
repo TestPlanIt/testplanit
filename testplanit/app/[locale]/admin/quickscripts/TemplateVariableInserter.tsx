@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CaseFields } from "@prisma/client";
+import type { CaseFields } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "~/components/ui/badge";

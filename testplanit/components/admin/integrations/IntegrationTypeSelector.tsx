@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { IntegrationProvider } from "@prisma/client";
+import { IntegrationProvider } from "~/zenstack/models";
 import { Link } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";

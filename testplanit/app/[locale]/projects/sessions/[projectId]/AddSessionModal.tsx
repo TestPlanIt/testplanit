@@ -43,8 +43,8 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import type { Attachments } from "@prisma/client";
-import { ApplicationArea } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
+import { ApplicationArea } from "~/zenstack/models";
 import { AlertTriangle, Asterisk, Combine, LayoutList } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";

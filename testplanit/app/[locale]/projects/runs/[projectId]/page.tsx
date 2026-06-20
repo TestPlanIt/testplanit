@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CirclePlus, Maximize2, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";

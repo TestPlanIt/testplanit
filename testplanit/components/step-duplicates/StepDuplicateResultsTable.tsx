@@ -19,7 +19,7 @@ import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { type StepDuplicateRow, getColumns } from "./stepDuplicateColumns";
 import { StepDuplicateConversionDialog } from "./StepDuplicateConversionDialog";
-import type { RepositoryCaseSource } from "@prisma/client";
+import type { RepositoryCaseSource } from "~/zenstack/models";
 
 interface MatchMember {
   id: number;

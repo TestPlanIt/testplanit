@@ -1,7 +1,7 @@
 import { TemplateListDisplay } from "@/components/tables/TemplateListDisplay";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { CaseFields, Color, FieldIcon, FieldOptions } from "@prisma/client";
+import type { CaseFields, Color, FieldIcon, FieldOptions } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

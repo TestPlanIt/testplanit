@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RepositoryCaseSource } from "@prisma/client";
+import { RepositoryCaseSource } from "~/zenstack/models";
 import { ExternalLink, LinkIcon } from "lucide-react";
 import React from "react";
 import { Link } from "~/lib/navigation";

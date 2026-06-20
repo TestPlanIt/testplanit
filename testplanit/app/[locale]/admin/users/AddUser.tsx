@@ -60,7 +60,7 @@ import {
   type PasswordPolicy,
 } from "@/components/PasswordStrengthIndicator";
 import { Switch } from "@/components/ui/switch";
-import { Roles } from "@prisma/client";
+import type { Roles } from "~/zenstack/models";
 
 interface AddUserProps {
   open: boolean;

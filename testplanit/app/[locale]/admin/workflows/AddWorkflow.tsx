@@ -10,7 +10,8 @@ import {
   useUpdateManyWorkflows,
 } from "~/lib/hooks";
 
-import { Projects, WorkflowType } from "@prisma/client";
+import { WorkflowType } from "~/zenstack/models";
+import type { Projects } from "~/zenstack/models";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";

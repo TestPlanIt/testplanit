@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Access, SsoProviderType } from "@prisma/client";
+import { Access, SsoProviderType } from "~/zenstack/models";
 import {
   Edit,
   KeyRound,

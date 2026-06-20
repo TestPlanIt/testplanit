@@ -1,5 +1,5 @@
 "use client";
-import { ResultFields } from "@prisma/client";
+import type { ResultFields } from "~/zenstack/models";
 import { useState } from "react";
 import {
   useFindFirstResultFields,

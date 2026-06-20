@@ -3,7 +3,7 @@
 import { Avatar } from "@/components/Avatar";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { useQuery } from "@tanstack/react-query";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { Drama } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";

@@ -23,12 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  LlmFeatureConfig,
-  LlmIntegration,
-  LlmProviderConfig,
-  ProjectLlmIntegration,
-} from "@prisma/client";
+import type { LlmFeatureConfig, LlmIntegration, LlmProviderConfig, ProjectLlmIntegration } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {

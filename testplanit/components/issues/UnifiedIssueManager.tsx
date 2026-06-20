@@ -2,7 +2,7 @@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { IntegrationProvider } from "@prisma/client";
+import { IntegrationProvider } from "~/zenstack/models";
 import { AlertCircle, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useFindFirstProjects } from "~/lib/hooks";

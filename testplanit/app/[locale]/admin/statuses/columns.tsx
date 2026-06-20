@@ -2,7 +2,7 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Status } from "@prisma/client";
+import type { Status } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

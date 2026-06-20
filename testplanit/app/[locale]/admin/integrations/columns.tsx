@@ -1,7 +1,7 @@
 import { DateFormatter } from "@/components/DateFormatter";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
-import { Integration } from "@prisma/client";
+import type { Integration } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
 import { MantisBTIcon } from "@/components/shared/mantisbt-icon";

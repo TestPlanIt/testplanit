@@ -1,11 +1,8 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
 import type { Prisma } from "@prisma/client";
-import {
-  GroupProjectPermission,
-  ProjectAccessType,
-  UserProjectPermission,
-} from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
+import type { GroupProjectPermission, UserProjectPermission } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import {

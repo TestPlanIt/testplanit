@@ -43,7 +43,8 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { ApplicationArea, Attachments, TestRunType } from "@prisma/client";
+import { ApplicationArea, TestRunType } from "~/zenstack/models";
+import type { Attachments } from "~/zenstack/models";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { Combine } from "lucide-react";
 import { useSession } from "next-auth/react";

@@ -1,6 +1,6 @@
 "use client";
 
-import { WorkflowScope } from "@prisma/client";
+import { WorkflowScope } from "~/zenstack/models";
 import { useMemo } from "react";
 
 import { useFindManyReviewRequest, useFindManyWorkflows } from "~/lib/hooks";

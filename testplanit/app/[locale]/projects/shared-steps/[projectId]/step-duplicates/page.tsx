@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { StepDuplicateResultsTable } from "@/components/step-duplicates/StepDuplicateResultsTable";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { ArrowLeft, GitCompare, Loader2, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";

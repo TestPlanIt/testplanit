@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Integration } from "@prisma/client";
+import type { Integration } from "~/zenstack/models";
 import { RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";

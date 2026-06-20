@@ -1,4 +1,5 @@
-import { Prisma, PrismaClient, WorkflowScope } from "@prisma/client";
+import { WorkflowScope } from "~/zenstack/models";
+import { Prisma, PrismaClient } from "@prisma/client";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 
 export const toNumberValue = (value: unknown): number | null => {

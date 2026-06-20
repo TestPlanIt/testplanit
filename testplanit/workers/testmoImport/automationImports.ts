@@ -1,9 +1,5 @@
-import {
-  JUnitResultType,
-  Prisma,
-  PrismaClient,
-  WorkflowScope,
-} from "@prisma/client";
+import { JUnitResultType, WorkflowScope } from "~/zenstack/models";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { createTestCaseVersionInTransaction } from "../../lib/services/testCaseVersionService.js";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 import {

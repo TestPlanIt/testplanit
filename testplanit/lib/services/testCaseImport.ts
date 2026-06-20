@@ -1,8 +1,4 @@
-import {
-  ParameterType,
-  RepositoryCaseSource,
-  WorkflowScope,
-} from "@prisma/client";
+import { ParameterType, RepositoryCaseSource, WorkflowScope } from "~/zenstack/models";
 import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";

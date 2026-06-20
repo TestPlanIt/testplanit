@@ -1,6 +1,6 @@
 "use server";
 
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";

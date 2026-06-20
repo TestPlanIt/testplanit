@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import {
-  Access,
-  DateFormat,
-  ItemsPerPage,
-  Locale,
-  NotificationMode,
-  Theme,
-  TimeFormat,
-} from "@prisma/client";
+import { Access, DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat } from "~/zenstack/models";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 import { invalidateSessionUserCache } from "~/lib/session-cache";

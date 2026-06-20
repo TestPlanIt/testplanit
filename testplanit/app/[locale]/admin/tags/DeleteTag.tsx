@@ -1,5 +1,5 @@
 "use client";
-import { Tags } from "@prisma/client";
+import type { Tags } from "~/zenstack/models";
 import { useState } from "react";
 import { useUpdateTags } from "~/lib/hooks";
 

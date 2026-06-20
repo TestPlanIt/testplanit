@@ -11,7 +11,7 @@
  * FK reroute order follows the "Recommended Transaction Order" in 49-RESEARCH.md.
  */
 
-import { LinkType } from "@prisma/client";
+import { LinkType } from "~/zenstack/models";
 import { prisma } from "~/lib/prismaBase";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 

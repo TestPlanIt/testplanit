@@ -1,4 +1,5 @@
-import { ApplicationArea, Prisma } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 import type {
   TestmoConfigurationMappingConfig,
   TestmoConfigVariantMappingConfig,

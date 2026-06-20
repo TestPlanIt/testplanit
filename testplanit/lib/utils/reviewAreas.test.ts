@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import {
   REVIEW_RELEVANT_AREAS,
   areaForEntityType,

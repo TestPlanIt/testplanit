@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { ReviewRequest, ReviewStatus } from "@prisma/client";
+import type { ReviewRequest, ReviewStatus } from "~/zenstack/models";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowRight,

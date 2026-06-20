@@ -14,7 +14,7 @@
  * 5 minutes per user, matching the pre-existing throttle.
  */
 
-import type { AuthMethod, User, Access, UserPreferences } from "@prisma/client";
+import type { AuthMethod, User, Access, UserPreferences } from "~/zenstack/models";
 import { prisma } from "./prisma";
 import valkeyConnection from "./valkey";
 

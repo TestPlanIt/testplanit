@@ -1,4 +1,4 @@
-import { NotificationMode } from "@prisma/client";
+import { NotificationMode } from "~/zenstack/models";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";

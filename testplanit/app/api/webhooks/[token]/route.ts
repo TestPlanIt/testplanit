@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { AdapterType } from "@prisma/client";
+import type { AdapterType } from "~/zenstack/models";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 

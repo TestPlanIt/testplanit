@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RepositoryCaseSource } from "@prisma/client";
+import { RepositoryCaseSource } from "~/zenstack/models";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { Layers } from "lucide-react";

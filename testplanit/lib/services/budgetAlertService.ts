@@ -1,4 +1,4 @@
-import { NotificationType } from "@prisma/client";
+import { NotificationType } from "~/zenstack/models";
 import {
   getBillingPeriodKey,
   getBillingPeriodStart,

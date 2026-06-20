@@ -1,5 +1,5 @@
 import { enhance } from "@zenstackhq/runtime";
-import { RepositoryCaseSource } from "@prisma/client";
+import { RepositoryCaseSource } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";

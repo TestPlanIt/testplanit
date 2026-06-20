@@ -4,7 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { FieldIcon, MilestoneTypes } from "@prisma/client";
+import type { FieldIcon, MilestoneTypes } from "~/zenstack/models";
 import { Milestone } from "lucide-react";
 import React from "react";
 import { useFindManyMilestoneTypes } from "~/lib/hooks";

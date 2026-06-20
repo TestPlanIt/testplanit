@@ -29,11 +29,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  ApplicationArea,
-  CaseFields as PrismaCaseField,
-  Prisma,
-} from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import type { CaseFields as PrismaCaseField } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 import { isEqual } from "lodash";
 import {
   AlertCircle,

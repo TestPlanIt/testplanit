@@ -1,6 +1,6 @@
 "use client";
 
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { useParams } from "next/navigation";
 import ProjectRepository from "./ProjectRepository";
 

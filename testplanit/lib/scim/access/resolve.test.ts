@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { Access } from "@prisma/client";
+import type { Access } from "~/zenstack/models";
 
 import { ACCESS_RANK, resolveEffectiveAccess } from "./resolve";
 

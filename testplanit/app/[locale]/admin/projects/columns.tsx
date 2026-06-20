@@ -12,13 +12,7 @@ import { UserListDisplay } from "@/components/tables/UserListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import {
-  Integration,
-  MilestoneTypesAssignment,
-  ProjectIntegration,
-  Projects,
-  User,
-} from "@prisma/client";
+import type { Integration, MilestoneTypesAssignment, ProjectIntegration, Projects, User } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { Bug, GitBranchIcon, SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

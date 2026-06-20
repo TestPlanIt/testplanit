@@ -1,6 +1,7 @@
 "use client";
 
-import { ProjectAccessType, Roles, User } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
+import type { Roles, User } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import {

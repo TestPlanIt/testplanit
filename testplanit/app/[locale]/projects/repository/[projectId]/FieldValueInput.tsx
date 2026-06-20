@@ -35,11 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import {
-  CaseFields as PrismaCaseField,
-  Tags as PrismaTag,
-  Workflows as PrismaWorkflow,
-} from "@prisma/client";
+import type { CaseFields as PrismaCaseField, Tags as PrismaTag, Workflows as PrismaWorkflow } from "~/zenstack/models";
 import { format } from "date-fns";
 import { CalendarDays } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";

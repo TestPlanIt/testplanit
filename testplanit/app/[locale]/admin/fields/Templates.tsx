@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Templates } from "@prisma/client";
+import type { Templates } from "~/zenstack/models";
 import { CirclePlus, LayoutTemplate } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

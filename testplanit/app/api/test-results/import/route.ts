@@ -12,12 +12,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import {
-  JUnitResultType,
-  RepositoryCaseSource,
-  TestRunType,
-  WorkflowScope,
-} from "@prisma/client";
+import { JUnitResultType, RepositoryCaseSource, TestRunType, WorkflowScope } from "~/zenstack/models";
 import { NextRequest } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import {

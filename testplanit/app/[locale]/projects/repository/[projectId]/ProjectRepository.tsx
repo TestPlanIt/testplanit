@@ -23,7 +23,7 @@ import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { DragTargetProvider } from "~/hooks/useDragTargetKind";
 import { Toggle } from "@/components/ui/toggle";
 import { ViewSelector } from "@/components/ViewSelector";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { useQuery } from "@tanstack/react-query";
 import {
   Bot,

@@ -57,7 +57,8 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { ApplicationArea, Prisma } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import { Prisma } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Asterisk, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";

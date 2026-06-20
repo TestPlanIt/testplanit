@@ -1,6 +1,7 @@
 "use server";
 
-import { ApplicationArea, ProjectAccessType, Roles } from "@prisma/client";
+import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
+import type { Roles } from "~/zenstack/models";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";

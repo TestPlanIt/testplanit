@@ -1,5 +1,5 @@
 "use client";
-import { Roles } from "@prisma/client";
+import type { Roles } from "~/zenstack/models";
 import { useState } from "react";
 import {
   useFindFirstRoles,

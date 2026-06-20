@@ -20,7 +20,7 @@ import React, { useCallback, useEffect, useState } from "react";
 
 import { FieldIconPicker } from "@/components/FieldIconPicker";
 import { CSS } from "@dnd-kit/utilities";
-import { FieldOptions } from "@prisma/client";
+import type { FieldOptions } from "~/zenstack/models";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

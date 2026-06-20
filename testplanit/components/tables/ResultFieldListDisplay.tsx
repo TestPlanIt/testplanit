@@ -4,7 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ResultFields } from "@prisma/client";
+import type { ResultFields } from "~/zenstack/models";
 import { SquareCheck } from "lucide-react";
 import React from "react";
 import { useFindManyResultFields } from "~/lib/hooks";

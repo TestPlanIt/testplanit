@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { SsoProviderType } from "@prisma/client";
+import { SsoProviderType } from "~/zenstack/models";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { useFindFirstRegistrationSettings } from "~/lib/hooks";

@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Attachments } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
 import { Paperclip } from "lucide-react";
 import React, { useState } from "react";
 

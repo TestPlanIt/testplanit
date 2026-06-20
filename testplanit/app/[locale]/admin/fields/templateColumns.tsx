@@ -3,7 +3,7 @@ import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { ResultFieldListDisplay } from "@/components/tables/ResultFieldListDisplay";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Templates } from "@prisma/client";
+import type { Templates } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

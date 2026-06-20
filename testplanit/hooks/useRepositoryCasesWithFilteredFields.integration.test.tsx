@@ -15,7 +15,7 @@
  * - Validate pagination totalCount matches filtered results
  */
 
-import type { RepositoryCases } from "@prisma/client";
+import type { RepositoryCases } from "~/zenstack/models";
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useFindManyRepositoryCasesFiltered } from "./useRepositoryCasesWithFilteredFields";

@@ -1,4 +1,4 @@
-import { SsoProviderType } from "@prisma/client";
+import { SsoProviderType } from "~/zenstack/models";
 import { db } from "~/server/db";
 
 export interface GoogleOAuthConfig {

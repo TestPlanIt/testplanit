@@ -23,7 +23,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { ApplicationArea, Configurations } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import type { Configurations } from "~/zenstack/models";
 import {
   Bot,
   CheckCircle,

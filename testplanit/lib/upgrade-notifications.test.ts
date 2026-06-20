@@ -1,4 +1,4 @@
-import { Access } from "@prisma/client";
+import { Access } from "~/zenstack/models";
 import { describe, expect, it } from "vitest";
 import {
   getUpgradeNotificationsBetweenVersions,

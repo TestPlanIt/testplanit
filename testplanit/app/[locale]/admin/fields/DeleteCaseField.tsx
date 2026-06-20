@@ -1,5 +1,5 @@
 "use client";
-import { CaseFields } from "@prisma/client";
+import type { CaseFields } from "~/zenstack/models";
 import { useState } from "react";
 import {
   useFindFirstCaseFields,

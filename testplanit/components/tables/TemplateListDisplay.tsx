@@ -4,7 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Templates } from "@prisma/client";
+import type { Templates } from "~/zenstack/models";
 import { LayoutTemplate } from "lucide-react";
 import React from "react";
 import { useFindManyTemplates } from "~/lib/hooks";

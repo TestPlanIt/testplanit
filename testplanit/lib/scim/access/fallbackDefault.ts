@@ -1,4 +1,5 @@
-import type { Access, Prisma } from "@prisma/client";
+import type { Access } from "~/zenstack/models";
+import type { Prisma } from "@prisma/client";
 
 export const SCIM_DEFAULT_MAPPED_ACCESS_KEY = "scim.defaultMappedAccess";
 
