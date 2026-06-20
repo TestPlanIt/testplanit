@@ -5,7 +5,6 @@ import {
 } from "@prisma/client";
 import { z } from "zod/v4";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
-import { prisma } from "~/lib/prisma";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";

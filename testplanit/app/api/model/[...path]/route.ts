@@ -1,5 +1,4 @@
 import type { AuditAction, ReviewEntityType } from "@prisma/client";
-import { enhance } from "@zenstackhq/runtime";
 import { NextRequestHandler } from "@zenstackhq/server/next";
 import { AsyncLocalStorage } from "async_hooks";
 import { NextRequest, NextResponse } from "next/server";
@@ -1045,7 +1044,8 @@ async function innerHandler(
         // authenticatedUserId and are recorded as __system__ downstream.
         userId: authenticatedUserId ?? parentAuditCtx.userId ?? undefined,
         userName: authenticatedUserName ?? parentAuditCtx.userName ?? undefined,
-        userEmail: authenticatedUserEmail ?? parentAuditCtx.userEmail ?? undefined,
+        userEmail:
+          authenticatedUserEmail ?? parentAuditCtx.userEmail ?? undefined,
         // Session-result subject (see above): names the session on its result + result-field rows.
         subjectEntityName:
           sessionResultSubjectName ?? parentAuditCtx.subjectEntityName,

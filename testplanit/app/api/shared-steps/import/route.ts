@@ -5,7 +5,6 @@ import Papa from "papaparse";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
-import { db } from "~/server/db";
 import { syncSharedStepToElasticsearch } from "~/services/sharedStepSearch";
 import {
   convertTextToTipTapJSON,

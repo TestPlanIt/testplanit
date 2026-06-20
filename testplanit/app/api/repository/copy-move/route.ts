@@ -7,7 +7,6 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { getCopyMoveQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
-import { db } from "~/server/db";
 import { submitSchema } from "./schemas";
 
 // Wrapped with withAuditContext so
