@@ -188,6 +188,19 @@ export interface AuditedConfigModel {
 export const AUDITED_CONFIG_MODELS: AuditedConfigModel[] = [];
 
 /**
+ * Access-control changes (user access tier, project/group permission grants &
+ * revokes) are recorded by the CDC substrate as the sole source — the trigger on
+ * User / UserProjectPermission / GroupProjectPermission captures each change and
+ * the correlation layer humanizes the FK ids to names. The app-layer semantic
+ * events (ROLE_CHANGED / PERMISSION_GRANT / PERMISSION_REVOKE) emitted by the
+ * lib/prisma.ts `$extends` hooks would double-audit the same change, so they are
+ * decommissioned here exactly like AUDITED_CONFIG_MODELS above: this set gates
+ * the hook emissions and is intentionally empty. Re-add an entityType (the model
+ * name) to restore its semantic event.
+ */
+export const SEMANTIC_ACCESS_AUDIT_MODELS: ReadonlySet<string> = new Set();
+
+/**
  * Non-config entity accessors the ZenStack RPC route (`app/api/model`) audits
  * canonically on the dominant admin/app mutation path. Each accessor MUST be a
  * real Prisma client field (camelCase model name) — a singular/plural typo here

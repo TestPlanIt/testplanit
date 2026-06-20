@@ -40,7 +40,11 @@
  * ────────────────────────────────────────────────────────────────────────────────────────────────
  */
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
-import { ROLLUP_MAP, resolveTwoHop, type TwoHopRow } from "~/lib/audit/rollupMap";
+import {
+  ROLLUP_MAP,
+  resolveTwoHop,
+  type TwoHopRow,
+} from "~/lib/audit/rollupMap";
 import {
   createHumanizeCache,
   createPrismaLookup,
@@ -165,6 +169,22 @@ const COMMENT_PARENT_FKS: Array<{ fk: string; entityType: string }> = [
   { fk: "reviewRequestId", entityType: "ReviewRequest" },
 ];
 
+/**
+ * Access/permission join tables attribute to themselves (not in ROLLUP_MAP) but
+ * carry no name column, and the granting routes set no GUC subject — so without
+ * help their AuditLog rows have a blank list-view name. With the app-layer
+ * semantic events decommissioned (SEMANTIC_ACCESS_AUDIT_MODELS), the CDC row is
+ * the sole source, so derive a readable label from the FK display names the
+ * humanizer already resolved in the diff (e.g. "UAT3 Sweep User → Demo Project"),
+ * and lift the projectId out of the project FK so the row surfaces in the
+ * project-scoped view. No lookup — everything is read from the humanized diff.
+ */
+const ACCESS_LABEL_COLS: Record<string, string[]> = {
+  UserProjectPermission: ["userId", "projectId"],
+  GroupProjectPermission: ["groupId", "projectId"],
+  GroupAssignment: ["userId", "groupId"],
+};
+
 /** Pull a column's value (new ?? old) from a changed_cols diff. */
 function colValue(row: RawDclRow, col: string): number | string | null {
   const entry = row.changed_cols?.[col];
@@ -175,7 +195,7 @@ function colValue(row: RawDclRow, col: string): number | string | null {
 
 /** Resolve a Comment row to its parent entity (entityType + entityId), or null if no parent FK is present. */
 function resolveCommentParent(
-  row: RawDclRow,
+  row: RawDclRow
 ): { entityType: string; entityId: string } | null {
   for (const { fk, entityType } of COMMENT_PARENT_FKS) {
     const v = colValue(row, fk);
@@ -197,10 +217,11 @@ export async function applyRollupMap(
   twoHopQuery: (
     hopTable: string,
     hopFkCol: string,
-    fkValues: Array<number | string>,
-  ) => Promise<TwoHopRow[]>,
+    fkValues: Array<number | string>
+  ) => Promise<TwoHopRow[]>
 ): Promise<Array<{ row: RawDclRow; entityType: string; entityId: string }>> {
-  const out: Array<{ row: RawDclRow; entityType: string; entityId: string }> = [];
+  const out: Array<{ row: RawDclRow; entityType: string; entityId: string }> =
+    [];
 
   // Pre-resolve two-hop owners for the whole group in one query per distinct fk value set.
   const twoHopOwners = new Map<string, Map<number | string, number | string>>();
@@ -210,7 +231,7 @@ export async function applyRollupMap(
       .filter((t) => {
         const cfg = ROLLUP_MAP[t];
         return cfg && cfg.twoHop === true;
-      }),
+      })
   );
   for (const table of twoHopTables) {
     const cfg = ROLLUP_MAP[table];
@@ -231,7 +252,11 @@ export async function applyRollupMap(
     .map((r) => extractFk(r, "sessionResultsId"))
     .filter((v): v is number | string => v !== null);
   if (rfvSessionFks.length > 0) {
-    for (const r of await twoHopQuery("SessionResults", "sessionId", rfvSessionFks)) {
+    for (const r of await twoHopQuery(
+      "SessionResults",
+      "sessionId",
+      rfvSessionFks
+    )) {
       rfvSessionOwners.set(r.id, r.ownerId);
     }
   }
@@ -240,7 +265,11 @@ export async function applyRollupMap(
     if (row.table === "Comment") {
       // Roll a comment up to the entity it is attached to (resolved name comes later).
       const parent = resolveCommentParent(row);
-      out.push(parent ? { row, ...parent } : { row, entityType: row.table, entityId: row.pk });
+      out.push(
+        parent
+          ? { row, ...parent }
+          : { row, entityType: row.table, entityId: row.pk }
+      );
       continue;
     }
     if (row.table === "ResultFieldValues") {
@@ -259,7 +288,11 @@ export async function applyRollupMap(
       }
       const caseId = extractFk(row, "testCaseId");
       if (caseId != null) {
-        out.push({ row, entityType: "RepositoryCases", entityId: String(caseId) });
+        out.push({
+          row,
+          entityType: "RepositoryCases",
+          entityId: String(caseId),
+        });
         continue;
       }
       // else: testRunResultsId (or none) — fall through to the ROLLUP_MAP two-hop below.
@@ -336,7 +369,7 @@ export function deriveAction(row: RawDclRow): AuditActionLiteral {
  */
 export async function writeAuditLogRows(
   tx: RawTxClient,
-  materialized: MaterializedRow[],
+  materialized: MaterializedRow[]
 ): Promise<number> {
   let written = 0;
   for (const m of materialized) {
@@ -380,9 +413,18 @@ export async function writeAuditLogRows(
 
 /** The minimal raw-client surface this module needs (prismaBase satisfies it). */
 interface RawTxClient {
-  $queryRaw: <T = unknown>(query: TemplateStringsArray, ...values: unknown[]) => Promise<T>;
-  $executeRaw: (query: TemplateStringsArray, ...values: unknown[]) => Promise<number>;
-  $queryRawUnsafe: <T = unknown>(query: string, ...values: unknown[]) => Promise<T>;
+  $queryRaw: <T = unknown>(
+    query: TemplateStringsArray,
+    ...values: unknown[]
+  ) => Promise<T>;
+  $executeRaw: (
+    query: TemplateStringsArray,
+    ...values: unknown[]
+  ) => Promise<number>;
+  $queryRawUnsafe: <T = unknown>(
+    query: string,
+    ...values: unknown[]
+  ) => Promise<T>;
 }
 interface RawPrismaClient extends RawTxClient {
   $transaction: <T>(fn: (tx: RawTxClient) => Promise<T>) => Promise<T>;
@@ -395,12 +437,14 @@ interface RawPrismaClient extends RawTxClient {
  */
 export async function pollDataChangeLogsOnce(
   prisma: RawPrismaClient,
-  opts: PollOnceOptions = {},
+  opts: PollOnceOptions = {}
 ): Promise<PollOnceResult> {
   const batchSize = opts.batchSize ?? DEFAULT_BATCH_SIZE;
   const markProcessed = opts.markProcessed ?? true;
 
-  const cache = createHumanizeCache(createPrismaLookup(prisma), { ttlMs: HUMANIZE_TTL_MS });
+  const cache = createHumanizeCache(createPrismaLookup(prisma), {
+    ttlMs: HUMANIZE_TTL_MS,
+  });
 
   // The batched two-hop lookup, bound to this transaction's client (set inside the tx below).
   return prisma.$transaction(async (tx) => {
@@ -419,13 +463,16 @@ export async function pollDataChangeLogsOnce(
     const twoHopQuery = async (
       hopTable: string,
       hopFkCol: string,
-      fkValues: Array<number | string>,
+      fkValues: Array<number | string>
     ): Promise<TwoHopRow[]> => {
       if (fkValues.length === 0) return [];
       // hopTable / hopFkCol come from the static ROLLUP_MAP (not row data) — safe to interpolate;
       // the fk VALUES are bound as a parameter ($1) via $queryRawUnsafe (no injection surface).
       const sql = `SELECT id, "${hopFkCol}" AS "ownerId" FROM "${hopTable}" WHERE id = ANY($1::int[])`;
-      return tx.$queryRawUnsafe<TwoHopRow[]>(sql, fkValues.map((v) => Number(v)));
+      return tx.$queryRawUnsafe<TwoHopRow[]>(
+        sql,
+        fkValues.map((v) => Number(v))
+      );
     };
 
     const groups = groupByOperationId(rows);
@@ -456,7 +503,11 @@ export async function pollDataChangeLogsOnce(
             const key = `${row.table}|${a}|${b}`;
             const action = deriveAction(row);
             const bucket =
-              action === "CREATE" ? creates : action === "DELETE" ? deletes : null;
+              action === "CREATE"
+                ? creates
+                : action === "DELETE"
+                  ? deletes
+                  : null;
             if (!bucket) continue;
             const list = bucket.get(key);
             if (list) list.push(row);
@@ -529,7 +580,7 @@ export async function pollDataChangeLogsOnce(
           opId &&
           kept.some(
             ({ entityType, entityId }) =>
-              !ownerSnapshot.has(`${entityType}:${entityId}`),
+              !ownerSnapshot.has(`${entityType}:${entityId}`)
           )
         ) {
           const backfillRows = await tx.$queryRaw<RawDclRow[]>`
@@ -540,7 +591,10 @@ export async function pollDataChangeLogsOnce(
           // that holds the name is often a child carrying the GUC subject (e.g. a TestRunResults row
           // holds the run name), whose owner is TestRuns:<runId> — NOT TestRunResults:<pk>. Keying by
           // the raw (table,pk) would never match a sibling step-result that looks up TestRuns:<runId>.
-          const backfillRolled = await applyRollupMap(backfillRows, twoHopQuery);
+          const backfillRolled = await applyRollupMap(
+            backfillRows,
+            twoHopQuery
+          );
           for (const { row, entityType, entityId } of backfillRolled) {
             const key = `${entityType}:${entityId}`;
             if (
@@ -576,7 +630,32 @@ export async function pollDataChangeLogsOnce(
           // value (root rows, or children carrying the GUC subject) first, else the owner's.
           let userName = row.actor_name;
           let entityName = row.entity_name ?? owner?.entityName ?? null;
-          const projectId = row.project_id ?? owner?.projectId ?? null;
+          let projectId = row.project_id ?? owner?.projectId ?? null;
+
+          // Nameless access/permission rows (sole-sourced from CDC): build a
+          // readable label + project scope from the humanized FK names already
+          // resolved in `changes` — no lookup, all read from the diff.
+          const accessCols = ACCESS_LABEL_COLS[row.table];
+          if (accessCols && entityName == null) {
+            const parts: string[] = [];
+            for (const col of accessCols) {
+              const e = changes[col] as
+                | {
+                    newName?: unknown;
+                    oldName?: unknown;
+                    new?: unknown;
+                    old?: unknown;
+                  }
+                | undefined;
+              const label = e?.newName ?? e?.oldName;
+              if (label != null) parts.push(String(label));
+              if (projectId == null && col === "projectId") {
+                const raw = e?.new ?? e?.old;
+                if (raw != null) projectId = String(raw);
+              }
+            }
+            if (parts.length) entityName = parts.join(" → ");
+          }
 
           // Comment is the one exception that needs a lookup: its row carries the
           // creatorId (the actor) and the parent FK (the attached entity) but not
@@ -589,7 +668,11 @@ export async function pollDataChangeLogsOnce(
               userName =
                 (await cache.resolve("User", "name", creatorId)) ?? userName;
             }
-            const parentName = await cache.resolve(entityType, "name", entityId);
+            const parentName = await cache.resolve(
+              entityType,
+              "name",
+              entityId
+            );
             if (parentName) entityName = parentName;
           }
 
@@ -619,7 +702,10 @@ export async function pollDataChangeLogsOnce(
         // Per-group isolation (T-14-05-04): a malformed diff in one group must not wedge the batch.
         // The group's source rows stay processed=false (we never add them to `ids` below) and are
         // retried on the next poll once the underlying issue clears.
-        console.error("[correlation] group materialization failed, skipping group:", err);
+        console.error(
+          "[correlation] group materialization failed, skipping group:",
+          err
+        );
       }
     }
 
@@ -652,7 +738,7 @@ export async function pollDataChangeLogsOnce(
 export async function pollDataChangeLogs(
   prisma: RawPrismaClient,
   runningRef: { running: boolean },
-  opts: { batchSize?: number; pollIntervalMs?: number } = {},
+  opts: { batchSize?: number; pollIntervalMs?: number } = {}
 ): Promise<void> {
   const batchSize = opts.batchSize ?? DEFAULT_BATCH_SIZE;
   const pollIntervalMs = opts.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
