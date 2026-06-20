@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-import { PrismaClient } from "@prisma/client";
+
 import { parse } from "csv-parse/sync";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import { readFileSync } from "fs";
 import { performance } from "perf_hooks";
 
-const prisma = new PrismaClient();
+const prisma = createRawDbClient();
 
 interface TestFolderData {
   folder_id: number;

@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+
 import { createHmac } from "node:crypto";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { expect, test } from "../../fixtures/index";
 import {
@@ -120,7 +121,7 @@ test.describe("Inbound body-cap boundary at 5 MiB exactly (I-05)", () => {
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Cap Boundary ${uniqueId}`);
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
   });
 
   test.afterAll(async () => {

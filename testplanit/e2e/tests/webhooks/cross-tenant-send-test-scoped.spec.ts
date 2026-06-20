@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+
 import type { BrowserContext } from "@playwright/test";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { expect, test } from "../../fixtures/index";
 
@@ -63,7 +64,7 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
   let bOnlyCtx: BrowserContext;
 
   test.beforeAll(async ({ api, browser, baseURL }) => {
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
     projectAId = await api.createProject(`E2E K-03 Project A ${uniqueId}`);
     projectBId = await api.createProject(`E2E K-03 Project B ${uniqueId}`);
 

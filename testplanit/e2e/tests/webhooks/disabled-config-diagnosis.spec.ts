@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+
 
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   seedDeliveries,
   seedOutboundConfig,
@@ -51,7 +52,7 @@ test.describe("Webhook DISABLED diagnosis surface — badge + tooltip + activity
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Disabled Diagnosis ${uniqueId}`);
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
 
     const seeded = await seedOutboundConfig(prisma, {
       projectId,

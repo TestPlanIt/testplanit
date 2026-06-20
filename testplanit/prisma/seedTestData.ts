@@ -1,7 +1,8 @@
 import { TestRunType } from "~/zenstack/models";
-import { PrismaClient } from "@prisma/client";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
-const prisma = new PrismaClient();
+
+const prisma = createRawDbClient();
 
 /**
  * Seeds test data for E2E tests including:

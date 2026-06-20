@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+
+const prisma = createRawDbClient();
 
 async function setupExtensions() {
   console.log("Setting up PostgreSQL extensions...");

@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 /**
  * Inbound Webhook Body Cap E2E (Phase 3, plan 03-08)
@@ -54,7 +55,7 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
     });
 
     await test.step("Resolve the webhook config id from the database", async () => {
-      const prisma = new PrismaClient();
+      const prisma = createRawDbClient();
       try {
         const config = await prisma.webhookConfig.findFirst({
           where: { token: configToken!, direction: "INBOUND" },
@@ -95,7 +96,7 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
       expect(response.status()).toBe(413);
     });
 
-    const prisma = new PrismaClient();
+    const prisma = createRawDbClient();
     try {
       const deliveries = await prisma.webhookDelivery.findMany({
         where: { webhookConfigId: configId! },

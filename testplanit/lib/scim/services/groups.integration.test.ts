@@ -21,8 +21,9 @@
  * without disturbing existing rows.
  */
 
-import { PrismaClient } from "@prisma/client";
+
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import {
   SCIM_SCHEMAS,
@@ -45,7 +46,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = new PrismaClient();
+const prisma = createRawDbClient();
 
 const PREFIX = `scimit-groups-${Date.now()}`;
 let counter = 0;

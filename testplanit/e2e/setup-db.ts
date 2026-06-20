@@ -12,10 +12,11 @@
  * Run with: pnpm test:e2e:setup-db
  */
 
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
 
-const prisma = new PrismaClient();
+import bcrypt from "bcrypt";
+import { createRawDbClient } from "~/lib/rawDbClient";
+
+const prisma = createRawDbClient();
 
 // E2E Test user credentials
 const E2E_ADMIN_EMAIL = "admin@example.com";

@@ -18,12 +18,12 @@
  *   pnpm tsx scripts/cleanup-duplicate-owner-datasets.ts --apply  # mutate
  */
 
-import { PrismaClient } from "@prisma/client";
+
 
 // Bare PrismaClient (not the lib/prisma.ts singleton) — that singleton
 // pulls in Elasticsearch sync, audit, and webhook emitter side-effects
 // at import time, which hangs a one-off CLI script.
-const prisma = new PrismaClient();
+const prisma = createRawDbClient();
 
 const APPLY = process.argv.includes("--apply");
 

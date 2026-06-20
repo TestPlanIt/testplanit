@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+
+const prisma = createRawDbClient();
 
 async function migrateIntegrationProjects() {
   console.log("Starting IntegrationProject migration...");

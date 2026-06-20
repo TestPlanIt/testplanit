@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+
 import { createHmac } from "node:crypto";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { expect, test } from "../../fixtures/index";
 
@@ -39,7 +40,7 @@ test.describe("Webhook deliveries — inbound row shows replay-not-supported ban
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E Inbound Banner ${uniqueId}`);
     await api.setupProjectIssueIntegration(projectId, "GITHUB");
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
   });
 
   test.afterAll(async () => {

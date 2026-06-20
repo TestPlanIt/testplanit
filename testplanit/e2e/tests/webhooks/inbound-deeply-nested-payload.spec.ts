@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+
 import { createHmac } from "node:crypto";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { expect, test } from "../../fixtures/index";
 import {
@@ -56,7 +57,7 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
   test.beforeAll(async ({ api, adminUserId: ai }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Deep Nested ${uniqueId}`);
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
     adminUserId = ai;
   });
 

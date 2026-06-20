@@ -1,7 +1,8 @@
 #!/usr/bin/env tsx
 
-import { PrismaClient } from "@prisma/client";
+
 import {
+import { createRawDbClient } from "~/lib/rawDbClient";
   getElasticsearchClient,
   REPOSITORY_CASE_INDEX,
 } from "../services/elasticsearchService";
@@ -10,7 +11,7 @@ import {
   syncProjectCasesToElasticsearch,
 } from "../services/repositoryCaseSync";
 
-const prisma = new PrismaClient();
+const prisma = createRawDbClient();
 
 async function deleteExistingIndex(): Promise<void> {
   const client = getElasticsearchClient();

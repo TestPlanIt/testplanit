@@ -37,7 +37,8 @@
  */
 
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { PrismaClient } from "@prisma/client";
+import { createRawDbClient } from "~/lib/rawDbClient";
+
 
 import { hashToken } from "~/lib/api-tokens";
 import {
@@ -58,7 +59,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = new PrismaClient();
+const prisma = createRawDbClient();
 
 describeIntegration("SCIM tokens service (live DB)", () => {
   let adminUserId: string;

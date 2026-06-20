@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+
 
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   startStubServer,
   type StubServerHandle,
@@ -41,7 +42,7 @@ test.describe("Webhook delivery replay — single outbound", () => {
     // First attempt fails (500) → seeds the failed row; subsequent requests
     // (the replay) succeed with 200.
     stub = await startStubServer({ failNTimes: 1 });
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
   });
 
   test.afterAll(async () => {

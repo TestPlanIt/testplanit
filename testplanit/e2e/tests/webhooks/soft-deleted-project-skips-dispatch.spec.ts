@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+
 
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   seedOutboundConfig,
   softDeleteProject,
@@ -50,7 +51,7 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Soft Delete ${uniqueId}`);
     stub = await startStubServer(); // 200 by default — must NEVER receive a hit
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
 
     const seededConfig = await seedOutboundConfig(prisma, {
       projectId,

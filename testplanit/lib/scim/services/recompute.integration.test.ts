@@ -27,8 +27,9 @@
  * prefix without disturbing existing rows.
  */
 
-import { PrismaClient } from "@prisma/client";
+
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { recomputeUserAccess, readScimFallbackDefault } from "./recompute";
 import { SCIM_DEFAULT_MAPPED_ACCESS_KEY } from "../access/fallbackDefault";
@@ -38,7 +39,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = new PrismaClient();
+const prisma = createRawDbClient();
 
 const PREFIX = `scimit-recompute-${Date.now()}`;
 let counter = 0;

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
-import { PrismaClient } from "@prisma/client";
+
 
 import { expect, test } from "../../fixtures/index";
 import { seedOutboundConfig } from "../../fixtures/webhooks-seed";
@@ -55,7 +56,7 @@ test.describe("Webhook deliveries tab — large dataset performance (N-03)", () 
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Perf Deliveries ${uniqueId}`);
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
 
     const seeded = await seedOutboundConfig(prisma, {
       projectId,

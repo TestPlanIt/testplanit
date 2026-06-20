@@ -1,5 +1,6 @@
 import { ApplicationArea, WorkflowScope } from "~/zenstack/models";
-import { PrismaClient } from "@prisma/client";
+import { createRawDbClient } from "~/lib/rawDbClient";
+
 import bcrypt from "bcrypt";
 import {
   SCIM_SYSTEM_USER_EMAIL,
@@ -11,7 +12,7 @@ import { seedFieldIcons } from "./seedFieldIcons";
 import { seedDefaultPromptConfig } from "./seedPromptConfig";
 import { seedTestData } from "./seedTestData";
 
-export const prisma = new PrismaClient();
+export const prisma = createRawDbClient();
 
 // Define default permissions for roles
 const adminPermissions = {

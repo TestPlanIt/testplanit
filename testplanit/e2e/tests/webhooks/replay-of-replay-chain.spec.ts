@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+
 
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   seedOutboundConfig,
   seedReplayChain,
@@ -47,7 +48,7 @@ test.describe("Replay-of-replay chain integrity (L-03)", () => {
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Replay Chain ${uniqueId}`);
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
     const seededConfig = await seedOutboundConfig(prisma, {
       projectId,
       url: "https://example.com/L03/replay-chain",

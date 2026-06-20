@@ -1,7 +1,8 @@
 import fs from "node:fs";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import path from "node:path";
 
-import { PrismaClient } from "@prisma/client";
+
 
 import { expect, test } from "../../fixtures/index";
 import {
@@ -133,7 +134,7 @@ test.describe("Webhook admin surface — Spanish (es-ES) i18n key coverage (F-01
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E i18n ES ${uniqueId}`);
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
 
     // Seed one outbound config in DISABLED health so the re-enable button +
     // its AlertDialog become reachable without driving the auto-disable

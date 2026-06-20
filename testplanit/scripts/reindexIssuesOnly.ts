@@ -1,9 +1,10 @@
 #!/usr/bin/env tsx
 
-import { PrismaClient } from "@prisma/client";
-import { syncProjectIssuesToElasticsearch } from "../services/issueSearch";
 
-const prisma = new PrismaClient();
+import { syncProjectIssuesToElasticsearch } from "../services/issueSearch";
+import { createRawDbClient } from "~/lib/rawDbClient";
+
+const prisma = createRawDbClient();
 
 async function reindexIssues() {
   console.log("Reindexing all issues...");

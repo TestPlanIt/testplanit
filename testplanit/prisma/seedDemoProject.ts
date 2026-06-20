@@ -1,7 +1,8 @@
 import { TestRunType } from "~/zenstack/models";
-import { PrismaClient } from "@prisma/client";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
-const prisma = new PrismaClient();
+
+const prisma = createRawDbClient();
 
 const DAY_MS = 86400000;
 const daysAgo = (n: number) => new Date(Date.now() - n * DAY_MS);

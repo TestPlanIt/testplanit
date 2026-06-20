@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+
 
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   startStubServer,
   type StubServerHandle,
@@ -38,7 +39,7 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E Outbound Webhook ${uniqueId}`);
     stub = await startStubServer();
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
   });
 
   test.afterAll(async () => {

@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+
 import { createHmac } from "node:crypto";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import { expect, test } from "../../fixtures/index";
 
 /**
@@ -122,7 +123,7 @@ test.describe("GitHub inbound webhook — admin form + raw-POST coverage", () =>
 
     // Rejected requests must not persist a "signature-mismatch"-shaped
     // delivery row — the route returns 401 before the service is invoked.
-    const prisma = new PrismaClient();
+    const prisma = createRawDbClient();
     try {
       await test.step("Verify no signature-mismatch WebhookDelivery row was written", async () => {
         const config = await prisma.webhookConfig.findFirst({
@@ -165,7 +166,7 @@ test.describe("GitHub inbound webhook — admin form + raw-POST coverage", () =>
       expect(response.status()).toBe(200);
     });
 
-    const prisma = new PrismaClient();
+    const prisma = createRawDbClient();
     try {
       await test.step("Verify a WebhookDelivery row was written with error='no_handler'", async () => {
         const config = await prisma.webhookConfig.findFirst({

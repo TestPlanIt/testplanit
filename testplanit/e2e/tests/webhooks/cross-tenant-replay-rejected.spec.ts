@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+
 import type { BrowserContext } from "@playwright/test";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { expect, test } from "../../fixtures/index";
 import {
@@ -70,7 +71,7 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
   let bOnlyCtx: BrowserContext;
 
   test.beforeAll(async ({ api, browser, baseURL }) => {
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
     projectAId = await api.createProject(`E2E K-02 Project A ${uniqueId}`);
     projectBId = await api.createProject(`E2E K-02 Project B ${uniqueId}`);
 

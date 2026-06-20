@@ -20,9 +20,9 @@
  *   pnpm scim:check-group-dupes
  */
 
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+
+const prisma = createRawDbClient();
 
 async function main(): Promise<void> {
   const rows = await prisma.$queryRaw<

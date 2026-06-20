@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+
 
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import { seedOutboundConfig } from "../../fixtures/webhooks-seed";
 
 /**
@@ -38,7 +39,7 @@ test.describe("Webhook deliveries tab empty state — copy + Reset filters CTA (
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Empty Deliveries ${uniqueId}`);
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
     // Seed an outbound config so the deliveries tab renders the
     // "no matches" empty-state (with Reset filters CTA), NOT the
     // "no webhooks configured" empty-state. The two branches are

@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+
 import { createHmac } from "node:crypto";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { expect, test } from "../../fixtures/index";
 import {
@@ -43,7 +44,7 @@ test.describe("Webhook secret with special characters round-trips end-to-end (L-
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Secret Special ${uniqueId}`);
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
   });
 
   test.afterAll(async () => {

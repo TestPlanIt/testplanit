@@ -33,8 +33,9 @@
 // `feedback_soft_delete`); never use deleteMany / hard delete.
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import { WorkflowScope } from "~/zenstack/models";
-import { PrismaClient } from "@prisma/client";
+
 import { enhance } from "@zenstackhq/runtime";
 
 // Live-DB gate (matches lib/services/iterationFanOut.integration.test.ts).
@@ -45,7 +46,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = new PrismaClient();
+const prisma = createRawDbClient();
 
 // Unique suffix isolates this run from any concurrent / prior test fixture.
 const RUN_TAG = `pf1-03-${Date.now()}`;

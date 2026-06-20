@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+
+const prisma = createRawDbClient();
 
 /**
  * Seeds comprehensive test execution data covering all dimension combinations

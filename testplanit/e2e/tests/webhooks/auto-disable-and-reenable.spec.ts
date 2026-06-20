@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+
 
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   startStubServer,
   type StubServerHandle,
@@ -53,7 +54,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E Auto Disable ${uniqueId}`);
     stub = await startStubServer(); // 200 by default — we never want HTTP fired while DISABLED
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
   });
 
   test.afterAll(async () => {

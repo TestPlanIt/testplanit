@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-import { PrismaClient } from "@prisma/client";
-import { performance } from "perf_hooks";
 
-const prisma = new PrismaClient();
+import { performance } from "perf_hooks";
+import { createRawDbClient } from "~/lib/rawDbClient";
+
+const prisma = createRawDbClient();
 
 interface TreeViewBenchmarkResult {
   projectId: number;

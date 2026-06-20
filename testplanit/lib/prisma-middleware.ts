@@ -1,4 +1,5 @@
 import { encrypt } from "@/utils/encryption";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import { syncIssueToElasticsearch } from "../services/issueSearch";
 import {
   syncChildMilestonesToElasticsearch,
@@ -618,7 +619,7 @@ export function elasticsearchSyncMiddleware() {
  */
 async function reindexProjectEntities(projectId: number): Promise<void> {
   const { PrismaClient } = await import("@prisma/client");
-  const prisma = new PrismaClient();
+  const prisma = createRawDbClient();
 
   try {
     // Get all repository cases in the project and sync them
@@ -696,7 +697,7 @@ async function reindexProjectEntities(projectId: number): Promise<void> {
  */
 async function reindexEntitiesWithWorkflow(workflowId: number): Promise<void> {
   const { PrismaClient } = await import("@prisma/client");
-  const prisma = new PrismaClient();
+  const prisma = createRawDbClient();
 
   try {
     // Repository cases with this state
@@ -740,7 +741,7 @@ async function reindexEntitiesWithConfiguration(
   configId: number
 ): Promise<void> {
   const { PrismaClient } = await import("@prisma/client");
-  const prisma = new PrismaClient();
+  const prisma = createRawDbClient();
 
   try {
     // Test runs with this configuration
@@ -772,7 +773,7 @@ async function reindexEntitiesWithConfiguration(
  */
 async function reindexEntitiesWithTemplate(templateId: number): Promise<void> {
   const { PrismaClient } = await import("@prisma/client");
-  const prisma = new PrismaClient();
+  const prisma = createRawDbClient();
 
   try {
     // Repository cases with this template
@@ -804,7 +805,7 @@ async function reindexEntitiesWithTemplate(templateId: number): Promise<void> {
  */
 async function reindexMilestonesWithType(typeId: number): Promise<void> {
   const { PrismaClient } = await import("@prisma/client");
-  const prisma = new PrismaClient();
+  const prisma = createRawDbClient();
 
   try {
     const milestones = await prisma.milestones.findMany({
@@ -825,7 +826,7 @@ async function reindexMilestonesWithType(typeId: number): Promise<void> {
  */
 async function reindexEntitiesWithUser(userId: string): Promise<void> {
   const { PrismaClient } = await import("@prisma/client");
-  const prisma = new PrismaClient();
+  const prisma = createRawDbClient();
 
   try {
     // Repository cases created by this user
@@ -909,7 +910,7 @@ async function reindexEntitiesWithUser(userId: string): Promise<void> {
  */
 async function reindexCasesInFolder(folderId: number): Promise<void> {
   const { PrismaClient } = await import("@prisma/client");
-  const prisma = new PrismaClient();
+  const prisma = createRawDbClient();
 
   try {
     const cases = await prisma.repositoryCases.findMany({

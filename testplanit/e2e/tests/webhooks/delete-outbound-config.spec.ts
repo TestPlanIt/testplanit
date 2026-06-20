@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+
 
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   seedDeliveries,
   seedOutboundConfig,
@@ -50,7 +51,7 @@ test.describe("Webhook outbound config delete — card disappears + no future fa
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Delete Outbound ${uniqueId}`);
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
 
     const seeded = await seedOutboundConfig(prisma, {
       projectId,

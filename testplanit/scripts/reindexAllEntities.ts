@@ -1,7 +1,8 @@
 #!/usr/bin/env tsx
 
-import { PrismaClient } from "@prisma/client";
+
 import { syncProjectIssuesToElasticsearch } from "../services/issueSearch";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import { syncProjectMilestonesToElasticsearch } from "../services/milestoneSearch";
 import { syncAllProjectsToElasticsearch } from "../services/projectSearch";
 import {
@@ -17,7 +18,7 @@ import {
   getElasticsearchClient,
 } from "../services/unifiedElasticsearchService";
 
-const prisma = new PrismaClient();
+const prisma = createRawDbClient();
 
 async function deleteAllIndices(): Promise<void> {
   const client = getElasticsearchClient();

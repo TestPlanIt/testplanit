@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+
 
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   seedDeliveries,
   seedInboundConfig,
@@ -54,7 +55,7 @@ test.describe("Webhook bulk-replay discovery — outbound-only count via filter 
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Bulk Discovery ${uniqueId}`);
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
 
     // Seed outbound config + 5 failed delivery rows. Each OUTBOUND seed
     // produces a paired WebhookOutboxEvent so the replay service can locate

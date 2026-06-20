@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+
 import { expect, test } from "../../fixtures";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import { getProjectWorkflowIds } from "../reviews/helpers";
 
 /**
@@ -17,7 +18,7 @@ test.describe("Milestone Export API", () => {
   let prisma: PrismaClient;
 
   test.beforeAll(() => {
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
   });
 
   test.afterAll(async () => {

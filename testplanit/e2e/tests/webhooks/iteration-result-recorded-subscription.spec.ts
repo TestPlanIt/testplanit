@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+
 
 import { materializeIterations } from "~/lib/services/iterationFanOut";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import { expect, test } from "../../fixtures/index";
 import {
   startStubServer,
@@ -50,7 +51,7 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E INT-04 ${uniqueId}`);
     stub = await startStubServer();
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
 
     // Seed a parameterized case + 2-iteration run inside a single
     // ZenStack-bypassing transaction. We use raw prisma here because the

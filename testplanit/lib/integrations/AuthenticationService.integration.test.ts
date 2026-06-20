@@ -15,7 +15,8 @@
 // cascades its UserIntegrationAuth rows (onDelete: Cascade).
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { PrismaClient } from "@prisma/client";
+import { createRawDbClient } from "~/lib/rawDbClient";
+
 import { AuthenticationService } from "./AuthenticationService";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
@@ -23,7 +24,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = new PrismaClient();
+const prisma = createRawDbClient();
 
 describeIntegration("AuthenticationService.storeUserAuth (live DB)", () => {
   let userId: string;

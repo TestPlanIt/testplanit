@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+
 import { createHash, createHmac } from "node:crypto";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { expect, test } from "../../fixtures/index";
 import {
@@ -58,7 +59,7 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
     // active issue integration; spec configures GitHub.
     await api.setupProjectIssueIntegration(projectId, "GITHUB");
     stub = await startStubServer(); // always 200 — replays succeed
-    prisma = new PrismaClient();
+    prisma = createRawDbClient();
   });
 
   test.afterAll(async () => {
