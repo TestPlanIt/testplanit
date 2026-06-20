@@ -25,14 +25,25 @@ const describeDb = RUN_INTEGRATION && HAS_DB ? describe : describe.skip;
 const humanizeMod = "~/lib/audit/humanize";
 
 // Structural shape of the not-yet-shipped module the assertions read. Real types ship in 14-04.
-type LookupFn = (table: string, field: string, id: number | string) => Promise<string | null>;
+type LookupFn = (
+  table: string,
+  field: string,
+  id: number | string
+) => Promise<string | null>;
 type HumanizeCache = {
   // resolve(table, field, id) returns the display name, hitting `lookup` only on a cache miss.
-  resolve: (table: string, field: string, id: number | string) => Promise<string | null>;
+  resolve: (
+    table: string,
+    field: string,
+    id: number | string
+  ) => Promise<string | null>;
 };
 type HumanizeModule = {
   // createHumanizeCache(lookup, { ttlMs }) → an in-memory TTL cache that calls `lookup` on miss.
-  createHumanizeCache: (lookup: LookupFn, opts: { ttlMs: number }) => HumanizeCache;
+  createHumanizeCache: (
+    lookup: LookupFn,
+    opts: { ttlMs: number }
+  ) => HumanizeCache;
 };
 
 const loadModule = async (): Promise<HumanizeModule> =>
@@ -109,15 +120,19 @@ describeDb("humanize (COR-03) — live prismaBase catalog lookup", () => {
       // displayName; the FK drop above lets the bare typeId stand without a CaseFieldTypes parent.
       const ins = await direct.query(
         `INSERT INTO "CaseFields" ("displayName", "systemName", "typeId") VALUES ($1, $2, $3) RETURNING id`,
-        [marker, marker, 1],
+        [marker, marker, 1]
       );
       const fieldId = ins.rows[0].id as number;
 
       const humanizeModSpecifier = "~/lib/audit/humanize";
       const prismaModSpecifier = "~/lib/prismaBase";
-      const { createHumanizeCache } = (await import(/* @vite-ignore */ humanizeModSpecifier)) as HumanizeModule;
+      const { createHumanizeCache } = (await import(
+        /* @vite-ignore */ humanizeModSpecifier
+      )) as HumanizeModule;
       // lib/prismaBase exports the base (extension-free) client as `prisma`.
-      const { prisma: prismaBase } = (await import(/* @vite-ignore */ prismaModSpecifier)) as { prisma: any };
+      const { prisma: prismaBase } = (await import(
+        /* @vite-ignore */ prismaModSpecifier
+      )) as { prisma: any };
 
       // The real lookup hits prismaBase; assert it round-trips the seeded displayName.
       const lookup: LookupFn = async (table, field, id) => {
@@ -128,7 +143,9 @@ describeDb("humanize (COR-03) — live prismaBase catalog lookup", () => {
         return row?.displayName ?? null;
       };
       const cache = createHumanizeCache(lookup, { ttlMs: 60_000 });
-      expect(await cache.resolve("CaseFields", "displayName", fieldId)).toBe(marker);
+      expect(await cache.resolve("CaseFields", "displayName", fieldId)).toBe(
+        marker
+      );
 
       await direct.query(`DELETE FROM "CaseFields" WHERE id = $1`, [fieldId]);
     } finally {

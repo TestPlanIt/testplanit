@@ -50,7 +50,9 @@ export default function Providers({ children }: { children: ReactNode }) {
         endpoint is the generated-hook default (DEFAULT_QUERY_ENDPOINT =
         "/api/model"), so existing requests are unchanged — we only inject fetch.
       */}
-      <ZenStackProvider value={{ endpoint: "/api/model", fetch: operationIdFetcher }}>
+      <ZenStackProvider
+        value={{ endpoint: "/api/model", fetch: operationIdFetcher }}
+      >
         <SessionProvider>
           <TooltipProvider delayDuration={300}>{content}</TooltipProvider>
         </SessionProvider>

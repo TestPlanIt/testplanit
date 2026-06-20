@@ -94,260 +94,262 @@ function parseAuditSchema(value: unknown): ParameterSchemaEntry[] {
   return out;
 }
 
-export const POST = withAuditContext(async (
-  req: NextRequest,
-  {
-    params,
-  }: {
-    params: Promise<{ runId: string; caseId: string }>;
-  }
-) => {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const POST = withAuditContext(
+  async (
+    req: NextRequest,
+    {
+      params,
+    }: {
+      params: Promise<{ runId: string; caseId: string }>;
     }
+  ) => {
+    try {
+      const session = await getServerSession(authOptions);
+      if (!session?.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
 
-    updateAuditContext({ userId: session.user.id });
+      updateAuditContext({ userId: session.user.id });
 
-    const { runId: runIdParam, caseId: caseIdParam } = await params;
-    const runId = parseInt(runIdParam, 10);
-    const caseId = parseInt(caseIdParam, 10);
-    if (isNaN(runId) || isNaN(caseId)) {
-      return NextResponse.json(
-        { error: "Invalid path parameter" },
-        { status: 400 }
-      );
-    }
+      const { runId: runIdParam, caseId: caseIdParam } = await params;
+      const runId = parseInt(runIdParam, 10);
+      const caseId = parseInt(caseIdParam, 10);
+      if (isNaN(runId) || isNaN(caseId)) {
+        return NextResponse.json(
+          { error: "Invalid path parameter" },
+          { status: 400 }
+        );
+      }
 
-    const body = await req.json().catch(() => null);
-    const parsed = bodySchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid input", details: z.treeifyError(parsed.error) },
-        { status: 400 }
-      );
-    }
+      const body = await req.json().catch(() => null);
+      const parsed = bodySchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: "Invalid input", details: z.treeifyError(parsed.error) },
+          { status: 400 }
+        );
+      }
 
-    const db = await getEnhancedDb(session);
+      const db = await getEnhancedDb(session);
 
-    // Verify the run-case exists and the viewer can see it via enhanced DB.
-    const runCase = await db.testRunCases.findFirst({
-      where: {
-        id: caseId,
-        testRunId: runId,
-        isDeleted: false,
-        testRun: { isDeleted: false },
-      },
-      select: {
-        id: true,
-        testRun: {
-          select: { projectId: true, isCompleted: true },
-        },
-      },
-    });
-    if (!runCase) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    // A completed run is frozen. The writes below run on the raw client, so
-    // enforce the same lock the ZenStack policy applies to model-API writes.
-    if (runCase.testRun.isCompleted) {
-      return NextResponse.json(
-        {
-          error: "This test run is completed and can no longer be modified",
-          code: "RUN_COMPLETED",
-        },
-        { status: 409 }
-      );
-    }
-
-    // Validate the chosen status is a Test-Run-scoped status enabled for
-    // the project. Statuses are admin-configured per Workflow; we don't
-    // hardcode any systemName here.
-    const chosenStatus = await prisma.status.findFirst({
-      where: {
-        id: parsed.data.statusId,
-        isEnabled: true,
-        isDeleted: false,
-        projects: { some: { projectId: runCase.testRun.projectId } },
-        scope: { some: { scope: { name: "Test Run" } } },
-      },
-      select: { id: true },
-    });
-    if (!chosenStatus) {
-      return NextResponse.json(
-        { error: "Status not available for this project" },
-        { status: 422 }
-      );
-    }
-    const appliedStatusId = chosenStatus.id;
-
-    // Pull the snapshot's parameter schema once so audit metadata can be
-    // redacted against the viewer's permission.
-    const snapshot = await db.testRunCaseDataSetSnapshot.findFirst({
-      where: { testRunCaseId: caseId, isDeleted: false },
-      select: { parametersJson: true },
-    });
-    const auditSchema = parseAuditSchema(snapshot?.parametersJson);
-    const viewerCanReadSensitive = await resolveCanReadSensitive(
-      session.user.id
-    );
-
-    // Carry executedById; the user is already validated by getEnhancedDb.
-    const executedById = session.user.id;
-
-    // Per-iteration audit payload collected inside the transaction; emitted
-    // after commit (best-effort, never blocks the response).
-    type AuditPayload = {
-      iterationId: number;
-      rowIndex: number;
-      redactedValues: Record<string, unknown>;
-    };
-    const auditPayloads: AuditPayload[] = [];
-
-    const skippedCount = await auditedTransaction(async (tx) => {
-      // Load and validate ownership of every requested iteration.
-      const iterations = await tx.testRunCaseIteration.findMany({
+      // Verify the run-case exists and the viewer can see it via enhanced DB.
+      const runCase = await db.testRunCases.findFirst({
         where: {
-          id: { in: parsed.data.iterationIds },
-          testRunCaseId: caseId,
+          id: caseId,
+          testRunId: runId,
           isDeleted: false,
+          testRun: { isDeleted: false },
         },
         select: {
           id: true,
-          rowIndex: true,
-          valuesJson: true,
+          testRun: {
+            select: { projectId: true, isCompleted: true },
+          },
         },
       });
-      if (iterations.length === 0) return 0;
+      if (!runCase) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
 
-      // 1. Per-iteration writes.
-      for (const iter of iterations) {
-        await tx.testRunResults.create({
-          data: {
-            testRunId: runId,
+      // A completed run is frozen. The writes below run on the raw client, so
+      // enforce the same lock the ZenStack policy applies to model-API writes.
+      if (runCase.testRun.isCompleted) {
+        return NextResponse.json(
+          {
+            error: "This test run is completed and can no longer be modified",
+            code: "RUN_COMPLETED",
+          },
+          { status: 409 }
+        );
+      }
+
+      // Validate the chosen status is a Test-Run-scoped status enabled for
+      // the project. Statuses are admin-configured per Workflow; we don't
+      // hardcode any systemName here.
+      const chosenStatus = await prisma.status.findFirst({
+        where: {
+          id: parsed.data.statusId,
+          isEnabled: true,
+          isDeleted: false,
+          projects: { some: { projectId: runCase.testRun.projectId } },
+          scope: { some: { scope: { name: "Test Run" } } },
+        },
+        select: { id: true },
+      });
+      if (!chosenStatus) {
+        return NextResponse.json(
+          { error: "Status not available for this project" },
+          { status: 422 }
+        );
+      }
+      const appliedStatusId = chosenStatus.id;
+
+      // Pull the snapshot's parameter schema once so audit metadata can be
+      // redacted against the viewer's permission.
+      const snapshot = await db.testRunCaseDataSetSnapshot.findFirst({
+        where: { testRunCaseId: caseId, isDeleted: false },
+        select: { parametersJson: true },
+      });
+      const auditSchema = parseAuditSchema(snapshot?.parametersJson);
+      const viewerCanReadSensitive = await resolveCanReadSensitive(
+        session.user.id
+      );
+
+      // Carry executedById; the user is already validated by getEnhancedDb.
+      const executedById = session.user.id;
+
+      // Per-iteration audit payload collected inside the transaction; emitted
+      // after commit (best-effort, never blocks the response).
+      type AuditPayload = {
+        iterationId: number;
+        rowIndex: number;
+        redactedValues: Record<string, unknown>;
+      };
+      const auditPayloads: AuditPayload[] = [];
+
+      const skippedCount = await auditedTransaction(async (tx) => {
+        // Load and validate ownership of every requested iteration.
+        const iterations = await tx.testRunCaseIteration.findMany({
+          where: {
+            id: { in: parsed.data.iterationIds },
             testRunCaseId: caseId,
+            isDeleted: false,
+          },
+          select: {
+            id: true,
+            rowIndex: true,
+            valuesJson: true,
+          },
+        });
+        if (iterations.length === 0) return 0;
+
+        // 1. Per-iteration writes.
+        for (const iter of iterations) {
+          await tx.testRunResults.create({
+            data: {
+              testRunId: runId,
+              testRunCaseId: caseId,
+              iterationId: iter.id,
+              statusId: appliedStatusId,
+              notes: parsed.data.reason
+                ? (parsed.data.reason as unknown as Prisma.InputJsonValue)
+                : Prisma.JsonNull,
+              evidence: {},
+              executedById,
+              attempt: 1,
+              testRunCaseVersion: 1,
+            },
+          });
+
+          await tx.testRunCaseIteration.update({
+            where: { id: iter.id },
+            data: {
+              statusId: appliedStatusId,
+              isCompleted: true,
+              completedAt: new Date(),
+            },
+          });
+
+          auditPayloads.push({
             iterationId: iter.id,
-            statusId: appliedStatusId,
-            notes: parsed.data.reason
-              ? (parsed.data.reason as unknown as Prisma.InputJsonValue)
-              : Prisma.JsonNull,
-            evidence: {},
-            executedById,
-            attempt: 1,
-            testRunCaseVersion: 1,
+            rowIndex: iter.rowIndex,
+            redactedValues: redactValues(
+              (iter.valuesJson as Record<string, unknown>) ?? {},
+              auditSchema,
+              viewerCanReadSensitive
+            ),
+          });
+        }
+
+        // 2. Rollup recompute ONCE for the case (after all per-iter writes).
+        const allIterations = await tx.testRunCaseIteration.findMany({
+          where: { testRunCaseId: caseId, isDeleted: false },
+          select: {
+            statusId: true,
+            status: {
+              select: {
+                id: true,
+                systemName: true,
+                isSuccess: true,
+                isFailure: true,
+                isCompleted: true,
+              },
+            },
           },
         });
-
-        await tx.testRunCaseIteration.update({
-          where: { id: iter.id },
-          data: {
-            statusId: appliedStatusId,
+        const allStatuses = await tx.status.findMany({
+          where: { isDeleted: false },
+          select: {
+            id: true,
+            systemName: true,
+            isSuccess: true,
+            isFailure: true,
             isCompleted: true,
-            completedAt: new Date(),
+            order: true,
+          },
+        });
+        const statusMap = new Map<number, RollupStatus>(
+          allStatuses.map((s) => [
+            s.id,
+            {
+              id: s.id,
+              systemName: s.systemName,
+              isSuccess: s.isSuccess,
+              isFailure: s.isFailure,
+              isCompleted: s.isCompleted,
+              order: s.order,
+            },
+          ])
+        );
+        const rollupStatusId = computeWorstOfStatus(
+          allIterations.map((it) => ({ statusId: it.statusId })),
+          statusMap
+        );
+
+        const passedCount = allIterations.filter(
+          (it) => it.status?.isSuccess === true
+        ).length;
+        const failedCount = allIterations.filter(
+          (it) => it.status?.isFailure === true
+        ).length;
+
+        await tx.testRunCases.update({
+          where: { id: caseId },
+          data: {
+            statusId: rollupStatusId ?? appliedStatusId,
+            passedIterations: passedCount,
+            failedIterations: failedCount,
           },
         });
 
-        auditPayloads.push({
-          iterationId: iter.id,
-          rowIndex: iter.rowIndex,
-          redactedValues: redactValues(
-            (iter.valuesJson as Record<string, unknown>) ?? {},
-            auditSchema,
-            viewerCanReadSensitive
-          ),
+        return iterations.length;
+      });
+
+      // Post-commit audit emission — best-effort, never blocks the response.
+      for (const payload of auditPayloads) {
+        captureAuditEvent({
+          action: "ITERATION_BULK_SKIPPED",
+          entityType: "TestRunCaseIteration",
+          entityId: String(payload.iterationId),
+          projectId: runCase.testRun.projectId,
+          userId: session.user.id,
+          metadata: {
+            rowIndex: payload.rowIndex,
+            redactedValues: payload.redactedValues,
+            reason: parsed.data.reason ?? null,
+            testRunCaseId: caseId,
+            testRunId: runId,
+            statusId: appliedStatusId,
+          },
+        }).catch(() => {
+          // Audit is best-effort.
         });
       }
 
-      // 2. Rollup recompute ONCE for the case (after all per-iter writes).
-      const allIterations = await tx.testRunCaseIteration.findMany({
-        where: { testRunCaseId: caseId, isDeleted: false },
-        select: {
-          statusId: true,
-          status: {
-            select: {
-              id: true,
-              systemName: true,
-              isSuccess: true,
-              isFailure: true,
-              isCompleted: true,
-            },
-          },
-        },
-      });
-      const allStatuses = await tx.status.findMany({
-        where: { isDeleted: false },
-        select: {
-          id: true,
-          systemName: true,
-          isSuccess: true,
-          isFailure: true,
-          isCompleted: true,
-          order: true,
-        },
-      });
-      const statusMap = new Map<number, RollupStatus>(
-        allStatuses.map((s) => [
-          s.id,
-          {
-            id: s.id,
-            systemName: s.systemName,
-            isSuccess: s.isSuccess,
-            isFailure: s.isFailure,
-            isCompleted: s.isCompleted,
-            order: s.order,
-          },
-        ])
-      );
-      const rollupStatusId = computeWorstOfStatus(
-        allIterations.map((it) => ({ statusId: it.statusId })),
-        statusMap
-      );
-
-      const passedCount = allIterations.filter(
-        (it) => it.status?.isSuccess === true
-      ).length;
-      const failedCount = allIterations.filter(
-        (it) => it.status?.isFailure === true
-      ).length;
-
-      await tx.testRunCases.update({
-        where: { id: caseId },
-        data: {
-          statusId: rollupStatusId ?? appliedStatusId,
-          passedIterations: passedCount,
-          failedIterations: failedCount,
-        },
-      });
-
-      return iterations.length;
-    });
-
-    // Post-commit audit emission — best-effort, never blocks the response.
-    for (const payload of auditPayloads) {
-      captureAuditEvent({
-        action: "ITERATION_BULK_SKIPPED",
-        entityType: "TestRunCaseIteration",
-        entityId: String(payload.iterationId),
-        projectId: runCase.testRun.projectId,
-        userId: session.user.id,
-        metadata: {
-          rowIndex: payload.rowIndex,
-          redactedValues: payload.redactedValues,
-          reason: parsed.data.reason ?? null,
-          testRunCaseId: caseId,
-          testRunId: runId,
-          statusId: appliedStatusId,
-        },
-      }).catch(() => {
-        // Audit is best-effort.
-      });
+      return NextResponse.json({ ok: true, skippedCount });
+    } catch (err) {
+      console.error("[iteration bulk-skip POST]", err);
+      return NextResponse.json({ error: "Internal error" }, { status: 500 });
     }
-
-    return NextResponse.json({ ok: true, skippedCount });
-  } catch (err) {
-    console.error("[iteration bulk-skip POST]", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-});
+);

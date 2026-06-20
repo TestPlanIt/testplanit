@@ -104,6 +104,9 @@ describe("useOperationId (CTX-03) — one operationId per save, header attach", 
       await wrapped("/api/model/steps/updateMany", { method: "POST" });
     });
 
-    expect(spy).toHaveBeenCalledWith("/api/model/steps/updateMany", expect.any(Object));
+    expect(spy).toHaveBeenCalledWith(
+      "/api/model/steps/updateMany",
+      expect.any(Object)
+    );
   });
 });

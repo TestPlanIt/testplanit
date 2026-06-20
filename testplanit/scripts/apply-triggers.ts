@@ -106,10 +106,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS audit_log_cdc_idempotency
 
 async function main() {
   const usingDirect = Boolean(process.env.DIRECT_DATABASE_URL);
-  const connectionString = process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
+  const connectionString =
+    process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error(
-      "Set DIRECT_DATABASE_URL (preferred — bypasses pgbouncer for DDL) or DATABASE_URL before running apply-triggers.",
+      "Set DIRECT_DATABASE_URL (preferred — bypasses pgbouncer for DDL) or DATABASE_URL before running apply-triggers."
     );
   }
 
@@ -140,17 +141,19 @@ async function main() {
       const captureCols = [
         ...new Set(
           [ROLLUP_MAP[entry.table]?.fkCol, ...(entry.captureCols ?? [])].filter(
-            (c): c is string => !!c,
-          ),
+            (c): c is string => !!c
+          )
         ),
       ].join(",");
 
       // Identifiers/args come ONLY from the static in-repo registry — no user input in this DDL.
-      await client.query(`DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`);
+      await client.query(
+        `DROP TRIGGER IF EXISTS ${triggerName} ON "${entry.table}";`
+      );
       await client.query(
         `CREATE TRIGGER ${triggerName}
            AFTER INSERT OR UPDATE OR DELETE ON "${entry.table}"
-           FOR EACH ROW EXECUTE FUNCTION audit_row_change('${pkCol}', '${denylistCsv}', '${nameCol}', '${projectCol}', '${captureCols}');`,
+           FOR EACH ROW EXECUTE FUNCTION audit_row_change('${pkCol}', '${denylistCsv}', '${nameCol}', '${projectCol}', '${captureCols}');`
       );
     }
 
@@ -158,7 +161,7 @@ async function main() {
     //     entry leaves its tpl_audit_* trigger live (still writing DataChangeLog) and fails the
     //     drift self-check below. This keeps the live trigger set in exact lockstep with the registry.
     const expectedTriggerNames = new Set(
-      TRIGGER_REGISTRY.map((e) => triggerNameFor(e.table)),
+      TRIGGER_REGISTRY.map((e) => triggerNameFor(e.table))
     );
     const { rows: liveAuditTriggers } = await client.query<{
       trigger_name: string;
@@ -166,15 +169,15 @@ async function main() {
     }>(
       `SELECT DISTINCT trigger_name, event_object_table
          FROM information_schema.triggers
-        WHERE trigger_name LIKE 'tpl_audit_%'`,
+        WHERE trigger_name LIKE 'tpl_audit_%'`
     );
     for (const t of liveAuditTriggers) {
       if (!expectedTriggerNames.has(t.trigger_name)) {
         await client.query(
-          `DROP TRIGGER IF EXISTS ${t.trigger_name} ON "${t.event_object_table}";`,
+          `DROP TRIGGER IF EXISTS ${t.trigger_name} ON "${t.event_object_table}";`
         );
         console.log(
-          `[apply-triggers] dropped orphaned trigger ${t.trigger_name} on "${t.event_object_table}"`,
+          `[apply-triggers] dropped orphaned trigger ${t.trigger_name} on "${t.event_object_table}"`
         );
       }
     }
@@ -194,32 +197,36 @@ async function main() {
     const { rows } = await client.query<{ n: number }>(
       `SELECT count(DISTINCT trigger_name)::int AS n
          FROM information_schema.triggers
-        WHERE trigger_name LIKE 'tpl_audit_%'`,
+        WHERE trigger_name LIKE 'tpl_audit_%'`
     );
     const liveCount = rows[0]?.n ?? 0;
     if (liveCount !== TRIGGER_REGISTRY.length) {
       const { rows: present } = await client.query<{ trigger_name: string }>(
         `SELECT DISTINCT trigger_name
            FROM information_schema.triggers
-          WHERE trigger_name LIKE 'tpl_audit_%'`,
+          WHERE trigger_name LIKE 'tpl_audit_%'`
       );
       const presentNames = new Set(present.map((r) => r.trigger_name));
-      const expectedNames = TRIGGER_REGISTRY.map((e) => triggerNameFor(e.table));
+      const expectedNames = TRIGGER_REGISTRY.map((e) =>
+        triggerNameFor(e.table)
+      );
       const missing = expectedNames.filter((n) => !presentNames.has(n));
       const extra = [...presentNames].filter((n) => !expectedNames.includes(n));
       console.error(
-        `[apply-triggers] DRIFT: live tpl_audit_* count ${liveCount} != registry ${TRIGGER_REGISTRY.length}.`,
+        `[apply-triggers] DRIFT: live tpl_audit_* count ${liveCount} != registry ${TRIGGER_REGISTRY.length}.`
       );
       if (missing.length) console.error(`  missing: ${missing.join(", ")}`);
       if (extra.length) console.error(`  extra:   ${extra.join(", ")}`);
-      throw new Error("Trigger drift detected after apply (see missing/extra above).");
+      throw new Error(
+        "Trigger drift detected after apply (see missing/extra above)."
+      );
     }
 
     console.log(
       `[apply-triggers] applied audit_row_change() + ${TRIGGER_REGISTRY.length} tpl_audit_* triggers ` +
         `+ DataChangeLog append-only enforcement (tpl_dcl_no_delete/tpl_dcl_no_update) + INSERT-only GRANT ` +
         `+ AuditLog CDC idempotency index (audit_log_cdc_idempotency) ` +
-        `(idempotent, via ${usingDirect ? "DIRECT_DATABASE_URL" : "DATABASE_URL"}).`,
+        `(idempotent, via ${usingDirect ? "DIRECT_DATABASE_URL" : "DATABASE_URL"}).`
     );
   } finally {
     await client.end();

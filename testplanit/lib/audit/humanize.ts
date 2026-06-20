@@ -20,7 +20,7 @@
 export type LookupFn = (
   table: string,
   field: string,
-  id: number | string,
+  id: number | string
 ) => Promise<string | null>;
 
 export interface HumanizeCacheOptions {
@@ -32,7 +32,7 @@ export interface HumanizeCache {
   resolve: (
     table: string,
     field: string,
-    id: number | string,
+    id: number | string
   ) => Promise<string | null>;
   /** Clears all cached entries (test helper / worker-shutdown hook). */
   reset: () => void;
@@ -53,7 +53,7 @@ const cacheKey = (table: string, field: string, id: number | string): string =>
  */
 export function createHumanizeCache(
   lookup: LookupFn,
-  opts: HumanizeCacheOptions,
+  opts: HumanizeCacheOptions
 ): HumanizeCache {
   const store = new Map<string, CacheEntry>();
 
@@ -86,7 +86,9 @@ const CATALOG_BY_COLUMN: Record<
   Record<string, { table: string; field: string }>
 > = {
   CaseFieldValues: { fieldId: { table: "CaseFields", field: "displayName" } },
-  ResultFieldValues: { fieldId: { table: "ResultFields", field: "displayName" } },
+  ResultFieldValues: {
+    fieldId: { table: "ResultFields", field: "displayName" },
+  },
   default: {
     statusId: { table: "Status", field: "name" },
     workflowId: { table: "Workflows", field: "name" },
@@ -105,7 +107,7 @@ const CATALOG_BY_COLUMN: Record<
 /** Resolve the catalog mapping for a (tableName, column), or null if the column is not humanizable. */
 function catalogFor(
   tableName: string,
-  column: string,
+  column: string
 ): { table: string; field: string } | null {
   const perTable = CATALOG_BY_COLUMN[tableName]?.[column];
   if (perTable) {
@@ -122,10 +124,19 @@ function catalogFor(
  * displayName; `typeCatalog` resolves fieldId → the field's type name (which decides how `value`
  * renders). Session fields reuse the case-field catalog (SessionFieldValues.fieldId → CaseFields).
  */
-const VALUE_TABLES: Record<string, { fieldCatalog: string; typeCatalog: string }> = {
+const VALUE_TABLES: Record<
+  string,
+  { fieldCatalog: string; typeCatalog: string }
+> = {
   CaseFieldValues: { fieldCatalog: "CaseFields", typeCatalog: "CaseFieldType" },
-  SessionFieldValues: { fieldCatalog: "CaseFields", typeCatalog: "CaseFieldType" },
-  ResultFieldValues: { fieldCatalog: "ResultFields", typeCatalog: "ResultFieldType" },
+  SessionFieldValues: {
+    fieldCatalog: "CaseFields",
+    typeCatalog: "CaseFieldType",
+  },
+  ResultFieldValues: {
+    fieldCatalog: "ResultFields",
+    typeCatalog: "ResultFieldType",
+  },
 };
 
 /** Pull the concatenated plain text out of a Tiptap doc (string- or object-encoded), truncated. */
@@ -158,16 +169,23 @@ function tiptapToPlainText(value: unknown): string {
 async function renderFieldValue(
   cache: HumanizeCache,
   type: string | null,
-  value: number | string | boolean | null | unknown,
+  value: number | string | boolean | null | unknown
 ): Promise<string | null> {
   if (value === null || value === undefined) return null;
   switch (type) {
     case "Dropdown":
-      return resolveName(cache, "FieldOptions", "name", value as number | string);
+      return resolveName(
+        cache,
+        "FieldOptions",
+        "name",
+        value as number | string
+      );
     case "Multi-Select": {
       const ids = Array.isArray(value) ? value : [value];
       const names = await Promise.all(
-        ids.map((id) => resolveName(cache, "FieldOptions", "name", id as number | string)),
+        ids.map((id) =>
+          resolveName(cache, "FieldOptions", "name", id as number | string)
+        )
       );
       const joined = names.filter(Boolean).join(", ");
       return joined || String(value);
@@ -190,13 +208,14 @@ async function renderFieldValue(
 async function humanizeFieldValueChange(
   cache: HumanizeCache,
   config: { fieldCatalog: string; typeCatalog: string },
-  changedCols: ChangedCols,
+  changedCols: ChangedCols
 ): Promise<HumanizedCols | null> {
   const fieldEntry = changedCols.fieldId;
   const fieldId = fieldEntry?.new ?? fieldEntry?.old;
   if (fieldId === null || fieldId === undefined) return null;
   const displayName =
-    (await resolveName(cache, config.fieldCatalog, "displayName", fieldId)) ?? "Field";
+    (await resolveName(cache, config.fieldCatalog, "displayName", fieldId)) ??
+    "Field";
   let type: string | null = null;
   try {
     type = await cache.resolve(config.typeCatalog, "type", fieldId);
@@ -236,7 +255,7 @@ async function resolveName(
   cache: HumanizeCache,
   table: string,
   field: string,
-  id: number | string | null,
+  id: number | string | null
 ): Promise<string | null> {
   if (id === null || id === undefined) {
     return null;
@@ -260,13 +279,17 @@ async function resolveName(
 export async function humanize(
   cache: HumanizeCache,
   tableName: string,
-  changedCols: ChangedCols,
+  changedCols: ChangedCols
 ): Promise<HumanizedCols> {
   // Value tables re-key their {fieldId, value} diff under the field's display name with a resolved
   // label ("Priority: Medium → High") instead of the opaque generic "value: 3 → 2".
   const valueTable = VALUE_TABLES[tableName];
   if (valueTable && changedCols.value !== undefined) {
-    const rekeyed = await humanizeFieldValueChange(cache, valueTable, changedCols);
+    const rekeyed = await humanizeFieldValueChange(
+      cache,
+      valueTable,
+      changedCols
+    );
     if (rekeyed) {
       return rekeyed;
     }
@@ -281,8 +304,18 @@ export async function humanize(
     }
     out[column] = {
       ...entry,
-      oldName: await resolveName(cache, catalog.table, catalog.field, entry.old),
-      newName: await resolveName(cache, catalog.table, catalog.field, entry.new),
+      oldName: await resolveName(
+        cache,
+        catalog.table,
+        catalog.field,
+        entry.old
+      ),
+      newName: await resolveName(
+        cache,
+        catalog.table,
+        catalog.field,
+        entry.new
+      ),
     };
   }
   return out;
@@ -326,7 +359,8 @@ export function createPrismaLookup(prisma: any): LookupFn {
     // type name ("Dropdown", "Checkbox", …), one relation hop into CaseFieldTypes. Both CaseFields
     // and ResultFields point their `type` relation at CaseFieldTypes, so the shape is identical.
     if (table === "CaseFieldType" || table === "ResultFieldType") {
-      const delegate = table === "ResultFieldType" ? "resultFields" : "caseFields";
+      const delegate =
+        table === "ResultFieldType" ? "resultFields" : "caseFields";
       const row = await prisma[delegate].findUnique({
         where: { id: Number(id) },
         select: { type: { select: { type: true } } },

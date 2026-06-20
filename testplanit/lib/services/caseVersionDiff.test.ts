@@ -58,7 +58,10 @@ describe("caseVersionDiff", () => {
         parameters: { p: 2 },
       }
     );
-    expect(changes?.Steps).toEqual({ old: [{ step: "a" }], new: [{ step: "b" }] });
+    expect(changes?.Steps).toEqual({
+      old: [{ step: "a" }],
+      new: [{ step: "b" }],
+    });
     expect(changes?.Tags).toEqual({ old: ["x"], new: ["y"] });
     expect(changes?.Issues).toEqual({ old: [{ id: 1 }], new: [] });
     expect(changes?.Parameters).toEqual({ old: { p: 1 }, new: { p: 2 } });

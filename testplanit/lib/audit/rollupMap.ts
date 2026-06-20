@@ -119,7 +119,7 @@ export interface TwoHopRow {
 export type TwoHopQueryFn = (
   hopTable: string,
   hopFkCol: string,
-  fkValues: Array<number | string>,
+  fkValues: Array<number | string>
 ) => Promise<TwoHopRow[]>;
 
 /**
@@ -131,7 +131,7 @@ export type TwoHopQueryFn = (
 export async function resolveTwoHop(
   config: TwoHopRollup,
   fkValues: Array<number | string>,
-  queryFn: TwoHopQueryFn,
+  queryFn: TwoHopQueryFn
 ): Promise<Map<number | string, number | string>> {
   const out = new Map<number | string, number | string>();
   const distinct = Array.from(new Set(fkValues));

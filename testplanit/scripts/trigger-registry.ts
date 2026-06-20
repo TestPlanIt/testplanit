@@ -50,9 +50,17 @@ export const DEFAULT_DENYLIST = ["createdAt", "updatedAt"];
 
 export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // ── Cases family ──────────────────────────────────────────────────────────
-  { table: "RepositoryCases", denylist: ["createdAt"], nameCol: "name", projectCol: "projectId" }, // NOTE: no updatedAt column on this table (Finding C)
+  {
+    table: "RepositoryCases",
+    denylist: ["createdAt"],
+    nameCol: "name",
+    projectCol: "projectId",
+  }, // NOTE: no updatedAt column on this table (Finding C)
   { table: "CaseFieldValues", denylist: [], captureCols: ["fieldId"] }, // no timestamps; fieldId identifies which field
-  { table: "Steps", denylist: ["createdAt", "updatedAt", "step", "expectedResult"] }, // step/expectedResult are TipTap
+  {
+    table: "Steps",
+    denylist: ["createdAt", "updatedAt", "step", "expectedResult"],
+  }, // step/expectedResult are TipTap
   { table: "TestCaseParameter", denylist: ["createdAt", "updatedAt"] },
 
   // Cases implicit m2m join tables (no timestamps; composite (A,B) PK → pkCol 'A')
@@ -60,7 +68,12 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   { table: "_IssueToRepositoryCases", pkCol: "A", denylist: [] },
 
   // ── Runs family ───────────────────────────────────────────────────────────
-  { table: "TestRuns", denylist: ["createdAt", "updatedAt"], nameCol: "name", projectCol: "projectId" },
+  {
+    table: "TestRuns",
+    denylist: ["createdAt", "updatedAt"],
+    nameCol: "name",
+    projectCol: "projectId",
+  },
   { table: "TestRunCases", denylist: ["createdAt", "updatedAt"] },
   { table: "TestRunResults", denylist: ["createdAt", "updatedAt"] },
   { table: "TestRunStepResults", denylist: ["createdAt", "updatedAt"] },
@@ -68,7 +81,11 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // Shared 3-way value table: a result field value belongs to a test-run result, a session result,
   // OR a case. Capture all three owner FKs (+ fieldId) so correlation can roll it up to the right
   // owner even on a value-only update. (The rollup FK testRunResultsId is added from ROLLUP_MAP.)
-  { table: "ResultFieldValues", denylist: [], captureCols: ["fieldId", "sessionResultsId", "testCaseId"] }, // no timestamps
+  {
+    table: "ResultFieldValues",
+    denylist: [],
+    captureCols: ["fieldId", "sessionResultsId", "testCaseId"],
+  }, // no timestamps
 
   // Runs implicit m2m join tables
   { table: "_IssueToTestRuns", pkCol: "A", denylist: [] },
@@ -76,7 +93,12 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   { table: "_IssueToTestRunStepResults", pkCol: "A", denylist: [] },
 
   // ── Sessions family ───────────────────────────────────────────────────────
-  { table: "Sessions", denylist: ["createdAt", "updatedAt", "note", "mission"], nameCol: "name", projectCol: "projectId" }, // note/mission are TipTap
+  {
+    table: "Sessions",
+    denylist: ["createdAt", "updatedAt", "note", "mission"],
+    nameCol: "name",
+    projectCol: "projectId",
+  }, // note/mission are TipTap
   { table: "SessionResults", denylist: ["createdAt", "updatedAt"] },
   { table: "SessionFieldValues", denylist: [], captureCols: ["fieldId"] }, // no timestamps; fieldId identifies which field
   // SessionVersions deliberately NOT audited — it is a version snapshot the app
@@ -92,17 +114,49 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // ── COV-04: Group A — Top-level project/user entities ─────────────────────
   // lastActiveAt is write-frequent (keep-alive ping every 5 min) — mirrors the existing
   // app-hook isLastActiveOnly skip; denylisting avoids thousands of zero-value rows/day.
-  { table: "User", denylist: ["createdAt", "updatedAt", "lastActiveAt"], nameCol: "name" },
-  { table: "Projects", denylist: ["createdAt"], nameCol: "name", projectCol: "id" }, // no updatedAt column; a Projects audit belongs to its own id
+  {
+    table: "User",
+    denylist: ["createdAt", "updatedAt", "lastActiveAt"],
+    nameCol: "name",
+  },
+  {
+    table: "Projects",
+    denylist: ["createdAt"],
+    nameCol: "name",
+    projectCol: "id",
+  }, // no updatedAt column; a Projects audit belongs to its own id
   // note/externalData/data are TipTap or opaque integration payloads; no updatedAt column.
-  { table: "Issue", denylist: ["createdAt", "note", "externalData", "data"], nameCol: "name", projectCol: "projectId" },
+  {
+    table: "Issue",
+    denylist: ["createdAt", "note", "externalData", "data"],
+    nameCol: "name",
+    projectCol: "projectId",
+  },
   // note/docs are TipTap (confirmed: AddMilestoneModal and page.tsx use TipTapEditor); no updatedAt.
-  { table: "Milestones", denylist: ["createdAt", "note", "docs"], nameCol: "name", projectCol: "projectId" },
+  {
+    table: "Milestones",
+    denylist: ["createdAt", "note", "docs"],
+    nameCol: "name",
+    projectCol: "projectId",
+  },
   // content is explicitly TipTap JSON (schema comment: "TipTap JSON format").
-  { table: "Comment", denylist: ["createdAt", "updatedAt", "content"], projectCol: "projectId" },
-  { table: "SharedStepGroup", denylist: ["createdAt", "updatedAt"], nameCol: "name", projectCol: "projectId" },
+  {
+    table: "Comment",
+    denylist: ["createdAt", "updatedAt", "content"],
+    projectCol: "projectId",
+  },
+  {
+    table: "SharedStepGroup",
+    denylist: ["createdAt", "updatedAt"],
+    nameCol: "name",
+    projectCol: "projectId",
+  },
   { table: "Attachments", denylist: ["createdAt"], nameCol: "name" }, // no updatedAt (immutable once uploaded)
-  { table: "ReviewRequest", denylist: ["createdAt", "updatedAt"], projectCol: "projectId" },
+  {
+    table: "ReviewRequest",
+    denylist: ["createdAt", "updatedAt"],
+    projectCol: "projectId",
+  },
 
   // ── COV-04: Group B — Admin-config catalog ─────────────────────────────────
   { table: "Workflows", denylist: [], nameCol: "name" }, // no timestamp columns
@@ -112,7 +166,11 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   { table: "FieldOptions", denylist: [], nameCol: "name" }, // no timestamp columns
   { table: "Tags", denylist: [], nameCol: "name" }, // no timestamp columns
   { table: "Templates", denylist: [], nameCol: "templateName" }, // no timestamp columns
-  { table: "CaseExportTemplate", denylist: ["createdAt", "updatedAt"], nameCol: "name" },
+  {
+    table: "CaseExportTemplate",
+    denylist: ["createdAt", "updatedAt"],
+    nameCol: "name",
+  },
   { table: "Roles", denylist: [], nameCol: "name" }, // no timestamp columns
   { table: "MilestoneTypes", denylist: [], nameCol: "name" }, // no timestamp columns
   { table: "ConfigCategories", denylist: [], nameCol: "name" }, // no timestamp columns
@@ -124,32 +182,73 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // ── COV-04: Group C — Integration / AI / Provider catalog ──────────────────
   // SAF-02/SAF-04 trigger-layer credential guard: credentials column is denylisted to
   // prevent encrypted secrets from landing in the append-only DataChangeLog.
-  { table: "Integration", denylist: ["createdAt", "updatedAt", "credentials"], nameCol: "name" },
-  { table: "LlmIntegration", denylist: ["createdAt", "updatedAt", "credentials"], nameCol: "name" },
-  { table: "CodeRepository", denylist: ["createdAt", "updatedAt", "credentials"], nameCol: "name" },
+  {
+    table: "Integration",
+    denylist: ["createdAt", "updatedAt", "credentials"],
+    nameCol: "name",
+  },
+  {
+    table: "LlmIntegration",
+    denylist: ["createdAt", "updatedAt", "credentials"],
+    nameCol: "name",
+  },
+  {
+    table: "CodeRepository",
+    denylist: ["createdAt", "updatedAt", "credentials"],
+    nameCol: "name",
+  },
   { table: "SamlConfiguration", denylist: ["createdAt", "updatedAt"] },
   { table: "LlmProviderConfig", denylist: ["createdAt", "updatedAt"] },
   { table: "LlmFeatureConfig", denylist: ["createdAt", "updatedAt"] },
   { table: "OllamaModelRegistry", denylist: ["createdAt", "updatedAt"] },
-  { table: "PromptConfig", denylist: ["createdAt", "updatedAt"], nameCol: "name" },
+  {
+    table: "PromptConfig",
+    denylist: ["createdAt", "updatedAt"],
+    nameCol: "name",
+  },
   { table: "PromptConfigPrompt", denylist: ["createdAt", "updatedAt"] },
 
   // ── COV-04: Group D — System config ────────────────────────────────────────
   // AppConfig PK is `key` (String @id), not `id` — requires explicit pkCol.
   { table: "AppConfig", pkCol: "key", denylist: [], nameCol: "key" }, // no timestamp columns; value IS the audited data
-  { table: "AllowedEmailDomain", denylist: ["createdAt", "updatedAt"], nameCol: "domain" },
+  {
+    table: "AllowedEmailDomain",
+    denylist: ["createdAt", "updatedAt"],
+    nameCol: "domain",
+  },
 
   // ── COV-04: Group E — Project-scoped link/config (scalar PK) ───────────────
-  { table: "ProjectIntegration", denylist: ["createdAt", "updatedAt"], projectCol: "projectId" },
-  { table: "ProjectLlmIntegration", denylist: ["createdAt", "updatedAt"], projectCol: "projectId" },
-  { table: "ProjectCodeRepositoryConfig", denylist: ["createdAt", "updatedAt"], projectCol: "projectId" },
+  {
+    table: "ProjectIntegration",
+    denylist: ["createdAt", "updatedAt"],
+    projectCol: "projectId",
+  },
+  {
+    table: "ProjectLlmIntegration",
+    denylist: ["createdAt", "updatedAt"],
+    projectCol: "projectId",
+  },
+  {
+    table: "ProjectCodeRepositoryConfig",
+    denylist: ["createdAt", "updatedAt"],
+    projectCol: "projectId",
+  },
   // External-project mapping under a ProjectIntegration (projectId is two hops
   // away via projectIntegration, so no direct projectCol — self-attributes).
-  { table: "IntegrationProject", denylist: ["createdAt", "updatedAt"], nameCol: "externalProjectName" },
+  {
+    table: "IntegrationProject",
+    denylist: ["createdAt", "updatedAt"],
+    nameCol: "externalProjectName",
+  },
   // Webhook configuration. token + secret are credential material and are
   // DENYLISTED so they never land in the append-only DataChangeLog (SAF-02/04);
   // the dedicated WebhookConfigSecret table stays excluded entirely.
-  { table: "WebhookConfig", denylist: ["createdAt", "updatedAt", "token", "secret"], nameCol: "name", projectCol: "projectId" },
+  {
+    table: "WebhookConfig",
+    denylist: ["createdAt", "updatedAt", "token", "secret"],
+    nameCol: "name",
+    projectCol: "projectId",
+  },
 
   // ── COV-04: Group F — Composite-PK permission/assignment tables ─────────────
   // These tables have @@id([colA, colB]) — no scalar id. pkCol = first column of the composite key.
@@ -161,7 +260,11 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   { table: "ProjectAssignment", pkCol: "userId", denylist: [] },
   { table: "ProjectStatusAssignment", pkCol: "statusId", denylist: [] },
   { table: "ProjectWorkflowAssignment", pkCol: "workflowId", denylist: [] },
-  { table: "ProjectConfigurationAssignment", pkCol: "configurationId", denylist: [] },
+  {
+    table: "ProjectConfigurationAssignment",
+    pkCol: "configurationId",
+    denylist: [],
+  },
   { table: "MilestoneTypesAssignment", pkCol: "projectId", denylist: [] },
 ];
 
@@ -190,12 +293,12 @@ export const REGISTRY_PROHIBITED = [
  */
 export function assertRegistrySafe(): void {
   const offenders = TRIGGER_REGISTRY.filter((entry) =>
-    REGISTRY_PROHIBITED.includes(entry.table),
+    REGISTRY_PROHIBITED.includes(entry.table)
   ).map((entry) => entry.table);
   if (offenders.length > 0) {
     throw new Error(
       `TRIGGER_REGISTRY contains prohibited table(s): ${offenders.join(", ")}. ` +
-        `These must never receive the generic audit trigger (REGISTRY_PROHIBITED).`,
+        `These must never receive the generic audit trigger (REGISTRY_PROHIBITED).`
     );
   }
 }

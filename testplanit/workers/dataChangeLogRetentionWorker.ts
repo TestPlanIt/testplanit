@@ -37,7 +37,9 @@ export interface PurgeResult {
 let stopRequested = false;
 let inflight: Promise<unknown> | null = null;
 
-export async function purgeOnce(client: PrismaClient = prisma): Promise<PurgeResult> {
+export async function purgeOnce(
+  client: PrismaClient = prisma
+): Promise<PurgeResult> {
   const startedAt = Date.now();
   const cutoff = new Date(startedAt - RETENTION_MS);
 

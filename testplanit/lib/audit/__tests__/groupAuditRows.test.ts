@@ -17,10 +17,7 @@ import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 
 // Minimal row factory — only the fields the grouping pass reads matter; the rest
 // are filled to satisfy the type without affecting behavior.
-function row(
-  id: string,
-  operationId: string | null
-): ExtendedAuditLog {
+function row(id: string, operationId: string | null): ExtendedAuditLog {
   return {
     id,
     operationId,

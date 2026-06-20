@@ -32,51 +32,57 @@ import { authOptions } from "~/server/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export const DELETE = withAuditContext(async (
-  req: NextRequest,
-  { params }: { params: Promise<{ snapshotId: string }> }
-) => {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const DELETE = withAuditContext(
+  async (
+    req: NextRequest,
+    { params }: { params: Promise<{ snapshotId: string }> }
+  ) => {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  updateAuditContext({ userId: session.user.id });
+    updateAuditContext({ userId: session.user.id });
 
-  const { snapshotId: snapshotIdParam } = await params;
-  const snapshotId = Number.parseInt(snapshotIdParam, 10);
-  if (!Number.isInteger(snapshotId) || snapshotId <= 0) {
-    return NextResponse.json({ error: "Invalid snapshot id" }, { status: 400 });
-  }
+    const { snapshotId: snapshotIdParam } = await params;
+    const snapshotId = Number.parseInt(snapshotIdParam, 10);
+    if (!Number.isInteger(snapshotId) || snapshotId <= 0) {
+      return NextResponse.json(
+        { error: "Invalid snapshot id" },
+        { status: 400 }
+      );
+    }
 
-  const snapshot = await prisma.llmReportSnapshot.findFirst({
-    where: { id: snapshotId, isDeleted: false },
-    select: { id: true, projectId: true },
-  });
-  if (!snapshot) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+    const snapshot = await prisma.llmReportSnapshot.findFirst({
+      where: { id: snapshotId, isDeleted: false },
+      select: { id: true, projectId: true },
+    });
+    if (!snapshot) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
-  const allowed = await userCanDeleteReportingFor(
-    session.user.id,
-    snapshot.projectId
-  );
-  if (!allowed) {
-    return NextResponse.json(
-      {
-        error: "You don't have permission to delete reports for this project.",
-      },
-      { status: 403 }
+    const allowed = await userCanDeleteReportingFor(
+      session.user.id,
+      snapshot.projectId
     );
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error:
+            "You don't have permission to delete reports for this project.",
+        },
+        { status: 403 }
+      );
+    }
+
+    await prisma.llmReportSnapshot.update({
+      where: { id: snapshotId },
+      data: { isDeleted: true, updatedAt: new Date() },
+    });
+
+    return NextResponse.json({ snapshotId, deleted: true });
   }
-
-  await prisma.llmReportSnapshot.update({
-    where: { id: snapshotId },
-    data: { isDeleted: true, updatedAt: new Date() },
-  });
-
-  return NextResponse.json({ snapshotId, deleted: true });
-});
+);
 
 /**
  * Mirrors the Reporting.canDelete branch of the snapshot's ZenStack policy.

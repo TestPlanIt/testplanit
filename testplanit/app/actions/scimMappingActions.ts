@@ -162,46 +162,46 @@ export async function saveMappingChange(
   }
 
   return runWithAuditContext({ userId: session.user.id }, async () => {
-  try {
-    const oldGroup = await prisma.groups.findUnique({
-      where: { id: validatedGroupId },
-      select: { mappedAccess: true, name: true },
-    });
+    try {
+      const oldGroup = await prisma.groups.findUnique({
+        where: { id: validatedGroupId },
+        select: { mappedAccess: true, name: true },
+      });
 
-    await prisma.groups.update({
-      where: { id: validatedGroupId },
-      data: { mappedAccess: newMappedAccess },
-    });
+      await prisma.groups.update({
+        where: { id: validatedGroupId },
+        data: { mappedAccess: newMappedAccess },
+      });
 
-    await captureAuditEvent({
-      action: "UPDATE",
-      entityType: "Groups",
-      entityId: String(validatedGroupId),
-      entityName: oldGroup?.name ?? String(validatedGroupId),
-      userId: session.user.id,
-      changes: {
-        mappedAccess: {
-          old: oldGroup?.mappedAccess ?? null,
-          new: newMappedAccess,
+      await captureAuditEvent({
+        action: "UPDATE",
+        entityType: "Groups",
+        entityId: String(validatedGroupId),
+        entityName: oldGroup?.name ?? String(validatedGroupId),
+        userId: session.user.id,
+        changes: {
+          mappedAccess: {
+            old: oldGroup?.mappedAccess ?? null,
+            new: newMappedAccess,
+          },
         },
-      },
-      metadata: { source: "admin-mapping-config" },
-    });
+        metadata: { source: "admin-mapping-config" },
+      });
 
-    const queue = getScimAccessRecomputeQueue();
-    if (queue) {
-      const jobData: ScimAccessRecomputeJobData = {
-        adminUserId: session.user.id,
-        groupId: validatedGroupId,
-      };
-      await queue.add("scim-access-recompute", jobData);
+      const queue = getScimAccessRecomputeQueue();
+      if (queue) {
+        const jobData: ScimAccessRecomputeJobData = {
+          adminUserId: session.user.id,
+          groupId: validatedGroupId,
+        };
+        await queue.add("scim-access-recompute", jobData);
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error("[scimMappingActions] saveMappingChange failed", err);
+      return { success: false, error: "Failed to save mapping" };
     }
-
-    return { success: true };
-  } catch (err) {
-    console.error("[scimMappingActions] saveMappingChange failed", err);
-    return { success: false, error: "Failed to save mapping" };
-  }
   }); // end runWithAuditContext
 }
 

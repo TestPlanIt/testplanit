@@ -41,13 +41,16 @@ const WRITE_OPS = new Set([
 
 type EnhanceUser = Parameters<typeof enhance>[1];
 
-export function enhanceWithAudit(user: EnhanceUser extends { user?: infer U } ? U : unknown) {
+export function enhanceWithAudit(
+  user: EnhanceUser extends { user?: infer U } ? U : unknown
+) {
   // Snapshot the actor's id + name + email at write time so the readable AuditLog never looks the
   // user up later (a later lookup would show their current name, not the name they had then).
-  const actor = (user as
-    | { id?: string | null; name?: string | null; email?: string | null }
-    | null
-    | undefined) ?? null;
+  const actor =
+    (user as
+      | { id?: string | null; name?: string | null; email?: string | null }
+      | null
+      | undefined) ?? null;
 
   return enhance(prisma, { user: user as never }).$extends({
     name: "audit-guc",
@@ -61,19 +64,21 @@ export function enhanceWithAudit(user: EnhanceUser extends { user?: infer U } ? 
             buildGucPayload(
               actor
                 ? { id: actor.id, name: actor.name, email: actor.email }
-                : null,
-            ),
+                : null
+            )
           );
           return prismaBase.$transaction(async (tx) => {
             await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
             const accessor = model.charAt(0).toLowerCase() + model.slice(1);
             return inAuditTx.run(true, () =>
               (
-                enhance(tx as never, { user: user as never }) as unknown as Record<
+                enhance(tx as never, {
+                  user: user as never,
+                }) as unknown as Record<
                   string,
                   Record<string, (a: unknown) => Promise<unknown>>
                 >
-              )[accessor][operation](args),
+              )[accessor][operation](args)
             );
           });
         },

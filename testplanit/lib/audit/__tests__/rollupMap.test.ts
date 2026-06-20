@@ -53,8 +53,14 @@ describe("rollupMap (COR-02) — child/join table → owning root entity attribu
 
   it("Steps and TestCaseParameter both resolve RepositoryCases via testCaseId (A1 confirmed)", async () => {
     const map = await loadMap();
-    expect(map.Steps).toMatchObject({ ownerTable: "RepositoryCases", fkCol: "testCaseId" });
-    expect(map.TestCaseParameter).toMatchObject({ ownerTable: "RepositoryCases", fkCol: "testCaseId" });
+    expect(map.Steps).toMatchObject({
+      ownerTable: "RepositoryCases",
+      fkCol: "testCaseId",
+    });
+    expect(map.TestCaseParameter).toMatchObject({
+      ownerTable: "RepositoryCases",
+      fkCol: "testCaseId",
+    });
   });
 
   it("TestRunStepResults is a two-hop entry (fkCol testRunResultId → TestRunResults.testRunId)", async () => {
@@ -82,9 +88,18 @@ describe("rollupMap (COR-02) — child/join table → owning root entity attribu
   it("Issue join tables attribute via column B (the ENTITY FK), NOT column A (the Issue FK)", async () => {
     const map = await loadMap();
     // Live spike DB: A → Issue, B → entity. Owning-entity FK is column B.
-    expect(map._IssueToRepositoryCases).toMatchObject({ ownerTable: "RepositoryCases", fkCol: "B" });
-    expect(map._IssueToTestRuns).toMatchObject({ ownerTable: "TestRuns", fkCol: "B" });
-    expect(map._IssueToSessions).toMatchObject({ ownerTable: "Sessions", fkCol: "B" });
+    expect(map._IssueToRepositoryCases).toMatchObject({
+      ownerTable: "RepositoryCases",
+      fkCol: "B",
+    });
+    expect(map._IssueToTestRuns).toMatchObject({
+      ownerTable: "TestRuns",
+      fkCol: "B",
+    });
+    expect(map._IssueToSessions).toMatchObject({
+      ownerTable: "Sessions",
+      fkCol: "B",
+    });
     // Two-hop issue join tables also key off column B then resolve the hop.
     expect(map._IssueToTestRunResults).toMatchObject({
       ownerTable: "TestRuns",
@@ -93,17 +108,29 @@ describe("rollupMap (COR-02) — child/join table → owning root entity attribu
       hopTable: "TestRunResults",
       hopFkCol: "testRunId",
     });
-    expect(map._IssueToTestRunStepResults).toMatchObject({ ownerTable: "TestRuns", fkCol: "B" });
+    expect(map._IssueToTestRunStepResults).toMatchObject({
+      ownerTable: "TestRuns",
+      fkCol: "B",
+    });
   });
 
   it("Tag join tables use the alphabetical A/B column that points at the OWNING entity", async () => {
     const map = await loadMap();
     // _RepositoryCasesToTags: A=RepositoryCases → fkCol A.
-    expect(map._RepositoryCasesToTags).toMatchObject({ ownerTable: "RepositoryCases", fkCol: "A" });
+    expect(map._RepositoryCasesToTags).toMatchObject({
+      ownerTable: "RepositoryCases",
+      fkCol: "A",
+    });
     // _SessionsToTags: A=Sessions → fkCol A.
-    expect(map._SessionsToTags).toMatchObject({ ownerTable: "Sessions", fkCol: "A" });
+    expect(map._SessionsToTags).toMatchObject({
+      ownerTable: "Sessions",
+      fkCol: "A",
+    });
     // _TagsToTestRuns: A=Tags, B=TestRuns → the TestRuns FK is column B.
-    expect(map._TagsToTestRuns).toMatchObject({ ownerTable: "TestRuns", fkCol: "B" });
+    expect(map._TagsToTestRuns).toMatchObject({
+      ownerTable: "TestRuns",
+      fkCol: "B",
+    });
   });
 
   it("root entities RepositoryCases / TestRuns / Sessions are ABSENT (they attribute to themselves)", async () => {

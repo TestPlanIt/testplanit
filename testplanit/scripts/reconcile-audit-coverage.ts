@@ -85,9 +85,7 @@ const PARITY_ACTIONS = [
 
 const DEFAULT_SINCE_HOURS = 24;
 
-type SinceResult =
-  | { mode: "timestamp"; since: Date }
-  | { mode: "all" };
+type SinceResult = { mode: "timestamp"; since: Date } | { mode: "all" };
 
 function parseSinceArg(argv: string[]): SinceResult {
   const allIdx = argv.indexOf("--all");
@@ -290,7 +288,10 @@ async function main(): Promise<void> {
 
       if (SAF04_HOOK_ONLY_ENTITY_TYPES.has(entityType)) {
         // Allowlisted — intentionally hook-only, not a delta
-        allowlistedCount.set(entityType, (allowlistedCount.get(entityType) ?? 0) + 1);
+        allowlistedCount.set(
+          entityType,
+          (allowlistedCount.get(entityType) ?? 0) + 1
+        );
         continue;
       }
 
@@ -302,7 +303,8 @@ async function main(): Promise<void> {
     // Report
     const totalChecked = hookPresence.size;
     const cdcCoveredCount = [...hookPresence.keys()].filter(
-      (k) => cdcPresence.has(k) && !SAF04_HOOK_ONLY_ENTITY_TYPES.has(k.split("|")[0])
+      (k) =>
+        cdcPresence.has(k) && !SAF04_HOOK_ONLY_ENTITY_TYPES.has(k.split("|")[0])
     ).length;
     const allowlistedTotal = [...allowlistedCount.values()].reduce(
       (sum, n) => sum + n,
@@ -320,16 +322,16 @@ async function main(): Promise<void> {
 
     if (allowlistedCount.size > 0) {
       console.log("SAF-04 allowlisted entities (hook-only by design):");
-      for (const [entityType, count] of [...allowlistedCount.entries()].sort()) {
+      for (const [entityType, count] of [
+        ...allowlistedCount.entries(),
+      ].sort()) {
         console.log(`  ${entityType} — ${count} op(s) skipped`);
       }
       console.log("");
     }
 
     if (delta.length === 0) {
-      console.log(
-        "PARITY PROVEN: triggers ⊇ hooks (0 hook-only deltas)"
-      );
+      console.log("PARITY PROVEN: triggers ⊇ hooks (0 hook-only deltas)");
       console.log("");
       process.exit(0);
     }
@@ -343,8 +345,7 @@ async function main(): Promise<void> {
       "entityType".length,
       ...delta.map((r) => r.entityType.length)
     );
-    const header =
-      "entityType".padEnd(col1) + "  op  hookRows";
+    const header = "entityType".padEnd(col1) + "  op  hookRows";
     console.error(header);
     console.error("-".repeat(header.length));
     for (const row of delta.sort(

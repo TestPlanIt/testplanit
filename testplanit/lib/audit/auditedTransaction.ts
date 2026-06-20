@@ -33,7 +33,7 @@ type TransactionOptions = {
 
 export async function auditedTransaction<T>(
   fn: (tx: Prisma.TransactionClient) => Promise<T>,
-  options?: TransactionOptions,
+  options?: TransactionOptions
 ): Promise<T> {
   const payload = JSON.stringify(buildGucPayload());
   return prisma.$transaction(async (tx) => {
@@ -54,7 +54,7 @@ export async function auditedTransaction<T>(
 export async function auditedEnhancedTransaction<T>(
   session: Session | null,
   fn: (tx: Prisma.TransactionClient) => Promise<T>,
-  options?: TransactionOptions,
+  options?: TransactionOptions
 ): Promise<T> {
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
@@ -68,11 +68,13 @@ export async function auditedEnhancedTransaction<T>(
       id: session.user.id,
       name: session.user.name,
       email: session.user.email,
-    }),
+    })
   );
   return prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
-    const etx = enhance(tx as never, { user }) as unknown as Prisma.TransactionClient;
+    const etx = enhance(tx as never, {
+      user,
+    }) as unknown as Prisma.TransactionClient;
     return auditTxStore.run(tx, () => fn(etx));
   }, options);
 }

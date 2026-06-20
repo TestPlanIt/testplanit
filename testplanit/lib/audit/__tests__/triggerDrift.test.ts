@@ -48,7 +48,7 @@ describeDb(
       const r = await direct.query(
         `SELECT count(DISTINCT trigger_name)::int AS n
            FROM information_schema.triggers
-          WHERE trigger_name LIKE 'tpl_audit_%'`,
+          WHERE trigger_name LIKE 'tpl_audit_%'`
       );
       return r.rows[0].n as number;
     };
@@ -100,7 +100,7 @@ describeDb(
       const dropped = TRIGGER_REGISTRY[0];
       const droppedTrigger = triggerNameFor(dropped.table);
       await direct.query(
-        `DROP TRIGGER IF EXISTS ${droppedTrigger} ON "${dropped.table}";`,
+        `DROP TRIGGER IF EXISTS ${droppedTrigger} ON "${dropped.table}";`
       );
 
       // The drift assertion would now FAIL: live count is short by exactly the dropped trigger.
@@ -110,5 +110,5 @@ describeDb(
       applyTriggers();
       expect(await liveTriggerCount()).toBe(TRIGGER_REGISTRY.length);
     });
-  },
+  }
 );

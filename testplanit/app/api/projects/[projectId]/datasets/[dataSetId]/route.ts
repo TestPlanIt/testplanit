@@ -97,116 +97,120 @@ export async function GET(
   }
 }
 
-export const DELETE = withAuditContext(async (
-  request: NextRequest,
-  {
-    params,
-  }: {
-    params: Promise<{ projectId: string; dataSetId: string }>;
-  }
-) => {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const DELETE = withAuditContext(
+  async (
+    request: NextRequest,
+    {
+      params,
+    }: {
+      params: Promise<{ projectId: string; dataSetId: string }>;
     }
+  ) => {
+    try {
+      const session = await getServerSession(authOptions);
+      if (!session?.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
 
-    updateAuditContext({ userId: session.user.id });
+      updateAuditContext({ userId: session.user.id });
 
-    const { projectId: projectIdParam, dataSetId: dataSetIdParam } =
-      await params;
-    const projectId = parseInt(projectIdParam, 10);
-    const dataSetId = parseInt(dataSetIdParam, 10);
-    if (isNaN(projectId) || isNaN(dataSetId)) {
-      return NextResponse.json(
-        { error: "Invalid path parameter" },
-        { status: 400 }
-      );
-    }
+      const { projectId: projectIdParam, dataSetId: dataSetIdParam } =
+        await params;
+      const projectId = parseInt(projectIdParam, 10);
+      const dataSetId = parseInt(dataSetIdParam, 10);
+      if (isNaN(projectId) || isNaN(dataSetId)) {
+        return NextResponse.json(
+          { error: "Invalid path parameter" },
+          { status: 400 }
+        );
+      }
 
-    const url = new URL(request.url);
-    const confirmed = url.searchParams.get("confirm") === "true";
+      const url = new URL(request.url);
+      const confirmed = url.searchParams.get("confirm") === "true";
 
-    const db = await getEnhancedDb(session);
+      const db = await getEnhancedDb(session);
 
-    const dataset = await db.dataSet.findFirst({
-      where: {
-        id: dataSetId,
-        projectId,
-        isShared: true,
-        isDeleted: false,
-      },
-      select: { id: true, name: true },
-    });
-    if (!dataset) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
+      const dataset = await db.dataSet.findFirst({
+        where: {
+          id: dataSetId,
+          projectId,
+          isShared: true,
+          isDeleted: false,
+        },
+        select: { id: true, name: true },
+      });
+      if (!dataset) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
 
-    const assignmentCount = await db.caseSharedDataSetAssignment.count({
-      where: { sharedDataSetId: dataSetId },
-    });
-
-    if (!confirmed && assignmentCount > 0) {
-      return NextResponse.json(
-        { error: "has_assignments", assignmentCount },
-        { status: 409 }
-      );
-    }
-
-    await prisma.$transaction(async (tx) => {
-      // Soft-delete the parent dataset; rows are gated everywhere by the
-      // parent's `isDeleted` filter, so flipping the row-level flag is
-      // unnecessary. DataSetVersion rows are immutable history and
-      // remain intact.
-      await tx.dataSet.update({
-        where: { id: dataSetId },
-        data: { isDeleted: true },
+      const assignmentCount = await db.caseSharedDataSetAssignment.count({
+        where: { sharedDataSetId: dataSetId },
       });
 
-      // Active assignments must be cleared atomically with the
-      // soft-delete so consumer cases stop resolving to a tombstoned
-      // dataset on the next iteration fan-out. Assignments do not carry
-      // an `isDeleted` flag (their lifecycle is bound to the case + the
-      // shared dataset), so a hard delete is the correct semantic. The
-      // run snapshot already records the resolved version per
-      // testRunCase, preserving historical fidelity.
-      //
-      // Per-row delete (no `deleteMany`) keeps this call site consistent
-      // with the rest of the codebase's policy-friendly mutation idioms;
-      // assignment counts are bounded by the number of consuming cases,
-      // so the loop is O(n) over a small n.
-      if (assignmentCount > 0) {
-        const targets = await tx.caseSharedDataSetAssignment.findMany({
-          where: { sharedDataSetId: dataSetId },
-          select: { id: true },
-        });
-        for (const t of targets) {
-          await tx.caseSharedDataSetAssignment.delete({ where: { id: t.id } });
-        }
+      if (!confirmed && assignmentCount > 0) {
+        return NextResponse.json(
+          { error: "has_assignments", assignmentCount },
+          { status: 409 }
+        );
       }
-    });
 
-    captureAuditEvent({
-      action: "DELETE",
-      entityType: "DataSet",
-      entityId: String(dataSetId),
-      entityName: dataset.name,
-      projectId,
-      userId: session.user.id,
-      metadata: {
-        affectedAssignments: assignmentCount,
-        confirmed,
-      },
-    }).catch(() => {
-      // Audit is best-effort; never block the response.
-    });
+      await prisma.$transaction(async (tx) => {
+        // Soft-delete the parent dataset; rows are gated everywhere by the
+        // parent's `isDeleted` filter, so flipping the row-level flag is
+        // unnecessary. DataSetVersion rows are immutable history and
+        // remain intact.
+        await tx.dataSet.update({
+          where: { id: dataSetId },
+          data: { isDeleted: true },
+        });
 
-    return NextResponse.json({
-      ok: true,
-      deletedAssignments: assignmentCount,
-    });
-  } catch (err) {
-    console.error("[shared-dataset detail DELETE]", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+        // Active assignments must be cleared atomically with the
+        // soft-delete so consumer cases stop resolving to a tombstoned
+        // dataset on the next iteration fan-out. Assignments do not carry
+        // an `isDeleted` flag (their lifecycle is bound to the case + the
+        // shared dataset), so a hard delete is the correct semantic. The
+        // run snapshot already records the resolved version per
+        // testRunCase, preserving historical fidelity.
+        //
+        // Per-row delete (no `deleteMany`) keeps this call site consistent
+        // with the rest of the codebase's policy-friendly mutation idioms;
+        // assignment counts are bounded by the number of consuming cases,
+        // so the loop is O(n) over a small n.
+        if (assignmentCount > 0) {
+          const targets = await tx.caseSharedDataSetAssignment.findMany({
+            where: { sharedDataSetId: dataSetId },
+            select: { id: true },
+          });
+          for (const t of targets) {
+            await tx.caseSharedDataSetAssignment.delete({
+              where: { id: t.id },
+            });
+          }
+        }
+      });
+
+      captureAuditEvent({
+        action: "DELETE",
+        entityType: "DataSet",
+        entityId: String(dataSetId),
+        entityName: dataset.name,
+        projectId,
+        userId: session.user.id,
+        metadata: {
+          affectedAssignments: assignmentCount,
+          confirmed,
+        },
+      }).catch(() => {
+        // Audit is best-effort; never block the response.
+      });
+
+      return NextResponse.json({
+        ok: true,
+        deletedAssignments: assignmentCount,
+      });
+    } catch (err) {
+      console.error("[shared-dataset detail DELETE]", err);
+      return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    }
   }
-});
+);

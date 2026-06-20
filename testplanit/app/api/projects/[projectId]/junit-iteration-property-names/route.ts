@@ -61,92 +61,97 @@ const putBodySchema = z.object({
     .max(16, "junitIterationPropertyNamesTooMany"),
 });
 
-export const PUT = withAuditContext(async (
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) => {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const PUT = withAuditContext(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ projectId: string }> }
+  ) => {
+    try {
+      const session = await getServerSession(authOptions);
+      if (!session?.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
 
-    updateAuditContext({ userId: session.user.id });
+      updateAuditContext({ userId: session.user.id });
 
-    const { projectId: projectIdParam } = await params;
-    const projectId = parseInt(projectIdParam);
-    if (Number.isNaN(projectId)) {
-      return NextResponse.json({ error: "Invalid projectId" }, { status: 400 });
-    }
+      const { projectId: projectIdParam } = await params;
+      const projectId = parseInt(projectIdParam);
+      if (Number.isNaN(projectId)) {
+        return NextResponse.json(
+          { error: "Invalid projectId" },
+          { status: 400 }
+        );
+      }
 
-    // Admin / project-admin gate. Matches the shape used by sibling
-    // routes (e.g. integrations/route.ts) — session.user.access is the
-    // canonical role marker.
-    const isAdmin = session.user.access === "ADMIN";
-    const isProjectAdmin = session.user.access === "PROJECTADMIN";
-    if (!isAdmin && !isProjectAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+      // Admin / project-admin gate. Matches the shape used by sibling
+      // routes (e.g. integrations/route.ts) — session.user.access is the
+      // canonical role marker.
+      const isAdmin = session.user.access === "ADMIN";
+      const isProjectAdmin = session.user.access === "PROJECTADMIN";
+      if (!isAdmin && !isProjectAdmin) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
 
-    // Confirm the project exists and the caller has access to it. We
-    // reuse the same access-where shape used by the integrations route
-    // so the authorization model is uniform.
-    const project = await prisma.projects.findFirst({
-      where: {
-        id: projectId,
-        isDeleted: false,
-        ...(isAdmin
-          ? {}
-          : {
-              OR: [
-                {
-                  userPermissions: {
-                    some: {
-                      userId: session.user.id,
-                      accessType: { not: ProjectAccessType.NO_ACCESS },
+      // Confirm the project exists and the caller has access to it. We
+      // reuse the same access-where shape used by the integrations route
+      // so the authorization model is uniform.
+      const project = await prisma.projects.findFirst({
+        where: {
+          id: projectId,
+          isDeleted: false,
+          ...(isAdmin
+            ? {}
+            : {
+                OR: [
+                  {
+                    userPermissions: {
+                      some: {
+                        userId: session.user.id,
+                        accessType: { not: ProjectAccessType.NO_ACCESS },
+                      },
                     },
                   },
-                },
-                {
-                  assignedUsers: {
-                    some: { userId: session.user.id },
+                  {
+                    assignedUsers: {
+                      some: { userId: session.user.id },
+                    },
                   },
-                },
-              ],
-            }),
-      },
-      select: { id: true },
-    });
-    if (!project) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const parsed = putBodySchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid request body",
-          issues: parsed.error.issues,
+                ],
+              }),
         },
-        { status: 400 }
+        select: { id: true },
+      });
+      if (!project) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      const body = await request.json();
+      const parsed = putBodySchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          {
+            error: "Invalid request body",
+            issues: parsed.error.issues,
+          },
+          { status: 400 }
+        );
+      }
+
+      const updated = await prisma.projects.update({
+        where: { id: projectId },
+        data: { junitIterationPropertyNames: parsed.data.propertyNames },
+        select: { id: true, junitIterationPropertyNames: true },
+      });
+
+      return NextResponse.json({
+        propertyNames: updated.junitIterationPropertyNames,
+      });
+    } catch (err) {
+      console.error("PUT junit-iteration-property-names failed:", err);
+      return NextResponse.json(
+        { error: "Failed to update property names" },
+        { status: 500 }
       );
     }
-
-    const updated = await prisma.projects.update({
-      where: { id: projectId },
-      data: { junitIterationPropertyNames: parsed.data.propertyNames },
-      select: { id: true, junitIterationPropertyNames: true },
-    });
-
-    return NextResponse.json({
-      propertyNames: updated.junitIterationPropertyNames,
-    });
-  } catch (err) {
-    console.error("PUT junit-iteration-property-names failed:", err);
-    return NextResponse.json(
-      { error: "Failed to update property names" },
-      { status: 500 }
-    );
   }
-});
+);

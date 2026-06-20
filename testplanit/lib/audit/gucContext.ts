@@ -71,12 +71,13 @@ export function buildGucPayload(
   explicitActor?:
     | string
     | { id?: string | null; name?: string | null; email?: string | null }
-    | null,
+    | null
 ): GucPayload {
   const ctx = getAuditContext();
   // An explicit actor (the enhanced/worker paths that already resolved the user) wins over the ALS
   // frame; a bare string keeps every existing `buildGucPayload(userId)` caller working unchanged.
-  const ex = typeof explicitActor === "string" ? { id: explicitActor } : explicitActor;
+  const ex =
+    typeof explicitActor === "string" ? { id: explicitActor } : explicitActor;
   return {
     userId: ex?.id ?? ctx?.userId ?? null,
     userName: ex?.name ?? ctx?.userName ?? null,
@@ -90,16 +91,17 @@ export function buildGucPayload(
     tenantId: getCurrentTenantId() ?? null,
     operationId: ctx?.operationId ?? null,
     entityName: ctx?.subjectEntityName ?? null,
-    projectId: ctx?.subjectProjectId != null ? String(ctx.subjectProjectId) : null,
+    projectId:
+      ctx?.subjectProjectId != null ? String(ctx.subjectProjectId) : null,
   };
 }
 
 export async function injectAuditGuc(
-  tx: Prisma.TransactionClient,
+  tx: Prisma.TransactionClient
 ): Promise<void> {
   const payload = buildGucPayload();
   await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
-    payload,
+    payload
   )}, true)`;
 }
 
@@ -121,11 +123,11 @@ export async function withAuditGuc<T>(
     maxWait?: number;
     timeout?: number;
     isolationLevel?: Prisma.TransactionIsolationLevel;
-  },
+  }
 ): Promise<T> {
   return client.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
-      payload,
+      payload
     )}, true)`;
     return fn(tx);
   }, options);

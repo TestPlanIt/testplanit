@@ -201,21 +201,23 @@ export function AuditLogDetailModal({
               )}
 
               {/* Metadata */}
-              {canViewMetadata && metadata && Object.keys(metadata).length > 0 && (
-                <>
-                  <Separator />
-                  <div className="min-w-0">
-                    <h4 className="text-sm font-medium mb-2">
-                      {t("metadata")}
-                    </h4>
-                    <div className="overflow-x-auto">
-                      <pre className="text-xs bg-muted p-3 rounded-md whitespace-pre">
-                        {JSON.stringify(metadata, null, 2)}
-                      </pre>
+              {canViewMetadata &&
+                metadata &&
+                Object.keys(metadata).length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="min-w-0">
+                      <h4 className="text-sm font-medium mb-2">
+                        {t("metadata")}
+                      </h4>
+                      <div className="overflow-x-auto">
+                        <pre className="text-xs bg-muted p-3 rounded-md whitespace-pre">
+                          {JSON.stringify(metadata, null, 2)}
+                        </pre>
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
             </div>
           </div>
         )}

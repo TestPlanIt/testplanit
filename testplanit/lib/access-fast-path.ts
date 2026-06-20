@@ -111,9 +111,12 @@ export async function tryFastPathCreate(params: {
     const payload = JSON.stringify(buildGucPayload(userId));
     const result = await prismaBase.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
-      const accessor = (tx as unknown as Record<string, { create: (a: { data: Record<string, unknown> }) => Promise<unknown> }>)[
-        parsedPath.model
-      ];
+      const accessor = (
+        tx as unknown as Record<
+          string,
+          { create: (a: { data: Record<string, unknown> }) => Promise<unknown> }
+        >
+      )[parsedPath.model];
       return accessor.create({ data });
     });
     return NextResponse.json({ data: result }, { status: 201 });

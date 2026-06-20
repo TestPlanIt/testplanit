@@ -27,7 +27,11 @@ function mockSession(user: { id: string; access: string | null } | null) {
 
 /** Stub the two raw queries: distinct actors, then the COUNT. */
 function mockQueryResults(
-  rows: Array<{ userId: string; userName: string | null; userEmail: string | null }>,
+  rows: Array<{
+    userId: string;
+    userName: string | null;
+    userEmail: string | null;
+  }>,
   total: number
 ) {
   vi.mocked(prisma.$queryRaw)

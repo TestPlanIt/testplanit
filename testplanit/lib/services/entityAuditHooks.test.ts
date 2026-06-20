@@ -70,7 +70,8 @@ const LEGACY_CONFIGS = [
 
 const cfgOf = (entityType: string) => {
   const cfg = LEGACY_CONFIGS.find((c) => c.entityType === entityType);
-  if (!cfg) throw new Error(`missing legacy entity-audit config: ${entityType}`);
+  if (!cfg)
+    throw new Error(`missing legacy entity-audit config: ${entityType}`);
   return cfg;
 };
 
@@ -238,7 +239,12 @@ describe("entity audit hooks", () => {
       });
       await hooks.create({
         args: { data: { testCaseId: 12, fieldId: 3, value: "High" } },
-        query: async () => ({ id: 99, testCaseId: 12, fieldId: 3, value: "High" }),
+        query: async () => ({
+          id: 99,
+          testCaseId: 12,
+          fieldId: 3,
+          value: "High",
+        }),
       });
       const ev = lastEvent();
       expect(ev.action).toBe("CREATE");
