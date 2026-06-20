@@ -1,3 +1,9 @@
+## [0.39.0](https://github.com/TestPlanIt/testplanit/compare/v0.38.10...v0.39.0) (2026-06-20)
+
+### Features
+
+* **mcp:** bulk case creation and template selection/listing ([#454](https://github.com/TestPlanIt/testplanit/issues/454)) ([a696255](https://github.com/TestPlanIt/testplanit/commit/a6962558066d01eb0f2bcbae857f276e819fd0e3))
+
 ## [0.38.10](https://github.com/TestPlanIt/testplanit/compare/v0.38.9...v0.38.10) (2026-06-20)
 
 ### Bug Fixes
