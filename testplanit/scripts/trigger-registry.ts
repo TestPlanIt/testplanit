@@ -65,7 +65,10 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   { table: "TestRunResults", denylist: ["createdAt", "updatedAt"] },
   { table: "TestRunStepResults", denylist: ["createdAt", "updatedAt"] },
   { table: "TestRunCaseIteration", denylist: ["createdAt", "updatedAt"] },
-  { table: "ResultFieldValues", denylist: [], captureCols: ["fieldId"] }, // no timestamps; fieldId identifies which field
+  // Shared 3-way value table: a result field value belongs to a test-run result, a session result,
+  // OR a case. Capture all three owner FKs (+ fieldId) so correlation can roll it up to the right
+  // owner even on a value-only update. (The rollup FK testRunResultsId is added from ROLLUP_MAP.)
+  { table: "ResultFieldValues", denylist: [], captureCols: ["fieldId", "sessionResultsId", "testCaseId"] }, // no timestamps
 
   // Runs implicit m2m join tables
   { table: "_IssueToTestRuns", pkCol: "A", denylist: [] },

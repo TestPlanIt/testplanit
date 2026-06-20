@@ -222,12 +222,47 @@ export async function applyRollupMap(
     twoHopOwners.set(table, await resolveTwoHop(cfg, fkValues, twoHopQuery));
   }
 
+  // ResultFieldValues is a shared value table: besides the test-run hop handled by ROLLUP_MAP above,
+  // a row may instead belong to a session result (sessionResultsId → SessionResults.sessionId →
+  // Sessions). Pre-resolve that hop in one batched query for the whole group.
+  const rfvSessionOwners = new Map<number | string, number | string>();
+  const rfvSessionFks = group
+    .filter((r) => r.table === "ResultFieldValues")
+    .map((r) => extractFk(r, "sessionResultsId"))
+    .filter((v): v is number | string => v !== null);
+  if (rfvSessionFks.length > 0) {
+    for (const r of await twoHopQuery("SessionResults", "sessionId", rfvSessionFks)) {
+      rfvSessionOwners.set(r.id, r.ownerId);
+    }
+  }
+
   for (const row of group) {
     if (row.table === "Comment") {
       // Roll a comment up to the entity it is attached to (resolved name comes later).
       const parent = resolveCommentParent(row);
       out.push(parent ? { row, ...parent } : { row, entityType: row.table, entityId: row.pk });
       continue;
+    }
+    if (row.table === "ResultFieldValues") {
+      // Shared 3-way value table — attribute to whichever owner FK is set (the trigger captures all
+      // three). Session and case rows would otherwise fall through to the test-run two-hop below and
+      // mis-attribute to TestRuns.
+      const sessionResultId = extractFk(row, "sessionResultsId");
+      if (sessionResultId != null) {
+        const owner = rfvSessionOwners.get(sessionResultId);
+        out.push({
+          row,
+          entityType: "Sessions",
+          entityId: owner != null ? String(owner) : String(sessionResultId),
+        });
+        continue;
+      }
+      const caseId = extractFk(row, "testCaseId");
+      if (caseId != null) {
+        out.push({ row, entityType: "RepositoryCases", entityId: String(caseId) });
+        continue;
+      }
+      // else: testRunResultsId (or none) — fall through to the ROLLUP_MAP two-hop below.
     }
     const cfg = ROLLUP_MAP[row.table];
     if (!cfg) {

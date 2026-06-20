@@ -845,6 +845,13 @@ async function innerHandler(
       }
     }
 
+    // Session subject for the audit GUC (applied to this request's runWithAuditContext frame below)
+    // so a session result and its nested result-field values record the session's name and project
+    // at write time — session results go through this generic route, not a bespoke endpoint, so
+    // without this they would materialize with a blank entity name.
+    let sessionResultSubjectName: string | undefined;
+    let sessionResultSubjectProjectId: number | undefined;
+
     // Required-result-field guard for SessionResults.create. The model handler
     // is the universal chokepoint — `lib/prisma.ts`'s `$extends` middleware is
     // bypassed by ZenStack's `enhance()` (see the repositoryCases ES-sync shim
@@ -876,9 +883,11 @@ async function innerHandler(
       if (Number.isFinite(sessionId)) {
         const session = await prisma.sessions.findUnique({
           where: { id: sessionId },
-          select: { templateId: true },
+          select: { templateId: true, name: true, projectId: true },
         });
         if (session) {
+          sessionResultSubjectName = session.name ?? undefined;
+          sessionResultSubjectProjectId = session.projectId ?? undefined;
           const nestedCreate = (
             data?.resultFieldValues as
               | {
@@ -1037,6 +1046,11 @@ async function innerHandler(
         userId: authenticatedUserId ?? parentAuditCtx.userId ?? undefined,
         userName: authenticatedUserName ?? parentAuditCtx.userName ?? undefined,
         userEmail: authenticatedUserEmail ?? parentAuditCtx.userEmail ?? undefined,
+        // Session-result subject (see above): names the session on its result + result-field rows.
+        subjectEntityName:
+          sessionResultSubjectName ?? parentAuditCtx.subjectEntityName,
+        subjectProjectId:
+          sessionResultSubjectProjectId ?? parentAuditCtx.subjectProjectId,
         suppressWebhooks: true,
         suppressEntityAudit: auditedByShim,
       },
