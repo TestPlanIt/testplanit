@@ -67,6 +67,21 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
     }
   }, [allIcons, selectedIconId, initialIconId, onIconSelect]);
 
+  useEffect(() => {
+    if (colors && onColorSelect && !selectedColorId && !initialColorId) {
+      const darkestBlackId =
+        [...colors]
+          .filter((color) => color.colorFamily?.name === "Black")
+          .sort((a, b) => a.order - b.order)[0]?.id ??
+        colors[0]?.id ??
+        null;
+      if (darkestBlackId != null) {
+        setSelectedColorId(darkestBlackId);
+        onColorSelect(darkestBlackId);
+      }
+    }
+  }, [colors, onColorSelect, selectedColorId, initialColorId]);
+
   const filteredIcons = allIcons?.filter((icon) =>
     icon.name.toLowerCase().includes(searchQuery.toLowerCase())
   );

@@ -229,8 +229,8 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                         <div className="flex items-center">
                           <DynamicIcon
                             className="h-4 w-4 mr-1"
-                            name={option.fieldOption.icon.name}
-                            color={option.fieldOption.iconColor.value}
+                            name={option.fieldOption.icon?.name as IconName}
+                            color={option.fieldOption.iconColor?.value}
                           />
                           {option.fieldOption.name}
                         </div>
@@ -253,8 +253,8 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                         <div className="flex items-center">
                           <DynamicIcon
                             className="h-4 w-4 mr-1"
-                            name={option.fieldOption.icon.name}
-                            color={option.fieldOption.iconColor.value}
+                            name={option.fieldOption.icon?.name as IconName}
+                            color={option.fieldOption.iconColor?.value}
                           />
                           {option.fieldOption.name}
                         </div>
@@ -322,8 +322,8 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                         <div className="flex items-center">
                           <DynamicIcon
                             className="shrink-0 mr-1"
-                            name={option.fieldOption.icon.name}
-                            color={option.fieldOption.iconColor.value}
+                            name={option.fieldOption.icon?.name as IconName}
+                            color={option.fieldOption.iconColor?.value}
                           />
                           {option.fieldOption.name}
                         </div>
