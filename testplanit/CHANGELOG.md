@@ -1,3 +1,13 @@
+## [0.40.0](https://github.com/TestPlanIt/testplanit/compare/v0.39.2...v0.40.0) (2026-06-20)
+
+### Features
+
+* **api:** add createTestCases for bulk case creation ([#459](https://github.com/TestPlanIt/testplanit/issues/459)) ([79c4db0](https://github.com/TestPlanIt/testplanit/commit/79c4db008dc0d021844a1aaf60c6e790f750582f))
+
+### Bug Fixes
+
+* **deps:** patch Dependabot security advisories ([#461](https://github.com/TestPlanIt/testplanit/issues/461)) ([e40c94e](https://github.com/TestPlanIt/testplanit/commit/e40c94e6f487769694249a7b0ff57d0ebd954fd2)), closes [package.json#pnpm](https://github.com/TestPlanIt/package.json/issues/pnpm)
+
 ## [0.39.2](https://github.com/TestPlanIt/testplanit/compare/v0.39.1...v0.39.2) (2026-06-20)
 
 ### Bug Fixes

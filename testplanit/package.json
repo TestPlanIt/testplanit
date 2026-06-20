@@ -1,6 +1,6 @@
 {
   "name": "testplanit",
-  "version": "0.39.2",
+  "version": "0.40.0",
   "private": true,
   "scripts": {
     "audit:coverage": "tsx scripts/audit-coverage.ts",
