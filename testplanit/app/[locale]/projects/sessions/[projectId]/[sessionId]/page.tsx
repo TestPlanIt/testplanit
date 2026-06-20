@@ -804,6 +804,10 @@ export default function SessionPage() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  // Initialize selectedTags from the loaded session ONCE. Creating a tag invalidates parent queries
+  // (the session includes its tags), refetching sessionData; without this guard the re-sync effect
+  // below would revert the user's in-progress tag edits on that refetch.
+  const hasInitializedTagsRef = useRef(false);
   const [missionContent, setMissionContent] =
     useState<JSONContent>(emptyEditorContent);
   const [noteContent, setNoteContent] =
@@ -1251,7 +1255,6 @@ export default function SessionPage() {
         keepDefaultValues: true,
       });
       setInitialValues(formValues);
-      setSelectedTags(sessionData.tags.map((tag) => tag.id));
 
       // Delay setting form as initialized
       requestAnimationFrame(() => {
@@ -1402,10 +1405,12 @@ export default function SessionPage() {
     }
   }, [sessionData, sessionData?.note, sessionData?.mission]);
 
-  // Add useEffect for initial tags
+  // Initialize the tag selection from the loaded session, once (see hasInitializedTagsRef) so a
+  // tag-create refetch of sessionData does not revert in-progress edits.
   useEffect(() => {
-    if (sessionData) {
+    if (sessionData && !hasInitializedTagsRef.current) {
       setSelectedTags(sessionData.tags.map((tag) => tag.id));
+      hasInitializedTagsRef.current = true;
     }
   }, [sessionData]);
 
