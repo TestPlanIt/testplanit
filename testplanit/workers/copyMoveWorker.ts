@@ -1,6 +1,7 @@
 import { Job, Worker } from "bullmq";
 import { WorkflowScope } from "@prisma/client";
 import { runWithAuditContext } from "../lib/auditContext";
+import { buildGucPayload } from "../lib/audit/gucContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
 import {
   disconnectAllTenantClients,
@@ -597,8 +598,13 @@ const processor = async (
           // inject here rather than wrapping the processor (Pitfall H).
           await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
             {
-              userId: job.data?.userId ?? null,
-              requestId: null,
+              // Full actor frame from the restored job context (CTX-02): the
+              // processor runs inside runWithAuditContext(actorContext), so
+              // buildGucPayload() carries userName + operationId (not just
+              // userId). Without it the copied rows' CDC capture had a blank
+              // actor name and a synthetic operationId that did not group under
+              // the originating save alongside the semantic CREATE/DUPLICATED.
+              ...buildGucPayload(),
               source: "worker",
               tenantId: job.data?.tenantId ?? getCurrentTenantId() ?? null,
             }
