@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 import { computeObjectDiff } from "~/lib/webhooks/diff";
 import { webhookEvents } from "~/lib/webhooks/events";
@@ -55,7 +55,7 @@ interface EmitOptions {
 
 export async function emitCaseCreated(
   row: RepositoryCaseRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   // Fetch the full case structure (fields + steps) so the consumer can
@@ -103,7 +103,7 @@ export async function emitCaseCreated(
 export async function emitCaseUpdated(
   oldRow: RepositoryCaseRow | null,
   newRow: RepositoryCaseRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   if (!oldRow) return;
@@ -161,7 +161,7 @@ export interface CaseFieldValueRow {
 export async function emitCaseFieldValueChanged(
   oldRow: CaseFieldValueRow | null,
   newRow: CaseFieldValueRow | null,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   const row = newRow ?? oldRow;
@@ -221,7 +221,7 @@ export async function emitCaseFieldValueChanged(
 
 export async function emitCaseDeleted(
   oldRow: RepositoryCaseRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   await webhookEvents.emit(

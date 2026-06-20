@@ -1,7 +1,10 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Access, ApplicationArea, WorkflowScope, WorkflowType } from "~/zenstack/models";
 import type { TestmoImportJob } from "~/zenstack/models";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { JsonNull } from "@zenstackhq/orm";
+import type { JsonObject, JsonValue } from "@zenstackhq/orm";
+import type { DbClient, TxClient } from "~/lib/zenstack";
+import { Prisma } from "@prisma/client";
 import { getSchema } from "@tiptap/core";
 import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
@@ -142,7 +145,7 @@ const userNameCache = new Map<string, string>();
 const folderNameCache = new Map<number, string>();
 
 const getProjectName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   projectId: number
 ): Promise<string> => {
   if (projectNameCache.has(projectId)) {
@@ -160,7 +163,7 @@ const getProjectName = async (
 };
 
 const getTemplateName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   templateId: number
 ): Promise<string> => {
   if (templateNameCache.has(templateId)) {
@@ -178,7 +181,7 @@ const getTemplateName = async (
 };
 
 const getWorkflowName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   workflowId: number
 ): Promise<string> => {
   if (workflowNameCache.has(workflowId)) {
@@ -196,7 +199,7 @@ const getWorkflowName = async (
 };
 
 const getConfigurationName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configurationId: number
 ): Promise<string | null> => {
   if (configurationNameCache.has(configurationId)) {
@@ -216,7 +219,7 @@ const getConfigurationName = async (
 };
 
 const getMilestoneName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   milestoneId: number
 ): Promise<string | null> => {
   if (milestoneNameCache.has(milestoneId)) {
@@ -236,7 +239,7 @@ const getMilestoneName = async (
 };
 
 const getUserName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   userId: string | null | undefined
 ): Promise<string> => {
   if (!userId) {
@@ -258,7 +261,7 @@ const getUserName = async (
 };
 
 const getFolderName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   folderId: number
 ): Promise<string> => {
   if (folderNameCache.has(folderId)) {
@@ -1138,12 +1141,12 @@ const isTipTapDocumentEmpty = (doc: Record<string, unknown>): boolean => {
 
 const convertToTipTapJsonValue = (
   value: unknown
-): Prisma.InputJsonValue | null => {
+): JsonValue | null => {
   const doc = convertToTipTapDocument(value);
   if (!doc || isTipTapDocumentEmpty(doc)) {
     return null;
   }
-  return doc as Prisma.InputJsonValue;
+  return doc as JsonValue;
 };
 
 const convertToTipTapJsonString = (value: unknown): string | null => {
@@ -1474,7 +1477,7 @@ const normalizeCaseFieldValue = (
 };
 
 async function importUsers(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration,
   importJob: TestmoImportJob
 ): Promise<EntitySummaryResult> {
@@ -1649,7 +1652,7 @@ interface MilestonesImportResult {
 }
 
 const importProjects = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   importJob: TestmoImportJob,
   userIdMap: Map<number, string>,
@@ -1877,7 +1880,7 @@ const importProjects = async (
 };
 
 const importMilestones = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   milestoneTypeIdMap: Map<number, number>,
@@ -2065,7 +2068,7 @@ interface SessionsImportResult {
 }
 
 const importSessions = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   milestoneIdMap: Map<number, number>,
@@ -2333,7 +2336,7 @@ interface SessionResultsImportResult {
 }
 
 const importSessionResults = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   sessionIdMap: Map<number, number>,
   statusIdMap: Map<number, number>,
@@ -2446,7 +2449,7 @@ interface SessionValuesImportResult {
 }
 
 const importSessionValues = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   sessionIdMap: Map<number, number>,
   testmoFieldValueMap: Map<number, { fieldId: number; name: string }>,
@@ -2587,7 +2590,7 @@ const importSessionValues = async (
 };
 
 const importRepositories = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   context: ImportContext,
@@ -2872,7 +2875,7 @@ const importRepositories = async (
 };
 
 const importRepositoryFolders = async (
-  prisma: PrismaClient,
+  prisma: DbClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   repositoryIdMap: Map<number, number>,
@@ -3167,7 +3170,7 @@ const importRepositoryFolders = async (
   return { summary, folderIdMap, repositoryRootFolderMap };
 };
 const importRepositoryCases = async (
-  prisma: PrismaClient,
+  prisma: DbClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   repositoryIdMap: Map<number, number>,
@@ -3415,7 +3418,7 @@ const importRepositoryCases = async (
       return;
     }
     await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
+      async (tx: TxClient) => {
         for (const record of records) {
           const caseSourceId = toNumberValue(record.id);
           const projectSourceId = toNumberValue(record.project_id);
@@ -4051,7 +4054,7 @@ const importRepositoryCases = async (
                 order,
                 steps:
                   stepsForVersion.length > 0
-                    ? (stepsForVersion as Prisma.InputJsonValue)
+                    ? (stepsForVersion as JsonValue)
                     : null,
                 tags: [],
                 issues: [],
@@ -4079,7 +4082,7 @@ const importRepositoryCases = async (
                 versionId: caseVersion.id,
                 field:
                   fieldValue.field.displayName || fieldValue.field.systemName,
-                value: fieldValue.value ?? Prisma.JsonNull,
+                value: fieldValue.value ?? JsonNull,
               })),
             });
           }
@@ -4191,7 +4194,7 @@ const importRepositoryCases = async (
 };
 
 const importTestRuns = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   _canonicalRepoIdByProject: Map<number, Set<number>>,
@@ -4398,7 +4401,7 @@ const importTestRuns = async (
 };
 
 const importTestRunCases = async (
-  prisma: PrismaClient,
+  prisma: DbClient,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
   caseIdMap: Map<number, number>,
@@ -4722,7 +4725,7 @@ const importTestRunCases = async (
 };
 
 const importTestRunResults = async (
-  prisma: PrismaClient,
+  prisma: DbClient,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
   testRunCaseIdMap: Map<number, number>,
@@ -4786,7 +4789,7 @@ const importTestRunResults = async (
       return;
     }
     await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
+      async (tx: TxClient) => {
         for (const record of records) {
           const resultSourceId = toNumberValue(record.id);
           const runSourceId = toNumberValue(record.run_id);
@@ -4982,7 +4985,7 @@ const importTestRunResults = async (
 };
 
 const importTestRunStepResults = async (
-  prisma: PrismaClient,
+  prisma: DbClient,
   datasetRows: Map<string, any[]>,
   testRunResultIdMap: Map<number, number>,
   testRunCaseIdMap: Map<number, number>,
@@ -5313,7 +5316,7 @@ const importTestRunStepResults = async (
 };
 
 async function importStatuses(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration
 ): Promise<EntitySummaryResult> {
   const summary: EntitySummaryResult = {
@@ -5517,7 +5520,7 @@ async function importStatuses(
 async function processImportMode(
   importJob: TestmoImportJob,
   jobId: string,
-  prisma: PrismaClient,
+  prisma: DbClient,
   tenantId?: string
 ) {
   if (FINAL_STATUSES.has(importJob.status)) {
@@ -5832,7 +5835,7 @@ async function processImportMode(
 
   try {
     const withTransaction = async <T>(
-      operation: (tx: Prisma.TransactionClient) => Promise<T>,
+      operation: (tx: TxClient) => Promise<T>,
       options?: { timeoutMs?: number }
     ): Promise<T> => {
       return prisma.$transaction(operation, {
@@ -7822,20 +7825,20 @@ async function processorInner(job: Job<TestmoImportJobData>) {
 
     const schemaValue =
       dataset.schema !== undefined && dataset.schema !== null
-        ? (JSON.parse(JSON.stringify(dataset.schema)) as Prisma.InputJsonValue)
-        : Prisma.JsonNull;
+        ? (JSON.parse(JSON.stringify(dataset.schema)) as JsonValue)
+        : JsonNull;
 
     const sampleRowsValue =
       dataset.sampleRows.length > 0
         ? (JSON.parse(
             JSON.stringify(dataset.sampleRows)
-          ) as Prisma.InputJsonValue)
-        : Prisma.JsonNull;
+          ) as JsonValue)
+        : JsonNull;
 
     const allRowsValue =
       dataset.allRows && dataset.allRows.length > 0
-        ? (JSON.parse(JSON.stringify(dataset.allRows)) as Prisma.InputJsonValue)
-        : Prisma.JsonNull;
+        ? (JSON.parse(JSON.stringify(dataset.allRows)) as JsonValue)
+        : JsonNull;
 
     await prisma.testmoImportDataset.create({
       data: {
@@ -7912,9 +7915,9 @@ async function processorInner(job: Job<TestmoImportJobData>) {
         processedRows,
         durationMs: summary.meta.durationMs,
         analysisGeneratedAt: new Date(),
-        configuration: Prisma.JsonNull,
-        options: Prisma.JsonNull,
-        analysis: analysisPayload as Prisma.JsonObject,
+        configuration: JsonNull,
+        options: JsonNull,
+        analysis: analysisPayload as JsonObject,
         processedCount: 0,
         errorCount: 0,
         skippedCount: 0,
@@ -7922,8 +7925,8 @@ async function processorInner(job: Job<TestmoImportJobData>) {
         currentEntity: null,
         estimatedTimeRemaining: null,
         processingRate: null,
-        activityLog: Prisma.JsonNull,
-        entityProgress: Prisma.JsonNull,
+        activityLog: JsonNull,
+        entityProgress: JsonNull,
       },
     });
 

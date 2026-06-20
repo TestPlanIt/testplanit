@@ -15,7 +15,7 @@
  * carry `Content-Type: application/scim+json` so IdPs can confidently parse
  * the §3.12 error envelope.
  */
-import { Prisma } from "@prisma/client";
+import { ORMError } from "@zenstackhq/orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
     if (
       typeof Prisma?.PrismaClientKnownRequestError === "function" &&
-      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e instanceof ORMError &&
       e.code === "P2002"
     ) {
       return scimError(409, "uniqueness", "userName already exists");

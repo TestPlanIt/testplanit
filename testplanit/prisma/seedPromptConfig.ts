@@ -1,11 +1,12 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { DbClient } from "~/lib/zenstack";
 import { LLM_FEATURES, PROMPT_FEATURE_VARIABLES } from "../lib/llm/constants";
 
 /**
  * Seeds the default prompt configuration with prompts for all AI features.
  * These are the original hard-coded prompts from the API routes.
  */
-export async function seedDefaultPromptConfig(prisma: PrismaClient) {
+export async function seedDefaultPromptConfig(prisma: DbClient) {
   console.log("Seeding default prompt configuration...");
 
   // Ensure no other config is marked as default (safety measure)
@@ -385,7 +386,7 @@ Return the JSON array of {step, expectedResult} for this test now.`,
         userPrompt: prompt.userPrompt,
         temperature: prompt.temperature,
         maxOutputTokens: prompt.maxOutputTokens,
-        variables: prompt.variables as Prisma.InputJsonValue,
+        variables: prompt.variables as JsonValue,
       },
       create: {
         promptConfigId: defaultConfig.id,
@@ -394,7 +395,7 @@ Return the JSON array of {step, expectedResult} for this test now.`,
         userPrompt: prompt.userPrompt,
         temperature: prompt.temperature,
         maxOutputTokens: prompt.maxOutputTokens,
-        variables: prompt.variables as Prisma.InputJsonValue,
+        variables: prompt.variables as JsonValue,
       },
     });
   }
@@ -424,7 +425,7 @@ Return the JSON array of {step, expectedResult} for this test now.`,
         userPrompt: p.userPrompt,
         temperature: p.temperature,
         maxOutputTokens: p.maxOutputTokens,
-        variables: p.variables as Prisma.InputJsonValue,
+        variables: p.variables as JsonValue,
       })),
     });
 

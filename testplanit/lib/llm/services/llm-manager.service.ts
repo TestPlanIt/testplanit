@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 import {
   AnthropicAdapter,
   AzureOpenAIAdapter,
@@ -177,15 +177,15 @@ import type {
 export class LlmManager {
   private static instance: LlmManager;
   private adapters: Map<number, BaseLlmAdapter> = new Map();
-  private prisma: PrismaClient;
+  private prisma: DbClient;
   private tenantId?: string;
 
-  private constructor(prisma: PrismaClient, tenantId?: string) {
+  private constructor(prisma: DbClient, tenantId?: string) {
     this.prisma = prisma;
     this.tenantId = tenantId;
   }
 
-  static getInstance(prisma: PrismaClient): LlmManager {
+  static getInstance(prisma: DbClient): LlmManager {
     if (!LlmManager.instance) {
       LlmManager.instance = new LlmManager(prisma);
     }
@@ -197,7 +197,7 @@ export class LlmManager {
    * Bypasses the singleton cache so each tenant gets its own instance.
    * Accepts tenantId so budget checks can be enqueued with the correct tenant.
    */
-  static createForWorker(prisma: PrismaClient, tenantId?: string): LlmManager {
+  static createForWorker(prisma: DbClient, tenantId?: string): LlmManager {
     return new LlmManager(prisma, tenantId);
   }
 

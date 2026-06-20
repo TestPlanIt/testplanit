@@ -1,5 +1,5 @@
 import { prisma as defaultPrisma } from "@/lib/prismaBase";
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 import { Job, JobsOptions } from "bullmq";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
 import { enqueueWithAuditContext } from "../../auditContextEnqueue";
@@ -32,7 +32,7 @@ export interface SyncJobData {
 }
 
 export interface SyncServiceOptions {
-  prismaClient?: PrismaClient; // Optional: use provided client for multi-tenant support
+  prismaClient?: DbClient; // Optional: use provided client for multi-tenant support
   /**
    * Skip the upstream API call if `Issue.lastSyncedAt` is fresher than this
    * many seconds. Caller's choice based on the trigger context:
@@ -1004,7 +1004,7 @@ export class SyncService {
    * updates the Redis cache, and writes the local Issue row.
    */
   private async _executeSyncWithAdapter(
-    prisma: PrismaClient,
+    prisma: DbClient,
     integration: { id: number; provider: string },
     externalIssueId: string,
     createIfMissing?: { projectId: number }
@@ -1088,7 +1088,7 @@ export class SyncService {
    * receivers always pass it that way via `extractLinkedIssueRef`).
    */
   private async _resolveGitHubIssueIdForSync(
-    prisma: PrismaClient,
+    prisma: DbClient,
     integrationId: number,
     externalIssueId: string
   ): Promise<string> {
@@ -1334,7 +1334,7 @@ export class SyncService {
     // Prisma client bypasses the $extends middleware where the
     // emitIssueUpdated hook normally fires. Refetch via the un-enhanced
     // client to get the full post-update row, then emit through the
-    // extended client's $transaction (so we have a Prisma.TransactionClient
+    // extended client's $transaction (so we have a TxClient
     // for webhookEvents.emit). Best-effort: a failure here must not roll
     // back the sync — wrap in try/catch.
     try {

@@ -1,5 +1,5 @@
 import { ProjectAccessType } from "~/zenstack/models";
-import { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 
 /**
  * Narrowest acceptable interface for the helpers below. Both the singleton
@@ -7,7 +7,7 @@ import { PrismaClient } from "@prisma/client";
  * only — callers are responsible for upstream authorization.
  */
 type EffectiveRolePrismaClient = Pick<
-  PrismaClient,
+  DbClient,
   "userProjectPermission" | "user" | "groupProjectPermission" | "projects"
 >;
 

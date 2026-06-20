@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { TxClient } from "~/lib/zenstack";
 
 import { getAuditContext, SYSTEM_ACTOR_ID } from "~/lib/auditContext";
 
@@ -42,14 +43,14 @@ export interface WebhookEventEmitOptions {
   /** Required: which project this event belongs to (Postgres FK on WebhookOutboxEvent.projectId). */
   projectId: number;
   /**
-   * REQUIRED: the `Prisma.TransactionClient` returned by
+   * REQUIRED: the `TxClient` returned by
    * `prisma.$transaction(async (tx) => ...)`. There is NO fallback to
    * the singleton client (Prisma does not route singleton calls into
    * an active tx via ALS — see file-level docs). Typed narrowly so the
    * type system rejects calls outside a transaction; runtime guard below
    * catches `as any` bypasses.
    */
-  tx: Prisma.TransactionClient;
+  tx: TxClient;
   /**
    * Optional explicit actor; when omitted, falls back to
    * `getAuditContext().userId`, then `null`. SYSTEM_ACTOR_ID, when passed
@@ -80,7 +81,7 @@ export const webhookEvents = {
   ): Promise<EmitResult | null> {
     // Runtime guard — catches `as any` bypasses of the TypeScript contract.
     if (!opts || !opts.tx) {
-      throw new Error("webhookEvents.emit requires a Prisma.TransactionClient");
+      throw new Error("webhookEvents.emit requires a TxClient");
     }
     const ctx = getAuditContext();
     if (ctx?.suppressWebhooks === true) {
@@ -102,7 +103,7 @@ export const webhookEvents = {
         eventTimestamp,
         projectId: opts.projectId,
         actorUserId: resolvedActorUserId,
-        payload: data as Prisma.InputJsonValue,
+        payload: data as JsonValue,
       },
       select: { id: true },
     });

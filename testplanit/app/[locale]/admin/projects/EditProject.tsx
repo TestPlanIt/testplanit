@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import type { Prisma } from "@prisma/client";
+import type { GroupProjectPermissionUpsertArgs, UserProjectPermissionUpsertArgs } from "~/zenstack/input";
 import { ProjectAccessType } from "~/zenstack/models";
 import type { GroupProjectPermission, UserProjectPermission } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
@@ -524,7 +524,7 @@ export function EditProjectModal({
       }
 
       // --- Handle User Permission Changes ---
-      const permissionsToUpsert: Prisma.UserProjectPermissionUpsertArgs[] = [];
+      const permissionsToUpsert: UserProjectPermissionUpsertArgs[] = [];
       const permissionIdsToDelete: { userId: string; projectId: number }[] = [];
 
       const submittedPermissions = data.userPermissions || {};
@@ -559,7 +559,7 @@ export function EditProjectModal({
             continue; // Skip this potentially invalid permission
           }
 
-          const upsertData: Prisma.UserProjectPermissionUpsertArgs = {
+          const upsertData: UserProjectPermissionUpsertArgs = {
             where: { userId_projectId: { userId, projectId: project.id } },
             create: {
               userId,
@@ -623,7 +623,7 @@ export function EditProjectModal({
       }
 
       // --- Handle Group Permission Changes (Similar logic to users) ---
-      const groupPermissionsToUpsert: Prisma.GroupProjectPermissionUpsertArgs[] =
+      const groupPermissionsToUpsert: GroupProjectPermissionUpsertArgs[] =
         [];
       const groupPermissionIdsToDelete: {
         groupId: string;
@@ -660,7 +660,7 @@ export function EditProjectModal({
             continue;
           }
 
-          const upsertData: Prisma.GroupProjectPermissionUpsertArgs = {
+          const upsertData: GroupProjectPermissionUpsertArgs = {
             // Use number for the actual DB operation if the schema expects numbers
             // Assuming Prisma schema uses Int for groupId in the relation table
             where: {

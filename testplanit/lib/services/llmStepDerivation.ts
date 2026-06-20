@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 import { LLM_FEATURES } from "~/lib/llm/constants";
 import { LlmManager } from "~/lib/llm/services/llm-manager.service";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
@@ -26,7 +26,7 @@ export function isLlmStepDerivationEligible(
  * wrap this in try/catch so a queue/LLM hiccup can't fail a successful import.
  */
 export async function enqueueDeriveCaseSteps(params: {
-  prisma: PrismaClient;
+  prisma: DbClient;
   projectId: number;
   testRunId: number;
   userId: string;

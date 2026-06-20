@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 import { webhookEvents } from "~/lib/webhooks/events";
 
@@ -26,7 +26,7 @@ interface EmitOptions {
 
 export async function emitSessionCreated(
   row: SessionRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   let stateName: string | null = null;
@@ -67,7 +67,7 @@ export async function emitSessionCreated(
 export async function emitSessionUpdateEvents(
   oldRow: SessionRow | null,
   newRow: SessionRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   if (!oldRow) return;
@@ -216,7 +216,7 @@ export interface SessionResultRow {
 
 export async function emitSessionResultAdded(
   row: SessionResultRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   const [session, status] = await Promise.all([
@@ -265,7 +265,7 @@ export async function emitSessionResultAdded(
 export async function emitSessionDuplicated(
   newSessionId: number,
   sourceSessionId: number,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions & { projectId: number }
 ): Promise<void> {
   const newSession = await tx.sessions.findUnique({

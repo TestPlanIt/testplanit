@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 /**
  * AppConfig key that stores the system-level review-feature kill switch.
@@ -34,7 +34,7 @@ export const REVIEW_FEATURE_FLAG_KEY = "review_feature_enabled";
  * project via Project Settings → Advanced.
  */
 export async function isReviewFeatureSystemEnabled(
-  tx: Pick<Prisma.TransactionClient, "appConfig">
+  tx: Pick<TxClient, "appConfig">
 ): Promise<boolean> {
   const row = await tx.appConfig.findUnique({
     where: { key: REVIEW_FEATURE_FLAG_KEY },

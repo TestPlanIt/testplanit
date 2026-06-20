@@ -4,7 +4,7 @@ import { SessionTableDisplay } from "@/components/tables/SessionTableDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { badgeVariants } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Prisma } from "@prisma/client";
+import type { SessionsWhereInput } from "~/zenstack/input";
 import { Compass } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
@@ -13,7 +13,7 @@ import { cn } from "~/utils";
 interface SessionsListProps {
   sessionIds?: number[];
   sessions?: SessionOption[];
-  filter?: Prisma.SessionsWhereInput;
+  filter?: SessionsWhereInput;
   count?: number;
   pageSize?: number;
   isCompleted?: boolean;
@@ -50,7 +50,7 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
         : undefined);
 
   const baseConditions = useMemo(() => {
-    const conditions: Prisma.SessionsWhereInput[] = [{ isDeleted: false }];
+    const conditions: SessionsWhereInput[] = [{ isDeleted: false }];
 
     if (filter) {
       conditions.push(filter);

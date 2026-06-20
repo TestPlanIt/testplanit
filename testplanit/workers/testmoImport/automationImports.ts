@@ -1,5 +1,8 @@
 import { JUnitResultType, WorkflowScope } from "~/zenstack/models";
-import { Prisma, PrismaClient } from "@prisma/client";
+import type { StatusGetPayload } from "~/zenstack/input";
+import { JsonNull } from "@zenstackhq/orm";
+import type { DbClient, TxClient } from "~/lib/zenstack";
+import { Prisma } from "@prisma/client";
 import { createTestCaseVersionInTransaction } from "../../lib/services/testCaseVersionService.js";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 import {
@@ -39,7 +42,7 @@ export function clearAutomationImportCaches(): void {
   userNameCache.clear();
 }
 
-type StatusResolution = Prisma.StatusGetPayload<{
+type StatusResolution = StatusGetPayload<{
   select: {
     id: true;
     name: true;
@@ -64,7 +67,7 @@ const chunkArray = <T>(items: T[], chunkSize: number): T[][] => {
 };
 
 async function getProjectName(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   projectId: number
 ): Promise<string> {
   if (projectNameCache.has(projectId)) {
@@ -82,7 +85,7 @@ async function getProjectName(
 }
 
 async function getTemplateName(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   templateId: number
 ): Promise<string> {
   if (templateNameCache.has(templateId)) {
@@ -100,7 +103,7 @@ async function getTemplateName(
 }
 
 async function getWorkflowName(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   workflowId: number
 ): Promise<string> {
   if (workflowNameCache.has(workflowId)) {
@@ -118,7 +121,7 @@ async function getWorkflowName(
 }
 
 async function getFolderName(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   folderId: number
 ): Promise<string> {
   if (folderNameCache.has(folderId)) {
@@ -136,7 +139,7 @@ async function getFolderName(
 }
 
 async function getUserName(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   userId: string | null | undefined
 ): Promise<string> {
   if (!userId) {
@@ -215,7 +218,7 @@ const normalizeAutomationClassName = (folder: string | null): string | null => {
  * Processes data in smaller transactions to provide better progress feedback.
  */
 export const importAutomationCases = async (
-  prisma: PrismaClient,
+  prisma: DbClient,
   configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -354,7 +357,7 @@ export const importAutomationCases = async (
     const chunk = repositoryCaseGroups.slice(index, index + chunkSize);
 
     await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
+      async (tx: TxClient) => {
         for (const group of chunk) {
           const {
             name,
@@ -623,7 +626,7 @@ export const importAutomationCases = async (
                   versionId: caseVersion.id,
                   field:
                     fieldValue.field.displayName || fieldValue.field.systemName,
-                  value: fieldValue.value ?? Prisma.JsonNull,
+                  value: fieldValue.value ?? JsonNull,
                 })),
               });
             }
@@ -662,7 +665,7 @@ export const importAutomationCases = async (
  * - Maps configuration and milestone
  */
 export const importAutomationRuns = async (
-  prisma: PrismaClient,
+  prisma: DbClient,
   _configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -761,7 +764,7 @@ export const importAutomationRuns = async (
     let processedInChunk = 0;
 
     await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
+      async (tx: TxClient) => {
         for (const row of chunk) {
           const testmoRunId = toNumberValue(row.id);
           const testmoProjectId = toNumberValue(row.project_id);
@@ -894,7 +897,7 @@ export const importAutomationRuns = async (
  * - Handles status mapping via Automation scope statuses
  */
 export const importAutomationRunTests = async (
-  prisma: PrismaClient,
+  prisma: DbClient,
   _configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -934,7 +937,7 @@ export const importAutomationRunTests = async (
   const statusCache = new Map<number, StatusResolution>();
 
   const fetchStatusById = async (
-    tx: Prisma.TransactionClient,
+    tx: TxClient,
     statusId: number
   ): Promise<StatusResolution | null> => {
     if (statusCache.has(statusId)) {
@@ -1064,7 +1067,7 @@ export const importAutomationRunTests = async (
   }
 
   const findAutomationStatus = async (
-    tx: Prisma.TransactionClient,
+    tx: TxClient,
     testmoStatusId: number | null,
     projectId: number,
     statusName: string | null
@@ -1142,7 +1145,7 @@ export const importAutomationRunTests = async (
     let processedInChunk = 0;
 
     await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
+      async (tx: TxClient) => {
         for (const row of chunk) {
           const testmoRunTestId = toNumberValue(row.id);
           const testmoRunId = toNumberValue(row.run_id);
@@ -1406,7 +1409,7 @@ export const importAutomationRunTests = async (
  * Stores key-value metadata like Version, Build info, etc.
  */
 export const importAutomationRunFields = async (
-  prisma: PrismaClient,
+  prisma: DbClient,
   _configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -1548,7 +1551,7 @@ export const importAutomationRunFields = async (
 };
 
 const reconcileLegacyJUnitSuiteLinks = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   suiteIds: number[]
 ) => {
   if (suiteIds.length === 0) {
@@ -1573,7 +1576,7 @@ const reconcileLegacyJUnitSuiteLinks = async (
 };
 
 const recomputeJUnitSuiteStats = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   suiteIds: number[]
 ) => {
   if (suiteIds.length === 0) {
@@ -1676,7 +1679,7 @@ const recomputeJUnitSuiteStats = async (
  * Stores CI/CD job URLs, build links, etc.
  */
 export const importAutomationRunLinks = async (
-  prisma: PrismaClient,
+  prisma: DbClient,
   _configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -1754,7 +1757,7 @@ export const importAutomationRunLinks = async (
     const chunk = automationRunLinkRows.slice(index, index + chunkSize);
 
     await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
+      async (tx: TxClient) => {
         for (const row of chunk) {
           const testmoRunId = toNumberValue(row.run_id);
           const testmoProjectId = toNumberValue(row.project_id);
@@ -1814,7 +1817,7 @@ export const importAutomationRunLinks = async (
  * Stores test execution logs, error traces, output, etc.
  */
 export const importAutomationRunTestFields = async (
-  prisma: PrismaClient,
+  prisma: DbClient,
   _configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -2061,7 +2064,7 @@ export const importAutomationRunTestFields = async (
 
     if (entries.length > 0) {
       await prisma.$transaction(
-        async (tx: Prisma.TransactionClient) => {
+        async (tx: TxClient) => {
           for (const [, update] of entries) {
             const junitResultId = update.junitResultId;
             if (!junitResultId) {
@@ -2200,7 +2203,7 @@ export const importAutomationRunTestFields = async (
   return summary;
 };
 export const importAutomationRunTags = async (
-  prisma: PrismaClient,
+  prisma: DbClient,
   configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
@@ -2271,7 +2274,7 @@ export const importAutomationRunTags = async (
     const chunk = automationRunTagRows.slice(index, index + chunkSize);
 
     await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
+      async (tx: TxClient) => {
         for (const row of chunk) {
           processedRows += 1;
           context.processedCount += 1;

@@ -1,6 +1,6 @@
 import { RepositoryCaseSource, WorkflowScope } from "~/zenstack/models";
 import type { CaseFields, CaseFieldTypes } from "~/zenstack/models";
-import { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { enhance } from "@zenstackhq/runtime";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -717,7 +717,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   data: {
                     testCaseId: newCase.id,
                     fieldId: parseInt(fieldId),
-                    value: value as Prisma.InputJsonValue,
+                    value: value as JsonValue,
                   },
                 });
               }

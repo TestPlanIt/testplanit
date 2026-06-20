@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 import { prisma } from "~/lib/prisma";
 import { webhookEvents } from "~/lib/webhooks/events";
@@ -70,7 +70,7 @@ interface EmitReviewReminderInput {
 }
 
 interface EmitOptions {
-  tx?: Prisma.TransactionClient;
+  tx?: TxClient;
   actorUserId?: string | null;
 }
 

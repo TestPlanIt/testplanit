@@ -34,6 +34,10 @@
 import { hash } from "bcrypt";
 import crypto from "crypto";
 
+import type { UserWhereInput } from "~/zenstack/input";
+import { DbNull, JsonNull } from "@zenstackhq/orm";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { TxClient } from "~/lib/zenstack";
 import { Prisma } from "@prisma/client";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -189,7 +193,7 @@ const DEFAULT_EMIT_OPTS = {
   actorUserId: SCIM_SYSTEM_USER_ID,
 } as const;
 
-function findUserByEmail(tx: Prisma.TransactionClient, email: string) {
+function findUserByEmail(tx: TxClient, email: string) {
   return tx.user.findFirst({
     where: { email: { equals: email, mode: "insensitive" } },
     include: SCIM_USER_INCLUDE,
@@ -223,15 +227,15 @@ function assertWritableOnly(updates: ScimUserUpdatePayload): void {
 /**
  * Coerce a `Record<string, unknown> | null | undefined` blob into the Prisma
  * input type for a nullable Json column. Plain JS `null` is ambiguous to
- * Prisma; the explicit `Prisma.DbNull` sentinel signals "set the column to
- * SQL NULL" without colliding with `Prisma.JsonNull` (the JSON `null` value).
+ * Prisma; the explicit `DbNull` sentinel signals "set the column to
+ * SQL NULL" without colliding with `JsonNull` (the JSON `null` value).
  */
 function toJsonInput(
   value: Record<string, unknown> | null | undefined
-): Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue | undefined {
+): Prisma.NullableJsonNullValueInput | JsonValue | undefined {
   if (value === undefined) return undefined;
-  if (value === null) return Prisma.DbNull;
-  return value as Prisma.InputJsonValue;
+  if (value === null) return DbNull;
+  return value as JsonValue;
 }
 
 function asScimSnapshot(row: PrismaUserForScim & { isActive: boolean }) {
@@ -296,7 +300,7 @@ export async function createScimUser(
 }
 
 async function resurrectTombstonedUser(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   existing: ExistingUser,
   body: ScimUserBody,
   ctx: ScimAuthContext
@@ -347,7 +351,7 @@ async function resurrectTombstonedUser(
 }
 
 async function jitBindExistingUser(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   existing: ExistingUser,
   body: ScimUserBody,
   ctx: ScimAuthContext
@@ -396,7 +400,7 @@ async function jitBindExistingUser(
 }
 
 async function insertNewScimUser(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   body: ScimUserBody,
   ctx: ScimAuthContext
 ): Promise<CreateScimUserResult> {
@@ -428,7 +432,7 @@ async function insertNewScimUser(
       scimFamilyName: body.name?.familyName ?? null,
       scimExtensions:
         Object.keys(extensions).length > 0
-          ? (extensions as Prisma.InputJsonValue)
+          ? (extensions as JsonValue)
           : undefined,
       authMethod: "SCIM",
       access: fallbackDefault,
@@ -493,11 +497,11 @@ export async function listScimUsers(
       : Math.min(Math.max(1, count), MAX_LIST_COUNT);
   const resolvedSkip = Math.max(0, (startIndex ?? 1) - 1);
 
-  const filterWhere: Prisma.UserWhereInput = filter
+  const filterWhere: UserWhereInput = filter
     ? scimFilterToPrismaWhere(filter)
     : {};
 
-  const finalWhere: Prisma.UserWhereInput = {
+  const finalWhere: UserWhereInput = {
     AND: [filterWhere, { isDeleted: false }],
   };
 

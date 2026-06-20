@@ -1,4 +1,5 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 
 /**
  * Service for managing Testmo import staging data in the database.
@@ -9,7 +10,7 @@ type StagingRowData = {
   jobId: string;
   datasetName: string;
   rowIndex: number;
-  rowData: Prisma.InputJsonValue;
+  rowData: JsonValue;
   fieldName: string | null;
   fieldValue: string | null;
   text1: string | null;
@@ -20,7 +21,7 @@ type StagingRowData = {
 };
 
 export class TestmoStagingService {
-  constructor(private prisma: PrismaClient | Prisma.TransactionClient) {}
+  constructor(private prisma: DbClient | TxClient) {}
 
   private prepareStagingRow(
     jobId: string,
@@ -28,7 +29,7 @@ export class TestmoStagingService {
     rowIndex: number,
     rowData: any
   ): StagingRowData {
-    let sanitizedData: Prisma.InputJsonValue = rowData as Prisma.InputJsonValue;
+    let sanitizedData: JsonValue = rowData as JsonValue;
     let fieldName: string | null = null;
     let fieldValue: string | null = null;
     let text1: string | null = null;
@@ -63,7 +64,7 @@ export class TestmoStagingService {
         fieldName = rawName;
       }
 
-      sanitizedData = clone as Prisma.InputJsonValue;
+      sanitizedData = clone as JsonValue;
     }
     if (
       datasetName === "run_result_steps" &&
@@ -97,7 +98,7 @@ export class TestmoStagingService {
       text3 = extractText("text3");
       text4 = extractText("text4");
 
-      sanitizedData = clone as Prisma.InputJsonValue;
+      sanitizedData = clone as JsonValue;
     }
 
     return {
@@ -171,12 +172,12 @@ export class TestmoStagingService {
         sourceId,
         targetId,
         targetType,
-        metadata: metadata as Prisma.InputJsonValue,
+        metadata: metadata as JsonValue,
       },
       update: {
         targetId,
         targetType,
-        metadata: metadata as Prisma.InputJsonValue,
+        metadata: metadata as JsonValue,
       },
     });
   }
@@ -211,12 +212,12 @@ export class TestmoStagingService {
           sourceId: mapping.sourceId,
           targetId: mapping.targetId,
           targetType: mapping.targetType,
-          metadata: mapping.metadata as Prisma.InputJsonValue,
+          metadata: mapping.metadata as JsonValue,
         },
         update: {
           targetId: mapping.targetId,
           targetType: mapping.targetType,
-          metadata: mapping.metadata as Prisma.InputJsonValue,
+          metadata: mapping.metadata as JsonValue,
         },
       })
     );

@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { ORMError } from "@zenstackhq/orm";
 import { NextRequest } from "next/server";
 import {
   afterAll,
@@ -202,7 +202,7 @@ describe("POST /api/scim/v2/Users", () => {
   });
 
   it("returns 409 uniqueness when the service throws Prisma P2002 directly", async () => {
-    const p2002 = new Prisma.PrismaClientKnownRequestError(
+    const p2002 = new ORMError(
       "Unique constraint failed",
       { code: "P2002", clientVersion: "test" }
     );

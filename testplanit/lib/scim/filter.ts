@@ -13,7 +13,7 @@
  *   2. **Closed operator whitelist.** Only `eq`, `pr`, and `and` are supported.
  *      `ne` / `co` / `sw` / `ew` / `gt` / `lt` / `ge` / `le` / `or` / `not` /
  *      `[]` (valuePath) all throw `InvalidFilterError`. The translator only
- *      emits `Prisma.UserWhereInput` literal objects and never template-
+ *      emits `UserWhereInput` literal objects and never template-
  *      strings user input into a SQL fragment — adversarial compValue lands
  *      as a literal string inside a Prisma WHERE that Prisma's parameterized
  *      query layer handles.
@@ -41,7 +41,7 @@
 
 import { parse } from "scim2-parse-filter";
 
-import type { Prisma } from "@prisma/client";
+import type { GroupsWhereInput, UserWhereInput } from "~/zenstack/input";
 import type { AndExp, Compare, Filter, Suffix } from "scim2-parse-filter";
 
 /**
@@ -88,11 +88,11 @@ const FILTERABLE_GROUP_ATTRS: ReadonlySet<string> = new Set([
 
 /**
  * Parse a SCIM filter string and translate the AST into a
- * `Prisma.UserWhereInput`. Throws {@link InvalidFilterError} for any
+ * `UserWhereInput`. Throws {@link InvalidFilterError} for any
  * unsupported operator, non-whitelisted attribute, type mismatch, or
  * upstream parse error.
  */
-export function scimFilterToPrismaWhere(raw: string): Prisma.UserWhereInput {
+export function scimFilterToPrismaWhere(raw: string): UserWhereInput {
   let ast: Filter;
   try {
     ast = parse(raw);
@@ -103,7 +103,7 @@ export function scimFilterToPrismaWhere(raw: string): Prisma.UserWhereInput {
   return translate(ast);
 }
 
-function translate(node: Filter): Prisma.UserWhereInput {
+function translate(node: Filter): UserWhereInput {
   switch (node.op) {
     case "eq":
       return translateEq(node as Compare);
@@ -116,7 +116,7 @@ function translate(node: Filter): Prisma.UserWhereInput {
   }
 }
 
-function translateEq(node: Compare): Prisma.UserWhereInput {
+function translateEq(node: Compare): UserWhereInput {
   const attr = node.attrPath;
   assertFilterable(attr);
 
@@ -152,7 +152,7 @@ function translateEq(node: Compare): Prisma.UserWhereInput {
   }
 }
 
-function translatePr(node: Suffix): Prisma.UserWhereInput {
+function translatePr(node: Suffix): UserWhereInput {
   const attr = node.attrPath;
   assertFilterable(attr);
 
@@ -200,7 +200,7 @@ function requireBoolean(attr: string, value: unknown): boolean {
 
 /**
  * Parse a SCIM filter string in the Group context and translate the AST into
- * a `Prisma.GroupsWhereInput`. Throws {@link InvalidFilterError} for any
+ * a `GroupsWhereInput`. Throws {@link InvalidFilterError} for any
  * unsupported operator, non-whitelisted attribute, type mismatch, or upstream
  * parse error.
  *
@@ -212,7 +212,7 @@ function requireBoolean(attr: string, value: unknown): boolean {
  */
 export function scimFilterToPrismaGroupWhere(
   raw: string
-): Prisma.GroupsWhereInput {
+): GroupsWhereInput {
   let ast: Filter;
   try {
     ast = parse(raw);
@@ -223,7 +223,7 @@ export function scimFilterToPrismaGroupWhere(
   return translateGroup(ast);
 }
 
-function translateGroup(node: Filter): Prisma.GroupsWhereInput {
+function translateGroup(node: Filter): GroupsWhereInput {
   switch (node.op) {
     case "eq":
       return translateGroupEq(node as Compare);
@@ -236,7 +236,7 @@ function translateGroup(node: Filter): Prisma.GroupsWhereInput {
   }
 }
 
-function translateGroupEq(node: Compare): Prisma.GroupsWhereInput {
+function translateGroupEq(node: Compare): GroupsWhereInput {
   const attr = node.attrPath;
   assertGroupFilterable(attr);
 
@@ -255,7 +255,7 @@ function translateGroupEq(node: Compare): Prisma.GroupsWhereInput {
   }
 }
 
-function translateGroupPr(node: Suffix): Prisma.GroupsWhereInput {
+function translateGroupPr(node: Suffix): GroupsWhereInput {
   const attr = node.attrPath;
   assertGroupFilterable(attr);
 

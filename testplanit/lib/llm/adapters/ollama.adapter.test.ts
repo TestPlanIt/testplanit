@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Decimal } from "decimal.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LlmAdapterConfig, LlmRequest } from "../types";
 import { OllamaAdapter } from "./ollama.adapter";
@@ -28,8 +28,8 @@ const createTestConfig = (
     maxTokensPerRequest: 4096,
     maxRequestsPerMinute: 60,
     maxRequestsPerDay: null,
-    costPerInputToken: new Prisma.Decimal("0"),
-    costPerOutputToken: new Prisma.Decimal("0"),
+    costPerInputToken: new Decimal("0"),
+    costPerOutputToken: new Decimal("0"),
     monthlyBudget: null,
     defaultTemperature: 0.7,
     defaultMaxTokens: 1000,

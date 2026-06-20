@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 /**
  * AppConfig key storing the threshold (in days) before a PENDING review
@@ -41,7 +41,7 @@ export const REVIEW_REMINDER_THRESHOLD_DAYS_DEFAULT = 1;
  * be poked by lower-privilege actors.
  */
 export async function getReviewReminderThresholdDays(
-  tx: Pick<Prisma.TransactionClient, "appConfig">
+  tx: Pick<TxClient, "appConfig">
 ): Promise<number> {
   const row = await tx.appConfig.findUnique({
     where: { key: REVIEW_REMINDER_THRESHOLD_DAYS_KEY },

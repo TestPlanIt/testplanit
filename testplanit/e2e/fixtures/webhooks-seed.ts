@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 
 import type { AdapterType, WebhookDelivery, WebhookDirection } from "~/zenstack/models";
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 
 import { isSlackWebhookUrl } from "../../lib/webhooks/slack-url-detection";
 import { encrypt } from "../../utils/encryption";
@@ -89,7 +89,7 @@ function generateSecret(): string {
  * behavior when the admin checks individual event boxes).
  */
 export async function seedOutboundConfig(
-  prisma: PrismaClient,
+  prisma: DbClient,
   args: {
     projectId: number;
     url: string;
@@ -192,7 +192,7 @@ export async function seedOutboundConfig(
  * Basic-Auth credentials or HMAC secrets pass through unmodified.
  */
 export async function seedInboundConfig(
-  prisma: PrismaClient,
+  prisma: DbClient,
   args: {
     projectId: number;
     adapterType: InboundAdapter;
@@ -258,7 +258,7 @@ export async function seedInboundConfig(
  * callers that want to correlate the seed with the adapter under test.
  */
 export async function seedLinkedIssue(
-  prisma: PrismaClient,
+  prisma: DbClient,
   args: {
     projectId: number;
     /** Adapter-shaped key — e.g. `TP-42` for Jira, `octocat/Hello-World#42` for GitHub, `297` for ADO. */
@@ -300,7 +300,7 @@ export async function seedLinkedIssue(
  * skip the outbox row (Phase 1 inbound has no outbox concept).
  */
 export async function seedDeliveries(
-  prisma: PrismaClient,
+  prisma: DbClient,
   args: {
     webhookConfigId: string;
     direction: WebhookDirection;
@@ -398,7 +398,7 @@ export async function seedDeliveries(
  * "trigger fails, replay fails, repeat 5 times" → depth=6 (1 original + 5 replays).
  */
 export async function seedReplayChain(
-  prisma: PrismaClient,
+  prisma: DbClient,
   args: {
     webhookConfigId: string;
     projectId: number;
@@ -515,7 +515,7 @@ export async function seedReplayChain(
  * still in scope.
  */
 export async function softDeleteProject(
-  prisma: PrismaClient,
+  prisma: DbClient,
   args: { projectId: number }
 ): Promise<void> {
   await prisma.projects.update({
@@ -530,7 +530,7 @@ export async function softDeleteProject(
  * `setTimeout` waits per `feedback_no_flaky_tests.md`.
  */
 export async function waitForDeliveries(
-  prisma: PrismaClient,
+  prisma: DbClient,
   args: {
     where: Record<string, unknown>;
     predicate: (rows: WebhookDelivery[]) => boolean;

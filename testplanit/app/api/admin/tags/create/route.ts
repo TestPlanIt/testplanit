@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { Prisma } from "@prisma/client";
+import { ORMError } from "@zenstackhq/orm";
 import { prisma } from "~/lib/prisma";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { getServerAuthSession } from "~/server/auth";
@@ -102,7 +102,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // requests with "Foo" and "foo" can both pass detection). Fall back
     // to the same detection logic.
     if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err instanceof ORMError &&
       err.code === "P2002"
     ) {
       const racing = await prisma.tags.findFirst({

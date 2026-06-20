@@ -58,6 +58,7 @@ import { VersionSelect } from "@/components/VersionSelect";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea } from "~/zenstack/models";
 import type { Attachments } from "~/zenstack/models";
+import type { JsonValue } from "@zenstackhq/orm";
 import { Prisma } from "@prisma/client";
 import {
   AlertCircle,
@@ -126,8 +127,8 @@ import TestCaseFormControls from "./TestCaseFormControl";
 
 // Type Definitions (ensure these are present and correct)
 interface SharedStepItemDetail {
-  step: Prisma.JsonValue;
-  expectedResult?: Prisma.JsonValue;
+  step: JsonValue;
+  expectedResult?: JsonValue;
   order: number;
 }
 interface SharedStepGroupWithItems {
@@ -140,7 +141,7 @@ interface SharedStepGroupWithItems {
 
 // Helper function to parse JsonValue to TipTap content (ensure this is present)
 const parseJsonToTipTap = (
-  jsonValue: Prisma.JsonValue | undefined | null
+  jsonValue: JsonValue | undefined | null
 ): object => {
   if (jsonValue === null || jsonValue === undefined) {
     return emptyEditorContent;

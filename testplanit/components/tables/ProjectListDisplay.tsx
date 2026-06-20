@@ -3,7 +3,7 @@
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { badgeVariants } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Prisma } from "@prisma/client";
+import type { ProjectsWhereInput } from "~/zenstack/input";
 import { BoxesIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
@@ -13,7 +13,7 @@ import { ProjectIcon } from "../ProjectIcon";
 
 interface ProjectListProps {
   projects?: Array<{ projectId: number } | ProjectLike>;
-  filter?: Prisma.ProjectsWhereInput;
+  filter?: ProjectsWhereInput;
   count?: number;
   usePopover?: boolean;
   pageSize?: number;
@@ -76,7 +76,7 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
         : undefined);
 
   const baseConditions = useMemo(() => {
-    const conditions: Prisma.ProjectsWhereInput[] = [{ isDeleted: false }];
+    const conditions: ProjectsWhereInput[] = [{ isDeleted: false }];
 
     if (filter) {
       conditions.push(filter);

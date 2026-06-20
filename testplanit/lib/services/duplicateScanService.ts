@@ -8,7 +8,7 @@
  * All queries are scoped to a single project — cross-project detection is out of scope.
  */
 
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 import type { Client } from "@elastic/elasticsearch";
 import { getRepositoryCaseIndexName } from "~/services/elasticsearchService";
 import {
@@ -65,7 +65,7 @@ type EsHit = {
 
 export class DuplicateScanService {
   constructor(
-    private prisma: PrismaClient,
+    private prisma: DbClient,
     private esClient: Client | null
   ) {}
 

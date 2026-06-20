@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 
 import { prisma as defaultPrisma } from "~/lib/prisma";
 import { getWebhookDispatchQueue } from "~/lib/queues";
@@ -46,7 +46,7 @@ export type ReplayResult =
 export async function replayDelivery(
   originalDeliveryId: string,
   opts: ReplayOptions,
-  prisma: PrismaClient | Prisma.TransactionClient = defaultPrisma
+  prisma: DbClient | TxClient = defaultPrisma
 ): Promise<ReplayResult> {
   // 1. Load the original delivery row + projectId from the related WebhookConfig.
   const delivery = await prisma.webhookDelivery.findUnique({
@@ -156,7 +156,7 @@ export interface BulkReplayResult {
 export async function bulkReplayDeliveries(
   deliveryIds: string[],
   opts: Omit<ReplayOptions, "source" | "batchId">,
-  prisma: PrismaClient | Prisma.TransactionClient = defaultPrisma
+  prisma: DbClient | TxClient = defaultPrisma
 ): Promise<BulkReplayResult> {
   if (deliveryIds.length > BULK_REPLAY_HARD_CAP) {
     return { outcome: "rejected", reason: "exceeds_cap" };

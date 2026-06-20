@@ -18,7 +18,7 @@ vi.mock("~/server/auth", () => ({
   getServerAuthSession: vi.fn(),
 }));
 
-import { Prisma } from "@prisma/client";
+import { ORMError } from "@zenstackhq/orm";
 
 import { mintScimToken, revokeScimToken } from "~/lib/scim/tokens";
 import { probeScimToken } from "~/lib/scim/probe";
@@ -139,7 +139,7 @@ describe("scimTokenActions", () => {
 
     it("surfaces a friendly 'name already exists' error on P2002 without audit", async () => {
       mockAdminSession();
-      const p2002 = new Prisma.PrismaClientKnownRequestError(
+      const p2002 = new ORMError(
         "Unique constraint failed",
         { code: "P2002", clientVersion: "test", meta: { target: ["name"] } }
       );

@@ -1,4 +1,6 @@
 import { ApplicationArea } from "~/zenstack/models";
+import { JsonNull, ORMError } from "@zenstackhq/orm";
+import type { JsonValue } from "@zenstackhq/orm";
 import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -112,7 +114,7 @@ async function resolveCanReadSensitive(userId: string): Promise<boolean> {
  *     unchanged when no entries are sensitive)
  */
 function parseParameterSchema(
-  value: Prisma.JsonValue | null | undefined
+  value: JsonValue | null | undefined
 ): ParameterSchemaEntry[] {
   if (!Array.isArray(value)) return [];
   const out: ParameterSchemaEntry[] = [];
@@ -441,19 +443,19 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     }
 
     const notesInput:
-      | Prisma.InputJsonValue
+      | JsonValue
       | Prisma.NullableJsonNullValueInput
       | undefined =
       input.notes === undefined
         ? undefined
         : input.notes === null
-          ? Prisma.JsonNull
-          : (input.notes as Prisma.InputJsonValue);
+          ? JsonNull
+          : (input.notes as JsonValue);
 
-    const evidenceInput: Prisma.InputJsonValue =
+    const evidenceInput: JsonValue =
       input.evidence === undefined || input.evidence === null
         ? {}
-        : (input.evidence as Prisma.InputJsonValue);
+        : (input.evidence as JsonValue);
 
     // Resolve `canReadSensitive` once per request — used at the audit
     // boundary to redact iteration parameter values for viewers who lack the
@@ -510,7 +512,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         await tx.resultFieldValues.createMany({
           data: input.fieldValues.map((fv) => ({
             fieldId: fv.fieldId,
-            value: (fv.value ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            value: (fv.value ?? JsonNull) as JsonValue,
             testRunResultsId: createdResult.id,
           })),
         });
@@ -834,7 +836,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     if (
       typeof Prisma?.PrismaClientKnownRequestError === "function" &&
-      error instanceof Prisma.PrismaClientKnownRequestError
+      error instanceof ORMError
     ) {
       if (error.code === "P2025") {
         return NextResponse.json(

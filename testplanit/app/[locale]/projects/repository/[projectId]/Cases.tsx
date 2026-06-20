@@ -17,6 +17,8 @@ import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import type { RepositoryCasesGetPayload, RepositoryCasesSelect, RepositoryCasesWhereInput, TestRunCasesGetPayload, TestRunCasesWhereInput } from "~/zenstack/input";
+import { JsonNull } from "@zenstackhq/orm";
 import { Prisma } from "@prisma/client";
 import {
   RowSelectionState,
@@ -310,7 +312,7 @@ const REPOSITORY_CASE_LIST_SELECT = {
       },
     },
   },
-} as const satisfies Prisma.RepositoryCasesSelect;
+} as const satisfies RepositoryCasesSelect;
 
 interface CasesProps {
   folderId: number | null;
@@ -776,9 +778,9 @@ export default function Cases({
   // Build repository case where clause (used for filtering by folder, view, template, etc.)
   // This excludes test run-specific filters like assignedTo and status
   // NOTE: When searchResultIds is active, ZenStack hooks are disabled and data comes from POST fetch instead
-  const repositoryCaseWhereClause: Prisma.RepositoryCasesWhereInput =
+  const repositoryCaseWhereClause: RepositoryCasesWhereInput =
     useMemo(() => {
-      const baseConditions: Prisma.RepositoryCasesWhereInput[] = [
+      const baseConditions: RepositoryCasesWhereInput[] = [
         {
           name: {
             contains: deferredSearchString,
@@ -843,7 +845,7 @@ export default function Cases({
                     some: {
                       fieldId: numericFieldId,
                       AND: [
-                        { value: { not: Prisma.JsonNull } },
+                        { value: { not: JsonNull } },
                         { value: { not: { equals: "" } } },
                       ],
                     },
@@ -862,7 +864,7 @@ export default function Cases({
                         some: {
                           fieldId: numericFieldId,
                           OR: [
-                            { value: { equals: Prisma.JsonNull } },
+                            { value: { equals: JsonNull } },
                             { value: { equals: "" } },
                           ],
                         },
@@ -884,7 +886,7 @@ export default function Cases({
                     caseFieldValues: {
                       some: {
                         fieldId: numericFieldId,
-                        value: { not: Prisma.JsonNull },
+                        value: { not: JsonNull },
                       },
                     },
                   });
@@ -903,7 +905,7 @@ export default function Cases({
                       caseFieldValues: {
                         some: {
                           fieldId: numericFieldId,
-                          value: { equals: Prisma.JsonNull },
+                          value: { equals: JsonNull },
                         },
                       },
                     },
@@ -942,7 +944,7 @@ export default function Cases({
                       caseFieldValues: {
                         some: {
                           fieldId: numericFieldId,
-                          value: { equals: Prisma.JsonNull },
+                          value: { equals: JsonNull },
                         },
                       },
                     },
@@ -1001,7 +1003,7 @@ export default function Cases({
                       caseFieldValues: {
                         some: {
                           fieldId: numericFieldId,
-                          value: { equals: Prisma.JsonNull },
+                          value: { equals: JsonNull },
                         },
                       },
                     },
@@ -1013,7 +1015,7 @@ export default function Cases({
                   caseFieldValues: {
                     some: {
                       fieldId: numericFieldId,
-                      value: { not: Prisma.JsonNull },
+                      value: { not: JsonNull },
                     },
                   },
                 });
@@ -1053,7 +1055,7 @@ export default function Cases({
                           caseFieldValues: {
                             some: {
                               fieldId: numericFieldId,
-                              value: { equals: Prisma.JsonNull },
+                              value: { equals: JsonNull },
                             },
                           },
                         },
@@ -1184,7 +1186,7 @@ export default function Cases({
                       caseFieldValues: {
                         some: {
                           fieldId: numericFieldId,
-                          value: { equals: Prisma.JsonNull },
+                          value: { equals: JsonNull },
                         },
                       },
                     },
@@ -1197,8 +1199,8 @@ export default function Cases({
                     some: {
                       fieldId: numericFieldId,
                       AND: [
-                        { value: { not: Prisma.JsonNull } },
-                        { NOT: { value: { equals: Prisma.JsonNull } } },
+                        { value: { not: JsonNull } },
+                        { NOT: { value: { equals: JsonNull } } },
                         { NOT: { value: { equals: "" } } },
                         { NOT: { value: { equals: null } } },
                       ],
@@ -1376,7 +1378,7 @@ export default function Cases({
                   caseFieldValues: {
                     some: {
                       fieldId: numericFieldId,
-                      value: { not: Prisma.JsonNull },
+                      value: { not: JsonNull },
                     },
                   },
                 });
@@ -1389,7 +1391,7 @@ export default function Cases({
                       caseFieldValues: {
                         some: {
                           fieldId: numericFieldId,
-                          value: { equals: Prisma.JsonNull },
+                          value: { equals: JsonNull },
                         },
                       },
                     },
@@ -1408,7 +1410,7 @@ export default function Cases({
                     some: {
                       fieldId: numericFieldId,
                       AND: [
-                        { value: { not: Prisma.JsonNull } },
+                        { value: { not: JsonNull } },
                         { value: { not: { equals: "" } } },
                       ],
                     },
@@ -1424,7 +1426,7 @@ export default function Cases({
                         some: {
                           fieldId: numericFieldId,
                           OR: [
-                            { value: { equals: Prisma.JsonNull } },
+                            { value: { equals: JsonNull } },
                             { value: { equals: "" } },
                           ],
                         },
@@ -1448,7 +1450,7 @@ export default function Cases({
                     caseFieldValues: {
                       some: {
                         fieldId: numericFieldId,
-                        value: { not: Prisma.JsonNull },
+                        value: { not: JsonNull },
                       },
                     },
                   });
@@ -1528,7 +1530,7 @@ export default function Cases({
         }
       }
 
-      const finalWhereClause: Prisma.RepositoryCasesWhereInput = {
+      const finalWhereClause: RepositoryCasesWhereInput = {
         AND: baseConditions,
       };
       return finalWhereClause;
@@ -1558,13 +1560,13 @@ export default function Cases({
 
   // The descendants POST body omits the folder filter — the server injects it
   // after resolving the subtree.
-  const repositoryCaseWhereClauseWithoutFolderFilter: Prisma.RepositoryCasesWhereInput =
+  const repositoryCaseWhereClauseWithoutFolderFilter: RepositoryCasesWhereInput =
     useMemo(() => {
       if (!isDescendantsMode) return repositoryCaseWhereClause;
       const andList = Array.isArray(repositoryCaseWhereClause.AND)
-        ? (repositoryCaseWhereClause.AND as Prisma.RepositoryCasesWhereInput[])
+        ? (repositoryCaseWhereClause.AND as RepositoryCasesWhereInput[])
         : repositoryCaseWhereClause.AND
-          ? [repositoryCaseWhereClause.AND as Prisma.RepositoryCasesWhereInput]
+          ? [repositoryCaseWhereClause.AND as RepositoryCasesWhereInput]
           : [];
       return {
         AND: andList.filter((cond) => !("folderId" in (cond ?? {}))),
@@ -1629,7 +1631,7 @@ export default function Cases({
   }, [filterId, viewType]);
 
   // Build test run case where clause (used for filtering by assignedTo and status)
-  const testRunCaseWhereClause: Prisma.TestRunCasesWhereInput = useMemo(() => {
+  const testRunCaseWhereClause: TestRunCasesWhereInput = useMemo(() => {
     if (
       !isRunMode ||
       !filterId ||
@@ -1912,7 +1914,7 @@ export default function Cases({
       }
     ) as {
       data:
-        | Prisma.TestRunCasesGetPayload<{
+        | TestRunCasesGetPayload<{
             select: {
               id: true;
               repositoryCaseId: true;
@@ -2195,7 +2197,7 @@ export default function Cases({
       : undefined
   ) as {
     data:
-      | Prisma.RepositoryCasesGetPayload<{
+      | RepositoryCasesGetPayload<{
           select: {
             id: true;
             projectId: true;

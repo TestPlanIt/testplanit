@@ -1,5 +1,6 @@
 import { WorkflowScope } from "~/zenstack/models";
-import { Prisma, PrismaClient } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 
 export const toNumberValue = (value: unknown): number | null => {
@@ -159,7 +160,7 @@ export type WorkflowResolver = {
  * the mapping is wrong-scope, missing, or unknown.
  */
 export const createWorkflowResolver = (
-  prisma: PrismaClient | Prisma.TransactionClient,
+  prisma: DbClient | TxClient,
   workflowIdMap: Map<number, number>
 ): WorkflowResolver => {
   const workflowScopeMap = new Map<number, WorkflowScope>();
@@ -218,14 +219,14 @@ export const createWorkflowResolver = (
   };
 };
 
-export const toInputJsonValue = (value: unknown): Prisma.InputJsonValue => {
+export const toInputJsonValue = (value: unknown): JsonValue => {
   const { structuredClone } = globalThis as unknown as {
     structuredClone?: <T>(input: T) => T;
   };
 
   if (typeof structuredClone === "function") {
-    return structuredClone(value) as Prisma.InputJsonValue;
+    return structuredClone(value) as JsonValue;
   }
 
-  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+  return JSON.parse(JSON.stringify(value)) as JsonValue;
 };

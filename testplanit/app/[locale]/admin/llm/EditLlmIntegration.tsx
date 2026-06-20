@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { AlertCircle, Info, Loader2, RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -527,7 +527,7 @@ export function EditLlmIntegration({
             timeout: values.timeout,
             streamingEnabled: values.streamingEnabled,
             isDefault: values.isDefault,
-            settings: mergedSettings as Prisma.InputJsonValue,
+            settings: mergedSettings as JsonValue,
             // Reset budget alert thresholds when config is saved — allows re-alerting against updated budget
             alertThresholdsFired: {},
           },

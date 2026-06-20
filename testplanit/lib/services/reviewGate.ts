@@ -1,5 +1,5 @@
 import { ReviewEntityType, WorkflowScope } from "~/zenstack/models";
-import { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 import { ReviewGateError } from "~/lib/utils/errors";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
@@ -61,7 +61,7 @@ import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
  *      invariant while ensuring a single transition can consume multiple
  *      pre-approved gates in one shot.
  *
- * The helper accepts a raw `Prisma.TransactionClient` rather than an
+ * The helper accepts a raw `TxClient` rather than an
  * enhanced ZenStack client. This is a documented exception to the
  * `feedback_default_to_enhanced_db` memory rule: the gate runs as a
  * system-context preflight, and the caller's downstream `consumedAt` stamp
@@ -90,7 +90,7 @@ import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
  *                    `toStateId` for transitive blocks).
  */
 export async function assertReviewGatePasses(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   entityType: ReviewEntityType,
   entityId: number,
   toStateId: number
@@ -221,7 +221,7 @@ export async function assertReviewGatePasses(
  *       of entities — same characteristic as the pre-strict batch path.
  */
 export async function assertBulkReviewGatePasses(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   entityType: ReviewEntityType,
   entities: ReadonlyArray<{ id: number; currentStateOrder: number | null }>,
   toStateId: number
@@ -336,7 +336,7 @@ const SCOPE_BY_ENTITY_TYPE: Record<ReviewEntityType, WorkflowScope> = {
  * entity surfaces via a downstream FK violation, not via the gate helper.
  */
 async function loadEntityForGate(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   entityType: ReviewEntityType,
   entityId: number
 ): Promise<{
@@ -385,7 +385,7 @@ async function loadEntityForGate(
  * (seed gap) rather than swallow it.
  */
 export async function resolveCreateStateRemap(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   projectId: number,
   scope: WorkflowScope,
   candidateStateId: number

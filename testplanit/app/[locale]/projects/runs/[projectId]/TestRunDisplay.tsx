@@ -4,7 +4,7 @@ import { Loading } from "@/components/Loading";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Prisma } from "@prisma/client";
+import type { MilestonesGetPayload, TestRunsGetPayload } from "~/zenstack/input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useProjectTestRunStream } from "~/hooks/useTestRunLiveStream";
 import { CirclePlus, GripVertical } from "lucide-react";
@@ -71,7 +71,7 @@ const _testRunPropSelect = {
   // testCases, tags, issues, and results are fetched separately to avoid N+1 queries
 } as const;
 
-export type TestRunsWithDetails = Prisma.TestRunsGetPayload<{
+export type TestRunsWithDetails = TestRunsGetPayload<{
   select: typeof _testRunPropSelect;
 }>;
 
@@ -84,7 +84,7 @@ const _milestonesPropInclude = {
   },
 } as const;
 
-export type MilestonePropItem = Prisma.MilestonesGetPayload<{
+export type MilestonePropItem = MilestonesGetPayload<{
   include: typeof _milestonesPropInclude;
 }>;
 

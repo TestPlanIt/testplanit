@@ -1,13 +1,13 @@
 "use server";
 
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { prisma as defaultPrisma } from "../lib/prismaBase";
 
 type UpdateRepositoryCaseForecastOptions = {
   skipTestRunUpdate?: boolean;
   collectAffectedTestRuns?: boolean;
-  prismaClient?: PrismaClient; // Optional: use provided client for multi-tenant support
+  prismaClient?: DbClient; // Optional: use provided client for multi-tenant support
 };
 
 type UpdateRepositoryCaseForecastResult = {
@@ -17,11 +17,11 @@ type UpdateRepositoryCaseForecastResult = {
 
 type UpdateTestRunForecastOptions = {
   alreadyRefreshedCaseIds?: Set<number>;
-  prismaClient?: PrismaClient; // Optional: use provided client for multi-tenant support
+  prismaClient?: DbClient; // Optional: use provided client for multi-tenant support
 };
 
 type GetUniqueCaseGroupIdsOptions = {
-  prismaClient?: PrismaClient; // Optional: use provided client for multi-tenant support
+  prismaClient?: DbClient; // Optional: use provided client for multi-tenant support
 };
 
 /**

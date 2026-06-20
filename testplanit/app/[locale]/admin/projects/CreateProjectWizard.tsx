@@ -3,6 +3,7 @@
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ProjectAccessType, WorkflowScope } from "~/zenstack/models";
+import type { GroupProjectPermissionUpsertArgs, UserProjectPermissionUpsertArgs } from "~/zenstack/input";
 import { Prisma } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -907,7 +908,7 @@ export function CreateProjectWizard({
       }
 
       // Setup user permissions
-      const userPermissionsToUpsert: Prisma.UserProjectPermissionUpsertArgs[] =
+      const userPermissionsToUpsert: UserProjectPermissionUpsertArgs[] =
         [];
       const submittedUserPermissions = data.userPermissions || {};
 
@@ -949,7 +950,7 @@ export function CreateProjectWizard({
       }
 
       // Setup group permissions
-      const groupPermissionsToUpsert: Prisma.GroupProjectPermissionUpsertArgs[] =
+      const groupPermissionsToUpsert: GroupProjectPermissionUpsertArgs[] =
         [];
       const submittedGroupPermissions = data.groupPermissions || {};
 

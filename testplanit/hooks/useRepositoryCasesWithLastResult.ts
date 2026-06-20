@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import type { RepositoryCasesWhereInput } from "~/zenstack/input";
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 import {
   countRepositoryCasesWithLastResult,
@@ -39,7 +39,7 @@ export function useRepositoryCasesWithLastResult(
  * @returns Query result with count
  */
 export function useCountRepositoryCasesWithLastResult(
-  where: Prisma.RepositoryCasesWhereInput,
+  where: RepositoryCasesWhereInput,
   options?: Omit<
     UseQueryOptions<
       | { success: true; count: number }

@@ -807,6 +807,9 @@ importers:
       date-fns-tz:
         specifier: ^3.2.0
         version: 3.2.0(date-fns@4.4.0)
+      decimal.js:
+        specifier: ^10.4.3
+        version: 10.6.0
       dompurify:
         specifier: ^3.4.11
         version: 3.4.11

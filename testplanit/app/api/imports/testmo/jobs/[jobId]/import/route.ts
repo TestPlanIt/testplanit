@@ -1,3 +1,5 @@
+import { JsonNull } from "@zenstackhq/orm";
+import type { JsonArray, JsonObject, JsonValue } from "@zenstackhq/orm";
 import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
@@ -99,15 +101,15 @@ export const POST = withAuditContext(
         errorCount: 0,
         skippedCount: 0,
         totalCount: job.totalCount ?? 0,
-        activityLog: [] as Prisma.JsonArray,
-        entityProgress: {} as Prisma.JsonObject,
+        activityLog: [] as JsonArray,
+        entityProgress: {} as JsonObject,
       };
 
       if (options !== undefined) {
         updateData.options =
           options === null
-            ? Prisma.JsonNull
-            : (JSON.parse(JSON.stringify(options)) as Prisma.InputJsonValue);
+            ? JsonNull
+            : (JSON.parse(JSON.stringify(options)) as JsonValue);
       }
 
       const updatedJob = await db.testmoImportJob.update({

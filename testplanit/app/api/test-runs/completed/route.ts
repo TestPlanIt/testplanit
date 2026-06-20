@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
@@ -13,8 +13,8 @@ export type CompletedTestRunsResponse = {
     testRunType: string;
     completedAt: Date | null;
     createdAt: Date;
-    note: Prisma.JsonValue | null;
-    docs: Prisma.JsonValue | null;
+    note: JsonValue | null;
+    docs: JsonValue | null;
     projectId: number;
     configId: number | null;
     milestoneId: number | null;

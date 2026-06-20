@@ -1,12 +1,12 @@
 import type { Access } from "~/zenstack/models";
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 import { resolveEffectiveAccess } from "../access/resolve";
 
 export { readScimFallbackDefault } from "../access/fallbackDefault";
 
 export async function recomputeUserAccess(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   userId: string,
   fallbackDefault: Access
 ): Promise<void> {

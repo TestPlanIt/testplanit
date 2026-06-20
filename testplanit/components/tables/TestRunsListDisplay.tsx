@@ -8,7 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { Prisma } from "@prisma/client";
+import type { TestRunsWhereInput } from "~/zenstack/input";
 import { Combine, PlayCircle, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
@@ -18,7 +18,7 @@ import { cn } from "~/utils";
 interface TestRunsListDisplayProps {
   testRunIds?: number[];
   testRuns?: TestRunOption[];
-  filter?: Prisma.TestRunsWhereInput;
+  filter?: TestRunsWhereInput;
   count?: number;
   pageSize?: number;
   isLoading?: boolean;
@@ -212,7 +212,7 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
 
   const baseConditions = useMemo(() => {
     // Don't filter out deleted runs - we want to show them with special styling
-    const conditions: Prisma.TestRunsWhereInput[] = [];
+    const conditions: TestRunsWhereInput[] = [];
 
     if (filter) {
       conditions.push(filter);

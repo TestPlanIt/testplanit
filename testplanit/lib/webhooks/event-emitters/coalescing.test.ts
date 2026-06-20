@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 
-import { Prisma } from "@prisma/client";
+import { ORMError } from "@zenstackhq/orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
@@ -187,7 +187,7 @@ describe("emitWithCoalescing — at-threshold summary emit", () => {
   });
 
   it("silently skips emit when summary digest INSERT throws P2002 (concurrent emitter already fired)", async () => {
-    const p2002 = new Prisma.PrismaClientKnownRequestError(
+    const p2002 = new ORMError(
       "Unique constraint failed",
       { code: "P2002", clientVersion: "test" }
     );
@@ -210,7 +210,7 @@ describe("emitWithCoalescing — at-threshold summary emit", () => {
   });
 
   it("propagates non-P2002 errors from the dedup INSERT", async () => {
-    const otherErr = new Prisma.PrismaClientKnownRequestError(
+    const otherErr = new ORMError(
       "Foreign key constraint failed",
       { code: "P2003", clientVersion: "test" }
     );

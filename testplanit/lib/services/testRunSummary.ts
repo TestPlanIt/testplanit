@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 import { prisma } from "~/lib/prisma";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
@@ -19,11 +19,11 @@ import type {
 } from "./testRunSummary-shared";
 
 /**
- * Accept either the singleton client or a `Prisma.TransactionClient` so the
+ * Accept either the singleton client or a `TxClient` so the
  * webhook emitter can pass `tx` (Plan 02-05 Task 5.2) and read post-write
  * state inside the same transaction that produced the emission.
  */
-type PrismaLike = typeof prisma | Prisma.TransactionClient;
+type PrismaLike = typeof prisma | TxClient;
 
 /**
  * Compute the test run summary data shape used by the in-app summary UI
@@ -35,7 +35,7 @@ type PrismaLike = typeof prisma | Prisma.TransactionClient;
  *   array (requires extra LATERAL joins — only used by the in-app detail
  *   view; the webhook emitter omits it).
  * @param options.client Optional client override; defaults to the singleton.
- *   Pass a `Prisma.TransactionClient` to read inside an active tx.
+ *   Pass a `TxClient` to read inside an active tx.
  */
 export async function getTestRunSummary(
   testRunId: number,

@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 import {
   computeWorstOfStatus,
@@ -41,7 +41,7 @@ import {
  *
  * The function expects to be called inside an existing transaction (or
  * with a raw `prisma` client passed as `tx` — both satisfy the
- * `Prisma.TransactionClient` shape in this codebase). It does NOT open
+ * `TxClient` shape in this codebase). It does NOT open
  * its own transaction; the caller owns the boundary so the iteration write
  * commits atomically with the surrounding JUnitTestResult write.
  */
@@ -203,7 +203,7 @@ export interface RouteToIterationResult {
  *          extended vs. updated rows.
  */
 export async function routeToIteration(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   args: RouteToIterationArgs
 ): Promise<RouteToIterationResult> {
   const { testRunCaseId, iterationIndex, statusId, statusMap } = args;

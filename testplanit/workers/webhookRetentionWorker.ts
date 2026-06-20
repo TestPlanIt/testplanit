@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 
 import { SYSTEM_ACTOR_ID } from "../lib/auditContext";
 import {
@@ -63,7 +63,7 @@ let stopRequested = false;
 let inflight: Promise<unknown> | null = null;
 
 async function batchedDeleteWebhookDelivery(
-  client: PrismaClient,
+  client: DbClient,
   cutoff: Date,
   deadlineMs: number
 ): Promise<number> {
@@ -85,7 +85,7 @@ async function batchedDeleteWebhookDelivery(
 }
 
 async function batchedDeleteWebhookEventDedup(
-  client: PrismaClient,
+  client: DbClient,
   cutoff: Date,
   deadlineMs: number
 ): Promise<number> {
@@ -107,7 +107,7 @@ async function batchedDeleteWebhookEventDedup(
 }
 
 async function batchedDeleteWebhookOutboxEvent(
-  client: PrismaClient,
+  client: DbClient,
   cutoff: Date,
   deadlineMs: number
 ): Promise<number> {
@@ -130,7 +130,7 @@ async function batchedDeleteWebhookOutboxEvent(
 }
 
 export async function purgeOnce(
-  client: PrismaClient = prisma,
+  client: DbClient = prisma,
   tenantId?: string,
   budgetMs: number = TENANT_PURGE_BUDGET_MS
 ): Promise<PurgeResult> {

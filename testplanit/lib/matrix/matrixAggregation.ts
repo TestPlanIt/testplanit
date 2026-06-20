@@ -18,7 +18,8 @@
  * project-read-gate.
  */
 
-import { Prisma, type PrismaClient } from "@prisma/client";
+import type { DbClient, TxClient } from "~/lib/zenstack";
+import { Prisma } from "@prisma/client";
 
 import {
   computeWorstOfStatus,
@@ -26,11 +27,11 @@ import {
 } from "~/lib/services/iterationRollup";
 
 /**
- * Accept either the singleton client or a `Prisma.TransactionClient` so
+ * Accept either the singleton client or a `TxClient` so
  * callers (and live-DB integration tests) can pass `tx` to read inside
  * a rolled-back transaction.
  */
-type PrismaLike = PrismaClient | Prisma.TransactionClient;
+type PrismaLike = DbClient | TxClient;
 import {
   redactValues,
   type ParameterSchemaEntry,

@@ -16,9 +16,10 @@
  */
 
 import { WorkflowType } from "~/zenstack/models";
-import { Prisma } from "@prisma/client";
+import type { RepositoryCasesWhereInput } from "~/zenstack/input";
+import type { TxClient } from "~/lib/zenstack";
 
-type AnyTx = Prisma.TransactionClient | { repositoryCases: any; projects: any };
+type AnyTx = TxClient | { repositoryCases: any; projects: any };
 
 interface ProjectFlagProbe {
   excludeNotStartedFromRuns: boolean;
@@ -107,7 +108,7 @@ export async function filterEligibleCaseIds(
  */
 export function buildEligibleCasesWhere(args: {
   project: ProjectFlagProbe | null | undefined;
-}): Prisma.RepositoryCasesWhereInput {
+}): RepositoryCasesWhereInput {
   if (!args.project?.excludeNotStartedFromRuns) return {};
   return {
     state: { workflowType: { not: WorkflowType.NOT_STARTED } },

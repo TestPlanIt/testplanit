@@ -4,7 +4,7 @@ import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { badgeVariants } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { RepositoryCaseSource } from "~/zenstack/models";
-import type { Prisma } from "@prisma/client";
+import type { RepositoryCasesWhereInput } from "~/zenstack/input";
 import { ListChecks } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
@@ -13,7 +13,7 @@ import { CaseDisplay } from "./CaseDisplay";
 
 interface CasesListProps {
   caseIds?: number[];
-  filter?: Prisma.RepositoryCasesWhereInput;
+  filter?: RepositoryCasesWhereInput;
   count?: number;
   pageSize?: number;
   isLoading?: boolean;
@@ -42,7 +42,7 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
     count ?? (typeof caseIds !== "undefined" ? caseIds.length : undefined);
 
   const baseConditions = useMemo(() => {
-    const conditions: Prisma.RepositoryCasesWhereInput[] = [
+    const conditions: RepositoryCasesWhereInput[] = [
       { isDeleted: false },
     ];
 

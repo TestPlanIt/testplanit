@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
 import {
   repoFileCache,
@@ -116,7 +116,7 @@ export interface RefreshResult {
  */
 export async function refreshRepoCache(
   configId: number,
-  prismaClient: PrismaClient
+  prismaClient: DbClient
 ): Promise<RefreshResult> {
   const config = await (
     prismaClient as any

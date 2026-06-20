@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 import { createReadStream, statSync } from "node:fs";
 import type { Readable } from "node:stream";
 import { Transform } from "node:stream";
@@ -72,7 +72,7 @@ type InternalDatasetSummary = TestmoDatasetSummary & {
 
 export interface TestmoExportAnalyzerOptionsWithStaging extends TestmoExportAnalyzerOptions {
   jobId: string;
-  prisma: PrismaClient | Prisma.TransactionClient;
+  prisma: DbClient | TxClient;
   onProgress?: (
     bytesRead: number,
     totalBytes: number,
@@ -843,7 +843,7 @@ export class TestmoExportAnalyzer {
 export const analyzeTestmoExport = async (
   source: TestmoReadableSource,
   jobId: string,
-  prisma: PrismaClient | Prisma.TransactionClient,
+  prisma: DbClient | TxClient,
   options?: Omit<TestmoExportAnalyzerOptionsWithStaging, "jobId" | "prisma">
 ): Promise<TestmoExportSummary> => {
   const analyzer = new TestmoExportAnalyzer();

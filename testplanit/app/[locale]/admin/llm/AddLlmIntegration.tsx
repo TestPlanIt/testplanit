@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Prisma } from "@prisma/client";
+import { JsonNull } from "@zenstackhq/orm";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
@@ -522,7 +522,7 @@ export function AddLlmIntegration({
           endpoint: values.endpoint,
           baseUrl: values.endpoint,
         },
-        settings: Object.keys(settings).length > 0 ? settings : Prisma.JsonNull,
+        settings: Object.keys(settings).length > 0 ? settings : JsonNull,
       };
 
       const llmIntegration = await createLlmIntegration({
@@ -556,7 +556,7 @@ export function AddLlmIntegration({
             // skips unsupported params.
             settings: capabilitiesForSave
               ? { modelCapabilities: capabilitiesForSave }
-              : Prisma.JsonNull,
+              : JsonNull,
           },
         });
 

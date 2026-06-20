@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { ORMError } from "@zenstackhq/orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
@@ -102,7 +102,7 @@ export const POST = withAuditContext(
         );
       }
       if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error instanceof ORMError &&
         error.code === "P2025"
       ) {
         return NextResponse.json(

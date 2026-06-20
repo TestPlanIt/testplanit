@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 
 import { LLM_FEATURES } from "~/lib/llm/constants";
 import {
@@ -37,7 +37,7 @@ interface AnalyzeTagsParams {
  */
 export class TagAnalysisService {
   constructor(
-    private prisma: PrismaClient,
+    private prisma: DbClient,
     private llmManager: LlmManager,
     private promptResolver: PromptResolver
   ) {}

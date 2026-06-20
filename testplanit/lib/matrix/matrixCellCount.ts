@@ -19,16 +19,17 @@
  * boundary.
  */
 
-import { Prisma, type PrismaClient } from "@prisma/client";
+import type { DbClient, TxClient } from "~/lib/zenstack";
+import { Prisma } from "@prisma/client";
 
 import type { MatrixCellCountResult, MatrixFilters } from "./types";
 
 /**
- * Accept either the singleton client or a `Prisma.TransactionClient` so
+ * Accept either the singleton client or a `TxClient` so
  * callers (and live-DB integration tests) can pass `tx` to read inside
  * a rolled-back transaction.
  */
-type PrismaLike = PrismaClient | Prisma.TransactionClient;
+type PrismaLike = DbClient | TxClient;
 
 const CELL_CAP_THRESHOLD = 50_000 as const;
 

@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 
 import {
   disconnectAllTenantClients,
@@ -35,7 +35,7 @@ let stopRequested = false;
 let inflight: Promise<number> | null = null;
 
 export async function pollOnce(
-  client: PrismaClient = prisma,
+  client: DbClient = prisma,
   tenantId?: string
 ): Promise<number> {
   const claimed = await claimOutboxBatch(client, BATCH_SIZE);

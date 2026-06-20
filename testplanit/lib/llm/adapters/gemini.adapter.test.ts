@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Decimal } from "decimal.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LlmAdapterConfig, LlmRequest } from "../types";
 import { GeminiAdapter } from "./gemini.adapter";
@@ -28,8 +28,8 @@ const createTestConfig = (
     maxTokensPerRequest: 8192,
     maxRequestsPerMinute: 60,
     maxRequestsPerDay: null,
-    costPerInputToken: new Prisma.Decimal("0.000075"),
-    costPerOutputToken: new Prisma.Decimal("0.0003"),
+    costPerInputToken: new Decimal("0.000075"),
+    costPerOutputToken: new Decimal("0.0003"),
     monthlyBudget: null,
     defaultTemperature: 0.7,
     defaultMaxTokens: 1000,

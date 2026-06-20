@@ -1,10 +1,10 @@
 import { MilestonesWithTypes } from "@/components/tables/MilestoneListDisplay";
 import type { MilestoneTypesAssignment, User } from "~/zenstack/models";
-import { Prisma } from "@prisma/client";
+import type { ProjectsGetPayload } from "~/zenstack/input";
 
 // Define the expected input type based on the Prisma query includes
 // Make this more comprehensive based on admin/projects/page.tsx includes
-type ProjectWithAdminDataInput = Prisma.ProjectsGetPayload<{
+type ProjectWithAdminDataInput = ProjectsGetPayload<{
   include: {
     // Includes from admin/projects/page.tsx
     creator: true;

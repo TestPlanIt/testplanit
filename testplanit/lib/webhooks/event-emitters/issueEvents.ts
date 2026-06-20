@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 import { computeObjectDiff } from "~/lib/webhooks/diff";
 import { webhookEvents } from "~/lib/webhooks/events";
@@ -47,7 +47,7 @@ interface EmitOptions {
 
 export async function emitIssueCreated(
   row: IssueRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   // Issue.projectId is nullable in the schema; integration-only issues
@@ -107,7 +107,7 @@ export async function emitIssueCreated(
 export async function emitIssueUpdated(
   oldRow: IssueRow | null,
   newRow: IssueRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   // Defensive — middleware can pass null when args.where is malformed.
@@ -146,7 +146,7 @@ export async function emitIssueUpdated(
 
 export async function emitIssueDeleted(
   oldRow: IssueRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   if (oldRow.projectId == null) return;

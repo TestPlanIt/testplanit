@@ -7,7 +7,7 @@ import {
   OpenAIAdapter,
 } from "@/lib/llm/adapters";
 import type { LlmAdapterConfig } from "@/lib/llm/types";
-import { Prisma } from "@prisma/client";
+import { Decimal } from "decimal.js";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -63,15 +63,15 @@ export async function POST(request: NextRequest) {
         maxTokensPerRequest: 4096,
         maxRequestsPerMinute: 60,
         maxRequestsPerDay: null,
-        costPerInputToken: new Prisma.Decimal(0),
-        costPerOutputToken: new Prisma.Decimal(0),
+        costPerInputToken: new Decimal(0),
+        costPerOutputToken: new Decimal(0),
         defaultTemperature: 0.7,
         defaultMaxTokens: 1000,
         timeout: 10000,
         retryAttempts: 1,
         streamingEnabled: true,
         isDefault: false,
-        monthlyBudget: new Prisma.Decimal(0),
+        monthlyBudget: new Decimal(0),
         billingPeriodStartDay: 1,
         createdAt: new Date(),
         updatedAt: new Date(),

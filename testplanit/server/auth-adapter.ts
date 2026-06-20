@@ -1,10 +1,11 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { AccountUncheckedCreateInput } from "~/zenstack/input";
+import type { DbClient } from "~/lib/zenstack";
 import { hash } from "bcrypt";
 import type { Adapter, AdapterAccount, AdapterUser } from "next-auth/adapters";
 import { NotificationService } from "~/lib/services/notificationService";
 
-const ACCOUNT_FIELDS: Record<keyof Prisma.AccountUncheckedCreateInput, true> = {
+const ACCOUNT_FIELDS: Record<keyof AccountUncheckedCreateInput, true> = {
   id: true,
   userId: true,
   type: true,
@@ -21,7 +22,7 @@ const ACCOUNT_FIELDS: Record<keyof Prisma.AccountUncheckedCreateInput, true> = {
 
 function sanitizeAccountData(
   account: AdapterAccount
-): Prisma.AccountUncheckedCreateInput {
+): AccountUncheckedCreateInput {
   const result: Record<string, unknown> = {};
 
   for (const key of Object.keys(ACCOUNT_FIELDS)) {
@@ -34,14 +35,14 @@ function sanitizeAccountData(
     result.session_state = null;
   }
 
-  return result as Prisma.AccountUncheckedCreateInput;
+  return result as AccountUncheckedCreateInput;
 }
 
 /**
  * Custom Prisma adapter that ensures UserPreferences are created
  * when a new user is created via OAuth or Magic Link
  */
-export function createCustomPrismaAdapter(prisma: PrismaClient): Adapter {
+export function createCustomPrismaAdapter(prisma: DbClient): Adapter {
   const baseAdapter = PrismaAdapter(prisma);
 
   return {

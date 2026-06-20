@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Projects, Sessions, TestRunCases, TestRunResults, TestRuns } from "~/zenstack/models";
-import type { Prisma } from "@prisma/client";
+import type { UserGetPayload } from "~/zenstack/input";
 import { useQuery } from "@tanstack/react-query";
 import { CirclePlay, Compass, LinkIcon, Star } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -75,7 +75,7 @@ export type ChartableItem =
 // Type for PopulatedTestRunCases from the user query
 // (Ensures we have the fields selected in useFindFirstUser)
 type PopulatedTestRunCaseFromUser = NonNullable<
-  Prisma.UserGetPayload<{
+  UserGetPayload<{
     include: {
       testRunCasesAssigned: {
         where: {

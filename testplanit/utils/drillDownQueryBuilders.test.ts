@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
 import {
@@ -40,7 +39,7 @@ describe("drillDownQueryBuilders", () => {
       expect(result.where?.testRun).toEqual({ projectId: 5 });
       expect(result.skip).toBe(0);
       expect(result.take).toBe(10);
-      expect(result.orderBy).toEqual({ executedAt: Prisma.SortOrder.desc });
+      expect(result.orderBy).toEqual({ executedAt: "desc" });
     });
 
     it("should apply user dimension filter", () => {
@@ -180,7 +179,7 @@ describe("drillDownQueryBuilders", () => {
       expect(result.where?.projectId).toBe(5);
       expect(result.skip).toBe(0);
       expect(result.take).toBe(10);
-      expect(result.orderBy).toEqual({ createdAt: Prisma.SortOrder.desc });
+      expect(result.orderBy).toEqual({ createdAt: "desc" });
     });
 
     it("should apply user dimension filter to results", () => {
@@ -425,7 +424,7 @@ describe("drillDownQueryBuilders", () => {
       const result = buildSessionsQuery(context, 0, 10);
 
       expect(result.where?.projectId).toBe(12);
-      expect(result.orderBy).toEqual({ createdAt: Prisma.SortOrder.desc });
+      expect(result.orderBy).toEqual({ createdAt: "desc" });
     });
 
     it("should apply user dimension filter to createdById", () => {
@@ -623,7 +622,7 @@ describe("drillDownQueryBuilders", () => {
       const context = createBaseContext();
       const result = buildMilestoneCompletionQuery(context, 0, 10);
 
-      expect(result.orderBy).toEqual({ order: Prisma.SortOrder.asc });
+      expect(result.orderBy).toEqual({ order: "asc" });
     });
   });
 

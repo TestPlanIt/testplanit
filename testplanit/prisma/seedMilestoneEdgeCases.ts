@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 
 export async function seedMilestoneEdgeCases(
-  prisma: PrismaClient,
+  prisma: DbClient,
   projectId: number,
   adminUserId: string,
   milestoneTypeId: number

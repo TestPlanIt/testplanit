@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 
-import { Prisma } from "@prisma/client";
+import { ORMError } from "@zenstackhq/orm";
+import type { TxClient } from "~/lib/zenstack";
 
 import {
   SCIM_COALESCING_THRESHOLD,
@@ -28,7 +29,7 @@ import { webhookEvents } from "~/lib/webhooks/events";
  *      and emit the per-event payload to the outbox.
  *
  * Crash safety: every read and write threads the caller's
- * Prisma.TransactionClient so the dedup row, the outbox row, and the
+ * TxClient so the dedup row, the outbox row, and the
  * triggering business mutation all commit-or-rollback atomically.
  *
  * Why threshold-trip, not a timer:
@@ -74,14 +75,14 @@ function extractSampleIds(payload: unknown): string[] {
 
 function isUniqueConstraint(err: unknown): boolean {
   return (
-    err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002"
+    err instanceof ORMError && err.code === "P2002"
   );
 }
 
 export async function emitWithCoalescing(
   eventName: string,
   payload: object,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: CoalescingOpts
 ): Promise<void> {
   const perEventDigest = createHash("sha256")

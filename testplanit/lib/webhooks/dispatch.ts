@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { WebhookConfigUncheckedUpdateInput } from "~/zenstack/input";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
 import { SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
@@ -79,7 +80,7 @@ const DIAGNOSTIC_EVENT_NAME = "webhook.test" as const;
 
 export async function dispatchWebhook(
   jobData: DispatchJobData,
-  prisma: PrismaClient | Prisma.TransactionClient
+  prisma: DbClient | TxClient
 ): Promise<DispatchOutcome> {
   // 1. Load outbox event + webhook config + active/retiring secrets concurrently.
   const [outboxEvent, config] = await Promise.all([
@@ -312,7 +313,7 @@ export async function dispatchWebhook(
   // on terminal `failed` / `completed`. The contract is event-level
   // (not per-attempt) for the failure counter.
   const now = new Date();
-  const timestampUpdate: Prisma.WebhookConfigUncheckedUpdateInput = {
+  const timestampUpdate: WebhookConfigUncheckedUpdateInput = {
     lastDispatchedAt: now,
   };
   if (errorSentinel === null) {

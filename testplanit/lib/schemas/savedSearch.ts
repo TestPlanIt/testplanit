@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { z } from "zod/v4";
 
 import {
@@ -173,7 +173,7 @@ export interface SavedSearchCriteria {
  */
 export function buildSavedSearchConfig(
   criteria: SavedSearchCriteria
-): Prisma.InputJsonValue {
+): JsonValue {
   const config = {
     version: SAVED_SEARCH_CONFIG_VERSION,
     query: criteria.query,
@@ -181,7 +181,7 @@ export function buildSavedSearchConfig(
     currentProjectOnly: criteria.currentProjectOnly,
     filters: criteria.filters,
   };
-  return JSON.parse(JSON.stringify(config)) as Prisma.InputJsonValue;
+  return JSON.parse(JSON.stringify(config)) as JsonValue;
 }
 
 /**

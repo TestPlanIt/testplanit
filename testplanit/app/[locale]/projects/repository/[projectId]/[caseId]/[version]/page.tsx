@@ -40,7 +40,7 @@ import {
 import { VersionNavigation } from "@/components/VersionNavigation";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import type { Attachments, RepositoryCaseVersions, Steps } from "~/zenstack/models";
-import { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { ChevronLeft, LinkIcon, Minus, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -78,7 +78,7 @@ interface CaseVersionExtended extends RepositoryCaseVersions {
   }[];
   tags: string[];
   issues: any;
-  // steps here is likely Prisma.JsonValue based on RepositoryCaseVersions
+  // steps here is likely JsonValue based on RepositoryCaseVersions
 }
 
 export default function TestCaseVersions() {
@@ -378,7 +378,7 @@ export default function TestCaseVersions() {
 
   if (!testcase) return <Loading />;
 
-  const transformSteps = (stepsData: Prisma.JsonValue | undefined): Steps[] => {
+  const transformSteps = (stepsData: JsonValue | undefined): Steps[] => {
     if (!stepsData) return [];
     try {
       const parsedSteps =
@@ -386,8 +386,8 @@ export default function TestCaseVersions() {
       if (Array.isArray(parsedSteps)) {
         return parsedSteps.map((step: any, index: number) => ({
           id: step.id || index,
-          step: step.step as Prisma.JsonValue,
-          expectedResult: step.expectedResult as Prisma.JsonValue,
+          step: step.step as JsonValue,
+          expectedResult: step.expectedResult as JsonValue,
           order: step.order !== undefined ? step.order : index,
           testCaseId: testcase.id,
           isDeleted: step.isDeleted !== undefined ? step.isDeleted : false,

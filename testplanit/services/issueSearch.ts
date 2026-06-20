@@ -1,5 +1,5 @@
 import type { Issue } from "~/zenstack/models";
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 import { prisma as defaultPrisma } from "~/lib/prismaBase";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
@@ -197,7 +197,7 @@ export async function deleteIssueFromIndex(
  */
 export async function syncIssueToElasticsearch(
   issueId: number,
-  prismaClient?: PrismaClient,
+  prismaClient?: DbClient,
   tenantId?: string
 ): Promise<boolean> {
   const prisma = prismaClient || defaultPrisma;

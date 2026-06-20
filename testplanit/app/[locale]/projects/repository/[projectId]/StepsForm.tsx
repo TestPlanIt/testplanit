@@ -34,7 +34,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import type { SharedStepGroup, Steps as PrismaSteps } from "~/zenstack/models";
-import { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import type { Editor } from "@tiptap/core";
 import {
   CircleSlash2,
@@ -582,9 +582,9 @@ function StepsForm<T extends FieldValues = FieldValues>({
   // Using a ref to store the "processed" version of the steps prop.
   const processedStepsRef = useRef<string | null>(null);
 
-  // Helper function to map Prisma.JsonValue to TipTap content, similar to parseJsonToTipTap
+  // Helper function to map JsonValue to TipTap content, similar to parseJsonToTipTap
   const mapPrismaJsonToTipTapContent = (
-    data: Prisma.JsonValue | undefined | null
+    data: JsonValue | undefined | null
   ): object => {
     if (data === null || data === undefined) return emptyEditorContent;
     if (typeof data === "string") {

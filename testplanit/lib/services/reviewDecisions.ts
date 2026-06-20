@@ -1,4 +1,5 @@
 import type { AuditAction, ReviewRequest } from "~/zenstack/models";
+import { ORMError } from "@zenstackhq/orm";
 import { Prisma } from "@prisma/client";
 import type { JSONContent } from "@tiptap/core";
 import type { Session } from "next-auth";
@@ -308,7 +309,7 @@ export async function decideReviewRequest(
         select: { id: true },
       });
       if (!after) {
-        throw new Prisma.PrismaClientKnownRequestError(
+        throw new ORMError(
           "No ReviewRequest found",
           { code: "P2025", clientVersion: Prisma.prismaVersion.client }
         );

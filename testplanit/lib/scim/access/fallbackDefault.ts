@@ -1,5 +1,5 @@
 import type { Access } from "~/zenstack/models";
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 export const SCIM_DEFAULT_MAPPED_ACCESS_KEY = "scim.defaultMappedAccess";
 
@@ -11,7 +11,7 @@ const VALID_ACCESS_VALUES: readonly string[] = [
 ];
 
 export async function readScimFallbackDefault(
-  client: Pick<Prisma.TransactionClient, "appConfig">
+  client: Pick<TxClient, "appConfig">
 ): Promise<Access> {
   const row = await client.appConfig.findUnique({
     where: { key: SCIM_DEFAULT_MAPPED_ACCESS_KEY },

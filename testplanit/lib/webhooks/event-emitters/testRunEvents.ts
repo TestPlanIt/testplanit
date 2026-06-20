@@ -1,4 +1,5 @@
-import type { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { TxClient } from "~/lib/zenstack";
 
 import {
   getPerCaseIterationCounts,
@@ -63,7 +64,7 @@ function capValueBytes(
  * ParameterSchemaEntry[] redaction shape.
  */
 function parseParameterSchema(
-  value: Prisma.JsonValue | null | undefined
+  value: JsonValue | null | undefined
 ): ParameterSchemaEntry[] {
   if (!Array.isArray(value)) return [];
   const out: ParameterSchemaEntry[] = [];
@@ -112,7 +113,7 @@ interface EmitOptions {
 
 export async function emitTestRunCreated(
   row: TestRunRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   let stateName: string | null = null;
@@ -160,7 +161,7 @@ export async function emitTestRunCreated(
 export async function emitTestRunUpdateEvents(
   oldRow: TestRunRow | null,
   newRow: TestRunRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   if (!oldRow) return;
@@ -296,7 +297,7 @@ export async function emitTestRunUpdateEvents(
  */
 async function assemblePerCaseRedactedIterations(
   testRunId: number,
-  tx: Prisma.TransactionClient
+  tx: TxClient
 ): Promise<
   Array<{
     testRunCaseId: number;
@@ -354,7 +355,7 @@ export interface TestRunResultRow {
 
 export async function emitTestRunResultAdded(
   row: TestRunResultRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   // Fetch the producing testRun + status + linked repository case (via
@@ -430,7 +431,7 @@ export async function emitTestRunResultAdded(
  */
 export async function emitJUnitResultAdded(
   row: { id: number; testSuiteId: number },
-  tx: Prisma.TransactionClient
+  tx: TxClient
 ): Promise<void> {
   const suite = await tx.jUnitTestSuite.findUnique({
     where: { id: row.testSuiteId },
@@ -449,7 +450,7 @@ export async function emitJUnitResultAdded(
 export async function emitTestRunDuplicated(
   newRunId: number,
   sourceRunId: number,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions & { projectId: number }
 ): Promise<void> {
   const newRun = await tx.testRuns.findUnique({

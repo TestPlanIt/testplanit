@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
 import { computeObjectDiff } from "~/lib/webhooks/diff";
@@ -56,13 +56,13 @@ export interface EmitOptions {
 }
 
 interface ResolvedEmitOpts {
-  tx: Prisma.TransactionClient;
+  tx: TxClient;
   projectId: number;
   actorUserId: string | null;
 }
 
 function defaultEmitOpts(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions
 ): ResolvedEmitOpts {
   return {
@@ -79,7 +79,7 @@ function toMemberRefs(memberIds: string[]): ScimGroupMemberRef[] {
 export async function emitScimGroupCreated(
   row: ScimGroupSnapshot,
   members: ScimGroupMemberRef[],
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   const resolved = defaultEmitOpts(tx, opts);
@@ -100,7 +100,7 @@ export async function emitScimGroupCreated(
 export async function emitScimGroupUpdated(
   oldRow: ScimGroupSnapshot | null | undefined,
   newRow: ScimGroupSnapshot,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   if (!oldRow) return;
@@ -129,7 +129,7 @@ export async function emitScimGroupUpdated(
 export async function emitScimGroupMemberAdded(
   row: ScimGroupSnapshot,
   addedMemberIds: string[],
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   const resolved = defaultEmitOpts(tx, opts);
@@ -153,7 +153,7 @@ export async function emitScimGroupMemberAdded(
 export async function emitScimGroupMemberRemoved(
   row: ScimGroupSnapshot,
   removedMemberIds: string[],
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   const resolved = defaultEmitOpts(tx, opts);
@@ -172,7 +172,7 @@ export async function emitScimGroupMemberRemoved(
 
 export async function emitScimGroupDeleted(
   row: ScimGroupSnapshot,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   const resolved = defaultEmitOpts(tx, opts);

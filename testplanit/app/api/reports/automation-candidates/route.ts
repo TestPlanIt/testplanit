@@ -31,7 +31,7 @@ import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -443,7 +443,7 @@ export async function POST(req: NextRequest) {
             data: {
               status: "complete",
               completedAt: new Date(),
-              output: output as unknown as Prisma.InputJsonValue,
+              output: output as unknown as JsonValue,
             },
           });
           send(controller, {
@@ -546,7 +546,7 @@ export async function POST(req: NextRequest) {
           data: {
             status: "complete",
             completedAt: new Date(),
-            output: output as unknown as Prisma.InputJsonValue,
+            output: output as unknown as JsonValue,
           },
         });
 

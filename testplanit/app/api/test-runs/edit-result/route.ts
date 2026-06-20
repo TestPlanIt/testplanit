@@ -1,3 +1,5 @@
+import { JsonNull, ORMError } from "@zenstackhq/orm";
+import type { JsonValue } from "@zenstackhq/orm";
 import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -335,21 +337,21 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     }
 
     const notesInput:
-      | Prisma.InputJsonValue
+      | JsonValue
       | Prisma.NullableJsonNullValueInput
       | undefined =
       input.notes === undefined
         ? undefined
         : input.notes === null
-          ? Prisma.JsonNull
-          : (input.notes as Prisma.InputJsonValue);
+          ? JsonNull
+          : (input.notes as JsonValue);
 
-    const evidenceInput: Prisma.InputJsonValue | undefined =
+    const evidenceInput: JsonValue | undefined =
       input.evidence === undefined
         ? undefined
         : input.evidence === null
           ? {}
-          : (input.evidence as Prisma.InputJsonValue);
+          : (input.evidence as JsonValue);
 
     const existingFieldValueByFieldId = new Map(
       existing.resultFieldValues.map((fv) => [fv.fieldId, fv.id])
@@ -377,7 +379,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       // Upsert custom field values: update rows that already exist on this
       // result, create the rest. Values arrive already client-encoded.
       for (const fv of input.fieldValues ?? []) {
-        const value = (fv.value ?? Prisma.JsonNull) as Prisma.InputJsonValue;
+        const value = (fv.value ?? JsonNull) as JsonValue;
         const existingId = existingFieldValueByFieldId.get(fv.fieldId);
         if (existingId !== undefined) {
           await tx.resultFieldValues.update({
@@ -407,7 +409,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
   } catch (error) {
     if (
       typeof Prisma?.PrismaClientKnownRequestError === "function" &&
-      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error instanceof ORMError &&
       error.code === "P2025"
     ) {
       return NextResponse.json(

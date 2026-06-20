@@ -1,4 +1,5 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 
 /**
  * Outbound webhook outbox helpers.
@@ -22,7 +23,7 @@ export interface ClaimedOutboxEvent {
   eventId: string;
   eventTimestamp: Date;
   actorUserId: string | null;
-  payload: Prisma.JsonValue;
+  payload: JsonValue;
   dispatchedAt: Date;
   createdAt: Date;
 }
@@ -38,7 +39,7 @@ export interface ClaimedOutboxEvent {
  * UI is the recovery path).
  */
 export async function claimOutboxBatch(
-  prisma: PrismaClient | Prisma.TransactionClient,
+  prisma: DbClient | TxClient,
   batchSize: number = DEFAULT_CLAIM_BATCH_SIZE
 ): Promise<ClaimedOutboxEvent[]> {
   const rows = await prisma.$queryRaw<ClaimedOutboxEvent[]>`
@@ -79,7 +80,7 @@ export async function claimOutboxBatch(
  */
 export async function fanoutToConfigs(
   row: Pick<ClaimedOutboxEvent, "projectId" | "eventName" | "payload">,
-  prisma: PrismaClient | Prisma.TransactionClient
+  prisma: DbClient | TxClient
 ): Promise<string[]> {
   if (row.eventName === "webhook.test") {
     const targetConfigId =

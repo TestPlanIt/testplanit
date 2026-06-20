@@ -1,5 +1,5 @@
 import type { AdapterType } from "~/zenstack/models";
-import { Prisma } from "@prisma/client";
+import { ORMError } from "@zenstackhq/orm";
 import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -62,7 +62,7 @@ const mocks = vi.hoisted(() => {
     captureAuditEvent: vi.fn(async () => undefined),
     isUniqueConstraintError: vi.fn((err: unknown) => {
       return (
-        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err instanceof ORMError &&
         err.code === "P2002"
       );
     }),
@@ -151,7 +151,7 @@ const resetTxMocks = () => {
   mocks.performIssueRefreshSystem.mockResolvedValue({ success: true });
   mocks.isUniqueConstraintError.mockImplementation((err: unknown) => {
     return (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err instanceof ORMError &&
       err.code === "P2002"
     );
   });

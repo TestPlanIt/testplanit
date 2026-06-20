@@ -3,6 +3,7 @@
  * These functions construct database queries to fetch underlying records for each metric type
  */
 
+import type { IssueFindManyArgs, IssueWhereInput, MilestonesFindManyArgs, MilestonesWhereInput, RepositoryCasesFindManyArgs, RepositoryCasesWhereInput, SessionResultsFindManyArgs, SessionResultsWhereInput, SessionsFindManyArgs, SessionsWhereInput, TestRunCasesFindManyArgs, TestRunCasesWhereInput, TestRunResultsFindManyArgs, TestRunResultsWhereInput, TestRunsFindManyArgs, TestRunsWhereInput } from "~/zenstack/input";
 import { Prisma } from "@prisma/client";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
 
@@ -64,8 +65,8 @@ export function buildTestExecutionQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.TestRunResultsFindManyArgs {
-  const where: Prisma.TestRunResultsWhereInput = {};
+): TestRunResultsFindManyArgs {
+  const where: TestRunResultsWhereInput = {};
 
   // Build testRun filter with all conditions
   const testRunFilter: any = {};
@@ -221,7 +222,7 @@ export function buildTestExecutionQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      executedAt: Prisma.SortOrder.desc,
+      executedAt: "desc",
     } as Prisma.TestRunResultsOrderByWithRelationInput,
   };
 }
@@ -233,8 +234,8 @@ export function buildTestRunsQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.TestRunsFindManyArgs {
-  const where: Prisma.TestRunsWhereInput = {};
+): TestRunsFindManyArgs {
+  const where: TestRunsWhereInput = {};
 
   // Apply project filter
   if (context.projectId) {
@@ -347,7 +348,7 @@ export function buildTestRunsQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
+      createdAt: "desc",
     } as Prisma.TestRunsOrderByWithRelationInput,
   };
 }
@@ -361,8 +362,8 @@ export function buildRepositoryStatsQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.RepositoryCasesFindManyArgs {
-  const where: Prisma.RepositoryCasesWhereInput = {
+): RepositoryCasesFindManyArgs {
+  const where: RepositoryCasesWhereInput = {
     isDeleted: false,
   };
 
@@ -536,7 +537,7 @@ export function buildRepositoryStatsQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
+      createdAt: "desc",
     } as Prisma.RepositoryCasesOrderByWithRelationInput,
   };
 }
@@ -549,8 +550,8 @@ export function buildTestCasesQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.RepositoryCasesFindManyArgs {
-  const where: Prisma.RepositoryCasesWhereInput = {
+): RepositoryCasesFindManyArgs {
+  const where: RepositoryCasesWhereInput = {
     isDeleted: false,
   };
 
@@ -673,7 +674,7 @@ export function buildTestCasesQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
+      createdAt: "desc",
     } as Prisma.RepositoryCasesOrderByWithRelationInput,
   };
 }
@@ -685,8 +686,8 @@ export function buildSessionsQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.SessionsFindManyArgs {
-  const where: Prisma.SessionsWhereInput = {};
+): SessionsFindManyArgs {
+  const where: SessionsWhereInput = {};
 
   // Apply project filter
   if (context.projectId) {
@@ -739,7 +740,7 @@ export function buildSessionsQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
+      createdAt: "desc",
     } as Prisma.SessionsOrderByWithRelationInput,
   };
 }
@@ -751,8 +752,8 @@ export function buildSessionResultsQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.SessionResultsFindManyArgs {
-  const where: Prisma.SessionResultsWhereInput = {};
+): SessionResultsFindManyArgs {
+  const where: SessionResultsWhereInput = {};
 
   // Build session filter with all conditions
   const sessionFilter: any = {};
@@ -822,7 +823,7 @@ export function buildSessionResultsQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
+      createdAt: "desc",
     } as Prisma.SessionResultsOrderByWithRelationInput,
   };
 }
@@ -834,8 +835,8 @@ export function buildIssuesQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.IssueFindManyArgs {
-  const where: Prisma.IssueWhereInput = {};
+): IssueFindManyArgs {
+  const where: IssueWhereInput = {};
 
   // Apply project filter
   if (context.projectId) {
@@ -888,7 +889,7 @@ export function buildIssuesQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
+      createdAt: "desc",
     } as Prisma.IssueOrderByWithRelationInput,
   };
 }
@@ -900,8 +901,8 @@ export function buildMilestonesQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.MilestonesFindManyArgs {
-  const where: Prisma.MilestonesWhereInput = {
+): MilestonesFindManyArgs {
+  const where: MilestonesWhereInput = {
     isDeleted: false,
   };
 
@@ -997,7 +998,7 @@ export function buildMilestonesQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
+      createdAt: "desc",
     } as Prisma.MilestonesOrderByWithRelationInput,
   };
 }
@@ -1010,11 +1011,11 @@ export function buildMilestoneCompletionQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.TestRunCasesFindManyArgs {
-  const where: Prisma.TestRunCasesWhereInput = {};
+): TestRunCasesFindManyArgs {
+  const where: TestRunCasesWhereInput = {};
 
   // Apply project filter through test run
-  const testRunFilter: Prisma.TestRunsWhereInput = {
+  const testRunFilter: TestRunsWhereInput = {
     isDeleted: false,
   };
 
@@ -1118,7 +1119,7 @@ export function buildMilestoneCompletionQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      order: Prisma.SortOrder.asc,
+      order: "asc",
     } as Prisma.TestRunCasesOrderByWithRelationInput,
   };
 }

@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { Job, Worker } from "bullmq";
 import {
   disconnectAllTenantClients,
@@ -152,10 +152,10 @@ const processor = async (job: Job<AuditLogJobData>) => {
         entityType: event.entityType,
         entityId: event.entityId,
         entityName: resolvedEntityName,
-        changes: event.changes as Prisma.InputJsonValue | undefined,
+        changes: event.changes as JsonValue | undefined,
         metadata:
           Object.keys(metadata).length > 0
-            ? (metadata as Prisma.InputJsonValue)
+            ? (metadata as JsonValue)
             : undefined,
         projectId: validatedProjectId,
       },

@@ -46,7 +46,7 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { Prisma } from "@prisma/client";
+import { ORMError } from "@zenstackhq/orm";
 import type { Session } from "next-auth";
 
 import { prisma } from "~/lib/prisma";
@@ -456,8 +456,8 @@ describeIntegration(
         caught = err;
       }
 
-      expect(caught).toBeInstanceOf(Prisma.PrismaClientKnownRequestError);
-      expect((caught as Prisma.PrismaClientKnownRequestError).code).toBe(
+      expect(caught).toBeInstanceOf(ORMError);
+      expect((caught as ORMError).code).toBe(
         "P2002"
       );
       expect(isAlreadyPendingError(caught)).toBe(true);

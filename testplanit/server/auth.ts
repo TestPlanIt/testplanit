@@ -1,5 +1,5 @@
 import type { UserPreferences } from "~/zenstack/models";
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 import { compare } from "bcrypt";
 
 // Pre-computed bcrypt hash of a random string (cost=10).
@@ -988,7 +988,7 @@ export const authOptions: NextAuthOptions = {
   ] as any[],
 };
 
-function authorize(prisma: PrismaClient) {
+function authorize(prisma: DbClient) {
   return async (
     credentials:
       | Record<

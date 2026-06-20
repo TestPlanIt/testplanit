@@ -58,7 +58,7 @@ import UploadAttachments, {
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ApplicationArea } from "~/zenstack/models";
-import { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { useQueryClient } from "@tanstack/react-query";
 import { Asterisk, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -86,8 +86,8 @@ import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import RenderField from "./RenderField";
 
 interface SharedStepItemDetail {
-  step: Prisma.JsonValue;
-  expectedResult?: Prisma.JsonValue;
+  step: JsonValue;
+  expectedResult?: JsonValue;
   order: number;
 }
 

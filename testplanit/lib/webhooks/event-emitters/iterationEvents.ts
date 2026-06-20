@@ -11,7 +11,7 @@
 // `app/api/test-runs/submit-result/route.ts` for the call site that
 // computes `webhookRedactedValues` separately from the audit redaction.
 
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 import { webhookEvents } from "~/lib/webhooks/events";
 
@@ -111,14 +111,14 @@ export interface EmitOptions {
  */
 export async function emitIterationResultRecorded(
   payload: IterationResultRecordedPayload,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   // The runtime guard in webhookEvents.emit also enforces this, but a
   // local check produces a more actionable error message for misuse.
   if (!tx) {
     throw new Error(
-      "emitIterationResultRecorded requires a Prisma.TransactionClient"
+      "emitIterationResultRecorded requires a TxClient"
     );
   }
   const safePayload: IterationResultRecordedPayload = {

@@ -1,4 +1,5 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
+import { Decimal } from "decimal.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LlmRequest, LlmStreamResponse } from "../types";
 import { LlmManager } from "./llm-manager.service";
@@ -162,8 +163,8 @@ describe("LlmManager", () => {
       maxTokensPerRequest: 4096,
       maxRequestsPerMinute: 60,
       maxRequestsPerDay: null,
-      costPerInputToken: new Prisma.Decimal("0.00003"),
-      costPerOutputToken: new Prisma.Decimal("0.00006"),
+      costPerInputToken: new Decimal("0.00003"),
+      costPerOutputToken: new Decimal("0.00006"),
       monthlyBudget: null,
       defaultTemperature: 0.7,
       defaultMaxTokens: 1000,
@@ -182,7 +183,7 @@ describe("LlmManager", () => {
     mockPrisma = createMockPrisma();
     // Reset singleton for each test
     (LlmManager as any).instance = undefined;
-    manager = LlmManager.getInstance(mockPrisma as unknown as PrismaClient);
+    manager = LlmManager.getInstance(mockPrisma as unknown as DbClient);
   });
 
   afterEach(() => {
@@ -192,10 +193,10 @@ describe("LlmManager", () => {
   describe("getInstance", () => {
     it("should return singleton instance", () => {
       const instance1 = LlmManager.getInstance(
-        mockPrisma as unknown as PrismaClient
+        mockPrisma as unknown as DbClient
       );
       const instance2 = LlmManager.getInstance(
-        mockPrisma as unknown as PrismaClient
+        mockPrisma as unknown as DbClient
       );
 
       expect(instance1).toBe(instance2);
@@ -670,7 +671,7 @@ describe("LlmManager", () => {
       resolvePrisma = createMockPrisma();
       // Use createForWorker to get a fresh (non-singleton) instance per test
       resolveManager = LlmManager.createForWorker(
-        resolvePrisma as unknown as PrismaClient
+        resolvePrisma as unknown as DbClient
       );
     });
 

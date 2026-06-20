@@ -1,10 +1,10 @@
-import type { Prisma } from "@prisma/client";
+import type { ReviewRequestGetPayload, ReviewRequestInclude } from "~/zenstack/input";
 
 /**
  * Shared ReviewRequest payload shapes for the Phase 02 review-feature UI.
  *
  * Defining the include literal here (as `const`) and re-using it across the
- * component + the `Prisma.ReviewRequestGetPayload<{ include: typeof X }>`
+ * component + the `ReviewRequestGetPayload<{ include: typeof X }>`
  * helper restores end-to-end type safety: rename a field in schema.zmodel
  * and the included relation becomes unresolvable at this seam, which
  * surfaces as a real type error in the consuming components rather than a
@@ -42,8 +42,8 @@ export const REVIEW_STATUS_BANNER_INCLUDE = {
       color: { select: { value: true } },
     },
   },
-} as const satisfies Prisma.ReviewRequestInclude;
+} as const satisfies ReviewRequestInclude;
 
-export type ReviewStatusBannerRequest = Prisma.ReviewRequestGetPayload<{
+export type ReviewStatusBannerRequest = ReviewRequestGetPayload<{
   include: typeof REVIEW_STATUS_BANNER_INCLUDE;
 }>;

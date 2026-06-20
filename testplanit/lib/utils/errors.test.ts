@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ApplicationArea } from "~/zenstack/models";
-import { Prisma } from "@prisma/client";
+import { ORMError } from "@zenstackhq/orm";
 import {
   isUniqueConstraintError,
   isNotFoundError,
@@ -15,10 +15,10 @@ import {
   isIneligibleAssigneeError,
 } from "./errors";
 
-function makePrismaError(code: string): Prisma.PrismaClientKnownRequestError {
+function makePrismaError(code: string): ORMError {
   // Constructor signature in @prisma/client v5+:
   // (message: string, { code, clientVersion, meta? })
-  return new Prisma.PrismaClientKnownRequestError(`test ${code}`, {
+  return new ORMError(`test ${code}`, {
     code,
     clientVersion: "test",
   });
@@ -102,7 +102,7 @@ describe("review gate error helpers", () => {
   });
 
   it("isAlreadyPendingError detects P2002 with correct index target", () => {
-    const err = new Prisma.PrismaClientKnownRequestError("dup", {
+    const err = new ORMError("dup", {
       code: "P2002",
       clientVersion: "test",
       meta: { target: "review_request_one_pending_per_entity" },
@@ -115,7 +115,7 @@ describe("review gate error helpers", () => {
     // of the bare index name. This is the shape returned in the wild by the
     // partial unique index on ReviewRequest — verified by the live-DB test
     // at lib/services/schemaValidation.test.ts.
-    const err = new Prisma.PrismaClientKnownRequestError("dup", {
+    const err = new ORMError("dup", {
       code: "P2002",
       clientVersion: "test",
       meta: { target: ["entityType", "entityId"] },
@@ -124,7 +124,7 @@ describe("review gate error helpers", () => {
   });
 
   it("isAlreadyPendingError rejects P2002 with wrong index target", () => {
-    const err = new Prisma.PrismaClientKnownRequestError("dup", {
+    const err = new ORMError("dup", {
       code: "P2002",
       clientVersion: "test",
       meta: { target: "some_other_constraint" },
@@ -133,7 +133,7 @@ describe("review gate error helpers", () => {
   });
 
   it("isAlreadyPendingError rejects P2002 with array target on unrelated fields", () => {
-    const err = new Prisma.PrismaClientKnownRequestError("dup", {
+    const err = new ORMError("dup", {
       code: "P2002",
       clientVersion: "test",
       meta: { target: ["email"] },

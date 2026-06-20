@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 import type {
   TestmoFieldOptionConfig,
   TestmoMappingConfiguration,
@@ -19,7 +19,7 @@ const generateSystemName = (value: string): string => {
 };
 
 export async function importTemplates(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration
 ): Promise<{ summary: EntitySummaryResult; templateMap: Map<string, number> }> {
   const summary: EntitySummaryResult = {
@@ -151,7 +151,7 @@ export async function importTemplates(
 }
 
 export async function importTemplateFields(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration,
   templateMap: Map<string, number>,
   datasetRows: Map<string, any[]>

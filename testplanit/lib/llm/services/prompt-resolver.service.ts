@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 import type { LlmFeature } from "../constants";
 import { FALLBACK_PROMPTS, type FallbackPrompt } from "./fallback-prompts";
 
@@ -23,7 +23,7 @@ export interface ResolvedPrompt {
  * 3. Hard-coded fallback: Use the original hard-coded prompt (safety net)
  */
 export class PromptResolver {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private prisma: DbClient) {}
 
   async resolve(
     feature: LlmFeature,

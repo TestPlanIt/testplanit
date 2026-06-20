@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ApplicationArea } from "~/zenstack/models";
 import type { CaseFields as PrismaCaseField } from "~/zenstack/models";
-import { Prisma } from "@prisma/client";
+import type { RepositoryCasesGetPayload } from "~/zenstack/input";
 import { isEqual } from "lodash";
 import {
   AlertCircle,
@@ -95,7 +95,7 @@ interface PreviewMatch {
 }
 
 // Define a more specific type for the case data needed in this modal
-type BulkEditCase = Prisma.RepositoryCasesGetPayload<{
+type BulkEditCase = RepositoryCasesGetPayload<{
   include: {
     state: true;
     project: true;

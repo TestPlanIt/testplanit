@@ -28,7 +28,7 @@ import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal
 import FieldValueRenderer from "@/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import type { Attachments, Status } from "~/zenstack/models";
-import { Prisma } from "@prisma/client";
+import type { RepositoryCasesGetPayload, RepositoryCasesSelect } from "~/zenstack/input";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Check,
@@ -405,10 +405,10 @@ export function TestRunCaseDetails({
     source: true,
     automated: true,
     hasParameters: true,
-  } satisfies Prisma.RepositoryCasesSelect;
+  } satisfies RepositoryCasesSelect;
 
   // Define the explicit type for the testcase based on the select
-  type RepositoryCaseWithDetails = Prisma.RepositoryCasesGetPayload<{
+  type RepositoryCaseWithDetails = RepositoryCasesGetPayload<{
     select: typeof repositoryCaseWithDetailsSelect;
   }>;
 

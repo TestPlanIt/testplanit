@@ -1,5 +1,6 @@
 "use server";
 
+import type { RepositoryCasesSelect, RepositoryCasesWhereInput } from "~/zenstack/input";
 import { Prisma } from "@prisma/client";
 import { prisma } from "~/lib/prisma";
 import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
@@ -12,7 +13,7 @@ export type { LastTestResult } from "~/lib/utils/computeLastTestResult";
  * Arguments for fetching repository cases with computed last test result.
  */
 export interface FetchCasesWithLastResultArgs {
-  where: Prisma.RepositoryCasesWhereInput;
+  where: RepositoryCasesWhereInput;
   orderBy?: Prisma.RepositoryCasesOrderByWithRelationInput;
   skip?: number;
   take?: number;
@@ -257,7 +258,7 @@ const repositoryCaseSelectClause = {
       },
     },
   },
-} satisfies Prisma.RepositoryCasesSelect;
+} satisfies RepositoryCasesSelect;
 
 /**
  * Fetches repository cases with computed last test result.
@@ -328,7 +329,7 @@ export async function fetchRepositoryCasesWithLastResult(
  * @returns Promise resolving to the count
  */
 export async function countRepositoryCasesWithLastResult(
-  where: Prisma.RepositoryCasesWhereInput
+  where: RepositoryCasesWhereInput
 ): Promise<
   { success: true; count: number } | { success: false; error: string; count: 0 }
 > {

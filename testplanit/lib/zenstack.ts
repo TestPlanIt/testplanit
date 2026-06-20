@@ -14,7 +14,11 @@
 //
 // $use() returns a NEW client that shares the same underlying connection, so all
 // three views run over one pool.
-import { ZenStackClient, type AuthType } from "@zenstackhq/orm";
+import {
+  ZenStackClient,
+  type AuthType,
+  type TransactionClientContract,
+} from "@zenstackhq/orm";
 import { PostgresDialect } from "@zenstackhq/orm/dialects/postgres";
 import { PolicyPlugin } from "@zenstackhq/plugin-policy";
 import { Pool } from "pg";
@@ -58,3 +62,12 @@ export type AppAuthUser = AuthType<typeof schema>;
 export function getAuthDb(user: AppAuthUser | undefined) {
   return policyClient.$setAuth(user);
 }
+
+/** Raw ORM client type — the v3 equivalent of Prisma's `PrismaClient` type. */
+export type DbClient = typeof rawClient;
+
+/**
+ * Transaction-scoped client passed to `$transaction(async (tx) => …)` callbacks.
+ * The v3 equivalent of `Prisma.TransactionClient`.
+ */
+export type TxClient = TransactionClientContract<typeof schema>;

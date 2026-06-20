@@ -1,4 +1,5 @@
-import { Prisma } from "@prisma/client";
+import type { RepositoryCasesWhereInput } from "~/zenstack/input";
+import { DbNull } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
     }
 
     // Build the base where clause for repository cases
-    const baseWhere: Prisma.RepositoryCasesWhereInput = {
+    const baseWhere: RepositoryCasesWhereInput = {
       isDeleted: false,
       isArchived: false,
       projectId: projectId,
@@ -158,7 +159,7 @@ export async function POST(request: Request) {
               fieldId: fieldId,
               testCaseId: { in: baseCaseIds },
               value: {
-                not: Prisma.DbNull,
+                not: DbNull,
               },
             },
             select: {
@@ -1001,7 +1002,7 @@ export async function POST(request: Request) {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
             value: {
-              not: Prisma.DbNull,
+              not: DbNull,
             },
           },
           select: {
@@ -1048,7 +1049,7 @@ export async function POST(request: Request) {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
             value: {
-              not: Prisma.DbNull,
+              not: DbNull,
             },
             AND: [{ value: { not: "" } }],
           },
@@ -1111,7 +1112,7 @@ export async function POST(request: Request) {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
             value: {
-              not: Prisma.DbNull,
+              not: DbNull,
             },
           },
           select: {
@@ -1161,7 +1162,7 @@ export async function POST(request: Request) {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
             value: {
-              not: Prisma.DbNull,
+              not: DbNull,
             },
           },
           select: {
@@ -1197,7 +1198,7 @@ export async function POST(request: Request) {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
             value: {
-              not: Prisma.DbNull,
+              not: DbNull,
             },
           },
           select: {

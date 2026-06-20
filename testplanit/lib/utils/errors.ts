@@ -1,21 +1,21 @@
 import { ApplicationArea } from "~/zenstack/models";
-import { Prisma } from "@prisma/client";
+import { ORMError } from "@zenstackhq/orm";
 
 export function isUniqueConstraintError(err: unknown): boolean {
   return (
-    err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002"
+    err instanceof ORMError && err.code === "P2002"
   );
 }
 
 export function isNotFoundError(err: unknown): boolean {
   return (
-    err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025"
+    err instanceof ORMError && err.code === "P2025"
   );
 }
 
 export function isForeignKeyError(err: unknown): boolean {
   return (
-    err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2003"
+    err instanceof ORMError && err.code === "P2003"
   );
 }
 
@@ -133,10 +133,10 @@ export function isReviewGateError(err: unknown): err is ReviewGateError {
 
 export function isAlreadyPendingError(
   err: unknown
-): err is AlreadyPendingError | Prisma.PrismaClientKnownRequestError {
+): err is AlreadyPendingError | ORMError {
   if (err instanceof AlreadyPendingError) return true;
   if (
-    !(err instanceof Prisma.PrismaClientKnownRequestError) ||
+    !(err instanceof ORMError) ||
     err.code !== "P2002"
   ) {
     return false;

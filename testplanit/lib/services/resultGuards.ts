@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 
@@ -179,7 +179,7 @@ export function hasResultMutationPermission({
  * Accepts either the base client or a transaction client.
  */
 export async function hasMissingRequiredResultField(
-  client: PrismaClient | Prisma.TransactionClient,
+  client: DbClient | TxClient,
   templateId: number | null,
   fieldValues: Array<{ fieldId: number; value: unknown }> | undefined
 ): Promise<boolean> {

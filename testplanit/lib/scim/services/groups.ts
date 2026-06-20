@@ -44,6 +44,10 @@
  *                                         (an admin had renamed)
  */
 
+import type { GroupsWhereInput } from "~/zenstack/input";
+import { DbNull } from "@zenstackhq/orm";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { TxClient } from "~/lib/zenstack";
 import { Prisma } from "@prisma/client";
 import { updateAuditContext } from "~/lib/auditContext";
 import { prisma } from "~/lib/prisma";
@@ -155,10 +159,10 @@ function parseGroupId(id: string): number | null {
 
 function toJsonInput(
   value: Record<string, unknown> | null | undefined
-): Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue | undefined {
+): Prisma.NullableJsonNullValueInput | JsonValue | undefined {
   if (value === undefined) return undefined;
-  if (value === null) return Prisma.DbNull;
-  return value as Prisma.InputJsonValue;
+  if (value === null) return DbNull;
+  return value as JsonValue;
 }
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
@@ -175,7 +179,7 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
  * row carries the skipped set; the webhook payload carries the applied set.
  */
 async function partitionMembers(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   requestedIds: string[]
 ): Promise<{ applied: string[]; skipped: string[] }> {
   if (requestedIds.length === 0) return { applied: [], skipped: [] };
@@ -241,7 +245,7 @@ function snapshot(row: PrismaGroupWithMembers) {
  * unit tests (where a second findUnique would yield null).
  */
 async function buildResource(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   row: PrismaGroupWithMembers,
   finalMemberIds: string[]
 ): Promise<ScimGroupResource> {
@@ -329,7 +333,7 @@ export async function createScimGroup(
 }
 
 async function insertNewScimGroup(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   payload: ReturnType<typeof scimToGroupCreate>,
   requestedMemberIds: string[],
   ctx: ScimAuthContext
@@ -344,7 +348,7 @@ async function insertNewScimGroup(
       externalId: payload.externalId,
       scimExtensions:
         payload.scimExtensions && Object.keys(payload.scimExtensions).length > 0
-          ? (payload.scimExtensions as Prisma.InputJsonValue)
+          ? (payload.scimExtensions as JsonValue)
           : undefined,
       isDeleted: false,
     },
@@ -385,7 +389,7 @@ async function insertNewScimGroup(
 }
 
 async function resurrectTombstonedGroup(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   existing: PrismaGroupWithMembers,
   body: ScimGroupBody,
   payload: ReturnType<typeof scimToGroupCreate>,
@@ -459,7 +463,7 @@ async function resurrectTombstonedGroup(
 }
 
 async function jitBindExistingGroup(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   existing: PrismaGroupWithMembers,
   payload: ReturnType<typeof scimToGroupCreate>,
   requestedMemberIds: string[],
@@ -565,11 +569,11 @@ export async function listScimGroups(
       : Math.min(Math.max(1, count), MAX_LIST_COUNT);
   const resolvedSkip = Math.max(0, (startIndex ?? 1) - 1);
 
-  const filterWhere: Prisma.GroupsWhereInput = filter
+  const filterWhere: GroupsWhereInput = filter
     ? scimFilterToPrismaGroupWhere(filter)
     : {};
 
-  const finalWhere: Prisma.GroupsWhereInput = {
+  const finalWhere: GroupsWhereInput = {
     AND: [filterWhere, { isDeleted: false }],
   };
 
