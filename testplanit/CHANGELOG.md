@@ -1,3 +1,9 @@
+## [0.39.2](https://github.com/TestPlanIt/testplanit/compare/v0.39.1...v0.39.2) (2026-06-20)
+
+### Bug Fixes
+
+* **tags:** persist tag selections in the case and session editors ([#456](https://github.com/TestPlanIt/testplanit/issues/456)) ([4fc7f90](https://github.com/TestPlanIt/testplanit/commit/4fc7f9009abaf552cce613f38af86cc33a1e1b20))
+
 ## [0.39.1](https://github.com/TestPlanIt/testplanit/compare/v0.39.0...v0.39.1) (2026-06-20)
 
 ### Bug Fixes
