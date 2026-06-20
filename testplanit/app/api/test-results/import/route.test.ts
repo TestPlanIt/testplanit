@@ -18,6 +18,12 @@ vi.mock("@/lib/prisma", () => {
   // client, which is enough for the smoke tests since
   // `routeToIteration` itself is mocked out below.
   const prismaMock: any = {
+    // auditedTransaction (wrapping routeToIteration) issues a
+    // `SET LOCAL app.audit_context` via tx.$executeRaw as the first statement
+    // inside the $transaction callback. Since the tx client is this same mock,
+    // it must expose the raw helpers.
+    $executeRaw: vi.fn().mockResolvedValue([]),
+    $queryRaw: vi.fn().mockResolvedValue([]),
     workflows: {
       findFirst: vi.fn(),
       // `resolveCreateStateRemap` enumerates gated states via findMany to

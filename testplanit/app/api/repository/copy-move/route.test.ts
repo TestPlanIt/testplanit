@@ -23,10 +23,23 @@ vi.mock("next-auth", () => ({
   getServerSession: (...args: any[]) => mockGetServerSession(...args),
 }));
 
-// ─── Mock ZenStack enhance ────────────────────────────────────────────────────
+// ─── Mock audit context wrappers (withAuditContext is a pass-through HOF) ──────
 
-vi.mock("@zenstackhq/runtime", () => ({
-  enhance: (...args: any[]) => mockEnhance(...args),
+vi.mock("~/lib/auditContextWrappers", () => ({
+  withAuditContext: (handler: any) => handler,
+}));
+
+// ─── Mock audit-context enqueue (delegates to queue.add) ──────────────────────
+
+vi.mock("~/lib/auditContextEnqueue", () => ({
+  enqueueWithAuditContext: (queue: any, name: string, data: any, opts?: any) =>
+    queue.add(name, data, opts),
+}));
+
+// ─── Mock enhanceWithAudit (returns the access-controlled enhanced client) ────
+
+vi.mock("~/lib/audit/enhanceWithAudit", () => ({
+  enhanceWithAudit: (...args: any[]) => mockEnhance(...args),
 }));
 
 // ─── Mock prisma ──────────────────────────────────────────────────────────────

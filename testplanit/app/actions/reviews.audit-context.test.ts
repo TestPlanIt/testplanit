@@ -125,6 +125,8 @@ vi.mock("~/lib/prisma", () => ({
     },
     $transaction: vi.fn(async (cb: (tx: unknown) => unknown) =>
       cb({
+        $executeRaw: vi.fn().mockResolvedValue([]),
+        $queryRaw: vi.fn().mockResolvedValue([]),
         reviewRequest: {
           create: vi.fn(async () => ({ id: REVIEW_REQUEST_ID })),
         },

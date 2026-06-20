@@ -52,8 +52,14 @@ vi.mock("~/lib/prisma", () => {
     reviewRequest: {
       updateMany: vi.fn(async () => ({ count: 1 })),
     },
+    // auditedTransaction sets the app.audit_context GUC as the first
+    // statement inside the transaction via tx.$executeRaw, so the tx proxy
+    // handed to the callback must expose the raw helpers alongside the
+    // reviewRequest.updateMany surface the consumedAt stamp uses.
     $transaction: vi.fn(async (cb: (tx: any) => Promise<unknown>) =>
       cb({
+        $executeRaw: vi.fn(async () => []),
+        $queryRaw: vi.fn(async () => []),
         reviewRequest: prismaStub.reviewRequest,
       })
     ),
@@ -222,19 +228,21 @@ const entityTypeMap: Record<string, string> = {
 
 describe("ZenStack API Route Audit Interception", () => {
   describe("AUDITED_ENTITIES", () => {
-    it("should include all main entity types", () => {
-      expect(AUDITED_ENTITIES.has("repositoryCases")).toBe(true);
-      expect(AUDITED_ENTITIES.has("testRuns")).toBe(true);
-      expect(AUDITED_ENTITIES.has("sessions")).toBe(true);
-      expect(AUDITED_ENTITIES.has("projects")).toBe(true);
+    it("should include the access/config entities the RPC shim still audits", () => {
+      // Project/app entities (repositoryCases, testRuns, sessions, projects,
+      // issue, sharedStepGroup, …) are now recorded solely by the trigger-based
+      // CDC substrate, so the RPC app-layer shim no longer audits them — only
+      // the access-control + admin-config accessors remain on this path.
       expect(AUDITED_ENTITIES.has("user")).toBe(true);
-      // Real Prisma accessor is singular (`issue`); the plural `issues` typo
-      // silently disabled issue auditing until the wiring was corrected.
-      expect(AUDITED_ENTITIES.has("issue")).toBe(true);
-      expect(AUDITED_ENTITIES.has("issues")).toBe(false);
-      // Shared step groups likewise audit under the singular accessor.
-      expect(AUDITED_ENTITIES.has("sharedStepGroup")).toBe(true);
-      expect(AUDITED_ENTITIES.has("sharedStepGroups")).toBe(false);
+      expect(AUDITED_ENTITIES.has("userProjectPermission")).toBe(true);
+      expect(AUDITED_ENTITIES.has("groupProjectPermission")).toBe(true);
+      // The decommissioned project/app accessors must NOT be in the shim set.
+      expect(AUDITED_ENTITIES.has("repositoryCases")).toBe(false);
+      expect(AUDITED_ENTITIES.has("testRuns")).toBe(false);
+      expect(AUDITED_ENTITIES.has("sessions")).toBe(false);
+      expect(AUDITED_ENTITIES.has("projects")).toBe(false);
+      expect(AUDITED_ENTITIES.has("issue")).toBe(false);
+      expect(AUDITED_ENTITIES.has("sharedStepGroup")).toBe(false);
     });
 
     it("should include permission entities", () => {
@@ -252,10 +260,10 @@ describe("ZenStack API Route Audit Interception", () => {
       expect(AUDITED_ENTITIES.has("apiToken")).toBe(true);
     });
 
-    it("audits test run results under the correct model key", () => {
-      // The ZenStack model path is plural (`testRunResults`); the previous
-      // singular `testRunResult` never matched, so result edits went unaudited.
-      expect(AUDITED_ENTITIES.has("testRunResults")).toBe(true);
+    it("no longer audits test run results on the RPC shim path (CDC owns them)", () => {
+      // Test run results are captured by the CDC trigger now; the RPC shim set
+      // carries neither the plural nor the singular accessor.
+      expect(AUDITED_ENTITIES.has("testRunResults")).toBe(false);
       expect(AUDITED_ENTITIES.has("testRunResult")).toBe(false);
     });
 
@@ -265,11 +273,11 @@ describe("ZenStack API Route Audit Interception", () => {
       expect(AUDITED_ENTITIES.has("account")).toBe(false);
     });
 
-    it("audits every admin-config model on the RPC path", () => {
-      // The canonical fix: each config model must be in the route's audited
-      // set so the post-RPC shim emits the single full-diff row (the $extends
-      // hook is suppressed for these on the RPC path). Spot-check the catalog,
-      // access-join, and project-scoped-join categories.
+    it("no longer audits admin-config catalog models on the RPC shim path (CDC owns them)", () => {
+      // The app-layer config audit was decommissioned: AUDITED_CONFIG_MODELS is
+      // intentionally empty so the CDC trigger is the sole source and the shim
+      // never double-audits. The former catalog/join accessors are absent here.
+      expect(AUDITED_CONFIG_MODELS).toHaveLength(0);
       for (const accessor of [
         "workflows",
         "status",
@@ -282,9 +290,10 @@ describe("ZenStack API Route Audit Interception", () => {
         "groupAssignment",
         "projectStatusAssignment",
       ]) {
-        expect(AUDITED_ENTITIES.has(accessor)).toBe(true);
+        expect(AUDITED_ENTITIES.has(accessor)).toBe(false);
       }
-      // Exhaustive: nothing in the shared source is missing from the set.
+      // Exhaustive: every config model that DOES remain (none today) must still
+      // be in the set — keeps the assertion correct if the list is repopulated.
       for (const cfg of AUDITED_CONFIG_MODELS) {
         expect(AUDITED_ENTITIES.has(cfg.accessor)).toBe(true);
       }
@@ -470,30 +479,31 @@ describe("ZenStack API Route Audit Interception", () => {
       ).toBeUndefined();
     });
 
-    it("resolves names for admin-config catalog models", () => {
+    it("no longer resolves names for decommissioned admin-config catalog models", () => {
+      // AUDITED_CONFIG_MODELS is empty (CDC owns these), so the shim's name map
+      // carries no entry for the former catalog accessors.
       expect(
         extractEntityName("workflows", { id: 1, name: "Release Flow" })
-      ).toBe("Release Flow");
+      ).toBeUndefined();
       expect(
         extractEntityName("caseFields", { id: 1, displayName: "Priority" })
-      ).toBe("Priority");
+      ).toBeUndefined();
       expect(
         extractEntityName("samlConfiguration", {
           id: "c1",
           issuer: "https://idp.example.com",
         })
-      ).toBe("https://idp.example.com");
+      ).toBeUndefined();
     });
 
-    it("resolves composite names for admin-config join models", () => {
-      // Join tables lack a scalar id; the shim derives a readable name from the
-      // composite key (mirrors the audit entry's entityName).
+    it("no longer resolves composite names for decommissioned admin-config join models", () => {
+      // Join-table name derivation lived in AUDITED_CONFIG_MODELS, now empty.
       expect(
         extractEntityName("rolePermission", { roleId: 75, area: "TestRuns" })
-      ).toBe("75:TestRuns");
+      ).toBeUndefined();
       expect(
         extractEntityName("groupAssignment", { userId: "u1", groupId: 3 })
-      ).toBe("u1:3");
+      ).toBeUndefined();
     });
 
     it("should return undefined for null result", () => {
@@ -506,15 +516,16 @@ describe("ZenStack API Route Audit Interception", () => {
   });
 
   describe("entityTypeMap", () => {
-    it("should map camelCase model names to PascalCase entity types", () => {
-      expect(entityTypeMap["repositoryCases"]).toBe("RepositoryCases");
-      expect(entityTypeMap["testRuns"]).toBe("TestRuns");
-      expect(entityTypeMap["sessions"]).toBe("Sessions");
-      expect(entityTypeMap["sharedStepGroup"]).toBe("SharedStepGroup");
-      expect(entityTypeMap["issue"]).toBe("Issue");
-      // The dead plural accessors must not map to anything.
-      expect(entityTypeMap["sharedStepGroups"]).toBeUndefined();
-      expect(entityTypeMap["issues"]).toBeUndefined();
+    it("should map the access/config accessors the RPC shim still labels", () => {
+      // The shim's entity-type map mirrors the audited RPC accessors. Project/
+      // app accessors moved to CDC, so they are no longer mapped here.
+      expect(entityTypeMap["user"]).toBe("User");
+      expect(entityTypeMap["apiToken"]).toBe("ApiToken");
+      expect(entityTypeMap["repositoryCases"]).toBeUndefined();
+      expect(entityTypeMap["testRuns"]).toBeUndefined();
+      expect(entityTypeMap["sessions"]).toBeUndefined();
+      expect(entityTypeMap["sharedStepGroup"]).toBeUndefined();
+      expect(entityTypeMap["issue"]).toBeUndefined();
     });
 
     it("should map permission models correctly", () => {
@@ -600,52 +611,57 @@ describe("ZenStack API Route Audit Interception", () => {
       };
     }
 
-    it("should construct a CREATE event for a new test case", () => {
+    it("should construct a CREATE event for a project permission grant", () => {
       const event = constructAuditEvent(
         "POST",
-        ["repositoryCases", "create"],
+        ["userProjectPermission", "create"],
         200,
         {
-          data: { id: 123, name: "New Test Case", projectId: 1 },
+          data: { id: 123, userId: "u-1", projectId: 1 },
         }
       );
 
       expect(event).toEqual({
         action: "CREATE",
-        entityType: "RepositoryCases",
+        entityType: "UserProjectPermission",
         entityId: "123",
-        entityName: "New Test Case",
+        entityName: undefined,
         projectId: 1,
         metadata: { operation: "create" },
       });
     });
 
-    it("should construct an UPDATE event for a test run", () => {
-      const event = constructAuditEvent("PATCH", ["testRuns", "update"], 200, {
-        data: { id: 456, name: "Updated Run", projectId: 2 },
+    it("should construct an UPDATE event for a user", () => {
+      const event = constructAuditEvent("PATCH", ["user", "update"], 200, {
+        data: { id: "u-456", email: "updated@example.com" },
       });
 
       expect(event).toEqual({
         action: "UPDATE",
-        entityType: "TestRuns",
-        entityId: "456",
-        entityName: "Updated Run",
-        projectId: 2,
+        entityType: "User",
+        entityId: "u-456",
+        entityName: "updated@example.com",
+        projectId: undefined,
         metadata: { operation: "update" },
       });
     });
 
-    it("should construct a DELETE event for a project", () => {
-      const event = constructAuditEvent("DELETE", ["projects", "delete"], 200, {
-        data: { id: 789, name: "Deleted Project" },
-      });
+    it("should construct a DELETE event for a project permission", () => {
+      const event = constructAuditEvent(
+        "DELETE",
+        ["userProjectPermission", "delete"],
+        200,
+        {
+          data: { id: 789, userId: "u-1", projectId: 3 },
+        }
+      );
 
       expect(event).toEqual({
         action: "DELETE",
-        entityType: "Projects",
+        entityType: "UserProjectPermission",
         entityId: "789",
-        entityName: "Deleted Project",
-        projectId: undefined,
+        entityName: undefined,
+        projectId: 3,
         metadata: { operation: "delete" },
       });
     });
@@ -653,7 +669,7 @@ describe("ZenStack API Route Audit Interception", () => {
     it("should construct a BULK_CREATE event with count", () => {
       const event = constructAuditEvent(
         "POST",
-        ["repositoryCases", "createMany"],
+        ["userProjectPermission", "createMany"],
         200,
         {
           data: { count: 10 },
@@ -662,9 +678,9 @@ describe("ZenStack API Route Audit Interception", () => {
 
       expect(event).toEqual({
         action: "BULK_CREATE",
-        entityType: "RepositoryCases",
+        entityType: "UserProjectPermission",
         entityId: "createMany-fallback",
-        entityName: "10 RepositoryCases",
+        entityName: "10 UserProjectPermission",
         projectId: undefined,
         metadata: { operation: "createMany", count: 10 },
       });
@@ -787,7 +803,7 @@ describe("ZenStack API Route Audit Interception", () => {
     it("should handle BULK_DELETE with count", () => {
       const event = constructAuditEvent(
         "DELETE",
-        ["repositoryCases", "deleteMany"],
+        ["userProjectPermission", "deleteMany"],
         200,
         {
           data: { count: 5 },
@@ -796,9 +812,9 @@ describe("ZenStack API Route Audit Interception", () => {
 
       expect(event).toEqual({
         action: "BULK_DELETE",
-        entityType: "RepositoryCases",
+        entityType: "UserProjectPermission",
         entityId: "deleteMany-fallback",
-        entityName: "5 RepositoryCases",
+        entityName: "5 UserProjectPermission",
         projectId: undefined,
         metadata: { operation: "deleteMany", count: 5 },
       });
@@ -1795,17 +1811,17 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
 
   it("records the changed fields for a real UPDATE", async () => {
     const { prisma } = await import("~/lib/prisma");
-    (prisma as any).tags = {
+    (prisma as any).userProjectPermission = {
       findUnique: vi
         .fn()
-        .mockResolvedValueOnce({ id: 1, name: "Old Name" }) // pre-snapshot
-        .mockResolvedValueOnce({ id: 1, name: "New Name" }), // after-read
+        .mockResolvedValueOnce({ id: 1, accessType: "READ" }) // pre-snapshot
+        .mockResolvedValueOnce({ id: 1, accessType: "WRITE" }), // after-read
     };
 
     const res = await run(
-      "tags",
+      "userProjectPermission",
       "update",
-      { where: { id: 1 }, data: { name: "New Name" } },
+      { where: { id: 1 }, data: { accessType: "WRITE" } },
       { id: 1 }
     );
 
@@ -1814,25 +1830,25 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
     expect(captureAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "UPDATE",
-        entityType: "Tags",
-        changes: { name: { old: "Old Name", new: "New Name" } },
+        entityType: "UserProjectPermission",
+        changes: { accessType: { old: "READ", new: "WRITE" } },
       })
     );
   });
 
   it("suppresses a no-op UPDATE (empty diff) instead of logging an empty row", async () => {
     const { prisma } = await import("~/lib/prisma");
-    (prisma as any).tags = {
+    (prisma as any).userProjectPermission = {
       findUnique: vi
         .fn()
-        .mockResolvedValueOnce({ id: 1, name: "Same" }) // pre-snapshot
-        .mockResolvedValueOnce({ id: 1, name: "Same" }), // after-read (unchanged)
+        .mockResolvedValueOnce({ id: 1, accessType: "READ" }) // pre-snapshot
+        .mockResolvedValueOnce({ id: 1, accessType: "READ" }), // after-read (unchanged)
     };
 
     const res = await run(
-      "tags",
+      "userProjectPermission",
       "update",
-      { where: { id: 1 }, data: { name: "Same" } },
+      { where: { id: 1 }, data: { accessType: "READ" } },
       { id: 1 }
     );
 
@@ -1842,17 +1858,17 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
 
   it("diffs a BigInt column on UPDATE without throwing it away", async () => {
     const { prisma } = await import("~/lib/prisma");
-    (prisma as any).ollamaModelRegistry = {
+    (prisma as any).userProjectPermission = {
       findUnique: vi
         .fn()
-        .mockResolvedValueOnce({ id: 1, modelSize: 100n })
-        .mockResolvedValueOnce({ id: 1, modelSize: 200n }),
+        .mockResolvedValueOnce({ id: 1, quota: 100n })
+        .mockResolvedValueOnce({ id: 1, quota: 200n }),
     };
 
     const res = await run(
-      "ollamaModelRegistry",
+      "userProjectPermission",
       "update",
-      { where: { id: 1 }, data: { modelSize: "200" } },
+      { where: { id: 1 }, data: { quota: "200" } },
       { id: 1 }
     );
 
@@ -1861,28 +1877,28 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
     expect(captureAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "UPDATE",
-        changes: { modelSize: { old: "100", new: "200" } },
+        changes: { quota: { old: "100", new: "200" } },
       })
     );
   });
 
   it("records created field values for a CREATE", async () => {
     const { prisma } = await import("~/lib/prisma");
-    (prisma as any).tags = { findUnique: vi.fn() };
+    (prisma as any).userProjectPermission = { findUnique: vi.fn() };
 
     const res = await run(
-      "tags",
+      "userProjectPermission",
       "create",
-      { data: { name: "Created Tag" } },
-      { id: 9, name: "Created Tag", isDeleted: false }
+      { data: { accessType: "WRITE" } },
+      { id: 9, accessType: "WRITE", isDeleted: false }
     );
 
     expect(res.status).toBe(200);
     expect(captureAuditEvent).toHaveBeenCalledTimes(1);
     const event = (captureAuditEvent.mock.calls[0] as unknown[])[0] as any;
     expect(event.action).toBe("CREATE");
-    expect(event.entityType).toBe("Tags");
-    expect(event.changes.name).toEqual({ old: null, new: "Created Tag" });
+    expect(event.entityType).toBe("UserProjectPermission");
+    expect(event.changes.accessType).toEqual({ old: null, new: "WRITE" });
     expect(event.changes.id).toEqual({ old: null, new: 9 });
   });
 
@@ -1932,28 +1948,30 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
 
   it("captures the removed row's values on a hard DELETE (where from ?q=)", async () => {
     const { prisma } = await import("~/lib/prisma");
-    (prisma as any).tags = {
-      findUnique: vi.fn().mockResolvedValueOnce({ id: 1, name: "ToDelete" }),
+    (prisma as any).userProjectPermission = {
+      findUnique: vi.fn().mockResolvedValueOnce({ id: 1, accessType: "WRITE" }),
     };
 
     const res = await run(
-      "tags",
+      "userProjectPermission",
       "delete",
       { where: { id: 1 } },
-      { id: 1, name: "ToDelete" }
+      { id: 1, accessType: "WRITE" }
     );
 
     expect(res.status).toBe(200);
-    expect((prisma as any).tags.findUnique).toHaveBeenCalledWith({
+    expect(
+      (prisma as any).userProjectPermission.findUnique
+    ).toHaveBeenCalledWith({
       where: { id: 1 },
     });
     expect(captureAuditEvent).toHaveBeenCalledTimes(1);
     expect(captureAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "DELETE",
-        entityType: "Tags",
+        entityType: "UserProjectPermission",
         changes: expect.objectContaining({
-          name: { old: "ToDelete", new: null },
+          accessType: { old: "WRITE", new: null },
         }),
       })
     );

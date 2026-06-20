@@ -89,6 +89,8 @@ describe("promptConfigActions", () => {
       const mockConfig = { id: "config-1", name: "Test Config" };
       vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
         const tx = {
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           promptConfig: {
             create: vi.fn().mockResolvedValue(mockConfig),
             updateMany: vi.fn(),
@@ -122,6 +124,8 @@ describe("promptConfigActions", () => {
 
       vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
         const tx = {
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           promptConfig: {
             create: mockCreate,
             updateMany: mockUpdateMany,
@@ -157,6 +161,8 @@ describe("promptConfigActions", () => {
 
       vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
         const tx = {
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           promptConfig: {
             create: mockCreate,
             updateMany: mockUpdateMany,
@@ -248,6 +254,8 @@ describe("promptConfigActions", () => {
 
       vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
         const tx = {
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           promptConfig: {
             update: mockUpdate,
             updateMany: vi.fn(),
@@ -291,6 +299,8 @@ describe("promptConfigActions", () => {
 
       vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
         const tx = {
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           promptConfig: {
             update: vi.fn(),
             updateMany: mockUpdateMany,
@@ -326,6 +336,8 @@ describe("promptConfigActions", () => {
 
       vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
         const tx = {
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           promptConfig: {
             update: vi.fn(),
             updateMany: vi.fn(),

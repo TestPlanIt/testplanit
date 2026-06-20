@@ -20,6 +20,8 @@ const {
     .mockResolvedValue(undefined);
 
   const mockTx = {
+    $executeRaw: vi.fn().mockResolvedValue([]),
+    $queryRaw: vi.fn().mockResolvedValue([]),
     stepSequenceMatch: {
       findUnique: vi.fn(),
       update: vi.fn(),

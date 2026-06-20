@@ -111,6 +111,8 @@ describe("Submit Result API Route", () => {
   };
 
   let txMocks: {
+    $executeRaw: ReturnType<typeof vi.fn>;
+    $queryRaw: ReturnType<typeof vi.fn>;
     testRunResults: {
       create: ReturnType<typeof vi.fn>;
       findFirst: ReturnType<typeof vi.fn>;
@@ -159,6 +161,11 @@ describe("Submit Result API Route", () => {
     (prisma.templateResultAssignment.findMany as any).mockResolvedValue([]);
 
     txMocks = {
+      // auditedTransaction sets the app.audit_context GUC as the first
+      // statement inside the transaction via tx.$executeRaw; the tx client
+      // handed to the route callback must expose these raw helpers.
+      $executeRaw: vi.fn().mockResolvedValue([]),
+      $queryRaw: vi.fn().mockResolvedValue([]),
       testRunResults: {
         create: vi.fn().mockResolvedValue({ id: 999 }),
         findFirst: vi.fn().mockResolvedValue(null),

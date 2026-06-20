@@ -304,6 +304,8 @@ describe("milestoneActions", () => {
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
@@ -348,6 +350,8 @@ describe("milestoneActions", () => {
         const mockUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: mockUpdate, updateMany: mockUpdateMany },
             testRuns: { updateMany: mockUpdateMany },
             sessions: { updateMany: mockUpdateMany },
@@ -385,6 +389,8 @@ describe("milestoneActions", () => {
         const mockUpdate = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: mockUpdate, updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
@@ -426,6 +432,8 @@ describe("milestoneActions", () => {
         const mockUpdate = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: mockUpdate, updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
@@ -469,6 +477,8 @@ describe("milestoneActions", () => {
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
@@ -509,6 +519,8 @@ describe("milestoneActions", () => {
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
@@ -580,6 +592,8 @@ describe("milestoneActions", () => {
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
@@ -681,6 +695,8 @@ describe("milestoneActions", () => {
         const mockTestRunsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
@@ -726,6 +742,8 @@ describe("milestoneActions", () => {
         const mockSessionsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
@@ -775,6 +793,8 @@ describe("milestoneActions", () => {
         const mockMilestonesUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: {
               update: vi.fn(),
               updateMany: mockMilestonesUpdateMany,
@@ -828,6 +848,8 @@ describe("milestoneActions", () => {
         const mockTestRunsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
@@ -867,6 +889,8 @@ describe("milestoneActions", () => {
         const mockTestRunsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
@@ -905,6 +929,8 @@ describe("milestoneActions", () => {
         const mockTestRunsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
@@ -946,6 +972,8 @@ describe("milestoneActions", () => {
         const mockSessionsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
@@ -985,6 +1013,8 @@ describe("milestoneActions", () => {
         const mockSessionsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
@@ -1023,6 +1053,8 @@ describe("milestoneActions", () => {
         const mockSessionsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
@@ -1063,6 +1095,8 @@ describe("milestoneActions", () => {
         const mockTestRunsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
@@ -1108,6 +1142,8 @@ describe("milestoneActions", () => {
         const mockSessionsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
@@ -1153,6 +1189,8 @@ describe("milestoneActions", () => {
         const mockTestRunsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
@@ -1198,6 +1236,8 @@ describe("milestoneActions", () => {
         const mockSessionsUpdateMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: mockMilestoneUpdate, updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: mockSessionsUpdateMany },
@@ -1281,6 +1321,8 @@ describe("milestoneActions", () => {
 
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
@@ -1332,6 +1374,8 @@ describe("milestoneActions", () => {
           .mockResolvedValue({ count: 2 });
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
@@ -1401,6 +1445,8 @@ describe("milestoneActions", () => {
 
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
@@ -1454,6 +1500,8 @@ describe("milestoneActions", () => {
         const txWorkflowsFindMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },

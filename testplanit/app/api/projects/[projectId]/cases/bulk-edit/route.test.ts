@@ -122,6 +122,8 @@ describe("Bulk Edit API Route", () => {
     // Set up a default transaction mock with all necessary methods
     (prisma.$transaction as any).mockImplementation(async (callback: any) => {
       const tx = {
+        $executeRaw: vi.fn().mockResolvedValue([]),
+        $queryRaw: vi.fn().mockResolvedValue([]),
         repositoryCaseVersions: {
           create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
           createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -255,6 +257,8 @@ describe("Bulk Edit API Route", () => {
     it("updates stateId correctly (not state relation)", async () => {
       const transactionMock = vi.fn().mockImplementation(async (callback) => {
         const tx = {
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -299,6 +303,8 @@ describe("Bulk Edit API Route", () => {
       // Get the callback passed to $transaction and verify it updates stateId
       const transactionCallback = transactionMock.mock.calls[0][0];
       const mockTx = {
+        $executeRaw: vi.fn().mockResolvedValue([]),
+        $queryRaw: vi.fn().mockResolvedValue([]),
         repositoryCaseVersions: {
           create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
           createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -345,6 +351,8 @@ describe("Bulk Edit API Route", () => {
 
       const transactionMock = vi.fn().mockImplementation(async (callback) => {
         const tx = {
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 1 }),
@@ -385,6 +393,8 @@ describe("Bulk Edit API Route", () => {
       // Verify stateId is set correctly by checking the transaction callback
       const transactionCallback = transactionMock.mock.calls[0][0];
       const mockTx = {
+        $executeRaw: vi.fn().mockResolvedValue([]),
+        $queryRaw: vi.fn().mockResolvedValue([]),
         repositoryCaseVersions: {
           create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
           createMany: vi.fn().mockResolvedValue({ count: 1 }),
@@ -425,6 +435,8 @@ describe("Bulk Edit API Route", () => {
       const mockTxUpdate = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -467,6 +479,8 @@ describe("Bulk Edit API Route", () => {
       const mockTxUpdate = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -505,6 +519,8 @@ describe("Bulk Edit API Route", () => {
       const mockTxUpdate = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -543,6 +559,8 @@ describe("Bulk Edit API Route", () => {
       const mockTxUpdate = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -592,6 +610,8 @@ describe("Bulk Edit API Route", () => {
       const mockTxUpdate = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -636,6 +656,8 @@ describe("Bulk Edit API Route", () => {
       const mockTxUpdate = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -682,6 +704,8 @@ describe("Bulk Edit API Route", () => {
       const mockTxUpdate = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -728,6 +752,8 @@ describe("Bulk Edit API Route", () => {
       const mockTxCreate = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -781,6 +807,8 @@ describe("Bulk Edit API Route", () => {
       const mockTxUpdate = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -831,6 +859,8 @@ describe("Bulk Edit API Route", () => {
       const mockTxDelete = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -871,6 +901,8 @@ describe("Bulk Edit API Route", () => {
       const mockCreateMany = vi.fn().mockResolvedValue({ count: 2 });
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: mockCreate,
             createMany: mockCreateMany,
@@ -910,6 +942,8 @@ describe("Bulk Edit API Route", () => {
       const mockCreateMany = vi.fn().mockResolvedValue({ count: 0 });
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: { createMany: mockCreateMany },
           repositoryCases: {
             findUnique: vi.fn().mockResolvedValue(mockCases[0]),
@@ -947,6 +981,8 @@ describe("Bulk Edit API Route", () => {
       const mockCreate = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -1013,6 +1049,8 @@ describe("Bulk Edit API Route", () => {
       const mockStepUpdate = vi.fn().mockResolvedValue({});
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -1062,6 +1100,8 @@ describe("Bulk Edit API Route", () => {
     it("calls auditBulkUpdate after successful update", async () => {
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -1123,6 +1163,8 @@ describe("Bulk Edit API Route", () => {
           // Verify extended timeout is passed
           expect(options.timeout).toBe(60000);
           return callback({
+            $executeRaw: vi.fn().mockResolvedValue([]),
+            $queryRaw: vi.fn().mockResolvedValue([]),
             repositoryCaseVersions: {
               create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
               createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -1169,6 +1211,8 @@ describe("Bulk Edit API Route", () => {
 
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -1209,6 +1253,8 @@ describe("Bulk Edit API Route", () => {
     it("returns 403 with structured payload when ReviewGateError is thrown", async () => {
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         const tx = {
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -1261,6 +1307,8 @@ describe("Bulk Edit API Route", () => {
       const txReviewRequestUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         const tx = {
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),
@@ -1327,6 +1375,8 @@ describe("Bulk Edit API Route", () => {
       const findUniqueMock = vi.fn().mockResolvedValue(null);
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         const tx = {
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
             create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
             createMany: vi.fn().mockResolvedValue({ count: 2 }),

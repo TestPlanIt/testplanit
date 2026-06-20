@@ -13,14 +13,9 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockDb, txMock, sessionRef } = vi.hoisted(() => {
+const { txMock, sessionRef } = vi.hoisted(() => {
   const tx = { __isTransaction__: true } as any;
-  const db = {
-    $transaction: vi.fn(async (fn: (t: any) => Promise<unknown>) => fn(tx)),
-    testCaseParameter: { findFirst: vi.fn() },
-  };
   return {
-    mockDb: db,
     txMock: tx,
     sessionRef: {
       current: { user: { id: "u-1", name: "U", email: "u@e.com" } },
@@ -32,8 +27,16 @@ vi.mock("next-auth", () => ({
   getServerSession: vi.fn(async () => sessionRef.current),
 }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
-vi.mock("~/lib/auth/utils", () => ({
-  getEnhancedDb: vi.fn(async () => mockDb),
+
+// The route opens its transaction via auditedEnhancedTransaction (sets the
+// app.audit_context GUC + enhances the tx). Its internals are covered by
+// lib/audit/auditedTransaction's own tests; here we stub it to run the caller's
+// callback with the same tx so we can assert the route hands that tx straight to
+// the parameter-mutation helper.
+vi.mock("~/lib/audit/auditedTransaction", () => ({
+  auditedEnhancedTransaction: vi.fn(
+    async (_session: unknown, fn: (t: any) => Promise<unknown>) => fn(txMock)
+  ),
 }));
 
 const helperSpies = vi.hoisted(() => ({
