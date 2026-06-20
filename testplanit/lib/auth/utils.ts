@@ -1,5 +1,4 @@
-import { prisma } from "@/lib/prisma";
-import { enhance } from "@zenstackhq/runtime";
+import { baseClient, getAuthDb } from "~/lib/zenstack";
 import type { Session } from "next-auth";
 
 /**
@@ -10,7 +9,7 @@ import type { Session } from "next-auth";
  * Preloading them would cause performance issues for users with many assignments.
  */
 export async function getUserWithRole(userId: string) {
-  return await prisma.user.findUnique({
+  return await baseClient.user.findUnique({
     where: { id: userId },
     include: {
       role: {
@@ -36,5 +35,5 @@ export async function getEnhancedDb(session: Session | null) {
     throw new Error("User not found");
   }
 
-  return enhance(prisma, { user });
+  return getAuthDb(user);
 }

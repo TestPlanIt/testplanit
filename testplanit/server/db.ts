@@ -1,23 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-
-import { env } from "~/env";
-
-const createPrismaClient = () => {
-  const client = new PrismaClient({
-    log:
-      env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-  });
-
-  // Note: Middleware functionality has been moved to client extensions
-  // or should be handled at the application layer
-
-  return client;
-};
-
-const globalForPrisma = globalThis as unknown as {
-  prisma: ReturnType<typeof createPrismaClient> | undefined;
-};
-
-export const db = globalForPrisma.prisma ?? createPrismaClient();
-
-if (env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+// server/db.ts
+// v2 compatibility shim. server/db previously exposed a raw PrismaClient that
+// deliberately bypassed the audit/ES hooks (Trash + a few admin routes). That
+// role is now rawClient in lib/zenstack.ts (no plugins, no policy).
+export { rawClient as db } from "~/lib/zenstack";

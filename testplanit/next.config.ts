@@ -126,8 +126,11 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: ["lucide-react"],
   serverExternalPackages: [
-    "@zenstackhq/runtime",
+    "@zenstackhq/orm",
+    "@zenstackhq/plugin-policy",
     "@zenstackhq/server",
+    "kysely",
+    "pg",
     "test-results-parser",
     "jspdf",
     "fflate",
