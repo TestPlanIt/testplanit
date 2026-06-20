@@ -92,9 +92,16 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | --- | --- |
 | `testplanit_cases_list` | List and filter test cases in a project (by folder, tag, name, state, custom field, linked issue, automation, and more). |
 | `testplanit_cases_get` | Get a single test case with its fields and steps. |
-| `testplanit_cases_create` | Create a test case. |
-| `testplanit_cases_update` | Update a test case. |
+| `testplanit_cases_create` | Create a test case. Optionally pass `templateId` to choose a template (defaults to the project's first enabled template); custom fields are validated against the chosen template. |
+| `testplanit_cases_create_many` | Create many test cases in one call — far faster than per-case creates. Each case takes the same fields as a single create plus optional per-case `folderId`/`stateName`; returns a per-case success/failure result so partial failures are visible. |
+| `testplanit_cases_update` | Update a test case. Custom fields are validated against the case's template. |
 | `testplanit_cases_delete` | Delete a test case. |
+
+### Templates
+
+| Tool | Description |
+| --- | --- |
+| `testplanit_templates_list` | List a project's enabled templates, each with the case fields it defines (display name, system name, type, required) — use it to pick a `templateId` for case creation and to learn which custom fields a template accepts. |
 
 ### Folders
 

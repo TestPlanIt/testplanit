@@ -58,14 +58,23 @@ export function registerCasesUpdate(
     },
     async (input) => {
       try {
-        // Fetch the case head first — needed to get projectId for state resolution
-        // and to validate the case exists before any writes.
-        const head = await zenstack<{ id: number; projectId: number } | null>(
+        // Fetch the case head first — needed to get projectId for state
+        // resolution and templateId for template-scoped custom-field
+        // resolution, and to validate the case exists before any writes.
+        const head = await zenstack<{
+          id: number;
+          projectId: number;
+          templateId: number;
+        } | null>(
           "repositoryCases",
           "findUnique",
           {
             where: { id: input.caseId },
-            select: { id: true, projectId: true } satisfies Prisma.RepositoryCasesSelect,
+            select: {
+              id: true,
+              projectId: true,
+              templateId: true,
+            } satisfies Prisma.RepositoryCasesSelect,
           },
           deps.env,
         );
@@ -119,9 +128,14 @@ export function registerCasesUpdate(
           );
         }
 
-        // Custom field upserts.
+        // Custom field upserts — resolved against the case's own template so an
+        // out-of-template field is rejected and global name ambiguity is moot.
         if (input.customFields !== undefined) {
-          const resolved = await resolveCustomFields(input.customFields, deps.env);
+          const resolved = await resolveCustomFields(
+            input.customFields,
+            head.templateId,
+            deps.env,
+          );
           await writeCustomFieldValues(input.caseId, resolved, deps.env);
         }
 

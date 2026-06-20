@@ -3,7 +3,7 @@ import * as z from "zod/v4";
 import {
   zenstack,
   resolveActiveRepository,
-  resolveDefaultTemplate,
+  resolveTemplateForProject,
   resolveCaseWorkflowState,
 } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -31,6 +31,14 @@ export function registerCasesCreate(
         projectId: z.number().int().positive().describe("Project to create the case in."),
         folderId: z.number().int().positive().describe("Folder to place the case in."),
         name: z.string().min(1).max(2000).describe("Test case name."),
+        templateId: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe(
+            "Template to use. Defaults to the project's first enabled template. Use testplanit_templates_list to see available templates and their fields.",
+          ),
         stateName: z
           .string()
           .min(1)
@@ -60,16 +68,25 @@ export function registerCasesCreate(
       try {
         // Pre-resolution: fail fast if project is misconfigured.
         const repositoryId = await resolveActiveRepository(input.projectId, deps.env);
-        const templateId = await resolveDefaultTemplate(input.projectId, deps.env);
+        // Honor an explicit templateId (validated against the project) or fall
+        // back to the project's default template when omitted.
+        const templateId = await resolveTemplateForProject(
+          input.projectId,
+          deps.env,
+          input.templateId,
+        );
         const state = await resolveCaseWorkflowState(
           input.projectId,
           deps.env,
           input.stateName,
         );
 
-        // Resolve tags and custom fields before the create write.
+        // Resolve custom fields against the chosen template — a field that
+        // isn't on the template is rejected (not silently dropped), and the
+        // template scope removes any global display-name ambiguity.
         const resolvedCustomFields = await resolveCustomFields(
           input.customFields,
+          templateId,
           deps.env,
         );
         const tagIds = await resolveTagIds(input.tags, deps.env);

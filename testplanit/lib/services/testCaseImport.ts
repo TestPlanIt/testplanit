@@ -119,12 +119,30 @@ export const ImportInputSchema = z.object({
 
 export type ImportInput = z.infer<typeof ImportInputSchema>;
 
+/**
+ * Per-input-case outcome, keyed by the caller-assigned `id` on each
+ * `TestCaseInputSchema` entry. Additive output: existing callers (the import
+ * wizard, the Jira panel) ignore it; the bulk-create route consumes it to
+ * report partial-failure status per case without re-deriving it from the
+ * name-keyed `errors` array.
+ */
+export interface ImportCaseResult {
+  id: string;
+  name: string;
+  status: "success" | "error";
+  /** Present on success — the created (or restored) RepositoryCases id. */
+  caseId?: number;
+  /** Present on error — the failure message for this single case. */
+  error?: string;
+}
+
 export interface ImportResult {
   status: "success" | "error";
   message?: string;
   importedCount: number;
   importedIds: number[];
   errors: string[];
+  results: ImportCaseResult[];
 }
 
 /** Author identity for the imported cases (caller-resolved, not session-bound). */
@@ -213,6 +231,7 @@ export async function persistGeneratedTestCases(
       importedCount: 0,
       importedIds: [],
       errors: parseResult.error.issues.map((i) => i.message),
+      results: [],
     };
   }
 
@@ -221,6 +240,7 @@ export async function persistGeneratedTestCases(
   const userName = author.userName;
   const errors: string[] = [];
   const importedIds: number[] = [];
+  const results: ImportCaseResult[] = [];
   let importedCount = 0;
 
   try {
@@ -758,9 +778,21 @@ export async function persistGeneratedTestCases(
 
             importedIds.push(newCase.id);
             importedCount++;
+            results.push({
+              id: testCase.id,
+              name: testCase.name,
+              status: "success",
+              caseId: newCase.id,
+            });
           } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
             errors.push(`Failed to import "${testCase.name}": ${msg}`);
+            results.push({
+              id: testCase.id,
+              name: testCase.name,
+              status: "error",
+              error: msg,
+            });
           }
         }
       },
@@ -772,6 +804,7 @@ export async function persistGeneratedTestCases(
       importedCount,
       importedIds,
       errors,
+      results,
     };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
@@ -781,6 +814,7 @@ export async function persistGeneratedTestCases(
       importedCount,
       importedIds,
       errors,
+      results,
     };
   }
 }
