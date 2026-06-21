@@ -1,3 +1,9 @@
+## [0.40.1](https://github.com/TestPlanIt/testplanit/compare/v0.40.0...v0.40.1) (2026-06-21)
+
+### Bug Fixes
+
+* **integrations:** configure Jira OAuth per-integration via admin UI ([#462](https://github.com/TestPlanIt/testplanit/issues/462)) ([7a0d08e](https://github.com/TestPlanIt/testplanit/commit/7a0d08eba7fbd90a8e8905ec46de9e897dd8b5dc))
+
 ## [0.40.0](https://github.com/TestPlanIt/testplanit/compare/v0.39.2...v0.40.0) (2026-06-20)
 
 ### Features
