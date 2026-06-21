@@ -51,6 +51,22 @@ describe("rollupMap (COR-02) — child/join table → owning root entity attribu
     expect(map.CaseFieldValues.twoHop).toBeFalsy();
   });
 
+  it("project-config assignment tables roll up to Projects via projectId (direct)", async () => {
+    const map = await loadMap();
+    for (const t of [
+      "ProjectWorkflowAssignment",
+      "ProjectStatusAssignment",
+      "MilestoneTypesAssignment",
+      "ProjectAssignment",
+    ]) {
+      expect(map[t]).toMatchObject({
+        ownerTable: "Projects",
+        fkCol: "projectId",
+      });
+      expect(map[t].twoHop).toBeFalsy();
+    }
+  });
+
   it("Steps and TestCaseParameter both resolve RepositoryCases via testCaseId (A1 confirmed)", async () => {
     const map = await loadMap();
     expect(map.Steps).toMatchObject({

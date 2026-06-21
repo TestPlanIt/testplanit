@@ -18,7 +18,7 @@
 
 /** Direct: the row's owning entity id is `<fkCol>` on the row itself. */
 interface DirectRollup {
-  ownerTable: "RepositoryCases" | "TestRuns" | "Sessions";
+  ownerTable: "RepositoryCases" | "TestRuns" | "Sessions" | "Projects";
   fkCol: string;
   twoHop?: false;
 }
@@ -28,7 +28,7 @@ interface DirectRollup {
  * holds the owning entity id. The worker batches the hop (one query per distinct fk value).
  */
 interface TwoHopRollup {
-  ownerTable: "RepositoryCases" | "TestRuns" | "Sessions";
+  ownerTable: "RepositoryCases" | "TestRuns" | "Sessions" | "Projects";
   fkCol: string;
   twoHop: true;
   hopTable: string;
@@ -43,6 +43,16 @@ export type RollupConfig = DirectRollup | TwoHopRollup;
  * ABSENT — they attribute to themselves.
  */
 export const ROLLUP_MAP: Record<string, RollupConfig> = {
+  // ── Project config/assignment family ────────────────────────────────────────
+  // High-volume nameless join tables created in bulk on project setup. Roll them
+  // up to the owning Projects row (which carries the project name) so the audit
+  // reads as one grouped "project configured" operation; the specific setting
+  // (workflow/status/milestone-type/user assigned) stays in the humanized diff.
+  ProjectWorkflowAssignment: { ownerTable: "Projects", fkCol: "projectId" },
+  ProjectStatusAssignment: { ownerTable: "Projects", fkCol: "projectId" },
+  MilestoneTypesAssignment: { ownerTable: "Projects", fkCol: "projectId" },
+  ProjectAssignment: { ownerTable: "Projects", fkCol: "projectId" },
+
   // ── Cases family ────────────────────────────────────────────────────────────
   CaseFieldValues: { ownerTable: "RepositoryCases", fkCol: "testCaseId" },
   Steps: { ownerTable: "RepositoryCases", fkCol: "testCaseId" },

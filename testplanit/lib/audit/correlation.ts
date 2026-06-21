@@ -50,6 +50,8 @@ import {
   createPrismaLookup,
   humanize,
   type ChangedCols,
+  type ChangedColEntry,
+  type HumanizedColEntry,
   type HumanizedCols,
 } from "~/lib/audit/humanize";
 
@@ -170,19 +172,27 @@ const COMMENT_PARENT_FKS: Array<{ fk: string; entityType: string }> = [
 ];
 
 /**
- * Access/permission join tables attribute to themselves (not in ROLLUP_MAP) but
- * carry no name column, and the granting routes set no GUC subject — so without
- * help their AuditLog rows have a blank list-view name. With the app-layer
- * semantic events decommissioned (SEMANTIC_ACCESS_AUDIT_MODELS), the CDC row is
- * the sole source, so derive a readable label from the FK display names the
- * humanizer already resolved in the diff (e.g. "UAT3 Sweep User → Demo Project"),
- * and lift the projectId out of the project FK so the row surfaces in the
- * project-scoped view. No lookup — everything is read from the humanized diff.
+ * Nameless join tables carry no name column, so without help their AuditLog rows
+ * have a blank list-view name and (for the project-config tables) no project
+ * scope. Derive a readable label + projectId from the FK display names the
+ * humanizer already resolved in the diff — NO lookup, everything is read from the
+ * humanized diff. Two groups:
+ *  - Access/permission tables (UserProjectPermission, …) self-attribute (not in
+ *    ROLLUP_MAP); the semantic events are decommissioned so the CDC row is the
+ *    sole source → label e.g. "UAT3 Sweep User → Demo Project".
+ *  - Project-config assignment tables (Project*Assignment) roll up to Projects;
+ *    at create time the owner snapshot supplies the project name, but when an
+ *    assignment changes on an EXISTING project (no Projects row in the operation)
+ *    this fallback derives the project name from the projectId FK.
  */
 const ACCESS_LABEL_COLS: Record<string, string[]> = {
   UserProjectPermission: ["userId", "projectId"],
   GroupProjectPermission: ["groupId", "projectId"],
   GroupAssignment: ["userId", "groupId"],
+  ProjectWorkflowAssignment: ["projectId"],
+  ProjectStatusAssignment: ["projectId"],
+  MilestoneTypesAssignment: ["projectId"],
+  ProjectAssignment: ["projectId"],
 };
 
 /** Pull a column's value (new ?? old) from a changed_cols diff. */
@@ -367,6 +377,71 @@ export function deriveAction(row: RawDclRow): AuditActionLiteral {
  * actually inserted (conflicts return 0 rowcount). Uses raw SQL because the named partial-index
  * conflict arbiter is not expressible through the Prisma model API.
  */
+/**
+ * Join two diff entries for the SAME column into one, comma-listing the distinct
+ * displayed values (e.g. two workflow assignments → `newName: "Default, Smoke"`).
+ */
+function mergeColumnEntries(
+  a: ChangedColEntry | HumanizedColEntry,
+  b: ChangedColEntry | HumanizedColEntry
+): HumanizedColEntry {
+  const join = (x: unknown, y: unknown): string | null => {
+    const seen = new Set<string>();
+    const parts: string[] = [];
+    for (const v of [x, y]) {
+      if (v === null || v === undefined) continue;
+      for (const piece of String(v).split(", ")) {
+        if (piece !== "" && !seen.has(piece)) {
+          seen.add(piece);
+          parts.push(piece);
+        }
+      }
+    }
+    return parts.length ? parts.join(", ") : null;
+  };
+  const an = a as HumanizedColEntry;
+  const bn = b as HumanizedColEntry;
+  const merged: HumanizedColEntry = {
+    old: join(a.old, b.old),
+    new: join(a.new, b.new),
+  };
+  if (an.oldName != null || bn.oldName != null)
+    merged.oldName = join(an.oldName, bn.oldName);
+  if (an.newName != null || bn.newName != null)
+    merged.newName = join(an.newName, bn.newName);
+  return merged;
+}
+
+/**
+ * Combine materialized rows that share an audit identity — the idempotency key
+ * (operationId + sourceTable + entityId + action). Several child / value /
+ * assignment rows that roll up to the same owner in one operation would otherwise
+ * be silently dropped by writeAuditLogRows' `ON CONFLICT DO NOTHING` (only the
+ * first survives). Merging here preserves EVERY change: distinct columns are
+ * unioned; a column present in several rows (e.g. N project-config assignments →
+ * one `workflowId` column) has its display values joined into a deduped comma
+ * list so the auditor sees ALL of them — not just the first.
+ */
+function mergeByIdentity(rows: MaterializedRow[]): MaterializedRow[] {
+  const byKey = new Map<string, MaterializedRow>();
+  for (const r of rows) {
+    const key = `${r.operationId ?? ""} ${r.sourceTable} ${r.entityId} ${r.action}`;
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, { ...r, changes: { ...r.changes } });
+      continue;
+    }
+    for (const col of Object.keys(r.changes)) {
+      const current = existing.changes[col];
+      existing.changes[col] =
+        current === undefined
+          ? r.changes[col]
+          : mergeColumnEntries(current, r.changes[col]);
+    }
+  }
+  return [...byKey.values()];
+}
+
 export async function writeAuditLogRows(
   tx: RawTxClient,
   materialized: MaterializedRow[]
@@ -709,7 +784,12 @@ export async function pollDataChangeLogsOnce(
       }
     }
 
-    const auditLogsWritten = await writeAuditLogRows(tx, materialized);
+    // Merge same-identity rows so multiple children of one owner in one operation
+    // are all preserved instead of being dropped by the idempotency index.
+    const auditLogsWritten = await writeAuditLogRows(
+      tx,
+      mergeByIdentity(materialized)
+    );
 
     if (markProcessed) {
       // Mark ONLY the rows whose group materialized successfully (processedSourceIds includes both
