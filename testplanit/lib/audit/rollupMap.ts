@@ -47,10 +47,15 @@ export const ROLLUP_MAP: Record<string, RollupConfig> = {
   // High-volume nameless join tables created in bulk on project setup. Roll them
   // up to the owning Projects row (which carries the project name) so the audit
   // reads as one grouped "project configured" operation; the specific setting
-  // (workflow/status/milestone-type/user assigned) stays in the humanized diff.
+  // (workflow/status/milestone-type/configuration/user assigned) stays in the
+  // humanized diff.
   ProjectWorkflowAssignment: { ownerTable: "Projects", fkCol: "projectId" },
   ProjectStatusAssignment: { ownerTable: "Projects", fkCol: "projectId" },
   MilestoneTypesAssignment: { ownerTable: "Projects", fkCol: "projectId" },
+  ProjectConfigurationAssignment: {
+    ownerTable: "Projects",
+    fkCol: "projectId",
+  },
   ProjectAssignment: { ownerTable: "Projects", fkCol: "projectId" },
 
   // ── Cases family ────────────────────────────────────────────────────────────

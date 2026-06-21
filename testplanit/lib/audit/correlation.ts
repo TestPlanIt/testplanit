@@ -192,6 +192,7 @@ const ACCESS_LABEL_COLS: Record<string, string[]> = {
   ProjectWorkflowAssignment: ["projectId"],
   ProjectStatusAssignment: ["projectId"],
   MilestoneTypesAssignment: ["projectId"],
+  ProjectConfigurationAssignment: ["projectId"],
   ProjectAssignment: ["projectId"],
 };
 

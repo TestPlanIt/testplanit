@@ -57,6 +57,7 @@ describe("rollupMap (COR-02) — child/join table → owning root entity attribu
       "ProjectWorkflowAssignment",
       "ProjectStatusAssignment",
       "MilestoneTypesAssignment",
+      "ProjectConfigurationAssignment",
       "ProjectAssignment",
     ]) {
       expect(map[t]).toMatchObject({
