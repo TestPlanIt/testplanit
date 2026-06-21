@@ -250,6 +250,8 @@ const SENSITIVE_FIELDS = new Set([
   "apiKey",
   "api_key",
   "secret",
+  "clientSecret",
+  "client_secret",
   "privateKey",
   "private_key",
   "token",
@@ -305,17 +307,48 @@ function bigIntJsonReplacer(_key: string, value: unknown): unknown {
   return typeof value === "bigint" ? value.toString() : value;
 }
 
+/** A JSON-style plain object (Json column value) — NOT a Date/Decimal/class instance. */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+/**
+ * Recursively mask any NESTED property whose key is a sensitive field name —
+ * e.g. SsoProvider.config.clientSecret, where the top-level column (`config`) is
+ * not itself sensitive but carries a secret inside its JSON. Only walks plain
+ * JSON objects/arrays; Dates/Decimals/other instances pass through untouched.
+ * BigInt scalars are coerced to string (matching the non-recursive scalar path).
+ */
+function maskNestedSensitive(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((v) => maskNestedSensitive(v));
+  }
+  if (isPlainObject(value)) {
+    const out: Record<string, unknown> = {};
+    for (const [key, v] of Object.entries(value)) {
+      out[key] = SENSITIVE_FIELDS.has(key)
+        ? maskSensitiveValue(key, v)
+        : maskNestedSensitive(v);
+    }
+    return out;
+  }
+  return typeof value === "bigint" ? value.toString() : value;
+}
+
 /**
  * Mask sensitive field values for audit logging.
  */
 function maskSensitiveValue(fieldName: string, value: unknown): unknown {
   if (!SENSITIVE_FIELDS.has(fieldName)) {
-    // Diffs are persisted as JSON (BullMQ payload + Prisma Json column), and
-    // JSON.stringify throws on BigInt. Coerce BigInt scalars (e.g. a file
-    // `size`, `modelSize`, `cacheTotalSize`) to strings — matching how the RPC
-    // layer serializes them — so a real change to such a column is recorded
-    // instead of throwing and being swallowed into a diff-less row.
-    return typeof value === "bigint" ? value.toString() : value;
+    // Not a sensitive column itself, but a JSON value may carry nested secrets
+    // (e.g. config.clientSecret) — walk it and mask any nested sensitive key.
+    // Scalars pass straight through (BigInt coerced so JSON.stringify won't throw
+    // on columns like `size` / `modelSize`, swallowing the row into a no-diff).
+    return maskNestedSensitive(value);
   }
 
   if (value === null || value === undefined) {
