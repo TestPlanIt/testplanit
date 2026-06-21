@@ -12,6 +12,12 @@ import { useTranslations } from "next-intl";
 
 interface AuthorizeIntegrationButtonProps {
   integration: Integration;
+  /**
+   * When true, render an invisible, non-interactive button that occupies the
+   * exact same footprint as the real one, so the remaining action icons stay
+   * aligned on rows where authorization doesn't apply.
+   */
+  placeholder?: boolean;
 }
 
 /**
@@ -22,6 +28,7 @@ interface AuthorizeIntegrationButtonProps {
  */
 export function AuthorizeIntegrationButton({
   integration,
+  placeholder = false,
 }: AuthorizeIntegrationButtonProps) {
   const t = useTranslations("admin.integrations");
 
@@ -31,6 +38,21 @@ export function AuthorizeIntegrationButton({
     });
     window.location.href = `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?${params.toString()}`;
   };
+
+  // Reserve the slot with the same Button + icon (identical size) but hidden
+  // and inert, so action icons line up across rows that don't show Authorize.
+  if (placeholder) {
+    return (
+      <Button
+        variant="ghost"
+        className="px-2 py-1 h-auto invisible pointer-events-none"
+        aria-hidden="true"
+        tabIndex={-1}
+      >
+        <ShieldCheck className="h-4 w-4" />
+      </Button>
+    );
+  }
 
   return (
     <Tooltip>
