@@ -221,22 +221,19 @@ When using API key authentication, and assuming the account has the required per
 
 #### Jira with OAuth 2.0
 
-OAuth 2.0 is Atlassian's preferred authentication path for Jira Cloud and is recommended for any team where the per-user reporter attribution and granular scoping matter.
+OAuth 2.0 is Atlassian's preferred authentication path for Jira Cloud and is recommended for any team where per-user reporter attribution and granular scoping matter. Each user authorizes individually and issues are created as that user.
 
-1. Create OAuth app in [Atlassian Developer Console](https://developer.atlassian.com/console)
-2. Set redirect URL: `https://your-testplanit-domain/api/auth/jira/callback`
-3. Configure in TestPlanIt:
+1. Create an OAuth 2.0 (3LO) integration in the [Atlassian Developer Console](https://developer.atlassian.com/console).
+2. Under **Permissions**, add the **Jira API** and select these scopes: `read:jira-work`, `write:jira-work`, and `read:jira-user`. (TestPlanIt also requests `offline_access` during authorization so it can refresh tokens — you don't add that one in the console.)
+3. Under **Authorization**, set the **Callback URL** to:
 
-```text
-Client ID: [from-atlassian]
-Client Secret: [from-atlassian]
-```
+   ```text
+   <your-testplanit-url>/api/integrations/oauth/jira/callback
+   ```
 
-Benefits:
-
-- Provides user-specific authentication
-- Each user authorizes their own Jira access
-- Issues created with the actual user as reporter
+   TestPlanIt shows this exact URL (with a copy button) in the integration dialog when you choose OAuth 2.0, so you don't have to construct it by hand.
+4. In TestPlanIt, add a Jira integration, choose **OAuth 2.0**, and enter the **Client ID** and **Client Secret** from the app, plus your Jira site URL (e.g. `https://your-domain.atlassian.net`).
+5. Finish the shared steps in [Completing the OAuth setup](#completing-the-oauth-setup-all-providers) — the integration must be authorized, activated, assigned to a project, and have a linked project before issues can be created.
 
 #### GitHub with Personal Access Token
 
@@ -336,10 +333,10 @@ OAuth 2.0 gives **per-user attribution**: each user authorizes individually and 
 
 Creating the OAuth app and entering the Client ID/Secret is only half the setup. Issue creation stays blocked until an administrator (or project manager) finishes these steps **in order**:
 
-1. **Activate the integration.** In **Administration → Issue Integrations**, click **Test Connection** on the new integration. This validates the configuration and marks it **Active**. An inactive integration does not appear when assigning to a project.
+1. **Activate the integration by authorizing it.** A new OAuth 2.0 integration shows **Awaiting authorization** — this is expected, not an error. (Running **Test Connection** only confirms the Client ID/Secret are well-formed; OAuth has no client-credentials grant, so it cannot mark the integration Active on its own.) In **Administration → Issue Integrations**, click **Authorize** on the integration row, and grant access on the provider's consent screen. This connects your account and flips the integration to **Active**. An integration that is not yet Active does not appear when assigning to a project.
 2. **Assign it to a project.** In **Project Settings → Issue Integrations**, click **Assign** on the integration.
 3. **Link an external project (repository).** In the integration's settings panel, use **Linked External Projects → Add Projects**, select the target repository (e.g. `owner/repo`), click **Add Selected**, then **Save Settings**. This step is required — without a linked external project the Create Issue dialog reports **"Integration Not Configured"** and the **Create** button stays disabled.
-4. **Authorize — once per user.** Each person who will create issues opens **Project → Integrations**, clicks **Authorize**, and grants access on the provider's consent screen. Because authorization is per-user, every issue is attributed to the individual who created it.
+4. **Authorize the remaining users — once per user.** Authorization is per-user, so each *additional* person who will create issues opens **Project → Integrations**, clicks **Authorize**, and grants access on the provider's consent screen. (The admin who activated the integration in step 1 is already authorized.) Every issue is then attributed to the individual who created it.
 
 #### Azure DevOps
 

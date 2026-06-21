@@ -28,6 +28,13 @@ interface TestConnectionResult {
    *  attempted). For partial-capability failures the per-probe `error`
    *  is the source of truth and `success` is false. */
   error?: string;
+  /** True for OAuth 2.0 (3LO) integrations where the admin-side test can
+   *  only confirm the client credentials are present — the real connection
+   *  is established per-user via the authorization flow after the
+   *  integration is saved. The UI uses this to show an "authorize next"
+   *  message instead of a plain success, and the route uses it to avoid
+   *  prematurely marking the integration ACTIVE. */
+  requiresUserAuth?: boolean;
   capabilities?: {
     /** Auth handshake (Jira /myself, GitHub /user, ADO /projects). */
     connection: CapabilityProbe;
@@ -124,8 +131,8 @@ async function testJiraConnection(
   settings: Record<string, string>,
   authType?: string
 ): Promise<TestConnectionResult> {
-  const { email, apiToken, clientId, clientSecret } = credentials;
-  const { baseUrl, cloudId } = settings;
+  const { email, apiToken } = credentials;
+  const { baseUrl } = settings;
 
   if (authType === "API_KEY" || (email && apiToken)) {
     if (!email || !apiToken || !baseUrl) {
@@ -192,30 +199,14 @@ async function testJiraConnection(
     };
   }
 
-  // OAuth2 path — stay close to the existing behavior; OAuth tokens
-  // expire and the per-user dance is exercised via the OAuth flow rather
-  // than this admin-side test.
-  if (!clientId || !clientSecret || !cloudId) {
-    return {
-      success: false,
-      error: "Missing required Jira OAuth2 configuration",
-    };
-  }
-  const connection = await probe(
-    "https://api.atlassian.com/oauth/token/accessible-resources",
-    {
-      headers: {
-        Authorization: `Bearer ${clientSecret}`,
-        Accept: "application/json",
-      },
-    }
-  );
+  // Jira OAuth 2.0 (3LO) is handled by checkOAuthClientConfig before this
+  // function is reached — there is no client-credentials grant for the Jira
+  // REST API, so the credential can only be exercised per-user through the
+  // authorization flow. Reaching here means the API-key fields are missing.
   return {
-    success: connection.ok,
-    error: connection.ok
-      ? undefined
-      : `Jira OAuth check failed: ${connection.error}`,
-    capabilities: { connection },
+    success: false,
+    error:
+      "Missing required Jira API key configuration (email, apiToken, baseUrl)",
   };
 }
 
@@ -238,6 +229,7 @@ function checkOAuthClientConfig(
   return {
     success: true,
     error: undefined,
+    requiresUserAuth: true,
   };
 }
 
@@ -751,11 +743,10 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     switch (testProvider) {
       case IntegrationProvider.JIRA:
-        result = await testJiraConnection(
-          testCredentials,
-          testSettings,
-          authType
-        );
+        result =
+          authType === "OAUTH2"
+            ? checkOAuthClientConfig(testCredentials)
+            : await testJiraConnection(testCredentials, testSettings, authType);
         break;
       case IntegrationProvider.GITHUB:
         result =
@@ -794,8 +785,12 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         };
     }
 
-    // Update integration status if testing an existing integration
-    if (integrationId && result.success) {
+    // Update integration status if testing an existing integration.
+    // OAuth 2.0 (3LO) integrations are NOT activated here: a passing test
+    // only confirms the client credentials are present (requiresUserAuth),
+    // not that a user has authorized. Their status flips to ACTIVE in the
+    // OAuth callback once a real user token is stored.
+    if (integrationId && result.success && !result.requiresUserAuth) {
       await prisma.integration.update({
         where: { id: integrationId },
         data: {
