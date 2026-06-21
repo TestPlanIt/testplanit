@@ -276,6 +276,28 @@ async function resolveName(
  * ids; non-FK columns pass through untouched. The cache is shared across the whole worker so repeat
  * ids within the TTL window resolve without a second DB call.
  */
+/**
+ * Implicit Prisma m2m join tables (`_*To*`). Their generic A/B columns are
+ * unreadable in a diff ("{A:4,B:13}"), and the row already rolls up to its owner
+ * (case/run/session) so the owner column is redundant. `col` is the NON-owner
+ * column — the linked tag/issue — verified against ROLLUP_MAP.fkCol. humanize()
+ * keeps ONLY that column, relabels it to its entity, and resolves its name.
+ */
+const M2M_JOIN_TABLES: Record<
+  string,
+  { col: "A" | "B"; label: string; model: string }
+> = {
+  _RepositoryCasesToTags: { col: "B", label: "Tags", model: "Tags" },
+  _SessionsToTags: { col: "B", label: "Tags", model: "Tags" },
+  _TagsToTestRuns: { col: "A", label: "Tags", model: "Tags" },
+  _IssueToRepositoryCases: { col: "A", label: "Issues", model: "Issue" },
+  _IssueToTestRuns: { col: "A", label: "Issues", model: "Issue" },
+  _IssueToTestRunResults: { col: "A", label: "Issues", model: "Issue" },
+  _IssueToTestRunStepResults: { col: "A", label: "Issues", model: "Issue" },
+  _IssueToSessions: { col: "A", label: "Issues", model: "Issue" },
+  _IssueToSessionResults: { col: "A", label: "Issues", model: "Issue" },
+};
+
 export async function humanize(
   cache: HumanizeCache,
   tableName: string,
@@ -293,6 +315,23 @@ export async function humanize(
     if (rekeyed) {
       return rekeyed;
     }
+  }
+
+  // Implicit m2m join tables: collapse the opaque A/B diff to just the linked
+  // tag/issue, named — "{A:4,B:13}" → { Tags: { new: "regression" } }. The owner
+  // column is dropped (the row already attributes to that owner).
+  const m2m = M2M_JOIN_TABLES[tableName];
+  if (m2m) {
+    const entry = changedCols[m2m.col];
+    if (!entry) return {};
+    return {
+      [m2m.label]: {
+        old: entry.old,
+        new: entry.new,
+        oldName: await resolveName(cache, m2m.model, "name", entry.old),
+        newName: await resolveName(cache, m2m.model, "name", entry.new),
+      },
+    };
   }
 
   const out: HumanizedCols = {};
@@ -352,6 +391,9 @@ export function createPrismaLookup(prisma: any): LookupFn {
     Projects: { delegate: "projects", field: "name" },
     Configurations: { delegate: "configurations", field: "name" },
     MilestoneTypes: { delegate: "milestoneTypes", field: "name" },
+    // Implicit-m2m link targets — the tag/issue named in a `_*To*` join row.
+    Tags: { delegate: "tags", field: "name" },
+    Issue: { delegate: "issue", field: "name" },
   };
 
   return async (table, field, id) => {

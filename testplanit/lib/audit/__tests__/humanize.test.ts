@@ -44,6 +44,12 @@ type HumanizeModule = {
     lookup: LookupFn,
     opts: { ttlMs: number }
   ) => HumanizeCache;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  humanize: (
+    cache: HumanizeCache,
+    tableName: string,
+    changedCols: any
+  ) => Promise<any>;
 };
 
 const loadModule = async (): Promise<HumanizeModule> =>
@@ -59,6 +65,42 @@ describe("humanize (COR-03) — FK → display name with TTL cache", () => {
     expect(name).toBe("Severity");
     expect(lookup).toHaveBeenCalledTimes(1);
     expect(lookup).toHaveBeenCalledWith("CaseFields", "displayName", 42);
+  });
+
+  it("relabels an implicit m2m join (_RepositoryCasesToTags) to the named tag, dropping the A/B owner column", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const lookup = vi.fn<LookupFn>(async () => "regression");
+    const cache = createHumanizeCache(lookup, { ttlMs: 60_000 });
+
+    // A = RepositoryCases (owner, dropped); B = Tags (kept + named).
+    const out = await humanize(cache, "_RepositoryCasesToTags", {
+      A: { old: null, new: 4 },
+      B: { old: null, new: 13 },
+    });
+
+    expect(out).toEqual({
+      Tags: { old: null, new: 13, oldName: null, newName: "regression" },
+    });
+    expect(out.A).toBeUndefined();
+    expect(out.B).toBeUndefined();
+    expect(lookup).toHaveBeenCalledWith("Tags", "name", 13);
+  });
+
+  it("relabels an _IssueTo* join (owner column A → Issues) to the named issue", async () => {
+    const { createHumanizeCache, humanize } = await loadModule();
+    const lookup = vi.fn<LookupFn>(async () => "Login is broken");
+    const cache = createHumanizeCache(lookup, { ttlMs: 60_000 });
+
+    // For _IssueTo* tables A = Issue (kept), B = owner (dropped).
+    const out = await humanize(cache, "_IssueToTestRuns", {
+      A: { old: null, new: 7 },
+      B: { old: null, new: 99 },
+    });
+
+    expect(out).toEqual({
+      Issues: { old: null, new: 7, oldName: null, newName: "Login is broken" },
+    });
+    expect(lookup).toHaveBeenCalledWith("Issue", "name", 7);
   });
 
   it("resolves a statusId to Status.name", async () => {
