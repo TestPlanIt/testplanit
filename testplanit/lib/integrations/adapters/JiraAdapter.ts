@@ -73,10 +73,18 @@ export class JiraAdapter extends BaseAdapter {
   constructor(config: any) {
     super(config);
 
-    // OAuth configuration
-    this.clientId = process.env.JIRA_CLIENT_ID || "";
-    this.clientSecret = process.env.JIRA_CLIENT_SECRET || "";
-    this.redirectUri = process.env.JIRA_REDIRECT_URI || "";
+    // OAuth configuration. Prefer the per-integration values that
+    // IntegrationManager.buildAdapterConfig decrypts from the integration's
+    // stored credentials (clientId/clientSecret) and derives for the redirect
+    // URI (the canonical /api/integrations/oauth/jira/callback route) — this is
+    // what lets each instance register its own Atlassian OAuth app from the
+    // admin UI. Fall back to the legacy JIRA_* env vars for single-app
+    // deployments that configured OAuth before per-integration creds existed.
+    this.clientId = config.clientId || process.env.JIRA_CLIENT_ID || "";
+    this.clientSecret =
+      config.clientSecret || process.env.JIRA_CLIENT_SECRET || "";
+    this.redirectUri =
+      config.redirectUri || process.env.JIRA_REDIRECT_URI || "";
 
     // Base URL from config if provided
     if (config.baseUrl) {

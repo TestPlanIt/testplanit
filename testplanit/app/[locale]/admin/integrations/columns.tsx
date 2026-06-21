@@ -9,6 +9,7 @@ import { Link, Plug } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
+import { AuthorizeIntegrationButton } from "./AuthorizeIntegrationButton";
 import { DeleteIntegrationButton } from "./DeleteIntegrationButton";
 import { EditIntegrationButton } from "./EditIntegrationButton";
 import { SyncIntegrationButton } from "./SyncIntegrationButton";
@@ -127,6 +128,26 @@ export const useColumns = (
             ERROR: "destructive",
           };
 
+          // An OAuth 2.0 (3LO) integration that isn't yet connected is in a
+          // valid, expected mid-setup state — not a misconfiguration. Show
+          // "Awaiting authorization" instead of a bare "Inactive" so the
+          // admin understands the next step is to authorize, not that they
+          // did something wrong.
+          const awaitingAuthorization =
+            row.original.authType === "OAUTH2" &&
+            row.original.status === "INACTIVE";
+
+          if (awaitingAuthorization) {
+            return (
+              <Badge
+                variant="outline"
+                className="border-warning text-warning-foreground"
+              >
+                {t("status.awaitingAuthorization")}
+              </Badge>
+            );
+          }
+
           return (
             <Badge variant={statusColors[row.original.status] as any}>
               {t(`status.${row.original.status.toLowerCase()}` as any)}
@@ -228,6 +249,13 @@ export const useColumns = (
         meta: { isPinned: "right" },
         cell: ({ row }) => (
           <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+            {row.original.authType === "OAUTH2" &&
+              row.original.status === "INACTIVE" && (
+                <AuthorizeIntegrationButton
+                  key={`authorize-${row.original.id}`}
+                  integration={row.original}
+                />
+              )}
             <SyncIntegrationButton
               key={`sync-${row.original.id}`}
               integration={row.original}
