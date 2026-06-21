@@ -10,6 +10,15 @@ import { expect, test } from "../../../fixtures";
  * - Viewing the detail modal for a log entry
  * - Exporting audit logs as CSV
  *
+ * The page renders a VirtualizedDataTable (testIdPrefix="audit-logs-table",
+ * rowTestIdPrefix="audit-log-row"), which is an ARIA-rolled div structure — NOT
+ * a semantic <table>/<thead>/<tbody>. The container carries
+ * data-testid="audit-logs-table", the scroll body "audit-logs-table-scroll",
+ * each data row "audit-log-row-<id>", header cells role="columnheader", and the
+ * row view-details button data-testid="audit-log-view-details". Because the
+ * row/cell/columnheader roles have no role="table" ancestor, they are matched by
+ * literal [role=...] attribute selectors rather than Playwright getByRole.
+ *
  * Audit log entries are written via a BullMQ queue worker which may not be
  * running during E2E tests. Tests that require data degrade gracefully:
  * - If rows exist: full interaction is tested
@@ -25,36 +34,35 @@ test.describe("Audit Log Management - Page Display", () => {
     const pageTitle = page.getByTestId("audit-logs-page-title");
     await expect(pageTitle).toBeVisible({ timeout: 10000 });
 
-    // The page should render a data table
-    const table = page.getByRole("table");
-    await expect(table.first()).toBeVisible({ timeout: 10000 });
+    // The page renders the virtualized audit-log table container
+    const table = page.getByTestId("audit-logs-table");
+    await expect(table).toBeVisible({ timeout: 10000 });
   });
 
   test("Audit log table renders with column headers", async ({ page }) => {
     await page.goto("/en-US/admin/audit-logs");
     await page.waitForLoadState("networkidle");
 
-    // Verify header row contains expected columns
-    const headerRow = page.locator("thead tr").first();
-    await expect(headerRow).toBeVisible({ timeout: 10000 });
+    // The table renders a header row of role="columnheader" cells
+    const table = page.getByTestId("audit-logs-table");
+    await expect(table).toBeVisible({ timeout: 10000 });
 
-    // Check at least one column header is visible
-    const headers = page.locator("th");
+    const headers = table.locator('[role="columnheader"]');
     expect(await headers.count()).toBeGreaterThan(0);
+    await expect(headers.first()).toBeVisible();
   });
 
   test("Audit log table renders table body", async ({ page }) => {
     await page.goto("/en-US/admin/audit-logs");
     await page.waitForLoadState("networkidle");
 
-    // The table body should be present (may be empty or have rows)
-    const tableBody = page.locator("tbody");
-    await expect(tableBody).toBeVisible({ timeout: 10000 });
+    // The scroll body holds the virtualized rows (empty-state copy or data rows)
+    const scrollBody = page.getByTestId("audit-logs-table-scroll");
+    await expect(scrollBody).toBeVisible({ timeout: 10000 });
 
-    // If rows exist, verify first row is visible
-    const rows = page.locator("tbody tr");
-    const rowCount = await rows.count();
-    if (rowCount > 0) {
+    // If rows exist, verify the first row is visible
+    const rows = page.locator('[data-testid^="audit-log-row-"]');
+    if ((await rows.count()) > 0) {
       await expect(rows.first()).toBeVisible();
     }
   });
@@ -65,8 +73,8 @@ test.describe("Audit Log Management - Filtering", () => {
     await page.goto("/en-US/admin/audit-logs");
     await page.waitForLoadState("networkidle");
 
-    // There are two SelectTriggers: action filter and entity type filter
-    // The action filter is the first one (w-[180px] container)
+    // The action filter is the first SelectTrigger (role="combobox"); the
+    // DateRangePicker before it is a button, not a combobox.
     const actionFilterTrigger = page.locator('[role="combobox"]').first();
     await expect(actionFilterTrigger).toBeVisible({ timeout: 10000 });
 
@@ -79,10 +87,10 @@ test.describe("Audit Log Management - Filtering", () => {
       await loginOption.click();
       await page.waitForLoadState("networkidle");
 
-      // The table should now show only LOGIN entries (or be empty)
-      // Verify the table is still rendered
-      const table = page.getByRole("table");
-      await expect(table.first()).toBeVisible({ timeout: 10000 });
+      // The table should still be rendered (now showing only LOGIN entries, or empty)
+      await expect(page.getByTestId("audit-logs-table")).toBeVisible({
+        timeout: 10000,
+      });
 
       // Reset filter back to "all"
       await actionFilterTrigger.click();
@@ -118,8 +126,9 @@ test.describe("Audit Log Management - Filtering", () => {
       await page.waitForLoadState("networkidle");
 
       // Verify table is still rendered after filter
-      const table = page.getByRole("table");
-      await expect(table.first()).toBeVisible({ timeout: 10000 });
+      await expect(page.getByTestId("audit-logs-table")).toBeVisible({
+        timeout: 10000,
+      });
 
       // Reset to all
       await entityTypeFilterTrigger.click();
@@ -149,9 +158,10 @@ test.describe("Audit Log Management - Filtering", () => {
     await page.waitForTimeout(600);
     await page.waitForLoadState("networkidle");
 
-    // Table should still be visible (possibly with 0 rows)
-    const table = page.getByRole("table");
-    await expect(table.first()).toBeVisible({ timeout: 10000 });
+    // Table should still be rendered (possibly with 0 rows)
+    await expect(page.getByTestId("audit-logs-table")).toBeVisible({
+      timeout: 10000,
+    });
 
     // Clear search — restore full list
     await searchInput.clear();
@@ -165,25 +175,24 @@ test.describe("Audit Log Management - Detail Modal", () => {
     await page.goto("/en-US/admin/audit-logs");
     await page.waitForLoadState("networkidle");
 
-    // The DataTable renders a "No Results" row when empty — detect actual data rows
-    // by checking whether any tbody row has a button (data rows have action buttons)
-    const dataRows = page
-      .locator("tbody tr")
-      .filter({ has: page.getByRole("button") });
+    // Data rows carry data-testid="audit-log-row-<id>". When the queue worker
+    // hasn't produced rows in the E2E env, none are present.
+    const dataRows = page.locator('[data-testid^="audit-log-row-"]');
     const dataRowCount = await dataRows.count();
 
     if (dataRowCount === 0) {
-      // No audit data available (queue worker not running in E2E env).
-      // Verify the empty state renders correctly and the table is still functional.
-      const tableBody = page.locator("tbody");
-      await expect(tableBody).toBeVisible({ timeout: 10000 });
+      // No audit data available — verify the table body (empty state) renders.
+      await expect(page.getByTestId("audit-logs-table-scroll")).toBeVisible({
+        timeout: 10000,
+      });
       return;
     }
 
-    // Find the view-details button in the first data row
-    // columns.tsx renders a Button with Eye icon
-    const firstRow = dataRows.first();
-    const viewDetailsButton = firstRow.getByRole("button").first();
+    // Open the view-details modal from the first row's Eye button. Scoped by
+    // testid so a grouped row's expand toggle isn't clicked by mistake.
+    const viewDetailsButton = page
+      .getByTestId("audit-log-view-details")
+      .first();
     await expect(viewDetailsButton).toBeVisible({ timeout: 10000 });
     await viewDetailsButton.click();
 
@@ -219,14 +228,12 @@ test.describe("Audit Log Management - CSV Export", () => {
     });
     await expect(exportButton).toBeVisible({ timeout: 10000 });
 
-    // Check if there are actual data rows (rows with action buttons, not the "No Results" row)
-    const dataRows = page
-      .locator("tbody tr")
-      .filter({ has: page.getByRole("button") });
+    // Check whether any data rows exist (export is disabled when totalCount is 0)
+    const dataRows = page.locator('[data-testid^="audit-log-row-"]');
     const dataRowCount = await dataRows.count();
 
     if (dataRowCount === 0) {
-      // No data — export button should be disabled (totalItems === 0)
+      // No data — export button should be disabled (totalCount === 0)
       await expect(exportButton).toBeDisabled();
       return;
     }

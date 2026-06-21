@@ -245,6 +245,7 @@ export const useColumns = (
             className="px-2 py-1 h-auto"
             onClick={() => onViewDetails(row.original)}
             title={t("viewDetails")}
+            data-testid="audit-log-view-details"
           >
             <Eye className="h-4 w-4" />
           </Button>
