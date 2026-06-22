@@ -142,7 +142,9 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   {
     table: "Issue",
     denylist: ["createdAt", "note", "externalData", "data"],
-    nameCol: "name",
+    // Issue.name is the reference key (e.g. "#213"); title is the human summary
+    // ("[FEATURE] Webhook System"), which reads far better in the audit log.
+    nameCol: "title",
     projectCol: "projectId",
   },
   // note/docs are TipTap (confirmed: AddMilestoneModal and page.tsx use TipTapEditor); no updatedAt.
