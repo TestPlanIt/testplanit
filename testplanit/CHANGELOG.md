@@ -1,3 +1,9 @@
+## [0.40.3](https://github.com/TestPlanIt/testplanit/compare/v0.40.2...v0.40.3) (2026-06-22)
+
+### Bug Fixes
+
+* Jira OAuth callback/adapter fixes + single-use magic-link notice ([#464](https://github.com/TestPlanIt/testplanit/issues/464)) ([2dbfdfb](https://github.com/TestPlanIt/testplanit/commit/2dbfdfb750e1d35b4bf945e4302336dd499a6059))
+
 ## [0.40.2](https://github.com/TestPlanIt/testplanit/compare/v0.40.1...v0.40.2) (2026-06-22)
 
 ### Bug Fixes
