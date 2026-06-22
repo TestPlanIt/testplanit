@@ -1,3 +1,9 @@
+## [0.40.2](https://github.com/TestPlanIt/testplanit/compare/v0.40.1...v0.40.2) (2026-06-22)
+
+### Bug Fixes
+
+* **integrations:** unblock Jira OAuth authorize + align admin action icons ([#463](https://github.com/TestPlanIt/testplanit/issues/463)) ([d7dae8c](https://github.com/TestPlanIt/testplanit/commit/d7dae8c4be81cf9a43c83d88aaf0b86452bca400))
+
 ## [0.40.1](https://github.com/TestPlanIt/testplanit/compare/v0.40.0...v0.40.1) (2026-06-21)
 
 ### Bug Fixes
