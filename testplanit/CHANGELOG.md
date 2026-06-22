@@ -1,3 +1,9 @@
+## [0.40.4](https://github.com/TestPlanIt/testplanit/compare/v0.40.3...v0.40.4) (2026-06-22)
+
+### Bug Fixes
+
+* **i18n:** translate single-use magic-link strings across locales ([18eada4](https://github.com/TestPlanIt/testplanit/commit/18eada4b432902c096caf4eedd0ab46aeb1873d9))
+
 ## [0.40.3](https://github.com/TestPlanIt/testplanit/compare/v0.40.2...v0.40.3) (2026-06-22)
 
 ### Bug Fixes
