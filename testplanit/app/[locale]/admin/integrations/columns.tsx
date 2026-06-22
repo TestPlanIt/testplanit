@@ -249,13 +249,19 @@ export const useColumns = (
         meta: { isPinned: "right" },
         cell: ({ row }) => (
           <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-            {row.original.authType === "OAUTH2" &&
-              row.original.status === "INACTIVE" && (
-                <AuthorizeIntegrationButton
-                  key={`authorize-${row.original.id}`}
-                  integration={row.original}
-                />
-              )}
+            {/* Always render the Authorize slot. Rows that aren't an
+                unauthorized OAuth integration get an invisible, same-size
+                placeholder so the remaining action icons stay aligned. */}
+            <AuthorizeIntegrationButton
+              key={`authorize-${row.original.id}`}
+              integration={row.original}
+              placeholder={
+                !(
+                  row.original.authType === "OAUTH2" &&
+                  row.original.status === "INACTIVE"
+                )
+              }
+            />
             <SyncIntegrationButton
               key={`sync-${row.original.id}`}
               integration={row.original}

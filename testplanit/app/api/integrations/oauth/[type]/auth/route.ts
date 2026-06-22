@@ -52,7 +52,16 @@ export async function GET(
 
     // Get the appropriate adapter based on the integration
     const manager = IntegrationManager.getInstance();
-    const adapter = await manager.getAdapter(integrationId);
+    // The integration is intentionally inactive until this authorization
+    // completes, so allow building the adapter to generate the authorize URL.
+    const adapter = await manager.getAdapter(
+      integrationId,
+      undefined,
+      undefined,
+      {
+        allowInactive: true,
+      }
+    );
 
     if (!adapter) {
       return NextResponse.json(
