@@ -1009,7 +1009,13 @@ export default function TestCaseDetails() {
   // Steps + CaseFieldValues writes correlate into one DataChangeLog group.
   const { beginOperation, endOperation } = useOperationId();
 
-  const { mutate: updateRepositoryCases } = useUpdateRepositoryCases();
+  // mutateAsync (not mutate): the case UPDATE must complete INSIDE the
+  // beginOperation()/endOperation() window so the global fetcher stamps its
+  // X-Operation-Id and the model route attributes the audit actor. A
+  // fire-and-forget `mutate` races the window — the name change then lands in
+  // the audit log un-grouped and attributed to "System" instead of the editor
+  // (and the refetch below could read the row before the write commits).
+  const { mutateAsync: updateRepositoryCases } = useUpdateRepositoryCases();
   const { mutateAsync: updateCaseFieldValues } = useUpdateCaseFieldValues();
   const { mutateAsync: createCaseFieldVersionValues } =
     useCreateCaseFieldVersionValues();

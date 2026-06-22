@@ -242,7 +242,7 @@ describe("CSV Import API Route", () => {
       deleteMany: vi.fn(),
     },
   };
-  // enhanceWithAudit() calls enhance(prisma, { user }).$extends({...}); the
+  // enhanceWithAudit() calls enhance(prismaBase, { user }).$extends({...}); the
   // audit-GUC $extends layer wraps writes in a SET LOCAL transaction at runtime
   // but here it is a no-op pass-through so route writes land on mockEnhancedDb
   // directly (and assertions can read the mock call records).

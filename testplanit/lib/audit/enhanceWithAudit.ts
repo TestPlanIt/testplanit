@@ -11,6 +11,18 @@
  * re-issuing the operation on a transaction-bound enhanced client so the policy
  * check and the write share that transaction. Reads pass straight through.
  *
+ * IMPORTANT — enhance the RAW base client (`prismaBase`), not the hooked
+ * `lib/prisma` client. When `enhance()` wraps a client that itself carries
+ * `$extends` query hooks (repositoryCases / testRuns / sessions / issue / …),
+ * ZenStack routes those models' writes through a path that ALSO skips the
+ * post-enhance `audit-guc` `$extends` below — so the primary entities would
+ * silently lose actor attribution (blank actor + null operationId → "System")
+ * while hook-less models (CaseFieldValues, Steps, …) kept it. Enhancing the
+ * un-hooked base client makes `$allOperations` fire for every model uniformly.
+ * Nothing is lost by skipping the hooked client: `enhance()` bypassed its
+ * ES-sync / webhook hooks already, which is why the RPC route carries explicit
+ * ES-sync / webhook-emit shims.
+ *
  * The actor is sourced from the authenticated `user` (already unified across
  * web session / API token / SCIM by the caller) with `buildGucPayload` filling
  * source / requestId / operationId / tenant from the ALS audit frame.
@@ -22,7 +34,6 @@
  */
 import { AsyncLocalStorage } from "node:async_hooks";
 import { enhance } from "@zenstackhq/runtime";
-import { prisma } from "~/lib/prisma";
 import { prisma as prismaBase } from "~/lib/prismaBase";
 import { buildGucPayload } from "~/lib/audit/gucContext";
 
@@ -52,7 +63,7 @@ export function enhanceWithAudit(
       | null
       | undefined) ?? null;
 
-  return enhance(prisma, { user: user as never }).$extends({
+  return enhance(prismaBase, { user: user as never }).$extends({
     name: "audit-guc",
     query: {
       $allModels: {
