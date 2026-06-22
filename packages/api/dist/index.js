@@ -1,5 +1,19 @@
 'use strict';
 
+// src/tipTapDoc.ts
+function tipTapDoc(text) {
+  const trimmed = text.trim();
+  return JSON.stringify({
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: trimmed ? [{ type: "text", text: trimmed }] : []
+      }
+    ]
+  });
+}
+
 // src/client.ts
 var TestPlanItError = class extends Error {
   statusCode;
@@ -69,6 +83,13 @@ var TestPlanItClient = class {
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         const response = await fetch(url.toString(), fetchOptions);
+        if (response.status === 429 && attempt < this.maxRetries) {
+          const retryAfter = response.headers.get("retry-after");
+          const seconds = retryAfter ? Number(retryAfter) : NaN;
+          const waitMs = Number.isFinite(seconds) ? Math.min(seconds * 1e3, 6e4) : this.retryDelay * (attempt + 1);
+          await this.sleep(waitMs);
+          continue;
+        }
         if (!response.ok) {
           const errorBody = await response.text();
           let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -916,6 +937,31 @@ var TestPlanItClient = class {
     return this.zenstack("repositoryCases", "create", { data });
   }
   /**
+   * Create many test cases in a single request.
+   *
+   * POSTs to the bulk-create endpoint, which resolves shared context once and
+   * persists each case — with its steps, tags, and custom-field values — in a
+   * transaction (one per distinct folder/state group). Far faster than calling
+   * {@link createTestCase} per case, and returns a per-case result so partial
+   * failures are visible: each entry is `status: "success"` with a `caseId`, or
+   * `status: "error"` with a message (e.g. a custom field not on the template).
+   *
+   * `templateId` defaults to the project's first enabled template; resolve a
+   * specific one with {@link findTemplateByName}. Resolve `folderId` with
+   * {@link findFolderByName} / {@link findOrCreateFolderPath}.
+   *
+   * Requires a TestPlanIt instance (app v0.39.0+) exposing
+   * `/api/projects/{projectId}/cases/bulk-create`.
+   */
+  async createTestCases(options) {
+    const { projectId, ...body } = options;
+    return this.request(
+      "POST",
+      `/api/projects/${projectId}/cases/bulk-create`,
+      { body }
+    );
+  }
+  /**
    * Get a test case by ID
    */
   async getTestCase(caseId) {
@@ -1071,6 +1117,83 @@ var TestPlanItClient = class {
       create: createData
     });
     return { testCase: createdCase, action: "created" };
+  }
+  /**
+   * Create an authored step on a test case.
+   * `step` and `expectedResult` are stored as TipTap rich-text documents to
+   * match the in-app step editor.
+   */
+  async createStep(options) {
+    const data = {
+      testCase: { connect: { id: options.testCaseId } },
+      step: tipTapDoc(options.step),
+      order: options.order
+    };
+    if (options.expectedResult !== void 0 && options.expectedResult !== "") {
+      data.expectedResult = tipTapDoc(options.expectedResult);
+    }
+    return this.zenstack("steps", "create", { data });
+  }
+  /**
+   * Create many authored steps on a test case in a single request.
+   * Preferred over repeated {@link createStep} calls when seeding a case's
+   * steps — one `createMany` instead of N creates keeps the call count (and
+   * rate-limit pressure) low when reporting large suites. Uses the scalar
+   * `testCaseId` FK because `createMany` does not accept nested relations.
+   */
+  async createSteps(options) {
+    const data = options.steps.map((s) => {
+      const row = {
+        testCaseId: options.testCaseId,
+        step: tipTapDoc(s.step),
+        order: s.order
+      };
+      if (s.expectedResult !== void 0 && s.expectedResult !== "") {
+        row.expectedResult = tipTapDoc(s.expectedResult);
+      }
+      return row;
+    });
+    return this.zenstack("steps", "createMany", { data });
+  }
+  /**
+   * Soft-delete every active step on a test case (sets `isDeleted: true`).
+   * Used to replace a case's steps when syncing them from automation.
+   * Returns the number of steps that were soft-deleted.
+   */
+  async softDeleteCaseSteps(testCaseId) {
+    const result = await this.zenstack("steps", "updateMany", {
+      where: { testCaseId, isDeleted: false },
+      data: { isDeleted: true }
+    });
+    return result?.count ?? 0;
+  }
+  /**
+   * Request opt-in, background LLM step derivation for low-structure cases
+   * (e.g. Mocha/Jasmine, which have no native steps to map deterministically).
+   * Enqueues a server-side job that runs ONLY when an LLM provider is configured
+   * for the project; otherwise it is inert. With `overwrite`, cases that already
+   * have steps are re-derived (destructive). Returns whether a job was enqueued.
+   */
+  async requestStepDerivation(options) {
+    return this.request(
+      "POST",
+      "/api/test-cases/derive-steps",
+      {
+        body: {
+          projectId: options.projectId,
+          testRunId: options.testRunId,
+          overwrite: options.overwrite ?? false,
+          cases: options.cases.map((c) => ({
+            testCaseId: c.testCaseId,
+            name: c.name,
+            className: c.className ?? null,
+            failure: c.failure ?? null,
+            systemOut: c.systemOut ?? null,
+            ...c.commands && c.commands.length > 0 ? { commands: c.commands } : {}
+          }))
+        }
+      }
+    );
   }
   // ============================================================================
   // Test Run Cases (linking cases to runs)
@@ -1439,7 +1562,41 @@ var TestPlanItClient = class {
   }
 };
 
+// src/mapper.ts
+function automationStepsToCaseSteps(steps) {
+  const rows = [];
+  let order = 0;
+  let attachIndex = -1;
+  const appendExpected = (index, title) => {
+    if (index < 0) return;
+    const row = rows[index];
+    row.expectedResult = row.expectedResult === void 0 || row.expectedResult === "" ? title : `${row.expectedResult}
+${title}`;
+  };
+  for (const step of steps) {
+    if (step.kind === "assertion") {
+      appendExpected(attachIndex, step.title);
+      continue;
+    }
+    const row = { step: step.title, order: order++ };
+    if (step.children && step.children.length > 0) {
+      const nested = step.children.filter((child) => child.kind === "assertion").map((child) => child.title);
+      if (nested.length > 0) row.expectedResult = nested.join("\n");
+    }
+    rows.push(row);
+    attachIndex = rows.length - 1;
+  }
+  return rows;
+}
+function deriveCaseStepsIfFresh(steps, existingStepCount) {
+  if (existingStepCount >= 1) return [];
+  return automationStepsToCaseSteps(steps);
+}
+
 exports.TestPlanItClient = TestPlanItClient;
 exports.TestPlanItError = TestPlanItError;
+exports.automationStepsToCaseSteps = automationStepsToCaseSteps;
+exports.deriveCaseStepsIfFresh = deriveCaseStepsIfFresh;
+exports.tipTapDoc = tipTapDoc;
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

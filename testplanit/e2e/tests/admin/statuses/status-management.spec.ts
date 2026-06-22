@@ -15,23 +15,30 @@ test.describe("Admin Status Management", () => {
   test("Admin can view statuses list with seeded statuses", async ({
     page,
   }) => {
-    await page.goto("/en-US/admin/statuses");
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the statuses admin page", async () => {
+      await page.goto("/en-US/admin/statuses");
+      await page.waitForLoadState("networkidle");
 
-    // Page card title should be "Statuses"
-    const statusesTitle = page.getByText("Statuses").first();
-    await expect(statusesTitle).toBeVisible({ timeout: 10000 });
+      // Page card title should be "Statuses"
+      const statusesTitle = page.getByText("Statuses").first();
+      await expect(statusesTitle).toBeVisible({ timeout: 10000 });
+    });
 
-    // Seeded statuses like "Passed", "Failed" should be visible
-    const passedStatus = page.getByText("Passed").first();
-    await expect(passedStatus).toBeVisible({ timeout: 10000 });
+    await test.step("Verify seeded statuses and Add button are visible", async () => {
+      // Seeded statuses like "Passed", "Failed" should be visible
+      const passedStatus = page.getByText("Passed").first();
+      await expect(passedStatus).toBeVisible({ timeout: 10000 });
 
-    const failedStatus = page.getByText("Failed").first();
-    await expect(failedStatus).toBeVisible({ timeout: 10000 });
+      const failedStatus = page.getByText("Failed").first();
+      await expect(failedStatus).toBeVisible({ timeout: 10000 });
 
-    // Add Status button should be present
-    const addBtn = page.getByRole("button").filter({ hasText: /add/i }).first();
-    await expect(addBtn).toBeVisible({ timeout: 5000 });
+      // Add Status button should be present
+      const addBtn = page
+        .getByRole("button")
+        .filter({ hasText: /add/i })
+        .first();
+      await expect(addBtn).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("Admin can create a new status", async ({ page, request, baseURL }) => {
@@ -39,48 +46,60 @@ test.describe("Admin Status Management", () => {
     let createdStatusId: number | null = null;
 
     try {
-      await page.goto("/en-US/admin/statuses");
-      await page.waitForLoadState("networkidle");
-
-      // Click AddStatusModal trigger button
-      const addBtn = page
-        .getByRole("button")
-        .filter({ hasText: /add/i })
-        .first();
-      await addBtn.click();
-
-      // Wait for dialog
       const dialog = page.locator('[role="dialog"]');
-      await expect(dialog).toBeVisible({ timeout: 5000 });
 
-      // Explicitly select a color via the ColorPicker (aria-label="color-picker")
-      // This ensures colorId is set in the form before submit
-      const colorPickerTrigger = dialog.locator('[aria-label="color-picker"]');
-      await expect(colorPickerTrigger).toBeVisible({ timeout: 5000 });
-      await colorPickerTrigger.click();
-      await page.waitForTimeout(500);
-      // ColorPicker options render in a portal — select first available color option
-      const firstColorOption = page.locator('[role="option"]').first();
-      await expect(firstColorOption).toBeVisible({ timeout: 3000 });
-      await firstColorOption.click();
-      await page.waitForTimeout(300);
+      await test.step("Open the Add Status dialog", async () => {
+        await page.goto("/en-US/admin/statuses");
+        await page.waitForLoadState("networkidle");
 
-      // Fill name input — first text input in the dialog
-      const nameInput = dialog.locator("input").first();
-      await nameInput.fill(statusName);
-      await page.waitForTimeout(500); // Allow systemName auto-fill
+        // Click AddStatusModal trigger button
+        const addBtn = page
+          .getByRole("button")
+          .filter({ hasText: /add/i })
+          .first();
+        await addBtn.click();
 
-      // Submit the form
-      const submitBtn = dialog.getByRole("button", { name: /submit/i }).first();
-      await submitBtn.click();
+        // Wait for dialog
+        await expect(dialog).toBeVisible({ timeout: 5000 });
+      });
 
-      // Wait for dialog to close
-      await expect(dialog).not.toBeVisible({ timeout: 10000 });
-      await page.waitForLoadState("networkidle");
+      await test.step("Pick a color in the ColorPicker", async () => {
+        // Explicitly select a color via the ColorPicker (aria-label="color-picker")
+        // This ensures colorId is set in the form before submit
+        const colorPickerTrigger = dialog.locator(
+          '[aria-label="color-picker"]'
+        );
+        await expect(colorPickerTrigger).toBeVisible({ timeout: 5000 });
+        await colorPickerTrigger.click();
+        await page.waitForTimeout(500);
+        // ColorPicker options render in a portal — select first available color option
+        const firstColorOption = page.locator('[role="option"]').first();
+        await expect(firstColorOption).toBeVisible({ timeout: 3000 });
+        await firstColorOption.click();
+        await page.waitForTimeout(300);
+      });
 
-      // Verify the status appears in the table
-      const statusEntry = page.getByText(statusName);
-      await expect(statusEntry).toBeVisible({ timeout: 10000 });
+      await test.step("Enter the status name and submit", async () => {
+        // Fill name input — first text input in the dialog
+        const nameInput = dialog.locator("input").first();
+        await nameInput.fill(statusName);
+        await page.waitForTimeout(500); // Allow systemName auto-fill
+
+        // Submit the form
+        const submitBtn = dialog
+          .getByRole("button", { name: /submit/i })
+          .first();
+        await submitBtn.click();
+
+        // Wait for dialog to close
+        await expect(dialog).not.toBeVisible({ timeout: 10000 });
+        await page.waitForLoadState("networkidle");
+      });
+
+      await test.step("Verify the new status appears in the table", async () => {
+        const statusEntry = page.getByText(statusName);
+        await expect(statusEntry).toBeVisible({ timeout: 10000 });
+      });
 
       // Get status ID for cleanup
       try {
@@ -176,41 +195,49 @@ test.describe("Admin Status Management", () => {
     }
 
     try {
-      await page.goto("/en-US/admin/statuses");
-      await page.waitForLoadState("networkidle");
-
-      // Find the status row by name
-      const statusRow = page
-        .locator("tr")
-        .filter({ hasText: originalName })
-        .first();
-      await expect(statusRow).toBeVisible({ timeout: 10000 });
-
-      // Click edit button — it's in the last cell (actions), first button
-      const actionsCell = statusRow.locator("td").last();
-      const editBtn = actionsCell.locator("button").first();
-      await editBtn.click();
-
-      // Wait for dialog
       const dialog = page.locator('[role="dialog"]');
-      await expect(dialog).toBeVisible({ timeout: 5000 });
 
-      // Update name — EditStatus name input has no placeholder, get first input
-      const nameInput = dialog.locator("input").first();
-      await nameInput.clear();
-      await nameInput.fill(updatedName);
+      await test.step("Open the edit dialog for the status", async () => {
+        await page.goto("/en-US/admin/statuses");
+        await page.waitForLoadState("networkidle");
 
-      // Submit
-      const submitBtn = dialog.getByRole("button", { name: /submit/i }).first();
-      await submitBtn.click();
+        // Find the status row by name
+        const statusRow = page
+          .locator("tr")
+          .filter({ hasText: originalName })
+          .first();
+        await expect(statusRow).toBeVisible({ timeout: 10000 });
 
-      // Wait for dialog to close
-      await expect(dialog).not.toBeVisible({ timeout: 10000 });
-      await page.waitForLoadState("networkidle");
+        // Click edit button — it's in the last cell (actions), first button
+        const actionsCell = statusRow.locator("td").last();
+        const editBtn = actionsCell.locator("button").first();
+        await editBtn.click();
 
-      // Verify updated name is visible
-      const updatedEntry = page.getByText(updatedName);
-      await expect(updatedEntry).toBeVisible({ timeout: 10000 });
+        // Wait for dialog
+        await expect(dialog).toBeVisible({ timeout: 5000 });
+      });
+
+      await test.step("Change the status name and submit", async () => {
+        // Update name — EditStatus name input has no placeholder, get first input
+        const nameInput = dialog.locator("input").first();
+        await nameInput.clear();
+        await nameInput.fill(updatedName);
+
+        // Submit
+        const submitBtn = dialog
+          .getByRole("button", { name: /submit/i })
+          .first();
+        await submitBtn.click();
+
+        // Wait for dialog to close
+        await expect(dialog).not.toBeVisible({ timeout: 10000 });
+        await page.waitForLoadState("networkidle");
+      });
+
+      await test.step("Verify the updated name is visible", async () => {
+        const updatedEntry = page.getByText(updatedName);
+        await expect(updatedEntry).toBeVisible({ timeout: 10000 });
+      });
     } finally {
       if (createdStatusId) {
         try {
@@ -283,19 +310,28 @@ test.describe("Admin Status Management", () => {
     }
 
     try {
-      await page.goto("/en-US/admin/statuses");
-      await page.waitForLoadState("networkidle");
-
-      // Find the status row
-      const statusRow = page
+      const deleteBtn = page
         .locator("tr")
         .filter({ hasText: statusName })
-        .first();
-      await expect(statusRow).toBeVisible({ timeout: 10000 });
+        .first()
+        .locator("td")
+        .last()
+        .locator("button")
+        .nth(1);
+
+      await test.step("Locate the status row", async () => {
+        await page.goto("/en-US/admin/statuses");
+        await page.waitForLoadState("networkidle");
+
+        // Find the status row
+        const statusRow = page
+          .locator("tr")
+          .filter({ hasText: statusName })
+          .first();
+        await expect(statusRow).toBeVisible({ timeout: 10000 });
+      });
 
       // Find delete button in actions cell (second button after edit)
-      const actionsCell = statusRow.locator("td").last();
-      const deleteBtn = actionsCell.locator("button").nth(1);
       const isDisabled = await deleteBtn.isDisabled().catch(() => true);
 
       if (isDisabled) {
@@ -303,24 +339,28 @@ test.describe("Admin Status Management", () => {
         return;
       }
 
-      await deleteBtn.click();
+      await test.step("Confirm deletion of the status", async () => {
+        await deleteBtn.click();
 
-      // AlertDialog should appear
-      const confirmDialog = page.locator('[role="alertdialog"]');
-      await expect(confirmDialog).toBeVisible({ timeout: 5000 });
+        // AlertDialog should appear
+        const confirmDialog = page.locator('[role="alertdialog"]');
+        await expect(confirmDialog).toBeVisible({ timeout: 5000 });
 
-      // Click the Delete confirm button
-      const confirmBtn = confirmDialog
-        .getByRole("button", { name: /delete/i })
-        .first();
-      await confirmBtn.click();
+        // Click the Delete confirm button
+        const confirmBtn = confirmDialog
+          .getByRole("button", { name: /delete/i })
+          .first();
+        await confirmBtn.click();
 
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(1000);
+        await page.waitForLoadState("networkidle");
+        await page.waitForTimeout(1000);
+      });
 
-      // Status should no longer be visible
-      await expect(page.getByText(statusName)).not.toBeVisible({
-        timeout: 5000,
+      await test.step("Verify the status is no longer visible", async () => {
+        // Status should no longer be visible
+        await expect(page.getByText(statusName)).not.toBeVisible({
+          timeout: 5000,
+        });
       });
 
       // Mark as already deleted
@@ -401,50 +441,56 @@ test.describe("Admin Status Management", () => {
     }
 
     try {
-      await page.goto("/en-US/admin/statuses");
-      await page.waitForLoadState("networkidle");
-
-      // Find the status row
       const statusRow = page
         .locator("tr")
         .filter({ hasText: statusName })
         .first();
-      await expect(statusRow).toBeVisible({ timeout: 10000 });
-
       // Find all switches in this row — order in columns.tsx:
       // isEnabled (col 3), isSuccess (col 4), isFailure (col 5), isCompleted (col 6)
       const rowSwitches = statusRow.locator('button[role="switch"]');
-      const switchCount = await rowSwitches.count();
-      expect(switchCount).toBeGreaterThan(0);
+      let switchCount: number | undefined;
 
-      // Toggle isEnabled switch (first switch in row)
-      const enabledSwitch = rowSwitches.first();
-      const initialEnabledState =
-        await enabledSwitch.getAttribute("data-state");
-      expect(initialEnabledState).toBe("checked"); // Created with isEnabled=true
+      await test.step("Verify the status row and its flag switches", async () => {
+        await page.goto("/en-US/admin/statuses");
+        await page.waitForLoadState("networkidle");
 
-      // Toggle success flag on (second switch = isSuccess)
-      if (switchCount >= 2) {
-        const successSwitch = rowSwitches.nth(1);
-        const initialSuccessState =
-          await successSwitch.getAttribute("data-state");
-        expect(initialSuccessState).toBe("unchecked"); // Created with isSuccess=false
+        await expect(statusRow).toBeVisible({ timeout: 10000 });
 
-        // Toggle success flag on
-        await successSwitch.click();
-        await page.waitForTimeout(1000);
+        switchCount = await rowSwitches.count();
+        expect(switchCount).toBeGreaterThan(0);
 
-        const newSuccessState = await successSwitch.getAttribute("data-state");
-        expect(newSuccessState).toBe("checked");
+        // Toggle isEnabled switch (first switch in row)
+        const enabledSwitch = rowSwitches.first();
+        const initialEnabledState =
+          await enabledSwitch.getAttribute("data-state");
+        expect(initialEnabledState).toBe("checked"); // Created with isEnabled=true
+      });
 
-        // Toggle back off
-        await successSwitch.click();
-        await page.waitForTimeout(1000);
+      await test.step("Toggle the success flag on and back off", async () => {
+        // Toggle success flag on (second switch = isSuccess)
+        if (switchCount! >= 2) {
+          const successSwitch = rowSwitches.nth(1);
+          const initialSuccessState =
+            await successSwitch.getAttribute("data-state");
+          expect(initialSuccessState).toBe("unchecked"); // Created with isSuccess=false
 
-        const finalSuccessState =
-          await successSwitch.getAttribute("data-state");
-        expect(finalSuccessState).toBe("unchecked");
-      }
+          // Toggle success flag on
+          await successSwitch.click();
+          await page.waitForTimeout(1000);
+
+          const newSuccessState =
+            await successSwitch.getAttribute("data-state");
+          expect(newSuccessState).toBe("checked");
+
+          // Toggle back off
+          await successSwitch.click();
+          await page.waitForTimeout(1000);
+
+          const finalSuccessState =
+            await successSwitch.getAttribute("data-state");
+          expect(finalSuccessState).toBe("unchecked");
+        }
+      });
     } finally {
       if (createdStatusId) {
         try {
@@ -521,27 +567,30 @@ test.describe("Admin Status Management", () => {
     }
 
     try {
-      await page.goto("/en-US/admin/statuses");
-      await page.waitForLoadState("networkidle");
-
-      // Find the status row
       const statusRow = page
         .locator("tr")
         .filter({ hasText: statusName })
         .first();
-      await expect(statusRow).toBeVisible({ timeout: 10000 });
-
       // First switch should be isEnabled — created with false
       const enabledSwitch = statusRow.locator('button[role="switch"]').first();
-      const initialState = await enabledSwitch.getAttribute("data-state");
-      expect(initialState).toBe("unchecked"); // Created with isEnabled=false
 
-      // Toggle enabled on
-      await enabledSwitch.click();
-      await page.waitForTimeout(1000);
+      await test.step("Verify the status starts disabled", async () => {
+        await page.goto("/en-US/admin/statuses");
+        await page.waitForLoadState("networkidle");
 
-      const newState = await enabledSwitch.getAttribute("data-state");
-      expect(newState).toBe("checked");
+        await expect(statusRow).toBeVisible({ timeout: 10000 });
+
+        const initialState = await enabledSwitch.getAttribute("data-state");
+        expect(initialState).toBe("unchecked"); // Created with isEnabled=false
+      });
+
+      await test.step("Toggle the status enabled and verify", async () => {
+        await enabledSwitch.click();
+        await page.waitForTimeout(1000);
+
+        const newState = await enabledSwitch.getAttribute("data-state");
+        expect(newState).toBe("checked");
+      });
     } finally {
       if (createdStatusId) {
         try {

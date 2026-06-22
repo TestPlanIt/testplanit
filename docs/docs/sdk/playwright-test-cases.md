@@ -232,3 +232,71 @@ parentFolderId (e.g., "Automated Tests")
 - `templateId` must be set for new test cases
 
 Folder paths are cached during the test run to avoid redundant API calls, making large test suites efficient.
+
+## Capturing test.step() as case steps
+
+When the reporter creates a new test case, it can seed that case's steps from your Playwright [`test.step()`](https://playwright.dev/docs/api/class-test#test-step) calls. This is on by default whenever `autoCreateTestCases` is enabled — set `captureSteps: false` to turn it off.
+
+```typescript
+import { test } from '@playwright/test';
+
+test('checkout flow', async ({ page }) => {
+  await test.step('Add item to cart', async () => {
+    // ...
+  });
+  await test.step('Proceed to checkout', async () => {
+    await test.step('Enter shipping address', async () => {
+      // ...
+    });
+    await test.step('Enter payment details', async () => {
+      // ...
+    });
+  });
+});
+```
+
+On the **first** run (when the case is created), the reporter writes these as ordered, authored steps on the case:
+
+```text
+1. Add item to cart
+2. Proceed to checkout
+3. › Enter shipping address
+4. › Enter payment details
+```
+
+How it works:
+
+- Each `test.step()` title becomes one step, in execution order.
+- Nested steps are flattened and prefixed with `›` per level of depth, so the hierarchy is preserved as readable text.
+- Only your `test.step()` calls are captured — auto-instrumented actions (`expect`, locator/`page` API calls, hooks, fixtures) are skipped.
+- Expected results are left blank (Playwright steps have no expected-result concept); you can fill them in afterward in TestPlanIt.
+
+:::note
+By default, steps are written **only when a case is created** — existing or restored cases are never modified, so edits you make in TestPlanIt are never overwritten on later runs. To keep existing cases in sync instead, see [Keeping steps in sync](#keeping-steps-in-sync) below. For the steps to render without an "orphaned steps" warning, the case's `templateId` should use a template that includes a **Steps** field.
+:::
+
+### Keeping steps in sync
+
+When you change a test script, the case in TestPlanIt can drift from what the automation actually does. Enable `overwriteSteps` to re-sync an **existing** case's steps from its `test.step()` calls on every run:
+
+```typescript
+// playwright.config.ts
+export default defineConfig({
+  reporter: [
+    ['@testplanit/playwright-reporter', {
+      domain: 'https://testplanit.example.com',
+      apiToken: process.env.TESTPLANIT_API_TOKEN,
+      projectId: 1,
+      overwriteSteps: true,   // replace existing case steps each run
+    }],
+  ],
+});
+```
+
+This applies to cases linked by ID (annotation, tag, or title) **and** to cases matched by `autoCreateTestCases`. On each run the case's existing steps are cleared and rewritten from the current `test.step()` calls.
+
+:::warning
+`overwriteSteps` is **destructive**: any manual edits to a case's steps in TestPlanIt are discarded the next time the test runs. Use it when the automation is the source of truth for the steps.
+
+As a safeguard, a test with **no** `test.step()` calls never clears an existing case's steps — so a test that simply doesn't use `test.step()` can't accidentally wipe a manually authored case. Cleared steps are soft-deleted (recoverable), not permanently removed, and step changes are not recorded as a new case version.
+:::

@@ -69,64 +69,73 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
     baseURL,
   }) => {
     const externalKey = "DEEP-J-1";
-    const seededIssue = await seedLinkedIssue(prisma, {
-      projectId,
-      externalKey,
-      externalSystem: "JIRA",
-      createdById: adminUserId,
-      name: "L-02 Jira deep",
-    });
-    const seededConfig = await seedInboundConfig(prisma, {
-      projectId,
-      adapterType: "JIRA",
+    let seededIssue: Awaited<ReturnType<typeof seedLinkedIssue>> | undefined;
+    let seededConfig: Awaited<ReturnType<typeof seedInboundConfig>> | undefined;
+
+    await test.step("Seed linked Jira issue and inbound webhook config", async () => {
+      seededIssue = await seedLinkedIssue(prisma, {
+        projectId,
+        externalKey,
+        externalSystem: "JIRA",
+        createdById: adminUserId,
+        name: "L-02 Jira deep",
+      });
+      seededConfig = await seedInboundConfig(prisma, {
+        projectId,
+        adapterType: "JIRA",
+      });
     });
 
-    const deepBranch = buildDeepObject(12, { sentinel: "deep-jira" });
-    const body = JSON.stringify({
-      webhookEvent: "jira:issue_updated",
-      issue: {
-        key: externalKey,
-        fields: {
-          status: { name: "In Progress" },
-          // Deeply nested branch the Jira adapter does not read; proves
-          // extra depth in unrelated fields doesn't break the lift.
-          rendered: deepBranch,
+    await test.step("Post 12-level nested Jira payload and expect 200", async () => {
+      const deepBranch = buildDeepObject(12, { sentinel: "deep-jira" });
+      const body = JSON.stringify({
+        webhookEvent: "jira:issue_updated",
+        issue: {
+          key: externalKey,
+          fields: {
+            status: { name: "In Progress" },
+            // Deeply nested branch the Jira adapter does not read; proves
+            // extra depth in unrelated fields doesn't break the lift.
+            rendered: deepBranch,
+          },
         },
-      },
-      // Top-level deep branch as well — Jira plugins sometimes attach
-      // `comment.body.content[]` outside the issue subtree.
-      changelog: deepBranch,
-    });
-    expect(body.length).toBeGreaterThan(200);
+        // Top-level deep branch as well — Jira plugins sometimes attach
+        // `comment.body.content[]` outside the issue subtree.
+        changelog: deepBranch,
+      });
+      expect(body.length).toBeGreaterThan(200);
 
-    const sig = signBody(body, seededConfig.secret);
-    const response = await request.post(
-      `${baseURL}/api/webhooks/${seededConfig.token}`,
-      {
-        data: body,
-        headers: {
-          "content-type": "application/json",
-          "x-hub-signature-256": sig,
+      const sig = signBody(body, seededConfig!.secret);
+      const response = await request.post(
+        `${baseURL}/api/webhooks/${seededConfig!.token}`,
+        {
+          data: body,
+          headers: {
+            "content-type": "application/json",
+            "x-hub-signature-256": sig,
+          },
+        }
+      );
+      expect(response.status()).toBe(200);
+    });
+
+    await test.step("Verify an applied delivery row was written", async () => {
+      // The "applied" path: a delivery row is written with error=null, which
+      // proves the adapter extractors successfully read the deep payload and
+      // the dedup INSERT committed. Issue.externalStatus is now refreshed
+      // post-tx via SyncService against the integration's upstream, so we
+      // do not assert that field here (the upstream call uses fake fixture
+      // credentials and is exercised by the dedicated sync specs).
+      await waitForDeliveries(prisma, {
+        where: {
+          webhookConfigId: seededConfig!.configId,
+          direction: "INBOUND",
+          error: null,
         },
-      }
-    );
-    expect(response.status()).toBe(200);
-
-    // The "applied" path: a delivery row is written with error=null, which
-    // proves the adapter extractors successfully read the deep payload and
-    // the dedup INSERT committed. Issue.externalStatus is now refreshed
-    // post-tx via SyncService against the integration's upstream, so we
-    // do not assert that field here (the upstream call uses fake fixture
-    // credentials and is exercised by the dedicated sync specs).
-    await waitForDeliveries(prisma, {
-      where: {
-        webhookConfigId: seededConfig.configId,
-        direction: "INBOUND",
-        error: null,
-      },
-      predicate: (rows) => rows.length >= 1,
+        predicate: (rows) => rows.length >= 1,
+      });
+      void seededIssue; // kept for symmetry with the other adapter cases
     });
-    void seededIssue; // kept for symmetry with the other adapter cases
   });
 
   test("GitHub: 12-level nested payload (deep labels + assignees) is processed without error", async ({
@@ -134,59 +143,68 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
     baseURL,
   }) => {
     const externalKey = "octocat/L02-Deep#42";
-    const seededIssue = await seedLinkedIssue(prisma, {
-      projectId,
-      externalKey,
-      externalSystem: "GITHUB",
-      createdById: adminUserId,
-      name: "L-02 GitHub deep",
-    });
-    const seededConfig = await seedInboundConfig(prisma, {
-      projectId,
-      adapterType: "GITHUB",
+    let seededIssue: Awaited<ReturnType<typeof seedLinkedIssue>> | undefined;
+    let seededConfig: Awaited<ReturnType<typeof seedInboundConfig>> | undefined;
+
+    await test.step("Seed linked GitHub issue and inbound webhook config", async () => {
+      seededIssue = await seedLinkedIssue(prisma, {
+        projectId,
+        externalKey,
+        externalSystem: "GITHUB",
+        createdById: adminUserId,
+        name: "L-02 GitHub deep",
+      });
+      seededConfig = await seedInboundConfig(prisma, {
+        projectId,
+        adapterType: "GITHUB",
+      });
     });
 
-    const deepBranch = buildDeepObject(12, { sentinel: "deep-github" });
-    const body = JSON.stringify({
-      action: "closed",
-      issue: {
-        number: 42,
-        state: "closed",
-        title: "L-02 deep github",
-        // Deeply nested labels + assignees branches — adapter reads neither.
-        labels: [{ id: 1, nested: deepBranch }],
-        assignees: [{ login: "alice", nested: deepBranch }],
-      },
-      repository: {
-        full_name: "octocat/L02-Deep",
-        // Repo-level nested config the adapter does not lift.
-        config: deepBranch,
-      },
-    });
-
-    const sig = signBody(body, seededConfig.secret);
-    const response = await request.post(
-      `${baseURL}/api/webhooks/${seededConfig.token}`,
-      {
-        data: body,
-        headers: {
-          "content-type": "application/json",
-          "x-hub-signature-256": sig,
-          "x-github-event": "issues",
+    await test.step("Post 12-level nested GitHub payload and expect 200", async () => {
+      const deepBranch = buildDeepObject(12, { sentinel: "deep-github" });
+      const body = JSON.stringify({
+        action: "closed",
+        issue: {
+          number: 42,
+          state: "closed",
+          title: "L-02 deep github",
+          // Deeply nested labels + assignees branches — adapter reads neither.
+          labels: [{ id: 1, nested: deepBranch }],
+          assignees: [{ login: "alice", nested: deepBranch }],
         },
-      }
-    );
-    expect(response.status()).toBe(200);
+        repository: {
+          full_name: "octocat/L02-Deep",
+          // Repo-level nested config the adapter does not lift.
+          config: deepBranch,
+        },
+      });
 
-    await waitForDeliveries(prisma, {
-      where: {
-        webhookConfigId: seededConfig.configId,
-        direction: "INBOUND",
-        error: null,
-      },
-      predicate: (rows) => rows.length >= 1,
+      const sig = signBody(body, seededConfig!.secret);
+      const response = await request.post(
+        `${baseURL}/api/webhooks/${seededConfig!.token}`,
+        {
+          data: body,
+          headers: {
+            "content-type": "application/json",
+            "x-hub-signature-256": sig,
+            "x-github-event": "issues",
+          },
+        }
+      );
+      expect(response.status()).toBe(200);
     });
-    void seededIssue;
+
+    await test.step("Verify an applied delivery row was written", async () => {
+      await waitForDeliveries(prisma, {
+        where: {
+          webhookConfigId: seededConfig!.configId,
+          direction: "INBOUND",
+          error: null,
+        },
+        predicate: (rows) => rows.length >= 1,
+      });
+      void seededIssue;
+    });
   });
 
   test("Azure DevOps: 12-level nested payload (deep _links) is processed without error", async ({
@@ -194,59 +212,69 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
     baseURL,
   }) => {
     const externalKey = "297";
-    const seededIssue = await seedLinkedIssue(prisma, {
-      projectId,
-      externalKey,
-      externalSystem: "AZURE_DEVOPS",
-      createdById: adminUserId,
-      name: "L-02 ADO deep",
-    });
-    const seededConfig = await seedInboundConfig(prisma, {
-      projectId,
-      adapterType: "AZURE_DEVOPS",
-      credentialInput: {
-        kind: "AZURE_DEVOPS",
-        username: "tpi",
-        password: "s3cret-deep",
-      },
-    });
+    let seededIssue: Awaited<ReturnType<typeof seedLinkedIssue>> | undefined;
+    let seededConfig: Awaited<ReturnType<typeof seedInboundConfig>> | undefined;
 
-    const deepBranch = buildDeepObject(12, { sentinel: "deep-ado" });
-    const body = JSON.stringify({
-      eventType: "workitem.updated",
-      resource: {
-        id: 297,
-        fields: {
-          "System.State": "Closed",
-          // Deeply nested fields branch — adapter only reads System.State.
-          extra: deepBranch,
+    await test.step("Seed linked ADO issue and inbound webhook config", async () => {
+      seededIssue = await seedLinkedIssue(prisma, {
+        projectId,
+        externalKey,
+        externalSystem: "AZURE_DEVOPS",
+        createdById: adminUserId,
+        name: "L-02 ADO deep",
+      });
+      seededConfig = await seedInboundConfig(prisma, {
+        projectId,
+        adapterType: "AZURE_DEVOPS",
+        credentialInput: {
+          kind: "AZURE_DEVOPS",
+          username: "tpi",
+          password: "s3cret-deep",
         },
-        // ADO's real payload threads `_links` with several levels of nesting.
-        _links: deepBranch,
-      },
+      });
     });
 
-    const basic = "Basic " + Buffer.from("tpi:s3cret-deep").toString("base64");
-    const response = await request.post(
-      `${baseURL}/api/webhooks/${seededConfig.token}`,
-      {
-        data: body,
-        headers: {
-          "content-type": "application/json",
-          authorization: basic,
+    await test.step("Post 12-level nested ADO payload and expect 200", async () => {
+      const deepBranch = buildDeepObject(12, { sentinel: "deep-ado" });
+      const body = JSON.stringify({
+        eventType: "workitem.updated",
+        resource: {
+          id: 297,
+          fields: {
+            "System.State": "Closed",
+            // Deeply nested fields branch — adapter only reads System.State.
+            extra: deepBranch,
+          },
+          // ADO's real payload threads `_links` with several levels of nesting.
+          _links: deepBranch,
         },
-      }
-    );
-    expect(response.status()).toBe(200);
+      });
 
-    await waitForDeliveries(prisma, {
-      where: {
-        webhookConfigId: seededConfig.configId,
-        direction: "INBOUND",
-        error: null,
-      },
-      predicate: (rows) => rows.length >= 1,
+      const basic =
+        "Basic " + Buffer.from("tpi:s3cret-deep").toString("base64");
+      const response = await request.post(
+        `${baseURL}/api/webhooks/${seededConfig!.token}`,
+        {
+          data: body,
+          headers: {
+            "content-type": "application/json",
+            authorization: basic,
+          },
+        }
+      );
+      expect(response.status()).toBe(200);
     });
-    void seededIssue;
+
+    await test.step("Verify an applied delivery row was written", async () => {
+      await waitForDeliveries(prisma, {
+        where: {
+          webhookConfigId: seededConfig!.configId,
+          direction: "INBOUND",
+          error: null,
+        },
+        predicate: (rows) => rows.length >= 1,
+      });
+      void seededIssue;
+    });
   });
 });

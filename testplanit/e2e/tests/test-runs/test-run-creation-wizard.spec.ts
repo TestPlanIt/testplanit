@@ -59,59 +59,68 @@ test.describe("Test Run Creation Wizard", () => {
 
     const runName = `Basic Run ${ts}`;
 
-    // Navigate to runs list page
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
-
-    // Open the create test run dialog
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
-    // Target the last dialog (multiple dialog instances may exist in DOM)
     const dialog = page.locator('[role="dialog"]').last();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // Step 1: Fill basic info
-    const nameInput = dialog.getByTestId("run-name-input");
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
-    await nameInput.fill(runName);
+    await test.step("Open the create test run dialog", async () => {
+      // Navigate to runs list page
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
 
-    // Verify the value was set
-    await expect(nameInput).toHaveValue(runName);
+      // Open the create test run dialog
+      const newRunButton = page.getByTestId("new-run-button");
+      await expect(newRunButton).toBeVisible({ timeout: 15000 });
+      await newRunButton.click();
 
-    // Proceed to Step 2 (test case selection)
-    const nextButton = dialog.getByTestId("run-next-button");
-    await expect(nextButton).toBeVisible({ timeout: 5000 });
-    await nextButton.dispatchEvent("click");
-
-    // Step 2: Select a test case from the repository
-    await expect(dialog.getByTestId("run-save-button")).toBeVisible({
-      timeout: 15000,
+      // Target the last dialog (multiple dialog instances may exist in DOM)
+      await expect(dialog).toBeVisible({ timeout: 10000 });
     });
 
-    // Click the folder containing our test case
-    await clickFolderNode(page, `Wizard Folder ${ts}`);
+    await test.step("Fill basic info and proceed to step 2", async () => {
+      // Step 1: Fill basic info
+      const nameInput = dialog.getByTestId("run-name-input");
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
+      await nameInput.fill(runName);
 
-    // Find the case in the table and click its checkbox to select it
-    const caseRow = page.locator(`tr:has-text("Wizard Case ${ts}")`).first();
-    await expect(caseRow).toBeVisible({ timeout: 15000 });
+      // Verify the value was set
+      await expect(nameInput).toHaveValue(runName);
 
-    const checkbox = caseRow.locator('input[type="checkbox"]').first();
-    if (await checkbox.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await checkbox.dispatchEvent("click");
-    } else {
-      await caseRow.dispatchEvent("click");
-    }
+      // Proceed to Step 2 (test case selection)
+      const nextButton = dialog.getByTestId("run-next-button");
+      await expect(nextButton).toBeVisible({ timeout: 5000 });
+      await nextButton.dispatchEvent("click");
 
-    // Save the test run
-    const saveButton = dialog.getByTestId("run-save-button");
-    await saveButton.dispatchEvent("click");
+      // Step 2: Select a test case from the repository
+      await expect(dialog.getByTestId("run-save-button")).toBeVisible({
+        timeout: 15000,
+      });
+    });
 
-    // After saving, we should be redirected to the new run's detail page
-    // or the run list. Either way, the run name should appear.
-    await expect(page.locator(`text="${runName}"`).first()).toBeVisible({
-      timeout: 20000,
+    await test.step("Select the test case from the repository", async () => {
+      // Click the folder containing our test case
+      await clickFolderNode(page, `Wizard Folder ${ts}`);
+
+      // Find the case in the table and click its checkbox to select it
+      const caseRow = page.locator(`tr:has-text("Wizard Case ${ts}")`).first();
+      await expect(caseRow).toBeVisible({ timeout: 15000 });
+
+      const checkbox = caseRow.locator('input[type="checkbox"]').first();
+      if (await checkbox.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await checkbox.dispatchEvent("click");
+      } else {
+        await caseRow.dispatchEvent("click");
+      }
+    });
+
+    await test.step("Save the test run and verify it appears", async () => {
+      // Save the test run
+      const saveButton = dialog.getByTestId("run-save-button");
+      await saveButton.dispatchEvent("click");
+
+      // After saving, we should be redirected to the new run's detail page
+      // or the run list. Either way, the run name should appear.
+      await expect(page.locator(`text="${runName}"`).first()).toBeVisible({
+        timeout: 20000,
+      });
     });
   });
 
@@ -128,59 +137,68 @@ test.describe("Test Run Creation Wizard", () => {
 
     const runName = `Config Run ${ts}`;
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
-
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
     const dialog = page.locator('[role="dialog"]').last();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    const nameInput = dialog.getByTestId("run-name-input");
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
-    await nameInput.fill(runName);
-    await expect(nameInput).toHaveValue(runName);
-
-    // Proceed to Step 2 — skip config selection to avoid dialog-closing issues
-    const nextBtn = dialog.getByTestId("run-next-button");
-    await expect(nextBtn).toBeVisible({ timeout: 5000 });
-    await nextBtn.dispatchEvent("click");
-
-    // Wait for step 2 to load
     const saveButton = dialog.getByTestId("run-save-button");
-    await expect(saveButton).toBeVisible({
-      timeout: 15000,
+
+    await test.step("Open the create test run dialog", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
+
+      const newRunButton = page.getByTestId("new-run-button");
+      await expect(newRunButton).toBeVisible({ timeout: 15000 });
+      await newRunButton.click();
+
+      await expect(dialog).toBeVisible({ timeout: 10000 });
     });
 
-    // Click the folder containing our test case
-    await clickFolderNode(page, `Config Folder ${ts}`);
+    await test.step("Fill name and proceed to step 2", async () => {
+      const nameInput = dialog.getByTestId("run-name-input");
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
+      await nameInput.fill(runName);
+      await expect(nameInput).toHaveValue(runName);
 
-    // Select a test case
-    const caseRow = page.locator(`tr:has-text("Config Case ${ts}")`).first();
-    await expect(caseRow).toBeVisible({ timeout: 15000 });
+      // Proceed to Step 2 — skip config selection to avoid dialog-closing issues
+      const nextBtn = dialog.getByTestId("run-next-button");
+      await expect(nextBtn).toBeVisible({ timeout: 5000 });
+      await nextBtn.dispatchEvent("click");
 
-    const checkbox = caseRow.locator('input[type="checkbox"]').first();
-    if (await checkbox.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await checkbox.dispatchEvent("click");
-    } else {
-      await caseRow.dispatchEvent("click");
-    }
+      // Wait for step 2 to load
+      await expect(saveButton).toBeVisible({
+        timeout: 15000,
+      });
+    });
 
-    // Wait a moment for the selection to register before saving
-    await page.waitForTimeout(500);
+    await test.step("Select the test case", async () => {
+      // Click the folder containing our test case
+      await clickFolderNode(page, `Config Folder ${ts}`);
 
-    // Save — wait for the button to be enabled, then click
-    await expect(saveButton).toBeEnabled({ timeout: 5000 });
-    await saveButton.dispatchEvent("click");
+      // Select a test case
+      const caseRow = page.locator(`tr:has-text("Config Case ${ts}")`).first();
+      await expect(caseRow).toBeVisible({ timeout: 15000 });
 
-    // Wait for the dialog to close (our dialog should disappear after save)
-    await expect(dialog).not.toBeVisible({ timeout: 15000 });
+      const checkbox = caseRow.locator('input[type="checkbox"]').first();
+      if (await checkbox.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await checkbox.dispatchEvent("click");
+      } else {
+        await caseRow.dispatchEvent("click");
+      }
 
-    // Verify the run was created — the run name should appear on the page
-    await expect(page.getByText(runName).first()).toBeVisible({
-      timeout: 20000,
+      // Wait a moment for the selection to register before saving
+      await page.waitForTimeout(500);
+    });
+
+    await test.step("Save the run and verify it was created", async () => {
+      // Save — wait for the button to be enabled, then click
+      await expect(saveButton).toBeEnabled({ timeout: 5000 });
+      await saveButton.dispatchEvent("click");
+
+      // Wait for the dialog to close (our dialog should disappear after save)
+      await expect(dialog).not.toBeVisible({ timeout: 15000 });
+
+      // Verify the run was created — the run name should appear on the page
+      await expect(page.getByText(runName).first()).toBeVisible({
+        timeout: 20000,
+      });
     });
   });
 
@@ -191,37 +209,44 @@ test.describe("Test Run Creation Wizard", () => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E Wizard Validation ${ts}`);
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
-
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
     const dialog = page.locator('[role="dialog"]').last();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    const nameInput = dialog.getByTestId("run-name-input");
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
+    await test.step("Open the create test run dialog", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
 
-    // Fill with a single character (too short — min 2 required)
-    await nameInput.fill("A");
-    await expect(nameInput).toHaveValue("A");
+      const newRunButton = page.getByTestId("new-run-button");
+      await expect(newRunButton).toBeVisible({ timeout: 15000 });
+      await newRunButton.click();
 
-    // Click Next — should trigger validation since name is too short
-    const nextBtnValidation = dialog.getByTestId("run-next-button");
-    await expect(nextBtnValidation).toBeVisible({ timeout: 5000 });
-    await nextBtnValidation.click();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
-    // Validation error message should appear
-    const validationError = dialog
-      .locator("text=/must be at least|required|invalid/i")
-      .first();
-    await expect(validationError).toBeVisible({ timeout: 5000 });
+    await test.step("Enter a too-short name and click Next", async () => {
+      const nameInput = dialog.getByTestId("run-name-input");
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
 
-    // We should still be on Step 1 (next button is still visible)
-    await expect(dialog.getByTestId("run-next-button")).toBeVisible({
-      timeout: 3000,
+      // Fill with a single character (too short — min 2 required)
+      await nameInput.fill("A");
+      await expect(nameInput).toHaveValue("A");
+
+      // Click Next — should trigger validation since name is too short
+      const nextBtnValidation = dialog.getByTestId("run-next-button");
+      await expect(nextBtnValidation).toBeVisible({ timeout: 5000 });
+      await nextBtnValidation.click();
+    });
+
+    await test.step("Verify the validation error keeps us on step 1", async () => {
+      // Validation error message should appear
+      const validationError = dialog
+        .locator("text=/must be at least|required|invalid/i")
+        .first();
+      await expect(validationError).toBeVisible({ timeout: 5000 });
+
+      // We should still be on Step 1 (next button is still visible)
+      await expect(dialog.getByTestId("run-next-button")).toBeVisible({
+        timeout: 3000,
+      });
     });
   });
 
@@ -235,39 +260,46 @@ test.describe("Test Run Creation Wizard", () => {
     const caseName = `Steps Case ${ts}`;
     await api.createTestCase(projectId, folderId, caseName);
 
-    await page.goto(`/en-US/projects/runs/${projectId}`);
-    await page.waitForLoadState("load");
-
-    const newRunButton = page.getByTestId("new-run-button");
-    await expect(newRunButton).toBeVisible({ timeout: 15000 });
-    await newRunButton.click();
-
     const dialog = page.locator('[role="dialog"]').last();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    const nameInput = dialog.getByTestId("run-name-input");
-    await expect(nameInput).toBeVisible({ timeout: 10000 });
+    await test.step("Open the create test run dialog", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}`);
+      await page.waitForLoadState("load");
 
-    // Step 1: Fill name (state is auto-populated with default workflow)
-    await nameInput.fill(`Steps Run ${ts}`);
-    await expect(nameInput).toHaveValue(`Steps Run ${ts}`);
+      const newRunButton = page.getByTestId("new-run-button");
+      await expect(newRunButton).toBeVisible({ timeout: 15000 });
+      await newRunButton.click();
 
-    // Click Next to go to step 2
-    const nextBtnSteps = dialog.getByTestId("run-next-button");
-    await expect(nextBtnSteps).toBeVisible({ timeout: 5000 });
-    await nextBtnSteps.click();
-
-    // Step 2 should show the test case repository
-    await expect(dialog.getByTestId("run-save-button")).toBeVisible({
-      timeout: 15000,
+      await expect(dialog).toBeVisible({ timeout: 10000 });
     });
 
-    // Click the folder containing our test case
-    await clickFolderNode(page, `Steps Folder ${ts}`);
+    await test.step("Fill name and advance to step 2", async () => {
+      const nameInput = dialog.getByTestId("run-name-input");
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
 
-    // The case we created should now be visible in the repository table
-    await expect(
-      page.locator(`tr`).filter({ hasText: caseName }).first()
-    ).toBeVisible({ timeout: 15000 });
+      // Step 1: Fill name (state is auto-populated with default workflow)
+      await nameInput.fill(`Steps Run ${ts}`);
+      await expect(nameInput).toHaveValue(`Steps Run ${ts}`);
+
+      // Click Next to go to step 2
+      const nextBtnSteps = dialog.getByTestId("run-next-button");
+      await expect(nextBtnSteps).toBeVisible({ timeout: 5000 });
+      await nextBtnSteps.click();
+
+      // Step 2 should show the test case repository
+      await expect(dialog.getByTestId("run-save-button")).toBeVisible({
+        timeout: 15000,
+      });
+    });
+
+    await test.step("Verify step 2 shows the project repository case", async () => {
+      // Click the folder containing our test case
+      await clickFolderNode(page, `Steps Folder ${ts}`);
+
+      // The case we created should now be visible in the repository table
+      await expect(
+        page.locator(`tr`).filter({ hasText: caseName }).first()
+      ).toBeVisible({ timeout: 15000 });
+    });
   });
 });

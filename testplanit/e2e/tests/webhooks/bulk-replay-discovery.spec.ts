@@ -103,75 +103,90 @@ test.describe("Webhook bulk-replay discovery — outbound-only count via filter 
     page,
     baseURL,
   }) => {
-    // 1. Land on the Deliveries tab unfiltered. Both outbound + inbound
-    //    rows are visible to the admin in this view (no config filter
-    //    applied yet) — confirms the cross-direction reach of the page.
-    await page.goto(
-      `${baseURL}/projects/settings/${projectId}/webhooks?tab=deliveries`
-    );
-    await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
-      timeout: 15_000,
+    let bulkButton: ReturnType<typeof page.getByTestId> | undefined;
+    let dialog: ReturnType<typeof page.getByTestId> | undefined;
+
+    await test.step("Open the unfiltered Deliveries tab", async () => {
+      // 1. Land on the Deliveries tab unfiltered. Both outbound + inbound
+      //    rows are visible to the admin in this view (no config filter
+      //    applied yet) — confirms the cross-direction reach of the page.
+      await page.goto(
+        `${baseURL}/projects/settings/${projectId}/webhooks?tab=deliveries`
+      );
+      await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
+        timeout: 15_000,
+      });
     });
 
-    // 2. Drive the filter bar via URL params (same path the Select +
-    //    Calendar widgets use under the hood — the tab parses URL state
-    //    on render). status=failed + single outbound config + since-
-    //    yesterday is the discovery scenario the manual case spells out.
-    const since = new Date();
-    since.setDate(since.getDate() - 1);
-    const filteredUrl =
-      `${baseURL}/projects/settings/${projectId}/webhooks` +
-      `?tab=deliveries&configIds=${outboundConfigId}&status=failed` +
-      `&since=${since.toISOString()}`;
-    await page.goto(filteredUrl);
-    await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
-      timeout: 15_000,
+    await test.step("Filter to status=failed, single outbound config, since yesterday", async () => {
+      // 2. Drive the filter bar via URL params (same path the Select +
+      //    Calendar widgets use under the hood — the tab parses URL state
+      //    on render). status=failed + single outbound config + since-
+      //    yesterday is the discovery scenario the manual case spells out.
+      const since = new Date();
+      since.setDate(since.getDate() - 1);
+      const filteredUrl =
+        `${baseURL}/projects/settings/${projectId}/webhooks` +
+        `?tab=deliveries&configIds=${outboundConfigId}&status=failed` +
+        `&since=${since.toISOString()}`;
+      await page.goto(filteredUrl);
+      await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect(page.getByTestId("webhook-deliveries-table")).toBeVisible({
+        timeout: 10_000,
+      });
     });
-    await expect(page.getByTestId("webhook-deliveries-table")).toBeVisible({
-      timeout: 10_000,
+
+    await test.step("Verify bulk-replay button advertises outbound-only count", async () => {
+      // 3. Bulk-replay button is visible (configIds.length===1 +
+      //    status===failed + outboundFailedCount > 0). Label MUST advertise
+      //    the OUTBOUND-only count, not the project-wide failure count.
+      bulkButton = page.getByTestId("webhook-bulk-replay-button");
+      await expect(bulkButton).toBeVisible({ timeout: 10_000 });
+      await expect(bulkButton).toContainText(
+        new RegExp(`${FAILED_OUTBOUND_COUNT}\\s+outbound`, "i")
+      );
+      // Defensive — the label MUST NOT advertise 7 (5 outbound + 2 inbound).
+      await expect(bulkButton).not.toContainText(/\b7\s+outbound\b/i);
     });
 
-    // 3. Bulk-replay button is visible (configIds.length===1 +
-    //    status===failed + outboundFailedCount > 0). Label MUST advertise
-    //    the OUTBOUND-only count, not the project-wide failure count.
-    const bulkButton = page.getByTestId("webhook-bulk-replay-button");
-    await expect(bulkButton).toBeVisible({ timeout: 10_000 });
-    await expect(bulkButton).toContainText(
-      new RegExp(`${FAILED_OUTBOUND_COUNT}\\s+outbound`, "i")
-    );
-    // Defensive — the label MUST NOT advertise 7 (5 outbound + 2 inbound).
-    await expect(bulkButton).not.toContainText(/\b7\s+outbound\b/i);
+    await test.step("Open the confirm dialog and verify its count", async () => {
+      // 4. Click the button → AlertDialog opens with the same count + a
+      //    Replay action button labelled with the count (D-31 — confirmed
+      //    via shadcn AlertDialog, never window.confirm).
+      await bulkButton!.click();
+      dialog = page.getByTestId("webhook-bulk-replay-dialog");
+      await expect(dialog).toBeVisible();
+      await expect(dialog).toContainText(String(FAILED_OUTBOUND_COUNT));
+      await expect(dialog).not.toContainText(
+        new RegExp(
+          `\\b${FAILED_OUTBOUND_COUNT + FAILED_INBOUND_COUNT}\\s+outbound\\b`,
+          "i"
+        )
+      );
 
-    // 4. Click the button → AlertDialog opens with the same count + a
-    //    Replay action button labelled with the count (D-31 — confirmed
-    //    via shadcn AlertDialog, never window.confirm).
-    await bulkButton.click();
-    const dialog = page.getByTestId("webhook-bulk-replay-dialog");
-    await expect(dialog).toBeVisible();
-    await expect(dialog).toContainText(String(FAILED_OUTBOUND_COUNT));
-    await expect(dialog).not.toContainText(
-      new RegExp(
-        `\\b${FAILED_OUTBOUND_COUNT + FAILED_INBOUND_COUNT}\\s+outbound\\b`,
-        "i"
-      )
-    );
-
-    const confirmButton = page.getByTestId("webhook-bulk-replay-confirm");
-    await expect(confirmButton).toBeVisible();
-    await expect(confirmButton).toContainText(String(FAILED_OUTBOUND_COUNT));
-
-    // 5. Cancel — discovery loop exited cleanly without enqueuing.
-    await page.getByTestId("webhook-bulk-replay-cancel").click();
-    await expect(dialog).not.toBeVisible();
-
-    // 6. Defense-in-depth at the data layer: the 2 inbound rows must NOT
-    //    have replays. (Cancel above means no rows at all; this asserts
-    //    that even if a future bug confirmed-without-clicking, the inbound
-    //    foil rows would still be untouched by the outbound-scoped action.)
-    const inboundReplays = await prisma.webhookDelivery.findMany({
-      where: { replayedFromDeliveryId: { in: inboundDeliveryIds } },
-      select: { id: true },
+      const confirmButton = page.getByTestId("webhook-bulk-replay-confirm");
+      await expect(confirmButton).toBeVisible();
+      await expect(confirmButton).toContainText(String(FAILED_OUTBOUND_COUNT));
     });
-    expect(inboundReplays).toHaveLength(0);
+
+    await test.step("Cancel the dialog without enqueuing", async () => {
+      // 5. Cancel — discovery loop exited cleanly without enqueuing.
+      await page.getByTestId("webhook-bulk-replay-cancel").click();
+      await expect(dialog!).not.toBeVisible();
+    });
+
+    await test.step("Confirm inbound foil rows have no replays", async () => {
+      // 6. Defense-in-depth at the data layer: the 2 inbound rows must NOT
+      //    have replays. (Cancel above means no rows at all; this asserts
+      //    that even if a future bug confirmed-without-clicking, the inbound
+      //    foil rows would still be untouched by the outbound-scoped action.)
+      const inboundReplays = await prisma.webhookDelivery.findMany({
+        where: { replayedFromDeliveryId: { in: inboundDeliveryIds } },
+        select: { id: true },
+      });
+      expect(inboundReplays).toHaveLength(0);
+    });
   });
 });

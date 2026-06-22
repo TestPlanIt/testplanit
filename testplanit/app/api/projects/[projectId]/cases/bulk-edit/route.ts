@@ -405,17 +405,6 @@ export const POST = withAuditContext(
             // Create version snapshot if requested
             // Note: The test case was already updated with currentVersion incremented above
             if (validatedData.createVersions) {
-              const tagNames = caseItem.tags.map((t) => t.name);
-              const issuesData = caseItem.issues.map((i) => ({
-                id: i.id,
-                name: i.name,
-                ...(i.externalId && { externalId: i.externalId }),
-              }));
-              const stepsData = caseItem.steps.map((s) => ({
-                step: s.step,
-                expectedResult: s.expectedResult,
-              }));
-
               await createTestCaseVersionInTransaction(tx, caseId, {
                 // Preserve original creator metadata
                 creatorId: caseItem.creatorId,
@@ -425,15 +414,15 @@ export const POST = withAuditContext(
                   // Apply any changes from the bulk edit
                   name: updateData.name ?? caseItem.name,
                   stateId: updateData.stateId ?? caseItem.stateId,
-                  stateName:
-                    updateData.stateId !== undefined
-                      ? caseItem.state?.name || ""
-                      : undefined,
                   automated: updateData.automated ?? caseItem.automated,
                   estimate: updateData.estimate ?? caseItem.estimate,
-                  steps: stepsData,
-                  tags: tagNames,
-                  issues: issuesData,
+                  // stateName, tags, issues, and steps are intentionally NOT
+                  // overridden here. The version service re-reads them from the
+                  // row we just updated inside this same transaction, so the
+                  // snapshot reflects this bulk edit's state, connect/disconnect
+                  // and step changes. Passing the in-memory pre-update
+                  // `caseItem` values would record stale data on the version
+                  // (e.g. the old state name for a just-changed state).
                   isArchived: caseItem.isArchived,
                   order: caseItem.order,
                 },

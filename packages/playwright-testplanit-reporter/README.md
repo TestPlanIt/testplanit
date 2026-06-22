@@ -93,6 +93,8 @@ caseIdPattern: /TEST-(\d+)/g  // JIRA-style:         "TEST-12345 should work"
 | `tagIds` | `(number \| string)[]` | No | - | Tags to apply (IDs or names). Non-existent tags are created automatically |
 | `caseIdPattern` | `RegExp \| string` | No | `/\[(\d+)\]/g` | Regex to extract case IDs from test titles. Must include a capturing group |
 | `autoCreateTestCases` | `boolean` | No | `false` | Auto-create test cases matched by describe path + test title |
+| `captureSteps` | `boolean` | No | `true` | Capture `test.step()` calls as authored steps on newly created cases (nested steps flattened, in order, prefixed by depth). Requires `autoCreateTestCases`; applies only to created cases — existing cases are never modified |
+| `overwriteSteps` | `boolean` | No | `false` | Overwrite an **existing** case's steps with the captured `test.step()` calls every run (linked-by-ID and auto-matched cases), keeping the case in sync as the script changes. **Destructive** — discards manual step edits. A test with no `test.step()` calls never clears existing steps |
 | `createFolderHierarchy` | `boolean` | No | `false` | Create nested folders from `test.describe` structure. Requires `autoCreateTestCases` and `parentFolderId` |
 | `parentFolderId` | `number \| string` | No | - | Parent folder for auto-created cases (ID or name) |
 | `templateId` | `number \| string` | No | - | Template for auto-created cases (ID or name) |

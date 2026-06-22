@@ -48,59 +48,67 @@ test.describe("Authenticated Share Flow", () => {
     context,
   }) => {
     const timestamp = Date.now();
-    const projectId = await api.createProject(`Auth Share Test ${timestamp}`);
+    let projectId: number | undefined;
+    let shareUrl: string | undefined;
+    let shareKey: string | undefined;
 
-    // Create test cases
-    const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Test Case 1 ${timestamp}`
-    );
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Test Case 2 ${timestamp}`
-    );
+    await test.step("Create project with two test cases", async () => {
+      projectId = await api.createProject(`Auth Share Test ${timestamp}`);
 
-    // Navigate to report builder and run report
-    await navigateToRepositoryStatsReport(page, projectId);
-    await runReport(page);
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Test Case 1 ${timestamp}`
+      );
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Test Case 2 ${timestamp}`
+      );
+    });
 
-    // Create an authenticated share
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+    await test.step("Build and run the repository stats report", async () => {
+      await navigateToRepositoryStatsReport(page, projectId!);
+      await runReport(page);
+    });
 
-    // Select AUTHENTICATED mode
-    // Note: The data-testid uses lowercase version of the mode
-    const authModeRadio = page.locator(
-      '[data-testid="share-mode-authenticated"]'
-    );
-    await expect(authModeRadio).toBeVisible({ timeout: 5000 });
-    await authModeRadio.click();
+    await test.step("Create an authenticated share link", async () => {
+      const shareButton = page.getByTestId("share-report-button");
+      await shareButton.click();
 
-    // Add title
-    const titleInput = page.getByTestId("share-title-input");
-    await titleInput.fill(`Authenticated Report ${timestamp}`);
+      // Select AUTHENTICATED mode
+      // Note: The data-testid uses lowercase version of the mode
+      const authModeRadio = page.locator(
+        '[data-testid="share-mode-authenticated"]'
+      );
+      await expect(authModeRadio).toBeVisible({ timeout: 5000 });
+      await authModeRadio.click();
 
-    // Create the share
-    const createButton = page.getByTestId("share-create-button");
-    await createButton.click();
+      // Add title
+      const titleInput = page.getByTestId("share-title-input");
+      await titleInput.fill(`Authenticated Report ${timestamp}`);
 
-    // Get the share URL
-    const shareUrlInput = page.getByTestId("share-url-input");
-    await expect(shareUrlInput).toBeVisible({ timeout: 10000 });
-    const shareUrl = await shareUrlInput.inputValue();
-    const shareKey = shareUrl.split("/share/")[1];
+      // Create the share
+      const createButton = page.getByTestId("share-create-button");
+      await createButton.click();
+    });
 
-    // Track for cleanup
-    const shareLinkData = await api.getShareLinkByKey(shareKey);
-    if (shareLinkData) {
-      api.trackShareLink(shareLinkData.id);
-      expect(shareLinkData.mode).toBe("AUTHENTICATED");
-    }
+    await test.step("Capture share URL and verify AUTHENTICATED mode", async () => {
+      const shareUrlInput = page.getByTestId("share-url-input");
+      await expect(shareUrlInput).toBeVisible({ timeout: 10000 });
+      shareUrl = await shareUrlInput.inputValue();
+      shareKey = shareUrl.split("/share/")[1];
 
-    await page.keyboard.press("Escape");
+      // Track for cleanup
+      const shareLinkData = await api.getShareLinkByKey(shareKey);
+      if (shareLinkData) {
+        api.trackShareLink(shareLinkData.id);
+        expect(shareLinkData.mode).toBe("AUTHENTICATED");
+      }
+
+      await page.keyboard.press("Escape");
+    });
 
     // Access in unauthenticated incognito mode
     const incognitoContext = await context.browser()!.newContext({
@@ -109,16 +117,18 @@ test.describe("Authenticated Share Flow", () => {
     const incognitoPage = await incognitoContext.newPage();
 
     try {
-      await incognitoPage.goto(shareUrl);
-      await incognitoPage.waitForLoadState("networkidle");
+      await test.step("Verify unauthenticated visitor is redirected to signin", async () => {
+        await incognitoPage.goto(shareUrl!);
+        await incognitoPage.waitForLoadState("networkidle");
 
-      // Should be redirected to sign-in page
-      await expect(incognitoPage).toHaveURL(/\/signin/, { timeout: 10000 });
+        // Should be redirected to sign-in page
+        await expect(incognitoPage).toHaveURL(/\/signin/, { timeout: 10000 });
 
-      // Verify callback URL is set to return to share
-      const currentUrl = incognitoPage.url();
-      expect(currentUrl).toContain("callbackUrl");
-      expect(currentUrl).toContain(`/share/${shareKey}`);
+        // Verify callback URL is set to return to share
+        const currentUrl = incognitoPage.url();
+        expect(currentUrl).toContain("callbackUrl");
+        expect(currentUrl).toContain(`/share/${shareKey}`);
+      });
     } finally {
       await incognitoPage.close();
       await incognitoContext.close();
@@ -130,60 +140,71 @@ test.describe("Authenticated Share Flow", () => {
     page,
   }) => {
     const timestamp = Date.now();
-    const projectId = await api.createProject(
-      `Auth Redirect Test ${timestamp}`
-    );
+    let projectId: number | undefined;
+    let shareUrl: string | undefined;
 
-    // Create test data
-    const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(projectId, rootFolderId, `Test Case ${timestamp}`);
+    await test.step("Create project with a test case", async () => {
+      projectId = await api.createProject(`Auth Redirect Test ${timestamp}`);
 
-    // Navigate to report builder and run report
-    await navigateToRepositoryStatsReport(page, projectId);
-    await runReport(page);
-
-    // Create an authenticated share
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
-
-    const authModeRadio = page.getByTestId("share-mode-authenticated");
-    await authModeRadio.click();
-
-    const createButton = page.getByTestId("share-create-button");
-    await createButton.click();
-
-    // Get the share URL
-    const shareUrlInput = page.getByTestId("share-url-input");
-    await expect(shareUrlInput).toBeVisible({ timeout: 10000 });
-    const shareUrl = await shareUrlInput.inputValue();
-    const shareKey = shareUrl.split("/share/")[1];
-
-    // Track for cleanup
-    const shareLinkData = await api.getShareLinkByKey(shareKey);
-    if (shareLinkData) {
-      api.trackShareLink(shareLinkData.id);
-    }
-
-    await page.keyboard.press("Escape");
-
-    // Navigate to the share URL as authenticated admin user
-    await page.goto(shareUrl);
-    await page.waitForLoadState("networkidle");
-
-    // Should be redirected to the Reports page with the report configuration
-    await expect(page).toHaveURL(/\/projects\/reports\/\d+/, {
-      timeout: 10000,
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Test Case ${timestamp}`
+      );
     });
 
-    // Verify the URL contains the report configuration parameters
-    const finalUrl = page.url();
-    expect(finalUrl).toContain("reportType=repository-stats");
-    expect(finalUrl).toContain("dimensions=testCase");
-    expect(finalUrl).toContain("metrics=testCaseCount");
+    await test.step("Build and run the repository stats report", async () => {
+      await navigateToRepositoryStatsReport(page, projectId!);
+      await runReport(page);
+    });
 
-    // Verify we're on the Report Builder tab (not viewing static share)
-    const reportBuilder = page.locator("text=/Report Builder/i");
-    await expect(reportBuilder.first()).toBeVisible({ timeout: 5000 });
+    await test.step("Create an authenticated share link", async () => {
+      const shareButton = page.getByTestId("share-report-button");
+      await shareButton.click();
+
+      const authModeRadio = page.getByTestId("share-mode-authenticated");
+      await authModeRadio.click();
+
+      const createButton = page.getByTestId("share-create-button");
+      await createButton.click();
+    });
+
+    await test.step("Capture share URL and track for cleanup", async () => {
+      const shareUrlInput = page.getByTestId("share-url-input");
+      await expect(shareUrlInput).toBeVisible({ timeout: 10000 });
+      shareUrl = await shareUrlInput.inputValue();
+      const shareKey = shareUrl.split("/share/")[1];
+
+      // Track for cleanup
+      const shareLinkData = await api.getShareLinkByKey(shareKey);
+      if (shareLinkData) {
+        api.trackShareLink(shareLinkData.id);
+      }
+
+      await page.keyboard.press("Escape");
+    });
+
+    await test.step("Verify authenticated user is redirected to the report builder", async () => {
+      // Navigate to the share URL as authenticated admin user
+      await page.goto(shareUrl!);
+      await page.waitForLoadState("networkidle");
+
+      // Should be redirected to the Reports page with the report configuration
+      await expect(page).toHaveURL(/\/projects\/reports\/\d+/, {
+        timeout: 10000,
+      });
+
+      // Verify the URL contains the report configuration parameters
+      const finalUrl = page.url();
+      expect(finalUrl).toContain("reportType=repository-stats");
+      expect(finalUrl).toContain("dimensions=testCase");
+      expect(finalUrl).toContain("metrics=testCaseCount");
+
+      // Verify we're on the Report Builder tab (not viewing static share)
+      const reportBuilder = page.locator("text=/Report Builder/i");
+      await expect(reportBuilder.first()).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("Authenticated share increments view count on access", async ({

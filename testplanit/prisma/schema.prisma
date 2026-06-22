@@ -109,6 +109,7 @@ enum NotificationType {
   REVIEW_REJECTED
   REVIEW_CANCELLED
   REVIEW_REMINDER
+  AI_STEPS_DERIVED
 }
 
 enum WorkflowType {

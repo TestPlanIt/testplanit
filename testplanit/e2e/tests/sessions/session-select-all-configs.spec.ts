@@ -12,57 +12,68 @@ test.describe("Session Configuration Select All", () => {
     page,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E SelectAll ${ts}`);
+    let projectId: number | undefined;
 
-    // Create 12 configurations (more than default page size of 10)
-    const configNames: string[] = [];
-    for (let i = 1; i <= 12; i++) {
-      const name = `SelectAll Config ${String(i).padStart(2, "0")} ${ts}`;
-      configNames.push(name);
-      await api.createConfiguration(name, projectId);
-    }
+    await test.step("Create a project with 12 configurations", async () => {
+      projectId = await api.createProject(`E2E SelectAll ${ts}`);
 
-    await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("load");
+      // Create 12 configurations (more than default page size of 10)
+      const configNames: string[] = [];
+      for (let i = 1; i <= 12; i++) {
+        const name = `SelectAll Config ${String(i).padStart(2, "0")} ${ts}`;
+        configNames.push(name);
+        await api.createConfiguration(name, projectId);
+      }
+    });
 
-    // Open Add Session dialog
-    const newSessionButton = page.getByTestId("new-session-button");
-    await expect(newSessionButton).toBeVisible({ timeout: 15000 });
-    await newSessionButton.click();
+    await test.step("Open the Add Session dialog", async () => {
+      await page.goto(`/en-US/projects/sessions/${projectId!}`);
+      await page.waitForLoadState("load");
+
+      // Open Add Session dialog
+      const newSessionButton = page.getByTestId("new-session-button");
+      await expect(newSessionButton).toBeVisible({ timeout: 15000 });
+      await newSessionButton.click();
+    });
 
     const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // Open the configurations combobox
-    const configLabel = dialog.locator('label:has-text("Configurations")');
-    const configCombobox = configLabel
-      .locator("..")
-      .locator('button[role="combobox"]');
-    await configCombobox.click();
+    await test.step("Open the configurations combobox", async () => {
+      await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // Wait for options to load
-    await page.waitForTimeout(1000);
+      // Open the configurations combobox
+      const configLabel = dialog.locator('label:has-text("Configurations")');
+      const configCombobox = configLabel
+        .locator("..")
+        .locator('button[role="combobox"]');
+      await configCombobox.click();
 
-    // The "Select All" option should show the total count, not just page count
-    // Since there are 12+ configs total (possibly more from other tests),
-    // the count should be greater than 10 (the page size)
-    const selectAllOption = page.locator(
-      '[role="option"][data-value="__select_all__"]'
-    );
-    await expect(selectAllOption).toBeVisible({ timeout: 5000 });
+      // Wait for options to load
+      await page.waitForTimeout(1000);
+    });
 
-    // Extract the count from "Select All (N)"
-    const selectAllText = await selectAllOption.textContent();
-    const match = selectAllText?.match(/\((\d+)\)/);
-    expect(match).not.toBeNull();
-    const count = parseInt(match![1], 10);
+    await test.step("Verify Select All shows the total count across pages", async () => {
+      // The "Select All" option should show the total count, not just page count
+      // Since there are 12+ configs total (possibly more from other tests),
+      // the count should be greater than 10 (the page size)
+      const selectAllOption = page.locator(
+        '[role="option"][data-value="__select_all__"]'
+      );
+      await expect(selectAllOption).toBeVisible({ timeout: 5000 });
 
-    // Should be at least 12 (our configs, plus possibly pre-existing ones)
-    expect(count).toBeGreaterThanOrEqual(12);
+      // Extract the count from "Select All (N)"
+      const selectAllText = await selectAllOption.textContent();
+      const match = selectAllText?.match(/\((\d+)\)/);
+      expect(match).not.toBeNull();
+      const count = parseInt(match![1], 10);
 
-    // The page indicator should show "1-10 of N" confirming we're on page 1
-    const paginationText = page.locator("text=/1–10 of/");
-    await expect(paginationText).toBeVisible({ timeout: 5000 });
+      // Should be at least 12 (our configs, plus possibly pre-existing ones)
+      expect(count).toBeGreaterThanOrEqual(12);
+
+      // The page indicator should show "1-10 of N" confirming we're on page 1
+      const paginationText = page.locator("text=/1–10 of/");
+      await expect(paginationText).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("should select all configurations across pages when clicking Select All", async ({
@@ -70,60 +81,75 @@ test.describe("Session Configuration Select All", () => {
     page,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`E2E SelectAllClick ${ts}`);
+    let projectId: number | undefined;
 
-    // Create 12 configurations
-    for (let i = 1; i <= 12; i++) {
-      await api.createConfiguration(
-        `AllClick Config ${String(i).padStart(2, "0")} ${ts}`,
-        projectId
-      );
-    }
+    await test.step("Create a project with 12 configurations", async () => {
+      projectId = await api.createProject(`E2E SelectAllClick ${ts}`);
 
-    await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("load");
+      // Create 12 configurations
+      for (let i = 1; i <= 12; i++) {
+        await api.createConfiguration(
+          `AllClick Config ${String(i).padStart(2, "0")} ${ts}`,
+          projectId
+        );
+      }
+    });
 
-    const newSessionButton = page.getByTestId("new-session-button");
-    await expect(newSessionButton).toBeVisible({ timeout: 15000 });
-    await newSessionButton.click();
+    await test.step("Open the Add Session dialog", async () => {
+      await page.goto(`/en-US/projects/sessions/${projectId!}`);
+      await page.waitForLoadState("load");
+
+      const newSessionButton = page.getByTestId("new-session-button");
+      await expect(newSessionButton).toBeVisible({ timeout: 15000 });
+      await newSessionButton.click();
+    });
 
     const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    // Open the configurations combobox
     const configLabel = dialog.locator('label:has-text("Configurations")');
-    const configCombobox = configLabel
-      .locator("..")
-      .locator('button[role="combobox"]');
-    await configCombobox.click();
-    await page.waitForTimeout(1000);
 
-    // Click Select All
-    const selectAllOption = page.locator(
-      '[role="option"][data-value="__select_all__"]'
-    );
-    await expect(selectAllOption).toBeVisible({ timeout: 5000 });
-    await selectAllOption.click();
+    await test.step("Select all configurations and close the popover", async () => {
+      await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // Wait for Select All to process (it fetches all items asynchronously)
-    await page.waitForTimeout(2000);
+      // Open the configurations combobox
+      const configCombobox = configLabel
+        .locator("..")
+        .locator('button[role="combobox"]');
+      await configCombobox.click();
+      await page.waitForTimeout(1000);
 
-    // Close the popover
-    await page.keyboard.press("Escape");
+      // Click Select All
+      const selectAllOption = page.locator(
+        '[role="option"][data-value="__select_all__"]'
+      );
+      await expect(selectAllOption).toBeVisible({ timeout: 5000 });
+      await selectAllOption.click();
 
-    // The label count should show at least 12
-    // Wait for the label to update with the count
-    await expect(configLabel).toContainText("(", { timeout: 5000 });
-    const labelText = await configLabel.textContent();
-    const match = labelText?.match(/\((\d+)\)/);
-    expect(match).not.toBeNull();
-    const selectedCount = parseInt(match![1], 10);
-    expect(selectedCount).toBeGreaterThanOrEqual(12);
+      // Wait for Select All to process (it fetches all items asynchronously)
+      await page.waitForTimeout(2000);
 
-    // The Create button should show the count
-    const createButton = dialog.locator('button[type="submit"]');
-    await expect(createButton).toContainText(`(${selectedCount})`, {
-      timeout: 5000,
+      // Close the popover
+      await page.keyboard.press("Escape");
+    });
+
+    let selectedCount: number | undefined;
+
+    await test.step("Verify the label reflects all selected configurations", async () => {
+      // The label count should show at least 12
+      // Wait for the label to update with the count
+      await expect(configLabel).toContainText("(", { timeout: 5000 });
+      const labelText = await configLabel.textContent();
+      const match = labelText?.match(/\((\d+)\)/);
+      expect(match).not.toBeNull();
+      selectedCount = parseInt(match![1], 10);
+      expect(selectedCount).toBeGreaterThanOrEqual(12);
+    });
+
+    await test.step("Verify the Create button shows the selected count", async () => {
+      // The Create button should show the count
+      const createButton = dialog.locator('button[type="submit"]');
+      await expect(createButton).toContainText(`(${selectedCount!})`, {
+        timeout: 5000,
+      });
     });
   });
 });

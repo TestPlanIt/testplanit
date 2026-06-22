@@ -81,6 +81,9 @@ export function SyncIntegrationButton({
       </TooltipTrigger>
       <TooltipContent>
         <p>{t("syncIntegration")}</p>
+        <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+          {t("syncIntegrationHint")}
+        </p>
       </TooltipContent>
     </Tooltip>
   );

@@ -59,45 +59,49 @@ test.describe("Batch Operations - createMany Steps (BATCH-01)", () => {
       isDeleted: false,
     }));
 
-    // POST to createMany endpoint
-    const createManyResponse = await request.post(
-      `${baseURL}/api/model/steps/createMany`,
-      {
-        data: { data: stepsArray },
-      }
-    );
+    await test.step("Create 5 steps via createMany and confirm the count", async () => {
+      // POST to createMany endpoint
+      const createManyResponse = await request.post(
+        `${baseURL}/api/model/steps/createMany`,
+        {
+          data: { data: stepsArray },
+        }
+      );
 
-    // createMany returns 201 Created
-    expect(createManyResponse.ok()).toBe(true);
+      // createMany returns 201 Created
+      expect(createManyResponse.ok()).toBe(true);
 
-    // createMany returns { data: { count: N } }
-    const createManyResult = await createManyResponse.json();
-    expect(createManyResult.data.count).toBe(5);
+      // createMany returns { data: { count: N } }
+      const createManyResult = await createManyResponse.json();
+      expect(createManyResult.data.count).toBe(5);
+    });
 
-    // Verify by reading back all 5 steps
-    const findManyResponse = await request.get(
-      `${baseURL}/api/model/steps/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { testCaseId: caseId, isDeleted: false },
-            orderBy: { order: "asc" },
-          }),
-        },
-      }
-    );
+    await test.step("Read back the steps and verify all 5 orders are present", async () => {
+      // Verify by reading back all 5 steps
+      const findManyResponse = await request.get(
+        `${baseURL}/api/model/steps/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { testCaseId: caseId, isDeleted: false },
+              orderBy: { order: "asc" },
+            }),
+          },
+        }
+      );
 
-    expect(findManyResponse.ok()).toBe(true);
-    const result = await findManyResponse.json();
-    expect(result.data.length).toBe(5);
+      expect(findManyResponse.ok()).toBe(true);
+      const result = await findManyResponse.json();
+      expect(result.data.length).toBe(5);
 
-    // Verify all 5 orders (1-5) are present
-    const orders = result.data.map((s: { order: number }) => s.order);
-    expect(orders).toContain(1);
-    expect(orders).toContain(2);
-    expect(orders).toContain(3);
-    expect(orders).toContain(4);
-    expect(orders).toContain(5);
+      // Verify all 5 orders (1-5) are present
+      const orders = result.data.map((s: { order: number }) => s.order);
+      expect(orders).toContain(1);
+      expect(orders).toContain(2);
+      expect(orders).toContain(3);
+      expect(orders).toContain(4);
+      expect(orders).toContain(5);
+    });
   });
 });
 
@@ -127,43 +131,47 @@ test.describe("Batch Operations - updateMany RepositoryCases (BATCH-02)", () => 
     request,
     baseURL,
   }) => {
-    // PATCH to updateMany endpoint — set isArchived: true on all 3 cases
-    const updateManyResponse = await request.patch(
-      `${baseURL}/api/model/repositoryCases/updateMany`,
-      {
-        data: {
-          where: { id: { in: caseIds } },
-          data: { isArchived: true },
-        },
-      }
-    );
-
-    expect(updateManyResponse.ok()).toBe(true);
-
-    // updateMany returns { data: { count: N } }
-    const updateManyResult = await updateManyResponse.json();
-    expect(updateManyResult.data.count).toBe(3);
-
-    // Verify by reading back all 3 cases
-    const findManyResponse = await request.get(
-      `${baseURL}/api/model/repositoryCases/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
+    await test.step("Archive all 3 cases via updateMany and confirm the count", async () => {
+      // PATCH to updateMany endpoint — set isArchived: true on all 3 cases
+      const updateManyResponse = await request.patch(
+        `${baseURL}/api/model/repositoryCases/updateMany`,
+        {
+          data: {
             where: { id: { in: caseIds } },
-          }),
-        },
-      }
-    );
+            data: { isArchived: true },
+          },
+        }
+      );
 
-    expect(findManyResponse.ok()).toBe(true);
-    const result = await findManyResponse.json();
-    expect(result.data.length).toBe(3);
+      expect(updateManyResponse.ok()).toBe(true);
 
-    // All 3 cases must have isArchived: true
-    expect(
-      result.data.every((c: { isArchived: boolean }) => c.isArchived === true)
-    ).toBe(true);
+      // updateMany returns { data: { count: N } }
+      const updateManyResult = await updateManyResponse.json();
+      expect(updateManyResult.data.count).toBe(3);
+    });
+
+    await test.step("Read back the cases and verify all 3 are archived", async () => {
+      // Verify by reading back all 3 cases
+      const findManyResponse = await request.get(
+        `${baseURL}/api/model/repositoryCases/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: { in: caseIds } },
+            }),
+          },
+        }
+      );
+
+      expect(findManyResponse.ok()).toBe(true);
+      const result = await findManyResponse.json();
+      expect(result.data.length).toBe(3);
+
+      // All 3 cases must have isArchived: true
+      expect(
+        result.data.every((c: { isArchived: boolean }) => c.isArchived === true)
+      ).toBe(true);
+    });
   });
 });
 
@@ -187,38 +195,42 @@ test.describe("Batch Operations - deleteMany Tags (BATCH-03)", () => {
     request,
     baseURL,
   }) => {
-    // DELETE to deleteMany endpoint with where filter in q param
-    // ZenStack v3 tags/deleteMany requires DELETE method (not POST)
-    const deleteManyResponse = await request.delete(
-      `${baseURL}/api/model/tags/deleteMany`,
-      {
-        params: {
-          q: JSON.stringify({ where: { id: { in: tagIds } } }),
-        },
-      }
-    );
+    await test.step("Delete all 4 tags via deleteMany and confirm the count", async () => {
+      // DELETE to deleteMany endpoint with where filter in q param
+      // ZenStack v3 tags/deleteMany requires DELETE method (not POST)
+      const deleteManyResponse = await request.delete(
+        `${baseURL}/api/model/tags/deleteMany`,
+        {
+          params: {
+            q: JSON.stringify({ where: { id: { in: tagIds } } }),
+          },
+        }
+      );
 
-    expect(deleteManyResponse.ok()).toBe(true);
+      expect(deleteManyResponse.ok()).toBe(true);
 
-    // deleteMany returns { data: { count: N } }
-    const deleteManyResult = await deleteManyResponse.json();
-    expect(deleteManyResult.data.count).toBe(4);
+      // deleteMany returns { data: { count: N } }
+      const deleteManyResult = await deleteManyResponse.json();
+      expect(deleteManyResult.data.count).toBe(4);
+    });
 
-    // Verify by reading back — all rows should be gone (hard delete)
-    const findManyResponse = await request.get(
-      `${baseURL}/api/model/tags/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { id: { in: tagIds } },
-          }),
-        },
-      }
-    );
+    await test.step("Read back the tags and verify no rows remain", async () => {
+      // Verify by reading back — all rows should be gone (hard delete)
+      const findManyResponse = await request.get(
+        `${baseURL}/api/model/tags/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: { in: tagIds } },
+            }),
+          },
+        }
+      );
 
-    expect(findManyResponse.ok()).toBe(true);
-    const result = await findManyResponse.json();
-    // All 4 tags are hard-deleted — no rows remain
-    expect(result.data.length).toBe(0);
+      expect(findManyResponse.ok()).toBe(true);
+      const result = await findManyResponse.json();
+      // All 4 tags are hard-deleted — no rows remain
+      expect(result.data.length).toBe(0);
+    });
   });
 });

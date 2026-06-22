@@ -78,7 +78,15 @@ export async function GET(
 
     // Get the appropriate adapter
     const manager = IntegrationManager.getInstance();
-    const adapter = await manager.getAdapter(integrationId!.toString());
+    // The integration is still inactive at callback time (it's flipped to
+    // ACTIVE below, once a token is stored), so allow building the adapter to
+    // exchange the authorization code for tokens.
+    const adapter = await manager.getAdapter(
+      integrationId!.toString(),
+      undefined,
+      undefined,
+      { allowInactive: true }
+    );
 
     if (!adapter || !adapter.exchangeCodeForTokens) {
       return NextResponse.redirect(

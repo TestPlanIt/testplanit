@@ -44,7 +44,7 @@ const fetchCaseDetailMock = vi.mocked(fetchDetailModule.fetchCaseDetail);
 
 const env: EnvConfig = { apiUrl: "https://host.example.com", apiToken: "tpi_testtoken" };
 
-const HEAD_CASE = { id: 99, projectId: 7 };
+const HEAD_CASE = { id: 99, projectId: 7, templateId: 22 };
 
 const FULL_DETAIL = {
   id: 99,
@@ -152,7 +152,12 @@ describe("testplanit_cases_update", () => {
 
     await callTool({ caseId: 99, customFields: { Priority: "Low" } });
 
-    expect(resolveCustomFieldsMock).toHaveBeenCalledWith({ Priority: "Low" }, env);
+    // Resolution is scoped to the case's own template id (from the head fetch).
+    expect(resolveCustomFieldsMock).toHaveBeenCalledWith(
+      { Priority: "Low" },
+      22,
+      env,
+    );
     expect(writeCustomFieldValuesMock).toHaveBeenCalledWith(
       99,
       [{ fieldId: 1, value: "Low", name: "Priority" }],

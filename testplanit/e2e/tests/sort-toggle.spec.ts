@@ -14,52 +14,71 @@ test.describe("Sort toggle on test runs list page", () => {
     page,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`SortToggle ${ts}`);
-    const folderId = await api.getRootFolderId(projectId);
+    let projectId: number | undefined;
 
-    // Create 3 cases with different statuses to populate the bar
-    const [c1, c2, c3] = await Promise.all([
-      api.createTestCase(projectId, folderId, `Toggle Case 1 ${ts}`),
-      api.createTestCase(projectId, folderId, `Toggle Case 2 ${ts}`),
-      api.createTestCase(projectId, folderId, `Toggle Case 3 ${ts}`),
-    ]);
-    const testRunId = await api.createTestRun(
-      projectId,
-      `Sort Toggle Run ${ts}`
-    );
-    const [rc1, rc2] = await api.addTestCasesToTestRun(testRunId, [c1, c2, c3]);
+    await test.step("Create a project and test run with cases in different statuses", async () => {
+      projectId = await api.createProject(`SortToggle ${ts}`);
+      const folderId = await api.getRootFolderId(projectId);
 
-    const passedId = await api.getStatusId("passed");
-    const failedId = await api.getStatusId("failed");
-    await api.setTestRunCaseStatus(rc1, passedId);
-    await api.setTestRunCaseStatus(rc2, failedId);
-    // rc3 left untested (no status)
+      // Create 3 cases with different statuses to populate the bar
+      const [c1, c2, c3] = await Promise.all([
+        api.createTestCase(projectId, folderId, `Toggle Case 1 ${ts}`),
+        api.createTestCase(projectId, folderId, `Toggle Case 2 ${ts}`),
+        api.createTestCase(projectId, folderId, `Toggle Case 3 ${ts}`),
+      ]);
+      const testRunId = await api.createTestRun(
+        projectId,
+        `Sort Toggle Run ${ts}`
+      );
+      const [rc1, rc2] = await api.addTestCasesToTestRun(testRunId, [
+        c1,
+        c2,
+        c3,
+      ]);
 
-    await page.goto(`/en-US/projects/runs/${projectId}?page=1&pageSize=25`);
-    await page.waitForLoadState("networkidle");
+      const passedId = await api.getStatusId("passed");
+      const failedId = await api.getStatusId("failed");
+      await api.setTestRunCaseStatus(rc1, passedId);
+      await api.setTestRunCaseStatus(rc2, failedId);
+      // rc3 left untested (no status)
+    });
 
-    // Find the sort toggle for our test run row
     const toggle = page.locator(`[data-testid="sort-toggle"]`).first();
-    await expect(toggle).toBeVisible();
 
-    // Hover to confirm initial tooltip says "Group by status"
-    await toggle.hover();
-    await expect(page.getByText("Group by status").first()).toBeVisible();
+    await test.step("Open the test runs list and locate the sort toggle", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId!}?page=1&pageSize=25`);
+      await page.waitForLoadState("networkidle");
 
-    // Click — switches to "sort by date" mode
-    await toggle.click();
-    await toggle.hover();
-    await expect(page.getByText("Sort by date").first()).toBeVisible();
+      // Find the sort toggle for our test run row
+      await expect(toggle).toBeVisible();
+    });
 
-    // Click again — back to "group by status"
-    await toggle.click();
-    await toggle.hover();
-    await expect(page.getByText("Group by status").first()).toBeVisible();
+    await test.step("Confirm initial tooltip shows Group by status", async () => {
+      // Hover to confirm initial tooltip says "Group by status"
+      await toggle.hover();
+      await expect(page.getByText("Group by status").first()).toBeVisible();
+    });
 
-    // The status bar should still be rendering segments
-    await expect(
-      page.locator('[data-testid="test-run-cases-status-bar"]').first()
-    ).toBeVisible();
+    await test.step("Click to switch to Sort by date mode", async () => {
+      // Click — switches to "sort by date" mode
+      await toggle.click();
+      await toggle.hover();
+      await expect(page.getByText("Sort by date").first()).toBeVisible();
+    });
+
+    await test.step("Click again to return to Group by status mode", async () => {
+      // Click again — back to "group by status"
+      await toggle.click();
+      await toggle.hover();
+      await expect(page.getByText("Group by status").first()).toBeVisible();
+    });
+
+    await test.step("Verify the status bar still renders segments", async () => {
+      // The status bar should still be rendering segments
+      await expect(
+        page.locator('[data-testid="test-run-cases-status-bar"]').first()
+      ).toBeVisible();
+    });
   });
 });
 
@@ -70,35 +89,48 @@ test.describe("Sort toggle on sessions list page", () => {
     request,
   }) => {
     const ts = Date.now();
-    const projectId = await api.createProject(`SortToggleSession ${ts}`);
-    const sessionId = await api.createSession(
-      projectId,
-      `Sort Toggle Session ${ts}`
-    );
+    let projectId: number | undefined;
 
-    // Add a result so the summary bar renders
-    const passedId = await api.getStatusId("passed");
-    await request.post(`/api/model/sessionResults/create`, {
-      data: {
+    await test.step("Create a session with a result so the summary bar renders", async () => {
+      projectId = await api.createProject(`SortToggleSession ${ts}`);
+      const sessionId = await api.createSession(
+        projectId,
+        `Sort Toggle Session ${ts}`
+      );
+
+      // Add a result so the summary bar renders
+      const passedId = await api.getStatusId("passed");
+      await request.post(`/api/model/sessionResults/create`, {
         data: {
-          session: { connect: { id: sessionId } },
-          status: { connect: { id: passedId } },
-          createdBy: { connect: { id: await api.getCurrentUserId() } },
+          data: {
+            session: { connect: { id: sessionId } },
+            status: { connect: { id: passedId } },
+            createdBy: { connect: { id: await api.getCurrentUserId() } },
+          },
         },
-      },
+      });
     });
 
-    await page.goto(`/en-US/projects/sessions/${projectId}?page=1&pageSize=25`);
-    await page.waitForLoadState("networkidle");
-
     const toggle = page.locator('[data-testid="sort-toggle"]').first();
-    await expect(toggle).toBeVisible();
 
-    await toggle.hover();
-    await expect(page.getByText("Group by status").first()).toBeVisible();
+    await test.step("Open the sessions list and locate the sort toggle", async () => {
+      await page.goto(
+        `/en-US/projects/sessions/${projectId!}?page=1&pageSize=25`
+      );
+      await page.waitForLoadState("networkidle");
 
-    await toggle.click();
-    await toggle.hover();
-    await expect(page.getByText("Sort by date").first()).toBeVisible();
+      await expect(toggle).toBeVisible();
+    });
+
+    await test.step("Confirm initial tooltip shows Group by status", async () => {
+      await toggle.hover();
+      await expect(page.getByText("Group by status").first()).toBeVisible();
+    });
+
+    await test.step("Click to switch to Sort by date mode", async () => {
+      await toggle.click();
+      await toggle.hover();
+      await expect(page.getByText("Sort by date").first()).toBeVisible();
+    });
   });
 });

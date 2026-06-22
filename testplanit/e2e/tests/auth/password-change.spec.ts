@@ -36,69 +36,79 @@ test.describe("Password Change", () => {
     try {
       const signinPage = new SigninPage(page);
 
-      // Sign in as the test user
-      await signinPage.goto();
-      await signinPage.fillCredentials(testEmail, originalPassword);
-      await signinPage.submit();
-      await page.waitForURL((url) => !url.pathname.includes("/signin"), {
-        timeout: 30000,
+      await test.step("Sign in as the test user", async () => {
+        await signinPage.goto();
+        await signinPage.fillCredentials(testEmail, originalPassword);
+        await signinPage.submit();
+        await page.waitForURL((url) => !url.pathname.includes("/signin"), {
+          timeout: 30000,
+        });
       });
 
-      // Navigate to user profile page
-      await page.goto(`${baseURL}/en-US/users/profile/${userId}`);
-      await page.waitForLoadState("networkidle");
-
-      // Find and click the Change Password button (it's a destructive variant button)
-      // The button text is "Change Password" from the ChangePasswordModal component
-      const changePasswordButton = page
-        .getByRole("button", { name: /^change password$/i })
-        .first();
-      await expect(changePasswordButton).toBeVisible({ timeout: 10000 });
-      await changePasswordButton.click();
-
-      // The ChangePasswordModal dialog opens (Radix UI Dialog with role="dialog")
       const dialog = page.locator('[role="dialog"]').first();
-      await expect(dialog).toBeVisible({ timeout: 10000 });
 
-      // Fill in current password
-      const currentPasswordInput = dialog.locator("#currentPassword");
-      await expect(currentPasswordInput).toBeVisible({ timeout: 5000 });
-      await currentPasswordInput.fill(originalPassword);
+      await test.step("Open the Change Password modal from the profile page", async () => {
+        // Navigate to user profile page
+        await page.goto(`${baseURL}/en-US/users/profile/${userId}`);
+        await page.waitForLoadState("networkidle");
 
-      // Fill in new password
-      const newPasswordInput = dialog.locator("#newPassword");
-      await newPasswordInput.fill(newPassword);
+        // Find and click the Change Password button (it's a destructive variant button)
+        // The button text is "Change Password" from the ChangePasswordModal component
+        const changePasswordButton = page
+          .getByRole("button", { name: /^change password$/i })
+          .first();
+        await expect(changePasswordButton).toBeVisible({ timeout: 10000 });
+        await changePasswordButton.click();
 
-      // Fill in confirm password
-      const confirmPasswordInput = dialog.locator("#confirmPassword");
-      await confirmPasswordInput.fill(newPassword);
-
-      // Submit the form
-      await dialog
-        .getByRole("button", { name: /change.*password|save|submit/i })
-        .first()
-        .click();
-
-      // Assert success: dialog closes or success toast appears
-      await expect(dialog).not.toBeVisible({ timeout: 10000 });
-
-      // Sign out
-      await page.goto(`${baseURL}/api/auth/signout`);
-      const signoutButton = page.getByRole("button", { name: /sign out/i });
-      if (await signoutButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await signoutButton.click();
-      }
-
-      // Sign in with the NEW password
-      await signinPage.goto();
-      await signinPage.fillCredentials(testEmail, newPassword);
-      await signinPage.submit();
-
-      // Assert successful login with new password
-      await page.waitForURL((url) => !url.pathname.includes("/signin"), {
-        timeout: 30000,
+        // The ChangePasswordModal dialog opens (Radix UI Dialog with role="dialog")
+        await expect(dialog).toBeVisible({ timeout: 10000 });
       });
-      expect(page.url()).toContain("/en-US");
+
+      await test.step("Fill in the password fields and submit", async () => {
+        // Fill in current password
+        const currentPasswordInput = dialog.locator("#currentPassword");
+        await expect(currentPasswordInput).toBeVisible({ timeout: 5000 });
+        await currentPasswordInput.fill(originalPassword);
+
+        // Fill in new password
+        const newPasswordInput = dialog.locator("#newPassword");
+        await newPasswordInput.fill(newPassword);
+
+        // Fill in confirm password
+        const confirmPasswordInput = dialog.locator("#confirmPassword");
+        await confirmPasswordInput.fill(newPassword);
+
+        // Submit the form
+        await dialog
+          .getByRole("button", { name: /change.*password|save|submit/i })
+          .first()
+          .click();
+
+        // Assert success: dialog closes or success toast appears
+        await expect(dialog).not.toBeVisible({ timeout: 10000 });
+      });
+
+      await test.step("Sign out", async () => {
+        await page.goto(`${baseURL}/api/auth/signout`);
+        const signoutButton = page.getByRole("button", { name: /sign out/i });
+        if (
+          await signoutButton.isVisible({ timeout: 2000 }).catch(() => false)
+        ) {
+          await signoutButton.click();
+        }
+      });
+
+      await test.step("Sign in with the new password and confirm access", async () => {
+        await signinPage.goto();
+        await signinPage.fillCredentials(testEmail, newPassword);
+        await signinPage.submit();
+
+        // Assert successful login with new password
+        await page.waitForURL((url) => !url.pathname.includes("/signin"), {
+          timeout: 30000,
+        });
+        expect(page.url()).toContain("/en-US");
+      });
     } finally {
       await api.deleteUser(userId);
     }
@@ -123,36 +133,41 @@ test.describe("Password Change", () => {
     try {
       const signinPage = new SigninPage(page);
 
-      // Sign in as the test user
-      await signinPage.goto();
-      await signinPage.fillCredentials(testEmail, originalPassword);
-      await signinPage.submit();
-      await page.waitForURL((url) => !url.pathname.includes("/signin"), {
-        timeout: 30000,
+      await test.step("Sign in as the test user", async () => {
+        await signinPage.goto();
+        await signinPage.fillCredentials(testEmail, originalPassword);
+        await signinPage.submit();
+        await page.waitForURL((url) => !url.pathname.includes("/signin"), {
+          timeout: 30000,
+        });
       });
 
-      // Change password via the API using the browser's authenticated context
-      // Use page.evaluate to call fetch from within the browser page (shares session cookies)
-      const changeResult = await page.evaluate(
-        async ({ userId, currentPassword, newPassword }) => {
-          const res = await fetch(`/api/users/${userId}/change-password`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ currentPassword, newPassword }),
-          });
-          return { ok: res.ok, status: res.status, data: await res.json() };
-        },
-        { userId, currentPassword: originalPassword, newPassword }
-      );
-      expect(changeResult.ok).toBeTruthy();
-      expect(changeResult.data.message).toBeTruthy();
+      await test.step("Change password via the API in the authenticated session", async () => {
+        // Change password via the API using the browser's authenticated context
+        // Use page.evaluate to call fetch from within the browser page (shares session cookies)
+        const changeResult = await page.evaluate(
+          async ({ userId, currentPassword, newPassword }) => {
+            const res = await fetch(`/api/users/${userId}/change-password`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ currentPassword, newPassword }),
+            });
+            return { ok: res.ok, status: res.status, data: await res.json() };
+          },
+          { userId, currentPassword: originalPassword, newPassword }
+        );
+        expect(changeResult.ok).toBeTruthy();
+        expect(changeResult.data.message).toBeTruthy();
+      });
 
-      // Reload the page
-      await page.reload();
-      await page.waitForLoadState("networkidle");
+      await test.step("Reload and confirm the session still persists", async () => {
+        // Reload the page
+        await page.reload();
+        await page.waitForLoadState("networkidle");
 
-      // Assert still authenticated (not redirected to signin)
-      expect(page.url()).not.toContain("/signin");
+        // Assert still authenticated (not redirected to signin)
+        expect(page.url()).not.toContain("/signin");
+      });
     } finally {
       await api.deleteUser(userId);
     }
@@ -173,55 +188,63 @@ test.describe("Password Change", () => {
     try {
       const signinPage = new SigninPage(page);
 
-      // Sign in as the test user
-      await signinPage.goto();
-      await signinPage.fillCredentials(testEmail, correctPassword);
-      await signinPage.submit();
-      await page.waitForURL((url) => !url.pathname.includes("/signin"), {
-        timeout: 30000,
+      await test.step("Sign in as the test user", async () => {
+        await signinPage.goto();
+        await signinPage.fillCredentials(testEmail, correctPassword);
+        await signinPage.submit();
+        await page.waitForURL((url) => !url.pathname.includes("/signin"), {
+          timeout: 30000,
+        });
       });
 
-      // Navigate to user profile page
-      await page.goto(`${baseURL}/en-US/users/profile/${userId}`);
-      await page.waitForLoadState("networkidle");
-
-      // Open the Change Password modal
-      const changePasswordButton = page
-        .getByRole("button", { name: /^change password$/i })
-        .first();
-      await expect(changePasswordButton).toBeVisible({ timeout: 10000 });
-      await changePasswordButton.click();
-
       const dialog = page.locator('[role="dialog"]').first();
-      await expect(dialog).toBeVisible({ timeout: 10000 });
 
-      // Enter WRONG current password
-      const currentPasswordInput = dialog.locator("#currentPassword");
-      await currentPasswordInput.fill("WrongPassword999!");
+      await test.step("Open the Change Password modal from the profile page", async () => {
+        // Navigate to user profile page
+        await page.goto(`${baseURL}/en-US/users/profile/${userId}`);
+        await page.waitForLoadState("networkidle");
 
-      const newPasswordInput = dialog.locator("#newPassword");
-      await newPasswordInput.fill("NewPassword456!");
+        // Open the Change Password modal
+        const changePasswordButton = page
+          .getByRole("button", { name: /^change password$/i })
+          .first();
+        await expect(changePasswordButton).toBeVisible({ timeout: 10000 });
+        await changePasswordButton.click();
 
-      const confirmPasswordInput = dialog.locator("#confirmPassword");
-      await confirmPasswordInput.fill("NewPassword456!");
+        await expect(dialog).toBeVisible({ timeout: 10000 });
+      });
 
-      // Submit
-      await dialog
-        .getByRole("button", { name: /change.*password|save|submit/i })
-        .first()
-        .click();
+      await test.step("Submit the form with a wrong current password", async () => {
+        // Enter WRONG current password
+        const currentPasswordInput = dialog.locator("#currentPassword");
+        await currentPasswordInput.fill("WrongPassword999!");
 
-      // Assert error message is visible in the dialog
-      await expect(
-        dialog
-          .getByText(
-            /invalid.*password|incorrect.*password|wrong.*password|current.*password/i
-          )
+        const newPasswordInput = dialog.locator("#newPassword");
+        await newPasswordInput.fill("NewPassword456!");
+
+        const confirmPasswordInput = dialog.locator("#confirmPassword");
+        await confirmPasswordInput.fill("NewPassword456!");
+
+        // Submit
+        await dialog
+          .getByRole("button", { name: /change.*password|save|submit/i })
           .first()
-      ).toBeVisible({ timeout: 10000 });
+          .click();
+      });
 
-      // Dialog should still be open
-      await expect(dialog).toBeVisible({ timeout: 2000 });
+      await test.step("Verify the error is shown and the dialog stays open", async () => {
+        // Assert error message is visible in the dialog
+        await expect(
+          dialog
+            .getByText(
+              /invalid.*password|incorrect.*password|wrong.*password|current.*password/i
+            )
+            .first()
+        ).toBeVisible({ timeout: 10000 });
+
+        // Dialog should still be open
+        await expect(dialog).toBeVisible({ timeout: 2000 });
+      });
     } finally {
       await api.deleteUser(userId);
     }
@@ -273,53 +296,61 @@ test.describe("Password Change", () => {
     try {
       const signinPage = new SigninPage(page);
 
-      // Admin sets mustChangePassword on the test user so the next signin
-      // routes to /auth/force-change-password.
-      await signinPage.goto();
-      await signinPage.fillCredentials(ADMIN_EMAIL, ADMIN_PASSWORD);
-      await signinPage.submit();
-      await page.waitForURL((url) => !url.pathname.includes("/signin"), {
-        timeout: 30000,
+      await test.step("Sign in as admin and flag the user for forced password change", async () => {
+        // Admin sets mustChangePassword on the test user so the next signin
+        // routes to /auth/force-change-password.
+        await signinPage.goto();
+        await signinPage.fillCredentials(ADMIN_EMAIL, ADMIN_PASSWORD);
+        await signinPage.submit();
+        await page.waitForURL((url) => !url.pathname.includes("/signin"), {
+          timeout: 30000,
+        });
+
+        const forceRes = await page.request.post(
+          `${baseURL}/api/admin/users/${userId}/force-change-password`
+        );
+        expect(forceRes.ok()).toBeTruthy();
       });
 
-      const forceRes = await page.request.post(
-        `${baseURL}/api/admin/users/${userId}/force-change-password`
-      );
-      expect(forceRes.ok()).toBeTruthy();
+      await test.step("Sign in as the test user and reach the force-change-password screen", async () => {
+        // Swap to the test user.
+        await page.context().clearCookies();
+        await signinPage.goto();
+        await signinPage.fillCredentials(testEmail, originalPassword);
+        await signinPage.submit();
+        await page.waitForURL(
+          (url) => url.pathname.includes("/auth/force-change-password"),
+          { timeout: 30000 }
+        );
+      });
 
-      // Swap to the test user.
-      await page.context().clearCookies();
-      await signinPage.goto();
-      await signinPage.fillCredentials(testEmail, originalPassword);
-      await signinPage.submit();
-      await page.waitForURL(
-        (url) => url.pathname.includes("/auth/force-change-password"),
-        { timeout: 30000 }
-      );
+      await test.step("Submit a too-short password to trigger the server policy", async () => {
+        // Passes client "passwords match" + "non-empty" checks; fails server
+        // minPasswordLength. The two-rule stuff (uppercase/numbers/etc.) would
+        // need a RegistrationSettings mutation and parallel-test risk, so we
+        // stick to minLength which is always enforced.
+        const tooShort = "a".repeat(Math.max(1, minPasswordLength - 1));
+        await page.locator("#newPassword").fill(tooShort);
+        await page.locator("#confirmPassword").fill(tooShort);
 
-      // Passes client "passwords match" + "non-empty" checks; fails server
-      // minPasswordLength. The two-rule stuff (uppercase/numbers/etc.) would
-      // need a RegistrationSettings mutation and parallel-test risk, so we
-      // stick to minLength which is always enforced.
-      const tooShort = "a".repeat(Math.max(1, minPasswordLength - 1));
-      await page.locator("#newPassword").fill(tooShort);
-      await page.locator("#confirmPassword").fill(tooShort);
+        await page
+          .getByRole("button", { name: /change password/i })
+          .first()
+          .click();
+      });
 
-      await page
-        .getByRole("button", { name: /change password/i })
-        .first()
-        .click();
-
-      // The error alert is `role="alert"` — added alongside #227 so tests can
-      // scope to it without relying on the strength indicator elsewhere on
-      // the page (which also renders "At least N characters" as a checklist
-      // item). Exact-match ensures we fail if the server regresses to the
-      // old "Password must be at least N characters" English string.
-      const errorAlert = page.getByRole("alert").first();
-      await expect(errorAlert).toBeVisible({ timeout: 10000 });
-      await expect(errorAlert.locator("p").first()).toHaveText(
-        `At least ${minPasswordLength} characters`
-      );
+      await test.step("Verify the violation renders as localized checklist text", async () => {
+        // The error alert is `role="alert"` — added alongside #227 so tests can
+        // scope to it without relying on the strength indicator elsewhere on
+        // the page (which also renders "At least N characters" as a checklist
+        // item). Exact-match ensures we fail if the server regresses to the
+        // old "Password must be at least N characters" English string.
+        const errorAlert = page.getByRole("alert").first();
+        await expect(errorAlert).toBeVisible({ timeout: 10000 });
+        await expect(errorAlert.locator("p").first()).toHaveText(
+          `At least ${minPasswordLength} characters`
+        );
+      });
     } finally {
       await api.deleteUser(userId);
     }

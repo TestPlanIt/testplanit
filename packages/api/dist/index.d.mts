@@ -188,6 +188,19 @@ interface RepositoryCase {
     };
 }
 /**
+ * Authored step on a test case.
+ * `step`/`expectedResult` hold a TipTap rich-text document (matching the
+ * in-app step editor).
+ */
+interface Step {
+    id: number;
+    testCaseId: number;
+    step?: unknown;
+    expectedResult?: unknown;
+    order: number;
+    isDeleted: boolean;
+}
+/**
  * Test case linked to a test run
  */
 interface TestRunCase {
@@ -447,6 +460,156 @@ interface CreateTestCaseOptions {
     automated?: boolean;
     stateId?: number;
     estimate?: number;
+}
+/**
+ * A single step on a case created via {@link TestPlanItClient.createTestCases}.
+ * Plain-text `text`/`expectedResult` are stored as TipTap rich-text documents
+ * server-side so they render in the in-app step editor.
+ */
+interface BulkTestCaseStep {
+    /** Step instruction (plain text). */
+    text?: string;
+    /** Expected result (plain text). */
+    expectedResult?: string;
+    /** Zero-based position; inferred from array order when omitted. */
+    order?: number;
+}
+/** One case in a {@link TestPlanItClient.createTestCases} batch. */
+interface BulkTestCaseInput {
+    name: string;
+    /** Override the batch folder for this case. */
+    folderId?: number;
+    /** Override the batch workflow state (by name) for this case. */
+    stateName?: string;
+    steps?: BulkTestCaseStep[];
+    /** Tag IDs (numbers) or tag names (strings, created if missing). */
+    tags?: Array<number | string>;
+    /**
+     * Custom field values keyed by display name (e.g. `{ Priority: "High" }`).
+     * Validated against the chosen template; a field not on the template is
+     * reported as a per-case error, never silently dropped.
+     */
+    customFields?: Record<string, unknown>;
+}
+/** Options for {@link TestPlanItClient.createTestCases} (bulk create). */
+interface CreateTestCasesOptions {
+    projectId: number;
+    /**
+     * Default folder for the batch. Each case may override it via
+     * {@link BulkTestCaseInput.folderId}.
+     */
+    folderId: number;
+    /** Template for the batch. Defaults to the project's first enabled template. */
+    templateId?: number;
+    /** Default CASES workflow state name; each case may override it. */
+    stateName?: string;
+    cases: BulkTestCaseInput[];
+}
+/** Per-case outcome from {@link TestPlanItClient.createTestCases}. */
+interface BulkTestCaseResult {
+    /** Index-based id echoing the case's position in the request (`"0"`, `"1"`, …). */
+    id: string;
+    name: string;
+    status: "success" | "error";
+    /** Present on success — the created RepositoryCase id. */
+    caseId?: number;
+    /** Present on error — the failure message for this case. */
+    error?: string;
+}
+/** Result of {@link TestPlanItClient.createTestCases}. */
+interface CreateTestCasesResult {
+    success: boolean;
+    importedCount: number;
+    failedCount: number;
+    results: BulkTestCaseResult[];
+}
+/**
+ * Options for creating an authored step on a test case.
+ * Plain-text `step`/`expectedResult` are stored as TipTap rich-text documents
+ * so they render in the in-app step editor.
+ */
+interface CreateStepOptions {
+    testCaseId: number;
+    /** Step instruction (plain text). */
+    step: string;
+    /** Expected result (plain text). Omitted when empty. */
+    expectedResult?: string;
+    /** Zero-based position of the step within the case. */
+    order: number;
+}
+/**
+ * Options for creating multiple authored steps on a test case in one request.
+ * Each step's plain-text `step`/`expectedResult` is stored as a TipTap doc.
+ */
+interface CreateStepsOptions {
+    testCaseId: number;
+    steps: Array<{
+        /** Step instruction (plain text). */
+        step: string;
+        /** Expected result (plain text). Omitted when empty. */
+        expectedResult?: string;
+        /** Zero-based position of the step within the case. */
+        order: number;
+    }>;
+}
+/** One case to request server-side LLM step derivation for. */
+interface RequestStepDerivationCase {
+    testCaseId: number;
+    /** The automated test's name — the primary signal the LLM derives from. */
+    name: string;
+    /** Suite/class the test belongs to, if any. */
+    className?: string | null;
+    /** Failure message from the result, if any. */
+    failure?: string | null;
+    /** Captured output from the result, if any. */
+    systemOut?: string | null;
+    /**
+     * Ordered low-level automation commands the test executed (e.g. navigate,
+     * find element, click, type, assert), if captured. When present, the model
+     * derives steps from what the test actually did rather than only its name.
+     */
+    commands?: string[];
+}
+interface RequestStepDerivationOptions {
+    projectId: number;
+    /** Test run the resulting "steps ready" notification links to. */
+    testRunId: number;
+    cases: RequestStepDerivationCase[];
+    /**
+     * Destructive opt-in: re-derive cases that already have steps (replace them).
+     * Default false (only stepless cases are enriched).
+     */
+    overwrite?: boolean;
+}
+/**
+ * A single normalized automation step, produced by a per-surface adapter
+ * (the result importer, or the Playwright / WDIO reporters) and consumed by
+ * `automationStepsToCaseSteps`. Format-agnostic: native shapes (Cucumber
+ * Gherkin keywords, Playwright `TestStep` trees) are mapped to this
+ * intermediate so the shared mapper never parses a native format itself.
+ */
+interface AutomationStep {
+    /** Plain-text step text (keyword-stripped for Gherkin). */
+    title: string;
+    /** Role of the step: Given → precondition, When → action, Then → assertion. */
+    kind: "precondition" | "action" | "assertion";
+    /** Nested steps (e.g. a Playwright `expect` nested under a `test.step`). */
+    children?: AutomationStep[];
+}
+/**
+ * A single derived case `Steps` row in plain-text form. The caller wraps
+ * `step`/`expectedResult` into TipTap-JSON on write via `tipTapDoc`; the
+ * mapper itself stays a pure text transform. Structurally identical to an
+ * element of {@link CreateStepsOptions.steps}, so a `CaseStepRow[]` is
+ * directly assignable to `createSteps({ testCaseId, steps })`.
+ */
+interface CaseStepRow {
+    /** Step instruction (plain text). */
+    step: string;
+    /** Expected result (plain text). Omitted/empty when not applicable — empty is valid. */
+    expectedResult?: string;
+    /** Zero-based position of the step within the case. */
+    order: number;
 }
 /**
  * Result of findOrCreateTestCase with metadata
@@ -878,6 +1041,24 @@ declare class TestPlanItClient {
      */
     createTestCase(options: CreateTestCaseOptions): Promise<RepositoryCase>;
     /**
+     * Create many test cases in a single request.
+     *
+     * POSTs to the bulk-create endpoint, which resolves shared context once and
+     * persists each case — with its steps, tags, and custom-field values — in a
+     * transaction (one per distinct folder/state group). Far faster than calling
+     * {@link createTestCase} per case, and returns a per-case result so partial
+     * failures are visible: each entry is `status: "success"` with a `caseId`, or
+     * `status: "error"` with a message (e.g. a custom field not on the template).
+     *
+     * `templateId` defaults to the project's first enabled template; resolve a
+     * specific one with {@link findTemplateByName}. Resolve `folderId` with
+     * {@link findFolderByName} / {@link findOrCreateFolderPath}.
+     *
+     * Requires a TestPlanIt instance (app v0.39.0+) exposing
+     * `/api/projects/{projectId}/cases/bulk-create`.
+     */
+    createTestCases(options: CreateTestCasesOptions): Promise<CreateTestCasesResult>;
+    /**
      * Get a test case by ID
      */
     getTestCase(caseId: number): Promise<RepositoryCase>;
@@ -896,6 +1077,38 @@ declare class TestPlanItClient {
      *   - 'created': A new test case was created
      */
     findOrCreateTestCase(options: CreateTestCaseOptions): Promise<FindOrCreateTestCaseResult>;
+    /**
+     * Create an authored step on a test case.
+     * `step` and `expectedResult` are stored as TipTap rich-text documents to
+     * match the in-app step editor.
+     */
+    createStep(options: CreateStepOptions): Promise<Step>;
+    /**
+     * Create many authored steps on a test case in a single request.
+     * Preferred over repeated {@link createStep} calls when seeding a case's
+     * steps — one `createMany` instead of N creates keeps the call count (and
+     * rate-limit pressure) low when reporting large suites. Uses the scalar
+     * `testCaseId` FK because `createMany` does not accept nested relations.
+     */
+    createSteps(options: CreateStepsOptions): Promise<{
+        count: number;
+    }>;
+    /**
+     * Soft-delete every active step on a test case (sets `isDeleted: true`).
+     * Used to replace a case's steps when syncing them from automation.
+     * Returns the number of steps that were soft-deleted.
+     */
+    softDeleteCaseSteps(testCaseId: number): Promise<number>;
+    /**
+     * Request opt-in, background LLM step derivation for low-structure cases
+     * (e.g. Mocha/Jasmine, which have no native steps to map deterministically).
+     * Enqueues a server-side job that runs ONLY when an LLM provider is configured
+     * for the project; otherwise it is inert. With `overwrite`, cases that already
+     * have steps are re-derived (destructive). Returns whether a job was enqueued.
+     */
+    requestStepDerivation(options: RequestStepDerivationOptions): Promise<{
+        enqueued: boolean;
+    }>;
     /**
      * Add a test case to a test run
      */
@@ -975,4 +1188,64 @@ declare class TestPlanItClient {
     getBaseUrl(): string;
 }
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type Status, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState };
+/**
+ * Wrap plain text in a minimal TipTap (ProseMirror) document so it renders
+ * in the in-app step editor. Empty (or whitespace-only) text produces a
+ * paragraph with an EMPTY content array — an empty text node
+ * (`{ type: "text", text: "" }`) is invalid in ProseMirror.
+ *
+ * Shared, pure helper (promoted from a private `TestPlanItClient` method) so
+ * both the client's step-write methods and step-derivation callers that write
+ * to the database directly produce identical TipTap docs. No imports, no side
+ * effects — uses only `JSON.stringify`.
+ */
+declare function tipTapDoc(text: string): string;
+
+/**
+ * Convert a normalized `AutomationStep[]` into ordered, plain-text case
+ * `Steps` rows. Pure, DB-free, format-agnostic, synchronous: the per-surface
+ * adapter (the result importer or the Playwright / WDIO reporters) produces
+ * the normalized input and decides what counts as a mappable step — this
+ * mapper does NO trace-filtering and trusts its input (D-02, D-15). The caller
+ * wraps each row's `step`/`expectedResult` into TipTap-JSON on write; this
+ * function itself never touches the DB or an LLM.
+ *
+ * Deterministic split rules:
+ *  - precondition (Gherkin `Given`) → a leading "Step 0" row, no expectedResult (D-08)
+ *  - action (Gherkin `When`)        → a step row (D-07)
+ *  - assertion (Gherkin `Then`)     → does NOT create a row; its title becomes the
+ *      expectedResult of the LAST step of the immediately preceding When-group.
+ *      A contiguous group of assertions CONCATENATES (joined with "\n") into that
+ *      single expectedResult — never new rows (D-07). With no preceding When it
+ *      attaches to the last emitted row, e.g. the last Given/Step-0 (D-08).
+ *  - Playwright nesting (D-09): an action whose immediate `children` include
+ *      assertion(s) takes their joined titles as its expectedResult.
+ *
+ * Steps that are not the last in a When-group keep an empty (omitted)
+ * expectedResult — one is never invented (D-07, D-10); an empty expectedResult
+ * is valid output. Returns `[]` for empty/low-structure input (D-14).
+ *
+ * Single non-recursive O(n) pass over the top-level array; `children` are
+ * inspected only one level deep, bounding stack depth and time (DoS, T-01-01).
+ */
+declare function automationStepsToCaseSteps(steps: AutomationStep[]): CaseStepRow[];
+/**
+ * Never-overwrite guard wrapper (CORE-01). Encodes the decision "only derive
+ * steps for a case that has none" given a caller-supplied signal — it does NOT
+ * query the database itself. The live "does this case already have steps?"
+ * fetch is the per-surface call site's job, deferred to later phases (Phase 2
+ * importer: `prisma.steps.findFirst({ where: { testCaseId, isDeleted: false } })`;
+ * Phase 3 reporter: its existing client) (D-11, D-12).
+ *
+ * When `existingStepCount >= 1` (the case already has at least one non-deleted
+ * step), returns `[]` with no side effects — derivation never clobbers
+ * existing, possibly human-edited steps. When `existingStepCount === 0`,
+ * returns the full mapped rows.
+ *
+ * This wrapper does NOT remove or bypass the reporters' explicit, opt-in
+ * `overwriteSteps` escape hatch — that destructive opt-in stays a documented
+ * caller concern (D-13).
+ */
+declare function deriveCaseStepsIfFresh(steps: AutomationStep[], existingStepCount: number): CaseStepRow[];
+
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, tipTapDoc };

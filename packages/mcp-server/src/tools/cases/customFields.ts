@@ -18,6 +18,12 @@ interface RawCaseField {
   }>;
 }
 
+interface RawTemplateFieldAssignment {
+  caseField: RawCaseField | null;
+}
+
+// Global CaseFields catalog select — used when no template scope applies
+// (e.g. the cases_list custom-field filter, which spans every template).
 const CASE_FIELD_RESOLVE_SELECT = {
   id: true,
   displayName: true,
@@ -28,6 +34,26 @@ const CASE_FIELD_RESOLVE_SELECT = {
     },
   },
 } as const satisfies Prisma.CaseFieldsSelect;
+
+// Template-scoped select — resolves against the chosen template's assigned
+// fields. This scopes display-name resolution to the template, so a display
+// name that is duplicated across the deployment is unambiguous as long as the
+// template carries only one of them, and a field that isn't on the template is
+// rejected as part of the same lookup.
+const TEMPLATE_FIELD_RESOLVE_SELECT = {
+  caseField: {
+    select: {
+      id: true,
+      displayName: true,
+      type: { select: { type: true } },
+      fieldOptions: {
+        select: {
+          fieldOption: { select: { id: true, name: true } },
+        },
+      },
+    },
+  },
+} as const satisfies Prisma.TemplateCaseAssignmentSelect;
 
 /**
  * Coerce a value to an option ID. Mirrors the read-side coercion in
@@ -71,47 +97,74 @@ function resolveOptionValue(
 
 /**
  * Resolve a flat `{ <displayName>: <value> }` input into resolved
- * `{ fieldId, value, name }` triples. Unknown or ambiguous display names
- * throw TestPlanItHttpError 422 — the message names the offending field
- * but NEVER includes the input value (T-06-05).
+ * `{ fieldId, value, name }` triples. Pass a `templateId` to scope resolution
+ * to that template's assigned fields (the write paths — create/update — do
+ * this so an out-of-template field is rejected and a globally-duplicated
+ * display name stays unambiguous as long as the template carries one of them).
+ * Omit `templateId` (pass `undefined`) for a project-wide lookup against the
+ * global CaseFields catalog — the cases_list custom-field filter spans every
+ * template, so it has no single template to scope to.
+ *
+ * A name that isn't in scope, or that is ambiguous within scope, throws
+ * TestPlanItHttpError 422 — the message names the offending field but NEVER
+ * includes the input value (T-06-05).
  *
  * For Dropdown / Multi-Select fields, the agent may pass either the
  * option ID (canonical) OR the option name (the read-path shape). We
  * resolve to the canonical option ID so caseFieldValues.value matches
  * what the UI / other consumers expect (closes WR-01 / WR-02).
- *
- * Ambiguity note (T-06-02): CaseFields are globally scoped (not per-project).
- * If two enabled fields share the same displayName, we throw rather than
- * silently picking one — ambiguity is a deployment configuration issue.
  */
 export async function resolveCustomFields(
   input: Record<string, unknown> | undefined,
+  templateId: number | undefined,
   env: EnvConfig,
 ): Promise<ResolvedField[]> {
   if (!input) return [];
   const names = Object.keys(input);
   if (names.length === 0) return [];
 
-  const fields = await zenstack<RawCaseField[]>(
-    "caseFields",
-    "findMany",
-    {
-      where: {
-        displayName: { in: names },
-        isDeleted: false,
-        isEnabled: true,
-      } satisfies Prisma.CaseFieldsWhereInput,
-      select: CASE_FIELD_RESOLVE_SELECT,
-    },
-    env,
-  );
-
-  // Group full field rows by displayName to detect ambiguity.
+  // Index the candidate fields by display name — scoped to the template when
+  // provided, otherwise the global enabled catalog filtered to the input names.
   const byName = new Map<string, RawCaseField[]>();
-  for (const f of fields) {
-    const arr = byName.get(f.displayName) ?? [];
-    arr.push(f);
-    byName.set(f.displayName, arr);
+  if (templateId != null) {
+    const assignments = await zenstack<RawTemplateFieldAssignment[]>(
+      "templateCaseAssignment",
+      "findMany",
+      {
+        where: {
+          templateId,
+          caseField: { isDeleted: false, isEnabled: true },
+        } satisfies Prisma.TemplateCaseAssignmentWhereInput,
+        select: TEMPLATE_FIELD_RESOLVE_SELECT,
+      },
+      env,
+    );
+    for (const a of assignments) {
+      const f = a.caseField;
+      if (!f) continue;
+      const arr = byName.get(f.displayName) ?? [];
+      arr.push(f);
+      byName.set(f.displayName, arr);
+    }
+  } else {
+    const fields = await zenstack<RawCaseField[]>(
+      "caseFields",
+      "findMany",
+      {
+        where: {
+          displayName: { in: names },
+          isDeleted: false,
+          isEnabled: true,
+        } satisfies Prisma.CaseFieldsWhereInput,
+        select: CASE_FIELD_RESOLVE_SELECT,
+      },
+      env,
+    );
+    for (const f of fields) {
+      const arr = byName.get(f.displayName) ?? [];
+      arr.push(f);
+      byName.set(f.displayName, arr);
+    }
   }
 
   const resolved: ResolvedField[] = [];
@@ -120,13 +173,19 @@ export async function resolveCustomFields(
     if (!matches || matches.length === 0) {
       // T-06-05: message contains the FIELD NAME only, never the value.
       throw new TestPlanItHttpError(
-        `Custom field '${name}' not found or not enabled in this deployment.`,
+        templateId != null
+          ? `Custom field '${name}' is not part of the selected template.`
+          : `Custom field '${name}' not found or not enabled in this deployment.`,
         { statusCode: 422 },
       );
     }
     if (matches.length > 1) {
       throw new TestPlanItHttpError(
-        `Custom field '${name}' is ambiguous — multiple enabled fields share this display name.`,
+        `Custom field '${name}' is ambiguous — ${
+          templateId != null
+            ? "the selected template has multiple fields with this display name."
+            : "multiple enabled fields share this display name."
+        }`,
         { statusCode: 422 },
       );
     }

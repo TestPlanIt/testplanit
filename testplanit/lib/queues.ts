@@ -2,6 +2,7 @@ import { type JobsOptions, Queue } from "bullmq";
 import {
   AUDIT_LOG_QUEUE_NAME,
   AUTO_TAG_QUEUE_NAME,
+  DERIVE_CASE_STEPS_QUEUE_NAME,
   BUDGET_ALERT_QUEUE_NAME,
   COPY_MOVE_QUEUE_NAME,
   DUPLICATE_SCAN_QUEUE_NAME,
@@ -33,6 +34,7 @@ export {
   AUDIT_LOG_QUEUE_NAME,
   BUDGET_ALERT_QUEUE_NAME,
   AUTO_TAG_QUEUE_NAME,
+  DERIVE_CASE_STEPS_QUEUE_NAME,
   REPO_CACHE_QUEUE_NAME,
   COPY_MOVE_QUEUE_NAME,
   DUPLICATE_SCAN_QUEUE_NAME,
@@ -73,6 +75,7 @@ let _elasticsearchReindexQueue: Queue | null = null;
 let _auditLogQueue: Queue | null = null;
 let _budgetAlertQueue: Queue | null = null;
 let _autoTagQueue: Queue | null = null;
+let _deriveCaseStepsQueue: Queue | null = null;
 let _repoCacheQueue: Queue | null = null;
 let _copyMoveQueue: Queue | null = null;
 let _duplicateScanQueue: Queue | null = null;
@@ -360,6 +363,32 @@ export function getAutoTagQueue(): Queue | null {
   return _autoTagQueue;
 }
 
+export function getDeriveCaseStepsQueue(): Queue | null {
+  if (_deriveCaseStepsQueue) return _deriveCaseStepsQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${DERIVE_CASE_STEPS_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  // attempts: 1 (NO_RETRY_LIGHT_RETENTION) — a partial retry could double-create
+  // steps from a case already written on the first pass (T-04-04).
+  _deriveCaseStepsQueue = new Queue(DERIVE_CASE_STEPS_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...NO_RETRY_LIGHT_RETENTION },
+  });
+
+  console.log(`Queue "${DERIVE_CASE_STEPS_QUEUE_NAME}" initialized.`);
+
+  _deriveCaseStepsQueue.on("error", (error) => {
+    console.error(`Queue ${DERIVE_CASE_STEPS_QUEUE_NAME} error:`, error);
+  });
+
+  return _deriveCaseStepsQueue;
+}
+
 /**
  * Get the repo cache queue instance (lazy initialization)
  * Used for automatic code repository cache refresh jobs
@@ -634,6 +663,7 @@ export function getAllQueues() {
     auditLogQueue: getAuditLogQueue(),
     budgetAlertQueue: getBudgetAlertQueue(),
     autoTagQueue: getAutoTagQueue(),
+    deriveCaseStepsQueue: getDeriveCaseStepsQueue(),
     repoCacheQueue: getRepoCacheQueue(),
     copyMoveQueue: getCopyMoveQueue(),
     duplicateScanQueue: getDuplicateScanQueue(),

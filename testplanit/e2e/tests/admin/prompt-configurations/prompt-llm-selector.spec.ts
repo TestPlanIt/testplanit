@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { PromptConfigurationsPage } from "../../../page-objects/admin/prompt-configurations.page";
+import { LLM_FEATURES } from "~/lib/llm/constants";
 
 /**
  * Prompt LLM Selector E2E Tests
@@ -10,18 +11,9 @@ import { PromptConfigurationsPage } from "../../../page-objects/admin/prompt-con
  * Covers TEST-03: E2E coverage for admin prompt editor LLM selector workflow.
  */
 
-const features = [
-  "markdown_parsing",
-  "test_case_generation",
-  "magic_select_cases",
-  "editor_assistant",
-  "llm_test",
-  "export_code_generation",
-  "auto_tag",
-  "duplicate_detection",
-  "generate_from_url",
-  "generate_from_url_app",
-];
+// Derive from LLM_FEATURES (the source of truth the edit form validates
+// against) so adding a new feature never silently breaks the save flow.
+const features = Object.values(LLM_FEATURES);
 
 /**
  * Creates a prompt config with all features via the API.
@@ -82,71 +74,82 @@ test.describe("Prompt LLM Selector - Select Integration", () => {
     api,
   }) => {
     const llmName = `E2E LLM ${Date.now()}`;
-    await api.createLlmIntegration(llmName);
 
-    // Open the edit dialog
-    await promptsPage.clickEditOnRow(configName);
+    let dialog: ReturnType<typeof page.locator> | undefined;
 
-    const dialog = page.locator('[role="dialog"]').first();
+    await test.step("Create the LLM integration", async () => {
+      await api.createLlmIntegration(llmName);
+    });
 
-    // Expand the "Test Case Generation" accordion by clicking the trigger
-    const accordionTrigger = dialog
-      .locator('[data-orientation="vertical"] button')
-      .filter({ hasText: "Test Case Generation" })
-      .first();
-    await accordionTrigger.scrollIntoViewIfNeeded();
-    await accordionTrigger.click();
+    await test.step("Open the prompt config edit dialog", async () => {
+      await promptsPage.clickEditOnRow(configName);
 
-    // Wait for accordion to open
-    await page.waitForTimeout(500);
+      dialog = page.locator('[role="dialog"]').first();
+    });
 
-    // Find the open accordion content
-    const openAccordion = dialog.locator('[data-state="open"]').first();
+    await test.step("Select the LLM integration on the Test Case Generation feature", async () => {
+      // Expand the "Test Case Generation" accordion by clicking the trigger
+      const accordionTrigger = dialog!
+        .locator('[data-orientation="vertical"] button')
+        .filter({ hasText: "Test Case Generation" })
+        .first();
+      await accordionTrigger.scrollIntoViewIfNeeded();
+      await accordionTrigger.click();
 
-    // Click the LLM Integration combobox (first combobox in the accordion)
-    const llmSelectTrigger = openAccordion
-      .locator('button[role="combobox"]')
-      .first();
-    await llmSelectTrigger.scrollIntoViewIfNeeded();
-    await llmSelectTrigger.click();
+      // Wait for accordion to open
+      await page.waitForTimeout(500);
 
-    // Select the created integration from the dropdown
-    const integrationOption = page.getByRole("option", { name: llmName });
-    await integrationOption.click();
+      // Find the open accordion content
+      const openAccordion = dialog!.locator('[data-state="open"]').first();
 
-    // Save the form
-    const saveButton = dialog.locator('button:has-text("Save")').last();
-    await saveButton.scrollIntoViewIfNeeded();
-    await saveButton.click();
+      // Click the LLM Integration combobox (first combobox in the accordion)
+      const llmSelectTrigger = openAccordion
+        .locator('button[role="combobox"]')
+        .first();
+      await llmSelectTrigger.scrollIntoViewIfNeeded();
+      await llmSelectTrigger.click();
 
-    // Wait for dialog to close
-    await expect(dialog).not.toBeVisible({ timeout: 30000 });
+      // Select the created integration from the dropdown
+      const integrationOption = page.getByRole("option", { name: llmName });
+      await integrationOption.click();
+    });
 
-    // Reload and verify the selection persisted
-    await promptsPage.goto();
-    await promptsPage.clickEditOnRow(configName);
+    await test.step("Save the form and wait for the dialog to close", async () => {
+      // Save the form
+      const saveButton = dialog!.locator('button:has-text("Save")').last();
+      await saveButton.scrollIntoViewIfNeeded();
+      await saveButton.click();
 
-    const dialog2 = page.locator('[role="dialog"]').first();
+      // Wait for dialog to close
+      await expect(dialog!).not.toBeVisible({ timeout: 30000 });
+    });
 
-    // Expand the same accordion
-    const accordionTrigger2 = dialog2
-      .locator('[data-orientation="vertical"] button')
-      .filter({ hasText: "Test Case Generation" })
-      .first();
-    await accordionTrigger2.scrollIntoViewIfNeeded();
-    await accordionTrigger2.click();
+    await test.step("Reload and verify the selection persisted", async () => {
+      await promptsPage.goto();
+      await promptsPage.clickEditOnRow(configName);
 
-    await page.waitForTimeout(1000);
+      const dialog2 = page.locator('[role="dialog"]').first();
 
-    // Find the accordion item that contains "Test Case Generation" and is open
-    const accordionItem2 = dialog2
-      .locator('[data-orientation="vertical"] > div')
-      .filter({ hasText: "Test Case Generation" })
-      .first();
-    const llmSelectText = accordionItem2
-      .locator('button[role="combobox"]')
-      .first();
-    await expect(llmSelectText).toContainText(llmName, { timeout: 10000 });
+      // Expand the same accordion
+      const accordionTrigger2 = dialog2
+        .locator('[data-orientation="vertical"] button')
+        .filter({ hasText: "Test Case Generation" })
+        .first();
+      await accordionTrigger2.scrollIntoViewIfNeeded();
+      await accordionTrigger2.click();
+
+      await page.waitForTimeout(1000);
+
+      // Find the accordion item that contains "Test Case Generation" and is open
+      const accordionItem2 = dialog2
+        .locator('[data-orientation="vertical"] > div')
+        .filter({ hasText: "Test Case Generation" })
+        .first();
+      const llmSelectText = accordionItem2
+        .locator('button[role="combobox"]')
+        .first();
+      await expect(llmSelectText).toContainText(llmName, { timeout: 10000 });
+    });
   });
 });
 
@@ -165,112 +168,126 @@ test.describe("Prompt LLM Selector - Clear Integration", () => {
 
     const apiBase = baseURL || "http://localhost:3002";
 
-    // Create LLM integration first
-    const llmId = await api.createLlmIntegration(llmName);
+    let dialog: ReturnType<typeof page.locator> | undefined;
 
-    // Create a prompt config and set an LLM integration on one feature via API
-    const createResponse = await api["request"].post(
-      `${apiBase}/api/model/promptConfig/create`,
-      {
-        data: {
+    await test.step("Create the LLM integration and a prompt config with it set on Test Case Generation", async () => {
+      // Create LLM integration first
+      const llmId = await api.createLlmIntegration(llmName);
+
+      // Create a prompt config and set an LLM integration on one feature via API
+      const createResponse = await api["request"].post(
+        `${apiBase}/api/model/promptConfig/create`,
+        {
           data: {
-            name: configName,
-            description: "Config for clear LLM selector E2E testing",
-            isDefault: false,
-            isActive: true,
-            prompts: {
-              create: features.map((feature) => ({
-                feature,
-                systemPrompt: `System prompt for ${feature}`,
-                userPrompt: "",
-                temperature: 0.7,
-                maxOutputTokens: 2048,
-                // Set llmIntegrationId on "test_case_generation" feature
-                ...(feature === "test_case_generation"
-                  ? { llmIntegrationId: llmId }
-                  : {}),
-              })),
+            data: {
+              name: configName,
+              description: "Config for clear LLM selector E2E testing",
+              isDefault: false,
+              isActive: true,
+              prompts: {
+                create: features.map((feature) => ({
+                  feature,
+                  systemPrompt: `System prompt for ${feature}`,
+                  userPrompt: "",
+                  temperature: 0.7,
+                  maxOutputTokens: 2048,
+                  // Set llmIntegrationId on "test_case_generation" feature
+                  ...(feature === "test_case_generation"
+                    ? { llmIntegrationId: llmId }
+                    : {}),
+                })),
+              },
             },
           },
-        },
-      }
-    );
-
-    if (!createResponse.ok()) {
-      const errorText = await createResponse.text();
-      throw new Error(
-        `Failed to create prompt config: ${createResponse.status()} - ${errorText}`
+        }
       );
-    }
 
-    await promptsPage.goto();
-
-    // Open the edit dialog
-    await promptsPage.clickEditOnRow(configName);
-
-    const dialog = page.locator('[role="dialog"]').first();
-
-    // Expand the "Test Case Generation" accordion
-    const accordionTrigger = dialog
-      .locator('[data-orientation="vertical"] button')
-      .filter({ hasText: "Test Case Generation" })
-      .first();
-    await accordionTrigger.scrollIntoViewIfNeeded();
-    await accordionTrigger.click();
-
-    await page.waitForTimeout(500);
-
-    const openAccordion = dialog.locator('[data-state="open"]').first();
-
-    // Verify integration is currently selected (shows llmName)
-    const llmSelectTrigger = openAccordion
-      .locator('button[role="combobox"]')
-      .first();
-    await expect(llmSelectTrigger).toContainText(llmName);
-
-    // Click the LLM Integration combobox to open the dropdown
-    await llmSelectTrigger.click();
-
-    // Select "Project Default (clear)" to clear the integration
-    // The __clear__ sentinel renders as "Project Default (clear)" per the en-US translation
-    const projectDefaultOption = page.getByRole("option", {
-      name: "Project Default (clear)",
+      if (!createResponse.ok()) {
+        const errorText = await createResponse.text();
+        throw new Error(
+          `Failed to create prompt config: ${createResponse.status()} - ${errorText}`
+        );
+      }
     });
-    await projectDefaultOption.click();
 
-    // Save the form
-    const saveButton = dialog.locator('button:has-text("Save")').last();
-    await saveButton.scrollIntoViewIfNeeded();
-    await saveButton.click();
+    await test.step("Open the prompt config edit dialog", async () => {
+      await promptsPage.goto();
 
-    // Wait for dialog to close
-    await expect(dialog).not.toBeVisible({ timeout: 30000 });
+      // Open the edit dialog
+      await promptsPage.clickEditOnRow(configName);
 
-    // Reload and verify the selection was cleared (shows placeholder, not integration name)
-    await promptsPage.goto();
-    await promptsPage.clickEditOnRow(configName);
+      dialog = page.locator('[role="dialog"]').first();
+    });
 
-    const dialog2 = page.locator('[role="dialog"]').first();
+    await test.step("Verify the integration is selected, then clear it to Project Default", async () => {
+      // Expand the "Test Case Generation" accordion
+      const accordionTrigger = dialog!
+        .locator('[data-orientation="vertical"] button')
+        .filter({ hasText: "Test Case Generation" })
+        .first();
+      await accordionTrigger.scrollIntoViewIfNeeded();
+      await accordionTrigger.click();
 
-    const accordionTrigger2 = dialog2
-      .locator('[data-orientation="vertical"] button')
-      .filter({ hasText: "Test Case Generation" })
-      .first();
-    await accordionTrigger2.scrollIntoViewIfNeeded();
-    await accordionTrigger2.click();
+      await page.waitForTimeout(500);
 
-    await page.waitForTimeout(1000);
+      const openAccordion = dialog!.locator('[data-state="open"]').first();
 
-    // Find the accordion item that contains "Test Case Generation"
-    const accordionItem2 = dialog2
-      .locator('[data-orientation="vertical"] > div')
-      .filter({ hasText: "Test Case Generation" })
-      .first();
-    const llmSelectText2 = accordionItem2
-      .locator('button[role="combobox"]')
-      .first();
+      // Verify integration is currently selected (shows llmName)
+      const llmSelectTrigger = openAccordion
+        .locator('button[role="combobox"]')
+        .first();
+      await expect(llmSelectTrigger).toContainText(llmName);
 
-    // Should not contain the LLM name (it's been cleared)
-    await expect(llmSelectText2).not.toContainText(llmName, { timeout: 10000 });
+      // Click the LLM Integration combobox to open the dropdown
+      await llmSelectTrigger.click();
+
+      // Select "Project Default (clear)" to clear the integration
+      // The __clear__ sentinel renders as "Project Default (clear)" per the en-US translation
+      const projectDefaultOption = page.getByRole("option", {
+        name: "Project Default (clear)",
+      });
+      await projectDefaultOption.click();
+    });
+
+    await test.step("Save the form and wait for the dialog to close", async () => {
+      // Save the form
+      const saveButton = dialog!.locator('button:has-text("Save")').last();
+      await saveButton.scrollIntoViewIfNeeded();
+      await saveButton.click();
+
+      // Wait for dialog to close
+      await expect(dialog!).not.toBeVisible({ timeout: 30000 });
+    });
+
+    await test.step("Reload and verify the selection was cleared", async () => {
+      // Reload and verify the selection was cleared (shows placeholder, not integration name)
+      await promptsPage.goto();
+      await promptsPage.clickEditOnRow(configName);
+
+      const dialog2 = page.locator('[role="dialog"]').first();
+
+      const accordionTrigger2 = dialog2
+        .locator('[data-orientation="vertical"] button')
+        .filter({ hasText: "Test Case Generation" })
+        .first();
+      await accordionTrigger2.scrollIntoViewIfNeeded();
+      await accordionTrigger2.click();
+
+      await page.waitForTimeout(1000);
+
+      // Find the accordion item that contains "Test Case Generation"
+      const accordionItem2 = dialog2
+        .locator('[data-orientation="vertical"] > div')
+        .filter({ hasText: "Test Case Generation" })
+        .first();
+      const llmSelectText2 = accordionItem2
+        .locator('button[role="combobox"]')
+        .first();
+
+      // Should not contain the LLM name (it's been cleared)
+      await expect(llmSelectText2).not.toContainText(llmName, {
+        timeout: 10000,
+      });
+    });
   });
 });

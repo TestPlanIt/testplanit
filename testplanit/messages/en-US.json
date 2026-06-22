@@ -5065,21 +5065,28 @@
       "manageDescription": "Configure and manage your external service issue integrations",
       "status": {
         "active": "Active",
-        "inactive": "Inactive"
+        "inactive": "Inactive",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "Connected Projects",
       "noIntegrations": "No issue integrations configured",
       "testConnection": "Test Connection",
       "testSuccess": "Connection Successful",
       "testSuccessDescription": "The issue integration is properly configured and connected",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "Connection Failed",
       "testFailedDescription": "Unable to connect to the external service",
       "testError": "Test Error",
       "testErrorDescription": "An error occurred while testing the connection",
-      "syncInProgress": "Syncing Issues...",
-      "syncIntegration": "Sync all issues from issue integration",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
+      "syncInProgress": "Re-syncing linked issues...",
+      "syncIntegration": "Re-sync linked issues",
+      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
       "syncSuccess": "Sync Queued",
-      "syncSuccessDescription": "Issues from \"{name}\" are being synced in the background. This may take a few moments. The table will update automatically when complete.",
+      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
       "syncError": "Sync Failed",
       "syncErrorDescription": "Could not queue sync job for this issue integration. Please try again later.",
       "delete": {
@@ -5211,6 +5218,10 @@
         "apiKeyWarningPoint4": "Use OAuth 2.0 instead for accurate per-user reporter attribution without administrator permissions.",
         "tokenCreatorNoticeTitle": "Issue creator attribution",
         "tokenCreatorNoticeDescription": "Issues created through this integration are always recorded as the account that owns this access token, not the TestPlanIt user who created them. This provider's API does not allow setting the creator on another user's behalf.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Forge API Key",
         "forgeApiKeyDescription": "Used by the Atlassian Forge app to authenticate requests from Jira issue panels. Generate a key here and paste it in your Forge app settings.",
         "forgeApiKeyPlaceholder": "Click Generate to create an API key",
@@ -5445,7 +5456,8 @@
         "duplicate_detection": "Duplicate Detection",
         "generate_from_url": "Generate Test Cases from URL (Requirements)",
         "generate_from_url_app": "Generate Test Cases from URL (Application Testing)",
-        "automation_candidates": "Automation Candidates Report"
+        "automation_candidates": "Automation Candidates Report",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5751,7 +5763,10 @@
         "reviewReminderTitle": "Review still pending",
         "reviewReminderAction": "is still waiting on your review of",
         "reviewReminderEmailMessage": "Reminder: {actorName}'s review request on {entityLabel} \"{entityName}\" in project \"{projectName}\" has been pending for {hoursPending} hours.",
-        "reviewReminderHoursPending": "Pending for {hoursPending, plural, one {# hour} other {# hours}}"
+        "reviewReminderHoursPending": "Pending for {hoursPending, plural, one {# hour} other {# hours}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

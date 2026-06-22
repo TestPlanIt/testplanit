@@ -5060,21 +5060,28 @@
       "manageDescription": "Konfigurieren und verwalten Sie Ihre Integrationen für externe Serviceprobleme",
       "status": {
         "active": "Aktiv",
-        "inactive": "Inaktiv"
+        "inactive": "Inaktiv",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "Verbundene Projekte",
       "noIntegrations": "Keine Probleme bei der Integrationskonfiguration",
       "testConnection": "Testverbindung",
       "testSuccess": "Verbindung erfolgreich",
       "testSuccessDescription": "Die Problemintegration ist ordnungsgemäß konfiguriert und verbunden.",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "Verbindung fehlgeschlagen",
       "testFailedDescription": "Verbindung zum externen Dienst konnte nicht hergestellt werden.",
       "testError": "Testfehler",
       "testErrorDescription": "Beim Testen der Verbindung ist ein Fehler aufgetreten.",
-      "syncInProgress": "Synchronisierungsprobleme...",
-      "syncIntegration": "Synchronisieren Sie alle Vorgänge aus der Vorgangsintegration.",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
+      "syncInProgress": "Re-syncing linked issues...",
+      "syncIntegration": "Re-sync linked issues",
+      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
       "syncSuccess": "Synchronisierung in der Warteschlange",
-      "syncSuccessDescription": "Die Ausgaben von \"{name}\" werden im Hintergrund synchronisiert. Dies kann einige Augenblicke dauern. Die Tabelle wird nach Abschluss automatisch aktualisiert.",
+      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
       "syncError": "Synchronisierung fehlgeschlagen",
       "syncErrorDescription": "Der Synchronisierungsauftrag für diese Problemintegration konnte nicht in die Warteschlange gestellt werden. Bitte versuchen Sie es später erneut.",
       "delete": {
@@ -5206,6 +5213,10 @@
         "apiKeyWarningPoint4": "Verwenden Sie stattdessen OAuth 2.0, um eine genaue Zuordnung der Meldungen pro Benutzer ohne Administratorrechte zu gewährleisten.",
         "tokenCreatorNoticeTitle": "Urheber des Problems",
         "tokenCreatorNoticeDescription": "Durch diese Integration erstellte Probleme werden immer dem Konto zugeordnet, dem dieses Zugriffstoken gehört, und nicht dem TestPlanIt-Benutzer, der sie erstellt hat. Die API dieses Anbieters erlaubt es nicht, den Ersteller im Namen eines anderen Benutzers festzulegen.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Forge API-Schlüssel",
         "forgeApiKeyDescription": "Wird von der Atlassian Forge-App zur Authentifizierung von Anfragen aus Jira-Vorgangspanels verwendet. Generieren Sie hier einen Schlüssel und fügen Sie ihn in die Einstellungen Ihrer Forge-App ein.",
         "forgeApiKeyPlaceholder": "Klicken Sie auf Generieren, um einen API-Schlüssel zu erstellen.",
@@ -5440,7 +5451,8 @@
         "duplicate_detection": "Duplikaterkennung",
         "generate_from_url": "Testfälle aus URL generieren (Anforderungen)",
         "generate_from_url_app": "Testfälle aus URL generieren (Anwendungstests)",
-        "automation_candidates": "Bericht über Automatisierungskandidaten"
+        "automation_candidates": "Bericht über Automatisierungskandidaten",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5744,7 +5756,10 @@
         "reviewReminderTitle": "Die Überprüfung steht noch aus.",
         "reviewReminderAction": "wartet noch auf Ihre Bewertung von",
         "reviewReminderEmailMessage": "Zur Erinnerung: Die Überprüfungsanfrage von {actorName}am {entityLabel} \"{entityName}\" im Projekt \"{projectName}\" ist seit {hoursPending} Stunden ausstehend.",
-        "reviewReminderHoursPending": "Ausstehend für {hoursPending, plural, one {# Stunde} other {# Stunden}}"
+        "reviewReminderHoursPending": "Ausstehend für {hoursPending, plural, one {# Stunde} other {# Stunden}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

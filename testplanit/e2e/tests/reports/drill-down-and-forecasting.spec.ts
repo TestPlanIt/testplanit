@@ -52,7 +52,7 @@ test.describe("Report Builder - Drill-Down", () => {
     await expect(
       page
         .locator(
-          "table, [data-testid='no-results'], text=/No results|No data|0 results/i"
+          "[role='table'], [data-testid='no-results'], :text-matches('No results|No data|0 results', 'i')"
         )
         .first()
     ).toBeVisible({ timeout: 30_000 });
@@ -63,94 +63,110 @@ test.describe("Report Builder - Drill-Down", () => {
     page,
   }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-    const projectId = await api.createProject(
-      `E2E Drill Down Project ${uniqueId}`
-    );
 
-    // Create test cases so we have data in the repository-stats report
-    const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Drill Down TC Alpha ${uniqueId}`
-    );
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Drill Down TC Beta ${uniqueId}`
-    );
+    let projectId: number | undefined;
+    let table: import("@playwright/test").Locator | undefined;
+    let clickableMetricCell: import("@playwright/test").Locator | undefined;
+    let isCellClickable: boolean | undefined;
 
-    // Navigate to repository-stats with testCase dimension + testCaseCount metric
-    await navigateToReport(
-      page,
-      projectId,
-      "repository-stats",
-      ["testCase"],
-      ["testCaseCount"]
-    );
+    await test.step("Create project with test cases for repository stats", async () => {
+      projectId = await api.createProject(`E2E Drill Down Project ${uniqueId}`);
 
-    await runReport(page);
+      // Create test cases so we have data in the repository-stats report
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Drill Down TC Alpha ${uniqueId}`
+      );
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Drill Down TC Beta ${uniqueId}`
+      );
+    });
 
-    // Wait for table to be visible - this means data exists
-    const table = page.locator("table").first();
-    await expect(table).toBeVisible({ timeout: 10000 });
-
-    // Look for a clickable metric cell (cursor-pointer span in a table cell)
-    // The metric cells render as <span class="... cursor-pointer ..."> when drill-down is available
-    const clickableMetricCell = table.locator("td span.cursor-pointer").first();
-
-    const isCellClickable = await clickableMetricCell
-      .isVisible()
-      .catch(() => false);
-
-    if (isCellClickable) {
-      await clickableMetricCell.click();
-
-      // The DrillDownDrawer opens as a Radix Drawer - it has role="dialog"
-      const drawer = page.locator('[role="dialog"]').first();
-      await expect(drawer).toBeVisible({ timeout: 5000 });
-
-      // Drawer title should be visible (shows the metric label)
-      const drawerTitle = drawer
-        .locator('[data-slot="drawer-title"]')
-        .or(drawer.locator("h2, h3").first());
-      await expect(drawerTitle.first()).toBeVisible({ timeout: 3000 });
-
-      // Close the drawer
-      const closeButton = drawer
-        .locator(
-          'button[aria-label="Close"], button:has-text("Close"), button:has-text("close")'
-        )
-        .first();
-      if (await closeButton.isVisible().catch(() => false)) {
-        await closeButton.click();
-      } else {
-        await page.keyboard.press("Escape");
-      }
-    } else {
-      // Fallback: if no clickable cells (no data with count > 0), verify the drill-down
-      // API endpoint is reachable via direct request
-      const response = await page.request.post(
-        `/api/report-builder/drill-down`,
-        {
-          data: {
-            context: {
-              metricId: "testCaseCount",
-              metricLabel: "Test Cases Count",
-              metricValue: 0,
-              reportType: "repository-stats",
-              mode: "project",
-              projectId,
-              dimensions: { testCase: {} },
-            },
-            offset: 0,
-            limit: 10,
-          },
-        }
+    await test.step("Run repository-stats report and wait for results table", async () => {
+      // Navigate to repository-stats with testCase dimension + testCaseCount metric
+      await navigateToReport(
+        page,
+        projectId!,
+        "repository-stats",
+        ["testCase"],
+        ["testCaseCount"]
       );
 
-      // API should respond with 200 (data or empty) or 400 (invalid context) - not 500
-      expect(response.status()).toBeLessThan(500);
+      await runReport(page);
+
+      // Wait for table to be visible - this means data exists
+      table = page.locator("[role='table']").first();
+      await expect(table).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Locate clickable metric cell", async () => {
+      // Look for a clickable metric cell (cursor-pointer span in a table cell)
+      // The metric cells render as <span class="... cursor-pointer ..."> when drill-down is available
+      clickableMetricCell = table!
+        .locator("[role='cell'] span.cursor-pointer")
+        .first();
+
+      isCellClickable = await clickableMetricCell
+        .isVisible()
+        .catch(() => false);
+    });
+
+    if (isCellClickable) {
+      await test.step("Open drill-down drawer and verify its title", async () => {
+        await clickableMetricCell!.click();
+
+        // The DrillDownDrawer opens as a Radix Drawer - it has role="dialog"
+        const drawer = page.locator('[role="dialog"]').first();
+        await expect(drawer).toBeVisible({ timeout: 5000 });
+
+        // Drawer title should be visible (shows the metric label)
+        const drawerTitle = drawer
+          .locator('[data-slot="drawer-title"]')
+          .or(drawer.locator("h2, h3").first());
+        await expect(drawerTitle.first()).toBeVisible({ timeout: 3000 });
+
+        // Close the drawer
+        const closeButton = drawer
+          .locator(
+            'button[aria-label="Close"], button:has-text("Close"), button:has-text("close")'
+          )
+          .first();
+        if (await closeButton.isVisible().catch(() => false)) {
+          await closeButton.click();
+        } else {
+          await page.keyboard.press("Escape");
+        }
+      });
+    } else {
+      await test.step("Verify drill-down API is reachable when no clickable cells exist", async () => {
+        // Fallback: if no clickable cells (no data with count > 0), verify the drill-down
+        // API endpoint is reachable via direct request
+        const response = await page.request.post(
+          `/api/report-builder/drill-down`,
+          {
+            data: {
+              context: {
+                metricId: "testCaseCount",
+                metricLabel: "Test Cases Count",
+                metricValue: 0,
+                reportType: "repository-stats",
+                mode: "project",
+                projectId,
+                dimensions: { testCase: {} },
+              },
+              offset: 0,
+              limit: 10,
+            },
+          }
+        );
+
+        // API should respond with 200 (data or empty) or 400 (invalid context) - not 500
+        expect(response.status()).toBeLessThan(500);
+      });
     }
   });
 
@@ -159,43 +175,50 @@ test.describe("Report Builder - Drill-Down", () => {
     page,
   }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-    const projectId = await api.createProject(
-      `E2E Drill Down API Project ${uniqueId}`
-    );
 
-    // Test the drill-down API directly with a valid context
-    const response = await page.request.post(`/api/report-builder/drill-down`, {
-      data: {
-        context: {
-          metricId: "testCaseCount",
-          metricLabel: "Test Cases Count",
-          metricValue: 1,
-          reportType: "repository-stats",
-          mode: "project",
-          projectId,
-          dimensions: {},
+    let response: import("@playwright/test").APIResponse | undefined;
+
+    await test.step("Post valid drill-down request and assert non-error status", async () => {
+      const projectId = await api.createProject(
+        `E2E Drill Down API Project ${uniqueId}`
+      );
+
+      // Test the drill-down API directly with a valid context
+      response = await page.request.post(`/api/report-builder/drill-down`, {
+        data: {
+          context: {
+            metricId: "testCaseCount",
+            metricLabel: "Test Cases Count",
+            metricValue: 1,
+            reportType: "repository-stats",
+            mode: "project",
+            projectId,
+            dimensions: {},
+          },
+          offset: 0,
+          limit: 10,
         },
-        offset: 0,
-        limit: 10,
-      },
+      });
+
+      // Should respond (200 with data/empty, or 400 for invalid config - not 401/403/500)
+      expect(response.status()).not.toBe(401);
+      expect(response.status()).not.toBe(403);
+      expect(response.status()).not.toBe(500);
     });
 
-    // Should respond (200 with data/empty, or 400 for invalid config - not 401/403/500)
-    expect(response.status()).not.toBe(401);
-    expect(response.status()).not.toBe(403);
-    expect(response.status()).not.toBe(500);
-
-    const body = await response.json();
-    // Response should have data array and total field (either empty or with data)
-    // Note: the API returns { data, total, hasMore, context } not { records, total }
-    if (response.status() === 200) {
-      expect(body).toHaveProperty("total");
-      // The API may return "records" or "data" as the array property name
-      const hasRecordsOrData = "records" in body || "data" in body;
-      expect(hasRecordsOrData).toBeTruthy();
-      const items = body.records ?? body.data;
-      expect(Array.isArray(items)).toBeTruthy();
-    }
+    await test.step("Verify response body shape on success", async () => {
+      const body = await response!.json();
+      // Response should have data array and total field (either empty or with data)
+      // Note: the API returns { data, total, hasMore, context } not { records, total }
+      if (response!.status() === 200) {
+        expect(body).toHaveProperty("total");
+        // The API may return "records" or "data" as the array property name
+        const hasRecordsOrData = "records" in body || "data" in body;
+        expect(hasRecordsOrData).toBeTruthy();
+        const items = body.records ?? body.data;
+        expect(Array.isArray(items)).toBeTruthy();
+      }
+    });
   });
 
   test("Drill-down API rejects unauthenticated requests with 401", async ({
@@ -205,37 +228,44 @@ test.describe("Report Builder - Drill-Down", () => {
     // E2E server runs on port 3002
     const e2eBaseURL = process.env.E2E_BASE_URL || "http://localhost:3002";
 
-    const incognitoContext = await page
-      .context()
-      .browser()!
-      .newContext({
-        storageState: { cookies: [], origins: [] },
-      });
-    const incognitoPage = await incognitoContext.newPage();
+    let incognitoContext: import("@playwright/test").BrowserContext | undefined;
+    let incognitoPage: import("@playwright/test").Page | undefined;
+
+    await test.step("Create unauthenticated incognito context", async () => {
+      incognitoContext = await page
+        .context()
+        .browser()!
+        .newContext({
+          storageState: { cookies: [], origins: [] },
+        });
+      incognitoPage = await incognitoContext.newPage();
+    });
 
     try {
-      const response = await incognitoPage.request.post(
-        `${e2eBaseURL}/api/report-builder/drill-down`,
-        {
-          data: {
-            context: {
-              metricId: "testCaseCount",
-              metricLabel: "Test Cases Count",
-              metricValue: 1,
-              reportType: "repository-stats",
-              mode: "project",
-              projectId: 1,
-              dimensions: {},
+      await test.step("Post drill-down request and assert 401", async () => {
+        const response = await incognitoPage!.request.post(
+          `${e2eBaseURL}/api/report-builder/drill-down`,
+          {
+            data: {
+              context: {
+                metricId: "testCaseCount",
+                metricLabel: "Test Cases Count",
+                metricValue: 1,
+                reportType: "repository-stats",
+                mode: "project",
+                projectId: 1,
+                dimensions: {},
+              },
             },
-          },
-        }
-      );
+          }
+        );
 
-      // Unauthenticated request should be rejected
-      expect(response.status()).toBe(401);
+        // Unauthenticated request should be rejected
+        expect(response.status()).toBe(401);
+      });
     } finally {
-      await incognitoPage.close();
-      await incognitoContext.close();
+      await incognitoPage!.close();
+      await incognitoContext!.close();
     }
   });
 });
@@ -246,47 +276,58 @@ test.describe("Report Builder - Forecasting", () => {
     page,
   }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-    const projectId = await api.createProject(
-      `E2E Forecast Project ${uniqueId}`
-    );
 
-    // Create test cases to use in the forecast call
-    const rootFolderId = await api.getRootFolderId(projectId);
-    const caseId1 = await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Forecast TC Alpha ${uniqueId}`
-    );
-    const caseId2 = await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Forecast TC Beta ${uniqueId}`
-    );
+    let caseId1: number | undefined;
+    let caseId2: number | undefined;
+    let response: import("@playwright/test").APIResponse | undefined;
 
-    // Call the forecasting API with the created case IDs
-    const response = await page.request.post(`/api/repository-cases/forecast`, {
-      data: {
-        caseIds: [caseId1, caseId2],
-      },
+    await test.step("Create project with two manual test cases", async () => {
+      const projectId = await api.createProject(
+        `E2E Forecast Project ${uniqueId}`
+      );
+
+      // Create test cases to use in the forecast call
+      const rootFolderId = await api.getRootFolderId(projectId);
+      caseId1 = await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Forecast TC Alpha ${uniqueId}`
+      );
+      caseId2 = await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Forecast TC Beta ${uniqueId}`
+      );
     });
 
-    // Should return 200 with forecast data
-    expect(response.status()).toBe(200);
+    await test.step("Call forecasting API with created case IDs", async () => {
+      // Call the forecasting API with the created case IDs
+      response = await page.request.post(`/api/repository-cases/forecast`, {
+        data: {
+          caseIds: [caseId1, caseId2],
+        },
+      });
 
-    const body = await response.json();
+      // Should return 200 with forecast data
+      expect(response.status()).toBe(200);
+    });
 
-    // Response shape: { manualEstimate, mixedEstimate, automatedEstimate, areAllCasesAutomated, fetchedTestCasesCount }
-    expect(body).toHaveProperty("manualEstimate");
-    expect(body).toHaveProperty("mixedEstimate");
-    expect(body).toHaveProperty("automatedEstimate");
-    expect(body).toHaveProperty("areAllCasesAutomated");
-    expect(body).toHaveProperty("fetchedTestCasesCount");
+    await test.step("Verify forecast response shape and values", async () => {
+      const body = await response!.json();
 
-    // We created 2 cases so the count should be 2
-    expect(body.fetchedTestCasesCount).toBe(2);
+      // Response shape: { manualEstimate, mixedEstimate, automatedEstimate, areAllCasesAutomated, fetchedTestCasesCount }
+      expect(body).toHaveProperty("manualEstimate");
+      expect(body).toHaveProperty("mixedEstimate");
+      expect(body).toHaveProperty("automatedEstimate");
+      expect(body).toHaveProperty("areAllCasesAutomated");
+      expect(body).toHaveProperty("fetchedTestCasesCount");
 
-    // areAllCasesAutomated should be false since we created manual test cases
-    expect(body.areAllCasesAutomated).toBe(false);
+      // We created 2 cases so the count should be 2
+      expect(body.fetchedTestCasesCount).toBe(2);
+
+      // areAllCasesAutomated should be false since we created manual test cases
+      expect(body.areAllCasesAutomated).toBe(false);
+    });
   });
 
   test("Forecasting API returns empty/zero response for empty project", async ({
@@ -306,20 +347,26 @@ test.describe("Report Builder - Forecasting", () => {
   test("Forecasting API returns zero estimates for non-existent case IDs", async ({
     page,
   }) => {
-    // Use IDs that don't exist - should return empty/zero response
-    const response = await page.request.post(`/api/repository-cases/forecast`, {
-      data: {
-        caseIds: [999999999], // Very unlikely to exist
-      },
+    let response: import("@playwright/test").APIResponse | undefined;
+
+    await test.step("Call forecasting API with non-existent case ID", async () => {
+      // Use IDs that don't exist - should return empty/zero response
+      response = await page.request.post(`/api/repository-cases/forecast`, {
+        data: {
+          caseIds: [999999999], // Very unlikely to exist
+        },
+      });
+
+      // Should return 200 with zero counts (not throw an error)
+      expect(response.status()).toBe(200);
     });
 
-    // Should return 200 with zero counts (not throw an error)
-    expect(response.status()).toBe(200);
-
-    const body = await response.json();
-    expect(body.fetchedTestCasesCount).toBe(0);
-    expect(body.manualEstimate).toBe(0);
-    expect(body.automatedEstimate).toBe(0);
+    await test.step("Verify zero estimates and counts", async () => {
+      const body = await response!.json();
+      expect(body.fetchedTestCasesCount).toBe(0);
+      expect(body.manualEstimate).toBe(0);
+      expect(body.automatedEstimate).toBe(0);
+    });
   });
 
   test("Forecasting API rejects invalid request body", async ({ page }) => {

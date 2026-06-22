@@ -50,75 +50,89 @@ test.describe("Public Share Flow", () => {
     context,
   }) => {
     const timestamp = Date.now();
-    const projectId = await api.createProject(`Public Share Test ${timestamp}`);
+    let projectId: number | undefined;
 
-    // Create test cases for the report
-    const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Test Case 1 ${timestamp}`
-    );
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Test Case 2 ${timestamp}`
-    );
+    await test.step("Create a project with two test cases for the report", async () => {
+      projectId = await api.createProject(`Public Share Test ${timestamp}`);
 
-    // Navigate to report builder
-    await navigateToRepositoryStatsReport(page, projectId);
+      // Create test cases for the report
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Test Case 1 ${timestamp}`
+      );
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Test Case 2 ${timestamp}`
+      );
+    });
 
-    // Run the report
-    await runReport(page);
+    await test.step("Open the report builder and run the report", async () => {
+      // Navigate to report builder
+      await navigateToRepositoryStatsReport(page, projectId!);
 
-    // Click the Share button
-    const shareButton = page.getByTestId("share-report-button");
-    await expect(shareButton).toBeVisible({ timeout: 5000 });
-    await shareButton.click();
+      // Run the report
+      await runReport(page);
+    });
 
-    // Wait for share dialog to open
-    const shareDialog = page.locator('[role="dialog"]');
-    await expect(shareDialog).toBeVisible({ timeout: 5000 });
+    await test.step("Open the share dialog and select public mode", async () => {
+      // Click the Share button
+      const shareButton = page.getByTestId("share-report-button");
+      await expect(shareButton).toBeVisible({ timeout: 5000 });
+      await shareButton.click();
 
-    // Select PUBLIC mode
-    const publicModeRadio = page.getByTestId("share-mode-public");
-    await expect(publicModeRadio).toBeVisible({ timeout: 5000 });
-    await publicModeRadio.click();
+      // Wait for share dialog to open
+      const shareDialog = page.locator('[role="dialog"]');
+      await expect(shareDialog).toBeVisible({ timeout: 5000 });
 
-    // Add a custom title
-    const titleInput = page.getByTestId("share-title-input");
-    await titleInput.fill(`Public Test Report ${timestamp}`);
+      // Select PUBLIC mode
+      const publicModeRadio = page.getByTestId("share-mode-public");
+      await expect(publicModeRadio).toBeVisible({ timeout: 5000 });
+      await publicModeRadio.click();
 
-    // Create the share link
-    const createButton = page.getByTestId("share-create-button");
-    await expect(createButton).toBeEnabled({ timeout: 5000 });
-    await createButton.click();
+      // Add a custom title
+      const titleInput = page.getByTestId("share-title-input");
+      await titleInput.fill(`Public Test Report ${timestamp}`);
+    });
 
-    // Wait for share creation success screen
-    const shareUrlInput = page.getByTestId("share-url-input");
-    await expect(shareUrlInput).toBeVisible({ timeout: 10000 });
+    let shareUrl: string | undefined;
 
-    // Get the share URL
-    const shareUrl = await shareUrlInput.inputValue();
-    console.log(`[TEST] Share URL created: ${shareUrl}`);
-    expect(shareUrl).toContain("/share/");
+    await test.step("Create the public share link", async () => {
+      // Create the share link
+      const createButton = page.getByTestId("share-create-button");
+      await expect(createButton).toBeEnabled({ timeout: 5000 });
+      await createButton.click();
 
-    // Extract share key from URL and track for cleanup
-    const shareKey = shareUrl.split("/share/")[1];
-    console.log(`[TEST] Share key: ${shareKey}`);
-    expect(shareKey).toBeTruthy();
+      // Wait for share creation success screen
+      const shareUrlInput = page.getByTestId("share-url-input");
+      await expect(shareUrlInput).toBeVisible({ timeout: 10000 });
 
-    // Get share link ID for cleanup
-    const shareLinkData = await api.getShareLinkByKey(shareKey);
-    console.log(`[TEST] Share link data:`, shareLinkData);
-    expect(shareLinkData).toBeTruthy();
-    expect(shareLinkData?.mode).toBe("PUBLIC");
-    if (shareLinkData) {
-      api.trackShareLink(shareLinkData.id);
-    }
+      // Get the share URL
+      shareUrl = await shareUrlInput.inputValue();
+      console.log(`[TEST] Share URL created: ${shareUrl}`);
+      expect(shareUrl).toContain("/share/");
+    });
 
-    // Close the share dialog
-    await page.keyboard.press("Escape");
+    await test.step("Verify the created share link and track it for cleanup", async () => {
+      // Extract share key from URL and track for cleanup
+      const shareKey = shareUrl!.split("/share/")[1];
+      console.log(`[TEST] Share key: ${shareKey}`);
+      expect(shareKey).toBeTruthy();
+
+      // Get share link ID for cleanup
+      const shareLinkData = await api.getShareLinkByKey(shareKey);
+      console.log(`[TEST] Share link data:`, shareLinkData);
+      expect(shareLinkData).toBeTruthy();
+      expect(shareLinkData?.mode).toBe("PUBLIC");
+      if (shareLinkData) {
+        api.trackShareLink(shareLinkData.id);
+      }
+
+      // Close the share dialog
+      await page.keyboard.press("Escape");
+    });
 
     // Open share link in a new incognito context (unauthenticated user)
     // IMPORTANT: Pass empty storageState to ensure no authentication
@@ -131,7 +145,7 @@ test.describe("Public Share Flow", () => {
     try {
       // Navigate to the share URL
       console.log(`[TEST] Navigating to share URL: ${shareUrl}`);
-      await incognitoPage.goto(shareUrl);
+      await incognitoPage.goto(shareUrl!);
       await incognitoPage.waitForLoadState("networkidle");
 
       // Log current URL for debugging
@@ -157,7 +171,7 @@ test.describe("Public Share Flow", () => {
       );
 
       // Verify the report content is displayed (table should be visible)
-      const reportTable = incognitoPage.locator("table").first();
+      const reportTable = incognitoPage.locator("[role='table']").first();
       await expect(reportTable).toBeVisible({ timeout: 30000 });
 
       // Verify test cases are in the report

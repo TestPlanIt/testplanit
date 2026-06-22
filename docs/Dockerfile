@@ -15,6 +15,10 @@ COPY docs/package.json ./docs/
 COPY package.json ./
 COPY pnpm-workspace.yaml ./
 
+# Dependency patches referenced by pnpm-workspace.yaml#patchedDependencies; the
+# frozen install reads these, so they must be present before it runs.
+COPY patches ./patches/
+
 # Copy the source code for the docs workspace
 COPY ./docs/ ./docs/
 

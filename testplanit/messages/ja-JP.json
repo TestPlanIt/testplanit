@@ -5060,21 +5060,28 @@
       "manageDescription": "外部サービスの問題統合を構成および管理する",
       "status": {
         "active": "アクティブ",
-        "inactive": "非アクティブ"
+        "inactive": "非アクティブ",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "関連プロジェクト",
       "noIntegrations": "問題統合が設定されていません",
       "testConnection": "テスト接続",
       "testSuccess": "接続成功",
       "testSuccessDescription": "問題統合は適切に構成され、接続されています",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "接続に失敗しました",
       "testFailedDescription": "外部サービスに接続できません",
       "testError": "テストエラー",
       "testErrorDescription": "接続テスト中にエラーが発生しました",
-      "syncInProgress": "同期の問題...",
-      "syncIntegration": "課題統合からすべての課題を同期します",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
+      "syncInProgress": "Re-syncing linked issues...",
+      "syncIntegration": "Re-sync linked issues",
+      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
       "syncSuccess": "同期キュー",
-      "syncSuccessDescription": "「{name}」の課題をバックグラウンドで同期しています。これには少し時間がかかる場合があります。完了すると、表は自動的に更新されます。",
+      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
       "syncError": "同期に失敗しました",
       "syncErrorDescription": "この問題の統合に関する同期ジョブをキューに追加できませんでした。しばらくしてからもう一度お試しください。",
       "delete": {
@@ -5206,6 +5213,10 @@
         "apiKeyWarningPoint4": "管理者権限なしでユーザーごとの正確な報告者特定を行うには、OAuth 2.0を使用してください。",
         "tokenCreatorNoticeTitle": "問題作成者の帰属表示",
         "tokenCreatorNoticeDescription": "この連携機能を通じて作成された課題は、作成者である TestPlanIt ユーザーではなく、このアクセス トークンを所有するアカウントに記録されます。このプロバイダーの API では、他のユーザーに代わって作成者を設定することはできません。",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Forge APIキー",
         "forgeApiKeyDescription": "Atlassian ForgeアプリがJira課題パネルからのリクエストを認証するために使用します。ここでキーを生成し、Forgeアプリの設定に貼り付けてください。",
         "forgeApiKeyPlaceholder": "「生成」をクリックしてAPIキーを作成します。",
@@ -5440,7 +5451,8 @@
         "duplicate_detection": "重複検出",
         "generate_from_url": "URLからテストケースを生成する（要件）",
         "generate_from_url_app": "URLからテストケースを生成する（アプリケーションテスト）",
-        "automation_candidates": "自動化候補者レポート"
+        "automation_candidates": "自動化候補者レポート",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5744,7 +5756,10 @@
         "reviewReminderTitle": "審査はまだ保留中です",
         "reviewReminderAction": "まだレビューをお待ちしています",
         "reviewReminderEmailMessage": "リマインダー: {actorName}によるプロジェクト \"{projectName}\" の {entityLabel} \"{entityName}\" のレビュー依頼は、 {hoursPending} 時間保留されています。",
-        "reviewReminderHoursPending": "{hoursPending, plural, one {# 時間} other {# 時間}} 保留中"
+        "reviewReminderHoursPending": "{hoursPending, plural, one {# 時間} other {# 時間}} 保留中",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

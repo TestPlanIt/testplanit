@@ -1,5 +1,21 @@
 # @testplanit/api
 
+## 0.5.0
+
+### Minor Changes
+
+- [#459](https://github.com/TestPlanIt/testplanit/pull/459) [`79c4db0`](https://github.com/TestPlanIt/testplanit/commit/79c4db008dc0d021844a1aaf60c6e790f750582f) Thanks [@therealbrad](https://github.com/therealbrad)! - Add `client.createTestCases()` — bulk test-case creation in a single request, with per-case steps, tags, and custom fields, optional per-case folder/state, and a per-case success/failure result (so partial failures are visible). Backed by the `/api/projects/{projectId}/cases/bulk-create` endpoint; requires a TestPlanIt instance running app v0.39.0+.
+
+## 0.4.0
+
+### Minor Changes
+
+- [#444](https://github.com/TestPlanIt/testplanit/pull/444) [`ea8f7cd`](https://github.com/TestPlanIt/testplanit/commit/ea8f7cd199dc239bb105cb876bc4120dff43827e) Thanks [@therealbrad](https://github.com/therealbrad)! - Capture Playwright `test.step()` calls as authored steps on test cases.
+  - **`captureSteps`** (default `true`): when the reporter creates a new test case (via `autoCreateTestCases`), it seeds the case's steps from the test's `test.step()` calls. Nested steps are flattened in execution order and prefixed by depth; auto-instrumented actions (`expect`, `pw:api`, hooks, fixtures) are ignored.
+  - **`overwriteSteps`** (default `false`): keep an existing case's steps in sync with the script — on every run, the steps of cases linked by ID or matched by auto-create are replaced with the current `test.step()` calls. This is destructive (existing steps are soft-deleted), so a test with no `test.step()` calls never clears an existing case's steps.
+
+  The `@testplanit/api` client gains `createStep()`, `createSteps()` (batched), and `softDeleteCaseSteps()` to support this. Steps are written in a single batched `createMany` per case (instead of one request per step), and the client now honors `429 Retry-After` backoff — keeping API call volume and rate-limit pressure low when reporting large suites.
+
 ## 0.3.1
 
 ### Patch Changes

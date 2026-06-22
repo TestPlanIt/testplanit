@@ -230,6 +230,67 @@ describe("POST /api/integrations/test-connection", () => {
       expect(data.success).toBe(false);
       expect(data.error).toContain("apiToken");
     });
+
+    it("returns requiresUserAuth (not a probe failure) for OAUTH2 with client credentials present", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+
+      const response = await POST(
+        createRequest({
+          provider: "JIRA",
+          authType: "OAUTH2",
+          credentials: { clientId: "abc", clientSecret: "shh" },
+          settings: { baseUrl: "https://mycompany.atlassian.net" },
+        })
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.requiresUserAuth).toBe(true);
+      // OAuth client creds can't be exercised from the admin side — no
+      // upstream call should be attempted (the old code probed Atlassian
+      // with the client secret as a bearer token, which always failed).
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("returns failure for OAUTH2 when client credentials are missing", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+
+      const response = await POST(
+        createRequest({
+          provider: "JIRA",
+          authType: "OAUTH2",
+          credentials: { clientId: "abc" }, // missing clientSecret
+          settings: { baseUrl: "https://mycompany.atlassian.net" },
+        })
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(false);
+      expect(data.error).toContain("clientSecret");
+    });
+
+    it("does NOT mark a saved OAUTH2 integration ACTIVE on a passing test", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      (prisma.integration.findUnique as any).mockResolvedValue({
+        id: 7,
+        provider: "JIRA",
+        authType: "OAUTH2",
+        credentials: { clientId: "abc", clientSecret: "shh" },
+        settings: { baseUrl: "https://mycompany.atlassian.net" },
+      });
+
+      const response = await POST(createRequest({ integrationId: 7 }));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.requiresUserAuth).toBe(true);
+      // Activation for OAuth happens only in the authorization callback once
+      // a real user token exists — never from the admin-side test.
+      expect(prisma.integration.update).not.toHaveBeenCalled();
+    });
   });
 
   describe("GITHUB provider", () => {

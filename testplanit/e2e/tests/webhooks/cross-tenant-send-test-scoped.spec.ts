@@ -162,80 +162,106 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     page,
     baseURL,
   }) => {
+    let aBefore: number | undefined;
+    let bBefore: number | undefined;
+
     // Snapshot pre-click delivery counts for both configs. We compare
     // against POST-click counts so an unrelated delivery (e.g., a previous
     // test run that fired before this test's beforeAll completed) doesn't
     // contaminate the assertion.
-    const aBefore = await prisma.webhookDelivery.count({
-      where: { webhookConfigId: projectAJiraConfigId },
-    });
-    const bBefore = await prisma.webhookDelivery.count({
-      where: { webhookConfigId: projectBJiraConfigId },
+    await test.step("Snapshot pre-click delivery counts for both configs", async () => {
+      aBefore = await prisma.webhookDelivery.count({
+        where: { webhookConfigId: projectAJiraConfigId },
+      });
+      bBefore = await prisma.webhookDelivery.count({
+        where: { webhookConfigId: projectBJiraConfigId },
+      });
     });
 
     // Admin navigates to Project A's webhooks page and fires the send-test
     // self-loop on the Jira card. The same flow as jira-inbound-webhook.spec
     // — but here we additionally assert that B's config sees ZERO new rows.
-    await page.goto(`${baseURL}/projects/settings/${projectAId}/webhooks`);
-    const jiraCard = page.getByTestId("webhook-inbound-card-jira");
-    await expect(jiraCard).toBeVisible({ timeout: 15_000 });
-    await jiraCard.getByTestId("webhook-send-test-button").click();
-    const result = jiraCard.getByTestId("webhook-test-result");
-    await expect(result).toContainText("200", { timeout: 10_000 });
-    await expect(result).toContainText("synthetic");
+    await test.step("Fire send-test self-loop on Project A's Jira card", async () => {
+      await page.goto(`${baseURL}/projects/settings/${projectAId}/webhooks`);
+      const jiraCard = page.getByTestId("webhook-inbound-card-jira");
+      await expect(jiraCard).toBeVisible({ timeout: 15_000 });
+      await jiraCard.getByTestId("webhook-send-test-button").click();
+      const result = jiraCard.getByTestId("webhook-test-result");
+      await expect(result).toContainText("200", { timeout: 10_000 });
+      await expect(result).toContainText("synthetic");
+    });
 
     // Wait for the delivery row on A's config to land. The receiver writes
     // it inside the request handler, but Next's RSC + DB commit ordering
     // can lag a few ms after the UI's response — poll until visible rather
     // than a fixed sleep (per feedback_no_flaky_tests).
-    const aAfterRows = await waitForCount(prisma, {
-      where: { webhookConfigId: projectAJiraConfigId },
-      atLeast: aBefore + 1,
-      timeoutMs: 15_000,
+    await test.step("Wait for delivery row to land on Project A's config", async () => {
+      const aAfterRows = await waitForCount(prisma, {
+        where: { webhookConfigId: projectAJiraConfigId },
+        atLeast: aBefore! + 1,
+        timeoutMs: 15_000,
+      });
+      expect(aAfterRows).toBeGreaterThanOrEqual(aBefore! + 1);
     });
-    expect(aAfterRows).toBeGreaterThanOrEqual(aBefore + 1);
 
     // Project B's config must have ZERO additional rows. The token-scoped
     // routing invariant: A's send-test POSTs to `/api/webhooks/${A.token}`,
     // which the receiver routes via `WebhookConfig.findFirst({where:
     // {token}})` — there is no path by which B's config could be selected.
-    const bAfter = await prisma.webhookDelivery.count({
-      where: { webhookConfigId: projectBJiraConfigId },
+    await test.step("Assert Project B's config has zero new delivery rows", async () => {
+      const bAfter = await prisma.webhookDelivery.count({
+        where: { webhookConfigId: projectBJiraConfigId },
+      });
+      expect(bAfter).toBe(bBefore);
     });
-    expect(bAfter).toBe(bBefore);
   });
 
   test("delivery row written for Project A is scoped to A's config (statusCode=200, JIRA, INBOUND)", async () => {
+    let latest:
+      | {
+          id: string;
+          adapterType: string;
+          direction: string;
+          statusCode: number | null;
+          error: string | null;
+        }
+      | undefined;
+
     // Tighten the assertion: the new row on A's config has the exact
     // shape sendTestWebhook produces. This guards against a regression
     // where the receiver writes the row against a different config (e.g.,
     // a future refactor that mistakenly uses projectId rather than token
     // for routing).
-    const rows = await prisma.webhookDelivery.findMany({
-      where: { webhookConfigId: projectAJiraConfigId },
-      select: {
-        id: true,
-        adapterType: true,
-        direction: true,
-        statusCode: true,
-        error: true,
-      },
-      orderBy: { receivedAt: "desc" },
-      take: 1,
+    await test.step("Fetch latest delivery row for Project A's config", async () => {
+      const rows = await prisma.webhookDelivery.findMany({
+        where: { webhookConfigId: projectAJiraConfigId },
+        select: {
+          id: true,
+          adapterType: true,
+          direction: true,
+          statusCode: true,
+          error: true,
+        },
+        orderBy: { receivedAt: "desc" },
+        take: 1,
+      });
+      expect(rows.length).toBeGreaterThanOrEqual(1);
+      latest = rows[0];
     });
-    expect(rows.length).toBeGreaterThanOrEqual(1);
-    const latest = rows[0];
-    expect(latest.adapterType).toBe("JIRA");
-    expect(latest.direction).toBe("INBOUND");
-    expect(latest.statusCode).toBe(200);
-    // First send-test in this test's lifetime should be the synthetic
-    // success path. Per the Phase 1 D-20 contract (synthetic branch in
-    // applyInboundIssueUpdate.ts), the delivery row's `error` column is
-    // set to the literal string "synthetic" — NOT null. Null is reserved
-    // for the linked-Issue update path; synthetic is a separately-tagged
-    // outcome so admins can distinguish self-loop tests from real receipts
-    // in the deliveries log.
-    expect(latest.error).toBe("synthetic");
+
+    await test.step("Assert delivery row shape is JIRA/INBOUND/200/synthetic", async () => {
+      expect(latest!.adapterType).toBe("JIRA");
+      expect(latest!.direction).toBe("INBOUND");
+      expect(latest!.statusCode).toBe(200);
+      // First send-test in this test's lifetime should be the synthetic
+      // success path. Per the Phase 1 D-20 contract (synthetic branch in
+      // applyInboundIssueUpdate.ts), the delivery row's `error` column is
+      // set to the literal string "synthetic" — NOT null. Null is reserved
+      // for the linked-Issue update path; synthetic is a separately-tagged
+      // outcome so admins can distinguish self-loop tests from real receipts
+      // in the deliveries log.
+      expect(latest!.error).toBe("synthetic");
+    });
   });
 
   test("B-only PROJECTADMIN URL-tampering to Project A's webhooks page sees no send-test button on A's Jira card", async ({
@@ -250,14 +276,21 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     // posture but still pass this assertion — fine, defence-in-depth).
     const page = await bOnlyCtx.newPage();
     try {
-      await page.goto(`${baseURL}/projects/settings/${projectAId}/webhooks`, {
-        waitUntil: "load",
+      await test.step("Open Project A's webhooks page from the B-only session", async () => {
+        await page.goto(`${baseURL}/projects/settings/${projectAId}/webhooks`, {
+          waitUntil: "load",
+        });
       });
-      await expect(page.getByTestId("webhook-inbound-card-jira")).toHaveCount(
-        0,
-        { timeout: 10_000 }
-      );
-      await expect(page.getByTestId("webhook-send-test-button")).toHaveCount(0);
+
+      await test.step("Assert no Jira card and no send-test button render", async () => {
+        await expect(page.getByTestId("webhook-inbound-card-jira")).toHaveCount(
+          0,
+          { timeout: 10_000 }
+        );
+        await expect(page.getByTestId("webhook-send-test-button")).toHaveCount(
+          0
+        );
+      });
     } finally {
       await page.close();
     }

@@ -140,6 +140,29 @@ export interface TestPlanItReporterOptions {
   autoCreateTestCases?: boolean;
 
   /**
+   * Whether to capture Playwright `test.step()` calls as authored steps on
+   * test cases that the reporter creates. Each `test.step()` title becomes a
+   * step (nested steps are flattened in execution order and prefixed to show
+   * their depth). Only applies to newly created cases — existing/linked cases
+   * are never modified. Requires `autoCreateTestCases`.
+   * @default true
+   */
+  captureSteps?: boolean;
+
+  /**
+   * Whether to overwrite the steps of an **existing** case with the captured
+   * `test.step()` calls every run — keeping the case in sync as the script
+   * changes. Applies to cases linked by ID and to cases matched by
+   * auto-create. Existing steps are soft-deleted and replaced.
+   *
+   * This is **destructive**: any manual edits to a case's steps are discarded
+   * on the next run. As a safeguard, a test with no `test.step()` calls never
+   * clears existing steps. Off by default.
+   * @default false
+   */
+  overwriteSteps?: boolean;
+
+  /**
    * Whether to create folder hierarchy based on the describe-block structure.
    * When enabled, nested `test.describe` blocks create nested folders:
    * describe('Suite A') > describe('Suite B') > test('...')
@@ -248,6 +271,12 @@ export interface TrackedTestResult {
   systemErr?: string;
   /** JUnit test result ID (set after the result is created) */
   junitResultId?: number;
+  /**
+   * Flattened `test.step()` titles (in execution order, nested steps prefixed
+   * to show depth). Populated only when step capture is enabled; used to seed
+   * authored steps on auto-created cases.
+   */
+  stepTitles?: string[];
 }
 
 /**
@@ -283,6 +312,8 @@ export interface ReporterStats {
   testCasesCreated: number;
   /** Number of test cases that were moved from deleted folders */
   testCasesMoved: number;
+  /** Number of authored steps created on auto-created test cases */
+  testStepsCreated: number;
   /** Number of folders that were created for hierarchy */
   foldersCreated: number;
   /** Number of test results reported (passed) */
@@ -317,6 +348,8 @@ export interface ReporterState {
   caseIdMap: Map<string, Promise<number>>;
   /** Map of test run case keys to in-flight/resolved IDs */
   testRunCaseMap: Map<string, Promise<number>>;
+  /** Map of case IDs to an in-flight/resolved step-write, so steps are written once per case per run */
+  caseStepsMap: Map<number, Promise<void>>;
   /** Map of folder paths (joined by >) to in-flight/resolved folder IDs */
   folderPathMap: Map<string, Promise<number>>;
   /** Status ID mappings */

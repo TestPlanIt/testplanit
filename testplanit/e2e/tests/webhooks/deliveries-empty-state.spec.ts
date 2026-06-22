@@ -58,71 +58,79 @@ test.describe("Webhook deliveries tab empty state — copy + Reset filters CTA (
     page,
     baseURL,
   }) => {
-    // 1. Land on the Deliveries tab with a non-default filter applied.
-    //    Using `status=failed` ensures the empty-state branch renders
-    //    even if a future seed accidentally drops a stray delivery row;
-    //    the empty-state gate is `deliveries.length === 0` after filter
-    //    application, so the test stays meaningful regardless.
-    const filteredUrl =
-      `${baseURL}/projects/settings/${projectId}/webhooks` +
-      `?tab=deliveries&status=failed&since=${new Date(0).toISOString()}`;
-    await page.goto(filteredUrl);
-    await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
-      timeout: 15_000,
+    let resetButton: ReturnType<typeof page.getByTestId> | undefined;
+
+    await test.step("Land on the Deliveries tab with a non-default filter applied", async () => {
+      // 1. Land on the Deliveries tab with a non-default filter applied.
+      //    Using `status=failed` ensures the empty-state branch renders
+      //    even if a future seed accidentally drops a stray delivery row;
+      //    the empty-state gate is `deliveries.length === 0` after filter
+      //    application, so the test stays meaningful regardless.
+      const filteredUrl =
+        `${baseURL}/projects/settings/${projectId}/webhooks` +
+        `?tab=deliveries&status=failed&since=${new Date(0).toISOString()}`;
+      await page.goto(filteredUrl);
+      await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
+        timeout: 15_000,
+      });
     });
 
-    // 2. The empty-state container renders with the expected copy + a
-    //    Reset filters button inside it (sibling to the "ghost" reset
-    //    button in the filter bar — both reach the same handler).
-    const empty = page.getByTestId("webhook-deliveries-empty");
-    await expect(empty).toBeVisible({ timeout: 10_000 });
-    await expect(empty).toContainText(/No deliveries match these filters/i);
+    await test.step("Verify empty-state copy, Reset filters button, and absent table", async () => {
+      // 2. The empty-state container renders with the expected copy + a
+      //    Reset filters button inside it (sibling to the "ghost" reset
+      //    button in the filter bar — both reach the same handler).
+      const empty = page.getByTestId("webhook-deliveries-empty");
+      await expect(empty).toBeVisible({ timeout: 10_000 });
+      await expect(empty).toContainText(/No deliveries match these filters/i);
 
-    const resetButton = page.getByTestId("webhook-deliveries-reset");
-    await expect(resetButton).toBeVisible();
-    await expect(resetButton).toContainText(/Reset filters/i);
+      resetButton = page.getByTestId("webhook-deliveries-reset");
+      await expect(resetButton).toBeVisible();
+      await expect(resetButton).toContainText(/Reset filters/i);
 
-    // 3. The full deliveries TABLE is NOT rendered when the empty state
-    //    is showing (the component renders one or the other, never both).
-    await expect(page.getByTestId("webhook-deliveries-table")).toHaveCount(0);
+      // 3. The full deliveries TABLE is NOT rendered when the empty state
+      //    is showing (the component renders one or the other, never both).
+      await expect(page.getByTestId("webhook-deliveries-table")).toHaveCount(0);
+    });
 
-    // 4. Click Reset filters → URL drops every filter param. The component's
-    //    resetFilters() rebuilds the search params from `?tab=deliveries`,
-    //    after which PaginationProvider re-syncs `page` + `pageSize` from
-    //    its state. The exact suffix is therefore tab-deliveries plus a
-    //    pagination tail; assert the filter keys are absent in step 5.
-    await resetButton.click();
+    await test.step("Click Reset filters and confirm filter params clear while empty state holds", async () => {
+      // 4. Click Reset filters → URL drops every filter param. The component's
+      //    resetFilters() rebuilds the search params from `?tab=deliveries`,
+      //    after which PaginationProvider re-syncs `page` + `pageSize` from
+      //    its state. The exact suffix is therefore tab-deliveries plus a
+      //    pagination tail; assert the filter keys are absent in step 5.
+      await resetButton!.click();
 
-    // Poll until every filter param is gone — the URL settles in two
-    // steps (resetFilters writes ?tab=deliveries&page=...&pageSize=..., then
-    // PaginationProvider may follow up). Polling guards against reading
-    // page.url() in the brief window between those writes.
-    await expect
-      .poll(
-        () => {
-          const u = new URL(page.url());
-          return [
-            u.searchParams.get("status"),
-            u.searchParams.get("since"),
-            u.searchParams.get("until"),
-            u.searchParams.get("configIds"),
-          ];
-        },
-        { timeout: 5_000 }
-      )
-      .toEqual([null, null, null, null]);
+      // Poll until every filter param is gone — the URL settles in two
+      // steps (resetFilters writes ?tab=deliveries&page=...&pageSize=..., then
+      // PaginationProvider may follow up). Polling guards against reading
+      // page.url() in the brief window between those writes.
+      await expect
+        .poll(
+          () => {
+            const u = new URL(page.url());
+            return [
+              u.searchParams.get("status"),
+              u.searchParams.get("since"),
+              u.searchParams.get("until"),
+              u.searchParams.get("configIds"),
+            ];
+          },
+          { timeout: 5_000 }
+        )
+        .toEqual([null, null, null, null]);
 
-    // 5. Defensive parse — tab is preserved; nothing else lingers.
-    const url = new URL(page.url());
-    expect(url.searchParams.get("tab")).toBe("deliveries");
-    expect(url.searchParams.get("status")).toBeNull();
-    expect(url.searchParams.get("since")).toBeNull();
-    expect(url.searchParams.get("until")).toBeNull();
-    expect(url.searchParams.get("configIds")).toBeNull();
+      // 5. Defensive parse — tab is preserved; nothing else lingers.
+      const url = new URL(page.url());
+      expect(url.searchParams.get("tab")).toBe("deliveries");
+      expect(url.searchParams.get("status")).toBeNull();
+      expect(url.searchParams.get("since")).toBeNull();
+      expect(url.searchParams.get("until")).toBeNull();
+      expect(url.searchParams.get("configIds")).toBeNull();
 
-    // 6. The empty state is still showing — a fresh project has zero
-    //    deliveries to match the now-default filter (last-7-days,
-    //    status=all, configIds=all), so the empty branch holds.
-    await expect(page.getByTestId("webhook-deliveries-empty")).toBeVisible();
+      // 6. The empty state is still showing — a fresh project has zero
+      //    deliveries to match the now-default filter (last-7-days,
+      //    status=all, configIds=all), so the empty branch holds.
+      await expect(page.getByTestId("webhook-deliveries-empty")).toBeVisible();
+    });
   });
 });

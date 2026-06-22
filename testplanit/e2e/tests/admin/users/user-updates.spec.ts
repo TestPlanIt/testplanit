@@ -19,254 +19,280 @@ test.describe("User Update Operations", () => {
   test.describe("Profile Page Updates", () => {
     test("User can update their display name", async ({ page }) => {
       const newName = `Updated Name ${Date.now()}`;
+      let originalName: string | undefined;
 
-      // Navigate to admin users page and click on admin user to get to profile
-      await page.goto("/en-US/admin/users");
-      await page.waitForLoadState("networkidle");
+      await test.step("Open admin user profile in edit mode", async () => {
+        // Navigate to admin users page and click on admin user to get to profile
+        await page.goto("/en-US/admin/users");
+        await page.waitForLoadState("networkidle");
 
-      // Find admin user row by email and click profile link
-      const adminRow = page
-        .locator("tr")
-        .filter({ hasText: "admin@example.com" });
-      await expect(adminRow).toBeVisible();
-      const adminProfileLink = adminRow.locator("a").first();
-      await adminProfileLink.click();
+        // Find admin user row by email and click profile link
+        const adminRow = page
+          .locator("tr")
+          .filter({ hasText: "admin@example.com" });
+        await expect(adminRow).toBeVisible();
+        const adminProfileLink = adminRow.locator("a").first();
+        await adminProfileLink.click();
 
-      // Wait for profile page
-      await page.waitForURL(/\/users\/profile\//);
-      await page.waitForLoadState("networkidle");
+        // Wait for profile page
+        await page.waitForURL(/\/users\/profile\//);
+        await page.waitForLoadState("networkidle");
 
-      // Enter edit mode
-      const editButton = page.getByRole("button", { name: /edit/i });
-      await editButton.click();
+        // Enter edit mode
+        const editButton = page.getByRole("button", { name: /edit/i });
+        await editButton.click();
 
-      // Wait for submit button to appear
-      const submitButton = page.getByTestId("profile-submit-button");
-      await expect(submitButton).toBeVisible();
-
-      // Update name
-      const nameInput = page.getByLabel(/^name/i);
-      const originalName = await nameInput.inputValue();
-      await nameInput.clear();
-      await nameInput.fill(newName);
-
-      // Save
-      await submitButton.click();
-      await page.waitForLoadState("networkidle");
-
-      // Verify name was updated (page should reload)
-      await expect(page.getByText(newName).first()).toBeVisible({
-        timeout: 10000,
+        // Wait for submit button to appear
+        const submitButton = page.getByTestId("profile-submit-button");
+        await expect(submitButton).toBeVisible();
       });
 
-      // Wait for edit button to be visible before reverting (ensures form is not in submitting state)
-      const editButtonAfterSave = page.getByRole("button", { name: /edit/i });
-      await expect(editButtonAfterSave).toBeVisible({ timeout: 10000 });
+      await test.step("Update display name and save", async () => {
+        // Update name
+        const nameInput = page.getByLabel(/^name/i);
+        originalName = await nameInput.inputValue();
+        await nameInput.clear();
+        await nameInput.fill(newName);
 
-      // Revert name back
-      await editButtonAfterSave.click();
-      const submitButtonRevert = page.getByTestId("profile-submit-button");
-      await expect(submitButtonRevert).toBeVisible();
-      const nameInputRevert = page.getByLabel(/^name/i);
+        // Save
+        const submitButton = page.getByTestId("profile-submit-button");
+        await submitButton.click();
+        await page.waitForLoadState("networkidle");
 
-      // Clear and fill with a different value first to ensure form sees a change
-      await nameInputRevert.clear();
-      await nameInputRevert.fill("Temp Name");
-      await page.waitForTimeout(300);
+        // Verify name was updated (page should reload)
+        await expect(page.getByText(newName).first()).toBeVisible({
+          timeout: 10000,
+        });
+      });
 
-      // Now fill with the original value
-      await nameInputRevert.clear();
-      await nameInputRevert.fill(originalName);
+      await test.step("Revert display name to original value", async () => {
+        // Wait for edit button to be visible before reverting (ensures form is not in submitting state)
+        const editButtonAfterSave = page.getByRole("button", { name: /edit/i });
+        await expect(editButtonAfterSave).toBeVisible({ timeout: 10000 });
 
-      // Wait for form validation to pass
-      await page.waitForTimeout(500);
+        // Revert name back
+        await editButtonAfterSave.click();
+        const submitButtonRevert = page.getByTestId("profile-submit-button");
+        await expect(submitButtonRevert).toBeVisible();
+        const nameInputRevert = page.getByLabel(/^name/i);
 
-      await expect(submitButtonRevert).toBeEnabled({ timeout: 5000 });
-      await submitButtonRevert.click();
-      await page.waitForLoadState("networkidle");
+        // Clear and fill with a different value first to ensure form sees a change
+        await nameInputRevert.clear();
+        await nameInputRevert.fill("Temp Name");
+        await page.waitForTimeout(300);
+
+        // Now fill with the original value
+        await nameInputRevert.clear();
+        await nameInputRevert.fill(originalName!);
+
+        // Wait for form validation to pass
+        await page.waitForTimeout(500);
+
+        await expect(submitButtonRevert).toBeEnabled({ timeout: 5000 });
+        await submitButtonRevert.click();
+        await page.waitForLoadState("networkidle");
+      });
     });
 
     test("User can update theme preference", async ({ page }) => {
-      // Navigate to admin users page and click on admin user
-      await page.goto("/en-US/admin/users");
-      await page.waitForLoadState("networkidle");
+      let originalTheme: string | undefined;
 
-      // Find admin user row by email and click profile link
-      const adminRow = page
-        .locator("tr")
-        .filter({ hasText: "admin@example.com" });
-      await expect(adminRow).toBeVisible();
-      const adminProfileLink = adminRow.locator("a").first();
-      await adminProfileLink.click();
+      await test.step("Open admin user profile in edit mode", async () => {
+        // Navigate to admin users page and click on admin user
+        await page.goto("/en-US/admin/users");
+        await page.waitForLoadState("networkidle");
 
-      await page.waitForURL(/\/users\/profile\//);
-      await page.waitForLoadState("networkidle");
+        // Find admin user row by email and click profile link
+        const adminRow = page
+          .locator("tr")
+          .filter({ hasText: "admin@example.com" });
+        await expect(adminRow).toBeVisible();
+        const adminProfileLink = adminRow.locator("a").first();
+        await adminProfileLink.click();
 
-      // Enter edit mode
-      const editButton = page.getByRole("button", { name: /edit/i });
-      await editButton.click();
+        await page.waitForURL(/\/users\/profile\//);
+        await page.waitForLoadState("networkidle");
 
-      // Wait for submit button
-      const submitButton = page.getByTestId("profile-submit-button");
-      await expect(submitButton).toBeVisible();
+        // Enter edit mode
+        const editButton = page.getByRole("button", { name: /edit/i });
+        await editButton.click();
 
-      // Find the theme select trigger using data-testid
-      const themeCombobox = page.getByTestId("profile-theme-select");
-      await expect(themeCombobox).toBeVisible();
-
-      // Get the current theme value from the combobox text
-      const originalThemeText = await themeCombobox.textContent();
-      const originalTheme = originalThemeText?.trim() || "Light";
-
-      // Click to open the dropdown
-      await themeCombobox.click();
-
-      // Select the opposite theme
-      const newTheme = originalTheme === "Light" ? "Dark" : "Light";
-
-      // Wait for dropdown to open and click the option
-      const themeOption = page.getByRole("option", {
-        name: newTheme,
-        exact: true,
-      });
-      await expect(themeOption).toBeVisible({ timeout: 5000 });
-      await themeOption.click();
-
-      // Save
-      await submitButton.click();
-      await page.waitForLoadState("networkidle");
-
-      // Verify the page reloaded and edit button is back
-      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
-        timeout: 10000,
+        // Wait for submit button
+        const submitButton = page.getByTestId("profile-submit-button");
+        await expect(submitButton).toBeVisible();
       });
 
-      // Revert theme back
-      await page.getByRole("button", { name: /edit/i }).click();
-      const submitButtonRevert = page.getByTestId("profile-submit-button");
-      await expect(submitButtonRevert).toBeVisible();
+      await test.step("Switch theme to the opposite value and save", async () => {
+        // Find the theme select trigger using data-testid
+        const themeCombobox = page.getByTestId("profile-theme-select");
+        await expect(themeCombobox).toBeVisible();
 
-      // Find and click the theme select trigger again
-      const themeComboboxRevert = page.getByTestId("profile-theme-select");
-      await expect(themeComboboxRevert).toBeVisible();
-      await themeComboboxRevert.click();
+        // Get the current theme value from the combobox text
+        const originalThemeText = await themeCombobox.textContent();
+        originalTheme = originalThemeText?.trim() || "Light";
 
-      // First select a different theme to trigger form dirty state
-      const tempTheme = originalTheme === "Light" ? "Dark" : "Light";
-      const tempThemeOption = page.getByRole("option", {
-        name: tempTheme,
-        exact: true,
+        // Click to open the dropdown
+        await themeCombobox.click();
+
+        // Select the opposite theme
+        const newTheme = originalTheme === "Light" ? "Dark" : "Light";
+
+        // Wait for dropdown to open and click the option
+        const themeOption = page.getByRole("option", {
+          name: newTheme,
+          exact: true,
+        });
+        await expect(themeOption).toBeVisible({ timeout: 5000 });
+        await themeOption.click();
+
+        // Save
+        const submitButton = page.getByTestId("profile-submit-button");
+        await submitButton.click();
+        await page.waitForLoadState("networkidle");
+
+        // Verify the page reloaded and edit button is back
+        await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+          timeout: 10000,
+        });
       });
-      await expect(tempThemeOption).toBeVisible({ timeout: 5000 });
-      await tempThemeOption.click();
-      await page.waitForTimeout(300);
 
-      // Reopen combobox to select original theme
-      await themeComboboxRevert.click();
+      await test.step("Revert theme to original value", async () => {
+        // Revert theme back
+        await page.getByRole("button", { name: /edit/i }).click();
+        const submitButtonRevert = page.getByTestId("profile-submit-button");
+        await expect(submitButtonRevert).toBeVisible();
 
-      // Now select the original theme
-      const themeOptionRevert = page.getByRole("option", {
-        name: originalTheme,
-        exact: true,
+        // Find and click the theme select trigger again
+        const themeComboboxRevert = page.getByTestId("profile-theme-select");
+        await expect(themeComboboxRevert).toBeVisible();
+        await themeComboboxRevert.click();
+
+        // First select a different theme to trigger form dirty state
+        const tempTheme = originalTheme === "Light" ? "Dark" : "Light";
+        const tempThemeOption = page.getByRole("option", {
+          name: tempTheme,
+          exact: true,
+        });
+        await expect(tempThemeOption).toBeVisible({ timeout: 5000 });
+        await tempThemeOption.click();
+        await page.waitForTimeout(300);
+
+        // Reopen combobox to select original theme
+        await themeComboboxRevert.click();
+
+        // Now select the original theme
+        const themeOptionRevert = page.getByRole("option", {
+          name: originalTheme,
+          exact: true,
+        });
+        await expect(themeOptionRevert).toBeVisible({ timeout: 5000 });
+        await themeOptionRevert.click();
+
+        // Wait for form validation
+        await page.waitForTimeout(500);
+
+        await expect(submitButtonRevert).toBeEnabled({ timeout: 5000 });
+        await submitButtonRevert.click();
+        await page.waitForLoadState("networkidle");
       });
-      await expect(themeOptionRevert).toBeVisible({ timeout: 5000 });
-      await themeOptionRevert.click();
-
-      // Wait for form validation
-      await page.waitForTimeout(500);
-
-      await expect(submitButtonRevert).toBeEnabled({ timeout: 5000 });
-      await submitButtonRevert.click();
-      await page.waitForLoadState("networkidle");
     });
 
     test("User can update items per page preference", async ({ page }) => {
-      // Navigate to admin users page and click on admin user
-      await page.goto("/en-US/admin/users");
-      await page.waitForLoadState("networkidle");
+      let originalValue: string | undefined;
 
-      // Find admin user row by email and click profile link
-      const adminRow = page
-        .locator("tr")
-        .filter({ hasText: "admin@example.com" });
-      await expect(adminRow).toBeVisible();
-      const adminProfileLink = adminRow.locator("a").first();
-      await adminProfileLink.click();
+      await test.step("Open admin user profile in edit mode", async () => {
+        // Navigate to admin users page and click on admin user
+        await page.goto("/en-US/admin/users");
+        await page.waitForLoadState("networkidle");
 
-      await page.waitForURL(/\/users\/profile\//);
-      await page.waitForLoadState("networkidle");
+        // Find admin user row by email and click profile link
+        const adminRow = page
+          .locator("tr")
+          .filter({ hasText: "admin@example.com" });
+        await expect(adminRow).toBeVisible();
+        const adminProfileLink = adminRow.locator("a").first();
+        await adminProfileLink.click();
 
-      // Enter edit mode
-      const editButton = page.getByRole("button", { name: /edit/i });
-      await editButton.click();
+        await page.waitForURL(/\/users\/profile\//);
+        await page.waitForLoadState("networkidle");
 
-      // Wait for submit button
-      const submitButton = page.getByTestId("profile-submit-button");
-      await expect(submitButton).toBeVisible();
+        // Enter edit mode
+        const editButton = page.getByRole("button", { name: /edit/i });
+        await editButton.click();
 
-      // Find the items per page combobox (shadcn Select component)
-      const itemsPerPageLabel = page
-        .getByText("Items Per Page", { exact: false })
-        .first();
-      await expect(itemsPerPageLabel).toBeVisible();
-
-      // Find the combobox trigger button
-      const itemsPerPageCombobox = page
-        .locator('[role="combobox"]')
-        .filter({ hasText: /^\d+$|^10$|^25$|^50$|^100$/i })
-        .first();
-      await expect(itemsPerPageCombobox).toBeVisible();
-
-      // Get the current value from the combobox text
-      const originalValueText = await itemsPerPageCombobox.textContent();
-      const originalValue = originalValueText?.trim() || "10";
-
-      // Click to open the dropdown
-      await itemsPerPageCombobox.click();
-
-      // Select a different value
-      const newValue = originalValue === "10" ? "25" : "10";
-
-      // Wait for dropdown and click the option
-      const itemsPerPageOption = page.getByRole("option", {
-        name: newValue,
-        exact: true,
-      });
-      await expect(itemsPerPageOption).toBeVisible({ timeout: 5000 });
-      await itemsPerPageOption.click();
-
-      // Save
-      await submitButton.click();
-      await page.waitForLoadState("networkidle");
-
-      // Verify saved
-      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
-        timeout: 10000,
+        // Wait for submit button
+        const submitButton = page.getByTestId("profile-submit-button");
+        await expect(submitButton).toBeVisible();
       });
 
-      // Revert
-      await page.getByRole("button", { name: /edit/i }).click();
-      const submitButtonRevert = page.getByTestId("profile-submit-button");
-      await expect(submitButtonRevert).toBeVisible();
+      await test.step("Change items per page to a different value and save", async () => {
+        // Find the items per page combobox (shadcn Select component)
+        const itemsPerPageLabel = page
+          .getByText("Items Per Page", { exact: false })
+          .first();
+        await expect(itemsPerPageLabel).toBeVisible();
 
-      // Find and click the items per page combobox again
-      const itemsPerPageComboboxRevert = page
-        .locator('[role="combobox"]')
-        .filter({ hasText: /^\d+$|^10$|^25$|^50$|^100$/i })
-        .first();
-      await expect(itemsPerPageComboboxRevert).toBeVisible();
-      await itemsPerPageComboboxRevert.click();
+        // Find the combobox trigger button
+        const itemsPerPageCombobox = page
+          .locator('[role="combobox"]')
+          .filter({ hasText: /^\d+$|^10$|^25$|^50$|^100$/i })
+          .first();
+        await expect(itemsPerPageCombobox).toBeVisible();
 
-      // Wait for dropdown and click the original value option
-      const itemsPerPageOptionRevert = page.getByRole("option", {
-        name: originalValue,
-        exact: true,
+        // Get the current value from the combobox text
+        const originalValueText = await itemsPerPageCombobox.textContent();
+        originalValue = originalValueText?.trim() || "10";
+
+        // Click to open the dropdown
+        await itemsPerPageCombobox.click();
+
+        // Select a different value
+        const newValue = originalValue === "10" ? "25" : "10";
+
+        // Wait for dropdown and click the option
+        const itemsPerPageOption = page.getByRole("option", {
+          name: newValue,
+          exact: true,
+        });
+        await expect(itemsPerPageOption).toBeVisible({ timeout: 5000 });
+        await itemsPerPageOption.click();
+
+        // Save
+        const submitButton = page.getByTestId("profile-submit-button");
+        await submitButton.click();
+        await page.waitForLoadState("networkidle");
+
+        // Verify saved
+        await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({
+          timeout: 10000,
+        });
       });
-      await expect(itemsPerPageOptionRevert).toBeVisible({ timeout: 5000 });
-      await itemsPerPageOptionRevert.click();
 
-      await submitButtonRevert.click();
-      await page.waitForLoadState("networkidle");
+      await test.step("Revert items per page to original value", async () => {
+        // Revert
+        await page.getByRole("button", { name: /edit/i }).click();
+        const submitButtonRevert = page.getByTestId("profile-submit-button");
+        await expect(submitButtonRevert).toBeVisible();
+
+        // Find and click the items per page combobox again
+        const itemsPerPageComboboxRevert = page
+          .locator('[role="combobox"]')
+          .filter({ hasText: /^\d+$|^10$|^25$|^50$|^100$/i })
+          .first();
+        await expect(itemsPerPageComboboxRevert).toBeVisible();
+        await itemsPerPageComboboxRevert.click();
+
+        // Wait for dropdown and click the original value option
+        const itemsPerPageOptionRevert = page.getByRole("option", {
+          name: originalValue,
+          exact: true,
+        });
+        await expect(itemsPerPageOptionRevert).toBeVisible({ timeout: 5000 });
+        await itemsPerPageOptionRevert.click();
+
+        await submitButtonRevert.click();
+        await page.waitForLoadState("networkidle");
+      });
     });
   });
 
@@ -282,50 +308,58 @@ test.describe("User Update Operations", () => {
       });
 
       try {
-        await page.goto("/en-US/admin/users");
-        await page.waitForLoadState("networkidle");
-
-        // Enable "Show Inactive" so users remain visible when toggled to inactive
-        const showInactiveSwitch = page.getByRole("switch", {
-          name: "Show Inactive",
-        });
-        const isShowInactiveChecked =
-          await showInactiveSwitch.getAttribute("data-state");
-        if (isShowInactiveChecked !== "checked") {
-          await showInactiveSwitch.click();
-          await page.waitForLoadState("networkidle");
-        }
-
-        // Find the test user row
-        const userRow = page.locator("tr").filter({ hasText: testEmail });
-        await expect(userRow).toBeVisible();
-
-        // Use the test ID to find the active toggle switch
+        let initialState: string | null = null;
         const activeSwitch = page.getByTestId(
           `user-active-toggle-${testUser.data.id}`
         );
-        await expect(activeSwitch).toBeVisible();
-        const initialState = await activeSwitch.getAttribute("data-state");
 
-        // Click to toggle
-        await activeSwitch.click();
+        await test.step("Open admin users page with inactive users shown", async () => {
+          await page.goto("/en-US/admin/users");
+          await page.waitForLoadState("networkidle");
 
-        // Wait for the UI to update after async handleToggle callback
-        await expect(activeSwitch).not.toHaveAttribute(
-          "data-state",
-          initialState || "",
-          { timeout: 15000 }
-        );
+          // Enable "Show Inactive" so users remain visible when toggled to inactive
+          const showInactiveSwitch = page.getByRole("switch", {
+            name: "Show Inactive",
+          });
+          const isShowInactiveChecked =
+            await showInactiveSwitch.getAttribute("data-state");
+          if (isShowInactiveChecked !== "checked") {
+            await showInactiveSwitch.click();
+            await page.waitForLoadState("networkidle");
+          }
 
-        // Toggle back
-        await activeSwitch.click();
+          // Find the test user row
+          const userRow = page.locator("tr").filter({ hasText: testEmail });
+          await expect(userRow).toBeVisible();
 
-        // Verify state restored
-        await expect(activeSwitch).toHaveAttribute(
-          "data-state",
-          initialState || "",
-          { timeout: 15000 }
-        );
+          // Use the test ID to find the active toggle switch
+          await expect(activeSwitch).toBeVisible();
+          initialState = await activeSwitch.getAttribute("data-state");
+        });
+
+        await test.step("Toggle active status off", async () => {
+          // Click to toggle
+          await activeSwitch.click();
+
+          // Wait for the UI to update after async handleToggle callback
+          await expect(activeSwitch).not.toHaveAttribute(
+            "data-state",
+            initialState || "",
+            { timeout: 15000 }
+          );
+        });
+
+        await test.step("Toggle active status back and verify restored", async () => {
+          // Toggle back
+          await activeSwitch.click();
+
+          // Verify state restored
+          await expect(activeSwitch).toHaveAttribute(
+            "data-state",
+            initialState || "",
+            { timeout: 15000 }
+          );
+        });
       } finally {
         // Cleanup
         await api.updateUser({
@@ -346,53 +380,61 @@ test.describe("User Update Operations", () => {
       });
 
       try {
-        await page.goto("/en-US/admin/users");
-        await page.waitForLoadState("networkidle");
+        await test.step("Open edit modal for the test user", async () => {
+          await page.goto("/en-US/admin/users");
+          await page.waitForLoadState("networkidle");
 
-        // Find the test user row
-        const userRow = page.locator("tr").filter({ hasText: testEmail });
-        await expect(userRow).toBeVisible();
+          // Find the test user row
+          const userRow = page.locator("tr").filter({ hasText: testEmail });
+          await expect(userRow).toBeVisible();
 
-        // Open three-dot dropdown menu and click Edit
-        const actionsCell = userRow.locator("td").last();
-        await actionsCell.locator("button").first().click();
-        const menu = page.locator('[role="menu"]');
-        await expect(menu).toBeVisible({ timeout: 5000 });
-        await menu.getByRole("menuitem", { name: /edit/i }).click();
+          // Open three-dot dropdown menu and click Edit
+          const actionsCell = userRow.locator("td").last();
+          await actionsCell.locator("button").first().click();
+          const menu = page.locator('[role="menu"]');
+          await expect(menu).toBeVisible({ timeout: 5000 });
+          await menu.getByRole("menuitem", { name: /edit/i }).click();
 
-        // Wait for modal to open
-        const dialog = page.locator('[role="dialog"]');
-        await expect(dialog).toBeVisible({ timeout: 5000 });
+          // Wait for modal to open
+          const dialog = page.locator('[role="dialog"]');
+          await expect(dialog).toBeVisible({ timeout: 5000 });
+        });
 
-        // Update name in the modal
-        const nameInput = dialog.locator('input[name="name"]');
-        await expect(nameInput).toBeVisible();
-        await nameInput.clear();
-        await nameInput.fill("Updated Edit Test User");
+        await test.step("Update name in the modal and save", async () => {
+          const dialog = page.locator('[role="dialog"]');
 
-        // Wait for form validation
-        await page.waitForTimeout(500);
+          // Update name in the modal
+          const nameInput = dialog.locator('input[name="name"]');
+          await expect(nameInput).toBeVisible();
+          await nameInput.clear();
+          await nameInput.fill("Updated Edit Test User");
 
-        // Save - use test ID for submit button
-        const saveButton = dialog.getByTestId("edit-user-submit-button");
-        await expect(saveButton).toBeVisible();
-        await expect(saveButton).toBeEnabled({ timeout: 5000 });
-        await saveButton.click();
+          // Wait for form validation
+          await page.waitForTimeout(500);
 
-        // Wait for modal to close
-        await expect(dialog).not.toBeVisible({ timeout: 5000 });
+          // Save - use test ID for submit button
+          const saveButton = dialog.getByTestId("edit-user-submit-button");
+          await expect(saveButton).toBeVisible();
+          await expect(saveButton).toBeEnabled({ timeout: 5000 });
+          await saveButton.click();
 
-        // Wait for network requests to complete after refetch
-        await page.waitForLoadState("networkidle");
+          // Wait for modal to close
+          await expect(dialog).not.toBeVisible({ timeout: 5000 });
 
-        // Reload the page to force a fresh fetch
-        await page.reload();
-        await page.waitForLoadState("networkidle");
+          // Wait for network requests to complete after refetch
+          await page.waitForLoadState("networkidle");
+        });
 
-        // Verify update - the updated name should appear in the table
-        await expect(
-          page.locator("tr").filter({ hasText: "Updated Edit Test User" })
-        ).toBeVisible({ timeout: 10000 });
+        await test.step("Reload and verify updated name in the table", async () => {
+          // Reload the page to force a fresh fetch
+          await page.reload();
+          await page.waitForLoadState("networkidle");
+
+          // Verify update - the updated name should appear in the table
+          await expect(
+            page.locator("tr").filter({ hasText: "Updated Edit Test User" })
+          ).toBeVisible({ timeout: 10000 });
+        });
       } finally {
         // Cleanup: soft delete the test user
         await api.updateUser({
@@ -413,41 +455,49 @@ test.describe("User Update Operations", () => {
       });
 
       try {
-        await page.goto("/en-US/admin/users");
-        await page.waitForLoadState("networkidle");
+        await test.step("Open delete confirmation for the test user", async () => {
+          await page.goto("/en-US/admin/users");
+          await page.waitForLoadState("networkidle");
 
-        // Find the test user row
-        const userRow = page.locator("tr").filter({ hasText: testEmail });
-        await expect(userRow).toBeVisible();
+          // Find the test user row
+          const userRow = page.locator("tr").filter({ hasText: testEmail });
+          await expect(userRow).toBeVisible();
 
-        // Open three-dot dropdown menu and click Delete
-        const actionsCell = userRow.locator("td").last();
-        await actionsCell.locator("button").first().click();
-        const menu = page.locator('[role="menu"]');
-        await expect(menu).toBeVisible({ timeout: 5000 });
-        await menu.getByRole("menuitem", { name: /delete/i }).click();
+          // Open three-dot dropdown menu and click Delete
+          const actionsCell = userRow.locator("td").last();
+          await actionsCell.locator("button").first().click();
+          const menu = page.locator('[role="menu"]');
+          await expect(menu).toBeVisible({ timeout: 5000 });
+          await menu.getByRole("menuitem", { name: /delete/i }).click();
 
-        // Wait for confirmation dialog
-        const alertDialog = page.locator('[role="alertdialog"]');
-        await expect(alertDialog).toBeVisible({ timeout: 5000 });
+          // Wait for confirmation dialog
+          const alertDialog = page.locator('[role="alertdialog"]');
+          await expect(alertDialog).toBeVisible({ timeout: 5000 });
+        });
 
-        // Confirm deletion - the destructive button is the confirm button
-        const confirmButton = alertDialog
-          .locator('button[class*="destructive"]')
-          .last();
-        await confirmButton.click();
+        await test.step("Confirm deletion", async () => {
+          const alertDialog = page.locator('[role="alertdialog"]');
 
-        // Wait for dialog to close
-        await expect(alertDialog).not.toBeVisible({ timeout: 5000 });
+          // Confirm deletion - the destructive button is the confirm button
+          const confirmButton = alertDialog
+            .locator('button[class*="destructive"]')
+            .last();
+          await confirmButton.click();
 
-        // Reload the page to ensure we see the updated list
-        await page.reload();
-        await page.waitForLoadState("networkidle");
+          // Wait for dialog to close
+          await expect(alertDialog).not.toBeVisible({ timeout: 5000 });
+        });
 
-        // User should no longer be visible (soft deleted users are excluded from the default view)
-        await expect(
-          page.locator("tr").filter({ hasText: testEmail })
-        ).toHaveCount(0, { timeout: 5000 });
+        await test.step("Reload and verify user is no longer listed", async () => {
+          // Reload the page to ensure we see the updated list
+          await page.reload();
+          await page.waitForLoadState("networkidle");
+
+          // User should no longer be visible (soft deleted users are excluded from the default view)
+          await expect(
+            page.locator("tr").filter({ hasText: testEmail })
+          ).toHaveCount(0, { timeout: 5000 });
+        });
       } catch (error) {
         // Cleanup in case test fails
         await api.updateUser({
@@ -478,68 +528,75 @@ test.describe("User Update Operations", () => {
       });
 
       try {
-        await page.goto("/en-US/admin/users");
-        await page.waitForLoadState("networkidle");
-
-        // Click Add User button
-        const addUserButton = page.getByRole("button", { name: /add user/i });
-        await addUserButton.click();
-
-        // Wait for add user dialog
         const dialog = page
           .locator('[role="dialog"]')
           .filter({ hasText: /add new user/i });
-        await expect(dialog).toBeVisible({ timeout: 5000 });
 
-        // Fill in the form with the deleted user's email
-        const nameInput = dialog.locator('input[name="name"]');
-        await nameInput.fill("Restored User");
+        await test.step("Open Add User dialog and fill in deleted user's details", async () => {
+          await page.goto("/en-US/admin/users");
+          await page.waitForLoadState("networkidle");
 
-        const emailInput = dialog.locator('input[name="email"]');
-        await emailInput.fill(testEmail);
+          // Click Add User button
+          const addUserButton = page.getByRole("button", { name: /add user/i });
+          await addUserButton.click();
 
-        const passwordInput = dialog.locator('input[name="password"]');
-        await passwordInput.fill("newpassword123");
+          // Wait for add user dialog
+          await expect(dialog).toBeVisible({ timeout: 5000 });
 
-        const confirmPasswordInput = dialog.locator(
-          'input[name="confirmPassword"]'
-        );
-        await confirmPasswordInput.fill("newpassword123");
+          // Fill in the form with the deleted user's email
+          const nameInput = dialog.locator('input[name="name"]');
+          await nameInput.fill("Restored User");
 
-        // Submit the form
-        const submitButton = dialog.getByRole("button", { name: /submit/i });
-        await submitButton.click();
+          const emailInput = dialog.locator('input[name="email"]');
+          await emailInput.fill(testEmail);
 
-        // Wait for restore dialog to appear. The flow is: submit →
-        // server P2002 unique constraint → client `findFirst` for the
-        // soft-deleted user → state update → dialog render. Under
-        // 8-worker parallel load each step can add latency, so 5s
-        // wasn't enough.
-        const restoreDialog = page
-          .locator('[role="dialog"]')
-          .filter({ hasText: /restore deleted user/i });
-        await expect(restoreDialog).toBeVisible({ timeout: 15000 });
+          const passwordInput = dialog.locator('input[name="password"]');
+          await passwordInput.fill("newpassword123");
 
-        // Verify the restore dialog message contains the email
-        await expect(restoreDialog.getByText(testEmail)).toBeVisible();
+          const confirmPasswordInput = dialog.locator(
+            'input[name="confirmPassword"]'
+          );
+          await confirmPasswordInput.fill("newpassword123");
 
-        // Click the restore button
-        const restoreButton = restoreDialog.getByRole("button", {
-          name: /restore user/i,
+          // Submit the form
+          const submitButton = dialog.getByRole("button", { name: /submit/i });
+          await submitButton.click();
         });
-        await restoreButton.click();
 
-        // Wait for both dialogs to close
-        await expect(restoreDialog).not.toBeVisible({ timeout: 5000 });
-        await expect(dialog).not.toBeVisible({ timeout: 5000 });
+        await test.step("Confirm restore of the soft-deleted user", async () => {
+          // Wait for restore dialog to appear. The flow is: submit →
+          // server P2002 unique constraint → client `findFirst` for the
+          // soft-deleted user → state update → dialog render. Under
+          // 8-worker parallel load each step can add latency, so 5s
+          // wasn't enough.
+          const restoreDialog = page
+            .locator('[role="dialog"]')
+            .filter({ hasText: /restore deleted user/i });
+          await expect(restoreDialog).toBeVisible({ timeout: 15000 });
 
-        // Reload page to see restored user
-        await page.reload();
-        await page.waitForLoadState("networkidle");
+          // Verify the restore dialog message contains the email
+          await expect(restoreDialog.getByText(testEmail)).toBeVisible();
 
-        // Verify the user is now visible in the table (not deleted)
-        const userRow = page.locator("tr").filter({ hasText: testEmail });
-        await expect(userRow).toBeVisible({ timeout: 10000 });
+          // Click the restore button
+          const restoreButton = restoreDialog.getByRole("button", {
+            name: /restore user/i,
+          });
+          await restoreButton.click();
+
+          // Wait for both dialogs to close
+          await expect(restoreDialog).not.toBeVisible({ timeout: 5000 });
+          await expect(dialog).not.toBeVisible({ timeout: 5000 });
+        });
+
+        await test.step("Reload and verify restored user is listed", async () => {
+          // Reload page to see restored user
+          await page.reload();
+          await page.waitForLoadState("networkidle");
+
+          // Verify the user is now visible in the table (not deleted)
+          const userRow = page.locator("tr").filter({ hasText: testEmail });
+          await expect(userRow).toBeVisible({ timeout: 10000 });
+        });
       } finally {
         // Cleanup
         await api.updateUser({
@@ -552,42 +609,46 @@ test.describe("User Update Operations", () => {
 
   test.describe("User Menu Operations", () => {
     test("User can change theme from dropdown menu", async ({ page }) => {
-      await page.goto("/en-US");
-      await page.waitForLoadState("networkidle");
+      await test.step("Open the user dropdown menu", async () => {
+        await page.goto("/en-US");
+        await page.waitForLoadState("networkidle");
 
-      // Open user menu using stable test-id selector
-      const userMenuButton = page.getByTestId("user-menu-trigger");
-      await expect(userMenuButton).toBeVisible({ timeout: 5000 });
-      await userMenuButton.click();
+        // Open user menu using stable test-id selector
+        const userMenuButton = page.getByTestId("user-menu-trigger");
+        await expect(userMenuButton).toBeVisible({ timeout: 5000 });
+        await userMenuButton.click();
 
-      // Wait for dropdown menu content
-      const menuContent = page.getByTestId("user-menu-content");
-      await expect(menuContent).toBeVisible({ timeout: 3000 });
+        // Wait for dropdown menu content
+        const menuContent = page.getByTestId("user-menu-content");
+        await expect(menuContent).toBeVisible({ timeout: 3000 });
+      });
 
-      // Open theme submenu using stable test-id
-      const themeSubmenu = page.getByTestId("theme-submenu-trigger");
-      if (await themeSubmenu.isVisible()) {
-        await themeSubmenu.click();
+      await test.step("Select dark theme from the theme submenu", async () => {
+        // Open theme submenu using stable test-id
+        const themeSubmenu = page.getByTestId("theme-submenu-trigger");
+        if (await themeSubmenu.isVisible()) {
+          await themeSubmenu.click();
 
-        // Wait for theme submenu content
-        const themeContent = page.getByTestId("theme-submenu-content");
-        await expect(themeContent).toBeVisible({ timeout: 3000 });
+          // Wait for theme submenu content
+          const themeContent = page.getByTestId("theme-submenu-content");
+          await expect(themeContent).toBeVisible({ timeout: 3000 });
 
-        // Select dark theme option
-        const darkTheme = themeContent
-          .getByRole("menuitem")
-          .filter({ hasText: /dark/i })
-          .first();
+          // Select dark theme option
+          const darkTheme = themeContent
+            .getByRole("menuitem")
+            .filter({ hasText: /dark/i })
+            .first();
 
-        if (await darkTheme.isVisible()) {
-          await darkTheme.click();
-          // Theme change happens asynchronously - wait for network idle
-          await page.waitForLoadState("networkidle");
+          if (await darkTheme.isVisible()) {
+            await darkTheme.click();
+            // Theme change happens asynchronously - wait for network idle
+            await page.waitForLoadState("networkidle");
+          }
         }
-      }
 
-      // Note: This test verifies the menu interaction works
-      // The actual theme change is tested in the profile tests
+        // Note: This test verifies the menu interaction works
+        // The actual theme change is tested in the profile tests
+      });
     });
   });
 
@@ -603,17 +664,19 @@ test.describe("User Update Operations", () => {
       });
 
       try {
-        // Update via API
-        const updated = await api.updateUser({
-          userId: testUser.data.id,
-          data: {
-            name: "Updated API Test User",
-            isActive: false,
-          },
-        });
+        await test.step("Update basic fields via API and verify response", async () => {
+          // Update via API
+          const updated = await api.updateUser({
+            userId: testUser.data.id,
+            data: {
+              name: "Updated API Test User",
+              isActive: false,
+            },
+          });
 
-        expect(updated.data.name).toBe("Updated API Test User");
-        expect(updated.data.isActive).toBe(false);
+          expect(updated.data.name).toBe("Updated API Test User");
+          expect(updated.data.isActive).toBe(false);
+        });
       } finally {
         // Cleanup
         await api.updateUser({
@@ -634,19 +697,21 @@ test.describe("User Update Operations", () => {
       });
 
       try {
-        // Update preferences via API
-        const updated = await api.updateUser({
-          userId: testUser.data.id,
-          data: {
-            userPreferences: {
-              theme: "Dark",
-              itemsPerPage: "P25",
+        await test.step("Update preferences via API and verify response", async () => {
+          // Update preferences via API
+          const updated = await api.updateUser({
+            userId: testUser.data.id,
+            data: {
+              userPreferences: {
+                theme: "Dark",
+                itemsPerPage: "P25",
+              },
             },
-          },
-        });
+          });
 
-        expect(updated.data.userPreferences?.theme).toBe("Dark");
-        expect(updated.data.userPreferences?.itemsPerPage).toBe("P25");
+          expect(updated.data.userPreferences?.theme).toBe("Dark");
+          expect(updated.data.userPreferences?.itemsPerPage).toBe("P25");
+        });
       } finally {
         // Cleanup
         await api.updateUser({
@@ -667,26 +732,28 @@ test.describe("User Update Operations", () => {
       });
 
       try {
-        // Create a completely fresh browser context without any cookies or storage
-        const context = await browser.newContext({
-          storageState: undefined, // No stored authentication
+        await test.step("Attempt unauthenticated update and expect 401", async () => {
+          // Create a completely fresh browser context without any cookies or storage
+          const context = await browser.newContext({
+            storageState: undefined, // No stored authentication
+          });
+          const unauthenticatedRequest = context.request;
+
+          // Try to update a user without authentication
+          const response = await unauthenticatedRequest.patch(
+            `http://localhost:3002/api/users/${testUser.data.id}`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+              data: JSON.stringify({ name: "Unauthorized Update" }),
+            }
+          );
+
+          // Should return 401 Unauthorized
+          expect(response.status()).toBe(401);
+          await context.close();
         });
-        const unauthenticatedRequest = context.request;
-
-        // Try to update a user without authentication
-        const response = await unauthenticatedRequest.patch(
-          `http://localhost:3002/api/users/${testUser.data.id}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-            data: JSON.stringify({ name: "Unauthorized Update" }),
-          }
-        );
-
-        // Should return 401 Unauthorized
-        expect(response.status()).toBe(401);
-        await context.close();
       } finally {
         // Cleanup
         await api.updateUser({

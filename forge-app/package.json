@@ -1,6 +1,7 @@
 {
   "name": "@testplanit/forge-app",
   "version": "2.0.0",
+  "private": true,
   "description": "TestPlanIt Plugin for Jira",
   "main": "src/index.js",
   "scripts": {
@@ -23,7 +24,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
+    "@babel/core": "^7.29.7",
     "@babel/preset-env": "^7.29.2",
     "@babel/preset-react": "^7.28.5",
     "@forge/cli": "^12.17.0",

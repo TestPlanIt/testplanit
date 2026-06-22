@@ -5060,21 +5060,28 @@
       "manageDescription": "Configurez et gérez vos intégrations de services externes.",
       "status": {
         "active": "Actif",
-        "inactive": "Inactif"
+        "inactive": "Inactif",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "Projets connectés",
       "noIntegrations": "Aucune intégration problématique configurée",
       "testConnection": "Test de connexion",
       "testSuccess": "Connexion réussie",
       "testSuccessDescription": "L'intégration du problème est correctement configurée et connectée.",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "Échec de la connexion",
       "testFailedDescription": "Impossible de se connecter au service externe",
       "testError": "Erreur de test",
       "testErrorDescription": "Une erreur s'est produite lors du test de la connexion.",
-      "syncInProgress": "Problèmes de synchronisation...",
-      "syncIntegration": "Synchroniser tous les problèmes à partir de l'intégration des problèmes",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
+      "syncInProgress": "Re-syncing linked issues...",
+      "syncIntegration": "Re-sync linked issues",
+      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
       "syncSuccess": "Synchronisation en file d'attente",
-      "syncSuccessDescription": "Les tickets provenant de «{name}» sont en cours de synchronisation en arrière-plan. Cela peut prendre quelques instants. Le tableau sera mis à jour automatiquement une fois la synchronisation terminée.",
+      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
       "syncError": "Échec de la synchronisation",
       "syncErrorDescription": "Impossible de mettre en file d'attente la tâche de synchronisation pour cette intégration. Veuillez réessayer plus tard.",
       "delete": {
@@ -5206,6 +5213,10 @@
         "apiKeyWarningPoint4": "Utilisez plutôt OAuth 2.0 pour une attribution précise des contributeurs par utilisateur sans autorisation d'administrateur.",
         "tokenCreatorNoticeTitle": "Attribution du créateur du problème",
         "tokenCreatorNoticeDescription": "Les tickets créés via cette intégration sont toujours enregistrés sous le compte propriétaire du jeton d'accès, et non sous celui de l'utilisateur TestPlanIt qui les a créés. L'API de ce fournisseur ne permet pas de définir le créateur pour le compte d'un autre utilisateur.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Clé API Forge",
         "forgeApiKeyDescription": "Utilisée par l'application Atlassian Forge pour authentifier les requêtes provenant des panneaux de tickets Jira. Générez une clé ici et collez-la dans les paramètres de votre application Forge.",
         "forgeApiKeyPlaceholder": "Cliquez sur Générer pour créer une clé API",
@@ -5440,7 +5451,8 @@
         "duplicate_detection": "Détection des doublons",
         "generate_from_url": "Générer des cas de test à partir d'une URL (exigences)",
         "generate_from_url_app": "Générer des cas de test à partir d'une URL (tests d'application)",
-        "automation_candidates": "Rapport des candidats à l'automatisation"
+        "automation_candidates": "Rapport des candidats à l'automatisation",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5744,7 +5756,10 @@
         "reviewReminderTitle": "Examen toujours en cours",
         "reviewReminderAction": "attend toujours votre avis sur",
         "reviewReminderEmailMessage": "Rappel : la demande de révision de {actorName}sur {entityLabel} \"{entityName}\" dans le projet \"{projectName}\" est en attente depuis {hoursPending} heures.",
-        "reviewReminderHoursPending": "En attente depuis {hoursPending, plural, one {# heure} other {# heures}}"
+        "reviewReminderHoursPending": "En attente depuis {hoursPending, plural, one {# heure} other {# heures}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

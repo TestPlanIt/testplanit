@@ -46,6 +46,7 @@ const WORKERS = [
   "elasticsearchReindexWorker",
   "auditLogWorker",
   "autoTagWorker",
+  "deriveCaseStepsWorker",
   "budgetAlertWorker",
   "repoCacheWorker",
   "copyMoveWorker",

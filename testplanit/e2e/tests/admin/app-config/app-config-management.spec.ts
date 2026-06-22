@@ -9,41 +9,53 @@ import { expect, test } from "../../../fixtures";
 
 test.describe("App Config Management - Page Display", () => {
   test("Admin can view app config list page", async ({ page }) => {
-    await page.goto("/en-US/admin/app-config");
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the app config admin page", async () => {
+      await page.goto("/en-US/admin/app-config");
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Verify URL
-    await expect(page).toHaveURL(/\/admin\/app-config/);
+    await test.step("Verify the URL and page title", async () => {
+      // Verify URL
+      await expect(page).toHaveURL(/\/admin\/app-config/);
 
-    // Verify page title (data-testid="app-config-title")
-    // Translated text is "Application Configuration" from admin.menu.appConfig
-    const pageTitle = page.getByTestId("app-config-title");
-    await expect(pageTitle).toBeVisible({ timeout: 10000 });
+      // Verify page title (data-testid="app-config-title")
+      // Translated text is "Application Configuration" from admin.menu.appConfig
+      const pageTitle = page.getByTestId("app-config-title");
+      await expect(pageTitle).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("App config page shows Add Configuration button", async ({ page }) => {
-    await page.goto("/en-US/admin/app-config");
-    await page.waitForLoadState("networkidle");
-
-    // AddAppConfigModal has a Button trigger with CirclePlus icon
-    // Translated as "Add Application Configuration" from admin.appConfig.addConfig
-    const addButton = page.locator("button").filter({
-      hasText: /Add Application Configuration|Add Config|Add/i,
+    await test.step("Open the app config admin page", async () => {
+      await page.goto("/en-US/admin/app-config");
+      await page.waitForLoadState("networkidle");
     });
-    await expect(addButton.first()).toBeVisible({ timeout: 10000 });
+
+    await test.step("Verify the Add Configuration button is visible", async () => {
+      // AddAppConfigModal has a Button trigger with CirclePlus icon
+      // Translated as "Add Application Configuration" from admin.appConfig.addConfig
+      const addButton = page.locator("button").filter({
+        hasText: /Add Application Configuration|Add Config|Add/i,
+      });
+      await expect(addButton.first()).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("App config page shows filter inputs", async ({ page }) => {
-    await page.goto("/en-US/admin/app-config");
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the app config admin page", async () => {
+      await page.goto("/en-US/admin/app-config");
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Key filter has data-testid="app-config-filter-input"
-    const keyFilter = page.getByTestId("app-config-filter-input");
-    await expect(keyFilter).toBeVisible({ timeout: 10000 });
+    await test.step("Verify the key and value filter inputs are visible", async () => {
+      // Key filter has data-testid="app-config-filter-input"
+      const keyFilter = page.getByTestId("app-config-filter-input");
+      await expect(keyFilter).toBeVisible({ timeout: 10000 });
 
-    // Value filter has data-testid="app-config-value-filter-input"
-    const valueFilter = page.getByTestId("app-config-value-filter-input");
-    await expect(valueFilter).toBeVisible({ timeout: 10000 });
+      // Value filter has data-testid="app-config-value-filter-input"
+      const valueFilter = page.getByTestId("app-config-value-filter-input");
+      await expect(valueFilter).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("App config page shows data table", async ({ page }) => {
@@ -58,39 +70,49 @@ test.describe("App Config Management - Page Display", () => {
 
 test.describe("App Config Management - Create Operations", () => {
   test("Admin can open add app config modal", async ({ page }) => {
-    await page.goto("/en-US/admin/app-config");
-    await page.waitForLoadState("networkidle");
-
-    // Click the add button (translated as "Add Application Configuration")
-    const addButton = page.locator("button").filter({
-      hasText: /Add Application Configuration|Add Config/i,
+    await test.step("Open the app config admin page", async () => {
+      await page.goto("/en-US/admin/app-config");
+      await page.waitForLoadState("networkidle");
     });
-    await addButton.first().click();
 
-    // Modal should open (data-testid="add-app-config-modal")
-    const modal = page.getByTestId("add-app-config-modal");
-    await expect(modal).toBeVisible({ timeout: 10000 });
+    await test.step("Open the add configuration modal", async () => {
+      // Click the add button (translated as "Add Application Configuration")
+      const addButton = page.locator("button").filter({
+        hasText: /Add Application Configuration|Add Config/i,
+      });
+      await addButton.first().click();
+
+      // Modal should open (data-testid="add-app-config-modal")
+      const modal = page.getByTestId("add-app-config-modal");
+      await expect(modal).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Add app config modal has key and value fields", async ({ page }) => {
-    await page.goto("/en-US/admin/app-config");
-    await page.waitForLoadState("networkidle");
-
-    const addButton = page.locator("button").filter({
-      hasText: /Add Application Configuration|Add Config/i,
+    await test.step("Open the app config admin page", async () => {
+      await page.goto("/en-US/admin/app-config");
+      await page.waitForLoadState("networkidle");
     });
-    await addButton.first().click();
 
-    const modal = page.getByTestId("add-app-config-modal");
-    await expect(modal).toBeVisible({ timeout: 10000 });
+    await test.step("Open the add configuration modal", async () => {
+      const addButton = page.locator("button").filter({
+        hasText: /Add Application Configuration|Add Config/i,
+      });
+      await addButton.first().click();
 
-    // Key input (data-testid="app-config-key-input")
-    const keyInput = page.getByTestId("app-config-key-input");
-    await expect(keyInput).toBeVisible({ timeout: 5000 });
+      const modal = page.getByTestId("add-app-config-modal");
+      await expect(modal).toBeVisible({ timeout: 10000 });
+    });
 
-    // Value textarea (data-testid="app-config-value-input")
-    const valueInput = page.getByTestId("app-config-value-input");
-    await expect(valueInput).toBeVisible({ timeout: 5000 });
+    await test.step("Verify the key and value fields are visible", async () => {
+      // Key input (data-testid="app-config-key-input")
+      const keyInput = page.getByTestId("app-config-key-input");
+      await expect(keyInput).toBeVisible({ timeout: 5000 });
+
+      // Value textarea (data-testid="app-config-value-input")
+      const valueInput = page.getByTestId("app-config-value-input");
+      await expect(valueInput).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("Admin can create a new app config entry", async ({
@@ -102,35 +124,43 @@ test.describe("App Config Management - Create Operations", () => {
     const configValue = '"test_value"'; // JSON string
     const apiBase = baseURL || "http://localhost:3000";
 
-    await page.goto("/en-US/admin/app-config");
-    await page.waitForLoadState("networkidle");
+    let modal: ReturnType<typeof page.getByTestId> | undefined;
 
-    // Open add modal
-    const addButton = page.locator("button").filter({
-      hasText: /Add Application Configuration|Add Config/i,
+    await test.step("Open the add configuration modal", async () => {
+      await page.goto("/en-US/admin/app-config");
+      await page.waitForLoadState("networkidle");
+
+      // Open add modal
+      const addButton = page.locator("button").filter({
+        hasText: /Add Application Configuration|Add Config/i,
+      });
+      await addButton.first().click();
+
+      modal = page.getByTestId("add-app-config-modal");
+      await expect(modal).toBeVisible({ timeout: 10000 });
     });
-    await addButton.first().click();
 
-    const modal = page.getByTestId("add-app-config-modal");
-    await expect(modal).toBeVisible({ timeout: 10000 });
+    await test.step("Fill in the key and value and submit", async () => {
+      // Fill key
+      const keyInput = page.getByTestId("app-config-key-input");
+      await keyInput.fill(configKey);
 
-    // Fill key
-    const keyInput = page.getByTestId("app-config-key-input");
-    await keyInput.fill(configKey);
+      // Fill value (JSON)
+      const valueInput = page.getByTestId("app-config-value-input");
+      await valueInput.fill(configValue);
 
-    // Fill value (JSON)
-    const valueInput = page.getByTestId("app-config-value-input");
-    await valueInput.fill(configValue);
+      // Submit
+      const submitButton = page.getByTestId("app-config-submit-button");
+      await submitButton.click();
+    });
 
-    // Submit
-    const submitButton = page.getByTestId("app-config-submit-button");
-    await submitButton.click();
+    await test.step("Verify the modal closes and the page reloads", async () => {
+      // Wait for modal to close
+      await expect(modal!).not.toBeVisible({ timeout: 10000 });
 
-    // Wait for modal to close
-    await expect(modal).not.toBeVisible({ timeout: 10000 });
-
-    // Verify the page still loads properly
-    await page.waitForLoadState("networkidle");
+      // Verify the page still loads properly
+      await page.waitForLoadState("networkidle");
+    });
 
     // Cleanup via API
     try {
@@ -145,31 +175,39 @@ test.describe("App Config Management - Create Operations", () => {
   });
 
   test("Cannot create app config with invalid JSON value", async ({ page }) => {
-    await page.goto("/en-US/admin/app-config");
-    await page.waitForLoadState("networkidle");
+    let modal: ReturnType<typeof page.getByTestId> | undefined;
 
-    const addButton = page.locator("button").filter({
-      hasText: /Add Application Configuration|Add Config/i,
+    await test.step("Open the add configuration modal", async () => {
+      await page.goto("/en-US/admin/app-config");
+      await page.waitForLoadState("networkidle");
+
+      const addButton = page.locator("button").filter({
+        hasText: /Add Application Configuration|Add Config/i,
+      });
+      await addButton.first().click();
+
+      modal = page.getByTestId("add-app-config-modal");
+      await expect(modal).toBeVisible({ timeout: 10000 });
     });
-    await addButton.first().click();
 
-    const modal = page.getByTestId("add-app-config-modal");
-    await expect(modal).toBeVisible({ timeout: 10000 });
+    await test.step("Enter a key and an invalid JSON value, then submit", async () => {
+      // Fill key
+      const keyInput = page.getByTestId("app-config-key-input");
+      await keyInput.fill(`invalid_json_test_${Date.now()}`);
 
-    // Fill key
-    const keyInput = page.getByTestId("app-config-key-input");
-    await keyInput.fill(`invalid_json_test_${Date.now()}`);
+      // Fill invalid JSON
+      const valueInput = page.getByTestId("app-config-value-input");
+      await valueInput.fill("not valid json {{{");
 
-    // Fill invalid JSON
-    const valueInput = page.getByTestId("app-config-value-input");
-    await valueInput.fill("not valid json {{{");
+      // Submit
+      const submitButton = page.getByTestId("app-config-submit-button");
+      await submitButton.click();
+    });
 
-    // Submit
-    const submitButton = page.getByTestId("app-config-submit-button");
-    await submitButton.click();
-
-    // Modal should still be visible due to validation error
-    await expect(modal).toBeVisible({ timeout: 5000 });
+    await test.step("Verify the modal stays open due to validation error", async () => {
+      // Modal should still be visible due to validation error
+      await expect(modal!).toBeVisible({ timeout: 5000 });
+    });
   });
 });
 
@@ -202,40 +240,48 @@ test.describe("App Config Management - Edit Operations", () => {
     }
 
     try {
-      await page.goto("/en-US/admin/app-config");
-      await page.waitForLoadState("networkidle");
+      let dialog: ReturnType<typeof page.locator> | undefined;
 
-      // Filter to find the config - the key filter searches server-side
-      const keyFilter = page.getByTestId("app-config-filter-input");
-      await keyFilter.fill(configKey);
+      await test.step("Open the config row and start editing", async () => {
+        await page.goto("/en-US/admin/app-config");
+        await page.waitForLoadState("networkidle");
 
-      // Wait for debounce (300ms) and table to update
-      await page.waitForTimeout(800);
+        // Filter to find the config - the key filter searches server-side
+        const keyFilter = page.getByTestId("app-config-filter-input");
+        await keyFilter.fill(configKey);
 
-      // Find the edit button in the row (data-testid="edit-config-button")
-      const editButton = page.getByTestId("edit-config-button").first();
-      await expect(editButton).toBeVisible({ timeout: 10000 });
-      await editButton.click();
+        // Wait for debounce (300ms) and table to update
+        await page.waitForTimeout(800);
 
-      // Edit dialog should open
-      const dialog = page.locator('[role="dialog"]');
-      await expect(dialog).toBeVisible({ timeout: 10000 });
+        // Find the edit button in the row (data-testid="edit-config-button")
+        const editButton = page.getByTestId("edit-config-button").first();
+        await expect(editButton).toBeVisible({ timeout: 10000 });
+        await editButton.click();
 
-      // Update the value field
-      const valueInput = page.getByTestId("app-config-value-input");
-      await expect(valueInput).toBeVisible({ timeout: 5000 });
-      await valueInput.clear();
-      await valueInput.fill(updatedValue);
+        // Edit dialog should open
+        dialog = page.locator('[role="dialog"]');
+        await expect(dialog).toBeVisible({ timeout: 10000 });
+      });
 
-      // Submit
-      const submitButton = page.getByTestId("app-config-submit-button");
-      await submitButton.click();
+      await test.step("Update the value and submit", async () => {
+        // Update the value field
+        const valueInput = page.getByTestId("app-config-value-input");
+        await expect(valueInput).toBeVisible({ timeout: 5000 });
+        await valueInput.clear();
+        await valueInput.fill(updatedValue);
 
-      // Wait for dialog to close
-      await expect(dialog).not.toBeVisible({ timeout: 10000 });
+        // Submit
+        const submitButton = page.getByTestId("app-config-submit-button");
+        await submitButton.click();
+      });
 
-      // Verify the updated value appears in the table
-      await page.waitForLoadState("networkidle");
+      await test.step("Verify the dialog closes and the page reloads", async () => {
+        // Wait for dialog to close
+        await expect(dialog!).not.toBeVisible({ timeout: 10000 });
+
+        // Verify the updated value appears in the table
+        await page.waitForLoadState("networkidle");
+      });
     } finally {
       // Cleanup
       await request
@@ -276,43 +322,47 @@ test.describe("App Config Management - Delete Operations", () => {
       return;
     }
 
-    await page.goto("/en-US/admin/app-config");
-    await page.waitForLoadState("networkidle");
+    await test.step("Locate the config and open the delete confirmation", async () => {
+      await page.goto("/en-US/admin/app-config");
+      await page.waitForLoadState("networkidle");
 
-    // Filter to find the config
-    const keyFilter = page.getByTestId("app-config-filter-input");
-    await keyFilter.fill(configKey);
-    await page.waitForTimeout(800);
+      // Filter to find the config
+      const keyFilter = page.getByTestId("app-config-filter-input");
+      await keyFilter.fill(configKey);
+      await page.waitForTimeout(800);
 
-    // Find delete button (data-testid="delete-config")
-    const deleteButton = page.getByTestId("delete-config").first();
-    await expect(deleteButton).toBeVisible({ timeout: 10000 });
-    await deleteButton.click();
+      // Find delete button (data-testid="delete-config")
+      const deleteButton = page.getByTestId("delete-config").first();
+      await expect(deleteButton).toBeVisible({ timeout: 10000 });
+      await deleteButton.click();
 
-    // Confirmation dialog should appear (data-testid="delete-confirmation-modal")
-    const confirmModal = page.getByTestId("delete-confirmation-modal");
-    await expect(confirmModal).toBeVisible({ timeout: 5000 });
+      // Confirmation dialog should appear (data-testid="delete-confirmation-modal")
+      const confirmModal = page.getByTestId("delete-confirmation-modal");
+      await expect(confirmModal).toBeVisible({ timeout: 5000 });
 
-    // Click the delete/confirm button
-    const confirmButton = confirmModal.locator("button").filter({
-      hasText: /^Delete$/i,
+      // Click the delete/confirm button
+      const confirmButton = confirmModal.locator("button").filter({
+        hasText: /^Delete$/i,
+      });
+      await confirmButton.last().click();
+
+      // Wait for deletion
+      await page.waitForTimeout(1500);
     });
-    await confirmButton.last().click();
 
-    // Wait for deletion
-    await page.waitForTimeout(1500);
+    await test.step("Reload and verify the config is gone", async () => {
+      // Reload and verify config is gone
+      await page.goto("/en-US/admin/app-config");
+      await page.waitForLoadState("networkidle");
 
-    // Reload and verify config is gone
-    await page.goto("/en-US/admin/app-config");
-    await page.waitForLoadState("networkidle");
+      const keyFilterAfter = page.getByTestId("app-config-filter-input");
+      await keyFilterAfter.fill(configKey);
+      await page.waitForTimeout(800);
 
-    const keyFilterAfter = page.getByTestId("app-config-filter-input");
-    await keyFilterAfter.fill(configKey);
-    await page.waitForTimeout(800);
-
-    // Table should show no rows for this key
-    const rows = page.locator("tbody tr").filter({ hasText: configKey });
-    await expect(rows).not.toBeVisible({ timeout: 5000 });
+      // Table should show no rows for this key
+      const rows = page.locator("tbody tr").filter({ hasText: configKey });
+      await expect(rows).not.toBeVisible({ timeout: 5000 });
+    });
   });
 });
 
@@ -339,21 +389,23 @@ test.describe("App Config Management - Search and Filter", () => {
     );
 
     try {
-      await page.goto("/en-US/admin/app-config");
-      await page.waitForLoadState("networkidle");
+      await test.step("Search by partial key name and verify rows render", async () => {
+        await page.goto("/en-US/admin/app-config");
+        await page.waitForLoadState("networkidle");
 
-      // Type a partial key name in the key filter
-      const keyFilter = page.getByTestId("app-config-filter-input");
-      await keyFilter.fill("e2e_search_test");
+        // Type a partial key name in the key filter
+        const keyFilter = page.getByTestId("app-config-filter-input");
+        await keyFilter.fill("e2e_search_test");
 
-      // Wait for debounce (300ms) + network
-      await page.waitForTimeout(800);
+        // Wait for debounce (300ms) + network
+        await page.waitForTimeout(800);
 
-      // If the config was created, it should appear
-      // The table may show 1 or more rows depending on concurrent test runs
-      const rows = page.locator("tbody tr");
-      const rowCount = await rows.count();
-      expect(rowCount).toBeGreaterThanOrEqual(0);
+        // If the config was created, it should appear
+        // The table may show 1 or more rows depending on concurrent test runs
+        const rows = page.locator("tbody tr");
+        const rowCount = await rows.count();
+        expect(rowCount).toBeGreaterThanOrEqual(0);
+      });
     } finally {
       // Cleanup
       if (createResponse.ok()) {
@@ -371,64 +423,82 @@ test.describe("App Config Management - Search and Filter", () => {
   test("Filtering with non-matching key shows empty or fewer results", async ({
     page,
   }) => {
-    await page.goto("/en-US/admin/app-config");
-    await page.waitForLoadState("networkidle");
+    let initialRows: number | undefined;
 
-    // Wait for initial rows to load
-    await page.waitForTimeout(500);
-    const initialRows = await page.locator("tbody tr").count();
+    await test.step("Load the page and record the initial row count", async () => {
+      await page.goto("/en-US/admin/app-config");
+      await page.waitForLoadState("networkidle");
 
-    // Type something that won't match any config key
-    const keyFilter = page.getByTestId("app-config-filter-input");
-    await keyFilter.fill("zzz_definitely_nonexistent_config_key_zzz");
+      // Wait for initial rows to load
+      await page.waitForTimeout(500);
+      initialRows = await page.locator("tbody tr").count();
+    });
 
-    // Wait for debounce + network
-    await page.waitForTimeout(800);
+    await test.step("Filter by a non-matching key and verify rows do not increase", async () => {
+      // Type something that won't match any config key
+      const keyFilter = page.getByTestId("app-config-filter-input");
+      await keyFilter.fill("zzz_definitely_nonexistent_config_key_zzz");
 
-    // Table should show fewer or equal rows
-    const filteredRows = await page.locator("tbody tr").count();
-    expect(filteredRows).toBeLessThanOrEqual(initialRows);
+      // Wait for debounce + network
+      await page.waitForTimeout(800);
+
+      // Table should show fewer or equal rows
+      const filteredRows = await page.locator("tbody tr").count();
+      expect(filteredRows).toBeLessThanOrEqual(initialRows!);
+    });
   });
 
   test("Clearing filter shows configs again", async ({ page }) => {
-    await page.goto("/en-US/admin/app-config");
-    await page.waitForLoadState("networkidle");
-
-    // Wait for initial load
-    await page.waitForTimeout(500);
-
-    // Apply a specific filter that should return 0 results
     const keyFilter = page.getByTestId("app-config-filter-input");
-    await keyFilter.fill("zzz_no_match_zzz");
-    await page.waitForTimeout(800);
+    let filteredRows: number | undefined;
 
-    const filteredRows = await page.locator("tbody tr").count();
+    await test.step("Apply a filter that returns no results", async () => {
+      await page.goto("/en-US/admin/app-config");
+      await page.waitForLoadState("networkidle");
 
-    // Clear the filter
-    await keyFilter.clear();
-    await page.waitForTimeout(800);
+      // Wait for initial load
+      await page.waitForTimeout(500);
 
-    const afterClearRows = await page.locator("tbody tr").count();
+      // Apply a specific filter that should return 0 results
+      await keyFilter.fill("zzz_no_match_zzz");
+      await page.waitForTimeout(800);
 
-    // After clearing, should have same or more rows than filtered state
-    expect(afterClearRows).toBeGreaterThanOrEqual(filteredRows);
+      filteredRows = await page.locator("tbody tr").count();
+    });
+
+    await test.step("Clear the filter and verify rows are restored", async () => {
+      // Clear the filter
+      await keyFilter.clear();
+      await page.waitForTimeout(800);
+
+      const afterClearRows = await page.locator("tbody tr").count();
+
+      // After clearing, should have same or more rows than filtered state
+      expect(afterClearRows).toBeGreaterThanOrEqual(filteredRows!);
+    });
   });
 
   test("Value filter works to reduce displayed rows", async ({ page }) => {
-    await page.goto("/en-US/admin/app-config");
-    await page.waitForLoadState("networkidle");
+    let initialRows: number | undefined;
 
-    // Wait for initial rows to load
-    await page.waitForTimeout(500);
-    const initialRows = await page.locator("tbody tr").count();
+    await test.step("Load the page and record the initial row count", async () => {
+      await page.goto("/en-US/admin/app-config");
+      await page.waitForLoadState("networkidle");
 
-    // Use value filter with non-matching text
-    const valueFilter = page.getByTestId("app-config-value-filter-input");
-    await valueFilter.fill("zzz_nonexistent_value_zzz_12345_unique");
-    await page.waitForTimeout(800);
+      // Wait for initial rows to load
+      await page.waitForTimeout(500);
+      initialRows = await page.locator("tbody tr").count();
+    });
 
-    // Should show fewer or equal rows (client-side filtering)
-    const filteredRows = await page.locator("tbody tr").count();
-    expect(filteredRows).toBeLessThanOrEqual(initialRows);
+    await test.step("Apply a non-matching value filter and verify rows do not increase", async () => {
+      // Use value filter with non-matching text
+      const valueFilter = page.getByTestId("app-config-value-filter-input");
+      await valueFilter.fill("zzz_nonexistent_value_zzz_12345_unique");
+      await page.waitForTimeout(800);
+
+      // Should show fewer or equal rows (client-side filtering)
+      const filteredRows = await page.locator("tbody tr").count();
+      expect(filteredRows).toBeLessThanOrEqual(initialRows!);
+    });
   });
 });

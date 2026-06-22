@@ -287,6 +287,28 @@ describe("IntegrationManager", () => {
       );
     });
 
+    it("builds an adapter for an inactive integration when allowInactive is set (OAuth authorization flow)", async () => {
+      // OAuth integrations are inactive until authorized; the authorize and
+      // callback routes must still be able to build the adapter to run the
+      // handshake. Without allowInactive this would throw and deadlock setup.
+      mockPrisma.integration.findUnique.mockResolvedValue({
+        id: 2,
+        name: "Jira OAuth",
+        provider: "JIRA",
+        status: "INACTIVE",
+        authType: "OAUTH2",
+        credentials: { clientId: "abc", clientSecret: "shh" },
+        settings: { baseUrl: "https://test.atlassian.net" },
+        userIntegrationAuths: [],
+      });
+
+      const adapter = await manager.getAdapter("2", undefined, undefined, {
+        allowInactive: true,
+      });
+
+      expect(adapter).toBeTruthy();
+    });
+
     it("should throw error when no adapter registered for provider", async () => {
       mockPrisma.integration.findUnique.mockResolvedValue({
         id: 1,

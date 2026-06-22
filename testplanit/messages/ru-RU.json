@@ -5060,21 +5060,28 @@
       "manageDescription": "Настройте и управляйте интеграцией ваших внешних сервисов для обработки заявок.",
       "status": {
         "active": "Активный",
-        "inactive": "Неактивный"
+        "inactive": "Неактивный",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "Связанные проекты",
       "noIntegrations": "Интеграции для решения проблем не настроены.",
       "testConnection": "Проверить соединение",
       "testSuccess": "Соединение установлено успешно.",
       "testSuccessDescription": "Интеграция проблем настроена и подключена должным образом.",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "Соединение не удалось.",
       "testFailedDescription": "Не удалось подключиться к внешнему сервису.",
       "testError": "Ошибка теста",
       "testErrorDescription": "Произошла ошибка при проверке соединения.",
-      "syncInProgress": "Проблемы с синхронизацией...",
-      "syncIntegration": "Синхронизируйте все задачи из интеграции задач.",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
+      "syncInProgress": "Re-syncing linked issues...",
+      "syncIntegration": "Re-sync linked issues",
+      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
       "syncSuccess": "Синхронизация поставлена в очередь",
-      "syncSuccessDescription": "Проблемы из \"{name}\" синхронизируются в фоновом режиме. Это может занять несколько минут. Таблица обновится автоматически после завершения.",
+      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
       "syncError": "Синхронизация не удалась",
       "syncErrorDescription": "Не удалось поставить в очередь задачу синхронизации для интеграции этой проблемы. Пожалуйста, попробуйте позже.",
       "delete": {
@@ -5206,6 +5213,10 @@
         "apiKeyWarningPoint4": "Для точного указания авторства каждого пользователя без прав администратора используйте OAuth 2.0.",
         "tokenCreatorNoticeTitle": "указание авторства выпуска",
         "tokenCreatorNoticeDescription": "Задачи, созданные с помощью этой интеграции, всегда записываются от имени учетной записи, владеющей этим токеном доступа, а не от имени пользователя TestPlanIt, который их создал. API этого поставщика не позволяет устанавливать имя создателя от имени другого пользователя.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Подделать ключ API",
         "forgeApiKeyDescription": "Используется приложением Atlassian Forge для аутентификации запросов из панелей задач Jira. Сгенерируйте ключ здесь и вставьте его в настройки вашего приложения Forge.",
         "forgeApiKeyPlaceholder": "Нажмите «Сгенерировать», чтобы создать ключ API.",
@@ -5440,7 +5451,8 @@
         "duplicate_detection": "Обнаружение дубликатов",
         "generate_from_url": "Создание тестовых сценариев на основе URL-адреса (требования)",
         "generate_from_url_app": "Генерация тестовых сценариев из URL-адреса (тестирование приложений)",
-        "automation_candidates": "Отчет о кандидатах на автоматизацию"
+        "automation_candidates": "Отчет о кандидатах на автоматизацию",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5744,7 +5756,10 @@
         "reviewReminderTitle": "Рассмотрение вопроса еще не завершено.",
         "reviewReminderAction": "всё ещё ждёт вашего отзыва",
         "reviewReminderEmailMessage": "Напоминание: Запрос на проверку проекта {actorName}по проекту {entityLabel} \"{entityName}\" в проекте \"{projectName}\" находится в ожидании уже {hoursPending} часов.",
-        "reviewReminderHoursPending": "Ожидается в течение {hoursPending, plural, one {# часов} other {# часов}}"
+        "reviewReminderHoursPending": "Ожидается в течение {hoursPending, plural, one {# часов} other {# часов}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

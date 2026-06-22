@@ -108,91 +108,106 @@ test.describe("Markdown Paste & Import", () => {
     request,
     baseURL,
   }) => {
-    const projectId = await getTestProjectId(api, "MD");
-    // Ensure the template has a Description (Text Long) field so TipTap renders
-    await ensureDescriptionFieldOnTemplate(api, projectId);
-    const uniqueId = Date.now();
-    const folderId = await api.createFolder(
-      projectId,
-      `MD Paste Folder ${uniqueId}`
-    );
-    const caseName = `MD Paste Case ${uniqueId}`;
-    const caseId = await api.createTestCase(projectId, folderId, caseName);
-
-    // Navigate to the case detail page
-    await testCasePage.goto(projectId, caseId);
-
-    // Enter edit mode
-    await testCasePage.clickEdit();
-
-    // The first .tiptap editor on the case detail page is the Description field
-    // (the second is the Expected field)
-    // The sidebar may overlap the editor, so we focus it via JavaScript
+    let projectId: number | undefined;
+    let caseId: number | undefined;
     const editor = page.locator(".tiptap").first();
-    await expect(editor).toBeAttached({ timeout: 10000 });
-    await editor.evaluate((el) => {
-      (el as HTMLElement).focus();
+
+    await test.step("Create project, folder, and test case via API", async () => {
+      projectId = await getTestProjectId(api, "MD");
+      // Ensure the template has a Description (Text Long) field so TipTap renders
+      await ensureDescriptionFieldOnTemplate(api, projectId);
+      const uniqueId = Date.now();
+      const folderId = await api.createFolder(
+        projectId,
+        `MD Paste Folder ${uniqueId}`
+      );
+      const caseName = `MD Paste Case ${uniqueId}`;
+      caseId = await api.createTestCase(projectId, folderId, caseName);
     });
-    await page.waitForTimeout(300);
 
-    // Paste markdown content
-    const markdownText =
-      "# Test Heading\n\n**Bold text** and *italic*\n\n- Item 1\n- Item 2";
-    await pasteTextIntoFocusedEditor(page, markdownText);
+    await test.step("Open the case detail page and enter edit mode", async () => {
+      // Navigate to the case detail page
+      await testCasePage.goto(projectId!, caseId!);
 
-    // Assert the editor DOM contains rich content (NOT literal markdown)
-    // Use innerHTML to check since the editor may be in a narrow panel
-    // where child elements are considered "hidden" by Playwright
-    await expect(async () => {
-      const innerHTML = await editor.innerHTML();
-      // Heading should be converted to h1 element (# maps to h1 in TipTap)
-      expect(innerHTML).toContain("<h1>");
-      expect(innerHTML).toContain("Test Heading");
-      // Bold should be converted to <strong>
-      expect(innerHTML).toContain("<strong>");
-      expect(innerHTML).toContain("Bold text");
-      // Italic should be converted to <em>
-      expect(innerHTML).toContain("<em>");
-      expect(innerHTML).toContain("italic");
-      // List items should be present (may have class attributes)
-      expect(innerHTML).toMatch(/<li[\s>]/);
-      expect(innerHTML).toContain("Item 1");
-      expect(innerHTML).toContain("Item 2");
-      // Should NOT contain literal markdown syntax
-      expect(innerHTML).not.toContain("**Bold text**");
-      expect(innerHTML).not.toContain("# Test Heading");
-    }).toPass({ timeout: 5000 });
+      // Enter edit mode
+      await testCasePage.clickEdit();
+    });
 
-    // Trigger a small edit to ensure TipTap's onUpdate propagates to React state
-    // (the programmatic paste via view.dispatch may not have flushed React state)
-    await page.keyboard.press("End");
-    await page.keyboard.type(" ");
-    await page.keyboard.press("Backspace");
-    await page.waitForTimeout(1000);
+    await test.step("Focus the Description editor and paste markdown", async () => {
+      // The first .tiptap editor on the case detail page is the Description field
+      // (the second is the Expected field)
+      // The sidebar may overlap the editor, so we focus it via JavaScript
+      await expect(editor).toBeAttached({ timeout: 10000 });
+      await editor.evaluate((el) => {
+        (el as HTMLElement).focus();
+      });
+      await page.waitForTimeout(300);
 
-    // Save the changes
-    await testCasePage.saveChanges();
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
+      // Paste markdown content
+      const markdownText =
+        "# Test Heading\n\n**Bold text** and *italic*\n\n- Item 1\n- Item 2";
+      await pasteTextIntoFocusedEditor(page, markdownText);
+    });
 
-    // Verify via API that the stored value is TipTap JSON
-    const parsedValue = await getDescriptionFieldValue(
-      request,
-      baseURL!,
-      caseId
-    );
-    expect(parsedValue).toBeTruthy();
-    expect(parsedValue.type).toBe("doc");
+    await test.step("Assert pasted markdown renders as rich text in the editor", async () => {
+      // Assert the editor DOM contains rich content (NOT literal markdown)
+      // Use innerHTML to check since the editor may be in a narrow panel
+      // where child elements are considered "hidden" by Playwright
+      await expect(async () => {
+        const innerHTML = await editor.innerHTML();
+        // Heading should be converted to h1 element (# maps to h1 in TipTap)
+        expect(innerHTML).toContain("<h1>");
+        expect(innerHTML).toContain("Test Heading");
+        // Bold should be converted to <strong>
+        expect(innerHTML).toContain("<strong>");
+        expect(innerHTML).toContain("Bold text");
+        // Italic should be converted to <em>
+        expect(innerHTML).toContain("<em>");
+        expect(innerHTML).toContain("italic");
+        // List items should be present (may have class attributes)
+        expect(innerHTML).toMatch(/<li[\s>]/);
+        expect(innerHTML).toContain("Item 1");
+        expect(innerHTML).toContain("Item 2");
+        // Should NOT contain literal markdown syntax
+        expect(innerHTML).not.toContain("**Bold text**");
+        expect(innerHTML).not.toContain("# Test Heading");
+      }).toPass({ timeout: 5000 });
+    });
 
-    // Should have a heading node
-    const hasHeading = parsedValue.content.some(
-      (node: any) => node.type === "heading"
-    );
-    expect(hasHeading).toBe(true);
+    await test.step("Nudge the editor to flush React state and save", async () => {
+      // Trigger a small edit to ensure TipTap's onUpdate propagates to React state
+      // (the programmatic paste via view.dispatch may not have flushed React state)
+      await page.keyboard.press("End");
+      await page.keyboard.type(" ");
+      await page.keyboard.press("Backspace");
+      await page.waitForTimeout(1000);
 
-    // Should have bold text
-    const hasBold = JSON.stringify(parsedValue).includes('"type":"bold"');
-    expect(hasBold).toBe(true);
+      // Save the changes
+      await testCasePage.saveChanges();
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(1000);
+    });
+
+    await test.step("Verify the stored Description is TipTap JSON with heading and bold", async () => {
+      // Verify via API that the stored value is TipTap JSON
+      const parsedValue = await getDescriptionFieldValue(
+        request,
+        baseURL!,
+        caseId!
+      );
+      expect(parsedValue).toBeTruthy();
+      expect(parsedValue.type).toBe("doc");
+
+      // Should have a heading node
+      const hasHeading = parsedValue.content.some(
+        (node: any) => node.type === "heading"
+      );
+      expect(hasHeading).toBe(true);
+
+      // Should have bold text
+      const hasBold = JSON.stringify(parsedValue).includes('"type":"bold"');
+      expect(hasBold).toBe(true);
+    });
   });
 
   test("Paste plain text stays as plain text (regression)", async ({
@@ -201,89 +216,104 @@ test.describe("Markdown Paste & Import", () => {
     request,
     baseURL,
   }) => {
-    const projectId = await getTestProjectId(api, "Plain");
-    // Ensure the template has a Description (Text Long) field so TipTap renders
-    await ensureDescriptionFieldOnTemplate(api, projectId);
-    const uniqueId = Date.now();
-    const folderId = await api.createFolder(
-      projectId,
-      `Plain Paste Folder ${uniqueId}`
-    );
-    const caseName = `Plain Paste Case ${uniqueId}`;
-    const caseId = await api.createTestCase(projectId, folderId, caseName);
-
-    // Navigate to the case detail page
-    await testCasePage.goto(projectId, caseId);
-
-    // Enter edit mode
-    await testCasePage.clickEdit();
-
-    // The first .tiptap editor on the case detail page is the Description field
+    let projectId: number | undefined;
+    let caseId: number | undefined;
     const editor = page.locator(".tiptap").first();
-    await expect(editor).toBeAttached({ timeout: 10000 });
 
-    // Focus the editor and type plain text (no markdown patterns)
-    // Use keyboard.type() to reliably input text via ProseMirror
-    await editor.evaluate((el) => {
-      (el as HTMLElement).focus();
+    await test.step("Create project, folder, and test case via API", async () => {
+      projectId = await getTestProjectId(api, "Plain");
+      // Ensure the template has a Description (Text Long) field so TipTap renders
+      await ensureDescriptionFieldOnTemplate(api, projectId);
+      const uniqueId = Date.now();
+      const folderId = await api.createFolder(
+        projectId,
+        `Plain Paste Folder ${uniqueId}`
+      );
+      const caseName = `Plain Paste Case ${uniqueId}`;
+      caseId = await api.createTestCase(projectId, folderId, caseName);
     });
-    await page.waitForTimeout(300);
 
-    const plainText = "Just a simple description without any formatting";
+    await test.step("Open the case detail page and enter edit mode", async () => {
+      // Navigate to the case detail page
+      await testCasePage.goto(projectId!, caseId!);
 
-    // First try pasting via synthetic event
-    await pasteTextIntoFocusedEditor(page, plainText);
-    await page.waitForTimeout(500);
+      // Enter edit mode
+      await testCasePage.clickEdit();
 
-    // Verify text was inserted - if synthetic paste didn't work, type it
-    const editorText = await editor.textContent();
-    if (!editorText?.includes("simple description")) {
-      // Synthetic paste didn't insert text - use keyboard as fallback
+      // The first .tiptap editor on the case detail page is the Description field
+      await expect(editor).toBeAttached({ timeout: 10000 });
+    });
+
+    await test.step("Paste plain text into the Description editor", async () => {
+      // Focus the editor and type plain text (no markdown patterns)
+      // Use keyboard.type() to reliably input text via ProseMirror
       await editor.evaluate((el) => {
         (el as HTMLElement).focus();
       });
-      await page.keyboard.type(plainText, { delay: 10 });
-    }
+      await page.waitForTimeout(300);
 
-    // Editor should contain the plain text
-    await expect(async () => {
-      const text = await editor.textContent();
-      expect(text).toContain("simple description");
-    }).toPass({ timeout: 5000 });
+      const plainText = "Just a simple description without any formatting";
 
-    // Should NOT have heading, bold, or list elements (verify via innerHTML)
-    const innerHTML = await editor.innerHTML();
-    expect(innerHTML).not.toMatch(/<h[1-6]/);
-    expect(innerHTML).not.toContain("<strong>");
-    expect(innerHTML).not.toContain("<li>");
+      // First try pasting via synthetic event
+      await pasteTextIntoFocusedEditor(page, plainText);
+      await page.waitForTimeout(500);
 
-    // Save
-    await testCasePage.saveChanges();
+      // Verify text was inserted - if synthetic paste didn't work, type it
+      const editorText = await editor.textContent();
+      if (!editorText?.includes("simple description")) {
+        // Synthetic paste didn't insert text - use keyboard as fallback
+        await editor.evaluate((el) => {
+          (el as HTMLElement).focus();
+        });
+        await page.keyboard.type(plainText, { delay: 10 });
+      }
+    });
 
-    // Wait for save to complete and reload
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
+    await test.step("Assert plain text stays plain (no rich formatting)", async () => {
+      // Editor should contain the plain text
+      await expect(async () => {
+        const text = await editor.textContent();
+        expect(text).toContain("simple description");
+      }).toPass({ timeout: 5000 });
 
-    // Verify via API that content is a simple paragraph doc
-    const parsedValue = await getDescriptionFieldValue(
-      request,
-      baseURL!,
-      caseId
-    );
-    expect(parsedValue).toBeTruthy();
-    expect(parsedValue.type).toBe("doc");
+      // Should NOT have heading, bold, or list elements (verify via innerHTML)
+      const innerHTML = await editor.innerHTML();
+      expect(innerHTML).not.toMatch(/<h[1-6]/);
+      expect(innerHTML).not.toContain("<strong>");
+      expect(innerHTML).not.toContain("<li>");
+    });
 
-    // Should NOT have heading nodes
-    const hasHeading = parsedValue.content.some(
-      (node: any) => node.type === "heading"
-    );
-    expect(hasHeading).toBe(false);
+    await test.step("Save the changes", async () => {
+      // Save
+      await testCasePage.saveChanges();
 
-    // Should have a paragraph containing our text
-    const hasParagraph = parsedValue.content.some(
-      (node: any) => node.type === "paragraph"
-    );
-    expect(hasParagraph).toBe(true);
+      // Wait for save to complete and reload
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(1000);
+    });
+
+    await test.step("Verify the stored Description is a simple paragraph doc", async () => {
+      // Verify via API that content is a simple paragraph doc
+      const parsedValue = await getDescriptionFieldValue(
+        request,
+        baseURL!,
+        caseId!
+      );
+      expect(parsedValue).toBeTruthy();
+      expect(parsedValue.type).toBe("doc");
+
+      // Should NOT have heading nodes
+      const hasHeading = parsedValue.content.some(
+        (node: any) => node.type === "heading"
+      );
+      expect(hasHeading).toBe(false);
+
+      // Should have a paragraph containing our text
+      const hasParagraph = parsedValue.content.some(
+        (node: any) => node.type === "paragraph"
+      );
+      expect(hasParagraph).toBe(true);
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -296,202 +326,222 @@ test.describe("Markdown Paste & Import", () => {
     request,
     baseURL,
   }) => {
-    const projectId = await getTestProjectId(api, "Import");
-    // Ensure the template has a Description (Text Long) field for import mapping
-    await ensureDescriptionFieldOnTemplate(api, projectId);
-    const uniqueId = Date.now();
-    const folderName = `MD CSV Import Folder ${uniqueId}`;
-    const folderId = await api.createFolder(projectId, folderName);
-
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
-
-    // Open import wizard
-    const importButton = page
-      .locator('button:has-text("Import Test Cases")')
-      .first();
-    await expect(importButton).toBeVisible({ timeout: 10000 });
-    await importButton.click();
-
+    let projectId: number | undefined;
     const importDialog = page.locator('[role="dialog"]');
-    await expect(importDialog.first()).toBeVisible({ timeout: 5000 });
-
-    // Upload the actual import-markdown.csv file from disk
-    const csvPath = path.resolve(
-      __dirname,
-      "../../../../test/test-data/sample-csv/import-markdown.csv"
-    );
-    const fileInput = page.locator('input[type="file"]').first();
-    await expect(fileInput).toBeAttached({ timeout: 5000 });
-    await fileInput.setInputFiles(csvPath);
-    await page.waitForLoadState("networkidle");
-
-    // Verify file uploaded
-    const fileInfo = importDialog.locator("text=import-markdown.csv");
-    await expect(fileInfo.first()).toBeVisible({ timeout: 5000 });
-
-    // Select template (required for page 1 validation)
-    const templateSelect = importDialog
-      .locator('[data-testid="template-select"]')
-      .first();
-    await expect(templateSelect).toBeVisible({ timeout: 5000 });
-    await templateSelect.click();
-    const templateOption = page.locator('[role="option"]').first();
-    await expect(templateOption).toBeVisible({ timeout: 5000 });
-    await templateOption.click();
-
-    // Select folder if needed
-    const folderSelect = importDialog
-      .locator('button:has-text("Select a folder")')
-      .first();
-    if (await folderSelect.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await folderSelect.click();
-      const folderOption = page.locator('[role="option"]').first();
-      await expect(folderOption).toBeVisible({ timeout: 5000 });
-      await folderOption.click();
-    }
-
-    // Navigate through wizard: Page 1 → 2 → 3 → 4
     const nextButton = importDialog
       .locator('[data-testid="next-button"]')
       .first();
-    await expect(nextButton).toBeEnabled({ timeout: 5000 });
-    await nextButton.click();
-    await page.waitForLoadState("networkidle");
 
-    // Page 2 → 3 (Folder split)
-    await page.waitForTimeout(1000);
-    await expect(nextButton).toBeEnabled({ timeout: 5000 });
-    await nextButton.click();
-    await page.waitForLoadState("networkidle");
+    await test.step("Create project and folder, then open the repository", async () => {
+      projectId = await getTestProjectId(api, "Import");
+      // Ensure the template has a Description (Text Long) field for import mapping
+      await ensureDescriptionFieldOnTemplate(api, projectId);
+      const uniqueId = Date.now();
+      const folderName = `MD CSV Import Folder ${uniqueId}`;
+      const folderId = await api.createFolder(projectId, folderName);
 
-    // Page 3 → 4 (Preview)
-    await page.waitForTimeout(1000);
-    await expect(nextButton).toBeEnabled({ timeout: 5000 });
-    await nextButton.click();
-    await page.waitForLoadState("networkidle");
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Click Import
-    const importBtn = importDialog
-      .locator('[data-testid="import-button"]')
-      .first();
-    await expect(importBtn).toBeVisible({ timeout: 5000 });
-    await expect(importBtn).toBeEnabled({ timeout: 5000 });
-    await importBtn.click();
+    await test.step("Open the import wizard and upload the markdown CSV", async () => {
+      // Open import wizard
+      const importButton = page
+        .locator('button:has-text("Import Test Cases")')
+        .first();
+      await expect(importButton).toBeVisible({ timeout: 10000 });
+      await importButton.click();
 
-    // Wait for import to complete
-    await expect(importDialog.first()).not.toBeVisible({ timeout: 30000 });
-    await page.waitForLoadState("networkidle");
+      await expect(importDialog.first()).toBeVisible({ timeout: 5000 });
 
-    // Verify key cases appear in the table
-    const _expectedCases = [
-      "MD - Headings",
-      "MD - Emphasis & Inline",
-      "MD - Blockquotes",
-      "MD - Unordered Lists",
-      "MD - Ordered Lists",
-      "MD - Code Blocks",
-      "MD - Links & Images",
-      "MD - Tables",
-      "MD - Mixed Rich Content",
-      "MD - Edge Cases",
-    ];
+      // Upload the actual import-markdown.csv file from disk
+      const csvPath = path.resolve(
+        __dirname,
+        "../../../../test/test-data/sample-csv/import-markdown.csv"
+      );
+      const fileInput = page.locator('input[type="file"]').first();
+      await expect(fileInput).toBeAttached({ timeout: 5000 });
+      await fileInput.setInputFiles(csvPath);
+      await page.waitForLoadState("networkidle");
 
-    // Verify a few representative cases are visible
-    for (const caseName of [
-      "MD - Headings",
-      "MD - Code Blocks",
-      "MD - Mixed Rich Content",
-    ]) {
-      await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
-        timeout: 15000,
-      });
-    }
+      // Verify file uploaded
+      const fileInfo = importDialog.locator("text=import-markdown.csv");
+      await expect(fileInfo.first()).toBeVisible({ timeout: 5000 });
+    });
 
-    // Now verify via API that each case's Description is TipTap JSON
-    // with appropriate structure for the markdown content
+    await test.step("Select the template and folder for the import", async () => {
+      // Select template (required for page 1 validation)
+      const templateSelect = importDialog
+        .locator('[data-testid="template-select"]')
+        .first();
+      await expect(templateSelect).toBeVisible({ timeout: 5000 });
+      await templateSelect.click();
+      const templateOption = page.locator('[role="option"]').first();
+      await expect(templateOption).toBeVisible({ timeout: 5000 });
+      await templateOption.click();
 
-    // Helper to get a case by name and check its Description
-    async function verifyCaseDescription(
-      caseName: string,
-      checks: {
-        hasNodeType?: string;
-        hasMarkType?: string;
-        isDoc?: boolean;
+      // Select folder if needed
+      const folderSelect = importDialog
+        .locator('button:has-text("Select a folder")')
+        .first();
+      if (await folderSelect.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await folderSelect.click();
+        const folderOption = page.locator('[role="option"]').first();
+        await expect(folderOption).toBeVisible({ timeout: 5000 });
+        await folderOption.click();
       }
-    ) {
-      const caseResponse = await request.get(
-        `${baseURL}/api/model/repositoryCases/findFirst`,
-        {
-          params: {
-            q: JSON.stringify({
-              where: { name: caseName, projectId, isDeleted: false },
-              select: { id: true },
-            }),
-          },
+    });
+
+    await test.step("Step through the wizard pages to the preview", async () => {
+      // Navigate through wizard: Page 1 → 2 → 3 → 4
+      await expect(nextButton).toBeEnabled({ timeout: 5000 });
+      await nextButton.click();
+      await page.waitForLoadState("networkidle");
+
+      // Page 2 → 3 (Folder split)
+      await page.waitForTimeout(1000);
+      await expect(nextButton).toBeEnabled({ timeout: 5000 });
+      await nextButton.click();
+      await page.waitForLoadState("networkidle");
+
+      // Page 3 → 4 (Preview)
+      await page.waitForTimeout(1000);
+      await expect(nextButton).toBeEnabled({ timeout: 5000 });
+      await nextButton.click();
+      await page.waitForLoadState("networkidle");
+    });
+
+    await test.step("Run the import and wait for it to complete", async () => {
+      // Click Import
+      const importBtn = importDialog
+        .locator('[data-testid="import-button"]')
+        .first();
+      await expect(importBtn).toBeVisible({ timeout: 5000 });
+      await expect(importBtn).toBeEnabled({ timeout: 5000 });
+      await importBtn.click();
+
+      // Wait for import to complete
+      await expect(importDialog.first()).not.toBeVisible({ timeout: 30000 });
+      await page.waitForLoadState("networkidle");
+    });
+
+    await test.step("Verify representative imported cases appear in the table", async () => {
+      // Verify key cases appear in the table
+      const _expectedCases = [
+        "MD - Headings",
+        "MD - Emphasis & Inline",
+        "MD - Blockquotes",
+        "MD - Unordered Lists",
+        "MD - Ordered Lists",
+        "MD - Code Blocks",
+        "MD - Links & Images",
+        "MD - Tables",
+        "MD - Mixed Rich Content",
+        "MD - Edge Cases",
+      ];
+
+      // Verify a few representative cases are visible
+      for (const caseName of [
+        "MD - Headings",
+        "MD - Code Blocks",
+        "MD - Mixed Rich Content",
+      ]) {
+        await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
+          timeout: 15000,
+        });
+      }
+    });
+
+    await test.step("Verify each imported case stores the expected TipTap structure", async () => {
+      // Now verify via API that each case's Description is TipTap JSON
+      // with appropriate structure for the markdown content
+
+      // Helper to get a case by name and check its Description
+      async function verifyCaseDescription(
+        caseName: string,
+        checks: {
+          hasNodeType?: string;
+          hasMarkType?: string;
+          isDoc?: boolean;
         }
-      );
-      expect(caseResponse.ok()).toBeTruthy();
-      const importedCase = (await caseResponse.json()).data;
-      expect(importedCase).toBeTruthy();
+      ) {
+        const caseResponse = await request.get(
+          `${baseURL}/api/model/repositoryCases/findFirst`,
+          {
+            params: {
+              q: JSON.stringify({
+                where: {
+                  name: caseName,
+                  projectId: projectId!,
+                  isDeleted: false,
+                },
+                select: { id: true },
+              }),
+            },
+          }
+        );
+        expect(caseResponse.ok()).toBeTruthy();
+        const importedCase = (await caseResponse.json()).data;
+        expect(importedCase).toBeTruthy();
 
-      const parsedValue = await getDescriptionFieldValue(
-        request,
-        baseURL!,
-        importedCase.id
-      );
-      expect(parsedValue).toBeTruthy();
+        const parsedValue = await getDescriptionFieldValue(
+          request,
+          baseURL!,
+          importedCase.id
+        );
+        expect(parsedValue).toBeTruthy();
 
-      if (checks.isDoc !== false) {
-        expect(parsedValue.type).toBe("doc");
-        expect(parsedValue.content).toBeDefined();
-        expect(parsedValue.content.length).toBeGreaterThan(0);
+        if (checks.isDoc !== false) {
+          expect(parsedValue.type).toBe("doc");
+          expect(parsedValue.content).toBeDefined();
+          expect(parsedValue.content.length).toBeGreaterThan(0);
+        }
+
+        const jsonStr = JSON.stringify(parsedValue);
+
+        if (checks.hasNodeType) {
+          const hasNode = jsonStr.includes(`"type":"${checks.hasNodeType}"`);
+          expect(
+            hasNode,
+            `Expected "${caseName}" to contain node type "${checks.hasNodeType}" in: ${jsonStr.substring(0, 500)}`
+          ).toBe(true);
+        }
+
+        if (checks.hasMarkType) {
+          const hasMark = jsonStr.includes(`"type":"${checks.hasMarkType}"`);
+          expect(
+            hasMark,
+            `Expected "${caseName}" to contain mark type "${checks.hasMarkType}" in: ${jsonStr.substring(0, 500)}`
+          ).toBe(true);
+        }
       }
 
-      const jsonStr = JSON.stringify(parsedValue);
-
-      if (checks.hasNodeType) {
-        const hasNode = jsonStr.includes(`"type":"${checks.hasNodeType}"`);
-        expect(
-          hasNode,
-          `Expected "${caseName}" to contain node type "${checks.hasNodeType}" in: ${jsonStr.substring(0, 500)}`
-        ).toBe(true);
-      }
-
-      if (checks.hasMarkType) {
-        const hasMark = jsonStr.includes(`"type":"${checks.hasMarkType}"`);
-        expect(
-          hasMark,
-          `Expected "${caseName}" to contain mark type "${checks.hasMarkType}" in: ${jsonStr.substring(0, 500)}`
-        ).toBe(true);
-      }
-    }
-
-    // Verify each imported case has the expected TipTap structure
-    await verifyCaseDescription("MD - Headings", { hasNodeType: "heading" });
-    await verifyCaseDescription("MD - Emphasis & Inline", {
-      hasMarkType: "bold",
-    });
-    // Note: "MD - Blockquotes" only contains blockquotes (a weak pattern),
-    // which alone doesn't trigger markdown detection (needs 2+ weak patterns).
-    // So it's stored as plain text. Just verify it's a valid doc.
-    await verifyCaseDescription("MD - Blockquotes", {});
-    await verifyCaseDescription("MD - Unordered Lists", {
-      hasNodeType: "bulletList",
-    });
-    await verifyCaseDescription("MD - Ordered Lists", {
-      hasNodeType: "orderedList",
-    });
-    await verifyCaseDescription("MD - Code Blocks", {
-      hasNodeType: "codeBlock",
-    });
-    await verifyCaseDescription("MD - Mixed Rich Content", {
-      hasNodeType: "heading",
-    });
-    // Also check that Mixed Rich Content has bold
-    await verifyCaseDescription("MD - Mixed Rich Content", {
-      hasMarkType: "bold",
+      // Verify each imported case has the expected TipTap structure
+      await verifyCaseDescription("MD - Headings", { hasNodeType: "heading" });
+      await verifyCaseDescription("MD - Emphasis & Inline", {
+        hasMarkType: "bold",
+      });
+      // Note: "MD - Blockquotes" only contains blockquotes (a weak pattern),
+      // which alone doesn't trigger markdown detection (needs 2+ weak patterns).
+      // So it's stored as plain text. Just verify it's a valid doc.
+      await verifyCaseDescription("MD - Blockquotes", {});
+      await verifyCaseDescription("MD - Unordered Lists", {
+        hasNodeType: "bulletList",
+      });
+      await verifyCaseDescription("MD - Ordered Lists", {
+        hasNodeType: "orderedList",
+      });
+      await verifyCaseDescription("MD - Code Blocks", {
+        hasNodeType: "codeBlock",
+      });
+      await verifyCaseDescription("MD - Mixed Rich Content", {
+        hasNodeType: "heading",
+      });
+      // Also check that Mixed Rich Content has bold
+      await verifyCaseDescription("MD - Mixed Rich Content", {
+        hasMarkType: "bold",
+      });
     });
   });
 });

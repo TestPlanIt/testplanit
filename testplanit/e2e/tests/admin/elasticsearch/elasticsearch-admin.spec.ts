@@ -10,103 +10,129 @@ import { expect, test } from "../../../fixtures";
 
 test.describe("Elasticsearch Admin - Page Display", () => {
   test("Admin can view Elasticsearch admin page", async ({ page }) => {
-    await page.goto("/en-US/admin/elasticsearch");
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the Elasticsearch admin page", async () => {
+      await page.goto("/en-US/admin/elasticsearch");
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Verify we're on the correct page
-    await expect(page).toHaveURL(/\/admin\/elasticsearch/);
+    await test.step("Verify the admin page loaded", async () => {
+      // Verify we're on the correct page
+      await expect(page).toHaveURL(/\/admin\/elasticsearch/);
 
-    // The page renders the ElasticsearchAdmin component which has multiple cards
-    // The status card contains a Database icon and status title
-    const pageContent = page.locator("main, .container");
-    await expect(pageContent.first()).toBeVisible({ timeout: 10000 });
+      // The page renders the ElasticsearchAdmin component which has multiple cards
+      // The status card contains a Database icon and status title
+      const pageContent = page.locator("main, .container");
+      await expect(pageContent.first()).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Admin can see Elasticsearch status card", async ({ page }) => {
-    await page.goto("/en-US/admin/elasticsearch");
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the Elasticsearch admin page and wait for status to load", async () => {
+      await page.goto("/en-US/admin/elasticsearch");
+      await page.waitForLoadState("networkidle");
 
-    // The status card is always rendered - it shows either connected or disconnected state
-    // Wait for loading to complete (spinner disappears or status shows)
-    await page.waitForTimeout(2000);
+      // The status card is always rendered - it shows either connected or disconnected state
+      // Wait for loading to complete (spinner disappears or status shows)
+      await page.waitForTimeout(2000);
+    });
 
-    // The status card shows connected or disconnected text
-    const connectedOrDisconnected = page.locator(
-      "text=/Connected|Disconnected|Failed to connect/i"
-    );
-    await expect(connectedOrDisconnected.first()).toBeVisible({
-      timeout: 15000,
+    await test.step("Verify the status card shows a connection state", async () => {
+      // The status card shows connected or disconnected text
+      const connectedOrDisconnected = page.locator(
+        "text=/Connected|Disconnected|Failed to connect/i"
+      );
+      await expect(connectedOrDisconnected.first()).toBeVisible({
+        timeout: 15000,
+      });
     });
   });
 
   test("Admin can see settings/configuration section", async ({ page }) => {
-    await page.goto("/en-US/admin/elasticsearch");
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the Elasticsearch admin page", async () => {
+      await page.goto("/en-US/admin/elasticsearch");
+      await page.waitForLoadState("networkidle");
+    });
 
-    // The page has multiple cards - status and reindex
-    // Look for Card elements - there should be at least 2 (status + reindex)
-    const cards = page.locator('[class*="card"], .card');
-    const cardCount = await cards.count();
-    // At minimum there should be status and reindex cards
-    expect(cardCount).toBeGreaterThanOrEqual(2);
+    await test.step("Verify the status and reindex cards are present", async () => {
+      // The page has multiple cards - status and reindex
+      // Look for Card elements - there should be at least 2 (status + reindex)
+      const cards = page.locator('[class*="card"], .card');
+      const cardCount = await cards.count();
+      // At minimum there should be status and reindex cards
+      expect(cardCount).toBeGreaterThanOrEqual(2);
+    });
   });
 
   test("Admin can see reindex section with entity type selector", async ({
     page,
   }) => {
-    await page.goto("/en-US/admin/elasticsearch");
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the Elasticsearch admin page", async () => {
+      await page.goto("/en-US/admin/elasticsearch");
+      await page.waitForLoadState("networkidle");
+    });
 
-    // The reindex card contains a Select component for entity type
-    // and a button to start reindex
-    const entityTypeSelect = page.locator('[role="combobox"]').first();
-    await expect(entityTypeSelect).toBeVisible({ timeout: 10000 });
+    await test.step("Verify the reindex entity type selector is visible", async () => {
+      // The reindex card contains a Select component for entity type
+      // and a button to start reindex
+      const entityTypeSelect = page.locator('[role="combobox"]').first();
+      await expect(entityTypeSelect).toBeVisible({ timeout: 10000 });
+    });
   });
 });
 
 test.describe("Elasticsearch Admin - Reindex Operation", () => {
   test("Admin can see reindex button in UI", async ({ page }) => {
-    await page.goto("/en-US/admin/elasticsearch");
-    await page.waitForLoadState("networkidle");
-
-    // The reindex button is present in the UI
-    // Button text is from translation: reindex.button.start or reindex.button.indexing
-    const reindexButton = page.locator("button").filter({
-      hasText: /Start Reindex|Reindex|Indexing/i,
+    await test.step("Open the Elasticsearch admin page", async () => {
+      await page.goto("/en-US/admin/elasticsearch");
+      await page.waitForLoadState("networkidle");
     });
-    await expect(reindexButton.first()).toBeVisible({ timeout: 10000 });
+
+    await test.step("Verify the reindex button is visible", async () => {
+      // The reindex button is present in the UI
+      // Button text is from translation: reindex.button.start or reindex.button.indexing
+      const reindexButton = page.locator("button").filter({
+        hasText: /Start Reindex|Reindex|Indexing/i,
+      });
+      await expect(reindexButton.first()).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Reindex button is disabled when Elasticsearch is not available", async ({
     page,
   }) => {
-    await page.goto("/en-US/admin/elasticsearch");
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the Elasticsearch admin page and wait for the status check", async () => {
+      await page.goto("/en-US/admin/elasticsearch");
+      await page.waitForLoadState("networkidle");
 
-    // Wait for status check to complete
-    await page.waitForTimeout(3000);
-
-    // If ES is not available (E2E environment), the button should be disabled
-    // per component logic: disabled={reindexing || !status?.available}
-    const reindexButton = page.locator("button").filter({
-      hasText: /Start Reindex|Reindex|Indexing/i,
+      // Wait for status check to complete
+      await page.waitForTimeout(3000);
     });
 
-    if (await reindexButton.first().isVisible()) {
-      // Either disabled (ES not available) or enabled (ES available) - both valid
-      const isDisabled = await reindexButton.first().isDisabled();
-      const isEnabled = !isDisabled;
-      // At least verify the button exists in a valid state
-      expect(isDisabled || isEnabled).toBe(true);
-    }
+    await test.step("Verify the reindex button is in a valid enabled/disabled state", async () => {
+      // If ES is not available (E2E environment), the button should be disabled
+      // per component logic: disabled={reindexing || !status?.available}
+      const reindexButton = page.locator("button").filter({
+        hasText: /Start Reindex|Reindex|Indexing/i,
+      });
+
+      if (await reindexButton.first().isVisible()) {
+        // Either disabled (ES not available) or enabled (ES available) - both valid
+        const isDisabled = await reindexButton.first().isDisabled();
+        const isEnabled = !isDisabled;
+        // At least verify the button exists in a valid state
+        expect(isDisabled || isEnabled).toBe(true);
+      }
+    });
   });
 
   test("Admin can attempt to trigger reindex operation", async ({ page }) => {
-    await page.goto("/en-US/admin/elasticsearch");
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the Elasticsearch admin page and wait for the status check", async () => {
+      await page.goto("/en-US/admin/elasticsearch");
+      await page.waitForLoadState("networkidle");
 
-    // Wait for ES status check to complete
-    await page.waitForTimeout(3000);
+      // Wait for ES status check to complete
+      await page.waitForTimeout(3000);
+    });
 
     const reindexButton = page.locator("button").filter({
       hasText: /Start Reindex|Reindex/i,
@@ -155,29 +181,35 @@ test.describe("Elasticsearch Admin - Reindex Operation", () => {
   test("Admin can use refresh button to recheck ES status", async ({
     page,
   }) => {
-    await page.goto("/en-US/admin/elasticsearch");
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the Elasticsearch admin page and wait for the initial status check", async () => {
+      await page.goto("/en-US/admin/elasticsearch");
+      await page.waitForLoadState("networkidle");
 
-    // Wait for initial status check
-    await page.waitForTimeout(2000);
-
-    // The status card has a Refresh button
-    const refreshButton = page.locator("button").filter({
-      hasText: /Refresh/i,
+      // Wait for initial status check
+      await page.waitForTimeout(2000);
     });
 
-    await expect(refreshButton.first()).toBeVisible({ timeout: 10000 });
+    await test.step("Click the refresh button to recheck status", async () => {
+      // The status card has a Refresh button
+      const refreshButton = page.locator("button").filter({
+        hasText: /Refresh/i,
+      });
 
-    // Click refresh - should trigger a new status check
-    await refreshButton.first().click();
+      await expect(refreshButton.first()).toBeVisible({ timeout: 10000 });
 
-    // Verify the button briefly shows loading state or the status updates
-    // The component sets loading=true when checking
-    await page.waitForTimeout(1000);
+      // Click refresh - should trigger a new status check
+      await refreshButton.first().click();
 
-    // The page should still be functional after refresh
-    await expect(page.locator('[role="combobox"]').first()).toBeVisible({
-      timeout: 10000,
+      // Verify the button briefly shows loading state or the status updates
+      // The component sets loading=true when checking
+      await page.waitForTimeout(1000);
+    });
+
+    await test.step("Verify the page is still functional after refresh", async () => {
+      // The page should still be functional after refresh
+      await expect(page.locator('[role="combobox"]').first()).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 });

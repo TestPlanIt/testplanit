@@ -48,72 +48,78 @@ test.describe("Password-Protected Share Flow", () => {
     context,
   }) => {
     const timestamp = Date.now();
-    const projectId = await api.createProject(
-      `Password Share Test ${timestamp}`
-    );
     const sharePassword = `TestPass123-${timestamp}`;
 
-    // Create test cases
-    const rootFolderId = await api.getRootFolderId(projectId);
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Test Case 1 ${timestamp}`
-    );
-    await api.createTestCase(
-      projectId,
-      rootFolderId,
-      `Test Case 2 ${timestamp}`
-    );
+    let projectId: number | undefined;
+    let shareUrl: string | undefined;
 
-    // Navigate to report builder and run report
-    await navigateToRepositoryStatsReport(page, projectId);
-    await runReport(page);
+    await test.step("Create project and test cases", async () => {
+      projectId = await api.createProject(`Password Share Test ${timestamp}`);
 
-    // Create a password-protected share
-    const shareButton = page.getByTestId("share-report-button");
-    await shareButton.click();
+      const rootFolderId = await api.getRootFolderId(projectId);
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Test Case 1 ${timestamp}`
+      );
+      await api.createTestCase(
+        projectId,
+        rootFolderId,
+        `Test Case 2 ${timestamp}`
+      );
+    });
 
-    // Select PASSWORD_PROTECTED mode
-    const passwordModeRadio = page.getByTestId("share-mode-password");
-    await expect(passwordModeRadio).toBeVisible({ timeout: 5000 });
-    await passwordModeRadio.click();
+    await test.step("Navigate to report builder and run report", async () => {
+      await navigateToRepositoryStatsReport(page, projectId!);
+      await runReport(page);
+    });
 
-    // Password fields should now be visible
-    const passwordInput = page.getByTestId("share-password-input");
-    await expect(passwordInput).toBeVisible({ timeout: 3000 });
+    await test.step("Create a password-protected share", async () => {
+      const shareButton = page.getByTestId("share-report-button");
+      await shareButton.click();
 
-    // Enter password
-    await passwordInput.fill(sharePassword);
+      // Select PASSWORD_PROTECTED mode
+      const passwordModeRadio = page.getByTestId("share-mode-password");
+      await expect(passwordModeRadio).toBeVisible({ timeout: 5000 });
+      await passwordModeRadio.click();
 
-    const confirmPasswordInput = page.getByTestId(
-      "share-confirm-password-input"
-    );
-    await confirmPasswordInput.fill(sharePassword);
+      // Password fields should now be visible
+      const passwordInput = page.getByTestId("share-password-input");
+      await expect(passwordInput).toBeVisible({ timeout: 3000 });
 
-    // Add title
-    const titleInput = page.getByTestId("share-title-input");
-    await titleInput.fill(`Password Protected Report ${timestamp}`);
+      // Enter password
+      await passwordInput.fill(sharePassword);
 
-    // Create the share
-    const createButton = page.getByTestId("share-create-button");
-    await createButton.click();
+      const confirmPasswordInput = page.getByTestId(
+        "share-confirm-password-input"
+      );
+      await confirmPasswordInput.fill(sharePassword);
 
-    // Get the share URL
-    const shareUrlInput = page.getByTestId("share-url-input");
-    await expect(shareUrlInput).toBeVisible({ timeout: 10000 });
-    const shareUrl = await shareUrlInput.inputValue();
-    const shareKey = shareUrl.split("/share/")[1];
+      // Add title
+      const titleInput = page.getByTestId("share-title-input");
+      await titleInput.fill(`Password Protected Report ${timestamp}`);
 
-    // Track for cleanup
-    const shareLinkData = await api.getShareLinkByKey(shareKey);
-    if (shareLinkData) {
-      api.trackShareLink(shareLinkData.id);
-      expect(shareLinkData.mode).toBe("PASSWORD_PROTECTED");
-    }
+      // Create the share
+      const createButton = page.getByTestId("share-create-button");
+      await createButton.click();
+    });
 
-    // Close dialog
-    await page.keyboard.press("Escape");
+    await test.step("Capture share URL and track for cleanup", async () => {
+      // Get the share URL
+      const shareUrlInput = page.getByTestId("share-url-input");
+      await expect(shareUrlInput).toBeVisible({ timeout: 10000 });
+      shareUrl = await shareUrlInput.inputValue();
+      const shareKey = shareUrl.split("/share/")[1];
+
+      const shareLinkData = await api.getShareLinkByKey(shareKey);
+      if (shareLinkData) {
+        api.trackShareLink(shareLinkData.id);
+        expect(shareLinkData.mode).toBe("PASSWORD_PROTECTED");
+      }
+
+      // Close dialog
+      await page.keyboard.press("Escape");
+    });
 
     // Access in incognito mode
     const incognitoContext = await context.browser()!.newContext({
@@ -123,42 +129,47 @@ test.describe("Password-Protected Share Flow", () => {
     await stubLiveStreams(incognitoPage);
 
     try {
-      await incognitoPage.goto(shareUrl);
-      await incognitoPage.waitForLoadState("networkidle");
-
-      // Should see password gate, not the report
-      const passwordGateInput = incognitoPage.getByTestId(
-        "password-gate-input"
-      );
-      await expect(passwordGateInput).toBeVisible({ timeout: 10000 });
-
-      // Verify report is NOT visible yet
       const sharedReportViewer = incognitoPage.getByTestId(
         "shared-report-viewer"
       );
-      await expect(sharedReportViewer).not.toBeVisible();
 
-      // Enter the correct password
-      await passwordGateInput.fill(sharePassword);
+      await test.step("Open share and confirm password gate blocks the report", async () => {
+        await incognitoPage.goto(shareUrl!);
+        await incognitoPage.waitForLoadState("networkidle");
 
-      const submitButton = incognitoPage.getByTestId("password-gate-submit");
-      await submitButton.click();
+        // Should see password gate, not the report
+        const passwordGateInput = incognitoPage.getByTestId(
+          "password-gate-input"
+        );
+        await expect(passwordGateInput).toBeVisible({ timeout: 10000 });
 
-      // Wait for password verification
-      await incognitoPage.waitForLoadState("networkidle");
+        // Verify report is NOT visible yet
+        await expect(sharedReportViewer).not.toBeVisible();
 
-      // Now the report should be visible
-      await expect(sharedReportViewer).toBeVisible({ timeout: 10000 });
+        // Enter the correct password
+        await passwordGateInput.fill(sharePassword);
 
-      // Verify report content
-      const reportTitle = incognitoPage.getByTestId("shared-report-title");
-      await expect(reportTitle).toContainText(
-        `Password Protected Report ${timestamp}`
-      );
+        const submitButton = incognitoPage.getByTestId("password-gate-submit");
+        await submitButton.click();
 
-      // Verify test cases are shown
-      const reportTable = incognitoPage.locator("table").first();
-      await expect(reportTable).toBeVisible({ timeout: 30000 });
+        // Wait for password verification
+        await incognitoPage.waitForLoadState("networkidle");
+      });
+
+      await test.step("Verify report content after unlocking", async () => {
+        // Now the report should be visible
+        await expect(sharedReportViewer).toBeVisible({ timeout: 10000 });
+
+        // Verify report content
+        const reportTitle = incognitoPage.getByTestId("shared-report-title");
+        await expect(reportTitle).toContainText(
+          `Password Protected Report ${timestamp}`
+        );
+
+        // Verify test cases are shown
+        const reportTable = incognitoPage.locator("[role='table']").first();
+        await expect(reportTable).toBeVisible({ timeout: 30000 });
+      });
     } finally {
       await incognitoPage.close();
       await incognitoContext.close();

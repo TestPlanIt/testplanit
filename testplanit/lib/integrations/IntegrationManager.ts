@@ -68,7 +68,8 @@ export class IntegrationManager {
   async getAdapter(
     integrationId: string,
     prismaClient?: typeof prisma,
-    userId?: string
+    userId?: string,
+    options?: { allowInactive?: boolean }
   ): Promise<IssueAdapter | null> {
     // OAuth adapters carry a per-user token, so they must be cached per user
     const cacheKey = userId ? `${integrationId}:${userId}` : integrationId;
@@ -95,7 +96,13 @@ export class IntegrationManager {
       throw new Error(`Integration not found: ${integrationId}`);
     }
 
-    if (integration.status !== "ACTIVE") {
+    // OAuth 2.0 (3LO) integrations are intentionally inactive until a user
+    // completes authorization — and the authorization flow itself needs the
+    // adapter to build the authorize URL and to exchange the code for tokens.
+    // Those two routes pass allowInactive so the setup handshake isn't blocked
+    // by the very state it exists to resolve (otherwise an OAuth integration
+    // can never become active). Every other caller still requires ACTIVE.
+    if (integration.status !== "ACTIVE" && !options?.allowInactive) {
       throw new Error(`Integration is not active: ${integrationId}`);
     }
 

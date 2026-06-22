@@ -24,6 +24,7 @@ import { useEffect, useRef } from "react";
 export interface TestRunWakeUp {
   event:
     | "sync"
+    | "test_run.created"
     | "test_run.result_added"
     | "test_run.state_changed"
     | "test_run.completed"

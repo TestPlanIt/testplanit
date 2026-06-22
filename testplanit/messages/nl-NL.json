@@ -5060,21 +5060,28 @@
       "manageDescription": "Configureer en beheer uw externe serviceprobleemintegraties",
       "status": {
         "active": "Actief",
-        "inactive": "Inactief"
+        "inactive": "Inactief",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "Verbonden projecten",
       "noIntegrations": "Geen probleemintegraties geconfigureerd",
       "testConnection": "Testverbinding",
       "testSuccess": "Verbinding succesvol",
       "testSuccessDescription": "De probleemintegratie is correct geconfigureerd en aangesloten",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "Verbinding mislukt",
       "testFailedDescription": "Kan geen verbinding maken met de externe service",
       "testError": "Testfout",
       "testErrorDescription": "Er is een fout opgetreden tijdens het testen van de verbinding",
-      "syncInProgress": "Synchronisatieproblemen...",
-      "syncIntegration": "Synchroniseer alle problemen vanuit de probleemintegratie.",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
+      "syncInProgress": "Re-syncing linked issues...",
+      "syncIntegration": "Re-sync linked issues",
+      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
       "syncSuccess": "Synchronisatie in de wachtrij",
-      "syncSuccessDescription": "Problemen met \"{name}\" worden op de achtergrond gesynchroniseerd. Dit kan even duren. De tabel wordt automatisch bijgewerkt zodra deze is voltooid.",
+      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
       "syncError": "Synchronisatie mislukt",
       "syncErrorDescription": "Het is niet gelukt om een synchronisatietaak voor deze integratie in de wachtrij te plaatsen. Probeer het later opnieuw.",
       "delete": {
@@ -5206,6 +5213,10 @@
         "apiKeyWarningPoint4": "Gebruik in plaats daarvan OAuth 2.0 voor nauwkeurige toewijzing van melders per gebruiker, zonder beheerdersrechten.",
         "tokenCreatorNoticeTitle": "Naamsvermelding van de maker van het probleem",
         "tokenCreatorNoticeDescription": "Issues die via deze integratie worden aangemaakt, worden altijd geregistreerd onder het account dat eigenaar is van dit toegangstoken, en niet onder de TestPlanIt-gebruiker die ze heeft aangemaakt. De API van deze provider staat niet toe dat de maker namens een andere gebruiker wordt ingesteld.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Forge API-sleutel",
         "forgeApiKeyDescription": "Deze sleutel wordt door de Atlassian Forge-app gebruikt om verzoeken vanuit Jira-issuepanelen te authenticeren. Genereer hier een sleutel en plak deze in de instellingen van uw Forge-app.",
         "forgeApiKeyPlaceholder": "Klik op Genereren om een API-sleutel aan te maken.",
@@ -5440,7 +5451,8 @@
         "duplicate_detection": "Detectie van duplicaten",
         "generate_from_url": "Testcases genereren vanuit URL (vereisten)",
         "generate_from_url_app": "Testcases genereren vanuit URL (applicatietesten)",
-        "automation_candidates": "Rapport over automatiseringskandidaten"
+        "automation_candidates": "Rapport over automatiseringskandidaten",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5744,7 +5756,10 @@
         "reviewReminderTitle": "Beoordeling nog in behandeling",
         "reviewReminderAction": "wacht nog steeds op uw beoordeling van",
         "reviewReminderEmailMessage": "Herinnering: Het beoordelingsverzoek van {actorName}voor {entityLabel} \"{entityName}\" in project \"{projectName}\" is al {hoursPending} uur in behandeling.",
-        "reviewReminderHoursPending": "In afwachting van {hoursPending, plural, one {# uur} other {# uur}}"
+        "reviewReminderHoursPending": "In afwachting van {hoursPending, plural, one {# uur} other {# uur}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

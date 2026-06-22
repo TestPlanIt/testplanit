@@ -5060,21 +5060,28 @@
       "manageDescription": "외부 서비스 문제 통합을 구성하고 관리하세요.",
       "status": {
         "active": "활동적인",
-        "inactive": "비활성화됨"
+        "inactive": "비활성화됨",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "연결된 프로젝트",
       "noIntegrations": "문제 없는 통합 구성 완료",
       "testConnection": "테스트 연결",
       "testSuccess": "연결 성공",
       "testSuccessDescription": "이슈 통합이 올바르게 구성되고 연결되었습니다.",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "연결 실패",
       "testFailedDescription": "외부 서비스에 연결할 수 없습니다.",
       "testError": "테스트 오류",
       "testErrorDescription": "연결 테스트 중 오류가 발생했습니다.",
-      "syncInProgress": "동기화 문제...",
-      "syncIntegration": "이슈 통합에서 모든 이슈를 동기화합니다.",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
+      "syncInProgress": "Re-syncing linked issues...",
+      "syncIntegration": "Re-sync linked issues",
+      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
       "syncSuccess": "동기화 대기 중",
-      "syncSuccessDescription": "\"{name}\"의 이슈가 백그라운드에서 동기화되고 있습니다. 몇 분 정도 소요될 수 있습니다. 완료되면 테이블이 자동으로 업데이트됩니다.",
+      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
       "syncError": "동기화 실패",
       "syncErrorDescription": "이 문제 통합에 대한 동기화 작업을 대기열에 추가할 수 없습니다. 나중에 다시 시도해 주세요.",
       "delete": {
@@ -5206,6 +5213,10 @@
         "apiKeyWarningPoint4": "관리자 권한 없이 사용자별 정확한 보고자 식별을 위해서는 OAuth 2.0을 사용하십시오.",
         "tokenCreatorNoticeTitle": "문제 제기자 정보",
         "tokenCreatorNoticeDescription": "이 연동을 통해 생성된 이슈는 항상 해당 액세스 토큰을 소유한 계정으로 기록되며, 이슈를 생성한 TestPlanIt 사용자 계정으로는 기록되지 않습니다. 이 공급자의 API는 다른 사용자를 대신하여 생성자를 설정하는 것을 허용하지 않습니다.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Forge API 키",
         "forgeApiKeyDescription": "Atlassian Forge 앱에서 Jira 이슈 패널의 요청을 인증하는 데 사용됩니다. 여기에서 키를 생성하고 Forge 앱 설정에 붙여넣으세요.",
         "forgeApiKeyPlaceholder": "API 키를 생성하려면 '생성'을 클릭하세요.",
@@ -5440,7 +5451,8 @@
         "duplicate_detection": "중복 감지",
         "generate_from_url": "URL(요구사항)에서 테스트 케이스 생성",
         "generate_from_url_app": "URL에서 테스트 케이스 생성 (애플리케이션 테스트)",
-        "automation_candidates": "자동화 후보 보고서"
+        "automation_candidates": "자동화 후보 보고서",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5744,7 +5756,10 @@
         "reviewReminderTitle": "검토는 아직 진행 중입니다.",
         "reviewReminderAction": "아직 귀하의 리뷰를 기다리고 있습니다.",
         "reviewReminderEmailMessage": "알림: {actorName}님의 {entityLabel} \"{entityName}\" 프로젝트 \"{projectName}\"에 대한 검토 요청이 {hoursPending} 시간 동안 보류 중입니다.",
-        "reviewReminderHoursPending": "대기 시간: {hoursPending, plural, one {#시간} other {#시간}}"
+        "reviewReminderHoursPending": "대기 시간: {hoursPending, plural, one {#시간} other {#시간}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

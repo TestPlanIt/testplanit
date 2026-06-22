@@ -19,31 +19,38 @@ test.describe("Session Lifecycle", () => {
     );
     const sessionName = `Lifecycle Session ${Date.now()}`;
 
-    await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("load");
-
-    const newSessionButton = page.getByTestId("new-session-button");
-    await expect(newSessionButton).toBeVisible({ timeout: 15000 });
-    await newSessionButton.click();
-
     const dialog = page.locator('[role="dialog"]');
-    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // The submit button is gated on defaultTemplate + defaultWorkflow
-    // queries resolving — and the form's init useEffect only runs once
-    // those land. Wait for enabled before typing so the lazy reset() does
-    // not wipe the name.
-    const submitButton = dialog.locator('button[type="submit"]');
-    await expect(submitButton).toBeEnabled({ timeout: 15000 });
+    await test.step("Open the new session dialog from the session list", async () => {
+      await page.goto(`/en-US/projects/sessions/${projectId}`);
+      await page.waitForLoadState("load");
 
-    const nameInput = dialog.locator('input[name="name"]');
-    await expect(nameInput).toBeVisible({ timeout: 5000 });
-    await nameInput.fill(sessionName);
+      const newSessionButton = page.getByTestId("new-session-button");
+      await expect(newSessionButton).toBeVisible({ timeout: 15000 });
+      await newSessionButton.click();
 
-    await submitButton.click();
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
-    // Dialog should close after successful creation
-    await expect(dialog).not.toBeVisible({ timeout: 15000 });
+    await test.step("Enter the session name and submit", async () => {
+      // The submit button is gated on defaultTemplate + defaultWorkflow
+      // queries resolving — and the form's init useEffect only runs once
+      // those land. Wait for enabled before typing so the lazy reset() does
+      // not wipe the name.
+      const submitButton = dialog.locator('button[type="submit"]');
+      await expect(submitButton).toBeEnabled({ timeout: 15000 });
+
+      const nameInput = dialog.locator('input[name="name"]');
+      await expect(nameInput).toBeVisible({ timeout: 5000 });
+      await nameInput.fill(sessionName);
+
+      await submitButton.click();
+    });
+
+    await test.step("Verify the dialog closes after creation", async () => {
+      // Dialog should close after successful creation
+      await expect(dialog).not.toBeVisible({ timeout: 15000 });
+    });
 
     // Cleanup
     const sessionResponse = await page.request.get(
@@ -77,66 +84,77 @@ test.describe("Session Lifecycle", () => {
     await api.createConfiguration(configName, projectId);
     const milestoneId = await api.createMilestone(projectId, milestoneName);
 
-    await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("load");
-
-    const newSessionButton = page.getByTestId("new-session-button");
-    await expect(newSessionButton).toBeVisible({ timeout: 15000 });
-    await newSessionButton.click();
-
     const dialog = page.locator('[role="dialog"]');
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-
-    // Wait for the submit button to be enabled before typing — the form
-    // resets itself once default template/workflow queries resolve, and
-    // typing earlier loses the value. (Same race as the basic-create test.)
     const submitButton = dialog.locator('button[type="submit"]');
-    await expect(submitButton).toBeEnabled({ timeout: 15000 });
 
-    // Fill the session name
-    const nameInput = dialog.locator('input[name="name"]');
-    await expect(nameInput).toBeVisible({ timeout: 5000 });
-    await nameInput.fill(sessionName);
+    await test.step("Open the new session dialog from the session list", async () => {
+      await page.goto(`/en-US/projects/sessions/${projectId}`);
+      await page.waitForLoadState("load");
 
-    // Select configuration via MultiAsyncCombobox (now in left column)
-    const configLabel = dialog.locator('label:has-text("Configurations")');
-    const configCombobox = configLabel
-      .locator("..")
-      .locator('button[role="combobox"]');
-    await expect(configCombobox).toBeVisible({ timeout: 5000 });
-    await configCombobox.click();
+      const newSessionButton = page.getByTestId("new-session-button");
+      await expect(newSessionButton).toBeVisible({ timeout: 15000 });
+      await newSessionButton.click();
 
-    // Wait for config option to appear and select it
-    const configOption = page.locator(
-      `[role="option"]:has-text("${configName}")`
-    );
-    await expect(configOption).toBeVisible({ timeout: 10000 });
-    await configOption.click();
-    await page.keyboard.press("Escape");
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+    });
 
-    // Verify configuration is selected (badge visible)
-    await expect(configCombobox).toContainText(configName, { timeout: 5000 });
+    await test.step("Enter the session name", async () => {
+      // Wait for the submit button to be enabled before typing — the form
+      // resets itself once default template/workflow queries resolve, and
+      // typing earlier loses the value. (Same race as the basic-create test.)
+      await expect(submitButton).toBeEnabled({ timeout: 15000 });
 
-    // MilestoneSelect is in the right column
-    const milestoneLabel = dialog.locator('label:has-text("Milestone")');
-    const milestoneSelect = milestoneLabel
-      .locator("..")
-      .locator('[role="combobox"]');
-    await expect(milestoneSelect).toBeVisible({ timeout: 5000 });
-    await milestoneSelect.click();
+      // Fill the session name
+      const nameInput = dialog.locator('input[name="name"]');
+      await expect(nameInput).toBeVisible({ timeout: 5000 });
+      await nameInput.fill(sessionName);
+    });
 
-    // Wait for milestone option
-    const milestoneOption = page.locator(
-      `[role="option"]:has-text("${milestoneName}")`
-    );
-    await expect(milestoneOption).toBeVisible({ timeout: 10000 });
-    await milestoneOption.click();
+    await test.step("Select the configuration", async () => {
+      // Select configuration via MultiAsyncCombobox (now in left column)
+      const configLabel = dialog.locator('label:has-text("Configurations")');
+      const configCombobox = configLabel
+        .locator("..")
+        .locator('button[role="combobox"]');
+      await expect(configCombobox).toBeVisible({ timeout: 5000 });
+      await configCombobox.click();
 
-    // Submit the form
-    await submitButton.click();
+      // Wait for config option to appear and select it
+      const configOption = page.locator(
+        `[role="option"]:has-text("${configName}")`
+      );
+      await expect(configOption).toBeVisible({ timeout: 10000 });
+      await configOption.click();
+      await page.keyboard.press("Escape");
 
-    // Dialog should close after successful creation
-    await expect(dialog).not.toBeVisible({ timeout: 15000 });
+      // Verify configuration is selected (badge visible)
+      await expect(configCombobox).toContainText(configName, { timeout: 5000 });
+    });
+
+    await test.step("Select the milestone", async () => {
+      // MilestoneSelect is in the right column
+      const milestoneLabel = dialog.locator('label:has-text("Milestone")');
+      const milestoneSelect = milestoneLabel
+        .locator("..")
+        .locator('[role="combobox"]');
+      await expect(milestoneSelect).toBeVisible({ timeout: 5000 });
+      await milestoneSelect.click();
+
+      // Wait for milestone option
+      const milestoneOption = page.locator(
+        `[role="option"]:has-text("${milestoneName}")`
+      );
+      await expect(milestoneOption).toBeVisible({ timeout: 10000 });
+      await milestoneOption.click();
+    });
+
+    await test.step("Submit and verify the dialog closes", async () => {
+      // Submit the form
+      await submitButton.click();
+
+      // Dialog should close after successful creation
+      await expect(dialog).not.toBeVisible({ timeout: 15000 });
+    });
 
     // Cleanup
     const sessionResponse = await page.request.get(

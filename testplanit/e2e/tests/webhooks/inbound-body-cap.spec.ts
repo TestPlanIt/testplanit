@@ -32,26 +32,32 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
     request,
     baseURL,
   }) => {
-    // Provision a Jira config via the admin form. The body cap is route-
-    // level so the choice of adapter is immaterial.
-    await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
-    // 1:1 inbound model: Add skips the chooser and creates inline.
-    await page.getByTestId("webhook-inbound-add-button").click();
+    let configToken: string | undefined;
+    let configId: string | undefined;
+    let oversizeBody: string | undefined;
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
 
-    // Scope to the JIRA card after creation.
-    const jiraCard = page.getByTestId("webhook-inbound-card-jira");
-    await expect(jiraCard).toBeVisible();
-    const urlText = await jiraCard.getByTestId("webhook-url").innerText();
-    const tokenMatch = urlText.match(/\/api\/webhooks\/(whk_[0-9a-f]+)/);
-    expect(tokenMatch).not.toBeNull();
-    const configToken = tokenMatch![1];
+    await test.step("Provision an inbound Jira webhook config", async () => {
+      // Provision a Jira config via the admin form. The body cap is route-
+      // level so the choice of adapter is immaterial.
+      await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
+      // 1:1 inbound model: Add skips the chooser and creates inline.
+      await page.getByTestId("webhook-inbound-add-button").click();
 
-    let configId: string;
-    {
+      // Scope to the JIRA card after creation.
+      const jiraCard = page.getByTestId("webhook-inbound-card-jira");
+      await expect(jiraCard).toBeVisible();
+      const urlText = await jiraCard.getByTestId("webhook-url").innerText();
+      const tokenMatch = urlText.match(/\/api\/webhooks\/(whk_[0-9a-f]+)/);
+      expect(tokenMatch).not.toBeNull();
+      configToken = tokenMatch![1];
+    });
+
+    await test.step("Resolve the webhook config id from the database", async () => {
       const prisma = new PrismaClient();
       try {
         const config = await prisma.webhookConfig.findFirst({
-          where: { token: configToken, direction: "INBOUND" },
+          where: { token: configToken!, direction: "INBOUND" },
           select: { id: true },
         });
         expect(config).not.toBeNull();
@@ -59,36 +65,40 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
       } finally {
         await prisma.$disconnect();
       }
-    }
-
-    const oversizeBody = JSON.stringify({
-      webhookEvent: "jira:issue_updated",
-      issue: {
-        key: "OVERSIZE-1",
-        fields: { status: { name: "X" }, summary: "A".repeat(6 * 1024 * 1024) },
-      },
     });
-    expect(oversizeBody.length).toBeGreaterThan(5_242_880);
-    expect(oversizeBody.length).toBeLessThan(7 * 1024 * 1024);
 
-    const response = await request.post(
-      `${baseURL}/api/webhooks/${configToken}`,
-      {
-        data: oversizeBody,
+    await test.step("Build a 6 MB JSON body exceeding the cap", async () => {
+      oversizeBody = JSON.stringify({
+        webhookEvent: "jira:issue_updated",
+        issue: {
+          key: "OVERSIZE-1",
+          fields: {
+            status: { name: "X" },
+            summary: "A".repeat(6 * 1024 * 1024),
+          },
+        },
+      });
+      expect(oversizeBody.length).toBeGreaterThan(5_242_880);
+      expect(oversizeBody.length).toBeLessThan(7 * 1024 * 1024);
+    });
+
+    await test.step("POST the oversize body and expect HTTP 413", async () => {
+      response = await request.post(`${baseURL}/api/webhooks/${configToken!}`, {
+        data: oversizeBody!,
         headers: {
           "content-type": "application/json",
           "x-hub-signature-256": "sha256=" + "0".repeat(64),
         },
         timeout: 30000,
-      }
-    );
+      });
 
-    expect(response.status()).toBe(413);
+      expect(response.status()).toBe(413);
+    });
 
     const prisma = new PrismaClient();
     try {
       const deliveries = await prisma.webhookDelivery.findMany({
-        where: { webhookConfigId: configId },
+        where: { webhookConfigId: configId! },
       });
       expect(deliveries).toHaveLength(0);
     } finally {

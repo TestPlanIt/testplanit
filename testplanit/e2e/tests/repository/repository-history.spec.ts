@@ -112,51 +112,62 @@ test.describe("Repository — navigation & history", () => {
     const projectId = await api.createProject(
       `Hist Init ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
     );
-    const folderId = await api.createFolder(projectId, "Folder 1");
-    await api.createTestCase(projectId, folderId, "Init Case");
 
-    await installHistoryTracker(page);
-    await page.goto(`${baseURL}/en-US/projects/overview/${projectId}`);
-    await page.waitForLoadState("networkidle");
-    await resetHistoryLog(page);
-    const lengthBefore: number = await page.evaluate(
-      () => window.history.length
-    );
+    let lengthBefore: number | undefined;
 
-    // Real cross-page navigation. We use location.href instead of
-    // clicking #test-cases-link in the project menu because the menu
-    // link occasionally races overlay dismissal under load — the bug
-    // we're testing is independent of how the user got to /repository.
-    await page.evaluate((id: number) => {
-      window.location.href = `/en-US/projects/repository/${id}`;
-    }, projectId);
+    await test.step("Seed a project with one folder and one test case", async () => {
+      const folderId = await api.createFolder(projectId, "Folder 1");
+      await api.createTestCase(projectId, folderId, "Init Case");
+    });
 
-    await page.waitForURL(/\/projects\/repository\/\d+/);
-    await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(300); // settle popstate + retry effects
+    await test.step("Open the project overview with history tracking and reset the log", async () => {
+      await installHistoryTracker(page);
+      await page.goto(`${baseURL}/en-US/projects/overview/${projectId}`);
+      await page.waitForLoadState("networkidle");
+      await resetHistoryLog(page);
+      lengthBefore = await page.evaluate(() => window.history.length);
+    });
 
-    // Functional: URL has the auto-populated params we expect.
-    const url = new URL(page.url());
-    expect(url.searchParams.get("view")).toBe("folders");
-    expect(url.searchParams.get("node")).toMatch(/^\d+$/);
-    expect(url.searchParams.get("page")).toBe("1");
-    expect(url.searchParams.get("pageSize")).toMatch(/^\d+$/);
+    await test.step("Navigate to the repository page", async () => {
+      // Real cross-page navigation. We use location.href instead of
+      // clicking #test-cases-link in the project menu because the menu
+      // link occasionally races overlay dismissal under load — the bug
+      // we're testing is independent of how the user got to /repository.
+      await page.evaluate((id: number) => {
+        window.location.href = `/en-US/projects/repository/${id}`;
+      }, projectId);
 
-    // History: exactly one new entry (the cross-page navigation itself).
-    // Note we use window.history.length, not push-count, because hard
-    // navigations via location.href add a history entry without going
-    // through pushState. Before the fix this delta was 5; after fix 1.
-    const lengthAfter: number = await page.evaluate(
-      () => window.history.length
-    );
-    if (lengthAfter - lengthBefore !== 1) {
-      console.log(
-        "[history-log]",
-        JSON.stringify(await getHistoryLog(page), null, 2)
+      await page.waitForURL(/\/projects\/repository\/\d+/);
+      await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(300); // settle popstate + retry effects
+    });
+
+    await test.step("Verify the auto-populated URL params", async () => {
+      // Functional: URL has the auto-populated params we expect.
+      const url = new URL(page.url());
+      expect(url.searchParams.get("view")).toBe("folders");
+      expect(url.searchParams.get("node")).toMatch(/^\d+$/);
+      expect(url.searchParams.get("page")).toBe("1");
+      expect(url.searchParams.get("pageSize")).toMatch(/^\d+$/);
+    });
+
+    await test.step("Verify history grew by exactly one entry", async () => {
+      // History: exactly one new entry (the cross-page navigation itself).
+      // Note we use window.history.length, not push-count, because hard
+      // navigations via location.href add a history entry without going
+      // through pushState. Before the fix this delta was 5; after fix 1.
+      const lengthAfter: number = await page.evaluate(
+        () => window.history.length
       );
-    }
-    expect(lengthAfter - lengthBefore).toBe(1);
+      if (lengthAfter - lengthBefore! !== 1) {
+        console.log(
+          "[history-log]",
+          JSON.stringify(await getHistoryLog(page), null, 2)
+        );
+      }
+      expect(lengthAfter - lengthBefore!).toBe(1);
+    });
   });
 
   test("back from repository to overview in one back-button click", async ({
@@ -167,25 +178,34 @@ test.describe("Repository — navigation & history", () => {
     const projectId = await api.createProject(
       `Hist Back ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
     );
-    await api.createFolder(projectId, "Folder 1");
 
-    await installHistoryTracker(page);
-    await page.goto(`${baseURL}/en-US/projects/overview/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Seed a project with one folder", async () => {
+      await api.createFolder(projectId, "Folder 1");
+    });
 
-    await page.evaluate((id: number) => {
-      window.location.href = `/en-US/projects/repository/${id}`;
-    }, projectId);
-    await page.waitForURL(/\/projects\/repository\/\d+/);
-    await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(300);
+    await test.step("Open the project overview with history tracking", async () => {
+      await installHistoryTracker(page);
+      await page.goto(`${baseURL}/en-US/projects/overview/${projectId}`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    await page.goBack();
-    await page.waitForURL(/\/projects\/overview\/\d+/, { timeout: 5000 });
-    await page.waitForLoadState("networkidle");
+    await test.step("Navigate to the repository page", async () => {
+      await page.evaluate((id: number) => {
+        window.location.href = `/en-US/projects/repository/${id}`;
+      }, projectId);
+      await page.waitForURL(/\/projects\/repository\/\d+/);
+      await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(300);
+    });
 
-    expect(page.url()).toMatch(/\/projects\/overview\/\d+(\?|$)/);
+    await test.step("Click back and verify return to overview", async () => {
+      await page.goBack();
+      await page.waitForURL(/\/projects\/overview\/\d+/, { timeout: 5000 });
+      await page.waitForLoadState("networkidle");
+
+      expect(page.url()).toMatch(/\/projects\/overview\/\d+(\?|$)/);
+    });
   });
 
   test("clicking a folder in the tree updates URL and content; no new push", async ({
@@ -195,43 +215,53 @@ test.describe("Repository — navigation & history", () => {
     const projectId = await api.createProject(
       `Hist Folder ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
     );
-    const folderAId = await api.createFolder(projectId, "Folder A");
-    const folderBId = await api.createFolder(projectId, "Folder B");
-    await api.createTestCase(projectId, folderAId, "Case in A");
-    await api.createTestCase(projectId, folderBId, "Case in B");
-
-    await installHistoryTracker(page);
     const repositoryPage = new RepositoryPage(page);
-    await repositoryPage.goto(projectId);
-    // Wait for auto-select to land on first folder.
-    await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
-    await page.waitForTimeout(300);
+    let folderBId: number | undefined;
 
-    await resetHistoryLog(page);
-
-    // Switch to Folder B. selectFolder is the page object's robust
-    // helper — it scrolls, retries, and dismisses any popups.
-    await repositoryPage.selectFolder(folderBId);
-    await page.waitForURL(new RegExp(`[?&]node=${folderBId}(?:&|$)`), {
-      timeout: 5000,
+    await test.step("Seed a project with two folders, each holding a case", async () => {
+      const folderAId = await api.createFolder(projectId, "Folder A");
+      folderBId = await api.createFolder(projectId, "Folder B");
+      await api.createTestCase(projectId, folderAId, "Case in A");
+      await api.createTestCase(projectId, folderBId, "Case in B");
     });
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(300);
 
-    // Functional: URL reflects Folder B.
-    expect(new URL(page.url()).searchParams.get("node")).toBe(
-      String(folderBId)
-    );
-    // Functional: the case from Folder B is visible in the table.
-    await expect(
-      repositoryPage.casesTable
-        .locator("tbody tr")
-        .filter({ hasText: "Case in B" })
-    ).toBeVisible({ timeout: 5000 });
+    await test.step("Open the repository, wait for auto-select, and reset the log", async () => {
+      await installHistoryTracker(page);
+      await repositoryPage.goto(projectId);
+      // Wait for auto-select to land on first folder.
+      await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
+      await page.waitForTimeout(300);
 
-    // History: zero new pushes — folder selection is intra-page state,
-    // not a navigation.
-    expectPushCount(await getHistoryLog(page), 0);
+      await resetHistoryLog(page);
+    });
+
+    await test.step("Select Folder B in the tree", async () => {
+      // Switch to Folder B. selectFolder is the page object's robust
+      // helper — it scrolls, retries, and dismisses any popups.
+      await repositoryPage.selectFolder(folderBId!);
+      await page.waitForURL(new RegExp(`[?&]node=${folderBId}(?:&|$)`), {
+        timeout: 5000,
+      });
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(300);
+    });
+
+    await test.step("Verify URL and content reflect Folder B with no new push", async () => {
+      // Functional: URL reflects Folder B.
+      expect(new URL(page.url()).searchParams.get("node")).toBe(
+        String(folderBId)
+      );
+      // Functional: the case from Folder B is visible in the table.
+      await expect(
+        repositoryPage.casesTable
+          .locator("tbody tr")
+          .filter({ hasText: "Case in B" })
+      ).toBeVisible({ timeout: 5000 });
+
+      // History: zero new pushes — folder selection is intra-page state,
+      // not a navigation.
+      expectPushCount(await getHistoryLog(page), 0);
+    });
   });
 
   test("changing view in the dropdown updates URL; no new push", async ({
@@ -241,41 +271,50 @@ test.describe("Repository — navigation & history", () => {
     const projectId = await api.createProject(
       `Hist View ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
     );
-    const folderId = await api.createFolder(projectId, "F1");
-    await api.createTestCase(projectId, folderId, "Case 1");
-
-    await installHistoryTracker(page);
     const repositoryPage = new RepositoryPage(page);
-    await repositoryPage.goto(projectId);
-    await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
-    await page.waitForTimeout(300);
 
-    await resetHistoryLog(page);
+    await test.step("Seed a project with one folder and one case", async () => {
+      const folderId = await api.createFolder(projectId, "F1");
+      await api.createTestCase(projectId, folderId, "Case 1");
+    });
 
-    // Open the view switcher (matches the existing view-switching.spec.ts
-    // helper). It's a Radix Select rendered as `[role="combobox"]` with
-    // the current view name as text.
-    const viewSwitcher = page
-      .locator('[role="combobox"]')
-      .filter({ hasText: /Folders|Template|State|Creator|Automation|Tag/i })
-      .first();
-    await expect(viewSwitcher).toBeVisible({ timeout: 5000 });
-    await viewSwitcher.click();
-    const stateOption = page
-      .locator('[role="option"]')
-      .filter({ hasText: /^state/i })
-      .first();
-    await expect(stateOption).toBeVisible({ timeout: 3000 });
-    await stateOption.click();
+    await test.step("Open the repository, wait for auto-select, and reset the log", async () => {
+      await installHistoryTracker(page);
+      await repositoryPage.goto(projectId);
+      await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
+      await page.waitForTimeout(300);
 
-    await page.waitForURL(/[?&]view=states/, { timeout: 5000 });
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(300);
+      await resetHistoryLog(page);
+    });
 
-    expect(new URL(page.url()).searchParams.get("view")).toBe("states");
+    await test.step("Switch the view to States via the dropdown", async () => {
+      // Open the view switcher (matches the existing view-switching.spec.ts
+      // helper). It's a Radix Select rendered as `[role="combobox"]` with
+      // the current view name as text.
+      const viewSwitcher = page
+        .locator('[role="combobox"]')
+        .filter({ hasText: /Folders|Template|State|Creator|Automation|Tag/i })
+        .first();
+      await expect(viewSwitcher).toBeVisible({ timeout: 5000 });
+      await viewSwitcher.click();
+      const stateOption = page
+        .locator('[role="option"]')
+        .filter({ hasText: /^state/i })
+        .first();
+      await expect(stateOption).toBeVisible({ timeout: 3000 });
+      await stateOption.click();
 
-    // History: zero new pushes (handleViewChange already uses replace).
-    expectPushCount(await getHistoryLog(page), 0);
+      await page.waitForURL(/[?&]view=states/, { timeout: 5000 });
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(300);
+    });
+
+    await test.step("Verify the view param updated with no new push", async () => {
+      expect(new URL(page.url()).searchParams.get("view")).toBe("states");
+
+      // History: zero new pushes (handleViewChange already uses replace).
+      expectPushCount(await getHistoryLog(page), 0);
+    });
   });
 
   test("pagination next-page updates URL; no new push (already uses replace)", async ({
@@ -285,49 +324,59 @@ test.describe("Repository — navigation & history", () => {
     const projectId = await api.createProject(
       `Hist Pag ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
     );
-    // Cases need to be in the auto-selected (root) folder, not a child,
-    // because auto-select-first-folder lands on the root.
-    const rootFolderId = await api.getRootFolderId(projectId);
-    // Need >10 cases so the default pageSize=10 produces a second page.
-    for (let i = 0; i < 12; i += 1) {
-      await api.createTestCase(projectId, rootFolderId, `Case ${i + 1}`);
-    }
+    let rootFolderId: number | undefined;
 
-    await installHistoryTracker(page);
-    // Navigate directly with an explicit pageSize so pagination is guaranteed
-    // to render (default page size may exceed the 12 cases we created).
-    await page.goto(
-      `/en-US/projects/repository/${projectId}?node=${rootFolderId}&pageSize=10`
-    );
-    await page.waitForLoadState("networkidle");
-    // Wait for an actual case row to appear — guarantees the case query
-    // has resolved and pagination is meaningful. Using the case name
-    // text is more robust than tbody-tr selectors which can match
-    // skeleton rows or other tables on the page.
-    await expect(page.getByText("Case 1").first()).toBeVisible({
-      timeout: 15000,
+    await test.step("Seed the root folder with 12 cases to force a second page", async () => {
+      // Cases need to be in the auto-selected (root) folder, not a child,
+      // because auto-select-first-folder lands on the root.
+      rootFolderId = await api.getRootFolderId(projectId);
+      // Need >10 cases so the default pageSize=10 produces a second page.
+      for (let i = 0; i < 12; i += 1) {
+        await api.createTestCase(projectId, rootFolderId, `Case ${i + 1}`);
+      }
     });
-    await page.waitForTimeout(300);
 
-    await resetHistoryLog(page);
+    await test.step("Open the repository with an explicit page size and reset the log", async () => {
+      await installHistoryTracker(page);
+      // Navigate directly with an explicit pageSize so pagination is guaranteed
+      // to render (default page size may exceed the 12 cases we created).
+      await page.goto(
+        `/en-US/projects/repository/${projectId}?node=${rootFolderId}&pageSize=10`
+      );
+      await page.waitForLoadState("networkidle");
+      // Wait for an actual case row to appear — guarantees the case query
+      // has resolved and pagination is meaningful. Using the case name
+      // text is more robust than tbody-tr selectors which can match
+      // skeleton rows or other tables on the page.
+      await expect(page.getByText("Case 1").first()).toBeVisible({
+        timeout: 15000,
+      });
+      await page.waitForTimeout(300);
 
-    // Click "Next" — matches the existing pagination.spec.ts selector.
-    const paginationNav = page.locator('nav[aria-label="pagination"]');
-    const nextButton = paginationNav
-      .locator('a:has-text("Next"), a[aria-label*="next"]')
-      .first();
-    await expect(nextButton).toBeVisible({ timeout: 5000 });
-    await nextButton.click();
+      await resetHistoryLog(page);
+    });
 
-    await page.waitForURL(/[?&]page=2/, { timeout: 5000 });
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(300);
+    await test.step("Click Next to advance to page two", async () => {
+      // Click "Next" — matches the existing pagination.spec.ts selector.
+      const paginationNav = page.locator('nav[aria-label="pagination"]');
+      const nextButton = paginationNav
+        .locator('a:has-text("Next"), a[aria-label*="next"]')
+        .first();
+      await expect(nextButton).toBeVisible({ timeout: 5000 });
+      await nextButton.click();
 
-    expect(new URL(page.url()).searchParams.get("page")).toBe("2");
+      await page.waitForURL(/[?&]page=2/, { timeout: 5000 });
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(300);
+    });
 
-    // History: zero — pagination already uses router.replace, this is a
-    // regression guard so a future change doesn't accidentally start
-    // pushing.
-    expectPushCount(await getHistoryLog(page), 0);
+    await test.step("Verify the page param is 2 with no new push", async () => {
+      expect(new URL(page.url()).searchParams.get("page")).toBe("2");
+
+      // History: zero — pagination already uses router.replace, this is a
+      // regression guard so a future change doesn't accidentally start
+      // pushing.
+      expectPushCount(await getHistoryLog(page), 0);
+    });
   });
 });

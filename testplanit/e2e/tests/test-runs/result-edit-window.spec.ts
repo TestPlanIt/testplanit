@@ -60,39 +60,45 @@ test("blocks a non-admin result edit when the project disables editing; admin st
   });
 
   const userContext = await browser.newContext();
+  // `sec-fetch-site: same-origin` marks this as the in-app browser request it
+  // simulates (the proxy otherwise treats header-less calls as external API).
+  const sameOrigin = { "sec-fetch-site": "same-origin" };
   try {
-    const userPage = await userContext.newPage();
-    await stubBellSSE(userPage);
-    await userPage.goto(`${baseURL}/en-US/signin`);
-    await userPage.waitForLoadState("networkidle");
-    await userPage.getByTestId("email-input").fill(email);
-    await userPage.getByTestId("password-input").fill(password);
-    await userPage.getByTestId("signin-button").click();
-    await userPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
+    await test.step("Sign in as the non-admin user", async () => {
+      const userPage = await userContext.newPage();
+      await stubBellSSE(userPage);
+      await userPage.goto(`${baseURL}/en-US/signin`);
+      await userPage.waitForLoadState("networkidle");
+      await userPage.getByTestId("email-input").fill(email);
+      await userPage.getByTestId("password-input").fill(password);
+      await userPage.getByTestId("signin-button").click();
+      await userPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
+    });
 
-    // Non-admin edit through the model route is blocked by the guard.
-    // `sec-fetch-site: same-origin` marks this as the in-app browser request it
-    // simulates (the proxy otherwise treats header-less calls as external API).
-    const sameOrigin = { "sec-fetch-site": "same-origin" };
-    const blocked = await userContext.request.patch(
-      `${baseURL}/api/model/testRunResults/update`,
-      {
-        headers: sameOrigin,
-        data: { where: { id: resultId }, data: { elapsed: 42 } },
-      }
-    );
-    expect(blocked.status()).toBe(403);
-    expect((await blocked.json())?.error?.code).toBe("EDIT_WINDOW_EXPIRED");
+    await test.step("Verify the non-admin result edit is blocked by the guard", async () => {
+      // Non-admin edit through the model route is blocked by the guard.
+      const blocked = await userContext.request.patch(
+        `${baseURL}/api/model/testRunResults/update`,
+        {
+          headers: sameOrigin,
+          data: { where: { id: resultId }, data: { elapsed: 42 } },
+        }
+      );
+      expect(blocked.status()).toBe(403);
+      expect((await blocked.json())?.error?.code).toBe("EDIT_WINDOW_EXPIRED");
+    });
 
-    // The admin (default request context) bypasses the window.
-    const allowed = await request.patch(
-      `${baseURL}/api/model/testRunResults/update`,
-      {
-        headers: sameOrigin,
-        data: { where: { id: resultId }, data: { elapsed: 99 } },
-      }
-    );
-    expect(allowed.ok()).toBeTruthy();
+    await test.step("Verify the admin bypasses the edit window", async () => {
+      // The admin (default request context) bypasses the window.
+      const allowed = await request.patch(
+        `${baseURL}/api/model/testRunResults/update`,
+        {
+          headers: sameOrigin,
+          data: { where: { id: resultId }, data: { elapsed: 99 } },
+        }
+      );
+      expect(allowed.ok()).toBeTruthy();
+    });
   } finally {
     await userContext.close();
   }

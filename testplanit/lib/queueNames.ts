@@ -8,6 +8,7 @@ export const ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
 export const AUDIT_LOG_QUEUE_NAME = "audit-logs";
 export const BUDGET_ALERT_QUEUE_NAME = "budget-alerts";
 export const AUTO_TAG_QUEUE_NAME = "auto-tag";
+export const DERIVE_CASE_STEPS_QUEUE_NAME = "derive-case-steps";
 export const REPO_CACHE_QUEUE_NAME = "repo-cache";
 // Job name for an on-demand, single-config cache refresh (manual "Refresh"
 // button). Runs the full list+content fetch off-request in the worker so a

@@ -27,20 +27,24 @@ test.describe("Session Duplication", () => {
       `Dup Menu Session ${ts}`
     );
 
-    await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("load");
+    await test.step("Open the sessions page and wait for the session", async () => {
+      await page.goto(`/en-US/projects/sessions/${projectId}`);
+      await page.waitForLoadState("load");
 
-    // Wait for the session item to appear
-    const sessionItem = page.locator(`#session-${sessionId}`);
-    await expect(sessionItem).toBeVisible({ timeout: 15000 });
+      // Wait for the session item to appear
+      const sessionItem = page.locator(`#session-${sessionId}`);
+      await expect(sessionItem).toBeVisible({ timeout: 15000 });
 
-    // Click the three-dot menu
-    const moreButton = sessionItem.locator("button:has(svg)").last();
-    await moreButton.click();
+      // Click the three-dot menu
+      const moreButton = sessionItem.locator("button:has(svg)").last();
+      await moreButton.click();
+    });
 
-    // The "Duplicate" menu item should be visible
-    const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
-    await expect(duplicateItem).toBeVisible({ timeout: 5000 });
+    await test.step("Verify the Duplicate menu item is visible", async () => {
+      // The "Duplicate" menu item should be visible
+      const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
+      await expect(duplicateItem).toBeVisible({ timeout: 5000 });
+    });
 
     // Cleanup
     await api.deleteSession(sessionId);
@@ -55,40 +59,48 @@ test.describe("Session Duplication", () => {
     const originalName = `Original Session ${ts}`;
     const sessionId = await api.createSession(projectId, originalName);
 
-    await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("load");
+    let dialog: ReturnType<typeof page.locator> | undefined;
 
-    // Wait for the session item to appear
-    const sessionItem = page.locator(`#session-${sessionId}`);
-    await expect(sessionItem).toBeVisible({ timeout: 15000 });
+    await test.step("Open the sessions page and trigger Duplicate", async () => {
+      await page.goto(`/en-US/projects/sessions/${projectId}`);
+      await page.waitForLoadState("load");
 
-    // Click the three-dot menu and then Duplicate
-    const moreButton = sessionItem.locator("button:has(svg)").last();
-    await moreButton.click();
+      // Wait for the session item to appear
+      const sessionItem = page.locator(`#session-${sessionId}`);
+      await expect(sessionItem).toBeVisible({ timeout: 15000 });
 
-    const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
-    await expect(duplicateItem).toBeVisible({ timeout: 5000 });
-    await duplicateItem.click();
+      // Click the three-dot menu and then Duplicate
+      const moreButton = sessionItem.locator("button:has(svg)").last();
+      await moreButton.click();
 
-    // The Add Session dialog should open (may take a moment to fetch data)
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 15000 });
+      const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
+      await expect(duplicateItem).toBeVisible({ timeout: 5000 });
+      await duplicateItem.click();
+    });
 
-    // The dialog title should indicate duplication
-    await expect(dialog.locator('h2, [class*="DialogTitle"]')).toContainText(
-      "Duplicate",
-      { timeout: 5000 }
-    );
+    await test.step("Verify the Add Session dialog opens with duplicate title", async () => {
+      // The Add Session dialog should open (may take a moment to fetch data)
+      dialog = page.locator('[role="dialog"]').first();
+      await expect(dialog).toBeVisible({ timeout: 15000 });
 
-    // The name field should be pre-populated with "Original Name - Duplicate"
-    const nameInput = dialog.locator('input[name="name"]');
-    await expect(nameInput).toBeVisible({ timeout: 5000 });
-    const nameValue = await nameInput.inputValue();
-    expect(nameValue).toContain(originalName);
-    expect(nameValue).toContain("Duplicate");
+      // The dialog title should indicate duplication
+      await expect(dialog.locator('h2, [class*="DialogTitle"]')).toContainText(
+        "Duplicate",
+        { timeout: 5000 }
+      );
+    });
+
+    await test.step("Verify the name field is pre-populated with the duplicate name", async () => {
+      // The name field should be pre-populated with "Original Name - Duplicate"
+      const nameInput = dialog!.locator('input[name="name"]');
+      await expect(nameInput).toBeVisible({ timeout: 5000 });
+      const nameValue = await nameInput.inputValue();
+      expect(nameValue).toContain(originalName);
+      expect(nameValue).toContain("Duplicate");
+    });
 
     // Cleanup - close dialog and delete session
-    const cancelButton = dialog.getByRole("button", { name: /cancel/i });
+    const cancelButton = dialog!.getByRole("button", { name: /cancel/i });
     await cancelButton.click();
     await api.deleteSession(sessionId);
   });
@@ -101,57 +113,66 @@ test.describe("Session Duplication", () => {
     const projectId = await api.createProject(`E2E Dup Create ${ts}`);
     const originalName = `Source Session ${ts}`;
     const sessionId = await api.createSession(projectId, originalName);
-
-    await page.goto(`/en-US/projects/sessions/${projectId}`);
-    await page.waitForLoadState("load");
-
-    // Wait for the session item
-    const sessionItem = page.locator(`#session-${sessionId}`);
-    await expect(sessionItem).toBeVisible({ timeout: 15000 });
-
-    // Open context menu and click Duplicate
-    const moreButton = sessionItem.locator("button:has(svg)").last();
-    await moreButton.click();
-    const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
-    await duplicateItem.click();
-
-    // Wait for dialog to appear
-    const dialog = page.locator('[role="dialog"]').first();
-    await expect(dialog).toBeVisible({ timeout: 15000 });
-
-    // Modify the name
-    const nameInput = dialog.locator('input[name="name"]');
-    await expect(nameInput).toBeVisible({ timeout: 5000 });
     const newName = `Duplicated Session ${ts}`;
-    await nameInput.clear();
-    await nameInput.fill(newName);
 
-    // Submit the form
-    const submitButton = dialog.locator('button[type="submit"]');
-    await expect(submitButton).toBeVisible();
-    await submitButton.click();
+    let dialog: ReturnType<typeof page.locator> | undefined;
+    let newSessionData: { data?: { id?: number } | null } | undefined;
 
-    // Dialog should close after successful creation
-    await expect(dialog).not.toBeVisible({ timeout: 15000 });
+    await test.step("Open context menu and click Duplicate", async () => {
+      await page.goto(`/en-US/projects/sessions/${projectId}`);
+      await page.waitForLoadState("load");
 
-    // Verify the new session was created
-    const newSessionResponse = await page.request.get(
-      `/api/model/sessions/findFirst?q=${encodeURIComponent(
-        JSON.stringify({
-          where: { projectId, name: newName, isDeleted: false },
-          select: { id: true },
-        })
-      )}`
-    );
-    expect(newSessionResponse.ok()).toBeTruthy();
-    const newSessionData = await newSessionResponse.json();
-    expect(newSessionData.data).not.toBeNull();
-    expect(newSessionData.data.id).not.toBe(sessionId);
+      // Wait for the session item
+      const sessionItem = page.locator(`#session-${sessionId}`);
+      await expect(sessionItem).toBeVisible({ timeout: 15000 });
+
+      // Open context menu and click Duplicate
+      const moreButton = sessionItem.locator("button:has(svg)").last();
+      await moreButton.click();
+      const duplicateItem = page.getByTestId(`session-duplicate-${sessionId}`);
+      await duplicateItem.click();
+
+      // Wait for dialog to appear
+      dialog = page.locator('[role="dialog"]').first();
+      await expect(dialog).toBeVisible({ timeout: 15000 });
+    });
+
+    await test.step("Modify the name and submit the form", async () => {
+      // Modify the name
+      const nameInput = dialog!.locator('input[name="name"]');
+      await expect(nameInput).toBeVisible({ timeout: 5000 });
+      await nameInput.clear();
+      await nameInput.fill(newName);
+
+      // Submit the form
+      const submitButton = dialog!.locator('button[type="submit"]');
+      await expect(submitButton).toBeVisible();
+      await submitButton.click();
+
+      // Dialog should close after successful creation
+      await expect(dialog!).not.toBeVisible({ timeout: 15000 });
+    });
+
+    await test.step("Verify the new duplicated session was created", async () => {
+      // Verify the new session was created
+      const newSessionResponse = await page.request.get(
+        `/api/model/sessions/findFirst?q=${encodeURIComponent(
+          JSON.stringify({
+            where: { projectId, name: newName, isDeleted: false },
+            select: { id: true },
+          })
+        )}`
+      );
+      expect(newSessionResponse.ok()).toBeTruthy();
+      newSessionData = await newSessionResponse.json();
+      expect(newSessionData!.data).not.toBeNull();
+      expect(newSessionData!.data!.id).not.toBe(sessionId);
+    });
 
     // Cleanup
     await api.deleteSession(sessionId);
-    if (newSessionData.data?.id) {
-      await api.deleteSession(newSessionData.data.id);
+    if (newSessionData!.data?.id) {
+      await api.deleteSession(newSessionData!.data.id);
     }
   });
 });

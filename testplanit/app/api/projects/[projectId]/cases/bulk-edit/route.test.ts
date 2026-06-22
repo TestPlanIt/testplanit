@@ -745,6 +745,51 @@ describe("Bulk Edit API Route", () => {
         });
       });
     });
+
+    it("handles issues disconnect correctly", async () => {
+      const mockTxUpdate = vi.fn().mockResolvedValue({});
+      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+        return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          repositoryCaseVersions: {
+            create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
+            createMany: vi.fn().mockResolvedValue({ count: 2 }),
+          },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: mockTxUpdate,
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
+          steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
+          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
+        });
+      });
+
+      const [request, context] = createRequest({
+        caseIds: [1, 2],
+        updates: {
+          issues: {
+            disconnect: [{ id: 10 }],
+          },
+        },
+        createVersions: true,
+      });
+      const response = await POST(request, context);
+
+      expect(response.status).toBe(200);
+
+      mockTxUpdate.mock.calls.forEach((call: any) => {
+        expect(call[0].data.issues).toEqual({
+          disconnect: [{ id: 10 }],
+        });
+      });
+    });
   });
 
   describe("Custom Field Updates", () => {
@@ -936,6 +981,120 @@ describe("Bulk Edit API Route", () => {
       // The new testCaseVersionService uses create() instead of createMany()
       expect(mockCreate).toHaveBeenCalled();
       expect(mockCreate).toHaveBeenCalledTimes(2);
+    });
+
+    it("snapshots post-update relations, not the stale pre-update case", async () => {
+      // Pre-update the case is linked to issue 10; the bulk edit disconnects
+      // it. The version service re-reads the row inside the transaction, so the
+      // snapshot must reflect the disconnect — not the in-memory pre-update
+      // relations the route loop holds.
+      const preUpdateCase = {
+        ...mockCases[0],
+        id: 1,
+        issues: [{ id: 10, name: "BUG-10", externalId: "BUG-10" }],
+      };
+      const postUpdateCase = {
+        ...mockCases[0],
+        id: 1,
+        issues: [],
+      };
+      (prisma.repositoryCases.findMany as any).mockResolvedValue([
+        preUpdateCase,
+      ]);
+
+      const mockCreate = vi.fn().mockResolvedValue({ id: 1, version: 1 });
+      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+        return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          repositoryCaseVersions: {
+            create: mockCreate,
+            createMany: vi.fn().mockResolvedValue({ count: 1 }),
+          },
+          repositoryCases: {
+            // The service's own fetch returns the freshly-updated row
+            findUnique: vi.fn().mockResolvedValue(postUpdateCase),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
+          steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
+          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
+        });
+      });
+
+      const [request, context] = createRequest({
+        caseIds: [1],
+        updates: { issues: { disconnect: [{ id: 10 }] } },
+        createVersions: true,
+      });
+      const response = await POST(request, context);
+
+      expect(response.status).toBe(200);
+      expect(mockCreate).toHaveBeenCalledTimes(1);
+      // The snapshot reflects the post-update (disconnected) issue set, proving
+      // the route no longer passes the stale pre-update relations as overrides.
+      expect(mockCreate.mock.calls[0][0].data.issues).toEqual([]);
+    });
+
+    it("snapshots the new state name when the state is bulk-changed", async () => {
+      // Pre-update the case is in "Old State"; the bulk edit moves it to state
+      // 2. The snapshot must record the new state's name, not the stale one.
+      const preUpdateCase = {
+        ...mockCases[0],
+        id: 1,
+        stateId: 1,
+        state: { name: "Old State" },
+      };
+      const postUpdateCase = {
+        ...mockCases[0],
+        id: 1,
+        stateId: 2,
+        state: { name: "New State" },
+      };
+      (prisma.repositoryCases.findMany as any).mockResolvedValue([
+        preUpdateCase,
+      ]);
+
+      const mockCreate = vi.fn().mockResolvedValue({ id: 1, version: 1 });
+      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+        return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          repositoryCaseVersions: {
+            create: mockCreate,
+            createMany: vi.fn().mockResolvedValue({ count: 1 }),
+          },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(postUpdateCase),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
+          steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
+          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
+        });
+      });
+
+      const [request, context] = createRequest({
+        caseIds: [1],
+        updates: { state: 2 },
+        createVersions: true,
+      });
+      const response = await POST(request, context);
+
+      expect(response.status).toBe(200);
+      expect(mockCreate).toHaveBeenCalledTimes(1);
+      expect(mockCreate.mock.calls[0][0].data.stateId).toBe(2);
+      expect(mockCreate.mock.calls[0][0].data.stateName).toBe("New State");
     });
 
     it("skips version creation when createVersions is false", async () => {

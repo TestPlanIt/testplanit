@@ -98,70 +98,94 @@ test.describe("Multi-Config Run Interaction", () => {
     page,
   }) => {
     const ts = Date.now();
-    const { projectId, config2Name, run1Id, run2Id, run2CaseIds } =
-      await setupMultiConfigRun(api, ts, 1);
-    const rc2Id = run2CaseIds[0]; // testRunCaseId that belongs to run2
-
-    // Capture POST bodies sent to the submit-result endpoint
+    let projectId: number | undefined;
+    let config2Name: string | undefined;
+    let run1Id: number | undefined;
+    let run2Id: number | undefined;
+    let rc2Id: number | undefined;
     const submitted: Array<{ testRunId: number; testRunCaseId: number }> = [];
-    await page.route("**/api/test-runs/submit-result", async (route) => {
-      const body = route.request().postDataJSON();
-      submitted.push({
-        testRunId: body.testRunId,
-        testRunCaseId: body.testRunCaseId,
+
+    await test.step("Set up multi-config run and capture submit-result requests", async () => {
+      const setup = await setupMultiConfigRun(api, ts, 1);
+      projectId = setup.projectId;
+      config2Name = setup.config2Name;
+      run1Id = setup.run1Id;
+      run2Id = setup.run2Id;
+      rc2Id = setup.run2CaseIds[0]; // testRunCaseId that belongs to run2
+
+      // Capture POST bodies sent to the submit-result endpoint
+      await page.route("**/api/test-runs/submit-result", async (route) => {
+        const body = route.request().postDataJSON();
+        submitted.push({
+          testRunId: body.testRunId,
+          testRunCaseId: body.testRunCaseId,
+        });
+        await route.continue();
       });
-      await route.continue();
     });
 
-    // Navigate to run1 with both runs' configs selected
-    await page.goto(
-      `/en-US/projects/runs/${projectId}/${run1Id}?configs=${run1Id},${run2Id}`
-    );
-    await page.waitForLoadState("load");
-    await page.waitForTimeout(3000);
+    let run2Row:
+      | ReturnType<ReturnType<typeof page.locator>["filter"]>
+      | undefined;
+    await test.step("Open run with both configs selected and verify two rows", async () => {
+      // Navigate to run1 with both runs' configs selected
+      await page.goto(
+        `/en-US/projects/runs/${projectId!}/${run1Id!}?configs=${run1Id!},${run2Id!}`
+      );
+      await page.waitForLoadState("load");
+      await page.waitForTimeout(3000);
 
-    // Table should show 2 rows — one row per config for the shared case
-    const rows = page.locator("tbody tr");
-    await expect(rows).toHaveCount(2, { timeout: 10000 });
+      // Table should show 2 rows — one row per config for the shared case
+      const rows = page.locator("tbody tr");
+      await expect(rows).toHaveCount(2, { timeout: 10000 });
 
-    // Find run2's row by the Firefox config badge text and click its status button
-    const run2Row = rows.filter({ hasText: config2Name });
-    await expect(run2Row).toBeVisible({ timeout: 8000 });
+      // Find run2's row by the Firefox config badge text and click its status button
+      run2Row = rows.filter({ hasText: config2Name! });
+      await expect(run2Row).toBeVisible({ timeout: 8000 });
+    });
 
-    const statusButton = run2Row
-      .locator("button")
-      .filter({ hasText: /untested/i })
-      .first();
-    await expect(statusButton).toBeVisible({ timeout: 8000 });
-    await statusButton.click();
+    await test.step("Open the status dropdown for the run2 config row and pick a status", async () => {
+      const statusButton = run2Row!
+        .locator("button")
+        .filter({ hasText: /untested/i })
+        .first();
+      await expect(statusButton).toBeVisible({ timeout: 8000 });
+      await statusButton.click();
 
-    // Status dropdown menu opens; pick the first available status
-    const dropdownMenu = page.locator('[role="menu"]');
-    await expect(dropdownMenu).toBeVisible({ timeout: 8000 });
-    const firstStatusOption = dropdownMenu.locator('[role="menuitem"]').first();
-    await expect(firstStatusOption).toBeVisible({ timeout: 5000 });
-    await firstStatusOption.click();
+      // Status dropdown menu opens; pick the first available status
+      const dropdownMenu = page.locator('[role="menu"]');
+      await expect(dropdownMenu).toBeVisible({ timeout: 8000 });
+      const firstStatusOption = dropdownMenu
+        .locator('[role="menuitem"]')
+        .first();
+      await expect(firstStatusOption).toBeVisible({ timeout: 5000 });
+      await firstStatusOption.click();
+    });
 
-    // AddResultModal dialog should open
-    const dialog = page.locator('[role="dialog"]');
-    await expect(dialog).toBeVisible({ timeout: 8000 });
+    await test.step("Submit the result from the AddResultModal dialog", async () => {
+      // AddResultModal dialog should open
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog).toBeVisible({ timeout: 8000 });
 
-    // Submit the result (Save button)
-    const saveButton = dialog
-      .locator('button[type="submit"], button:has-text("Save")')
-      .last();
-    await expect(saveButton).toBeVisible({ timeout: 5000 });
-    await saveButton.click();
+      // Submit the result (Save button)
+      const saveButton = dialog
+        .locator('button[type="submit"], button:has-text("Save")')
+        .last();
+      await expect(saveButton).toBeVisible({ timeout: 5000 });
+      await saveButton.click();
 
-    // Wait for the request to fire and be captured
-    await page.waitForTimeout(2000);
+      // Wait for the request to fire and be captured
+      await page.waitForTimeout(2000);
+    });
 
-    // The submitted payload must target run2, not run1
-    expect(submitted.length).toBeGreaterThan(0);
-    const payload = submitted[submitted.length - 1];
-    expect(payload.testRunId).toBe(run2Id);
-    expect(payload.testRunCaseId).toBe(rc2Id);
-    expect(payload.testRunId).not.toBe(run1Id);
+    await test.step("Verify the submitted payload targets run2, not run1", async () => {
+      // The submitted payload must target run2, not run1
+      expect(submitted.length).toBeGreaterThan(0);
+      const payload = submitted[submitted.length - 1];
+      expect(payload.testRunId).toBe(run2Id!);
+      expect(payload.testRunCaseId).toBe(rc2Id!);
+      expect(payload.testRunId).not.toBe(run1Id!);
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -173,32 +197,43 @@ test.describe("Multi-Config Run Interaction", () => {
   }) => {
     const ts = Date.now();
     // 2 cases × 2 configs = 4 rows
-    const { projectId, run1Id, run2Id } = await setupMultiConfigRun(api, ts, 2);
+    let projectId: number | undefined;
+    let run1Id: number | undefined;
+    let run2Id: number | undefined;
 
-    await page.goto(
-      `/en-US/projects/runs/${projectId}/${run1Id}?configs=${run1Id},${run2Id}`
-    );
-    await page.waitForLoadState("load");
-    await page.waitForTimeout(3000);
+    await test.step("Set up multi-config run and open with both configs and verify four rows", async () => {
+      const setup = await setupMultiConfigRun(api, ts, 2);
+      projectId = setup.projectId;
+      run1Id = setup.run1Id;
+      run2Id = setup.run2Id;
 
-    // All 4 rows must be visible before we start
-    const bodyRows = page.locator("tbody tr");
-    await expect(bodyRows).toHaveCount(4, { timeout: 10000 });
+      await page.goto(
+        `/en-US/projects/runs/${projectId!}/${run1Id!}?configs=${run1Id!},${run2Id!}`
+      );
+      await page.waitForLoadState("load");
+      await page.waitForTimeout(3000);
 
-    // Click the "Select Case" header checkbox (select-all)
-    const headerCheckbox = page
-      .locator("thead")
-      .getByRole("checkbox", { name: /select case/i });
-    await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
-    await headerCheckbox.click();
+      // All 4 rows must be visible before we start
+      const bodyRows = page.locator("tbody tr");
+      await expect(bodyRows).toHaveCount(4, { timeout: 10000 });
+    });
 
-    // Every row checkbox must now be checked
-    const rowCheckboxes = page.locator("tbody").getByRole("checkbox");
-    const count = await rowCheckboxes.count();
-    expect(count).toBe(4);
-    for (let i = 0; i < count; i++) {
-      await expect(rowCheckboxes.nth(i)).toBeChecked({ timeout: 5000 });
-    }
+    await test.step("Click select-all header checkbox and verify every row is checked", async () => {
+      // Click the "Select Case" header checkbox (select-all)
+      const headerCheckbox = page
+        .locator("thead")
+        .getByRole("checkbox", { name: /select case/i });
+      await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
+      await headerCheckbox.click();
+
+      // Every row checkbox must now be checked
+      const rowCheckboxes = page.locator("tbody").getByRole("checkbox");
+      const count = await rowCheckboxes.count();
+      expect(count).toBe(4);
+      for (let i = 0; i < count; i++) {
+        await expect(rowCheckboxes.nth(i)).toBeChecked({ timeout: 5000 });
+      }
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -209,34 +244,48 @@ test.describe("Multi-Config Run Interaction", () => {
     page,
   }) => {
     const ts = Date.now();
-    const { projectId, run1Id, run2Id } = await setupMultiConfigRun(api, ts, 2);
+    let projectId: number | undefined;
+    let run1Id: number | undefined;
+    let run2Id: number | undefined;
 
-    await page.goto(
-      `/en-US/projects/runs/${projectId}/${run1Id}?configs=${run1Id},${run2Id}`
-    );
-    await page.waitForLoadState("load");
-    await page.waitForTimeout(3000);
+    await test.step("Set up multi-config run and open with both configs and verify four rows", async () => {
+      const setup = await setupMultiConfigRun(api, ts, 2);
+      projectId = setup.projectId;
+      run1Id = setup.run1Id;
+      run2Id = setup.run2Id;
 
-    await expect(page.locator("tbody tr")).toHaveCount(4, { timeout: 10000 });
+      await page.goto(
+        `/en-US/projects/runs/${projectId!}/${run1Id!}?configs=${run1Id!},${run2Id!}`
+      );
+      await page.waitForLoadState("load");
+      await page.waitForTimeout(3000);
+
+      await expect(page.locator("tbody tr")).toHaveCount(4, { timeout: 10000 });
+    });
 
     const headerCheckbox = page
       .locator("thead")
       .getByRole("checkbox", { name: /select case/i });
-    await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
-
-    // First click: select all
-    await headerCheckbox.click();
     const rowCheckboxes = page.locator("tbody").getByRole("checkbox");
-    for (let i = 0; i < 4; i++) {
-      await expect(rowCheckboxes.nth(i)).toBeChecked({ timeout: 5000 });
-    }
 
-    // Second click: deselect all
-    await headerCheckbox.click();
-    await page.waitForTimeout(500); // let useLayoutEffect settle
-    for (let i = 0; i < 4; i++) {
-      await expect(rowCheckboxes.nth(i)).not.toBeChecked({ timeout: 5000 });
-    }
+    await test.step("First click selects all rows", async () => {
+      await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
+
+      // First click: select all
+      await headerCheckbox.click();
+      for (let i = 0; i < 4; i++) {
+        await expect(rowCheckboxes.nth(i)).toBeChecked({ timeout: 5000 });
+      }
+    });
+
+    await test.step("Second click deselects all rows", async () => {
+      // Second click: deselect all
+      await headerCheckbox.click();
+      await page.waitForTimeout(500); // let useLayoutEffect settle
+      for (let i = 0; i < 4; i++) {
+        await expect(rowCheckboxes.nth(i)).not.toBeChecked({ timeout: 5000 });
+      }
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -249,34 +298,48 @@ test.describe("Multi-Config Run Interaction", () => {
     const ts = Date.now();
     // 2 cases × 2 configs = 4 rows — expect rows ordered: C1/cfg1, C1/cfg2, C2/cfg1, C2/cfg2
     // (actual order depends on server sort, but we need ≥4 rows to test a range)
-    const { projectId, run1Id, run2Id } = await setupMultiConfigRun(api, ts, 2);
+    let projectId: number | undefined;
+    let run1Id: number | undefined;
+    let run2Id: number | undefined;
 
-    await page.goto(
-      `/en-US/projects/runs/${projectId}/${run1Id}?configs=${run1Id},${run2Id}`
-    );
-    await page.waitForLoadState("load");
-    await page.waitForTimeout(3000);
+    await test.step("Set up multi-config run and open with both configs and verify four rows", async () => {
+      const setup = await setupMultiConfigRun(api, ts, 2);
+      projectId = setup.projectId;
+      run1Id = setup.run1Id;
+      run2Id = setup.run2Id;
 
-    const bodyRows = page.locator("tbody tr");
-    await expect(bodyRows).toHaveCount(4, { timeout: 10000 });
+      await page.goto(
+        `/en-US/projects/runs/${projectId!}/${run1Id!}?configs=${run1Id!},${run2Id!}`
+      );
+      await page.waitForLoadState("load");
+      await page.waitForTimeout(3000);
+
+      const bodyRows = page.locator("tbody tr");
+      await expect(bodyRows).toHaveCount(4, { timeout: 10000 });
+    });
 
     const rowCheckboxes = page.locator("tbody").getByRole("checkbox");
-    await expect(rowCheckboxes).toHaveCount(4, { timeout: 5000 });
 
-    // Click row 0 (first row)
-    await rowCheckboxes.nth(0).click();
-    await expect(rowCheckboxes.nth(0)).toBeChecked({ timeout: 3000 });
+    await test.step("Click row 0 then shift-click row 2 to select the range", async () => {
+      await expect(rowCheckboxes).toHaveCount(4, { timeout: 5000 });
 
-    // Shift-click row 2 to select rows 0–2
-    await page.keyboard.down("Shift");
-    await rowCheckboxes.nth(2).click();
-    await page.keyboard.up("Shift");
+      // Click row 0 (first row)
+      await rowCheckboxes.nth(0).click();
+      await expect(rowCheckboxes.nth(0)).toBeChecked({ timeout: 3000 });
 
-    // Rows 0, 1, and 2 should all be checked
-    await expect(rowCheckboxes.nth(0)).toBeChecked({ timeout: 5000 });
-    await expect(rowCheckboxes.nth(1)).toBeChecked({ timeout: 5000 });
-    await expect(rowCheckboxes.nth(2)).toBeChecked({ timeout: 5000 });
-    // Row 3 should remain unchecked
-    await expect(rowCheckboxes.nth(3)).not.toBeChecked({ timeout: 3000 });
+      // Shift-click row 2 to select rows 0–2
+      await page.keyboard.down("Shift");
+      await rowCheckboxes.nth(2).click();
+      await page.keyboard.up("Shift");
+    });
+
+    await test.step("Verify rows 0-2 are checked and row 3 remains unchecked", async () => {
+      // Rows 0, 1, and 2 should all be checked
+      await expect(rowCheckboxes.nth(0)).toBeChecked({ timeout: 5000 });
+      await expect(rowCheckboxes.nth(1)).toBeChecked({ timeout: 5000 });
+      await expect(rowCheckboxes.nth(2)).toBeChecked({ timeout: 5000 });
+      // Row 3 should remain unchecked
+      await expect(rowCheckboxes.nth(3)).not.toBeChecked({ timeout: 3000 });
+    });
   });
 });

@@ -228,6 +228,20 @@ export interface RepositoryCase {
 }
 
 /**
+ * Authored step on a test case.
+ * `step`/`expectedResult` hold a TipTap rich-text document (matching the
+ * in-app step editor).
+ */
+export interface Step {
+  id: number;
+  testCaseId: number;
+  step?: unknown;
+  expectedResult?: unknown;
+  order: number;
+  isDeleted: boolean;
+}
+
+/**
  * Test case linked to a test run
  */
 export interface TestRunCase {
@@ -507,6 +521,171 @@ export interface CreateTestCaseOptions {
   automated?: boolean;
   stateId?: number;
   estimate?: number;
+}
+
+/**
+ * A single step on a case created via {@link TestPlanItClient.createTestCases}.
+ * Plain-text `text`/`expectedResult` are stored as TipTap rich-text documents
+ * server-side so they render in the in-app step editor.
+ */
+export interface BulkTestCaseStep {
+  /** Step instruction (plain text). */
+  text?: string;
+  /** Expected result (plain text). */
+  expectedResult?: string;
+  /** Zero-based position; inferred from array order when omitted. */
+  order?: number;
+}
+
+/** One case in a {@link TestPlanItClient.createTestCases} batch. */
+export interface BulkTestCaseInput {
+  name: string;
+  /** Override the batch folder for this case. */
+  folderId?: number;
+  /** Override the batch workflow state (by name) for this case. */
+  stateName?: string;
+  steps?: BulkTestCaseStep[];
+  /** Tag IDs (numbers) or tag names (strings, created if missing). */
+  tags?: Array<number | string>;
+  /**
+   * Custom field values keyed by display name (e.g. `{ Priority: "High" }`).
+   * Validated against the chosen template; a field not on the template is
+   * reported as a per-case error, never silently dropped.
+   */
+  customFields?: Record<string, unknown>;
+}
+
+/** Options for {@link TestPlanItClient.createTestCases} (bulk create). */
+export interface CreateTestCasesOptions {
+  projectId: number;
+  /**
+   * Default folder for the batch. Each case may override it via
+   * {@link BulkTestCaseInput.folderId}.
+   */
+  folderId: number;
+  /** Template for the batch. Defaults to the project's first enabled template. */
+  templateId?: number;
+  /** Default CASES workflow state name; each case may override it. */
+  stateName?: string;
+  cases: BulkTestCaseInput[];
+}
+
+/** Per-case outcome from {@link TestPlanItClient.createTestCases}. */
+export interface BulkTestCaseResult {
+  /** Index-based id echoing the case's position in the request (`"0"`, `"1"`, …). */
+  id: string;
+  name: string;
+  status: "success" | "error";
+  /** Present on success — the created RepositoryCase id. */
+  caseId?: number;
+  /** Present on error — the failure message for this case. */
+  error?: string;
+}
+
+/** Result of {@link TestPlanItClient.createTestCases}. */
+export interface CreateTestCasesResult {
+  success: boolean;
+  importedCount: number;
+  failedCount: number;
+  results: BulkTestCaseResult[];
+}
+
+/**
+ * Options for creating an authored step on a test case.
+ * Plain-text `step`/`expectedResult` are stored as TipTap rich-text documents
+ * so they render in the in-app step editor.
+ */
+export interface CreateStepOptions {
+  testCaseId: number;
+  /** Step instruction (plain text). */
+  step: string;
+  /** Expected result (plain text). Omitted when empty. */
+  expectedResult?: string;
+  /** Zero-based position of the step within the case. */
+  order: number;
+}
+
+/**
+ * Options for creating multiple authored steps on a test case in one request.
+ * Each step's plain-text `step`/`expectedResult` is stored as a TipTap doc.
+ */
+export interface CreateStepsOptions {
+  testCaseId: number;
+  steps: Array<{
+    /** Step instruction (plain text). */
+    step: string;
+    /** Expected result (plain text). Omitted when empty. */
+    expectedResult?: string;
+    /** Zero-based position of the step within the case. */
+    order: number;
+  }>;
+}
+
+/** One case to request server-side LLM step derivation for. */
+export interface RequestStepDerivationCase {
+  testCaseId: number;
+  /** The automated test's name — the primary signal the LLM derives from. */
+  name: string;
+  /** Suite/class the test belongs to, if any. */
+  className?: string | null;
+  /** Failure message from the result, if any. */
+  failure?: string | null;
+  /** Captured output from the result, if any. */
+  systemOut?: string | null;
+  /**
+   * Ordered low-level automation commands the test executed (e.g. navigate,
+   * find element, click, type, assert), if captured. When present, the model
+   * derives steps from what the test actually did rather than only its name.
+   */
+  commands?: string[];
+}
+
+export interface RequestStepDerivationOptions {
+  projectId: number;
+  /** Test run the resulting "steps ready" notification links to. */
+  testRunId: number;
+  cases: RequestStepDerivationCase[];
+  /**
+   * Destructive opt-in: re-derive cases that already have steps (replace them).
+   * Default false (only stepless cases are enriched).
+   */
+  overwrite?: boolean;
+}
+
+// ============================================================================
+// Automation Step Mapper Types
+// ============================================================================
+
+/**
+ * A single normalized automation step, produced by a per-surface adapter
+ * (the result importer, or the Playwright / WDIO reporters) and consumed by
+ * `automationStepsToCaseSteps`. Format-agnostic: native shapes (Cucumber
+ * Gherkin keywords, Playwright `TestStep` trees) are mapped to this
+ * intermediate so the shared mapper never parses a native format itself.
+ */
+export interface AutomationStep {
+  /** Plain-text step text (keyword-stripped for Gherkin). */
+  title: string;
+  /** Role of the step: Given → precondition, When → action, Then → assertion. */
+  kind: "precondition" | "action" | "assertion";
+  /** Nested steps (e.g. a Playwright `expect` nested under a `test.step`). */
+  children?: AutomationStep[];
+}
+
+/**
+ * A single derived case `Steps` row in plain-text form. The caller wraps
+ * `step`/`expectedResult` into TipTap-JSON on write via `tipTapDoc`; the
+ * mapper itself stays a pure text transform. Structurally identical to an
+ * element of {@link CreateStepsOptions.steps}, so a `CaseStepRow[]` is
+ * directly assignable to `createSteps({ testCaseId, steps })`.
+ */
+export interface CaseStepRow {
+  /** Step instruction (plain text). */
+  step: string;
+  /** Expected result (plain text). Omitted/empty when not applicable — empty is valid. */
+  expectedResult?: string;
+  /** Zero-based position of the step within the case. */
+  order: number;
 }
 
 /**

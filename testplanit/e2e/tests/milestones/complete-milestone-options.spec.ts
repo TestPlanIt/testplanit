@@ -15,84 +15,103 @@ test.describe("Complete Milestone - Feature Validation", () => {
     page,
     api,
   }) => {
-    // Create a test project and milestone
-    const projectId = await api.createProject(
-      `E2E Milestone Test ${Date.now()}`
-    );
-    await api.createMilestone(projectId, `Test Milestone ${Date.now()}`, {
-      isStarted: true,
-      isCompleted: false,
+    let projectId: number | undefined;
+
+    await test.step("Create a started milestone via the API", async () => {
+      // Create a test project and milestone
+      projectId = await api.createProject(`E2E Milestone Test ${Date.now()}`);
+      await api.createMilestone(projectId, `Test Milestone ${Date.now()}`, {
+        isStarted: true,
+        isCompleted: false,
+      });
     });
 
-    // Navigate to milestones page
-    await page.goto(`/en-US/projects/milestones/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the milestones page and wait for milestones to load", async () => {
+      // Navigate to milestones page
+      await page.goto(`/en-US/projects/milestones/${projectId}`);
+      await page.waitForLoadState("networkidle");
 
-    // Wait for milestone content to be visible (uses card layout, not table)
-    // Look for the "Active" tab which indicates milestones are loaded
-    const activeTab = page.getByRole("tab", { name: /Active/i });
-    await expect(activeTab).toBeVisible({ timeout: 10000 });
-
-    // Find the first milestone card
-    const milestoneCard = page
-      .locator("div")
-      .filter({ hasText: "Test Milestone" })
-      .first();
-    await expect(milestoneCard).toBeVisible({ timeout: 10000 });
-
-    // Open the 3-dot menu (last button in the card)
-    const menuButton = milestoneCard.getByRole("button").last();
-    await menuButton.click();
-
-    // Click Complete from the menu
-    const completeMilestoneButton = page.getByRole("menuitem", {
-      name: "Complete",
+      // Wait for milestone content to be visible (uses card layout, not table)
+      // Look for the "Active" tab which indicates milestones are loaded
+      const activeTab = page.getByRole("tab", { name: /Active/i });
+      await expect(activeTab).toBeVisible({ timeout: 10000 });
     });
-    await expect(completeMilestoneButton).toBeVisible({ timeout: 10000 });
-    await completeMilestoneButton.click();
 
-    // Wait for dialog to open
-    await expect(page.getByRole("dialog")).toBeVisible();
+    await test.step("Open the Complete action from the milestone card menu", async () => {
+      // Find the first milestone card
+      const milestoneCard = page
+        .locator("div")
+        .filter({ hasText: "Test Milestone" })
+        .first();
+      await expect(milestoneCard).toBeVisible({ timeout: 10000 });
 
-    // Verify dialog has the completion date picker
-    await expect(
-      page.getByText(/Pick Completion Date|Select Date/i)
-    ).toBeVisible();
+      // Open the 3-dot menu (last button in the card)
+      const menuButton = milestoneCard.getByRole("button").last();
+      await menuButton.click();
 
-    // Verify the Complete button exists
-    await expect(page.getByRole("button", { name: /Complete/i })).toBeVisible();
+      // Click Complete from the menu
+      const completeMilestoneButton = page.getByRole("menuitem", {
+        name: "Complete",
+      });
+      await expect(completeMilestoneButton).toBeVisible({ timeout: 10000 });
+      await completeMilestoneButton.click();
+    });
 
-    // Close dialog
-    await page.getByRole("button", { name: /Cancel/i }).click();
+    await test.step("Verify the Complete Milestone dialog UI elements", async () => {
+      // Wait for dialog to open
+      await expect(page.getByRole("dialog")).toBeVisible();
+
+      // Verify dialog has the completion date picker
+      await expect(
+        page.getByText(/Pick Completion Date|Select Date/i)
+      ).toBeVisible();
+
+      // Verify the Complete button exists
+      await expect(
+        page.getByRole("button", { name: /Complete/i })
+      ).toBeVisible();
+    });
+
+    await test.step("Close the dialog", async () => {
+      // Close dialog
+      await page.getByRole("button", { name: /Cancel/i }).click();
+    });
   });
 
   test("should show checkboxes when milestone has incomplete dependencies", async ({
     page,
     api,
   }) => {
-    // Create a test project
-    const projectId = await api.createProject(
-      `E2E Milestone Test ${Date.now()}`
-    );
+    let milestoneCards: ReturnType<typeof page.locator> | undefined;
+    let count: number | undefined;
 
-    // This test verifies the checkbox functionality exists
-    // It will only run if there's a milestone with dependencies in the seeded data
-    await page.goto(`/en-US/projects/milestones/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Create a project and open its milestones page", async () => {
+      // Create a test project
+      const projectId = await api.createProject(
+        `E2E Milestone Test ${Date.now()}`
+      );
 
-    // Wait for the Active tab to be visible
-    const activeTab = page.getByRole("tab", { name: /Active/i });
-    await expect(activeTab).toBeVisible({ timeout: 10000 });
+      // This test verifies the checkbox functionality exists
+      // It will only run if there's a milestone with dependencies in the seeded data
+      await page.goto(`/en-US/projects/milestones/${projectId}`);
+      await page.waitForLoadState("networkidle");
 
-    // Look for incomplete milestone cards (cards in the Active tab)
-    const milestoneCards = page
-      .locator("div")
-      .filter({ hasText: /Test Milestone|Milestone/ });
-    const count = await milestoneCards.count();
+      // Wait for the Active tab to be visible
+      const activeTab = page.getByRole("tab", { name: /Active/i });
+      await expect(activeTab).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Collect the incomplete milestone cards", async () => {
+      // Look for incomplete milestone cards (cards in the Active tab)
+      milestoneCards = page
+        .locator("div")
+        .filter({ hasText: /Test Milestone|Milestone/ });
+      count = await milestoneCards.count();
+    });
 
     // Try to find one with dependencies
-    for (let i = 0; i < Math.min(count, 5); i++) {
-      const card = milestoneCards.nth(i);
+    for (let i = 0; i < Math.min(count!, 5); i++) {
+      const card = milestoneCards!.nth(i);
 
       // Open the 3-dot menu
       const menuButton = card.getByRole("button").last();
@@ -162,27 +181,34 @@ test.describe("Complete Milestone - Feature Validation", () => {
     page,
     api,
   }) => {
-    // Create a test project
-    const projectId = await api.createProject(
-      `E2E Milestone Test ${Date.now()}`
-    );
+    let milestoneCards: ReturnType<typeof page.locator> | undefined;
+    let count: number | undefined;
 
-    await page.goto(`/en-US/projects/milestones/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Create a project and open its milestones page", async () => {
+      // Create a test project
+      const projectId = await api.createProject(
+        `E2E Milestone Test ${Date.now()}`
+      );
 
-    // Wait for the Active tab to be visible
-    const activeTab = page.getByRole("tab", { name: /Active/i });
-    await expect(activeTab).toBeVisible({ timeout: 10000 });
+      await page.goto(`/en-US/projects/milestones/${projectId}`);
+      await page.waitForLoadState("networkidle");
 
-    // Look for incomplete milestone cards
-    const milestoneCards = page
-      .locator("div")
-      .filter({ hasText: /Test Milestone|Milestone/ });
-    const count = await milestoneCards.count();
+      // Wait for the Active tab to be visible
+      const activeTab = page.getByRole("tab", { name: /Active/i });
+      await expect(activeTab).toBeVisible({ timeout: 10000 });
+    });
+
+    await test.step("Collect the incomplete milestone cards", async () => {
+      // Look for incomplete milestone cards
+      milestoneCards = page
+        .locator("div")
+        .filter({ hasText: /Test Milestone|Milestone/ });
+      count = await milestoneCards.count();
+    });
 
     // Try to find a milestone with test runs
-    for (let i = 0; i < Math.min(count, 5); i++) {
-      const card = milestoneCards.nth(i);
+    for (let i = 0; i < Math.min(count!, 5); i++) {
+      const card = milestoneCards!.nth(i);
 
       // Open the 3-dot menu
       const menuButton = card.getByRole("button").last();

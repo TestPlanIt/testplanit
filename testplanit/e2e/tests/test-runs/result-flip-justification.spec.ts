@@ -57,29 +57,39 @@ test.describe("Result flip justification", () => {
     request,
     baseURL,
   }) => {
-    const { runId, testRunCaseId } = await seedRunCase(api, request, baseURL);
-    const passedId = await api.getStatusId("passed");
-    const failedId = await api.getStatusId("failed");
+    let runId: Awaited<ReturnType<typeof seedRunCase>>["runId"] | undefined;
+    let testRunCaseId:
+      | Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"]
+      | undefined;
+    let failedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
 
-    // Prior completed result (Passed), seeded via the un-gated model route.
-    await api.createTestResult(runId, testRunCaseId, passedId);
+    await test.step("Seed a run-case with a prior Passed result", async () => {
+      ({ runId, testRunCaseId } = await seedRunCase(api, request, baseURL));
+      const passedId = await api.getStatusId("passed");
+      failedId = await api.getStatusId("failed");
 
-    const response = await request.post(
-      `${baseURL}/api/test-runs/submit-result`,
-      {
+      // Prior completed result (Passed), seeded via the un-gated model route.
+      await api.createTestResult(runId!, testRunCaseId!, passedId);
+    });
+
+    await test.step("Submit an outcome flip to Failed without a justification", async () => {
+      response = await request.post(`${baseURL}/api/test-runs/submit-result`, {
         data: {
-          testRunId: runId,
+          testRunId: runId!,
           testRunCaseId,
-          statusId: failedId,
+          statusId: failedId!,
           attempt: 2,
           testRunCaseVersion: 1,
         },
-      }
-    );
+      });
+    });
 
-    expect(response.status()).toBe(400);
-    const body = await response.json();
-    expect(body.code).toBe("JUSTIFICATION_REQUIRED");
+    await test.step("Verify the flip is rejected with JUSTIFICATION_REQUIRED", async () => {
+      expect(response!.status()).toBe(400);
+      const body = await response!.json();
+      expect(body.code).toBe("JUSTIFICATION_REQUIRED");
+    });
   });
 
   test("accepts an outcome flip when a justification is provided", async ({
@@ -87,28 +97,38 @@ test.describe("Result flip justification", () => {
     request,
     baseURL,
   }) => {
-    const { runId, testRunCaseId } = await seedRunCase(api, request, baseURL);
-    const passedId = await api.getStatusId("passed");
-    const failedId = await api.getStatusId("failed");
-    await api.createTestResult(runId, testRunCaseId, passedId);
+    let runId: Awaited<ReturnType<typeof seedRunCase>>["runId"] | undefined;
+    let testRunCaseId:
+      | Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"]
+      | undefined;
+    let failedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
 
-    const response = await request.post(
-      `${baseURL}/api/test-runs/submit-result`,
-      {
+    await test.step("Seed a run-case with a prior Passed result", async () => {
+      ({ runId, testRunCaseId } = await seedRunCase(api, request, baseURL));
+      const passedId = await api.getStatusId("passed");
+      failedId = await api.getStatusId("failed");
+      await api.createTestResult(runId!, testRunCaseId!, passedId);
+    });
+
+    await test.step("Submit an outcome flip to Failed with a justification", async () => {
+      response = await request.post(`${baseURL}/api/test-runs/submit-result`, {
         data: {
-          testRunId: runId,
+          testRunId: runId!,
           testRunCaseId,
-          statusId: failedId,
+          statusId: failedId!,
           attempt: 2,
           testRunCaseVersion: 1,
           notes: noteDoc("Overrode after re-running on a fixed environment"),
         },
-      }
-    );
+      });
+    });
 
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(body.result?.id).toBeTruthy();
+    await test.step("Verify the flip is accepted and a result is returned", async () => {
+      expect(response!.status()).toBe(200);
+      const body = await response!.json();
+      expect(body.result?.id).toBeTruthy();
+    });
   });
 
   test("accepts a same-outcome re-submission without a justification", async ({
@@ -116,24 +136,34 @@ test.describe("Result flip justification", () => {
     request,
     baseURL,
   }) => {
-    const { runId, testRunCaseId } = await seedRunCase(api, request, baseURL);
-    const passedId = await api.getStatusId("passed");
-    await api.createTestResult(runId, testRunCaseId, passedId);
+    let runId: Awaited<ReturnType<typeof seedRunCase>>["runId"] | undefined;
+    let testRunCaseId:
+      | Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"]
+      | undefined;
+    let passedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
 
-    const response = await request.post(
-      `${baseURL}/api/test-runs/submit-result`,
-      {
+    await test.step("Seed a run-case with a prior Passed result", async () => {
+      ({ runId, testRunCaseId } = await seedRunCase(api, request, baseURL));
+      passedId = await api.getStatusId("passed");
+      await api.createTestResult(runId!, testRunCaseId!, passedId);
+    });
+
+    await test.step("Re-submit the same Passed outcome without a justification", async () => {
+      response = await request.post(`${baseURL}/api/test-runs/submit-result`, {
         data: {
-          testRunId: runId,
+          testRunId: runId!,
           testRunCaseId,
-          statusId: passedId,
+          statusId: passedId!,
           attempt: 2,
           testRunCaseVersion: 1,
         },
-      }
-    );
+      });
+    });
 
-    expect(response.status()).toBe(200);
+    await test.step("Verify the same-outcome re-submission is accepted", async () => {
+      expect(response!.status()).toBe(200);
+    });
   });
 
   test("accepts the first result without a justification", async ({
@@ -141,24 +171,34 @@ test.describe("Result flip justification", () => {
     request,
     baseURL,
   }) => {
-    const { runId, testRunCaseId } = await seedRunCase(api, request, baseURL);
-    const failedId = await api.getStatusId("failed");
+    let runId: Awaited<ReturnType<typeof seedRunCase>>["runId"] | undefined;
+    let testRunCaseId:
+      | Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"]
+      | undefined;
+    let failedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
 
-    // No prior attempt → the first result needs no justification, even Failed.
-    const response = await request.post(
-      `${baseURL}/api/test-runs/submit-result`,
-      {
+    await test.step("Seed a run-case with no prior result", async () => {
+      ({ runId, testRunCaseId } = await seedRunCase(api, request, baseURL));
+      failedId = await api.getStatusId("failed");
+    });
+
+    await test.step("Submit the first result as Failed without a justification", async () => {
+      // No prior attempt → the first result needs no justification, even Failed.
+      response = await request.post(`${baseURL}/api/test-runs/submit-result`, {
         data: {
-          testRunId: runId,
+          testRunId: runId!,
           testRunCaseId,
-          statusId: failedId,
+          statusId: failedId!,
           attempt: 1,
           testRunCaseVersion: 1,
         },
-      }
-    );
+      });
+    });
 
-    expect(response.status()).toBe(200);
+    await test.step("Verify the first result is accepted", async () => {
+      expect(response!.status()).toBe(200);
+    });
   });
 
   test("does not require justification when the project setting is disabled", async ({
@@ -166,28 +206,38 @@ test.describe("Result flip justification", () => {
     request,
     baseURL,
   }) => {
-    const { runId, testRunCaseId } = await seedRunCase(api, request, baseURL, {
-      requireJustification: false,
-    });
-    const passedId = await api.getStatusId("passed");
-    const failedId = await api.getStatusId("failed");
-    await api.createTestResult(runId, testRunCaseId, passedId);
+    let runId: Awaited<ReturnType<typeof seedRunCase>>["runId"] | undefined;
+    let testRunCaseId:
+      | Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"]
+      | undefined;
+    let failedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
+    let response: Awaited<ReturnType<typeof request.post>> | undefined;
 
-    // A different-outcome flip with no notes is accepted because the
-    // project has not opted into mandatory justification.
-    const response = await request.post(
-      `${baseURL}/api/test-runs/submit-result`,
-      {
+    await test.step("Seed a run-case with the setting disabled and a prior Passed result", async () => {
+      ({ runId, testRunCaseId } = await seedRunCase(api, request, baseURL, {
+        requireJustification: false,
+      }));
+      const passedId = await api.getStatusId("passed");
+      failedId = await api.getStatusId("failed");
+      await api.createTestResult(runId!, testRunCaseId!, passedId);
+    });
+
+    await test.step("Submit an outcome flip to Failed without a justification", async () => {
+      // A different-outcome flip with no notes is accepted because the
+      // project has not opted into mandatory justification.
+      response = await request.post(`${baseURL}/api/test-runs/submit-result`, {
         data: {
-          testRunId: runId,
+          testRunId: runId!,
           testRunCaseId,
-          statusId: failedId,
+          statusId: failedId!,
           attempt: 2,
           testRunCaseVersion: 1,
         },
-      }
-    );
+      });
+    });
 
-    expect(response.status()).toBe(200);
+    await test.step("Verify the flip is accepted when justification is not required", async () => {
+      expect(response!.status()).toBe(200);
+    });
   });
 });

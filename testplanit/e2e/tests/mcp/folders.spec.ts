@@ -95,27 +95,41 @@ test.describe("MCP folder CRUD lifecycle (Phase 6)", () => {
     baseURL,
   }) => {
     const name = `MCP-Root-${Date.now()}`;
-    const r = await request.post(
-      `${baseURL}/api/model/repositoryFolders/create`,
-      {
-        headers: ctx.headers,
-        data: {
+    let created:
+      | {
+          id: number;
+          name: string;
+          parentId: number | null;
+          isDeleted: boolean;
+        }
+      | undefined;
+
+    await test.step("Create root folder with null parent via REST", async () => {
+      const r = await request.post(
+        `${baseURL}/api/model/repositoryFolders/create`,
+        {
+          headers: ctx.headers,
           data: {
-            name,
-            project: { connect: { id: ctx.projectId } },
-            repository: { connect: { id: ctx.repositoryId } },
+            data: {
+              name,
+              project: { connect: { id: ctx.projectId } },
+              repository: { connect: { id: ctx.repositoryId } },
+            },
           },
-        },
-      }
-    );
-    expect(r.status(), `create root folder status`).toBeLessThan(300);
-    const body = await r.json();
-    const created = body.data ?? body;
-    expect(created.id).toBeGreaterThan(0);
-    expect(created.name).toBe(name);
-    expect(created.parentId).toBeNull();
-    expect(created.isDeleted).toBe(false);
-    rootFolderId = created.id;
+        }
+      );
+      expect(r.status(), `create root folder status`).toBeLessThan(300);
+      const body = await r.json();
+      created = body.data ?? body;
+    });
+
+    await test.step("Verify created root folder fields", async () => {
+      expect(created!.id).toBeGreaterThan(0);
+      expect(created!.name).toBe(name);
+      expect(created!.parentId).toBeNull();
+      expect(created!.isDeleted).toBe(false);
+      rootFolderId = created!.id;
+    });
   });
 
   test("CASE-08 — create child folder under root via REST (mirrors testplanit_folders_create with parentId)", async ({
@@ -123,27 +137,36 @@ test.describe("MCP folder CRUD lifecycle (Phase 6)", () => {
     baseURL,
   }) => {
     const name = `MCP-Child-${Date.now()}`;
-    const r = await request.post(
-      `${baseURL}/api/model/repositoryFolders/create`,
-      {
-        headers: ctx.headers,
-        data: {
+    let created:
+      | { id: number; parentId: number | null; isDeleted: boolean }
+      | undefined;
+
+    await test.step("Create child folder under root via REST", async () => {
+      const r = await request.post(
+        `${baseURL}/api/model/repositoryFolders/create`,
+        {
+          headers: ctx.headers,
           data: {
-            name,
-            project: { connect: { id: ctx.projectId } },
-            repository: { connect: { id: ctx.repositoryId } },
-            parent: { connect: { id: rootFolderId } },
+            data: {
+              name,
+              project: { connect: { id: ctx.projectId } },
+              repository: { connect: { id: ctx.repositoryId } },
+              parent: { connect: { id: rootFolderId } },
+            },
           },
-        },
-      }
-    );
-    expect(r.status(), `create child folder status`).toBeLessThan(300);
-    const body = await r.json();
-    const created = body.data ?? body;
-    expect(created.id).toBeGreaterThan(0);
-    expect(created.parentId).toBe(rootFolderId);
-    expect(created.isDeleted).toBe(false);
-    childFolderId = created.id;
+        }
+      );
+      expect(r.status(), `create child folder status`).toBeLessThan(300);
+      const body = await r.json();
+      created = body.data ?? body;
+    });
+
+    await test.step("Verify created child folder is nested under root", async () => {
+      expect(created!.id).toBeGreaterThan(0);
+      expect(created!.parentId).toBe(rootFolderId);
+      expect(created!.isDeleted).toBe(false);
+      childFolderId = created!.id;
+    });
   });
 
   test("CASE-06 — GET folder tree with case counts (mirrors testplanit_folders_list)", async ({
@@ -165,19 +188,36 @@ test.describe("MCP folder CRUD lifecycle (Phase 6)", () => {
         },
       })
     );
-    const r = await request.get(
-      `${baseURL}/api/model/repositoryFolders/findMany?q=${q}`,
-      { headers: ctx.headers }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(body.data.length).toBeGreaterThan(0);
-    const root = body.data.find((f: { id: number }) => f.id === rootFolderId);
-    expect(root).toBeDefined();
-    expect(root._count).toBeDefined();
-    expect(
-      root.children.some((c: { id: number }) => c.id === childFolderId)
-    ).toBe(true);
+    let body:
+      | {
+          data: Array<{
+            id: number;
+            _count?: unknown;
+            children: Array<{ id: number }>;
+          }>;
+        }
+      | undefined;
+
+    await test.step("Fetch folder tree with case counts via REST", async () => {
+      const r = await request.get(
+        `${baseURL}/api/model/repositoryFolders/findMany?q=${q}`,
+        { headers: ctx.headers }
+      );
+      expect(r.status()).toBe(200);
+      body = await r.json();
+    });
+
+    await test.step("Verify root folder includes counts and child", async () => {
+      expect(body!.data.length).toBeGreaterThan(0);
+      const root = body!.data.find(
+        (f: { id: number }) => f.id === rootFolderId
+      );
+      expect(root).toBeDefined();
+      expect(root!._count).toBeDefined();
+      expect(
+        root!.children.some((c: { id: number }) => c.id === childFolderId)
+      ).toBe(true);
+    });
   });
 
   test("CASE-09 — rename root folder via PATCH (mirrors testplanit_folders_update)", async ({
@@ -185,51 +225,57 @@ test.describe("MCP folder CRUD lifecycle (Phase 6)", () => {
     baseURL,
   }) => {
     const newName = `MCP-Root-Renamed-${Date.now()}`;
-    const r = await request.patch(
-      `${baseURL}/api/model/repositoryFolders/update`,
-      {
-        headers: ctx.headers,
-        data: { where: { id: rootFolderId }, data: { name: newName } },
-      }
-    );
-    expect(r.status()).toBeLessThan(300);
-    const body = await r.json();
-    expect((body.data ?? body).name).toBe(newName);
+    await test.step("Rename root folder via PATCH", async () => {
+      const r = await request.patch(
+        `${baseURL}/api/model/repositoryFolders/update`,
+        {
+          headers: ctx.headers,
+          data: { where: { id: rootFolderId }, data: { name: newName } },
+        }
+      );
+      expect(r.status()).toBeLessThan(300);
+      const body = await r.json();
+      expect((body.data ?? body).name).toBe(newName);
+    });
   });
 
   test("CASE-09 — reparent child to root (disconnect) via PATCH (mirrors testplanit_folders_update with parentId:null)", async ({
     request,
     baseURL,
   }) => {
-    const r = await request.patch(
-      `${baseURL}/api/model/repositoryFolders/update`,
-      {
-        headers: ctx.headers,
-        data: {
-          where: { id: childFolderId },
-          data: { parent: { disconnect: true } },
-        },
-      }
-    );
-    expect(r.status()).toBeLessThan(300);
-    const body = await r.json();
-    expect((body.data ?? body).parentId).toBeNull();
+    await test.step("Reparent child to root by disconnecting parent via PATCH", async () => {
+      const r = await request.patch(
+        `${baseURL}/api/model/repositoryFolders/update`,
+        {
+          headers: ctx.headers,
+          data: {
+            where: { id: childFolderId },
+            data: { parent: { disconnect: true } },
+          },
+        }
+      );
+      expect(r.status()).toBeLessThan(300);
+      const body = await r.json();
+      expect((body.data ?? body).parentId).toBeNull();
+    });
   });
 
   test("CASE-10 — soft-delete the child folder (now root-level and empty) via PATCH isDeleted=true (mirrors testplanit_folders_delete)", async ({
     request,
     baseURL,
   }) => {
-    const r = await request.patch(
-      `${baseURL}/api/model/repositoryFolders/update`,
-      {
-        headers: ctx.headers,
-        data: { where: { id: childFolderId }, data: { isDeleted: true } },
-      }
-    );
-    expect(r.status()).toBeLessThan(300);
-    const body = await r.json();
-    expect((body.data ?? body).isDeleted).toBe(true);
+    await test.step("Soft-delete child folder via PATCH isDeleted true", async () => {
+      const r = await request.patch(
+        `${baseURL}/api/model/repositoryFolders/update`,
+        {
+          headers: ctx.headers,
+          data: { where: { id: childFolderId }, data: { isDeleted: true } },
+        }
+      );
+      expect(r.status()).toBeLessThan(300);
+      const body = await r.json();
+      expect((body.data ?? body).isDeleted).toBe(true);
+    });
   });
 
   test("CASE-10 — soft-deleted child folder is hidden from subsequent list", async ({
@@ -246,28 +292,32 @@ test.describe("MCP folder CRUD lifecycle (Phase 6)", () => {
         take: 1,
       })
     );
-    const r = await request.get(
-      `${baseURL}/api/model/repositoryFolders/findMany?q=${q}`,
-      { headers: ctx.headers }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(body.data).toHaveLength(0);
+    await test.step("Confirm soft-deleted child folder is absent from list", async () => {
+      const r = await request.get(
+        `${baseURL}/api/model/repositoryFolders/findMany?q=${q}`,
+        { headers: ctx.headers }
+      );
+      expect(r.status()).toBe(200);
+      const body = await r.json();
+      expect(body.data).toHaveLength(0);
+    });
   });
 
   test("CASE-10 — soft-delete the root folder (empty after child was removed) via PATCH isDeleted=true (mirrors testplanit_folders_delete)", async ({
     request,
     baseURL,
   }) => {
-    const r = await request.patch(
-      `${baseURL}/api/model/repositoryFolders/update`,
-      {
-        headers: ctx.headers,
-        data: { where: { id: rootFolderId }, data: { isDeleted: true } },
-      }
-    );
-    expect(r.status()).toBeLessThan(300);
-    const body = await r.json();
-    expect((body.data ?? body).isDeleted).toBe(true);
+    await test.step("Soft-delete root folder via PATCH isDeleted true", async () => {
+      const r = await request.patch(
+        `${baseURL}/api/model/repositoryFolders/update`,
+        {
+          headers: ctx.headers,
+          data: { where: { id: rootFolderId }, data: { isDeleted: true } },
+        }
+      );
+      expect(r.status()).toBeLessThan(300);
+      const body = await r.json();
+      expect((body.data ?? body).isDeleted).toBe(true);
+    });
   });
 });

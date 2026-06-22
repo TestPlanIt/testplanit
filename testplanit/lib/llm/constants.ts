@@ -14,6 +14,7 @@ export const LLM_FEATURES = {
   GENERATE_FROM_URL: "generate_from_url",
   GENERATE_FROM_URL_APP: "generate_from_url_app",
   AUTOMATION_CANDIDATES: "automation_candidates",
+  DERIVE_CASE_STEPS: "derive_case_steps",
 } as const;
 
 export type LlmFeature = (typeof LLM_FEATURES)[keyof typeof LLM_FEATURES];
@@ -131,6 +132,30 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
         "Newline-delimited JSON: one row per manual case, each carrying id, name, description, steps summary, automation status, custom field values keyed by field name, and drilled-down linked-issue metadata (provider-agnostic — labels/components/priority etc. when present)",
     },
   ],
+  [LLM_FEATURES.DERIVE_CASE_STEPS]: [
+    {
+      name: "TEST_NAME",
+      description: "Name of the automated test being enriched",
+    },
+    {
+      name: "CLASS_NAME",
+      description: "Suite/class the test belongs to (may be empty)",
+    },
+    {
+      name: "FAILURE",
+      description: "Failure message from the result, if any (may be empty)",
+    },
+    {
+      name: "SYSTEM_OUT",
+      description:
+        "Captured stdout/output from the result, if any (may be empty)",
+    },
+    {
+      name: "COMMANDS",
+      description:
+        "Ordered low-level automation commands the test executed (navigation, clicks, input, assertions), if captured — may be empty",
+    },
+  ],
 };
 
 /**
@@ -150,4 +175,5 @@ export const LLM_FEATURE_LABELS: Record<LlmFeature, string> = {
   [LLM_FEATURES.GENERATE_FROM_URL_APP]:
     "Generate Test Cases from URL (Application Testing)",
   [LLM_FEATURES.AUTOMATION_CANDIDATES]: "Automation Candidates Report",
+  [LLM_FEATURES.DERIVE_CASE_STEPS]: "AI Step Derivation",
 };

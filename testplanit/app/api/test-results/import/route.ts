@@ -61,6 +61,17 @@ import {
 } from "~/lib/services/testResultsParser";
 import { getServerAuthSession } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
+import { adaptTestSteps } from "~/lib/services/automationStepAdapter";
+import {
+  automationStepsToCaseSteps,
+  deriveCaseStepsIfFresh,
+  tipTapDoc,
+} from "@testplanit/api";
+import {
+  enqueueDeriveCaseSteps,
+  isLlmStepDerivationEligible,
+} from "~/lib/services/llmStepDerivation";
+import type { DeriveCaseStepsJobData } from "~/workers/deriveCaseStepsWorker";
 import { progressMessages } from "./progress-messages";
 
 // Helper function to find matching status
@@ -213,6 +224,13 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         const caseIdFormat: CaseIdFormat = parseCaseIdFormat(
           formData.get("caseIdFormat") as string | null
         );
+        // Opt-in, destructive: when on, re-derived steps replace a case's
+        // existing steps every import (soft-delete + rewrite), mirroring the
+        // Playwright reporter's `overwriteSteps`. Off by default — the default
+        // path never overwrites existing (possibly human-edited) steps
+        // (CORE-01). A stepless import never clears existing steps (safeguard).
+        const overwriteSteps =
+          (formData.get("overwriteSteps") as string | null) === "true";
 
         sendProgress(5, progressMessages.validating);
 
@@ -605,6 +623,18 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           className: string | null;
           requestedCaseId: number;
         }> = [];
+
+        // Track per-case step-derivation failures (Phase 2). Advisory only —
+        // step derivation is best-effort enrichment and never fails the import.
+        const stepDerivationWarnings: Array<{
+          testName: string;
+          className: string | null;
+          error: string;
+        }> = [];
+
+        // Phase 4: low-structure stepless cases collected across all suites for
+        // opt-in, background LLM step derivation (one job enqueued after the loop).
+        const llmEligibleCases: DeriveCaseStepsJobData["cases"] = [];
 
         sendProgress(
           25,
@@ -1166,6 +1196,90 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   }
                 }
 
+                // Derive readable case Steps from the parsed automation
+                // structure (Phase 2, IMPORT-01/02/03/04). Cucumber
+                // Given/When/Then map to deterministic steps; Playwright-JUnit,
+                // Mocha and plain JUnit carry no step data so testCase.steps is
+                // empty and this is a graceful no-op (use the Playwright
+                // reporter or the opt-in LLM path for those). Best-effort
+                // enrichment isolated in its own try/catch — a derivation error
+                // is recorded as an advisory warning and never fails the import.
+                try {
+                  const automationSteps = adaptTestSteps(
+                    testCase.steps ?? [],
+                    suiteFormat
+                  );
+                  const existingStepCount = await prisma.steps.count({
+                    where: {
+                      testCaseId: repositoryCase.id,
+                      isDeleted: false,
+                    },
+                  });
+
+                  // Phase 4 (D-02): a case the deterministic path can't help —
+                  // low-structure (no parsed automation steps) AND stepless — is
+                  // eligible for opt-in background LLM derivation. Collect now;
+                  // one job is enqueued after the suite loop.
+                  if (
+                    isLlmStepDerivationEligible(
+                      automationSteps.length,
+                      existingStepCount
+                    )
+                  ) {
+                    llmEligibleCases.push({
+                      testCaseId: repositoryCase.id,
+                      name: testCase.name,
+                      className: className ?? null,
+                      failure: testCase.failure ?? null,
+                      systemOut: extendedData?.systemOut ?? null,
+                    });
+                  }
+
+                  let derivedRows;
+                  if (overwriteSteps) {
+                    // Destructive opt-in (Phase 2.1): re-derive and replace.
+                    // Safeguard: a stepless import never clears existing steps.
+                    const mapped = automationStepsToCaseSteps(automationSteps);
+                    if (mapped.length > 0 && existingStepCount > 0) {
+                      await prisma.steps.updateMany({
+                        where: {
+                          testCaseId: repositoryCase.id,
+                          isDeleted: false,
+                        },
+                        data: { isDeleted: true },
+                      });
+                    }
+                    derivedRows = mapped;
+                  } else {
+                    // Default: never-overwrite guard (CORE-01).
+                    derivedRows = deriveCaseStepsIfFresh(
+                      automationSteps,
+                      existingStepCount
+                    );
+                  }
+                  if (derivedRows.length > 0) {
+                    await prisma.steps.createMany({
+                      data: derivedRows.map((row) => ({
+                        testCaseId: repositoryCase.id,
+                        order: row.order,
+                        step: tipTapDoc(row.step),
+                        expectedResult: row.expectedResult
+                          ? tipTapDoc(row.expectedResult)
+                          : undefined,
+                      })),
+                    });
+                  }
+                } catch (stepErr) {
+                  stepDerivationWarnings.push({
+                    testName: testCase.name,
+                    className: className ?? null,
+                    error:
+                      stepErr instanceof Error
+                        ? stepErr.message
+                        : String(stepErr),
+                  });
+                }
+
                 // Note: Attachments from JUnit XML are tracked in attachmentMappings
                 // and uploaded via CLI to the Attachments table (linked to junitTestResultId).
                 // We no longer create JUnitAttachment records here to avoid showing
@@ -1241,6 +1355,28 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           });
         }
 
+        // Phase 4 (D-03/D-06/LLM-01..03): enqueue ONE background LLM step-derivation
+        // job per import for the collected low-structure stepless cases — but only
+        // when an LLM provider is configured for the project (provider-config IS the
+        // opt-in; resolve once, inert when null). Never inline (no chat() here) and
+        // wrapped so a queue/LLM hiccup can never fail an already-successful import.
+        if (llmEligibleCases.length > 0 && userId) {
+          try {
+            await enqueueDeriveCaseSteps({
+              prisma,
+              projectId,
+              testRunId,
+              userId,
+              cases: llmEligibleCases,
+            });
+          } catch (enqueueErr) {
+            console.error(
+              "Failed to enqueue derive-case-steps job (non-blocking):",
+              enqueueErr
+            );
+          }
+        }
+
         // Advisory duplicate warnings — never blocks import
         let duplicateWarnings: Array<{
           caseName: string;
@@ -1310,6 +1446,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           attachmentMappings?: typeof attachmentMappings;
           duplicateWarnings?: typeof duplicateWarnings;
           caseIdWarnings?: typeof caseIdWarnings;
+          stepDerivationWarnings?: typeof stepDerivationWarnings;
         } = { complete: true, testRunId };
 
         // Only include mappings if there are attachments to upload
@@ -1321,6 +1458,9 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         }
         if (caseIdWarnings.length > 0) {
           responseData.caseIdWarnings = caseIdWarnings;
+        }
+        if (stepDerivationWarnings.length > 0) {
+          responseData.stepDerivationWarnings = stepDerivationWarnings;
         }
 
         controller.enqueue(

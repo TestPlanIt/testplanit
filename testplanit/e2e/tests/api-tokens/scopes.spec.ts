@@ -38,51 +38,71 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   let fullAccessToken: string;
 
   test("creates token with mode:read scope", async ({ request, baseURL }) => {
-    const r = await request.post(`${baseURL}/api/api-tokens`, {
-      data: { name: `RO-${Date.now()}`, scopes: ["mode:read"] },
+    let r: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Create API token with mode:read scope", async () => {
+      r = await request.post(`${baseURL}/api/api-tokens`, {
+        data: { name: `RO-${Date.now()}`, scopes: ["mode:read"] },
+      });
+      expect(r.status()).toBe(200);
     });
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(body.scopes).toEqual(["mode:read"]);
-    readOnlyToken = body.token;
-    expect(readOnlyToken).toMatch(/^tpi_/);
+    await test.step("Verify response carries the mode:read scope and token", async () => {
+      const body = await r!.json();
+      expect(body.scopes).toEqual(["mode:read"]);
+      readOnlyToken = body.token;
+      expect(readOnlyToken).toMatch(/^tpi_/);
+    });
   });
 
   test("creates token with client:mcp scope", async ({ request, baseURL }) => {
-    const r = await request.post(`${baseURL}/api/api-tokens`, {
-      data: { name: `MCP-${Date.now()}`, scopes: ["client:mcp"] },
+    let r: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Create API token with client:mcp scope", async () => {
+      r = await request.post(`${baseURL}/api/api-tokens`, {
+        data: { name: `MCP-${Date.now()}`, scopes: ["client:mcp"] },
+      });
+      expect(r.status()).toBe(200);
     });
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(body.scopes).toEqual(["client:mcp"]);
+    await test.step("Verify response carries the client:mcp scope", async () => {
+      const body = await r!.json();
+      expect(body.scopes).toEqual(["client:mcp"]);
+    });
   });
 
   test("creates token with both scopes", async ({ request, baseURL }) => {
-    const r = await request.post(`${baseURL}/api/api-tokens`, {
-      data: {
-        name: `Both-${Date.now()}`,
-        scopes: ["mode:read", "client:mcp"],
-      },
+    let r: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Create API token with both mode:read and client:mcp scopes", async () => {
+      r = await request.post(`${baseURL}/api/api-tokens`, {
+        data: {
+          name: `Both-${Date.now()}`,
+          scopes: ["mode:read", "client:mcp"],
+        },
+      });
+      expect(r.status()).toBe(200);
     });
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(body.scopes).toEqual(
-      expect.arrayContaining(["mode:read", "client:mcp"])
-    );
+    await test.step("Verify response carries both scopes", async () => {
+      const body = await r!.json();
+      expect(body.scopes).toEqual(
+        expect.arrayContaining(["mode:read", "client:mcp"])
+      );
+    });
   });
 
   test("creates token with empty scopes (TOK-06 regression)", async ({
     request,
     baseURL,
   }) => {
-    const r = await request.post(`${baseURL}/api/api-tokens`, {
-      data: { name: `Full-${Date.now()}` },
+    let r: Awaited<ReturnType<typeof request.post>> | undefined;
+    await test.step("Create API token with no scopes", async () => {
+      r = await request.post(`${baseURL}/api/api-tokens`, {
+        data: { name: `Full-${Date.now()}` },
+      });
+      expect(r.status()).toBe(200);
     });
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(body.scopes).toEqual([]);
-    fullAccessToken = body.token;
-    expect(fullAccessToken).toMatch(/^tpi_/);
+    await test.step("Verify response carries empty scopes and token", async () => {
+      const body = await r!.json();
+      expect(body.scopes).toEqual([]);
+      fullAccessToken = body.token;
+      expect(fullAccessToken).toMatch(/^tpi_/);
+    });
   });
 
   test("rejects token creation with invalid scope", async ({
@@ -98,11 +118,13 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   test("read-only token can GET tag entities", async ({ baseURL, browser }) => {
     const ctx = await browser.newContext({ storageState: undefined });
     try {
-      const r = await ctx.request.get(`${baseURL}/api/model/tags/findMany`, {
-        headers: { Authorization: `Bearer ${readOnlyToken}` },
-        params: { q: JSON.stringify({}) },
+      await test.step("GET tags with the read-only token and expect 200", async () => {
+        const r = await ctx.request.get(`${baseURL}/api/model/tags/findMany`, {
+          headers: { Authorization: `Bearer ${readOnlyToken}` },
+          params: { q: JSON.stringify({}) },
+        });
+        expect(r.status()).toBe(200);
       });
-      expect(r.status()).toBe(200);
     } finally {
       await ctx.close();
     }
@@ -114,13 +136,15 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   }) => {
     const ctx = await browser.newContext({ storageState: undefined });
     try {
-      const r = await ctx.request.post(`${baseURL}/api/model/tags/create`, {
-        headers: { Authorization: `Bearer ${readOnlyToken}` },
-        data: { data: { name: uniqueTagName() } },
+      await test.step("POST a tag with the read-only token and expect 403 READ_ONLY_TOKEN", async () => {
+        const r = await ctx.request.post(`${baseURL}/api/model/tags/create`, {
+          headers: { Authorization: `Bearer ${readOnlyToken}` },
+          data: { data: { name: uniqueTagName() } },
+        });
+        expect(r.status()).toBe(403);
+        const body = await r.json();
+        expect(body.code).toBe("READ_ONLY_TOKEN");
       });
-      expect(r.status()).toBe(403);
-      const body = await r.json();
-      expect(body.code).toBe("READ_ONLY_TOKEN");
     } finally {
       await ctx.close();
     }
@@ -132,19 +156,21 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   }) => {
     const ctx = await browser.newContext({ storageState: undefined });
     try {
-      const r = await ctx.request.post(`${baseURL}/api/model/tags/create`, {
-        headers: { Authorization: `Bearer ${fullAccessToken}` },
-        data: { data: { name: uniqueTagName() } },
+      await test.step("POST a tag with the full-access token and confirm it is not blocked as read-only", async () => {
+        const r = await ctx.request.post(`${baseURL}/api/model/tags/create`, {
+          headers: { Authorization: `Bearer ${fullAccessToken}` },
+          data: { data: { name: uniqueTagName() } },
+        });
+        // WR-09: the contract is "TOK-06: empty-scopes token CAN write." A
+        // 500 / 401 / unrelated 403 is a real regression that `not.toBe(403)`
+        // alone would mask. Constrain to success or expected validation.
+        expect([200, 201, 400, 422]).toContain(r.status());
+        if (r.status() === 400 || r.status() === 422) {
+          const body = await r.json();
+          // The expected error code MUST NOT be the READ_ONLY_TOKEN chokepoint.
+          expect(body.code ?? body.error?.code).not.toBe("READ_ONLY_TOKEN");
+        }
       });
-      // WR-09: the contract is "TOK-06: empty-scopes token CAN write." A
-      // 500 / 401 / unrelated 403 is a real regression that `not.toBe(403)`
-      // alone would mask. Constrain to success or expected validation.
-      expect([200, 201, 400, 422]).toContain(r.status());
-      if (r.status() === 400 || r.status() === 422) {
-        const body = await r.json();
-        // The expected error code MUST NOT be the READ_ONLY_TOKEN chokepoint.
-        expect(body.code ?? body.error?.code).not.toBe("READ_ONLY_TOKEN");
-      }
     } finally {
       await ctx.close();
     }
@@ -162,32 +188,34 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   }) => {
     const ctx = await browser.newContext({ storageState: undefined });
     try {
-      const r = await ctx.request.post(
-        `${baseURL}/api/model/repositoryCases/create`,
-        {
-          headers: {
-            Authorization: `Bearer ${readOnlyToken}`,
-            "Content-Type": "application/json",
-          },
-          // Placeholder body — request is rejected at the auth gate before
-          // reaching ZenStack, so the FK shape doesn't matter.
-          data: {
-            data: {
-              name: "should-not-be-created",
-              source: "MANUAL",
-              automated: false,
-              project: { connect: { id: 1 } },
-              repository: { connect: { id: 1 } },
-              folder: { connect: { id: 1 } },
-              template: { connect: { id: 1 } },
-              state: { connect: { id: 1 } },
+      await test.step("POST a repository case with the read-only token and expect 403 READ_ONLY_TOKEN", async () => {
+        const r = await ctx.request.post(
+          `${baseURL}/api/model/repositoryCases/create`,
+          {
+            headers: {
+              Authorization: `Bearer ${readOnlyToken}`,
+              "Content-Type": "application/json",
             },
-          },
-        }
-      );
-      expect(r.status()).toBe(403);
-      const body = await r.json();
-      expect(body.code).toBe("READ_ONLY_TOKEN");
+            // Placeholder body — request is rejected at the auth gate before
+            // reaching ZenStack, so the FK shape doesn't matter.
+            data: {
+              data: {
+                name: "should-not-be-created",
+                source: "MANUAL",
+                automated: false,
+                project: { connect: { id: 1 } },
+                repository: { connect: { id: 1 } },
+                folder: { connect: { id: 1 } },
+                template: { connect: { id: 1 } },
+                state: { connect: { id: 1 } },
+              },
+            },
+          }
+        );
+        expect(r.status()).toBe(403);
+        const body = await r.json();
+        expect(body.code).toBe("READ_ONLY_TOKEN");
+      });
     } finally {
       await ctx.close();
     }
@@ -199,19 +227,21 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   }) => {
     const ctx = await browser.newContext({ storageState: undefined });
     try {
-      const r = await ctx.request.patch(
-        `${baseURL}/api/model/repositoryCases/update`,
-        {
-          headers: {
-            Authorization: `Bearer ${readOnlyToken}`,
-            "Content-Type": "application/json",
-          },
-          data: { where: { id: 1 }, data: { name: "x" } },
-        }
-      );
-      expect(r.status()).toBe(403);
-      const body = await r.json();
-      expect(body.code).toBe("READ_ONLY_TOKEN");
+      await test.step("PATCH a repository case with the read-only token and expect 403 READ_ONLY_TOKEN", async () => {
+        const r = await ctx.request.patch(
+          `${baseURL}/api/model/repositoryCases/update`,
+          {
+            headers: {
+              Authorization: `Bearer ${readOnlyToken}`,
+              "Content-Type": "application/json",
+            },
+            data: { where: { id: 1 }, data: { name: "x" } },
+          }
+        );
+        expect(r.status()).toBe(403);
+        const body = await r.json();
+        expect(body.code).toBe("READ_ONLY_TOKEN");
+      });
     } finally {
       await ctx.close();
     }
@@ -223,25 +253,27 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   }) => {
     const ctx = await browser.newContext({ storageState: undefined });
     try {
-      const r = await ctx.request.post(
-        `${baseURL}/api/model/repositoryFolders/create`,
-        {
-          headers: {
-            Authorization: `Bearer ${readOnlyToken}`,
-            "Content-Type": "application/json",
-          },
-          data: {
-            data: {
-              name: "should-not-be-created",
-              project: { connect: { id: 1 } },
-              repository: { connect: { id: 1 } },
+      await test.step("POST a repository folder with the read-only token and expect 403 READ_ONLY_TOKEN", async () => {
+        const r = await ctx.request.post(
+          `${baseURL}/api/model/repositoryFolders/create`,
+          {
+            headers: {
+              Authorization: `Bearer ${readOnlyToken}`,
+              "Content-Type": "application/json",
             },
-          },
-        }
-      );
-      expect(r.status()).toBe(403);
-      const body = await r.json();
-      expect(body.code).toBe("READ_ONLY_TOKEN");
+            data: {
+              data: {
+                name: "should-not-be-created",
+                project: { connect: { id: 1 } },
+                repository: { connect: { id: 1 } },
+              },
+            },
+          }
+        );
+        expect(r.status()).toBe(403);
+        const body = await r.json();
+        expect(body.code).toBe("READ_ONLY_TOKEN");
+      });
     } finally {
       await ctx.close();
     }

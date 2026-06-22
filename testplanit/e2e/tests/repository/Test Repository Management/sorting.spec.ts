@@ -129,67 +129,91 @@ test.describe("Sorting", () => {
   test("Sort Test Cases by Name Column", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create a folder with multiple test cases
-    const folderName = `Sort Name Folder ${Date.now()}`;
-    const folderId = await api.createFolder(projectId, folderName);
-    await api.createTestCase(projectId, folderId, `B Case ${Date.now()}`);
-    await api.createTestCase(projectId, folderId, `A Case ${Date.now()}`);
-    await api.createTestCase(projectId, folderId, `C Case ${Date.now()}`);
+    let folderId: number | undefined;
+    await test.step("Create a folder with multiple test cases", async () => {
+      const folderName = `Sort Name Folder ${Date.now()}`;
+      folderId = await api.createFolder(projectId, folderName);
+      await api.createTestCase(projectId, folderId, `B Case ${Date.now()}`);
+      await api.createTestCase(projectId, folderId, `A Case ${Date.now()}`);
+      await api.createTestCase(projectId, folderId, `C Case ${Date.now()}`);
+    });
 
-    await repositoryPage.goto(projectId);
-
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
-
-    // Use the cases table specifically - scoped to the right data-testid
     const table = repositoryPage.casesTable;
-    await expect(table).toBeVisible({ timeout: 10000 });
-
-    // Wait for exactly 3 rows (our 3 test cases in this folder)
     const rows = table.locator("tbody tr");
-    await expect(rows).toHaveCount(3, { timeout: 10000 });
 
-    // Find the Name column sort button
-    await clickSortButton(page, "Name");
+    await test.step("Open the folder and confirm 3 cases load", async () => {
+      await repositoryPage.goto(projectId);
 
-    // Verify rows still present after sort
-    await expect(rows).toHaveCount(3);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // Click again to reverse sort
-    await clickSortButton(page, "Name");
+      // Use the cases table specifically - scoped to the right data-testid
+      await expect(table).toBeVisible({ timeout: 10000 });
 
-    // Verify rows still present after reverse sort
-    await expect(rows).toHaveCount(3);
+      // Wait for exactly 3 rows (our 3 test cases in this folder)
+      await expect(rows).toHaveCount(3, { timeout: 10000 });
+    });
+
+    await test.step("Sort by Name and verify rows remain", async () => {
+      // Find the Name column sort button
+      await clickSortButton(page, "Name");
+
+      // Verify rows still present after sort
+      await expect(rows).toHaveCount(3);
+    });
+
+    await test.step("Reverse the Name sort and verify rows remain", async () => {
+      // Click again to reverse sort
+      await clickSortButton(page, "Name");
+
+      // Verify rows still present after reverse sort
+      await expect(rows).toHaveCount(3);
+    });
   });
 
   test("Sort Test Cases by State Column", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create a folder with test cases
-    const folderName = `Sort State Folder ${Date.now()}`;
-    const folderId = await api.createFolder(projectId, folderName);
-    await api.createTestCase(projectId, folderId, `State Case 1 ${Date.now()}`);
-    await api.createTestCase(projectId, folderId, `State Case 2 ${Date.now()}`);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `Sort State Folder ${Date.now()}`;
+      folderId = await api.createFolder(projectId, folderName);
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `State Case 1 ${Date.now()}`
+      );
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `State Case 2 ${Date.now()}`
+      );
+    });
 
-    await repositoryPage.goto(projectId);
-
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
-
-    // Use the cases-table testid — `page.locator("table").first()` can match
-    // the folder tree or another table on the page before the cases table
-    // hydrates, which produced a "Received: 10" mismatch under load.
     const table = repositoryPage.casesTable;
-    await expect(table).toBeVisible({ timeout: 10000 });
-
     const rows = table.locator("tbody tr");
-    await expect(rows).toHaveCount(2, { timeout: 10000 });
 
-    // Find the State column sort button
-    await clickSortButton(page, "State");
+    await test.step("Open the folder and confirm 2 cases load", async () => {
+      await repositoryPage.goto(projectId);
 
-    // Verify rows still present after sort
-    await expect(rows).toHaveCount(2);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
+
+      // Use the cases-table testid — `page.locator("table").first()` can match
+      // the folder tree or another table on the page before the cases table
+      // hydrates, which produced a "Received: 10" mismatch under load.
+      await expect(table).toBeVisible({ timeout: 10000 });
+
+      await expect(rows).toHaveCount(2, { timeout: 10000 });
+    });
+
+    await test.step("Sort by State and verify rows remain", async () => {
+      // Find the State column sort button
+      await clickSortButton(page, "State");
+
+      // Verify rows still present after sort
+      await expect(rows).toHaveCount(2);
+    });
   });
 
   test("Maintain Test Case Order Within Folder", async ({ api, page }) => {
@@ -198,49 +222,58 @@ test.describe("Sorting", () => {
     // Create a folder with test cases in specific order
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(7);
-    const folderName = `Maintain Order Folder ${timestamp}-${random}`;
-    const folderId = await api.createFolder(projectId, folderName);
-    await api.createTestCase(
-      projectId,
-      folderId,
-      `First Case ${timestamp}-${random}`
-    );
-    await api.createTestCase(
-      projectId,
-      folderId,
-      `Second Case ${timestamp}-${random}`
-    );
-    await api.createTestCase(
-      projectId,
-      folderId,
-      `Third Case ${timestamp}-${random}`
-    );
 
-    await repositoryPage.goto(projectId);
+    let folderId: number | undefined;
+    await test.step("Create a folder with three ordered test cases", async () => {
+      const folderName = `Maintain Order Folder ${timestamp}-${random}`;
+      folderId = await api.createFolder(projectId, folderName);
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `First Case ${timestamp}-${random}`
+      );
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Second Case ${timestamp}-${random}`
+      );
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Third Case ${timestamp}-${random}`
+      );
+    });
 
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
-
-    // Verify the table is visible
     const table = page.locator("table").first();
-    await expect(table).toBeVisible({ timeout: 10000 });
-
-    // Wait for rows to appear in tbody
     const rows = table.locator("tbody tr");
-    await expect(rows.first()).toBeVisible({ timeout: 10000 });
-    const count = await rows.count();
-    expect(count).toBe(3);
 
-    // Navigate away and back
-    await page.reload();
-    await repositoryPage.waitForRepositoryLoad();
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the folder and confirm 3 rows are shown", async () => {
+      await repositoryPage.goto(projectId);
 
-    // Verify order is maintained (same number of rows)
-    await expect(table).toBeVisible({ timeout: 10000 });
-    await expect(rows.first()).toBeVisible({ timeout: 10000 });
-    expect(await rows.count()).toBe(3);
+      await repositoryPage.selectFolder(folderId!);
+      await page.waitForLoadState("networkidle");
+
+      // Verify the table is visible
+      await expect(table).toBeVisible({ timeout: 10000 });
+
+      // Wait for rows to appear in tbody
+      await expect(rows.first()).toBeVisible({ timeout: 10000 });
+      const count = await rows.count();
+      expect(count).toBe(3);
+    });
+
+    await test.step("Reload and confirm the order is maintained", async () => {
+      // Navigate away and back
+      await page.reload();
+      await repositoryPage.waitForRepositoryLoad();
+      await repositoryPage.selectFolder(folderId!);
+      await page.waitForLoadState("networkidle");
+
+      // Verify order is maintained (same number of rows)
+      await expect(table).toBeVisible({ timeout: 10000 });
+      await expect(rows.first()).toBeVisible({ timeout: 10000 });
+      expect(await rows.count()).toBe(3);
+    });
   });
 
   test("Sort Cycles Through Default, Ascending, Descending", async ({
@@ -249,524 +282,615 @@ test.describe("Sorting", () => {
   }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create a folder with test cases
-    const folderName = `Sort Cycle Folder ${Date.now()}`;
-    const folderId = await api.createFolder(projectId, folderName);
-    await api.createTestCase(projectId, folderId, `Alpha Case ${Date.now()}`);
-    await api.createTestCase(projectId, folderId, `Beta Case ${Date.now()}`);
-
-    await repositoryPage.goto(projectId);
-
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `Sort Cycle Folder ${Date.now()}`;
+      folderId = await api.createFolder(projectId, folderName);
+      await api.createTestCase(projectId, folderId, `Alpha Case ${Date.now()}`);
+      await api.createTestCase(projectId, folderId, `Beta Case ${Date.now()}`);
+    });
 
     const table = page.locator("table").first();
-    await expect(table).toBeVisible({ timeout: 10000 });
-
     const rows = table.locator("tbody tr");
-    await expect(rows.first()).toBeVisible({ timeout: 10000 });
-
-    // Find the Name column header and sort button
     const nameHeader = table.locator("th").filter({ hasText: "Name" }).first();
     const sortButton = nameHeader
       .getByRole("button", { name: "Sort column" })
       .first();
-    await expect(sortButton).toBeVisible({ timeout: 5000 });
-
-    // Initial state: "Not sorted" - check the sort icon inside the button
     const sortIcon = sortButton.getByRole("img");
-    await expect(sortIcon).toHaveAccessibleName("Not sorted");
 
-    // Click 1: Should change to ascending
-    await sortButton.click();
-    await expect(rows.first()).toBeVisible({ timeout: 10000 });
-    await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
+    await test.step("Open the folder and confirm the Name sort starts unsorted", async () => {
+      await repositoryPage.goto(projectId);
 
-    // Click 2: Should change to descending
-    await sortButton.click();
-    await expect(rows.first()).toBeVisible({ timeout: 10000 });
-    await expect(sortIcon).toHaveAccessibleName("Sorted descending");
+      await repositoryPage.selectFolder(folderId!);
+      await page.waitForLoadState("networkidle");
 
-    // Click 3: Should return to default (not sorted)
-    await sortButton.click();
-    await expect(rows.first()).toBeVisible({ timeout: 10000 });
-    await expect(sortIcon).toHaveAccessibleName("Not sorted");
+      await expect(table).toBeVisible({ timeout: 10000 });
+
+      await expect(rows.first()).toBeVisible({ timeout: 10000 });
+
+      // Find the Name column header and sort button
+      await expect(sortButton).toBeVisible({ timeout: 5000 });
+
+      // Initial state: "Not sorted" - check the sort icon inside the button
+      await expect(sortIcon).toHaveAccessibleName("Not sorted");
+    });
+
+    await test.step("First click sorts ascending", async () => {
+      // Click 1: Should change to ascending
+      await sortButton.click();
+      await expect(rows.first()).toBeVisible({ timeout: 10000 });
+      await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
+    });
+
+    await test.step("Second click sorts descending", async () => {
+      // Click 2: Should change to descending
+      await sortButton.click();
+      await expect(rows.first()).toBeVisible({ timeout: 10000 });
+      await expect(sortIcon).toHaveAccessibleName("Sorted descending");
+    });
+
+    await test.step("Third click returns to unsorted", async () => {
+      // Click 3: Should return to default (not sorted)
+      await sortButton.click();
+      await expect(rows.first()).toBeVisible({ timeout: 10000 });
+      await expect(sortIcon).toHaveAccessibleName("Not sorted");
+    });
   });
 
   test("Verify Name Column Sort Order - Ascending", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases with predictable names
-    const folderName = `Sort Verify Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with predictably named test cases", async () => {
+      const folderName = `Sort Verify Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    // Create cases with names that will sort alphabetically
-    await api.createTestCase(projectId, folderId, `Charlie Test ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Alpha Test ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Bravo Test ${timestamp}`);
+      // Create cases with names that will sort alphabetically
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Charlie Test ${timestamp}`
+      );
+      await api.createTestCase(projectId, folderId, `Alpha Test ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Bravo Test ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    await test.step("Open the folder and sort by Name ascending", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // Click sort to get ascending order
-    await clickSortButton(page, "Name");
+      // Click sort to get ascending order
+      await clickSortButton(page, "Name");
+    });
 
-    // Get the values from the Name column
-    const nameValues = await getColumnValues(page, "Name");
+    await test.step("Verify the Name column is in ascending order", async () => {
+      // Get the values from the Name column
+      const nameValues = await getColumnValues(page, "Name");
 
-    // Verify they are in ascending alphabetical order
-    expect(nameValues.length).toBe(3);
-    expect(nameValues[0]).toContain("Alpha");
-    expect(nameValues[1]).toContain("Bravo");
-    expect(nameValues[2]).toContain("Charlie");
+      // Verify they are in ascending alphabetical order
+      expect(nameValues.length).toBe(3);
+      expect(nameValues[0]).toContain("Alpha");
+      expect(nameValues[1]).toContain("Bravo");
+      expect(nameValues[2]).toContain("Charlie");
+    });
   });
 
   test("Verify Name Column Sort Order - Descending", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases with predictable names
-    const folderName = `Sort Verify Desc Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with predictably named test cases", async () => {
+      const folderName = `Sort Verify Desc Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    // Create cases with names that will sort alphabetically
-    await api.createTestCase(projectId, folderId, `Charlie Test ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Alpha Test ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Bravo Test ${timestamp}`);
+      // Create cases with names that will sort alphabetically
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Charlie Test ${timestamp}`
+      );
+      await api.createTestCase(projectId, folderId, `Alpha Test ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Bravo Test ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    await test.step("Open the folder and sort by Name descending", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // Click sort twice to get descending order
-    await clickSortButton(page, "Name");
-    await clickSortButton(page, "Name");
+      // Click sort twice to get descending order
+      await clickSortButton(page, "Name");
+      await clickSortButton(page, "Name");
+    });
 
-    // Get the values from the Name column
-    const nameValues = await getColumnValues(page, "Name");
+    await test.step("Verify the Name column is in descending order", async () => {
+      // Get the values from the Name column
+      const nameValues = await getColumnValues(page, "Name");
 
-    // Verify they are in descending alphabetical order
-    expect(nameValues.length).toBe(3);
-    expect(nameValues[0]).toContain("Charlie");
-    expect(nameValues[1]).toContain("Bravo");
-    expect(nameValues[2]).toContain("Alpha");
+      // Verify they are in descending alphabetical order
+      expect(nameValues.length).toBe(3);
+      expect(nameValues[0]).toContain("Charlie");
+      expect(nameValues[1]).toContain("Bravo");
+      expect(nameValues[2]).toContain("Alpha");
+    });
   });
 
   test("Sort by ID Column", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `Sort ID Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with sequentially created test cases", async () => {
+      const folderName = `Sort ID Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    // Create 3 test cases - they will have sequential IDs
-    await api.createTestCase(projectId, folderId, `First Case ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Second Case ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Third Case ${timestamp}`);
+      // Create 3 test cases - they will have sequential IDs
+      await api.createTestCase(projectId, folderId, `First Case ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Second Case ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Third Case ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    await test.step("Open the folder and enable the ID column", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // First, we need to make the ID column visible via column selection
-    // Open column selection dropdown
-    const columnSelectionButton = page.getByTestId("column-selection-trigger");
-    if (await columnSelectionButton.isVisible()) {
-      await columnSelectionButton.click();
+      // First, we need to make the ID column visible via column selection
+      // Open column selection dropdown
+      const columnSelectionButton = page.getByTestId(
+        "column-selection-trigger"
+      );
+      if (await columnSelectionButton.isVisible()) {
+        await columnSelectionButton.click();
 
-      // Look for the ID checkbox and enable it if not already
-      const idCheckbox = page
-        .locator("label")
-        .filter({ hasText: /^ID$/ })
-        .locator('input[type="checkbox"]');
-      if (await idCheckbox.isVisible()) {
-        const isChecked = await idCheckbox.isChecked();
-        if (!isChecked) {
-          await idCheckbox.click();
+        // Look for the ID checkbox and enable it if not already
+        const idCheckbox = page
+          .locator("label")
+          .filter({ hasText: /^ID$/ })
+          .locator('input[type="checkbox"]');
+        if (await idCheckbox.isVisible()) {
+          const isChecked = await idCheckbox.isChecked();
+          if (!isChecked) {
+            await idCheckbox.click();
+          }
         }
+
+        // Close the dropdown by clicking elsewhere
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(500);
       }
+    });
 
-      // Close the dropdown by clicking elsewhere
-      await page.keyboard.press("Escape");
-      await page.waitForTimeout(500);
-    }
+    await test.step("Sort the ID column through ascending and descending", async () => {
+      // Now sort by ID column
+      const table = page.locator("table").first();
+      const idHeader = table.locator("th").filter({ hasText: /^ID$/ }).first();
 
-    // Now sort by ID column
-    const table = page.locator("table").first();
-    const idHeader = table.locator("th").filter({ hasText: /^ID$/ }).first();
+      // Check if ID column is visible
+      if (await idHeader.isVisible()) {
+        const sortButton = idHeader
+          .getByRole("button", { name: "Sort column" })
+          .first();
+        await expect(sortButton).toBeVisible({ timeout: 5000 });
 
-    // Check if ID column is visible
-    if (await idHeader.isVisible()) {
-      const sortButton = idHeader
-        .getByRole("button", { name: "Sort column" })
-        .first();
-      await expect(sortButton).toBeVisible({ timeout: 5000 });
+        // Click to sort ascending
+        await sortButton.click();
+        await waitForTableStable(page);
 
-      // Click to sort ascending
-      await sortButton.click();
-      await waitForTableStable(page);
+        // Verify sort icon shows ascending
+        const sortIcon = sortButton.getByRole("img");
+        await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
 
-      // Verify sort icon shows ascending
-      const sortIcon = sortButton.getByRole("img");
-      await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
+        // Click again to sort descending
+        await sortButton.click();
+        await waitForTableStable(page);
 
-      // Click again to sort descending
-      await sortButton.click();
-      await waitForTableStable(page);
-
-      // Verify sort icon shows descending
-      await expect(sortIcon).toHaveAccessibleName("Sorted descending");
-    }
+        // Verify sort icon shows descending
+        await expect(sortIcon).toHaveAccessibleName("Sorted descending");
+      }
+    });
   });
 
   test("Sort by Tags Column", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `Sort Tags Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `Sort Tags Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Case 1 ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Case 2 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 1 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 2 ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    await test.step("Open the folder", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
+    });
 
-    // Find and click the Tags column sort button
-    const table = page.locator("table").first();
-    const tagsHeader = table.locator("th").filter({ hasText: "Tags" }).first();
-
-    if (await tagsHeader.isVisible()) {
-      const sortButton = tagsHeader
-        .getByRole("button", { name: "Sort column" })
+    await test.step("Cycle the Tags column sort through all states", async () => {
+      // Find and click the Tags column sort button
+      const table = page.locator("table").first();
+      const tagsHeader = table
+        .locator("th")
+        .filter({ hasText: "Tags" })
         .first();
 
-      if (await sortButton.isVisible()) {
-        // Initial state should be "Not sorted"
-        const sortIcon = sortButton.getByRole("img");
-        await expect(sortIcon).toHaveAccessibleName("Not sorted");
+      if (await tagsHeader.isVisible()) {
+        const sortButton = tagsHeader
+          .getByRole("button", { name: "Sort column" })
+          .first();
 
-        // Click to sort ascending
-        await sortButton.click();
-        await waitForTableStable(page);
-        await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
+        if (await sortButton.isVisible()) {
+          // Initial state should be "Not sorted"
+          const sortIcon = sortButton.getByRole("img");
+          await expect(sortIcon).toHaveAccessibleName("Not sorted");
 
-        // Click to sort descending
-        await sortButton.click();
-        await waitForTableStable(page);
-        await expect(sortIcon).toHaveAccessibleName("Sorted descending");
+          // Click to sort ascending
+          await sortButton.click();
+          await waitForTableStable(page);
+          await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
 
-        // Click to return to default
-        await sortButton.click();
-        await waitForTableStable(page);
-        await expect(sortIcon).toHaveAccessibleName("Not sorted");
+          // Click to sort descending
+          await sortButton.click();
+          await waitForTableStable(page);
+          await expect(sortIcon).toHaveAccessibleName("Sorted descending");
+
+          // Click to return to default
+          await sortButton.click();
+          await waitForTableStable(page);
+          await expect(sortIcon).toHaveAccessibleName("Not sorted");
+        }
       }
-    }
+    });
   });
 
   test("Sorting Persists Across Pagination", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with many test cases (more than one page)
-    const folderName = `Sort Pagination Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with 15 sortable test cases", async () => {
+      // Create a folder with many test cases (more than one page)
+      const folderName = `Sort Pagination Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    // Create 15 test cases with alphabetically sortable names
-    const names = [
-      "Oscar",
-      "Alfa",
-      "November",
-      "Bravo",
-      "Mike",
-      "Charlie",
-      "Lima",
-      "Delta",
-      "Kilo",
-      "Echo",
-      "Juliet",
-      "Foxtrot",
-      "India",
-      "Golf",
-      "Hotel",
-    ];
+      // Create 15 test cases with alphabetically sortable names
+      const names = [
+        "Oscar",
+        "Alfa",
+        "November",
+        "Bravo",
+        "Mike",
+        "Charlie",
+        "Lima",
+        "Delta",
+        "Kilo",
+        "Echo",
+        "Juliet",
+        "Foxtrot",
+        "India",
+        "Golf",
+        "Hotel",
+      ];
 
-    for (const name of names) {
-      await api.createTestCase(
-        projectId,
-        folderId,
-        `${name} Case ${timestamp}`
-      );
-    }
+      for (const name of names) {
+        await api.createTestCase(
+          projectId,
+          folderId,
+          `${name} Case ${timestamp}`
+        );
+      }
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
-
-    // Sort by Name ascending
-    await clickSortButton(page, "Name");
-    await waitForTableStable(page);
-
-    // Wait for the table to have content (not empty rows)
-    await expect(async () => {
-      const firstPageNames = await getColumnValues(page, "Name");
-      expect(firstPageNames.length).toBeGreaterThan(0);
-      expect(firstPageNames[0]).toBeTruthy(); // Not empty
-    }).toPass({ timeout: 5000 });
-
-    // Verify first item is "Alfa" (first alphabetically)
-    const firstPageNames = await getColumnValues(page, "Name");
-    expect(firstPageNames[0]).toContain("Alfa");
-
-    // Get the sort icon state
-    const sortState = await getSortIconState(page, "Name");
-    expect(sortState).toBe("Sorted ascending");
-
-    // Navigate to next page if pagination is available
-    const nextPageButton = page
-      .getByRole("button", { name: /next|›/i })
-      .first();
-    if (
-      (await nextPageButton.isVisible()) &&
-      (await nextPageButton.isEnabled())
-    ) {
-      await nextPageButton.click();
+    await test.step("Open the folder and sort by Name ascending", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
       await waitForTableStable(page);
 
-      // Verify sort is still ascending after page change
-      const sortStateAfterPagination = await getSortIconState(page, "Name");
-      expect(sortStateAfterPagination).toBe("Sorted ascending");
-    }
+      // Sort by Name ascending
+      await clickSortButton(page, "Name");
+      await waitForTableStable(page);
+    });
+
+    await test.step("Verify the first page is sorted ascending", async () => {
+      // Wait for the table to have content (not empty rows)
+      await expect(async () => {
+        const firstPageNames = await getColumnValues(page, "Name");
+        expect(firstPageNames.length).toBeGreaterThan(0);
+        expect(firstPageNames[0]).toBeTruthy(); // Not empty
+      }).toPass({ timeout: 5000 });
+
+      // Verify first item is "Alfa" (first alphabetically)
+      const firstPageNames = await getColumnValues(page, "Name");
+      expect(firstPageNames[0]).toContain("Alfa");
+
+      // Get the sort icon state
+      const sortState = await getSortIconState(page, "Name");
+      expect(sortState).toBe("Sorted ascending");
+    });
+
+    await test.step("Verify the sort persists onto the next page", async () => {
+      // Navigate to next page if pagination is available
+      const nextPageButton = page
+        .getByRole("button", { name: /next|›/i })
+        .first();
+      if (
+        (await nextPageButton.isVisible()) &&
+        (await nextPageButton.isEnabled())
+      ) {
+        await nextPageButton.click();
+        await waitForTableStable(page);
+
+        // Verify sort is still ascending after page change
+        const sortStateAfterPagination = await getSortIconState(page, "Name");
+        expect(sortStateAfterPagination).toBe("Sorted ascending");
+      }
+    });
   });
 
   test("Change Sort Column Resets Previous Sort", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `Sort Change Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `Sort Change Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Zebra Case ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Alpha Case ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Mike Case ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Zebra Case ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Alpha Case ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Mike Case ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    let nameSortState: string | undefined;
+    await test.step("Open the folder and sort by Name ascending", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // Sort by Name ascending
-    await clickSortButton(page, "Name");
+      // Sort by Name ascending
+      await clickSortButton(page, "Name");
 
-    // Verify Name column shows sorted ascending
-    let nameSortState = await getSortIconState(page, "Name");
-    expect(nameSortState).toBe("Sorted ascending");
+      // Verify Name column shows sorted ascending
+      nameSortState = await getSortIconState(page, "Name");
+      expect(nameSortState).toBe("Sorted ascending");
+    });
 
-    // Now sort by State column
-    await clickSortButton(page, "State");
+    await test.step("Sort by State and confirm Name resets to unsorted", async () => {
+      // Now sort by State column
+      await clickSortButton(page, "State");
 
-    // Verify State column shows sorted ascending
-    const stateSortState = await getSortIconState(page, "State");
-    expect(stateSortState).toBe("Sorted ascending");
+      // Verify State column shows sorted ascending
+      const stateSortState = await getSortIconState(page, "State");
+      expect(stateSortState).toBe("Sorted ascending");
 
-    // Verify Name column is now "Not sorted"
-    nameSortState = await getSortIconState(page, "Name");
-    expect(nameSortState).toBe("Not sorted");
+      // Verify Name column is now "Not sorted"
+      nameSortState = await getSortIconState(page, "Name");
+      expect(nameSortState).toBe("Not sorted");
+    });
   });
 
   test("Sort with Different States", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Get available states for the project
-    const stateIds = await api.getStateIds(projectId, 2);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases in different states", async () => {
+      // Get available states for the project
+      const stateIds = await api.getStateIds(projectId, 2);
 
-    // Create a folder with test cases having different states
-    const folderName = `Sort States Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+      // Create a folder with test cases having different states
+      const folderName = `Sort States Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    // Create test cases with different states
-    await api.createTestCaseWithState(
-      projectId,
-      folderId,
-      `State A Case ${timestamp}`,
-      stateIds[0]
-    );
-    if (stateIds.length > 1) {
+      // Create test cases with different states
       await api.createTestCaseWithState(
         projectId,
         folderId,
-        `State B Case ${timestamp}`,
-        stateIds[1]
+        `State A Case ${timestamp}`,
+        stateIds[0]
       );
-    }
-    await api.createTestCaseWithState(
-      projectId,
-      folderId,
-      `State C Case ${timestamp}`,
-      stateIds[0]
-    );
+      if (stateIds.length > 1) {
+        await api.createTestCaseWithState(
+          projectId,
+          folderId,
+          `State B Case ${timestamp}`,
+          stateIds[1]
+        );
+      }
+      await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        `State C Case ${timestamp}`,
+        stateIds[0]
+      );
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    await test.step("Open the folder and sort by State", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // Sort by State column
-    await clickSortButton(page, "State");
+      // Sort by State column
+      await clickSortButton(page, "State");
+    });
 
-    // Verify sort icon shows ascending
-    const sortState = await getSortIconState(page, "State");
-    expect(sortState).toBe("Sorted ascending");
+    await test.step("Verify State is sorted ascending and all rows remain", async () => {
+      // Verify sort icon shows ascending
+      const sortState = await getSortIconState(page, "State");
+      expect(sortState).toBe("Sorted ascending");
 
-    // Verify we still have all rows
-    const table = page.locator("table").first();
-    const rows = table.locator("tbody tr");
-    const rowCount = await rows.count();
-    expect(rowCount).toBeGreaterThanOrEqual(2);
+      // Verify we still have all rows
+      const table = page.locator("table").first();
+      const rows = table.locator("tbody tr");
+      const rowCount = await rows.count();
+      expect(rowCount).toBeGreaterThanOrEqual(2);
+    });
   });
 
   test("Multiple Column Sort Cycles", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `Multi Sort Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `Multi Sort Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Case 1 ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Case 2 ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Case 3 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 1 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 2 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 3 ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    await test.step("Open the folder", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
+    });
 
-    // Test cycling through multiple columns
-    const columnsToTest = ["Name", "State"];
+    await test.step("Cycle each column through ascending, descending, and reset", async () => {
+      // Test cycling through multiple columns
+      const columnsToTest = ["Name", "State"];
 
-    for (const columnName of columnsToTest) {
-      // Click to ascending
-      await clickSortButton(page, columnName);
-      let sortState = await getSortIconState(page, columnName);
-      expect(sortState).toBe("Sorted ascending");
+      for (const columnName of columnsToTest) {
+        // Click to ascending
+        await clickSortButton(page, columnName);
+        let sortState = await getSortIconState(page, columnName);
+        expect(sortState).toBe("Sorted ascending");
 
-      // Click to descending
-      await clickSortButton(page, columnName);
-      sortState = await getSortIconState(page, columnName);
-      expect(sortState).toBe("Sorted descending");
+        // Click to descending
+        await clickSortButton(page, columnName);
+        sortState = await getSortIconState(page, columnName);
+        expect(sortState).toBe("Sorted descending");
 
-      // Click to reset
-      await clickSortButton(page, columnName);
-      sortState = await getSortIconState(page, columnName);
-      expect(sortState).toBe("Not sorted");
-    }
+        // Click to reset
+        await clickSortButton(page, columnName);
+        sortState = await getSortIconState(page, columnName);
+        expect(sortState).toBe("Not sorted");
+      }
+    });
   });
 
   test("Sort Preserves Row Count", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `Sort Count Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
-
     const testCaseCount = 5;
-    for (let i = 0; i < testCaseCount; i++) {
-      await api.createTestCase(
-        projectId,
-        folderId,
-        `Case ${i + 1} ${timestamp}`
-      );
-    }
+    let folderId: number | undefined;
+    await test.step("Create a folder with five test cases", async () => {
+      const folderName = `Sort Count Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+      for (let i = 0; i < testCaseCount; i++) {
+        await api.createTestCase(
+          projectId,
+          folderId,
+          `Case ${i + 1} ${timestamp}`
+        );
+      }
+    });
 
     const table = page.locator("table").first();
     // Use [data-row-id] to count only data rows, excluding expanded sub-rows
     const rows = table.locator("tbody tr[data-row-id]");
 
-    // Initial count
-    const initialCount = await rows.count();
-    expect(initialCount).toBe(testCaseCount);
+    await test.step("Open the folder and confirm initial row count", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // Sort ascending
-    await clickSortButton(page, "Name");
-    expect(await rows.count()).toBe(testCaseCount);
+      // Initial count
+      const initialCount = await rows.count();
+      expect(initialCount).toBe(testCaseCount);
+    });
 
-    // Sort descending
-    await clickSortButton(page, "Name");
-    expect(await rows.count()).toBe(testCaseCount);
+    await test.step("Cycle the sort and verify row count is preserved", async () => {
+      // Sort ascending
+      await clickSortButton(page, "Name");
+      expect(await rows.count()).toBe(testCaseCount);
 
-    // Reset sort
-    await clickSortButton(page, "Name");
-    expect(await rows.count()).toBe(testCaseCount);
+      // Sort descending
+      await clickSortButton(page, "Name");
+      expect(await rows.count()).toBe(testCaseCount);
+
+      // Reset sort
+      await clickSortButton(page, "Name");
+      expect(await rows.count()).toBe(testCaseCount);
+    });
   });
 
   test("Sort with Search Filter Applied", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `Sort Search Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `Sort Search Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Alpha Zebra ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Beta Zebra ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Charlie Other ${timestamp}`);
-
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
-
-    // Apply search filter
-    const searchInput = page.getByTestId("search-input");
-    await searchInput.fill("Zebra");
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(600); // Wait for debounce
+      await api.createTestCase(projectId, folderId, `Alpha Zebra ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Beta Zebra ${timestamp}`);
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Charlie Other ${timestamp}`
+      );
+    });
 
     const table = page.locator("table").first();
     const rows = table.locator("tbody tr");
 
-    // Should have 2 results matching "Zebra"
-    await expect(rows).toHaveCount(2, { timeout: 10000 });
+    await test.step("Open the folder and search for Zebra", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // Now sort by Name
-    await clickSortButton(page, "Name");
+      // Apply search filter
+      const searchInput = page.getByTestId("search-input");
+      await searchInput.fill("Zebra");
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(600); // Wait for debounce
 
-    // Should still have 2 results
-    await expect(rows).toHaveCount(2);
+      // Should have 2 results matching "Zebra"
+      await expect(rows).toHaveCount(2, { timeout: 10000 });
+    });
 
-    // Verify sort is applied
-    const sortState = await getSortIconState(page, "Name");
-    expect(sortState).toBe("Sorted ascending");
+    await test.step("Sort the filtered results and verify order", async () => {
+      // Now sort by Name
+      await clickSortButton(page, "Name");
 
-    // Verify order - Alpha should come before Beta
-    const nameValues = await getColumnValues(page, "Name");
-    expect(nameValues[0]).toContain("Alpha");
-    expect(nameValues[1]).toContain("Beta");
+      // Should still have 2 results
+      await expect(rows).toHaveCount(2);
+
+      // Verify sort is applied
+      const sortState = await getSortIconState(page, "Name");
+      expect(sortState).toBe("Sorted ascending");
+
+      // Verify order - Alpha should come before Beta
+      const nameValues = await getColumnValues(page, "Name");
+      expect(nameValues[0]).toContain("Alpha");
+      expect(nameValues[1]).toContain("Beta");
+    });
   });
 
   test("Sort Icon Visual States", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `Sort Icon Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `Sort Icon Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Case A ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Case B ${timestamp}`);
-
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+      await api.createTestCase(projectId, folderId, `Case A ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case B ${timestamp}`);
+    });
 
     const table = page.locator("table").first();
     const nameHeader = table.locator("th").filter({ hasText: "Name" }).first();
@@ -775,66 +899,83 @@ test.describe("Sorting", () => {
       .first();
     const sortIcon = sortButton.getByRole("img");
 
-    // Verify all three states have correct aria-labels
-    await expect(sortIcon).toHaveAccessibleName("Not sorted");
+    await test.step("Open the folder and confirm the unsorted icon", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    await sortButton.click();
-    await waitForTableStable(page);
-    await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
+      // Verify all three states have correct aria-labels
+      await expect(sortIcon).toHaveAccessibleName("Not sorted");
+    });
 
-    await sortButton.click();
-    await waitForTableStable(page);
-    await expect(sortIcon).toHaveAccessibleName("Sorted descending");
+    await test.step("Click through ascending, descending, and back to unsorted", async () => {
+      await sortButton.click();
+      await waitForTableStable(page);
+      await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
 
-    await sortButton.click();
-    await waitForTableStable(page);
-    await expect(sortIcon).toHaveAccessibleName("Not sorted");
+      await sortButton.click();
+      await waitForTableStable(page);
+      await expect(sortIcon).toHaveAccessibleName("Sorted descending");
+
+      await sortButton.click();
+      await waitForTableStable(page);
+      await expect(sortIcon).toHaveAccessibleName("Not sorted");
+    });
   });
 
   test("Sort Button Accessibility", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `Sort Access Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with a test case", async () => {
+      const folderName = `Sort Access Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Case 1 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 1 ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    await test.step("Open the folder", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
+    });
 
-    const table = page.locator("table").first();
-    const nameHeader = table.locator("th").filter({ hasText: "Name" }).first();
+    await test.step("Verify the sort button and icon expose accessible names", async () => {
+      const table = page.locator("table").first();
+      const nameHeader = table
+        .locator("th")
+        .filter({ hasText: "Name" })
+        .first();
 
-    // Verify sort button has correct accessible name
-    const sortButton = nameHeader.getByRole("button", { name: "Sort column" });
-    await expect(sortButton).toBeVisible();
-    await expect(sortButton).toHaveAttribute("aria-label", "Sort column");
+      // Verify sort button has correct accessible name
+      const sortButton = nameHeader.getByRole("button", {
+        name: "Sort column",
+      });
+      await expect(sortButton).toBeVisible();
+      await expect(sortButton).toHaveAttribute("aria-label", "Sort column");
 
-    // Verify the sort icon has an accessible name
-    const sortIcon = sortButton.getByRole("img");
-    await expect(sortIcon).toBeVisible();
-    const ariaLabel = await sortIcon.getAttribute("aria-label");
-    expect(ariaLabel).toBeTruthy();
+      // Verify the sort icon has an accessible name
+      const sortIcon = sortButton.getByRole("img");
+      await expect(sortIcon).toBeVisible();
+      const ariaLabel = await sortIcon.getAttribute("aria-label");
+      expect(ariaLabel).toBeTruthy();
+    });
   });
 
   test("Rapid Sort Clicks Are Handled Correctly", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `Rapid Sort Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `Rapid Sort Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Case 1 ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Case 2 ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Case 3 ${timestamp}`);
-
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+      await api.createTestCase(projectId, folderId, `Case 1 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 2 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 3 ${timestamp}`);
+    });
 
     const table = page.locator("table").first();
     const nameHeader = table.locator("th").filter({ hasText: "Name" }).first();
@@ -842,55 +983,72 @@ test.describe("Sorting", () => {
       .getByRole("button", { name: "Sort column" })
       .first();
 
-    // Rapid clicks - should cycle through states correctly
-    await sortButton.click();
-    await sortButton.click();
-    await sortButton.click();
+    await test.step("Open the folder", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
+    });
 
-    // Wait for all operations to complete
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
+    await test.step("Click the sort button three times in rapid succession", async () => {
+      // Rapid clicks - should cycle through states correctly
+      await sortButton.click();
+      await sortButton.click();
+      await sortButton.click();
 
-    // Should be back to "Not sorted" after 3 clicks
-    const sortIcon = sortButton.getByRole("img");
-    await expect(sortIcon).toHaveAccessibleName("Not sorted");
+      // Wait for all operations to complete
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(1000);
+    });
 
-    // Verify table still has correct number of rows
-    const rows = table.locator("tbody tr");
-    expect(await rows.count()).toBe(3);
+    await test.step("Verify the sort reset to unsorted and rows are intact", async () => {
+      // Should be back to "Not sorted" after 3 clicks
+      const sortIcon = sortButton.getByRole("img");
+      await expect(sortIcon).toHaveAccessibleName("Not sorted");
+
+      // Verify table still has correct number of rows
+      const rows = table.locator("tbody tr");
+      expect(await rows.count()).toBe(3);
+    });
   });
 
   test("Sort Preserves Header Column Count", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `Sort Column Count Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `Sort Column Count Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Case A ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Case B ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Case C ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case A ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case B ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case C ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    let initialHeaderColumnCount: number | undefined;
+    await test.step("Open the folder and capture the header column count", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // Get initial header column count
-    const initialHeaderColumnCount = await getColumnCount(page);
-    expect(initialHeaderColumnCount).toBeGreaterThan(0);
+      // Get initial header column count
+      initialHeaderColumnCount = await getColumnCount(page);
+      expect(initialHeaderColumnCount).toBeGreaterThan(0);
+    });
 
-    // Sort ascending
-    await clickSortButton(page, "Name");
-    expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
+    await test.step("Cycle the sort and verify header column count is preserved", async () => {
+      // Sort ascending
+      await clickSortButton(page, "Name");
+      expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
 
-    // Sort descending
-    await clickSortButton(page, "Name");
-    expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
+      // Sort descending
+      await clickSortButton(page, "Name");
+      expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
 
-    // Reset sort
-    await clickSortButton(page, "Name");
-    expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
+      // Reset sort
+      await clickSortButton(page, "Name");
+      expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
+    });
   });
 
   test("Header Column Count Preserved When Switching Sort Columns", async ({
@@ -900,39 +1058,46 @@ test.describe("Sorting", () => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `Sort Switch Column Count Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `Sort Switch Column Count Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Case 1 ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Case 2 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 1 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 2 ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    let initialHeaderColumnCount: number | undefined;
+    await test.step("Open the folder and capture the header column count", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // Get initial header column count
-    const initialHeaderColumnCount = await getColumnCount(page);
-    expect(initialHeaderColumnCount).toBeGreaterThan(0);
+      // Get initial header column count
+      initialHeaderColumnCount = await getColumnCount(page);
+      expect(initialHeaderColumnCount).toBeGreaterThan(0);
+    });
 
-    // Sort by Name
-    await clickSortButton(page, "Name");
-    expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
+    await test.step("Switch between columns and cycle Name while checking column count", async () => {
+      // Sort by Name
+      await clickSortButton(page, "Name");
+      expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
 
-    // Switch to State column
-    await clickSortButton(page, "State");
-    expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
+      // Switch to State column
+      await clickSortButton(page, "State");
+      expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
 
-    // Switch back to Name
-    await clickSortButton(page, "Name");
-    expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
+      // Switch back to Name
+      await clickSortButton(page, "Name");
+      expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
 
-    // Go through full cycle on Name
-    await clickSortButton(page, "Name"); // descending
-    expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
+      // Go through full cycle on Name
+      await clickSortButton(page, "Name"); // descending
+      expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
 
-    await clickSortButton(page, "Name"); // reset
-    expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
+      await clickSortButton(page, "Name"); // reset
+      expect(await getColumnCount(page)).toBe(initialHeaderColumnCount);
+    });
   });
 
   test("Header Column Count Preserved After Multiple Sort Operations", async ({
@@ -942,42 +1107,49 @@ test.describe("Sorting", () => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `Multi Sort Column Count Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `Multi Sort Column Count Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Alpha ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Beta ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Gamma ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Delta ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Alpha ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Beta ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Gamma ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Delta ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    let initialHeaderColumnCount: number | undefined;
+    await test.step("Open the folder and capture the header column count", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // Get initial header column count
-    const initialHeaderColumnCount = await getColumnCount(page);
+      // Get initial header column count
+      initialHeaderColumnCount = await getColumnCount(page);
+    });
 
-    // Perform many sort operations
-    const sortOperations = [
-      "Name",
-      "Name",
-      "Name", // Full cycle on Name
-      "State",
-      "State", // Partial cycle on State
-      "Name", // Switch back to Name
-      "State",
-      "State",
-      "State", // Full cycle on State
-    ];
+    await test.step("Run many sort operations and verify column count after each", async () => {
+      // Perform many sort operations
+      const sortOperations = [
+        "Name",
+        "Name",
+        "Name", // Full cycle on Name
+        "State",
+        "State", // Partial cycle on State
+        "Name", // Switch back to Name
+        "State",
+        "State",
+        "State", // Full cycle on State
+      ];
 
-    for (const column of sortOperations) {
-      await clickSortButton(page, column);
+      for (const column of sortOperations) {
+        await clickSortButton(page, column);
 
-      // After each sort operation, verify header column count is preserved
-      const currentHeaderCount = await getColumnCount(page);
-      expect(currentHeaderCount).toBe(initialHeaderColumnCount);
-    }
+        // After each sort operation, verify header column count is preserved
+        const currentHeaderCount = await getColumnCount(page);
+        expect(currentHeaderCount).toBe(initialHeaderColumnCount);
+      }
+    });
   });
 });
 
@@ -1112,124 +1284,150 @@ test.describe("Sorting with ViewSelector Filters", () => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Get available states for the project
-    const stateIds = await api.getStateIds(projectId, 2);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases in different states", async () => {
+      // Get available states for the project
+      const stateIds = await api.getStateIds(projectId, 2);
 
-    // Create a folder with test cases having different states
-    const folderName = `ViewSort States Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+      // Create a folder with test cases having different states
+      const folderName = `ViewSort States Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCaseWithState(
-      projectId,
-      folderId,
-      `Zebra Case ${timestamp}`,
-      stateIds[0]
-    );
-    await api.createTestCaseWithState(
-      projectId,
-      folderId,
-      `Alpha Case ${timestamp}`,
-      stateIds[0]
-    );
-    if (stateIds.length > 1) {
       await api.createTestCaseWithState(
         projectId,
         folderId,
-        `Mike Case ${timestamp}`,
-        stateIds[1]
+        `Zebra Case ${timestamp}`,
+        stateIds[0]
       );
-    }
+      await api.createTestCaseWithState(
+        projectId,
+        folderId,
+        `Alpha Case ${timestamp}`,
+        stateIds[0]
+      );
+      if (stateIds.length > 1) {
+        await api.createTestCaseWithState(
+          projectId,
+          folderId,
+          `Mike Case ${timestamp}`,
+          stateIds[1]
+        );
+      }
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    let initialColumnCount: number | undefined;
+    await test.step("Open the folder and switch to the States view", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // Get initial column count
-    const initialColumnCount = await getColumnCount(page);
+      // Get initial column count
+      initialColumnCount = await getColumnCount(page);
 
-    // Try to switch to States view if available
-    await selectView(page, "States");
-    await page.waitForTimeout(500);
+      // Try to switch to States view if available
+      await selectView(page, "States");
+      await page.waitForTimeout(500);
+    });
 
-    // Sort by Name
-    await clickSortButton(page, "Name");
+    await test.step("Sort by Name and verify sort state and column count", async () => {
+      // Sort by Name
+      await clickSortButton(page, "Name");
 
-    // Verify sort is applied
-    const sortState = await getSortIconState(page, "Name");
-    expect(sortState).toBe("Sorted ascending");
+      // Verify sort is applied
+      const sortState = await getSortIconState(page, "Name");
+      expect(sortState).toBe("Sorted ascending");
 
-    // Verify column count is preserved
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+      // Verify column count is preserved
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
 
-    // Sort descending
-    await clickSortButton(page, "Name");
-    expect(await getSortIconState(page, "Name")).toBe("Sorted descending");
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+      // Sort descending
+      await clickSortButton(page, "Name");
+      expect(await getSortIconState(page, "Name")).toBe("Sorted descending");
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
+    });
   });
 
   test("Sort After Applying Templates View Filter", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `ViewSort Templates Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `ViewSort Templates Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Charlie Case ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Alpha Case ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Bravo Case ${timestamp}`);
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Charlie Case ${timestamp}`
+      );
+      await api.createTestCase(projectId, folderId, `Alpha Case ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Bravo Case ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    let initialColumnCount: number | undefined;
+    await test.step("Open the folder and switch to the Templates view", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    const initialColumnCount = await getColumnCount(page);
+      initialColumnCount = await getColumnCount(page);
 
-    // Try to switch to Templates view
-    await selectView(page, "Templates");
-    await page.waitForTimeout(500);
+      // Try to switch to Templates view
+      await selectView(page, "Templates");
+      await page.waitForTimeout(500);
+    });
 
-    // Sort by Name ascending
-    await clickSortButton(page, "Name");
-    expect(await getSortIconState(page, "Name")).toBe("Sorted ascending");
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+    await test.step("Cycle the Name sort and verify state and column count", async () => {
+      // Sort by Name ascending
+      await clickSortButton(page, "Name");
+      expect(await getSortIconState(page, "Name")).toBe("Sorted ascending");
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
 
-    // Sort by Name descending
-    await clickSortButton(page, "Name");
-    expect(await getSortIconState(page, "Name")).toBe("Sorted descending");
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+      // Sort by Name descending
+      await clickSortButton(page, "Name");
+      expect(await getSortIconState(page, "Name")).toBe("Sorted descending");
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
 
-    // Reset sort
-    await clickSortButton(page, "Name");
-    expect(await getSortIconState(page, "Name")).toBe("Not sorted");
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+      // Reset sort
+      await clickSortButton(page, "Name");
+      expect(await getSortIconState(page, "Name")).toBe("Not sorted");
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
+    });
   });
 
   test("Sort After Applying Creators View Filter", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `ViewSort Creators Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `ViewSort Creators Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Delta Case ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Alpha Case ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Delta Case ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Alpha Case ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    let initialColumnCount: number | undefined;
+    await test.step("Open the folder and switch to the Creators view", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    const initialColumnCount = await getColumnCount(page);
+      initialColumnCount = await getColumnCount(page);
 
-    // Try to switch to Creators view
-    await selectView(page, "Creators");
-    await page.waitForTimeout(500);
+      // Try to switch to Creators view
+      await selectView(page, "Creators");
+      await page.waitForTimeout(500);
+    });
 
-    // Sort by Name
-    await clickSortButton(page, "Name");
-    expect(await getSortIconState(page, "Name")).toBe("Sorted ascending");
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+    await test.step("Sort by Name and verify state and column count", async () => {
+      // Sort by Name
+      await clickSortButton(page, "Name");
+      expect(await getSortIconState(page, "Name")).toBe("Sorted ascending");
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
+    });
   });
 
   test("Sort Preserves Column Count When Switching Views", async ({
@@ -1239,43 +1437,54 @@ test.describe("Sorting with ViewSelector Filters", () => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `ViewSort Switch Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `ViewSort Switch Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Case 1 ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Case 2 ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Case 3 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 1 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 2 ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case 3 ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    let initialColumnCount: number | undefined;
+    await test.step("Open the folder and capture the column count", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    const initialColumnCount = await getColumnCount(page);
+      initialColumnCount = await getColumnCount(page);
+    });
 
-    // Apply sort in Folders view
-    await clickSortButton(page, "Name");
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+    await test.step("Sort in Folders view and confirm column count", async () => {
+      // Apply sort in Folders view
+      await clickSortButton(page, "Name");
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
+    });
 
-    // Switch to States view
-    await selectView(page, "States");
-    await page.waitForTimeout(500);
-    await waitForTableStable(page);
+    await test.step("Switch to States view and sort, confirming column count", async () => {
+      // Switch to States view
+      await selectView(page, "States");
+      await page.waitForTimeout(500);
+      await waitForTableStable(page);
 
-    // Column count should be preserved
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+      // Column count should be preserved
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
 
-    // Apply sort in States view
-    await clickSortButton(page, "Name");
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+      // Apply sort in States view
+      await clickSortButton(page, "Name");
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
+    });
 
-    // Switch back to Folders view
-    await selectView(page, "Folders");
-    await page.waitForTimeout(500);
-    await waitForTableStable(page);
+    await test.step("Switch back to Folders view and confirm column count", async () => {
+      // Switch back to Folders view
+      await selectView(page, "Folders");
+      await page.waitForTimeout(500);
+      await waitForTableStable(page);
 
-    // Column count should still be preserved
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+      // Column count should still be preserved
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
+    });
   });
 
   test("Sort with Combined Search and ViewSelector Filter", async ({
@@ -1285,50 +1494,69 @@ test.describe("Sorting with ViewSelector Filters", () => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `ViewSort Combined Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `ViewSort Combined Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Alpha Feature ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Beta Feature ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Charlie Bug ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Delta Feature ${timestamp}`);
-
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
-
-    const initialColumnCount = await getColumnCount(page);
-
-    // Apply search filter
-    const searchInput = page.getByTestId("search-input");
-    await searchInput.fill("Feature");
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(600); // Wait for debounce
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Alpha Feature ${timestamp}`
+      );
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Beta Feature ${timestamp}`
+      );
+      await api.createTestCase(projectId, folderId, `Charlie Bug ${timestamp}`);
+      await api.createTestCase(
+        projectId,
+        folderId,
+        `Delta Feature ${timestamp}`
+      );
+    });
 
     const table = page.locator("table").first();
     const rows = table.locator("tbody tr");
 
-    // Should have 3 results matching "Feature"
-    await expect(rows).toHaveCount(3, { timeout: 10000 });
+    let initialColumnCount: number | undefined;
+    await test.step("Open the folder and search for Feature", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    // Now sort by Name
-    await clickSortButton(page, "Name");
+      initialColumnCount = await getColumnCount(page);
 
-    // Should still have 3 results
-    await expect(rows).toHaveCount(3);
+      // Apply search filter
+      const searchInput = page.getByTestId("search-input");
+      await searchInput.fill("Feature");
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(600); // Wait for debounce
 
-    // Verify sort is applied
-    expect(await getSortIconState(page, "Name")).toBe("Sorted ascending");
+      // Should have 3 results matching "Feature"
+      await expect(rows).toHaveCount(3, { timeout: 10000 });
+    });
 
-    // Verify column count preserved
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+    await test.step("Sort the filtered results and verify state, count, and order", async () => {
+      // Now sort by Name
+      await clickSortButton(page, "Name");
 
-    // Verify order - Alpha should come first
-    const nameValues = await getColumnValues(page, "Name");
-    expect(nameValues[0]).toContain("Alpha");
-    expect(nameValues[1]).toContain("Beta");
-    expect(nameValues[2]).toContain("Delta");
+      // Should still have 3 results
+      await expect(rows).toHaveCount(3);
+
+      // Verify sort is applied
+      expect(await getSortIconState(page, "Name")).toBe("Sorted ascending");
+
+      // Verify column count preserved
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
+
+      // Verify order - Alpha should come first
+      const nameValues = await getColumnValues(page, "Name");
+      expect(nameValues[0]).toContain("Alpha");
+      expect(nameValues[1]).toContain("Beta");
+      expect(nameValues[2]).toContain("Delta");
+    });
   });
 
   test("Header Column Count Preserved After View Switch and Sort", async ({
@@ -1338,39 +1566,46 @@ test.describe("Sorting with ViewSelector Filters", () => {
     const projectId = await getTestProjectId(api);
     const timestamp = Date.now();
 
-    // Create a folder with test cases
-    const folderName = `ViewSort Multi Switch Folder ${timestamp}`;
-    const folderId = await api.createFolder(projectId, folderName);
+    let folderId: number | undefined;
+    await test.step("Create a folder with test cases", async () => {
+      const folderName = `ViewSort Multi Switch Folder ${timestamp}`;
+      folderId = await api.createFolder(projectId, folderName);
 
-    await api.createTestCase(projectId, folderId, `Case A ${timestamp}`);
-    await api.createTestCase(projectId, folderId, `Case B ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case A ${timestamp}`);
+      await api.createTestCase(projectId, folderId, `Case B ${timestamp}`);
+    });
 
-    await repositoryPage.goto(projectId);
-    await repositoryPage.selectFolder(folderId);
-    await waitForTableStable(page);
+    let initialColumnCount: number | undefined;
+    await test.step("Open the folder and sort by Name in the initial view", async () => {
+      await repositoryPage.goto(projectId);
+      await repositoryPage.selectFolder(folderId!);
+      await waitForTableStable(page);
 
-    const initialColumnCount = await getColumnCount(page);
+      initialColumnCount = await getColumnCount(page);
 
-    // Sort by Name in the initial view
-    await clickSortButton(page, "Name");
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
-    expect(await getSortIconState(page, "Name")).toBe("Sorted ascending");
+      // Sort by Name in the initial view
+      await clickSortButton(page, "Name");
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
+      expect(await getSortIconState(page, "Name")).toBe("Sorted ascending");
+    });
 
-    // Try switching to States view if available
-    await selectView(page, "States");
-    await page.waitForTimeout(300);
-    await waitForTableStable(page);
+    await test.step("Switch to States view, sort again, and verify state and column count", async () => {
+      // Try switching to States view if available
+      await selectView(page, "States");
+      await page.waitForTimeout(300);
+      await waitForTableStable(page);
 
-    // Column count should be preserved after view switch
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+      // Column count should be preserved after view switch
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
 
-    // Sort again after view switch
-    await clickSortButton(page, "Name");
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+      // Sort again after view switch
+      await clickSortButton(page, "Name");
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
 
-    // Verify sort is applied (could be ascending or descending depending on state persistence)
-    const sortState = await getSortIconState(page, "Name");
-    expect(["Sorted ascending", "Sorted descending"]).toContain(sortState);
+      // Verify sort is applied (could be ascending or descending depending on state persistence)
+      const sortState = await getSortIconState(page, "Name");
+      expect(["Sorted ascending", "Sorted descending"]).toContain(sortState);
+    });
   });
 });
 
@@ -1472,154 +1707,182 @@ test.describe("Run Mode Sorting", () => {
   }
 
   test("Sort by Name Column in Test Run", async ({ api, page }) => {
-    const { projectId, testRunId } = await createTestProjectWithTestRun(api);
+    let projectId: number | undefined;
+    let testRunId: number | undefined;
+    await test.step("Create a project with a test run and cases", async () => {
+      ({ projectId, testRunId } = await createTestProjectWithTestRun(api));
+    });
 
-    // Navigate to the test run page
-    await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);
-    await waitForTableStable(page);
+    await test.step("Open the test run page", async () => {
+      // Navigate to the test run page
+      await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);
+      await waitForTableStable(page);
+    });
 
-    // Sort by Name ascending
-    await clickSortButton(page, "Name");
+    await test.step("Cycle the Name sort through all states", async () => {
+      // Sort by Name ascending
+      await clickSortButton(page, "Name");
 
-    // Verify sort icon shows ascending
-    const sortState = await getSortIconState(page, "Name");
-    expect(sortState).toBe("Sorted ascending");
+      // Verify sort icon shows ascending
+      const sortState = await getSortIconState(page, "Name");
+      expect(sortState).toBe("Sorted ascending");
 
-    // Sort descending
-    await clickSortButton(page, "Name");
-    expect(await getSortIconState(page, "Name")).toBe("Sorted descending");
+      // Sort descending
+      await clickSortButton(page, "Name");
+      expect(await getSortIconState(page, "Name")).toBe("Sorted descending");
 
-    // Reset sort
-    await clickSortButton(page, "Name");
-    expect(await getSortIconState(page, "Name")).toBe("Not sorted");
+      // Reset sort
+      await clickSortButton(page, "Name");
+      expect(await getSortIconState(page, "Name")).toBe("Not sorted");
+    });
   });
 
   test("Sort by ID Column in Test Run", async ({ api, page }) => {
-    const { projectId, testRunId } = await createTestProjectWithTestRun(api);
+    let projectId: number | undefined;
+    let testRunId: number | undefined;
+    await test.step("Create a project with a test run and cases", async () => {
+      ({ projectId, testRunId } = await createTestProjectWithTestRun(api));
+    });
 
-    await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);
-    await waitForTableStable(page);
+    await test.step("Open the test run page and enable the ID column", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);
+      await waitForTableStable(page);
 
-    // First, we need to make the ID column visible via column selection
-    const columnSelectionButton = page.getByTestId("column-selection-trigger");
-    if (await columnSelectionButton.isVisible()) {
-      await columnSelectionButton.click();
+      // First, we need to make the ID column visible via column selection
+      const columnSelectionButton = page.getByTestId(
+        "column-selection-trigger"
+      );
+      if (await columnSelectionButton.isVisible()) {
+        await columnSelectionButton.click();
 
-      // Look for the ID checkbox and enable it if not already
-      const idCheckbox = page
-        .locator("label")
-        .filter({ hasText: /^ID$/ })
-        .locator('input[type="checkbox"]');
-      if (await idCheckbox.isVisible()) {
-        const isChecked = await idCheckbox.isChecked();
-        if (!isChecked) {
-          await idCheckbox.click();
+        // Look for the ID checkbox and enable it if not already
+        const idCheckbox = page
+          .locator("label")
+          .filter({ hasText: /^ID$/ })
+          .locator('input[type="checkbox"]');
+        if (await idCheckbox.isVisible()) {
+          const isChecked = await idCheckbox.isChecked();
+          if (!isChecked) {
+            await idCheckbox.click();
+          }
         }
+
+        // Close the dropdown by clicking elsewhere
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(500);
       }
+    });
 
-      // Close the dropdown by clicking elsewhere
-      await page.keyboard.press("Escape");
-      await page.waitForTimeout(500);
-    }
+    await test.step("Sort the ID column through ascending and descending", async () => {
+      // Now sort by ID column
+      const table = page.locator("table").first();
+      const idHeader = table.locator("th").filter({ hasText: /^ID$/ }).first();
 
-    // Now sort by ID column
-    const table = page.locator("table").first();
-    const idHeader = table.locator("th").filter({ hasText: /^ID$/ }).first();
+      // Check if ID column is visible
+      if (await idHeader.isVisible()) {
+        const sortButton = idHeader
+          .getByRole("button", { name: "Sort column" })
+          .first();
+        await expect(sortButton).toBeVisible({ timeout: 5000 });
 
-    // Check if ID column is visible
-    if (await idHeader.isVisible()) {
-      const sortButton = idHeader
-        .getByRole("button", { name: "Sort column" })
-        .first();
-      await expect(sortButton).toBeVisible({ timeout: 5000 });
+        // Sort by ID ascending
+        await sortButton.click({ force: true });
+        await waitForTableStable(page);
 
-      // Sort by ID ascending
-      await sortButton.click({ force: true });
-      await waitForTableStable(page);
+        // Verify sort icon shows ascending
+        const sortIcon = sortButton.getByRole("img");
+        await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
 
-      // Verify sort icon shows ascending
-      const sortIcon = sortButton.getByRole("img");
-      await expect(sortIcon).toHaveAccessibleName("Sorted ascending");
-
-      // Sort descending
-      await sortButton.click({ force: true });
-      await waitForTableStable(page);
-      await expect(sortIcon).toHaveAccessibleName("Sorted descending");
-    }
+        // Sort descending
+        await sortButton.click({ force: true });
+        await waitForTableStable(page);
+        await expect(sortIcon).toHaveAccessibleName("Sorted descending");
+      }
+    });
   });
 
   test("Sort with Status Set on Test Run Cases", async ({ api, page }) => {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(7);
-    const projectId = await api.createProject(
-      `E2E Run Mode Status Project ${timestamp}-${random}`
-    );
-    const folderId = await api.getRootFolderId(projectId);
 
-    // Create test cases
-    const caseId1 = await api.createTestCase(
-      projectId,
-      folderId,
-      `Alpha Case ${timestamp}-${random}`
-    );
-    const caseId2 = await api.createTestCase(
-      projectId,
-      folderId,
-      `Beta Case ${timestamp}-${random}`
-    );
-    const caseId3 = await api.createTestCase(
-      projectId,
-      folderId,
-      `Charlie Case ${timestamp}-${random}`
-    );
+    let projectId: number | undefined;
+    let testRunId: number | undefined;
+    await test.step("Create a test run with cases in different statuses", async () => {
+      projectId = await api.createProject(
+        `E2E Run Mode Status Project ${timestamp}-${random}`
+      );
+      const folderId = await api.getRootFolderId(projectId);
 
-    // Create a test run
-    const testRunId = await api.createTestRun(
-      projectId,
-      `Status Test Run ${Date.now()}`
-    );
+      // Create test cases
+      const caseId1 = await api.createTestCase(
+        projectId,
+        folderId,
+        `Alpha Case ${timestamp}-${random}`
+      );
+      const caseId2 = await api.createTestCase(
+        projectId,
+        folderId,
+        `Beta Case ${timestamp}-${random}`
+      );
+      const caseId3 = await api.createTestCase(
+        projectId,
+        folderId,
+        `Charlie Case ${timestamp}-${random}`
+      );
 
-    // Get status IDs
-    const passedStatusId = await api.getStatusId("passed");
-    const failedStatusId = await api.getStatusId("failed");
+      // Create a test run
+      testRunId = await api.createTestRun(
+        projectId,
+        `Status Test Run ${Date.now()}`
+      );
 
-    // Add cases with different statuses
-    const trc1 = await api.addTestCaseToTestRun(testRunId, caseId1, {
-      order: 1,
-      statusId: passedStatusId,
+      // Get status IDs
+      const passedStatusId = await api.getStatusId("passed");
+      const failedStatusId = await api.getStatusId("failed");
+
+      // Add cases with different statuses
+      const trc1 = await api.addTestCaseToTestRun(testRunId, caseId1, {
+        order: 1,
+        statusId: passedStatusId,
+      });
+      const trc2 = await api.addTestCaseToTestRun(testRunId, caseId2, {
+        order: 2,
+        statusId: failedStatusId,
+      });
+      await api.addTestCaseToTestRun(testRunId, caseId3, { order: 3 }); // No status
+
+      // Create results for the cases with statuses
+      await api.createTestResult(testRunId, trc1, passedStatusId);
+      await api.createTestResult(testRunId, trc2, failedStatusId);
     });
-    const trc2 = await api.addTestCaseToTestRun(testRunId, caseId2, {
-      order: 2,
-      statusId: failedStatusId,
+
+    let initialColumnCount: number | undefined;
+    await test.step("Open the test run page and capture the column count", async () => {
+      await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);
+      await waitForTableStable(page);
+
+      // Get initial column count
+      initialColumnCount = await getColumnCount(page);
     });
-    await api.addTestCaseToTestRun(testRunId, caseId3, { order: 3 }); // No status
 
-    // Create results for the cases with statuses
-    await api.createTestResult(testRunId, trc1, passedStatusId);
-    await api.createTestResult(testRunId, trc2, failedStatusId);
+    await test.step("Cycle the Name sort and verify state and column count", async () => {
+      // Sort by Name
+      await clickSortButton(page, "Name");
+      expect(await getSortIconState(page, "Name")).toBe("Sorted ascending");
 
-    await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);
-    await waitForTableStable(page);
+      // Verify column count preserved
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
 
-    // Get initial column count
-    const initialColumnCount = await getColumnCount(page);
+      // Sort descending
+      await clickSortButton(page, "Name");
+      expect(await getSortIconState(page, "Name")).toBe("Sorted descending");
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
 
-    // Sort by Name
-    await clickSortButton(page, "Name");
-    expect(await getSortIconState(page, "Name")).toBe("Sorted ascending");
-
-    // Verify column count preserved
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
-
-    // Sort descending
-    await clickSortButton(page, "Name");
-    expect(await getSortIconState(page, "Name")).toBe("Sorted descending");
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
-
-    // Reset sort
-    await clickSortButton(page, "Name");
-    expect(await getSortIconState(page, "Name")).toBe("Not sorted");
-    expect(await getColumnCount(page)).toBe(initialColumnCount);
+      // Reset sort
+      await clickSortButton(page, "Name");
+      expect(await getSortIconState(page, "Name")).toBe("Not sorted");
+      expect(await getColumnCount(page)).toBe(initialColumnCount);
+    });
   });
 
   test("Header Column Count Preserved in Run Mode After Sort", async ({

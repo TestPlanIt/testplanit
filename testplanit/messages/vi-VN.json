@@ -5060,21 +5060,28 @@
       "manageDescription": "Cấu hình và quản lý các tích hợp vấn đề dịch vụ bên ngoài của bạn.",
       "status": {
         "active": "Tích cực",
-        "inactive": "Không hoạt động"
+        "inactive": "Không hoạt động",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "Các dự án liên kết",
       "noIntegrations": "Không có vấn đề nào được cấu hình tích hợp",
       "testConnection": "Kiểm tra kết nối",
       "testSuccess": "Kết nối thành công",
       "testSuccessDescription": "Việc tích hợp vấn đề đã được cấu hình và kết nối đúng cách.",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "Kết nối thất bại",
       "testFailedDescription": "Không thể kết nối với dịch vụ bên ngoài",
       "testError": "Lỗi kiểm thử",
       "testErrorDescription": "Đã xảy ra lỗi trong quá trình kiểm tra kết nối.",
-      "syncInProgress": "Lỗi đồng bộ hóa...",
-      "syncIntegration": "Đồng bộ hóa tất cả các sự cố từ quá trình tích hợp sự cố.",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
+      "syncInProgress": "Re-syncing linked issues...",
+      "syncIntegration": "Re-sync linked issues",
+      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
       "syncSuccess": "Đã xếp hàng đồng bộ",
-      "syncSuccessDescription": "Các vấn đề từ \"{name}\" đang được đồng bộ hóa trong nền. Quá trình này có thể mất vài phút. Bảng sẽ tự động cập nhật khi hoàn tất.",
+      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
       "syncError": "Đồng bộ hóa thất bại",
       "syncErrorDescription": "Không thể xếp hàng công việc đồng bộ cho sự cố tích hợp này. Vui lòng thử lại sau.",
       "delete": {
@@ -5206,6 +5213,10 @@
         "apiKeyWarningPoint4": "Hãy sử dụng OAuth 2.0 để ghi nhận chính xác thông tin người báo cáo mà không cần quyền quản trị viên.",
         "tokenCreatorNoticeTitle": "Ghi nhận người tạo vấn đề",
         "tokenCreatorNoticeDescription": "Các sự cố được tạo ra thông qua quá trình tích hợp này luôn được ghi nhận là do tài khoản sở hữu mã thông báo truy cập đó gây ra, chứ không phải do người dùng TestPlanIt đã tạo ra chúng. API của nhà cung cấp này không cho phép thiết lập người tạo thay mặt người dùng khác.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Khóa API Forge",
         "forgeApiKeyDescription": "Được ứng dụng Atlassian Forge sử dụng để xác thực các yêu cầu từ bảng quản lý sự cố Jira. Tạo khóa tại đây và dán vào cài đặt ứng dụng Forge của bạn.",
         "forgeApiKeyPlaceholder": "Nhấp vào Tạo để tạo khóa API.",
@@ -5440,7 +5451,8 @@
         "duplicate_detection": "Phát hiện trùng lặp",
         "generate_from_url": "Tạo các trường hợp kiểm thử từ URL (Yêu cầu)",
         "generate_from_url_app": "Tạo trường hợp kiểm thử từ URL (Kiểm thử ứng dụng)",
-        "automation_candidates": "Báo cáo ứng viên tự động hóa"
+        "automation_candidates": "Báo cáo ứng viên tự động hóa",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5744,7 +5756,10 @@
         "reviewReminderTitle": "Đang chờ xem xét",
         "reviewReminderAction": "vẫn đang chờ đánh giá của bạn về",
         "reviewReminderEmailMessage": "Nhắc nhở: Yêu cầu xem xét của {actorName}đối với {entityLabel} \"{entityName}\" trong dự án \"{projectName}\" đã bị chờ xử lý trong {hoursPending} giờ.",
-        "reviewReminderHoursPending": "Đang chờ xử lý trong {hoursPending, plural, one {# giờ} other {# giờ}}"
+        "reviewReminderHoursPending": "Đang chờ xử lý trong {hoursPending, plural, one {# giờ} other {# giờ}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

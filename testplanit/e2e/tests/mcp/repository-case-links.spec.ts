@@ -142,38 +142,46 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
       );
       return;
     }
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: {
-          isDeleted: false,
-          OR: [{ caseAId: ctx.caseAId }, { caseBId: ctx.caseAId }],
-        },
-        include: {
-          caseA: {
-            select: { id: true, name: true, source: true, automated: true },
+
+    let body: { data: { id: number }[] } | undefined;
+
+    await test.step("Query links by caseId with bidirectional OR clause", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: {
+            isDeleted: false,
+            OR: [{ caseAId: ctx.caseAId }, { caseBId: ctx.caseAId }],
           },
-          caseB: {
-            select: { id: true, name: true, source: true, automated: true },
+          include: {
+            caseA: {
+              select: { id: true, name: true, source: true, automated: true },
+            },
+            caseB: {
+              select: { id: true, name: true, source: true, automated: true },
+            },
+            createdBy: { select: { id: true, name: true, email: true } },
           },
-          createdBy: { select: { id: true, name: true, email: true } },
-        },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: 26,
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/repositoryCaseLink/findMany?q=${q}`,
-      { headers: ctx.headers }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    expect(body.data.length).toBeGreaterThanOrEqual(1);
-    // Confirm the link we located in beforeAll appears in the OR-mode results.
-    const found = body.data.find(
-      (row: { id: number }) => row.id === ctx.linkId
-    );
-    expect(found).toBeDefined();
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 26,
+        })
+      );
+      const r = await request.get(
+        `${baseURL}/api/model/repositoryCaseLink/findMany?q=${q}`,
+        { headers: ctx.headers }
+      );
+      expect(r.status()).toBe(200);
+      body = await r.json();
+    });
+
+    await test.step("Confirm the seeded link appears in OR-mode results", async () => {
+      expect(Array.isArray(body!.data)).toBe(true);
+      expect(body!.data.length).toBeGreaterThanOrEqual(1);
+      // Confirm the link we located in beforeAll appears in the OR-mode results.
+      const found = body!.data.find(
+        (row: { id: number }) => row.id === ctx.linkId
+      );
+      expect(found).toBeDefined();
+    });
   });
 
   // -- caseAId mode (one-way originating side) -------------------------------
@@ -188,23 +196,31 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
       );
       return;
     }
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: { isDeleted: false, caseAId: ctx.caseAId },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: 26,
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/repositoryCaseLink/findMany?q=${q}`,
-      { headers: ctx.headers }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    for (const row of body.data) {
-      expect(row.caseAId).toBe(ctx.caseAId);
-    }
+
+    let body: { data: { caseAId: number }[] } | undefined;
+
+    await test.step("Query links filtered by originating endpoint caseAId", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: { isDeleted: false, caseAId: ctx.caseAId },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 26,
+        })
+      );
+      const r = await request.get(
+        `${baseURL}/api/model/repositoryCaseLink/findMany?q=${q}`,
+        { headers: ctx.headers }
+      );
+      expect(r.status()).toBe(200);
+      body = await r.json();
+    });
+
+    await test.step("Assert every result matches the requested caseAId", async () => {
+      expect(Array.isArray(body!.data)).toBe(true);
+      for (const row of body!.data) {
+        expect(row.caseAId).toBe(ctx.caseAId);
+      }
+    });
   });
 
   // -- caseBId mode (one-way destination side) -------------------------------
@@ -219,23 +235,31 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
       );
       return;
     }
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: { isDeleted: false, caseBId: ctx.caseBId },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: 26,
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/repositoryCaseLink/findMany?q=${q}`,
-      { headers: ctx.headers }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    for (const row of body.data) {
-      expect(row.caseBId).toBe(ctx.caseBId);
-    }
+
+    let body: { data: { caseBId: number }[] } | undefined;
+
+    await test.step("Query links filtered by destination endpoint caseBId", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: { isDeleted: false, caseBId: ctx.caseBId },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 26,
+        })
+      );
+      const r = await request.get(
+        `${baseURL}/api/model/repositoryCaseLink/findMany?q=${q}`,
+        { headers: ctx.headers }
+      );
+      expect(r.status()).toBe(200);
+      body = await r.json();
+    });
+
+    await test.step("Assert every result matches the requested caseBId", async () => {
+      expect(Array.isArray(body!.data)).toBe(true);
+      for (const row of body!.data) {
+        expect(row.caseBId).toBe(ctx.caseBId);
+      }
+    });
   });
 
   // -- linkType filter -------------------------------------------------------
@@ -248,26 +272,34 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
       console.warn("REPO-05 linkType skipped: seed has no RepositoryCaseLink");
       return;
     }
-    const q = encodeURIComponent(
-      JSON.stringify({
-        where: {
-          isDeleted: false,
-          caseAId: ctx.caseAId,
-          type: ctx.linkType,
-        },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: 26,
-      })
-    );
-    const r = await request.get(
-      `${baseURL}/api/model/repositoryCaseLink/findMany?q=${q}`,
-      { headers: ctx.headers }
-    );
-    expect(r.status()).toBe(200);
-    const body = await r.json();
-    expect(Array.isArray(body.data)).toBe(true);
-    for (const row of body.data) {
-      expect(row.type).toBe(ctx.linkType);
-    }
+
+    let body: { data: { type: string }[] } | undefined;
+
+    await test.step("Query links narrowed by where.type linkType filter", async () => {
+      const q = encodeURIComponent(
+        JSON.stringify({
+          where: {
+            isDeleted: false,
+            caseAId: ctx.caseAId,
+            type: ctx.linkType,
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 26,
+        })
+      );
+      const r = await request.get(
+        `${baseURL}/api/model/repositoryCaseLink/findMany?q=${q}`,
+        { headers: ctx.headers }
+      );
+      expect(r.status()).toBe(200);
+      body = await r.json();
+    });
+
+    await test.step("Assert every result matches the requested linkType", async () => {
+      expect(Array.isArray(body!.data)).toBe(true);
+      for (const row of body!.data) {
+        expect(row.type).toBe(ctx.linkType);
+      }
+    });
   });
 });

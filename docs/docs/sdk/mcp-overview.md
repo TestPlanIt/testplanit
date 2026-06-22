@@ -10,7 +10,8 @@ The TestPlanIt MCP server lets AI agents — Claude Desktop, Cursor, custom MCP-
 
 ## What an agent can ask
 
-- List, fetch, create, update, and soft-delete test cases (with steps, custom fields, tags, folder breadcrumb, linked issues, and linked automated tests inline)
+- List, fetch, create (one at a time or many in a single bulk call), update, and soft-delete test cases (with steps, custom fields, tags, folder breadcrumb, linked issues, and linked automated tests inline)
+- List a project's templates and the case fields each defines, and choose which template a new case uses — custom fields are validated against that template
 - List and create test runs, add cases to existing runs, submit test results, and update run state
 - List sessions, session results, and session findings — the exploratory testing surface — and create or update sessions
 - Create and update milestones, mark them started or complete, and list milestone progress with pooled status rollups inline
@@ -19,7 +20,7 @@ The TestPlanIt MCP server lets AI agents — Claude Desktop, Cursor, custom MCP-
 - List code repositories configured in a project (with credentials never returned)
 - List folders and tags scoped to a project, with usage counts and tree relationships preserved
 
-See the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) for the full tool reference, including request/response schemas for all 42 tools.
+See the [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) for the full tool reference, including request/response schemas for all 44 tools.
 
 ## Installation
 

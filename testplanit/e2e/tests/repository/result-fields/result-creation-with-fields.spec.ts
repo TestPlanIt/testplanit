@@ -146,38 +146,47 @@ test.describe("Result Creation - Text String Fields", () => {
     const displayName = `Text Field ${Date.now()}`;
     const systemName = `result_text_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Text String",
-      isRequired: false,
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for optional Text String field", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Text String",
+        isRequired: false,
+      }));
     });
 
-    // Verify field label is visible
-    const fieldLabel = modal.getByText(displayName).first();
-    await expect(fieldLabel).toBeVisible({ timeout: 5000 });
+    await test.step("Verify field label is visible", async () => {
+      const fieldLabel = modal!.getByText(displayName).first();
+      await expect(fieldLabel).toBeVisible({ timeout: 5000 });
+    });
 
-    // Leave field empty, submit
-    await submitAndExpectSuccess(modal);
+    await test.step("Submit with the field left empty", async () => {
+      await submitAndExpectSuccess(modal!);
+    });
   });
 
   test("Submit result with text string value", async ({ page, api }) => {
     const displayName = `Text Field ${Date.now()}`;
     const systemName = `result_text_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Text String",
-      isRequired: false,
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Text String field", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Text String",
+        isRequired: false,
+      }));
     });
 
-    // Fill text field
-    const fieldInput = getFieldInput(modal, displayName);
-    await expect(fieldInput).toBeVisible({ timeout: 5000 });
-    await fieldInput.fill("Test result value");
+    await test.step("Fill the text field and submit", async () => {
+      const fieldInput = getFieldInput(modal!, displayName);
+      await expect(fieldInput).toBeVisible({ timeout: 5000 });
+      await fieldInput.fill("Test result value");
 
-    await submitAndExpectSuccess(modal);
+      await submitAndExpectSuccess(modal!);
+    });
   });
 
   test("Default value auto-applied for text string", async ({ page, api }) => {
@@ -185,18 +194,22 @@ test.describe("Result Creation - Text String Fields", () => {
     const systemName = `result_text_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const defaultValue = "Default result text";
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Text String",
-      isRequired: false,
-      defaultValue,
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Text String field with a default value", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Text String",
+        isRequired: false,
+        defaultValue,
+      }));
     });
 
-    // Verify default value is pre-filled
-    const fieldInput = getFieldInput(modal, displayName);
-    await expect(fieldInput).toBeVisible({ timeout: 5000 });
-    await expect(fieldInput).toHaveValue(defaultValue);
+    await test.step("Verify default value is pre-filled", async () => {
+      const fieldInput = getFieldInput(modal!, displayName);
+      await expect(fieldInput).toBeVisible({ timeout: 5000 });
+      await expect(fieldInput).toHaveValue(defaultValue);
+    });
   });
 
   test("Required text string validation prevents submission", async ({
@@ -206,20 +219,23 @@ test.describe("Result Creation - Text String Fields", () => {
     const displayName = `Required Text ${Date.now()}`;
     const systemName = `result_text_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Text String",
-      isRequired: true,
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for required Text String field", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Text String",
+        isRequired: true,
+      }));
     });
 
-    // Leave required field empty, try to submit
-    const saveButton = modal.getByRole("button", { name: "Save" });
-    await saveButton.click();
+    await test.step("Submit with the required field empty and verify dialog stays open", async () => {
+      const saveButton = modal!.getByRole("button", { name: "Save" });
+      await saveButton.click();
 
-    // Dialog should remain open (validation error)
-    await expect(modal).toBeVisible();
-    await page.waitForTimeout(500);
+      await expect(modal!).toBeVisible();
+      await page.waitForTimeout(500);
+    });
   });
 
   test("Hint text displays for text string field", async ({ page, api }) => {
@@ -227,20 +243,24 @@ test.describe("Result Creation - Text String Fields", () => {
     const systemName = `result_text_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const hintText = "This is a helpful hint for the result field";
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Text String",
-      isRequired: false,
-      hint: hintText,
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Text String field with hint text", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Text String",
+        isRequired: false,
+        hint: hintText,
+      }));
     });
 
-    // Verify hint text is visible within the field's form item
-    const fieldLabel = modal.getByText(displayName).first();
-    const formItem = fieldLabel.locator("..");
-    const hintElement = formItem.locator("p.text-sm");
-    await expect(hintElement).toBeVisible({ timeout: 5000 });
-    await expect(hintElement).toContainText(hintText);
+    await test.step("Verify hint text is visible within the field's form item", async () => {
+      const fieldLabel = modal!.getByText(displayName).first();
+      const formItem = fieldLabel.locator("..");
+      const hintElement = formItem.locator("p.text-sm");
+      await expect(hintElement).toBeVisible({ timeout: 5000 });
+      await expect(hintElement).toContainText(hintText);
+    });
   });
 });
 
@@ -259,49 +279,58 @@ test.describe("Result Creation - Text Long Fields", () => {
     const displayName = `Long Text ${Date.now()}`;
     const systemName = `result_long_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Text Long",
-      isRequired: false,
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Text Long field", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Text Long",
+        isRequired: false,
+      }));
     });
 
-    // Text Long renders as a TipTapEditor, not a plain input
-    const fieldLabel = modal.getByText(displayName).first();
-    await expect(fieldLabel).toBeVisible({ timeout: 5000 });
+    await test.step("Type rich text into the editor and submit", async () => {
+      // Text Long renders as a TipTapEditor, not a plain input
+      const fieldLabel = modal!.getByText(displayName).first();
+      await expect(fieldLabel).toBeVisible({ timeout: 5000 });
 
-    // The TipTapEditor renders a contenteditable div with class "tiptap"
-    const formItem = fieldLabel.locator("..");
-    const editor = formItem.locator(".tiptap");
-    await expect(editor).toBeVisible({ timeout: 5000 });
+      // The TipTapEditor renders a contenteditable div with class "tiptap"
+      const formItem = fieldLabel.locator("..");
+      const editor = formItem.locator(".tiptap");
+      await expect(editor).toBeVisible({ timeout: 5000 });
 
-    // Type into the editor
-    await editor.click();
-    await page.keyboard.type("Rich text content for result");
+      // Type into the editor
+      await editor.click();
+      await page.keyboard.type("Rich text content for result");
 
-    await submitAndExpectSuccess(modal);
+      await submitAndExpectSuccess(modal!);
+    });
   });
 
   test("Text Long field with default value", async ({ page, api }) => {
     const displayName = `Long Default ${Date.now()}`;
     const systemName = `result_long_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Text Long",
-      isRequired: false,
-      defaultValue: "Default long text content",
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Text Long field with a default value", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Text Long",
+        isRequired: false,
+        defaultValue: "Default long text content",
+      }));
     });
 
-    // Verify the editor renders with default content
-    const fieldLabel = modal.getByText(displayName).first();
-    await expect(fieldLabel).toBeVisible({ timeout: 5000 });
+    await test.step("Verify the editor renders with default content", async () => {
+      const fieldLabel = modal!.getByText(displayName).first();
+      await expect(fieldLabel).toBeVisible({ timeout: 5000 });
 
-    const formItem = fieldLabel.locator("..");
-    const editor = formItem.locator(".tiptap");
-    await expect(editor).toBeVisible({ timeout: 5000 });
-    await expect(editor).toContainText("Default long text content");
+      const formItem = fieldLabel.locator("..");
+      const editor = formItem.locator(".tiptap");
+      await expect(editor).toBeVisible({ timeout: 5000 });
+      await expect(editor).toContainText("Default long text content");
+    });
   });
 });
 
@@ -320,46 +349,54 @@ test.describe("Result Creation - Number Fields", () => {
     const displayName = `Number Field ${Date.now()}`;
     const systemName = `result_num_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Number",
-      isRequired: false,
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Number field", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Number",
+        isRequired: false,
+      }));
     });
 
-    // Fill number field
-    const fieldInput = getFieldInput(modal, displayName);
-    await expect(fieldInput).toBeVisible({ timeout: 5000 });
-    await fieldInput.fill("123.45");
+    await test.step("Fill the number field and submit", async () => {
+      const fieldInput = getFieldInput(modal!, displayName);
+      await expect(fieldInput).toBeVisible({ timeout: 5000 });
+      await fieldInput.fill("123.45");
 
-    await submitAndExpectSuccess(modal);
+      await submitAndExpectSuccess(modal!);
+    });
   });
 
   test("Number min/max validation enforced", async ({ page, api }) => {
     const displayName = `Number Range ${Date.now()}`;
     const systemName = `result_num_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Number",
-      isRequired: false,
-      minValue: 0,
-      maxValue: 100,
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Number field with min/max range", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Number",
+        isRequired: false,
+        minValue: 0,
+        maxValue: 100,
+      }));
     });
 
-    // Fill with value outside range
-    const fieldInput = getFieldInput(modal, displayName);
-    await expect(fieldInput).toBeVisible({ timeout: 5000 });
-    await fieldInput.fill("150");
+    await test.step("Enter out-of-range value", async () => {
+      const fieldInput = getFieldInput(modal!, displayName);
+      await expect(fieldInput).toBeVisible({ timeout: 5000 });
+      await fieldInput.fill("150");
+    });
 
-    // Try to submit - validation should fail
-    const saveButton = modal.getByRole("button", { name: "Save" });
-    await saveButton.click();
+    await test.step("Submit and verify validation keeps dialog open", async () => {
+      const saveButton = modal!.getByRole("button", { name: "Save" });
+      await saveButton.click();
 
-    // Dialog should remain open due to validation error
-    await expect(modal).toBeVisible();
-    await page.waitForTimeout(500);
+      await expect(modal!).toBeVisible();
+      await page.waitForTimeout(500);
+    });
   });
 });
 
@@ -378,19 +415,24 @@ test.describe("Result Creation - Integer Fields", () => {
     const displayName = `Integer Field ${Date.now()}`;
     const systemName = `result_int_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Integer",
-      isRequired: false,
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Integer field", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Integer",
+        isRequired: false,
+      }));
     });
 
-    // Integer falls through to the default case and renders as a plain input
-    const fieldInput = getFieldInput(modal, displayName);
-    await expect(fieldInput).toBeVisible({ timeout: 5000 });
-    await fieldInput.fill("42");
+    await test.step("Fill the integer field and submit", async () => {
+      // Integer falls through to the default case and renders as a plain input
+      const fieldInput = getFieldInput(modal!, displayName);
+      await expect(fieldInput).toBeVisible({ timeout: 5000 });
+      await fieldInput.fill("42");
 
-    await submitAndExpectSuccess(modal);
+      await submitAndExpectSuccess(modal!);
+    });
   });
 });
 
@@ -409,19 +451,24 @@ test.describe("Result Creation - Date Fields", () => {
     const displayName = `Date Field ${Date.now()}`;
     const systemName = `result_date_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Date",
-      isRequired: false,
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Date field", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Date",
+        isRequired: false,
+      }));
     });
 
-    // Date falls through to the default case and renders as a plain input
-    const fieldInput = getFieldInput(modal, displayName);
-    await expect(fieldInput).toBeVisible({ timeout: 5000 });
-    await fieldInput.fill("2025-01-15");
+    await test.step("Fill the date field and submit", async () => {
+      // Date falls through to the default case and renders as a plain input
+      const fieldInput = getFieldInput(modal!, displayName);
+      await expect(fieldInput).toBeVisible({ timeout: 5000 });
+      await fieldInput.fill("2025-01-15");
 
-    await submitAndExpectSuccess(modal);
+      await submitAndExpectSuccess(modal!);
+    });
   });
 });
 
@@ -440,19 +487,24 @@ test.describe("Result Creation - Link Fields", () => {
     const displayName = `Link Field ${Date.now()}`;
     const systemName = `result_link_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Link",
-      isRequired: false,
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Link field", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Link",
+        isRequired: false,
+      }));
     });
 
-    // Link falls through to the default case and renders as a plain input
-    const fieldInput = getFieldInput(modal, displayName);
-    await expect(fieldInput).toBeVisible({ timeout: 5000 });
-    await fieldInput.fill("https://example.com/result");
+    await test.step("Fill the link field and submit", async () => {
+      // Link falls through to the default case and renders as a plain input
+      const fieldInput = getFieldInput(modal!, displayName);
+      await expect(fieldInput).toBeVisible({ timeout: 5000 });
+      await fieldInput.fill("https://example.com/result");
 
-    await submitAndExpectSuccess(modal);
+      await submitAndExpectSuccess(modal!);
+    });
   });
 });
 
@@ -471,46 +523,51 @@ test.describe("Result Creation - Dropdown Fields", () => {
     const displayName = `Priority ${Date.now()}`;
     const systemName = `result_dd_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(
-      page,
-      api,
-      projectId,
-      {
-        displayName,
-        systemName,
-        typeName: "Dropdown",
-        isRequired: false,
-      },
-      async ({ resultFieldId }) => {
-        // Create dropdown options linked to the result field
-        await api.createFieldOption({
-          name: "Low",
-          resultFieldId,
-          isDefault: false,
-          order: 0,
-        });
-        await api.createFieldOption({
-          name: "High",
-          resultFieldId,
-          isDefault: false,
-          order: 1,
-        });
-      }
-    );
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Dropdown field with options", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(
+        page,
+        api,
+        projectId,
+        {
+          displayName,
+          systemName,
+          typeName: "Dropdown",
+          isRequired: false,
+        },
+        async ({ resultFieldId }) => {
+          // Create dropdown options linked to the result field
+          await api.createFieldOption({
+            name: "Low",
+            resultFieldId,
+            isDefault: false,
+            order: 0,
+          });
+          await api.createFieldOption({
+            name: "High",
+            resultFieldId,
+            isDefault: false,
+            order: 1,
+          });
+        }
+      ));
+    });
 
-    // Find the select trigger within the field's form item
-    const fieldLabel = modal.getByText(displayName).first();
-    const formItem = fieldLabel.locator("..");
-    const selectTrigger = formItem.locator("button").first();
-    await expect(selectTrigger).toBeVisible({ timeout: 5000 });
-    await selectTrigger.click();
+    await test.step("Open the dropdown trigger", async () => {
+      const fieldLabel = modal!.getByText(displayName).first();
+      const formItem = fieldLabel.locator("..");
+      const selectTrigger = formItem.locator("button").first();
+      await expect(selectTrigger).toBeVisible({ timeout: 5000 });
+      await selectTrigger.click();
+    });
 
-    // Select "High" from the dropdown options
-    await page.waitForTimeout(500);
-    const option = page.getByRole("option", { name: "High" });
-    await option.click();
+    await test.step('Select "High" and submit', async () => {
+      await page.waitForTimeout(500);
+      const option = page.getByRole("option", { name: "High" });
+      await option.click();
 
-    await submitAndExpectSuccess(modal);
+      await submitAndExpectSuccess(modal!);
+    });
   });
 });
 
@@ -529,43 +586,50 @@ test.describe("Result Creation - Multi-Select Fields", () => {
     const displayName = `MultiSelect ${Date.now()}`;
     const systemName = `result_ms_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(
-      page,
-      api,
-      projectId,
-      {
-        displayName,
-        systemName,
-        typeName: "Multi-Select",
-        isRequired: false,
-      },
-      async ({ resultFieldId }) => {
-        await api.createFieldOption({
-          name: "Browser",
-          resultFieldId,
-          isDefault: false,
-          order: 0,
-        });
-        await api.createFieldOption({
-          name: "Mobile",
-          resultFieldId,
-          isDefault: false,
-          order: 1,
-        });
-        await api.createFieldOption({
-          name: "API",
-          resultFieldId,
-          isDefault: false,
-          order: 2,
-        });
-      }
-    );
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Multi-Select field with options", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(
+        page,
+        api,
+        projectId,
+        {
+          displayName,
+          systemName,
+          typeName: "Multi-Select",
+          isRequired: false,
+        },
+        async ({ resultFieldId }) => {
+          await api.createFieldOption({
+            name: "Browser",
+            resultFieldId,
+            isDefault: false,
+            order: 0,
+          });
+          await api.createFieldOption({
+            name: "Mobile",
+            resultFieldId,
+            isDefault: false,
+            order: 1,
+          });
+          await api.createFieldOption({
+            name: "API",
+            resultFieldId,
+            isDefault: false,
+            order: 2,
+          });
+        }
+      ));
+    });
 
-    // Multi-Select falls through to the default case and renders as a plain input
-    const fieldLabel = modal.getByText(displayName, { exact: false }).first();
-    await expect(fieldLabel).toBeVisible({ timeout: 5000 });
+    await test.step("Verify Multi-Select field renders and submit", async () => {
+      // Multi-Select falls through to the default case and renders as a plain input
+      const fieldLabel = modal!
+        .getByText(displayName, { exact: false })
+        .first();
+      await expect(fieldLabel).toBeVisible({ timeout: 5000 });
 
-    await submitAndExpectSuccess(modal);
+      await submitAndExpectSuccess(modal!);
+    });
   });
 });
 
@@ -584,19 +648,26 @@ test.describe("Result Creation - Checkbox Fields", () => {
     const displayName = `Checkbox Field ${Date.now()}`;
     const systemName = `result_cb_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
-      displayName,
-      systemName,
-      typeName: "Checkbox",
-      isRequired: false,
-      isChecked: false,
+    let modal: Awaited<ReturnType<typeof setupAndOpenAddResultModal>>["modal"];
+    await test.step("Open Add Result modal for Checkbox field", async () => {
+      ({ modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+        displayName,
+        systemName,
+        typeName: "Checkbox",
+        isRequired: false,
+        isChecked: false,
+      }));
     });
 
-    // Checkbox falls through to the default case in renderDynamicField
-    // and renders as a plain input element
-    const fieldLabel = modal.getByText(displayName, { exact: false }).first();
-    await expect(fieldLabel).toBeVisible({ timeout: 5000 });
+    await test.step("Verify Checkbox field renders and submit", async () => {
+      // Checkbox falls through to the default case in renderDynamicField
+      // and renders as a plain input element
+      const fieldLabel = modal!
+        .getByText(displayName, { exact: false })
+        .first();
+      await expect(fieldLabel).toBeVisible({ timeout: 5000 });
 
-    await submitAndExpectSuccess(modal);
+      await submitAndExpectSuccess(modal!);
+    });
   });
 });

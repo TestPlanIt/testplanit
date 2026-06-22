@@ -1,3 +1,84 @@
+## [0.40.2](https://github.com/TestPlanIt/testplanit/compare/v0.40.1...v0.40.2) (2026-06-22)
+
+### Bug Fixes
+
+* **integrations:** unblock Jira OAuth authorize + align admin action icons ([#463](https://github.com/TestPlanIt/testplanit/issues/463)) ([d7dae8c](https://github.com/TestPlanIt/testplanit/commit/d7dae8c4be81cf9a43c83d88aaf0b86452bca400))
+
+## [0.40.1](https://github.com/TestPlanIt/testplanit/compare/v0.40.0...v0.40.1) (2026-06-21)
+
+### Bug Fixes
+
+* **integrations:** configure Jira OAuth per-integration via admin UI ([#462](https://github.com/TestPlanIt/testplanit/issues/462)) ([7a0d08e](https://github.com/TestPlanIt/testplanit/commit/7a0d08eba7fbd90a8e8905ec46de9e897dd8b5dc))
+
+## [0.40.0](https://github.com/TestPlanIt/testplanit/compare/v0.39.2...v0.40.0) (2026-06-20)
+
+### Features
+
+* **api:** add createTestCases for bulk case creation ([#459](https://github.com/TestPlanIt/testplanit/issues/459)) ([79c4db0](https://github.com/TestPlanIt/testplanit/commit/79c4db008dc0d021844a1aaf60c6e790f750582f))
+
+### Bug Fixes
+
+* **deps:** patch Dependabot security advisories ([#461](https://github.com/TestPlanIt/testplanit/issues/461)) ([e40c94e](https://github.com/TestPlanIt/testplanit/commit/e40c94e6f487769694249a7b0ff57d0ebd954fd2)), closes [package.json#pnpm](https://github.com/TestPlanIt/package.json/issues/pnpm)
+
+## [0.39.2](https://github.com/TestPlanIt/testplanit/compare/v0.39.1...v0.39.2) (2026-06-20)
+
+### Bug Fixes
+
+* **tags:** persist tag selections in the case and session editors ([#456](https://github.com/TestPlanIt/testplanit/issues/456)) ([4fc7f90](https://github.com/TestPlanIt/testplanit/commit/4fc7f9009abaf552cce613f38af86cc33a1e1b20))
+
+## [0.39.1](https://github.com/TestPlanIt/testplanit/compare/v0.39.0...v0.39.1) (2026-06-20)
+
+### Bug Fixes
+
+* **repository:** prevent test case edit crash from null dropdown option colors ([#455](https://github.com/TestPlanIt/testplanit/issues/455)) ([61a4dfe](https://github.com/TestPlanIt/testplanit/commit/61a4dfea6f2a0ebf1ebb6d4f9d7416ad617717ca))
+
+## [0.39.0](https://github.com/TestPlanIt/testplanit/compare/v0.38.10...v0.39.0) (2026-06-20)
+
+### Features
+
+* **mcp:** bulk case creation and template selection/listing ([#454](https://github.com/TestPlanIt/testplanit/issues/454)) ([a696255](https://github.com/TestPlanIt/testplanit/commit/a6962558066d01eb0f2bcbae857f276e819fd0e3))
+
+## [0.38.10](https://github.com/TestPlanIt/testplanit/compare/v0.38.9...v0.38.10) (2026-06-20)
+
+### Bug Fixes
+
+* folder-scoped case selection, bulk-edit issue unlink + version snapshots, and sync-button clarity ([#453](https://github.com/TestPlanIt/testplanit/issues/453)) ([37eda9b](https://github.com/TestPlanIt/testplanit/commit/37eda9bb8d674e58e996e3be7ce298e5c3e4ae23))
+
+## [0.38.9](https://github.com/TestPlanIt/testplanit/compare/v0.38.8...v0.38.9) (2026-06-19)
+
+### Bug Fixes
+
+* **docker:** include @testplanit/api dist in image build context ([#451](https://github.com/TestPlanIt/testplanit/issues/451)) ([578587c](https://github.com/TestPlanIt/testplanit/commit/578587cb10e179508d9504ebfa4904ff4669a763))
+
+## [0.38.8](https://github.com/TestPlanIt/testplanit/compare/v0.38.7...v0.38.8) (2026-06-19)
+
+### Bug Fixes
+
+* **docker:** copy pnpm patches into image build context ([#450](https://github.com/TestPlanIt/testplanit/issues/450)) ([ee26f4d](https://github.com/TestPlanIt/testplanit/commit/ee26f4d084c0163d85bc33f22846325a0f8b1a88))
+
+## [0.38.7](https://github.com/TestPlanIt/testplanit/compare/v0.38.6...v0.38.7) (2026-06-19)
+
+### Bug Fixes
+
+* **access:** honor project default access on project-scoped child models ([#449](https://github.com/TestPlanIt/testplanit/issues/449)) ([2182e79](https://github.com/TestPlanIt/testplanit/commit/2182e795e75686fd8983a4cbf299b7e2f8c26f9c))
+* **deps:** bump multer to 2.2.0 and webpack-dev-server to 5.2.5 ([#446](https://github.com/TestPlanIt/testplanit/issues/446)) ([a107ba8](https://github.com/TestPlanIt/testplanit/commit/a107ba85232d659df5b2452e80ce5e30df7d1336)), closes [#428](https://github.com/TestPlanIt/testplanit/issues/428) [#427](https://github.com/TestPlanIt/testplanit/issues/427) [#429](https://github.com/TestPlanIt/testplanit/issues/429) [#421](https://github.com/TestPlanIt/testplanit/issues/421)
+
+## [0.38.6](https://github.com/TestPlanIt/testplanit/compare/v0.38.5...v0.38.6) (2026-06-18)
+
+### Bug Fixes
+
+* **deps:** patch Dependabot security advisories ([#443](https://github.com/TestPlanIt/testplanit/issues/443)) ([f13a7b5](https://github.com/TestPlanIt/testplanit/commit/f13a7b5a371393ced51b2d52ef0811d1e1ec3ae6)), closes [package.json#pnpm](https://github.com/TestPlanIt/package.json/issues/pnpm)
+
+### Enhancements
+
+* **playwright-reporter:** capture test.step() as case steps (+ E2E conversion, test-run live-update fix) ([#444](https://github.com/TestPlanIt/testplanit/issues/444)) ([ea8f7cd](https://github.com/TestPlanIt/testplanit/commit/ea8f7cd199dc239bb105cb876bc4120dff43827e))
+
+## [0.38.5](https://github.com/TestPlanIt/testplanit/compare/v0.38.4...v0.38.5) (2026-06-16)
+
+### Bug Fixes
+
+* add table role to virtualized tables (a11y) + avoid spurious redirect on cold-session loads ([#442](https://github.com/TestPlanIt/testplanit/issues/442)) ([d31b9a7](https://github.com/TestPlanIt/testplanit/commit/d31b9a739786d07d6faac3e4b0b3f4043d0a0443)), closes [#441](https://github.com/TestPlanIt/testplanit/issues/441)
+
 ## [0.38.4](https://github.com/TestPlanIt/testplanit/compare/v0.38.3...v0.38.4) (2026-06-16)
 
 ### Enhancements

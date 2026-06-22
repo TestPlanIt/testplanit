@@ -74,7 +74,7 @@ test.describe("Report Builder - Multiple Report Types", () => {
     await expect(
       page
         .locator(
-          "table, [data-testid='no-results'], text=/No results|No data|0 results/i"
+          "[role='table'], [data-testid='no-results'], :text-matches('No results|No data|0 results', 'i')"
         )
         .first()
     ).toBeVisible({ timeout: 30_000 });
@@ -88,7 +88,7 @@ test.describe("Report Builder - Multiple Report Types", () => {
   ) {
     // Accept either a results table, a visualization, or a no-results message
     const hasTable = await page
-      .locator("table")
+      .locator("[role='table']")
       .first()
       .isVisible()
       .catch(() => false);
@@ -112,19 +112,23 @@ test.describe("Report Builder - Multiple Report Types", () => {
   }) => {
     const projectId = await createProjectWithTestData(api);
 
-    // automation-trends is a pre-built report (isPreBuilt: true) - no dimensions/metrics needed
-    await navigateToReport(page, projectId, "automation-trends");
+    await test.step("Open the automation-trends pre-built report builder", async () => {
+      // automation-trends is a pre-built report (isPreBuilt: true) - no dimensions/metrics needed
+      await navigateToReport(page, projectId, "automation-trends");
+    });
 
-    // The run report button should be available (pre-built reports don't require dimension selection)
-    const runButton = page.locator('[data-testid="run-report-button"]');
-    await expect(runButton).toBeVisible({ timeout: 10000 });
+    await test.step("Run the report and verify results or no-data message", async () => {
+      // The run report button should be available (pre-built reports don't require dimension selection)
+      const runButton = page.locator('[data-testid="run-report-button"]');
+      await expect(runButton).toBeVisible({ timeout: 10000 });
 
-    // Run the report
-    await runButton.click();
-    await page.waitForLoadState("networkidle");
+      // Run the report
+      await runButton.click();
+      await page.waitForLoadState("networkidle");
 
-    // Assert results or no-data message
-    await assertReportResultsOrNoData(page);
+      // Assert results or no-data message
+      await assertReportResultsOrNoData(page);
+    });
   });
 
   test("Report builder with test-execution report type shows results or no-data", async ({
@@ -133,24 +137,28 @@ test.describe("Report Builder - Multiple Report Types", () => {
   }) => {
     const projectId = await createProjectWithTestData(api);
 
-    // test-execution with status dimension and testCaseCount metric
-    await navigateToReport(
-      page,
-      projectId,
-      "test-execution",
-      ["status"],
-      ["testCaseCount"]
-    );
+    await test.step("Open test-execution report with status dimension and testCaseCount metric", async () => {
+      // test-execution with status dimension and testCaseCount metric
+      await navigateToReport(
+        page,
+        projectId,
+        "test-execution",
+        ["status"],
+        ["testCaseCount"]
+      );
+    });
 
-    // Wait for run button to be enabled (dimensions/metrics loaded from URL)
-    const runButton = page.locator('[data-testid="run-report-button"]');
-    await expect(runButton).toBeVisible({ timeout: 5000 });
-    await expect(runButton).toBeEnabled({ timeout: 10000 });
+    await test.step("Run the report and verify results or no-data message", async () => {
+      // Wait for run button to be enabled (dimensions/metrics loaded from URL)
+      const runButton = page.locator('[data-testid="run-report-button"]');
+      await expect(runButton).toBeVisible({ timeout: 5000 });
+      await expect(runButton).toBeEnabled({ timeout: 10000 });
 
-    await runReport(page);
+      await runReport(page);
 
-    // Should show results table or no-data message
-    await assertReportResultsOrNoData(page);
+      // Should show results table or no-data message
+      await assertReportResultsOrNoData(page);
+    });
   });
 
   test("Report builder with flaky-tests report type loads", async ({
@@ -159,17 +167,21 @@ test.describe("Report Builder - Multiple Report Types", () => {
   }) => {
     const projectId = await createProjectWithTestData(api);
 
-    // flaky-tests is pre-built (isPreBuilt: true) - no dimensions/metrics needed
-    await navigateToReport(page, projectId, "flaky-tests");
+    await test.step("Open the flaky-tests pre-built report builder", async () => {
+      // flaky-tests is pre-built (isPreBuilt: true) - no dimensions/metrics needed
+      await navigateToReport(page, projectId, "flaky-tests");
+    });
 
-    const runButton = page.locator('[data-testid="run-report-button"]');
-    await expect(runButton).toBeVisible({ timeout: 10000 });
+    await test.step("Run the report and verify results, visualization, or no-data message", async () => {
+      const runButton = page.locator('[data-testid="run-report-button"]');
+      await expect(runButton).toBeVisible({ timeout: 10000 });
 
-    await runButton.click();
-    await page.waitForLoadState("networkidle");
+      await runButton.click();
+      await page.waitForLoadState("networkidle");
 
-    // Accept results table, visualization (bubble chart), or no-data message
-    await assertReportResultsOrNoData(page);
+      // Accept results table, visualization (bubble chart), or no-data message
+      await assertReportResultsOrNoData(page);
+    });
   });
 
   test("Report builder with test-case-health report type loads", async ({
@@ -178,16 +190,20 @@ test.describe("Report Builder - Multiple Report Types", () => {
   }) => {
     const projectId = await createProjectWithTestData(api);
 
-    // test-case-health is pre-built (isPreBuilt: true)
-    await navigateToReport(page, projectId, "test-case-health");
+    await test.step("Open the test-case-health pre-built report builder", async () => {
+      // test-case-health is pre-built (isPreBuilt: true)
+      await navigateToReport(page, projectId, "test-case-health");
+    });
 
-    const runButton = page.locator('[data-testid="run-report-button"]');
-    await expect(runButton).toBeVisible({ timeout: 10000 });
+    await test.step("Run the report and verify results or no-data message", async () => {
+      const runButton = page.locator('[data-testid="run-report-button"]');
+      await expect(runButton).toBeVisible({ timeout: 10000 });
 
-    await runButton.click();
-    await page.waitForLoadState("networkidle");
+      await runButton.click();
+      await page.waitForLoadState("networkidle");
 
-    await assertReportResultsOrNoData(page);
+      await assertReportResultsOrNoData(page);
+    });
   });
 
   test("Report builder with repository-stats and folder dimension shows results", async ({
@@ -196,24 +212,30 @@ test.describe("Report Builder - Multiple Report Types", () => {
   }) => {
     const projectId = await createProjectWithTestData(api);
 
-    // Use repository-stats (not pre-built) with folder dimension + testCaseCount metric
-    await navigateToReport(
-      page,
-      projectId,
-      "repository-stats",
-      ["folder"],
-      ["testCaseCount"]
-    );
+    await test.step("Open repository-stats report with folder dimension and testCaseCount metric", async () => {
+      // Use repository-stats (not pre-built) with folder dimension + testCaseCount metric
+      await navigateToReport(
+        page,
+        projectId,
+        "repository-stats",
+        ["folder"],
+        ["testCaseCount"]
+      );
+    });
 
-    const runButton = page.locator('[data-testid="run-report-button"]');
-    await expect(runButton).toBeVisible({ timeout: 5000 });
-    await expect(runButton).toBeEnabled({ timeout: 10000 });
+    await test.step("Run the report", async () => {
+      const runButton = page.locator('[data-testid="run-report-button"]');
+      await expect(runButton).toBeVisible({ timeout: 5000 });
+      await expect(runButton).toBeEnabled({ timeout: 10000 });
 
-    await runReport(page);
+      await runReport(page);
+    });
 
-    // Should show results table (project has folders with test cases)
-    const table = page.locator("table").first();
-    await expect(table).toBeVisible({ timeout: 10000 });
+    await test.step("Verify the results table is shown", async () => {
+      // Should show results table (project has folders with test cases)
+      const table = page.locator("[role='table']").first();
+      await expect(table).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Pre-built report type selector is available on reports page", async ({
@@ -224,13 +246,19 @@ test.describe("Report Builder - Multiple Report Types", () => {
       `E2E PreBuilt Report Project ${Date.now()}`
     );
 
-    // Navigate to the reports page (no specific report type)
-    await page.goto(`/en-US/projects/reports/${projectId}`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the reports page", async () => {
+      // Navigate to the reports page (no specific report type)
+      await page.goto(`/en-US/projects/reports/${projectId}`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // The report type selector should be visible
-    const reportTypeSelect = page.locator('[data-testid="report-type-select"]');
-    await expect(reportTypeSelect.first()).toBeVisible({ timeout: 10000 });
+    await test.step("Verify the report type selector is visible", async () => {
+      // The report type selector should be visible
+      const reportTypeSelect = page.locator(
+        '[data-testid="report-type-select"]'
+      );
+      await expect(reportTypeSelect.first()).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Report builder URL params persist dimensions and metrics on reload", async ({
@@ -239,29 +267,35 @@ test.describe("Report Builder - Multiple Report Types", () => {
   }) => {
     const projectId = await createProjectWithTestData(api);
 
-    // Navigate with URL params
-    await navigateToReport(
-      page,
-      projectId,
-      "repository-stats",
-      ["testCase"],
-      ["testCaseCount"]
-    );
+    await test.step("Open report builder with dimension and metric URL params", async () => {
+      // Navigate with URL params
+      await navigateToReport(
+        page,
+        projectId,
+        "repository-stats",
+        ["testCase"],
+        ["testCaseCount"]
+      );
+    });
 
-    // Run the report
-    const runButton = page.locator('[data-testid="run-report-button"]');
-    await expect(runButton).toBeEnabled({ timeout: 10000 });
-    await runReport(page);
+    await test.step("Run the report and verify the dimension param is in the URL", async () => {
+      // Run the report
+      const runButton = page.locator('[data-testid="run-report-button"]');
+      await expect(runButton).toBeEnabled({ timeout: 10000 });
+      await runReport(page);
 
-    // Verify URL contains the dimension param
-    await expect(page).toHaveURL(/dimensions=testCase/);
+      // Verify URL contains the dimension param
+      await expect(page).toHaveURL(/dimensions=testCase/);
+    });
 
-    // Reload - params should persist and report should re-run
-    await page.reload();
-    await page.waitForLoadState("networkidle");
+    await test.step("Reload and verify params persist and the report auto-runs", async () => {
+      // Reload - params should persist and report should re-run
+      await page.reload();
+      await page.waitForLoadState("networkidle");
 
-    // Report should auto-run with persisted params
-    const table = page.locator("table").first();
-    await expect(table).toBeVisible({ timeout: 10000 });
+      // Report should auto-run with persisted params
+      const table = page.locator("[role='table']").first();
+      await expect(table).toBeVisible({ timeout: 10000 });
+    });
   });
 });

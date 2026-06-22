@@ -32,136 +32,185 @@ test.describe("Project Settings Pages", () => {
   });
 
   test("integrations settings page loads correctly", async ({ page }) => {
-    await page.goto(`/en-US/projects/settings/${testProjectId}/integrations`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the integrations settings page", async () => {
+      await page.goto(`/en-US/projects/settings/${testProjectId}/integrations`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // The page renders a Card with "Issue Integrations" title via tGlobal("admin.menu.integrations")
-    // CardTitle renders as a <div>, not a heading element, so use getByText
-    const pageTitle = page.getByText(/issue integrations/i);
-    await expect(pageTitle.first()).toBeVisible({ timeout: 15000 });
+    await test.step("Verify the Issue Integrations title and main content render", async () => {
+      // The page renders a Card with "Issue Integrations" title via tGlobal("admin.menu.integrations")
+      // CardTitle renders as a <div>, not a heading element, so use getByText
+      const pageTitle = page.getByText(/issue integrations/i);
+      await expect(pageTitle.first()).toBeVisible({ timeout: 15000 });
 
-    // The page content area should be visible
-    const mainContent = page.locator("main");
-    await expect(mainContent).toBeVisible({ timeout: 5000 });
+      // The page content area should be visible
+      const mainContent = page.locator("main");
+      await expect(mainContent).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("integrations page shows available integrations section", async ({
     page,
   }) => {
-    await page.goto(`/en-US/projects/settings/${testProjectId}/integrations`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the integrations settings page", async () => {
+      await page.goto(`/en-US/projects/settings/${testProjectId}/integrations`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // The page always renders the "Available Issue Integrations" card
-    // t("projects.settings.integrations.availableIntegrations") = "Available Issue Integrations"
-    const availableSection = page.getByText(/available issue integrations/i);
-    await expect(availableSection.first()).toBeVisible({ timeout: 15000 });
+    await test.step("Verify the Available Issue Integrations card is shown", async () => {
+      // The page always renders the "Available Issue Integrations" card
+      // t("projects.settings.integrations.availableIntegrations") = "Available Issue Integrations"
+      const availableSection = page.getByText(/available issue integrations/i);
+      await expect(availableSection.first()).toBeVisible({ timeout: 15000 });
+    });
   });
 
   test("AI models settings page loads correctly", async ({ page }) => {
-    await page.goto(`/en-US/projects/settings/${testProjectId}/ai-models`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the AI models settings page", async () => {
+      await page.goto(`/en-US/projects/settings/${testProjectId}/ai-models`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Page renders with t("admin.menu.llm") title
-    // The page has "Available Models" and "Prompt Configuration" cards
-    const mainContent = page.locator("main");
-    await expect(mainContent).toBeVisible({ timeout: 15000 });
+    await test.step("Verify main content and the Project Default models card render", async () => {
+      // Page renders with t("admin.menu.llm") title
+      // The page has "Available Models" and "Prompt Configuration" cards
+      const mainContent = page.locator("main");
+      await expect(mainContent).toBeVisible({ timeout: 15000 });
 
-    // The available models card should be visible (translation key "availableModels" = "Project Default")
-    const modelsCard = page.getByText(/project default/i);
-    await expect(modelsCard.first()).toBeVisible({ timeout: 10000 });
+      // The available models card should be visible (translation key "availableModels" = "Project Default")
+      const modelsCard = page.getByText(/project default/i);
+      await expect(modelsCard.first()).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("AI models page shows prompt configuration section", async ({
     page,
   }) => {
-    await page.goto(`/en-US/projects/settings/${testProjectId}/ai-models`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the AI models settings page", async () => {
+      await page.goto(`/en-US/projects/settings/${testProjectId}/ai-models`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // The prompt config card is always rendered
-    const promptConfigSection = page.getByText(/prompt config/i);
-    await expect(promptConfigSection.first()).toBeVisible({ timeout: 15000 });
+    await test.step("Verify the prompt configuration section is shown", async () => {
+      // The prompt config card is always rendered
+      const promptConfigSection = page.getByText(/prompt config/i);
+      await expect(promptConfigSection.first()).toBeVisible({ timeout: 15000 });
+    });
   });
 
   test("shares settings page loads correctly", async ({ page }) => {
-    await page.goto(`/en-US/projects/settings/${testProjectId}/shares`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the shares settings page", async () => {
+      await page.goto(`/en-US/projects/settings/${testProjectId}/shares`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Page renders with t("reports.shareDialog.manageShares.title") = "Manage Shares"
-    const mainContent = page.locator("main");
-    await expect(mainContent).toBeVisible({ timeout: 15000 });
+    await test.step("Verify main content and the Manage Shares title render", async () => {
+      // Page renders with t("reports.shareDialog.manageShares.title") = "Manage Shares"
+      const mainContent = page.locator("main");
+      await expect(mainContent).toBeVisible({ timeout: 15000 });
 
-    // The page shows "Manage Shares" via t("title") in a CardTitle (renders as <div>, not heading)
-    const sharesTitle = page.getByText(/manage shares/i);
-    await expect(sharesTitle.first()).toBeVisible({ timeout: 10000 });
+      // The page shows "Manage Shares" via t("title") in a CardTitle (renders as <div>, not heading)
+      const sharesTitle = page.getByText(/manage shares/i);
+      await expect(sharesTitle.first()).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("shares page displays the share link list component", async ({
     page,
   }) => {
-    await page.goto(`/en-US/projects/settings/${testProjectId}/shares`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the shares settings page", async () => {
+      await page.goto(`/en-US/projects/settings/${testProjectId}/shares`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // ShareLinkList renders within the Card's CardContent area
-    // Even with no shares, the component renders (empty state or table headers)
-    // The shares page CardContent doesn't have space-y-6; use the main Card structure
-    const cardContent = page.locator("main").locator("[class*='p-6']").first();
-    await expect(cardContent).toBeVisible({ timeout: 15000 });
+    await test.step("Verify the share link list component renders", async () => {
+      // ShareLinkList renders within the Card's CardContent area
+      // Even with no shares, the component renders (empty state or table headers)
+      // The shares page CardContent doesn't have space-y-6; use the main Card structure
+      const cardContent = page
+        .locator("main")
+        .locator("[class*='p-6']")
+        .first();
+      await expect(cardContent).toBeVisible({ timeout: 15000 });
+    });
   });
 
   test("quickscript settings page loads correctly", async ({ page }) => {
-    await page.goto(`/en-US/projects/settings/${testProjectId}/quickscript`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the quickscript settings page", async () => {
+      await page.goto(`/en-US/projects/settings/${testProjectId}/quickscript`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // Page renders with t("projects.settings.quickScript.title") heading
-    const mainContent = page.locator("main");
-    await expect(mainContent).toBeVisible({ timeout: 15000 });
+    await test.step("Verify the quickscript page main content renders", async () => {
+      // Page renders with t("projects.settings.quickScript.title") heading
+      const mainContent = page.locator("main");
+      await expect(mainContent).toBeVisible({ timeout: 15000 });
+    });
   });
 
   test("quickscript page shows enable/disable toggle", async ({ page }) => {
-    await page.goto(`/en-US/projects/settings/${testProjectId}/quickscript`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the quickscript settings page", async () => {
+      await page.goto(`/en-US/projects/settings/${testProjectId}/quickscript`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // The switch has data-testid="quickscript-enabled-toggle"
-    const toggle = page.getByTestId("quickscript-enabled-toggle");
-    await expect(toggle).toBeVisible({ timeout: 15000 });
+    await test.step("Verify the enable/disable toggle is shown", async () => {
+      // The switch has data-testid="quickscript-enabled-toggle"
+      const toggle = page.getByTestId("quickscript-enabled-toggle");
+      await expect(toggle).toBeVisible({ timeout: 15000 });
+    });
   });
 
   test("quickscript toggle can be clicked to change state", async ({
     page,
   }) => {
-    await page.goto(`/en-US/projects/settings/${testProjectId}/quickscript`);
-    await page.waitForLoadState("networkidle");
-
     const toggle = page.getByTestId("quickscript-enabled-toggle");
-    await expect(toggle).toBeVisible({ timeout: 15000 });
 
-    // Record initial state and click to toggle
-    const initialChecked = await toggle.isChecked();
-    await toggle.click();
+    await test.step("Open the quickscript page and confirm the toggle is visible", async () => {
+      await page.goto(`/en-US/projects/settings/${testProjectId}/quickscript`);
+      await page.waitForLoadState("networkidle");
 
-    // After click, state should change
-    await expect(toggle).toHaveAttribute(
-      "data-state",
-      initialChecked ? "unchecked" : "checked",
-      { timeout: 10000 }
-    );
+      await expect(toggle).toBeVisible({ timeout: 15000 });
+    });
+
+    let initialChecked: boolean | undefined;
+    await test.step("Record the initial state and click to toggle", async () => {
+      // Record initial state and click to toggle
+      initialChecked = await toggle.isChecked();
+      await toggle.click();
+    });
+
+    await test.step("Verify the toggle state changed", async () => {
+      // After click, state should change
+      await expect(toggle).toHaveAttribute(
+        "data-state",
+        initialChecked ? "unchecked" : "checked",
+        { timeout: 10000 }
+      );
+    });
   });
 
   test("navigating directly to settings page highlights correct menu item", async ({
     page,
   }) => {
-    await page.goto(`/en-US/projects/settings/${testProjectId}/integrations`);
-    await page.waitForLoadState("networkidle");
+    await test.step("Open the integrations settings page directly", async () => {
+      await page.goto(`/en-US/projects/settings/${testProjectId}/integrations`);
+      await page.waitForLoadState("networkidle");
+    });
 
-    // The settings menu section should be visible (accordion auto-expands for active page)
-    const settingsSection = page.getByTestId("project-menu-section-settings");
-    await expect(settingsSection).toBeVisible({ timeout: 15000 });
+    await test.step("Verify the settings menu section is expanded", async () => {
+      // The settings menu section should be visible (accordion auto-expands for active page)
+      const settingsSection = page.getByTestId("project-menu-section-settings");
+      await expect(settingsSection).toBeVisible({ timeout: 15000 });
+    });
 
-    // The integrations link should be active (has bg-primary and text-primary-foreground classes)
-    // The link id="settings-integrations-link" is set on the <a> element
-    const integrationsLink = page.locator("a#settings-integrations-link");
-    await expect(integrationsLink).toBeVisible({ timeout: 10000 });
-    await expect(integrationsLink).toHaveClass(/bg-primary/);
+    await test.step("Verify the integrations menu item is highlighted as active", async () => {
+      // The integrations link should be active (has bg-primary and text-primary-foreground classes)
+      // The link id="settings-integrations-link" is set on the <a> element
+      const integrationsLink = page.locator("a#settings-integrations-link");
+      await expect(integrationsLink).toBeVisible({ timeout: 10000 });
+      await expect(integrationsLink).toHaveClass(/bg-primary/);
+    });
   });
 });
 
@@ -227,53 +276,67 @@ test.describe("Project Member Management", () => {
   }) => {
     const dialog = await openEditDialog(page);
 
-    // Verify the 3 tabs are present
-    const detailsTab = dialog.getByRole("tab", { name: /details/i });
-    const usersTab = dialog.getByRole("tab", { name: /users/i });
-    const groupsTab = dialog.getByRole("tab", { name: /groups/i });
+    await test.step("Verify the Details, Users, and Groups tabs are present", async () => {
+      // Verify the 3 tabs are present
+      const detailsTab = dialog.getByRole("tab", { name: /details/i });
+      const usersTab = dialog.getByRole("tab", { name: /users/i });
+      const groupsTab = dialog.getByRole("tab", { name: /groups/i });
 
-    await expect(detailsTab).toBeVisible({ timeout: 5000 });
-    await expect(usersTab).toBeVisible({ timeout: 5000 });
-    await expect(groupsTab).toBeVisible({ timeout: 5000 });
+      await expect(detailsTab).toBeVisible({ timeout: 5000 });
+      await expect(usersTab).toBeVisible({ timeout: 5000 });
+      await expect(groupsTab).toBeVisible({ timeout: 5000 });
+    });
   });
 
   test("Users tab shows user permissions table", async ({ page }) => {
     const dialog = await openEditDialog(page);
 
-    // Click Users tab
-    const usersTab = dialog.getByRole("tab", { name: /users/i });
-    await expect(usersTab).toBeVisible({ timeout: 5000 });
-    await usersTab.click();
+    await test.step("Open the Users tab", async () => {
+      // Click Users tab
+      const usersTab = dialog.getByRole("tab", { name: /users/i });
+      await expect(usersTab).toBeVisible({ timeout: 5000 });
+      await usersTab.click();
+    });
 
-    // Wait for Users tab content to appear
-    // The ProjectUserPermissions renders a table with columns: User, Global Role, Project Access, Remove
-    const userTable = dialog.locator("table").first();
-    await expect(userTable).toBeVisible({ timeout: 10000 });
+    await test.step("Verify the user permissions table is shown", async () => {
+      // Wait for Users tab content to appear
+      // The ProjectUserPermissions renders a table with columns: User, Global Role, Project Access, Remove
+      const userTable = dialog.locator("table").first();
+      await expect(userTable).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Users tab has an Add User combobox", async ({ page }) => {
     const dialog = await openEditDialog(page);
 
-    const usersTab = dialog.getByRole("tab", { name: /users/i });
-    await usersTab.click();
+    await test.step("Open the Users tab", async () => {
+      const usersTab = dialog.getByRole("tab", { name: /users/i });
+      await usersTab.click();
+    });
 
-    // Wait for the tab content to render
-    // The AsyncCombobox renders as a button[role="combobox"]
-    const addUserCombobox = dialog.getByRole("combobox").first();
-    await expect(addUserCombobox).toBeVisible({ timeout: 10000 });
+    await test.step("Verify the Add User combobox is shown", async () => {
+      // Wait for the tab content to render
+      // The AsyncCombobox renders as a button[role="combobox"]
+      const addUserCombobox = dialog.getByRole("combobox").first();
+      await expect(addUserCombobox).toBeVisible({ timeout: 10000 });
+    });
   });
 
   test("Groups tab shows group permissions table", async ({ page }) => {
     const dialog = await openEditDialog(page);
 
-    // Click Groups tab
-    const groupsTab = dialog.getByRole("tab", { name: /groups/i });
-    await expect(groupsTab).toBeVisible({ timeout: 5000 });
-    await groupsTab.click();
+    await test.step("Open the Groups tab", async () => {
+      // Click Groups tab
+      const groupsTab = dialog.getByRole("tab", { name: /groups/i });
+      await expect(groupsTab).toBeVisible({ timeout: 5000 });
+      await groupsTab.click();
+    });
 
-    // Wait for Groups tab content — similar table structure
-    await expect(dialog.locator("table").first()).toBeVisible({
-      timeout: 10000,
+    await test.step("Verify the group permissions table is shown", async () => {
+      // Wait for Groups tab content — similar table structure
+      await expect(dialog.locator("table").first()).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 
@@ -282,26 +345,32 @@ test.describe("Project Member Management", () => {
   }) => {
     const dialog = await openEditDialog(page);
 
-    // Details tab is active by default — wait for form to fully load
-    // The Members tab data (user/group permissions) must load before Save works
-    const saveButton = dialog.getByRole("button", { name: /save/i });
-    await expect(saveButton).toBeVisible({ timeout: 10000 });
+    await test.step("Wait for the form and permissions data to load, then save", async () => {
+      // Details tab is active by default — wait for form to fully load
+      // The Members tab data (user/group permissions) must load before Save works
+      const saveButton = dialog.getByRole("button", { name: /save/i });
+      await expect(saveButton).toBeVisible({ timeout: 10000 });
 
-    // Wait for async data to load (permissions queries)
-    await page.waitForTimeout(2000);
+      // Wait for async data to load (permissions queries)
+      await page.waitForTimeout(2000);
 
-    await saveButton.click();
+      await saveButton.click();
+    });
 
-    // Dialog should close on success (toast fires and dialog closes)
-    await expect(dialog).not.toBeVisible({ timeout: 15000 });
+    await test.step("Verify the dialog closes on successful save", async () => {
+      // Dialog should close on success (toast fires and dialog closes)
+      await expect(dialog).not.toBeVisible({ timeout: 15000 });
+    });
   });
 
   test("edit project dialog can be cancelled", async ({ page }) => {
     const dialog = await openEditDialog(page);
 
-    // Close dialog via escape or close button
-    await page.keyboard.press("Escape");
+    await test.step("Cancel the dialog and verify it closes", async () => {
+      // Close dialog via escape or close button
+      await page.keyboard.press("Escape");
 
-    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+      await expect(dialog).not.toBeVisible({ timeout: 5000 });
+    });
   });
 });

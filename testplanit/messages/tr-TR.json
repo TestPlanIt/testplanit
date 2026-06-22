@@ -5060,21 +5060,28 @@
       "manageDescription": "Harici hizmet sorun entegrasyonlarınızı yapılandırın ve yönetin.",
       "status": {
         "active": "Aktif",
-        "inactive": "Etkin değil"
+        "inactive": "Etkin değil",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "Bağlantılı Projeler",
       "noIntegrations": "Herhangi bir entegrasyon yapılandırılmadı.",
       "testConnection": "Test Bağlantısı",
       "testSuccess": "Bağlantı başarılı",
       "testSuccessDescription": "Sorun entegrasyonu düzgün şekilde yapılandırılmış ve bağlanmıştır.",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "Bağlantı başarısız oldu",
       "testFailedDescription": "Harici hizmete bağlanılamadı.",
       "testError": "Test Hatası",
       "testErrorDescription": "Bağlantı test edilirken bir hata oluştu.",
-      "syncInProgress": "Senkronizasyon sorunları...",
-      "syncIntegration": "Sorun entegrasyonundan gelen tüm sorunları senkronize edin.",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
+      "syncInProgress": "Re-syncing linked issues...",
+      "syncIntegration": "Re-sync linked issues",
+      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
       "syncSuccess": "Senkronizasyon Sıraya Alındı",
-      "syncSuccessDescription": "\"{name}\" adresinden gelen sorunlar arka planda senkronize ediliyor. Bu işlem birkaç dakika sürebilir. Tamamlandığında tablo otomatik olarak güncellenecektir.",
+      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
       "syncError": "Senkronizasyon Başarısız",
       "syncErrorDescription": "Bu sorun entegrasyonu için senkronizasyon görevi sıraya alınamadı. Lütfen daha sonra tekrar deneyin.",
       "delete": {
@@ -5206,6 +5213,10 @@
         "apiKeyWarningPoint4": "Yönetici izinlerine gerek kalmadan kullanıcı bazında doğru raporlama yapan kişiyi belirlemek için bunun yerine OAuth 2.0 kullanın.",
         "tokenCreatorNoticeTitle": "Sorun yaratıcısının atıfı",
         "tokenCreatorNoticeDescription": "Bu entegrasyon aracılığıyla oluşturulan sorunlar, her zaman bu erişim belirtecinin sahibi olan hesap olarak kaydedilir, sorunu oluşturan TestPlanIt kullanıcısı olarak değil. Bu sağlayıcının API'si, oluşturucuyu başka bir kullanıcı adına ayarlamaya izin vermez.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Forge API Anahtarı",
         "forgeApiKeyDescription": "Atlassian Forge uygulaması tarafından Jira sorun panellerinden gelen istekleri doğrulamak için kullanılır. Buradan bir anahtar oluşturun ve Forge uygulamanızın ayarlarına yapıştırın.",
         "forgeApiKeyPlaceholder": "API anahtarı oluşturmak için Oluştur'a tıklayın.",
@@ -5440,7 +5451,8 @@
         "duplicate_detection": "Kopya Tespiti",
         "generate_from_url": "URL'den Test Senaryoları Oluştur (Gereksinimler)",
         "generate_from_url_app": "URL'den Test Senaryoları Oluşturma (Uygulama Testi)",
-        "automation_candidates": "Otomasyon Adayları Raporu"
+        "automation_candidates": "Otomasyon Adayları Raporu",
+        "derive_case_steps": "AI Step Derivation"
       }
     },
     "elasticsearch": {
@@ -5744,7 +5756,10 @@
         "reviewReminderTitle": "İnceleme henüz sonuçlanmadı.",
         "reviewReminderAction": "Hâlâ sizin değerlendirmenizi bekliyor.",
         "reviewReminderEmailMessage": "Hatırlatma: {actorName}'ın {entityLabel} \"{entityName}\" hakkındaki inceleme isteği, \"{projectName}\" projesinde {hoursPending} saattir beklemede.",
-        "reviewReminderHoursPending": "Beklemede {hoursPending, plural, one {saat} other {saat}}"
+        "reviewReminderHoursPending": "Beklemede {hoursPending, plural, one {saat} other {saat}}",
+        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
+        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
+        "aiStepsDerivedReviewLink": "Review test run"
       }
     },
     "issues": {

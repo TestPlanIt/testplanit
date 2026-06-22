@@ -354,6 +354,55 @@ describe("FieldValueRenderer", () => {
     });
   });
 
+  describe("Dropdown/Multi-Select options without an icon color", () => {
+    // Regression: FieldOptions.iconColorId and iconId are both nullable, so an
+    // option can legitimately have icon === null / iconColor === null. The
+    // edit-mode option renderers must guard these the same way view mode does,
+    // otherwise mapping over the options throws at render time and the page
+    // fails to load.
+    it("renders Dropdown in edit mode when an option has no icon or color", () => {
+      const template = makeTemplate(3, "Dropdown", [
+        { id: 10, name: "Option A", icon: null, iconColor: null },
+        { id: 11, name: "Option B", icon: { name: "circle" }, iconColor: null },
+      ]);
+
+      const { container } = render(
+        <FieldValueRenderer
+          {...defaultProps}
+          fieldValue={10}
+          fieldType="Dropdown"
+          template={template}
+          fieldId={3}
+          isEditMode={true}
+        />
+      );
+
+      expect(
+        container.querySelector('[data-testid="field-value-field-3"]')
+      ).toBeInTheDocument();
+    });
+
+    it("renders Multi-Select in edit mode when a selected option has no icon or color", () => {
+      const template = makeTemplate(4, "Multi-Select", [
+        { id: 20, name: "Tag Alpha", icon: null, iconColor: null },
+        { id: 21, name: "Tag Beta", icon: { name: "circle" }, iconColor: null },
+      ]);
+
+      render(
+        <FieldValueRenderer
+          {...defaultProps}
+          fieldValue={[20]}
+          fieldType="Multi-Select"
+          template={template}
+          fieldId={4}
+          isEditMode={true}
+        />
+      );
+
+      expect(screen.getByText("Tag Alpha")).toBeInTheDocument();
+    });
+  });
+
   describe("Date field", () => {
     it("renders DateFormatter in view mode", () => {
       const template = makeTemplate(5, "Date");
