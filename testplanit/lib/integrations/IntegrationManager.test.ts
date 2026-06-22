@@ -263,6 +263,149 @@ describe("IntegrationManager", () => {
 
       vi.unstubAllEnvs();
     });
+
+    it("refreshes a borrowed (no caller userId) token on the token owner's behalf", async () => {
+      // Read paths (issue hover/details) borrow a token via getAdapter without
+      // passing a userId. Such a read must still refresh an expired token —
+      // using the owner recorded on the auth row — otherwise reads start failing
+      // one hour after the admin connects.
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockImplementation(
+        (value: string) => value
+      );
+
+      const integration = {
+        id: 60,
+        name: "GitLab OAuth",
+        provider: "GITLAB",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          encrypted: JSON.stringify({
+            clientId: "gl-client",
+            clientSecret: "gl-secret",
+          }),
+        },
+        settings: { instanceUrl: "https://gitlab.com" },
+        userIntegrationAuths: [
+          {
+            userId: "owner-9",
+            isActive: true,
+            accessToken: "old-access",
+            refreshToken: "the-refresh-token",
+            tokenExpiresAt: new Date(Date.now() - 1000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+      mockPrisma.integration.findUnique.mockResolvedValue(integration);
+
+      const mockFetch = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              access_token: "fresh-access",
+              refresh_token: "fresh-refresh",
+              expires_in: 7200,
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ id: 1, username: "u" }),
+        });
+      global.fetch = mockFetch;
+
+      // Borrowed read: NO userId argument.
+      await manager.getAdapter("60");
+
+      // The refresh fired even without a caller userId…
+      expect(mockFetch.mock.calls[0][0]).toBe("https://gitlab.com/oauth/token");
+      // …and the new token was persisted for the token's OWNER, not skipped.
+      expect(AuthenticationService.storeUserAuth).toHaveBeenCalledWith(
+        "owner-9",
+        60,
+        expect.objectContaining({
+          accessToken: "fresh-access",
+          refreshToken: "fresh-refresh",
+        })
+      );
+
+      vi.unstubAllEnvs();
+    });
+
+    it("evicts a cached OAuth adapter once its access token expires", async () => {
+      // A cached OAuth adapter holds a 1-hour token. Once it lapses, the next
+      // getAdapter must rebuild (and refresh) rather than serve the stale token.
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockImplementation(
+        (value: string) => value
+      );
+
+      const integration = {
+        id: 61,
+        name: "GitLab OAuth",
+        provider: "GITLAB",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          encrypted: JSON.stringify({
+            clientId: "gl-client",
+            clientSecret: "gl-secret",
+          }),
+        },
+        settings: { instanceUrl: "https://gitlab.com" },
+        userIntegrationAuths: [
+          {
+            userId: "owner-x",
+            isActive: true,
+            accessToken: "access",
+            refreshToken: "refresh",
+            tokenExpiresAt: new Date(Date.now() + 3600_000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+      mockPrisma.integration.findUnique.mockResolvedValue(integration);
+
+      // Token endpoint returns fresh tokens; everything else is the validation
+      // call. Keyed off the URL so both the first build and the post-expiry
+      // rebuild (which refreshes) are satisfied.
+      global.fetch = vi.fn().mockImplementation((url: string) =>
+        String(url).includes("oauth/token")
+          ? Promise.resolve({
+              ok: true,
+              json: () =>
+                Promise.resolve({
+                  access_token: "fresh-access",
+                  refresh_token: "fresh-refresh",
+                  expires_in: 3600,
+                }),
+            })
+          : Promise.resolve({
+              ok: true,
+              json: () => Promise.resolve({ id: 1, username: "u" }),
+            })
+      );
+
+      const first = await manager.getAdapter("61");
+      const stillCached = await manager.getAdapter("61");
+      expect(stillCached).toBe(first); // cache hit while token valid
+      expect(mockPrisma.integration.findUnique).toHaveBeenCalledTimes(1);
+
+      // An hour passes — the cached adapter's token is now expired.
+      vi.advanceTimersByTime(3600_000 + 1000);
+
+      const afterExpiry = await manager.getAdapter("61");
+      expect(afterExpiry).not.toBe(first); // evicted + rebuilt
+      expect(mockPrisma.integration.findUnique).toHaveBeenCalledTimes(2);
+
+      vi.unstubAllEnvs();
+      vi.useRealTimers();
+    });
   });
 
   describe("getAdapter", () => {

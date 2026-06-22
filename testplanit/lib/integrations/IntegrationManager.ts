@@ -22,6 +22,10 @@ export class IntegrationManager {
     new (config: any) => IssueAdapter
   > = new Map();
   private adapterCache: Map<string, IssueAdapter> = new Map();
+  // Access-token expiry (epoch ms) for cached OAuth adapters. A cached adapter
+  // holding an expired token must be rebuilt (so its token can refresh) rather
+  // than served stale — otherwise reads start failing one hour after connect.
+  private adapterCacheExpiry: Map<string, number> = new Map();
 
   private constructor() {
     // Initialize with built-in adapters
@@ -74,9 +78,16 @@ export class IntegrationManager {
     // OAuth adapters carry a per-user token, so they must be cached per user
     const cacheKey = userId ? `${integrationId}:${userId}` : integrationId;
 
-    // Check cache first
+    // Check cache first — but never serve an OAuth adapter whose access token
+    // has expired. Evict it so the rebuild below refreshes the token; otherwise
+    // borrowed reads keep using the stale token and fail with a 401.
     if (this.adapterCache.has(cacheKey)) {
-      return this.adapterCache.get(cacheKey)!;
+      const expiry = this.adapterCacheExpiry.get(cacheKey);
+      if (expiry === undefined || expiry > Date.now()) {
+        return this.adapterCache.get(cacheKey)!;
+      }
+      this.adapterCache.delete(cacheKey);
+      this.adapterCacheExpiry.delete(cacheKey);
     }
 
     // Fetch integration from database (use provided client for multi-tenant support)
@@ -168,18 +179,22 @@ export class IntegrationManager {
         ? EncryptionService.decrypt(auth.refreshToken, masterKey)
         : undefined;
 
-      // Transparently refresh an expired access token when the adapter
-      // supports it and we have both a refresh token and the owning user.
-      // The new token is persisted so subsequent requests skip the refresh.
+      // Transparently refresh an expired access token. Refresh on behalf of the
+      // token's owner: read paths (issue hover/details) borrow a token without
+      // passing a userId, so fall back to the owning user recorded on the auth
+      // row. Without this, borrowed reads can never refresh and start failing an
+      // hour after the admin connects. The new token is persisted so subsequent
+      // requests skip the refresh.
       const isExpired =
         !!auth.tokenExpiresAt && auth.tokenExpiresAt < new Date();
-      if (isExpired && refreshToken && userId && adapter.refreshTokens) {
+      const ownerId = userId ?? auth.userId;
+      if (isExpired && refreshToken && ownerId && adapter.refreshTokens) {
         try {
           const refreshed = await adapter.refreshTokens(refreshToken);
           accessToken = refreshed.accessToken;
           refreshToken = refreshed.refreshToken || refreshToken;
           authData.expiresAt = refreshed.expiresAt;
-          await AuthenticationService.storeUserAuth(userId, integration.id, {
+          await AuthenticationService.storeUserAuth(ownerId, integration.id, {
             accessToken: refreshed.accessToken,
             refreshToken,
             expiresAt: refreshed.expiresAt,
@@ -211,6 +226,14 @@ export class IntegrationManager {
     // costs nothing.
     if (!options?.allowInactive) {
       this.adapterCache.set(cacheKey, adapter);
+      // Track the access-token expiry so the cache hit above can evict and
+      // rebuild once it lapses (OAuth only; API-key adapters have no expiry).
+      if (authData.expiresAt) {
+        this.adapterCacheExpiry.set(
+          cacheKey,
+          new Date(authData.expiresAt).getTime()
+        );
+      }
     }
 
     return adapter;
@@ -276,6 +299,7 @@ export class IntegrationManager {
     for (const key of this.adapterCache.keys()) {
       if (key === integrationId || key.startsWith(`${integrationId}:`)) {
         this.adapterCache.delete(key);
+        this.adapterCacheExpiry.delete(key);
       }
     }
   }
@@ -285,6 +309,7 @@ export class IntegrationManager {
    */
   clearAllAdapters(): void {
     this.adapterCache.clear();
+    this.adapterCacheExpiry.clear();
   }
 
   /**
