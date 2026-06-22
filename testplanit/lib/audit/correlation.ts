@@ -87,7 +87,7 @@ interface RawDclRow {
 }
 
 /** A DataChangeLog row resolved to its owning root entity + humanized diff, ready for AuditLog. */
-interface MaterializedRow {
+export interface MaterializedRow {
   sourceRowId: bigint | number | string;
   sourceTable: string;
   op: string;
@@ -444,6 +444,33 @@ function mergeByIdentity(rows: MaterializedRow[]): MaterializedRow[] {
   return [...byKey.values()];
 }
 
+/**
+ * Replace a (bulk) TestRunCases CREATE diff — the noisy per-column id / order /
+ * iteration-counter set — with one readable line: "N test cases added" carrying
+ * the comma-listed case names. Runs AFTER mergeByIdentity, so a bulk add already
+ * merged into one row reads as a count + the named list instead of raw ids. The
+ * count comes from the merged `id` column (numeric pks never contain ", "), with
+ * the case-name list length as a fallback. Non-bulk and non-create rows pass
+ * through untouched.
+ */
+export function summarizeBulkCaseAdds(
+  rows: MaterializedRow[]
+): MaterializedRow[] {
+  return rows.map((r) => {
+    if (r.sourceTable !== "TestRunCases" || r.action !== "CREATE") return r;
+    const caseCol = r.changes.repositoryCaseId as HumanizedColEntry | undefined;
+    const names = caseCol?.newName ?? caseCol?.new;
+    if (names == null) return r;
+    const idVal = (r.changes.id as HumanizedColEntry | undefined)?.new;
+    const count =
+      idVal != null
+        ? String(idVal).split(", ").length
+        : String(names).split(", ").length;
+    const label = `${count} test case${count === 1 ? "" : "s"} added`;
+    return { ...r, changes: { [label]: { old: null, new: String(names) } } };
+  });
+}
+
 export async function writeAuditLogRows(
   tx: RawTxClient,
   materialized: MaterializedRow[]
@@ -796,7 +823,7 @@ export async function pollDataChangeLogsOnce(
     // are all preserved instead of being dropped by the idempotency index.
     const auditLogsWritten = await writeAuditLogRows(
       tx,
-      mergeByIdentity(materialized)
+      summarizeBulkCaseAdds(mergeByIdentity(materialized))
     );
 
     if (markProcessed) {

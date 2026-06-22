@@ -89,6 +89,12 @@ const CATALOG_BY_COLUMN: Record<
   ResultFieldValues: {
     fieldId: { table: "ResultFields", field: "displayName" },
   },
+  // TestRunCases captures repositoryCaseId (the case added to the run); resolve it
+  // to the case name so a bulk add reads as case names, not raw ids. The summary
+  // step in correlation.ts then collapses these to "N test cases added: <names>".
+  TestRunCases: {
+    repositoryCaseId: { table: "RepositoryCases", field: "name" },
+  },
   default: {
     statusId: { table: "Status", field: "name" },
     workflowId: { table: "Workflows", field: "name" },
