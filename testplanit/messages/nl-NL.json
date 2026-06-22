@@ -1072,7 +1072,7 @@
         "apple": "Doorgaan met Apple",
         "microsoft": "Ga verder met Microsoft",
         "samlProvider": "Meld je aan met {name}",
-        "magicLink": "Aanmelden met Magic Link",
+        "magicLink": "Inloggen met eenmalige Magic Link",
         "emailLogin": "Doorgaan met e-mail"
       },
       "magicLink": {

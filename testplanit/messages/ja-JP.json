@@ -1072,7 +1072,7 @@
         "apple": "Appleで続ける",
         "microsoft": "Microsoft で続行",
         "samlProvider": "{name}でサインイン",
-        "magicLink": "マジックリンクでサインイン",
+        "magicLink": "1回限り有効なマジックリンクでサインイン",
         "emailLogin": "メールで続行"
       },
       "magicLink": {

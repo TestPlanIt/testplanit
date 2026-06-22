@@ -1072,7 +1072,7 @@
         "apple": "Tiếp tục với Apple",
         "microsoft": "Tiếp tục với Microsoft",
         "samlProvider": "Đăng nhập bằng {name}",
-        "magicLink": "Đăng nhập bằng Magic Link",
+        "magicLink": "Đăng nhập bằng Magic Link dùng một lần",
         "emailLogin": "Tiếp tục với email"
       },
       "magicLink": {
