@@ -176,11 +176,11 @@ export function AuditLogDetailModal({
                             </code>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <div className="overflow-hidden">
+                            <div className="">
                               <span className="text-muted-foreground text-xs">
                                 {t("oldValue")}:
                               </span>
-                              <pre className="text-xs mt-1 bg-background p-2 rounded overflow-x-auto">
+                              <pre className="text-xs mt-1 bg-background p-2 rounded w-full whitespace-pre-wrap break-words">
                                 {formatValue(change.oldName ?? change.old)}
                               </pre>
                             </div>
@@ -188,7 +188,7 @@ export function AuditLogDetailModal({
                               <span className="text-muted-foreground text-xs">
                                 {t("newValue")}:
                               </span>
-                              <pre className="text-xs mt-1 bg-background p-2 rounded overflow-x-auto">
+                              <pre className="text-xs mt-1 bg-background p-2 rounded w-full whitespace-pre-wrap break-words">
                                 {formatValue(change.newName ?? change.new)}
                               </pre>
                             </div>
@@ -210,8 +210,8 @@ export function AuditLogDetailModal({
                       <h4 className="text-sm font-medium mb-2">
                         {t("metadata")}
                       </h4>
-                      <div className="overflow-x-auto">
-                        <pre className="text-xs bg-muted p-3 rounded-md whitespace-pre">
+                      <div>
+                        <pre className="text-xs bg-muted p-3 rounded-md whitespace-pre-wrap break-words">
                           {JSON.stringify(metadata, null, 2)}
                         </pre>
                       </div>

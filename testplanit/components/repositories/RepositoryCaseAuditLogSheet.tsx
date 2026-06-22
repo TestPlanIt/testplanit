@@ -67,7 +67,7 @@ export function RepositoryCaseAuditLogSheet({
           className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
           data-testid="case-history-trigger"
         >
-          <History className="h-4 w-4 shrink-0" />
+          <History className="text-foreground h-4 w-4 shrink-0" />
           <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
             {t("trigger")}
           </span>
