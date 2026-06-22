@@ -359,6 +359,66 @@ export async function POST(
       validatedData.testRunResultId ||
       validatedData.testRunStepResultId
     ) {
+      // Entity links to (re)connect on both create and update.
+      const linkConnects = {
+        ...(validatedData.testCaseId && {
+          repositoryCases: {
+            connect: { id: parseInt(validatedData.testCaseId) },
+          },
+        }),
+        ...(validatedData.testRunId && {
+          testRuns: {
+            connect: { id: parseInt(validatedData.testRunId) },
+          },
+        }),
+        ...(validatedData.sessionId && {
+          sessions: {
+            connect: { id: parseInt(validatedData.sessionId) },
+          },
+        }),
+        ...(validatedData.testRunResultId && {
+          testRunResults: {
+            connect: { id: parseInt(validatedData.testRunResultId) },
+          },
+        }),
+        ...(validatedData.testRunStepResultId && {
+          testRunStepResults: {
+            connect: { id: parseInt(validatedData.testRunStepResultId) },
+          },
+        }),
+      };
+
+      // Populate the same first-class columns a synced/webhooked issue gets
+      // (mirrors SyncService's issueFields) so a created issue renders with its
+      // key, Jira link, status, and hover details everywhere — not just as a
+      // title with the key buried in the data blob.
+      const trackerFields = {
+        name: createdIssue.key || createdIssue.id,
+        title: createdIssue.title,
+        description: createdIssue.description ?? "",
+        status: createdIssue.status,
+        priority: createdIssue.priority || "medium",
+        externalKey: createdIssue.key || createdIssue.id,
+        externalUrl: createdIssue.url,
+        externalStatus: createdIssue.status,
+        externalData: createdIssue.customFields || {},
+        issueTypeId: createdIssue.issueType?.id,
+        issueTypeName: createdIssue.issueType?.name,
+        issueTypeIconUrl: createdIssue.issueType?.iconUrl,
+        lastSyncedAt: new Date(),
+        data: {
+          id: createdIssue.id,
+          key: createdIssue.key,
+          url: createdIssue.url,
+          status: createdIssue.status,
+          priority: createdIssue.priority,
+          assignee: createdIssue.assignee,
+          reporter: createdIssue.reporter,
+          labels: createdIssue.labels,
+          customFields: createdIssue.customFields,
+        },
+      };
+
       // Use upsert to handle cases where the issue already exists
       const issue = await prisma.issue.upsert({
         where: {
@@ -368,91 +428,17 @@ export async function POST(
           },
         },
         create: {
-          name: createdIssue.title,
-          title: createdIssue.title, // Use the same value for title
+          ...trackerFields,
           externalId: createdIssue.key || createdIssue.id,
-          data: {
-            id: createdIssue.id,
-            key: createdIssue.key,
-            url: createdIssue.url,
-            status: createdIssue.status,
-            priority: createdIssue.priority,
-            assignee: createdIssue.assignee,
-            reporter: createdIssue.reporter,
-            labels: createdIssue.labels,
-            customFields: createdIssue.customFields,
-          },
           integrationId: parseInt(integrationId),
           // Use the internal TestPlanIt project ID (from request or derived from linked entities)
           projectId: internalProjectId,
           createdById: session.user.id,
-          // Link to the appropriate entities
-          ...(validatedData.testCaseId && {
-            repositoryCases: {
-              connect: { id: parseInt(validatedData.testCaseId) },
-            },
-          }),
-          ...(validatedData.testRunId && {
-            testRuns: {
-              connect: { id: parseInt(validatedData.testRunId) },
-            },
-          }),
-          ...(validatedData.sessionId && {
-            sessions: {
-              connect: { id: parseInt(validatedData.sessionId) },
-            },
-          }),
-          ...(validatedData.testRunResultId && {
-            testRunResults: {
-              connect: { id: parseInt(validatedData.testRunResultId) },
-            },
-          }),
-          ...(validatedData.testRunStepResultId && {
-            testRunStepResults: {
-              connect: { id: parseInt(validatedData.testRunStepResultId) },
-            },
-          }),
+          ...linkConnects,
         },
         update: {
-          // Update fields that might have changed
-          title: createdIssue.title,
-          data: {
-            id: createdIssue.id,
-            key: createdIssue.key,
-            url: createdIssue.url,
-            status: createdIssue.status,
-            priority: createdIssue.priority,
-            assignee: createdIssue.assignee,
-            reporter: createdIssue.reporter,
-            labels: createdIssue.labels,
-            customFields: createdIssue.customFields,
-          },
-          // Also connect any new relationships
-          ...(validatedData.testCaseId && {
-            repositoryCases: {
-              connect: { id: parseInt(validatedData.testCaseId) },
-            },
-          }),
-          ...(validatedData.testRunId && {
-            testRuns: {
-              connect: { id: parseInt(validatedData.testRunId) },
-            },
-          }),
-          ...(validatedData.sessionId && {
-            sessions: {
-              connect: { id: parseInt(validatedData.sessionId) },
-            },
-          }),
-          ...(validatedData.testRunResultId && {
-            testRunResults: {
-              connect: { id: parseInt(validatedData.testRunResultId) },
-            },
-          }),
-          ...(validatedData.testRunStepResultId && {
-            testRunStepResults: {
-              connect: { id: parseInt(validatedData.testRunStepResultId) },
-            },
-          }),
+          ...trackerFields,
+          ...linkConnects,
         },
       });
 
