@@ -5654,21 +5654,22 @@ model AuditLog {
     @@deny('all', !auth())
     @@deny('update, delete', true)
 
-    // Test-case audit entries inherit the test case's own read restrictions, so
-    // audit visibility tracks exactly who can view the case (mirrors the
-    // RepositoryCases NONE / NO_ACCESS denies, scoped through the project).
-    @@deny('read', entityType == 'RepositoryCases' && auth().access == 'NONE')
-    @@deny('read', entityType == 'RepositoryCases' && project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+    // Case / run / session audit entries inherit the underlying entity's own read
+    // restrictions, so audit visibility tracks exactly who can view that entity
+    // (mirrors the project NONE / NO_ACCESS denies, scoped through the project).
+    @@deny('read', (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions') && auth().access == 'NONE')
+    @@deny('read', (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions') && project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
 
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read', auth().id == userId)
     @@allow('read', project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
 
-    // Anyone who can read a test case can read that case's audit trail. This
-    // mirrors the RepositoryCases read policy, resolved through the audit log's
-    // denormalized project relation.
+    // Anyone who can read a case / run / session can read that entity's audit
+    // trail. These entities share one project-membership read model, so the same
+    // predicate (resolved through the audit log's denormalized project relation)
+    // grants audit visibility for all three.
     @@allow('read',
-        entityType == 'RepositoryCases' && (
+        (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions') && (
             project.creator == auth() ||
             project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
             project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||

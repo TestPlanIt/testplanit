@@ -5,6 +5,7 @@ import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsD
 import { DateFormatter } from "@/components/DateFormatter";
 import DynamicIcon from "@/components/DynamicIcon";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
+import { RunAuditLogSheet } from "@/components/runs/RunAuditLogSheet";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
@@ -359,6 +360,7 @@ function JunitTableSection({
                 )}
               </CardTitle>
               <div className="flex items-start gap-2">
+                {testRunData && <RunAuditLogSheet runId={testRunData.id} />}
                 {testRunData?.isCompleted ? (
                   <div className="flex items-center gap-1">
                     <Badge
