@@ -24,7 +24,8 @@ The application uses the following background processes:
 12. **Webhook Dispatch Worker** - Delivers outbound webhooks to subscribed external endpoints
 13. **Webhook Outbox Worker** - Polls the outbox table and fans events out to webhook configs
 14. **Webhook Retention Worker** - Daily purge of webhook delivery / dedup / outbox rows older than 30 days
-15. **Scheduler** - Sets up recurring jobs (cron jobs)
+15. **DataChangeLog Retention Worker** - Daily purge of processed audit change-capture rows older than 30 days
+16. **Scheduler** - Sets up recurring jobs (cron jobs)
 
 ## Workers
 
@@ -91,6 +92,7 @@ The application uses the following background processes:
 - Persists audit log entries for user and system actions
 - High throughput, independent operations
 - Default concurrency: 10 (lightweight, independent writes)
+- Also runs the CDC correlation loop (Loop B): drains each database's `DataChangeLog` into the readable `AuditLog`; in multi-tenant mode it polls every configured tenant per cycle, re-reading the tenant list so runtime additions are picked up
 - Location: `workers/auditLogWorker.ts`
 
 ### Budget Alert Worker
@@ -136,6 +138,15 @@ The application uses the following background processes:
 - Multi-tenant aware: runs the purge against every configured tenant database per cycle and emits one audit row per (tenant, run)
 - Batched `LIMIT 1000` deletes to avoid lock contention
 - Location: `workers/webhookRetentionWorker.ts`
+
+### DataChangeLog Retention Worker
+
+- Wakes once per day and batch-deletes processed `DataChangeLog` rows (the audit change-capture substrate) older than 30 days
+- Never deletes unprocessed rows — the audit log worker must correlate them into `AuditLog` first; the append-only `datachangelog_append_only` trigger enforces this at the database level too
+- Batched `LIMIT 1000` deletes to avoid lock contention with the capture path; emits one `DCL_RETENTION_PURGED` audit event per run
+- Multi-tenant aware: runs the purge against every configured tenant database per cycle and emits one audit row per (tenant, run)
+- Standalone daily loop (no BullMQ queue) — self-schedules internally rather than via the scheduler
+- Location: `workers/dataChangeLogRetentionWorker.ts`
 
 ### Scheduler
 
@@ -232,9 +243,11 @@ Most workers run with a 512 MB `max_memory_restart` ceiling and a 384 MB old-spa
 | Sync Worker | 1G | 768M | Loads integration adapters + Elasticsearch sync extensions |
 | Forecast Worker | 2G | 1536M | Recomputes run/case forecasts over large historical result sets; the default 512 MB tier was OOM-killed under production data volumes |
 | SCIM Access Recompute Worker | 2G | 1536M | Loads the full ZenStack runtime to recompute `User.access` tiers from IdP group mappings; boots to ~1.4 GB RSS at idle, so the default 512 MB tier triggered a tight PM2 SIGINT/restart loop rather than a real OOM |
+| Audit Log Worker | 3G | 2304M | The CDC correlation loop (Loop B) caches one raw Prisma client per tenant in multi-tenant mode — one Rust query engine per tenant, the same per-tenant footprint as the webhook outbox worker. Harmless headroom in single-tenant mode (a single client). |
 | Webhook Dispatch Worker | 3G | 2304M | Loads ZenStack runtime + ES sync services + audit log service; carries full `test_run.completed` payloads under concurrency=5; observed steady-state RSS in multi-tenant clusters sits near 1.9 GB |
 | Webhook Outbox Worker | 3G | 2304M | Same heavy dependency tree as dispatch; caches one Prisma client per tenant in multi-tenant mode |
 | Webhook Retention Worker | 3G | 2304M | Iterates every tenant's database per pass; headroom protects against batched-delete loops on tenants with large retention backlogs. Tenant Prisma clients are disconnected after each pass to release Rust query engine buffers, so steady-state should drop substantially after the first few passes — these ceilings can be lowered once production telemetry confirms it. |
+| DataChangeLog Retention Worker | 3G | 2304M | Loads the audit log service plus the raw Prisma base client and runs a batched-delete loop over the high-volume change-capture table; headroom mirrors the webhook retention worker so a large purge backlog (e.g. after a heavy import) does not trip the ceiling mid-pass. |
 
 ## Persistence Across Reboots
 
@@ -298,7 +311,7 @@ You can monitor worker health and performance using:
 
 ### Memory issues
 
-- Most workers run with a 512 MB ceiling; the sync worker runs with a 1 GB ceiling; the forecast and SCIM access recompute workers run with a 2 GB ceiling; the three webhook workers (dispatch, outbox, retention) run with a 3 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
+- Most workers run with a 512 MB ceiling; the sync worker runs with a 1 GB ceiling; the forecast and SCIM access recompute workers run with a 2 GB ceiling; the audit log worker, the three webhook workers (dispatch, outbox, retention), and the DataChangeLog retention worker run with a 3 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
 - If a worker is being killed and restarted by PM2 in a tight loop (visible as repeated `restart` events in `pm2 status`), raise `max_memory_restart` and `--max-old-space-size` in `ecosystem.config.js` for that worker before assuming there is a real leak.
 - Monitor with `pm2 monit`
 

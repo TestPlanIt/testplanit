@@ -6,8 +6,9 @@
  * operationId (one logical save → one group), rolls each child/value/join row up to its owning
  * root entity via ROLLUP_MAP (COR-02), humanizes the FK ids in the diff to display names (COR-03),
  * maps an isDeleted false→true soft-delete to a DELETE action (Phase 12 Decision 4), and inserts
- * AuditLog rows idempotently. `pollDataChangeLogs(prisma, …)` runs the loop forever as the worker's
- * Loop B; `pollDataChangeLogsOnce(prisma, …)` does a single pass (the test + manual-drain entry).
+ * AuditLog rows idempotently. `pollDataChangeLogsAcrossTenants(listClients, …)` runs the loop forever
+ * as the worker's Loop B (one poll pass per tenant per cycle); `pollDataChangeLogsOnce(prisma, …)`
+ * does a single pass (the supervisor's per-tenant unit + the test + manual-drain entry).
  *
  * ── LOAD-BEARING INVARIANTS ────────────────────────────────────────────────────────────────────
  *  1. SOLE AUTHORIZED READER. DataChangeLog is `@@deny('all', true)` at the ZenStack policy layer.
@@ -488,7 +489,7 @@ export async function writeAuditLogRows(
 }
 
 /** The minimal raw-client surface this module needs (prismaBase satisfies it). */
-interface RawTxClient {
+export interface RawTxClient {
   $queryRaw: <T = unknown>(
     query: TemplateStringsArray,
     ...values: unknown[]
@@ -502,8 +503,14 @@ interface RawTxClient {
     ...values: unknown[]
   ) => Promise<T>;
 }
-interface RawPrismaClient extends RawTxClient {
+export interface RawPrismaClient extends RawTxClient {
   $transaction: <T>(fn: (tx: RawTxClient) => Promise<T>) => Promise<T>;
+}
+
+/** A correlation target: one tenant's raw client (tenantId undefined in single-tenant mode). */
+export interface TenantPollClient {
+  tenantId: string | undefined;
+  client: RawPrismaClient;
 }
 
 /**
@@ -811,13 +818,18 @@ export async function pollDataChangeLogsOnce(
 }
 
 /**
- * Loop B entry: poll DataChangeLog forever until `runningRef.running` flips false. Empty polls sleep
- * `pollIntervalMs`. Each pass is one `pollDataChangeLogsOnce`; the processed flag is the only cursor,
- * so the loop is fully restart-safe (a fresh process resumes from the first unprocessed seq). A poll
- * error is logged and the loop continues after a backoff sleep — the unprocessed rows are retried.
+ * Multi-tenant Loop B supervisor. DataChangeLog lives in EVERY tenant database (the capture
+ * triggers are applied per-DB), so the consumer must drain each tenant's log into that tenant's
+ * AuditLog — a single primary-DB loop would leave every other tenant's audit changes captured but
+ * never surfaced (and never purged). Each cycle it re-resolves the live (tenantId, client) set via
+ * `listClients` — re-read every pass so tenants added at runtime are picked up WITHOUT a worker
+ * restart (mirrors the webhook outbox poller) — and runs ONE poll pass per client, serially.
+ * Per-client failures are isolated (logged; the cycle continues with the next tenant). It sleeps
+ * `pollIntervalMs` only when NO client had work this cycle, so a backlog on any tenant drains fast.
+ * Single-tenant callers pass a `listClients` returning exactly one entry with `tenantId: undefined`.
  */
-export async function pollDataChangeLogs(
-  prisma: RawPrismaClient,
+export async function pollDataChangeLogsAcrossTenants(
+  listClients: () => TenantPollClient[],
   runningRef: { running: boolean },
   opts: { batchSize?: number; pollIntervalMs?: number } = {}
 ): Promise<void> {
@@ -825,14 +837,37 @@ export async function pollDataChangeLogs(
   const pollIntervalMs = opts.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
 
   while (runningRef.running) {
+    let clients: TenantPollClient[];
     try {
-      const { processed } = await pollDataChangeLogsOnce(prisma, { batchSize });
-      if (processed === 0) {
-        await sleep(pollIntervalMs);
-      }
-      // A full batch (processed === batchSize) loops immediately to drain a backlog fast.
+      clients = listClients();
     } catch (err) {
-      console.error("[correlation] poll pass failed, backing off:", err);
+      // A bad tenant config must not kill the loop — back off and re-resolve next pass.
+      console.error(
+        "[correlation] failed to resolve tenant clients for Loop B, backing off:",
+        err
+      );
+      await sleep(pollIntervalMs);
+      continue;
+    }
+
+    let anyProcessed = false;
+    for (const { tenantId, client } of clients) {
+      if (!runningRef.running) break;
+      try {
+        const { processed } = await pollDataChangeLogsOnce(client, {
+          batchSize,
+        });
+        if (processed > 0) anyProcessed = true;
+      } catch (err) {
+        // Per-tenant isolation: one tenant's poll failure must not starve the others.
+        console.error(
+          `[correlation] Loop B poll failed${tenantId ? ` for tenant ${tenantId}` : ""}, continuing:`,
+          err
+        );
+      }
+    }
+
+    if (!anyProcessed) {
       await sleep(pollIntervalMs);
     }
   }
