@@ -1072,7 +1072,7 @@
         "apple": "Doorgaan met Apple",
         "microsoft": "Ga verder met Microsoft",
         "samlProvider": "Meld je aan met {name}",
-        "magicLink": "Aanmelden met Magic Link",
+        "magicLink": "Sign in with Magic Link",
         "emailLogin": "Doorgaan met e-mail"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Toegang geweigerd. Uw account is mogelijk inactief of u hebt geen toestemming om u aan te melden.",
       "configuration": "Er is een probleem met de serverconfiguratie.",
-      "verification": "Het verificatietoken is verlopen of al gebruikt.",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "Ongeldige verificatiecode. Probeer het opnieuw.",
       "twoFactorTokenRequired": "Token vereist",
       "verificationCodeRequired": "Een verificatiecode is vereist."
@@ -7643,8 +7643,9 @@
       "intro": "Klik op de onderstaande knop om in te loggen:",
       "signInButton": "Inloggen",
       "copyPasteIntro": "Of kopieer en plak deze link in uw browser:",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "Als u deze e-mail niet hebt aangevraagd, kunt u deze gerust negeren.",
-      "textBody": "Meld u aan bij TestPlanIt\n\nKlik op de onderstaande link om u aan te melden:\n{url}\n\nAls u deze e-mail niet hebt aangevraagd, kunt u deze gerust negeren."
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

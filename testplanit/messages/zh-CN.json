@@ -1072,7 +1072,7 @@
         "apple": "继续使用 Apple",
         "microsoft": "继续使用 Microsoft",
         "samlProvider": "使用 {name}登录",
-        "magicLink": "使用 Magic Link 登录",
+        "magicLink": "Sign in with Magic Link",
         "emailLogin": "继续通过电子邮件"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "访问被拒绝。您的帐户可能已停用或您没有登录权限。",
       "configuration": "服务器配置存在问题。",
-      "verification": "验证令牌已过期或已被使用。",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "验证码无效，请重试。",
       "twoFactorTokenRequired": "需要令牌",
       "verificationCodeRequired": "需要验证码"
@@ -7643,8 +7643,9 @@
       "intro": "点击下方按钮登录：",
       "signInButton": "登入",
       "copyPasteIntro": "或者复制此链接并粘贴到浏览器中：",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "如果您没有请求收到这封邮件，您可以忽略它。",
-      "textBody": "登录 TestPlanIt\n\n点击以下链接登录：\n{url}\n\n如果您没有请求此电子邮件，则可以忽略它。"
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

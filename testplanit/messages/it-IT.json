@@ -1072,7 +1072,7 @@
         "apple": "Continua con Apple",
         "microsoft": "Continua con Microsoft",
         "samlProvider": "Accedi con {name}",
-        "magicLink": "Accedi con Magic Link",
+        "magicLink": "Sign in with Magic Link",
         "emailLogin": "Continua con l'email"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Accesso negato. Il tuo account potrebbe essere inattivo o non hai l'autorizzazione per accedere.",
       "configuration": "Si è verificato un problema con la configurazione del server.",
-      "verification": "Il token di verifica è scaduto o è già stato utilizzato.",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "Codice di verifica non valido. Riprova.",
       "twoFactorTokenRequired": "È necessario il token",
       "verificationCodeRequired": "È richiesto il codice di verifica"
@@ -7643,8 +7643,9 @@
       "intro": "Fai clic sul pulsante qui sotto per accedere:",
       "signInButton": "Registrazione",
       "copyPasteIntro": "Oppure copia e incolla questo link nel tuo browser:",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "Se non hai richiesto questa email, puoi tranquillamente ignorarla.",
-      "textBody": "Accedi a TestPlanIt\n\nFai clic sul link qui sotto per accedere:\n{url}\n\nSe non hai richiesto questa email, puoi tranquillamente ignorarla."
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {
