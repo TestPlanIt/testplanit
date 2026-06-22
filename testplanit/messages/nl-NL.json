@@ -1072,7 +1072,7 @@
         "apple": "Doorgaan met Apple",
         "microsoft": "Ga verder met Microsoft",
         "samlProvider": "Meld je aan met {name}",
-        "magicLink": "Sign in with Magic Link",
+        "magicLink": "Aanmelden met Magic Link",
         "emailLogin": "Doorgaan met e-mail"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Toegang geweigerd. Uw account is mogelijk inactief of u hebt geen toestemming om u aan te melden.",
       "configuration": "Er is een probleem met de serverconfiguratie.",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "Deze inloglink is verlopen of is al gebruikt. Magic Links kunnen maar één keer worden gebruikt — vraag een nieuwe aan om in te loggen.",
       "invalid2FACode": "Ongeldige verificatiecode. Probeer het opnieuw.",
       "twoFactorTokenRequired": "Token vereist",
       "verificationCodeRequired": "Een verificatiecode is vereist."
@@ -7643,9 +7643,9 @@
       "intro": "Klik op de onderstaande knop om in te loggen:",
       "signInButton": "Inloggen",
       "copyPasteIntro": "Of kopieer en plak deze link in uw browser:",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "Voor uw veiligheid kan deze link maar één keer worden gebruikt. Vraag een nieuwe link aan als u opnieuw wilt inloggen.",
       "disclaimer": "Als u deze e-mail niet hebt aangevraagd, kunt u deze gerust negeren.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "Log in bij TestPlanIt\n\nKlik op de onderstaande link om in te loggen:\n{url}\n\nVoor uw veiligheid kan deze link maar één keer worden gebruikt. Vraag een nieuwe link aan als u opnieuw wilt inloggen.\n\nAls u deze e-mail niet hebt aangevraagd, kunt u deze veilig negeren."
     }
   },
   "comments": {

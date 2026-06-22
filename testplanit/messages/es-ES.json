@@ -1072,7 +1072,7 @@
         "apple": "Continuar con Apple",
         "microsoft": "Continuar con Microsoft",
         "samlProvider": "Iniciar sesión con {name}",
-        "magicLink": "Sign in with Magic Link",
+        "magicLink": "Inicia sesión con Magic Link",
         "emailLogin": "Continuar con el email"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Acceso denegado. Es posible que tu cuenta esté inactiva o que no tengas permiso para iniciar sesión.",
       "configuration": "Hay un problema con la configuración del servidor.",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "Este enlace de inicio de sesión ha caducado o ya se ha utilizado. Los Magic Links solo se pueden usar una vez; solicita uno nuevo para iniciar sesión.",
       "invalid2FACode": "Código de verificación no válido. Inténtalo de nuevo.",
       "twoFactorTokenRequired": "Se requiere token",
       "verificationCodeRequired": "Se requiere un código de verificación."
@@ -7643,9 +7643,9 @@
       "intro": "Haz clic en el botón de abajo para iniciar sesión:",
       "signInButton": "Iniciar sesión",
       "copyPasteIntro": "O bien, copie y pegue este enlace en su navegador:",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "Por tu seguridad, este enlace solo se puede usar una vez. Solicita un enlace nuevo si necesitas volver a iniciar sesión.",
       "disclaimer": "Si no solicitaste este correo electrónico, puedes ignorarlo sin problema.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "Inicia sesión en TestPlanIt\n\nHaz clic en el enlace de abajo para iniciar sesión:\n{url}\n\nPor tu seguridad, este enlace solo se puede usar una vez. Solicita un enlace nuevo si necesitas volver a iniciar sesión.\n\nSi no solicitaste este correo, puedes ignorarlo sin problema."
     }
   },
   "comments": {

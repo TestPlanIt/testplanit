@@ -1072,7 +1072,7 @@
         "apple": "Continue com a Apple",
         "microsoft": "Continue com a Microsoft",
         "samlProvider": "Faça login com {name}",
-        "magicLink": "Sign in with Magic Link",
+        "magicLink": "Faça login com o Magic Link",
         "emailLogin": "Continuar com o e-mail"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Acesso negado. Sua conta pode estar inativa ou você não tem permissão para fazer login.",
       "configuration": "Existe um problema com a configuração do servidor.",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "Este link de acesso expirou ou já foi utilizado. Os Magic Links só podem ser usados uma vez — solicite um novo para entrar.",
       "invalid2FACode": "Código de verificação inválido. Tente novamente.",
       "twoFactorTokenRequired": "É necessário um token.",
       "verificationCodeRequired": "É necessário um código de verificação."
@@ -7643,9 +7643,9 @@
       "intro": "Clique no botão abaixo para iniciar sessão:",
       "signInButton": "Entrar",
       "copyPasteIntro": "Ou copie e cole este link no seu navegador:",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "Para sua segurança, este link só pode ser usado uma vez. Solicite um novo link se precisar entrar novamente.",
       "disclaimer": "Se você não solicitou este e-mail, pode ignorá-lo sem problemas.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "Entre no TestPlanIt\n\nClique no link abaixo para entrar:\n{url}\n\nPara sua segurança, este link só pode ser usado uma vez. Solicite um novo link se precisar entrar novamente.\n\nSe você não solicitou este e-mail, pode ignorá-lo com segurança."
     }
   },
   "comments": {

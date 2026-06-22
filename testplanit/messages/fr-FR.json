@@ -1072,7 +1072,7 @@
         "apple": "Continuez avec Apple",
         "microsoft": "Continuez avec Microsoft",
         "samlProvider": "Connectez-vous avec {name}",
-        "magicLink": "Sign in with Magic Link",
+        "magicLink": "Se connecter avec Magic Link",
         "emailLogin": "Poursuivre par courriel"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Accès refusé. Votre compte est peut-être inactif ou vous n'avez pas l'autorisation de vous connecter.",
       "configuration": "Il y a un problème avec la configuration du serveur.",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "Ce lien de connexion a expiré ou a déjà été utilisé. Les Magic Links ne peuvent être utilisés qu'une seule fois — veuillez en demander un nouveau pour vous connecter.",
       "invalid2FACode": "Code de vérification invalide. Veuillez réessayer.",
       "twoFactorTokenRequired": "Un jeton est requis.",
       "verificationCodeRequired": "Un code de vérification est requis."
@@ -7643,9 +7643,9 @@
       "intro": "Cliquez sur le bouton ci-dessous pour vous connecter :",
       "signInButton": "Se connecter",
       "copyPasteIntro": "Ou copiez et collez ce lien dans votre navigateur :",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "Pour votre sécurité, ce lien ne peut être utilisé qu'une seule fois. Demandez un nouveau lien si vous devez vous reconnecter.",
       "disclaimer": "Si vous n'avez pas demandé cet e-mail, vous pouvez l'ignorer sans problème.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "Connectez-vous à TestPlanIt\n\nCliquez sur le lien ci-dessous pour vous connecter :\n{url}\n\nPour votre sécurité, ce lien ne peut être utilisé qu'une seule fois. Demandez un nouveau lien si vous devez vous reconnecter.\n\nSi vous n'avez pas demandé cet e-mail, vous pouvez l'ignorer en toute sécurité."
     }
   },
   "comments": {

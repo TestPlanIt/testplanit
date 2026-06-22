@@ -1072,7 +1072,7 @@
         "apple": "Tiếp tục với Apple",
         "microsoft": "Tiếp tục với Microsoft",
         "samlProvider": "Đăng nhập bằng {name}",
-        "magicLink": "Sign in with Magic Link",
+        "magicLink": "Đăng nhập bằng Magic Link",
         "emailLogin": "Tiếp tục với email"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Truy cập bị từ chối. Tài khoản của bạn có thể không hoạt động hoặc bạn không có quyền đăng nhập.",
       "configuration": "Có vấn đề với cấu hình máy chủ.",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "Liên kết đăng nhập này đã hết hạn hoặc đã được sử dụng. Magic Link chỉ có thể dùng một lần — vui lòng yêu cầu liên kết mới để đăng nhập.",
       "invalid2FACode": "Mã xác minh không hợp lệ. Vui lòng thử lại.",
       "twoFactorTokenRequired": "Cần có mã thông báo.",
       "verificationCodeRequired": "Cần có mã xác minh."
@@ -7643,9 +7643,9 @@
       "intro": "Nhấp vào nút bên dưới để đăng nhập:",
       "signInButton": "Đăng nhập",
       "copyPasteIntro": "Hoặc sao chép và dán liên kết này vào trình duyệt của bạn:",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "Vì lý do bảo mật, liên kết này chỉ có thể dùng một lần. Hãy yêu cầu liên kết mới nếu bạn cần đăng nhập lại.",
       "disclaimer": "Nếu bạn không yêu cầu nhận email này, bạn có thể bỏ qua nó một cách an toàn.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "Đăng nhập vào TestPlanIt\n\nNhấp vào liên kết bên dưới để đăng nhập:\n{url}\n\nVì lý do bảo mật, liên kết này chỉ có thể dùng một lần. Hãy yêu cầu liên kết mới nếu bạn cần đăng nhập lại.\n\nNếu bạn không yêu cầu email này, bạn có thể bỏ qua nó một cách an toàn."
     }
   },
   "comments": {

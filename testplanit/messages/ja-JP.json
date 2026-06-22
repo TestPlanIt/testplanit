@@ -1072,7 +1072,7 @@
         "apple": "Appleで続ける",
         "microsoft": "Microsoft で続行",
         "samlProvider": "{name}でサインイン",
-        "magicLink": "Sign in with Magic Link",
+        "magicLink": "マジックリンクでサインイン",
         "emailLogin": "メールで続行"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "アクセスが拒否されました。アカウントが非アクティブであるか、サインインする権限がない可能性があります。",
       "configuration": "サーバー構成に問題があります。",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "このサインインリンクは有効期限が切れているか、すでに使用されています。マジックリンクは1回しか使用できません。サインインするには新しいリンクをリクエストしてください。",
       "invalid2FACode": "認証コードが無効です。もう一度お試しください。",
       "twoFactorTokenRequired": "トークンが必要です",
       "verificationCodeRequired": "認証コードが必要です"
@@ -7643,9 +7643,9 @@
       "intro": "下のボタンをクリックしてログインしてください。",
       "signInButton": "サインイン",
       "copyPasteIntro": "または、このリンクをコピーしてブラウザに貼り付けてください。",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "セキュリティ上の理由から、このリンクは1回しか使用できません。再度サインインする必要がある場合は、新しいリンクをリクエストしてください。",
       "disclaimer": "このメールをリクエストしていない場合は、無視していただいて構いません。",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "TestPlanItにサインイン\n\n下のリンクをクリックしてサインインしてください:\n{url}\n\nセキュリティ上の理由から、このリンクは1回しか使用できません。再度サインインする必要がある場合は、新しいリンクをリクエストしてください。\n\nこのメールにお心当たりがない場合は、無視していただいて問題ありません。"
     }
   },
   "comments": {
