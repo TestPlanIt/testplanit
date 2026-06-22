@@ -200,8 +200,18 @@ export class IntegrationManager {
       await adapter.authenticate(authData);
     }
 
-    // Cache the adapter
-    this.adapterCache.set(cacheKey, adapter);
+    // Cache the adapter — but never the transient ones built for the OAuth
+    // setup handshake (allowInactive). Those are constructed before a user
+    // token exists, so they are unauthenticated and have no cloud ID. Caching
+    // one under the shared integration key poisons later real requests on this
+    // pod with "Cloud ID not set" until it restarts — and because each pod has
+    // its own cache (and the callback's clearAdapter only clears the pod it
+    // runs on), other replicas would keep serving the stale adapter. The auth
+    // and callback routes each use their adapter once, so skipping the cache
+    // costs nothing.
+    if (!options?.allowInactive) {
+      this.adapterCache.set(cacheKey, adapter);
+    }
 
     return adapter;
   }

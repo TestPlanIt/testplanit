@@ -309,6 +309,31 @@ describe("IntegrationManager", () => {
       expect(adapter).toBeTruthy();
     });
 
+    it("does NOT cache adapters built with allowInactive (avoids poisoning a pod with an unauthenticated, cloud-id-less adapter)", async () => {
+      mockPrisma.integration.findUnique.mockResolvedValue({
+        id: 2,
+        name: "Jira OAuth",
+        provider: "JIRA",
+        status: "INACTIVE",
+        authType: "OAUTH2",
+        credentials: { clientId: "abc", clientSecret: "shh" },
+        settings: { baseUrl: "https://test.atlassian.net" },
+        userIntegrationAuths: [],
+      });
+
+      // First call builds the transient setup adapter…
+      await manager.getAdapter("2", undefined, undefined, {
+        allowInactive: true,
+      });
+      // …a second call must rebuild from the DB rather than return a cached
+      // (unauthenticated, no cloud ID) instance.
+      await manager.getAdapter("2", undefined, undefined, {
+        allowInactive: true,
+      });
+
+      expect(mockPrisma.integration.findUnique).toHaveBeenCalledTimes(2);
+    });
+
     it("should throw error when no adapter registered for provider", async () => {
       mockPrisma.integration.findUnique.mockResolvedValue({
         id: 1,
