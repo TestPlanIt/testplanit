@@ -1,3 +1,9 @@
+## [0.40.5](https://github.com/TestPlanIt/testplanit/compare/v0.40.4...v0.40.5) (2026-06-23)
+
+### Bug Fixes
+
+* **integrations:** keep Jira reads working past token expiry and persist created issues ([#465](https://github.com/TestPlanIt/testplanit/issues/465)) ([0c774a2](https://github.com/TestPlanIt/testplanit/commit/0c774a28d7e808d197b8f244694a0b89e0c7d268))
+
 ## [0.40.4](https://github.com/TestPlanIt/testplanit/compare/v0.40.3...v0.40.4) (2026-06-22)
 
 ### Bug Fixes
