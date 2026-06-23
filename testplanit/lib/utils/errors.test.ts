@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ApplicationArea } from "~/zenstack/models";
-import { ORMError } from "@zenstackhq/orm";
+import { ORMError, ORMErrorReason } from "@zenstackhq/orm";
 import {
   isUniqueConstraintError,
   isNotFoundError,
@@ -15,35 +15,47 @@ import {
   isIneligibleAssigneeError,
 } from "./errors";
 
-function makePrismaError(code: string): ORMError {
-  // Constructor signature in @prisma/client v5+:
-  // (message: string, { code, clientVersion, meta? })
-  return new ORMError(`test ${code}`, {
-    code,
-    clientVersion: "test",
-  });
+// v3 surfaces database failures as an ORMError carrying the Postgres SQLSTATE in
+// `dbErrorCode` (plus the SQLSTATE text the helpers also match on); a missing
+// record is the NOT_FOUND reason. These build the real v3 shapes.
+function makeDbError(sqlstate: string, message: string): ORMError {
+  const err = new ORMError(ORMErrorReason.DB_QUERY_ERROR, message);
+  (err as { dbErrorCode?: unknown }).dbErrorCode = sqlstate;
+  return err;
 }
+const uniqueViolation = (constraint = "some_unique_index") =>
+  makeDbError(
+    "23505",
+    `duplicate key value violates unique constraint "${constraint}"`
+  );
+const foreignKeyViolation = () =>
+  makeDbError(
+    "23503",
+    'insert or update on table "x" violates foreign key constraint "x_fk"'
+  );
+const notFoundError = () =>
+  new ORMError(ORMErrorReason.NOT_FOUND, "record not found");
 
 describe("errors helpers", () => {
-  it("detects P2002 unique-constraint errors", () => {
-    expect(isUniqueConstraintError(makePrismaError("P2002"))).toBe(true);
-    expect(isNotFoundError(makePrismaError("P2002"))).toBe(false);
-    expect(isForeignKeyError(makePrismaError("P2002"))).toBe(false);
+  it("detects unique-constraint (SQLSTATE 23505) errors", () => {
+    expect(isUniqueConstraintError(uniqueViolation())).toBe(true);
+    expect(isNotFoundError(uniqueViolation())).toBe(false);
+    expect(isForeignKeyError(uniqueViolation())).toBe(false);
   });
 
-  it("detects P2025 not-found errors", () => {
-    expect(isNotFoundError(makePrismaError("P2025"))).toBe(true);
-    expect(isUniqueConstraintError(makePrismaError("P2025"))).toBe(false);
-    expect(isForeignKeyError(makePrismaError("P2025"))).toBe(false);
+  it("detects not-found errors", () => {
+    expect(isNotFoundError(notFoundError())).toBe(true);
+    expect(isUniqueConstraintError(notFoundError())).toBe(false);
+    expect(isForeignKeyError(notFoundError())).toBe(false);
   });
 
-  it("detects P2003 foreign-key errors", () => {
-    expect(isForeignKeyError(makePrismaError("P2003"))).toBe(true);
-    expect(isUniqueConstraintError(makePrismaError("P2003"))).toBe(false);
-    expect(isNotFoundError(makePrismaError("P2003"))).toBe(false);
+  it("detects foreign-key (SQLSTATE 23503) errors", () => {
+    expect(isForeignKeyError(foreignKeyViolation())).toBe(true);
+    expect(isUniqueConstraintError(foreignKeyViolation())).toBe(false);
+    expect(isNotFoundError(foreignKeyViolation())).toBe(false);
   });
 
-  it("rejects non-Prisma Error subclasses", () => {
+  it("rejects unrelated Error subclasses", () => {
     expect(isUniqueConstraintError(new Error("plain"))).toBe(false);
     expect(isUniqueConstraintError(new TypeError("type"))).toBe(false);
     expect(isNotFoundError(new RangeError("range"))).toBe(false);
@@ -101,43 +113,38 @@ describe("review gate error helpers", () => {
     expect(isAlreadyPendingError(err)).toBe(true);
   });
 
-  it("isAlreadyPendingError detects P2002 with correct index target", () => {
-    const err = new ORMError("dup", {
-      code: "P2002",
-      clientVersion: "test",
-      meta: { target: "review_request_one_pending_per_entity" },
-    });
+  it("isAlreadyPendingError detects the pending-review unique index by name", () => {
+    const err = makeDbError(
+      "23505",
+      'duplicate key value violates unique constraint "review_request_one_pending_per_entity"'
+    );
     expect(isAlreadyPendingError(err)).toBe(true);
   });
 
-  it("isAlreadyPendingError detects P2002 with array target (Prisma 6 shape)", () => {
-    // Prisma 6.19+ reports `meta.target` as a string[] of field names instead
-    // of the bare index name. This is the shape returned in the wild by the
-    // partial unique index on ReviewRequest — verified by the live-DB test
-    // at lib/services/schemaValidation.test.ts.
-    const err = new ORMError("dup", {
-      code: "P2002",
-      clientVersion: "test",
-      meta: { target: ["entityType", "entityId"] },
-    });
+  it("isAlreadyPendingError detects the pending-review violation by column tuple", () => {
+    // The partial unique index on ReviewRequest is (entityType, entityId); v3
+    // surfaces the raw Postgres SQLSTATE text, which names those columns even
+    // when it doesn't quote the index name.
+    const err = makeDbError(
+      "23505",
+      "duplicate key value violates unique constraint. Key (entityType, entityId)=(CASE, 1) already exists"
+    );
     expect(isAlreadyPendingError(err)).toBe(true);
   });
 
-  it("isAlreadyPendingError rejects P2002 with wrong index target", () => {
-    const err = new ORMError("dup", {
-      code: "P2002",
-      clientVersion: "test",
-      meta: { target: "some_other_constraint" },
-    });
+  it("isAlreadyPendingError rejects a different unique violation", () => {
+    const err = makeDbError(
+      "23505",
+      'duplicate key value violates unique constraint "some_other_constraint"'
+    );
     expect(isAlreadyPendingError(err)).toBe(false);
   });
 
-  it("isAlreadyPendingError rejects P2002 with array target on unrelated fields", () => {
-    const err = new ORMError("dup", {
-      code: "P2002",
-      clientVersion: "test",
-      meta: { target: ["email"] },
-    });
+  it("isAlreadyPendingError rejects a unique violation on unrelated columns", () => {
+    const err = makeDbError(
+      "23505",
+      'duplicate key value violates unique constraint "users_email_key" Key (email)=(a@b.com) already exists'
+    );
     expect(isAlreadyPendingError(err)).toBe(false);
   });
 
