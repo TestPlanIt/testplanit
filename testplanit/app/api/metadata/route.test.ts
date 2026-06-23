@@ -15,8 +15,8 @@ vi.mock("~/server/db", () => ({
   db: {},
 }));
 
-vi.mock("@zenstackhq/runtime", () => ({
-  enhance: vi.fn(() => mockEnhancedDb),
+vi.mock("~/lib/zenstack", () => ({
+  getAuthDb: vi.fn(() => mockEnhancedDb),
 }));
 
 import { GET } from "./route";

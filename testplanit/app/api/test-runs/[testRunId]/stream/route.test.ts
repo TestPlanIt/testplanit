@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
-vi.mock("@zenstackhq/runtime", () => ({ enhance: vi.fn() }));
+vi.mock("~/lib/zenstack", () => ({ getAuthDb: vi.fn() }));
 
 vi.mock("~/lib/multiTenantPrisma", () => ({
   getCurrentTenantId: vi.fn().mockReturnValue("acme"),
@@ -20,7 +20,7 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import { getServerSession } from "next-auth";
 import { prisma } from "~/lib/prisma";
 import { createSubscriberClient } from "~/lib/valkey";
@@ -91,7 +91,7 @@ describe("GET /api/test-runs/[id]/stream", () => {
       id: "user-1",
       access: null,
     } as never);
-    vi.mocked(enhance).mockReturnValue({
+    vi.mocked(getAuthDb).mockReturnValue({
       testRuns: { findFirst: vi.fn().mockResolvedValue(null) },
     } as never);
     const res = await GET(req("/api/test-runs/42/stream"), {

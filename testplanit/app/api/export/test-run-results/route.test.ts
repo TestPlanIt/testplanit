@@ -11,8 +11,8 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateRequest: vi.fn(),
 }));
 
-vi.mock("@zenstackhq/runtime", () => ({
-  enhance: vi.fn(),
+vi.mock("~/lib/zenstack", () => ({
+  getAuthDb: vi.fn(),
 }));
 
 vi.mock("~/lib/prisma", () => ({
@@ -23,7 +23,7 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
 import { GET } from "./route";
@@ -102,7 +102,7 @@ describe("GET /api/export/test-run-results", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: "user-1",
       } as never);
-      vi.mocked(enhance).mockReturnValue({
+      vi.mocked(getAuthDb).mockReturnValue({
         projects: { findFirst: vi.fn().mockResolvedValue(null) },
       } as never);
 

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
-vi.mock("@zenstackhq/runtime", () => ({ enhance: vi.fn() }));
+vi.mock("~/lib/zenstack", () => ({ getAuthDb: vi.fn() }));
 
 vi.mock("~/lib/multiTenantPrisma", () => ({
   getCurrentTenantId: vi.fn().mockReturnValue("acme"),
@@ -20,7 +20,7 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import { getServerSession } from "next-auth";
 import { prisma } from "~/lib/prisma";
 import { createSubscriberClient } from "~/lib/valkey";
@@ -91,10 +91,10 @@ describe("GET /api/projects/[projectId]/test-runs/stream", () => {
       id: "user-1",
       access: null,
     } as never);
-    // Non-admin → goes through enhance() → ZenStack policy filters out the
+    // Non-admin → goes through getAuthDb() → ZenStack policy filters out the
     // project. findFirst returns null so we 404 (not 403) to avoid
     // leaking existence.
-    vi.mocked(enhance).mockReturnValue({
+    vi.mocked(getAuthDb).mockReturnValue({
       projects: { findFirst: vi.fn().mockResolvedValue(null) },
     } as never);
     const res = await GET(req("/api/projects/293/test-runs/stream"), {

@@ -30,10 +30,10 @@ vi.mock("next-auth", () => ({
   getServerSession: (...args: any[]) => mockGetServerSession(...args),
 }));
 
-// ─── Mock ZenStack enhance ────────────────────────────────────────────────────
+// ─── Mock ZenStack getAuthDb ────────────────────────────────────────────────────
 
-vi.mock("@zenstackhq/runtime", () => ({
-  enhance: (...args: any[]) => mockEnhance(...args),
+vi.mock("~/lib/zenstack", () => ({
+  getAuthDb: (...args: any[]) => mockEnhance(...args),
 }));
 
 // ─── Mock prisma ──────────────────────────────────────────────────────────────

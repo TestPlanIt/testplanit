@@ -1,28 +1,17 @@
 import type { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock prisma
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    user: {
-      findUnique: vi.fn(),
-    },
-  },
+// getUserWithRole reads baseClient.user.findUnique; getEnhancedDb delegates to
+// getAuthDb. Mock both off the v3 client module.
+vi.mock("~/lib/zenstack", () => ({
+  baseClient: { user: { findUnique: vi.fn() } },
+  getAuthDb: vi.fn((user) => ({ _user: user })),
 }));
 
-// Mock ZenStack enhance
-vi.mock("@zenstackhq/runtime", () => ({
-  enhance: vi.fn((prisma, context) => ({
-    ...prisma,
-    _context: context,
-  })),
-}));
-
-import { prisma } from "@/lib/prisma";
-import { enhance } from "@zenstackhq/runtime";
+import { baseClient, getAuthDb } from "~/lib/zenstack";
 import { getEnhancedDb, getUserWithRole } from "./utils";
 
-const mockPrisma = prisma as unknown as {
+const mockPrisma = baseClient as unknown as {
   user: {
     findUnique: ReturnType<typeof vi.fn>;
   };
@@ -139,7 +128,7 @@ describe("Auth Utils", () => {
 
       const result = await getEnhancedDb(session);
 
-      expect(enhance).toHaveBeenCalledWith(prisma, { user: mockUser });
+      expect(getAuthDb).toHaveBeenCalledWith(mockUser);
       expect(result).toBeDefined();
     });
 
@@ -208,14 +197,11 @@ describe("Auth Utils", () => {
 
       await getEnhancedDb(session);
 
-      expect(enhance).toHaveBeenCalledWith(
-        prisma,
+      expect(getAuthDb).toHaveBeenCalledWith(
         expect.objectContaining({
-          user: expect.objectContaining({
-            id: "user-456",
-            role: expect.objectContaining({
-              name: "SuperAdmin",
-            }),
+          id: "user-456",
+          role: expect.objectContaining({
+            name: "SuperAdmin",
           }),
         })
       );

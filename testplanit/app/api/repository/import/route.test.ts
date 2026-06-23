@@ -1,4 +1,4 @@
-import { enhance } from "@zenstackhq/runtime";
+import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -13,8 +13,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("@zenstackhq/runtime", () => ({
-  enhance: vi.fn(),
+vi.mock("~/lib/audit/enhanceWithAudit", () => ({
+  enhanceWithAudit: vi.fn(),
 }));
 
 vi.mock("~/server/db", () => ({
@@ -242,7 +242,7 @@ describe("CSV Import API Route", () => {
       deleteMany: vi.fn(),
     },
   };
-  // enhanceWithAudit() calls enhance(prismaBase, { user }).$extends({...}); the
+  // enhanceWithAudit() calls enhanceWithAudit(prismaBase, { user }).$extends({...}); the
   // audit-GUC $extends layer wraps writes in a SET LOCAL transaction at runtime
   // but here it is a no-op pass-through so route writes land on mockEnhancedDb
   // directly (and assertions can read the mock call records).
@@ -257,7 +257,7 @@ describe("CSV Import API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getServerSession as any).mockResolvedValue(mockSession);
-    (enhance as any).mockReturnValue(mockEnhancedDb);
+    (enhanceWithAudit as any).mockReturnValue(mockEnhancedDb);
     mockPrisma.user.findUnique.mockResolvedValue(mockSession.user);
     mockEnhancedDb.projects.findFirst.mockResolvedValue(mockProject);
     mockEnhancedDb.repositories.findFirst.mockResolvedValue(mockRepository);
