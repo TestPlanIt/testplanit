@@ -445,29 +445,42 @@ function mergeByIdentity(rows: MaterializedRow[]): MaterializedRow[] {
 }
 
 /**
- * Replace a (bulk) TestRunCases CREATE diff — the noisy per-column id / order /
- * iteration-counter set — with one readable line: "N test cases added" carrying
- * the comma-listed case names. Runs AFTER mergeByIdentity, so a bulk add already
+ * Replace a (bulk) TestRunCases CREATE or DELETE diff — the noisy per-column id /
+ * order / iteration-counter set (add) or the isDeleted flip (remove) — with one
+ * readable line: "N test cases added" / "N test cases removed" carrying the
+ * comma-listed case names. Runs AFTER mergeByIdentity, so a bulk add/remove already
  * merged into one row reads as a count + the named list instead of raw ids. The
- * count comes from the merged `id` column (numeric pks never contain ", "), with
- * the case-name list length as a fallback. Non-bulk and non-create rows pass
- * through untouched.
+ * count comes from the merged `repositoryCaseId` column (numeric pks never contain
+ * ", "), with the name-list length as a fallback. A soft-delete (UPDATE isDeleted)
+ * only carries repositoryCaseId because the trigger registry lists it in captureCols;
+ * a hard delete carries it on the `old` side. Non-case and untouched-action rows pass
+ * through.
  */
-export function summarizeBulkCaseAdds(
+export function summarizeBulkCaseChanges(
   rows: MaterializedRow[]
 ): MaterializedRow[] {
   return rows.map((r) => {
-    if (r.sourceTable !== "TestRunCases" || r.action !== "CREATE") return r;
+    if (
+      r.sourceTable !== "TestRunCases" ||
+      (r.action !== "CREATE" && r.action !== "DELETE")
+    )
+      return r;
     const caseCol = r.changes.repositoryCaseId as HumanizedColEntry | undefined;
-    const names = caseCol?.newName ?? caseCol?.new;
+    const names =
+      caseCol?.newName ?? caseCol?.new ?? caseCol?.oldName ?? caseCol?.old;
     if (names == null) return r;
-    const idVal = (r.changes.id as HumanizedColEntry | undefined)?.new;
+    const idList = caseCol?.new ?? caseCol?.old;
     const count =
-      idVal != null
-        ? String(idVal).split(", ").length
+      idList != null
+        ? String(idList).split(", ").length
         : String(names).split(", ").length;
-    const label = `${count} test case${count === 1 ? "" : "s"} added`;
-    return { ...r, changes: { [label]: { old: null, new: String(names) } } };
+    const verb = r.action === "CREATE" ? "added" : "removed";
+    const label = `${count} test case${count === 1 ? "" : "s"} ${verb}`;
+    const entry =
+      r.action === "CREATE"
+        ? { old: null, new: String(names) }
+        : { old: String(names), new: null };
+    return { ...r, changes: { [label]: entry } };
   });
 }
 
@@ -723,10 +736,20 @@ export async function pollDataChangeLogsOnce(
           const changes = row.changed_cols
             ? await humanize(cache, row.table, row.changed_cols)
             : {};
+          const action = deriveAction(row);
           // The trigger injects the rollup FK (unchanged, old === new) on value-only child UPDATEs
           // so the row can attribute to its owner; it's noise in the displayed diff, so drop it.
           // (applyRollupMap above read the FK from the RAW changed_cols, not this humanized copy.)
           for (const key of Object.keys(changes)) {
+            // Keep the captured repositoryCaseId on a run-case soft-delete: it IS unchanged
+            // (old === new) there, but summarizeBulkCaseChanges needs it to render
+            // "N test cases removed: <names>". On any other update it stays noise → dropped.
+            if (
+              row.table === "TestRunCases" &&
+              action === "DELETE" &&
+              key === "repositoryCaseId"
+            )
+              continue;
             const e = changes[key] as { old?: unknown; new?: unknown };
             if (e && e.old === e.new) delete changes[key];
           }
@@ -792,7 +815,7 @@ export async function pollDataChangeLogsOnce(
             op: row.op,
             entityType,
             entityId,
-            action: deriveAction(row),
+            action,
             actor,
             userName,
             userEmail: row.actor_email,
@@ -823,7 +846,7 @@ export async function pollDataChangeLogsOnce(
     // are all preserved instead of being dropped by the idempotency index.
     const auditLogsWritten = await writeAuditLogRows(
       tx,
-      summarizeBulkCaseAdds(mergeByIdentity(materialized))
+      summarizeBulkCaseChanges(mergeByIdentity(materialized))
     );
 
     if (markProcessed) {

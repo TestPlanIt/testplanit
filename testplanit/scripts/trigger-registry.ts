@@ -74,7 +74,13 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
     nameCol: "name",
     projectCol: "projectId",
   },
-  { table: "TestRunCases", denylist: ["createdAt", "updatedAt"] },
+  // captureCols repositoryCaseId so a soft-delete (UPDATE isDeleted) still records WHICH case
+  // left the run — correlation renders "N test cases removed: <names>", mirroring the add side.
+  {
+    table: "TestRunCases",
+    denylist: ["createdAt", "updatedAt"],
+    captureCols: ["repositoryCaseId"],
+  },
   { table: "TestRunResults", denylist: ["createdAt", "updatedAt"] },
   { table: "TestRunStepResults", denylist: ["createdAt", "updatedAt"] },
   { table: "TestRunCaseIteration", denylist: ["createdAt", "updatedAt"] },
