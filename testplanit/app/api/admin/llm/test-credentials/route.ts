@@ -8,6 +8,7 @@ import {
 } from "@/lib/llm/adapters";
 import type { LlmAdapterConfig } from "@/lib/llm/types";
 import { Decimal } from "decimal.js";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
         settings: {
           deploymentName,
           apiVersion: provider === "AZURE_OPENAI" ? "2024-02-01" : undefined,
-        },
+        } as JsonValue,
         isDeleted: false,
         createdAt: new Date(),
         updatedAt: new Date(),

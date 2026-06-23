@@ -19,7 +19,7 @@ export async function verifyEmail(email: any, token: any) {
     return await prisma.user.update({
       where: { emailVerifToken: token, email: email },
       data: {
-        emailVerified: new Date().toISOString(),
+        emailVerified: new Date(),
         emailVerifToken: null,
       },
     });

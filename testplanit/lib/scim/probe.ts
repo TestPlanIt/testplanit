@@ -30,7 +30,7 @@
 
 import { SCIM_BASE_PATH } from "~/lib/scim/constants";
 import { getScimBaseUrl } from "~/lib/scim/responses";
-import { decryptScimSecret, getScimTokenById } from "~/lib/scim/tokens";
+import { decryptScimSecret, getScimTokenWithSecret } from "~/lib/scim/tokens";
 
 /**
  * Result of a single probe. `ok` mirrors `Response.ok` for HTTP results
@@ -54,7 +54,7 @@ export interface ScimProbeResult {
 export async function probeScimToken(
   tokenId: string
 ): Promise<ScimProbeResult> {
-  const row = await getScimTokenById(tokenId);
+  const row = await getScimTokenWithSecret(tokenId);
   if (!row) {
     return { ok: false, status: 0, reason: "Token not found" };
   }

@@ -1784,7 +1784,7 @@ export async function getReplayBatchStatus(
     const auditRows = await prisma.auditLog.findMany({
       where: {
         action: "WEBHOOK_REPLAYED",
-        metadata: { path: ["batchId"], equals: batchId },
+        metadata: { path: "batchId", equals: batchId },
       },
       select: { metadata: true, projectId: true },
     });

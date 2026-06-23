@@ -11,16 +11,6 @@ import type { IssueAdapter, IssueData } from "../adapters/IssueAdapter";
 import { issueCache } from "../cache/IssueCache";
 import { integrationManager } from "../IntegrationManager";
 
-// Lazy-load zenstack enhance to reduce worker memory at startup
-let _enhance: typeof import("@zenstackhq/runtime").enhance | null = null;
-async function _getEnhance() {
-  if (!_enhance) {
-    const { enhance } = await import("@zenstackhq/runtime");
-    _enhance = enhance;
-  }
-  return _enhance;
-}
-
 export interface SyncJobData {
   userId: string;
   integrationId: number;

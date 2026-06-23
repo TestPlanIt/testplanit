@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import type { JsonValue } from "@zenstackhq/orm";
 
 import type { AdapterType, WebhookDelivery, WebhookDirection } from "~/zenstack/models";
 import type { DbClient } from "~/lib/zenstack";
@@ -347,7 +348,7 @@ export async function seedDeliveries(
           projectId: args.projectId,
           eventName: eventType,
           eventId,
-          payload,
+          payload: payload as JsonValue,
           dispatchedAt: new Date(),
         },
       });

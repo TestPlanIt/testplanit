@@ -117,7 +117,7 @@ export function SaveSearchDialog({
           shareLink.projectId !== null ? shareLink.projectId : undefined,
         expiresAt: shareLink.expiresAt,
         notifyOnView: shareLink.notifyOnView,
-        passwordHash: shareLink.passwordHash,
+        hasPassword: !!passwordHash,
       });
 
       toast.success(t("search.savedSearches.saved"), {

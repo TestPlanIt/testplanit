@@ -1,4 +1,5 @@
 "use client";
+import type { JsonValue } from "@zenstackhq/orm";
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
@@ -588,7 +589,7 @@ export function SessionResultForm({
         data: {
           sessionId: sessionId,
           statusId: parseInt(values.statusId as string),
-          resultData: values.resultData || emptyEditorContent,
+          resultData: (values.resultData || emptyEditorContent) as JsonValue,
           elapsed: elapsedInSeconds,
           createdById: session.user.id,
           issues: {

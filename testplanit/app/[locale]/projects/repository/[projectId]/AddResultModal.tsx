@@ -1,4 +1,5 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import type { JsonValue } from "@zenstackhq/orm";
 import { schema } from "~/zenstack/schema";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
@@ -1100,8 +1101,8 @@ export function AddResultModal({
                     testRunResultId: result.id,
                     stepId: step.id,
                     statusId: stepStatusIdToUse,
-                    notes: stepNotes || emptyEditorContent,
-                    evidence: stepEvidence,
+                    notes: (stepNotes || emptyEditorContent) as JsonValue,
+                    evidence: stepEvidence as JsonValue,
                     elapsed: stepElapsedInSeconds,
                     executedAt: new Date(),
                     issues: {
@@ -1330,8 +1331,8 @@ export function AddResultModal({
                   testRunResultId: result.id,
                   stepId: step.id,
                   statusId: stepStatusIdToUse,
-                  notes: stepNotes || emptyEditorContent,
-                  evidence: stepEvidence,
+                  notes: (stepNotes || emptyEditorContent) as JsonValue,
+                  evidence: stepEvidence as JsonValue,
                   elapsed: stepElapsedInSeconds,
                   executedAt: new Date(),
                   issues: {

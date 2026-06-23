@@ -372,7 +372,9 @@ export default function TestCaseVersions() {
 
   if (!testcase) return <Loading />;
 
-  const transformSteps = (stepsData: JsonValue | undefined): Steps[] => {
+  const transformSteps = (
+    stepsData: JsonValue | null | undefined
+  ): Steps[] => {
     if (!stepsData) return [];
     try {
       const parsedSteps =

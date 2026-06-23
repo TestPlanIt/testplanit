@@ -171,7 +171,7 @@ export function ShareDialog({
           shareLink.projectId !== null ? shareLink.projectId : undefined,
         expiresAt: shareLink.expiresAt,
         notifyOnView: shareLink.notifyOnView,
-        passwordHash: shareLink.passwordHash,
+        hasPassword: !!passwordHash,
       });
 
       // Generate share URL (without locale - middleware will redirect based on user preference/browser language)

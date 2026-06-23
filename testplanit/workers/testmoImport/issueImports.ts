@@ -1,4 +1,5 @@
 import { IntegrationAuthType, IntegrationProvider, IntegrationStatus } from "~/zenstack/models";
+import type { JsonValue } from "@zenstackhq/orm";
 import type { DbClient, TxClient } from "~/lib/zenstack";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 import { toNumberValue, toStringValue } from "./helpers";
@@ -142,7 +143,7 @@ export const importIssueTargets = async (
             testmoSourceId: sourceId,
             testmoType: config.testmoType,
             importedFrom: "testmo",
-          },
+          } as JsonValue,
         },
       });
 

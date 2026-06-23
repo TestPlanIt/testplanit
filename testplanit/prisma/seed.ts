@@ -1,4 +1,5 @@
 import { ApplicationArea, WorkflowScope } from "~/zenstack/models";
+import type { JsonValue } from "@zenstackhq/orm";
 import { createRawDbClient } from "~/lib/rawDbClient";
 
 import bcrypt from "bcrypt";
@@ -417,7 +418,7 @@ async function seedCoreData() {
     update: {},
     create: {
       key: "project_docs_default",
-      value: initialContent,
+      value: initialContent as unknown as JsonValue,
     },
   });
   console.log("Seeded default project documentation.");
@@ -601,7 +602,7 @@ async function _seedProjectDocsDefault() {
     update: {},
     create: {
       key: "project_docs_default",
-      value: initialContent,
+      value: initialContent as unknown as JsonValue,
     },
   });
   console.log("Seeded default project documentation.");

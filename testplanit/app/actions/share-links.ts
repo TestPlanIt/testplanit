@@ -51,7 +51,7 @@ export const auditShareLinkCreation = withActionAuditContext(
     projectId?: number;
     expiresAt: Date | null;
     notifyOnView: boolean;
-    passwordHash: string | null;
+    hasPassword: boolean;
   }) => {
     const session = await getServerSession(authOptions);
 
@@ -72,7 +72,7 @@ export const auditShareLinkCreation = withActionAuditContext(
           shareKey: shareLink.shareKey,
           entityType: shareLink.entityType,
           mode: shareLink.mode,
-          hasPassword: !!shareLink.passwordHash,
+          hasPassword: shareLink.hasPassword,
           expiresAt: shareLink.expiresAt?.toISOString() || null,
           notifyOnView: shareLink.notifyOnView,
         },

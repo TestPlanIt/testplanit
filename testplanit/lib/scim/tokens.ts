@@ -107,6 +107,17 @@ export async function getScimTokenById(id: string): Promise<ScimToken | null> {
 }
 
 /**
+ * Like {@link getScimTokenById} but opts the `@omit`'d `secret` column back
+ * in (still encrypted at rest) for callers that need to decrypt it.
+ */
+export async function getScimTokenWithSecret(id: string) {
+  return prisma.scimToken.findUnique({
+    where: { id },
+    omit: { secret: false },
+  });
+}
+
+/**
  * List tokens for the admin UI. By default only active (non-revoked) tokens
  * are returned; pass `showRevoked: true` to include revoked rows for the
  * collapsed "Revoked" section. `search` does a case-insensitive `contains`
