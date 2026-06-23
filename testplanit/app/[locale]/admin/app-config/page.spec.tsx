@@ -42,11 +42,17 @@ vi.mock("~/lib/contexts/PaginationContext", () => ({
   ),
 }));
 
-// Use vi.doMock (NOT hoisted) with local mocks
-vi.doMock("~/lib/hooks/app-config", () => ({
-  useFindManyAppConfig: mockUseFindManyAppConfig,
-  useCreateAppConfig: () => ({ mutateAsync: mockCreateMutateAsync }),
-  useUpdateAppConfig: () => ({ mutateAsync: mockUpdateMutateAsync }),
+// Use vi.doMock (NOT hoisted) so the dynamically-imported page picks up these
+// useClientQueries mocks built from the local spies (the page reads
+// appConfig.useFindMany/useCreate/useUpdate).
+vi.doMock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    appConfig: {
+      useFindMany: mockUseFindManyAppConfig,
+      useCreate: () => ({ mutateAsync: mockCreateMutateAsync, isPending: false }),
+      useUpdate: () => ({ mutateAsync: mockUpdateMutateAsync, isPending: false }),
+    },
+  }),
 }));
 
 // Mock next/navigation hooks, keeping other exports
