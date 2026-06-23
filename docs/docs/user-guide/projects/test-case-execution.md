@@ -18,14 +18,14 @@ This view typically includes:
     - **Test Case Name**: Displays the name of the test case being executed.
     - **Current Status**: Shows the current overall status (e.g., Untested, Passed, Failed, Blocked) for this case _within this specific run_.
     - **Navigation**: May include Previous/Next buttons to move between test cases in the run sequence without returning to the main list.
-    - **Close Button** (`X` icon): Returns the right panel to the default Test Run metadata view.
+    - **Close Button**: Returns the right panel to the default Test Run metadata view.
 
 2. **Overall Result Controls**: Buttons to set the overall status for the _entire test case_ within this run:
 
-    - **Pass** (`Check` icon): Marks the entire case as passed.
-    - **Fail** (`X` icon): Marks the entire case as failed.
-    - **Block** (`CircleSlash` icon): Marks the case as blocked (e.g., due to an environment issue or dependency).
-    - **Skip** (`SkipForward` icon): Marks the case as skipped.
+    - **Pass**: Marks the entire case as passed.
+    - **Fail**: Marks the entire case as failed.
+    - **Block**: Marks the case as blocked (e.g., due to an environment issue or dependency).
+    - **Skip**: Marks the case as skipped.
     - _(Setting an overall result might automatically update step results accordingly, depending on configuration.)_
 
 3. **Steps List**: Displays the steps defined in the test case, usually including:

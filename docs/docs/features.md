@@ -189,7 +189,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Password enforcement** - Force password changes (individual or bulk) and revoke passwords
 - **Password strength indicator** - Real-time zxcvbn-powered feedback on signup and password change forms
 - **Sign-in enforcement** - [Force SSO](./user-guide/security-settings.md#sign-in-enforcement) (disable email/password sign-in), require 2FA for password logins, or require 2FA for all sign-ins including SSO. All three toggles live alongside the password policy on the Security admin page
-- **Audit logs** - Track all changes for compliance and security review; covers admin configuration mutations, system-actor attribution, SCIM mutations (filterable by `source = scim` with the originating token id), and a tamper-evident archive surface for long-term retention
+- **Audit logs** - Track all changes for compliance and security review; covers admin configuration mutations, system-actor attribution, SCIM mutations (filterable by `source = scim` with the originating token id), and a tamper-evident archive surface for long-term retention. Surfaced system-wide for admins, [per project](./user-guide/audit-logs.md#viewing-a-projects-activity), [per user](./user-guide/audit-logs.md#viewing-your-own-activity) from any profile, and [per item](./user-guide/audit-logs.md#viewing-an-items-activity) via the Activity view on test cases, runs, and sessions
 - **Two-factor authentication** - Add an extra layer of security for user accounts
 - **Data encryption** - Secure data at rest and in transit
 - **API tokens** - [Personal and service-account API tokens](./api-tokens.md) with scoped access and revocation
