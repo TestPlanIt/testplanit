@@ -1,6 +1,6 @@
-import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";

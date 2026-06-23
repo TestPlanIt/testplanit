@@ -1,8 +1,8 @@
 "use client";
 
-import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
 import { SessionNameDisplay } from "@/components/SessionNameDisplay";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";

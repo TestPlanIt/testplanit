@@ -38,12 +38,11 @@ for (const file of files) {
     },
   );
 
-  // Add the factory import (after the first import line) if not present.
+  // Add the factory import by PREPENDING before the first import (safe even when
+  // the first import is multi-line; inserting after the first line would split it).
   if (!out.includes('from "~/lib/rawDbClient"')) {
-    out = out.replace(/^(import .*\n)/m, `$1import { createRawDbClient } from "~/lib/rawDbClient";\n`);
+    out = out.replace(/^(import\b)/m, `import { createRawDbClient } from "~/lib/rawDbClient";\n$1`);
   }
-  // Collapse a possible blank line left by a removed import.
-  out = out.replace(/^\n(import \{ createRawDbClient \})/m, "$1");
 
   if (out !== src) {
     fs.writeFileSync(file, out);

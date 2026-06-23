@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { useQuery } from "@tanstack/react-query";
 
 /**
  * Result shape exposed by useReviewFeatureEnabled.

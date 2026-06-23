@@ -1,7 +1,7 @@
 "use client";
-import type { Workflows } from "~/zenstack/models";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import type { Workflows } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 

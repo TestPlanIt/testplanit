@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { Button } from "@/components/ui/button";
 import { Color } from "@tiptap/extension-color";
 import { Emoji, EmojiItem, gitHubEmojis } from "@tiptap/extension-emoji";
 import { FileHandler } from "@tiptap/extension-file-handler";

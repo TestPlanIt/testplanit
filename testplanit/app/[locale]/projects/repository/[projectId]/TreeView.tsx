@@ -1,6 +1,6 @@
-import LoadingSpinner from "@/components/LoadingSpinner";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

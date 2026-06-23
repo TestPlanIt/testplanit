@@ -1,8 +1,8 @@
 "use client";
 
-import { useDebounce } from "@/components/Debounce";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { useDebounce } from "@/components/Debounce";
 import { Filter } from "@/components/tables/Filter";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Form } from "@/components/ui/form";

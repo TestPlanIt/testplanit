@@ -1,6 +1,6 @@
-import LoadingSpinner from "@/components/LoadingSpinner";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { LinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback } from "react";

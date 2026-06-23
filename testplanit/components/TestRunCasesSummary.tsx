@@ -1,6 +1,6 @@
-import { DateFormatter } from "@/components/DateFormatter";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { DateFormatter } from "@/components/DateFormatter";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { Skeleton } from "@/components/ui/skeleton";
 import {

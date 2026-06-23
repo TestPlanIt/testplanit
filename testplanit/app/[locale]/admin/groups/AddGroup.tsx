@@ -1,7 +1,7 @@
 "use client";
-import { HelpPopover } from "@/components/ui/help-popover";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { HelpPopover } from "@/components/ui/help-popover";
 import type { User } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";

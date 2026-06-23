@@ -1,6 +1,6 @@
-import TextFromJson from "@/components/TextFromJson";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import TextFromJson from "@/components/TextFromJson";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { Layers, Minus, Plus, SearchCheck } from "lucide-react";
 import { useTranslations } from "next-intl";

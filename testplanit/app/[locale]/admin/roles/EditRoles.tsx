@@ -1,8 +1,8 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
-import { ApplicationArea } from "~/zenstack/models";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { ApplicationArea } from "~/zenstack/models";
 import type { Roles } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";

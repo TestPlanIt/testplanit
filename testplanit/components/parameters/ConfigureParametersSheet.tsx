@@ -1,8 +1,8 @@
 "use client";
 
-import { DatasetImportWizard } from "@/components/parameters/DatasetImportWizard";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { DatasetImportWizard } from "@/components/parameters/DatasetImportWizard";
 import { DatasetTab } from "@/components/parameters/DatasetTab";
 import { ParametersTab } from "@/components/parameters/ParametersTab";
 import { Button } from "@/components/ui/button";

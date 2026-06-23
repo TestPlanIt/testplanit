@@ -1,8 +1,8 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import type { Projects, Templates } from "~/zenstack/models";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import type { Projects, Templates } from "~/zenstack/models";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";

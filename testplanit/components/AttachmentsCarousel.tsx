@@ -1,6 +1,6 @@
-import { AttachmentPreview } from "@/components/AttachmentPreview";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { AttachmentPreview } from "@/components/AttachmentPreview";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,

@@ -1,7 +1,7 @@
 "use client";
-import DynamicIcon from "@/components/DynamicIcon";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import DynamicIcon from "@/components/DynamicIcon";
 import { useEffect, useState } from "react";
 import { IconName } from "~/types/globals";
 

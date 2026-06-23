@@ -1,6 +1,4 @@
 import {
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { schema } from "~/zenstack/schema";
   afterEach,
   beforeAll,
   beforeEach,
@@ -96,17 +94,17 @@ vi.mock("~/lib/navigation", () => ({
 
 // Mock dependencies
 vi.mock("~/lib/hooks", () => ({
-  useClientQueries(schema).repositoryCases.useFindMany: vi.fn(),
-  useClientQueries(schema).repositoryCases.useUpdate: vi.fn(),
-  useClientQueries(schema).workflows.useFindMany: vi.fn(),
-  useClientQueries(schema).tags.useFindMany: vi.fn(),
-  useClientQueries(schema).issue.useFindMany: vi.fn(),
-  useClientQueries(schema).caseFieldValues.useUpdate: vi.fn(),
-  useClientQueries(schema).caseFieldValues.useCreate: vi.fn(),
-  useClientQueries(schema).steps.useCreate: vi.fn(),
-  useClientQueries(schema).steps.useDeleteMany: vi.fn(),
-  useClientQueries(schema).repositoryCases.useUpdateMany: vi.fn(),
-  useClientQueries(schema).steps.useUpdate: vi.fn(),
+  useFindManyRepositoryCases: vi.fn(),
+  useUpdateRepositoryCases: vi.fn(),
+  useFindManyWorkflows: vi.fn(),
+  useFindManyTags: vi.fn(),
+  useFindManyIssue: vi.fn(),
+  useUpdateCaseFieldValues: vi.fn(),
+  useCreateCaseFieldValues: vi.fn(),
+  useCreateSteps: vi.fn(),
+  useDeleteManySteps: vi.fn(),
+  useUpdateManyRepositoryCases: vi.fn(),
+  useUpdateSteps: vi.fn(),
   useCreateTags: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
@@ -115,11 +113,11 @@ vi.mock("~/lib/hooks", () => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
-  useClientQueries(schema).repositoryCaseVersions.useCreate: vi.fn(() => ({
+  useCreateRepositoryCaseVersions: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
-  useClientQueries(schema).caseFieldVersionValues.useCreate: vi.fn(() => ({
+  useCreateCaseFieldVersionValues: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
@@ -210,6 +208,21 @@ import * as NextAuth from "next-auth/react";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindManyRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
+import {
+  useCreateCaseFieldValues,
+  useCreateCaseFieldVersionValues,
+  useCreateRepositoryCaseVersions,
+  useCreateSteps,
+  useDeleteManySteps,
+  useFindManyIssue,
+  useFindManyRepositoryCases,
+  useFindManyTags,
+  useFindManyWorkflows,
+  useUpdateCaseFieldValues,
+  useUpdateManyRepositoryCases,
+  useUpdateRepositoryCases,
+  useUpdateSteps,
+} from "~/lib/hooks";
 import { BulkEditModal } from "./BulkEditModal";
 
 // Setup to fix hasPointerCapture issue with Radix UI
@@ -956,7 +969,7 @@ describe("BulkEditModal", () => {
     });
 
     // Mock hooks
-    (useClientQueries(schema).repositoryCases.useFindMany as Mock).mockReturnValue({
+    (useFindManyRepositoryCases as Mock).mockReturnValue({
       data: mockCasesWithTextFields,
       isLoading: false,
       error: null,
@@ -970,62 +983,62 @@ describe("BulkEditModal", () => {
       refetch: vi.fn(),
     });
 
-    (useClientQueries(schema).workflows.useFindMany as Mock).mockReturnValue({
+    (useFindManyWorkflows as Mock).mockReturnValue({
       data: mockWorkflowData,
       isLoading: false,
     });
 
-    (useClientQueries(schema).tags.useFindMany as Mock).mockReturnValue({
+    (useFindManyTags as Mock).mockReturnValue({
       data: mockTagsData,
       isLoading: false,
     });
 
-    (useClientQueries(schema).issue.useFindMany as Mock).mockReturnValue({
+    (useFindManyIssue as Mock).mockReturnValue({
       data: mockIssuesData,
       isLoading: false,
     });
 
-    (useClientQueries(schema).repositoryCases.useUpdate as Mock).mockReturnValue({
+    (useUpdateRepositoryCases as Mock).mockReturnValue({
       mutateAsync: mockUpdateCasesMutation,
       isPending: false,
     });
 
-    (useClientQueries(schema).caseFieldValues.useUpdate as Mock).mockReturnValue({
+    (useUpdateCaseFieldValues as Mock).mockReturnValue({
       mutateAsync: mockUpdateCaseFieldValue,
       isPending: false,
     });
 
-    (useClientQueries(schema).caseFieldValues.useCreate as Mock).mockReturnValue({
+    (useCreateCaseFieldValues as Mock).mockReturnValue({
       mutateAsync: mockCreateCaseFieldValues,
       isPending: false,
     });
 
-    (useClientQueries(schema).repositoryCases.useUpdateMany as Mock).mockReturnValue({
+    (useUpdateManyRepositoryCases as Mock).mockReturnValue({
       mutateAsync: mockUpdateManyRepositoryCases,
       isPending: false,
     });
 
-    (useClientQueries(schema).steps.useCreate as Mock).mockReturnValue({
+    (useCreateSteps as Mock).mockReturnValue({
       mutateAsync: mockCreateSteps,
       isPending: false,
     });
 
-    (useClientQueries(schema).steps.useDeleteMany as Mock).mockReturnValue({
+    (useDeleteManySteps as Mock).mockReturnValue({
       mutateAsync: mockDeleteManySteps,
       isPending: false,
     });
 
-    (useClientQueries(schema).steps.useUpdate as Mock).mockReturnValue({
+    (useUpdateSteps as Mock).mockReturnValue({
       mutateAsync: mockUpdateSteps,
       isPending: false,
     });
 
-    (useClientQueries(schema).repositoryCaseVersions.useCreate as Mock).mockReturnValue({
+    (useCreateRepositoryCaseVersions as Mock).mockReturnValue({
       mutateAsync: mockCreateRepositoryCaseVersions,
       isPending: false,
     });
 
-    (useClientQueries(schema).caseFieldVersionValues.useCreate as Mock).mockReturnValue({
+    (useCreateCaseFieldVersionValues as Mock).mockReturnValue({
       mutateAsync: mockCreateCaseFieldVersionValues,
       isPending: false,
     });
@@ -1894,7 +1907,7 @@ describe("BulkEditModal", () => {
 
   describe("Edge Cases and Error Handling", () => {
     it("should handle loading state", () => {
-      (useClientQueries(schema).repositoryCases.useFindMany as Mock).mockReturnValue({
+      (useFindManyRepositoryCases as Mock).mockReturnValue({
         data: null,
         isLoading: true,
         error: null,
@@ -2406,7 +2419,7 @@ describe("BulkEditModal", () => {
       });
 
       // Use the mock data with Steps field
-      (useClientQueries(schema).repositoryCases.useFindMany as Mock).mockReturnValue({
+      (useFindManyRepositoryCases as Mock).mockReturnValue({
         data: mockCasesWithStepsField,
         isLoading: false,
         error: null,
@@ -2421,48 +2434,48 @@ describe("BulkEditModal", () => {
       });
 
       // Re-setup other mocks that are needed
-      (useClientQueries(schema).workflows.useFindMany as Mock).mockReturnValue({
+      (useFindManyWorkflows as Mock).mockReturnValue({
         data: mockWorkflowData,
         isLoading: false,
       });
 
-      (useClientQueries(schema).tags.useFindMany as Mock).mockReturnValue({
+      (useFindManyTags as Mock).mockReturnValue({
         data: mockTagsData,
         isLoading: false,
       });
 
-      (useClientQueries(schema).issue.useFindMany as Mock).mockReturnValue({
+      (useFindManyIssue as Mock).mockReturnValue({
         data: mockIssuesData,
         isLoading: false,
       });
 
-      (useClientQueries(schema).repositoryCases.useUpdate as Mock).mockReturnValue({
+      (useUpdateRepositoryCases as Mock).mockReturnValue({
         mutateAsync: mockUpdateCasesMutation,
         isPending: false,
       });
 
-      (useClientQueries(schema).caseFieldValues.useUpdate as Mock).mockReturnValue({
+      (useUpdateCaseFieldValues as Mock).mockReturnValue({
         mutateAsync: mockUpdateCaseFieldValue,
       });
 
-      (useClientQueries(schema).caseFieldValues.useCreate as Mock).mockReturnValue({
+      (useCreateCaseFieldValues as Mock).mockReturnValue({
         mutateAsync: mockCreateCaseFieldValues,
       });
 
-      (useClientQueries(schema).repositoryCases.useUpdateMany as Mock).mockReturnValue({
+      (useUpdateManyRepositoryCases as Mock).mockReturnValue({
         mutateAsync: mockUpdateManyRepositoryCases,
         isPending: false,
       });
 
-      (useClientQueries(schema).steps.useCreate as Mock).mockReturnValue({
+      (useCreateSteps as Mock).mockReturnValue({
         mutateAsync: mockCreateSteps,
       });
 
-      (useClientQueries(schema).steps.useDeleteMany as Mock).mockReturnValue({
+      (useDeleteManySteps as Mock).mockReturnValue({
         mutateAsync: mockDeleteManySteps,
       });
 
-      (useClientQueries(schema).steps.useUpdate as Mock).mockReturnValue({
+      (useUpdateSteps as Mock).mockReturnValue({
         mutateAsync: mockUpdateSteps,
       });
 
@@ -2476,12 +2489,12 @@ describe("BulkEditModal", () => {
         error: null,
       }));
 
-      (useClientQueries(schema).repositoryCaseVersions.useCreate as Mock).mockReturnValue({
+      (useCreateRepositoryCaseVersions as Mock).mockReturnValue({
         mutateAsync: mockCreateRepositoryCaseVersions,
         isPending: false,
       });
 
-      (useClientQueries(schema).caseFieldVersionValues.useCreate as Mock).mockReturnValue({
+      (useCreateCaseFieldVersionValues as Mock).mockReturnValue({
         mutateAsync: mockCreateCaseFieldVersionValues,
         isPending: false,
       });
@@ -2742,7 +2755,7 @@ describe("BulkEditModal", () => {
         } as Response);
       }) as any;
 
-      (useClientQueries(schema).repositoryCases.useFindMany as Mock).mockReturnValue({
+      (useFindManyRepositoryCases as Mock).mockReturnValue({
         data: mockCasesWithJapanese,
         isLoading: false,
         error: null,
@@ -2903,7 +2916,7 @@ describe("BulkEditModal", () => {
         } as Response);
       }) as any;
 
-      (useClientQueries(schema).repositoryCases.useFindMany as Mock).mockReturnValue({
+      (useFindManyRepositoryCases as Mock).mockReturnValue({
         data: mockCasesWithSpecialChars,
         isLoading: false,
         error: null,
@@ -3004,7 +3017,7 @@ describe("BulkEditModal", () => {
         } as Response);
       }) as any;
 
-      (useClientQueries(schema).repositoryCases.useFindMany as Mock).mockReturnValue({
+      (useFindManyRepositoryCases as Mock).mockReturnValue({
         data: mockCasesWithEmoji,
         isLoading: false,
         error: null,

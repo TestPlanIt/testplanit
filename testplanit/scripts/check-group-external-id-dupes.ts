@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+import { createRawDbClient } from "~/lib/rawDbClient";
 /**
  * check-group-external-id-dupes.ts — Pre-migration audit gate for the
  * Groups.externalId UNIQUE constraint.

@@ -1,9 +1,8 @@
 import { NotificationType } from "~/zenstack/models";
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { schema } from "~/zenstack/schema";
 import { render, screen } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useFindManyNotification } from "~/lib/hooks";
 import { NotificationBell } from "./NotificationBell";
 
 // Mock dependencies
@@ -109,7 +108,7 @@ describe("NotificationBell", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useSession).mockReturnValue({ data: mockSession } as any);
-    vi.mocked(useClientQueries(schema).notification.useFindMany).mockReturnValue({
+    vi.mocked(useFindManyNotification).mockReturnValue({
       data: mockNotifications,
       refetch: vi.fn(),
     } as any);
@@ -149,7 +148,7 @@ describe("NotificationBell", () => {
       relatedEntityType: null,
     }));
 
-    vi.mocked(useClientQueries(schema).notification.useFindMany).mockReturnValue({
+    vi.mocked(useFindManyNotification).mockReturnValue({
       data: manyNotifications,
       refetch: vi.fn(),
     } as any);
@@ -161,7 +160,7 @@ describe("NotificationBell", () => {
   });
 
   it("should not show badge when no unread notifications", () => {
-    vi.mocked(useClientQueries(schema).notification.useFindMany).mockReturnValue({
+    vi.mocked(useFindManyNotification).mockReturnValue({
       data: mockNotifications.map((n) => ({ ...n, isRead: true })),
       refetch: vi.fn(),
     } as any);
@@ -176,7 +175,7 @@ describe("NotificationBell", () => {
     render(<NotificationBell />);
 
     // Wave 5: SSE is the sole update source; no refetchInterval / refetchIntervalInBackground.
-    expect(useClientQueries(schema).notification.useFindMany).toHaveBeenCalledWith(
+    expect(useFindManyNotification).toHaveBeenCalledWith(
       {
         where: {
           userId: "user-123",
@@ -193,7 +192,7 @@ describe("NotificationBell", () => {
     );
 
     const lastCallOptions = vi
-      .mocked(useClientQueries(schema).notification.useFindMany)
+      .mocked(useFindManyNotification)
       .mock.calls.at(-1)?.[1] as Record<string, unknown> | undefined;
     expect(lastCallOptions).toBeDefined();
     expect(lastCallOptions).not.toHaveProperty("refetchInterval");
@@ -206,13 +205,13 @@ describe("NotificationBell", () => {
     render(<NotificationBell />);
 
     // Wave 5: no refetchInterval / refetchIntervalInBackground — SSE is sole update source.
-    expect(useClientQueries(schema).notification.useFindMany).toHaveBeenCalledWith(expect.any(Object), {
+    expect(useFindManyNotification).toHaveBeenCalledWith(expect.any(Object), {
       enabled: false,
     });
   });
 
   it("should handle empty notifications", () => {
-    vi.mocked(useClientQueries(schema).notification.useFindMany).mockReturnValue({
+    vi.mocked(useFindManyNotification).mockReturnValue({
       data: [],
       refetch: vi.fn(),
     } as any);

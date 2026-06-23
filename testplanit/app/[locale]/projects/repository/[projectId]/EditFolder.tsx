@@ -1,7 +1,7 @@
 "use client";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

@@ -1,6 +1,6 @@
-import { Avatar } from "@/components/Avatar";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { Avatar } from "@/components/Avatar";
 import {
   Tooltip,
   TooltipContent,

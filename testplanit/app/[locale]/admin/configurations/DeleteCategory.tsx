@@ -1,8 +1,8 @@
 "use client";
 
-import { Form } from "@/components/ui/form";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { Form } from "@/components/ui/form";
 import type { ConfigCategories } from "~/zenstack/models";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";

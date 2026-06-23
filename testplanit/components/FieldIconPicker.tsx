@@ -1,6 +1,6 @@
-import { ColorPicker } from "@/components/ColorPicker";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { ColorPicker } from "@/components/ColorPicker";
 import { Input } from "@/components/ui/input";
 import {
   Select,

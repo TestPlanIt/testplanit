@@ -52,7 +52,10 @@ const files = [];
 (function walk(dir) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     if (e.isDirectory()) { if (!SKIP_DIRS.has(e.name)) walk(path.join(dir, e.name)); }
-    else if (/\.tsx?$/.test(e.name)) files.push(path.join(dir, e.name));
+    // Skip test/spec files: they mock the v2 named hooks as object keys
+    // (vi.mock("~/lib/hooks", () => ({ useFindManyX: vi.fn() }))) — converting
+    // those needs a different v3 strategy (Phase 7), not this inline codemod.
+    else if (/\.tsx?$/.test(e.name) && !/\.(test|spec)\.tsx?$/.test(e.name)) files.push(path.join(dir, e.name));
   }
 })(ROOT);
 
@@ -94,10 +97,12 @@ for (const file of files) {
     src = src.replace(new RegExp(`\\b${local}\\b`, "g"), expr);
   }
 
-  // Inject the two v3 imports after the first import line (once).
+  // Inject the two v3 imports BEFORE the first import statement (prepending is
+  // safe even when the first import is multi-line; inserting "after the first
+  // line" would split a multi-line `import { ... }` block).
   if (!/from "@zenstackhq\/tanstack-query\/react"/.test(src)) {
-    src = src.replace(/^(import .*\n)/m,
-      `$1import { useClientQueries } from "@zenstackhq/tanstack-query/react";\nimport { schema } from "~/zenstack/schema";\n`);
+    src = src.replace(/^(import\b)/m,
+      `import { useClientQueries } from "@zenstackhq/tanstack-query/react";\nimport { schema } from "~/zenstack/schema";\n$1`);
   }
 
   changed++;

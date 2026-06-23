@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { useState } from "react";
 import { Variant } from "./Categories";
 
 import { useTranslations } from "next-intl";

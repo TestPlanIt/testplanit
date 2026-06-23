@@ -1,9 +1,8 @@
 import { NotificationMode } from "~/zenstack/models";
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { schema } from "~/zenstack/schema";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useFindUniqueAppConfig, useUpdateUserPreferences } from "~/lib/hooks";
 import { NotificationPreferences } from "./NotificationPreferences";
 
 // Mock dependencies
@@ -65,13 +64,13 @@ describe("NotificationPreferences - Email Server Configuration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useSession).mockReturnValue({ data: mockSession } as any);
-    vi.mocked(useClientQueries(schema).appConfig.useFindUnique).mockReturnValue({
+    vi.mocked(useFindUniqueAppConfig).mockReturnValue({
       data: {
         key: "notificationSettings",
         value: { defaultMode: "IN_APP" },
       },
     } as any);
-    vi.mocked(useClientQueries(schema).userPreferences.useUpdate).mockReturnValue({
+    vi.mocked(useUpdateUserPreferences).mockReturnValue({
       mutate: mockUpdatePreferences,
       isPending: false,
     } as any);

@@ -1,8 +1,8 @@
 "use client";
 
-import { Loading } from "@/components/Loading";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { Loading } from "@/components/Loading";
 import { DataTable } from "@/components/tables/DataTable";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";

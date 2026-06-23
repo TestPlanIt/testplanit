@@ -1,8 +1,8 @@
 "use client";
 
-import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
 import { DateFormatter } from "@/components/DateFormatter";
 import { formatSeconds } from "@/components/DurationDisplay";
 import { Loading } from "@/components/Loading";

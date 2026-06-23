@@ -1,6 +1,6 @@
-import { Locale, Theme } from "~/zenstack/models";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { Locale, Theme } from "~/zenstack/models";
 import {
   Accessibility,
   Check,

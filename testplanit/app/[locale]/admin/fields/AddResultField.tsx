@@ -1,8 +1,8 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import { useTranslations } from "next-intl";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";

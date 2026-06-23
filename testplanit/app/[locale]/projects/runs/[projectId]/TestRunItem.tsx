@@ -1,6 +1,6 @@
-import { DateTextDisplay } from "@/components/DateTextDisplay";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { DateTextDisplay } from "@/components/DateTextDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { MemberList } from "@/components/MemberList";

@@ -1,6 +1,6 @@
-import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DurationDisplay } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import LoadingSpinner from "@/components/LoadingSpinner";

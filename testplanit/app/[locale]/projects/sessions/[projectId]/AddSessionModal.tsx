@@ -1,6 +1,6 @@
-import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import {

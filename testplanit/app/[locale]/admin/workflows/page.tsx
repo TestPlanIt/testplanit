@@ -1,8 +1,8 @@
 "use client";
 
-import { DataTable } from "@/components/tables/DataTable";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { DataTable } from "@/components/tables/DataTable";
 import { WorkflowScope } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";

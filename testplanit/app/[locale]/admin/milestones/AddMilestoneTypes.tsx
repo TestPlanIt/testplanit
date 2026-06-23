@@ -1,7 +1,7 @@
 "use client";
-import { useTranslations } from "next-intl";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";

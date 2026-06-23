@@ -1,6 +1,6 @@
-import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
 import { ConfigureParametersButton } from "@/components/parameters/ConfigureParametersButton";

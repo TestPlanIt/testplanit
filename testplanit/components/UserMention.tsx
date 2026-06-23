@@ -1,8 +1,8 @@
 "use client";
 
-import { Avatar } from "@/components/Avatar";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { Avatar } from "@/components/Avatar";
 import { Star } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

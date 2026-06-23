@@ -1,7 +1,15 @@
-import { useMemo } from "react";
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import {
+  useClientQueries,
+  type ClientHooks,
+} from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { useMemo } from "react";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
+
+// Hook signatures for the RepositoryCases grouped client (v3 has no standalone
+// useFindMany* symbol, so `typeof useClientQueries(schema)...` is not a valid
+// type — index the ClientHooks type instead).
+type ZsRepoHooks = ClientHooks<typeof schema>["repositoryCases"];
 
 /**
  * Filters out orphaned field values from a test case
@@ -160,9 +168,9 @@ export interface PostFetchFilter {
  * and applies post-fetch filtering for text/link/steps operators
  */
 export function useFindManyRepositoryCasesFiltered(
-  queryOptions: Parameters<typeof useClientQueries(schema).repositoryCases.useFindMany>[0],
+  queryOptions: Parameters<ZsRepoHooks["useFindMany"]>[0],
   postFetchFilters?: PostFetchFilter[],
-  options?: Parameters<typeof useClientQueries(schema).repositoryCases.useFindMany>[1],
+  options?: Parameters<ZsRepoHooks["useFindMany"]>[1],
   clientPagination?: { skip: number; take: number | undefined }
 ) {
   const result = useClientQueries(schema).repositoryCases.useFindMany(queryOptions, options);
@@ -260,14 +268,14 @@ export function useFindManyRepositoryCasesFiltered(
     ...result,
     data: paginatedData,
     totalCount: totalFilteredCount,
-  } as ReturnType<typeof useClientQueries(schema).repositoryCases.useFindMany> & { totalCount: number };
+  } as ReturnType<ZsRepoHooks["useFindMany"]> & { totalCount: number };
 }
 
 /**
  * Wrapper around useClientQueries(schema).repositoryCases.useFindFirst that automatically filters orphaned field values
  */
 export function useFindFirstRepositoryCasesFiltered(
-  ...args: Parameters<typeof useClientQueries(schema).repositoryCases.useFindFirst>
+  ...args: Parameters<ZsRepoHooks["useFindFirst"]>
 ) {
   const result = useClientQueries(schema).repositoryCases.useFindFirst(...args);
 

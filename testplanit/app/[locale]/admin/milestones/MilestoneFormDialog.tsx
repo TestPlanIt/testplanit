@@ -1,8 +1,8 @@
 "use client";
 
-import DynamicIcon from "@/components/DynamicIcon";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

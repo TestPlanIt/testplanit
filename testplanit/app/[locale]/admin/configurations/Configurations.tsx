@@ -1,6 +1,6 @@
-import { useDebounce } from "@/components/Debounce";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { useDebounce } from "@/components/Debounce";
 import { CustomColumnMeta } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";

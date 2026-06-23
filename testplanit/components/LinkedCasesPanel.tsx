@@ -1,6 +1,6 @@
-import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";

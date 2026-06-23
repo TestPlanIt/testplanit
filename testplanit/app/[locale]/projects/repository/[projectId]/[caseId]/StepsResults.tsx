@@ -1,6 +1,6 @@
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import type { Steps as PrismaSteps } from "~/zenstack/models";
 import { Layers, SearchCheck } from "lucide-react";
 import { useTranslations } from "next-intl";

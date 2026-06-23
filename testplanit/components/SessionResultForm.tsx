@@ -1,8 +1,8 @@
 "use client";
 
-import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { SimpleUnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";

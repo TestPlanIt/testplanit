@@ -1,8 +1,8 @@
 "use client";
 
-import { DateFormatter } from "@/components/DateFormatter";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { DateFormatter } from "@/components/DateFormatter";
 import { UserDisplay } from "@/components/search/UserDisplay";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";

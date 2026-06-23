@@ -1,8 +1,8 @@
 "use client";
 
-import { ApplicationArea } from "~/zenstack/models";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { ApplicationArea } from "~/zenstack/models";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";

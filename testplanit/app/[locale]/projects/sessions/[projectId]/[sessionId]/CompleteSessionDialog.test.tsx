@@ -1,8 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  useCreateSessionVersions,
+  useFindManyWorkflows,
+  useUpdateSessions,
+} from "~/lib/hooks";
 import {
   CompletableSession,
   CompleteSessionDialog,
@@ -22,9 +25,9 @@ vi.mock("next-auth/react", () => ({
 
 // Mock hooks
 vi.mock("~/lib/hooks", () => ({
-  useClientQueries(schema).workflows.useFindMany: vi.fn(),
-  useClientQueries(schema).sessions.useUpdate: vi.fn(),
-  useClientQueries(schema).sessionVersions.useCreate: vi.fn(),
+  useFindManyWorkflows: vi.fn(),
+  useUpdateSessions: vi.fn(),
+  useCreateSessionVersions: vi.fn(),
 }));
 
 // Mock next-intl
@@ -33,9 +36,9 @@ vi.mock("next-intl", () => ({
 }));
 
 const mockUseSession = vi.mocked(useSession);
-const mockUseFindManyWorkflows = vi.mocked(useClientQueries(schema).workflows.useFindMany);
-const mockUseUpdateSessions = vi.mocked(useClientQueries(schema).sessions.useUpdate);
-const mockUseCreateSessionVersions = vi.mocked(useClientQueries(schema).sessionVersions.useCreate);
+const mockUseFindManyWorkflows = vi.mocked(useFindManyWorkflows);
+const mockUseUpdateSessions = vi.mocked(useUpdateSessions);
+const mockUseCreateSessionVersions = vi.mocked(useCreateSessionVersions);
 
 describe("CompleteSessionDialog", () => {
   const mockSession: CompletableSession = {

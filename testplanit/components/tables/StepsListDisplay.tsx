@@ -1,6 +1,6 @@
-import TextFromJson from "@/components/TextFromJson";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import TextFromJson from "@/components/TextFromJson";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,

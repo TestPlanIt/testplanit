@@ -1,8 +1,8 @@
 "use client";
 
-import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import {

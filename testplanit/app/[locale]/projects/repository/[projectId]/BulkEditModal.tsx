@@ -1,8 +1,8 @@
 "use client";
 
-import { formatSeconds } from "@/components/DurationDisplay";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { formatSeconds } from "@/components/DurationDisplay";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

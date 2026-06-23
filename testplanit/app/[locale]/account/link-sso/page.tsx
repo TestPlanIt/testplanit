@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckCircle2, InfoIcon, Shield } from "lucide-react";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { CheckCircle2, InfoIcon, Shield } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";

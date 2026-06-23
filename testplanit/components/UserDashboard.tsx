@@ -1,6 +1,6 @@
-import { SessionResultsSummary } from "@/components/SessionResultsSummary";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { SessionResultsSummary } from "@/components/SessionResultsSummary";
 import { TestRunCasesSummary } from "@/components/TestRunCasesSummary";
 import {
   Card,

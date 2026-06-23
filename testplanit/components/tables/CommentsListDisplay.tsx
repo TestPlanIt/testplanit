@@ -1,8 +1,8 @@
 "use client";
 
-import { UserNameCell } from "@/components/tables/UserNameCell";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import { badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

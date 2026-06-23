@@ -1,6 +1,6 @@
-import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import JUnitDurationHistogram from "@/components/dataVisualizations/JUnitDurationHistogram";
 import JUnitStatusTimeline from "@/components/dataVisualizations/JUnitStatusTimeline";
 import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";

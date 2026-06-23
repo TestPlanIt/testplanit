@@ -1,6 +1,6 @@
-import React from "react";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import React from "react";
 
 import { Avatar } from "@/components/Avatar";
 import { UserNameCell } from "@/components/tables/UserNameCell";

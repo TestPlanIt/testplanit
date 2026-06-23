@@ -1,8 +1,8 @@
 "use client";
 
-import CompletedRunsLineChart from "@/components/dataVisualizations/CompletedRunsLineChart";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import CompletedRunsLineChart from "@/components/dataVisualizations/CompletedRunsLineChart";
 import RecentResultsDonut from "@/components/dataVisualizations/RecentResultsDonut";
 import SummarySunburstChart, {
   SunburstHierarchyNode,

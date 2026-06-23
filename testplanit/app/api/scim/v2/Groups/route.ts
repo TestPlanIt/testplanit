@@ -14,6 +14,7 @@
  * `scimError` envelope. All error responses carry `Content-Type:
  * application/scim+json` so IdPs can confidently parse the §3.12 envelope.
  */
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { ORMError } from "@zenstackhq/orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -108,9 +109,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return e.response;
     }
     if (
-      typeof Prisma?.PrismaClientKnownRequestError === "function" &&
-      e instanceof ORMError &&
-      e.code === "P2002"
+      isUniqueConstraintError(e)
     ) {
       return scimError(
         409,

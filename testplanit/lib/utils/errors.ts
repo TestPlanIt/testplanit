@@ -1,22 +1,38 @@
 import { ApplicationArea } from "~/zenstack/models";
-import { ORMError } from "@zenstackhq/orm";
+import { ORMError, ORMErrorReason } from "@zenstackhq/orm";
+
+// v3 error shapes differ from Prisma: server-side mutations throw an ORMError
+// carrying `reason` + the driver's `dbErrorCode` (Postgres SQLSTATE) and
+// `dbErrorMessage` — there is no Prisma-style `.code` ("P2002" etc.). Client-side
+// ZenStack hook errors are NOT ORMError instances; they arrive deserialized as
+// `{ info: { message } }` (or a generic Error). These helpers handle both:
+// SQLSTATE on an ORMError, otherwise a text match on whatever message is present.
+function ormErrorText(err: unknown): string {
+  if (err instanceof ORMError) {
+    return `${err.message ?? ""} ${err.dbErrorMessage ?? ""}`;
+  }
+  if (err && typeof err === "object") {
+    const e = err as { message?: unknown; info?: { message?: unknown } };
+    const m = typeof e.message === "string" ? e.message : "";
+    const im =
+      e.info && typeof e.info.message === "string" ? e.info.message : "";
+    return `${m} ${im}`;
+  }
+  return typeof err === "string" ? err : "";
+}
 
 export function isUniqueConstraintError(err: unknown): boolean {
-  return (
-    err instanceof ORMError && err.code === "P2002"
-  );
+  if (err instanceof ORMError && err.dbErrorCode === "23505") return true;
+  return /duplicate key value|unique constraint/i.test(ormErrorText(err));
 }
 
 export function isNotFoundError(err: unknown): boolean {
-  return (
-    err instanceof ORMError && err.code === "P2025"
-  );
+  return err instanceof ORMError && err.reason === ORMErrorReason.NOT_FOUND;
 }
 
 export function isForeignKeyError(err: unknown): boolean {
-  return (
-    err instanceof ORMError && err.code === "P2003"
-  );
+  if (err instanceof ORMError && err.dbErrorCode === "23503") return true;
+  return /foreign key constraint/i.test(ormErrorText(err));
 }
 
 export class ReviewGateError extends Error {
@@ -135,31 +151,15 @@ export function isAlreadyPendingError(
   err: unknown
 ): err is AlreadyPendingError | ORMError {
   if (err instanceof AlreadyPendingError) return true;
-  if (
-    !(err instanceof ORMError) ||
-    err.code !== "P2002"
-  ) {
+  if (!isUniqueConstraintError(err)) {
     return false;
   }
-  // Prisma reports `meta.target` in two shapes depending on the underlying
-  // driver and Prisma version:
-  //   - String: the bare index name, e.g. "review_request_one_pending_per_entity".
-  //   - Array<string>: the field list, e.g. ["entityType", "entityId"]
-  //     (Prisma 6.19+ with the rust query engine returns this for partial
-  //     unique indexes on the ReviewRequest table — verified live against
-  //     PostgreSQL by lib/services/schemaValidation.test.ts).
-  // Match both. The message body always includes the field tuple wording
-  // "(`entityType`,`entityId`)", which is the disambiguating signal when
-  // `meta.target` is the array form (the array alone cannot be attributed
-  // to one specific partial index, but on the ReviewRequest table this
-  // exact pair only belongs to `review_request_one_pending_per_entity`).
-  const target = err.meta?.target;
-  if (typeof target === "string") {
-    return target.includes("review_request_one_pending_per_entity");
-  }
-  if (Array.isArray(target)) {
-    const fields = target.map(String);
-    return fields.includes("entityType") && fields.includes("entityId");
-  }
-  return false;
+  // The unique violation is the partial index `review_request_one_pending_per_entity`.
+  // v3 surfaces the Postgres error text (dbErrorMessage / message), which names the
+  // constraint and/or the (entityType, entityId) field tuple — match either.
+  const text = ormErrorText(err);
+  return (
+    text.includes("review_request_one_pending_per_entity") ||
+    (/entityType/.test(text) && /entityId/.test(text))
+  );
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { IntegrationProvider } from "~/zenstack/models";
 import { AlertCircle, Settings } from "lucide-react";

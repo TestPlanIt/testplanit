@@ -1,6 +1,6 @@
-import { UserNameCell } from "@/components/tables/UserNameCell";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,

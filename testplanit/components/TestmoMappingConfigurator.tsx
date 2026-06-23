@@ -1,8 +1,8 @@
 "use client";
 
-import { ColorPicker } from "@/components/ColorPicker";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { ColorPicker } from "@/components/ColorPicker";
 import { FieldIconPicker } from "@/components/FieldIconPicker";
 import StatusDotDisplay from "@/components/StatusDotDisplay";
 import { Badge } from "@/components/ui/badge";

@@ -1,8 +1,8 @@
 "use client";
 
-import { IntegrationsList } from "@/components/admin/integrations/integrations-list";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { IntegrationsList } from "@/components/admin/integrations/integrations-list";
 import { Loading } from "@/components/Loading";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import {

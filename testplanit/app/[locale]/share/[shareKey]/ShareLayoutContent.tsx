@@ -1,8 +1,8 @@
 "use client";
 
-import { Session } from "next-auth";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";

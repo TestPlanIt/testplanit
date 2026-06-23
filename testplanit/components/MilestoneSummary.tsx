@@ -1,8 +1,8 @@
 "use client";
 
-import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,

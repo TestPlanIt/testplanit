@@ -1,6 +1,6 @@
-import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DateFormatter } from "@/components/DateFormatter";
 import { formatSeconds } from "@/components/DurationDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";

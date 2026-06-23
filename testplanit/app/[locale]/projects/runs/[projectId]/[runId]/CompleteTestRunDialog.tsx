@@ -1,8 +1,8 @@
 "use client";
 
-import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {

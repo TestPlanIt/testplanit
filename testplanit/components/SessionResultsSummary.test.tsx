@@ -1,6 +1,4 @@
 import { DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat } from "~/zenstack/models";
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { schema } from "~/zenstack/schema";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
@@ -59,11 +57,12 @@ function renderWithQueryClient(ui: React.ReactElement) {
 
 // Mock Hooks
 vi.mock("~/lib/hooks", () => ({
-  useClientQueries(schema).sessionResults.useFindMany: vi.fn(),
-  useClientQueries(schema).status.useFindFirst: vi.fn(),
+  useFindManySessionResults: vi.fn(),
+  useFindFirstStatus: vi.fn(),
 }));
 
 // Import the mocked hooks AFTER vi.mock
+import { useFindFirstStatus, useFindManySessionResults } from "~/lib/hooks";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
@@ -137,10 +136,10 @@ vi.mock("~/utils/duration", () => ({
 // --- Test Setup ---
 beforeEach(() => {
   // Reset mocks using the IMPORTED functions, cast to Mock<any>
-  (useClientQueries(schema).sessionResults.useFindMany as Mock<any>)
+  (useFindManySessionResults as Mock<any>)
     .mockClear()
     .mockReturnValue({ data: [], isLoading: false });
-  (useClientQueries(schema).status.useFindFirst as Mock<any>).mockClear().mockReturnValue({
+  (useFindFirstStatus as Mock<any>).mockClear().mockReturnValue({
     data: {
       id: 1,
       name: "Untested",
@@ -195,7 +194,7 @@ describe("SessionResultsSummary", () => {
       isDeleted: false,
       color: { id: 1, name: "Grey", value: "#808080" },
     };
-    (useClientQueries(schema).status.useFindFirst as Mock<any>).mockReturnValue({
+    (useFindFirstStatus as Mock<any>).mockReturnValue({
       data: firstStatus,
       isLoading: false,
     });

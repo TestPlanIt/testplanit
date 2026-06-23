@@ -1,8 +1,8 @@
 "use client";
 
-import { Avatar } from "@/components/Avatar";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { Avatar } from "@/components/Avatar";
 import { DateFormatter } from "@/components/DateFormatter";
 import { EmailCell } from "@/components/EmailDisplay";
 import { AccessLevelDisplay } from "@/components/tables/AccessLevelDisplay";

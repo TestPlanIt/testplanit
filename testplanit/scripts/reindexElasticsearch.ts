@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
 
 
-import {
 import { createRawDbClient } from "~/lib/rawDbClient";
+import {
   getElasticsearchClient,
   REPOSITORY_CASE_INDEX,
 } from "../services/elasticsearchService";

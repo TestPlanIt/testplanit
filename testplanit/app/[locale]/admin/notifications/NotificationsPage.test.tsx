@@ -1,9 +1,12 @@
 import { NotificationMode } from "~/zenstack/models";
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { schema } from "~/zenstack/schema";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  useCreateAppConfig,
+  useFindUniqueAppConfig,
+  useUpdateAppConfig,
+} from "~/lib/hooks";
 import NotificationSettingsPage from "./page";
 
 // Mock dependencies
@@ -127,18 +130,18 @@ describe("Admin Notifications Page - Email Server Configuration", () => {
       data: mockAdminSession,
       status: "authenticated",
     } as any);
-    vi.mocked(useClientQueries(schema).appConfig.useFindUnique).mockReturnValue({
+    vi.mocked(useFindUniqueAppConfig).mockReturnValue({
       data: {
         key: "notificationSettings",
         value: { defaultMode: NotificationMode.IN_APP },
       },
       isLoading: false,
     } as any);
-    vi.mocked(useClientQueries(schema).appConfig.useUpdate).mockReturnValue({
+    vi.mocked(useUpdateAppConfig).mockReturnValue({
       mutate: mockUpdateAppConfig,
       isPending: false,
     } as any);
-    vi.mocked(useClientQueries(schema).appConfig.useCreate).mockReturnValue({
+    vi.mocked(useCreateAppConfig).mockReturnValue({
       mutate: mockCreateAppConfig,
       isPending: false,
     } as any);
@@ -204,7 +207,7 @@ describe("Admin Notifications Page - Email Server Configuration", () => {
 
   it("should fallback default mode to IN_APP when email server is not configured and current mode is email-based", async () => {
     // Mock settings with email-based default mode
-    vi.mocked(useClientQueries(schema).appConfig.useFindUnique).mockReturnValue({
+    vi.mocked(useFindUniqueAppConfig).mockReturnValue({
       data: {
         key: "notificationSettings",
         value: { defaultMode: NotificationMode.IN_APP_EMAIL_IMMEDIATE },

@@ -3,9 +3,9 @@
  * Colors are pulled dynamically from the database Color table
  */
 
-import { useMemo, type CSSProperties } from "react";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { useMemo, type CSSProperties } from "react";
 
 interface ColorFamily {
   id: number;

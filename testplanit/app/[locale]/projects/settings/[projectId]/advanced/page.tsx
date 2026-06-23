@@ -1,8 +1,8 @@
 "use client";
 
-import { ProjectIcon } from "@/components/ProjectIcon";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { ProjectIcon } from "@/components/ProjectIcon";
 import { AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,

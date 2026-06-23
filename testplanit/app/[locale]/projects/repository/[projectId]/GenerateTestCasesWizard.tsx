@@ -1,8 +1,8 @@
 "use client";
 
-import { DateFormatter } from "@/components/DateFormatter";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { DateFormatter } from "@/components/DateFormatter";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { SearchIssuesDialog } from "@/components/issues/search-issues-dialog";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";

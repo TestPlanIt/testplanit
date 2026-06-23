@@ -1,8 +1,8 @@
 "use client";
 
-import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { Filter } from "@/components/tables/Filter";
 import {
   AlertDialog,

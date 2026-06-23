@@ -1,8 +1,8 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import type { GroupProjectPermissionUpsertArgs, UserProjectPermissionUpsertArgs } from "~/zenstack/input";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import type { GroupProjectPermissionUpsertArgs, UserProjectPermissionUpsertArgs } from "~/zenstack/input";
 import { ProjectAccessType } from "~/zenstack/models";
 import type { GroupProjectPermission, UserProjectPermission } from "~/zenstack/models";
 import { useTranslations } from "next-intl";

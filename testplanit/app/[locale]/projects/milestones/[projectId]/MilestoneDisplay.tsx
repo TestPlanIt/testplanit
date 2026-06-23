@@ -1,6 +1,6 @@
-import { Loading } from "@/components/Loading";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { Loading } from "@/components/Loading";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
