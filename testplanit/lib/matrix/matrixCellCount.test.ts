@@ -56,15 +56,26 @@ describe("computeCellCount", () => {
 
 describe("runCellCountPreflight", () => {
   let mockPrisma: any;
+  // runCellCountPreflight runs its two COUNT queries via Kysely
+  // sql`...`.execute(prisma.$qb). qbRows yields each query's rows array (set per
+  // test); the $qb executor wraps it in the { rows } shape the action reads.
+  let qbRows: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    qbRows = vi.fn();
     mockPrisma = {
-      $queryRaw: vi.fn(),
+      $qb: {
+        getExecutor: () => ({
+          transformQuery: (n: unknown) => n,
+          compileQuery: (n: unknown) => n,
+          executeQuery: async () => ({ rows: await qbRows() }),
+        }),
+      },
     };
   });
 
   it("happy path under the cap: willRefuse=false", async () => {
-    mockPrisma.$queryRaw
+    qbRows
       .mockResolvedValueOnce([{ case_count: 3n, config_count: 2n }])
       .mockResolvedValueOnce([
         { case_id: 1, max_iters: 3 },
@@ -86,7 +97,7 @@ describe("runCellCountPreflight", () => {
   });
 
   it("exactly at 50,000: willRefuse=false (boundary inclusive)", async () => {
-    mockPrisma.$queryRaw
+    qbRows
       .mockResolvedValueOnce([{ case_count: 500n, config_count: 1n }])
       .mockResolvedValueOnce(
         Array.from({ length: 500 }, (_, i) => ({
@@ -100,7 +111,7 @@ describe("runCellCountPreflight", () => {
   });
 
   it("at 50,001: willRefuse=true", async () => {
-    mockPrisma.$queryRaw
+    qbRows
       .mockResolvedValueOnce([{ case_count: 1n, config_count: 1n }])
       .mockResolvedValueOnce([{ case_id: 1, max_iters: 50001 }]);
     const result = await runCellCountPreflight(mockPrisma, 1, {});
@@ -109,7 +120,7 @@ describe("runCellCountPreflight", () => {
   });
 
   it("zero rows: returns 0 cells, not refused", async () => {
-    mockPrisma.$queryRaw
+    qbRows
       .mockResolvedValueOnce([{ case_count: 0n, config_count: 0n }])
       .mockResolvedValueOnce([]);
     const result = await runCellCountPreflight(mockPrisma, 1, {});
@@ -121,7 +132,7 @@ describe("runCellCountPreflight", () => {
   });
 
   it("threshold has the literal value 50000 (matches the type contract)", async () => {
-    mockPrisma.$queryRaw
+    qbRows
       .mockResolvedValueOnce([{ case_count: 0n, config_count: 0n }])
       .mockResolvedValueOnce([]);
     const result = await runCellCountPreflight(mockPrisma, 1, {});
