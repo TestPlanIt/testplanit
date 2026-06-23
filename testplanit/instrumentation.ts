@@ -31,6 +31,7 @@ export async function register() {
   // capture alive no matter how the app is installed/updated/launched. Idempotent, advisory-locked,
   // and fail-open by default (see ensureAuditTriggers); never blocks startup unless explicitly made
   // fatal via AUDIT_TRIGGER_BOOTSTRAP_FATAL=1.
-  const { ensureAuditTriggers } = await import("~/lib/audit/ensureAuditTriggers");
+  const { ensureAuditTriggers } =
+    await import("~/lib/audit/ensureAuditTriggers");
   await ensureAuditTriggers();
 }

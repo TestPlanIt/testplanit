@@ -22,6 +22,7 @@ import {
   pollDataChangeLogsAcrossTenants,
   type TenantPollClient,
 } from "../lib/audit/correlation";
+import { ensureAuditTriggers } from "../lib/audit/ensureAuditTriggers";
 
 /**
  * Process an audit log job.
@@ -316,10 +317,21 @@ const startWorker = async () => {
 // Run the worker only when this file is executed directly (not on require)
 if (require.main === module) {
   console.log("[AuditLogWorker] Running as standalone process...");
-  startWorker().catch((err) => {
-    console.error("[AuditLogWorker] Failed to start:", err);
-    process.exit(1);
-  });
+  // Re-attach the audit-trigger substrate before draining DataChangeLog. The web tier's
+  // instrumentation hook does this too, but workers can boot first (or the web pod can fail its
+  // startup asserts), and this worker is the direct consumer of the capture triggers — if they were
+  // dropped (by `prisma db push`, or a launch path that skips apply-triggers) it would silently
+  // drain nothing. Idempotent and advisory-locked; fail-open by default so a DDL hiccup can't
+  // crash-loop the worker — set AUDIT_TRIGGER_BOOTSTRAP_FATAL=1 to refuse to start without it.
+  void (async () => {
+    try {
+      await ensureAuditTriggers();
+      await startWorker();
+    } catch (err) {
+      console.error("[AuditLogWorker] Failed to start:", err);
+      process.exit(1);
+    }
+  })();
 }
 
 export default worker;

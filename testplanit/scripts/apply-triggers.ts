@@ -1,10 +1,15 @@
 /**
  * Idempotent trigger DDL applier — the SOLE source of audit trigger DDL (CAP-02).
  *
- * Generalizes the proven Phase 12 spike applier (prisma/spike/apply-spike-trigger.ts) from a
- * single hard-coded table to the full TRIGGER_REGISTRY. Run on every `pnpm generate` and from
- * the deploy entrypoint AFTER `prisma db push` (which silently drops triggers), so the audit
- * substrate is re-attached on every schema sync.
+ * Attaches one capture trigger per TRIGGER_REGISTRY entry (each writes "DataChangeLog") plus the
+ * DataChangeLog append-only enforcement triggers and grants. `prisma db push` silently DROPS these
+ * triggers, and not every launch path re-runs the applier, so the substrate is re-attached from
+ * three places — losing it means silent audit-capture loss with no error:
+ *   - `pnpm generate` / `pnpm db:push`, immediately AFTER `prisma db push` (every schema sync),
+ *   - the deploy entrypoint (docker-entrypoint.sh), after db push,
+ *   - the application's own boot, launch-agnostic, via the exported applyAuditTriggers() — called by
+ *     lib/audit/ensureAuditTriggers from instrumentation.ts (web tier) and the audit-log worker
+ *     (worker tier), so capture survives however the app is installed, updated, or relaunched.
  *
  * In order, against a DIRECT (pooler-bypassing) connection, it:
  *   1. resolves DIRECT_DATABASE_URL ?? DATABASE_URL,
@@ -21,8 +26,10 @@
  *   7. self-checks: count(DISTINCT trigger_name) over tpl_audit_% against the registry length, and
  *      asserts the connecting role holds INSERT/SELECT/UPDATE/DELETE on DataChangeLog.
  *
- * Run:  cd testplanit && tsx scripts/apply-triggers.ts
- * Safe to run repeatedly — every function/trigger is CREATE OR REPLACE / DROP IF EXISTS first.
+ * Run as a CLI:  cd testplanit && tsx scripts/apply-triggers.ts
+ * Or import applyAuditTriggers() to apply from the running app. Safe to run repeatedly — every
+ * function/trigger is CREATE OR REPLACE / DROP IF EXISTS first, and concurrent runners serialize on
+ * a session advisory lock so parallel replica boots can't deadlock on the catalogs.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
