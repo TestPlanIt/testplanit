@@ -1552,8 +1552,7 @@ export default function TestCaseDetails() {
         for (const stepItem of data.steps as any[]) {
           if (stepItem.isShared && stepItem.sharedStepGroupId) {
             const group = sharedStepGroupsDataFromHook?.find(
-              (g: SharedStepGroupWithItems) =>
-                g.id === stepItem.sharedStepGroupId
+              (g) => g.id === stepItem.sharedStepGroupId
             );
             if (group && group.items && group.items.length > 0) {
               for (const sharedItem of group.items) {

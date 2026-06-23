@@ -5779,7 +5779,7 @@ async function processImportMode(
       await prisma.testmoImportJob.update({
         where: { id: jobId },
         data,
-      });
+      } as TestmoImportJobUpdateArgs);
 
       context.lastProgressUpdate = now;
     } catch (progressError) {
@@ -5844,10 +5844,8 @@ async function processImportMode(
       operation: (tx: TxClient) => Promise<T>,
       options?: { timeoutMs?: number }
     ): Promise<T> => {
-      return prisma.$transaction(operation, {
-        timeout: options?.timeoutMs ?? IMPORT_TRANSACTION_TIMEOUT_MS,
-        maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
-      });
+      void options;
+      return prisma.$transaction(operation);
     };
 
     logMessage(context, "Processing workflow mappings");

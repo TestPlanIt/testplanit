@@ -945,7 +945,7 @@ export function EditResultModal({
 
           // Find existing step result from the existingResult
           const existingStepResult = existingResult
-            ?.find((r: TestRunResult) => r.id === Number(resultId))
+            ?.find((r) => r.id === Number(resultId))
             ?.stepResults?.find((sr) => sr.stepId === step.id);
 
           if (existingStepResult) {

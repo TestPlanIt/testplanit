@@ -330,7 +330,13 @@ export default function SSOAdminPage() {
           where: { id: existingProvider.id },
           data: {
             enabled: true,
-            samlConfig: { upsert: { create: samlConfig, update: samlConfig } },
+            samlConfig: {
+              upsert: {
+                where: { providerId: existingProvider.id },
+                create: samlConfig,
+                update: samlConfig,
+              },
+            },
           },
         });
       } else {

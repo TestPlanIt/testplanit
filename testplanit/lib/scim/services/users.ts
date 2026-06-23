@@ -641,11 +641,11 @@ export async function putScimUser(
     }
 
     const before = asScimSnapshot(current);
-    const updated = await tx.user.update({
+    const updated = (await tx.user.update({
       where: { id: current.id },
       data: updates,
       include: SCIM_USER_INCLUDE,
-    });
+    } as UserUpdateArgs)) as Parameters<typeof asScimSnapshot>[0];
 
     await emitScimUserUpdated(
       before,

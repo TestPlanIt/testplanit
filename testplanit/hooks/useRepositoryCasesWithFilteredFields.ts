@@ -15,27 +15,22 @@ type ZsRepoHooks = ClientHooks<typeof schema>["repositoryCases"];
  * Filters out orphaned field values from a test case
  * (field values that are not part of the test case's current template)
  */
-export function filterOrphanedFieldValues<
-  T extends { template?: any; caseFieldValues?: any[] },
->(testCase: T): T {
-  if (
-    !testCase ||
-    !testCase.template?.caseFields ||
-    !testCase.caseFieldValues
-  ) {
+export function filterOrphanedFieldValues<T>(testCase: T): T {
+  const tc = testCase as any;
+  if (!tc || !tc.template?.caseFields || !tc.caseFieldValues) {
     return testCase;
   }
 
   const templateFieldIds = new Set(
-    testCase.template.caseFields.map((cf: any) => cf.caseField.id)
+    tc.template.caseFields.map((cf: any) => cf.caseField.id)
   );
 
-  const filteredFieldValues = testCase.caseFieldValues.filter((cfv: any) =>
+  const filteredFieldValues = tc.caseFieldValues.filter((cfv: any) =>
     templateFieldIds.has(cfv.fieldId)
   );
 
   return {
-    ...testCase,
+    ...tc,
     caseFieldValues: filteredFieldValues,
   };
 }
@@ -192,7 +187,7 @@ export function useFindManyRepositoryCasesFiltered(
 
     // Apply post-fetch filters if provided
     if (postFetchFilters && postFetchFilters.length > 0) {
-      cases = cases.filter((testCase) => {
+      cases = cases.filter((testCase: any) => {
         // Check all post-fetch filters
         for (const filter of postFetchFilters) {
           // Find the field value for this filter

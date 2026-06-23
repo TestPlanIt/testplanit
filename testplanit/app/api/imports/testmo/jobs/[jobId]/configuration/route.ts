@@ -98,10 +98,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
       updateData.phase = "CONFIGURING";
     }
 
+    // db is the policy-enhanced client; its update<T> generic instantiates too
+    // deeply for tsc here (TS2589). updateData is already typed at its
+    // declaration above, so the args cast only sidesteps the depth limit.
     const updatedJob = await db.testmoImportJob.update({
       where: { id: jobId },
       data: updateData,
-    });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
 
     const payload = serializeImportJob(updatedJob);
 
