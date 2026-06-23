@@ -1,22 +1,27 @@
 import { render, screen } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock ZenStack hooks
-vi.mock("@zenstackhq/tanstack-query/react", () => ({
-  useClientQueries: () => ({
-    repositoryFolders: { useFindMany: vi.fn(() => ({
+// Mock ZenStack hooks. useFindManyRepositoryFolders is hoisted so tests can
+// drive it via mockReturnValue (the test body previously reached it through
+// `await import("~/lib/hooks")`, which no longer exists in v3).
+const { useFindManyRepositoryFolders } = vi.hoisted(() => ({
+  useFindManyRepositoryFolders: vi.fn(() => ({
     data: [],
     isLoading: false,
     error: null,
     refetch: vi.fn(),
-  })), useUpdate: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })) },
-    repositoryCases: { useUpdate: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })) },
+  })),
+}));
+
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    repositoryFolders: {
+      useFindMany: useFindManyRepositoryFolders,
+      useUpdate: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+    },
+    repositoryCases: {
+      useUpdate: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+    },
   }),
 }));
 
@@ -159,7 +164,6 @@ describe("TreeView", () => {
   });
 
   it("renders empty state when no data while loading (spinner delay prevents flash)", async () => {
-    const { useFindManyRepositoryFolders } = await import("~/lib/hooks");
     vi.mocked(useFindManyRepositoryFolders).mockReturnValue({
       data: [],
       isLoading: true,
@@ -177,7 +181,6 @@ describe("TreeView", () => {
   });
 
   it("renders empty state message when no folders exist", async () => {
-    const { useFindManyRepositoryFolders } = await import("~/lib/hooks");
     vi.mocked(useFindManyRepositoryFolders).mockReturnValue({
       data: [],
       isLoading: false,
@@ -194,7 +197,6 @@ describe("TreeView", () => {
   });
 
   it("renders empty state for non-editor when no folders exist", async () => {
-    const { useFindManyRepositoryFolders } = await import("~/lib/hooks");
     vi.mocked(useFindManyRepositoryFolders).mockReturnValue({
       data: [],
       isLoading: false,
@@ -235,7 +237,6 @@ describe("TreeView", () => {
       },
     ];
 
-    const { useFindManyRepositoryFolders } = await import("~/lib/hooks");
     vi.mocked(useFindManyRepositoryFolders).mockReturnValue({
       data: mockFolders,
       isLoading: false,
@@ -267,7 +268,6 @@ describe("TreeView", () => {
       },
     ];
 
-    const { useFindManyRepositoryFolders } = await import("~/lib/hooks");
     vi.mocked(useFindManyRepositoryFolders).mockReturnValue({
       data: mockFolders,
       isLoading: false,
@@ -296,7 +296,6 @@ describe("TreeView", () => {
       },
     ];
 
-    const { useFindManyRepositoryFolders } = await import("~/lib/hooks");
     vi.mocked(useFindManyRepositoryFolders).mockReturnValue({
       data: mockFolders,
       isLoading: false,
@@ -327,7 +326,6 @@ describe("TreeView", () => {
       },
     ];
 
-    const { useFindManyRepositoryFolders } = await import("~/lib/hooks");
     vi.mocked(useFindManyRepositoryFolders).mockReturnValue({
       data: mockFolders,
       isLoading: false,
@@ -363,7 +361,6 @@ describe("TreeView", () => {
       },
     ];
 
-    const { useFindManyRepositoryFolders } = await import("~/lib/hooks");
     vi.mocked(useFindManyRepositoryFolders).mockReturnValue({
       data: mockFolders,
       isLoading: false,
@@ -409,7 +406,6 @@ describe("TreeView", () => {
       },
     ];
 
-    const { useFindManyRepositoryFolders } = await import("~/lib/hooks");
     vi.mocked(useFindManyRepositoryFolders).mockReturnValue({
       data: mockFolders,
       isLoading: false,

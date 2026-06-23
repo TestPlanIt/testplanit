@@ -20,15 +20,18 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useFindManyRepositoryCasesFiltered } from "./useRepositoryCasesWithFilteredFields";
 
-// Mock the ZenStack hook
-vi.mock("@zenstackhq/tanstack-query/react", () => ({
-  useClientQueries: () => ({
-    repositoryCases: { useFindMany: vi.fn() },
-  }),
+// The wrapper reads useClientQueries(schema).repositoryCases.useFindMany; hoist
+// it so tests can drive it via mockReturnValue (previously imported from the
+// now-removed ~/lib/hooks/repository-cases).
+const { useFindManyRepositoryCases } = vi.hoisted(() => ({
+  useFindManyRepositoryCases: vi.fn(),
 }));
 
-const { useFindManyRepositoryCases } =
-  await import("~/lib/hooks/repository-cases");
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    repositoryCases: { useFindMany: useFindManyRepositoryCases },
+  }),
+}));
 
 // Test data setup - known values for comprehensive testing
 const createTestCase = (
