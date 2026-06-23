@@ -2,12 +2,21 @@ import { NotificationType } from "~/zenstack/models";
 import { render, screen } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useFindManyNotification } from "~/lib/hooks";
 import { NotificationBell } from "./NotificationBell";
+
+// v3: the component reads via useClientQueries(schema).notification.useFindMany.
+// Hoist a stable mock fn so per-test mockReturnValue / call assertions work.
+const { useFindManyNotification } = vi.hoisted(() => ({
+  useFindManyNotification: vi.fn(),
+}));
 
 // Mock dependencies
 vi.mock("next-auth/react");
-vi.mock("~/lib/hooks");
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    notification: { useFindMany: useFindManyNotification },
+  }),
+}));
 vi.mock("~/app/actions/notifications", () => ({
   markNotificationAsRead: vi.fn(),
   markNotificationAsUnread: vi.fn(),
