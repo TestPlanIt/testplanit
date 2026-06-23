@@ -39,19 +39,18 @@ const mockUseFindUniqueCaseSharedDataSetAssignment = vi.fn();
 const mockUseFindFirstDataSetVersion = vi.fn();
 const mockRouterPush = vi.fn();
 
-vi.mock("~/lib/hooks", () => ({
-  useCountTestRunCases: (...args: any[]) => mockUseCountTestRunCases(...args),
-  useFindManyTestRunCaseIteration: (...args: any[]) =>
-    mockUseFindManyTestRunCaseIteration(...args),
-  useFindUniqueCaseSharedDataSetAssignment: (...args: any[]) =>
-    mockUseFindUniqueCaseSharedDataSetAssignment(...args),
-  useFindFirstDataSetVersion: (...args: any[]) =>
-    mockUseFindFirstDataSetVersion(...args),
-  // The AssignSharedDatasetDialog (lazy-loaded path) also reaches into
-  // this module — provide a stub so it never throws when the dialog
-  // mounts in the rare test that triggers it.
-  useFindManyDataSet: () => ({ data: [] }),
-  useFindManyTestCaseParameter: () => ({ data: [] }),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    testRunCases: { useCount: (...args: any[]) => mockUseCountTestRunCases(...args) },
+    testRunCaseIteration: { useFindMany: (...args: any[]) =>
+    mockUseFindManyTestRunCaseIteration(...args) },
+    caseSharedDataSetAssignment: { useFindUnique: (...args: any[]) =>
+    mockUseFindUniqueCaseSharedDataSetAssignment(...args) },
+    dataSetVersion: { useFindFirst: (...args: any[]) =>
+    mockUseFindFirstDataSetVersion(...args) },
+    dataSet: { useFindMany: () => ({ data: [] }) },
+    testCaseParameter: { useFindMany: () => ({ data: [] }) },
+  }),
 }));
 
 vi.mock("~/lib/navigation", () => ({

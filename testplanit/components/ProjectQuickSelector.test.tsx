@@ -12,8 +12,10 @@ const mockRouterPush = vi.hoisted(() => vi.fn());
 const _stableEmptyArray = vi.hoisted(() => [] as any[]);
 
 // --- Mocks ---
-vi.mock("~/lib/hooks", () => ({
-  useFindManyProjects: mockUseFindManyProjects,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: { useFindMany: mockUseFindManyProjects },
+  }),
 }));
 
 vi.mock("~/lib/navigation", () => ({

@@ -12,11 +12,13 @@ const { mockColorsData } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyColor: vi.fn(() => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    color: { useFindMany: vi.fn(() => ({
     data: mockColorsData.data,
     isLoading: mockColorsData.isLoading,
-  })),
+  })) },
+  }),
 }));
 
 // Helper to build color families

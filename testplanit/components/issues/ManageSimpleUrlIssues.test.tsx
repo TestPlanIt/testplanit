@@ -9,9 +9,10 @@ const { mockUseFindManyIssue, mockUseUpsertIssue, mockUpsertAsync } =
     mockUpsertAsync: vi.fn(),
   }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyIssue: mockUseFindManyIssue,
-  useUpsertIssue: mockUseUpsertIssue,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    issue: { useFindMany: mockUseFindManyIssue, useUpsert: mockUseUpsertIssue },
+  }),
 }));
 
 vi.mock("next-intl", () => ({

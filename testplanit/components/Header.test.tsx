@@ -49,9 +49,10 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock ~/lib/hooks
-vi.mock("~/lib/hooks", () => ({
-  useFindManyProjects: vi.fn(() => ({ data: [] })),
-  useFindUniqueProjects: vi.fn(() => ({ data: null })),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: { useFindMany: vi.fn(() => ({ data: [] })), useFindUnique: vi.fn(() => ({ data: null })) },
+  }),
 }));
 
 // Mock ~/lib/version

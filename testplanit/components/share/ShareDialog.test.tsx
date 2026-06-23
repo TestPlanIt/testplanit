@@ -22,12 +22,13 @@ vi.mock("next-auth/react", () => ({
 }));
 
 // Mock ~/lib/hooks useCreateShareLink
-vi.mock("~/lib/hooks", () => ({
-  useCreateShareLink: () => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    shareLink: { useCreate: () => ({
     mutateAsync: mockMutateAsync,
     isPending: false,
-  }),
-  useFindFirstRegistrationSettings: () => ({
+  }) },
+    registrationSettings: { useFindFirst: () => ({
     data: {
       minPasswordLength: 8,
       requireUppercase: false,
@@ -35,6 +36,7 @@ vi.mock("~/lib/hooks", () => ({
       requireNumbers: false,
       requiredSpecialChars: null,
     },
+  }) },
   }),
 }));
 

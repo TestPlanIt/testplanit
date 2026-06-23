@@ -48,11 +48,12 @@ const hooks = vi.hoisted(() => ({
   useFindManyDataSetVersion: vi.fn(),
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyDataSet: hooks.useFindManyDataSet,
-  useFindFirstDataSetVersion: hooks.useFindFirstDataSetVersion,
-  useFindManyTestCaseParameter: hooks.useFindManyTestCaseParameter,
-  useFindManyDataSetVersion: hooks.useFindManyDataSetVersion,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    dataSet: { useFindMany: hooks.useFindManyDataSet },
+    dataSetVersion: { useFindFirst: hooks.useFindFirstDataSetVersion, useFindMany: hooks.useFindManyDataSetVersion },
+    testCaseParameter: { useFindMany: hooks.useFindManyTestCaseParameter },
+  }),
 }));
 
 // Sonner toast — track calls but don't render anything.

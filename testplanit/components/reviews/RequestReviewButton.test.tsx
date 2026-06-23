@@ -22,8 +22,10 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
 // reassigning `mockAutoFetchedPendingData`.
 let mockAutoFetchedPendingData: { id: string; status: "PENDING" } | undefined =
   undefined;
-vi.mock("~/lib/hooks", () => ({
-  useFindFirstReviewRequest: () => ({ data: mockAutoFetchedPendingData }),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    reviewRequest: { useFindFirst: () => ({ data: mockAutoFetchedPendingData }) },
+  }),
 }));
 
 // Stub RequestReviewSheet so we don't re-test its internals here. The stub

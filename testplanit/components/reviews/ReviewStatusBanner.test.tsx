@@ -12,10 +12,11 @@ const mockUseUpdateReviewRequest = vi.fn(() => ({
   mutateAsync: vi.fn(),
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindFirstReviewRequest: (...args: unknown[]) =>
-    mockUseFindFirstReviewRequest(...args),
-  useUpdateReviewRequest: () => mockUseUpdateReviewRequest(),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    reviewRequest: { useFindFirst: (...args: unknown[]) =>
+    mockUseFindFirstReviewRequest(...args), useUpdate: () => mockUseUpdateReviewRequest() },
+  }),
 }));
 
 // Stub UserNameCell — it pulls the i18n navigation router (not available

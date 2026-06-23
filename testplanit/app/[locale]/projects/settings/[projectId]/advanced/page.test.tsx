@@ -62,17 +62,18 @@ let mockProjectLoading = false;
 // system policy.
 let mockEditWindowConfig: { value: number } | undefined;
 
-vi.mock("~/lib/hooks", () => ({
-  useFindUniqueProjects: () => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: { useFindUnique: () => ({
     data: mockProjectData,
     isLoading: mockProjectLoading,
-  }),
-  useUpdateProjects: () => ({
+  }), useUpdate: () => ({
     mutateAsync: mockMutateAsync,
     isPending: false,
-  }),
-  useFindUniqueAppConfig: () => ({
+  }) },
+    appConfig: { useFindUnique: () => ({
     data: mockEditWindowConfig,
+  }) },
   }),
 }));
 

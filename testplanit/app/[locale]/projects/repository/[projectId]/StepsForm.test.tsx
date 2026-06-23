@@ -3,23 +3,23 @@ import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock ZenStack hooks
-vi.mock("~/lib/hooks", () => ({
-  useFindManySharedStepGroup: vi.fn(() => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    sharedStepGroup: { useFindMany: vi.fn(() => ({
     data: [],
     isLoading: false,
-  })),
-  useFindManySharedStepItem: vi.fn(() => ({
+  })), useCreate: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })) },
+    sharedStepItem: { useFindMany: vi.fn(() => ({
     data: [],
     isLoading: false,
-  })),
-  useCreateSharedStepGroup: vi.fn(() => ({
+  })), useCreateMany: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
-  })),
-  useCreateManySharedStepItem: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })),
+  })) },
+  }),
 }));
 
 // Mock next/navigation

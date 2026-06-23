@@ -43,8 +43,10 @@ const mockHookReturn = vi.hoisted(() => ({
     isLoading: boolean;
   },
 }));
-vi.mock("~/lib/hooks", () => ({
-  useFindUniqueAuditLog: () => mockHookReturn.value,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    auditLog: { useFindUnique: () => mockHookReturn.value },
+  }),
 }));
 
 const baseLog: ExtendedAuditLog = {

@@ -39,11 +39,12 @@ vi.mock("next-intl", () => ({
   },
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyCaseExportTemplate: mockUseFindManyCaseExportTemplate,
-  useFindManyCaseExportTemplateProjectAssignment:
-    mockUseFindManyCaseExportTemplateProjectAssignment,
-  useFindUniqueProjects: mockUseFindUniqueProjects,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    caseExportTemplate: { useFindMany: mockUseFindManyCaseExportTemplate },
+    caseExportTemplateProjectAssignment: { useFindMany: mockUseFindManyCaseExportTemplateProjectAssignment },
+    projects: { useFindUnique: mockUseFindUniqueProjects },
+  }),
 }));
 
 vi.mock("~/app/actions/aiExportActions", () => ({

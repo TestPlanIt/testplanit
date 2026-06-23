@@ -95,14 +95,14 @@ const {
   };
 });
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyRolePermission: () => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    rolePermission: { useFindMany: () => ({
     data: stableExistingPermissions,
     isLoading: stableLoadingState.isLoading,
+  }), useUpsert: () => ({ mutateAsync: mockUpsertRolePermission }) },
+    roles: { useUpdate: () => ({ mutateAsync: mockUpdateRole }), useUpdateMany: () => ({ mutateAsync: mockUpdateManyRoles }) },
   }),
-  useUpdateRoles: () => ({ mutateAsync: mockUpdateRole }),
-  useUpdateManyRoles: () => ({ mutateAsync: mockUpdateManyRoles }),
-  useUpsertRolePermission: () => ({ mutateAsync: mockUpsertRolePermission }),
 }));
 
 // Test role data

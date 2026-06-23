@@ -21,9 +21,10 @@ const {
 
 // --- Mocks ---
 
-vi.mock("@/lib/hooks/integration", () => ({
-  useUpsertIntegration: mockUseUpsertIntegration,
-  useUpdateIntegration: mockUseUpdateIntegration,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    integration: { useUpsert: mockUseUpsertIntegration, useUpdate: mockUseUpdateIntegration },
+  }),
 }));
 
 // Mock @prisma/client enums

@@ -17,9 +17,10 @@ vi.mock("next-intl", () => ({
   useTranslations: mockUseTranslations,
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyApiToken: mockUseFindManyApiToken,
-  useDeleteApiToken: mockUseDeleteApiToken,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    apiToken: { useFindMany: mockUseFindManyApiToken, useDelete: mockUseDeleteApiToken },
+  }),
 }));
 
 vi.mock("@tanstack/react-query", () => ({

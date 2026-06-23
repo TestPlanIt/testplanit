@@ -27,15 +27,15 @@ const {
   mockRouterReplace: vi.fn(),
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyWebhookDelivery: (...args: any[]) =>
-    mockFindManyWebhookDelivery(...args),
-  useFindManyWebhookConfig: (...args: any[]) =>
-    mockFindManyWebhookConfig(...args),
-  useCountWebhookDelivery: (...args: any[]) =>
-    mockCountWebhookDelivery(...args),
-  useFindUniqueWebhookDelivery: (...args: any[]) =>
-    mockFindUniqueWebhookDelivery(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    webhookDelivery: { useFindMany: (...args: any[]) =>
+    mockFindManyWebhookDelivery(...args), useCount: (...args: any[]) =>
+    mockCountWebhookDelivery(...args), useFindUnique: (...args: any[]) =>
+    mockFindUniqueWebhookDelivery(...args) },
+    webhookConfig: { useFindMany: (...args: any[]) =>
+    mockFindManyWebhookConfig(...args) },
+  }),
 }));
 
 // PaginationProvider depends on next-auth/react; stub session.

@@ -77,27 +77,27 @@ const mockDeleteManyProjectAssignment = vi.fn().mockResolvedValue({});
 const mockCreateManyGroupAssignment = vi.fn().mockResolvedValue({});
 const mockDeleteManyGroupAssignment = vi.fn().mockResolvedValue({});
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyRoles: () => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    roles: { useFindMany: () => ({
     data: [{ id: 1, name: "Tester", isDeleted: false }],
-  }),
-  useFindManyProjects: () => ({
+  }) },
+    projects: { useFindMany: () => ({
     data: [{ id: 1, name: "Project A", isDeleted: false }],
-  }),
-  useFindManyGroups: () => ({
+  }) },
+    groups: { useFindMany: () => ({
     data: [{ id: 1, name: "Group A", isDeleted: false }],
-  }),
-  useCreateManyProjectAssignment: () => ({
+  }) },
+    projectAssignment: { useCreateMany: () => ({
     mutateAsync: mockCreateManyProjectAssignment,
-  }),
-  useDeleteManyProjectAssignment: () => ({
+  }), useDeleteMany: () => ({
     mutateAsync: mockDeleteManyProjectAssignment,
-  }),
-  useCreateManyGroupAssignment: () => ({
+  }) },
+    groupAssignment: { useCreateMany: () => ({
     mutateAsync: mockCreateManyGroupAssignment,
-  }),
-  useDeleteManyGroupAssignment: () => ({
+  }), useDeleteMany: () => ({
     mutateAsync: mockDeleteManyGroupAssignment,
+  }) },
   }),
 }));
 

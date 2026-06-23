@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 // Mock the React Query hooks to avoid import errors
-vi.mock("~/lib/hooks/repository-cases", () => ({
-  useFindManyRepositoryCases: vi.fn(),
-  useFindFirstRepositoryCases: vi.fn(),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    repositoryCases: { useFindMany: vi.fn(), useFindFirst: vi.fn() },
+  }),
 }));
 
 import {

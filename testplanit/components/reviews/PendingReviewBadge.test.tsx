@@ -11,9 +11,10 @@ import { PendingReviewBadge } from "./PendingReviewBadge";
 const mockUseFindFirstReviewRequest = vi.fn(() => ({ data: null }));
 const mockUseFindManyReviewRequest = vi.fn(() => ({ data: [] }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindFirstReviewRequest: () => mockUseFindFirstReviewRequest(),
-  useFindManyReviewRequest: () => mockUseFindManyReviewRequest(),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    reviewRequest: { useFindFirst: () => mockUseFindFirstReviewRequest(), useFindMany: () => mockUseFindManyReviewRequest() },
+  }),
 }));
 
 function pending(

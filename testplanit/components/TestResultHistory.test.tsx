@@ -31,14 +31,16 @@ const {
 
 // --- Mocks ---
 
-vi.mock("~/lib/hooks", () => ({
-  useFindFirstRepositoryCases: mockUseFindFirstRepositoryCases,
-  useFindManyAppConfig: mockUseFindManyAppConfig,
-  useFindManyResultFieldValues: mockUseFindManyResultFieldValues,
-  useFindManySharedStepItem: mockUseFindManySharedStepItem,
-  useFindManyTestRuns: mockUseFindManyTestRuns,
-  useCreateTestRunCases: mockUseCreateTestRunCases,
-  useFindUniqueProjects: mockUseFindUniqueProjects,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    repositoryCases: { useFindFirst: mockUseFindFirstRepositoryCases },
+    appConfig: { useFindMany: mockUseFindManyAppConfig },
+    resultFieldValues: { useFindMany: mockUseFindManyResultFieldValues },
+    sharedStepItem: { useFindMany: mockUseFindManySharedStepItem },
+    testRuns: { useFindMany: mockUseFindManyTestRuns },
+    testRunCases: { useCreate: mockUseCreateTestRunCases },
+    projects: { useFindUnique: mockUseFindUniqueProjects },
+  }),
 }));
 
 vi.mock("~/hooks/useProjectPermissions", () => ({

@@ -13,11 +13,12 @@ const mocks = vi.hoisted(() => ({
   toastError: vi.fn(),
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyShareLink: (...args: unknown[]) => mocks.findMany(...args),
-  useUpdateShareLink: () => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    shareLink: { useFindMany: (...args: unknown[]) => mocks.findMany(...args), useUpdate: () => ({
     mutateAsync: mocks.updateShareLink,
     isPending: false,
+  }) },
   }),
 }));
 

@@ -31,11 +31,13 @@ const {
   mockToastError: vi.fn(),
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyWebhookConfig: (...args: any[]) =>
-    mockFindManyWebhookConfig(...args),
-  useFindFirstProjectIntegration: (...args: any[]) =>
-    mockFindFirstProjectIntegration(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    webhookConfig: { useFindMany: (...args: any[]) =>
+    mockFindManyWebhookConfig(...args) },
+    projectIntegration: { useFindFirst: (...args: any[]) =>
+    mockFindFirstProjectIntegration(...args) },
+  }),
 }));
 
 // `~/lib/navigation` wraps `next-intl`'s `createNavigation` which probes

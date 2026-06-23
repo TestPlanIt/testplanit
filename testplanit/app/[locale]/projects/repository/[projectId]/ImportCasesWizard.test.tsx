@@ -3,11 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  useFindManyProjectLlmIntegration,
-  useFindManyRepositoryFolders,
-  useFindManyTemplates,
-} from "~/lib/hooks";
+
 import { ImportCasesWizard } from "./ImportCasesWizard";
 
 // Mock dependencies
@@ -19,10 +15,17 @@ vi.mock("next-intl", () => ({
   useTranslations: vi.fn(),
 }));
 
-vi.mock("~/lib/hooks", () => ({
+const { useFindManyTemplates, useFindManyRepositoryFolders, useFindManyProjectLlmIntegration } = vi.hoisted(() => ({
   useFindManyTemplates: vi.fn(),
   useFindManyRepositoryFolders: vi.fn(),
   useFindManyProjectLlmIntegration: vi.fn(),
+}));
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    templates: { useFindMany: useFindManyTemplates },
+    repositoryFolders: { useFindMany: useFindManyRepositoryFolders },
+    projectLlmIntegration: { useFindMany: useFindManyProjectLlmIntegration },
+  }),
 }));
 
 vi.mock("@/components/ui/use-toast", () => ({

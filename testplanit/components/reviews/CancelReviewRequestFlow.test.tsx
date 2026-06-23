@@ -13,9 +13,11 @@ import { ReviewStatusBanner } from "./ReviewStatusBanner";
 
 const mockUseFindFirstReviewRequest = vi.fn();
 
-vi.mock("~/lib/hooks", () => ({
-  useFindFirstReviewRequest: (...args: unknown[]) =>
-    mockUseFindFirstReviewRequest(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    reviewRequest: { useFindFirst: (...args: unknown[]) =>
+    mockUseFindFirstReviewRequest(...args) },
+  }),
 }));
 
 const mockCancelReviewRequest = vi.fn();

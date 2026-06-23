@@ -42,8 +42,10 @@ vi.mock("~/lib/navigation", () => ({
 // IterationStatusLegendPopover (rendered inside the sidebar header) calls
 // the ZenStack `useFindManyStatus` hook, which uses React Query. Stub it
 // out so the sidebar test doesn't need a QueryClientProvider.
-vi.mock("~/lib/hooks", () => ({
-  useFindManyStatus: () => ({ data: [] }),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    status: { useFindMany: () => ({ data: [] }) },
+  }),
 }));
 
 const parametersSchema: IterationParameterMeta[] = [

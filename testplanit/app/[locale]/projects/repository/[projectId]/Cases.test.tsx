@@ -77,36 +77,34 @@ vi.mock("next-auth/react", async (importOriginal) => {
 });
 
 // Mock all ZenStack hooks from ~/lib/hooks
-vi.mock("~/lib/hooks", () => ({
-  useCountProjects: vi.fn(() => ({ data: 2, isLoading: false })),
-  useFindManyRepositoryFolders: vi.fn(() => ({ data: [], isLoading: false })),
-  useCountRepositoryCases: vi.fn(() => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: { useCount: vi.fn(() => ({ data: 2, isLoading: false })), useFindUnique: vi.fn(() => ({ data: null, isLoading: false })) },
+    repositoryFolders: { useFindMany: vi.fn(() => ({ data: [], isLoading: false })) },
+    repositoryCases: { useCount: vi.fn(() => ({
     data: 0,
     isLoading: false,
     refetch: vi.fn(),
-  })),
-  useFindManyTemplates: vi.fn(() => ({ data: [], isLoading: false })),
-  useFindUniqueProjects: vi.fn(() => ({ data: null, isLoading: false })),
-  useFindManyProjectLlmIntegration: vi.fn(() => ({
+  })), useUpdate: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })) },
+    templates: { useFindMany: vi.fn(() => ({ data: [], isLoading: false })) },
+    projectLlmIntegration: { useFindMany: vi.fn(() => ({
     data: [],
     isLoading: false,
-  })),
-  useFindFirstTestRuns: vi.fn(() => ({ data: null, isLoading: false })),
-  useCountTestRunCases: vi.fn(() => ({ data: 0, isLoading: false })),
-  useFindManyTestRunCases: vi.fn(() => ({
+  })) },
+    testRuns: { useFindFirst: vi.fn(() => ({ data: null, isLoading: false })) },
+    testRunCases: { useCount: vi.fn(() => ({ data: 0, isLoading: false })), useFindMany: vi.fn(() => ({
     data: [],
     isLoading: false,
     refetch: vi.fn(),
-  })),
-  useUpdateRepositoryCases: vi.fn(() => ({
+  })), useUpdate: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
-  })),
-  useUpdateTestRunCases: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })),
-  useFindManyReviewRequest: vi.fn(() => ({ data: [], isLoading: false })),
+  })) },
+    reviewRequest: { useFindMany: vi.fn(() => ({ data: [], isLoading: false })) },
+  }),
 }));
 
 vi.mock("~/hooks/useReviewFeatureEnabled", () => ({

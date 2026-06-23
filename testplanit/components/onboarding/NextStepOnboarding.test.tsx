@@ -1,11 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  useFindFirstUserPreferences,
-  useFindManyProjects,
-  useUpdateUserPreferences,
-} from "~/lib/hooks";
 
 // vi.hoisted() for stable refs in vi.mock() factories
 const {
@@ -52,10 +47,16 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
   })),
 }));
 
-vi.mock("~/lib/hooks", () => ({
+const { useFindFirstUserPreferences, useFindManyProjects, useUpdateUserPreferences } = vi.hoisted(() => ({
   useFindFirstUserPreferences: vi.fn(),
   useFindManyProjects: vi.fn(),
   useUpdateUserPreferences: vi.fn(),
+}));
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    userPreferences: { useFindFirst: useFindFirstUserPreferences, useUpdate: useUpdateUserPreferences },
+    projects: { useFindMany: useFindManyProjects },
+  }),
 }));
 
 vi.mock("@prisma/client", () => ({

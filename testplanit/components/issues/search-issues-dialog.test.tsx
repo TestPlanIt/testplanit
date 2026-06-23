@@ -15,17 +15,17 @@ const {
 
 // --- Mocks ---
 
-vi.mock("@/lib/hooks/issue", () => ({
-  useFindManyIssue: mockUseFindManyIssue,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    issue: { useFindMany: mockUseFindManyIssue },
+    projectIntegration: { useFindMany: mockUseFindManyProjectIntegration },
+    integrationProject: { useFindMany: mockUseFindManyIntegrationProject },
+  }),
 }));
 
-vi.mock("@/lib/hooks/project-integration", () => ({
-  useFindManyProjectIntegration: mockUseFindManyProjectIntegration,
-}));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyIntegrationProject: mockUseFindManyIntegrationProject,
-}));
+
+
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key.split(".").pop() ?? key,

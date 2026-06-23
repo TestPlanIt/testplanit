@@ -5,9 +5,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockUseFindManyFieldIcon = vi.fn();
 const mockUseFindManyColor = vi.fn();
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyFieldIcon: (...args: any[]) => mockUseFindManyFieldIcon(...args),
-  useFindManyColor: (...args: any[]) => mockUseFindManyColor(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    fieldIcon: { useFindMany: (...args: any[]) => mockUseFindManyFieldIcon(...args) },
+    color: { useFindMany: (...args: any[]) => mockUseFindManyColor(...args) },
+  }),
 }));
 
 vi.mock("next-intl", () => ({

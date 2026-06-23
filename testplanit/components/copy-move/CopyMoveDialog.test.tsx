@@ -69,18 +69,18 @@ vi.mock("./useCopyMoveJob", () => ({
   useCopyMoveJob: () => mockJobState,
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyProjects: () => mockProjectsData,
-  useFindFirstRepositories: () => ({ data: { id: 100 } }),
-  useCreateRepositoryFolders: () => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: { useFindMany: () => mockProjectsData },
+    repositories: { useFindFirst: () => ({ data: { id: 100 } }) },
+    repositoryFolders: { useCreate: () => ({
     mutateAsync: vi.fn().mockResolvedValue({ id: 99 }),
+  }), useFindMany: () => mockFoldersData },
+    repositoryCases: { useFindMany: () => ({ data: [] }) },
   }),
-  useFindManyRepositoryCases: () => ({ data: [] }),
 }));
 
-vi.mock("~/lib/hooks/repository-folders", () => ({
-  useFindManyRepositoryFolders: () => mockFoldersData,
-}));
+
 
 vi.mock("~/lib/navigation", () => ({
   Link: ({ href, children, className }: any) => (

@@ -165,21 +165,21 @@ const {
 // Track which assignment data variant to use per test
 let useEmptyAssignments = false;
 
-vi.mock("~/lib/hooks", () => ({
-  useUpdateGroups: () => ({ mutateAsync: mockUpdateGroup }),
-  useFindManyUser: () => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    groups: { useUpdate: () => ({ mutateAsync: mockUpdateGroup }) },
+    user: { useFindMany: () => ({
     data: stableAllUsers,
     isLoading: false,
-  }),
-  useFindManyGroupAssignment: () => ({
+  }) },
+    groupAssignment: { useFindMany: () => ({
     data: useEmptyAssignments ? stableEmptyAssignments : stableGroupAssignments,
     isLoading: false,
-  }),
-  useCreateManyGroupAssignment: () => ({
+  }), useCreateMany: () => ({
     mutateAsync: mockCreateManyGroupAssignment,
-  }),
-  useDeleteManyGroupAssignment: () => ({
+  }), useDeleteMany: () => ({
     mutateAsync: mockDeleteManyGroupAssignment,
+  }) },
   }),
 }));
 

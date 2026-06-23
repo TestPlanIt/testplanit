@@ -39,19 +39,19 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: mockUseProjectPermissions,
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useCreateTestRunResults: mockUseCreateTestRunResults,
-  useFindFirstWorkflows: mockUseFindFirstWorkflows,
-  useFindManyStatus: mockUseFindManyStatus,
-  useFindManyTestRunResults: mockUseFindManyTestRunResults,
-  useFindManyTemplateResultAssignment: () => ({ data: [] }),
-  useUpdateTestRunCases: mockUseUpdateTestRunCases,
-  useUpdateTestRuns: mockUseUpdateTestRuns,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    testRunResults: { useCreate: mockUseCreateTestRunResults, useFindMany: mockUseFindManyTestRunResults },
+    workflows: { useFindFirst: mockUseFindFirstWorkflows },
+    status: { useFindMany: mockUseFindManyStatus },
+    templateResultAssignment: { useFindMany: () => ({ data: [] }) },
+    testRunCases: { useUpdate: mockUseUpdateTestRunCases },
+    testRuns: { useUpdate: mockUseUpdateTestRuns },
+    templates: { useFindMany: mockUseFindManyTemplates },
+  }),
 }));
 
-vi.mock("~/lib/hooks/templates", () => ({
-  useFindManyTemplates: mockUseFindManyTemplates,
-}));
+
 
 vi.mock("next-auth/react", () => ({
   useSession: mockUseSession,

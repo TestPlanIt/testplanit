@@ -9,8 +9,10 @@ const { mockUseFindManyIntegrationProject } = vi.hoisted(() => ({
 
 // --- Mocks ---
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyIntegrationProject: mockUseFindManyIntegrationProject,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    integrationProject: { useFindMany: mockUseFindManyIntegrationProject },
+  }),
 }));
 
 vi.mock("next-intl", () => ({

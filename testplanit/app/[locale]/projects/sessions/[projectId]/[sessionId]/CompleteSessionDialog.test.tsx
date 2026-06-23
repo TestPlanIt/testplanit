@@ -1,11 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  useCreateSessionVersions,
-  useFindManyWorkflows,
-  useUpdateSessions,
-} from "~/lib/hooks";
+
 import {
   CompletableSession,
   CompleteSessionDialog,
@@ -24,10 +20,17 @@ vi.mock("next-auth/react", () => ({
 }));
 
 // Mock hooks
-vi.mock("~/lib/hooks", () => ({
+const { useFindManyWorkflows, useUpdateSessions, useCreateSessionVersions } = vi.hoisted(() => ({
   useFindManyWorkflows: vi.fn(),
   useUpdateSessions: vi.fn(),
   useCreateSessionVersions: vi.fn(),
+}));
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    workflows: { useFindMany: useFindManyWorkflows },
+    sessions: { useUpdate: useUpdateSessions },
+    sessionVersions: { useCreate: useCreateSessionVersions },
+  }),
 }));
 
 // Mock next-intl

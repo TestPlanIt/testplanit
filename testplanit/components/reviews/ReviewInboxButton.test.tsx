@@ -24,11 +24,13 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
 const mockUseCountReviewRequest = vi.fn();
 const mockUseFindUniqueUser = vi.fn();
 const mockUseCountProjects = vi.fn();
-vi.mock("~/lib/hooks", () => ({
-  useCountReviewRequest: (...args: unknown[]) =>
-    mockUseCountReviewRequest(...args),
-  useFindUniqueUser: (...args: unknown[]) => mockUseFindUniqueUser(...args),
-  useCountProjects: (...args: unknown[]) => mockUseCountProjects(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    reviewRequest: { useCount: (...args: unknown[]) =>
+    mockUseCountReviewRequest(...args) },
+    user: { useFindUnique: (...args: unknown[]) => mockUseFindUniqueUser(...args) },
+    projects: { useCount: (...args: unknown[]) => mockUseCountProjects(...args) },
+  }),
 }));
 
 // ~/lib/navigation Link — required wrapper, NEVER next/link.

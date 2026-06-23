@@ -12,10 +12,10 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
 const mockUseFindManyProjects = vi.fn();
 const mockUseCountProjects = vi.fn();
 const mockUseUpdateProjects = vi.fn();
-vi.mock("~/lib/hooks", () => ({
-  useFindManyProjects: (...args: unknown[]) => mockUseFindManyProjects(...args),
-  useCountProjects: (...args: unknown[]) => mockUseCountProjects(...args),
-  useUpdateProjects: (...args: unknown[]) => mockUseUpdateProjects(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: { useFindMany: (...args: unknown[]) => mockUseFindManyProjects(...args), useCount: (...args: unknown[]) => mockUseCountProjects(...args), useUpdate: (...args: unknown[]) => mockUseUpdateProjects(...args) },
+  }),
 }));
 
 const mockToastSuccess = vi.fn();

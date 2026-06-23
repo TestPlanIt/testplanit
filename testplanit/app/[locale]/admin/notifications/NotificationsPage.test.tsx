@@ -2,16 +2,12 @@ import { NotificationMode } from "~/zenstack/models";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  useCreateAppConfig,
-  useFindUniqueAppConfig,
-  useUpdateAppConfig,
-} from "~/lib/hooks";
+
 import NotificationSettingsPage from "./page";
 
 // Mock dependencies
 vi.mock("next-auth/react");
-vi.mock("~/lib/hooks");
+
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),

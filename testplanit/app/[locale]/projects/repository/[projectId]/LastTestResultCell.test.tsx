@@ -26,27 +26,28 @@ vi.mock("~/app/actions/searchProjectMembers", () => ({
   searchProjectMembers: vi.fn(),
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useCreateTestRunCases: vi.fn(() => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    testRunCases: { useCreate: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
-  })),
-  useFindManyTestRuns: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-  })),
-  useFindManyRepositoryFolders: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-  })),
-  useFindManyStatus: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-  })),
-  useUpdateTestRunCases: vi.fn(() => ({
+  })), useUpdate: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
-  })),
+  })) },
+    testRuns: { useFindMany: vi.fn(() => ({
+    data: [],
+    isLoading: false,
+  })) },
+    repositoryFolders: { useFindMany: vi.fn(() => ({
+    data: [],
+    isLoading: false,
+  })) },
+    status: { useFindMany: vi.fn(() => ({
+    data: [],
+    isLoading: false,
+  })) },
+  }),
 }));
 
 // Mock next/navigation first

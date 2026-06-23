@@ -21,8 +21,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useFindManyRepositoryCasesFiltered } from "./useRepositoryCasesWithFilteredFields";
 
 // Mock the ZenStack hook
-vi.mock("~/lib/hooks/repository-cases", () => ({
-  useFindManyRepositoryCases: vi.fn(),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    repositoryCases: { useFindMany: vi.fn() },
+  }),
 }));
 
 const { useFindManyRepositoryCases } =

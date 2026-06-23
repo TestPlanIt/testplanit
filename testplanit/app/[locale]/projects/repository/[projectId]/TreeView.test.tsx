@@ -2,21 +2,22 @@ import { render, screen } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock ZenStack hooks
-vi.mock("~/lib/hooks", () => ({
-  useFindManyRepositoryFolders: vi.fn(() => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    repositoryFolders: { useFindMany: vi.fn(() => ({
     data: [],
     isLoading: false,
     error: null,
     refetch: vi.fn(),
-  })),
-  useUpdateRepositoryFolders: vi.fn(() => ({
+  })), useUpdate: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
-  })),
-  useUpdateRepositoryCases: vi.fn(() => ({
+  })) },
+    repositoryCases: { useUpdate: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
-  })),
+  })) },
+  }),
 }));
 
 // Mock next/navigation

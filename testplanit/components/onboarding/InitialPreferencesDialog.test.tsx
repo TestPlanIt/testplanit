@@ -1,10 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  useFindFirstUserPreferences,
-  useUpdateUserPreferences,
-} from "~/lib/hooks";
+
 import { InitialPreferencesDialog } from "./InitialPreferencesDialog";
 
 const mockSetTheme = vi.fn();
@@ -13,9 +10,14 @@ vi.mock("next-auth/react", () => ({
   useSession: vi.fn(),
 }));
 
-vi.mock("~/lib/hooks", () => ({
+const { useFindFirstUserPreferences, useUpdateUserPreferences } = vi.hoisted(() => ({
   useFindFirstUserPreferences: vi.fn(),
-  useUpdateUserPreferences: vi.fn(() => ({ mutateAsync: vi.fn() })),
+  useUpdateUserPreferences: vi.fn(),
+}));
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    userPreferences: { useFindFirst: useFindFirstUserPreferences, useUpdate: useUpdateUserPreferences },
+  }),
 }));
 
 vi.mock("next-intl", () => ({

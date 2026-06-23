@@ -27,9 +27,11 @@ vi.mock("~/app/[locale]/admin/fields/AddResultField", () => ({
   AddResultFieldModal: () => null,
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyColor: () => ({ data: [] }),
-  useFindManyStatusScope: () => ({ data: [] }),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    color: { useFindMany: () => ({ data: [] }) },
+    statusScope: { useFindMany: () => ({ data: [] }) },
+  }),
 }));
 
 type SelectContextValue = {

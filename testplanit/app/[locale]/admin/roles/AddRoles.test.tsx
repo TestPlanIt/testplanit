@@ -49,10 +49,11 @@ const { mockCreateRole, mockUpdateManyRoles, mockUpsertRolePermission } =
     mockUpsertRolePermission: vi.fn().mockResolvedValue({}),
   }));
 
-vi.mock("~/lib/hooks", () => ({
-  useCreateRoles: () => ({ mutateAsync: mockCreateRole }),
-  useUpdateManyRoles: () => ({ mutateAsync: mockUpdateManyRoles }),
-  useUpsertRolePermission: () => ({ mutateAsync: mockUpsertRolePermission }),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    roles: { useCreate: () => ({ mutateAsync: mockCreateRole }), useUpdateMany: () => ({ mutateAsync: mockUpdateManyRoles }) },
+    rolePermission: { useUpsert: () => ({ mutateAsync: mockUpsertRolePermission }) },
+  }),
 }));
 
 function makeQueryClient() {

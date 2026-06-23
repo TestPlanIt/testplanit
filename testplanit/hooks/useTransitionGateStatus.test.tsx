@@ -14,11 +14,13 @@ import {
 
 const mockUseFindManyWorkflows = vi.fn();
 const mockUseFindManyReviewRequest = vi.fn();
-vi.mock("~/lib/hooks", () => ({
-  useFindManyWorkflows: (...args: unknown[]) =>
-    mockUseFindManyWorkflows(...args),
-  useFindManyReviewRequest: (...args: unknown[]) =>
-    mockUseFindManyReviewRequest(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    workflows: { useFindMany: (...args: unknown[]) =>
+    mockUseFindManyWorkflows(...args) },
+    reviewRequest: { useFindMany: (...args: unknown[]) =>
+    mockUseFindManyReviewRequest(...args) },
+  }),
 }));
 
 const mockUseReviewFeatureEnabled = vi.fn();

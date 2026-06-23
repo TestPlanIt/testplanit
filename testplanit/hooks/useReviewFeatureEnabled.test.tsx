@@ -23,9 +23,11 @@ import { useReviewFeatureEnabled } from "./useReviewFeatureEnabled";
 
 // Mock the ZenStack-generated hook for project read.
 const mockUseFindUniqueProjects = vi.fn();
-vi.mock("~/lib/hooks", () => ({
-  useFindUniqueProjects: (...args: unknown[]) =>
-    mockUseFindUniqueProjects(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: { useFindUnique: (...args: unknown[]) =>
+    mockUseFindUniqueProjects(...args) },
+  }),
 }));
 
 // Stub global fetch so the GET /api/config/review-feature call is controllable.

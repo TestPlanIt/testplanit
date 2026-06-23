@@ -23,10 +23,12 @@ vi.mock("next-intl", () => ({
   useTranslations: vi.fn(() => (key: string) => key.split(".").pop() ?? key),
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useUpdateAttachments: vi.fn(() => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    attachments: { useUpdate: vi.fn(() => ({
     mutateAsync: mockUpdateAttachments,
-  })),
+  })) },
+  }),
 }));
 
 vi.mock("~/utils/storageUrl", () => ({

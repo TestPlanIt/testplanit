@@ -116,11 +116,12 @@ const {
   };
 });
 
-vi.mock("~/lib/hooks", () => ({
-  useFindUniqueAppConfig: () => ({ data: stableConfig }),
-  useUpsertAppConfig: () => ({
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    appConfig: { useFindUnique: () => ({ data: stableConfig }), useUpsert: () => ({
     mutateAsync: mockUpsertMutateAsync,
     isPending: false,
+  }) },
   }),
 }));
 

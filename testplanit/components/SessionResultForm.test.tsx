@@ -13,18 +13,21 @@ const mockUseLocale = vi.hoisted(() => vi.fn());
 const mockUseProjectPermissions = vi.hoisted(() => vi.fn());
 
 // --- ZenStack hook mocks ---
-vi.mock("~/lib/hooks", () => ({
-  useCreateSessionResults: vi.fn(() => ({ mutateAsync: vi.fn() })),
-  useFindManyStatus: vi.fn(() => ({ data: [], isLoading: false })),
-  useFindFirstProjects: vi.fn(() => ({ data: null, isLoading: false })),
-  useFindFirstSessions: vi.fn(() => ({ data: null, isLoading: false })),
-  useFindManyWorkflows: vi.fn(() => ({ data: [], isLoading: false })),
-  useFindManyTemplateResultAssignment: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-  })),
-  useCreateAttachments: vi.fn(() => ({ mutateAsync: vi.fn() })),
-  useUpdateSessions: vi.fn(() => ({ mutateAsync: vi.fn() })),
+const { useFindManyStatus, useFindFirstSessions, useFindManyTemplateResultAssignment } = vi.hoisted(() => ({
+  useFindManyStatus: vi.fn(),
+  useFindFirstSessions: vi.fn(),
+  useFindManyTemplateResultAssignment: vi.fn(),
+}));
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    sessionResults: { useCreate: vi.fn(() => ({ mutateAsync: vi.fn() })) },
+    status: { useFindMany: useFindManyStatus },
+    projects: { useFindFirst: vi.fn(() => ({ data: null, isLoading: false })) },
+    sessions: { useFindFirst: useFindFirstSessions, useUpdate: vi.fn(() => ({ mutateAsync: vi.fn() })) },
+    workflows: { useFindMany: vi.fn(() => ({ data: [], isLoading: false })) },
+    templateResultAssignment: { useFindMany: useFindManyTemplateResultAssignment },
+    attachments: { useCreate: vi.fn(() => ({ mutateAsync: vi.fn() })) },
+  }),
 }));
 
 // --- next-auth ---
@@ -175,11 +178,6 @@ function setupDefaultMocks() {
 }
 
 // Import after vi.mock so they use mocked versions
-import {
-  useFindFirstSessions,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-} from "~/lib/hooks";
 
 beforeEach(() => {
   vi.clearAllMocks();

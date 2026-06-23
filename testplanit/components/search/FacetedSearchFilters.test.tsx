@@ -34,19 +34,21 @@ const {
 // ---------------------------------------------------------------------------
 // Mock hooks from ~/lib/hooks
 // ---------------------------------------------------------------------------
-vi.mock("~/lib/hooks", () => ({
-  useFindManyProjects: () => mockProjectsData,
-  useFindManyTags: () => mockTagsData,
-  useFindManyWorkflows: () => mockWorkflowsData,
-  useFindManyTemplates: () => mockTemplatesData,
-  useFindManyMilestones: () => mockMilestonesData,
-  useFindManyProjectAssignment: () => mockProjectAssignmentData,
-  useFindManyRepositoryFolders: () => mockFoldersData,
-  useFindManyUser: () => mockUsersData,
-  useFindManyConfigurations: (args: unknown) => {
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: { useFindMany: () => mockProjectsData },
+    tags: { useFindMany: () => mockTagsData },
+    workflows: { useFindMany: () => mockWorkflowsData },
+    templates: { useFindMany: () => mockTemplatesData },
+    milestones: { useFindMany: () => mockMilestonesData },
+    projectAssignment: { useFindMany: () => mockProjectAssignmentData },
+    repositoryFolders: { useFindMany: () => mockFoldersData },
+    user: { useFindMany: () => mockUsersData },
+    configurations: { useFindMany: (args: unknown) => {
     configurationsHookSpy(args);
     return mockConfigurationsData;
-  },
+  } },
+  }),
 }));
 
 // ---------------------------------------------------------------------------
