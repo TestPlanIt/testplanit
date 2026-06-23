@@ -1,4 +1,6 @@
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,12 +59,6 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import { emptyEditorContent } from "~/app/constants";
-import {
-  useCreateManySharedStepItem,
-  useCreateSharedStepGroup,
-  useFindManySharedStepGroup,
-  useFindManySharedStepItem,
-} from "~/lib/hooks";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import SortableStep from "./SortableStep";
 
@@ -185,7 +181,7 @@ const StepItem: React.FC<StepItemProps> = ({
     data: sharedItemsData,
     isLoading: sharedItemsIsLoading,
     // error: sharedItemsError, // TODO: Handle error display
-  } = useFindManySharedStepItem(
+  } = useClientQueries(schema).sharedStepItem.useFindMany(
     {
       where: {
         sharedStepGroupId: field.sharedStepGroupId,
@@ -537,15 +533,15 @@ function StepsForm<T extends FieldValues = FieldValues>({
     name: name as string,
   });
 
-  const createSharedStepGroupMutation = useCreateSharedStepGroup();
-  const createManySharedStepItemMutation = useCreateManySharedStepItem();
+  const createSharedStepGroupMutation = useClientQueries(schema).sharedStepGroup.useCreate();
+  const createManySharedStepItemMutation = useClientQueries(schema).sharedStepItem.useCreateMany();
 
   // Moved hook to top level
   const {
     data: allSharedStepGroupsData, // Renamed for clarity
     isLoading: isLoadingAllSharedStepGroups,
     // error: allSharedStepGroupsError, // TODO: Handle error display if needed
-  } = useFindManySharedStepGroup({
+  } = useClientQueries(schema).sharedStepGroup.useFindMany({
     where: { projectId: projectId, isDeleted: false },
     orderBy: { name: "asc" },
     include: { _count: { select: { items: true } } },
@@ -567,7 +563,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
     data: itemsOfSelectedSharedGroup,
     isLoading: isLoadingItemsOfSelectedSharedGroup,
     // error: errorItemsOfSelectedSharedGroup, // TODO: Handle error
-  } = useFindManySharedStepItem(
+  } = useClientQueries(schema).sharedStepItem.useFindMany(
     {
       where: {
         sharedStepGroupId: selectedSharedGroupInDialog?.id,

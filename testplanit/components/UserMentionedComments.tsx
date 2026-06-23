@@ -1,6 +1,8 @@
 "use client";
 
 import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { SessionNameDisplay } from "@/components/SessionNameDisplay";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
@@ -16,7 +18,6 @@ import { ExternalLink, MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import { useCountCommentMention, useFindManyCommentMention } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
 
@@ -224,7 +225,7 @@ export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
   const [pageSize, setPageSize] = useState<number | "All">(10);
 
   const { data: totalCount, isLoading: isCountLoading } =
-    useCountCommentMention({
+    useClientQueries(schema).commentMention.useCount({
       where: {
         userId: userId,
         comment: {
@@ -239,7 +240,7 @@ export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
   const pageSizeOptions = usePageSizeOptions(totalCount ?? 0);
 
   const { data: mentions, isLoading: isMentionsLoading } =
-    useFindManyCommentMention({
+    useClientQueries(schema).commentMention.useFindMany({
       where: {
         userId: userId,
         comment: {

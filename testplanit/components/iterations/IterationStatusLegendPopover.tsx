@@ -1,6 +1,8 @@
 "use client";
 
 import { Info } from "lucide-react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +11,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useFindManyStatus } from "~/lib/hooks";
 
 import {
   glyphFromStatus,
@@ -35,7 +36,7 @@ export function IterationStatusLegendPopover({
 
   // Real Test-Run-scope statuses for this project. Names + colors are
   // admin-configured per Workflow; the legend renders whatever is configured.
-  const { data: statuses } = useFindManyStatus({
+  const { data: statuses } = useClientQueries(schema).status.useFindMany({
     where: {
       AND: [
         { isEnabled: true },

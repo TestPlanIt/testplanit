@@ -1,6 +1,8 @@
 "use client";
 
 import { useDebounce } from "@/components/Debounce";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
@@ -24,15 +26,6 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useCountRepositoryCases,
-  useCountSessions,
-  useCountTestRuns,
-  useFindManyRepositoryCases,
-  useFindManySessions,
-  useFindManyTags,
-  useFindManyTestRuns,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import {
   useCaseColumns,
@@ -137,7 +130,7 @@ function TagDetail() {
     typeof testRunsPageSize === "number" ? testRunsPageSize : 999999;
 
   // Fetch the tag metadata only
-  const { data: tags, isLoading: isLoadingTag } = useFindManyTags(
+  const { data: tags, isLoading: isLoadingTag } = useClientQueries(schema).tags.useFindMany(
     {
       where: { id: Number(tagId), isDeleted: false },
       select: { id: true, name: true },
@@ -241,7 +234,7 @@ function TagDetail() {
 
   // Fetch paginated test cases
   const { data: repositoryCases, isLoading: isLoadingCases } =
-    useFindManyRepositoryCases(
+    useClientQueries(schema).repositoryCases.useFindMany(
       {
         where: casesWhere,
         select: {
@@ -268,7 +261,7 @@ function TagDetail() {
       }
     );
 
-  const { data: casesCount } = useCountRepositoryCases(
+  const { data: casesCount } = useClientQueries(schema).repositoryCases.useCount(
     {
       where: casesWhere,
     },
@@ -278,7 +271,7 @@ function TagDetail() {
   );
 
   // Fetch paginated sessions
-  const { data: sessions, isLoading: isLoadingSessions } = useFindManySessions(
+  const { data: sessions, isLoading: isLoadingSessions } = useClientQueries(schema).sessions.useFindMany(
     {
       where: sessionsWhere,
       select: {
@@ -304,7 +297,7 @@ function TagDetail() {
     }
   );
 
-  const { data: sessionsCount } = useCountSessions(
+  const { data: sessionsCount } = useClientQueries(schema).sessions.useCount(
     {
       where: sessionsWhere,
     },
@@ -314,7 +307,7 @@ function TagDetail() {
   );
 
   // Fetch paginated test runs
-  const { data: testRuns, isLoading: isLoadingTestRuns } = useFindManyTestRuns(
+  const { data: testRuns, isLoading: isLoadingTestRuns } = useClientQueries(schema).testRuns.useFindMany(
     {
       where: testRunsWhere,
       select: {
@@ -340,7 +333,7 @@ function TagDetail() {
     }
   );
 
-  const { data: testRunsCount } = useCountTestRuns(
+  const { data: testRunsCount } = useClientQueries(schema).testRuns.useCount(
     {
       where: testRunsWhere,
     },

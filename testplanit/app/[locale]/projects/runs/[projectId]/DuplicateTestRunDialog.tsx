@@ -1,6 +1,8 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -29,7 +31,6 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
-import { useFindManyTestRunCases, useFindUniqueTestRuns } from "~/lib/hooks";
 
 interface DuplicateTestRunDialogProps {
   open: boolean;
@@ -87,7 +88,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
   const { setValue, getValues, handleSubmit } = form;
 
   const { data: originalRunData, isLoading: isLoadingOriginalRun } =
-    useFindUniqueTestRuns(
+    useClientQueries(schema).testRuns.useFindUnique(
       {
         where: { id: testRunId },
         select: {
@@ -127,7 +128,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
   const {
     data: testRunCasesDataForStatusList,
     isLoading: isLoadingCasesForStatusList,
-  } = useFindManyTestRunCases(
+  } = useClientQueries(schema).testRunCases.useFindMany(
     {
       where: {
         testRunId: testRunId,

@@ -1,6 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -16,11 +18,6 @@ import {
   CustomColumnDef,
 } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import {
-  useFindManyProjects,
-  useFindManyUser,
-  useUpdateProjects,
-} from "~/lib/hooks";
 import { ExtendedProjects, useColumns } from "./columns";
 
 import { CreateProjectWizard } from "@/admin/projects/CreateProjectWizard";
@@ -125,7 +122,7 @@ function ProjectAdmin() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { mutateAsync: updateProjects } = useUpdateProjects();
+  const { mutateAsync: updateProjects } = useClientQueries(schema).projects.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateProjectsRef = useRef(updateProjects);
@@ -145,7 +142,7 @@ function ProjectAdmin() {
     },
   });
 
-  const { data: allUsers } = useFindManyUser({
+  const { data: allUsers } = useClientQueries(schema).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     select: { id: true, access: true },
   });
@@ -196,7 +193,7 @@ function ProjectAdmin() {
   const skip = (currentPage - 1) * effectivePageSize;
   const debouncedSearchString = useDebounce(searchString, 500);
 
-  const { data: totalFilteredProjects } = useFindManyProjects(
+  const { data: totalFilteredProjects } = useClientQueries(schema).projects.useFindMany(
     {
       where: {
         AND: [
@@ -227,7 +224,7 @@ function ProjectAdmin() {
 
   // 1. Fetch Projects with refined include for direct/group users
   const { data: projectsRaw, isLoading: isLoadingProjects } =
-    useFindManyProjects(
+    useClientQueries(schema).projects.useFindMany(
       {
         orderBy:
           !needsClientSideSorting && sortConfig

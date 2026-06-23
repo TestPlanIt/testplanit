@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -33,11 +35,6 @@ import { CirclePlus, ScrollText, Search, Trash2, Edit } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  useFindManyCaseExportTemplate,
-  useUpdateCaseExportTemplate,
-  useUpdateManyCaseExportTemplate,
-} from "~/lib/hooks";
 import { AddQuickScriptTemplate } from "./AddQuickScriptTemplate";
 import { DeleteQuickScriptTemplate } from "./DeleteQuickScriptTemplate";
 import { EditQuickScriptTemplate } from "./EditQuickScriptTemplate";
@@ -62,16 +59,16 @@ export default function QuickScriptTemplates() {
     number | undefined
   >(undefined);
 
-  const { mutateAsync: updateTemplate } = useUpdateCaseExportTemplate();
+  const { mutateAsync: updateTemplate } = useClientQueries(schema).caseExportTemplate.useUpdate();
   const { mutateAsync: updateManyTemplates } =
-    useUpdateManyCaseExportTemplate();
+    useClientQueries(schema).caseExportTemplate.useUpdateMany();
 
   const updateTemplateRef = useRef(updateTemplate);
   useEffect(() => {
     updateTemplateRef.current = updateTemplate;
   });
 
-  const { data, isLoading } = useFindManyCaseExportTemplate(
+  const { data, isLoading } = useClientQueries(schema).caseExportTemplate.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { name: "asc" },

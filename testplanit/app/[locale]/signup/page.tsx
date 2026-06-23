@@ -2,6 +2,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   generateEmailVerificationToken,
   resendVerificationEmail,
 } from "@/components/EmailVerifications";
@@ -11,10 +13,6 @@ import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
 import { isEmailDomainAllowed } from "~/app/actions/auth";
 import { createUserRegistrationNotification } from "~/app/actions/notifications";
-import {
-  useFindFirstRegistrationSettings,
-  useFindManySsoProvider,
-} from "~/lib/hooks";
 import { translateServerError } from "~/lib/i18n/translateServerError";
 import { useRouter } from "~/lib/navigation";
 
@@ -88,7 +86,7 @@ const Signup: NextPage = () => {
   // Check if Force SSO is enabled - if so, redirect to 404
   // Wait for session to be cleared before fetching to prevent 410 errors with stale sessions
   const { data: ssoProviders, isLoading: isLoadingSsoProviders } =
-    useFindManySsoProvider(
+    useClientQueries(schema).ssoProvider.useFindMany(
       {
         include: { samlConfig: true },
       },
@@ -98,7 +96,7 @@ const Signup: NextPage = () => {
     );
 
   // Fetch registration settings to get the default access level for new users
-  const { data: registrationSettings } = useFindFirstRegistrationSettings(
+  const { data: registrationSettings } = useClientQueries(schema).registrationSettings.useFindFirst(
     undefined,
     {
       enabled: sessionCleared,

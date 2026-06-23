@@ -1,12 +1,13 @@
 "use client";
 
 import { CirclePlus } from "lucide-react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import Select, { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
-import { useCreateTags, useFindManyTags, useUpdateTags } from "~/lib/hooks";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 import {
   replaceProblematicChars,
@@ -41,7 +42,7 @@ export function ManageTags({
     refetch,
     isLoading,
     isFetching,
-  } = useFindManyTags({
+  } = useClientQueries(schema).tags.useFindMany({
     orderBy: {
       name: "asc",
     },
@@ -59,8 +60,8 @@ export function ManageTags({
     }
   }, [tags]);
 
-  const { mutateAsync: createTags, isPending: isCreating } = useCreateTags();
-  const { mutateAsync: updateTags } = useUpdateTags();
+  const { mutateAsync: createTags, isPending: isCreating } = useClientQueries(schema).tags.useCreate();
+  const { mutateAsync: updateTags } = useClientQueries(schema).tags.useUpdate();
 
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });

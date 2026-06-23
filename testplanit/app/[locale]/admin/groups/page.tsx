@@ -1,6 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import {
@@ -13,7 +15,6 @@ import { useRouter } from "~/lib/navigation";
 import { useDebounce } from "@/components/Debounce";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import { useFindManyGroups } from "~/lib/hooks";
 import { ExtendedGroups, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -77,7 +78,7 @@ function GroupList() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { data: totalFilteredGroups } = useFindManyGroups(
+  const { data: totalFilteredGroups } = useClientQueries(schema).groups.useFindMany(
     {
       where: {
         AND: [
@@ -108,7 +109,7 @@ function GroupList() {
     }
   }, [totalFilteredGroups, setTotalItems]);
 
-  const { data, isLoading } = useFindManyGroups(
+  const { data, isLoading } = useClientQueries(schema).groups.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }

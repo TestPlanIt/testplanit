@@ -1,4 +1,6 @@
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +10,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Edit, MessageSquareCode, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { useCountProjects } from "~/lib/hooks/projects";
 
 export interface PromptConfigPromptWithIntegration extends PromptConfigPrompt {
   llmIntegration?: { id: number; name: string } | null;
@@ -24,7 +25,7 @@ function DefaultPromptProjectList({ configId }: { configId: string }) {
   const filter = {
     OR: [{ promptConfigId: configId }, { promptConfigId: null }],
   };
-  const { data: count } = useCountProjects({
+  const { data: count } = useClientQueries(schema).projects.useCount({
     where: { isDeleted: false, ...filter },
   });
 

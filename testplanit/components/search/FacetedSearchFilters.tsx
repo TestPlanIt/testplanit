@@ -1,6 +1,8 @@
 "use client";
 
 import DynamicIcon from "@/components/DynamicIcon";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Accordion,
   AccordionContent,
@@ -60,17 +62,6 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import {
-  useFindManyConfigurations,
-  useFindManyMilestones,
-  useFindManyProjectAssignment,
-  useFindManyProjects,
-  useFindManyRepositoryFolders,
-  useFindManyTags,
-  useFindManyTemplates,
-  useFindManyUser,
-  useFindManyWorkflows,
-} from "~/lib/hooks";
-import {
   BaseEntityFilters,
   IssueFilters,
   MilestoneFilters,
@@ -111,7 +102,7 @@ export function FacetedSearchFilters({
   // - Admins see all entities
   // - Non-admins see only entities from their assigned projects
   // Global entities: Projects (ZenStack handles), Tags, Configurations
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: [
       { isCompleted: "asc" }, // Active projects first
@@ -142,7 +133,7 @@ export function FacetedSearchFilters({
   const workflowScopes = getWorkflowScopes();
 
   // Get current user's project assignments for access control (non-admin users only)
-  const { data: currentUserProjects } = useFindManyProjectAssignment(
+  const { data: currentUserProjects } = useClientQueries(schema).projectAssignment.useFindMany(
     {
       where: {
         userId: session?.user?.id || "",
@@ -161,7 +152,7 @@ export function FacetedSearchFilters({
     currentUserProjects?.map((p) => p.projectId) || [];
 
   // Fetch workflow states - filtered by scope and project access
-  const { data: workflowStates } = useFindManyWorkflows({
+  const { data: workflowStates } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -202,12 +193,12 @@ export function FacetedSearchFilters({
     },
   });
 
-  const { data: tags } = useFindManyTags({
+  const { data: tags } = useClientQueries(schema).tags.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
 
-  const { data: templates } = useFindManyTemplates({
+  const { data: templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -243,7 +234,7 @@ export function FacetedSearchFilters({
     orderBy: { templateName: "asc" },
   });
 
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       isDeleted: false,
       // If searching within a specific project, only show milestones from that project
@@ -268,7 +259,7 @@ export function FacetedSearchFilters({
     orderBy: { name: "asc" },
   });
 
-  const { data: configurations } = useFindManyConfigurations({
+  const { data: configurations } = useClientQueries(schema).configurations.useFindMany({
     where: {
       isDeleted: false,
       // When searching within a project, only surface configurations assigned
@@ -278,7 +269,7 @@ export function FacetedSearchFilters({
     orderBy: { name: "asc" },
   });
 
-  const { data: users } = useFindManyUser({
+  const { data: users } = useClientQueries(schema).user.useFindMany({
     where: {
       isDeleted: false,
       isActive: true,
@@ -314,7 +305,7 @@ export function FacetedSearchFilters({
     orderBy: { name: "asc" },
   });
 
-  const { data: folders } = useFindManyRepositoryFolders({
+  const { data: folders } = useClientQueries(schema).repositoryFolders.useFindMany({
     where: {
       isDeleted: false,
       // If searching within a specific project, only show folders from that project

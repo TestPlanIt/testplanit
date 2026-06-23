@@ -1,6 +1,8 @@
 "use client";
 
 import { DataTable } from "@/components/tables/DataTable";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
@@ -11,10 +13,6 @@ import { CopyX, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  useFindManyStepSequenceMatch,
-  useUpdateStepSequenceMatch,
-} from "~/lib/hooks/step-sequence-match";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { type StepDuplicateRow, getColumns } from "./stepDuplicateColumns";
@@ -75,9 +73,9 @@ export function StepDuplicateResultsTable({
   );
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
-  const updateMatch = useUpdateStepSequenceMatch();
+  const updateMatch = useClientQueries(schema).stepSequenceMatch.useUpdate();
 
-  const { data: allMatches, isLoading } = useFindManyStepSequenceMatch({
+  const { data: allMatches, isLoading } = useClientQueries(schema).stepSequenceMatch.useFindMany({
     where: {
       projectId: Number(projectId),
       status: "PENDING",

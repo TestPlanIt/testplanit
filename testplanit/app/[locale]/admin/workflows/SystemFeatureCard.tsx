@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   Card,
   CardContent,
   CardDescription,
@@ -15,7 +17,6 @@ import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useFindUniqueAppConfig, useUpsertAppConfig } from "~/lib/hooks";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { Label } from "~/components/ui/label";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
@@ -45,14 +46,14 @@ export function SystemFeatureCard() {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const { systemEnabled, isLoading } = useReviewFeatureEnabled();
-  const upsertAppConfig = useUpsertAppConfig();
+  const upsertAppConfig = useClientQueries(schema).appConfig.useUpsert();
 
   const isAdmin = session?.user?.access === "ADMIN";
   const isEnabled = systemEnabled === true;
   const disabled = isLoading || upsertAppConfig.isPending || !isAdmin;
 
   const { data: thresholdConfig, isLoading: thresholdLoading } =
-    useFindUniqueAppConfig(
+    useClientQueries(schema).appConfig.useFindUnique(
       { where: { key: REMINDER_THRESHOLD_KEY } },
       { enabled: isAdmin && isEnabled }
     );

@@ -1,6 +1,8 @@
 "use client";
 
 import DynamicIcon from "@/components/DynamicIcon";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -40,7 +42,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
-import { useFindManyMilestoneTypes } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { MilestoneFormData } from "./AddMilestonesToProjectsWizard";
 
@@ -94,7 +95,7 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
 
   // Fetch milestone types for all selected projects
   const { data: allMilestoneTypes, isLoading: milestoneTypesLoading } =
-    useFindManyMilestoneTypes({
+    useClientQueries(schema).milestoneTypes.useFindMany({
       where: {
         AND: [
           {

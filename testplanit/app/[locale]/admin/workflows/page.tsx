@@ -1,20 +1,14 @@
 "use client";
 
 import { DataTable } from "@/components/tables/DataTable";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { WorkflowScope } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { scopeDisplayData } from "~/app/constants";
-import {
-  useCreateManyProjectWorkflowAssignment,
-  useDeleteManyProjectWorkflowAssignment,
-  useFindManyProjects,
-  useFindManyWorkflows,
-  useUpdateManyWorkflows,
-  useUpdateWorkflows,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { performOptimisticReorder } from "~/utils/optimistic-updates";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
@@ -85,17 +79,17 @@ function WorkflowComponent() {
     Record<string, boolean>
   >({});
 
-  const { mutateAsync: updateWorkflows } = useUpdateWorkflows();
-  const { mutateAsync: updateManyWorkflows } = useUpdateManyWorkflows();
+  const { mutateAsync: updateWorkflows } = useClientQueries(schema).workflows.useUpdate();
+  const { mutateAsync: updateManyWorkflows } = useClientQueries(schema).workflows.useUpdateMany();
   const { mutateAsync: createManyProjectWorkflowAssignment } =
-    useCreateManyProjectWorkflowAssignment();
+    useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
   const { mutateAsync: deleteManyProjectWorkflowAssignment } =
-    useDeleteManyProjectWorkflowAssignment();
-  const { data: projects } = useFindManyProjects({
+    useClientQueries(schema).projectWorkflowAssignment.useDeleteMany();
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
   });
 
-  const { data, isLoading } = useFindManyWorkflows(
+  const { data, isLoading } = useClientQueries(schema).workflows.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { order: "asc" },

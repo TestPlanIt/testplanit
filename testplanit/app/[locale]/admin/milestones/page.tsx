@@ -1,6 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -38,14 +40,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
-import {
-  useCreateManyMilestoneTypesAssignment,
-  useDeleteManyMilestoneTypesAssignment,
-  useFindManyMilestoneTypes,
-  useFindManyProjects,
-  useUpdateManyMilestoneTypes,
-  useUpdateMilestoneTypes,
-} from "~/lib/hooks";
 import AddMilestonesToProjectsWizard from "./AddMilestonesToProjectsWizard";
 import { AddMilestoneType } from "./AddMilestoneTypes";
 import { ExtendedMilestoneTypes, useColumns } from "./columns";
@@ -101,7 +95,7 @@ function MilestoneTypes() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { data: totalFilteredMilestoneTypes } = useFindManyMilestoneTypes(
+  const { data: totalFilteredMilestoneTypes } = useClientQueries(schema).milestoneTypes.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -135,7 +129,7 @@ function MilestoneTypes() {
     }
   }, [totalFilteredMilestoneTypes, setTotalItems]);
 
-  const { data, isLoading } = useFindManyMilestoneTypes(
+  const { data, isLoading } = useClientQueries(schema).milestoneTypes.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -176,7 +170,7 @@ function MilestoneTypes() {
 
   const milestoneTypes = data as ExtendedMilestoneTypes[];
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
   });
 
@@ -203,13 +197,13 @@ function MilestoneTypes() {
     number | undefined
   >(undefined);
 
-  const { mutateAsync: updateMilestoneType } = useUpdateMilestoneTypes();
+  const { mutateAsync: updateMilestoneType } = useClientQueries(schema).milestoneTypes.useUpdate();
   const { mutateAsync: updateManyMilestoneTypes } =
-    useUpdateManyMilestoneTypes();
+    useClientQueries(schema).milestoneTypes.useUpdateMany();
   const { mutateAsync: createManyMilestoneTypeProjectAssignment } =
-    useCreateManyMilestoneTypesAssignment();
+    useClientQueries(schema).milestoneTypesAssignment.useCreateMany();
   const { mutateAsync: deleteManyMilestoneTypesAssignment } =
-    useDeleteManyMilestoneTypesAssignment();
+    useClientQueries(schema).milestoneTypesAssignment.useDeleteMany();
 
   const handleToggleDefault = useCallback((id: number, _isDefault: boolean) => {
     setSelectedMilestoneTypeId(id);

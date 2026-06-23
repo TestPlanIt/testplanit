@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -30,12 +32,6 @@ import {
 import { useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  useCreateConfigurations,
-  useFindManyConfigCategories,
-  useFindManyConfigurations,
-  useFindManyProjects,
-} from "~/lib/hooks";
 
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import { ProjectIcon } from "@/components/ProjectIcon";
@@ -101,9 +97,9 @@ const AddConfigurationWizard = (): React.ReactElement => {
 
   const form = useForm();
 
-  const { mutateAsync: createConfigurations } = useCreateConfigurations();
+  const { mutateAsync: createConfigurations } = useClientQueries(schema).configurations.useCreate();
 
-  const { data: categories } = useFindManyConfigCategories({
+  const { data: categories } = useClientQueries(schema).configCategories.useFindMany({
     where: { isDeleted: false },
     include: {
       variants: {
@@ -113,12 +109,12 @@ const AddConfigurationWizard = (): React.ReactElement => {
     },
   });
 
-  const { data: existingConfigurations } = useFindManyConfigurations({
+  const { data: existingConfigurations } = useClientQueries(schema).configurations.useFindMany({
     where: { isDeleted: false },
     include: { variants: true },
   });
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
     select: { id: true, name: true, iconUrl: true },

@@ -1,14 +1,11 @@
 "use client";
 
 import { ApplicationArea } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useFindFirstAppConfig,
-  useFindFirstProjects,
-  useUpdateProjects,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
 import { Loading } from "@/components/Loading";
@@ -57,7 +54,7 @@ export default function ProjectDocumentation({
     data: project,
     refetch: refetchProject,
     isLoading: isProjectLoading,
-  } = useFindFirstProjects(
+  } = useClientQueries(schema).projects.useFindFirst(
     {
       where: {
         AND: [{ isDeleted: false }, { id: parseInt(projectId) }],
@@ -74,12 +71,12 @@ export default function ProjectDocumentation({
   } = useProjectPermissions(projectId, ApplicationArea.Documentation);
 
   // Fetch default content from AppConfig
-  const { data: appConfig } = useFindFirstAppConfig({
+  const { data: appConfig } = useClientQueries(schema).appConfig.useFindFirst({
     where: {
       key: "project_docs_default",
     },
   });
-  const { mutateAsync: updateProject } = useUpdateProjects();
+  const { mutateAsync: updateProject } = useClientQueries(schema).projects.useUpdate();
 
   // Use a ref to track the original docs from the database
   const originalDocsRef = useRef<object | null>(null);

@@ -1,6 +1,8 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,13 +24,6 @@ import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  useCreateManyCaseExportTemplateProjectAssignment,
-  useDeleteManyCaseExportTemplateProjectAssignment,
-  useFindManyCaseExportTemplate,
-  useFindManyCaseExportTemplateProjectAssignment,
-} from "~/lib/hooks";
-import { useUpdateProjects } from "~/lib/hooks";
 
 interface ExportTemplateAssignmentSectionProps {
   projectId: number;
@@ -51,7 +46,7 @@ export function ExportTemplateAssignmentSection({
   };
 
   const { data: templates, isLoading: templatesLoading } =
-    useFindManyCaseExportTemplate({
+    useClientQueries(schema).caseExportTemplate.useFindMany({
       where: { isDeleted: false, isEnabled: true },
       select: {
         id: true,
@@ -63,16 +58,16 @@ export function ExportTemplateAssignmentSection({
     });
 
   const { data: assignments, isLoading: assignmentsLoading } =
-    useFindManyCaseExportTemplateProjectAssignment({
+    useClientQueries(schema).caseExportTemplateProjectAssignment.useFindMany({
       where: { projectId },
       select: { templateId: true },
     });
 
   const { mutateAsync: deleteManyAssignment } =
-    useDeleteManyCaseExportTemplateProjectAssignment();
+    useClientQueries(schema).caseExportTemplateProjectAssignment.useDeleteMany();
   const { mutateAsync: createManyAssignment } =
-    useCreateManyCaseExportTemplateProjectAssignment();
-  const updateProject = useUpdateProjects();
+    useClientQueries(schema).caseExportTemplateProjectAssignment.useCreateMany();
+  const updateProject = useClientQueries(schema).projects.useUpdate();
 
   const [selectedTemplates, setSelectedTemplates] = useState<TemplateOption[]>(
     []

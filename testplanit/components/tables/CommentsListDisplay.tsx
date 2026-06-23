@@ -1,6 +1,8 @@
 "use client";
 
 import { UserNameCell } from "@/components/tables/UserNameCell";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +17,6 @@ import { formatDistanceToNow } from "date-fns";
 import { MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
-import { useFindManyComment } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -90,7 +91,7 @@ export const CommentsListDisplay: React.FC<CommentsListDisplayProps> = ({
   const [open, setOpen] = useState(false);
 
   // Fetch first 3 comments when popover is opened
-  const { data: comments, isLoading: isLoadingComments } = useFindManyComment(
+  const { data: comments, isLoading: isLoadingComments } = useClientQueries(schema).comment.useFindMany(
     {
       where: {
         repositoryCaseId: repositoryCaseId,

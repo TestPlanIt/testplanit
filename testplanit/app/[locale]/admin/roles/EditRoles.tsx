@@ -1,15 +1,11 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 import { ApplicationArea } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import type { Roles } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  useFindManyRolePermission,
-  useUpdateManyRoles,
-  useUpdateRoles,
-  useUpsertRolePermission,
-} from "~/lib/hooks";
 import { RESTRICTED_FIELDS_AREAS } from "~/lib/utils/restrictedFieldsAreas";
 import { REVIEW_RELEVANT_AREAS } from "~/lib/utils/reviewAreas";
 
@@ -78,13 +74,13 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
   const t = useTranslations();
   const tAreas = useTranslations("enums.ApplicationArea");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateRole } = useUpdateRoles();
-  const { mutateAsync: updateManyRoles } = useUpdateManyRoles();
-  const { mutateAsync: upsertRolePermission } = useUpsertRolePermission();
+  const { mutateAsync: updateRole } = useClientQueries(schema).roles.useUpdate();
+  const { mutateAsync: updateManyRoles } = useClientQueries(schema).roles.useUpdateMany();
+  const { mutateAsync: upsertRolePermission } = useClientQueries(schema).rolePermission.useUpsert();
 
   // Fetch existing permissions for this role
   const { data: existingPermissions, isLoading: isLoadingPermissions } =
-    useFindManyRolePermission({
+    useClientQueries(schema).rolePermission.useFindMany({
       where: { roleId: role.id },
     });
 

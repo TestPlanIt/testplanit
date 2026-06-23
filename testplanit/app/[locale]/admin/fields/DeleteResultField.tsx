@@ -1,11 +1,8 @@
 "use client";
 import type { ResultFields } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useState } from "react";
-import {
-  useFindFirstResultFields,
-  useUpdateManyFieldOptions,
-  useUpdateResultFields,
-} from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -40,10 +37,10 @@ export function DeleteResultField({
   const t = useTranslations("admin.templates.resultFields.delete");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateResultField } = useUpdateResultFields();
-  const { mutateAsync: updateManyFieldOptions } = useUpdateManyFieldOptions();
+  const { mutateAsync: updateResultField } = useClientQueries(schema).resultFields.useUpdate();
+  const { mutateAsync: updateManyFieldOptions } = useClientQueries(schema).fieldOptions.useUpdateMany();
 
-  const { data: defaultResultField } = useFindFirstResultFields({
+  const { data: defaultResultField } = useClientQueries(schema).resultFields.useFindFirst({
     where: {
       AND: [{ isEnabled: true }, { isDeleted: false }],
     },

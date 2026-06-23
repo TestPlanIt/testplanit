@@ -1,6 +1,8 @@
 "use client";
 
 import { IntegrationModal } from "@/components/admin/integrations/IntegrationModal";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
@@ -25,10 +27,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  useDeleteIntegration,
-  useFindManyIntegration,
-} from "@/lib/hooks/integration";
 import type { Integration } from "~/zenstack/models";
 import { CirclePlus, Plug, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -91,7 +89,7 @@ function IntegrationList() {
   const skip = (currentPage - 1) * effectivePageSize;
 
   // Query for total filtered integrations (for pagination)
-  const { data: totalFilteredIntegrations } = useFindManyIntegration(
+  const { data: totalFilteredIntegrations } = useClientQueries(schema).integration.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -134,7 +132,7 @@ function IntegrationList() {
     data: integrations,
     isLoading,
     refetch,
-  } = useFindManyIntegration(
+  } = useClientQueries(schema).integration.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -185,7 +183,7 @@ function IntegrationList() {
     }
   }, [status, session, router]);
 
-  const { mutate: deleteIntegration } = useDeleteIntegration();
+  const { mutate: deleteIntegration } = useClientQueries(schema).integration.useDelete();
 
   // Stabilize mutation ref — ZenStack's mutate changes identity every render
   const deleteIntegrationRef = useRef(deleteIntegration);

@@ -1,5 +1,7 @@
 "use client";
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -16,7 +18,6 @@ import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useUpdateSessions } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
 interface DeleteSessionProps {
@@ -38,7 +39,7 @@ export function DeleteSessionModal({
 }: DeleteSessionProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { mutateAsync: updateSessions } = useUpdateSessions();
+  const { mutateAsync: updateSessions } = useClientQueries(schema).sessions.useUpdate();
   const t = useTranslations();
 
   const form = useForm();

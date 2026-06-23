@@ -1,4 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Popover,
   PopoverContent,
@@ -8,7 +10,6 @@ import type { Color, ColorFamily, FieldIcon, Milestones, MilestoneTypes } from "
 import { Milestone } from "lucide-react";
 import { useTheme } from "next-themes";
 import React, { useEffect, useState } from "react";
-import { useFindManyColor } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import {
   createColorMap,
@@ -41,7 +42,7 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
   milestones,
 }) => {
   const { resolvedTheme } = useTheme();
-  const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(schema).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });

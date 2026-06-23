@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useFindUniqueTestRuns } from "~/lib/hooks";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { logDataExport } from "~/lib/services/auditClient";
 import { toHumanReadable } from "~/utils/duration";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
@@ -137,7 +138,7 @@ export function useExportTestRunPdf({
   const [isExporting, setIsExporting] = useState(false);
 
   // Disabled query; the heavy data is fetched only when the user exports.
-  const { refetch } = useFindUniqueTestRuns(
+  const { refetch } = useClientQueries(schema).testRuns.useFindUnique(
     { where: { id: testRunId ?? 0 }, include: EXPORT_INCLUDE },
     { enabled: false }
   );

@@ -1,6 +1,8 @@
 "use client";
 
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -23,7 +25,6 @@ import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import type { MilestoneSummaryData } from "~/app/api/milestones/[milestoneId]/summary/route";
-import { useFindFirstStatus } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
@@ -59,7 +60,7 @@ export function MilestoneSummary({
     staleTime: 30000, // Cache for 30 seconds
   });
 
-  const { data: firstStatus } = useFindFirstStatus({
+  const { data: firstStatus } = useClientQueries(schema).status.useFindFirst({
     where: {
       isDeleted: false,
     },

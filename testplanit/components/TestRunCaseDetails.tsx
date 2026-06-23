@@ -1,4 +1,6 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DurationDisplay } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -53,13 +55,6 @@ import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
-import {
-  useFindFirstWorkflows,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-  useUpdateTestRunCases,
-} from "~/lib/hooks";
-import { useFindManyTemplates } from "~/lib/hooks/templates";
 import {
   isIssueRequiredOnFailureSubmitResultError,
   isJustificationRequiredSubmitResultError,
@@ -183,10 +178,10 @@ export function TestRunCaseDetails({
     setSelectedAttachments([]);
   };
 
-  const { mutateAsync: updateTestRunCase } = useUpdateTestRunCases();
+  const { mutateAsync: updateTestRunCase } = useClientQueries(schema).testRunCases.useUpdate();
 
   // Find the first IN_PROGRESS workflow state for this project
-  const { data: inProgressWorkflow } = useFindFirstWorkflows({
+  const { data: inProgressWorkflow } = useClientQueries(schema).workflows.useFindFirst({
     where: {
       projects: {
         some: {
@@ -424,7 +419,7 @@ export function TestRunCaseDetails({
   // can't capture one, so when it does we escalate to the full Add Result modal
   // (which captures the field) rather than letting submit-result reject it.
   const { data: requiredResultFieldAssignments } =
-    useFindManyTemplateResultAssignment(
+    useClientQueries(schema).templateResultAssignment.useFindMany(
       {
         where: {
           templateId: testcase?.template?.id,
@@ -437,7 +432,7 @@ export function TestRunCaseDetails({
   const hasRequiredResultField =
     (requiredResultFieldAssignments?.length ?? 0) > 0;
 
-  const { data: _templates } = useFindManyTemplates({
+  const { data: _templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -462,7 +457,7 @@ export function TestRunCaseDetails({
   });
 
   // Fetch available statuses
-  const { data: statuses } = useFindManyStatus({
+  const { data: statuses } = useClientQueries(schema).status.useFindMany({
     where: {
       AND: [
         { isEnabled: true },

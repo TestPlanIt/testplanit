@@ -1,16 +1,9 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import {
-  useCreateManyGroupAssignment,
-  useCreateManyProjectAssignment,
-  useFindFirstRegistrationSettings,
-  useFindFirstSsoProvider,
-  useFindManyGroups,
-  useFindManyProjects,
-  useFindManyRoles,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -80,18 +73,18 @@ export function AddUser({ open, onClose }: AddUserProps) {
   } | null>(null);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const { mutateAsync: createManyProjectAssignment } =
-    useCreateManyProjectAssignment();
+    useClientQueries(schema).projectAssignment.useCreateMany();
   const { mutateAsync: createManyGroupAssignment } =
-    useCreateManyGroupAssignment();
+    useClientQueries(schema).groupAssignment.useCreateMany();
 
   // Theme the MultiSelect component
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
 
   // Fetch roles, projects, groups, and registration settings...
-  const { data: roles } = useFindManyRoles();
+  const { data: roles } = useClientQueries(schema).roles.useFindMany();
   const defaultRoleId = roles?.find((role) => role.isDefault)?.id;
-  const { data: registrationSettings } = useFindFirstRegistrationSettings();
+  const { data: registrationSettings } = useClientQueries(schema).registrationSettings.useFindFirst();
 
   // Email server configuration status
   const [isEmailServerConfigured, setIsEmailServerConfigured] = useState(true);
@@ -99,7 +92,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
   // Mirrors the revoke-password pre-flight: a passwordless login path exists
   // when either an enabled MAGIC_LINK SSO provider is present or the email
   // server env vars are configured.
-  const { data: magicLinkProvider } = useFindFirstSsoProvider({
+  const { data: magicLinkProvider } = useClientQueries(schema).ssoProvider.useFindFirst({
     where: { type: "MAGIC_LINK", enabled: true },
     select: { id: true },
   });
@@ -234,7 +227,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
       ),
     })) || [];
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
@@ -252,7 +245,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
     setValue("projects", allProjectIds);
   };
 
-  const { data: groups } = useFindManyGroups({
+  const { data: groups } = useClientQueries(schema).groups.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });

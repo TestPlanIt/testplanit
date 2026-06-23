@@ -1,6 +1,8 @@
 "use client";
 
 import CompletedRunsLineChart from "@/components/dataVisualizations/CompletedRunsLineChart";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import RecentResultsDonut from "@/components/dataVisualizations/RecentResultsDonut";
 import SummarySunburstChart, {
   SunburstHierarchyNode,
@@ -59,16 +61,6 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useCreateTestRuns,
-  useFindFirstJUnitTestResult,
-  useFindFirstProjects,
-  useFindFirstTestRunResults,
-  useFindManyJUnitTestResult,
-  useFindManyMilestones,
-  useFindManyTestRunResults,
-  useFindManyTestRuns,
-} from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
@@ -349,7 +341,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     data: allIncompleteTestRuns,
     isLoading: isLoadingIncompleteRuns,
     refetch: refetchIncompleteTestRuns,
-  } = useFindManyTestRuns(
+  } = useClientQueries(schema).testRuns.useFindMany(
     {
       where: {
         AND: [
@@ -434,7 +426,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     }),
   });
 
-  const { data: project, isLoading: isProjectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: isProjectLoading } = useClientQueries(schema).projects.useFindFirst(
     {
       where: {
         AND: [
@@ -452,7 +444,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     }
   );
 
-  const _createTestRun = useCreateTestRuns();
+  const _createTestRun = useClientQueries(schema).testRuns.useCreate();
 
   // NOTE: Disabled due to performance optimization - results data is no longer fetched in the main query
   const _numNotStartedActiveTestRuns = 0;
@@ -523,7 +515,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     setCompletedRunsPage(1);
   }, [completedRunsPageSize, runTypeFilter, setCompletedRunsPage]);
 
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       projectId: numericProjectId ?? undefined,
       isDeleted: false,
@@ -560,7 +552,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   const {
     data: completedRunsLast6Months,
     isLoading: isLoadingCompletedRunsData,
-  } = useFindManyTestRuns(
+  } = useClientQueries(schema).testRuns.useFindMany(
     {
       where: {
         projectId: numericProjectId ?? undefined,
@@ -581,7 +573,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // --- Fetch Recent Manual Test Run Results (two-query approach) ---
   // Query 1: Get the most recent result to determine the date range
-  const { data: latestManualResult } = useFindFirstTestRunResults(
+  const { data: latestManualResult } = useClientQueries(schema).testRunResults.useFindFirst(
     {
       where: {
         testRun: { projectId: numericProjectId ?? undefined },
@@ -610,7 +602,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // Query 2: Get all results within 7 days of the latest result
   const { data: rawRecentResults, isLoading: isLoadingRecentResults } =
-    useFindManyTestRunResults(
+    useClientQueries(schema).testRunResults.useFindMany(
       {
         where: {
           testRun: { projectId: numericProjectId ?? undefined },
@@ -719,7 +711,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // --- Fetch Recent Automated (JUnit) Test Results (two-query approach) ---
   // Query 1: Get the most recent automated result to determine the date range
-  const { data: latestAutomatedResult } = useFindFirstJUnitTestResult(
+  const { data: latestAutomatedResult } = useClientQueries(schema).jUnitTestResult.useFindFirst(
     {
       where: {
         testSuite: {
@@ -750,7 +742,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // Query 2: Get all automated results within 7 days of the latest result
   const { data: rawAutomatedResults, isLoading: isLoadingAutomatedResults } =
-    useFindManyJUnitTestResult(
+    useClientQueries(schema).jUnitTestResult.useFindMany(
       {
         where: {
           testSuite: {

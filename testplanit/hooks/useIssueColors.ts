@@ -4,7 +4,8 @@
  */
 
 import { useMemo, type CSSProperties } from "react";
-import { useFindManyColor } from "~/lib/hooks";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 
 interface ColorFamily {
   id: number;
@@ -28,7 +29,7 @@ export interface IssueBadgeStyle extends CSSProperties {
  */
 export function useIssueColors() {
   // Fetch all colors with their color families
-  const { data: colors, isLoading } = useFindManyColor({
+  const { data: colors, isLoading } = useClientQueries(schema).color.useFindMany({
     include: {
       colorFamily: true,
     },

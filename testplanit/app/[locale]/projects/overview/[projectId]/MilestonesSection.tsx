@@ -1,9 +1,10 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay";
 import { LinkIcon, Milestone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
-import { useFindManyMilestones } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { MilestonesWithTypes } from "~/utils/milestoneUtils";
 
@@ -15,7 +16,7 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
   const t = useTranslations();
 
   const { data: milestones, isLoading: isLoadingMilestones } =
-    useFindManyMilestones({
+    useClientQueries(schema).milestones.useFindMany({
       where: {
         AND: [{ projectId }, { isCompleted: false }, { isDeleted: false }],
       },
@@ -30,7 +31,7 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
     });
 
   const { data: milestonesCountResult, isLoading: isLoadingCount } =
-    useFindManyMilestones({
+    useClientQueries(schema).milestones.useFindMany({
       where: {
         AND: [{ projectId }, { isCompleted: false }, { isDeleted: false }],
       },

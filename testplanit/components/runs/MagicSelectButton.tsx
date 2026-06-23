@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Tooltip,
   TooltipContent,
@@ -9,7 +11,6 @@ import {
 import { Wand2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
-import { useFindFirstProjects } from "~/lib/hooks";
 import { MagicSelectDialog } from "./MagicSelectDialog";
 
 interface MagicSelectButtonProps {
@@ -36,7 +37,7 @@ export function MagicSelectButton({
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Check if project has an active LLM integration
-  const { data: project, isLoading } = useFindFirstProjects({
+  const { data: project, isLoading } = useClientQueries(schema).projects.useFindFirst({
     where: { id: projectId },
     include: {
       projectLlmIntegrations: {

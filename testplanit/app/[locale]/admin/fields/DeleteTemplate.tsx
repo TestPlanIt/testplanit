@@ -1,12 +1,8 @@
 "use client";
 import type { Templates } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useState } from "react";
-import {
-  useFindFirstTemplates,
-  useUpdateManyRepositoryCases,
-  useUpdateManySessions,
-  useUpdateTemplates,
-} from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -42,11 +38,11 @@ export function DeleteTemplate({
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateTemplate } = useUpdateTemplates();
-  const { mutateAsync: updateManyTestCases } = useUpdateManyRepositoryCases();
-  const { mutateAsync: updateManySessions } = useUpdateManySessions();
+  const { mutateAsync: updateTemplate } = useClientQueries(schema).templates.useUpdate();
+  const { mutateAsync: updateManyTestCases } = useClientQueries(schema).repositoryCases.useUpdateMany();
+  const { mutateAsync: updateManySessions } = useClientQueries(schema).sessions.useUpdateMany();
 
-  const { data: defaultTemplate } = useFindFirstTemplates({
+  const { data: defaultTemplate } = useClientQueries(schema).templates.useFindFirst({
     where: {
       AND: [{ isDefault: true }, { isEnabled: true }, { isDeleted: false }],
     },

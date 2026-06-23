@@ -1,9 +1,10 @@
 import { Loading } from "@/components/Loading";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import React, { useEffect, useState } from "react";
-import { useFindManyColor, useUpdateMilestones } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import {
   createColorMap,
@@ -34,11 +35,11 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
 }) => {
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
-  const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(schema).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
-  const { mutateAsync: updateMilestones } = useUpdateMilestones();
+  const { mutateAsync: updateMilestones } = useClientQueries(schema).milestones.useUpdate();
   const router = useRouter();
   const queryClient = useQueryClient();
 

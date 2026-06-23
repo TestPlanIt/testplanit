@@ -1,7 +1,8 @@
 "use client";
 import type { Configurations } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useState } from "react";
-import { useUpdateConfigurations } from "~/lib/hooks";
 
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
@@ -32,7 +33,7 @@ export function DeleteConfiguration({
   onClose,
 }: DeleteConfigurationProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfiguration } = useUpdateConfigurations();
+  const { mutateAsync: updateConfiguration } = useClientQueries(schema).configurations.useUpdate();
   const t = useTranslations("admin.configurations");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");

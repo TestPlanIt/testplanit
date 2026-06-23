@@ -1,6 +1,8 @@
 "use client";
 
 import { Loading } from "@/components/Loading";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +18,6 @@ import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useFindFirstProjects } from "~/lib/hooks";
 import { DatasetCreateDialog } from "../datasets/dataset-create-dialog";
 import { DatasetsList } from "../datasets/datasets-list";
 import { JunitIterationPropertyForm } from "../junit/junit-iteration-property-form";
@@ -36,7 +37,7 @@ export default function ProjectParametersSettingsPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
 
-  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: projectLoading } = useClientQueries(schema).projects.useFindFirst(
     {
       where: { id: projectId },
       select: {

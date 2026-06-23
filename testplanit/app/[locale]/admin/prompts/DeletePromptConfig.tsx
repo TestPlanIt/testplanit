@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -15,8 +17,6 @@ import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useUpdateManyProjects } from "~/lib/hooks";
-import { useUpdatePromptConfig } from "~/lib/hooks/prompt-config";
 
 interface DeletePromptConfigProps {
   config: PromptConfig;
@@ -33,8 +33,8 @@ export function DeletePromptConfig({
   const tCommon = useTranslations("common");
   const [loading, setLoading] = useState(false);
 
-  const { mutateAsync: updatePromptConfig } = useUpdatePromptConfig();
-  const { mutateAsync: updateManyProjects } = useUpdateManyProjects();
+  const { mutateAsync: updatePromptConfig } = useClientQueries(schema).promptConfig.useUpdate();
+  const { mutateAsync: updateManyProjects } = useClientQueries(schema).projects.useUpdateMany();
 
   const handleDelete = async () => {
     setLoading(true);

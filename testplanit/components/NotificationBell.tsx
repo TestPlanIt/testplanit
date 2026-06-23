@@ -1,6 +1,8 @@
 "use client";
 
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { NotificationContent } from "@/components/NotificationContent";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +37,6 @@ import {
   markNotificationAsRead,
   markNotificationAsUnread,
 } from "~/app/actions/notifications";
-import { useFindManyNotification } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -177,7 +178,7 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
 
-  const { data: notifications, refetch } = useFindManyNotification(
+  const { data: notifications, refetch } = useClientQueries(schema).notification.useFindMany(
     {
       where: {
         userId: session?.user?.id,
@@ -208,7 +209,7 @@ export function NotificationBell() {
   }, [session?.user?.id, refetch]);
 
   // SSE wake-up: open EventSource when authenticated; refetch on each event.
-  // Read path remains useFindManyNotification → getEnhancedDb (Architectural Directive 2 / ISO-02).
+  // Read path remains useClientQueries(schema).notification.useFindMany → getEnhancedDb (Architectural Directive 2 / ISO-02).
   // SSE is the sole update source — no polling fallback remains (UI-03 / D-23).
   // Reconnect → server emits {event:"sync"} → onmessage → refetch catches anything missed.
   useEffect(() => {

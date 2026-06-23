@@ -1,6 +1,8 @@
 "use client";
 
 import { ColorPicker } from "@/components/ColorPicker";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { FieldIconPicker } from "@/components/FieldIconPicker";
 import StatusDotDisplay from "@/components/StatusDotDisplay";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +51,6 @@ import {
   FilePlus2,
   SquareDashed,
 } from "lucide-react";
-import { useFindManyColor, useFindManyStatusScope } from "~/lib/hooks";
 import type {
   TestmoConfigurationMappingConfig,
   TestmoConfigurationSuggestion,
@@ -3491,7 +3492,7 @@ function StatusMappingSection({
   const tStatuses = useTranslations("admin.statuses");
   const systemNameEditedRef = useRef<Map<number, boolean>>(new Map());
 
-  const { data: colorData } = useFindManyColor({
+  const { data: colorData } = useClientQueries(schema).color.useFindMany({
     select: { id: true, value: true },
     orderBy: { order: "asc" },
   });
@@ -3510,7 +3511,7 @@ function StatusMappingSection({
     [colorData]
   );
 
-  const { data: statusScopeData } = useFindManyStatusScope({
+  const { data: statusScopeData } = useClientQueries(schema).statusScope.useFindMany({
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });

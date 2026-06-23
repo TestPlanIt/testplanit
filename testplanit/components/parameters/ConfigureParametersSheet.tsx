@@ -1,6 +1,8 @@
 "use client";
 
 import { DatasetImportWizard } from "@/components/parameters/DatasetImportWizard";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DatasetTab } from "@/components/parameters/DatasetTab";
 import { ParametersTab } from "@/components/parameters/ParametersTab";
 import { Button } from "@/components/ui/button";
@@ -21,7 +23,6 @@ import { SquareStack } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createContext, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useCountDataSetRow, useFindManyTestCaseParameter } from "~/lib/hooks";
 
 /**
  * Context exposed to descendants of the Sheet so the dataset-cell editor
@@ -62,7 +63,7 @@ export function ConfigureParametersSheet({
   const [editingCell, setEditingCell] = useState(false);
   const [showImportWizard, setShowImportWizard] = useState(false);
 
-  const { data: parameters = [] } = useFindManyTestCaseParameter(
+  const { data: parameters = [] } = useClientQueries(schema).testCaseParameter.useFindMany(
     {
       where: { testCaseId: caseId, isDeleted: false },
       orderBy: { order: "asc" },
@@ -74,7 +75,7 @@ export function ConfigureParametersSheet({
   // Confirm step. Cross-project filter is enforced server-side via the
   // dataset read endpoint (Plan 02-02); the count hook here is purely
   // for display copy.
-  const { data: existingRowCount = 0 } = useCountDataSetRow(
+  const { data: existingRowCount = 0 } = useClientQueries(schema).dataSetRow.useCount(
     {
       where: {
         dataSet: {

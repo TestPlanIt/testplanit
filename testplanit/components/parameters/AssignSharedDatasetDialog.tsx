@@ -1,6 +1,8 @@
 "use client";
 
 import { SharedDatasetMappingFields } from "@/components/parameters/SharedDatasetMappingFields";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { SharedDatasetVersionPicker } from "@/components/parameters/SharedDatasetVersionPicker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -24,11 +26,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  useFindFirstDataSetVersion,
-  useFindManyDataSet,
-  useFindManyTestCaseParameter,
-} from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { SKIP_SENTINEL } from "~/lib/utils/datasetMapping";
 
@@ -126,7 +123,7 @@ export function AssignSharedDatasetDialog({
   const queryClient = useQueryClient();
 
   // ---------- Section 1 — Choose dataset ----------
-  const { data: datasetsRaw, isLoading: datasetsLoading } = useFindManyDataSet(
+  const { data: datasetsRaw, isLoading: datasetsLoading } = useClientQueries(schema).dataSet.useFindMany(
     {
       where: { projectId, isShared: true, isDeleted: false },
       orderBy: { name: "asc" },
@@ -181,7 +178,7 @@ export function AssignSharedDatasetDialog({
   // Resolve the version whose columns we should map against:
   //   - "current" / "follow-latest" → latest version of the selected dataset
   //   - "specific" → the user's pick from the version picker
-  const { data: latestVersion } = useFindFirstDataSetVersion(
+  const { data: latestVersion } = useClientQueries(schema).dataSetVersion.useFindFirst(
     {
       where: selectedDataSetId
         ? { dataSetId: selectedDataSetId }
@@ -197,7 +194,7 @@ export function AssignSharedDatasetDialog({
     { enabled: open && selectedDataSetId !== null }
   );
 
-  const { data: specificVersionData } = useFindFirstDataSetVersion(
+  const { data: specificVersionData } = useClientQueries(schema).dataSetVersion.useFindFirst(
     {
       where: { id: specificVersion?.id ?? -1 },
       select: {
@@ -225,7 +222,7 @@ export function AssignSharedDatasetDialog({
   // We need the case's parameters to render the mapping select. The
   // dialog uses the auto-generated ZenStack hook so callers don't have
   // to thread the parameters through props.
-  const { data: caseParametersRaw } = useFindManyTestCaseParameter(
+  const { data: caseParametersRaw } = useClientQueries(schema).testCaseParameter.useFindMany(
     {
       where: { testCaseId: caseId, isDeleted: false },
       orderBy: { order: "asc" },

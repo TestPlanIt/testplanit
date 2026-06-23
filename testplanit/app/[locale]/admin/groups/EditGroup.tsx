@@ -1,15 +1,10 @@
 "use client";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import type { Groups, User } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import {
-  useCreateManyGroupAssignment,
-  useDeleteManyGroupAssignment,
-  useFindManyGroupAssignment,
-  useFindManyUser,
-  useUpdateGroups,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -100,17 +95,17 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
     useState<EditGroupFormData | null>(null);
   const [downgradedUsers, setDowngradedUsers] = useState<DowngradedUser[]>([]);
 
-  const { mutateAsync: updateGroup } = useUpdateGroups();
-  const { data: allUsersData, isLoading: usersLoading } = useFindManyUser({
+  const { mutateAsync: updateGroup } = useClientQueries(schema).groups.useUpdate();
+  const { data: allUsersData, isLoading: usersLoading } = useClientQueries(schema).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     orderBy: { name: "asc" },
   });
   const { data: groupAssignments, isLoading: assignmentsLoading } =
-    useFindManyGroupAssignment({ where: { groupId: group.id } });
+    useClientQueries(schema).groupAssignment.useFindMany({ where: { groupId: group.id } });
   const { mutateAsync: createManyGroupAssignment } =
-    useCreateManyGroupAssignment();
+    useClientQueries(schema).groupAssignment.useCreateMany();
   const { mutateAsync: deleteManyGroupAssignment } =
-    useDeleteManyGroupAssignment();
+    useClientQueries(schema).groupAssignment.useDeleteMany();
 
   const allUsers: User[] | undefined = allUsersData as User[] | undefined;
 

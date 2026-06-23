@@ -1,6 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
@@ -33,11 +35,6 @@ import {
 } from "~/app/actions/searchAuditLogUsers";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
-import {
-  useCountAuditLog,
-  useFindManyAuditLog,
-  useInfiniteFindManyAuditLog,
-} from "~/lib/hooks";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { logDataExport } from "~/lib/services/auditClient";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
@@ -182,7 +179,7 @@ function AuditLogsContent({ session }: { session: Session }) {
 
   // Total count for the filtered set — drives the "loaded of total" footer and
   // gates the export button.
-  const { data: totalCount } = useCountAuditLog({ where: whereClause });
+  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({ where: whereClause });
 
   // Fetch audit logs as an infinite, virtualized stream — the list only needs
   // the columns the table renders. Excludes the `changes` and `metadata` Json
@@ -216,7 +213,7 @@ function AuditLogsContent({ session }: { session: Session }) {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-  } = useInfiniteFindManyAuditLog(baseArgs, {
+  } = useClientQueries(schema).auditLog.useInfiniteFindMany(baseArgs, {
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
       return {
@@ -250,7 +247,7 @@ function AuditLogsContent({ session }: { session: Session }) {
   );
 
   // Get unique entity types for filter
-  const { data: entityTypes } = useFindManyAuditLog({
+  const { data: entityTypes } = useClientQueries(schema).auditLog.useFindMany({
     select: { entityType: true },
     distinct: ["entityType"],
     orderBy: { entityType: "asc" },
@@ -259,7 +256,7 @@ function AuditLogsContent({ session }: { session: Session }) {
   // Distinct projects that appear in the audit log, for the project filter.
   // Sourced from the log itself (policy-enforced) so the dropdown never lists a
   // project with no audit rows and never leaks projects outside the viewer's reach.
-  const { data: projectRows } = useFindManyAuditLog({
+  const { data: projectRows } = useClientQueries(schema).auditLog.useFindMany({
     where: { projectId: { not: null } },
     select: { projectId: true, project: { select: { name: true } } },
     distinct: ["projectId"],
@@ -290,7 +287,7 @@ function AuditLogsContent({ session }: { session: Session }) {
   }, []);
 
   // Fetch all logs for export (no pagination)
-  const { refetch: refetchAllLogs } = useFindManyAuditLog(
+  const { refetch: refetchAllLogs } = useClientQueries(schema).auditLog.useFindMany(
     {
       orderBy: buildAuditLogOrderBy(sortConfig),
       include: {

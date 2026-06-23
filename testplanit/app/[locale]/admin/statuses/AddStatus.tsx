@@ -1,14 +1,8 @@
 "use client";
 import DynamicIcon from "@/components/DynamicIcon";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useEffect, useState } from "react";
-import {
-  useCreateManyProjectStatusAssignment,
-  useCreateManyStatusScopeAssignment,
-  useCreateStatus,
-  useFindFirstColor,
-  useFindManyProjects,
-  useFindManyStatusScope,
-} from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -87,18 +81,18 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [systemNameFocused, setSystemNameFocused] = useState(false);
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
-  const { data: defaultColorData } = useFindFirstColor();
+  const { data: defaultColorData } = useClientQueries(schema).color.useFindFirst();
 
-  const { mutateAsync: createStatus } = useCreateStatus();
+  const { mutateAsync: createStatus } = useClientQueries(schema).status.useCreate();
   const { mutateAsync: createManyStatusScopeAssignment } =
-    useCreateManyStatusScopeAssignment();
+    useClientQueries(schema).statusScopeAssignment.useCreateMany();
   const { mutateAsync: createManyProjectStatusAssignment } =
-    useCreateManyProjectStatusAssignment();
+    useClientQueries(schema).projectStatusAssignment.useCreateMany();
 
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
 
-  const { data: scopes } = useFindManyStatusScope();
+  const { data: scopes } = useClientQueries(schema).statusScope.useFindMany();
 
   const scopeOptions =
     scopes && scopes.length > 0
@@ -118,7 +112,7 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
     setValue("scope", allScopeIds);
   };
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });

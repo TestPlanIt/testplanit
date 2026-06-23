@@ -1,6 +1,8 @@
 "use client";
 
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Loading } from "@/components/Loading";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Badge } from "@/components/ui/badge";
@@ -36,12 +38,6 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import {
-  useFindFirstSessionVersions,
-  useFindManyMilestones,
-  useFindManySessionVersions,
-  useFindManyWorkflows,
-} from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import { SessionVersionRenderer } from "./SessionVersionRenderer";
 
@@ -69,14 +65,14 @@ export default function SessionVersionPage() {
   const t = useTranslations();
   const tCommon = useTranslations("common");
 
-  const { data: currentVersion, isLoading } = useFindFirstSessionVersions({
+  const { data: currentVersion, isLoading } = useClientQueries(schema).sessionVersions.useFindFirst({
     where: {
       sessionId: Number(sessionId),
       version: Number(version),
     },
   });
 
-  const { data: versions } = useFindManySessionVersions({
+  const { data: versions } = useClientQueries(schema).sessionVersions.useFindMany({
     where: { sessionId: Number(sessionId) },
     orderBy: { version: "desc" },
   });
@@ -91,7 +87,7 @@ export default function SessionVersionPage() {
       ? (versions?.[currentVersionIndex + 1]?.version ?? null)
       : null;
 
-  const { data: previousVersion } = useFindFirstSessionVersions({
+  const { data: previousVersion } = useClientQueries(schema).sessionVersions.useFindFirst({
     where: {
       sessionId: Number(sessionId),
       version: previousVersionNumber || -1,
@@ -121,7 +117,7 @@ export default function SessionVersionPage() {
   const sortedPreviousAttachments =
     sortVersionData.attachments(previousAttachments);
 
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: { isDeleted: false },
     orderBy: { order: "asc" },
     include: {
@@ -140,7 +136,7 @@ export default function SessionVersionPage() {
     },
   });
 
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       projectId: Number(projectId),
       isDeleted: false,

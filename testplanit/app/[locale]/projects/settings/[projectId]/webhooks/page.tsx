@@ -1,6 +1,8 @@
 "use client";
 
 import { Loading } from "@/components/Loading";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import {
   Card,
@@ -16,7 +18,6 @@ import { notFound, useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useFindFirstProjects } from "~/lib/hooks";
 import { WebhookConfigForm } from "./webhook-config-form";
 import { WebhookDeliveriesTab } from "./webhook-deliveries-tab";
 import { WebhookOutboundForm } from "./webhook-outbound-form";
@@ -61,7 +62,7 @@ export default function ProjectWebhooksPage() {
   };
 
   // Fetch project data (allow global admin access or project assignment).
-  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: projectLoading } = useClientQueries(schema).projects.useFindFirst(
     {
       where: { id: projectId },
       select: {

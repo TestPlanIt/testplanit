@@ -1,18 +1,11 @@
 "use client";
 import type { Roles, User } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import {
-  useCreateManyGroupAssignment,
-  useCreateManyProjectAssignment,
-  useDeleteManyGroupAssignment,
-  useDeleteManyProjectAssignment,
-  useFindManyGroups,
-  useFindManyProjects,
-  useFindManyRoles,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -127,13 +120,13 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
 
   // Hooks for API calls
   const { mutateAsync: createManyProjectAssignment } =
-    useCreateManyProjectAssignment();
+    useClientQueries(schema).projectAssignment.useCreateMany();
   const { mutateAsync: deleteManyProjectAssignment } =
-    useDeleteManyProjectAssignment();
+    useClientQueries(schema).projectAssignment.useDeleteMany();
   const { mutateAsync: createManyGroupAssignment } =
-    useCreateManyGroupAssignment();
+    useClientQueries(schema).groupAssignment.useCreateMany();
   const { mutateAsync: deleteManyGroupAssignment } =
-    useDeleteManyGroupAssignment();
+    useClientQueries(schema).groupAssignment.useDeleteMany();
   const { data: session } = useSession();
 
   // Theme the MultiSelect component
@@ -141,7 +134,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
   const customStyles = getCustomStyles({ theme });
 
   // Fetch data for dropdowns/multiselects
-  const { data: allRoles } = useFindManyRoles({
+  const { data: allRoles } = useClientQueries(schema).roles.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
@@ -152,7 +145,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
       }))
     : [];
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
@@ -167,7 +160,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
     setValue("projects", allProjectIds);
   };
 
-  const { data: groups } = useFindManyGroups({
+  const { data: groups } = useClientQueries(schema).groups.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });

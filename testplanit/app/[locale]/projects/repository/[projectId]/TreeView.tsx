@@ -1,4 +1,6 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -37,11 +39,6 @@ import { useDragLayer, useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { useCopyMoveJob } from "~/components/copy-move/useCopyMoveJob";
 import { useDragModifier } from "~/hooks/useDragModifier";
-import {
-  useFindManyRepositoryFolders,
-  useUpdateRepositoryCases,
-  useUpdateRepositoryFolders,
-} from "~/lib/hooks";
 import { ItemTypes } from "~/types/dndTypes";
 import { DeleteFolderModal } from "./DeleteFolderModal";
 import { EditFolderModal } from "./EditFolder";
@@ -152,7 +149,7 @@ const TreeView: React.FC<{
     isLoading: foldersLoading,
     error: _error,
     refetch: refetchFolders,
-  } = useFindManyRepositoryFolders(
+  } = useClientQueries(schema).repositoryFolders.useFindMany(
     {
       where: {
         projectId: Number(projectId),
@@ -371,8 +368,8 @@ const TreeView: React.FC<{
     return combined;
   }, [loadedFolderIds, autoLoadedFolderIds]);
 
-  const { mutateAsync: updateFolder } = useUpdateRepositoryFolders();
-  const { mutateAsync: updateCase } = useUpdateRepositoryCases();
+  const { mutateAsync: updateFolder } = useClientQueries(schema).repositoryFolders.useUpdate();
+  const { mutateAsync: updateCase } = useClientQueries(schema).repositoryCases.useUpdate();
 
   const copyMoveJob = useCopyMoveJob();
   const [pendingCopyTargets, setPendingCopyTargets] = useState<

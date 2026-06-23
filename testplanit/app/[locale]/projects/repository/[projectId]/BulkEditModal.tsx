@@ -1,6 +1,8 @@
 "use client";
 
 import { formatSeconds } from "@/components/DurationDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -54,12 +56,6 @@ import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useFindManyTags,
-  useFindManyWorkflows,
-  useUpdateManyRepositoryCases,
-  useUpdateRepositoryCases,
-} from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
@@ -275,7 +271,7 @@ export function BulkEditModal({
   }, [fetchCases]);
 
   const { data: workflowsData, isLoading: isLoadingWorkflows } =
-    useFindManyWorkflows(
+    useClientQueries(schema).workflows.useFindMany(
       {
         where: {
           scope: "CASES",
@@ -353,7 +349,7 @@ export function BulkEditModal({
     });
   }, [bulkGateCheck, tReviews, casesData]);
 
-  const { data: availableTagsData, isLoading: isLoadingTags } = useFindManyTags(
+  const { data: availableTagsData, isLoading: isLoadingTags } = useClientQueries(schema).tags.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { name: "asc" },
@@ -364,9 +360,9 @@ export function BulkEditModal({
 
   // Issue names are resolved from casesData (which includes issues: true) instead of fetching all issues
 
-  const { isPending: isUpdating } = useUpdateRepositoryCases();
+  const { isPending: isUpdating } = useClientQueries(schema).repositoryCases.useUpdate();
   const { mutateAsync: updateManyRepositoryCases, isPending: isDeleting } =
-    useUpdateManyRepositoryCases();
+    useClientQueries(schema).repositoryCases.useUpdateMany();
 
   // --- Memos and State Calculations ---
 

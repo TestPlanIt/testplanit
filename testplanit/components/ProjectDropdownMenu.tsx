@@ -1,4 +1,6 @@
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Select,
   SelectContent,
@@ -9,7 +11,6 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useFindManyProjects } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 
 interface ProjectDropdownMenuProps {
@@ -26,7 +27,7 @@ export const ProjectDropdownMenu = ({
   const t = useTranslations();
 
   // ZenStack now handles all access control automatically based on the schema rules
-  const { data: projects } = useFindManyProjects(
+  const { data: projects } = useClientQueries(schema).projects.useFindMany(
     {
       where: {
         isDeleted: false,

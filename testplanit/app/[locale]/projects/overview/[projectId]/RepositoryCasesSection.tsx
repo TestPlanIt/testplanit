@@ -1,4 +1,6 @@
 import ProjectOverviewSunburstChart from "@/components/dataVisualizations/ProjectOverviewSunburstChart";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { Separator } from "@/components/ui/separator";
@@ -6,11 +8,6 @@ import { LinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 import LoadingSpinner from "~/components/LoadingSpinner";
-import {
-  useFindManyRepositoryCases,
-  useFindManyWorkflows,
-  useGroupByRepositoryCases,
-} from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 
 interface RepositoryCasesSectionProps {
@@ -22,7 +19,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
 }) => {
   const t = useTranslations("projects.overview");
 
-  const { data: repositoryCasesBreakdown } = useGroupByRepositoryCases(
+  const { data: repositoryCasesBreakdown } = useClientQueries(schema).repositoryCases.useGroupBy(
     {
       by: ["automated", "stateId"],
       where: {
@@ -55,7 +52,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
     return Array.from(ids);
   }, [repositoryCasesBreakdown]);
 
-  const { data: workflowStates } = useFindManyWorkflows(
+  const { data: workflowStates } = useClientQueries(schema).workflows.useFindMany(
     breakdownStateIds.length
       ? {
           where: { id: { in: breakdownStateIds } },
@@ -157,7 +154,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
     data: repositoryCasesLatestFive,
     isLoading,
     isFetching,
-  } = useFindManyRepositoryCases(
+  } = useClientQueries(schema).repositoryCases.useFindMany(
     {
       where: {
         AND: [

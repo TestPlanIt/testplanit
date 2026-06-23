@@ -1,17 +1,9 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
 import type { Projects } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useEffect, useState } from "react";
-import {
-  useCreateManyTemplateCaseAssignment,
-  useCreateManyTemplateProjectAssignment,
-  useCreateManyTemplateResultAssignment,
-  useCreateTemplates,
-  useFindManyCaseFields,
-  useFindManyProjects,
-  useFindManyResultFields,
-  useUpdateManyTemplates,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
@@ -84,19 +76,19 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
     DraggableField[]
   >([]);
 
-  const { mutateAsync: createTemplate } = useCreateTemplates();
-  const { mutateAsync: updateManyTemplates } = useUpdateManyTemplates();
+  const { mutateAsync: createTemplate } = useClientQueries(schema).templates.useCreate();
+  const { mutateAsync: updateManyTemplates } = useClientQueries(schema).templates.useUpdateMany();
   const { mutateAsync: createTemplateProjectAssignment } =
-    useCreateManyTemplateProjectAssignment();
+    useClientQueries(schema).templateProjectAssignment.useCreateMany();
   const { mutateAsync: createTemplateCaseAssignment } =
-    useCreateManyTemplateCaseAssignment();
+    useClientQueries(schema).templateCaseAssignment.useCreateMany();
   const { mutateAsync: createTemplateResultAssignment } =
-    useCreateManyTemplateResultAssignment();
+    useClientQueries(schema).templateResultAssignment.useCreateMany();
 
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
@@ -109,12 +101,12 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
         }))
       : [];
 
-  const { data: caseFields } = useFindManyCaseFields({
+  const { data: caseFields } = useClientQueries(schema).caseFields.useFindMany({
     where: { isDeleted: false },
     orderBy: { displayName: "asc" },
   });
 
-  const { data: resultFields } = useFindManyResultFields({
+  const { data: resultFields } = useClientQueries(schema).resultFields.useFindMany({
     where: { isDeleted: false },
     orderBy: { displayName: "asc" },
   });

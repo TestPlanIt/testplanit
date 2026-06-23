@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Command,
   CommandEmpty,
@@ -17,7 +19,6 @@ import { Boxes, ChevronDown, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useState } from "react";
-import { useFindManyProjects } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -29,7 +30,7 @@ export const ProjectQuickSelector = () => {
   const [open, setOpen] = useState(false);
 
   // Use ZenStack hook to fetch projects
-  const { data: projects = [], isLoading } = useFindManyProjects({
+  const { data: projects = [], isLoading } = useClientQueries(schema).projects.useFindMany({
     where: {
       isDeleted: false,
     },

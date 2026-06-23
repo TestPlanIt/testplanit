@@ -1,4 +1,6 @@
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ApplicationArea, RepositoryCaseSource } from "~/zenstack/models";
 import { CirclePlay, Combine } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -8,7 +10,6 @@ import { ConfigurationNameDisplay } from "~/components/ConfigurationNameDisplay"
 import { Button } from "~/components/ui/button";
 import { MultiAsyncCombobox } from "~/components/ui/multi-async-combobox";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { useFindManyTestRuns } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import ProjectRepository from "../../../repository/[projectId]/ProjectRepository";
 
@@ -149,7 +150,7 @@ export function TestCasesSection({
   const canAddEditResults = testRunResultPermissions?.canAddEdit ?? false;
 
   // Fetch sibling test runs for multi-config test runs
-  const { data: siblingTestRunsData } = useFindManyTestRuns(
+  const { data: siblingTestRunsData } = useClientQueries(schema).testRuns.useFindMany(
     {
       where: {
         configurationGroupId: testRunData?.configurationGroupId ?? undefined,

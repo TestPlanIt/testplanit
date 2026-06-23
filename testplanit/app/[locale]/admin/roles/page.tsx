@@ -1,6 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -12,11 +14,6 @@ import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { DataTable } from "@/components/tables/DataTable";
-import {
-  useFindManyRoles,
-  useUpdateManyRoles,
-  useUpdateRoles,
-} from "~/lib/hooks";
 import { ExtendedRoles, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -78,7 +75,7 @@ function RoleList() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { data: totalFilteredRoles } = useFindManyRoles(
+  const { data: totalFilteredRoles } = useClientQueries(schema).roles.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -115,7 +112,7 @@ function RoleList() {
     }
   }, [totalFilteredRoles, setTotalItems]);
 
-  const { data: roles, isLoading } = useFindManyRoles(
+  const { data: roles, isLoading } = useClientQueries(schema).roles.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -172,8 +169,8 @@ function RoleList() {
     }
   }, [status, session, router]);
 
-  const { mutateAsync: updateRole } = useUpdateRoles();
-  const { mutateAsync: updateManyRoles } = useUpdateManyRoles();
+  const { mutateAsync: updateRole } = useClientQueries(schema).roles.useUpdate();
+  const { mutateAsync: updateManyRoles } = useClientQueries(schema).roles.useUpdateMany();
 
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render
   const updateRoleRef = useRef(updateRole);

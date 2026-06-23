@@ -1,6 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -13,12 +15,6 @@ import { useRouter } from "~/lib/navigation";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import {
-  useFindManyScimToken,
-  useFindUniqueAppConfig,
-  useUpdateScimToken,
-  useUpsertAppConfig,
-} from "~/lib/hooks";
 import { ExtendedScimToken, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -80,10 +76,10 @@ function FallbackDefaultCard() {
   const t = useTranslations("admin.scim");
   const tCommon = useTranslations("common");
   const tGroups = useTranslations("admin.groups");
-  const { data: config } = useFindUniqueAppConfig({
+  const { data: config } = useClientQueries(schema).appConfig.useFindUnique({
     where: { key: SCIM_DEFAULT_MAPPED_ACCESS_KEY },
   });
-  const upsert = useUpsertAppConfig();
+  const upsert = useClientQueries(schema).appConfig.useUpsert();
   const [selectedAccess, setSelectedAccess] = useState<string>("NONE");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingAccess, setPendingAccess] = useState<string | null>(null);
@@ -261,7 +257,7 @@ function ScimTokensList() {
     ? columnToFieldMap[sortConfig.column] || sortConfig.column
     : "lastUsedAt";
 
-  const { mutateAsync: updateScimToken } = useUpdateScimToken();
+  const { mutateAsync: updateScimToken } = useClientQueries(schema).scimToken.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateScimTokenRef = useRef(updateScimToken);
@@ -269,7 +265,7 @@ function ScimTokensList() {
     updateScimTokenRef.current = updateScimToken;
   });
 
-  const { data: totalFilteredTokens } = useFindManyScimToken(
+  const { data: totalFilteredTokens } = useClientQueries(schema).scimToken.useFindMany(
     {
       orderBy: { [sortField]: sortConfig?.direction || "desc" },
       where: {
@@ -312,7 +308,7 @@ function ScimTokensList() {
     data: tokens,
     isLoading,
     refetch: refetchTokens,
-  } = useFindManyScimToken(
+  } = useClientQueries(schema).scimToken.useFindMany(
     {
       orderBy: { [sortField]: sortConfig?.direction || "desc" },
       where: {

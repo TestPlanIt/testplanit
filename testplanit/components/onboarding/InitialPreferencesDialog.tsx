@@ -2,6 +2,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,10 +39,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
-import {
-  useFindFirstUserPreferences,
-  useUpdateUserPreferences,
-} from "~/lib/hooks";
 import { languageNames } from "~/i18n/navigation";
 
 type TimezoneOption = {
@@ -82,14 +80,14 @@ export function InitialPreferencesDialog() {
     data: userPreferences,
     refetch: refetchPreferences,
     isLoading: isPreferencesLoading,
-  } = useFindFirstUserPreferences(
+  } = useClientQueries(schema).userPreferences.useFindFirst(
     {
       where: { userId: sessionUserId },
     },
     { enabled: !!sessionUserId }
   );
 
-  const { mutateAsync: updateUserPreferences } = useUpdateUserPreferences();
+  const { mutateAsync: updateUserPreferences } = useClientQueries(schema).userPreferences.useUpdate();
 
   const defaultValues = useMemo(
     () => ({

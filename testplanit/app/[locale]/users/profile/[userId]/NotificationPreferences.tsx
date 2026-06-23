@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Card,
   CardContent,
@@ -15,7 +17,6 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useFindUniqueAppConfig, useUpdateUserPreferences } from "~/lib/hooks";
 
 interface NotificationPreferencesProps {
   userPreferences: any;
@@ -36,10 +37,10 @@ export function NotificationPreferences({
     useState<NotificationMode>("USE_GLOBAL");
   const [isEmailServerConfigured, setIsEmailServerConfigured] = useState(true);
 
-  const { data: globalSettings } = useFindUniqueAppConfig({
+  const { data: globalSettings } = useClientQueries(schema).appConfig.useFindUnique({
     where: { key: "notificationSettings" },
   });
-  const { mutate: updatePreferences, isPending } = useUpdateUserPreferences();
+  const { mutate: updatePreferences, isPending } = useClientQueries(schema).userPreferences.useUpdate();
 
   useEffect(() => {
     if (userPreferences) {

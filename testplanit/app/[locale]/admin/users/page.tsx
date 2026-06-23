@@ -1,6 +1,8 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -14,7 +16,6 @@ import { useRouter } from "~/lib/navigation";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import { useFindManyUser } from "~/lib/hooks";
 import type { UserFindManyArgs } from "~/zenstack/input";
 import { ExtendedUser, useColumns } from "./columns";
 
@@ -176,7 +177,7 @@ function UserList() {
         ? { [sortConfig.column]: sortConfig.direction }
         : { name: "asc" };
 
-  const { data: totalFilteredUsers } = useFindManyUser(
+  const { data: totalFilteredUsers } = useClientQueries(schema).user.useFindMany(
     {
       orderBy,
       include: {
@@ -213,7 +214,7 @@ function UserList() {
     }
   }, [totalFilteredUsers, setTotalItems]);
 
-  const { data: users, isLoading } = useFindManyUser(
+  const { data: users, isLoading } = useClientQueries(schema).user.useFindMany(
     {
       orderBy,
       include: {

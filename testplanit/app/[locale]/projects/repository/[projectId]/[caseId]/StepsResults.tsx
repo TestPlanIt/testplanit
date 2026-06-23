@@ -1,11 +1,12 @@
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import type { Steps as PrismaSteps } from "~/zenstack/models";
 import { Layers, SearchCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { emptyEditorContent } from "~/app/constants";
 import { Separator } from "~/components/ui/separator";
-import { useFindManySharedStepItem } from "~/lib/hooks";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 
 interface DisplayStep extends PrismaSteps {
@@ -30,7 +31,7 @@ const RenderSharedGroupItemsForResults: React.FC<
   RenderSharedGroupItemsForResultsProps
 > = ({ sharedStepGroupId, projectId, parameters }) => {
   const t = useTranslations("repository.steps");
-  const { data: items, isLoading } = useFindManySharedStepItem(
+  const { data: items, isLoading } = useClientQueries(schema).sharedStepItem.useFindMany(
     {
       where: {
         sharedStepGroupId,

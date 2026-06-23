@@ -1,4 +1,6 @@
 import { UserNameCell } from "@/components/tables/UserNameCell";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
@@ -8,7 +10,6 @@ import {
 import type { User } from "~/zenstack/models";
 import { UserRoundIcon } from "lucide-react";
 import React from "react";
-import { useFindManyUser } from "~/lib/hooks";
 
 interface UserListProps {
   users: { userId: string }[];
@@ -19,7 +20,7 @@ export const UserListDisplay: React.FC<UserListProps> = ({ users }) => {
     users = [];
   }
 
-  const { data: allUsers } = useFindManyUser({
+  const { data: allUsers } = useClientQueries(schema).user.useFindMany({
     orderBy: { name: "asc" },
     where: {
       AND: [

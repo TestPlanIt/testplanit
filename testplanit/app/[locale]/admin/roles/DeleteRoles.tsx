@@ -1,11 +1,8 @@
 "use client";
 import type { Roles } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useState } from "react";
-import {
-  useFindFirstRoles,
-  useUpdateManyUser,
-  useUpdateRoles,
-} from "~/lib/hooks";
 
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
@@ -35,10 +32,10 @@ export function DeleteRole({ role, open, onClose }: DeleteRoleProps) {
   const t = useTranslations("admin.roles.delete");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateRole } = useUpdateRoles();
-  const { mutateAsync: updateManyUser } = useUpdateManyUser();
+  const { mutateAsync: updateRole } = useClientQueries(schema).roles.useUpdate();
+  const { mutateAsync: updateManyUser } = useClientQueries(schema).user.useUpdateMany();
 
-  const { data: defaultRole } = useFindFirstRoles({
+  const { data: defaultRole } = useClientQueries(schema).roles.useFindFirst({
     where: { isDefault: true, isDeleted: false },
   });
 

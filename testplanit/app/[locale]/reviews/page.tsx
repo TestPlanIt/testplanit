@@ -1,6 +1,8 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { History, Inbox } from "lucide-react";
@@ -21,14 +23,6 @@ import {
   type ReviewableEntityType,
 } from "~/components/reviews/ReviewDecisionDialogs";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import {
-  useFindManyProjects,
-  useFindManyRepositoryCases,
-  useFindManyReviewRequest,
-  useFindManySessions,
-  useFindManyTestRuns,
-  useFindUniqueUser,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
 import {
@@ -147,7 +141,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
   };
 
   // Flatten the user's role IDs across global + SPECIFIC_ROLE assignments.
-  const { data: userWithRoles } = useFindUniqueUser(
+  const { data: userWithRoles } = useClientQueries(schema).user.useFindUnique(
     {
       where: { id: userId },
       select: {
@@ -188,7 +182,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     return Array.from(ids);
   }, [userWithRoles]);
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
@@ -266,7 +260,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     }
   }, [sortConfig, view]);
 
-  const { data: rows } = useFindManyReviewRequest(
+  const { data: rows } = useClientQueries(schema).reviewRequest.useFindMany(
     {
       where: whereClause,
       orderBy,
@@ -332,7 +326,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     [inboxRows]
   );
 
-  const { data: caseRows } = useFindManyRepositoryCases(
+  const { data: caseRows } = useClientQueries(schema).repositoryCases.useFindMany(
     {
       where: { id: { in: caseIds }, isDeleted: false },
       select: {
@@ -346,14 +340,14 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     } as any,
     { enabled: caseIds.length > 0 } as any
   );
-  const { data: runRows } = useFindManyTestRuns(
+  const { data: runRows } = useClientQueries(schema).testRuns.useFindMany(
     {
       where: { id: { in: runIds }, isDeleted: false },
       select: { id: true, name: true, isDeleted: true },
     } as any,
     { enabled: runIds.length > 0 } as any
   );
-  const { data: sessionRows } = useFindManySessions(
+  const { data: sessionRows } = useClientQueries(schema).sessions.useFindMany(
     {
       where: { id: { in: sessionIds }, isDeleted: false },
       select: { id: true, name: true, isDeleted: true },

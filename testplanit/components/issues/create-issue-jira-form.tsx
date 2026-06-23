@@ -1,6 +1,8 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,7 +26,6 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import { useFindManyIntegrationProject } from "~/lib/hooks";
 import { DynamicJiraField } from "./dynamic-jira-field";
 
 interface JiraField {
@@ -103,7 +104,7 @@ export function CreateIssueJiraForm({
 
   // Fetch linked IntegrationProject records instead of all external projects
   const { data: integrationProjects, isLoading: projectsLoading } =
-    useFindManyIntegrationProject(
+    useClientQueries(schema).integrationProject.useFindMany(
       {
         where: {
           projectIntegrationId,

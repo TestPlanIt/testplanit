@@ -1,5 +1,7 @@
 "use client";
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -14,11 +16,6 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  useFindManyRepositoryCases,
-  useUpdateManyRepositoryCases,
-  useUpdateRepositoryFolders,
-} from "~/lib/hooks";
 
 export interface FolderNode {
   id: number;
@@ -52,8 +49,8 @@ export function DeleteFolderModal({
 }: DeleteFolderModalProps) {
   const t = useTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateManyCases } = useUpdateManyRepositoryCases();
-  const { mutateAsync: updateFolder } = useUpdateRepositoryFolders();
+  const { mutateAsync: updateManyCases } = useClientQueries(schema).repositoryCases.useUpdateMany();
+  const { mutateAsync: updateFolder } = useClientQueries(schema).repositoryFolders.useUpdate();
   const { projectId } = useParams<{ projectId: string }>();
 
   // Helper to get all descendant folder IDs (including self)
@@ -76,7 +73,7 @@ export function DeleteFolderModal({
   );
 
   // Fetch all cases in these folders when dialog is open
-  const { data: cases, isLoading: isCasesLoading } = useFindManyRepositoryCases(
+  const { data: cases, isLoading: isCasesLoading } = useClientQueries(schema).repositoryCases.useFindMany(
     open && projectId
       ? {
           where: {

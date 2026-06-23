@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -8,12 +10,6 @@ import {
 import { ExternalLink, FolderOpen, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import {
-  useFindManyCaseFields,
-  useFindUniqueRepositoryCases,
-  useFindUniqueSessions,
-  useFindUniqueTestRuns,
-} from "~/lib/hooks";
 import { extractTiptapText } from "~/lib/llm/services/auto-tag/content-extractor";
 import type { EntityType } from "~/lib/llm/services/auto-tag/types";
 import { Link } from "~/lib/navigation";
@@ -200,7 +196,7 @@ function LoadingState() {
  * Fetched separately to avoid ZenStack's 63-char PostgreSQL alias limit.
  */
 function useFieldOptionsMap(fieldIds: number[]) {
-  const { data: fields } = useFindManyCaseFields(
+  const { data: fields } = useClientQueries(schema).caseFields.useFindMany(
     fieldIds.length > 0
       ? {
           where: { id: { in: fieldIds } },
@@ -231,7 +227,7 @@ function useFieldOptionsMap(fieldIds: number[]) {
 function CaseDetail({ entityId }: { entityId: number }) {
   const t = useTranslations("common");
   const tDetail = useTranslations("autoTag.entityDetail");
-  const { data, isLoading } = useFindUniqueRepositoryCases(
+  const { data, isLoading } = useClientQueries(schema).repositoryCases.useFindUnique(
     {
       where: { id: entityId },
       include: {
@@ -328,7 +324,7 @@ function CaseDetail({ entityId }: { entityId: number }) {
 function TestRunDetail({ entityId }: { entityId: number }) {
   const t = useTranslations("common");
   const tDetail = useTranslations("autoTag.entityDetail");
-  const { data, isLoading } = useFindUniqueTestRuns(
+  const { data, isLoading } = useClientQueries(schema).testRuns.useFindUnique(
     {
       where: { id: entityId },
     },
@@ -368,7 +364,7 @@ function TestRunDetail({ entityId }: { entityId: number }) {
 function SessionDetail({ entityId }: { entityId: number }) {
   const t = useTranslations("common");
   const tDetail = useTranslations("autoTag.entityDetail");
-  const { data, isLoading } = useFindUniqueSessions(
+  const { data, isLoading } = useClientQueries(schema).sessions.useFindUnique(
     {
       where: { id: entityId },
       include: {

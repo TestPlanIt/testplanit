@@ -1,11 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { emptyEditorContent } from "~/app/constants";
-import { useCreateMilestones } from "~/lib/hooks";
 import { MilestoneFormDialog } from "./MilestoneFormDialog";
 import { ProjectSelectionDialog } from "./ProjectSelectionDialog";
 
@@ -26,7 +27,7 @@ const AddMilestonesToProjectsWizard = (): React.ReactElement => {
   const [step, setStep] = useState(0);
   const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createMilestones } = useCreateMilestones();
+  const { mutateAsync: createMilestones } = useClientQueries(schema).milestones.useCreate();
   const t = useTranslations("admin.milestones");
 
   const handleNextProjects = (projectIds: number[]) => {

@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Card,
   CardContent,
@@ -20,11 +22,6 @@ import {
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  useDeleteAppConfig,
-  useFindUniqueAppConfig,
-  useUpsertAppConfig,
-} from "~/lib/hooks";
 
 const KEY = "edit_results_duration";
 
@@ -38,9 +35,9 @@ type PolicyMode = "none" | "disabled" | "max";
  */
 export function ResultEditingPolicyCard() {
   const t = useTranslations("admin.statuses.editPolicy");
-  const { data: config } = useFindUniqueAppConfig({ where: { key: KEY } });
-  const upsert = useUpsertAppConfig();
-  const remove = useDeleteAppConfig();
+  const { data: config } = useClientQueries(schema).appConfig.useFindUnique({ where: { key: KEY } });
+  const upsert = useClientQueries(schema).appConfig.useUpsert();
+  const remove = useClientQueries(schema).appConfig.useDelete();
 
   const [mode, setMode] = useState<PolicyMode>("none");
   const [maxMinutes, setMaxMinutes] = useState("");

@@ -1,9 +1,10 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { UserRoundCog, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useFindUniqueGroups } from "~/lib/hooks";
 
 interface GroupNameCellProps {
   groupId: string;
@@ -18,7 +19,7 @@ export function GroupNameCell({ groupId }: GroupNameCellProps) {
     data: group,
     isLoading,
     error,
-  } = useFindUniqueGroups(
+  } = useClientQueries(schema).groups.useFindUnique(
     {
       where: { id: !isNaN(groupIdNum) ? groupIdNum : undefined },
       select: { name: true, scimDisplayName: true },

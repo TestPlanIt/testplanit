@@ -1,7 +1,8 @@
 "use client";
 import type { Issue } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useState } from "react";
-import { useUpdateIssue } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -30,7 +31,7 @@ interface DeleteIssueProps {
 
 export function DeleteIssue({ issue, open, onClose }: DeleteIssueProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateIssue } = useUpdateIssue();
+  const { mutateAsync: updateIssue } = useClientQueries(schema).issue.useUpdate();
 
   const form = useForm();
   const {

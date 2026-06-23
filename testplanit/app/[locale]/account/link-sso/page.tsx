@@ -1,6 +1,8 @@
 "use client";
 
 import { CheckCircle2, InfoIcon, Shield } from "lucide-react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { signIn, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -15,7 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { useFindManySsoProvider } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
 const GoogleIcon = ({ className }: { className?: string }) => (
@@ -44,7 +45,7 @@ export default function LinkSSOPage() {
   const [linking, setLinking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: allProviders } = useFindManySsoProvider({
+  const { data: allProviders } = useClientQueries(schema).ssoProvider.useFindMany({
     where: { enabled: true },
     include: { samlConfig: true },
   });

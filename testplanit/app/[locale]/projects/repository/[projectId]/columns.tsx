@@ -1,11 +1,12 @@
 import { Checkbox } from "@/components/ui/checkbox";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getMaxOrderInTestRun } from "~/app/actions/test-run";
-import { useFindManyTestRuns, useUpsertTestRunCases } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -82,11 +83,6 @@ import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
 import LoadingSpinner from "~/components/LoadingSpinner";
-import {
-  useFindManyRepositoryFolders,
-  useFindManyStatus,
-  useUpdateTestRunCases,
-} from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
@@ -323,7 +319,7 @@ const NameCell = React.memo(function NameCell({
   // DISABLED: Fetch all folders to build the path hierarchy
   // TODO: Replace with API endpoint that fetches only the path for a specific folder
   // This was causing performance issues by loading all folders for each case row
-  const { data: allFolders } = useFindManyRepositoryFolders(
+  const { data: allFolders } = useClientQueries(schema).repositoryFolders.useFindMany(
     {
       where: {
         projectId: projectId,
@@ -556,13 +552,13 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   const [isInitialRender, setIsInitialRender] = useState(true);
   const t = useTranslations();
 
-  const { mutateAsync: _updateTestRunCase } = useUpdateTestRunCases();
+  const { mutateAsync: _updateTestRunCase } = useClientQueries(schema).testRunCases.useUpdate();
 
   useEffect(() => {
     setIsInitialRender(false);
   }, []);
 
-  const { data: statuses } = useFindManyStatus({
+  const { data: statuses } = useClientQueries(schema).status.useFindMany({
     where: {
       AND: [
         { isEnabled: true },
@@ -898,13 +894,13 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
   projectId: number;
 }) {
   const t = useTranslations();
-  const { mutateAsync: upsertTestRunCase } = useUpsertTestRunCases();
+  const { mutateAsync: upsertTestRunCase } = useClientQueries(schema).testRunCases.useUpsert();
 
   const {
     data: testRuns,
     isLoading: isLoadingTestRuns,
     refetch: refetchTestRuns,
-  } = useFindManyTestRuns({
+  } = useClientQueries(schema).testRuns.useFindMany({
     where: {
       AND: [
         { projectId: Number(projectId) },
@@ -1134,7 +1130,7 @@ const AssigneeCell = React.memo(function AssigneeCell({
 }) {
   const [isAssigning, setIsAssigning] = useState(false);
   const t = useTranslations();
-  const { mutateAsync: updateTestRunCase } = useUpdateTestRunCases();
+  const { mutateAsync: updateTestRunCase } = useClientQueries(schema).testRunCases.useUpdate();
 
   const handleAssignmentChange = async (
     user: {

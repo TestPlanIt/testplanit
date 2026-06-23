@@ -1,6 +1,8 @@
 "use client";
 
 import { Loading } from "@/components/Loading";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +22,6 @@ import * as React from "react";
 import { use, useEffect, useState } from "react";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useFindFirstProjects, useFindManyMilestones } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
 interface ProjectMilestonesProps {
@@ -43,7 +44,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     useProjectPermissions(projectId, ApplicationArea.Milestones);
   const canAddEdit = permissions?.canAddEdit ?? false;
 
-  const { data: project, isLoading: isLoadingProject } = useFindFirstProjects(
+  const { data: project, isLoading: isLoadingProject } = useClientQueries(schema).projects.useFindFirst(
     {
       where: {
         AND: [
@@ -61,7 +62,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     }
   );
 
-  const { data: incompleteMilestones } = useFindManyMilestones({
+  const { data: incompleteMilestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       AND: [
         { projectId: Number(projectId) },
@@ -84,7 +85,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     },
   });
 
-  const { data: completedMilestones } = useFindManyMilestones({
+  const { data: completedMilestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       AND: [
         { projectId: Number(projectId) },

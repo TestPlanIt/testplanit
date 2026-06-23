@@ -1,6 +1,8 @@
 "use client";
 
 import { useDebounce } from "@/components/Debounce";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { Filter } from "@/components/tables/Filter";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
@@ -34,11 +36,6 @@ import { searchProjectAuditLogUsers } from "~/app/actions/searchProjectAuditLogU
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
-import {
-  useCountAuditLog,
-  useFindManyAuditLog,
-  useInfiniteFindManyAuditLog,
-} from "~/lib/hooks";
 import { logDataExport } from "~/lib/services/auditClient";
 
 const PAGE_SIZE = 50;
@@ -138,7 +135,7 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
     dateRange,
   ]);
 
-  const { data: totalCount } = useCountAuditLog({ where: whereClause });
+  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({ where: whereClause });
 
   const baseArgs = {
     where: whereClause,
@@ -167,7 +164,7 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-  } = useInfiniteFindManyAuditLog(baseArgs, {
+  } = useClientQueries(schema).auditLog.useInfiniteFindMany(baseArgs, {
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
       return {
@@ -201,7 +198,7 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
 
   // Entity types present in this project's audit log, so the filter lists only
   // relevant types.
-  const { data: entityTypes } = useFindManyAuditLog({
+  const { data: entityTypes } = useClientQueries(schema).auditLog.useFindMany({
     where: { projectId },
     select: { entityType: true },
     distinct: ["entityType"],
@@ -219,7 +216,7 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
   }, []);
 
   // Fetch all filtered logs for export (no pagination).
-  const { refetch: refetchAllLogs } = useFindManyAuditLog(
+  const { refetch: refetchAllLogs } = useClientQueries(schema).auditLog.useFindMany(
     {
       orderBy: { [sortConfig.column]: sortConfig.direction },
       include: { project: { select: { name: true } } },

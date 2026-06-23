@@ -1,6 +1,8 @@
 "use client";
 
 import { useDebounce } from "@/components/Debounce";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
@@ -15,7 +17,6 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import { useFindManyAppConfig } from "~/lib/hooks";
 import { AddAppConfig } from "./AddAppConfig";
 import { getColumns } from "./columns";
 import { DeleteAppConfig } from "./DeleteAppConfig";
@@ -57,7 +58,7 @@ function AppConfigs() {
   const debouncedSearchString = useDebounce(searchString, 300);
   const debouncedValueSearchString = useDebounce(valueSearchString, 300);
 
-  const { data: appConfigs, isLoading } = useFindManyAppConfig({
+  const { data: appConfigs, isLoading } = useClientQueries(schema).appConfig.useFindMany({
     where: {
       key: {
         contains: debouncedSearchString,

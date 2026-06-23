@@ -2,6 +2,8 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,9 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateIssue } from "@/lib/hooks/issue";
-import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
-import { useFindManyIntegrationProject } from "~/lib/hooks";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { AlertCircle, Asterisk, ExternalLink, Loader2 } from "lucide-react";
@@ -159,10 +158,10 @@ export function CreateIssueDialog({
   });
 
   // ZenStack hook for creating issues
-  const createIssue = useCreateIssue();
+  const createIssue = useClientQueries(schema).issue.useCreate();
 
   // Fetch project integrations
-  const { data: projectIntegrations } = useFindManyProjectIntegration({
+  const { data: projectIntegrations } = useClientQueries(schema).projectIntegration.useFindMany({
     where: {
       projectId,
       isActive: true,
@@ -176,7 +175,7 @@ export function CreateIssueDialog({
   const integrationId = activeIntegration?.integrationId;
 
   // Fetch active IntegrationProject records for multi-project support (D-09, D-10)
-  const { data: integrationProjects } = useFindManyIntegrationProject(
+  const { data: integrationProjects } = useClientQueries(schema).integrationProject.useFindMany(
     {
       where: {
         projectIntegrationId: activeIntegration?.id || "",

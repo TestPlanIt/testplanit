@@ -1,6 +1,8 @@
 "use client";
 
 import { Loading } from "@/components/Loading";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DataTable } from "@/components/tables/DataTable";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
@@ -33,11 +35,6 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useCreateAppConfig,
-  useFindUniqueAppConfig,
-  useUpdateAppConfig,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { useColumns, NotificationHistoryItem } from "./columns";
@@ -111,13 +108,13 @@ function NotificationSettingsContent() {
     [notificationHistory]
   );
 
-  const { data: settings, isLoading } = useFindUniqueAppConfig({
+  const { data: settings, isLoading } = useClientQueries(schema).appConfig.useFindUnique({
     where: { key: "notificationSettings" },
   });
   const { mutate: createSettings, isPending: isCreating } =
-    useCreateAppConfig();
+    useClientQueries(schema).appConfig.useCreate();
   const { mutate: updateSettings, isPending: isUpdating } =
-    useUpdateAppConfig();
+    useClientQueries(schema).appConfig.useUpdate();
 
   useEffect(() => {
     // Redirect non-admin users

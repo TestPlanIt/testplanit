@@ -1,6 +1,8 @@
 "use client";
 
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -17,7 +19,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
-import { useFindManyProjects } from "~/lib/hooks";
 
 interface ProjectSelectionDialogProps {
   open: boolean;
@@ -35,7 +36,7 @@ export const ProjectSelectionDialog: React.FC<ProjectSelectionDialogProps> = ({
   const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: projects, isLoading } = useFindManyProjects({
+  const { data: projects, isLoading } = useClientQueries(schema).projects.useFindMany({
     where: {
       AND: [
         { isDeleted: false },

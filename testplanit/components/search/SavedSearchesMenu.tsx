@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -38,7 +40,6 @@ import {
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useFindManyShareLink, useUpdateShareLink } from "~/lib/hooks";
 import {
   parseSavedSearchConfig,
   type SavedSearchCriteria,
@@ -85,7 +86,7 @@ export function SavedSearchesMenu({
     data: savedSearches,
     isLoading,
     refetch,
-  } = useFindManyShareLink(
+  } = useClientQueries(schema).shareLink.useFindMany(
     {
       where: { entityType: "SEARCH", isDeleted: false, isRevoked: false },
       orderBy: { updatedAt: "desc" },
@@ -94,7 +95,7 @@ export function SavedSearchesMenu({
   );
 
   const { mutateAsync: updateShareLink, isPending: isMutating } =
-    useUpdateShareLink();
+    useClientQueries(schema).shareLink.useUpdate();
 
   const handleLoad = (saved: {
     id: string;

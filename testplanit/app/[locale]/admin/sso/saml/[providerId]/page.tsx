@@ -1,6 +1,8 @@
 "use client";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,12 +22,6 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  useCreateSamlConfiguration,
-  useFindUniqueSamlConfiguration,
-  useFindUniqueSsoProvider,
-  useUpdateSamlConfiguration,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
 // Get all Access enum values dynamically with their translation keys
@@ -64,16 +60,16 @@ export default function SAMLConfigurationPage() {
   const t = useTranslations();
   const [isSaving, setIsSaving] = useState(false);
 
-  const { data: provider } = useFindUniqueSsoProvider({
+  const { data: provider } = useClientQueries(schema).ssoProvider.useFindUnique({
     where: { id: providerId },
   });
 
-  const { data: samlConfig } = useFindUniqueSamlConfiguration({
+  const { data: samlConfig } = useClientQueries(schema).samlConfiguration.useFindUnique({
     where: { providerId: providerId },
   });
 
-  const { mutateAsync: createSamlConfig } = useCreateSamlConfiguration();
-  const { mutateAsync: updateSamlConfig } = useUpdateSamlConfiguration();
+  const { mutateAsync: createSamlConfig } = useClientQueries(schema).samlConfiguration.useCreate();
+  const { mutateAsync: updateSamlConfig } = useClientQueries(schema).samlConfiguration.useUpdate();
 
   const [formData, setFormData] = useState<SamlFormData>({
     entryPoint: "",

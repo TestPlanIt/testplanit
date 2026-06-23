@@ -1,6 +1,8 @@
 "use client";
 
 import { CodeRepositoryModal } from "@/components/admin/code-repositories/CodeRepositoryModal";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
@@ -36,10 +38,6 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useFindManyCodeRepository,
-  useUpdateCodeRepository,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { CodeRepositoryRow, getColumns } from "./columns";
 
@@ -115,7 +113,7 @@ function CodeRepositoryList() {
   );
 
   // Query for total filtered repositories (for pagination)
-  const { data: totalFilteredRepos } = useFindManyCodeRepository(
+  const { data: totalFilteredRepos } = useClientQueries(schema).codeRepository.useFindMany(
     {
       orderBy: queryOrderBy,
       where: queryWhere,
@@ -138,7 +136,7 @@ function CodeRepositoryList() {
     data: repositories,
     isLoading,
     refetch,
-  } = useFindManyCodeRepository(
+  } = useClientQueries(schema).codeRepository.useFindMany(
     {
       orderBy: queryOrderBy,
       where: queryWhere,
@@ -170,7 +168,7 @@ function CodeRepositoryList() {
   }, [status, session, router]);
 
   // Soft-delete and status update via ZenStack hook
-  const { mutate: updateCodeRepository } = useUpdateCodeRepository();
+  const { mutate: updateCodeRepository } = useClientQueries(schema).codeRepository.useUpdate();
 
   // Stabilize mutation ref -- ZenStack's mutate changes identity every render
   const updateRef = useRef(updateCodeRepository);

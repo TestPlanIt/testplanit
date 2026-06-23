@@ -1,6 +1,8 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -23,7 +25,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useFindManyStatus } from "~/lib/hooks";
 
 export interface IterationBulkConfirmDialogProps {
   open: boolean;
@@ -69,7 +70,7 @@ export function IterationBulkConfirmDialog({
   // so subsequent changes animate. Reset when the dialog reopens.
   const [animateBorder, setAnimateBorder] = useState(false);
 
-  const { data: statuses } = useFindManyStatus({
+  const { data: statuses } = useClientQueries(schema).status.useFindMany({
     where: {
       AND: [
         { isEnabled: true },

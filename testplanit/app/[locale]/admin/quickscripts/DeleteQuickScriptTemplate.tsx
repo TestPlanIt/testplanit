@@ -1,8 +1,9 @@
 "use client";
 
 import type { CaseExportTemplate } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useState } from "react";
-import { useUpdateCaseExportTemplate } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -37,7 +38,7 @@ export function DeleteQuickScriptTemplate({
   const t = useTranslations("admin.exportTemplates.delete");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateTemplate } = useUpdateCaseExportTemplate();
+  const { mutateAsync: updateTemplate } = useClientQueries(schema).caseExportTemplate.useUpdate();
 
   const form = useForm();
   const {

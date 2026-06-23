@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useFindManyNotification } from "~/lib/hooks";
 import { NotificationBell } from "./NotificationBell";
 
 // Mock dependencies
@@ -85,7 +86,7 @@ describe("NotificationBell - openNotifications parameter", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useSession as any).mockReturnValue({ data: mockSession });
-    (useFindManyNotification as any).mockReturnValue({
+    (useClientQueries(schema).notification.useFindMany as any).mockReturnValue({
       data: mockNotifications,
       refetch: vi.fn(),
     });

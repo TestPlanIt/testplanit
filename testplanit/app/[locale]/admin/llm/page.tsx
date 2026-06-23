@@ -1,6 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -20,15 +22,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus, RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import {
-  useFindManyLlmIntegration,
-  useUpdateLlmIntegration,
-} from "~/lib/hooks/llm-integration";
-import {
-  useUpdateLlmProviderConfig,
-  useUpdateManyLlmProviderConfig,
-} from "~/lib/hooks/llm-provider-config";
-import { useGroupByLlmUsage } from "~/lib/hooks/llm-usage";
 import { getBillingPeriodStart } from "~/lib/utils/billingPeriod";
 import { AddLlmIntegration } from "./AddLlmIntegration";
 import { DeleteLlmIntegration } from "./DeleteLlmIntegration";
@@ -77,10 +70,10 @@ function LlmIntegrationList() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { mutateAsync: updateLlmIntegration } = useUpdateLlmIntegration();
-  const { mutateAsync: updateLlmProviderConfig } = useUpdateLlmProviderConfig();
+  const { mutateAsync: updateLlmIntegration } = useClientQueries(schema).llmIntegration.useUpdate();
+  const { mutateAsync: updateLlmProviderConfig } = useClientQueries(schema).llmProviderConfig.useUpdate();
   const { mutateAsync: updateManyLlmProviderConfig } =
-    useUpdateManyLlmProviderConfig();
+    useClientQueries(schema).llmProviderConfig.useUpdateMany();
 
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render
   const updateLlmIntegrationRef = useRef(updateLlmIntegration);
@@ -131,7 +124,7 @@ function LlmIntegrationList() {
   );
 
   // Query for total filtered integrations (for pagination)
-  const { data: totalFilteredIntegrations } = useFindManyLlmIntegration(
+  const { data: totalFilteredIntegrations } = useClientQueries(schema).llmIntegration.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -189,7 +182,7 @@ function LlmIntegrationList() {
     data: integrations,
     isLoading,
     refetch,
-  } = useFindManyLlmIntegration(
+  } = useClientQueries(schema).llmIntegration.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -270,7 +263,7 @@ function LlmIntegrationList() {
       .reduce((a: Date, b: Date) => (a < b ? a : b));
   }, [totalFilteredIntegrations]);
 
-  const { data: monthlyUsageGroups } = useGroupByLlmUsage(
+  const { data: monthlyUsageGroups } = useClientQueries(schema).llmUsage.useGroupBy(
     {
       by: ["llmIntegrationId"],
       _sum: { totalCost: true },

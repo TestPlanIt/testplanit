@@ -1,4 +1,6 @@
 import { AttachmentPreview } from "@/components/AttachmentPreview";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -28,7 +30,6 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
-import { useUpdateAttachments } from "~/lib/hooks";
 import { getStorageUrlClient } from "~/utils/storageUrl";
 import { DateFormatter } from "./DateFormatter";
 import { UserNameCell } from "./tables/UserNameCell";
@@ -54,7 +55,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
   const t = useTranslations();
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(initialIndex);
-  const { mutateAsync: updateAttachments } = useUpdateAttachments();
+  const { mutateAsync: updateAttachments } = useClientQueries(schema).attachments.useUpdate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState("");

@@ -1,11 +1,12 @@
 "use client";
 
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { UserDisplay } from "@/components/search/UserDisplay";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React from "react";
-import { useFindFirstUser } from "~/lib/hooks";
 import { cn, type ClassValue } from "~/utils";
 
 export interface CreationInfoProps {
@@ -21,7 +22,7 @@ export const CreationInfo: React.FC<CreationInfoProps> = ({
 }) => {
   const t = useTranslations();
   const { data: session } = useSession();
-  const { data: user } = useFindFirstUser(
+  const { data: user } = useClientQueries(schema).user.useFindFirst(
     {
       where: { id: userId ?? "" },
       select: { name: true, image: true },

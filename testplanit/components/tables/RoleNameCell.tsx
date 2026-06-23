@@ -1,9 +1,10 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { RoleNameDisplay } from "~/components/RoleNameDisplay";
-import { useFindUniqueRoles } from "~/lib/hooks";
 
 interface RoleNameCellProps {
   roleId: string | null; // Can be numeric string or potentially null/"NONE"
@@ -18,7 +19,7 @@ export function RoleNameCell({ roleId }: RoleNameCellProps) {
     data: role,
     isLoading,
     error,
-  } = useFindUniqueRoles(
+  } = useClientQueries(schema).roles.useFindUnique(
     {
       where: { id: isValidRoleId ? roleIdNum : undefined },
       select: { id: true, name: true },

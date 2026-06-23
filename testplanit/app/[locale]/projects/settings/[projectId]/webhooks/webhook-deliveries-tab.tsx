@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -40,11 +42,6 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { bulkReplayFailedDeliveries } from "~/app/actions/webhook-config";
-import {
-  useFindManyWebhookConfig,
-  useCountWebhookDelivery,
-  useFindManyWebhookDelivery,
-} from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 
 import { WebhookDeliveryDrawer } from "./webhook-delivery-drawer";
@@ -272,7 +269,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
     : undefined;
 
   // ─── Fetch project's webhook configs for the multi-select ───────────
-  const { data: configs } = useFindManyWebhookConfig({
+  const { data: configs } = useClientQueries(schema).webhookConfig.useFindMany({
     where: { projectId },
     select: { id: true, name: true, adapterType: true, direction: true },
   });
@@ -325,7 +322,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
   const effectivePageSize = typeof pageSize === "number" ? pageSize : 250;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { data: totalCount } = useCountWebhookDelivery({ where });
+  const { data: totalCount } = useClientQueries(schema).webhookDelivery.useCount({ where });
 
   useEffect(() => {
     if (typeof totalCount === "number") {
@@ -334,7 +331,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
   }, [totalCount, setTotalItems]);
 
   const { data: deliveriesData, refetch: refetchDeliveries } =
-    useFindManyWebhookDelivery({
+    useClientQueries(schema).webhookDelivery.useFindMany({
       where,
       orderBy,
       take: effectivePageSize,

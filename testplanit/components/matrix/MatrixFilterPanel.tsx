@@ -1,6 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useMemo } from "react";
 
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
@@ -10,11 +12,6 @@ import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { searchProjectDataSets } from "~/app/actions/searchProjectDataSets";
 import { searchProjectMatrixConfigurations } from "~/app/actions/searchProjectMatrixConfigurations";
 import { searchProjectStatuses } from "~/app/actions/searchProjectStatuses";
-import {
-  useFindManyConfigurations,
-  useFindManyDataSet,
-  useFindManyStatus,
-} from "~/lib/hooks";
 import { useMatrixFilters } from "~/hooks/useMatrixFilters";
 
 interface OptionRow {
@@ -54,7 +51,7 @@ interface DatasetOptionRow {
  *
  * Status hydration: when the URL pre-selects status ids (e.g. shared link
  * with `?status=2`), the combobox would otherwise show ID-only chips until
- * the user re-opens the picker. A single `useFindManyStatus` query rehydrates
+ * the user re-opens the picker. A single `useClientQueries(schema).status.useFindMany` query rehydrates
  * those ids to `{name, color}` so the chip shows the proper dot + label
  * on first paint.
  */
@@ -67,7 +64,7 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   // Hydrate URL-loaded status ids → {name, color}. The combobox's `value` is
   // user-controlled; without a hydrate step, a fresh page load with
   // `?status=2` would show "#2" until the user re-opened the dropdown.
-  const { data: hydratedStatusesRaw } = useFindManyStatus(
+  const { data: hydratedStatusesRaw } = useClientQueries(schema).status.useFindMany(
     {
       where: { id: { in: statusIds } },
       select: {
@@ -106,7 +103,7 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   // (id === 0) doesn't exist in the DB, so filter it out of the lookup.
   const configIds = filters.configIds ?? [];
   const realConfigIds = configIds.filter((id) => id !== 0);
-  const { data: hydratedConfigsRaw } = useFindManyConfigurations(
+  const { data: hydratedConfigsRaw } = useClientQueries(schema).configurations.useFindMany(
     {
       where: { id: { in: realConfigIds } },
       select: { id: true, name: true },
@@ -128,7 +125,7 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   }, [configIds, hydratedConfigsRaw, t]);
 
   const datasetIds = filters.datasetIds ?? [];
-  const { data: hydratedDatasetsRaw } = useFindManyDataSet(
+  const { data: hydratedDatasetsRaw } = useClientQueries(schema).dataSet.useFindMany(
     {
       where: { id: { in: datasetIds } },
       select: {

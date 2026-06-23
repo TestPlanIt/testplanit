@@ -1,4 +1,6 @@
 import { ColorPicker } from "@/components/ColorPicker";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -9,7 +11,6 @@ import {
 import { Ellipsis } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
-import { useFindManyColor, useFindManyFieldIcon } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import DynamicIcon from "./DynamicIcon";
 
@@ -27,10 +28,10 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
   initialColorId,
 }) => {
   const tCommon = useTranslations("common");
-  const { data: allIcons, isLoading: isIconsLoading } = useFindManyFieldIcon({
+  const { data: allIcons, isLoading: isIconsLoading } = useClientQueries(schema).fieldIcon.useFindMany({
     orderBy: { name: "asc" },
   });
-  const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(schema).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });

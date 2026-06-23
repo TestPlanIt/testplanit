@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ApplicationArea } from "~/zenstack/models";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -17,11 +19,6 @@ import {
 } from "nextstepjs";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useFindFirstUserPreferences,
-  useFindManyProjects,
-  useUpdateUserPreferences,
-} from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 
 // Custom tour card component that respects Tailwind theme
@@ -942,7 +939,7 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   }, [pathname]);
 
   // Get user preferences to check tour completion status
-  const { data: userPreferences } = useFindFirstUserPreferences(
+  const { data: userPreferences } = useClientQueries(schema).userPreferences.useFindFirst(
     {
       where: { userId: session?.user?.id || "" },
     },
@@ -950,10 +947,10 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   );
 
   // Hook to update user preferences
-  const { mutateAsync: updateUserPreferences } = useUpdateUserPreferences();
+  const { mutateAsync: updateUserPreferences } = useClientQueries(schema).userPreferences.useUpdate();
 
   // Find Demo Project (React Query deduplicates with Header's identical query)
-  const { data: allProjects = [] } = useFindManyProjects({
+  const { data: allProjects = [] } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: [{ isCompleted: "asc" as const }, { name: "asc" as const }],
     select: {

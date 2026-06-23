@@ -1,6 +1,8 @@
 "use client";
 
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,7 +27,6 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { completeMilestoneCascade } from "~/app/actions/milestoneActions";
-import { useFindManyWorkflows } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import type { MilestonesWithTypes } from "~/utils/milestoneUtils";
 
@@ -75,7 +76,7 @@ export function CompleteMilestoneDialog({
   });
 
   // Fetch RUNS workflows
-  const { data: runWorkflows } = useFindManyWorkflows({
+  const { data: runWorkflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -92,7 +93,7 @@ export function CompleteMilestoneDialog({
   });
 
   // Fetch SESSIONS workflows
-  const { data: sessionWorkflows } = useFindManyWorkflows({
+  const { data: sessionWorkflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,

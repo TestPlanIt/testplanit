@@ -2,6 +2,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -44,15 +46,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
-import {
-  useFindManyLlmIntegration,
-  useUpdateLlmIntegration,
-} from "~/lib/hooks/llm-integration";
-import {
-  useFindManyLlmProviderConfig,
-  useUpdateLlmProviderConfig,
-} from "~/lib/hooks/llm-provider-config";
-import { useDeleteManyLlmUsage } from "~/lib/hooks/llm-usage";
 import { getBillingPeriodStart } from "~/lib/utils/billingPeriod";
 
 const createFormSchema = (
@@ -165,15 +158,15 @@ export function EditLlmIntegration({
     { unsupportedParams: string[]; probedAt: string }
   > | null>(null);
 
-  const { mutateAsync: updateLlmIntegration } = useUpdateLlmIntegration();
-  const { mutateAsync: updateLlmProviderConfig } = useUpdateLlmProviderConfig();
-  const { mutateAsync: deleteManyLlmUsage } = useDeleteManyLlmUsage();
+  const { mutateAsync: updateLlmIntegration } = useClientQueries(schema).llmIntegration.useUpdate();
+  const { mutateAsync: updateLlmProviderConfig } = useClientQueries(schema).llmProviderConfig.useUpdate();
+  const { mutateAsync: deleteManyLlmUsage } = useClientQueries(schema).llmUsage.useDeleteMany();
   const [testingConnection, setTestingConnection] = useState(false);
   const [resettingSpend, setResettingSpend] = useState(false);
-  const { data: existingDefaultConfigs } = useFindManyLlmProviderConfig({
+  const { data: existingDefaultConfigs } = useClientQueries(schema).llmProviderConfig.useFindMany({
     where: { isDefault: true },
   });
-  const { data: existingIntegrations } = useFindManyLlmIntegration({
+  const { data: existingIntegrations } = useClientQueries(schema).llmIntegration.useFindMany({
     select: { name: true },
   });
 

@@ -1,6 +1,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import DynamicIcon from "@/components/DynamicIcon";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,13 +44,6 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
-import {
-  useFindManyMilestones,
-  useFindManyTags,
-  useFindManyTemplates,
-  useFindManyWorkflows,
-} from "~/lib/hooks";
-import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
 import { IconName } from "~/types/globals";
 import { ConfigurationSelect } from "./forms/ConfigurationSelect";
 import { FolderSelect, transformFolders } from "./forms/FolderSelect";
@@ -115,19 +110,19 @@ export default function TestResultsImportDialog({
   const [importStatus, setImportStatus] = useState<string>("");
 
   // Fetch milestones, tags, workflows
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: { projectId, isDeleted: false, isCompleted: false },
     orderBy: { startedAt: "asc" },
     include: {
       milestoneType: { include: { icon: true } },
     },
   });
-  useFindManyTags({
+  useClientQueries(schema).tags.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -149,7 +144,7 @@ export default function TestResultsImportDialog({
 
   // Fetch folders for the project
   const { data: folders, isLoading: isFoldersLoading } =
-    useFindManyRepositoryFolders({
+    useClientQueries(schema).repositoryFolders.useFindMany({
       where: {
         projectId,
         isDeleted: false,
@@ -158,7 +153,7 @@ export default function TestResultsImportDialog({
     });
 
   // Fetch templates for the project
-  const { data: templates } = useFindManyTemplates({
+  const { data: templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
       projects: {

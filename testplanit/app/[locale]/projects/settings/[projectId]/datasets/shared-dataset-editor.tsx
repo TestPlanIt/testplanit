@@ -1,6 +1,8 @@
 "use client";
 
 import { Loading } from "@/components/Loading";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   DatasetTab,
   type DatasetTabRow,
@@ -19,11 +21,6 @@ import {
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  useFindFirstDataSet,
-  useFindFirstDataSetVersion,
-  useFindManyDataSetRow,
-} from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 
 interface SharedDatasetEditorProps {
@@ -101,7 +98,7 @@ export function SharedDatasetEditor({
     data: dataset,
     isLoading: datasetLoading,
     error: datasetError,
-  } = useFindFirstDataSet({
+  } = useClientQueries(schema).dataSet.useFindFirst({
     where: {
       id: dataSetId,
       projectId,
@@ -123,7 +120,7 @@ export function SharedDatasetEditor({
   // pinned DataSetVersion below.
   const isCurrentView = selectedVersion === "current";
   const { data: liveRowsRaw, isLoading: liveRowsLoading } =
-    useFindManyDataSetRow(
+    useClientQueries(schema).dataSetRow.useFindMany(
       {
         where: { dataSetId, isDeleted: false },
         orderBy: { rowIndex: "asc" },
@@ -136,7 +133,7 @@ export function SharedDatasetEditor({
   const historicalVersionId =
     selectedVersion !== "current" ? selectedVersion.id : -1;
   const { data: historicalVersion, isLoading: historicalLoading } =
-    useFindFirstDataSetVersion(
+    useClientQueries(schema).dataSetVersion.useFindFirst(
       {
         where: { id: historicalVersionId },
         select: {
@@ -151,7 +148,7 @@ export function SharedDatasetEditor({
 
   // ----- Latest version (used to derive parameters when current view
   //       has no live row schema yet — e.g., first save not done). -----
-  const { data: latestVersion } = useFindFirstDataSetVersion({
+  const { data: latestVersion } = useClientQueries(schema).dataSetVersion.useFindFirst({
     where: { dataSetId },
     orderBy: { version: "desc" },
     select: {

@@ -1,15 +1,8 @@
 "use client";
 import type { Status } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useState } from "react";
-import {
-  useCreateManyProjectStatusAssignment,
-  useCreateManyStatusScopeAssignment,
-  useDeleteManyProjectStatusAssignment,
-  useDeleteManyStatusScopeAssignment,
-  useFindManyProjects,
-  useFindManyStatusScope,
-  useUpdateStatus,
-} from "~/lib/hooks";
 
 import DynamicIcon from "@/components/DynamicIcon";
 import { IconName } from "~/types/globals";
@@ -93,20 +86,20 @@ export function EditStatus({ status, open, onClose }: EditStatusProps) {
     status.colorId
   );
 
-  const { mutateAsync: updateStatus } = useUpdateStatus();
+  const { mutateAsync: updateStatus } = useClientQueries(schema).status.useUpdate();
   const { mutateAsync: createManyStatusScopeAssignment } =
-    useCreateManyStatusScopeAssignment();
+    useClientQueries(schema).statusScopeAssignment.useCreateMany();
   const { mutateAsync: deleteManyStatusScopeAssignment } =
-    useDeleteManyStatusScopeAssignment();
+    useClientQueries(schema).statusScopeAssignment.useDeleteMany();
   const { mutateAsync: createManyProjectStatusAssignment } =
-    useCreateManyProjectStatusAssignment();
+    useClientQueries(schema).projectStatusAssignment.useCreateMany();
   const { mutateAsync: deleteManyProjectStatusAssignment } =
-    useDeleteManyProjectStatusAssignment();
+    useClientQueries(schema).projectStatusAssignment.useDeleteMany();
 
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
 
-  const { data: scopes } = useFindManyStatusScope();
+  const { data: scopes } = useClientQueries(schema).statusScope.useFindMany();
 
   const scopeOptions =
     scopes && scopes.length > 0
@@ -128,7 +121,7 @@ export function EditStatus({ status, open, onClose }: EditStatusProps) {
     );
   };
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });

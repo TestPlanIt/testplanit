@@ -1,10 +1,8 @@
 "use client";
 import { useTranslations } from "next-intl";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useState } from "react";
-import {
-  useCreateMilestoneTypes,
-  useUpdateManyMilestoneTypes,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -53,9 +51,9 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
     isDefault: z.boolean(),
   });
 
-  const { mutateAsync: createMilestoneType } = useCreateMilestoneTypes();
+  const { mutateAsync: createMilestoneType } = useClientQueries(schema).milestoneTypes.useCreate();
   const { mutateAsync: updateManyMilestoneTypes } =
-    useUpdateManyMilestoneTypes();
+    useClientQueries(schema).milestoneTypes.useUpdateMany();
 
   const handleIconSelect = (iconId: number) => {
     setSelectedIconId(iconId);

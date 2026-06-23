@@ -2,6 +2,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -43,15 +45,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
-import {
-  useUpsertLlmIntegration,
-  useFindManyLlmIntegration,
-} from "~/lib/hooks/llm-integration";
-import {
-  useCreateLlmProviderConfig,
-  useFindManyLlmProviderConfig,
-  useUpdateLlmProviderConfig,
-} from "~/lib/hooks/llm-provider-config";
 
 const createFormSchema = (t: any, existingNames: string[]) =>
   z.object({
@@ -225,13 +218,13 @@ export function AddLlmIntegration({
   // instead of failing on the unique-name constraint. The active-name
   // collision check is the `existingNames`-based Zod refinement already
   // wired into `formSchema`.
-  const { mutateAsync: createLlmIntegration } = useUpsertLlmIntegration();
-  const { mutateAsync: createLlmProviderConfig } = useCreateLlmProviderConfig();
-  const { mutateAsync: updateLlmProviderConfig } = useUpdateLlmProviderConfig();
-  const { data: existingDefaultConfigs } = useFindManyLlmProviderConfig({
+  const { mutateAsync: createLlmIntegration } = useClientQueries(schema).llmIntegration.useUpsert();
+  const { mutateAsync: createLlmProviderConfig } = useClientQueries(schema).llmProviderConfig.useCreate();
+  const { mutateAsync: updateLlmProviderConfig } = useClientQueries(schema).llmProviderConfig.useUpdate();
+  const { data: existingDefaultConfigs } = useClientQueries(schema).llmProviderConfig.useFindMany({
     where: { isDefault: true },
   });
-  const { data: existingIntegrations } = useFindManyLlmIntegration({
+  const { data: existingIntegrations } = useClientQueries(schema).llmIntegration.useFindMany({
     select: { name: true },
   });
 

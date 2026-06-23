@@ -1,6 +1,8 @@
 "use client";
 
 import { Loading } from "@/components/Loading";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Accordion,
   AccordionContent,
@@ -30,7 +32,6 @@ import { useTranslations } from "next-intl";
 import React, { use, useRef, useState } from "react";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useFindFirstProjects } from "~/lib/hooks";
 import MilestonesSection from "./MilestonesSection";
 import ProjectHeader from "./ProjectHeader";
 import RepositoryCasesSection from "./RepositoryCasesSection";
@@ -80,7 +81,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
     setTimeout(() => setIsTransitioning(false), 300);
   };
 
-  const { data: project, isLoading: isLoadingProject } = useFindFirstProjects(
+  const { data: project, isLoading: isLoadingProject } = useClientQueries(schema).projects.useFindFirst(
     {
       where: {
         AND: [{ id: parseInt(projectId) }, { isDeleted: false }],

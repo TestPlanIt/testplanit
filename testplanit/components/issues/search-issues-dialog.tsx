@@ -1,6 +1,8 @@
 "use client";
 
 import { useDebounce } from "@/components/Debounce";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -16,13 +18,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useFindManyIssue } from "@/lib/hooks/issue";
-import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
 import { AlertCircle, ExternalLink, Loader2, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useFindManyIntegrationProject } from "~/lib/hooks";
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { CreateIssueJiraForm } from "./create-issue-jira-form";
 
@@ -161,7 +160,7 @@ export function SearchIssuesDialog({
   const pollingForKeyRef = useRef<string | null>(null);
 
   // Fetch project integrations
-  const { data: projectIntegrations } = useFindManyProjectIntegration({
+  const { data: projectIntegrations } = useClientQueries(schema).projectIntegration.useFindMany({
     where: {
       projectId,
       isActive: true,
@@ -174,7 +173,7 @@ export function SearchIssuesDialog({
   const activeIntegration = projectIntegrations?.[0];
 
   // Fetch active IntegrationProject records for multi-project fan-out
-  const { data: activeIntegrationProjects } = useFindManyIntegrationProject(
+  const { data: activeIntegrationProjects } = useClientQueries(schema).integrationProject.useFindMany(
     {
       where: {
         projectIntegrationId: activeIntegration?.id || "",
@@ -195,7 +194,7 @@ export function SearchIssuesDialog({
   }, [activeIntegration]);
 
   // Search internal issues (only when no integration or explicitly internal)
-  const { data: internalIssues, isLoading: loadingInternal } = useFindManyIssue(
+  const { data: internalIssues, isLoading: loadingInternal } = useClientQueries(schema).issue.useFindMany(
     {
       where: {
         projectId,

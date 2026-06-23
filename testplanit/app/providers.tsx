@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Provider as ZenStackProvider } from "@zenstackhq/tanstack-query/runtime-v5/react";
+import { QuerySettingsProvider as ZenStackProvider } from "@zenstackhq/tanstack-query/react";
 import { SessionProvider } from "next-auth/react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";

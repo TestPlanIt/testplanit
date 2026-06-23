@@ -1,6 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -12,7 +14,6 @@ import { useRouter } from "~/lib/navigation";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import { useFindManyUser } from "~/lib/hooks";
 import { ExtendedUser, useUserColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -67,7 +68,7 @@ function Users() {
   const skip = (currentPage - 1) * effectivePageSize;
   const debouncedSearchString = useDebounce(searchString, 500);
 
-  const { data: totalFilteredUsers } = useFindManyUser(
+  const { data: totalFilteredUsers } = useClientQueries(schema).user.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -103,7 +104,7 @@ function Users() {
     }
   }, [totalFilteredUsers, setTotalItems]);
 
-  const { data, isLoading } = useFindManyUser(
+  const { data, isLoading } = useClientQueries(schema).user.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }

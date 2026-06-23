@@ -1,6 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -25,7 +27,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
-import { useCountTags, useFindManyTags } from "~/lib/hooks";
 import { AddTag } from "./AddTag";
 import { ExtendedTags, useColumns } from "./columns";
 import { DeleteTag } from "./DeleteTag";
@@ -118,7 +119,7 @@ function TagList() {
   // Fetch ONLY basic tag data - no includes at all
   // ZenStack's access control on includes causes bind variable explosion (even with limits)
   // Projects and counts are fetched separately via direct Prisma queries
-  const { data: tags, isLoading: isLoadingTags } = useFindManyTags(
+  const { data: tags, isLoading: isLoadingTags } = useClientQueries(schema).tags.useFindMany(
     tagsWhere
       ? {
           where: tagsWhere,
@@ -131,7 +132,7 @@ function TagList() {
     }
   );
 
-  const { data: tagsCount } = useCountTags(
+  const { data: tagsCount } = useClientQueries(schema).tags.useCount(
     tagsWhere
       ? {
           where: tagsWhere,

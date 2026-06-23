@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +20,6 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import { useCreateAppConfig } from "~/lib/hooks";
 
 interface AddAppConfigProps {
   open: boolean;
@@ -48,7 +49,7 @@ export function AddAppConfig({ open, onClose }: AddAppConfigProps) {
     },
   });
 
-  const { mutateAsync: createAppConfig } = useCreateAppConfig();
+  const { mutateAsync: createAppConfig } = useClientQueries(schema).appConfig.useCreate();
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);

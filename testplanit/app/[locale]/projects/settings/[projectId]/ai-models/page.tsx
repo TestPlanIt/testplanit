@@ -1,6 +1,8 @@
 "use client";
 
 import { Loading } from "@/components/Loading";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,13 +30,6 @@ import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import {
-  useFindFirstProjects,
-  useFindManyLlmIntegration,
-  useFindManyProjectLlmIntegration,
-  useUpdateProjects,
-} from "~/lib/hooks";
-import { useFindManyPromptConfig } from "~/lib/hooks/prompt-config";
 import { FeatureOverrides } from "./feature-overrides";
 import { LlmIntegrationsList } from "./llm-integrations-list";
 
@@ -47,7 +42,7 @@ export default function ProjectAiModelsPage() {
   const tGlobal = useTranslations();
 
   // Fetch project data (allow global admin access or project assignment)
-  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: projectLoading } = useClientQueries(schema).projects.useFindFirst(
     {
       where: {
         id: projectId,
@@ -82,7 +77,7 @@ export default function ProjectAiModelsPage() {
 
   // Fetch available LLM integrations
   const { data: llmIntegrations, isLoading: integrationsLoading } =
-    useFindManyLlmIntegration({
+    useClientQueries(schema).llmIntegration.useFindMany({
       where: {
         isDeleted: false,
         status: "ACTIVE",
@@ -99,7 +94,7 @@ export default function ProjectAiModelsPage() {
   const {
     data: projectLlmIntegrations,
     isLoading: projectIntegrationsLoading,
-  } = useFindManyProjectLlmIntegration({
+  } = useClientQueries(schema).projectLlmIntegration.useFindMany({
     where: {
       projectId,
       isActive: true,
@@ -116,12 +111,12 @@ export default function ProjectAiModelsPage() {
   const currentIntegration = projectLlmIntegrations?.[0];
 
   // Fetch available prompt configurations
-  const { data: promptConfigs } = useFindManyPromptConfig({
+  const { data: promptConfigs } = useClientQueries(schema).promptConfig.useFindMany({
     where: { isDeleted: false, isActive: true },
     orderBy: { name: "asc" },
   });
 
-  const { mutateAsync: updateProject } = useUpdateProjects();
+  const { mutateAsync: updateProject } = useClientQueries(schema).projects.useUpdate();
   const [updatingPromptConfig, setUpdatingPromptConfig] = useState(false);
 
   const handlePromptConfigChange = async (value: string) => {

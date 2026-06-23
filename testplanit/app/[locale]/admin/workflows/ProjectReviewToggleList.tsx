@@ -1,6 +1,8 @@
 "use client";
 
 import { useDebounce } from "@/components/Debounce";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
@@ -15,11 +17,6 @@ import { toast } from "sonner";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePagination } from "~/lib/contexts/PaginationContext";
-import {
-  useCountProjects,
-  useFindManyProjects,
-  useUpdateProjects,
-} from "~/lib/hooks";
 
 type ProjectRow = {
   id: number;
@@ -79,7 +76,7 @@ export function ProjectReviewToggleList() {
     [debouncedSearch]
   );
 
-  const { data: count } = useCountProjects(
+  const { data: count } = useClientQueries(schema).projects.useCount(
     { where },
     { enabled: systemEnabled === true }
   );
@@ -88,7 +85,7 @@ export function ProjectReviewToggleList() {
     if (typeof count === "number") setTotalItems(count);
   }, [count, setTotalItems]);
 
-  const { data: projects, isLoading } = useFindManyProjects(
+  const { data: projects, isLoading } = useClientQueries(schema).projects.useFindMany(
     {
       where,
       select: {
@@ -104,7 +101,7 @@ export function ProjectReviewToggleList() {
     { enabled: systemEnabled === true }
   );
 
-  const { mutateAsync: updateProjects } = useUpdateProjects();
+  const { mutateAsync: updateProjects } = useClientQueries(schema).projects.useUpdate();
   const updateRef = useRef(updateProjects);
   useEffect(() => {
     updateRef.current = updateProjects;

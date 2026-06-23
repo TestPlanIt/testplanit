@@ -1,6 +1,8 @@
 "use client";
 
 import { DataTable } from "@/components/tables/DataTable";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,14 +20,6 @@ import { CirclePlus, LayoutTemplate } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  useCreateManyTemplateProjectAssignment,
-  useDeleteManyTemplateProjectAssignment,
-  useFindManyProjects,
-  useFindManyTemplates,
-  useUpdateManyTemplates,
-  useUpdateTemplates,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddTemplate } from "./AddTemplate";
 import { DeleteTemplate } from "./DeleteTemplate";
@@ -59,12 +53,12 @@ export default function TemplateComponent() {
   const [deletingTemplate, setDeletingTemplate] =
     useState<ExtendedTemplates | null>(null);
 
-  const { mutateAsync: updateTemplate } = useUpdateTemplates();
-  const { mutateAsync: updateManyTemplate } = useUpdateManyTemplates();
+  const { mutateAsync: updateTemplate } = useClientQueries(schema).templates.useUpdate();
+  const { mutateAsync: updateManyTemplate } = useClientQueries(schema).templates.useUpdateMany();
   const { mutateAsync: createManyTemplateProjectAssignment } =
-    useCreateManyTemplateProjectAssignment();
+    useClientQueries(schema).templateProjectAssignment.useCreateMany();
   const { mutateAsync: deleteManyTemplateProjectAssignment } =
-    useDeleteManyTemplateProjectAssignment();
+    useClientQueries(schema).templateProjectAssignment.useDeleteMany();
 
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render,
   // which would cause useCallback/useMemo to recompute and remount table cells.
@@ -73,11 +67,11 @@ export default function TemplateComponent() {
     updateTemplateRef.current = updateTemplate;
   });
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
   });
 
-  const { data, isLoading } = useFindManyTemplates(
+  const { data, isLoading } = useClientQueries(schema).templates.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: sortConfig

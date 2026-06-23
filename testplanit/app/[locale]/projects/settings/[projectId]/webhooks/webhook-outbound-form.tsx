@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -60,7 +62,6 @@ import {
   setWebhookActive,
   updateOutboundSubscriptions,
 } from "~/app/actions/webhook-config";
-import { useFindManyWebhookConfig } from "~/lib/hooks";
 import { translateServerError } from "~/lib/i18n/translateServerError";
 import { isSlackWebhookUrl } from "~/lib/webhooks/slack-url-detection";
 import { z } from "zod/v4";
@@ -191,7 +192,7 @@ function getCatalogForScope(scope: "project" | "system"): CatalogShape {
 const DEFAULT_PRESET: string[] = [];
 
 /**
- * Outbound config row shape returned by `useFindManyWebhookConfig`. The select
+ * Outbound config row shape returned by `useClientQueries(schema).webhookConfig.useFindMany`. The select
  * clause INCLUDES `name` and `url` (Plan 02-01 columns; Blocker 4 fix), and
  * EXCLUDES the encrypted `secret` column (HI-01).
  */
@@ -312,7 +313,7 @@ export function WebhookOutboundForm({
   const { catalog: scopedCatalog, sections: scopedSections } =
     getCatalogForScope(scope);
 
-  const { data, isLoading, refetch } = useFindManyWebhookConfig({
+  const { data, isLoading, refetch } = useClientQueries(schema).webhookConfig.useFindMany({
     where: { projectId, direction: "OUTBOUND" },
     orderBy: { createdAt: "desc" },
     select: {

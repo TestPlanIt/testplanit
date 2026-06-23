@@ -1,4 +1,6 @@
 import DynamicIcon from "@/components/DynamicIcon";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import {
   MilestoneSelect,
@@ -41,11 +43,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
-import {
-  useCreateMilestones,
-  useFindManyMilestones,
-  useFindManyMilestoneTypes,
-} from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 
 function buildFormSchema(t: (key: any) => string) {
@@ -87,9 +84,9 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
   const t = useTranslations();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createMilestones } = useCreateMilestones();
+  const { mutateAsync: createMilestones } = useClientQueries(schema).milestones.useCreate();
 
-  const { data: milestoneTypes } = useFindManyMilestoneTypes({
+  const { data: milestoneTypes } = useClientQueries(schema).milestoneTypes.useFindMany({
     where: {
       AND: [
         {
@@ -111,7 +108,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
   });
 
   const { data: milestones, isLoading: milestonesLoading } =
-    useFindManyMilestones({
+    useClientQueries(schema).milestones.useFindMany({
       where: {
         projectId: Number(projectId),
         isDeleted: false,

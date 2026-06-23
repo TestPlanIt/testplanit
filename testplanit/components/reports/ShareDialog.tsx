@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   auditShareLinkCreation,
   prepareShareLinkData,
 } from "@/actions/share-links";
@@ -33,10 +35,6 @@ import { Asterisk, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import {
-  useCreateShareLink,
-  useFindFirstRegistrationSettings,
-} from "~/lib/hooks";
 import { cn } from "~/utils";
 import {
   PasswordStrengthIndicator,
@@ -62,7 +60,7 @@ export function ShareDialog({
   const tCommon = useTranslations("common");
   const tAuth = useTranslations("auth.signup.errors");
   const { data: session } = useSession();
-  const { data: registrationSettings } = useFindFirstRegistrationSettings();
+  const { data: registrationSettings } = useClientQueries(schema).registrationSettings.useFindFirst();
   const policy: PasswordPolicy | null = registrationSettings
     ? {
         minPasswordLength: registrationSettings.minPasswordLength ?? 8,
@@ -90,7 +88,7 @@ export function ShareDialog({
 
   // Use ZenStack hook for creating share links
   const { mutateAsync: createShareLink, isPending: isCreating } =
-    useCreateShareLink();
+    useClientQueries(schema).shareLink.useCreate();
 
   // Generate default title with timestamp
   const defaultTitle = useMemo(() => {

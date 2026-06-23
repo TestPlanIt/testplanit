@@ -1,6 +1,8 @@
 "use client";
 
 import { useDebounce } from "@/components/Debounce";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
@@ -31,13 +33,6 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useCountIssue,
-  useFindFirstProjects,
-  useFindManyIssue,
-  useFindManyProjectIntegration,
-  useGroupByIssue,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 
@@ -65,7 +60,7 @@ function ProjectIssues() {
   const maxScrollAttempts = 10;
   const scrollInterval = useRef<NodeJS.Timeout | null>(null);
 
-  const { data: project } = useFindFirstProjects(
+  const { data: project } = useClientQueries(schema).projects.useFindFirst(
     {
       where: {
         id: projectId ?? -1,
@@ -142,7 +137,7 @@ function ProjectIssues() {
   }, [projectId]);
 
   // Fetch distinct status values for the filter dropdown (scoped to this project)
-  const { data: statusOptions } = useGroupByIssue(
+  const { data: statusOptions } = useClientQueries(schema).issue.useGroupBy(
     {
       by: ["status"],
       where: { isDeleted: false, ...projectFilterForGroupBy },
@@ -154,7 +149,7 @@ function ProjectIssues() {
   );
 
   // Fetch distinct priority values for the filter dropdown (scoped to this project)
-  const { data: priorityOptions } = useGroupByIssue(
+  const { data: priorityOptions } = useClientQueries(schema).issue.useGroupBy(
     {
       by: ["priority"],
       where: { isDeleted: false, ...projectFilterForGroupBy },
@@ -350,7 +345,7 @@ function ProjectIssues() {
   };
 
   // When we have a targetIssueId, fetch all issues to find which page it's on
-  const { data: allIssues } = useFindManyIssue(
+  const { data: allIssues } = useClientQueries(schema).issue.useFindMany(
     targetIssueId && issuesWhere && shouldPreventPageReset
       ? {
           where: issuesWhere,
@@ -371,7 +366,7 @@ function ProjectIssues() {
   );
 
   // Fetch basic issue data
-  const { data: issues, isLoading: isLoadingIssues } = useFindManyIssue(
+  const { data: issues, isLoading: isLoadingIssues } = useClientQueries(schema).issue.useFindMany(
     issuesWhere
       ? {
           where: issuesWhere,
@@ -396,7 +391,7 @@ function ProjectIssues() {
   );
 
   // Get total count of issues
-  const { data: issuesCount } = useCountIssue(
+  const { data: issuesCount } = useClientQueries(schema).issue.useCount(
     issuesWhere
       ? {
           where: issuesWhere,
@@ -737,7 +732,7 @@ function ProjectIssues() {
 
   // Determine if the project only has SIMPLE_URL integrations so we can hide
   // columns that would always be empty (description, status, priority, lastSyncedAt).
-  const { data: projectIntegrations } = useFindManyProjectIntegration(
+  const { data: projectIntegrations } = useClientQueries(schema).projectIntegration.useFindMany(
     {
       where: { projectId: projectId ?? -1, isActive: true },
       include: { integration: { select: { provider: true } } },

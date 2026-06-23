@@ -1,6 +1,8 @@
 "use client";
 
 import { useDebounce } from "@/components/Debounce";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Filter } from "@/components/tables/Filter";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Form } from "@/components/ui/form";
@@ -28,11 +30,6 @@ import {
 } from "~/app/[locale]/admin/audit-logs/columns";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
-import {
-  useCountAuditLog,
-  useFindManyAuditLog,
-  useInfiniteFindManyAuditLog,
-} from "~/lib/hooks";
 
 const PAGE_SIZE = 50;
 
@@ -148,7 +145,7 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-  } = useInfiniteFindManyAuditLog(baseArgs, {
+  } = useClientQueries(schema).auditLog.useInfiniteFindMany(baseArgs, {
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
       return {
@@ -180,23 +177,23 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     [rows]
   );
 
-  const { data: totalCount } = useCountAuditLog({ where: whereClause });
+  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({ where: whereClause });
 
   // Filter options come from the distinct values this user has actually
   // generated, so each dropdown lists only relevant actions/types.
-  const { data: actionRows } = useFindManyAuditLog({
+  const { data: actionRows } = useClientQueries(schema).auditLog.useFindMany({
     where: { userId },
     select: { action: true },
     distinct: ["action"],
     orderBy: { action: "asc" },
   });
-  const { data: typeRows } = useFindManyAuditLog({
+  const { data: typeRows } = useClientQueries(schema).auditLog.useFindMany({
     where: { userId },
     select: { entityType: true },
     distinct: ["entityType"],
     orderBy: { entityType: "asc" },
   });
-  const { data: projectRows } = useFindManyAuditLog({
+  const { data: projectRows } = useClientQueries(schema).auditLog.useFindMany({
     where: { userId, projectId: { not: null } },
     select: { projectId: true, project: { select: { name: true } } },
     distinct: ["projectId"],

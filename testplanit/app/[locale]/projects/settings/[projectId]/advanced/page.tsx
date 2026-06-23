@@ -1,6 +1,8 @@
 "use client";
 
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
@@ -28,11 +30,6 @@ import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import {
-  useFindUniqueAppConfig,
-  useFindUniqueProjects,
-  useUpdateProjects,
-} from "~/lib/hooks";
 
 export default function AdvancedPage() {
   const params = useParams();
@@ -40,7 +37,7 @@ export default function AdvancedPage() {
   const { data: session, status } = useSession();
   const t = useTranslations("projects.settings.advanced");
 
-  const { data: project, isLoading: projectLoading } = useFindUniqueProjects(
+  const { data: project, isLoading: projectLoading } = useClientQueries(schema).projects.useFindUnique(
     {
       where: { id: projectId },
       // `name` + `iconUrl` are needed for the shared project-settings header
@@ -72,7 +69,7 @@ export default function AdvancedPage() {
 
   // System edit-window policy (ceiling). value: 0 = locked everywhere, N =
   // max seconds (projects may tighten), absent = no policy.
-  const { data: editWindowConfig } = useFindUniqueAppConfig(
+  const { data: editWindowConfig } = useClientQueries(schema).appConfig.useFindUnique(
     { where: { key: "edit_results_duration" } },
     { enabled: status === "authenticated" }
   );
@@ -86,7 +83,7 @@ export default function AdvancedPage() {
       ? Math.floor(systemEditWindowSeconds / 60)
       : null;
 
-  const updateProject = useUpdateProjects();
+  const updateProject = useClientQueries(schema).projects.useUpdate();
 
   // Access guard: ADMIN or PROJECTADMIN per D-18 / Open Question 4.
   // Mirrors the quickscript page guard: imperative `notFound()` from useEffect

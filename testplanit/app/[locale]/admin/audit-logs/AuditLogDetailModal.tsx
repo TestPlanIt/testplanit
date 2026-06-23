@@ -1,6 +1,8 @@
 "use client";
 
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -12,7 +14,6 @@ import { Separator } from "@/components/ui/separator";
 import { ShieldCheck } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useFindUniqueAuditLog } from "~/lib/hooks";
 
 interface AuditLogDetailModalProps {
   logId: string | null;
@@ -40,7 +41,7 @@ export function AuditLogDetailModal({
   // The list query deliberately omits these columns to keep the page light at
   // scale — a single import can produce 100+ rows whose `changes` payload each
   // contains the full entity (kilobytes of Tiptap JSON for test cases).
-  const { data: log, isLoading } = useFindUniqueAuditLog(
+  const { data: log, isLoading } = useClientQueries(schema).auditLog.useFindUnique(
     {
       where: { id: logId ?? "" },
       include: { project: { select: { name: true } } },

@@ -2,13 +2,9 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import type { CaseExportTemplate } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useMemo, useRef, useState } from "react";
-import {
-  useFindManyCaseExportTemplate,
-  useFindManyCaseFields,
-  useUpdateCaseExportTemplate,
-  useUpdateManyCaseExportTemplate,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -86,11 +82,11 @@ export function EditQuickScriptTemplate({
     isEnabled: z.boolean(),
   });
 
-  const { mutateAsync: updateTemplate } = useUpdateCaseExportTemplate();
+  const { mutateAsync: updateTemplate } = useClientQueries(schema).caseExportTemplate.useUpdate();
   const { mutateAsync: updateManyTemplates } =
-    useUpdateManyCaseExportTemplate();
+    useClientQueries(schema).caseExportTemplate.useUpdateMany();
 
-  const { data: existingTemplates } = useFindManyCaseExportTemplate({
+  const { data: existingTemplates } = useClientQueries(schema).caseExportTemplate.useFindMany({
     where: { isDeleted: false },
     select: {
       category: true,
@@ -129,7 +125,7 @@ export function EditQuickScriptTemplate({
     ].sort();
   }, [allTemplates]);
 
-  const { data: caseFieldsData } = useFindManyCaseFields({
+  const { data: caseFieldsData } = useClientQueries(schema).caseFields.useFindMany({
     where: { isEnabled: true, isDeleted: false },
     select: { systemName: true, type: { select: { type: true } } },
   });

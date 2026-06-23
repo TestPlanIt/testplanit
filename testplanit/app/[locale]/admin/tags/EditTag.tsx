@@ -1,7 +1,8 @@
 "use client";
 import type { Tags } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useState } from "react";
-import { useFindManyTags, useUpdateTags } from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -49,9 +50,9 @@ export function EditTag({ tag, open, onClose }: EditTagProps) {
   const tTags = useTranslations("tags.edit");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateTag } = useUpdateTags();
+  const { mutateAsync: updateTag } = useClientQueries(schema).tags.useUpdate();
   // Query all tags (including soft-deleted) for case-insensitive duplicate checking
-  const { data: allTags } = useFindManyTags({
+  const { data: allTags } = useClientQueries(schema).tags.useFindMany({
     select: { id: true, name: true, isDeleted: true },
   });
 

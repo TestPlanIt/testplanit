@@ -1,6 +1,8 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
@@ -34,13 +36,6 @@ import {
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  useFindManyProjects,
-  useFindFirstRepositories,
-  useCreateRepositoryFolders,
-  useFindManyRepositoryCases,
-} from "~/lib/hooks";
-import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 import type { FolderTreeNode } from "~/workers/copyMoveWorker";
@@ -93,14 +88,14 @@ export function CopyMoveDialog({
 
   // ── Data hooks ───────────────────────────────────────────────────────────
   const { data: projects = [], isLoading: projectsLoading } =
-    useFindManyProjects({
+    useClientQueries(schema).projects.useFindMany({
       where: { isDeleted: false },
       orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
       select: { id: true, name: true, iconUrl: true, isCompleted: true },
     });
 
   const { data: folders = [], isLoading: foldersLoading } =
-    useFindManyRepositoryFolders(
+    useClientQueries(schema).repositoryFolders.useFindMany(
       {
         where: { projectId: targetProjectId ?? 0, isDeleted: false },
         select: { id: true, name: true, parentId: true, order: true },
@@ -110,7 +105,7 @@ export function CopyMoveDialog({
     );
 
   // Target project's repository (needed for creating folders)
-  const { data: targetRepo } = useFindFirstRepositories(
+  const { data: targetRepo } = useClientQueries(schema).repositories.useFindFirst(
     {
       where: {
         projectId: targetProjectId ?? 0,
@@ -122,10 +117,10 @@ export function CopyMoveDialog({
     { enabled: !!targetProjectId }
   );
 
-  const { mutateAsync: createFolder } = useCreateRepositoryFolders();
+  const { mutateAsync: createFolder } = useClientQueries(schema).repositoryFolders.useCreate();
 
   // ── Folder-mode data hooks ────────────────────────────────────────────────
-  const { data: sourceFolders = [] } = useFindManyRepositoryFolders(
+  const { data: sourceFolders = [] } = useClientQueries(schema).repositoryFolders.useFindMany(
     sourceFolderId
       ? {
           where: { projectId: sourceProjectId, isDeleted: false },
@@ -156,7 +151,7 @@ export function CopyMoveDialog({
     return new Set(folderSubtreeIds);
   }, [sourceFolderId, targetProjectId, sourceProjectId, folderSubtreeIds]);
 
-  const { data: folderCases = [] } = useFindManyRepositoryCases(
+  const { data: folderCases = [] } = useClientQueries(schema).repositoryCases.useFindMany(
     folderSubtreeIds.length > 0
       ? {
           where: { folderId: { in: folderSubtreeIds }, isDeleted: false },
@@ -176,7 +171,7 @@ export function CopyMoveDialog({
 
   // Case-mode: look up the source folders of the selected cases so we can
   // detect same-folder moves when sourceFolderId is not provided.
-  const { data: selectedCases = [] } = useFindManyRepositoryCases(
+  const { data: selectedCases = [] } = useClientQueries(schema).repositoryCases.useFindMany(
     sourceFolderId === undefined && selectedCaseIds.length > 0
       ? {
           where: { id: { in: selectedCaseIds }, isDeleted: false },

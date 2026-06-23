@@ -1,6 +1,8 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -28,7 +30,6 @@ import { UserMention } from "~/components/UserMention";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { useEffectiveRoleOnProject } from "~/hooks/useEffectiveRoleOnProject";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import { useFindFirstReviewRequest } from "~/lib/hooks";
 
 import type { AssigneeOption } from "./AssigneeCombobox";
 import { CancelRequestButton } from "./CancelRequestButton";
@@ -118,7 +119,7 @@ export function ReviewStatusBanner({
   const [requestChangesOpen, setRequestChangesOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
 
-  const { data } = useFindFirstReviewRequest(
+  const { data } = useClientQueries(schema).reviewRequest.useFindFirst(
     {
       where: { entityType, entityId, isDeleted: false },
       orderBy: { createdAt: "desc" },

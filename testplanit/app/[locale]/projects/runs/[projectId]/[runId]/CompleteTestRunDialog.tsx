@@ -1,6 +1,8 @@
 "use client";
 
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -34,7 +36,6 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
-import { useFindManyWorkflows, useUpdateTestRuns } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
 
@@ -60,9 +61,9 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const { mutateAsync: updateTestRun } = useUpdateTestRuns();
+  const { mutateAsync: updateTestRun } = useClientQueries(schema).testRuns.useUpdate();
 
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,

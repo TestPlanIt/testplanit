@@ -1,9 +1,7 @@
 "use client";
 import { useState } from "react";
-import {
-  useUpdateConfigVariants,
-  useUpdateManyConfigurations,
-} from "~/lib/hooks";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Variant } from "./Categories";
 
 import { useTranslations } from "next-intl";
@@ -38,9 +36,9 @@ export function DeleteVariantModal({
   onDelete,
 }: DeleteVariantModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfigVariants } = useUpdateConfigVariants();
+  const { mutateAsync: updateConfigVariants } = useClientQueries(schema).configVariants.useUpdate();
   const { mutateAsync: updateManyConfigurations } =
-    useUpdateManyConfigurations();
+    useClientQueries(schema).configurations.useUpdateMany();
   const t = useTranslations("admin.configurations.variants.delete");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");

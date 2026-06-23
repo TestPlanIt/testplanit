@@ -1,6 +1,8 @@
 "use client";
 
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -28,11 +30,6 @@ import { CalendarIcon, CircleCheckBig, TriangleAlert } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import {
-  useCreateSessionVersions,
-  useFindManyWorkflows,
-  useUpdateSessions,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
@@ -88,9 +85,9 @@ export function CompleteSessionDialog({
   const t = useTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const { mutateAsync: updateSessions } = useUpdateSessions();
-  const { mutateAsync: createSessionVersions } = useCreateSessionVersions();
-  const { data: workflows } = useFindManyWorkflows({
+  const { mutateAsync: updateSessions } = useClientQueries(schema).sessions.useUpdate();
+  const { mutateAsync: createSessionVersions } = useClientQueries(schema).sessionVersions.useCreate();
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,

@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   BookOpen,
   Clock,
   HelpCircle,
@@ -16,7 +18,6 @@ import { useTheme } from "next-themes";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useFindManyProjects, useFindUniqueProjects } from "~/lib/hooks";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import svgIcon from "~/public/tpi_logo.svg";
 
@@ -66,7 +67,7 @@ export const Header = () => {
   const isOnProjectPage = path.includes("/projects/") && !!projectId;
 
   // Minimal query to check if current project is the Demo Project
-  const { data: currentProject } = useFindUniqueProjects(
+  const { data: currentProject } = useClientQueries(schema).projects.useFindUnique(
     {
       where: { id: Number(projectId) },
       select: { name: true },
@@ -76,7 +77,7 @@ export const Header = () => {
   const isDemoProject = currentProject?.name === "Demo Project";
 
   // Reuse the same query as ProjectQuickSelector — React Query deduplicates it
-  const { data: allProjects = [] } = useFindManyProjects({
+  const { data: allProjects = [] } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: [{ isCompleted: "asc" as const }, { name: "asc" as const }],
     select: {

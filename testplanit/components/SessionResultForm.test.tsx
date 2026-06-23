@@ -1,4 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
 import React from "react";
@@ -15,11 +17,11 @@ const mockUseProjectPermissions = vi.hoisted(() => vi.fn());
 // --- ZenStack hook mocks ---
 vi.mock("~/lib/hooks", () => ({
   useCreateSessionResults: vi.fn(() => ({ mutateAsync: vi.fn() })),
-  useFindManyStatus: vi.fn(() => ({ data: [], isLoading: false })),
+  useClientQueries(schema).status.useFindMany: vi.fn(() => ({ data: [], isLoading: false })),
   useFindFirstProjects: vi.fn(() => ({ data: null, isLoading: false })),
-  useFindFirstSessions: vi.fn(() => ({ data: null, isLoading: false })),
+  useClientQueries(schema).sessions.useFindFirst: vi.fn(() => ({ data: null, isLoading: false })),
   useFindManyWorkflows: vi.fn(() => ({ data: [], isLoading: false })),
-  useFindManyTemplateResultAssignment: vi.fn(() => ({
+  useClientQueries(schema).templateResultAssignment.useFindMany: vi.fn(() => ({
     data: [],
     isLoading: false,
   })),
@@ -175,26 +177,21 @@ function setupDefaultMocks() {
 }
 
 // Import after vi.mock so they use mocked versions
-import {
-  useFindFirstSessions,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-} from "~/lib/hooks";
 
 beforeEach(() => {
   vi.clearAllMocks();
   setupDefaultMocks();
 
-  (useFindManyStatus as ReturnType<typeof vi.fn>).mockReturnValue({
+  (useClientQueries(schema).status.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
     data: mockStatuses,
     isLoading: false,
   });
-  (useFindFirstSessions as ReturnType<typeof vi.fn>).mockReturnValue({
+  (useClientQueries(schema).sessions.useFindFirst as ReturnType<typeof vi.fn>).mockReturnValue({
     data: mockSessionData,
     isLoading: false,
   });
   (
-    useFindManyTemplateResultAssignment as ReturnType<typeof vi.fn>
+    useClientQueries(schema).templateResultAssignment.useFindMany as ReturnType<typeof vi.fn>
   ).mockReturnValue({
     data: [],
     isLoading: false,
@@ -240,7 +237,7 @@ describe("SessionResultForm", () => {
   });
 
   it("shows loading spinner when session data is loading", () => {
-    (useFindFirstSessions as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessions.useFindFirst as ReturnType<typeof vi.fn>).mockReturnValue({
       data: null,
       isLoading: true,
     });
@@ -251,7 +248,7 @@ describe("SessionResultForm", () => {
   });
 
   it("shows loading spinner when statuses are loading", () => {
-    (useFindManyStatus as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).status.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: null,
       isLoading: true,
     });
@@ -318,7 +315,7 @@ describe("SessionResultForm", () => {
     ];
 
     (
-      useFindManyTemplateResultAssignment as ReturnType<typeof vi.fn>
+      useClientQueries(schema).templateResultAssignment.useFindMany as ReturnType<typeof vi.fn>
     ).mockReturnValue({
       data: mockTemplateFields,
       isLoading: false,

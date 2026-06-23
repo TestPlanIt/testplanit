@@ -1,6 +1,8 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Card,
   CardContent,
@@ -26,13 +28,6 @@ import {
 import type { LlmFeatureConfig, LlmIntegration, LlmProviderConfig, ProjectLlmIntegration } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import {
-  useCreateLlmFeatureConfig,
-  useDeleteLlmFeatureConfig,
-  useFindManyLlmFeatureConfig,
-  useUpdateLlmFeatureConfig,
-} from "~/lib/hooks/llm-feature-config";
-import { useFindManyPromptConfigPrompt } from "~/lib/hooks/prompt-config-prompt";
 import { LLM_FEATURE_LABELS, LLM_FEATURES } from "~/lib/llm/constants";
 import { getProviderIcon, LlmProviderBadge } from "~/lib/llm/provider-styles";
 
@@ -72,7 +67,7 @@ export function FeatureOverrides({
   const t = useTranslations("projects.settings.aiModels.featureOverrides");
   const tCommon = useTranslations("common");
 
-  const { data: featureConfigs } = useFindManyLlmFeatureConfig({
+  const { data: featureConfigs } = useClientQueries(schema).llmFeatureConfig.useFindMany({
     where: { projectId },
     include: {
       llmIntegration: {
@@ -81,7 +76,7 @@ export function FeatureOverrides({
     },
   });
 
-  const { data: promptConfigPrompts } = useFindManyPromptConfigPrompt(
+  const { data: promptConfigPrompts } = useClientQueries(schema).promptConfigPrompt.useFindMany(
     {
       where: { promptConfigId: promptConfigId ?? undefined },
       include: {
@@ -93,9 +88,9 @@ export function FeatureOverrides({
     { enabled: promptConfigId !== null }
   );
 
-  const { mutateAsync: createFeatureConfig } = useCreateLlmFeatureConfig();
-  const { mutateAsync: updateFeatureConfig } = useUpdateLlmFeatureConfig();
-  const { mutateAsync: deleteFeatureConfig } = useDeleteLlmFeatureConfig();
+  const { mutateAsync: createFeatureConfig } = useClientQueries(schema).llmFeatureConfig.useCreate();
+  const { mutateAsync: updateFeatureConfig } = useClientQueries(schema).llmFeatureConfig.useUpdate();
+  const { mutateAsync: deleteFeatureConfig } = useClientQueries(schema).llmFeatureConfig.useDelete();
 
   const getEffectiveResolution = (feature: string): EffectiveResolution => {
     const featureConfig = featureConfigs?.find((c) => c.feature === feature) as

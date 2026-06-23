@@ -1,4 +1,6 @@
 import { useDebounce } from "@/components/Debounce";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { CustomColumnMeta } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
@@ -16,10 +18,6 @@ import { searchProjects } from "~/app/actions/searchProjects";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { usePagination } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useFindManyConfigurations,
-  useUpdateConfigurations,
-} from "~/lib/hooks";
 import AddConfigurationWizard from "./AddConfigurationWizard";
 import { BulkEditConfigurations } from "./BulkEditConfigurations";
 import { ConfigWithVariants, useColumns } from "./configColumns";
@@ -74,7 +72,7 @@ function Configurations(): React.ReactElement | null {
   const skip = (currentPage - 1) * effectivePageSize;
 
   // Fetch ALL configurations (no pagination, no search filter in query)
-  const { data: allConfigurations, isLoading } = useFindManyConfigurations(
+  const { data: allConfigurations, isLoading } = useClientQueries(schema).configurations.useFindMany(
     {
       orderBy: sortConfig
         ? sortConfig.column === "variants" || sortConfig.column === "projects"
@@ -132,7 +130,7 @@ function Configurations(): React.ReactElement | null {
     return filteredConfigurations.slice(skip, skip + effectivePageSize);
   }, [filteredConfigurations, skip, effectivePageSize]);
 
-  const { mutate: updateConfiguration } = useUpdateConfigurations();
+  const { mutate: updateConfiguration } = useClientQueries(schema).configurations.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutate changes identity every render
   const updateConfigurationRef = useRef(updateConfiguration);

@@ -1,6 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -20,10 +22,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus, MessageSquareCode } from "lucide-react";
 import { toast } from "sonner";
-import {
-  useFindManyPromptConfig,
-  useUpdatePromptConfig,
-} from "~/lib/hooks/prompt-config";
 import { AddPromptConfig } from "./AddPromptConfig";
 import { ExtendedPromptConfig, useColumns } from "./columns";
 import { DeletePromptConfig } from "./DeletePromptConfig";
@@ -69,7 +67,7 @@ function PromptConfigList() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { mutateAsync: updatePromptConfig } = useUpdatePromptConfig();
+  const { mutateAsync: updatePromptConfig } = useClientQueries(schema).promptConfig.useUpdate();
 
   const updatePromptConfigRef = useRef(updatePromptConfig);
   useEffect(() => {
@@ -77,7 +75,7 @@ function PromptConfigList() {
   });
 
   // Query for total filtered configs (for pagination)
-  const { data: totalFilteredConfigs } = useFindManyPromptConfig(
+  const { data: totalFilteredConfigs } = useClientQueries(schema).promptConfig.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -120,7 +118,7 @@ function PromptConfigList() {
     data: configs,
     isLoading,
     refetch,
-  } = useFindManyPromptConfig(
+  } = useClientQueries(schema).promptConfig.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }

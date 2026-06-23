@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -58,10 +60,6 @@ import {
   sendTestWebhook,
   setWebhookActive,
 } from "~/app/actions/webhook-config";
-import {
-  useFindFirstProjectIntegration,
-  useFindManyWebhookConfig,
-} from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { redactWebhookUrl } from "~/lib/webhooks/redaction";
 
@@ -251,7 +249,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   const tActions = useTranslations("common.actions");
   const tCommon = useTranslations("common");
 
-  const { data, isLoading, refetch } = useFindManyWebhookConfig({
+  const { data, isLoading, refetch } = useClientQueries(schema).webhookConfig.useFindMany({
     where: { projectId, direction: "INBOUND" },
     orderBy: { createdAt: "desc" },
     select: {
@@ -281,7 +279,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   // can be added. `null` here means either no active integration exists
   // OR the active integration's provider isn't a supported inbound
   // adapter (e.g. SIMPLE_URL — link-only, no webhook surface).
-  const { data: activeIntegration } = useFindFirstProjectIntegration({
+  const { data: activeIntegration } = useClientQueries(schema).projectIntegration.useFindFirst({
     where: {
       projectId,
       isActive: true,

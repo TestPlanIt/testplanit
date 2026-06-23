@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Color } from "@tiptap/extension-color";
 import { Emoji, EmojiItem, gitHubEmojis } from "@tiptap/extension-emoji";
 import { FileHandler } from "@tiptap/extension-file-handler";
@@ -99,7 +101,6 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { emptyEditorContent } from "~/app/constants";
-import { useFindManyProjectLlmIntegration } from "~/lib/hooks/project-llm-integration";
 import {
   createParameterMentionExtension,
   type ParameterChipMeta,
@@ -154,7 +155,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   const projectIdNumber = projectId ? parseInt(projectId) : NaN;
   const isValidProjectId = !isNaN(projectIdNumber) && projectIdNumber > 0;
 
-  const { data: llmIntegrations } = useFindManyProjectLlmIntegration(
+  const { data: llmIntegrations } = useClientQueries(schema).projectLlmIntegration.useFindMany(
     {
       where: {
         projectId: projectIdNumber,

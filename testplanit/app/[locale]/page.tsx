@@ -1,6 +1,8 @@
 "use client";
 
 import { type NextPage } from "next";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -10,7 +12,6 @@ import {
   processProjectsWithEffectiveMembers,
 } from "~/utils/projectUtils";
 
-import { useFindManyProjects, useFindManyUser } from "~/lib/hooks";
 
 import { Loading } from "@/components/Loading";
 import { NoProjectsCard } from "@/components/NoProjectsCard";
@@ -37,7 +38,7 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
   const t = useTranslations();
 
   const { data: session } = useSession();
-  const { data: allUsers, isLoading: isUsersLoading } = useFindManyUser({
+  const { data: allUsers, isLoading: isUsersLoading } = useClientQueries(schema).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     select: { id: true, access: true },
   });
@@ -53,7 +54,7 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
   // ZenStack will automatically filter projects based on access rules
   // This includes explicit assignments AND projects with defaultAccessType: GLOBAL_ROLE
   const { data: projectsRaw, isLoading: isLoadingProjects } =
-    useFindManyProjects(
+    useClientQueries(schema).projects.useFindMany(
       {
         where: {
           isDeleted: false,

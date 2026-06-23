@@ -2,6 +2,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Dialog,
   DialogContent,
@@ -19,10 +21,6 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
-import {
-  useUpsertIntegration,
-  useUpdateIntegration,
-} from "@/lib/hooks/integration";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { IntegrationAuthType, IntegrationProvider } from "~/zenstack/models";
 import type { Integration } from "~/zenstack/models";
@@ -98,8 +96,8 @@ export function IntegrationModal({
   // instead of failing on the unique-name constraint. The new-name
   // collision against an ACTIVE row is still rejected by the API route's
   // explicit duplicate-name check before the mutation runs.
-  const createIntegrationMutation = useUpsertIntegration();
-  const updateIntegrationMutation = useUpdateIntegration();
+  const createIntegrationMutation = useClientQueries(schema).integration.useUpsert();
+  const updateIntegrationMutation = useClientQueries(schema).integration.useUpdate();
 
   const isCreating = createIntegrationMutation.status === "pending";
   const isUpdating = updateIntegrationMutation.status === "pending";

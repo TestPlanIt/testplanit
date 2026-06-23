@@ -1,4 +1,6 @@
 import { DateTextDisplay } from "@/components/DateTextDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import { UserDisplay } from "@/components/search/UserDisplay";
@@ -28,11 +30,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
-import {
-  useFindManyColor,
-  useFindManyMilestones,
-  useFindManyMilestoneTypes,
-} from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import {
   ColorMap,
@@ -86,7 +83,7 @@ export default function MilestoneFormControls({
   const t = useTranslations("milestones");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const { data: colors } = useFindManyColor({
+  const { data: colors } = useClientQueries(schema).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
@@ -101,7 +98,7 @@ export default function MilestoneFormControls({
   }, [colors]);
 
   // Fetch milestone types
-  const { data: milestoneTypes } = useFindManyMilestoneTypes({
+  const { data: milestoneTypes } = useClientQueries(schema).milestoneTypes.useFindMany({
     where: {
       AND: [
         {
@@ -118,7 +115,7 @@ export default function MilestoneFormControls({
   });
 
   // Fetch milestones for parent selection
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       projectId: Number(projectId),
       isDeleted: false,

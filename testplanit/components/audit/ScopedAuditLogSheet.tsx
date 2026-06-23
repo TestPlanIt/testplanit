@@ -1,6 +1,8 @@
 "use client";
 
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
@@ -36,11 +38,6 @@ import {
 } from "~/app/[locale]/admin/audit-logs/columns";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
-import {
-  useCountAuditLog,
-  useFindManyAuditLog,
-  useInfiniteFindManyAuditLog,
-} from "~/lib/hooks";
 
 const PAGE_SIZE = 50;
 
@@ -194,7 +191,7 @@ function ScopedAuditLogContent({
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-  } = useInfiniteFindManyAuditLog(baseArgs, {
+  } = useClientQueries(schema).auditLog.useInfiniteFindMany(baseArgs, {
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
       return {
@@ -224,11 +221,11 @@ function ScopedAuditLogContent({
     [rows]
   );
 
-  const { data: totalCount } = useCountAuditLog({ where: whereClause });
+  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({ where: whereClause });
 
   // Action options come from the distinct actions recorded for this entity, so
   // the dropdown lists only relevant actions.
-  const { data: actionRows } = useFindManyAuditLog({
+  const { data: actionRows } = useClientQueries(schema).auditLog.useFindMany({
     where: { entityType, entityId },
     select: { action: true },
     distinct: ["action"],

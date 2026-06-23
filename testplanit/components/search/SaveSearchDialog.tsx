@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   auditShareLinkCreation,
   prepareShareLinkData,
 } from "@/actions/share-links";
@@ -21,7 +23,6 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useCreateShareLink } from "~/lib/hooks";
 import {
   buildSavedSearchConfig,
   type SavedSearchCriteria,
@@ -49,7 +50,7 @@ export function SaveSearchDialog({
 }: SaveSearchDialogProps) {
   const t = useTranslations();
   const { data: session } = useSession();
-  const { mutateAsync: createShareLink, isPending } = useCreateShareLink();
+  const { mutateAsync: createShareLink, isPending } = useClientQueries(schema).shareLink.useCreate();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");

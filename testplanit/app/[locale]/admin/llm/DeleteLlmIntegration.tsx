@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -14,8 +16,6 @@ import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useDeleteLlmIntegration } from "~/lib/hooks/llm-integration";
-import { useDeleteLlmProviderConfig } from "~/lib/hooks/llm-provider-config";
 
 interface DeleteLlmIntegrationProps {
   integration: any;
@@ -32,8 +32,8 @@ export function DeleteLlmIntegration({
   const tGlobal = useTranslations();
   const [loading, setLoading] = useState(false);
 
-  const { mutateAsync: deleteLlmIntegration } = useDeleteLlmIntegration();
-  const { mutateAsync: deleteLlmProviderConfig } = useDeleteLlmProviderConfig();
+  const { mutateAsync: deleteLlmIntegration } = useClientQueries(schema).llmIntegration.useDelete();
+  const { mutateAsync: deleteLlmProviderConfig } = useClientQueries(schema).llmProviderConfig.useDelete();
 
   const handleDelete = async () => {
     setLoading(true);

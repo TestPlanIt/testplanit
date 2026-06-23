@@ -1,6 +1,8 @@
 "use client";
 
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { SearchIssuesDialog } from "@/components/issues/search-issues-dialog";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
@@ -97,12 +99,6 @@ import {
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useFindFirstProjects,
-  useFindFirstWorkflows,
-  useFindManyRepositoryCases,
-  useFindManyTemplates,
-} from "~/lib/hooks";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import {
   convertHtmlToTipTapJSON,
@@ -1534,7 +1530,7 @@ export function GenerateTestCasesWizard({
   const formSubmitHandlersRef = useRef<Map<string, () => void>>(new Map());
 
   // Fetch project data
-  const { data: project } = useFindFirstProjects({
+  const { data: project } = useClientQueries(schema).projects.useFindFirst({
     where: {
       id: projectId,
       isDeleted: false,
@@ -1557,7 +1553,7 @@ export function GenerateTestCasesWizard({
   });
 
   // Fetch templates
-  const { data: templates } = useFindManyTemplates({
+  const { data: templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
       projects: {
@@ -1600,7 +1596,7 @@ export function GenerateTestCasesWizard({
 
   // Fetch existing test cases in current folder for context
   // Fetch the maximum order value separately for accurate ordering
-  const { data: maxOrderData } = useFindManyRepositoryCases({
+  const { data: maxOrderData } = useClientQueries(schema).repositoryCases.useFindMany({
     where: {
       projectId: projectId,
       folderId: folderId,
@@ -1617,7 +1613,7 @@ export function GenerateTestCasesWizard({
   });
 
   // Fetch default workflow state for new test cases
-  const { data: defaultWorkflow } = useFindFirstWorkflows({
+  const { data: defaultWorkflow } = useClientQueries(schema).workflows.useFindFirst({
     where: {
       projects: {
         some: {

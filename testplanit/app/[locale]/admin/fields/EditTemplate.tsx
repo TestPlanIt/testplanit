@@ -1,20 +1,9 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
 import type { Projects, Templates } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  useCreateManyTemplateCaseAssignment,
-  useCreateManyTemplateProjectAssignment,
-  useCreateManyTemplateResultAssignment,
-  useDeleteManyTemplateCaseAssignment,
-  useDeleteManyTemplateProjectAssignment,
-  useDeleteManyTemplateResultAssignment,
-  useFindManyCaseFields,
-  useFindManyProjects,
-  useFindManyResultFields,
-  useUpdateManyTemplates,
-  useUpdateTemplates,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
@@ -116,25 +105,25 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
   const caseFieldsInitializedRef = useRef(false);
   const resultFieldsInitializedRef = useRef(false);
 
-  const { mutateAsync: updateTemplate } = useUpdateTemplates();
-  const { mutateAsync: updateManyTemplates } = useUpdateManyTemplates();
+  const { mutateAsync: updateTemplate } = useClientQueries(schema).templates.useUpdate();
+  const { mutateAsync: updateManyTemplates } = useClientQueries(schema).templates.useUpdateMany();
   const { mutateAsync: createManyTemplateProjectAssignment } =
-    useCreateManyTemplateProjectAssignment();
+    useClientQueries(schema).templateProjectAssignment.useCreateMany();
   const { mutateAsync: deleteManyTemplateProjectAssignment } =
-    useDeleteManyTemplateProjectAssignment();
+    useClientQueries(schema).templateProjectAssignment.useDeleteMany();
   const { mutateAsync: createManyTemplateCaseAssignment } =
-    useCreateManyTemplateCaseAssignment();
+    useClientQueries(schema).templateCaseAssignment.useCreateMany();
   const { mutateAsync: deleteManyTemplateCaseAssignment } =
-    useDeleteManyTemplateCaseAssignment();
+    useClientQueries(schema).templateCaseAssignment.useDeleteMany();
   const { mutateAsync: createManyTemplateResultAssignment } =
-    useCreateManyTemplateResultAssignment();
+    useClientQueries(schema).templateResultAssignment.useCreateMany();
   const { mutateAsync: deleteManyTemplateResultAssignment } =
-    useDeleteManyTemplateResultAssignment();
+    useClientQueries(schema).templateResultAssignment.useDeleteMany();
 
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     orderBy: { name: "asc" },
     where: { isDeleted: false },
   });
@@ -152,12 +141,12 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
     setValue("projects", allProjectIds);
   };
 
-  const { data: caseFields } = useFindManyCaseFields({
+  const { data: caseFields } = useClientQueries(schema).caseFields.useFindMany({
     where: { isDeleted: false },
     orderBy: { displayName: "asc" },
   });
 
-  const { data: resultFields } = useFindManyResultFields({
+  const { data: resultFields } = useClientQueries(schema).resultFields.useFindMany({
     where: { isDeleted: false },
     orderBy: { displayName: "asc" },
   });

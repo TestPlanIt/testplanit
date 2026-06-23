@@ -1,4 +1,6 @@
 import { DateTextDisplay } from "@/components/DateTextDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import DynamicIcon from "@/components/DynamicIcon";
 import { Loading } from "@/components/Loading";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
@@ -18,12 +20,6 @@ import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import type { PendingReviewSummary } from "@/components/reviews/PendingReviewBadge";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import {
-  useFindManyColor,
-  useFindManyReviewRequest,
-  useUpdateTestRuns,
-} from "~/lib/hooks";
-import { useFindManyTestRunCases } from "~/lib/hooks/test-run-cases";
 import { ItemTypes } from "~/types/dndTypes";
 import { cn } from "~/utils";
 import {
@@ -331,7 +327,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   const { projectId } = useParams();
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
-  const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(schema).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
@@ -343,7 +339,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
 
   // Mutation for updating test run milestone
   const queryClient = useQueryClient();
-  const updateTestRunMutation = useUpdateTestRuns();
+  const updateTestRunMutation = useClientQueries(schema).testRuns.useUpdate();
 
   const handleDropTestRun = useCallback(
     async (testRunId: number, targetMilestoneId: number | null) => {
@@ -380,7 +376,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   // trip per page render — never per-row, per RESEARCH §"Pitfall 6").
   const { enabled: reviewFeatureEnabled } =
     useReviewFeatureEnabled(numericProjectId);
-  const { data: pendingReviewsForVisibleRuns } = useFindManyReviewRequest(
+  const { data: pendingReviewsForVisibleRuns } = useClientQueries(schema).reviewRequest.useFindMany(
     {
       where: {
         entityType: "RUN",
@@ -432,7 +428,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     staleTime: 30000, // Cache for 30 seconds
   });
 
-  const { data: testRunCases } = useFindManyTestRunCases(
+  const { data: testRunCases } = useClientQueries(schema).testRunCases.useFindMany(
     {
       where: { testRunId: { in: testRunIds }, isDeleted: false },
       select: { id: true, testRunId: true, repositoryCaseId: true },
@@ -486,7 +482,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   //   - zenstack/TestRuns:     run name, workflow state, isCompleted, etc.
   //                            (read via useFindManyTestRuns at page level)
   //   - zenstack/TestRunCases: each tile's per-case status (read inside
-  //                            TestRunItem via useFindManyTestRunCases)
+  //                            TestRunItem via useClientQueries(schema).testRunCases.useFindMany)
   //   - zenstack/ReviewRequest: the pendingRequest sidebars on each tile
   // The "zenstack" prefix is required because @zenstackhq/tanstack-query
   // stamps every generated hook's query key with it (see runtime-v5/react.js

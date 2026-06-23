@@ -1,8 +1,9 @@
 "use client";
 import type { Workflows } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useUpdateWorkflows } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -33,7 +34,7 @@ export function DeleteWorkflows({
   onClose,
 }: DeleteWorkflowsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateWorkflows } = useUpdateWorkflows();
+  const { mutateAsync: updateWorkflows } = useClientQueries(schema).workflows.useUpdate();
 
   const t = useTranslations("admin.workflows");
   const tCommon = useTranslations("common");

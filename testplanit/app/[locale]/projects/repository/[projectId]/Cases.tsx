@@ -1,4 +1,6 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
 import { useDebounce } from "@/components/Debounce";
 import {
@@ -54,20 +56,6 @@ import {
   useFindManyRepositoryCasesFiltered,
 } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { usePagination } from "~/lib/contexts/PaginationContext";
-import {
-  useCountProjects,
-  useCountRepositoryCases,
-  useCountTestRunCases,
-  useFindFirstTestRuns,
-  useFindManyProjectLlmIntegration,
-  useFindManyRepositoryFolders,
-  useFindManyReviewRequest,
-  useFindManyTemplates,
-  useFindManyTestRunCases,
-  useFindUniqueProjects,
-  useUpdateRepositoryCases,
-  useUpdateTestRunCases,
-} from "~/lib/hooks";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
@@ -437,10 +425,10 @@ export default function Cases({
   const debouncedSearchString = useDebounce(searchString, 500);
   const deferredSearchString = useDeferredValue(debouncedSearchString);
 
-  const { mutateAsync: updateRepositoryCases } = useUpdateRepositoryCases({
+  const { mutateAsync: updateRepositoryCases } = useClientQueries(schema).repositoryCases.useUpdate({
     optimisticUpdate: false,
   });
-  const { mutateAsync: updateTestRunCases } = useUpdateTestRunCases({
+  const { mutateAsync: updateTestRunCases } = useClientQueries(schema).testRunCases.useUpdate({
     optimisticUpdate: false,
   });
   const [, startTransition] = useTransition();
@@ -508,13 +496,13 @@ export default function Cases({
   const canAddEditResults = testRunResultPermissions?.canAddEdit ?? false;
 
   // Check if user has access to more than 1 project (needed for copy/move visibility)
-  const { data: projectCount } = useCountProjects({
+  const { data: projectCount } = useClientQueries(schema).projects.useCount({
     where: { isDeleted: false },
   });
   const showCopyMove = canAddEdit && (projectCount ?? 0) > 1;
 
   // *** NEW: Fetch total project case count ***
-  const { data: totalProjectCasesCountData } = useCountRepositoryCases(
+  const { data: totalProjectCasesCountData } = useClientQueries(schema).repositoryCases.useCount(
     {
       where: {
         projectId: projectId,
@@ -530,7 +518,7 @@ export default function Cases({
   );
   const totalProjectCases = totalProjectCasesCountData ?? 0;
 
-  const { data: projectSettings } = useFindUniqueProjects(
+  const { data: projectSettings } = useClientQueries(schema).projects.useFindUnique(
     {
       where: { id: projectId },
       select: {
@@ -545,7 +533,7 @@ export default function Cases({
     projectSettings?.excludeNotStartedFromRuns ?? false;
 
   // Check if project has an active LLM integration (for auto-tag)
-  const { data: projectLlmIntegrations } = useFindManyProjectLlmIntegration(
+  const { data: projectLlmIntegrations } = useClientQueries(schema).projectLlmIntegration.useFindMany(
     {
       where: { projectId },
     },
@@ -556,7 +544,7 @@ export default function Cases({
 
   // Lightweight project-wide template field discovery
   const { data: projectTemplates, isLoading: isTemplatesLoading } =
-    useFindManyTemplates(
+    useClientQueries(schema).templates.useFindMany(
       {
         where: {
           projects: { some: { projectId: projectId } },
@@ -598,7 +586,7 @@ export default function Cases({
 
   // Fetch folders to auto-select first folder when needed
   const { data: projectFolders, isLoading: isFoldersLoading } =
-    useFindManyRepositoryFolders(
+    useClientQueries(schema).repositoryFolders.useFindMany(
       {
         where: {
           projectId: projectId,
@@ -618,7 +606,7 @@ export default function Cases({
     );
 
   // Fetch test run configuration for run mode
-  const { data: testRunData } = useFindFirstTestRuns(
+  const { data: testRunData } = useClientQueries(schema).testRuns.useFindFirst(
     {
       where: {
         id: runId,
@@ -1727,7 +1715,7 @@ export default function Cases({
 
   // Fetch test run cases and their related repository cases for run mode
   const { data: testRunCasesData, refetch: refetchTestRunCases } =
-    useFindManyTestRunCases(
+    useClientQueries(schema).testRunCases.useFindMany(
       {
         where: {
           testRunId:
@@ -2028,7 +2016,7 @@ export default function Cases({
   // Add filtered count query for accurate pagination
   // For repository mode: count repository cases
   const { data: filteredCountData, refetch: refetchFilteredCount } =
-    useCountRepositoryCases(
+    useClientQueries(schema).repositoryCases.useCount(
       {
         where: repositoryCaseWhereClause,
       },
@@ -2055,7 +2043,7 @@ export default function Cases({
     );
 
   // For run mode: count test run cases matching the filters
-  const { data: testRunCasesCountData } = useCountTestRunCases(
+  const { data: testRunCasesCountData } = useClientQueries(schema).testRunCases.useCount(
     {
       where: {
         testRunId:
@@ -2626,7 +2614,7 @@ export default function Cases({
     () => cases.map((c: { id: number }) => c.id),
     [cases]
   );
-  const { data: pendingReviewsForVisibleCases } = useFindManyReviewRequest(
+  const { data: pendingReviewsForVisibleCases } = useClientQueries(schema).reviewRequest.useFindMany(
     {
       where: {
         entityType: "CASE",

@@ -1,6 +1,8 @@
 "use client";
 
 import { revokeShareLink } from "@/actions/share-links";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { EditShareLinkDialog } from "@/components/share/EditShareLinkDialog";
 import {
   AlertDialog,
@@ -45,7 +47,6 @@ import {
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useFindManyShareLink, useUpdateShareLink } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 
 interface ShareLinkListProps {
@@ -73,7 +74,7 @@ export function ShareLinkList({
     data: shares,
     isLoading,
     refetch,
-  } = useFindManyShareLink({
+  } = useClientQueries(schema).shareLink.useFindMany({
     where: {
       ...(projectId !== undefined && { projectId }),
       ...(entityType && { entityType }),
@@ -92,7 +93,7 @@ export function ShareLinkList({
   });
 
   const { mutateAsync: updateShareLink, isPending: isRevoking } =
-    useUpdateShareLink();
+    useClientQueries(schema).shareLink.useUpdate();
 
   const handleCopyLink = async (shareKey: string, shareId: string) => {
     const protocol = window.location.protocol;

@@ -1,6 +1,8 @@
 "use client";
 
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,7 +47,6 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useDeleteApiToken, useFindManyApiToken } from "~/lib/hooks";
 
 interface ApiTokenSettingsProps {
   userId: string;
@@ -84,12 +85,12 @@ export function ApiTokenSettings({
   const [newToken, setNewToken] = useState<NewTokenData | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const { data: tokens, refetch: refetchTokens } = useFindManyApiToken({
+  const { data: tokens, refetch: refetchTokens } = useClientQueries(schema).apiToken.useFindMany({
     where: { userId, isActive: true },
     orderBy: { createdAt: "desc" },
   });
 
-  const deleteToken = useDeleteApiToken();
+  const deleteToken = useClientQueries(schema).apiToken.useDelete();
 
   async function handleCreateToken() {
     if (!newTokenName.trim()) {

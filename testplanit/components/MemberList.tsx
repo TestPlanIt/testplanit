@@ -1,4 +1,6 @@
 import React from "react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 
 import { Avatar } from "@/components/Avatar";
 import { UserNameCell } from "@/components/tables/UserNameCell";
@@ -7,7 +9,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useFindManyUser } from "~/lib/hooks";
 import { cn, type ClassValue } from "~/utils";
 
 interface MemberListProps {
@@ -21,7 +22,7 @@ export const MemberList: React.FC<MemberListProps> = ({
   className,
   maxUsers,
 }) => {
-  const { data: allUsers } = useFindManyUser({
+  const { data: allUsers } = useClientQueries(schema).user.useFindMany({
     orderBy: { name: "asc" },
     where: {
       AND: [

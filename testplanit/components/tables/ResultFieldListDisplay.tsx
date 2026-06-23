@@ -1,4 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Popover,
   PopoverContent,
@@ -7,7 +9,6 @@ import {
 import type { ResultFields } from "~/zenstack/models";
 import { SquareCheck } from "lucide-react";
 import React from "react";
-import { useFindManyResultFields } from "~/lib/hooks";
 
 interface ResultFieldListProps {
   resultFields: { resultFieldId: number }[];
@@ -18,7 +19,7 @@ export const ResultFieldListDisplay: React.FC<ResultFieldListProps> = ({
   resultFields,
   usePopover = true,
 }) => {
-  const { data: allResultFields } = useFindManyResultFields({
+  const { data: allResultFields } = useClientQueries(schema).resultFields.useFindMany({
     orderBy: { displayName: "asc" },
     where: {
       AND: [

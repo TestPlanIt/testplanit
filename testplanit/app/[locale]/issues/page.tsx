@@ -1,6 +1,8 @@
 "use client";
 
 import { useDebounce } from "@/components/Debounce";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
@@ -28,7 +30,6 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import { useCountIssue, useFindManyIssue, useGroupByIssue } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 
@@ -78,7 +79,7 @@ function Issues() {
   const accessFilterReady = !!session?.user?.id;
 
   // Fetch distinct status values for the filter dropdown
-  const { data: statusOptions } = useGroupByIssue(
+  const { data: statusOptions } = useClientQueries(schema).issue.useGroupBy(
     {
       by: ["status"],
       where: { isDeleted: false },
@@ -90,7 +91,7 @@ function Issues() {
   );
 
   // Fetch distinct priority values for the filter dropdown
-  const { data: priorityOptions } = useGroupByIssue(
+  const { data: priorityOptions } = useClientQueries(schema).issue.useGroupBy(
     {
       by: ["priority"],
       where: { isDeleted: false },
@@ -328,7 +329,7 @@ function Issues() {
   };
 
   // Fetch basic issue data - only include integration to avoid bind variable issues
-  const { data: issues, isLoading: isLoadingIssues } = useFindManyIssue(
+  const { data: issues, isLoading: isLoadingIssues } = useClientQueries(schema).issue.useFindMany(
     issuesWhere
       ? {
           where: issuesWhere,
@@ -351,7 +352,7 @@ function Issues() {
   );
 
   // Get total count of issues
-  const { data: issuesCount } = useCountIssue(
+  const { data: issuesCount } = useClientQueries(schema).issue.useCount(
     issuesWhere
       ? {
           where: issuesWhere,

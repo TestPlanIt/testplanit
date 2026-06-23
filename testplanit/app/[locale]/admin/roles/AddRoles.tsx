@@ -1,13 +1,10 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 import { ApplicationArea } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import {
-  useCreateRoles,
-  useUpdateManyRoles,
-  useUpsertRolePermission,
-} from "~/lib/hooks";
 import { RESTRICTED_FIELDS_AREAS } from "~/lib/utils/restrictedFieldsAreas";
 import { REVIEW_RELEVANT_AREAS } from "~/lib/utils/reviewAreas";
 
@@ -75,9 +72,9 @@ export function AddRole({ open, onClose }: AddRoleProps) {
   const t = useTranslations();
   const tAreas = useTranslations("enums.ApplicationArea");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createRole } = useCreateRoles();
-  const { mutateAsync: updateManyRoles } = useUpdateManyRoles();
-  const upsertRolePermission = useUpsertRolePermission();
+  const { mutateAsync: createRole } = useClientQueries(schema).roles.useCreate();
+  const { mutateAsync: updateManyRoles } = useClientQueries(schema).roles.useUpdateMany();
+  const upsertRolePermission = useClientQueries(schema).rolePermission.useUpsert();
 
   // Initialize permissions with all false values
   const initialPermissions = useMemo(

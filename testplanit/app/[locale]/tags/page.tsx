@@ -1,6 +1,8 @@
 "use client";
 
 import { useDebounce } from "@/components/Debounce";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
@@ -35,11 +37,6 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useCountTags,
-  useFindManyProjects,
-  useFindManyTags,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { useTagColumns } from "./columns";
@@ -77,7 +74,7 @@ function Tags() {
 
   // ── AI Auto-Tag ──────────────────────────────────────────────────
   const [autoTagOpen, setAutoTagOpen] = useState(false);
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     include: {
       projectLlmIntegrations: {
@@ -186,7 +183,7 @@ function Tags() {
   // Fetch ONLY basic tag data - no includes at all
   // ZenStack's access control on includes causes bind variable explosion (even with limits)
   // Projects and counts are fetched separately via direct Prisma queries
-  const { data: tags, isLoading: isLoadingTags } = useFindManyTags(
+  const { data: tags, isLoading: isLoadingTags } = useClientQueries(schema).tags.useFindMany(
     tagsWhere
       ? {
           where: tagsWhere,
@@ -199,7 +196,7 @@ function Tags() {
     }
   );
 
-  const { data: tagsCount } = useCountTags(
+  const { data: tagsCount } = useClientQueries(schema).tags.useCount(
     tagsWhere
       ? {
           where: tagsWhere,

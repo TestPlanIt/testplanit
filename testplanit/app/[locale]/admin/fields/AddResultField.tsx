@@ -1,13 +1,9 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
 import { useTranslations } from "next-intl";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  useCreateResultFields,
-  useFindManyCaseFields,
-  useFindManyCaseFieldTypes,
-  useFindManyResultFields,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { FieldOptions } from "~/zenstack/models";
@@ -162,17 +158,17 @@ export function AddResultFieldModal({
   const applyOptionOrder = (options: FieldOptions[]): FieldOptions[] =>
     options.map((option, index) => ({ ...option, order: index }));
 
-  const { mutateAsync: createResultField } = useCreateResultFields();
+  const { mutateAsync: createResultField } = useClientQueries(schema).resultFields.useCreate();
 
-  const { data: types, isLoading: typesLoading } = useFindManyCaseFieldTypes({
+  const { data: types, isLoading: typesLoading } = useClientQueries(schema).caseFieldTypes.useFindMany({
     orderBy: { type: "asc" },
   });
 
-  const { data: existingCaseFields } = useFindManyCaseFields({
+  const { data: existingCaseFields } = useClientQueries(schema).caseFields.useFindMany({
     select: { systemName: true },
   });
 
-  const { data: existingResultFields } = useFindManyResultFields({
+  const { data: existingResultFields } = useClientQueries(schema).resultFields.useFindMany({
     select: { systemName: true },
   });
 

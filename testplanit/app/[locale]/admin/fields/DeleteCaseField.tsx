@@ -1,11 +1,8 @@
 "use client";
 import type { CaseFields } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useState } from "react";
-import {
-  useFindFirstCaseFields,
-  useUpdateCaseFields,
-  useUpdateManyFieldOptions,
-} from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -40,10 +37,10 @@ export function DeleteCaseField({
   const t = useTranslations("admin.templates.caseFields.delete");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateCaseFields } = useUpdateCaseFields();
-  const { mutateAsync: updateManyFieldOptions } = useUpdateManyFieldOptions();
+  const { mutateAsync: updateCaseFields } = useClientQueries(schema).caseFields.useUpdate();
+  const { mutateAsync: updateManyFieldOptions } = useClientQueries(schema).fieldOptions.useUpdateMany();
 
-  const { data: defaultCaseField } = useFindFirstCaseFields({
+  const { data: defaultCaseField } = useClientQueries(schema).caseFields.useFindFirst({
     where: {
       AND: [{ isEnabled: true }, { isDeleted: false }],
     },

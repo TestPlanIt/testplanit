@@ -1,7 +1,8 @@
 "use client";
 import type { Tags } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useState } from "react";
-import { useUpdateTags } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -30,7 +31,7 @@ interface DeleteTagProps {
 
 export function DeleteTag({ tag, open, onClose }: DeleteTagProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateTag } = useUpdateTags();
+  const { mutateAsync: updateTag } = useClientQueries(schema).tags.useUpdate();
 
   const form = useForm();
   const {

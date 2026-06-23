@@ -1,9 +1,10 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { LinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback } from "react";
 import { BubbleChart } from "~/components/dataVisualizations/BubbleChart";
-import { useFindManyTags } from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 
 interface TagsSectionProps {
@@ -25,7 +26,7 @@ const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
   const router = useRouter();
   // const currentLocale = useLocale(); // Removed as per user's previous change, assuming router handles it
 
-  const { data: tags, isLoading: isLoadingTags } = useFindManyTags(
+  const { data: tags, isLoading: isLoadingTags } = useClientQueries(schema).tags.useFindMany(
     {
       where: {
         isDeleted: false,

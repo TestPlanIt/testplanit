@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   FolderSelect,
   transformFolders,
 } from "@/components/forms/FolderSelect";
@@ -49,11 +51,6 @@ import Papa from "papaparse";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod/v4";
-import {
-  useFindManyProjectLlmIntegration,
-  useFindManyRepositoryFolders,
-  useFindManyTemplates,
-} from "~/lib/hooks";
 import {
   aggregateMultiRowSteps,
   inspectMultiRowAggregation,
@@ -215,7 +212,7 @@ export function ImportCasesWizard({
   }, [open, initialFile]);
 
   // Fetch data
-  const { data: templates } = useFindManyTemplates({
+  const { data: templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -241,7 +238,7 @@ export function ImportCasesWizard({
 
   const defaultTemplate = templates?.find((template) => template.isDefault);
 
-  const { data: folders } = useFindManyRepositoryFolders({
+  const { data: folders } = useClientQueries(schema).repositoryFolders.useFindMany({
     where: { projectId, isDeleted: false },
     orderBy: { order: "asc" },
   });
@@ -374,7 +371,7 @@ export function ImportCasesWizard({
   }, [currentPage, effectiveImportRows, fieldMappings, projectId]);
 
   // Check if project has an active LLM integration (for markdown parsing)
-  const { data: projectLlmIntegrations } = useFindManyProjectLlmIntegration({
+  const { data: projectLlmIntegrations } = useClientQueries(schema).projectLlmIntegration.useFindMany({
     where: { projectId, isActive: true },
   });
   const hasLlmIntegration =

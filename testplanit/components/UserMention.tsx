@@ -1,11 +1,12 @@
 "use client";
 
 import { Avatar } from "@/components/Avatar";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Star } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
-import { useFindFirstUser } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 
@@ -36,7 +37,7 @@ export function UserMention({
   hideLink = false,
   className,
 }: UserMentionProps) {
-  const { data: user } = useFindFirstUser({
+  const { data: user } = useClientQueries(schema).user.useFindFirst({
     where: { id: userId },
     select: { name: true, image: true, isDeleted: true },
   });

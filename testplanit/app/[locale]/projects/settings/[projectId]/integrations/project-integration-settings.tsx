@@ -1,6 +1,8 @@
 "use client";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,13 +26,6 @@ import { AlertCircle, Loader2, Save, Star, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  useFindManyIntegrationProject,
-  useFindManyWebhookConfig,
-  useUpdateIntegrationProject,
-  useUpdateProjectIntegration,
-  useUpsertIntegrationProject,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
 import { removeIntegrationProjectMapping } from "~/app/actions/project-integration";
@@ -78,10 +73,10 @@ export function ProjectIntegrationSettings({
   const [isAddingProjects, setIsAddingProjects] = useState(false);
 
   const { mutateAsync: updateProjectIntegration } =
-    useUpdateProjectIntegration();
+    useClientQueries(schema).projectIntegration.useUpdate();
 
   const { data: integrationProjects, isLoading: isLoadingLinkedProjects } =
-    useFindManyIntegrationProject({
+    useClientQueries(schema).integrationProject.useFindMany({
       where: {
         projectIntegrationId: projectIntegration.id,
         isActive: true,
@@ -90,15 +85,15 @@ export function ProjectIntegrationSettings({
     });
 
   const { mutateAsync: upsertIntegrationProject } =
-    useUpsertIntegrationProject();
+    useClientQueries(schema).integrationProject.useUpsert();
   const { mutateAsync: updateIntegrationProject } =
-    useUpdateIntegrationProject();
+    useClientQueries(schema).integrationProject.useUpdate();
 
   // The Remove confirmation copy includes a bullet about cascade-deleting
   // the inbound webhook ONLY when one exists. Cheap query — same shape
   // the webhooks page uses, so React Query dedupes when both are mounted.
   const { data: inboundConfigs, refetch: refetchInboundConfigs } =
-    useFindManyWebhookConfig({
+    useClientQueries(schema).webhookConfig.useFindMany({
       where: {
         projectId: projectIntegration.projectId,
         direction: "INBOUND",

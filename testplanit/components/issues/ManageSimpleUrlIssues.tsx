@@ -1,6 +1,8 @@
 "use client";
 
 import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import {
@@ -28,7 +30,6 @@ import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
-import { useFindManyIssue, useUpsertIssue } from "~/lib/hooks";
 import { buildSimpleUrlLink } from "~/lib/integrations/simpleUrl";
 
 interface ManageSimpleUrlIssuesProps {
@@ -80,14 +81,14 @@ export function ManageSimpleUrlIssues({
   }, [isAddOpen, form]);
 
   // Fetch linked issues
-  const { data: issues, refetch } = useFindManyIssue({
+  const { data: issues, refetch } = useClientQueries(schema).issue.useFindMany({
     where: {
       id: { in: linkedIssueIds },
       isDeleted: false,
     },
   });
 
-  const { mutateAsync: upsertIssue } = useUpsertIssue();
+  const { mutateAsync: upsertIssue } = useClientQueries(schema).issue.useUpsert();
 
   const watchedIssueId =
     useWatch({ control: form.control, name: "issueId" }) || "";

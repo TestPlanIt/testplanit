@@ -1,6 +1,8 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Popover,
   PopoverContent,
@@ -11,7 +13,6 @@ import type { Projects } from "~/zenstack/models";
 import { BoxesIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
-import { useFindManyProjects } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { ProjectIcon } from "../ProjectIcon";
 
@@ -43,7 +44,7 @@ export const UserProjectsDisplay: React.FC<UserProjectsDisplayProps> = ({
     void fetchProjects();
   }, [userId]);
 
-  const { data: allProjects, isLoading: projectsLoading } = useFindManyProjects(
+  const { data: allProjects, isLoading: projectsLoading } = useClientQueries(schema).projects.useFindMany(
     {
       where: {
         AND: [

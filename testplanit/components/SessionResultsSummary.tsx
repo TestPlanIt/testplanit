@@ -1,6 +1,8 @@
 "use client";
 
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -15,7 +17,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { SessionSummaryData } from "~/app/api/sessions/[sessionId]/summary/route";
-import { useFindFirstStatus } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
@@ -99,7 +100,7 @@ export function SessionResultsSummary({
     return combinedIssues;
   }, [summaryData, projectId]);
 
-  const { data: firstStatus } = useFindFirstStatus({
+  const { data: firstStatus } = useClientQueries(schema).status.useFindFirst({
     where: {
       isDeleted: false,
     },

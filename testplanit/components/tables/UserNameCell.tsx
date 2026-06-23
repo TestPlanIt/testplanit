@@ -1,4 +1,6 @@
 import { Avatar } from "@/components/Avatar";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Tooltip,
   TooltipContent,
@@ -8,7 +10,6 @@ import { LinkIcon, Star } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React from "react";
-import { useFindFirstUser } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 
@@ -25,7 +26,7 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
   shrinkLink = false,
   className,
 }) => {
-  const { data: user } = useFindFirstUser({
+  const { data: user } = useClientQueries(schema).user.useFindFirst({
     where: {
       id: userId,
     },

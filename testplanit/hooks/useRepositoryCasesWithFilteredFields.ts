@@ -1,8 +1,6 @@
 import { useMemo } from "react";
-import {
-  useFindFirstRepositoryCases,
-  useFindManyRepositoryCases,
-} from "~/lib/hooks/repository-cases";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 
 /**
@@ -158,16 +156,16 @@ export interface PostFetchFilter {
 }
 
 /**
- * Wrapper around useFindManyRepositoryCases that automatically filters orphaned field values
+ * Wrapper around useClientQueries(schema).repositoryCases.useFindMany that automatically filters orphaned field values
  * and applies post-fetch filtering for text/link/steps operators
  */
 export function useFindManyRepositoryCasesFiltered(
-  queryOptions: Parameters<typeof useFindManyRepositoryCases>[0],
+  queryOptions: Parameters<typeof useClientQueries(schema).repositoryCases.useFindMany>[0],
   postFetchFilters?: PostFetchFilter[],
-  options?: Parameters<typeof useFindManyRepositoryCases>[1],
+  options?: Parameters<typeof useClientQueries(schema).repositoryCases.useFindMany>[1],
   clientPagination?: { skip: number; take: number | undefined }
 ) {
-  const result = useFindManyRepositoryCases(queryOptions, options);
+  const result = useClientQueries(schema).repositoryCases.useFindMany(queryOptions, options);
 
   // Extract totalCount from result for dependency tracking
   const resultTotalCount = (result as any).totalCount;
@@ -262,16 +260,16 @@ export function useFindManyRepositoryCasesFiltered(
     ...result,
     data: paginatedData,
     totalCount: totalFilteredCount,
-  } as ReturnType<typeof useFindManyRepositoryCases> & { totalCount: number };
+  } as ReturnType<typeof useClientQueries(schema).repositoryCases.useFindMany> & { totalCount: number };
 }
 
 /**
- * Wrapper around useFindFirstRepositoryCases that automatically filters orphaned field values
+ * Wrapper around useClientQueries(schema).repositoryCases.useFindFirst that automatically filters orphaned field values
  */
 export function useFindFirstRepositoryCasesFiltered(
-  ...args: Parameters<typeof useFindFirstRepositoryCases>
+  ...args: Parameters<typeof useClientQueries(schema).repositoryCases.useFindFirst>
 ) {
-  const result = useFindFirstRepositoryCases(...args);
+  const result = useClientQueries(schema).repositoryCases.useFindFirst(...args);
 
   const filteredData = useMemo(() => {
     if (!result.data) return result.data;

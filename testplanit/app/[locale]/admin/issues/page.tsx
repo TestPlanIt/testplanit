@@ -1,6 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -23,7 +25,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useCountIssue, useFindManyIssue } from "~/lib/hooks";
 import { ExtendedIssue, useIssueColumns } from "./columns";
 import { DeleteIssue } from "./DeleteIssue";
 import { EditIssue } from "./EditIssue";
@@ -167,7 +168,7 @@ function IssueList() {
 
   // Fetch ONLY basic issue data - no includes at all
   // Projects and counts are fetched separately via direct Prisma queries
-  const { data: issues, isLoading: isLoadingIssues } = useFindManyIssue(
+  const { data: issues, isLoading: isLoadingIssues } = useClientQueries(schema).issue.useFindMany(
     issuesWhere
       ? {
           where: issuesWhere,
@@ -196,7 +197,7 @@ function IssueList() {
     }
   );
 
-  const { data: issuesCount } = useCountIssue(
+  const { data: issuesCount } = useClientQueries(schema).issue.useCount(
     issuesWhere
       ? {
           where: issuesWhere,

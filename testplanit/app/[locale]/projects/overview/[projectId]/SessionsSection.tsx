@@ -1,10 +1,11 @@
 import { DateTextDisplay } from "@/components/DateTextDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Compass, LinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 import SessionResultsSummary from "~/components/SessionResultsSummary";
-import { useFindManySessions } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 
 interface SessionsSectionProps {
@@ -14,7 +15,7 @@ interface SessionsSectionProps {
 const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
   const t = useTranslations();
 
-  const { data: sessions, isLoading: isLoadingSessions } = useFindManySessions({
+  const { data: sessions, isLoading: isLoadingSessions } = useClientQueries(schema).sessions.useFindMany({
     where: {
       AND: [
         { projectId: Number(projectId) },
@@ -27,7 +28,7 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
   });
 
   const { data: sessionsCount, isLoading: isLoadingCount } =
-    useFindManySessions({
+    useClientQueries(schema).sessions.useFindMany({
       where: {
         AND: [
           { projectId: Number(projectId) },

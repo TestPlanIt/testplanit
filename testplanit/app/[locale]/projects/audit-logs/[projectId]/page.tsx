@@ -1,6 +1,8 @@
 "use client";
 
 import { Loading } from "@/components/Loading";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import {
   Card,
@@ -15,7 +17,6 @@ import { notFound, useParams } from "next/navigation";
 import { useEffect } from "react";
 import { ProjectAuditLog } from "~/components/projects/ProjectAuditLog";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useFindFirstProjects } from "~/lib/hooks";
 
 export default function ProjectAuditLogsPage() {
   const params = useParams();
@@ -26,7 +27,7 @@ export default function ProjectAuditLogsPage() {
   const tCommon = useTranslations("common");
 
   // Fetch project data (allow global admin access or project assignment)
-  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: projectLoading } = useClientQueries(schema).projects.useFindFirst(
     {
       where: { id: projectId },
       select: {

@@ -1,4 +1,6 @@
 import TextFromJson from "@/components/TextFromJson";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
@@ -10,7 +12,6 @@ import { Layers, ListOrdered, SearchCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { emptyEditorContent } from "~/app/constants";
-import { useFindManySharedStepItem } from "~/lib/hooks";
 
 interface ListDisplayStep extends PrismaSteps {
   sharedStepGroupId: number | null;
@@ -29,7 +30,7 @@ const RenderSharedGroupInList: React.FC<RenderSharedGroupInListProps> = ({
   sharedStepGroupId,
 }) => {
   const t = useTranslations("repository.steps");
-  const { data: items, isLoading } = useFindManySharedStepItem(
+  const { data: items, isLoading } = useClientQueries(schema).sharedStepItem.useFindMany(
     {
       where: {
         sharedStepGroupId,

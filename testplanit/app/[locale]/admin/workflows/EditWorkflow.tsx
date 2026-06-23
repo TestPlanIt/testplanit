@@ -1,16 +1,11 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
 import { WorkflowType } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import type { Projects, Workflows } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import {
-  useCreateManyProjectWorkflowAssignment,
-  useDeleteManyProjectWorkflowAssignment,
-  useFindManyProjects,
-  useUpdateManyWorkflows,
-  useUpdateWorkflows,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
@@ -109,17 +104,17 @@ export function EditWorkflows({
     workflows.colorId
   );
 
-  const { mutateAsync: updateWorkflows } = useUpdateWorkflows();
-  const { mutateAsync: updateManyWorkflows } = useUpdateManyWorkflows();
+  const { mutateAsync: updateWorkflows } = useClientQueries(schema).workflows.useUpdate();
+  const { mutateAsync: updateManyWorkflows } = useClientQueries(schema).workflows.useUpdateMany();
   const { mutateAsync: createManyProjectWorkflowAssignment } =
-    useCreateManyProjectWorkflowAssignment();
+    useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
   const { mutateAsync: deleteManyProjectWorkflowAssignment } =
-    useDeleteManyProjectWorkflowAssignment();
+    useClientQueries(schema).projectWorkflowAssignment.useDeleteMany();
 
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });

@@ -1,5 +1,7 @@
 "use client";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,10 +26,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
-import {
-  useFindFirstRepositoryFolders,
-  useUpdateRepositoryFolders,
-} from "~/lib/hooks";
 
 const parseTipTapContent = (content: any) => {
   if (!content) return emptyEditorContent;
@@ -67,11 +65,11 @@ export function EditFolderModal({
 }: EditRepositoryFolderModalProps) {
   const t = useTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateRepositoryFolder } = useUpdateRepositoryFolders();
+  const { mutateAsync: updateRepositoryFolder } = useClientQueries(schema).repositoryFolders.useUpdate();
   const [editorKey, setEditorKey] = useState(0);
 
   const { data: folder, isLoading: isLoadingFolder } =
-    useFindFirstRepositoryFolders({
+    useClientQueries(schema).repositoryFolders.useFindFirst({
       where: {
         id: folderId,
         isDeleted: false,

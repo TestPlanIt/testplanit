@@ -1,4 +1,6 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import {
@@ -60,17 +62,6 @@ import { searchConfigurations } from "~/app/actions/searchConfigurations";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useCreateAttachments,
-  useCreateSessions,
-  useCreateSessionVersions,
-  useFindFirstProjects,
-  useFindManyIssue,
-  useFindManyMilestones,
-  useFindManyTags,
-  useFindManyTemplates,
-  useFindManyWorkflows,
-} from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
@@ -115,11 +106,11 @@ export function AddSessionModal({
   const t = useTranslations();
   const locale = useLocale();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createSessions } = useCreateSessions();
-  const { mutateAsync: createSessionVersions } = useCreateSessionVersions();
-  const { mutateAsync: createAttachments } = useCreateAttachments();
+  const { mutateAsync: createSessions } = useClientQueries(schema).sessions.useCreate();
+  const { mutateAsync: createSessionVersions } = useClientQueries(schema).sessionVersions.useCreate();
+  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
 
-  const { data: project } = useFindFirstProjects({
+  const { data: project } = useClientQueries(schema).projects.useFindFirst({
     where: {
       id: Number(projectId),
     },
@@ -132,7 +123,7 @@ export function AddSessionModal({
     },
   });
 
-  const { data: allIssues } = useFindManyIssue(
+  const { data: allIssues } = useClientQueries(schema).issue.useFindMany(
     {
       where: {
         // Filter by projectId
@@ -146,7 +137,7 @@ export function AddSessionModal({
     }
   );
 
-  const { data: templates } = useFindManyTemplates({
+  const { data: templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -161,7 +152,7 @@ export function AddSessionModal({
     },
   });
 
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -181,7 +172,7 @@ export function AddSessionModal({
     },
   });
 
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       projectId: Number(projectId),
       isDeleted: false,
@@ -193,7 +184,7 @@ export function AddSessionModal({
     orderBy: [{ startedAt: "asc" }, { isStarted: "asc" }],
   });
 
-  const { data: tags } = useFindManyTags({
+  const { data: tags } = useClientQueries(schema).tags.useFindMany({
     where: {
       isDeleted: false,
     },

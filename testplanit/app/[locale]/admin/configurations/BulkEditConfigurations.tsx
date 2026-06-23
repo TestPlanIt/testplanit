@@ -1,18 +1,14 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import MultiSelect from "react-select";
 import { z } from "zod/v4";
-import {
-  useCreateManyProjectConfigurationAssignment,
-  useDeleteManyProjectConfigurationAssignment,
-  useFindManyProjects,
-  useUpdateManyConfigurations,
-} from "~/lib/hooks";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 
 import { Button } from "@/components/ui/button";
@@ -93,16 +89,16 @@ export function BulkEditConfigurations({
   const tCommon = useTranslations("common");
   const t = useTranslations("admin.configurations");
   const { mutateAsync: createManyProjectConfigurationAssignment } =
-    useCreateManyProjectConfigurationAssignment();
+    useClientQueries(schema).projectConfigurationAssignment.useCreateMany();
   const { mutateAsync: deleteManyProjectConfigurationAssignment } =
-    useDeleteManyProjectConfigurationAssignment();
+    useClientQueries(schema).projectConfigurationAssignment.useDeleteMany();
   const { mutateAsync: updateManyConfigurations } =
-    useUpdateManyConfigurations();
+    useClientQueries(schema).configurations.useUpdateMany();
 
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });

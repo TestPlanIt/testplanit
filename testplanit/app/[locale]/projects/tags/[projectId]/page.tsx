@@ -1,6 +1,8 @@
 "use client";
 
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { DataTable } from "@/components/tables/DataTable";
@@ -25,13 +27,6 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useFindFirstProjects,
-  useFindManyRepositoryCases,
-  useFindManySessions,
-  useFindManyTags,
-  useFindManyTestRuns,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { useColumns } from "./columns";
 
@@ -97,7 +92,7 @@ function TagList() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { data: project } = useFindFirstProjects(
+  const { data: project } = useClientQueries(schema).projects.useFindFirst(
     {
       where: {
         AND: [
@@ -116,7 +111,7 @@ function TagList() {
   );
 
   const { data: repositoryCases, isLoading: isLoadingCases } =
-    useFindManyRepositoryCases(
+    useClientQueries(schema).repositoryCases.useFindMany(
       {
         where: {
           projectId: Number(projectId),
@@ -137,7 +132,7 @@ function TagList() {
       }
     );
 
-  const { data: sessions, isLoading: isLoadingSessions } = useFindManySessions(
+  const { data: sessions, isLoading: isLoadingSessions } = useClientQueries(schema).sessions.useFindMany(
     {
       where: {
         projectId: Number(projectId),
@@ -158,7 +153,7 @@ function TagList() {
     }
   );
 
-  const { data: testRuns, isLoading: isLoadingRuns } = useFindManyTestRuns(
+  const { data: testRuns, isLoading: isLoadingRuns } = useClientQueries(schema).testRuns.useFindMany(
     {
       where: {
         projectId: Number(projectId),
@@ -180,7 +175,7 @@ function TagList() {
   );
 
   // Fetch ONLY basic tag data - no includes to avoid bind variable explosion
-  const { data: tags, isLoading: isLoadingTags } = useFindManyTags(
+  const { data: tags, isLoading: isLoadingTags } = useClientQueries(schema).tags.useFindMany(
     {
       where: {
         isDeleted: false,

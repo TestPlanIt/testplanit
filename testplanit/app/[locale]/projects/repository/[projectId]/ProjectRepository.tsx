@@ -1,6 +1,8 @@
 "use client";
 
 import BreadcrumbComponent from "@/components/BreadcrumbComponent";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { UnifiedDragPreview } from "@/components/dnd/UnifiedDragPreview";
 import { PageFileDropOverlay } from "@/components/PageFileDropOverlay";
@@ -77,13 +79,6 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
-import {
-  useCountProjects,
-  useFindFirstProjects,
-  useFindFirstRepositories,
-  useFindManyRepositoryCases,
-  useFindManyTestRunCases,
-} from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { useFolderStats } from "~/lib/useFolderStats";
 import { AddCase } from "./AddCase";
@@ -465,7 +460,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     setSelectedFolderId(newFolderId);
   }, [nodeParam]);
 
-  const { data: project, isLoading: isProjectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: isProjectLoading } = useClientQueries(schema).projects.useFindFirst(
     {
       where: {
         AND: [
@@ -480,7 +475,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   );
 
   const { data: repository, isLoading: isRepositoryLoading } =
-    useFindFirstRepositories(
+    useClientQueries(schema).repositories.useFindFirst(
       {
         where: {
           AND: [
@@ -617,7 +612,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     return map;
   }, [showDescendants, selectedFolderId, folderHierarchy]);
 
-  const { data: testRunCasesWithLoading } = useFindManyTestRunCases(
+  const { data: testRunCasesWithLoading } = useClientQueries(schema).testRunCases.useFindMany(
     {
       where: {
         testRunId: Number(params.runId),
@@ -664,7 +659,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   );
   const _testRunCases = testRunCasesWithLoading as TestRunCase[] | undefined;
 
-  const { data: caseFoldersWithLoading } = useFindManyRepositoryCases(
+  const { data: caseFoldersWithLoading } = useClientQueries(schema).repositoryCases.useFindMany(
     {
       where: {
         AND: [
@@ -1321,7 +1316,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const { currentPage, setCurrentPage, pageSize } = usePagination();
 
   // Fetch minimal case position data for auto-paging in run mode
-  const { data: casePositions } = useFindManyTestRunCases(
+  const { data: casePositions } = useClientQueries(schema).testRunCases.useFindMany(
     {
       where: { testRunId: Number(params.runId), isDeleted: false },
       orderBy: { order: "asc" },
@@ -1416,7 +1411,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
 
   // Check if user has access to more than 1 project (needed for copy/move visibility)
   // Must be before early returns to satisfy Rules of Hooks
-  const { data: projectCount } = useCountProjects({
+  const { data: projectCount } = useClientQueries(schema).projects.useCount({
     where: { isDeleted: false },
   });
   const showCopyMove = canAddEdit && (projectCount ?? 0) > 1;

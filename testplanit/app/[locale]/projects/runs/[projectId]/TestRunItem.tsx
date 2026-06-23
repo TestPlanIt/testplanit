@@ -1,4 +1,6 @@
 import { DateTextDisplay } from "@/components/DateTextDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import DynamicIcon from "@/components/DynamicIcon";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { MemberList } from "@/components/MemberList";
@@ -40,7 +42,6 @@ import { useParams } from "next/navigation";
 import React, { useState } from "react";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { useFindManyTestRunCases } from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import type { IconName } from "~/types/globals";
 import { cn } from "~/utils";
@@ -141,7 +142,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
     Date.now() - new Date(testRun.createdAt).getTime() < 5 * 60 * 1000;
 
   // Fetch test run cases with their results and assigned users
-  const { data: testRunCases } = useFindManyTestRunCases({
+  const { data: testRunCases } = useClientQueries(schema).testRunCases.useFindMany({
     where: {
       testRunId: testRun.id,
       isDeleted: false,

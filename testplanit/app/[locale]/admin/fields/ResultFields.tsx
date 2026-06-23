@@ -1,6 +1,8 @@
 "use client";
 
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DataTable } from "@/components/tables/DataTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +10,6 @@ import { CirclePlus, SquareCheck } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useFindManyResultFields, useUpdateResultFields } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddResultFieldModal } from "./AddResultField";
 import { DeleteResultField } from "./DeleteResultField";
@@ -32,7 +33,7 @@ export default function ResultFields() {
     direction: "asc",
   });
 
-  const { mutateAsync: updateResultField } = useUpdateResultFields();
+  const { mutateAsync: updateResultField } = useClientQueries(schema).resultFields.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateResultFieldRef = useRef(updateResultField);
@@ -64,7 +65,7 @@ export default function ResultFields() {
     []
   );
 
-  const { data: resultfields, isLoading } = useFindManyResultFields(
+  const { data: resultfields, isLoading } = useClientQueries(schema).resultFields.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: sortConfig

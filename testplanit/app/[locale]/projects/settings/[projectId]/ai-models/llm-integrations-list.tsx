@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -23,11 +25,6 @@ import { AlertTriangle, Check, Loader2, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  useCreateProjectLlmIntegration,
-  useDeleteProjectLlmIntegration,
-  useUpdateProjectLlmIntegration,
-} from "~/lib/hooks";
 import { getProviderIcon, LlmProviderBadge } from "~/lib/llm/provider-styles";
 
 type LlmIntegrationWithConfig = LlmIntegration & {
@@ -61,11 +58,11 @@ export function LlmIntegrationsList({
 
   // ZenStack hooks
   const { mutateAsync: createProjectLlmIntegration } =
-    useCreateProjectLlmIntegration();
+    useClientQueries(schema).projectLlmIntegration.useCreate();
   const { mutateAsync: updateProjectLlmIntegration } =
-    useUpdateProjectLlmIntegration();
+    useClientQueries(schema).projectLlmIntegration.useUpdate();
   const { mutateAsync: deleteProjectLlmIntegration } =
-    useDeleteProjectLlmIntegration();
+    useClientQueries(schema).projectLlmIntegration.useDelete();
 
   const handleAssignIntegrationClick = (integrationId: number) => {
     // If there's already an active LLM integration, show warning dialog

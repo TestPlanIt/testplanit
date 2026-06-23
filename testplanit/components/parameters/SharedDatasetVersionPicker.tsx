@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   Select,
   SelectContent,
   SelectItem,
@@ -9,7 +11,6 @@ import {
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { useFindManyDataSetVersion } from "~/lib/hooks";
 
 export type SharedDatasetVersionPickerMode = "editor" | "picker";
 
@@ -61,7 +62,7 @@ export function SharedDatasetVersionPicker({
 }: SharedDatasetVersionPickerProps) {
   const t = useTranslations("projects.settings.datasets.versionPicker");
 
-  const { data: versions, isLoading } = useFindManyDataSetVersion({
+  const { data: versions, isLoading } = useClientQueries(schema).dataSetVersion.useFindMany({
     where: { dataSetId },
     orderBy: { version: "desc" },
     take: 50,

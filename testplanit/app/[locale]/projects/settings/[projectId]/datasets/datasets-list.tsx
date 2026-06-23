@@ -2,6 +2,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { DateTimeDisplay } from "@/components/search/DateTimeDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Button } from "@/components/ui/button";
@@ -23,7 +25,6 @@ import { BookLock, Database, Loader2, SquarePen, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useFindManyDataSet } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { DatasetDeleteConfirmDialog } from "./dataset-delete-confirm-dialog";
 
@@ -69,7 +70,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
     isLoading,
     error,
     refetch,
-  } = useFindManyDataSet({
+  } = useClientQueries(schema).dataSet.useFindMany({
     where: { projectId, isShared: true, isDeleted: false },
     orderBy: { name: "asc" },
     select: {

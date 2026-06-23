@@ -1,18 +1,13 @@
 "use client";
 
 import { Form } from "@/components/ui/form";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import type { ConfigCategories } from "~/zenstack/models";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  useFindManyConfigurations,
-  useFindManyConfigVariants,
-  useUpdateConfigCategories,
-  useUpdateManyConfigurations,
-  useUpdateManyConfigVariants,
-} from "~/lib/hooks";
 
 import {
   AlertDialog,
@@ -37,11 +32,11 @@ export function DeleteConfigCategory({
   onClose,
 }: DeleteConfigCategoryProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfigCategories } = useUpdateConfigCategories();
+  const { mutateAsync: updateConfigCategories } = useClientQueries(schema).configCategories.useUpdate();
   const { mutateAsync: updateManyConfigurations } =
-    useUpdateManyConfigurations();
+    useClientQueries(schema).configurations.useUpdateMany();
   const { mutateAsync: updateManyConfigVariants } =
-    useUpdateManyConfigVariants();
+    useClientQueries(schema).configVariants.useUpdateMany();
 
   const t = useTranslations("admin.configurations.categories.delete");
   const tCommon = useTranslations("common");
@@ -53,7 +48,7 @@ export function DeleteConfigCategory({
     handleSubmit,
   } = form;
 
-  const { data: variants } = useFindManyConfigVariants({
+  const { data: variants } = useClientQueries(schema).configVariants.useFindMany({
     where: {
       AND: [
         {
@@ -64,7 +59,7 @@ export function DeleteConfigCategory({
     },
   });
 
-  const { data: configurations } = useFindManyConfigurations({
+  const { data: configurations } = useClientQueries(schema).configurations.useFindMany({
     include: { variants: true },
     where: {
       AND: [

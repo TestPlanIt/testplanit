@@ -1,4 +1,6 @@
 import { DateTextDisplay } from "@/components/DateTextDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import DynamicIcon from "@/components/DynamicIcon";
 import { Loading } from "@/components/Loading";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
@@ -12,12 +14,6 @@ import { useTheme } from "next-themes";
 import React, { useEffect, useMemo, useState } from "react";
 import type { PendingReviewSummary } from "@/components/reviews/PendingReviewBadge";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import {
-  useFindManyColor,
-  useFindManyReviewRequest,
-  useFindManySessionFieldValues,
-  useFindUniqueSessions,
-} from "~/lib/hooks";
 import {
   ColorMap,
   createColorMap,
@@ -207,7 +203,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
 }) => {
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
-  const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(schema).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
@@ -230,7 +226,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   );
   const { enabled: reviewFeatureEnabled } =
     useReviewFeatureEnabled(sessionProjectId);
-  const { data: pendingReviewsForVisibleSessions } = useFindManyReviewRequest(
+  const { data: pendingReviewsForVisibleSessions } = useClientQueries(schema).reviewRequest.useFindMany(
     {
       where: {
         entityType: "SESSION",
@@ -277,7 +273,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
 
   // Fetch source session data when duplicateSource is set
   const { data: duplicateSessionData, isLoading: isDuplicateLoading } =
-    useFindUniqueSessions(
+    useClientQueries(schema).sessions.useFindUnique(
       {
         where: { id: duplicateSource?.id ?? 0 },
         select: {
@@ -298,7 +294,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
       { enabled: !!duplicateSource }
     );
 
-  const { data: duplicateFieldValues } = useFindManySessionFieldValues(
+  const { data: duplicateFieldValues } = useClientQueries(schema).sessionFieldValues.useFindMany(
     {
       where: { sessionId: duplicateSource?.id ?? 0 },
       select: { fieldId: true, value: true },

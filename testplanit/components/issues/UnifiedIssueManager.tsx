@@ -1,11 +1,12 @@
 "use client";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { IntegrationProvider } from "~/zenstack/models";
 import { AlertCircle, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useFindFirstProjects } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { DeferredIssueManager } from "./DeferredIssueManager";
 import { ManageExternalIssues } from "./ManageExternalIssues";
@@ -50,7 +51,7 @@ export function UnifiedIssueManager({
   const t = useTranslations();
 
   // Fetch project with both old and new issue tracking config
-  const { data: project, isLoading } = useFindFirstProjects({
+  const { data: project, isLoading } = useClientQueries(schema).projects.useFindFirst({
     where: { id: projectId },
     include: {
       projectIntegrations: {

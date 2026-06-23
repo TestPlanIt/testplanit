@@ -1,4 +1,6 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import JUnitDurationHistogram from "@/components/dataVisualizations/JUnitDurationHistogram";
 import JUnitStatusTimeline from "@/components/dataVisualizations/JUnitStatusTimeline";
 import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";
@@ -69,7 +71,6 @@ import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
 import { TestRunCasesSummary } from "~/components/TestRunCasesSummary";
 import { usePagination } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import { useFindManyJUnitTestResult } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
@@ -231,7 +232,7 @@ function JunitTableSection({
 
   // Fetch all JUnit results for this run (only if automated test run type)
   const isJUnitRun = isAutomatedTestRunType(testRunData?.testRunType);
-  useFindManyJUnitTestResult(
+  useClientQueries(schema).jUnitTestResult.useFindMany(
     isJUnitRun
       ? {
           where: { testSuiteId: Number(runId) },

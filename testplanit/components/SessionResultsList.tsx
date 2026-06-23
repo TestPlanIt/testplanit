@@ -1,6 +1,8 @@
 "use client";
 
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
   AlertDialog,
@@ -66,17 +68,6 @@ import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useCreateAttachments,
-  useCreateResultFieldValues,
-  useFindFirstProjects,
-  useFindManySessionResults,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-  useUpdateAttachments,
-  useUpdateResultFieldValues,
-  useUpdateSessionResults,
-} from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { getBackgroundStyle } from "~/utils/colorUtils";
 import { toHumanReadable } from "~/utils/duration";
@@ -288,7 +279,7 @@ export function SessionResultsList({
     restrictedFieldPermissions?.canAddEdit ?? false;
 
   // Load statuses for the session result edit form
-  const { data: statuses, isLoading: isLoadingStatuses } = useFindManyStatus({
+  const { data: statuses, isLoading: isLoadingStatuses } = useClientQueries(schema).status.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -319,7 +310,7 @@ export function SessionResultsList({
 
   // Fetch project data for issueConfigId
   const { data: projectData, isLoading: isLoadingProject } =
-    useFindFirstProjects(
+    useClientQueries(schema).projects.useFindFirst(
       {
         where: { id: Number(projectId) },
         select: {
@@ -335,8 +326,8 @@ export function SessionResultsList({
     );
 
   // Add this line to get the createAttachments hook
-  const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: updateAttachments } = useUpdateAttachments();
+  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateAttachments } = useClientQueries(schema).attachments.useUpdate();
 
   // Initialize the form with dynamic schema
   const form = useForm<FieldFormValues>({
@@ -352,7 +343,7 @@ export function SessionResultsList({
     data: sessionResults,
     isLoading,
     refetch,
-  } = useFindManySessionResults({
+  } = useClientQueries(schema).sessionResults.useFindMany({
     where: {
       sessionId: sessionId,
       isDeleted: false,
@@ -429,18 +420,18 @@ export function SessionResultsList({
     },
   });
 
-  const { mutateAsync: updateSessionResult } = useUpdateSessionResults();
+  const { mutateAsync: updateSessionResult } = useClientQueries(schema).sessionResults.useUpdate();
 
   // Add hooks for field values operations
-  const { mutateAsync: createResultFieldValue } = useCreateResultFieldValues();
-  const { mutateAsync: updateResultFieldValue } = useUpdateResultFieldValues();
+  const { mutateAsync: createResultFieldValue } = useClientQueries(schema).resultFieldValues.useCreate();
+  const { mutateAsync: updateResultFieldValue } = useClientQueries(schema).resultFieldValues.useUpdate();
 
   // Fetch template fields when the session result is being edited
   const [editTemplateFields, setEditTemplateFields] = useState<any[]>([]);
 
   // Add template field fetching when opening edit dialog
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =
-    useFindManyTemplateResultAssignment({
+    useClientQueries(schema).templateResultAssignment.useFindMany({
       where: {
         templateId:
           sessionResults && sessionResults.length > 0

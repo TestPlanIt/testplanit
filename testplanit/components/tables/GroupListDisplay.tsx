@@ -1,4 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Popover,
   PopoverContent,
@@ -8,7 +10,6 @@ import type { Groups } from "~/zenstack/models";
 import { UserRoundCog, UsersRound, UsersRoundIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
-import { useFindManyGroups } from "~/lib/hooks";
 
 interface GroupListProps {
   groups: { groupId: number }[];
@@ -16,7 +17,7 @@ interface GroupListProps {
 
 export const GroupListDisplay: React.FC<GroupListProps> = ({ groups }) => {
   const tGroups = useTranslations("admin.groups");
-  const { data: allGroups } = useFindManyGroups({
+  const { data: allGroups } = useClientQueries(schema).groups.useFindMany({
     orderBy: { name: "asc" },
     where: {
       AND: [

@@ -1,6 +1,8 @@
 "use client";
 
 import type { NextPage } from "next";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -11,8 +13,6 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { SsoProviderType } from "~/zenstack/models";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import { useFindFirstRegistrationSettings } from "~/lib/hooks";
-import { useFindManySsoProvider } from "~/lib/hooks/sso-provider";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -142,14 +142,14 @@ const Signin: NextPage = () => {
 
   // Fetch ALL SSO providers (we need all to check forceSso)
   // Sort by name at the database level to help with SAML providers
-  const { data: registrationSettings } = useFindFirstRegistrationSettings(
+  const { data: registrationSettings } = useClientQueries(schema).registrationSettings.useFindFirst(
     undefined,
     { enabled: sessionCleared }
   );
 
   // Wait for session to be cleared before fetching to prevent 410 errors with stale sessions
   const { data: ssoProviders, isLoading: isLoadingSsoProviders } =
-    useFindManySsoProvider(
+    useClientQueries(schema).ssoProvider.useFindMany(
       {
         include: { samlConfig: true },
         orderBy: { name: "asc" },

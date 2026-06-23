@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -15,7 +17,6 @@ import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useDeleteAppConfig } from "~/lib/hooks";
 import { AppConfigRow } from "./types";
 
 interface DeleteAppConfigProps {
@@ -30,7 +31,7 @@ export function DeleteAppConfig({
   onClose,
 }: DeleteAppConfigProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: deleteAppConfig } = useDeleteAppConfig();
+  const { mutateAsync: deleteAppConfig } = useClientQueries(schema).appConfig.useDelete();
   const tCommon = useTranslations("common");
 
   const form = useForm();

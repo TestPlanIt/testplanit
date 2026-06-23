@@ -1,4 +1,6 @@
 import { DateTextDisplay } from "@/components/DateTextDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   Tooltip,
@@ -9,7 +11,6 @@ import { Combine, LinkIcon, PlayCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { TestRunCasesSummary } from "~/components/TestRunCasesSummary";
-import { useFindManyTestRuns } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 
 interface TestRunsSectionProps {
@@ -19,7 +20,7 @@ interface TestRunsSectionProps {
 const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
   const t = useTranslations();
 
-  const { data: testRuns, isLoading: isLoadingTestRuns } = useFindManyTestRuns({
+  const { data: testRuns, isLoading: isLoadingTestRuns } = useClientQueries(schema).testRuns.useFindMany({
     where: {
       AND: [
         { projectId: Number(projectId) },
@@ -40,7 +41,7 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
   });
 
   const { data: testRunsCount, isLoading: isLoadingCount } =
-    useFindManyTestRuns({
+    useClientQueries(schema).testRuns.useFindMany({
       where: {
         AND: [
           { projectId: Number(projectId) },

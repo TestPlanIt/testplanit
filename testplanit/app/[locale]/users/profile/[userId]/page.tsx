@@ -1,6 +1,8 @@
 "use client";
 
 import { Avatar } from "@/components/Avatar";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
 import { EmailCell } from "@/components/EmailDisplay";
 import { AccessLevelDisplay } from "@/components/tables/AccessLevelDisplay";
@@ -65,7 +67,6 @@ import * as React from "react";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import { useFindFirstUser, useFindUniqueAppConfig } from "~/lib/hooks";
 import { UserAuditLog } from "~/components/users/UserAuditLog";
 import { SCIM_SCHEMAS } from "~/lib/scim/constants";
 import { languageNames } from "~/i18n/navigation";
@@ -142,11 +143,11 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const tNotifications = useTranslations("users.profile.notifications");
   const tNotificationModes = useTranslations("admin.notifications.defaultMode");
   const tUserMenu = useTranslations("userMenu");
-  const { data: globalSettings } = useFindUniqueAppConfig({
+  const { data: globalSettings } = useClientQueries(schema).appConfig.useFindUnique({
     where: { key: "notificationSettings" },
   });
 
-  const { data: user, refetch: refetchUser } = useFindFirstUser({
+  const { data: user, refetch: refetchUser } = useClientQueries(schema).user.useFindFirst({
     where: {
       AND: [{ isDeleted: false }, { id: userId }],
     },

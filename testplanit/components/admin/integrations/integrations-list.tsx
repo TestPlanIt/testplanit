@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -25,10 +27,6 @@ import { AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  useFindManyIntegrationProject,
-  useFindManyWebhookConfig,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import {
   removeProjectIntegration,
@@ -62,13 +60,13 @@ export function IntegrationsList({
   // Conditional bullet in the Remove + Switch dialogs: shown only when an
   // inbound webhook actually exists for the project. Cheap query — same
   // shape the webhooks page uses, dedupes via React Query when both mount.
-  const { data: inboundConfigs } = useFindManyWebhookConfig({
+  const { data: inboundConfigs } = useClientQueries(schema).webhookConfig.useFindMany({
     where: { projectId, direction: "INBOUND" },
     select: { id: true },
   });
   const hasInboundWebhook = (inboundConfigs?.length ?? 0) > 0;
 
-  const { data: linkedProjects } = useFindManyIntegrationProject(
+  const { data: linkedProjects } = useClientQueries(schema).integrationProject.useFindMany(
     {
       where: {
         projectIntegrationId: currentIntegration?.id ?? "",
@@ -110,7 +108,7 @@ export function IntegrationsList({
       }
       // Server action bypasses ZenStack mutation hooks, so the React
       // Query cache (used by parent's useFindManyProjectIntegration +
-      // local useFindManyWebhookConfig) doesn't auto-invalidate. Wide
+      // local useClientQueries(schema).webhookConfig.useFindMany) doesn't auto-invalidate. Wide
       // invalidation under the `["zenstack"]` prefix refreshes all
       // related ZenStack-generated queries in one shot.
       await queryClient.invalidateQueries({ queryKey: ["zenstack"] });

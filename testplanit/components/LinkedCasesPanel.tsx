@@ -1,4 +1,6 @@
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
@@ -47,11 +49,6 @@ import type { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { z } from "zod/v4";
-import {
-  useFindManyRepositoryCaseLink,
-  useUpdateRepositoryCaseLink,
-  useUpsertRepositoryCaseLink,
-} from "~/lib/hooks";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { DateFormatter } from "./DateFormatter";
 import { UserNameCell } from "./tables/UserNameCell";
@@ -99,7 +96,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
   const tGlobal = useTranslations();
 
   // Fetch all links where this case is caseA or caseB
-  const { data: links, refetch } = useFindManyRepositoryCaseLink({
+  const { data: links, refetch } = useClientQueries(schema).repositoryCaseLink.useFindMany({
     where: {
       OR: [
         { caseAId: caseId, isDeleted: false },
@@ -187,8 +184,8 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
   // For Add Link Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { mutateAsync: upsertLink } = useUpsertRepositoryCaseLink();
-  const { mutateAsync: updateLink } = useUpdateRepositoryCaseLink();
+  const { mutateAsync: upsertLink } = useClientQueries(schema).repositoryCaseLink.useUpsert();
+  const { mutateAsync: updateLink } = useClientQueries(schema).repositoryCaseLink.useUpdate();
 
   // Compute all linked case IDs to prevent circular/self-link
   const linkedCaseIds = useMemo(() => {

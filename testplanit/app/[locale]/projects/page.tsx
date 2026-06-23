@@ -1,9 +1,10 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import { useFindManyProjects, useFindManyUser } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import {
   ProcessedProject,
@@ -25,12 +26,12 @@ const Projects = () => {
   >({});
   const [isLoadingIssueCounts, setIsLoadingIssueCounts] = useState(false);
 
-  const { data: allUsers } = useFindManyUser({
+  const { data: allUsers } = useClientQueries(schema).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     select: { id: true, access: true },
   });
 
-  const { data: projectsRaw, isFetched } = useFindManyProjects(
+  const { data: projectsRaw, isFetched } = useClientQueries(schema).projects.useFindMany(
     {
       where: {
         isDeleted: false,

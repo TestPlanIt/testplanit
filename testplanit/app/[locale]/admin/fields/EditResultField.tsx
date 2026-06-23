@@ -1,15 +1,8 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 import { useEffect, useMemo, useState } from "react";
-import {
-  useCreateFieldOptions,
-  useFindManyCaseFields,
-  useFindManyCaseFieldTypes,
-  useFindManyResultFields,
-  useUpdateFieldOptions,
-  useUpdateManyFieldOptions,
-  useUpdateResultFields,
-} from "~/lib/hooks";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { FieldOptions } from "~/zenstack/models";
@@ -109,20 +102,20 @@ export function EditResultField({
   const [error, setError] = useState<string | null>(null);
   const [defaultItem, setDefaultItem] = useState<number | null>(null);
 
-  const { mutateAsync: updateResultField } = useUpdateResultFields();
-  const { mutateAsync: createFieldOptions } = useCreateFieldOptions();
-  const { mutateAsync: updateManyFieldOptions } = useUpdateManyFieldOptions();
-  const { mutateAsync: updateFieldOptions } = useUpdateFieldOptions();
+  const { mutateAsync: updateResultField } = useClientQueries(schema).resultFields.useUpdate();
+  const { mutateAsync: createFieldOptions } = useClientQueries(schema).fieldOptions.useCreate();
+  const { mutateAsync: updateManyFieldOptions } = useClientQueries(schema).fieldOptions.useUpdateMany();
+  const { mutateAsync: updateFieldOptions } = useClientQueries(schema).fieldOptions.useUpdate();
 
-  const { data: types } = useFindManyCaseFieldTypes({
+  const { data: types } = useClientQueries(schema).caseFieldTypes.useFindMany({
     orderBy: { type: "asc" },
   });
 
-  const { data: existingCaseFields } = useFindManyCaseFields({
+  const { data: existingCaseFields } = useClientQueries(schema).caseFields.useFindMany({
     select: { id: true, systemName: true },
   });
 
-  const { data: existingResultFields } = useFindManyResultFields({
+  const { data: existingResultFields } = useClientQueries(schema).resultFields.useFindMany({
     select: { id: true, systemName: true },
   });
 

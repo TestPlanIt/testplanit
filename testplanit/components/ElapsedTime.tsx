@@ -1,9 +1,10 @@
 "use client";
 
 import { AlarmClockPlus, Clock, ClockAlert, Timer } from "lucide-react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { useFindManySessionResults } from "~/lib/hooks";
 import { cn, type ClassValue } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
 
@@ -29,7 +30,7 @@ export function ElapsedTime({
 
   // Fetch all session results for the given sessionId
   const { data: sessionResults, isLoading: isLoadingResults } =
-    useFindManySessionResults({
+    useClientQueries(schema).sessionResults.useFindMany({
       where: {
         sessionId: sessionId,
         isDeleted: false,

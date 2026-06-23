@@ -2,6 +2,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import BreadcrumbComponent from "@/components/BreadcrumbComponent";
 import { formatSeconds } from "@/components/DurationDisplay";
 import {
@@ -92,28 +94,6 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import {
-  useCreateAttachments,
-  useCreateCaseFieldValues,
-  useCreateCaseFieldVersionValues,
-  useCreateSteps,
-  useFindFirstProjects,
-  useFindManyJUnitAttachment,
-  useFindManyJUnitProperty,
-  useFindManyJUnitTestStep,
-  useFindManyRepositoryCaseVersions,
-  useFindManyRepositoryFolders,
-  useFindManySharedStepGroup,
-  useFindManyTags,
-  useFindManyTemplates,
-  useFindManyTestCaseParameter,
-  useFindManyWorkflows,
-  useFindUniqueProjects,
-  useUpdateAttachments,
-  useUpdateCaseFieldValues,
-  useUpdateManySteps,
-  useUpdateRepositoryCases,
-} from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
@@ -387,7 +367,7 @@ export default function TestCaseDetails() {
 
   const numericCaseId = Number(caseId);
   const isValidCaseId = !isNaN(numericCaseId);
-  const { data: caseParameters = [] } = useFindManyTestCaseParameter(
+  const { data: caseParameters = [] } = useClientQueries(schema).testCaseParameter.useFindMany(
     {
       where: { testCaseId: numericCaseId, isDeleted: false },
       orderBy: { order: "asc" },
@@ -416,7 +396,7 @@ export default function TestCaseDetails() {
 
   const isFormInitialized = useRef(false);
 
-  const { data: project, isLoading: isProjectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: isProjectLoading } = useClientQueries(schema).projects.useFindFirst(
     {
       where: { id: Number(projectId) },
       select: {
@@ -439,7 +419,7 @@ export default function TestCaseDetails() {
   const activeIntegration = project?.projectIntegrations?.[0];
 
   // QuickScript feature flag
-  const { data: projectSettings } = useFindUniqueProjects(
+  const { data: projectSettings } = useClientQueries(schema).projects.useFindUnique(
     { where: { id: Number(projectId) }, select: { quickScriptEnabled: true } },
     { enabled: isValidProjectId }
   );
@@ -669,12 +649,12 @@ export default function TestCaseDetails() {
       }
     );
 
-  const { data: versions } = useFindManyRepositoryCaseVersions({
+  const { data: versions } = useClientQueries(schema).repositoryCaseVersions.useFindMany({
     where: { repositoryCaseId: Number(caseId) },
     orderBy: { version: "desc" },
   });
 
-  const { data: templates } = useFindManyTemplates({
+  const { data: templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
       projects: {
@@ -708,7 +688,7 @@ export default function TestCaseDetails() {
     },
   });
 
-  const { data: tags } = useFindManyTags(
+  const { data: tags } = useClientQueries(schema).tags.useFindMany(
     {
       where: {
         isDeleted: false,
@@ -723,7 +703,7 @@ export default function TestCaseDetails() {
   const testcase = data as any as ExtendedCases;
 
   const { data: folders, isLoading: isFoldersLoading } =
-    useFindManyRepositoryFolders(
+    useClientQueries(schema).repositoryFolders.useFindMany(
       {
         where: { projectId: Number(projectId), isDeleted: false },
         orderBy: { order: "asc" },
@@ -733,12 +713,12 @@ export default function TestCaseDetails() {
       }
     );
 
-  // Correct placement for useFindManySharedStepGroup hook
+  // Correct placement for useClientQueries(schema).sharedStepGroup.useFindMany hook
   const {
     data: sharedStepGroupsDataFromHook,
     isLoading: isLoadingSharedStepGroups,
   }: { data?: SharedStepGroupWithItems[]; isLoading?: boolean } =
-    useFindManySharedStepGroup(
+    useClientQueries(schema).sharedStepGroup.useFindMany(
       {
         where: {
           project: { id: Number(projectId) },
@@ -763,7 +743,7 @@ export default function TestCaseDetails() {
     createFormSchema(testcase?.template?.caseFields || [], t)
   );
 
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       scope: "CASES",
@@ -1018,15 +998,15 @@ export default function TestCaseDetails() {
   // fire-and-forget `mutate` races the window — the name change then lands in
   // the audit log un-grouped and attributed to "System" instead of the editor
   // (and the refetch below could read the row before the write commits).
-  const { mutateAsync: updateRepositoryCases } = useUpdateRepositoryCases();
-  const { mutateAsync: updateCaseFieldValues } = useUpdateCaseFieldValues();
+  const { mutateAsync: updateRepositoryCases } = useClientQueries(schema).repositoryCases.useUpdate();
+  const { mutateAsync: updateCaseFieldValues } = useClientQueries(schema).caseFieldValues.useUpdate();
   const { mutateAsync: createCaseFieldVersionValues } =
-    useCreateCaseFieldVersionValues();
-  const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: updateAttachments } = useUpdateAttachments();
-  const { mutateAsync: createSteps } = useCreateSteps();
-  const { mutateAsync: updateManySteps } = useUpdateManySteps();
-  const { mutateAsync: createCaseFieldValues } = useCreateCaseFieldValues();
+    useClientQueries(schema).caseFieldVersionValues.useCreate();
+  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateAttachments } = useClientQueries(schema).attachments.useUpdate();
+  const { mutateAsync: createSteps } = useClientQueries(schema).steps.useCreate();
+  const { mutateAsync: updateManySteps } = useClientQueries(schema).steps.useUpdateMany();
+  const { mutateAsync: createCaseFieldValues } = useClientQueries(schema).caseFieldValues.useCreate();
 
   // Restore handleEditModeToggle
   const handleEditModeToggle = () => {
@@ -1801,15 +1781,15 @@ export default function TestCaseDetails() {
 
   // Fetch JUnit-specific data if this is an automated case
   const isJUnitCase = isAutomatedCaseSource(testcase?.source);
-  const { data: junitSteps } = useFindManyJUnitTestStep(
+  const { data: junitSteps } = useClientQueries(schema).jUnitTestStep.useFindMany(
     isJUnitCase ? { where: { repositoryCaseId: testcase.id } } : undefined,
     { enabled: isJUnitCase }
   );
-  const { data: junitAttachments } = useFindManyJUnitAttachment(
+  const { data: junitAttachments } = useClientQueries(schema).jUnitAttachment.useFindMany(
     isJUnitCase ? { where: { repositoryCaseId: testcase.id } } : undefined,
     { enabled: isJUnitCase }
   );
-  const { data: junitProperties } = useFindManyJUnitProperty(
+  const { data: junitProperties } = useClientQueries(schema).jUnitProperty.useFindMany(
     isJUnitCase ? { where: { repositoryCaseId: testcase.id } } : undefined,
     { enabled: isJUnitCase }
   );

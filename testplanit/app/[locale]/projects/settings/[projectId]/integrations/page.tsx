@@ -1,6 +1,8 @@
 "use client";
 
 import { IntegrationsList } from "@/components/admin/integrations/integrations-list";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Loading } from "@/components/Loading";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import {
@@ -14,11 +16,6 @@ import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect } from "react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import {
-  useFindFirstProjects,
-  useFindManyIntegration,
-  useFindManyProjectIntegration,
-} from "~/lib/hooks";
 import { ProjectIntegrationSettings } from "./project-integration-settings";
 
 export default function ProjectIntegrationsPage() {
@@ -34,7 +31,7 @@ export default function ProjectIntegrationsPage() {
   const tCommon = useTranslations("common");
 
   // Fetch project data (allow global admin access or project assignment)
-  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: projectLoading } = useClientQueries(schema).projects.useFindFirst(
     {
       where: {
         id: projectId,
@@ -66,7 +63,7 @@ export default function ProjectIntegrationsPage() {
 
   // Fetch project integrations
   const { data: projectIntegrations, isLoading: projectIntegrationsLoading } =
-    useFindManyProjectIntegration({
+    useClientQueries(schema).projectIntegration.useFindMany({
       where: {
         projectId,
         isActive: true,
@@ -78,7 +75,7 @@ export default function ProjectIntegrationsPage() {
 
   // Get issue tracking integrations configured by admins
   const { data: integrations, isLoading: integrationsLoading } =
-    useFindManyIntegration({
+    useClientQueries(schema).integration.useFindMany({
       where: {
         isDeleted: false,
         status: "ACTIVE",

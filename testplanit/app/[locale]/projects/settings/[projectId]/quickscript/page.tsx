@@ -1,6 +1,8 @@
 "use client";
 
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Loading } from "@/components/Loading";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -63,15 +65,6 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import {
-  useCreateProjectCodeRepositoryConfig,
-  useDeleteProjectCodeRepositoryConfig,
-  useFindFirstProjectCodeRepositoryConfig,
-  useFindFirstProjects,
-  useFindManyCodeRepository,
-  useUpdateProjectCodeRepositoryConfig,
-  useUpdateProjects,
-} from "~/lib/hooks";
 import { ExportTemplateAssignmentSection } from "./ExportTemplateAssignmentSection";
 import { Link } from "~/lib/navigation";
 
@@ -145,7 +138,7 @@ export default function QuickScriptPage() {
 
   // Load existing config
   const { data: existingConfig, refetch: refetchConfig } =
-    useFindFirstProjectCodeRepositoryConfig({
+    useClientQueries(schema).projectCodeRepositoryConfig.useFindFirst({
       where: { projectId },
       include: {
         repository: {
@@ -156,17 +149,17 @@ export default function QuickScriptPage() {
 
   // Load available repositories for selector
   const { data: repositories, isLoading: repositoriesLoading } =
-    useFindManyCodeRepository({
+    useClientQueries(schema).codeRepository.useFindMany({
       where: { isDeleted: false, status: "ACTIVE" },
       select: { id: true, name: true, provider: true },
     });
 
-  const createConfig = useCreateProjectCodeRepositoryConfig();
-  const updateConfig = useUpdateProjectCodeRepositoryConfig();
-  const deleteConfig = useDeleteProjectCodeRepositoryConfig();
+  const createConfig = useClientQueries(schema).projectCodeRepositoryConfig.useCreate();
+  const updateConfig = useClientQueries(schema).projectCodeRepositoryConfig.useUpdate();
+  const deleteConfig = useClientQueries(schema).projectCodeRepositoryConfig.useDelete();
 
   // Fetch project data (allow global admin access or project assignment)
-  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: projectLoading } = useClientQueries(schema).projects.useFindFirst(
     {
       where: { id: projectId },
       select: {
@@ -197,7 +190,7 @@ export default function QuickScriptPage() {
       retryDelay: 1000,
     }
   );
-  const updateProject = useUpdateProjects();
+  const updateProject = useClientQueries(schema).projects.useUpdate();
 
   // Access control check - must be ADMIN or PROJECTADMIN
   useEffect(() => {

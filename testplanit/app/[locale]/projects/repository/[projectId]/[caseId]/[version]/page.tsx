@@ -1,6 +1,8 @@
 "use client";
 
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
 import { formatSeconds } from "@/components/DurationDisplay";
 import { Loading } from "@/components/Loading";
@@ -47,14 +49,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
-import {
-  useFindFirstRepositoryCaseVersions,
-  useFindFirstWorkflows,
-  useFindManyIssue,
-  useFindManyRepositoryCaseVersions,
-  useFindManyTemplates,
-  useFindManyTestCaseParameter,
-} from "~/lib/hooks";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { Link, useRouter } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
@@ -108,7 +102,7 @@ export default function TestCaseVersions() {
     setSelectedAttachments([]);
   };
 
-  const { data, isLoading } = useFindFirstRepositoryCaseVersions({
+  const { data, isLoading } = useClientQueries(schema).repositoryCaseVersions.useFindFirst({
     where: {
       repositoryCaseId: Number(caseId),
       version: Number(version),
@@ -125,7 +119,7 @@ export default function TestCaseVersions() {
     },
   });
 
-  const { data: versions } = useFindManyRepositoryCaseVersions({
+  const { data: versions } = useClientQueries(schema).repositoryCaseVersions.useFindMany({
     where: { repositoryCaseId: Number(caseId) },
     orderBy: { version: "desc" },
   });
@@ -140,7 +134,7 @@ export default function TestCaseVersions() {
       ? (versions?.[currentVersionIndex + 1]?.version ?? null)
       : null;
 
-  const { data: previousData } = useFindFirstRepositoryCaseVersions({
+  const { data: previousData } = useClientQueries(schema).repositoryCaseVersions.useFindFirst({
     where: {
       repositoryCaseId: Number(caseId),
       version: previousVersionNumber || -1,
@@ -167,7 +161,7 @@ export default function TestCaseVersions() {
   // were renamed/deleted after the version, but it matches the case-detail
   // page's rendering and keeps mentions from showing as raw text.
   const numericCaseId = Number(caseId);
-  const { data: liveCaseParameters } = useFindManyTestCaseParameter(
+  const { data: liveCaseParameters } = useClientQueries(schema).testCaseParameter.useFindMany(
     {
       where: { testCaseId: numericCaseId, isDeleted: false },
       orderBy: { order: "asc" },
@@ -230,7 +224,7 @@ export default function TestCaseVersions() {
   }, [testcase?.issues, previousTestcase?.issues]);
 
   // Fetch only the issues referenced in this version (not all issues)
-  const { data: allIssues } = useFindManyIssue(
+  const { data: allIssues } = useClientQueries(schema).issue.useFindMany(
     {
       where: { id: { in: versionIssueIds } },
       select: {
@@ -258,7 +252,7 @@ export default function TestCaseVersions() {
     { enabled: versionIssueIds.length > 0 }
   );
 
-  const { data: templates } = useFindManyTemplates({
+  const { data: templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
       projects: {
@@ -292,12 +286,12 @@ export default function TestCaseVersions() {
     },
   });
 
-  const { data: workflowState } = useFindFirstWorkflows({
+  const { data: workflowState } = useClientQueries(schema).workflows.useFindFirst({
     where: { id: testcase?.stateId },
     include: { icon: true, color: true },
   });
 
-  const { data: previousWorkflowState } = useFindFirstWorkflows({
+  const { data: previousWorkflowState } = useClientQueries(schema).workflows.useFindFirst({
     where: { id: previousTestcase?.stateId ?? 0 },
     include: { icon: true, color: true },
   });

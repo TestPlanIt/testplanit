@@ -1,5 +1,7 @@
 "use client";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import type { Configurations } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -7,12 +9,6 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import MultiSelect from "react-select";
 import { z } from "zod/v4";
-import {
-  useCreateManyProjectConfigurationAssignment,
-  useDeleteManyProjectConfigurationAssignment,
-  useFindManyProjects,
-  useUpdateConfigurations,
-} from "~/lib/hooks";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 
 import { Button } from "@/components/ui/button";
@@ -62,17 +58,17 @@ export function EditConfiguration({
   onClose,
 }: EditConfigurationProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfiguration } = useUpdateConfigurations();
+  const { mutateAsync: updateConfiguration } = useClientQueries(schema).configurations.useUpdate();
   const { mutateAsync: createManyProjectConfigurationAssignment } =
-    useCreateManyProjectConfigurationAssignment();
+    useClientQueries(schema).projectConfigurationAssignment.useCreateMany();
   const { mutateAsync: deleteManyProjectConfigurationAssignment } =
-    useDeleteManyProjectConfigurationAssignment();
+    useClientQueries(schema).projectConfigurationAssignment.useDeleteMany();
   const tCommon = useTranslations("common");
 
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });

@@ -1,10 +1,11 @@
 import TextFromJson from "@/components/TextFromJson";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { Layers, Minus, Plus, SearchCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { emptyEditorContent } from "~/app/constants";
-import { useFindManySharedStepItem } from "~/lib/hooks";
 
 interface DisplayStep {
   id: number;
@@ -38,7 +39,7 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
 }) => {
   const t_steps = useTranslations("repository.steps");
 
-  // Memoize the query options for useFindManySharedStepItem
+  // Memoize the query options for useClientQueries(schema).sharedStepItem.useFindMany
   const queryOptions = React.useMemo(
     () => ({
       where: {
@@ -58,7 +59,7 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
     [sharedStepGroupId]
   );
 
-  const { data: items, isLoading } = useFindManySharedStepItem(
+  const { data: items, isLoading } = useClientQueries(schema).sharedStepItem.useFindMany(
     queryOptions,
     hookOptions
   );

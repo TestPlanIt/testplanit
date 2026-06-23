@@ -2,6 +2,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -101,20 +103,6 @@ import { CommentsSection } from "~/components/comments/CommentsSection";
 import TestRunCasesSummary from "~/components/TestRunCasesSummary";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
-import {
-  useCreateAttachments,
-  useFindFirstRepositoryCases,
-  useFindFirstStatusScope,
-  useFindManyJUnitTestSuite,
-  useFindManyMilestones,
-  useFindManyWorkflows,
-  useFindUniqueTestRuns,
-  useUpdateAttachments,
-  useUpdateManyTestRunCaseIteration,
-  useUpdateManyTestRunResults,
-  useUpdateManyTestRunStepResults,
-  useUpdateTestRuns,
-} from "~/lib/hooks";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
 import { IconName } from "~/types/globals";
@@ -311,8 +299,8 @@ export default function TestRunPage() {
   >(null);
   const [pendingAttachmentChanges, setPendingAttachmentChanges] =
     useState<AttachmentChanges>({ edits: [], deletes: [] });
-  const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: updateAttachments } = useUpdateAttachments();
+  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateAttachments } = useClientQueries(schema).attachments.useUpdate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeletingTestRun, setIsDeletingTestRun] = useState(false);
   const t = useTranslations();
@@ -323,11 +311,11 @@ export default function TestRunPage() {
     null
   );
   const { mutateAsync: softDeleteTestRunResults } =
-    useUpdateManyTestRunResults();
+    useClientQueries(schema).testRunResults.useUpdateMany();
   const { mutateAsync: softDeleteTestRunStepResults } =
-    useUpdateManyTestRunStepResults();
+    useClientQueries(schema).testRunStepResults.useUpdateMany();
   const { mutateAsync: softDeleteTestRunCaseIterations } =
-    useUpdateManyTestRunCaseIteration();
+    useClientQueries(schema).testRunCaseIteration.useUpdateMany();
   const [zoomedChart, setZoomedChart] = useState<null | "donut">(null);
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
 
@@ -366,7 +354,7 @@ export default function TestRunPage() {
     ? parseInt(searchParams.get("selectedCase")!)
     : null;
 
-  const { data: statusScope } = useFindFirstStatusScope({
+  const { data: statusScope } = useClientQueries(schema).statusScope.useFindFirst({
     where: {
       name: "Automation",
     },
@@ -378,7 +366,7 @@ export default function TestRunPage() {
   });
 
   // Fetch test run data
-  const { data: testRunData, refetch: refetchTestRun } = useFindUniqueTestRuns(
+  const { data: testRunData, refetch: refetchTestRun } = useClientQueries(schema).testRuns.useFindUnique(
     {
       where: {
         id: Number(runId),
@@ -506,7 +494,7 @@ export default function TestRunPage() {
   // Fetch JUnit test suites if this is a JUNIT run
   const isJUnitRun = isAutomatedTestRunType(testRunData?.testRunType);
   const { data: jUnitSuites, isLoading: isJUnitLoading } =
-    useFindManyJUnitTestSuite(
+    useClientQueries(schema).jUnitTestSuite.useFindMany(
       isJUnitRun
         ? {
             where: { testRunId: Number(runId) },
@@ -573,7 +561,7 @@ export default function TestRunPage() {
   });
 
   // Add data fetching queries
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -593,7 +581,7 @@ export default function TestRunPage() {
     },
   });
 
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       projectId: Number(projectId),
       isDeleted: false,
@@ -713,7 +701,7 @@ export default function TestRunPage() {
   }, [isLoading]);
 
   // Add mutation hooks
-  const { mutateAsync: updateTestRuns } = useUpdateTestRuns();
+  const { mutateAsync: updateTestRuns } = useClientQueries(schema).testRuns.useUpdate();
 
   // Add form controls
   const {
@@ -1219,7 +1207,7 @@ export default function TestRunPage() {
   };
 
   const { data: testcase, isLoading: isTestcaseLoading } =
-    useFindFirstRepositoryCases({
+    useClientQueries(schema).repositoryCases.useFindFirst({
       where: { id: selectedTestCaseId ?? undefined, isDeleted: false },
       include: {
         state: {

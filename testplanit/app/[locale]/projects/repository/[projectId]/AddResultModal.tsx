@@ -1,4 +1,6 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
@@ -29,19 +31,6 @@ import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
-import {
-  useCreateAttachments,
-  useCreateTestRunStepResults,
-  useFindFirstProjects,
-  useFindFirstRepositoryCases,
-  useFindFirstWorkflows,
-  useFindManyIssue,
-  useFindManySharedStepItem,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-  useFindManyTestRunResults,
-  useUpdateTestRunCases,
-} from "~/lib/hooks";
 import {
   isIssueRequiredOnFailureSubmitResultError,
   isJustificationRequiredSubmitResultError,
@@ -352,7 +341,7 @@ export function AddResultModal({
   ];
 
   // Fetch issue details for all selected issues
-  const { data: issueDetails } = useFindManyIssue(
+  const { data: issueDetails } = useClientQueries(schema).issue.useFindMany(
     {
       where: {
         id: { in: allIssueIds },
@@ -386,7 +375,7 @@ export function AddResultModal({
   }, [issueDetails]);
 
   // Query previous test run results to determine the correct attempt number
-  const { data: previousResults } = useFindManyTestRunResults({
+  const { data: previousResults } = useClientQueries(schema).testRunResults.useFindMany({
     where: {
       testRunCaseId,
     },
@@ -398,7 +387,7 @@ export function AddResultModal({
 
   // Find the repository case to get its template ID
   const { data: repositoryCase, isLoading: isLoadingCase } =
-    useFindFirstRepositoryCases({
+    useClientQueries(schema).repositoryCases.useFindFirst({
       where: {
         testRuns: {
           some: {
@@ -416,7 +405,7 @@ export function AddResultModal({
 
   // Fetch template result fields if we have a case with a template
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =
-    useFindManyTemplateResultAssignment({
+    useClientQueries(schema).templateResultAssignment.useFindMany({
       where: {
         templateId: repositoryCase?.templateId || 0,
       },
@@ -450,7 +439,7 @@ export function AddResultModal({
 
   // Fetch project data to get integrations
   const { data: projectData, isLoading: isLoadingProject } =
-    useFindFirstProjects({
+    useClientQueries(schema).projects.useFindFirst({
       where: { id: projectId },
       select: {
         projectIntegrations: {
@@ -596,7 +585,7 @@ export function AddResultModal({
   }, [isOpen, issueOnFailureError, totalLinkedIssueCount]);
 
   // Fetch available statuses
-  const { data: statuses } = useFindManyStatus({
+  const { data: statuses } = useClientQueries(schema).status.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -625,13 +614,13 @@ export function AddResultModal({
     },
   });
 
-  const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: updateTestRunCase } = useUpdateTestRunCases();
+  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateTestRunCase } = useClientQueries(schema).testRunCases.useUpdate();
   const { mutateAsync: createTestRunStepResult } =
-    useCreateTestRunStepResults();
+    useClientQueries(schema).testRunStepResults.useCreate();
 
   // Find the first IN_PROGRESS workflow state for this project
-  const { data: inProgressWorkflow } = useFindFirstWorkflows({
+  const { data: inProgressWorkflow } = useClientQueries(schema).workflows.useFindFirst({
     where: {
       projects: {
         some: {
@@ -2331,7 +2320,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
   // Explicitly set return type to React.ReactNode
   const t = useTranslations();
   const tCommon = useTranslations("common");
-  const { data: items, isLoading } = useFindManySharedStepItem({
+  const { data: items, isLoading } = useClientQueries(schema).sharedStepItem.useFindMany({
     where: {
       sharedStepGroupId,
       sharedStepGroup: { isDeleted: false },

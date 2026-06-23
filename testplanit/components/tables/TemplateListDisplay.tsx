@@ -1,4 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Popover,
   PopoverContent,
@@ -7,7 +9,6 @@ import {
 import type { Templates } from "~/zenstack/models";
 import { LayoutTemplate } from "lucide-react";
 import React from "react";
-import { useFindManyTemplates } from "~/lib/hooks";
 
 interface TemplateListProps {
   templates: { templateId: number; templateName: string }[];
@@ -18,7 +19,7 @@ export const TemplateListDisplay: React.FC<TemplateListProps> = ({
   templates,
   usePopover = true,
 }) => {
-  const { data: allTemplates } = useFindManyTemplates({
+  const { data: allTemplates } = useClientQueries(schema).templates.useFindMany({
     orderBy: { templateName: "asc" },
     where: {
       AND: [

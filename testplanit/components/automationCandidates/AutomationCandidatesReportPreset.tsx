@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -33,10 +35,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "~/lib/navigation";
 
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useFindManyLlmReportSnapshot,
-  useFindManyRepositoryCases,
-} from "~/lib/hooks";
 
 import {
   extractCandidatesFromBuffer,
@@ -154,7 +152,7 @@ export function AutomationCandidatesReportPreset({
     data: history,
     isLoading: historyLoadingRaw,
     refetch: refetchHistory,
-  } = useFindManyLlmReportSnapshot(
+  } = useClientQueries(schema).llmReportSnapshot.useFindMany(
     {
       where: {
         projectId,
@@ -1026,7 +1024,7 @@ function RankedList({
   // may have been renamed since the snapshot was generated) — the
   // snapshot stores the ranking, the cases keep their own state.
   const caseIds = useMemo(() => candidates.map((c) => c.caseId), [candidates]);
-  const { data: caseRecords } = useFindManyRepositoryCases(
+  const { data: caseRecords } = useClientQueries(schema).repositoryCases.useFindMany(
     {
       where: { id: { in: caseIds }, projectId },
       select: {

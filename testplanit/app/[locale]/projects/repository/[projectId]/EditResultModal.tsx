@@ -1,4 +1,6 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
@@ -22,18 +24,6 @@ import { toast } from "sonner";
 import * as z from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useCreateAttachments,
-  useCreateTestRunStepResults,
-  useFindFirstProjects,
-  useFindFirstRepositoryCases,
-  useFindFirstTestRunResults,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-  useFindManyTestRunResults,
-  useUpdateTestRunResults,
-  useUpdateTestRunStepResults,
-} from "~/lib/hooks";
 import {
   editTestRunResult,
   isEditWindowExpiredResultError,
@@ -344,7 +334,7 @@ export function EditResultModal({
   const canEditRestrictedPerm = canEditRestricted || isSuperAdmin;
 
   // Fetch the existing result data
-  const { data: existingResult } = useFindManyTestRunResults<{
+  const { data: existingResult } = useClientQueries(schema).testRunResults.useFindMany<{
     where: {
       testRunId: number;
       testRunCaseId: number;
@@ -389,7 +379,7 @@ export function EditResultModal({
   // values. Non-parameterized results have `iteration` = null and the
   // memoized `parameters` below stays `undefined` — chips fall back to
   // `@name` (unsubstituted) which matches the pre-iterations behavior.
-  const { data: resultRow } = useFindFirstTestRunResults(
+  const { data: resultRow } = useClientQueries(schema).testRunResults.useFindFirst(
     {
       where: { id: resultId, isDeleted: false },
       select: {
@@ -488,7 +478,7 @@ export function EditResultModal({
 
   // Find the repository case to get its template ID
   const { data: repositoryCase, isLoading: isLoadingCase } =
-    useFindFirstRepositoryCases({
+    useClientQueries(schema).repositoryCases.useFindFirst({
       where: {
         testRuns: {
           some: {
@@ -506,7 +496,7 @@ export function EditResultModal({
 
   // Fetch template result fields if we have a case with a template
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =
-    useFindManyTemplateResultAssignment({
+    useClientQueries(schema).templateResultAssignment.useFindMany({
       where: {
         templateId: repositoryCase?.templateId || 0,
       },
@@ -547,7 +537,7 @@ export function EditResultModal({
 
   // Fetch project data to get issueConfigId
   const { data: projectData, isLoading: isLoadingProject } =
-    useFindFirstProjects({
+    useClientQueries(schema).projects.useFindFirst({
       where: { id: projectId },
       select: {
         projectIntegrations: {
@@ -693,7 +683,7 @@ export function EditResultModal({
   ]);
 
   // Fetch available statuses
-  const { data: statuses } = useFindManyStatus({
+  const { data: statuses } = useClientQueries(schema).status.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -734,12 +724,12 @@ export function EditResultModal({
     }
   }, [statuses, form]);
 
-  const { mutateAsync: updateTestRunResults } = useUpdateTestRunResults();
-  const { mutateAsync: createAttachments } = useCreateAttachments();
+  const { mutateAsync: updateTestRunResults } = useClientQueries(schema).testRunResults.useUpdate();
+  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
   const { mutateAsync: updateTestRunStepResults } =
-    useUpdateTestRunStepResults();
+    useClientQueries(schema).testRunStepResults.useUpdate();
   const { mutateAsync: createTestRunStepResults } =
-    useCreateTestRunStepResults();
+    useClientQueries(schema).testRunStepResults.useCreate();
 
   const _handleStatusChange = (statusId: number) => {
     form.setValue("statusId", statusId);

@@ -1,13 +1,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import userEvent from "@testing-library/user-event";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  useFindManyProjectLlmIntegration,
-  useFindManyRepositoryFolders,
-  useFindManyTemplates,
-} from "~/lib/hooks";
 import { ImportCasesWizard } from "./ImportCasesWizard";
 
 // Mock dependencies
@@ -20,9 +17,9 @@ vi.mock("next-intl", () => ({
 }));
 
 vi.mock("~/lib/hooks", () => ({
-  useFindManyTemplates: vi.fn(),
-  useFindManyRepositoryFolders: vi.fn(),
-  useFindManyProjectLlmIntegration: vi.fn(),
+  useClientQueries(schema).templates.useFindMany: vi.fn(),
+  useClientQueries(schema).repositoryFolders.useFindMany: vi.fn(),
+  useClientQueries(schema).projectLlmIntegration.useFindMany: vi.fn(),
 }));
 
 vi.mock("@/components/ui/use-toast", () => ({
@@ -303,11 +300,11 @@ describe("ImportCasesWizard", () => {
       if (!namespace) return mockTGlobal;
       return () => "";
     });
-    (useFindManyTemplates as any).mockReturnValue({ data: mockTemplates });
-    (useFindManyRepositoryFolders as any).mockReturnValue({
+    (useClientQueries(schema).templates.useFindMany as any).mockReturnValue({ data: mockTemplates });
+    (useClientQueries(schema).repositoryFolders.useFindMany as any).mockReturnValue({
       data: mockFolders,
     });
-    (useFindManyProjectLlmIntegration as any).mockReturnValue({
+    (useClientQueries(schema).projectLlmIntegration.useFindMany as any).mockReturnValue({
       data: [],
     });
   });

@@ -1,6 +1,8 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -43,41 +45,30 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  useCreateAllowedEmailDomain,
-  useCreateSsoProvider,
-  useDeleteAllowedEmailDomain,
-  useFindFirstRegistrationSettings,
-  useFindManyAllowedEmailDomain,
-  useFindManySsoProvider,
-  useUpdateAllowedEmailDomain,
-  useUpdateSsoProvider,
-  useUpsertRegistrationSettings,
-} from "~/lib/hooks";
 
 export default function SSOAdminPage() {
   const { data: session } = useSession();
   const t = useTranslations();
 
-  const { data: ssoProviders, refetch } = useFindManySsoProvider({
+  const { data: ssoProviders, refetch } = useClientQueries(schema).ssoProvider.useFindMany({
     include: { samlConfig: true },
   });
-  const { mutateAsync: createProvider } = useCreateSsoProvider();
-  const { mutateAsync: updateProvider } = useUpdateSsoProvider();
+  const { mutateAsync: createProvider } = useClientQueries(schema).ssoProvider.useCreate();
+  const { mutateAsync: updateProvider } = useClientQueries(schema).ssoProvider.useUpdate();
 
   // Domain restriction hooks
   const { data: allowedDomains, refetch: refetchDomains } =
-    useFindManyAllowedEmailDomain({
+    useClientQueries(schema).allowedEmailDomain.useFindMany({
       orderBy: { domain: "asc" },
     });
-  const { mutateAsync: createDomain } = useCreateAllowedEmailDomain();
-  const { mutateAsync: updateDomain } = useUpdateAllowedEmailDomain();
-  const { mutateAsync: deleteDomain } = useDeleteAllowedEmailDomain();
+  const { mutateAsync: createDomain } = useClientQueries(schema).allowedEmailDomain.useCreate();
+  const { mutateAsync: updateDomain } = useClientQueries(schema).allowedEmailDomain.useUpdate();
+  const { mutateAsync: deleteDomain } = useClientQueries(schema).allowedEmailDomain.useDelete();
 
   // Registration settings hooks
   const { data: registrationSettings, refetch: refetchSettings } =
-    useFindFirstRegistrationSettings();
-  const { mutateAsync: upsertSettings } = useUpsertRegistrationSettings();
+    useClientQueries(schema).registrationSettings.useFindFirst();
+  const { mutateAsync: upsertSettings } = useClientQueries(schema).registrationSettings.useUpsert();
 
   // Google OAuth configuration state
   const [isGoogleConfigOpen, setIsGoogleConfigOpen] = useState(false);

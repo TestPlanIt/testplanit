@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Card,
   CardContent,
@@ -25,26 +27,19 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  useCountUser,
-  useFindFirstRegistrationSettings,
-  useFindManySsoProvider,
-  useUpdateSsoProvider,
-  useUpsertRegistrationSettings,
-} from "~/lib/hooks";
 
 export default function SecurityAdminPage() {
   const { data: session } = useSession();
   const t = useTranslations("admin.security");
   const tCommon = useTranslations("common");
 
-  const { data: settings, refetch } = useFindFirstRegistrationSettings();
+  const { data: settings, refetch } = useClientQueries(schema).registrationSettings.useFindFirst();
   const { data: ssoProviders, refetch: refetchSsoProviders } =
-    useFindManySsoProvider();
-  const { mutateAsync: updateSsoProvider } = useUpdateSsoProvider();
-  const { mutateAsync: upsertSettings } = useUpsertRegistrationSettings();
+    useClientQueries(schema).ssoProvider.useFindMany();
+  const { mutateAsync: updateSsoProvider } = useClientQueries(schema).ssoProvider.useUpdate();
+  const { mutateAsync: upsertSettings } = useClientQueries(schema).registrationSettings.useUpsert();
 
-  const { data: affectedCount } = useCountUser({
+  const { data: affectedCount } = useClientQueries(schema).user.useCount({
     where: {
       authMethod: { in: ["INTERNAL", "BOTH"] },
       mustChangePassword: false,

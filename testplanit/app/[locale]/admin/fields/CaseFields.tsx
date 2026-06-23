@@ -1,6 +1,8 @@
 "use client";
 
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DataTable } from "@/components/tables/DataTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +10,6 @@ import { CirclePlus, LayoutList } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useFindManyCaseFields, useUpdateCaseFields } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddCaseFieldModal } from "./AddCaseField";
 import { ExtendedCaseFields, useColumns } from "./caseFieldColumns";
@@ -32,7 +33,7 @@ export default function CaseFields() {
     direction: "asc",
   });
 
-  const { mutateAsync: updateCaseField } = useUpdateCaseFields();
+  const { mutateAsync: updateCaseField } = useClientQueries(schema).caseFields.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateCaseFieldRef = useRef(updateCaseField);
@@ -64,7 +65,7 @@ export default function CaseFields() {
     []
   );
 
-  const { data: casefields, isLoading } = useFindManyCaseFields(
+  const { data: casefields, isLoading } = useClientQueries(schema).caseFields.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: sortConfig

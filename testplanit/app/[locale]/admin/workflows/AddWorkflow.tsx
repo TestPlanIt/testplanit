@@ -1,14 +1,8 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
 import { useEffect, useMemo, useState } from "react";
-import {
-  useCreateManyProjectWorkflowAssignment,
-  useCreateWorkflows,
-  useFindFirstColor,
-  useFindFirstFieldIcon,
-  useFindManyProjects,
-  useUpdateManyWorkflows,
-} from "~/lib/hooks";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 
 import { WorkflowType } from "~/zenstack/models";
 import type { Projects } from "~/zenstack/models";
@@ -111,22 +105,22 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
     useReviewFeatureEnabled();
   const reviewFeatureDisabled = reviewFeatureSystemEnabled === false;
 
-  const { data: defaultIconData } = useFindFirstFieldIcon({
+  const { data: defaultIconData } = useClientQueries(schema).fieldIcon.useFindFirst({
     where: { name: "layout-list" },
   });
-  const { data: defaultColorData } = useFindFirstColor();
+  const { data: defaultColorData } = useClientQueries(schema).color.useFindFirst();
   const [selectedIconId, setSelectedIconId] = useState<number | null>(null);
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
 
-  const { mutateAsync: createWorkflows } = useCreateWorkflows();
-  const { mutateAsync: updateManyWorkflows } = useUpdateManyWorkflows();
+  const { mutateAsync: createWorkflows } = useClientQueries(schema).workflows.useCreate();
+  const { mutateAsync: updateManyWorkflows } = useClientQueries(schema).workflows.useUpdateMany();
   const { mutateAsync: createManyProjectWorkflowAssignment } =
-    useCreateManyProjectWorkflowAssignment();
+    useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
 
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });

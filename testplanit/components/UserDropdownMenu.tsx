@@ -1,4 +1,6 @@
 import { Locale, Theme } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Accessibility,
   Check,
@@ -14,7 +16,6 @@ import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useRef, useState } from "react";
-import { useFindUniqueUser } from "~/lib/hooks";
 import { languageNames, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -38,7 +39,7 @@ export function UserDropdownMenu() {
   const router = useRouter();
   const { data: session, update } = useSession();
   const { theme, setTheme } = useTheme();
-  const { refetch: refetchUser } = useFindUniqueUser(
+  const { refetch: refetchUser } = useClientQueries(schema).user.useFindUnique(
     { where: { id: session?.user?.id || "" } },
     { enabled: !!session?.user?.id }
   );

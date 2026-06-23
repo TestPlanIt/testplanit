@@ -1,6 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -13,7 +15,6 @@ import { useRouter } from "~/lib/navigation";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import { useFindManyApiToken, useUpdateApiToken } from "~/lib/hooks";
 import { ExtendedApiToken, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -106,7 +107,7 @@ function ApiTokensList() {
     ? columnToFieldMap[sortConfig.column] || sortConfig.column
     : "createdAt";
 
-  const { mutateAsync: updateApiToken } = useUpdateApiToken();
+  const { mutateAsync: updateApiToken } = useClientQueries(schema).apiToken.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateApiTokenRef = useRef(updateApiToken);
@@ -114,7 +115,7 @@ function ApiTokensList() {
     updateApiTokenRef.current = updateApiToken;
   });
 
-  const { data: totalFilteredTokens } = useFindManyApiToken(
+  const { data: totalFilteredTokens } = useClientQueries(schema).apiToken.useFindMany(
     {
       orderBy: { [sortField]: sortConfig?.direction || "desc" },
       include: {
@@ -176,7 +177,7 @@ function ApiTokensList() {
     data: tokens,
     isLoading,
     refetch: refetchTokens,
-  } = useFindManyApiToken(
+  } = useClientQueries(schema).apiToken.useFindMany(
     {
       orderBy: { [sortField]: sortConfig?.direction || "desc" },
       include: {

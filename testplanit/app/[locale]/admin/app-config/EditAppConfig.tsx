@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +15,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useUpdateAppConfig } from "~/lib/hooks";
 
 type AppConfig = {
   key: string;
@@ -33,7 +34,7 @@ export function EditAppConfig({ config, open, onClose }: EditAppConfigProps) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { mutateAsync: updateAppConfig } = useUpdateAppConfig();
+  const { mutateAsync: updateAppConfig } = useClientQueries(schema).appConfig.useUpdate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

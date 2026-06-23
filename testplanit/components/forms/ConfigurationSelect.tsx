@@ -1,9 +1,10 @@
 import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { CircleSlash2, Combine } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { searchConfigurations } from "~/app/actions/searchConfigurations";
-import { useFindFirstConfigurations } from "~/lib/hooks";
 import { cn, type ClassValue } from "~/utils";
 
 type ConfigOption = { id: number; name: string };
@@ -27,7 +28,7 @@ export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
   const tCommon = useTranslations("common");
 
   // Resolve the current value's name for display
-  const { data: currentConfig } = useFindFirstConfigurations({
+  const { data: currentConfig } = useClientQueries(schema).configurations.useFindFirst({
     where: { id: value ?? undefined },
     select: { id: true, name: true },
   });

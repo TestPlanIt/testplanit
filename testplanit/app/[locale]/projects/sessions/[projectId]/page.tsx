@@ -1,6 +1,8 @@
 "use client";
 
 import { useDebounce } from "@/components/Debounce";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
@@ -28,13 +30,6 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useFindFirstProjects,
-  useFindFirstSessionResults,
-  useFindManyMilestones,
-  useFindManySessionResults,
-  useFindManySessions,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddSessionModal } from "./AddSessionModal";
 import SessionDisplay from "./SessionDisplay";
@@ -148,7 +143,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     return isNaN(id) ? null : id;
   }, [projectId]);
 
-  const { data: project, isLoading: isProjectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: isProjectLoading } = useClientQueries(schema).projects.useFindFirst(
     {
       where: {
         AND: [
@@ -207,7 +202,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     data: incompleteSessions,
     isLoading: isLoadingIncomplete,
     refetch: refetchIncompleteSessions,
-  } = useFindManySessions(
+  } = useClientQueries(schema).sessions.useFindMany(
     {
       where: {
         AND: [
@@ -230,7 +225,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     data: allCompletedSessions,
     isLoading: isLoadingAllCompleted,
     refetch: refetchCompletedSessions,
-  } = useFindManySessions(
+  } = useClientQueries(schema).sessions.useFindMany(
     {
       where: {
         AND: [
@@ -258,7 +253,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   }, []);
 
   const { data: completedSessionsForChart, isLoading: isLoadingChartData } =
-    useFindManySessions(
+    useClientQueries(schema).sessions.useFindMany(
       {
         where: {
           AND: [
@@ -327,7 +322,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   );
 
   const { data: milestones, isLoading: isLoadingMilestones } =
-    useFindManyMilestones({
+    useClientQueries(schema).milestones.useFindMany({
       where: {
         projectId: numericProjectId ?? undefined,
         isDeleted: false,
@@ -514,7 +509,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   // Chart data, success rate, and date range are derived via useMemo below.
 
   // Query 1: Get the most recent session result to determine the date range
-  const { data: latestSessionResult } = useFindFirstSessionResults(
+  const { data: latestSessionResult } = useClientQueries(schema).sessionResults.useFindFirst(
     {
       where: {
         session: { projectId: numericProjectId ?? undefined },
@@ -546,7 +541,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   const {
     data: recentRawSessionResults,
     isLoading: isLoadingRecentSessionResults,
-  } = useFindManySessionResults(
+  } = useClientQueries(schema).sessionResults.useFindMany(
     {
       where: {
         session: { projectId: numericProjectId ?? undefined },

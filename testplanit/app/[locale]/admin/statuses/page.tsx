@@ -1,13 +1,14 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import { useFindManyStatus, useUpdateStatus } from "~/lib/hooks";
 import { getColumns } from "./columns";
 import { ResultEditingPolicyCard } from "./ResultEditingPolicyCard";
 
@@ -34,7 +35,7 @@ function Status() {
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { mutateAsync: updateStatus } = useUpdateStatus();
+  const { mutateAsync: updateStatus } = useClientQueries(schema).status.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateStatusRef = useRef(updateStatus);
@@ -42,7 +43,7 @@ function Status() {
     updateStatusRef.current = updateStatus;
   });
 
-  const { data } = useFindManyStatus(
+  const { data } = useClientQueries(schema).status.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { order: "asc" },

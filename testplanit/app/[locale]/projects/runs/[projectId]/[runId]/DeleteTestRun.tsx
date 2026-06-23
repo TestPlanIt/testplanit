@@ -1,5 +1,7 @@
 "use client";
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogCancel,
   AlertDialogContent,
@@ -15,7 +17,6 @@ import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useUpdateTestRuns } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
 interface DeleteTestRunProps {
@@ -39,7 +40,7 @@ export function DeleteTestRunModal({
 }: DeleteTestRunProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { mutateAsync: updateTestRuns } = useUpdateTestRuns();
+  const { mutateAsync: updateTestRuns } = useClientQueries(schema).testRuns.useUpdate();
   const t = useTranslations("runs.delete");
   const tCommon = useTranslations("common");
 

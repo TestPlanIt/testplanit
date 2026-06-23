@@ -1,4 +1,6 @@
 import { SessionResultsSummary } from "@/components/SessionResultsSummary";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { TestRunCasesSummary } from "@/components/TestRunCasesSummary";
 import {
   Card,
@@ -16,11 +18,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
 import type { UserDashboardData } from "~/app/api/users/[userId]/dashboard/route";
 import { DateFormatter } from "~/components/DateFormatter";
-import {
-  useFindManySessions,
-  useFindManyTestRunCases,
-  useFindManyTestRuns,
-} from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import { toHumanReadable } from "~/utils/duration";
 import UserWorkGanttChart, {
@@ -515,7 +512,7 @@ export function UserDashboard() {
   }, [scheduledWorkItems]);
 
   // --- 2. Fetch Open Test Runs (include project) ---
-  const { data: allOpenRuns, isLoading: isLoadingRuns } = useFindManyTestRuns(
+  const { data: allOpenRuns, isLoading: isLoadingRuns } = useClientQueries(schema).testRuns.useFindMany(
     {
       where: {
         isDeleted: false,
@@ -539,7 +536,7 @@ export function UserDashboard() {
 
   // --- 3. Fetch Test Cases assigned to the user for those Runs ---
   const { data: userTestCasesForRuns, isLoading: isLoadingTestCases } =
-    useFindManyTestRunCases(
+    useClientQueries(schema).testRunCases.useFindMany(
       {
         where: {
           testRunId: { in: allOpenRunIds },
@@ -603,7 +600,7 @@ export function UserDashboard() {
 
   // --- 5. Fetch Active Sessions assigned to the user (include project) ---
   const { data: userActiveSessions, isLoading: isLoadingSessions } =
-    useFindManySessions(
+    useClientQueries(schema).sessions.useFindMany(
       {
         where: {
           assignedToId: userId, // Correct field from schema

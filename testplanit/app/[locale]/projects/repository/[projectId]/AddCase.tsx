@@ -1,4 +1,6 @@
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
 import { ConfigureParametersButton } from "@/components/parameters/ConfigureParametersButton";
@@ -73,14 +75,6 @@ import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
-import {
-  useFindFirstRepositoryCases,
-  useFindFirstRepositoryFolders,
-  useFindManySharedStepGroup,
-  useFindManyTags,
-  useFindManyTemplates,
-  useFindManyWorkflows,
-} from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import RenderField from "./RenderField";
@@ -346,7 +340,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     data: sharedStepGroupsData,
     isLoading: isLoadingSharedStepGroups,
   }: { data?: SharedStepGroupWithItems[]; isLoading?: boolean } =
-    useFindManySharedStepGroup(
+    useClientQueries(schema).sharedStepGroup.useFindMany(
       {
         where: {
           project: { id: Number(projectId) },
@@ -362,7 +356,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       { enabled: !!projectId && open }
     );
 
-  const { data: folder } = useFindFirstRepositoryFolders(
+  const { data: folder } = useClientQueries(schema).repositoryFolders.useFindFirst(
     {
       where: {
         id: folderId,
@@ -378,7 +372,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     }
   );
 
-  const { data: maxOrder } = useFindFirstRepositoryCases(
+  const { data: maxOrder } = useClientQueries(schema).repositoryCases.useFindFirst(
     {
       where: {
         folderId: folderId,
@@ -395,7 +389,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     }
   );
 
-  const { data: templates } = useFindManyTemplates(
+  const { data: templates } = useClientQueries(schema).templates.useFindMany(
     {
       where: {
         isDeleted: false,
@@ -433,7 +427,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     }
   );
 
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       scope: "CASES",
@@ -507,7 +501,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     setValue,
   } = form;
 
-  const { data: tags } = useFindManyTags({
+  const { data: tags } = useClientQueries(schema).tags.useFindMany({
     where: {
       isDeleted: false,
     },

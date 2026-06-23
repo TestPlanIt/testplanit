@@ -1,5 +1,7 @@
 "use client";
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogCancel,
   AlertDialogContent,
@@ -13,7 +15,6 @@ import type { Milestones } from "~/zenstack/models";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useUpdateMilestones } from "~/lib/hooks";
 
 interface DeleteMilestoneModalProps {
   milestone: Milestones;
@@ -32,7 +33,7 @@ export function DeleteMilestoneModal({
 }: DeleteMilestoneModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { mutateAsync: updateMilestone } = useUpdateMilestones();
+  const { mutateAsync: updateMilestone } = useClientQueries(schema).milestones.useUpdate();
   const t = useTranslations("milestones.delete");
   const tCommon = useTranslations("common");
 

@@ -1,5 +1,7 @@
 "use client";
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -12,7 +14,6 @@ import {
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { useUpdateRepositoryCases } from "~/lib/hooks";
 
 // Define a more specific type for the testcase prop
 interface DeleteModalTestCase {
@@ -49,7 +50,7 @@ export function DeleteCaseModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showActiveRunWarning, setShowActiveRunWarning] = useState(false);
   const [activeRunCount, setActiveRunCount] = useState(0);
-  const { mutateAsync: updateRepositoryCases } = useUpdateRepositoryCases();
+  const { mutateAsync: updateRepositoryCases } = useClientQueries(schema).repositoryCases.useUpdate();
 
   useEffect(() => {
     if (

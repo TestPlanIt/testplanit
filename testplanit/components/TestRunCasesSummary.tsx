@@ -1,4 +1,6 @@
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -25,7 +27,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
-import { useFindFirstStatus } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
 import { cn } from "~/utils";
@@ -208,7 +209,7 @@ export function TestRunCasesSummary({
     };
   }
 
-  const { data: firstStatus } = useFindFirstStatus({
+  const { data: firstStatus } = useClientQueries(schema).status.useFindFirst({
     where: { isDeleted: false },
     orderBy: { order: "asc" },
     include: { color: true },

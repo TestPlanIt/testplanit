@@ -1,4 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Popover,
   PopoverContent,
@@ -7,7 +9,6 @@ import {
 import type { FieldIcon, MilestoneTypes } from "~/zenstack/models";
 import { Milestone } from "lucide-react";
 import React from "react";
-import { useFindManyMilestoneTypes } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import DynamicIcon from "../DynamicIcon";
 
@@ -26,7 +27,7 @@ export const MilestoneTypeListDisplay: React.FC<MilestoneTypeListProps> = ({
     milestoneTypes = [];
   }
 
-  const { data: allMilestoneTypes } = useFindManyMilestoneTypes({
+  const { data: allMilestoneTypes } = useClientQueries(schema).milestoneTypes.useFindMany({
     orderBy: { name: "asc" },
     where: {
       AND: [

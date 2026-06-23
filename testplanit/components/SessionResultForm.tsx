@@ -1,6 +1,8 @@
 "use client";
 
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { SimpleUnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
@@ -35,16 +37,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
-import {
-  useCreateAttachments,
-  useCreateSessionResults,
-  useFindFirstProjects,
-  useFindFirstSessions,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-  useFindManyWorkflows,
-  useUpdateSessions,
-} from "~/lib/hooks";
 import { getBackgroundStyle } from "~/utils/colorUtils";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
@@ -220,7 +212,7 @@ export function SessionResultForm({
     restrictedFieldPermissions?.canAddEdit ?? false;
 
   // Fetch project data to get integrations
-  const { data: projectData } = useFindFirstProjects({
+  const { data: projectData } = useClientQueries(schema).projects.useFindFirst({
     where: { id: Number(projectId) },
     select: {
       projectIntegrations: {
@@ -245,7 +237,7 @@ export function SessionResultForm({
 
   // Fetch session data to get the template
   const { data: sessionData, isLoading: isLoadingSession } =
-    useFindFirstSessions({
+    useClientQueries(schema).sessions.useFindFirst({
       where: {
         id: Number(sessionId),
       },
@@ -262,7 +254,7 @@ export function SessionResultForm({
 
   // Fetch template result fields if we have a session with a template
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =
-    useFindManyTemplateResultAssignment({
+    useClientQueries(schema).templateResultAssignment.useFindMany({
       where: {
         templateId: sessionData?.templateId || 0,
       },
@@ -295,7 +287,7 @@ export function SessionResultForm({
     });
 
   // Get statuses that can be used for session results
-  const { data: statuses, isLoading: isLoadingStatuses } = useFindManyStatus({
+  const { data: statuses, isLoading: isLoadingStatuses } = useClientQueries(schema).status.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -324,7 +316,7 @@ export function SessionResultForm({
     },
   });
 
-  const { data: inProgressWorkflows } = useFindManyWorkflows({
+  const { data: inProgressWorkflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -341,9 +333,9 @@ export function SessionResultForm({
     },
   });
 
-  const { mutateAsync: createSessionResult } = useCreateSessionResults();
-  const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: updateSession } = useUpdateSessions();
+  const { mutateAsync: createSessionResult } = useClientQueries(schema).sessionResults.useCreate();
+  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateSession } = useClientQueries(schema).sessions.useUpdate();
 
   // Update useEffect to remove debug logging
   useEffect(() => {

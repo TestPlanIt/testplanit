@@ -1,6 +1,8 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { CheckCircle, ChevronDown, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -13,13 +15,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  useFindFirstRepositoryCases,
-  useFindFirstTestRuns,
-  useFindFirstWorkflows,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-} from "~/lib/hooks";
 import {
   isIssueRequiredOnFailureSubmitResultError,
   isJustificationRequiredSubmitResultError,
@@ -96,7 +91,7 @@ export function IterationResultPanel({
   // dedupes with the same query already running inside TestRunCaseDetails.
   // Steps are passed through to the AddResultModal so per-step result
   // capture works inside an iteration (results.id → step results).
-  const { data: testcase } = useFindFirstRepositoryCases(
+  const { data: testcase } = useClientQueries(schema).repositoryCases.useFindFirst(
     {
       where: { id: caseId, isDeleted: false },
       select: {
@@ -113,7 +108,7 @@ export function IterationResultPanel({
   // Quick-status can't capture a required result field; when the case's
   // template requires one, escalate to the full Add Result modal instead.
   const { data: requiredResultFieldAssignments } =
-    useFindManyTemplateResultAssignment(
+    useClientQueries(schema).templateResultAssignment.useFindMany(
       {
         where: {
           templateId: testcase?.template?.id,
@@ -127,7 +122,7 @@ export function IterationResultPanel({
     (requiredResultFieldAssignments?.length ?? 0) > 0;
 
   // Fetch the test run for its configuration (passed to AddResultModal).
-  const { data: testRun } = useFindFirstTestRuns(
+  const { data: testRun } = useClientQueries(schema).testRuns.useFindFirst(
     {
       where: { id: testRunId, isDeleted: false },
       select: {
@@ -138,7 +133,7 @@ export function IterationResultPanel({
     { enabled: !!testRunId }
   );
 
-  const { data: statuses } = useFindManyStatus({
+  const { data: statuses } = useClientQueries(schema).status.useFindMany({
     where: {
       AND: [
         { isEnabled: true },
@@ -151,7 +146,7 @@ export function IterationResultPanel({
     orderBy: { order: "asc" },
   });
 
-  const { data: inProgressWorkflow } = useFindFirstWorkflows({
+  const { data: inProgressWorkflow } = useClientQueries(schema).workflows.useFindFirst({
     where: {
       projects: { some: { projectId: Number(projectId) } },
       scope: "RUNS",

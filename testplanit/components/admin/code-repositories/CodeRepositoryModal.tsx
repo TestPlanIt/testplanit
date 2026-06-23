@@ -2,6 +2,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { Button } from "@/components/ui/button";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +36,6 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
-import { useUpdateCodeRepository, useUpsertCodeRepository } from "~/lib/hooks";
 import { CodeRepositoryConfigForm } from "./CodeRepositoryConfigForm";
 
 const PROVIDERS = [
@@ -81,8 +82,8 @@ export function CodeRepositoryModal({
     error?: string;
   } | null>(null);
 
-  const { mutateAsync: upsertRepository } = useUpsertCodeRepository();
-  const { mutateAsync: updateRepository } = useUpdateCodeRepository();
+  const { mutateAsync: upsertRepository } = useClientQueries(schema).codeRepository.useUpsert();
+  const { mutateAsync: updateRepository } = useClientQueries(schema).codeRepository.useUpdate();
 
   const form = useForm<FormData>({
     resolver: standardSchemaResolver(formSchema),

@@ -2,6 +2,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { useParams, useSearchParams } from "next/navigation";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
@@ -21,20 +23,6 @@ import { notifySessionAssignment } from "~/app/actions/session-notifications";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useCreateAttachments,
-  useCreateSessionVersions,
-  useFindFirstProjects,
-  useFindFirstSessions,
-  useFindManyMilestones,
-  useFindManySessionResults,
-  useFindManySessions,
-  useFindManySessionVersions,
-  useFindManyTemplates,
-  useFindManyWorkflows,
-  useUpdateAttachments,
-  useUpdateSessions,
-} from "~/lib/hooks";
 
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import { ConfigurationSelect } from "@/components/forms/ConfigurationSelect";
@@ -834,8 +822,8 @@ export default function SessionPage() {
   >(null);
   const [pendingAttachmentChanges, setPendingAttachmentChanges] =
     useState<AttachmentChanges>({ edits: [], deletes: [] });
-  const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: updateAttachments } = useUpdateAttachments();
+  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateAttachments } = useClientQueries(schema).attachments.useUpdate();
   const _version = searchParams.get("version");
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -845,7 +833,7 @@ export default function SessionPage() {
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const [refreshResults, setRefreshResults] = useState(0);
-  const { isLoading: isLoadingProjectData } = useFindFirstProjects({
+  const { isLoading: isLoadingProjectData } = useClientQueries(schema).projects.useFindFirst({
     where: { id: numericProjectId ?? undefined },
     select: {
       projectIntegrations: {
@@ -949,7 +937,7 @@ export default function SessionPage() {
     data: sessionData,
     refetch: refetchSession,
     isLoading: isLoadingSession,
-  } = useFindFirstSessions({
+  } = useClientQueries(schema).sessions.useFindFirst({
     where: {
       id: Number(sessionId),
     },
@@ -1036,7 +1024,7 @@ export default function SessionPage() {
     configuration: { id: number; name: string } | null;
   };
 
-  const { data: siblingSessions } = useFindManySessions(
+  const { data: siblingSessions } = useClientQueries(schema).sessions.useFindMany(
     {
       where: {
         configurationGroupId: sessionData?.configurationGroupId ?? undefined,
@@ -1085,13 +1073,13 @@ export default function SessionPage() {
   );
 
   // Fetch versions
-  const { data: versions } = useFindManySessionVersions({
+  const { data: versions } = useClientQueries(schema).sessionVersions.useFindMany({
     where: { sessionId: Number(sessionId) },
     orderBy: { version: "desc" },
   });
 
   // Fetch session results for PDF export
-  const { data: sessionResultsForExport } = useFindManySessionResults({
+  const { data: sessionResultsForExport } = useClientQueries(schema).sessionResults.useFindMany({
     where: { sessionId: Number(sessionId), isDeleted: false },
     include: {
       status: { include: { color: true } },
@@ -1151,7 +1139,7 @@ export default function SessionPage() {
 
   // Add data fetching queries
   const { data: templates, isLoading: isLoadingTemplates } =
-    useFindManyTemplates({
+    useClientQueries(schema).templates.useFindMany({
       where: {
         projects: {
           some: {
@@ -1167,7 +1155,7 @@ export default function SessionPage() {
     });
 
   const { data: workflows, isLoading: isLoadingWorkflows } =
-    useFindManyWorkflows({
+    useClientQueries(schema).workflows.useFindMany({
       where: {
         isDeleted: false,
         isEnabled: true,
@@ -1210,7 +1198,7 @@ export default function SessionPage() {
   }, [workflows, sessionData]);
 
   const { data: milestones, isLoading: isLoadingMilestones } =
-    useFindManyMilestones({
+    useClientQueries(schema).milestones.useFindMany({
       where: {
         projectId: numericProjectId ?? undefined,
         isDeleted: false,
@@ -1317,8 +1305,8 @@ export default function SessionPage() {
   }, [isLoading]);
 
   // Add mutation hooks
-  const { mutateAsync: updateSessions } = useUpdateSessions();
-  const { mutateAsync: createSessionVersions } = useCreateSessionVersions();
+  const { mutateAsync: updateSessions } = useClientQueries(schema).sessions.useUpdate();
+  const { mutateAsync: createSessionVersions } = useClientQueries(schema).sessionVersions.useCreate();
 
   // Add form controls
   const {

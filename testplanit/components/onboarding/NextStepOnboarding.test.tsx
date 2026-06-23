@@ -1,11 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  useFindFirstUserPreferences,
-  useFindManyProjects,
-  useUpdateUserPreferences,
-} from "~/lib/hooks";
 
 // vi.hoisted() for stable refs in vi.mock() factories
 const {
@@ -53,9 +50,9 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
 }));
 
 vi.mock("~/lib/hooks", () => ({
-  useFindFirstUserPreferences: vi.fn(),
-  useFindManyProjects: vi.fn(),
-  useUpdateUserPreferences: vi.fn(),
+  useClientQueries(schema).userPreferences.useFindFirst: vi.fn(),
+  useClientQueries(schema).projects.useFindMany: vi.fn(),
+  useClientQueries(schema).userPreferences.useUpdate: vi.fn(),
 }));
 
 vi.mock("@prisma/client", () => ({
@@ -94,9 +91,9 @@ vi.mock("nextstepjs", () => ({
 
 import { NextStepOnboarding } from "./NextStepOnboarding";
 
-const mockUseFindFirstUserPreferences = vi.mocked(useFindFirstUserPreferences);
-const mockUseFindManyProjects = vi.mocked(useFindManyProjects);
-const mockUseUpdateUserPreferences = vi.mocked(useUpdateUserPreferences);
+const mockUseFindFirstUserPreferences = vi.mocked(useClientQueries(schema).userPreferences.useFindFirst);
+const mockUseFindManyProjects = vi.mocked(useClientQueries(schema).projects.useFindMany);
+const mockUseUpdateUserPreferences = vi.mocked(useClientQueries(schema).userPreferences.useUpdate);
 const mockUseSession = vi.mocked(useSession);
 
 const setupDefaultMocks = () => {

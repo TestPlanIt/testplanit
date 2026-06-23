@@ -1,14 +1,11 @@
 "use client";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import type { User } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import {
-  useCreateGroups,
-  useCreateManyGroupAssignment,
-  useFindManyUser,
-} from "~/lib/hooks";
 import { invalidateModelQueries } from "~/utils/optimistic-updates";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -64,10 +61,10 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
   const queryClient = useQueryClient();
 
-  const { mutateAsync: createGroup } = useCreateGroups();
+  const { mutateAsync: createGroup } = useClientQueries(schema).groups.useCreate();
   const { mutateAsync: createManyGroupAssignment } =
-    useCreateManyGroupAssignment();
-  const { data: allUsersData, isLoading: usersLoading } = useFindManyUser({
+    useClientQueries(schema).groupAssignment.useCreateMany();
+  const { data: allUsersData, isLoading: usersLoading } = useClientQueries(schema).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     orderBy: { name: "asc" },
   });

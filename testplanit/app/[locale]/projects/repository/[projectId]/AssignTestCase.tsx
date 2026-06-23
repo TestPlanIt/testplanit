@@ -1,6 +1,8 @@
 "use client";
 
 import { UserNameCell } from "@/components/tables/UserNameCell";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +22,6 @@ import {
   notifyBulkTestCaseAssignment,
   notifyTestCaseAssignment,
 } from "~/app/actions/test-run-notifications";
-import { useUpdateTestRunCases } from "~/lib/hooks";
 import { ExtendedCases } from "./columns";
 
 interface AssignTestCaseModalProps {
@@ -58,7 +59,7 @@ export function AssignTestCaseModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update mutation
-  const { mutateAsync: updateTestRunCase } = useUpdateTestRunCases();
+  const { mutateAsync: updateTestRunCase } = useClientQueries(schema).testRunCases.useUpdate();
 
   const handleAssign = async () => {
     setIsSubmitting(true);

@@ -1,4 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Popover,
   PopoverContent,
@@ -7,7 +9,6 @@ import {
 import type { CaseFields } from "~/zenstack/models";
 import { LayoutList } from "lucide-react";
 import React from "react";
-import { useFindManyCaseFields } from "~/lib/hooks";
 interface CaseFieldListProps {
   caseFields: { caseFieldId: number }[];
   usePopover?: boolean;
@@ -17,7 +18,7 @@ export const CaseFieldListDisplay: React.FC<CaseFieldListProps> = ({
   caseFields,
   usePopover = true,
 }) => {
-  const { data: allCaseFields } = useFindManyCaseFields({
+  const { data: allCaseFields } = useClientQueries(schema).caseFields.useFindMany({
     orderBy: { displayName: "asc" },
     where: {
       AND: [

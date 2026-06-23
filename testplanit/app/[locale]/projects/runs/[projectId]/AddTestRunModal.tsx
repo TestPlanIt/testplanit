@@ -1,6 +1,8 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
@@ -70,15 +72,6 @@ import { RunCardinalityHardRefuseDialog } from "@/components/runs/RunCardinality
 import { RunCardinalitySoftConfirmDialog } from "@/components/runs/RunCardinalitySoftConfirmDialog";
 import type { PreflightResult } from "~/lib/types/iterationCardinality";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useCreateAttachments,
-  useCreateTestRuns,
-  useFindManyConfigurations,
-  useFindManyMilestones,
-  useFindManyTags,
-  useFindManyWorkflows,
-  useFindUniqueProjects,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
 import { IconName } from "~/types/globals";
@@ -931,8 +924,8 @@ export default function AddTestRunModal({
 
   const [linkedIssueIds, setLinkedIssueIds] = useState<number[]>([]);
 
-  const { mutateAsync: createTestRuns } = useCreateTestRuns();
-  const { mutateAsync: createAttachments } = useCreateAttachments();
+  const { mutateAsync: createTestRuns } = useClientQueries(schema).testRuns.useCreate();
+  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
 
   // `excludeNotStartedFromRuns` is the per-project toggle that hides NOT_STARTED
   // workflow-state cases from runs. We read it here so the submit handler can
@@ -940,14 +933,14 @@ export default function AddTestRunModal({
   // payload — without this, a user picking a stale page state could still get a
   // draft case added to a run after the admin flipped the toggle on. Cheap one-
   // row read; the picker-side filter (UI hide) is tracked as a follow-up.
-  const { data: projectFlag } = useFindUniqueProjects(
+  const { data: projectFlag } = useClientQueries(schema).projects.useFindUnique(
     {
       where: { id: Number(projectId) },
       select: { excludeNotStartedFromRuns: true },
     },
     { enabled: Number.isFinite(Number(projectId)) }
   );
-  const { data: configurations } = useFindManyConfigurations({
+  const { data: configurations } = useClientQueries(schema).configurations.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -955,7 +948,7 @@ export default function AddTestRunModal({
     },
     orderBy: { name: "asc" },
   });
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -965,7 +958,7 @@ export default function AddTestRunModal({
     include: { icon: true, color: true },
     orderBy: { order: "asc" },
   });
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       projectId: Number(projectId),
       isDeleted: false,
@@ -976,7 +969,7 @@ export default function AddTestRunModal({
       children: { include: { milestoneType: { include: { icon: true } } } },
     },
   });
-  useFindManyTags({
+  useClientQueries(schema).tags.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });

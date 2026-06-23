@@ -1,4 +1,6 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
 import { formatSeconds } from "@/components/DurationDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -67,15 +69,6 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { EditResultModal } from "~/app/[locale]/projects/repository/[projectId]/EditResultModal";
 import FieldValueRenderer from "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useCreateTestRunCases,
-  useFindFirstRepositoryCases,
-  useFindManyAppConfig,
-  useFindManyResultFieldValues,
-  useFindManySharedStepItem,
-  useFindManyTestRuns,
-  useFindUniqueProjects,
-} from "~/lib/hooks";
 import { resolveEffectiveWindowSeconds } from "~/lib/services/editWindow";
 import { Link } from "~/lib/navigation";
 import { getDateFnsLocale } from "~/utils/locales";
@@ -190,7 +183,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
 }) {
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
-  const { data: testRuns } = useFindManyTestRuns({
+  const { data: testRuns } = useClientQueries(schema).testRuns.useFindMany({
     where: {
       AND: [
         { projectId: Number(projectId) },
@@ -219,7 +212,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
     orderBy: { name: "asc" },
   });
 
-  const { mutateAsync: createTestRunCase } = useCreateTestRunCases();
+  const { mutateAsync: createTestRunCase } = useClientQueries(schema).testRunCases.useCreate();
 
   const handleAddToTestRun = async (testRunId: number) => {
     try {
@@ -302,7 +295,7 @@ const ResultFieldValuesDisplay = ({
 }) => {
   const tCommon = useTranslations("common");
 
-  const { data: fieldValues, isLoading } = useFindManyResultFieldValues(
+  const { data: fieldValues, isLoading } = useClientQueries(schema).resultFieldValues.useFindMany(
     {
       where: {
         testRunResultsId: resultId,
@@ -584,7 +577,7 @@ const RenderSharedGroupInHistoryList: React.FC<{
   const tCommon = useTranslations("common");
   const locale = useLocale();
 
-  const { data: items, isLoading } = useFindManySharedStepItem(
+  const { data: items, isLoading } = useClientQueries(schema).sharedStepItem.useFindMany(
     {
       where: {
         sharedStepGroupId,
@@ -732,7 +725,7 @@ export default function TestResultHistory({
   } | null>(null);
 
   // Fetch app config for edit duration
-  const { data: appConfigData } = useFindManyAppConfig({
+  const { data: appConfigData } = useClientQueries(schema).appConfig.useFindMany({
     where: { key: "edit_results_duration" },
   });
 
@@ -742,7 +735,7 @@ export default function TestResultHistory({
 
   // Per-project edit-window override, resolved against the system ceiling so
   // the Edit button matches the server guard in submit-result's sibling path.
-  const { data: editWindowProject } = useFindUniqueProjects(
+  const { data: editWindowProject } = useClientQueries(schema).projects.useFindUnique(
     {
       where: { id: Number(projectId) },
       select: { editResultsDurationSeconds: true },
@@ -754,7 +747,7 @@ export default function TestResultHistory({
 
   // Fetch test case data
   const { data: fetchedTestCase, isLoading: isLoadingTestCase } =
-    useFindFirstRepositoryCases(
+    useClientQueries(schema).repositoryCases.useFindFirst(
       {
         where: { id: Number(caseId), isDeleted: false },
         select: {

@@ -1,8 +1,9 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useUpdateTags } from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -52,7 +53,7 @@ export function AddTag({ open, onClose }: AddTagProps) {
   // new one — kept on the auto-generated update hook so the React Query
   // cache invalidation (cases-with-tags lists, filter dropdowns, etc.)
   // stays automatic.
-  const { mutateAsync: updateTag } = useUpdateTags();
+  const { mutateAsync: updateTag } = useClientQueries(schema).tags.useUpdate();
 
   const form = useForm<AddTagFormData>({
     resolver: standardSchemaResolver(AddTagSchema),

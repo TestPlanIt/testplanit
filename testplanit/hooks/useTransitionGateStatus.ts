@@ -1,9 +1,10 @@
 "use client";
 
 import { WorkflowScope } from "~/zenstack/models";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useMemo } from "react";
 
-import { useFindManyReviewRequest, useFindManyWorkflows } from "~/lib/hooks";
 
 import { useReviewFeatureEnabled } from "./useReviewFeatureEnabled";
 
@@ -83,7 +84,7 @@ export function useTransitionGateStatus(
   // Workflow states in the entity-type's scope. We fetch ALL (gated and
   // non-gated) so the hook can look up the target state's order from the
   // same list, then filter to gates client-side. One round trip total.
-  const { data: workflows, isLoading: workflowsLoading } = useFindManyWorkflows(
+  const { data: workflows, isLoading: workflowsLoading } = useClientQueries(schema).workflows.useFindMany(
     {
       where: {
         scope: SCOPE_BY_ENTITY_TYPE[entityType],
@@ -104,7 +105,7 @@ export function useTransitionGateStatus(
   // resolves "do I have approval for each blocking gate?" by indexing this
   // list by `toStateId`.
   const { data: approvedRequests, isLoading: approvalsLoading } =
-    useFindManyReviewRequest(
+    useClientQueries(schema).reviewRequest.useFindMany(
       {
         where: {
           entityType,
@@ -235,7 +236,7 @@ export function useBulkTransitionGateStatus(
   const { enabled, isLoading: featureLoading } =
     useReviewFeatureEnabled(projectId);
 
-  const { data: workflows, isLoading: workflowsLoading } = useFindManyWorkflows(
+  const { data: workflows, isLoading: workflowsLoading } = useClientQueries(schema).workflows.useFindMany(
     {
       where: {
         scope: SCOPE_BY_ENTITY_TYPE[entityType],
@@ -254,7 +255,7 @@ export function useBulkTransitionGateStatus(
 
   const entityIds = entities.map((e) => e.id);
   const { data: approvedRequests, isLoading: approvalsLoading } =
-    useFindManyReviewRequest(
+    useClientQueries(schema).reviewRequest.useFindMany(
       {
         where: {
           entityType,

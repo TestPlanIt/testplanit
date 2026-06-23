@@ -1,17 +1,14 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Inbox } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import {
-  useCountProjects,
-  useCountReviewRequest,
-  useFindUniqueUser,
-} from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 
 /**
@@ -43,7 +40,7 @@ export function ReviewInboxButton() {
 
   // Load the user's role memberships once per session — feeds the role-holder
   // branch of the count query's OR clause.
-  const { data: userWithRoles } = useFindUniqueUser(
+  const { data: userWithRoles } = useClientQueries(schema).user.useFindUnique(
     {
       where: { id: session?.user?.id ?? "" },
       select: {
@@ -86,7 +83,7 @@ export function ReviewInboxButton() {
     return Array.from(ids);
   })();
 
-  const { data: count } = useCountReviewRequest(
+  const { data: count } = useClientQueries(schema).reviewRequest.useCount(
     {
       where: {
         status: "PENDING",
@@ -106,7 +103,7 @@ export function ReviewInboxButton() {
   // reflects "projects this user can act in." Used to hide the icon entirely
   // when the viewer has no review-enabled project to act in.
   const { data: enabledProjectCount, isLoading: projectCountLoading } =
-    useCountProjects(
+    useClientQueries(schema).projects.useCount(
       {
         where: {
           reviewWorkflowEnabled: true,

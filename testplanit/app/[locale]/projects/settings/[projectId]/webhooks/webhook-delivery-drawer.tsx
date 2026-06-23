@@ -1,6 +1,8 @@
 "use client";
 
 import { DateFormatter } from "@/components/DateFormatter";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +29,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { replayWebhookDelivery } from "~/app/actions/webhook-config";
-import { useFindUniqueWebhookDelivery } from "~/lib/hooks";
 
 const EVENT_LABEL_KEYS: Record<string, string> = {
   "test_run.created": "events.testRunCreated",
@@ -76,7 +77,7 @@ interface WebhookDeliveryDrawerProps {
  *
  * Lazy-loads the full record only when the modal opens — the deliveries list
  * query selects a small column set for speed; the modal fetches the same
- * minimal shape via `useFindUniqueWebhookDelivery` so it's small and fast.
+ * minimal shape via `useClientQueries(schema).webhookDelivery.useFindUnique` so it's small and fast.
  *
  * Conditional rendering by direction (D-17a / D-17b — outbound-only replay):
  *   OUTBOUND → eventId field + Replay button + AlertDialog confirm
@@ -100,7 +101,7 @@ export function WebhookDeliveryDrawer({
   const [replayConfirmOpen, setReplayConfirmOpen] = useState(false);
   const [replayInFlight, setReplayInFlight] = useState(false);
 
-  const { data: delivery, isLoading } = useFindUniqueWebhookDelivery(
+  const { data: delivery, isLoading } = useClientQueries(schema).webhookDelivery.useFindUnique(
     {
       where: { id: deliveryId ?? "" },
       select: {

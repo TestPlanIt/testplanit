@@ -1,4 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
 import React from "react";
@@ -53,12 +55,12 @@ const mockField = vi.hoisted(() => ({
 
 // --- ZenStack hook mocks ---
 vi.mock("~/lib/hooks", () => ({
-  useFindManySessionResults: vi.fn(() => ({
+  useClientQueries(schema).sessionResults.useFindMany: vi.fn(() => ({
     data: stableEmptyArray,
     isLoading: false,
     refetch: vi.fn(),
   })),
-  useFindManyStatus: vi.fn(() => ({
+  useClientQueries(schema).status.useFindMany: vi.fn(() => ({
     data: stableEmptyArray,
     isLoading: false,
   })),
@@ -277,7 +279,6 @@ const buildMockResult = (overrides: Partial<any> = {}) => ({
 });
 
 // Import after vi.mock
-import { useFindManySessionResults, useFindManyStatus } from "~/lib/hooks";
 import { SessionResultsList } from "./SessionResultsList";
 
 beforeEach(() => {
@@ -303,11 +304,11 @@ beforeEach(() => {
   mockUseRouter.mockReturnValue({ push: vi.fn(), refresh: vi.fn() });
 
   // Re-mock with stable references after vi.clearAllMocks()
-  (useFindManyStatus as ReturnType<typeof vi.fn>).mockReturnValue({
+  (useClientQueries(schema).status.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
     data: mockStatuses,
     isLoading: false,
   });
-  (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+  (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
     data: stableEmptyArray,
     isLoading: false,
     refetch: vi.fn(),
@@ -333,7 +334,7 @@ describe("SessionResultsList", () => {
   });
 
   it("shows loading spinner when results are loading", () => {
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: null,
       isLoading: true,
       refetch: vi.fn(),
@@ -353,7 +354,7 @@ describe("SessionResultsList", () => {
   });
 
   it("shows loading spinner when statuses are loading", () => {
-    (useFindManyStatus as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).status.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: null,
       isLoading: true,
     });
@@ -372,7 +373,7 @@ describe("SessionResultsList", () => {
   });
 
   it("renders result cards with status name", () => {
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [buildMockResult()],
       isLoading: false,
       refetch: vi.fn(),
@@ -392,7 +393,7 @@ describe("SessionResultsList", () => {
   });
 
   it("renders user name cell for each result", () => {
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [buildMockResult()],
       isLoading: false,
       refetch: vi.fn(),
@@ -412,7 +413,7 @@ describe("SessionResultsList", () => {
   });
 
   it("renders date formatter for result createdAt", () => {
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [buildMockResult()],
       isLoading: false,
       refetch: vi.fn(),
@@ -432,7 +433,7 @@ describe("SessionResultsList", () => {
   });
 
   it("shows edit button when user has canEditResults permission and session is not completed", () => {
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [buildMockResult({ createdById: "user-123" })],
       isLoading: false,
       refetch: vi.fn(),
@@ -454,7 +455,7 @@ describe("SessionResultsList", () => {
   });
 
   it("hides edit button when session is completed", () => {
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [buildMockResult()],
       isLoading: false,
       refetch: vi.fn(),
@@ -474,7 +475,7 @@ describe("SessionResultsList", () => {
   });
 
   it("hides edit button when user lacks canEditResults permission", () => {
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [buildMockResult()],
       isLoading: false,
       refetch: vi.fn(),
@@ -494,7 +495,7 @@ describe("SessionResultsList", () => {
   });
 
   it("shows delete button when user has canDeleteResults permission and session is not completed", () => {
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [buildMockResult()],
       isLoading: false,
       refetch: vi.fn(),
@@ -514,7 +515,7 @@ describe("SessionResultsList", () => {
   });
 
   it("hides delete button when session is completed", () => {
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [buildMockResult()],
       isLoading: false,
       refetch: vi.fn(),
@@ -534,7 +535,7 @@ describe("SessionResultsList", () => {
   });
 
   it("renders elapsed time when result has elapsed value", () => {
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [buildMockResult({ elapsed: 120 })],
       isLoading: false,
       refetch: vi.fn(),
@@ -570,7 +571,7 @@ describe("SessionResultsList", () => {
       note: null,
     };
 
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [buildMockResult({ attachments: [mockAttachment] })],
       isLoading: false,
       refetch: vi.fn(),
@@ -591,7 +592,7 @@ describe("SessionResultsList", () => {
   });
 
   it("renders multiple result cards when multiple results exist", () => {
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [
         buildMockResult({
           id: 1,
@@ -621,7 +622,7 @@ describe("SessionResultsList", () => {
   });
 
   it("renders copy link button for each result", () => {
-    (useFindManySessionResults as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useClientQueries(schema).sessionResults.useFindMany as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [buildMockResult()],
       isLoading: false,
       refetch: vi.fn(),

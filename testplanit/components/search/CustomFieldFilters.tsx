@@ -1,6 +1,8 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -22,7 +24,6 @@ import { format } from "date-fns";
 import { CalendarIcon, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { useFindManyCaseFields } from "~/lib/hooks";
 import {
   CustomFieldFilter,
   CustomFieldOperator,
@@ -70,7 +71,7 @@ export function CustomFieldFilters({
 
   // Fetch available custom fields based on entity type
   // Filter by templates assigned to the project
-  const { data: caseFields } = useFindManyCaseFields(
+  const { data: caseFields } = useClientQueries(schema).caseFields.useFindMany(
     {
       where: {
         isEnabled: true,

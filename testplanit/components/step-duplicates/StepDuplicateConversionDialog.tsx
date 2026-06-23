@@ -1,6 +1,8 @@
 "use client";
 
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -19,8 +21,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
-import { useUpdateStepSequenceMatch } from "~/lib/hooks/step-sequence-match";
-import { useFindManySteps } from "~/lib/hooks/steps";
 import type { RepositoryCaseSource } from "~/zenstack/models";
 import type { StepFormField } from "@/[locale]/projects/repository/[projectId]/StepsForm";
 import StepsForm from "@/[locale]/projects/repository/[projectId]/StepsForm";
@@ -85,7 +85,7 @@ export function StepDuplicateConversionDialog({
     defaultValues: { steps: [] },
   });
 
-  const updateMatch = useUpdateStepSequenceMatch();
+  const updateMatch = useClientQueries(schema).stepSequenceMatch.useUpdate();
 
   // Initialize state when match changes
   useEffect(() => {
@@ -97,7 +97,7 @@ export function StepDuplicateConversionDialog({
   const firstMember = match?.members?.[0];
 
   // Fetch steps for preview from the first member's range
-  const { data: stepsData, isLoading: stepsLoading } = useFindManySteps(
+  const { data: stepsData, isLoading: stepsLoading } = useClientQueries(schema).steps.useFindMany(
     firstMember
       ? {
           where: {

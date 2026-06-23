@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
@@ -26,7 +28,6 @@ import { AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import { useFormContext } from "react-hook-form";
-import { useFindManyLlmIntegration } from "~/lib/hooks/llm-integration";
 import {
   LLM_FEATURE_LABELS,
   PROMPT_FEATURE_VARIABLES,
@@ -54,7 +55,7 @@ export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
   const systemPromptRef = useRef<HTMLTextAreaElement | null>(null);
   const userPromptRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const { data: integrations } = useFindManyLlmIntegration({
+  const { data: integrations } = useClientQueries(schema).llmIntegration.useFindMany({
     where: { isDeleted: false, status: "ACTIVE" },
     include: { llmProviderConfig: true },
     orderBy: { name: "asc" },

@@ -1,6 +1,8 @@
 "use client";
 
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   Select,
   SelectContent,
   SelectGroup,
@@ -13,7 +15,6 @@ import type { CaseFields } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "~/components/ui/badge";
-import { useFindManyCaseFields } from "~/lib/hooks";
 
 const CASE_VARIABLES = [
   { label: "name", value: "{{name}}", type: "Text" },
@@ -74,7 +75,7 @@ export function TemplateVariableInserter({
     };
   }, [textareaRef]);
 
-  const { data: caseFieldsData } = useFindManyCaseFields({
+  const { data: caseFieldsData } = useClientQueries(schema).caseFields.useFindMany({
     where: { isEnabled: true, isDeleted: false },
     select: {
       displayName: true,

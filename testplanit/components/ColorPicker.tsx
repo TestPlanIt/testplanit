@@ -1,4 +1,6 @@
 import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
   Select,
   SelectContent,
   SelectItem,
@@ -7,7 +9,6 @@ import {
 import type { Color } from "~/zenstack/models";
 import { Ellipsis } from "lucide-react";
 import React, { useState } from "react";
-import { useFindManyColor } from "~/lib/hooks";
 
 interface ColorPickerProps {
   onColorSelect: (colorId: number) => void;
@@ -18,7 +19,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   onColorSelect,
   initialColorId,
 }) => {
-  const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(schema).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });

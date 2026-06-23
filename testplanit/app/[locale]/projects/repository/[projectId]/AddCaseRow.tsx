@@ -1,4 +1,6 @@
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -22,12 +24,6 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
-import {
-  useFindFirstRepositoryCases,
-  useFindFirstRepositoryFolders,
-  useFindManyTemplates,
-  useFindManyWorkflows,
-} from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 
 function buildFormSchema(t: (key: any) => string) {
@@ -63,7 +59,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const { data: folder } = useFindFirstRepositoryFolders(
+  const { data: folder } = useClientQueries(schema).repositoryFolders.useFindFirst(
     {
       where: {
         id: folderId,
@@ -79,7 +75,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     }
   );
 
-  const { data: maxOrder } = useFindFirstRepositoryCases(
+  const { data: maxOrder } = useClientQueries(schema).repositoryCases.useFindFirst(
     {
       where: {
         folderId: folderId,
@@ -104,7 +100,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   // would briefly return nothing for projects whose only assigned template
   // is the seeded "Default Template", which leaves `template.id` as 0 and
   // silently breaks case creation. Matches the AddCase modal's lookup.
-  const { data: templates } = useFindManyTemplates(
+  const { data: templates } = useClientQueries(schema).templates.useFindMany(
     {
       where: {
         isDeleted: false,
@@ -121,7 +117,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   );
   const template = templates?.find((t) => t.isDefault) ?? templates?.[0];
 
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       scope: "CASES",

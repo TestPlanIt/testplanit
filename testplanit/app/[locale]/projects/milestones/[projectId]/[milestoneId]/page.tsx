@@ -1,6 +1,8 @@
 "use client";
 
 import { ForecastDisplay } from "@/components/ForecastDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import LoadingSpinnerPage from "@/components/LoadingSpinnerAlert";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
@@ -57,15 +59,6 @@ import { CommentsSection } from "~/components/comments/CommentsSection";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { useExportMilestonePdf } from "~/hooks/pdf/useExportMilestonePdf";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useFindFirstMilestones,
-  useFindManyColor,
-  useFindManyMilestones,
-  useFindManyMilestoneTypes,
-  useFindManySessions,
-  useFindManyTestRuns,
-  useUpdateMilestones,
-} from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import {
   ColorMap,
@@ -166,7 +159,7 @@ export default function MilestoneDetailsPage() {
   });
 
   const { data: milestone, isLoading: isMilestoneLoading } =
-    useFindFirstMilestones({
+    useClientQueries(schema).milestones.useFindFirst({
       where: {
         id: Number(milestoneId),
         projectId: Number(projectId),
@@ -198,12 +191,12 @@ export default function MilestoneDetailsPage() {
     });
 
   const { data: milestoneTypes, isLoading: isTypesLoading } =
-    useFindManyMilestoneTypes({
+    useClientQueries(schema).milestoneTypes.useFindMany({
       include: { icon: true },
     });
 
   const { data: allProjectMilestones, isLoading: isProjectMilestonesLoading } =
-    useFindManyMilestones({
+    useClientQueries(schema).milestones.useFindMany({
       where: {
         projectId: Number(projectId),
         isDeleted: false,
@@ -217,7 +210,7 @@ export default function MilestoneDetailsPage() {
       },
     });
 
-  const { data: colors } = useFindManyColor({
+  const { data: colors } = useClientQueries(schema).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
@@ -240,7 +233,7 @@ export default function MilestoneDetailsPage() {
     [milestoneId, descendantsData]
   );
 
-  const { data: milestoneSessions } = useFindManySessions({
+  const { data: milestoneSessions } = useClientQueries(schema).sessions.useFindMany({
     where: {
       milestoneId: { in: allMilestoneIds },
       isDeleted: false,
@@ -270,7 +263,7 @@ export default function MilestoneDetailsPage() {
     orderBy: [{ isCompleted: "asc" }, { createdAt: "desc" }],
   });
 
-  const { data: milestoneTestRuns } = useFindManyTestRuns({
+  const { data: milestoneTestRuns } = useClientQueries(schema).testRuns.useFindMany({
     where: {
       milestoneId: { in: allMilestoneIds },
       isDeleted: false,
@@ -360,7 +353,7 @@ export default function MilestoneDetailsPage() {
     void fetchMilestoneForecast();
   }, [milestoneId, tCommon]);
 
-  const { mutateAsync: updateMilestone } = useUpdateMilestones();
+  const { mutateAsync: updateMilestone } = useClientQueries(schema).milestones.useUpdate();
 
   const isLoading =
     isMilestoneLoading ||

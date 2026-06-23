@@ -1,12 +1,13 @@
 "use client";
 
 import { Session } from "next-auth";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "~/components/theme-provider";
-import { useFindUniqueUserPreferences } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 
 interface ShareLayoutContentProps {
@@ -23,7 +24,7 @@ export function ShareLayoutContent({
   const tBranding = useTranslations("common.branding");
 
   // Fetch user preferences if authenticated
-  const { data: userPreferences } = useFindUniqueUserPreferences(
+  const { data: userPreferences } = useClientQueries(schema).userPreferences.useFindUnique(
     {
       where: { userId: session?.user?.id || "" },
     },

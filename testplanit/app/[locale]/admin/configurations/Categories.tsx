@@ -1,4 +1,6 @@
 import { useDebounce } from "@/components/Debounce";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Loading } from "@/components/Loading";
 import { CustomColumnMeta } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
@@ -24,13 +26,6 @@ import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { z } from "zod/v4";
-import {
-  useCreateConfigCategories,
-  useCreateConfigVariants,
-  useFindManyConfigCategories,
-  useUpdateConfigVariants,
-  useUpdateManyConfigurations,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ConfigCategoryWithVariants, useColumns } from "./categoryColumns";
 import { DeleteConfigCategory } from "./DeleteCategory";
@@ -56,11 +51,11 @@ function ConfigCategoriesList() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
-  const { mutateAsync: createConfigCategory } = useCreateConfigCategories();
-  const { mutateAsync: createConfigVariant } = useCreateConfigVariants();
-  const { mutateAsync: updateConfigVariant } = useUpdateConfigVariants();
+  const { mutateAsync: createConfigCategory } = useClientQueries(schema).configCategories.useCreate();
+  const { mutateAsync: createConfigVariant } = useClientQueries(schema).configVariants.useCreate();
+  const { mutateAsync: updateConfigVariant } = useClientQueries(schema).configVariants.useUpdate();
   const { mutateAsync: updateManyConfigurations } =
-    useUpdateManyConfigurations();
+    useClientQueries(schema).configurations.useUpdateMany();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const variantInputRef = useRef<HTMLInputElement>(null);
@@ -99,7 +94,7 @@ function ConfigCategoriesList() {
     }),
   });
 
-  const { data, refetch, isLoading } = useFindManyConfigCategories(
+  const { data, refetch, isLoading } = useClientQueries(schema).configCategories.useFindMany(
     {
       where: {
         isDeleted: false,
@@ -289,7 +284,7 @@ function ConfigCategoriesList() {
           data: { isEnabled: false },
         });
 
-        // Disable related configurations (Ensure useUpdateManyConfigurations hook is imported and used)
+        // Disable related configurations (Ensure useClientQueries(schema).configurations.useUpdateMany hook is imported and used)
         await updateManyConfigurations({
           where: {
             variants: {
