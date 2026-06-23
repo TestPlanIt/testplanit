@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {会话} other {会话}}",
     "labels": {
       "totalElapsed": "花费时间",
@@ -2468,6 +2473,11 @@
       "versionCreated": "版本 {version} 创建",
       "latestVersionUpdated": "最新版本 {version, number} 已更新",
       "historyView": "测试用例历史记录视图"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "未找到选项",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "未找到测试运行。",
     "add": {
       "title": "添加测试运行",
@@ -5663,7 +5678,9 @@
       },
       "systemActor": "系统",
       "systemActorTooltip": "系统执行的操作，而非登录用户执行的操作。",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {

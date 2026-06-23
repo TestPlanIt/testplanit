@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {Oturum} other {Oturumlar}}",
     "labels": {
       "totalElapsed": "Harcanan Zaman",
@@ -2468,6 +2473,11 @@
       "versionCreated": "Sürüm {version} Oluşturuldu",
       "latestVersionUpdated": "En Son Sürüm {version, number} Güncellendi",
       "historyView": "Test Durumu Geçmişini Görüntüle"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "Seçenek bulunamadı.",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "Test çalıştırması bulunamadı.",
     "add": {
       "title": "Test Çalıştırması Ekle",
@@ -5663,7 +5678,9 @@
       },
       "systemActor": "Sistem",
       "systemActorTooltip": "Sistem tarafından gerçekleştirilen işlem, oturum açmış bir kullanıcı tarafından değil.",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {

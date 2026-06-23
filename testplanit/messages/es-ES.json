@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {Sesión} other {Sesiones}}",
     "labels": {
       "totalElapsed": "Tiempo gastado",
@@ -2468,6 +2473,11 @@
       "versionCreated": "Versión {version} creada",
       "latestVersionUpdated": "Última versión {version, number} Actualizada",
       "historyView": "Ver Historial de Casos de Prueba"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "Opción no encontrada",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "No se encontró ejecución de prueba.",
     "add": {
       "title": "Añadir prueba",
@@ -5663,7 +5678,9 @@
       },
       "systemActor": "Sistema",
       "systemActorTooltip": "Acción realizada por el sistema, no por un usuario que haya iniciado sesión.",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {

@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {세션} other {세션들}}",
     "labels": {
       "totalElapsed": "소요 시간",
@@ -2468,6 +2473,11 @@
       "versionCreated": "버전 {version} 생성됨",
       "latestVersionUpdated": "최신 버전 {version, number} 업데이트됨",
       "historyView": "테스트 케이스 기록 보기"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "옵션을 찾을 수 없습니다",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "테스트 실행을 찾을 수 없습니다.",
     "add": {
       "title": "테스트 실행 추가",
@@ -5663,7 +5678,9 @@
       },
       "systemActor": "체계",
       "systemActorTooltip": "로그인한 사용자가 아닌 시스템에서 수행한 작업입니다.",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {

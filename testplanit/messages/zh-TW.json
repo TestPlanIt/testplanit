@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {會話} other {會話}}",
     "labels": {
       "totalElapsed": "花費時間",
@@ -2468,6 +2473,11 @@
       "versionCreated": "版本 {version} 創建",
       "latestVersionUpdated": "最新版本 {version, number} 已更新",
       "historyView": "測試用例歷史記錄視圖"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "未找到選項",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "未找到測試運行。",
     "add": {
       "title": "新增測試運行",
@@ -5663,7 +5678,9 @@
       },
       "systemActor": "系統",
       "systemActorTooltip": "系統執行的操作，而非登入使用者執行的操作。",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {

@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {セッション} other {セッション}}",
     "labels": {
       "totalElapsed": "費やした時間",
@@ -2468,6 +2473,11 @@
       "versionCreated": "バージョン {version} が作成されました",
       "latestVersionUpdated": "最新バージョン {version, number} 更新済み",
       "historyView": "テストケース履歴ビュー"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "オプションが見つかりません",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "テスト実行が見つかりません。",
     "add": {
       "title": "テスト実行を追加",
@@ -5663,7 +5678,9 @@
       },
       "systemActor": "システム",
       "systemActorTooltip": "ログインユーザーではなく、システムによって実行された操作",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {

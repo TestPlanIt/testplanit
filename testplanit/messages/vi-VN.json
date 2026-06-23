@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {Phiên} other {Các phiên}}",
     "labels": {
       "totalElapsed": "Thời gian đã dành",
@@ -2468,6 +2473,11 @@
       "versionCreated": "Phiên bản {version} Đã tạo",
       "latestVersionUpdated": "Phiên bản mới nhất {version, number} Đã cập nhật",
       "historyView": "Chế độ xem lịch sử trường hợp kiểm thử"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "Không tìm thấy tùy chọn",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "Không tìm thấy kết quả chạy thử nghiệm.",
     "add": {
       "title": "Thêm Chạy thử",
@@ -5663,7 +5678,9 @@
       },
       "systemActor": "Hệ thống",
       "systemActorTooltip": "Hành động này được thực hiện bởi hệ thống, không phải bởi người dùng đã đăng nhập.",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {
