@@ -22,6 +22,7 @@ import {
   pollDataChangeLogsAcrossTenants,
   type TenantPollClient,
 } from "../lib/audit/correlation";
+import { ensureAuditTriggers } from "../lib/audit/ensureAuditTriggers";
 
 /**
  * Process an audit log job.
@@ -316,10 +317,30 @@ const startWorker = async () => {
 // Run the worker only when this file is executed directly (not on require)
 if (require.main === module) {
   console.log("[AuditLogWorker] Running as standalone process...");
-  startWorker().catch((err) => {
-    console.error("[AuditLogWorker] Failed to start:", err);
-    process.exit(1);
-  });
+  // Re-attach the audit-trigger substrate before draining DataChangeLog — but ONLY in single-tenant
+  // mode, where this worker owns its one database and is the direct consumer of the capture triggers
+  // (if they were dropped by `prisma db push` or a launch path that skips apply-triggers it would
+  // silently drain nothing). In multi-tenant mode this process has no single database to apply to —
+  // its DATABASE_URL is a placeholder and tenant connections are resolved per-cycle — so each
+  // tenant's web app owns trigger install via the instrumentation boot hook, and we skip here rather
+  // than uselessly connect to the placeholder. Idempotent and advisory-locked; fail-open by default
+  // so a DDL hiccup can't crash-loop the worker — set AUDIT_TRIGGER_BOOTSTRAP_FATAL=1 to refuse to
+  // start without it.
+  void (async () => {
+    try {
+      if (isMultiTenantMode()) {
+        console.log(
+          "[AuditLogWorker] multi-tenant mode — skipping trigger bootstrap (each tenant's web tier owns it)"
+        );
+      } else {
+        await ensureAuditTriggers();
+      }
+      await startWorker();
+    } catch (err) {
+      console.error("[AuditLogWorker] Failed to start:", err);
+      process.exit(1);
+    }
+  })();
 }
 
 export default worker;
