@@ -2,6 +2,50 @@ import "@testing-library/jest-dom";
 import React from "react";
 import { afterAll, beforeAll, vi } from "vitest";
 
+// v3 grouped data hooks come from `useClientQueries(schema).<model>.useX()`,
+// which calls React context internally and throws "Cannot read 'useContext' of
+// null" when rendered without the app providers. Stub useClientQueries so every
+// model/operation returns an inert query/mutation result, letting component
+// renders mount. Tests that assert on hook-driven data still vi.mock the module
+// locally (per-file mocks override this global stub).
+vi.mock("@zenstackhq/tanstack-query/react", async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual = await importOriginal<any>();
+  const queryResult = () => ({
+    data: undefined,
+    isLoading: false,
+    isPending: false,
+    isError: false,
+    isSuccess: true,
+    error: null,
+    refetch: vi.fn(),
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
+  });
+  const mutationResult = () => ({
+    mutate: vi.fn(),
+    mutateAsync: vi.fn().mockResolvedValue(undefined),
+    isPending: false,
+    isError: false,
+    isSuccess: false,
+    error: null,
+    reset: vi.fn(),
+  });
+  const ops = new Proxy(
+    {},
+    {
+      get: (_t, op: string | symbol) => {
+        if (typeof op !== "string") return undefined;
+        const isMutation = /^use(Create|Update|Upsert|Delete)/.test(op);
+        return () => (isMutation ? mutationResult() : queryResult());
+      },
+    }
+  );
+  const models = new Proxy({}, { get: () => ops });
+  return { ...actual, useClientQueries: () => models };
+});
+
 // The app's root <TooltipProvider> lives in app/providers.tsx, which test
 // renders don't include. Without a provider in scope Radix's <Tooltip>
 // throws "Tooltip must be used within TooltipProvider". Stub the module so
