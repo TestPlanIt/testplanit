@@ -154,7 +154,7 @@ describe("share-links server actions", () => {
       projectId: 1,
       expiresAt: new Date("2024-12-31"),
       notifyOnView: true,
-      passwordHash: null,
+      hasPassword: false,
     };
 
     it("should return early if no session", async () => {
@@ -249,7 +249,7 @@ describe("share-links server actions", () => {
 
       await auditShareLinkCreation({
         ...mockShareLink,
-        passwordHash: "$2b$10$hashedpassword",
+        hasPassword: true,
       });
 
       const call = vi.mocked(prisma.auditLog.create).mock.calls[0][0];

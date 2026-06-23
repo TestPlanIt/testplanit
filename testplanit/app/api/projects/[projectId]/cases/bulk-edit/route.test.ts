@@ -1318,9 +1318,9 @@ describe("Bulk Edit API Route", () => {
 
     it("handles timeout gracefully", async () => {
       (prisma.$transaction as any).mockImplementation(
-        async (callback: any, options: any) => {
-          // Verify extended timeout is passed
-          expect(options.timeout).toBe(60000);
+        async (callback: any) => {
+          // v3 $transaction options accept only { isolationLevel } (no
+          // maxWait/timeout), so there's no timeout option to assert here.
           return callback({
             $executeRaw: vi.fn().mockResolvedValue([]),
             $queryRaw: vi.fn().mockResolvedValue([]),
