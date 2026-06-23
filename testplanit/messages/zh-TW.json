@@ -1072,7 +1072,7 @@
         "apple": "繼續使用 Apple",
         "microsoft": "繼續使用 Microsoft",
         "samlProvider": "使用 {name} 登入",
-        "magicLink": "使用一次性魔法連結登入",
+        "magicLink": "Sign in with single-use Magic Link",
         "emailLogin": "繼續透過電子郵件"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "訪問被拒絕。您的帳戶可能已停用或您沒有登入權限。",
       "configuration": "伺服器配置存在問題。",
-      "verification": "此登入連結已過期或已被使用。魔法連結僅能使用一次，請重新申請一個以登入。",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "驗證碼無效，請重試。",
       "twoFactorTokenRequired": "需要令牌",
       "verificationCodeRequired": "需要驗證碼"
@@ -7643,9 +7643,9 @@
       "intro": "點擊下方按鈕登入：",
       "signInButton": "登入",
       "copyPasteIntro": "或複製此連結並貼上到瀏覽器中：",
-      "singleUseNotice": "為了您的安全，此連結僅能使用一次。如需再次登入，請申請新的連結。",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "如果您沒有要求收到這封郵件，您可以忽略它。",
-      "textBody": "登入 TestPlanIt\n\n點擊下方連結登入：\n{url}\n\n為了您的安全，此連結僅能使用一次。如需再次登入，請申請新的連結。\n\n如果您並未要求此郵件，可以放心忽略。"
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

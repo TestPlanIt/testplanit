@@ -1072,7 +1072,7 @@
         "apple": "Weiter mit Apple",
         "microsoft": "Mit Microsoft fortfahren",
         "samlProvider": "Melden Sie sich mit {name}an.",
-        "magicLink": "Mit einmaligem Magic Link anmelden",
+        "magicLink": "Sign in with single-use Magic Link",
         "emailLogin": "Mit der E-Mail fortfahren"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Zugriff verweigert. Ihr Konto ist möglicherweise inaktiv oder Sie haben keine Berechtigung zum Anmelden.",
       "configuration": "Es gibt ein Problem mit der Serverkonfiguration.",
-      "verification": "Dieser Anmeldelink ist abgelaufen oder wurde bereits verwendet. Magic Links können nur einmal verwendet werden – fordern Sie bitte einen neuen an, um sich anzumelden.",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "Ungültiger Bestätigungscode. Bitte versuchen Sie es erneut.",
       "twoFactorTokenRequired": "Token erforderlich",
       "verificationCodeRequired": "Ein Bestätigungscode ist erforderlich."
@@ -7643,9 +7643,9 @@
       "intro": "Klicken Sie auf die Schaltfläche unten, um sich anzumelden:",
       "signInButton": "Anmelden",
       "copyPasteIntro": "Oder kopieren Sie diesen Link und fügen Sie ihn in Ihren Browser ein:",
-      "singleUseNotice": "Zu Ihrer Sicherheit kann dieser Link nur einmal verwendet werden. Fordern Sie einen neuen Link an, wenn Sie sich erneut anmelden möchten.",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "Wenn Sie diese E-Mail nicht angefordert haben, können Sie sie getrost ignorieren.",
-      "textBody": "Melden Sie sich bei TestPlanIt an\n\nKlicken Sie auf den unten stehenden Link, um sich anzumelden:\n{url}\n\nZu Ihrer Sicherheit kann dieser Link nur einmal verwendet werden. Fordern Sie einen neuen Link an, wenn Sie sich erneut anmelden möchten.\n\nWenn Sie diese E-Mail nicht angefordert haben, können Sie sie getrost ignorieren."
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

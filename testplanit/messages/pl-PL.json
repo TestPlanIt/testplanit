@@ -1072,7 +1072,7 @@
         "apple": "Kontynuuj z Apple",
         "microsoft": "Kontynuuj z Microsoft",
         "samlProvider": "Zaloguj się za pomocą {name}",
-        "magicLink": "Zaloguj się jednorazowym Magic Linkiem",
+        "magicLink": "Sign in with single-use Magic Link",
         "emailLogin": "Kontynuuj z e-mailem"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Dostęp zabroniony. Twoje konto może być nieaktywne lub nie masz uprawnień do logowania.",
       "configuration": "Wystąpił problem z konfiguracją serwera.",
-      "verification": "Ten link do logowania wygasł lub został już użyty. Magic Linki można wykorzystać tylko raz — poproś o nowy, aby się zalogować.",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "Nieprawidłowy kod weryfikacyjny. Spróbuj ponownie.",
       "twoFactorTokenRequired": "Token jest wymagany",
       "verificationCodeRequired": "Wymagany jest kod weryfikacyjny"
@@ -7643,9 +7643,9 @@
       "intro": "Kliknij poniższy przycisk, aby się zalogować:",
       "signInButton": "Zalogować się",
       "copyPasteIntro": "Lub skopiuj i wklej ten link do przeglądarki:",
-      "singleUseNotice": "Ze względów bezpieczeństwa tego linku można użyć tylko raz. Poproś o nowy link, jeśli musisz zalogować się ponownie.",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "Jeśli nie prosiłeś o wysłanie tego e-maila, możesz go bezpiecznie zignorować.",
-      "textBody": "Zaloguj się do TestPlanIt\n\nKliknij poniższy link, aby się zalogować:\n{url}\n\nZe względów bezpieczeństwa tego linku można użyć tylko raz. Poproś o nowy link, jeśli musisz zalogować się ponownie.\n\nJeśli nie prosiłeś o tę wiadomość, możesz ją zignorować."
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

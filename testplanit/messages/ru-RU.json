@@ -1072,7 +1072,7 @@
         "apple": "Продолжить с Apple",
         "microsoft": "Продолжить работу с Microsoft",
         "samlProvider": "Войдите с помощью {name}",
-        "magicLink": "Войти с помощью одноразовой Magic Link",
+        "magicLink": "Sign in with single-use Magic Link",
         "emailLogin": "Продолжить отправку электронного письма"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Доступ запрещен. Возможно, ваша учетная запись неактивна или у вас нет разрешения на вход.",
       "configuration": "Возникла проблема с конфигурацией сервера.",
-      "verification": "Эта ссылка для входа истекла или уже была использована. Magic Link можно использовать только один раз — запросите новую, чтобы войти.",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "Неверный код подтверждения. Пожалуйста, попробуйте еще раз.",
       "twoFactorTokenRequired": "Требуется токен",
       "verificationCodeRequired": "Требуется код подтверждения."
@@ -7643,9 +7643,9 @@
       "intro": "Нажмите кнопку ниже, чтобы войти:",
       "signInButton": "Войти",
       "copyPasteIntro": "Или скопируйте и вставьте эту ссылку в свой браузер:",
-      "singleUseNotice": "В целях безопасности эту ссылку можно использовать только один раз. Запросите новую ссылку, если вам нужно войти снова.",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "Если вы не запрашивали это письмо, можете смело его проигнорировать.",
-      "textBody": "Войдите в TestPlanIt\n\nНажмите на ссылку ниже, чтобы войти:\n{url}\n\nВ целях безопасности эту ссылку можно использовать только один раз. Запросите новую ссылку, если вам нужно войти снова.\n\nЕсли вы не запрашивали это письмо, можете спокойно его проигнорировать."
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {
