@@ -116,14 +116,35 @@ const {
   };
 });
 
-vi.mock("@zenstackhq/tanstack-query/react", () => ({
-  useClientQueries: () => ({
-    appConfig: { useFindUnique: () => ({ data: stableConfig }), useUpsert: () => ({
-    mutateAsync: mockUpsertMutateAsync,
-    isPending: false,
-  }) },
-  }),
-}));
+// The spec renders the admin page tree, which reads more models than this card
+// (e.g. scimToken.useUpdate). Return the controlled appConfig hooks and fall
+// back to inert stubs for every other model/op so the tree mounts.
+vi.mock("@zenstackhq/tanstack-query/react", () => {
+  const stub = (op: string) =>
+    /^use(Create|Update|Upsert|Delete)/.test(op)
+      ? () => ({ mutateAsync: vi.fn(), mutate: vi.fn(), isPending: false })
+      : () => ({ data: undefined, isLoading: false, refetch: vi.fn() });
+  const specific: Record<string, Record<string, unknown>> = {
+    appConfig: {
+      useFindUnique: () => ({ data: stableConfig }),
+      useUpsert: () => ({ mutateAsync: mockUpsertMutateAsync, isPending: false }),
+    },
+  };
+  return {
+    useClientQueries: () =>
+      new Proxy({} as Record<string, unknown>, {
+        get: (_t, model) =>
+          typeof model !== "string"
+            ? undefined
+            : new Proxy({} as Record<string, unknown>, {
+                get: (_t2, op) =>
+                  typeof op !== "string"
+                    ? undefined
+                    : (specific[model]?.[op] ?? stub(op)),
+              }),
+      }),
+  };
+});
 
 vi.mock("~/app/actions/scimMappingActions", () => ({
   previewFallbackDefaultChange: mockPreviewFallbackDefaultChange,
