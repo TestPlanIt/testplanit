@@ -1,8 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// listScimConflictsAction issues its filtered query via Kysely
+// `sql`...`.execute(prisma.$qb). Mock $qb as a capturing executor: transform/
+// compile pass the raw node through (so tests can inspect its SQL fragments and
+// bound parameters) and executeQuery returns the { rows } shape the action reads.
+const { qbCompileQuery, qbExecuteQuery } = vi.hoisted(() => ({
+  qbCompileQuery: vi.fn((node: unknown) => node),
+  qbExecuteQuery: vi.fn(),
+}));
+
 vi.mock("~/lib/prisma", () => ({
   prisma: {
-    $queryRaw: vi.fn(),
+    $qb: {
+      getExecutor: () => ({
+        transformQuery: (n: unknown) => n,
+        compileQuery: qbCompileQuery,
+        executeQuery: qbExecuteQuery,
+      }),
+    },
     auditLog: {
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -75,6 +90,8 @@ function makeAuditRow(overrides: Record<string, unknown> = {}) {
 describe("scimConflictLogActions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    qbCompileQuery.mockImplementation((node: unknown) => node);
+    qbExecuteQuery.mockResolvedValue({ rows: [] });
     // Default tx behavior: invoke the callback with a fake tx client.
     vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => {
       const txStub = {
@@ -91,33 +108,33 @@ describe("scimConflictLogActions", () => {
   });
 
   describe("listScimConflictsAction", () => {
-    it("L1: rejects non-admin caller and does NOT call $queryRaw", async () => {
+    it("L1: rejects non-admin caller and does not issue the query", async () => {
       mockNonAdminSession();
 
       const result = await listScimConflictsAction({});
 
       expect(result).toEqual({ success: false, error: "Unauthorized" });
-      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+      expect(qbExecuteQuery).not.toHaveBeenCalled();
     });
 
-    it("L2: rejects missing session and does NOT call $queryRaw", async () => {
+    it("L2: rejects missing session and does not issue the query", async () => {
       mockNoSession();
 
       const result = await listScimConflictsAction({});
 
       expect(result).toEqual({ success: false, error: "Unauthorized" });
-      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+      expect(qbExecuteQuery).not.toHaveBeenCalled();
     });
 
-    it("L3: admin session calls $queryRaw with the SCIM filter literal", async () => {
+    it("L3: admin session issues the query with the SCIM filter literal", async () => {
       mockAdminSession();
-      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([] as any);
+      qbExecuteQuery.mockResolvedValueOnce({ rows: [] } as any);
 
       await listScimConflictsAction({ startIndex: 0, count: 50 });
 
-      expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(qbExecuteQuery).toHaveBeenCalledTimes(1);
       // The Prisma.sql template fragments are stored on the first arg.
-      const call = vi.mocked(prisma.$queryRaw).mock.calls[0][0] as any;
+      const call = qbCompileQuery.mock.calls[0][0] as any;
       // Prisma.sql arg is a Sql object: stringify by walking its values+strings.
       const rendered = JSON.stringify(call);
       expect(rendered).toContain("metadata->>'source' = 'scim'");
@@ -136,7 +153,7 @@ describe("scimConflictLogActions", () => {
       const rows = Array.from({ length: 51 }, (_, i) =>
         makeAuditRow({ id: `audit-${i}` })
       );
-      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce(rows as any);
+      qbExecuteQuery.mockResolvedValueOnce({ rows } as any);
 
       const result = await listScimConflictsAction({ count: 50 });
 
@@ -147,7 +164,7 @@ describe("scimConflictLogActions", () => {
 
     it("L5: default startIndex=0, count=50 when input is empty", async () => {
       mockAdminSession();
-      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([] as any);
+      qbExecuteQuery.mockResolvedValueOnce({ rows: [] } as any);
 
       const result = await listScimConflictsAction({});
 
@@ -158,7 +175,7 @@ describe("scimConflictLogActions", () => {
 
     it("L6: respects cursor input — passes cursor.timestamp and cursor.id to query", async () => {
       mockAdminSession();
-      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([] as any);
+      qbExecuteQuery.mockResolvedValueOnce({ rows: [] } as any);
 
       await listScimConflictsAction({
         cursor: {
@@ -167,15 +184,15 @@ describe("scimConflictLogActions", () => {
         },
       });
 
-      const call = vi.mocked(prisma.$queryRaw).mock.calls[0][0] as any;
+      const call = qbCompileQuery.mock.calls[0][0] as any;
       const rendered = JSON.stringify(call);
       // The cursor must appear as a bound value, not interpolated text.
       expect(rendered).toContain("audit-cursor-id");
     });
 
-    it("L7: $queryRaw failure returns generic error and does NOT leak err.message", async () => {
+    it("L7: query failure returns generic error and does NOT leak err.message", async () => {
       mockAdminSession();
-      vi.mocked(prisma.$queryRaw).mockRejectedValueOnce(
+      qbExecuteQuery.mockRejectedValueOnce(
         new Error('column "foo" does not exist')
       );
 
@@ -188,7 +205,7 @@ describe("scimConflictLogActions", () => {
 
     it("L8: list action does NOT write any audit row (read-only)", async () => {
       mockAdminSession();
-      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([] as any);
+      qbExecuteQuery.mockResolvedValueOnce({ rows: [] } as any);
 
       await listScimConflictsAction({});
 
