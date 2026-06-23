@@ -1,15 +1,18 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockTx, mockDb, sessionRef } = vi.hoisted(() => {
+const { mockTx, auditedTxSpy, sessionRef } = vi.hoisted(() => {
   const tx: any = {};
-  const db: any = {
-    $transaction: vi.fn(async (fn: (t: any) => Promise<unknown>) => fn(tx)),
-    testCaseParameter: { findFirst: vi.fn() },
-  };
   return {
     mockTx: tx,
-    mockDb: db,
+    // Stands in for the route's transaction boundary. The route now opens its
+    // tx via auditedEnhancedTransaction (GUC + tx enhance) instead of
+    // getEnhancedDb().$transaction; its internals are covered by that module's
+    // own tests, so here we run the caller's callback with mockTx and assert the
+    // route opened exactly one transaction through it.
+    auditedTxSpy: vi.fn(
+      async (_session: unknown, fn: (t: any) => Promise<unknown>) => fn(tx)
+    ),
     sessionRef: {
       current: { user: { id: "u-1", name: "U", email: "u@e.com" } },
     },
@@ -22,8 +25,8 @@ vi.mock("next-auth", () => ({
 
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
 
-vi.mock("~/lib/auth/utils", () => ({
-  getEnhancedDb: vi.fn(async () => mockDb),
+vi.mock("~/lib/audit/auditedTransaction", () => ({
+  auditedEnhancedTransaction: auditedTxSpy,
 }));
 
 const helperSpies = vi.hoisted(() => ({
@@ -63,10 +66,6 @@ beforeEach(() => {
     name: "username",
   });
   helperSpies.softDeleteParameterInTransaction.mockResolvedValue(undefined);
-  mockDb.testCaseParameter.findFirst = vi.fn(async () => ({
-    id: 1,
-    name: "username",
-  }));
 });
 
 describe("POST /api/repository/cases/[caseId]/parameters", () => {
@@ -108,7 +107,7 @@ describe("POST /api/repository/cases/[caseId]/parameters", () => {
       { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(200);
-    expect(mockDb.$transaction).toHaveBeenCalledTimes(1);
+    expect(auditedTxSpy).toHaveBeenCalledTimes(1);
     expect(helperSpies.createParameterInTransaction).toHaveBeenCalledTimes(1);
     const args = helperSpies.createParameterInTransaction.mock.calls[0];
     expect(args[0]).toBe(mockTx);
@@ -172,7 +171,7 @@ describe("DELETE /api/repository/cases/[caseId]/parameters/[paramId]", () => {
       params: Promise.resolve({ caseId: "5", paramId: "1" }),
     });
     expect(res.status).toBe(200);
-    expect(mockDb.$transaction).toHaveBeenCalledTimes(1);
+    expect(auditedTxSpy).toHaveBeenCalledTimes(1);
     expect(helperSpies.softDeleteParameterInTransaction).toHaveBeenCalledTimes(
       1
     );

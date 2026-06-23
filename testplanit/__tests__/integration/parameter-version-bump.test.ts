@@ -13,14 +13,9 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockDb, txMock, sessionRef } = vi.hoisted(() => {
+const { txMock, sessionRef } = vi.hoisted(() => {
   const tx: any = {};
-  const db: any = {
-    $transaction: vi.fn(async (fn: (t: any) => Promise<unknown>) => fn(tx)),
-    testCaseParameter: { findFirst: vi.fn() },
-  };
   return {
-    mockDb: db,
     txMock: tx,
     sessionRef: {
       current: { user: { id: "u-1", name: "U", email: "u@e.com" } },
@@ -32,8 +27,15 @@ vi.mock("next-auth", () => ({
   getServerSession: vi.fn(async () => sessionRef.current),
 }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
-vi.mock("~/lib/auth/utils", () => ({
-  getEnhancedDb: vi.fn(async () => mockDb),
+
+// All three route surfaces open their transaction via auditedEnhancedTransaction
+// (GUC + tx enhance), whose internals are covered by its own tests. Stub it to
+// run the caller's callback with txMock so we can assert each route delegates to
+// the version-bumping parameter helper with that same tx.
+vi.mock("~/lib/audit/auditedTransaction", () => ({
+  auditedEnhancedTransaction: vi.fn(
+    async (_session: unknown, fn: (t: any) => Promise<unknown>) => fn(txMock)
+  ),
 }));
 
 const helperSpies = vi.hoisted(() => ({

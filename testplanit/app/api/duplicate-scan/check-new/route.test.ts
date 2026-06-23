@@ -20,6 +20,14 @@ const {
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
+vi.mock("~/lib/auditContextWrappers", () => ({
+  withAuditContext: (handler: (...args: any[]) => any) => handler,
+}));
+
+vi.mock("~/lib/auditContext", () => ({
+  updateAuditContext: vi.fn(),
+}));
+
 vi.mock("next-auth", () => ({
   getServerSession: (...args: any[]) => mockGetServerSession(...args),
 }));
@@ -55,8 +63,10 @@ vi.mock("~/lib/prisma", () => ({
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function makeRequest(body: Record<string, unknown>): Request {
-  return new Request("http://localhost:3000/api/duplicate-scan/check-new", {
+import { NextRequest } from "next/server";
+
+function makeRequest(body: Record<string, unknown>): NextRequest {
+  return new NextRequest("http://localhost:3000/api/duplicate-scan/check-new", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

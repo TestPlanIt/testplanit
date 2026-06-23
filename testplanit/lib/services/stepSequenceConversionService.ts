@@ -2,6 +2,7 @@
 // PostgreSQL's 63-char limit for deeply nested conversion queries
 
 import { prisma } from "~/lib/prismaBase";
+import { withAuditGuc, buildGucPayload } from "~/lib/audit/gucContext";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
@@ -42,7 +43,9 @@ export async function convertMatch(
   userId: string,
   editedSteps?: Array<{ step: string | null; expectedResult: string | null }>
 ): Promise<ConversionResult> {
-  const result = await prisma.$transaction(
+  const result = await withAuditGuc(
+    prisma,
+    buildGucPayload(userId),
     async (tx) => {
       // -----------------------------------------------------------------------
       // Step 1 — Load match and validate

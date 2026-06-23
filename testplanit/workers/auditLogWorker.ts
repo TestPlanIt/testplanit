@@ -2,7 +2,9 @@ import type { Prisma } from "@prisma/client";
 import { Job, Worker } from "bullmq";
 import {
   disconnectAllTenantClients,
+  getAllTenantIds,
   getPrismaClientForJob,
+  getTenantPrismaClient,
   isMultiTenantMode,
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
@@ -16,6 +18,10 @@ import {
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
+import {
+  pollDataChangeLogsAcrossTenants,
+  type TenantPollClient,
+} from "../lib/audit/correlation";
 
 /**
  * Process an audit log job.
@@ -158,6 +164,13 @@ const processor = async (job: Job<AuditLogJobData>) => {
             ? (metadata as Prisma.InputJsonValue)
             : undefined,
         projectId: validatedProjectId,
+        // Stamp the per-operation correlation id from the request's audit
+        // context so an aggregate semantic event (BULK_*, DUPLICATED,
+        // ITERATION_*) groups in the UI as the header of the CDC per-row detail
+        // rows that share the same operationId, instead of floating separately.
+        // Events with no X-Operation-Id (login, export, …) carry null and are
+        // unaffected.
+        operationId: context?.operationId ?? null,
       },
     });
 
@@ -171,6 +184,39 @@ const processor = async (job: Job<AuditLogJobData>) => {
 };
 
 let worker: Worker | null = null;
+
+/**
+ * Loop B (CDC consumer) lifecycle. `running` is the single stop signal flipped false by the
+ * SIGINT/SIGTERM handlers — pollDataChangeLogsAcrossTenants checks it at each iteration boundary and exits
+ * cleanly (any half-processed batch is left processed=false for the next start; the idempotent
+ * insert handles re-materialization safely). `loopBPromise` lets shutdown await a clean stop.
+ */
+const correlationRunning = { running: false };
+let loopBPromise: Promise<void> | null = null;
+
+/**
+ * Loop B correlation targets. DataChangeLog lives in every tenant database (capture triggers are
+ * applied per-DB), so the consumer must drain each one into its own AuditLog. Single-tenant: the raw
+ * prismaBase client (the sole authorized DataChangeLog reader — it bypasses the @@deny('all', true)
+ * policy by design). Multi-tenant: one raw client per configured tenant, re-resolved each cycle so a
+ * tenant added at runtime is picked up without a worker restart. getTenantPrismaClient returns a
+ * cached vanilla PrismaClient per tenant, which satisfies the raw-client surface correlation needs
+ * (raw SQL on DataChangeLog + policy-free model lookups for humanization).
+ */
+function listCorrelationClients(): TenantPollClient[] {
+  if (!isMultiTenantMode()) {
+    return [
+      {
+        tenantId: undefined,
+        client: getPrismaClientForJob({ tenantId: undefined }),
+      },
+    ];
+  }
+  return getAllTenantIds().map((tenantId) => ({
+    tenantId,
+    client: getTenantPrismaClient(tenantId),
+  }));
+}
 
 /**
  * Start the audit log worker.
@@ -210,9 +256,38 @@ const startWorker = async () => {
     );
   }
 
+  // Loop B (CDC consumer): drains DataChangeLog → AuditLog in a restart-safe polling loop ALONGSIDE
+  // the BullMQ consumer above (Loop A). It only needs the DB (no Valkey), so it starts regardless of
+  // the Valkey branch. In multi-tenant mode it polls EVERY configured tenant's database per cycle
+  // (re-resolved each pass so runtime tenant additions are picked up); in single-tenant mode it
+  // polls the one prismaBase client. Each client is the sole authorized DataChangeLog reader for its
+  // database — it bypasses the @@deny('all', true) policy by design, the same raw-client pattern the
+  // BullMQ processor uses above. Fire-and-forget against the running flag; the process stays alive on
+  // the BullMQ worker (Loop A) and/or this loop's own event loop.
+  correlationRunning.running = true;
+  loopBPromise = pollDataChangeLogsAcrossTenants(
+    listCorrelationClients,
+    correlationRunning
+  ).catch((err) => {
+    console.error("[AuditLogWorker] CDC poll loop (Loop B) crashed:", err);
+  });
+  console.log(
+    `[AuditLogWorker] Started CDC poll loop (Loop B)${
+      isMultiTenantMode()
+        ? ` across ${getAllTenantIds().length} tenant database(s)`
+        : ""
+    } for DataChangeLog → AuditLog materialization`
+  );
+
   // Graceful shutdown
   process.on("SIGINT", async () => {
     console.log("[AuditLogWorker] Shutting down...");
+    // Stop Loop B at its next iteration boundary, then await its clean exit (a half-processed
+    // batch is left processed=false for the next start — the idempotent insert handles re-run).
+    correlationRunning.running = false;
+    if (loopBPromise) {
+      await loopBPromise;
+    }
     if (worker) {
       await worker.close();
     }
@@ -224,6 +299,10 @@ const startWorker = async () => {
 
   process.on("SIGTERM", async () => {
     console.log("[AuditLogWorker] Received SIGTERM, shutting down...");
+    correlationRunning.running = false;
+    if (loopBPromise) {
+      await loopBPromise;
+    }
     if (worker) {
       await worker.close();
     }

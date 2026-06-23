@@ -44,6 +44,10 @@ vi.mock("../lib/queueNames", () => ({
 // ─── Mock prisma ──────────────────────────────────────────────────────────────
 
 const mockTx = {
+  // Phase 13 CTX-02 — the worker stamps app.audit_context via tx.$executeRaw
+  // as the first statement inside the per-case transaction; stub it so the
+  // copy/move flow runs without a real connection.
+  $executeRaw: vi.fn().mockResolvedValue(0),
   repositoryCases: {
     // findFirst: the copy/move flow now probes for a soft-deleted row at
     // the target's (projectId, name, className, source) tuple before
@@ -92,6 +96,7 @@ const mockPrisma = {
 
 vi.mock("../lib/multiTenantPrisma", () => ({
   getPrismaClientForJob: vi.fn(() => mockPrisma),
+  getCurrentTenantId: vi.fn(() => undefined),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),

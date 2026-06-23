@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {Session} other {Sessions}}",
     "labels": {
       "totalElapsed": "Time Spent",
@@ -2468,6 +2473,11 @@
       "versionCreated": "Version {version} Created",
       "latestVersionUpdated": "Latest Version {version, number} Updated",
       "historyView": "Test Case History View"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "Option not found",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "Test run not found.",
     "add": {
       "title": "Add Test Run",
@@ -5628,12 +5643,14 @@
     },
     "auditLogs": {
       "description": "View system-wide audit trail for security and compliance tracking",
+      "projectDescription": "View the audit trail of actions performed in this project.",
       "filterPlaceholder": "Search by entity, user, or action...",
       "filterAction": "Action",
       "filterEntityType": "Entity Type",
       "allActions": "All Actions",
       "allEntityTypes": "All Entity Types",
       "allUsers": "All Users",
+      "allProjects": "All Projects",
       "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "View Details",
       "detailTitle": "Audit Log Details",
@@ -5661,7 +5678,9 @@
       },
       "systemActor": "System",
       "systemActorTooltip": "Action performed by the system, not a logged-in user",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {

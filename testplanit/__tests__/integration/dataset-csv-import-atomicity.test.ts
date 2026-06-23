@@ -14,7 +14,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockDb, mockTx, sessionRef, txCalls } = vi.hoisted(() => {
+const { mockDb, mockTx, auditedTxSpy, sessionRef, txCalls } = vi.hoisted(() => {
   const calls: { op: string; args: unknown[] }[] = [];
   const tx: any = {
     dataSetRow: {
@@ -48,14 +48,21 @@ const { mockDb, mockTx, sessionRef, txCalls } = vi.hoisted(() => {
     testCaseParameter: { findMany: vi.fn() },
     dataSet: { findFirst: vi.fn() },
     dataSetRow: { aggregate: vi.fn() },
-    $transaction: vi.fn(async (fn: (t: any) => Promise<unknown>) => {
+  };
+  // The route reads through getEnhancedDb (mockDb) then commits through
+  // auditedEnhancedTransaction (GUC + tx enhance), whose internals have their
+  // own tests. Run the caller's callback with mockTx so the soft-delete /
+  // insert / rowIndex wiring runs against the in-memory tx mocks.
+  const auditedTx = vi.fn(
+    async (_session: unknown, fn: (t: any) => Promise<unknown>) => {
       calls.length = 0;
       return fn(tx);
-    }),
-  };
+    }
+  );
   return {
     mockDb: db,
     mockTx: tx,
+    auditedTxSpy: auditedTx,
     sessionRef: {
       current: { user: { id: "u-1", name: "U", email: "u@e.com" } },
     },
@@ -69,6 +76,9 @@ vi.mock("next-auth", () => ({
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
 vi.mock("~/lib/auth/utils", () => ({
   getEnhancedDb: vi.fn(async () => mockDb),
+}));
+vi.mock("~/lib/audit/auditedTransaction", () => ({
+  auditedEnhancedTransaction: auditedTxSpy,
 }));
 
 import { POST as importCsvPost } from "~/app/api/repository/cases/[caseId]/dataset/import-csv/route";
@@ -129,7 +139,7 @@ describe("CSV import atomicity", () => {
       { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(400);
-    expect(mockDb.$transaction).not.toHaveBeenCalled();
+    expect(auditedTxSpy).not.toHaveBeenCalled();
   });
 
   it("replace mode soft-deletes existing rows then inserts new rows in one tx", async () => {
@@ -145,7 +155,7 @@ describe("CSV import atomicity", () => {
       { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(200);
-    expect(mockDb.$transaction).toHaveBeenCalledTimes(1);
+    expect(auditedTxSpy).toHaveBeenCalledTimes(1);
     expect(mockTx.dataSetRow.updateMany).toHaveBeenCalledTimes(1);
     const updateArgs = mockTx.dataSetRow.updateMany.mock.calls[0][0];
     expect(updateArgs.data).toMatchObject({ isDeleted: true });
@@ -221,7 +231,7 @@ describe("CSV import atomicity", () => {
       { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(400);
-    expect(mockDb.$transaction).not.toHaveBeenCalled();
+    expect(auditedTxSpy).not.toHaveBeenCalled();
   });
 
   it("returns 401 when unauthenticated", async () => {

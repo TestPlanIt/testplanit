@@ -224,6 +224,30 @@ describe("AuditLog Service", () => {
       expect(diff!.accessToken.new).toMatch(/\[\*\*\*\*.+\]/);
     });
 
+    it("masks a secret nested inside a JSON column (SsoProvider.config.clientSecret)", () => {
+      const oldEntity = {
+        id: 1,
+        config: { clientId: "public-id", clientSecret: "old-secret-value" },
+      };
+      const newEntity = {
+        id: 1,
+        config: { clientId: "public-id", clientSecret: "new-secret-value" },
+      };
+
+      const diff = calculateDiff(oldEntity, newEntity);
+
+      expect(diff).toBeDefined();
+      // The non-secret clientId is preserved; the nested clientSecret is redacted.
+      const oldConfig = diff!.config.old as Record<string, unknown>;
+      const newConfig = diff!.config.new as Record<string, unknown>;
+      expect(oldConfig.clientId).toBe("public-id");
+      expect(newConfig.clientId).toBe("public-id");
+      expect(oldConfig.clientSecret).toBe("[REDACTED]");
+      expect(newConfig.clientSecret).toBe("[REDACTED]");
+      // No raw secret value survives anywhere in the serialized diff.
+      expect(JSON.stringify(diff)).not.toContain("secret-value");
+    });
+
     it("should handle nested object changes", () => {
       const oldEntity = {
         id: 1,

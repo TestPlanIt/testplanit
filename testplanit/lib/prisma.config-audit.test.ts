@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AUDITED_CONFIG_MODELS,
   ENTITY_NAME_FIELDS,
+  type AuditedConfigModel,
   type AuditEvent,
 } from "./services/auditLog";
 import {
@@ -48,11 +49,20 @@ const noopDelegate: ConfigAuditDelegate = {
   findUnique: vi.fn().mockResolvedValue(null),
 };
 
-const findCfg = (entityType: string) => {
-  const cfg = AUDITED_CONFIG_MODELS.find((c) => c.entityType === entityType);
-  if (!cfg) throw new Error(`missing config model: ${entityType}`);
-  return cfg;
-};
+// The app-layer config audit was decommissioned (F6): AUDITED_CONFIG_MODELS is
+// intentionally empty because the Postgres CDC triggers are now the sole source
+// for catalog/config/join CRUD. The factory + wiring deliberately remain a no-op
+// so the behavioral tests below still exercise them — they build synthetic
+// AuditedConfigModel descriptors rather than reading from the (empty) live list.
+const findCfg = (
+  entityType: string,
+  overrides: Partial<AuditedConfigModel> = {}
+): AuditedConfigModel => ({
+  entityType,
+  accessor: entityType.charAt(0).toLowerCase() + entityType.slice(1),
+  kind: "catalog",
+  ...overrides,
+});
 
 describe("admin-config audit sweep", () => {
   beforeEach(() => {
@@ -60,9 +70,10 @@ describe("admin-config audit sweep", () => {
     delete mocks.currentContext.suppressEntityAudit;
   });
 
-  // The chief risk: a mistyped accessor is silent dead code because the
-  // $extends block is cast `as any`. Validate every accessor against the
-  // schema (source of truth) and every entityType against ENTITY_NAME_FIELDS.
+  // App-layer config audit decommissioned (F6): the Postgres CDC triggers are
+  // now the sole source for catalog/config/join CRUD, so the driving list is
+  // intentionally empty to avoid double-auditing every change. The factory and
+  // its `$extends` wiring remain present (and are exercised below) as a no-op.
   describe("wiring guard", () => {
     const schema = readFileSync(
       resolve(dirname(fileURLToPath(import.meta.url)), "../schema.zmodel"),
@@ -75,10 +86,14 @@ describe("admin-config audit sweep", () => {
       name.charAt(0).toLowerCase() + name.slice(1);
     const validAccessors = new Set([...modelNames].map(toAccessor));
 
-    it("has at least the models named in the RFI plus the broader sweep", () => {
-      expect(AUDITED_CONFIG_MODELS.length).toBeGreaterThanOrEqual(28);
+    it("is intentionally empty (app-layer config audit decommissioned for CDC)", () => {
+      expect(AUDITED_CONFIG_MODELS).toEqual([]);
     });
 
+    // Defensive: should any model be re-added (to restore a specific app-layer
+    // hook), it must still name a real model with a valid accessor and name
+    // field — the mistyped-accessor dead-hook guard. Empty today, so this is a
+    // no-op, but it keeps the invariant in place for any future re-add.
     it.each(AUDITED_CONFIG_MODELS)(
       "$entityType: accessor maps to a real model and has a name field",
       (cfg) => {
@@ -92,35 +107,6 @@ describe("admin-config audit sweep", () => {
     it("has unique accessors (no duplicate hook keys)", () => {
       const accessors = AUDITED_CONFIG_MODELS.map((c) => c.accessor);
       expect(new Set(accessors).size).toBe(accessors.length);
-    });
-
-    // Coverage guard. Every Project*Assignment join model in the schema is, by
-    // its name, an admin-managed project-scope link (a project opting in to a
-    // catalog item). Each new one needs an entry in AUDITED_CONFIG_MODELS or
-    // its create/delete mutations silently bypass the audit log — the gap
-    // that v0.31.6's ProjectConfigurationAssignment had until this PR.
-    //
-    // If a future Project*Assignment is genuinely *not* meant to be audited
-    // (it's a runtime/derived link, not admin-managed), register the
-    // exception here with the reason rather than removing the guard.
-    const EXEMPT_PROJECT_ASSIGNMENT_JOINS = new Set<string>([
-      // (none today)
-    ]);
-    const projectAssignmentJoinModels = [...modelNames].filter(
-      (m) =>
-        m.startsWith("Project") &&
-        m.endsWith("Assignment") &&
-        !EXEMPT_PROJECT_ASSIGNMENT_JOINS.has(m)
-    );
-
-    it("every Project*Assignment join model in the schema is audited", () => {
-      const registered = new Set(
-        AUDITED_CONFIG_MODELS.map((c) => c.entityType)
-      );
-      const missing = projectAssignmentJoinModels.filter(
-        (m) => !registered.has(m)
-      );
-      expect(missing).toEqual([]);
     });
   });
 
@@ -185,7 +171,7 @@ describe("admin-config audit sweep", () => {
 
     it("forwards projectId only for project-scoped models", async () => {
       const scoped = buildConfigAuditHooks(
-        findCfg("LlmFeatureConfig"),
+        findCfg("LlmFeatureConfig", { hasProjectId: true }),
         noopDelegate
       );
       await scoped.create({
@@ -216,7 +202,7 @@ describe("admin-config audit sweep", () => {
   describe("join hooks", () => {
     it("derives entityId from the composite key when there is no scalar id", async () => {
       const hooks = buildConfigAuditHooks(
-        findCfg("GroupAssignment"),
+        findCfg("GroupAssignment", { kind: "join" }),
         noopDelegate
       );
       await hooks.create({
@@ -231,7 +217,10 @@ describe("admin-config audit sweep", () => {
 
     it("createMany emits BULK_CREATE", async () => {
       const hooks = buildConfigAuditHooks(
-        findCfg("ProjectStatusAssignment"),
+        findCfg("ProjectStatusAssignment", {
+          kind: "join",
+          hasProjectId: true,
+        }),
         noopDelegate
       );
       await hooks.createMany({
@@ -246,7 +235,7 @@ describe("admin-config audit sweep", () => {
 
     it("deleteMany emits BULK_DELETE", async () => {
       const hooks = buildConfigAuditHooks(
-        findCfg("RolePermission"),
+        findCfg("RolePermission", { kind: "join" }),
         noopDelegate
       );
       await hooks.deleteMany({
@@ -281,7 +270,7 @@ describe("admin-config audit sweep", () => {
         query: async () => ({ id: 7 }),
       });
       const join = buildConfigAuditHooks(
-        findCfg("RolePermission"),
+        findCfg("RolePermission", { kind: "join" }),
         noopDelegate
       );
       await join.createMany({ args: {}, query: async () => ({ count: 3 }) });

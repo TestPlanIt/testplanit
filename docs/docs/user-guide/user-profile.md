@@ -112,6 +112,10 @@ Shows user activity metrics in a grid layout:
 - Milestones Created
 - Last Active date
 
+### Audit Log
+
+Shown on your own profile, or on any user's profile when you're an administrator. Expands to an **Audit Log** of the actions that user has performed — logins, data changes, permission changes, and more — scoped automatically to that user. The search box and the action, entity-type, project, and date-range filters work just like the system-wide viewer. See [Viewing your own activity](./audit-logs.md#viewing-your-own-activity) for details.
+
 ### Account History
 
 Shows historical account information:

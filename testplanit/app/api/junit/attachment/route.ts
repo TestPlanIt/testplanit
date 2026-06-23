@@ -8,6 +8,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
+import { updateAuditContext } from "~/lib/auditContext";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -21,7 +23,7 @@ const attachmentSchema = z.object({
   note: z.string().optional(),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   // Authenticate user (session or API token)
   const session = await getServerAuthSession();
   let userId = session?.user?.id;
@@ -46,6 +48,8 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     );
   }
+
+  updateAuditContext({ userId });
 
   try {
     const body = await request.json();
@@ -102,4 +106,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

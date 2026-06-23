@@ -6,6 +6,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { mockTx, mockPrisma } = vi.hoisted(() => {
   const mockTx = {
+    $executeRaw: vi.fn().mockResolvedValue([]),
+    $queryRaw: vi.fn().mockResolvedValue([]),
     testRunCases: {
       findMany: vi.fn(),
       deleteMany: vi.fn(),

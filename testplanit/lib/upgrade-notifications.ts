@@ -392,6 +392,23 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
     `,
     access: [Access.ADMIN],
   },
+  "0.40.6": {
+    title: "New Feature: Activity History on Test Cases, Runs & Sessions",
+    message: `
+      <p>See the complete change history for an individual <strong>test case</strong>, <strong>test run</strong>, or <strong>session</strong>.</p>
+      <h4>Per-Item Activity</h4>
+      <ul>
+        <li>Click the new <strong>Activity</strong> button on any test case, test run, or session to open its <strong>Activity Log</strong></li>
+        <li>See every recorded change scoped to that item — who changed what, when, with before/after values</li>
+        <li>Filter by action type and date range, and open any entry for full details</li>
+      </ul>
+      <h4>Activity on User Profiles</h4>
+      <ul>
+        <li>User profiles now include an <strong>Audit Log</strong> section showing the actions a user has performed</li>
+        <li>Review your own activity from your profile; administrators can review any user's</li>
+      </ul>
+    `,
+  },
 };
 
 /**

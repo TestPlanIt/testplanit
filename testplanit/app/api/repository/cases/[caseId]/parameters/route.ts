@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod/v4";
 
-import { getEnhancedDb } from "~/lib/auth/utils";
+import { auditedEnhancedTransaction } from "~/lib/audit/auditedTransaction";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
 import { createParameterInTransaction } from "~/lib/services/parameterMutations";
 import { authOptions } from "~/server/auth";
@@ -40,9 +40,7 @@ export async function POST(
     const body = await request.json();
     const data = parameterCreateSchema.parse({ ...body, testCaseId: caseId });
 
-    const db = await getEnhancedDb(session);
-
-    const result = await db.$transaction(async (tx: unknown) => {
+    const result = await auditedEnhancedTransaction(session, async (tx) => {
       return createParameterInTransaction(tx, caseId, data, {
         id: session.user.id,
         name: session.user.name,

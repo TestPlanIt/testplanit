@@ -45,9 +45,33 @@ function lastEvent(): AuditEvent {
   return (calls[calls.length - 1][1] as { event: AuditEvent }).event;
 }
 
+// ENTITY_AUDIT_MODELS is now empty (DATA hook removal). Inline the configs that
+// the behavioral tests exercise so the factory logic remains covered.
+const LEGACY_CONFIGS = [
+  { entityType: "Integration", accessor: "integration" },
+  { entityType: "PromptConfig", accessor: "promptConfig" },
+  {
+    entityType: "ProjectIntegration",
+    accessor: "projectIntegration",
+    hasProjectId: true,
+    relatedAccessor: "integration",
+  },
+  {
+    entityType: "TestRunCases",
+    accessor: "testRunCases",
+    relatedAccessor: "repositoryCases",
+  },
+  {
+    entityType: "CaseFieldValues",
+    accessor: "caseFieldValues",
+    relatedAccessor: "caseFields",
+  },
+] as const;
+
 const cfgOf = (entityType: string) => {
-  const cfg = ENTITY_AUDIT_MODELS.find((c) => c.entityType === entityType);
-  if (!cfg) throw new Error(`missing entity-audit model: ${entityType}`);
+  const cfg = LEGACY_CONFIGS.find((c) => c.entityType === entityType);
+  if (!cfg)
+    throw new Error(`missing legacy entity-audit config: ${entityType}`);
   return cfg;
 };
 
@@ -201,6 +225,67 @@ describe("entity audit hooks", () => {
         query: async () => ({ id: "pc1", name: "Summarize" }),
       });
       expect(lastEvent().entityName).toBe("Summarize");
+    });
+  });
+
+  describe("child model (CaseFieldValues)", () => {
+    it("create resolves the field name by FK and records the value", async () => {
+      const related: EntityAuditDelegate = {
+        findUnique: vi.fn().mockResolvedValue({ displayName: "Priority" }),
+      };
+      const hooks = buildEntityAuditHooks(cfgOf("CaseFieldValues"), {
+        self: forbiddenSelf,
+        related,
+      });
+      await hooks.create({
+        args: { data: { testCaseId: 12, fieldId: 3, value: "High" } },
+        query: async () => ({
+          id: 99,
+          testCaseId: 12,
+          fieldId: 3,
+          value: "High",
+        }),
+      });
+      const ev = lastEvent();
+      expect(ev.action).toBe("CREATE");
+      expect(ev.entityType).toBe("CaseFieldValues");
+      expect(ev.entityId).toBe("99");
+      expect(ev.entityName).toBe("Priority");
+      expect(ev.changes?.value.new).toBe("High");
+      expect(related.findUnique).toHaveBeenCalledWith({
+        where: { id: 3 },
+        select: { displayName: true },
+      });
+      // The just-created row is never re-read (invisible in-tx).
+      expect(forbiddenSelf.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("update on the RPC partial row diffs the value and names from the field", async () => {
+      const self: EntityAuditDelegate = {
+        findUnique: vi.fn().mockResolvedValue({
+          id: 99,
+          testCaseId: 12,
+          fieldId: 3,
+          value: "Low",
+          field: { displayName: "Priority" },
+        }),
+      };
+      const hooks = buildEntityAuditHooks(cfgOf("CaseFieldValues"), {
+        self,
+        related: { findUnique: vi.fn() },
+      });
+      await hooks.update({
+        args: { where: { id: 99 }, data: { value: "High" } },
+        query: async () => ({ id: 99 }),
+      });
+      const ev = lastEvent();
+      expect(ev.action).toBe("UPDATE");
+      expect(ev.entityName).toBe("Priority");
+      expect(ev.changes?.value).toEqual({ old: "Low", new: "High" });
+      // The included `field` relation is stripped from the scalar diff.
+      expect(ev.changes?.field).toBeUndefined();
+      // projectId is left for the worker to backfill via the testCase parent.
+      expect(ev.projectId).toBeUndefined();
     });
   });
 

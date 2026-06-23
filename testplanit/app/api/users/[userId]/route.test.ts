@@ -21,6 +21,23 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
+// The route runs its writes through auditedTransaction(), which (in production)
+// opens prisma.$transaction, sets the app.audit_context GUC via tx.$executeRaw,
+// and runs the callback. The tests drive behavior through the prisma.$transaction
+// mock above, so delegate auditedTransaction straight to it (preserving both the
+// mockResolvedValue and mockImplementation(callback) styles the tests use).
+vi.mock("~/lib/audit/auditedTransaction", () => ({
+  auditedTransaction: vi.fn(async (fn: any) => {
+    const { prisma: mockedPrisma } = await import("~/lib/prisma");
+    return (mockedPrisma.$transaction as any)(fn);
+  }),
+}));
+
+// Session cache invalidation hits Valkey; stub it out.
+vi.mock("~/lib/session-cache", () => ({
+  invalidateSessionUserCache: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -77,6 +94,8 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
   const createRequest = (body: any): NextRequest => {
     return {
       json: async () => body,
+      // withAuditContext reads req.headers via extractAuditContextFromHeaders.
+      headers: new Headers(),
     } as NextRequest;
   };
 

@@ -1,5 +1,4 @@
 import type { AuditAction, ReviewEntityType } from "@prisma/client";
-import { enhance } from "@zenstackhq/runtime";
 import { NextRequestHandler } from "@zenstackhq/server/next";
 import { AsyncLocalStorage } from "async_hooks";
 import { NextRequest, NextResponse } from "next/server";
@@ -9,6 +8,8 @@ import {
   extractBearerToken,
 } from "~/lib/api-token-auth";
 import { getAuditContext, runWithAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import {
   enrichFromApiAuth,
   withAuditContext,
@@ -348,8 +349,9 @@ async function getPrisma() {
     }
   }
 
-  // Use prisma from lib/prisma.ts which has audit logging extensions
-  return enhance(prisma, { user: user ?? undefined });
+  // enhanceWithAudit wraps writes in a GUC-carrying transaction so trigger CDC
+  // records the actor (plain enhance() bypasses the lib/prisma $extends hook).
+  return enhanceWithAudit(user ?? undefined);
 }
 
 const baseHandler = NextRequestHandler({ getPrisma, useAppDir: true });
@@ -489,6 +491,14 @@ async function innerHandler(
 
     // Get the authenticated user ID (from session or API token)
     const authenticatedUserId = session?.user?.id ?? apiAuthContext?.userId;
+    // ...and their display name + email, so the audit frame carries the actor's
+    // identity (snapshotted at write time) for paths that build the GUC from the
+    // frame rather than an explicit user object — notably tryFastPathCreate,
+    // which runs BEFORE getPrisma's enrichFromApiAuth and so otherwise sees no name.
+    const authenticatedUserName =
+      session?.user?.name ?? apiAuthContext?.name ?? undefined;
+    const authenticatedUserEmail =
+      session?.user?.email ?? apiAuthContext?.email ?? undefined;
 
     // Clone the request body for audit logging and potential modification
     let requestBody: any = null;
@@ -731,7 +741,7 @@ async function innerHandler(
             // submit-result / milestone paths can hold a single tx across
             // gate + entity update + consume and don't pay this cost; the
             // auto-API path explicitly accepts it.
-            await prisma.$transaction(
+            await auditedTransaction(
               async (tx) => {
                 const gateResult = await assertReviewGatePasses(
                   tx,
@@ -834,6 +844,13 @@ async function innerHandler(
       }
     }
 
+    // Session subject for the audit GUC (applied to this request's runWithAuditContext frame below)
+    // so a session result and its nested result-field values record the session's name and project
+    // at write time — session results go through this generic route, not a bespoke endpoint, so
+    // without this they would materialize with a blank entity name.
+    let sessionResultSubjectName: string | undefined;
+    let sessionResultSubjectProjectId: number | undefined;
+
     // Required-result-field guard for SessionResults.create. The model handler
     // is the universal chokepoint — `lib/prisma.ts`'s `$extends` middleware is
     // bypassed by ZenStack's `enhance()` (see the repositoryCases ES-sync shim
@@ -865,9 +882,11 @@ async function innerHandler(
       if (Number.isFinite(sessionId)) {
         const session = await prisma.sessions.findUnique({
           where: { id: sessionId },
-          select: { templateId: true },
+          select: { templateId: true, name: true, projectId: true },
         });
         if (session) {
+          sessionResultSubjectName = session.name ?? undefined;
+          sessionResultSubjectProjectId = session.projectId ?? undefined;
           const nestedCreate = (
             data?.resultFieldValues as
               | {
@@ -1018,6 +1037,20 @@ async function innerHandler(
     let response = await runWithAuditContext(
       {
         ...parentAuditCtx,
+        // Attribute the audit actor to the authenticated user so trigger-based
+        // CDC records WHO made the change (the GUC actor is read from this ALS
+        // frame by injectAuditGuc). Without this the worker-materialized
+        // AuditLog row has an empty userId. Genuine system paths have no
+        // authenticatedUserId and are recorded as __system__ downstream.
+        userId: authenticatedUserId ?? parentAuditCtx.userId ?? undefined,
+        userName: authenticatedUserName ?? parentAuditCtx.userName ?? undefined,
+        userEmail:
+          authenticatedUserEmail ?? parentAuditCtx.userEmail ?? undefined,
+        // Session-result subject (see above): names the session on its result + result-field rows.
+        subjectEntityName:
+          sessionResultSubjectName ?? parentAuditCtx.subjectEntityName,
+        subjectProjectId:
+          sessionResultSubjectProjectId ?? parentAuditCtx.subjectProjectId,
         suppressWebhooks: true,
         suppressEntityAudit: auditedByShim,
       },

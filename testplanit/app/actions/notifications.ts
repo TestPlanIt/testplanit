@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { runWithAuditContext } from "~/lib/auditContext";
 import { prisma } from "~/lib/prisma";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
@@ -11,18 +12,20 @@ export async function markNotificationAsRead(notificationId: string) {
     throw new Error("Unauthorized");
   }
 
-  try {
-    const notification = await prisma.notification.update({
-      where: { id: notificationId },
-      data: { isRead: true },
-    });
+  return runWithAuditContext({ userId: session.user.id }, async () => {
+    try {
+      const notification = await prisma.notification.update({
+        where: { id: notificationId },
+        data: { isRead: true },
+      });
 
-    revalidatePath("/");
-    return { success: true, notification };
-  } catch (error) {
-    console.error("Failed to mark notification as read:", error);
-    return { success: false, error: "Failed to update notification" };
-  }
+      revalidatePath("/");
+      return { success: true, notification };
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+      return { success: false, error: "Failed to update notification" };
+    }
+  });
 }
 
 export async function markNotificationAsUnread(notificationId: string) {
@@ -31,18 +34,20 @@ export async function markNotificationAsUnread(notificationId: string) {
     throw new Error("Unauthorized");
   }
 
-  try {
-    const notification = await prisma.notification.update({
-      where: { id: notificationId },
-      data: { isRead: false },
-    });
+  return runWithAuditContext({ userId: session.user.id }, async () => {
+    try {
+      const notification = await prisma.notification.update({
+        where: { id: notificationId },
+        data: { isRead: false },
+      });
 
-    revalidatePath("/");
-    return { success: true, notification };
-  } catch (error) {
-    console.error("Failed to mark notification as unread:", error);
-    return { success: false, error: "Failed to update notification" };
-  }
+      revalidatePath("/");
+      return { success: true, notification };
+    } catch (error) {
+      console.error("Failed to mark notification as unread:", error);
+      return { success: false, error: "Failed to update notification" };
+    }
+  });
 }
 
 export async function deleteNotification(notificationId: string) {
@@ -51,18 +56,20 @@ export async function deleteNotification(notificationId: string) {
     throw new Error("Unauthorized");
   }
 
-  try {
-    const notification = await prisma.notification.update({
-      where: { id: notificationId },
-      data: { isDeleted: true },
-    });
+  return runWithAuditContext({ userId: session.user.id }, async () => {
+    try {
+      const notification = await prisma.notification.update({
+        where: { id: notificationId },
+        data: { isDeleted: true },
+      });
 
-    revalidatePath("/");
-    return { success: true, notification };
-  } catch (error) {
-    console.error("Failed to delete notification:", error);
-    return { success: false, error: "Failed to delete notification" };
-  }
+      revalidatePath("/");
+      return { success: true, notification };
+    } catch (error) {
+      console.error("Failed to delete notification:", error);
+      return { success: false, error: "Failed to delete notification" };
+    }
+  });
 }
 
 export async function markAllNotificationsAsRead() {
@@ -71,22 +78,24 @@ export async function markAllNotificationsAsRead() {
     throw new Error("Unauthorized");
   }
 
-  try {
-    const result = await prisma.notification.updateMany({
-      where: {
-        userId: session.user.id,
-        isRead: false,
-        isDeleted: false,
-      },
-      data: { isRead: true },
-    });
+  return runWithAuditContext({ userId: session.user.id }, async () => {
+    try {
+      const result = await prisma.notification.updateMany({
+        where: {
+          userId: session.user.id,
+          isRead: false,
+          isDeleted: false,
+        },
+        data: { isRead: true },
+      });
 
-    revalidatePath("/");
-    return { success: true, count: result.count };
-  } catch (error) {
-    console.error("Failed to mark all notifications as read:", error);
-    return { success: false, error: "Failed to update notifications" };
-  }
+      revalidatePath("/");
+      return { success: true, count: result.count };
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+      return { success: false, error: "Failed to update notifications" };
+    }
+  });
 }
 
 export async function deleteAllNotifications() {
@@ -95,21 +104,23 @@ export async function deleteAllNotifications() {
     throw new Error("Unauthorized");
   }
 
-  try {
-    const result = await prisma.notification.updateMany({
-      where: {
-        userId: session.user.id,
-        isDeleted: false,
-      },
-      data: { isDeleted: true },
-    });
+  return runWithAuditContext({ userId: session.user.id }, async () => {
+    try {
+      const result = await prisma.notification.updateMany({
+        where: {
+          userId: session.user.id,
+          isDeleted: false,
+        },
+        data: { isDeleted: true },
+      });
 
-    revalidatePath("/");
-    return { success: true, count: result.count };
-  } catch (error) {
-    console.error("Failed to delete all notifications:", error);
-    return { success: false, error: "Failed to delete notifications" };
-  }
+      revalidatePath("/");
+      return { success: true, count: result.count };
+    } catch (error) {
+      console.error("Failed to delete all notifications:", error);
+      return { success: false, error: "Failed to delete notifications" };
+    }
+  });
 }
 
 export async function getUnreadNotificationCount() {

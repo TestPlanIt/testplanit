@@ -2,6 +2,8 @@ import { hash } from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { getServerAuthSession } from "~/server/auth";
 
 /**
@@ -44,7 +46,7 @@ const createSchema = z.object({
   emailVerified: z.string().datetime().nullable().optional(),
 });
 
-export async function POST(req: NextRequest) {
+export const POST = withAuditContext(async (req: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -100,7 +102,7 @@ export async function POST(req: NextRequest) {
   // Create user + default preferences in one transaction (mirrors
   // /api/auth/signup so we get the same all-or-nothing guarantee).
   try {
-    const newUser = await prisma.$transaction(async (tx) => {
+    const newUser = await auditedTransaction(async (tx) => {
       return tx.user.create({
         data: {
           name: body.name,
@@ -177,4 +179,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

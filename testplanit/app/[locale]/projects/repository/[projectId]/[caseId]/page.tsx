@@ -53,7 +53,9 @@ import {
 } from "@/components/ui/tooltip";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
+import { RepositoryCaseAuditLogSheet } from "@/components/repositories/RepositoryCaseAuditLogSheet";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
+import { useOperationId } from "~/hooks/useOperationId";
 import { VersionSelect } from "@/components/VersionSelect";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea, Attachments, Prisma } from "@prisma/client";
@@ -1001,7 +1003,19 @@ export default function TestCaseDetails() {
     setTimeout(() => setIsTransitioning(false), 300);
   };
 
-  const { mutate: updateRepositoryCases } = useUpdateRepositoryCases();
+  // Phase 14 CTX-03: one operationId per logical case save. beginOperation()
+  // before the first write makes the global ZenStack fetcher stamp the same
+  // X-Operation-Id header on every mutation below, so the RepositoryCases +
+  // Steps + CaseFieldValues writes correlate into one DataChangeLog group.
+  const { beginOperation, endOperation } = useOperationId();
+
+  // mutateAsync (not mutate): the case UPDATE must complete INSIDE the
+  // beginOperation()/endOperation() window so the global fetcher stamps its
+  // X-Operation-Id and the model route attributes the audit actor. A
+  // fire-and-forget `mutate` races the window — the name change then lands in
+  // the audit log un-grouped and attributed to "System" instead of the editor
+  // (and the refetch below could read the row before the write commits).
+  const { mutateAsync: updateRepositoryCases } = useUpdateRepositoryCases();
   const { mutateAsync: updateCaseFieldValues } = useUpdateCaseFieldValues();
   const { mutateAsync: createCaseFieldVersionValues } =
     useCreateCaseFieldVersionValues();
@@ -1195,6 +1209,10 @@ export default function TestCaseDetails() {
       setIsSubmitting(false);
       return;
     }
+
+    // Phase 14 CTX-03: open the logical save group. Every ZenStack write below
+    // shares this operationId via the global fetcher's X-Operation-Id header.
+    beginOperation();
 
     try {
       const estimateDuration = data.estimate
@@ -1728,6 +1746,10 @@ export default function TestCaseDetails() {
       console.error("Error in handleSave:", error);
       setIsSubmitting(false);
       return;
+    } finally {
+      // Close the logical save group so the operationId can't leak into a
+      // later, unrelated request.
+      endOperation();
     }
   };
 
@@ -1935,13 +1957,16 @@ export default function TestCaseDetails() {
                 )}
                 <div className="flex items-center space-x-2 w-fit">
                   {!isEditMode && (
-                    <VersionSelect
-                      versions={versions || []}
-                      currentVersion={testcase.currentVersion.toString()}
-                      onVersionChange={viewVersion}
-                      userDateFormat={session?.user.preferences?.dateFormat}
-                      userTimeFormat={session?.user.preferences?.timeFormat}
-                    />
+                    <>
+                      <VersionSelect
+                        versions={versions || []}
+                        currentVersion={testcase.currentVersion.toString()}
+                        onVersionChange={viewVersion}
+                        userDateFormat={session?.user.preferences?.dateFormat}
+                        userTimeFormat={session?.user.preferences?.timeFormat}
+                      />
+                      <RepositoryCaseAuditLogSheet caseId={testcase.id} />
+                    </>
                   )}
                   {isEditMode && !isSubmitting ? (
                     <div className="space-y-2 w-full">

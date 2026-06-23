@@ -4,6 +4,7 @@ import { createHmac, randomBytes } from "node:crypto";
 
 import type { AdapterType } from "@prisma/client";
 
+import { runWithAuditContext } from "~/lib/auditContext";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
@@ -171,161 +172,182 @@ export async function createOrRotateInboundWebhook(input: {
     return { success: false, error: "Unauthorized" };
   }
 
-  // Schema denies all client writes; this server action authorizes the
-  // caller explicitly (mirroring the prior @@allow policy) and writes via raw
-  // `prisma` to bypass the deny.
-  let authorized: boolean;
-  try {
-    authorized = await canManageWebhookConfig(session, projectId);
-  } catch (err) {
-    console.error("[webhook-config] auth check failed", err);
-    return { success: false, error: "Failed to save webhook configuration" };
-  }
-  if (!authorized) {
-    return { success: false, error: "Forbidden" };
-  }
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
+      // Schema denies all client writes; this server action authorizes the
+      // caller explicitly (mirroring the prior @@allow policy) and writes via raw
+      // `prisma` to bypass the deny.
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(session, projectId);
+      } catch (err) {
+        console.error("[webhook-config] auth check failed", err);
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
+      }
+      if (!authorized) {
+        return { success: false, error: "Forbidden" };
+      }
 
-  // Branch on adapter type to derive the plaintext-to-encrypt and the
-  // success-response shape (only HMAC adapters return the freshly minted
-  // secret to the admin; ADO admin already has the credentials they typed).
-  let plaintextToEncrypt: string;
-  let returnSecretToAdmin: boolean;
+      // Branch on adapter type to derive the plaintext-to-encrypt and the
+      // success-response shape (only HMAC adapters return the freshly minted
+      // secret to the admin; ADO admin already has the credentials they typed).
+      let plaintextToEncrypt: string;
+      let returnSecretToAdmin: boolean;
 
-  if (
-    adapterType === "JIRA" ||
-    adapterType === "GITHUB" ||
-    adapterType === "GITLAB" ||
-    adapterType === "GITEA"
-  ) {
-    plaintextToEncrypt = generateSecret();
-    returnSecretToAdmin = true;
-  } else if (adapterType === "REDMINE") {
-    // The redmine_webhook plugin cannot sign payloads or send a secret; the
-    // unguessable URL token is the credential. Mint and store an (unused)
-    // secret to satisfy the schema, and reveal only the URL — there is
-    // nothing for the admin to copy into Redmine.
-    plaintextToEncrypt = generateSecret();
-    returnSecretToAdmin = false;
-  } else if (adapterType === "MANTISBT") {
-    // A MantisBT webhook plugin cannot sign payloads or send a secret; the
-    // unguessable URL token is the credential. Mint and store an (unused)
-    // secret to satisfy the schema, and reveal only the URL — there is
-    // nothing for the admin to copy into MantisBT.
-    plaintextToEncrypt = generateSecret();
-    returnSecretToAdmin = false;
-  } else if (adapterType === "AZURE_DEVOPS") {
-    if (
-      !secretInput ||
-      secretInput.kind !== "AZURE_DEVOPS" ||
-      typeof secretInput.username !== "string" ||
-      typeof secretInput.password !== "string" ||
-      secretInput.username.length === 0 ||
-      secretInput.password.length === 0
-    ) {
-      console.error(
-        "[webhook-config] missing or invalid ADO credentials",
-        redactToken(`projectId:${projectId}`)
-      );
-      return { success: false, error: "Failed to save webhook configuration" };
-    }
-    // JSON-encode the {username, password} pair; the ADO adapter
-    // JSON.parses on the receiver side. The Slack-URL-as-credential pattern
-    // sets the precedent for overloading `WebhookConfig.secret`.
-    plaintextToEncrypt = JSON.stringify({
-      username: secretInput.username,
-      password: secretInput.password,
-    });
-    returnSecretToAdmin = false;
-  } else {
-    // SLACK / GENERIC_HMAC are OUTBOUND-only; should never reach here for
-    // INBOUND configs. Defensive guard mirrors getAdapter's error branch.
-    return {
-      success: false,
-      error: "Failed to save webhook configuration",
-    };
-  }
+      if (
+        adapterType === "JIRA" ||
+        adapterType === "GITHUB" ||
+        adapterType === "GITLAB" ||
+        adapterType === "GITEA"
+      ) {
+        plaintextToEncrypt = generateSecret();
+        returnSecretToAdmin = true;
+      } else if (adapterType === "REDMINE") {
+        // The redmine_webhook plugin cannot sign payloads or send a secret; the
+        // unguessable URL token is the credential. Mint and store an (unused)
+        // secret to satisfy the schema, and reveal only the URL — there is
+        // nothing for the admin to copy into Redmine.
+        plaintextToEncrypt = generateSecret();
+        returnSecretToAdmin = false;
+      } else if (adapterType === "MANTISBT") {
+        // A MantisBT webhook plugin cannot sign payloads or send a secret; the
+        // unguessable URL token is the credential. Mint and store an (unused)
+        // secret to satisfy the schema, and reveal only the URL — there is
+        // nothing for the admin to copy into MantisBT.
+        plaintextToEncrypt = generateSecret();
+        returnSecretToAdmin = false;
+      } else if (adapterType === "AZURE_DEVOPS") {
+        if (
+          !secretInput ||
+          secretInput.kind !== "AZURE_DEVOPS" ||
+          typeof secretInput.username !== "string" ||
+          typeof secretInput.password !== "string" ||
+          secretInput.username.length === 0 ||
+          secretInput.password.length === 0
+        ) {
+          console.error(
+            "[webhook-config] missing or invalid ADO credentials",
+            redactToken(`projectId:${projectId}`)
+          );
+          return {
+            success: false,
+            error: "Failed to save webhook configuration",
+          };
+        }
+        // JSON-encode the {username, password} pair; the ADO adapter
+        // JSON.parses on the receiver side. The Slack-URL-as-credential pattern
+        // sets the precedent for overloading `WebhookConfig.secret`.
+        plaintextToEncrypt = JSON.stringify({
+          username: secretInput.username,
+          password: secretInput.password,
+        });
+        returnSecretToAdmin = false;
+      } else {
+        // SLACK / GENERIC_HMAC are OUTBOUND-only; should never reach here for
+        // INBOUND configs. Defensive guard mirrors getAdapter's error branch.
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
+      }
 
-  const token = generateToken();
+      const token = generateToken();
 
-  let encryptedSecret: string;
-  try {
-    encryptedSecret = await encrypt(plaintextToEncrypt);
-  } catch (err) {
-    console.error("[webhook-config] encrypt failed", err);
-    return { success: false, error: "Failed to save webhook configuration" };
-  }
+      let encryptedSecret: string;
+      try {
+        encryptedSecret = await encrypt(plaintextToEncrypt);
+      } catch (err) {
+        console.error("[webhook-config] encrypt failed", err);
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
+      }
 
-  const origin = process.env.NEXTAUTH_URL ?? "";
-  const url = `${origin}/api/webhooks/${token}`;
+      const origin = process.env.NEXTAUTH_URL ?? "";
+      const url = `${origin}/api/webhooks/${token}`;
 
-  const buildResult = (configId: string): CreateOrRotateResult => ({
-    success: true,
-    configId,
-    url,
-    ...(returnSecretToAdmin ? { secret: plaintextToEncrypt } : {}),
-  });
-
-  try {
-    const existing = await prisma.webhookConfig.findFirst({
-      where: { projectId, adapterType, direction: "INBOUND" },
-      select: { id: true },
-    });
-
-    let config: { id: string };
-    if (existing) {
-      // Rotation overwrites — old token immediately invalid.
-      config = await prisma.webhookConfig.update({
-        where: { id: existing.id },
-        data: { token, secret: encryptedSecret, isActive: true },
-        select: { id: true },
+      const buildResult = (configId: string): CreateOrRotateResult => ({
+        success: true,
+        configId,
+        url,
+        ...(returnSecretToAdmin ? { secret: plaintextToEncrypt } : {}),
       });
-    } else {
-      config = await prisma.webhookConfig.create({
-        data: {
-          projectId,
-          adapterType,
-          direction: "INBOUND",
-          token,
-          secret: encryptedSecret,
-          isActive: true,
-        },
-        select: { id: true },
-      });
-    }
 
-    return buildResult(config.id);
-  } catch (err) {
-    // Defensive concurrent-create race fallback. The schema-level @@unique
-    // was dropped to allow multiple OUTBOUND configs per (project, adapter),
-    // so this retry path is dormant in normal operation. Kept as a safety net
-    // in case a future migration adds a partial unique index on INBOUND rows.
-    if (isUniqueConstraintError(err)) {
-      console.warn(
-        "[webhook-config] createOrRotate hit concurrent-create race; retrying via rotate path"
-      );
       try {
         const existing = await prisma.webhookConfig.findFirst({
           where: { projectId, adapterType, direction: "INBOUND" },
           select: { id: true },
         });
+
+        let config: { id: string };
         if (existing) {
-          const config = await prisma.webhookConfig.update({
+          // Rotation overwrites — old token immediately invalid.
+          config = await prisma.webhookConfig.update({
             where: { id: existing.id },
             data: { token, secret: encryptedSecret, isActive: true },
             select: { id: true },
           });
-          return buildResult(config.id);
+        } else {
+          config = await prisma.webhookConfig.create({
+            data: {
+              projectId,
+              adapterType,
+              direction: "INBOUND",
+              token,
+              secret: encryptedSecret,
+              isActive: true,
+            },
+            select: { id: true },
+          });
         }
-      } catch (retryErr) {
-        console.error(
-          "[webhook-config] createOrRotate concurrent-race retry failed",
-          retryErr
-        );
+
+        return buildResult(config.id);
+      } catch (err) {
+        // Defensive concurrent-create race fallback. The schema-level @@unique
+        // was dropped to allow multiple OUTBOUND configs per (project, adapter),
+        // so this retry path is dormant in normal operation. Kept as a safety net
+        // in case a future migration adds a partial unique index on INBOUND rows.
+        if (isUniqueConstraintError(err)) {
+          console.warn(
+            "[webhook-config] createOrRotate hit concurrent-create race; retrying via rotate path"
+          );
+          try {
+            const existing = await prisma.webhookConfig.findFirst({
+              where: { projectId, adapterType, direction: "INBOUND" },
+              select: { id: true },
+            });
+            if (existing) {
+              const config = await prisma.webhookConfig.update({
+                where: { id: existing.id },
+                data: { token, secret: encryptedSecret, isActive: true },
+                select: { id: true },
+              });
+              return buildResult(config.id);
+            }
+          } catch (retryErr) {
+            console.error(
+              "[webhook-config] createOrRotate concurrent-race retry failed",
+              retryErr
+            );
+          }
+        }
+        console.error("[webhook-config] createOrRotate failed", err);
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
       }
     }
-    console.error("[webhook-config] createOrRotate failed", err);
-    return { success: false, error: "Failed to save webhook configuration" };
-  }
+  ); // end runWithAuditContext
 }
 
 /**
@@ -368,51 +390,72 @@ export async function deleteInboundWebhook(input: {
     return { success: false, error: "Unauthorized" };
   }
 
-  // Authorize before raw write. Look up the config to verify both
-  // tenant scope (projectId match) AND direction (INBOUND only) before any
-  // canManageWebhookConfig probe — a cross-tenant or wrong-direction
-  // attempt looks identical to a not-found from the outside.
-  let config: { projectId: number; direction?: "INBOUND" | "OUTBOUND" } | null;
-  try {
-    config = await prisma.webhookConfig.findUnique({
-      where: { id: webhookConfigId },
-      select: { projectId: true, direction: true },
-    });
-  } catch (err) {
-    console.error("[webhook-config] lookup failed (delete)", err);
-    return { success: false, error: "Failed to delete webhook configuration" };
-  }
-  if (!config) {
-    return { success: false, error: "Not found" };
-  }
-  if (config.projectId !== projectId) {
-    return { success: false, error: "Not found" };
-  }
-  // Only refuse OUTBOUND when the field is present (existing tests mock
-  // findUnique without `direction` — undefined falls through to allow legacy
-  // call sites that pre-date the field check).
-  if (config.direction && config.direction !== "INBOUND") {
-    return { success: false, error: "Not found" };
-  }
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
+      // Authorize before raw write. Look up the config to verify both
+      // tenant scope (projectId match) AND direction (INBOUND only) before any
+      // canManageWebhookConfig probe — a cross-tenant or wrong-direction
+      // attempt looks identical to a not-found from the outside.
+      let config: {
+        projectId: number;
+        direction?: "INBOUND" | "OUTBOUND";
+      } | null;
+      try {
+        config = await prisma.webhookConfig.findUnique({
+          where: { id: webhookConfigId },
+          select: { projectId: true, direction: true },
+        });
+      } catch (err) {
+        console.error("[webhook-config] lookup failed (delete)", err);
+        return {
+          success: false,
+          error: "Failed to delete webhook configuration",
+        };
+      }
+      if (!config) {
+        return { success: false, error: "Not found" };
+      }
+      if (config.projectId !== projectId) {
+        return { success: false, error: "Not found" };
+      }
+      // Only refuse OUTBOUND when the field is present (existing tests mock
+      // findUnique without `direction` — undefined falls through to allow legacy
+      // call sites that pre-date the field check).
+      if (config.direction && config.direction !== "INBOUND") {
+        return { success: false, error: "Not found" };
+      }
 
-  let authorized: boolean;
-  try {
-    authorized = await canManageWebhookConfig(session, config.projectId);
-  } catch (err) {
-    console.error("[webhook-config] auth check failed (delete)", err);
-    return { success: false, error: "Failed to delete webhook configuration" };
-  }
-  if (!authorized) {
-    return { success: false, error: "Forbidden" };
-  }
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(session, config.projectId);
+      } catch (err) {
+        console.error("[webhook-config] auth check failed (delete)", err);
+        return {
+          success: false,
+          error: "Failed to delete webhook configuration",
+        };
+      }
+      if (!authorized) {
+        return { success: false, error: "Forbidden" };
+      }
 
-  try {
-    await prisma.webhookConfig.delete({ where: { id: webhookConfigId } });
-    return { success: true };
-  } catch (err) {
-    console.error("[webhook-config] delete failed", err);
-    return { success: false, error: "Failed to delete webhook configuration" };
-  }
+      try {
+        await prisma.webhookConfig.delete({ where: { id: webhookConfigId } });
+        return { success: true };
+      } catch (err) {
+        console.error("[webhook-config] delete failed", err);
+        return {
+          success: false,
+          error: "Failed to delete webhook configuration",
+        };
+      }
+    }
+  ); // end runWithAuditContext
 }
 
 /**
@@ -473,42 +516,60 @@ export async function setWebhookActive(
     return { success: false, error: "Unauthorized" };
   }
 
-  let projectId: number;
-  try {
-    const config = await prisma.webhookConfig.findUnique({
-      where: { id: configId },
-      select: { projectId: true },
-    });
-    if (!config) {
-      return { success: false, error: "Not found" };
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
+      let projectId: number;
+      try {
+        const config = await prisma.webhookConfig.findUnique({
+          where: { id: configId },
+          select: { projectId: true },
+        });
+        if (!config) {
+          return { success: false, error: "Not found" };
+        }
+        projectId = config.projectId;
+      } catch (err) {
+        console.error("[webhook-config] lookup failed (setActive)", err);
+        return {
+          success: false,
+          error: "Failed to update webhook configuration",
+        };
+      }
+
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(session, projectId);
+      } catch (err) {
+        console.error("[webhook-config] auth check failed (setActive)", err);
+        return {
+          success: false,
+          error: "Failed to update webhook configuration",
+        };
+      }
+      if (!authorized) {
+        return { success: false, error: "Forbidden" };
+      }
+
+      try {
+        await prisma.webhookConfig.update({
+          where: { id: configId },
+          data: { isActive },
+        });
+        return { success: true };
+      } catch (err) {
+        console.error("[webhook-config] setActive failed", err);
+        return {
+          success: false,
+          error: "Failed to update webhook configuration",
+        };
+      }
     }
-    projectId = config.projectId;
-  } catch (err) {
-    console.error("[webhook-config] lookup failed (setActive)", err);
-    return { success: false, error: "Failed to update webhook configuration" };
-  }
-
-  let authorized: boolean;
-  try {
-    authorized = await canManageWebhookConfig(session, projectId);
-  } catch (err) {
-    console.error("[webhook-config] auth check failed (setActive)", err);
-    return { success: false, error: "Failed to update webhook configuration" };
-  }
-  if (!authorized) {
-    return { success: false, error: "Forbidden" };
-  }
-
-  try {
-    await prisma.webhookConfig.update({
-      where: { id: configId },
-      data: { isActive },
-    });
-    return { success: true };
-  } catch (err) {
-    console.error("[webhook-config] setActive failed", err);
-    return { success: false, error: "Failed to update webhook configuration" };
-  }
+  ); // end runWithAuditContext
 }
 
 export interface SendTestWebhookResult {
@@ -817,130 +878,161 @@ export async function createOutboundWebhook(input: {
     return { success: false, error: "Unauthorized" };
   }
 
-  // The name column is nullable on the schema for back-compat with INBOUND
-  // configs that don't carry an admin label, but OUTBOUND requires it.
-  // Validate trim-non-empty up front.
-  const trimmedName = input.name?.trim() ?? "";
-  if (trimmedName.length === 0) {
-    return {
-      success: false,
-      errorCode: "projects.webhooks.outboundCreateNameRequired",
-      error: "Name is required",
-    };
-  }
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
+      // The name column is nullable on the schema for back-compat with INBOUND
+      // configs that don't carry an admin label, but OUTBOUND requires it.
+      // Validate trim-non-empty up front.
+      const trimmedName = input.name?.trim() ?? "";
+      if (trimmedName.length === 0) {
+        return {
+          success: false,
+          errorCode: "projects.webhooks.outboundCreateNameRequired",
+          error: "Name is required",
+        };
+      }
 
-  // URL validation runs BEFORE auth so invalid input doesn't probe the
-  // project-admin check (cheap-fail-first).
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(input.url);
-  } catch {
-    return {
-      success: false,
-      errorCode: "projects.webhooks.outboundCreateUrlInvalid",
-      error: "Invalid URL",
-    };
-  }
-  if (parsedUrl.protocol !== "https:" && !isHttpOutboundAllowed()) {
-    return {
-      success: false,
-      errorCode: "projects.webhooks.outboundCreateUrlMustUseHttps",
-      error: "URL must use HTTPS",
-    };
-  }
+      // URL validation runs BEFORE auth so invalid input doesn't probe the
+      // project-admin check (cheap-fail-first).
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(input.url);
+      } catch {
+        return {
+          success: false,
+          errorCode: "projects.webhooks.outboundCreateUrlInvalid",
+          error: "Invalid URL",
+        };
+      }
+      if (parsedUrl.protocol !== "https:" && !isHttpOutboundAllowed()) {
+        return {
+          success: false,
+          errorCode: "projects.webhooks.outboundCreateUrlMustUseHttps",
+          error: "URL must use HTTPS",
+        };
+      }
 
-  let authorized: boolean;
-  try {
-    authorized = await canManageWebhookConfig(session, input.projectId);
-  } catch (err) {
-    console.error("[webhook-config] auth check failed (createOutbound)", err);
-    return { success: false, error: "Failed to save webhook configuration" };
-  }
-  if (!authorized) {
-    return { success: false, error: "Forbidden" };
-  }
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(session, input.projectId);
+      } catch (err) {
+        console.error(
+          "[webhook-config] auth check failed (createOutbound)",
+          err
+        );
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
+      }
+      if (!authorized) {
+        return { success: false, error: "Forbidden" };
+      }
 
-  const adapterType: "SLACK" | "GENERIC_HMAC" = isSlackWebhookUrl(input.url)
-    ? "SLACK"
-    : "GENERIC_HMAC";
-  const subscribedEvents = input.subscribedEvents ?? DEFAULT_OUTBOUND_PRESET;
-  const token = generateToken();
+      const adapterType: "SLACK" | "GENERIC_HMAC" = isSlackWebhookUrl(input.url)
+        ? "SLACK"
+        : "GENERIC_HMAC";
+      const subscribedEvents =
+        input.subscribedEvents ?? DEFAULT_OUTBOUND_PRESET;
+      const token = generateToken();
 
-  if (adapterType === "SLACK") {
-    // Slack URL is the credential — no HMAC signing secret needed.
-    try {
-      const config = await prisma.webhookConfig.create({
-        data: {
-          projectId: input.projectId,
-          adapterType: "SLACK",
-          direction: "OUTBOUND",
-          token,
-          secret: "", // Slack URL is the credential
-          subscribedEvents,
-          isActive: true,
-          name: trimmedName,
-          url: input.url,
-        },
-        select: { id: true },
-      });
-      return { success: true, configId: config.id };
-    } catch (err) {
-      console.error(
-        "[webhook-config] createOutboundWebhook (Slack) failed",
-        err
-      );
-      return { success: false, error: "Failed to save webhook configuration" };
+      if (adapterType === "SLACK") {
+        // Slack URL is the credential — no HMAC signing secret needed.
+        try {
+          const config = await prisma.webhookConfig.create({
+            data: {
+              projectId: input.projectId,
+              adapterType: "SLACK",
+              direction: "OUTBOUND",
+              token,
+              secret: "", // Slack URL is the credential
+              subscribedEvents,
+              isActive: true,
+              name: trimmedName,
+              url: input.url,
+            },
+            select: { id: true },
+          });
+          return { success: true, configId: config.id };
+        } catch (err) {
+          console.error(
+            "[webhook-config] createOutboundWebhook (Slack) failed",
+            err
+          );
+          return {
+            success: false,
+            error: "Failed to save webhook configuration",
+          };
+        }
+      }
+
+      // GENERIC_HMAC path — seed an initial WebhookConfigSecret in the same tx
+      // so the dispatcher's two-secret signing has an active row from t=0.
+      const plaintextSecret = generateSecret();
+      let encryptedSecret: string;
+      try {
+        encryptedSecret = await encrypt(plaintextSecret);
+      } catch (err) {
+        console.error(
+          "[webhook-config] encrypt failed (createOutbound HMAC)",
+          err
+        );
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
+      }
+
+      try {
+        const created = await prisma.$transaction(async (tx) => {
+          const config = await tx.webhookConfig.create({
+            data: {
+              projectId: input.projectId,
+              adapterType: "GENERIC_HMAC",
+              direction: "OUTBOUND",
+              token,
+              // Column kept in sync with the active WebhookConfigSecret — the
+              // rotation flow keeps this lockstep so legacy code paths that read
+              // `WebhookConfig.secret` directly still see the current key.
+              secret: encryptedSecret,
+              subscribedEvents,
+              isActive: true,
+              name: trimmedName,
+              url: input.url,
+            },
+            select: { id: true },
+          });
+          await tx.webhookConfigSecret.create({
+            data: {
+              webhookConfigId: config.id,
+              secret: encryptedSecret,
+              activatedAt: new Date(),
+            },
+          });
+          return config;
+        });
+        return {
+          success: true,
+          configId: created.id,
+          secret: plaintextSecret,
+        };
+      } catch (err) {
+        console.error(
+          "[webhook-config] createOutboundWebhook (HMAC) failed",
+          err
+        );
+        return {
+          success: false,
+          error: "Failed to save webhook configuration",
+        };
+      }
     }
-  }
-
-  // GENERIC_HMAC path — seed an initial WebhookConfigSecret in the same tx
-  // so the dispatcher's two-secret signing has an active row from t=0.
-  const plaintextSecret = generateSecret();
-  let encryptedSecret: string;
-  try {
-    encryptedSecret = await encrypt(plaintextSecret);
-  } catch (err) {
-    console.error("[webhook-config] encrypt failed (createOutbound HMAC)", err);
-    return { success: false, error: "Failed to save webhook configuration" };
-  }
-
-  try {
-    const created = await prisma.$transaction(async (tx) => {
-      const config = await tx.webhookConfig.create({
-        data: {
-          projectId: input.projectId,
-          adapterType: "GENERIC_HMAC",
-          direction: "OUTBOUND",
-          token,
-          // Column kept in sync with the active WebhookConfigSecret — the
-          // rotation flow keeps this lockstep so legacy code paths that read
-          // `WebhookConfig.secret` directly still see the current key.
-          secret: encryptedSecret,
-          subscribedEvents,
-          isActive: true,
-          name: trimmedName,
-          url: input.url,
-        },
-        select: { id: true },
-      });
-      await tx.webhookConfigSecret.create({
-        data: {
-          webhookConfigId: config.id,
-          secret: encryptedSecret,
-          activatedAt: new Date(),
-        },
-      });
-      return config;
-    });
-    return {
-      success: true,
-      configId: created.id,
-      secret: plaintextSecret,
-    };
-  } catch (err) {
-    console.error("[webhook-config] createOutboundWebhook (HMAC) failed", err);
-    return { success: false, error: "Failed to save webhook configuration" };
-  }
+  ); // end runWithAuditContext
 }
 
 /**
@@ -957,31 +1049,49 @@ export async function deleteOutboundWebhook(
     return { success: false, error: "Unauthorized" };
   }
 
-  const config = await prisma.webhookConfig.findUnique({
-    where: { id: configId },
-    select: { projectId: true, direction: true },
-  });
-  if (!config) return { success: false, error: "Not found" };
-  if (config.direction !== "OUTBOUND") {
-    return { success: false, error: "Not an outbound webhook" };
-  }
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
+      const config = await prisma.webhookConfig.findUnique({
+        where: { id: configId },
+        select: { projectId: true, direction: true },
+      });
+      if (!config) return { success: false, error: "Not found" };
+      if (config.direction !== "OUTBOUND") {
+        return { success: false, error: "Not an outbound webhook" };
+      }
 
-  let authorized: boolean;
-  try {
-    authorized = await canManageWebhookConfig(session, config.projectId);
-  } catch (err) {
-    console.error("[webhook-config] auth check failed (deleteOutbound)", err);
-    return { success: false, error: "Failed to delete webhook configuration" };
-  }
-  if (!authorized) return { success: false, error: "Forbidden" };
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(session, config.projectId);
+      } catch (err) {
+        console.error(
+          "[webhook-config] auth check failed (deleteOutbound)",
+          err
+        );
+        return {
+          success: false,
+          error: "Failed to delete webhook configuration",
+        };
+      }
+      if (!authorized) return { success: false, error: "Forbidden" };
 
-  try {
-    await prisma.webhookConfig.delete({ where: { id: configId } });
-    return { success: true };
-  } catch (err) {
-    console.error("[webhook-config] deleteOutboundWebhook failed", err);
-    return { success: false, error: "Failed to delete webhook configuration" };
-  }
+      try {
+        await prisma.webhookConfig.delete({ where: { id: configId } });
+        return { success: true };
+      } catch (err) {
+        console.error("[webhook-config] deleteOutboundWebhook failed", err);
+        return {
+          success: false,
+          error: "Failed to delete webhook configuration",
+        };
+      }
+    }
+  ); // end runWithAuditContext
 }
 
 /**
@@ -1003,33 +1113,45 @@ export async function updateOutboundSubscriptions(
     return { success: false, error: "Unauthorized" };
   }
 
-  const config = await prisma.webhookConfig.findUnique({
-    where: { id: configId },
-    select: { projectId: true, direction: true },
-  });
-  if (!config) return { success: false, error: "Not found" };
-  if (config.direction !== "OUTBOUND") {
-    return { success: false, error: "Not an outbound webhook" };
-  }
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
+      const config = await prisma.webhookConfig.findUnique({
+        where: { id: configId },
+        select: { projectId: true, direction: true },
+      });
+      if (!config) return { success: false, error: "Not found" };
+      if (config.direction !== "OUTBOUND") {
+        return { success: false, error: "Not an outbound webhook" };
+      }
 
-  let authorized: boolean;
-  try {
-    authorized = await canManageWebhookConfig(session, config.projectId);
-  } catch {
-    return { success: false, error: "Failed to update subscriptions" };
-  }
-  if (!authorized) return { success: false, error: "Forbidden" };
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(session, config.projectId);
+      } catch {
+        return { success: false, error: "Failed to update subscriptions" };
+      }
+      if (!authorized) return { success: false, error: "Forbidden" };
 
-  try {
-    await prisma.webhookConfig.update({
-      where: { id: configId },
-      data: { subscribedEvents },
-    });
-    return { success: true };
-  } catch (err) {
-    console.error("[webhook-config] updateOutboundSubscriptions failed", err);
-    return { success: false, error: "Failed to update subscriptions" };
-  }
+      try {
+        await prisma.webhookConfig.update({
+          where: { id: configId },
+          data: { subscribedEvents },
+        });
+        return { success: true };
+      } catch (err) {
+        console.error(
+          "[webhook-config] updateOutboundSubscriptions failed",
+          err
+        );
+        return { success: false, error: "Failed to update subscriptions" };
+      }
+    }
+  ); // end runWithAuditContext
 }
 
 // =============================================================================
@@ -1072,81 +1194,90 @@ export async function rotateOutboundSecret(
     return { success: false, error: "Unauthorized" };
   }
 
-  const config = await prisma.webhookConfig.findUnique({
-    where: { id: configId },
-    select: { projectId: true, direction: true, adapterType: true },
-  });
-  if (!config) return { success: false, error: "Not found" };
-  if (config.direction !== "OUTBOUND") {
-    return { success: false, error: "Not an outbound webhook" };
-  }
-  if (config.adapterType === "SLACK") {
-    return {
-      success: false,
-      error: "Slack webhooks do not have a rotatable secret",
-    };
-  }
-
-  let authorized: boolean;
-  try {
-    authorized = await canManageWebhookConfig(session, config.projectId);
-  } catch {
-    return { success: false, error: "Failed to rotate secret" };
-  }
-  if (!authorized) return { success: false, error: "Forbidden" };
-
-  const plaintextSecret = generateSecret();
-  let encryptedSecret: string;
-  try {
-    encryptedSecret = await encrypt(plaintextSecret);
-  } catch {
-    return { success: false, error: "Failed to rotate secret" };
-  }
-
-  try {
-    await prisma.$transaction(async (tx) => {
-      const activeSecrets = await tx.webhookConfigSecret.findMany({
-        where: {
-          webhookConfigId: configId,
-          retiredAt: null,
-          autoRetireAt: null,
-        },
-        select: { id: true },
-      });
-      if (activeSecrets.length > 1) {
-        throw new Error("MULTIPLE_ACTIVE");
-      }
-      // Demote the previous active (if exists). Zero-active is a recovery
-      // path — proceed to create a new active without demoting.
-      if (activeSecrets.length === 1) {
-        await tx.webhookConfigSecret.update({
-          where: { id: activeSecrets[0].id },
-          data: { autoRetireAt: new Date(Date.now() + SEVEN_DAYS_MS) },
-        });
-      }
-      await tx.webhookConfigSecret.create({
-        data: {
-          webhookConfigId: configId,
-          secret: encryptedSecret,
-          activatedAt: new Date(),
-        },
-      });
-      await tx.webhookConfig.update({
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
+      const config = await prisma.webhookConfig.findUnique({
         where: { id: configId },
-        data: { secret: encryptedSecret },
+        select: { projectId: true, direction: true, adapterType: true },
       });
-    });
-    return { success: true, secret: plaintextSecret };
-  } catch (err) {
-    if (err instanceof Error && err.message === "MULTIPLE_ACTIVE") {
-      return {
-        success: false,
-        error: "Multiple active secrets — contact support",
-      };
+      if (!config) return { success: false, error: "Not found" };
+      if (config.direction !== "OUTBOUND") {
+        return { success: false, error: "Not an outbound webhook" };
+      }
+      if (config.adapterType === "SLACK") {
+        return {
+          success: false,
+          error: "Slack webhooks do not have a rotatable secret",
+        };
+      }
+
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(session, config.projectId);
+      } catch {
+        return { success: false, error: "Failed to rotate secret" };
+      }
+      if (!authorized) return { success: false, error: "Forbidden" };
+
+      const plaintextSecret = generateSecret();
+      let encryptedSecret: string;
+      try {
+        encryptedSecret = await encrypt(plaintextSecret);
+      } catch {
+        return { success: false, error: "Failed to rotate secret" };
+      }
+
+      try {
+        await prisma.$transaction(async (tx) => {
+          const activeSecrets = await tx.webhookConfigSecret.findMany({
+            where: {
+              webhookConfigId: configId,
+              retiredAt: null,
+              autoRetireAt: null,
+            },
+            select: { id: true },
+          });
+          if (activeSecrets.length > 1) {
+            throw new Error("MULTIPLE_ACTIVE");
+          }
+          // Demote the previous active (if exists). Zero-active is a recovery
+          // path — proceed to create a new active without demoting.
+          if (activeSecrets.length === 1) {
+            await tx.webhookConfigSecret.update({
+              where: { id: activeSecrets[0].id },
+              data: { autoRetireAt: new Date(Date.now() + SEVEN_DAYS_MS) },
+            });
+          }
+          await tx.webhookConfigSecret.create({
+            data: {
+              webhookConfigId: configId,
+              secret: encryptedSecret,
+              activatedAt: new Date(),
+            },
+          });
+          await tx.webhookConfig.update({
+            where: { id: configId },
+            data: { secret: encryptedSecret },
+          });
+        });
+        return { success: true, secret: plaintextSecret };
+      } catch (err) {
+        if (err instanceof Error && err.message === "MULTIPLE_ACTIVE") {
+          return {
+            success: false,
+            error: "Multiple active secrets — contact support",
+          };
+        }
+        console.error("[webhook-config] rotateOutboundSecret failed", err);
+        return { success: false, error: "Failed to rotate secret" };
+      }
     }
-    console.error("[webhook-config] rotateOutboundSecret failed", err);
-    return { success: false, error: "Failed to rotate secret" };
-  }
+  ); // end runWithAuditContext
 }
 
 /**
@@ -1163,44 +1294,53 @@ export async function retireOutboundSecretNow(
     return { success: false, error: "Unauthorized" };
   }
 
-  const secret = await prisma.webhookConfigSecret.findUnique({
-    where: { id: secretId },
-    select: {
-      retiredAt: true,
-      autoRetireAt: true,
-      webhookConfig: { select: { projectId: true } },
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
     },
-  });
-  if (!secret) return { success: false, error: "Not found" };
-  if (secret.retiredAt) return { success: false, error: "Already retired" };
-  if (secret.autoRetireAt === null) {
-    return {
-      success: false,
-      error: "Cannot retire the active secret — rotate first",
-    };
-  }
+    async () => {
+      const secret = await prisma.webhookConfigSecret.findUnique({
+        where: { id: secretId },
+        select: {
+          retiredAt: true,
+          autoRetireAt: true,
+          webhookConfig: { select: { projectId: true } },
+        },
+      });
+      if (!secret) return { success: false, error: "Not found" };
+      if (secret.retiredAt) return { success: false, error: "Already retired" };
+      if (secret.autoRetireAt === null) {
+        return {
+          success: false,
+          error: "Cannot retire the active secret — rotate first",
+        };
+      }
 
-  let authorized: boolean;
-  try {
-    authorized = await canManageWebhookConfig(
-      session,
-      secret.webhookConfig.projectId
-    );
-  } catch {
-    return { success: false, error: "Failed to retire secret" };
-  }
-  if (!authorized) return { success: false, error: "Forbidden" };
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(
+          session,
+          secret.webhookConfig.projectId
+        );
+      } catch {
+        return { success: false, error: "Failed to retire secret" };
+      }
+      if (!authorized) return { success: false, error: "Forbidden" };
 
-  try {
-    await prisma.webhookConfigSecret.update({
-      where: { id: secretId },
-      data: { retiredAt: new Date() },
-    });
-    return { success: true };
-  } catch (err) {
-    console.error("[webhook-config] retireOutboundSecretNow failed", err);
-    return { success: false, error: "Failed to retire secret" };
-  }
+      try {
+        await prisma.webhookConfigSecret.update({
+          where: { id: secretId },
+          data: { retiredAt: new Date() },
+        });
+        return { success: true };
+      } catch (err) {
+        console.error("[webhook-config] retireOutboundSecretNow failed", err);
+        return { success: false, error: "Failed to retire secret" };
+      }
+    }
+  ); // end runWithAuditContext
 }
 
 /**
@@ -1220,44 +1360,53 @@ export async function extendRetiringSecret(
     return { success: false, error: "Unauthorized" };
   }
 
-  const secret = await prisma.webhookConfigSecret.findUnique({
-    where: { id: secretId },
-    select: {
-      retiredAt: true,
-      autoRetireAt: true,
-      webhookConfig: { select: { projectId: true } },
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
     },
-  });
-  if (!secret) return { success: false, error: "Not found" };
-  if (secret.retiredAt) return { success: false, error: "Already retired" };
-  if (secret.autoRetireAt === null) {
-    return { success: false, error: "Cannot extend the active secret" };
-  }
+    async () => {
+      const secret = await prisma.webhookConfigSecret.findUnique({
+        where: { id: secretId },
+        select: {
+          retiredAt: true,
+          autoRetireAt: true,
+          webhookConfig: { select: { projectId: true } },
+        },
+      });
+      if (!secret) return { success: false, error: "Not found" };
+      if (secret.retiredAt) return { success: false, error: "Already retired" };
+      if (secret.autoRetireAt === null) {
+        return { success: false, error: "Cannot extend the active secret" };
+      }
 
-  let authorized: boolean;
-  try {
-    authorized = await canManageWebhookConfig(
-      session,
-      secret.webhookConfig.projectId
-    );
-  } catch {
-    return { success: false, error: "Failed to extend secret" };
-  }
-  if (!authorized) return { success: false, error: "Forbidden" };
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(
+          session,
+          secret.webhookConfig.projectId
+        );
+      } catch {
+        return { success: false, error: "Failed to extend secret" };
+      }
+      if (!authorized) return { success: false, error: "Forbidden" };
 
-  const newAutoRetireAt = new Date(
-    secret.autoRetireAt.getTime() + SEVEN_DAYS_MS
-  );
-  try {
-    await prisma.webhookConfigSecret.update({
-      where: { id: secretId },
-      data: { autoRetireAt: newAutoRetireAt },
-    });
-    return { success: true, newAutoRetireAt };
-  } catch (err) {
-    console.error("[webhook-config] extendRetiringSecret failed", err);
-    return { success: false, error: "Failed to extend secret" };
-  }
+      const newAutoRetireAt = new Date(
+        secret.autoRetireAt.getTime() + SEVEN_DAYS_MS
+      );
+      try {
+        await prisma.webhookConfigSecret.update({
+          where: { id: secretId },
+          data: { autoRetireAt: newAutoRetireAt },
+        });
+        return { success: true, newAutoRetireAt };
+      } catch (err) {
+        console.error("[webhook-config] extendRetiringSecret failed", err);
+        return { success: false, error: "Failed to extend secret" };
+      }
+    }
+  ); // end runWithAuditContext
 }
 
 // =============================================================================
@@ -1285,47 +1434,59 @@ export async function sendTestOutboundWebhook(
     return { success: false, error: "Unauthorized" };
   }
 
-  const config = await prisma.webhookConfig.findUnique({
-    where: { id: configId },
-    select: { projectId: true, direction: true },
-  });
-  if (!config) return { success: false, error: "Not found" };
-  if (config.direction !== "OUTBOUND") {
-    return { success: false, error: "Not an outbound webhook" };
-  }
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
+    },
+    async () => {
+      const config = await prisma.webhookConfig.findUnique({
+        where: { id: configId },
+        select: { projectId: true, direction: true },
+      });
+      if (!config) return { success: false, error: "Not found" };
+      if (config.direction !== "OUTBOUND") {
+        return { success: false, error: "Not an outbound webhook" };
+      }
 
-  let authorized: boolean;
-  try {
-    authorized = await canManageWebhookConfig(session, config.projectId);
-  } catch {
-    return { success: false, error: "Failed to send test webhook" };
-  }
-  if (!authorized) return { success: false, error: "Forbidden" };
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(session, config.projectId);
+      } catch {
+        return { success: false, error: "Failed to send test webhook" };
+      }
+      if (!authorized) return { success: false, error: "Forbidden" };
 
-  let eventId: string | null = null;
-  try {
-    await prisma.$transaction(async (tx) => {
-      const result = await webhookEvents.emit(
-        "webhook.test",
-        {
-          source: "TestPlanIt",
-          message: "Webhook pipeline is healthy",
-          configId,
-          dispatchedAt: new Date().toISOString(),
-        },
-        {
-          projectId: config.projectId,
-          tx,
-          actorUserId: session.user.id ?? null,
-        }
-      );
-      eventId = result?.eventId ?? null;
-    });
-  } catch (err) {
-    console.error("[webhook-config] sendTestOutboundWebhook emit failed", err);
-    return { success: false, error: "Failed to send test webhook" };
-  }
-  return { success: true, eventId: eventId ?? undefined };
+      let eventId: string | null = null;
+      try {
+        await prisma.$transaction(async (tx) => {
+          const result = await webhookEvents.emit(
+            "webhook.test",
+            {
+              source: "TestPlanIt",
+              message: "Webhook pipeline is healthy",
+              configId,
+              dispatchedAt: new Date().toISOString(),
+            },
+            {
+              projectId: config.projectId,
+              tx,
+              actorUserId: session.user.id ?? null,
+            }
+          );
+          eventId = result?.eventId ?? null;
+        });
+      } catch (err) {
+        console.error(
+          "[webhook-config] sendTestOutboundWebhook emit failed",
+          err
+        );
+        return { success: false, error: "Failed to send test webhook" };
+      }
+      return { success: true, eventId: eventId ?? undefined };
+    }
+  ); // end runWithAuditContext
 }
 
 // =============================================================================
@@ -1516,70 +1677,82 @@ export async function reEnableWebhookConfig(
   const session = await getServerAuthSession();
   if (!session?.user) return { ok: false, error: "Unauthorized" };
 
-  let projectId: number;
-  let endpointHealth: "HEALTHY" | "DEGRADED" | "DISABLED";
-  try {
-    const config = await prisma.webhookConfig.findUnique({
-      where: { id: webhookConfigId },
-      select: { projectId: true, endpointHealth: true },
-    });
-    if (!config) return { ok: false, error: "Not found" };
-    projectId = config.projectId;
-    endpointHealth = config.endpointHealth;
-  } catch (err) {
-    console.error(
-      "[webhook-config] lookup failed (reEnableWebhookConfig)",
-      err
-    );
-    return { ok: false, error: "Failed to re-enable webhook" };
-  }
-
-  // Only DISABLED is re-enable-able. DEGRADED auto-clears, HEALTHY has
-  // nothing to do. Reject before the auth probe so an attacker cannot use
-  // this action to discover health state of arbitrary configs.
-  if (endpointHealth !== "DISABLED") {
-    return { ok: false, error: "Not disabled" };
-  }
-
-  let authorized: boolean;
-  try {
-    authorized = await canManageWebhookConfig(session, projectId);
-  } catch (err) {
-    console.error(
-      "[webhook-config] auth check failed (reEnableWebhookConfig)",
-      err
-    );
-    return { ok: false, error: "Failed to re-enable webhook" };
-  }
-  if (!authorized) return { ok: false, error: "Forbidden" };
-
-  try {
-    await prisma.webhookConfig.update({
-      where: { id: webhookConfigId },
-      data: { endpointHealth: "HEALTHY", consecutiveFailureCount: 0 },
-    });
-  } catch (err) {
-    console.error("[webhook-config] reEnableWebhookConfig update failed", err);
-    return { ok: false, error: "Failed to re-enable webhook" };
-  }
-
-  // Actor is the human admin (`actorUserId`), NOT `__system__`.
-  await captureAuditEvent({
-    action: "WEBHOOK_HEALTH_CHANGED",
-    entityType: "WebhookConfig",
-    entityId: webhookConfigId,
-    projectId,
-    userId: session.user.id ?? "",
-    metadata: {
-      webhookConfigId,
-      from: "DISABLED",
-      to: "HEALTHY",
-      reason: "manual_reenable",
-      consecutiveFailureCount: 0,
+  return runWithAuditContext(
+    {
+      userId: session.user.id,
+      userName: session.user.name ?? undefined,
+      userEmail: session.user.email ?? undefined,
     },
-  });
+    async () => {
+      let projectId: number;
+      let endpointHealth: "HEALTHY" | "DEGRADED" | "DISABLED";
+      try {
+        const config = await prisma.webhookConfig.findUnique({
+          where: { id: webhookConfigId },
+          select: { projectId: true, endpointHealth: true },
+        });
+        if (!config) return { ok: false, error: "Not found" };
+        projectId = config.projectId;
+        endpointHealth = config.endpointHealth;
+      } catch (err) {
+        console.error(
+          "[webhook-config] lookup failed (reEnableWebhookConfig)",
+          err
+        );
+        return { ok: false, error: "Failed to re-enable webhook" };
+      }
 
-  return { ok: true };
+      // Only DISABLED is re-enable-able. DEGRADED auto-clears, HEALTHY has
+      // nothing to do. Reject before the auth probe so an attacker cannot use
+      // this action to discover health state of arbitrary configs.
+      if (endpointHealth !== "DISABLED") {
+        return { ok: false, error: "Not disabled" };
+      }
+
+      let authorized: boolean;
+      try {
+        authorized = await canManageWebhookConfig(session, projectId);
+      } catch (err) {
+        console.error(
+          "[webhook-config] auth check failed (reEnableWebhookConfig)",
+          err
+        );
+        return { ok: false, error: "Failed to re-enable webhook" };
+      }
+      if (!authorized) return { ok: false, error: "Forbidden" };
+
+      try {
+        await prisma.webhookConfig.update({
+          where: { id: webhookConfigId },
+          data: { endpointHealth: "HEALTHY", consecutiveFailureCount: 0 },
+        });
+      } catch (err) {
+        console.error(
+          "[webhook-config] reEnableWebhookConfig update failed",
+          err
+        );
+        return { ok: false, error: "Failed to re-enable webhook" };
+      }
+
+      // Actor is the human admin (`actorUserId`), NOT `__system__`.
+      await captureAuditEvent({
+        action: "WEBHOOK_HEALTH_CHANGED",
+        entityType: "WebhookConfig",
+        entityId: webhookConfigId,
+        projectId,
+        userId: session.user.id ?? "",
+        metadata: {
+          webhookConfigId,
+          from: "DISABLED",
+          to: "HEALTHY",
+          reason: "manual_reenable",
+          consecutiveFailureCount: 0,
+        },
+      });
+
+      return { ok: true };
+    }
+  ); // end runWithAuditContext
 }
 
 /**

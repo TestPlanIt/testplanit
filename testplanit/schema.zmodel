@@ -5599,6 +5599,7 @@ enum AuditAction {
     WEBHOOK_REPLAYED
     WEBHOOK_HEALTH_CHANGED
     WEBHOOK_RETENTION_PURGED
+    DCL_RETENTION_PURGED
     DUPLICATED
     // Parameterized Test Cases — iteration audit actions
     ITERATION_VALUES_OVERRIDDEN
@@ -5614,29 +5615,33 @@ enum AuditAction {
 }
 
 model AuditLog {
-    id         String      @id @default(cuid())
+    id          String      @id @default(cuid())
 
     // Actor information
-    userId     String?     @db.Text
-    userEmail  String?     @db.Text
-    userName   String?     @db.Text
+    userId      String?     @db.Text
+    userEmail   String?     @db.Text
+    userName    String?     @db.Text
 
     // Action details
-    action     AuditAction
-    entityType String      @db.VarChar(100)
-    entityId   String      @db.Text
-    entityName String?     @db.Text
+    action      AuditAction
+    entityType  String      @db.VarChar(100)
+    entityId    String      @db.Text
+    entityName  String?     @db.Text
 
     // Change tracking
-    changes    Json? // { field: { old: value, new: value } }
-    metadata   Json? // Additional context (IP, user agent, request ID, etc.)
+    changes     Json? // { field: { old: value, new: value } }
+    metadata    Json? // Additional context (IP, user agent, request ID, etc.)
 
     // Timestamps
-    timestamp  DateTime    @default(now()) @db.Timestamptz(6)
+    timestamp   DateTime    @default(now()) @db.Timestamptz(6)
 
     // Multi-tenant support (optional project association)
-    projectId  Int?
-    project    Projects?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+    projectId   Int?
+    project     Projects?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+    // CDC correlation — set by auditLogWorker when materializing DataChangeLog rows; null for captureAuditEvent semantic events.
+    operationId String?     @db.Text // groups multi-request logical saves in the UI
+    sourceTable String?     @db.VarChar(100) // Postgres table name for CDC-sourced rows
 
     // Indexes for efficient querying
     @@index([entityType, entityId])
@@ -5644,9 +5649,104 @@ model AuditLog {
     @@index([projectId, timestamp])
     @@index([timestamp])
     @@index([action])
+    @@index([operationId])
 
     @@deny('all', !auth())
     @@deny('update, delete', true)
+
+    // Case / run / session audit entries inherit the underlying entity's own read
+    // restrictions, so audit visibility tracks exactly who can view that entity
+    // (mirrors the project NONE / NO_ACCESS denies, scoped through the project).
+    @@deny('read', (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions') && auth().access == 'NONE')
+    @@deny('read', (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions') && project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
     @@allow('read', auth().access == 'ADMIN')
     @@allow('read', auth().id == userId)
+    @@allow('read', project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
+
+    // Anyone who can read a case / run / session can read that entity's audit
+    // trail. These entities share one project-membership read model, so the same
+    // predicate (resolved through the audit log's denormalized project relation)
+    // grants audit visibility for all three.
+    @@allow('read',
+        (entityType == 'RepositoryCases' || entityType == 'TestRuns' || entityType == 'Sessions') && (
+            project.creator == auth() ||
+            project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+            project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+            project.groupPermissions?[
+                group.assignedUsers?[user == auth()] &&
+                ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+                 (accessType == 'GLOBAL_ROLE' && auth().role != null))
+            ] ||
+            (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+            (project.assignedUsers?[user == auth()] &&
+             project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+        )
+    )
+}
+
+// Append-only change-data-capture substrate. The generic audit_row_change()
+// trigger (prisma/audit_row_change.sql) writes one row here per
+// INSERT/UPDATE/DELETE on every allowlisted table; a downstream correlation
+// worker reads it via the raw prismaBase client.
+//
+// COLUMN-NAME RECONCILIATION (load-bearing): every field is @map-ed so the
+// Postgres columns this model produces match EXACTLY the snake_case/reserved
+// columns the trigger INSERTs into:
+//   "table", op, pk, changed_cols, actor, operation_id, tenant, txid, ts,
+//   processed, seq
+// If any column drifts (e.g. Prisma emits "changedCols" instead of
+// "changed_cols"), the trigger's INSERT targets a non-existent column and
+// every capture fails at runtime.
+model DataChangeLog {
+    // Stable row identity (BIGSERIAL PK).
+    id          BigInt   @id @default(autoincrement())
+    // Monotonic worker cursor (separate BIGSERIAL — column "seq").
+    seq         BigInt   @default(autoincrement())
+
+    // What changed.
+    tableName   String   @map("table") @db.VarChar(100) // column "table" (reserved word; field renamed)
+    op          String   @db.Char(1)                    // 'I' | 'U' | 'D'
+    pk          String   @db.Text                        // PK value as string (handles Int + cuid)
+    changedCols Json?    @map("changed_cols")            // { col: { old, new } }
+
+    // Actor context from the app.audit_context GUC (null = context unset:
+    // completeness over attribution).
+    actor       String?  @db.Text
+    operationId String?  @map("operation_id") @db.Text
+    tenant      String?  @db.Text
+
+    // Write-time human-context snapshot (immutable). The trigger captures these
+    // AT THE MOMENT OF THE CHANGE so the readable AuditLog never has to look them
+    // up later (a later lookup would show the value as it is NOW, not as it was
+    // then). actorName/actorEmail come from the GUC; entityName/projectId are read
+    // off the changed row's name/project columns (or the GUC subject for child
+    // rows whose own table has neither). projectId stays text here and is cast to
+    // Int by the correlation worker when writing AuditLog.
+    actorName   String?  @map("actor_name") @db.Text
+    actorEmail  String?  @map("actor_email") @db.Text
+    entityName  String?  @map("entity_name") @db.Text
+    projectId   String?  @map("project_id") @db.Text
+
+    // DB-level metadata.
+    txid        BigInt
+    ts          DateTime @default(now()) @db.Timestamptz(6)
+
+    // Worker cursor flag.
+    processed   Boolean  @default(false)
+
+    // Worker poll hot path (the WHERE processed = false partial-index clause is
+    // applied by scripts/apply-triggers.ts in 13-03 — plain @@index here).
+    @@index([seq], map: "dcl_unprocessed_seq")
+    @@index([tableName, pk], map: "dcl_table_pk")
+    @@index([ts], map: "dcl_ts")
+
+    // Fully locked at the ZenStack policy layer — no application access. The
+    // worker reads via the raw prismaBase client (bypasses policy by design);
+    // INSERT is governed by the DB-role GRANT applied in 13-03. The explicit
+    // update/delete denials are defense-in-depth for the append-only invariant
+    // (SPIKE-04 Decision 5 / SAF-03).
+    @@deny('all', true)
+    @@deny('update', true)
+    @@deny('delete', true)
 }

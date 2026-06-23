@@ -1,3 +1,5 @@
+import { operationIdRef } from "~/lib/zenstackFetcher";
+
 export interface SubmitTestRunResultInput {
   testRunId: number;
   testRunCaseId: number;
@@ -139,11 +141,15 @@ export interface EditTestRunResultInput {
 export async function editTestRunResult(
   input: EditTestRunResultInput
 ): Promise<SubmitTestRunResultResponse["result"]> {
+  const editHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (operationIdRef.current) {
+    editHeaders["X-Operation-Id"] = operationIdRef.current;
+  }
   const response = await fetch("/api/test-runs/edit-result", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: editHeaders,
     body: JSON.stringify(input),
   });
 
@@ -168,11 +174,19 @@ export async function editTestRunResult(
 export async function submitTestRunResult(
   input: SubmitTestRunResultInput
 ): Promise<SubmitTestRunResultResponse["result"]> {
+  // Stamp the shared operationId (minted by the result modal's beginOperation)
+  // so this raw fetch and the step-result mutations the modal also issues land
+  // under ONE operationId — the correlation worker then groups the whole "record
+  // result" action together and the step rows inherit the run's name/project.
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (operationIdRef.current) {
+    headers["X-Operation-Id"] = operationIdRef.current;
+  }
   const response = await fetch("/api/test-runs/submit-result", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify(input),
   });
 

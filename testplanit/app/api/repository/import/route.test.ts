@@ -178,7 +178,7 @@ describe("CSV Import API Route", () => {
     isDefault: true,
   };
 
-  const mockEnhancedDb = {
+  const mockEnhancedDb: any = {
     projects: {
       findFirst: vi.fn(),
     },
@@ -242,6 +242,11 @@ describe("CSV Import API Route", () => {
       deleteMany: vi.fn(),
     },
   };
+  // enhanceWithAudit() calls enhance(prismaBase, { user }).$extends({...}); the
+  // audit-GUC $extends layer wraps writes in a SET LOCAL transaction at runtime
+  // but here it is a no-op pass-through so route writes land on mockEnhancedDb
+  // directly (and assertions can read the mock call records).
+  mockEnhancedDb.$extends = vi.fn(() => mockEnhancedDb);
 
   const mockPrisma = {
     user: {
@@ -263,17 +268,21 @@ describe("CSV Import API Route", () => {
       id: 1,
       name: "Test Folder",
     });
-    mockEnhancedDb.repositoryFolders.create.mockImplementation(({ data }) => ({
-      id: Math.floor(Math.random() * 1000),
-      ...data,
-    }));
-    mockEnhancedDb.repositoryCases.create.mockImplementation(({ data }) => ({
-      id: Math.floor(Math.random() * 1000),
-      ...data,
-    }));
+    mockEnhancedDb.repositoryFolders.create.mockImplementation(
+      ({ data }: any) => ({
+        id: Math.floor(Math.random() * 1000),
+        ...data,
+      })
+    );
+    mockEnhancedDb.repositoryCases.create.mockImplementation(
+      ({ data }: any) => ({
+        id: Math.floor(Math.random() * 1000),
+        ...data,
+      })
+    );
     mockEnhancedDb.repositoryCases.findFirst.mockResolvedValue(null);
     mockEnhancedDb.repositoryCases.findUnique.mockImplementation(
-      ({ where }) => ({
+      ({ where }: any) => ({
         id: where.id,
         name: "Test Case",
         currentVersion: 1,
@@ -529,7 +538,7 @@ describe("CSV Import API Route", () => {
 
     it("imports test cases with tags", async () => {
       mockEnhancedDb.tags.findFirst.mockResolvedValue(null);
-      mockEnhancedDb.tags.create.mockImplementation(({ data }) => ({
+      mockEnhancedDb.tags.create.mockImplementation(({ data }: any) => ({
         id: Math.floor(Math.random() * 1000),
         ...data,
       }));
@@ -559,7 +568,7 @@ describe("CSV Import API Route", () => {
 
     it("imports test cases with JSON formatted tags", async () => {
       mockEnhancedDb.tags.findFirst.mockResolvedValue(null);
-      mockEnhancedDb.tags.create.mockImplementation(({ data }) => ({
+      mockEnhancedDb.tags.create.mockImplementation(({ data }: any) => ({
         id: Math.floor(Math.random() * 1000),
         ...data,
       }));
@@ -589,7 +598,7 @@ describe("CSV Import API Route", () => {
 
     it("matches existing tags case-insensitively", async () => {
       const existingTag = { id: 1, name: "Smoke", isDeleted: false };
-      mockEnhancedDb.tags.findFirst.mockImplementation(({ where }) => {
+      mockEnhancedDb.tags.findFirst.mockImplementation(({ where }: any) => {
         // Simulate case-insensitive matching - findFirst is called with mode: "insensitive"
         if (
           where.name?.equals?.toLowerCase() === "smoke" &&
@@ -633,7 +642,7 @@ describe("CSV Import API Route", () => {
       const deletedTag = { id: 2, name: "Regression", isDeleted: true };
       let tagRestored = false;
 
-      mockEnhancedDb.tags.findFirst.mockImplementation(({ where }) => {
+      mockEnhancedDb.tags.findFirst.mockImplementation(({ where }: any) => {
         // First call checks for active tag - returns null
         if (where.isDeleted === false) {
           return null;
@@ -645,7 +654,7 @@ describe("CSV Import API Route", () => {
         return null;
       });
 
-      mockEnhancedDb.tags.update.mockImplementation(({ where, data }) => {
+      mockEnhancedDb.tags.update.mockImplementation(({ where, data }: any) => {
         if (where.id === deletedTag.id && data.isDeleted === false) {
           tagRestored = true;
           return { ...deletedTag, isDeleted: false };
@@ -685,7 +694,7 @@ describe("CSV Import API Route", () => {
 
     it("trims whitespace from tag names", async () => {
       mockEnhancedDb.tags.findFirst.mockResolvedValue(null);
-      mockEnhancedDb.tags.create.mockImplementation(({ data }) => ({
+      mockEnhancedDb.tags.create.mockImplementation(({ data }: any) => ({
         id: Math.floor(Math.random() * 1000),
         ...data,
       }));
@@ -995,12 +1004,14 @@ describe("CSV Import API Route", () => {
     });
 
     it("imports test cases with workflow state", async () => {
-      mockEnhancedDb.workflows.findFirst.mockImplementation(({ where }) => {
-        if (where.name === "In Progress") {
-          return { id: 2, name: "In Progress" };
+      mockEnhancedDb.workflows.findFirst.mockImplementation(
+        ({ where }: any) => {
+          if (where.name === "In Progress") {
+            return { id: 2, name: "In Progress" };
+          }
+          return mockWorkflow;
         }
-        return mockWorkflow;
-      });
+      );
 
       const request = createRequest({
         projectId: 1,
@@ -1316,7 +1327,7 @@ describe("CSV Import API Route", () => {
 
     it("handles mixed create and update operations", async () => {
       mockEnhancedDb.repositoryCases.findFirst.mockImplementation(
-        ({ where }) => {
+        ({ where }: any) => {
           if (where.id === 1001) {
             return { id: 1001, name: "Existing Case" };
           }

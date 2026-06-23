@@ -1,5 +1,5 @@
 import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
-import { enhance } from "@zenstackhq/runtime";
+import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
@@ -7,7 +7,6 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { getCopyMoveQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
-import { db } from "~/server/db";
 import { submitSchema } from "./schemas";
 
 // Wrapped with withAuditContext so
@@ -54,7 +53,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       include: { role: { include: { rolePermissions: true } } },
     });
 
-    const enhancedDb = enhance(db, { user: user ?? undefined });
+    const enhancedDb = enhanceWithAudit(user ?? undefined);
 
     // 5. Source access check
     const sourceProject = await enhancedDb.projects.findFirst({

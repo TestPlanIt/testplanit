@@ -164,13 +164,14 @@ All workers support multi-tenant mode:
 | Sync Worker | Yes | Syncs issues to correct tenant database |
 | Elasticsearch Reindex Worker | Yes | Indexes to tenant-specific ES index |
 | Auto Tag Worker | Yes | Runs AI tagging against correct tenant database |
-| Audit Log Worker | Yes | Persists audit entries to correct tenant database |
+| Audit Log Worker | Yes | Persists semantic audit entries to the correct tenant database (per-job `tenantId`); its CDC correlation loop (Loop B) drains every configured tenant's `DataChangeLog` into that tenant's `AuditLog` each cycle, re-reading the tenant list so runtime additions are picked up |
 | Budget Alert Worker | Yes | Checks budgets per tenant database |
 | Repo Cache Worker | Yes | Refreshes tenant-scoped Valkey caches |
 | Testmo Import Worker | Yes | Memory-intensive; consider per-tenant deployment for frequent imports |
 | Webhook Dispatch Worker | Yes | Routes per-job via `tenantId` stamped on each dispatch job by the outbox poller |
 | Webhook Outbox Worker | Yes | Polls every configured tenant per cycle, claims per-tenant batches via `FOR UPDATE SKIP LOCKED`, stamps `tenantId` on each enqueued dispatch job |
 | Webhook Retention Worker | Yes | Runs the daily 30-day purge against every configured tenant database, emits one audit row per tenant per run |
+| DataChangeLog Retention Worker | Yes | Runs the daily 30-day purge of the audit change-capture log against every configured tenant database, emits one audit row per tenant per run |
 
 ### Testmo Import Worker Note
 

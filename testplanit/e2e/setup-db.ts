@@ -59,6 +59,26 @@ async function ensureExtensions() {
   }
 }
 
+async function ensureAuditTriggers() {
+  // prisma db push drops unmanaged triggers, so re-apply after every schema
+  // sync or the audit specs see no rows once the app-layer hooks are removed.
+  console.log("🔔 Applying audit-capture triggers...");
+
+  const { execSync } = await import("child_process");
+
+  try {
+    execSync("npx tsx scripts/apply-triggers.ts", {
+      cwd: process.cwd(),
+      stdio: "inherit",
+      env: process.env,
+    });
+    console.log("   Audit triggers applied");
+  } catch (error) {
+    console.error("   Failed to apply audit triggers:", error);
+    throw error;
+  }
+}
+
 async function resetDatabase() {
   console.log("🗑️  Resetting database...");
 
@@ -313,6 +333,12 @@ async function main() {
     // review_request_one_pending_per_entity partial unique). Idempotent via
     // IF NOT EXISTS; mirrors docker-entrypoint.sh production invocation.
     await ensureExtensions();
+
+    // Step 0.6: Re-apply the 68 tpl_audit_* capture triggers and the
+    // DataChangeLog append-only enforcement triggers. prisma db push drops
+    // all unmanaged triggers, so they must be re-applied here. Idempotent
+    // via DROP IF EXISTS + CREATE and CREATE OR REPLACE for functions.
+    await ensureAuditTriggers();
 
     // Step 1: Reset database
     await resetDatabase();

@@ -2,6 +2,7 @@ import { Prisma, type AuditAction, type ReviewRequest } from "@prisma/client";
 import type { JSONContent } from "@tiptap/core";
 import type { Session } from "next-auth";
 
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { CommentService } from "~/lib/services/commentService";
@@ -286,7 +287,7 @@ export async function decideReviewRequest(
   // racing on the same PENDING row cannot both pass — the loser returns
   // `count === 0` and surfaces as "already decided" before the Comment
   // ever lands.
-  const { commentId } = await prisma.$transaction(async (tx) => {
+  const { commentId } = await auditedTransaction(async (tx) => {
     const result = await tx.reviewRequest.updateMany({
       where: { id: reviewRequestId, status: "PENDING" },
       data: {

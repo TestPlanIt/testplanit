@@ -9,33 +9,20 @@ import { syncIssueToElasticsearch } from "../services/issueSearch";
 import { syncMilestoneToElasticsearch } from "../services/milestoneSearch";
 import { syncProjectToElasticsearch } from "../services/projectSearch";
 import {
-  auditCreate,
-  auditUpdate,
-  auditDelete,
-  auditEntity,
   auditRoleChange,
   auditPermissionGrant,
   auditPermissionRevoke,
   auditSsoConfigChange,
   auditSystemConfigChange,
-  auditBulkCreate,
-  auditBulkUpdate,
-  auditBulkDelete,
   captureAuditEvent,
   isEntityAuditSuppressed,
-  resolveTestRunResultAuditScope,
   AUDITED_CONFIG_MODELS,
+  SEMANTIC_ACCESS_AUDIT_MODELS,
 } from "./services/auditLog";
 import { buildConfigAuditHooks } from "./services/configAuditHooks";
-import {
-  buildEntityAuditHooks,
-  ENTITY_AUDIT_MODELS,
-} from "./services/entityAuditHooks";
 import { invalidateApiTokenCache } from "./api-token-cache";
-// Plan 02-05 — outbound webhook emitters spliced alongside the existing
-// audit/ES-sync calls. Each emit is bound to a Prisma.TransactionClient
-// constructed inside an explicit baseClient.$transaction wrapper (Blocker 3
-// fix — see Plan 02-05 02-CONTEXT D-01 for the crash-safety reasoning).
+import { injectAuditGuc } from "~/lib/audit/gucContext";
+import { auditTxStore } from "~/lib/audit/auditTxStore";
 import {
   emitTestRunCreated,
   emitTestRunResultAdded,
@@ -58,40 +45,6 @@ import {
   emitCaseUpdated,
 } from "./webhooks/event-emitters/caseEvents";
 
-// An attachment hangs off exactly one of several optional parents (a case,
-// session, run, or one of their results). It has no scalar projectId column and
-// no single relation chain to a project, so it is intentionally absent from the
-// audit project-scope backfill. To keep attachment events traceable to their
-// owning context, record whichever parent FK is set on the audit row's metadata
-// (read from the committed row on delete, or the create payload on the partial
-// ZenStack RPC create path). Returns undefined for an orphan attachment so no
-// empty `parent` object is stamped.
-const ATTACHMENT_PARENT_FKS = [
-  "testCaseId",
-  "sessionId",
-  "sessionResultsId",
-  "testRunsId",
-  "testRunResultsId",
-  "testRunStepResultId",
-  "junitTestResultId",
-] as const;
-function attachmentParentMetadata(
-  ...sources: Array<Record<string, unknown> | null | undefined>
-): Record<string, unknown> | undefined {
-  const parent: Record<string, unknown> = {};
-  for (const key of ATTACHMENT_PARENT_FKS) {
-    if (key in parent) continue;
-    for (const source of sources) {
-      const value = source?.[key];
-      if (value != null) {
-        parent[key] = value;
-        break;
-      }
-    }
-  }
-  return Object.keys(parent).length > 0 ? { parent } : undefined;
-}
-
 // Declare global types
 declare global {
   var prisma: PrismaClient | undefined;
@@ -105,6 +58,40 @@ let dbClient: any;
 // Helper function to create and configure PrismaClient with Elasticsearch sync
 function createPrismaClient(errorFormat: "pretty" | "colorless") {
   const baseClient = new PrismaClient({ errorFormat });
+
+  // Run a write hook's body either on the caller's already-open audited
+  // transaction (the GUC was set, and the tx published on auditTxStore, by
+  // auditedTransaction) or — when the write is standalone — in a fresh
+  // transaction this helper owns with the GUC set first. Reusing the caller's
+  // transaction keeps every row it touches (parent + child/value tables)
+  // attributed to one actor and preserves atomicity; opening a second nested
+  // transaction (the prior behavior) did neither.
+  //
+  // `write()` performs the mutation: on the ambient transaction it is the inner
+  // `query(args)` (so the hook does not re-enter itself); standalone it runs on
+  // the owned, un-extended tx. `tx` is for before-image reads, webhook/live
+  // emit, and side effects.
+  async function withHookTx(
+    hook: {
+      query: (a: any) => Promise<any>;
+      args: any;
+      accessor: string;
+      op: string;
+    },
+    body: (tx: any, write: () => Promise<any>) => Promise<any>
+  ): Promise<any> {
+    const { query, args, accessor, op } = hook;
+    const ambient = auditTxStore.getStore();
+    if (ambient) {
+      return body(ambient as any, () => query(args));
+    }
+    return baseClient.$transaction(async (tx) => {
+      await injectAuditGuc(tx);
+      return auditTxStore.run(tx as any, () =>
+        body(tx, () => (tx as any)[accessor][op](args))
+      );
+    });
+  }
 
   // Generic audit hooks for admin-managed configuration/catalog models. These
   // models need only audit logging (no Elasticsearch sync, webhook emit, or
@@ -120,395 +107,311 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
     ])
   );
 
-  // Generic re-read audit hooks for the entity models whose ZenStack RPC
-  // mutation result is a partial { id } row (Integration, PromptConfig and the
-  // ProjectIntegration / TestRunCases link models). The factory resolves a
-  // human display name + full diff on every write path (RPC and direct Prisma),
-  // using only pre-reads / committed FK lookups so it is correct inside
-  // interactive transactions. The driving list lives in ENTITY_AUDIT_MODELS
-  // (lib/services/entityAuditHooks.ts) and is validated against the datamodel
-  // in tests, mirroring the configAuditHooks pattern above.
-  const entityAuditHooks: Record<string, unknown> = Object.fromEntries(
-    ENTITY_AUDIT_MODELS.map((cfg) => [
-      cfg.accessor,
-      buildEntityAuditHooks(cfg, {
-        self: (baseClient as any)[cfg.accessor],
-        related: cfg.relatedAccessor
-          ? (baseClient as any)[cfg.relatedAccessor]
-          : undefined,
-      }),
-    ])
-  );
-
   // Add Elasticsearch sync using client extensions
   const client = baseClient.$extends({
     query: {
       ...configAuditHooks,
-      ...entityAuditHooks,
-      repositoryCases: {
-        // Plan 02-05 Blocker 3 — wrap entity write + emit in an explicit
-        // baseClient.$transaction so both commit-or-rollback atomically.
-        // Existing audit/ES-sync calls keep their async-via-queue /
-        // fire-and-forget shape inside the closure (they don't need tx
-        // binding for their own correctness).
+      // WebhookConfig is trigger-audited (scripts/trigger-registry.ts) but the
+      // webhook-config server actions write it through this hooked client, which
+      // has no other reason to wrap webhookConfig. These hooks exist only to set
+      // the app.audit_context GUC (via withHookTx) so the trigger records the
+      // acting admin rather than __system__. No ES/webhook emit or before-image.
+      webhookConfig: {
         async create({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const result = await query(args);
-            if (result?.id) {
-              syncRepositoryCaseToElasticsearch(result.id).catch(
-                (error: any) => {
-                  console.error(
-                    `Failed to sync repository case ${result.id} to Elasticsearch:`,
-                    error
-                  );
-                }
-              );
-              await auditCreate("RepositoryCases", result, result.projectId);
-              if (result.projectId !== undefined) {
-                await emitCaseCreated(result, tx);
-              }
-            }
-            return result;
-          });
+          return withHookTx(
+            { query, args, accessor: "webhookConfig", op: "create" },
+            async (_tx, write) => write()
+          );
         },
         async update({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            // Fetch old state for audit diff
-            const oldEntity = args.where
-              ? await tx.repositoryCases.findUnique({ where: args.where })
-              : null;
-            const result = await query(args);
-            if (result?.id) {
-              syncRepositoryCaseToElasticsearch(result.id).catch(
-                (error: any) => {
-                  console.error(
-                    `Failed to sync repository case ${result.id} to Elasticsearch:`,
-                    error
-                  );
-                }
-              );
-              await auditUpdate(
-                "RepositoryCases",
-                oldEntity,
-                result,
-                result.projectId
-              );
-              if (result.projectId !== undefined) {
-                await emitCaseUpdated(oldEntity, result, tx);
-              }
-              // Per-project "exclude draft cases from runs" hook: when the
-              // case's state transitions to a Workflows row of type
-              // NOT_STARTED AND the project has the flag on, soft-delete the
-              // case's UNEXECUTED entries in any open run. Executed run-cases
-              // (one with at least one TestRunResults row) are left in place
-              // so the recorded outcome stays visible; the existing edit-
-              // window machinery already locks them. Inside the same
-              // transaction so the soft-deletes commit-or-rollback with the
-              // state change. See `Projects.excludeNotStartedFromRuns` in
-              // schema.zmodel for the contract.
-              if (
-                oldEntity &&
-                result.stateId !== oldEntity.stateId &&
-                result.projectId !== undefined
-              ) {
-                const project = await tx.projects.findUnique({
-                  where: { id: result.projectId },
-                  select: { excludeNotStartedFromRuns: true },
-                });
-                if (project?.excludeNotStartedFromRuns) {
-                  const newState = await tx.workflows.findUnique({
-                    where: { id: result.stateId },
-                    select: { workflowType: true },
-                  });
-                  if (newState?.workflowType === WorkflowType.NOT_STARTED) {
-                    await tx.testRunCases.updateMany({
-                      where: {
-                        repositoryCaseId: result.id,
-                        isDeleted: false,
-                        testRun: { isCompleted: false },
-                        results: { none: {} },
-                      },
-                      data: { isDeleted: true },
-                    });
-                  }
-                }
-              }
-            }
-            return result;
-          });
+          return withHookTx(
+            { query, args, accessor: "webhookConfig", op: "update" },
+            async (_tx, write) => write()
+          );
         },
-        async upsert({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const oldEntity = args.where
-              ? await tx.repositoryCases.findUnique({ where: args.where })
-              : null;
-            const result = await query(args);
-            if (result?.id) {
-              syncRepositoryCaseToElasticsearch(result.id).catch(
-                (error: any) => {
-                  console.error(
-                    `Failed to sync repository case ${result.id} to Elasticsearch:`,
-                    error
-                  );
-                }
-              );
-              if (oldEntity) {
-                await auditUpdate(
-                  "RepositoryCases",
-                  oldEntity,
-                  result,
-                  result.projectId
+        async delete({ args, query }: any) {
+          return withHookTx(
+            { query, args, accessor: "webhookConfig", op: "delete" },
+            async (_tx, write) => write()
+          );
+        },
+      },
+      repositoryCases: {
+        async create({ args, query }: any) {
+          return await withHookTx(
+            { query, args, accessor: "repositoryCases", op: "create" },
+            async (tx, write) => {
+              const result = await write();
+              if (result?.id) {
+                syncRepositoryCaseToElasticsearch(result.id).catch(
+                  (error: any) => {
+                    console.error(
+                      `Failed to sync repository case ${result.id} to Elasticsearch:`,
+                      error
+                    );
+                  }
                 );
-                if (result.projectId !== undefined) {
-                  await emitCaseUpdated(oldEntity, result, tx);
-                }
-              } else {
-                await auditCreate("RepositoryCases", result, result.projectId);
                 if (result.projectId !== undefined) {
                   await emitCaseCreated(result, tx);
                 }
               }
+              return result;
             }
-            return result;
-          });
+          );
+        },
+        async update({ args, query }: any) {
+          return await withHookTx(
+            { query, args, accessor: "repositoryCases", op: "update" },
+            async (tx, write) => {
+              // Fetch old state for emit diff
+              const oldEntity = args.where
+                ? await tx.repositoryCases.findUnique({ where: args.where })
+                : null;
+              const result = await write();
+              if (result?.id) {
+                syncRepositoryCaseToElasticsearch(result.id).catch(
+                  (error: any) => {
+                    console.error(
+                      `Failed to sync repository case ${result.id} to Elasticsearch:`,
+                      error
+                    );
+                  }
+                );
+                if (result.projectId !== undefined) {
+                  await emitCaseUpdated(oldEntity, result, tx);
+                }
+                // Per-project "exclude draft cases from runs" hook: when the
+                // case's state transitions to a Workflows row of type
+                // NOT_STARTED AND the project has the flag on, soft-delete the
+                // case's UNEXECUTED entries in any open run. Executed run-cases
+                // (one with at least one TestRunResults row) are left in place
+                // so the recorded outcome stays visible; the existing edit-
+                // window machinery already locks them. Inside the same
+                // transaction so the soft-deletes commit-or-rollback with the
+                // state change. See `Projects.excludeNotStartedFromRuns` in
+                // schema.zmodel for the contract.
+                if (
+                  oldEntity &&
+                  result.stateId !== oldEntity.stateId &&
+                  result.projectId !== undefined
+                ) {
+                  const project = await tx.projects.findUnique({
+                    where: { id: result.projectId },
+                    select: { excludeNotStartedFromRuns: true },
+                  });
+                  if (project?.excludeNotStartedFromRuns) {
+                    const newState = await tx.workflows.findUnique({
+                      where: { id: result.stateId },
+                      select: { workflowType: true },
+                    });
+                    if (newState?.workflowType === WorkflowType.NOT_STARTED) {
+                      await tx.testRunCases.updateMany({
+                        where: {
+                          repositoryCaseId: result.id,
+                          isDeleted: false,
+                          testRun: { isCompleted: false },
+                          results: { none: {} },
+                        },
+                        data: { isDeleted: true },
+                      });
+                    }
+                  }
+                }
+              }
+              return result;
+            }
+          );
+        },
+        async upsert({ args, query }: any) {
+          return await withHookTx(
+            { query, args, accessor: "repositoryCases", op: "upsert" },
+            async (tx, write) => {
+              const oldEntity = args.where
+                ? await tx.repositoryCases.findUnique({ where: args.where })
+                : null;
+              const result = await write();
+              if (result?.id) {
+                syncRepositoryCaseToElasticsearch(result.id).catch(
+                  (error: any) => {
+                    console.error(
+                      `Failed to sync repository case ${result.id} to Elasticsearch:`,
+                      error
+                    );
+                  }
+                );
+                if (oldEntity) {
+                  if (result.projectId !== undefined) {
+                    await emitCaseUpdated(oldEntity, result, tx);
+                  }
+                } else {
+                  if (result.projectId !== undefined) {
+                    await emitCaseCreated(result, tx);
+                  }
+                }
+              }
+              return result;
+            }
+          );
         },
         async delete({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const oldEntity = args.where
-              ? await tx.repositoryCases.findUnique({ where: args.where })
-              : null;
-            const result = await query(args);
-            if (result?.id) {
-              syncRepositoryCaseToElasticsearch(result.id).catch(
-                (error: any) => {
-                  console.error(
-                    `Failed to sync repository case ${result.id} to Elasticsearch after delete:`,
-                    error
-                  );
-                }
-              );
+          return await withHookTx(
+            { query, args, accessor: "repositoryCases", op: "delete" },
+            async (tx, write) => {
+              const oldEntity = args.where
+                ? await tx.repositoryCases.findUnique({ where: args.where })
+                : null;
+              const result = await write();
+              if (result?.id) {
+                syncRepositoryCaseToElasticsearch(result.id).catch(
+                  (error: any) => {
+                    console.error(
+                      `Failed to sync repository case ${result.id} to Elasticsearch after delete:`,
+                      error
+                    );
+                  }
+                );
+              }
+              if (oldEntity) {
+                await emitCaseDeleted(oldEntity, tx);
+              }
+              return result;
             }
-            if (oldEntity) {
-              await auditDelete(
-                "RepositoryCases",
-                oldEntity,
-                oldEntity.projectId
-              );
-              await emitCaseDeleted(oldEntity, tx);
-            }
-            return result;
-          });
-        },
-        async createMany({ args, query }: any) {
-          const result = await query(args);
-          // Audit bulk create
-          if (result?.count > 0) {
-            // args.data is an array of objects for createMany
-            // Ensure projectId is a valid number before passing to audit
-            const rawProjectId = args.data?.[0]?.projectId;
-            const projectId =
-              typeof rawProjectId === "number" && rawProjectId > 0
-                ? rawProjectId
-                : undefined;
-            await auditBulkCreate("RepositoryCases", result.count, projectId);
-          }
-          return result;
-        },
-        async updateMany({ args, query }: any) {
-          const result = await query(args);
-          // Audit bulk update
-          if (result?.count > 0) {
-            await auditBulkUpdate("RepositoryCases", result.count, args.where);
-          }
-          return result;
-        },
-        async deleteMany({ args, query }: any) {
-          const result = await query(args);
-          // Audit bulk delete
-          if (result?.count > 0) {
-            await auditBulkDelete("RepositoryCases", result.count, args.where);
-          }
-          return result;
+          );
         },
       },
       testRuns: {
         async create({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const result = await query(args);
-            if (result?.id) {
-              syncTestRunToElasticsearch(result.id).catch((error: any) => {
-                console.error(
-                  `Failed to sync test run ${result.id} to Elasticsearch:`,
-                  error
-                );
-              });
-              await auditCreate("TestRuns", result, result.projectId);
-              if (result.projectId !== undefined) {
-                await emitTestRunCreated(result, tx);
+          return await withHookTx(
+            { query, args, accessor: "testRuns", op: "create" },
+            async (tx, write) => {
+              const result = await write();
+              if (result?.id) {
+                syncTestRunToElasticsearch(result.id).catch((error: any) => {
+                  console.error(
+                    `Failed to sync test run ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                });
+                if (result.projectId !== undefined) {
+                  await emitTestRunCreated(result, tx);
+                }
               }
+              return result;
             }
-            return result;
-          });
+          );
         },
         async update({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const oldEntity = args.where
-              ? await tx.testRuns.findUnique({ where: args.where })
-              : null;
+          return await withHookTx(
+            { query, args, accessor: "testRuns", op: "update" },
+            async (tx, write) => {
+              const oldEntity = args.where
+                ? await tx.testRuns.findUnique({ where: args.where })
+                : null;
 
-            // Auto-set completedAt when isCompleted changes to true
-            if (
-              args.data?.isCompleted === true &&
-              !args.data?.completedAt &&
-              oldEntity?.isCompleted !== true
-            ) {
-              args.data.completedAt = new Date();
-            }
-
-            const result = await query(args);
-            if (result?.id) {
-              syncTestRunToElasticsearch(result.id).catch((error: any) => {
-                console.error(
-                  `Failed to sync test run ${result.id} to Elasticsearch:`,
-                  error
-                );
-              });
-              await auditUpdate(
-                "TestRuns",
-                oldEntity,
-                result,
-                result.projectId
-              );
-              if (result.projectId !== undefined) {
-                await emitTestRunUpdateEvents(oldEntity, result, tx);
+              // Auto-set completedAt when isCompleted changes to true
+              if (
+                args.data?.isCompleted === true &&
+                !args.data?.completedAt &&
+                oldEntity?.isCompleted !== true
+              ) {
+                args.data.completedAt = new Date();
               }
+
+              const result = await write();
+              if (result?.id) {
+                syncTestRunToElasticsearch(result.id).catch((error: any) => {
+                  console.error(
+                    `Failed to sync test run ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                });
+                if (result.projectId !== undefined) {
+                  await emitTestRunUpdateEvents(oldEntity, result, tx);
+                }
+              }
+              return result;
             }
-            return result;
-          });
+          );
         },
         async delete({ args, query }: any) {
-          // Fetch entity before deletion for audit
-          const oldEntity = args.where
-            ? await baseClient.testRuns.findUnique({ where: args.where })
-            : null;
           const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("TestRuns", oldEntity, oldEntity.projectId);
-          }
-          return result;
-        },
-        async createMany({ args, query }: any) {
-          const result = await query(args);
-          if (result?.count > 0) {
-            const projectId = args.data?.[0]?.projectId;
-            await auditBulkCreate("TestRuns", result.count, projectId);
-          }
-          return result;
-        },
-        async updateMany({ args, query }: any) {
-          const result = await query(args);
-          if (result?.count > 0) {
-            await auditBulkUpdate("TestRuns", result.count, args.where);
-          }
-          return result;
-        },
-        async deleteMany({ args, query }: any) {
-          const result = await query(args);
-          if (result?.count > 0) {
-            await auditBulkDelete("TestRuns", result.count, args.where);
-          }
           return result;
         },
       },
-      // Audit parity exempt (informational): sessions has full CRUD hook parity
-      // but the lifecycle events that matter (login/logout/invalidation) are
-      // audited at the NextAuth event-callback layer above the DB hook — see
-      // app/api/auth/logout/route.ts for the LOGOUT pair. The hooks here still
-      // fire for completeness but are not the primary audit signal.
-      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
       sessions: {
         async create({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const result = await query(args);
-            if (result?.id) {
-              syncSessionToElasticsearch(result.id).catch((error: any) => {
-                console.error(
-                  `Failed to sync session ${result.id} to Elasticsearch:`,
-                  error
-                );
-              });
-              await auditCreate("Sessions", result, result.projectId);
-              if (result.projectId !== undefined) {
-                await emitSessionCreated(result, tx);
-              }
-            }
-            return result;
-          });
-        },
-        async update({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const oldEntity = args.where
-              ? await tx.sessions.findUnique({ where: args.where })
-              : null;
-            const result = await query(args);
-            if (result?.id) {
-              syncSessionToElasticsearch(result.id).catch((error: any) => {
-                console.error(
-                  `Failed to sync session ${result.id} to Elasticsearch:`,
-                  error
-                );
-              });
-              await auditUpdate(
-                "Sessions",
-                oldEntity,
-                result,
-                result.projectId
-              );
-              if (result.projectId !== undefined) {
-                await emitSessionUpdateEvents(oldEntity, result, tx);
-              }
-            }
-            return result;
-          });
-        },
-        async upsert({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const oldEntity = args.where
-              ? await tx.sessions.findUnique({ where: args.where })
-              : null;
-            const result = await query(args);
-            if (result?.id) {
-              syncSessionToElasticsearch(result.id).catch((error: any) => {
-                console.error(
-                  `Failed to sync session ${result.id} to Elasticsearch:`,
-                  error
-                );
-              });
-              if (oldEntity) {
-                await auditUpdate(
-                  "Sessions",
-                  oldEntity,
-                  result,
-                  result.projectId
-                );
-                if (result.projectId !== undefined) {
-                  await emitSessionUpdateEvents(oldEntity, result, tx);
-                }
-              } else {
-                await auditCreate("Sessions", result, result.projectId);
+          return await withHookTx(
+            { query, args, accessor: "sessions", op: "create" },
+            async (tx, write) => {
+              const result = await write();
+              if (result?.id) {
+                syncSessionToElasticsearch(result.id).catch((error: any) => {
+                  console.error(
+                    `Failed to sync session ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                });
                 if (result.projectId !== undefined) {
                   await emitSessionCreated(result, tx);
                 }
               }
+              return result;
             }
-            return result;
-          });
+          );
+        },
+        async update({ args, query }: any) {
+          return await withHookTx(
+            { query, args, accessor: "sessions", op: "update" },
+            async (tx, write) => {
+              const oldEntity = args.where
+                ? await tx.sessions.findUnique({ where: args.where })
+                : null;
+              const result = await write();
+              if (result?.id) {
+                syncSessionToElasticsearch(result.id).catch((error: any) => {
+                  console.error(
+                    `Failed to sync session ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                });
+                if (result.projectId !== undefined) {
+                  await emitSessionUpdateEvents(oldEntity, result, tx);
+                }
+              }
+              return result;
+            }
+          );
+        },
+        async upsert({ args, query }: any) {
+          return await withHookTx(
+            { query, args, accessor: "sessions", op: "upsert" },
+            async (tx, write) => {
+              const oldEntity = args.where
+                ? await tx.sessions.findUnique({ where: args.where })
+                : null;
+              const result = await write();
+              if (result?.id) {
+                syncSessionToElasticsearch(result.id).catch((error: any) => {
+                  console.error(
+                    `Failed to sync session ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                });
+                if (oldEntity) {
+                  if (result.projectId !== undefined) {
+                    await emitSessionUpdateEvents(oldEntity, result, tx);
+                  }
+                } else {
+                  if (result.projectId !== undefined) {
+                    await emitSessionCreated(result, tx);
+                  }
+                }
+              }
+              return result;
+            }
+          );
         },
         async delete({ args, query }: any) {
-          // Fetch entity before deletion for audit
-          const oldEntity = args.where
-            ? await baseClient.sessions.findUnique({ where: args.where })
-            : null;
           const result = await query(args);
           if (result?.id) {
             syncSessionToElasticsearch(result.id).catch((error: any) => {
@@ -518,38 +421,9 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
           }
-          if (oldEntity) {
-            await auditDelete("Sessions", oldEntity, oldEntity.projectId);
-          }
-          return result;
-        },
-        async createMany({ args, query }: any) {
-          const result = await query(args);
-          if (result?.count > 0) {
-            const projectId = args.data?.[0]?.projectId;
-            await auditBulkCreate("Sessions", result.count, projectId);
-          }
-          return result;
-        },
-        async updateMany({ args, query }: any) {
-          const result = await query(args);
-          if (result?.count > 0) {
-            await auditBulkUpdate("Sessions", result.count, args.where);
-          }
-          return result;
-        },
-        async deleteMany({ args, query }: any) {
-          const result = await query(args);
-          if (result?.count > 0) {
-            await auditBulkDelete("Sessions", result.count, args.where);
-          }
           return result;
         },
       },
-      // Keyed to the Prisma client field `sharedStepGroup` (singular). A prior
-      // `sharedStepGroups:` (plural) key never matched the delegate, so the
-      // audit + ES-sync side effects below were dead on every shared-step-group
-      // mutation — the same class of bug fixed for `issue` below.
       sharedStepGroup: {
         async create({ args, query }: any) {
           const result = await query(args);
@@ -560,16 +434,10 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 error
               );
             });
-            // Audit log
-            await auditCreate("SharedStepGroup", result, result.projectId);
           }
           return result;
         },
         async update({ args, query }: any) {
-          // Fetch old state for audit diff
-          const oldEntity = args.where
-            ? await baseClient.sharedStepGroup.findUnique({ where: args.where })
-            : null;
           const result = await query(args);
           if (result?.id) {
             syncSharedStepToElasticsearch(result.id).catch((error: any) => {
@@ -578,127 +446,101 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 error
               );
             });
-            // Audit log
-            await auditUpdate(
-              "SharedStepGroup",
-              oldEntity,
-              result,
-              result.projectId
-            );
           }
           return result;
         },
         async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.sharedStepGroup.findUnique({ where: args.where })
-            : null;
           const result = await query(args);
-          if (oldEntity) {
-            await auditDelete(
-              "SharedStepGroup",
-              oldEntity,
-              oldEntity.projectId
-            );
-          }
           return result;
         },
       },
-      // Plan 02-05 Rule-1 fix: this hook block was previously keyed `issues:`
-      // (plural) which never matched the Prisma client field (`prisma.issue`,
-      // singular). The audit + ES-sync side effects below were therefore
-      // dead code on every Issue mutation. Renaming to the correct singular
-      // key activates BOTH the existing audit/ES sync AND the new webhook
-      // emit. Documented as a deviation in the SUMMARY.
       issue: {
         async create({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const result = await query(args);
-            if (result?.id) {
-              syncIssueToElasticsearch(result.id).catch((error: any) => {
-                console.error(
-                  `Failed to sync issue ${result.id} to Elasticsearch:`,
-                  error
-                );
-              });
-              await auditCreate("Issue", result, result.projectId);
-              if (result.projectId !== undefined) {
-                await emitIssueCreated(result, tx);
-              }
-            }
-            return result;
-          });
-        },
-        async update({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const oldEntity = args.where
-              ? await tx.issue.findUnique({ where: args.where })
-              : null;
-            const result = await query(args);
-            if (result?.id) {
-              syncIssueToElasticsearch(result.id).catch((error: any) => {
-                console.error(
-                  `Failed to sync issue ${result.id} to Elasticsearch:`,
-                  error
-                );
-              });
-              await auditUpdate("Issue", oldEntity, result, result.projectId);
-              if (result.projectId !== undefined) {
-                await emitIssueUpdated(oldEntity, result, tx);
-              }
-            }
-            return result;
-          });
-        },
-        async upsert({ args, query }: any) {
-          // Mirror the repositoryCases/testRuns/sessions upsert pattern:
-          // pre-fetch oldEntity so we can branch into create-vs-update emit.
-          // The Jira integration's /api/integrations/[id]/create-issue route
-          // uses upsert (so a re-link of an existing Jira ticket doesn't
-          // create a duplicate row) — without this hook, audit + emit were
-          // silently skipped.
-          return await baseClient.$transaction(async (tx) => {
-            const oldEntity = args.where
-              ? await tx.issue.findUnique({ where: args.where })
-              : null;
-            const result = await query(args);
-            if (result?.id) {
-              syncIssueToElasticsearch(result.id).catch((error: any) => {
-                console.error(
-                  `Failed to sync issue ${result.id} to Elasticsearch:`,
-                  error
-                );
-              });
-              if (oldEntity) {
-                await auditUpdate("Issue", oldEntity, result, result.projectId);
-                if (result.projectId !== undefined) {
-                  await emitIssueUpdated(oldEntity, result, tx);
-                }
-              } else {
-                await auditCreate("Issue", result, result.projectId);
+          return await withHookTx(
+            { query, args, accessor: "issue", op: "create" },
+            async (tx, write) => {
+              const result = await write();
+              if (result?.id) {
+                syncIssueToElasticsearch(result.id).catch((error: any) => {
+                  console.error(
+                    `Failed to sync issue ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                });
                 if (result.projectId !== undefined) {
                   await emitIssueCreated(result, tx);
                 }
               }
+              return result;
             }
-            return result;
-          });
+          );
+        },
+        async update({ args, query }: any) {
+          return await withHookTx(
+            { query, args, accessor: "issue", op: "update" },
+            async (tx, write) => {
+              const oldEntity = args.where
+                ? await tx.issue.findUnique({ where: args.where })
+                : null;
+              const result = await write();
+              if (result?.id) {
+                syncIssueToElasticsearch(result.id).catch((error: any) => {
+                  console.error(
+                    `Failed to sync issue ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                });
+                if (result.projectId !== undefined) {
+                  await emitIssueUpdated(oldEntity, result, tx);
+                }
+              }
+              return result;
+            }
+          );
+        },
+        async upsert({ args, query }: any) {
+          return await withHookTx(
+            { query, args, accessor: "issue", op: "upsert" },
+            async (tx, write) => {
+              const oldEntity = args.where
+                ? await tx.issue.findUnique({ where: args.where })
+                : null;
+              const result = await write();
+              if (result?.id) {
+                syncIssueToElasticsearch(result.id).catch((error: any) => {
+                  console.error(
+                    `Failed to sync issue ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                });
+                if (oldEntity) {
+                  if (result.projectId !== undefined) {
+                    await emitIssueUpdated(oldEntity, result, tx);
+                  }
+                } else {
+                  if (result.projectId !== undefined) {
+                    await emitIssueCreated(result, tx);
+                  }
+                }
+              }
+              return result;
+            }
+          );
         },
         async delete({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const oldEntity = args.where
-              ? await tx.issue.findUnique({ where: args.where })
-              : null;
-            const result = await query(args);
-            if (oldEntity) {
-              await auditDelete(
-                "Issue",
-                oldEntity,
-                oldEntity.projectId ?? undefined
-              );
-              await emitIssueDeleted(oldEntity, tx);
+          return await withHookTx(
+            { query, args, accessor: "issue", op: "delete" },
+            async (tx, write) => {
+              const oldEntity = args.where
+                ? await tx.issue.findUnique({ where: args.where })
+                : null;
+              const result = await write();
+              if (oldEntity) {
+                await emitIssueDeleted(oldEntity, tx);
+              }
+              return result;
             }
-            return result;
-          });
+          );
         },
       },
       milestones: {
@@ -711,16 +553,10 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 error
               );
             });
-            // Audit log
-            await auditCreate("Milestones", result, result.projectId);
           }
           return result;
         },
         async update({ args, query }: any) {
-          // Fetch old state for audit diff
-          const oldEntity = args.where
-            ? await baseClient.milestones.findUnique({ where: args.where })
-            : null;
           const result = await query(args);
           if (result?.id) {
             syncMilestoneToElasticsearch(result.id).catch((error: any) => {
@@ -729,24 +565,11 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 error
               );
             });
-            // Audit log
-            await auditUpdate(
-              "Milestones",
-              oldEntity,
-              result,
-              result.projectId
-            );
           }
           return result;
         },
         async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.milestones.findUnique({ where: args.where })
-            : null;
           const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("Milestones", oldEntity, oldEntity.projectId);
-          }
           return result;
         },
       },
@@ -760,16 +583,10 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 error
               );
             });
-            // Audit log
-            await auditCreate("Projects", result);
           }
           return result;
         },
         async update({ args, query }: any) {
-          // Fetch old state for audit diff
-          const oldEntity = args.where
-            ? await baseClient.projects.findUnique({ where: args.where })
-            : null;
           const result = await query(args);
           if (result?.id) {
             syncProjectToElasticsearch(result.id).catch((error: any) => {
@@ -778,20 +595,11 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 error
               );
             });
-            // Audit log
-            await auditUpdate("Projects", oldEntity, result);
           }
           return result;
         },
         async delete({ args, query }: any) {
-          // Fetch entity before deletion for audit
-          const oldEntity = args.where
-            ? await baseClient.projects.findUnique({ where: args.where })
-            : null;
           const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("Projects", oldEntity);
-          }
           return result;
         },
       },
@@ -799,13 +607,6 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       // Phase 1: Security & Access Control Audit Logging
       // =============================================================================
       user: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("User", result);
-          }
-          return result;
-        },
         async update({ args, query }: any) {
           // Skip audit for session keep-alive writes (throttled lastActiveAt
           // pings from the session callback). Auditing these produces a log
@@ -813,17 +614,18 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           const dataKeys = args.data ? Object.keys(args.data) : [];
           const isLastActiveOnly =
             dataKeys.length === 1 && dataKeys[0] === "lastActiveAt";
-          if (isLastActiveOnly) {
+          // The CDC trigger on User is the sole source for access-tier changes;
+          // the ROLE_CHANGED semantic event is decommissioned (empty set), so the
+          // hook is a pass-through and skips the now-pointless old-entity fetch.
+          if (isLastActiveOnly || !SEMANTIC_ACCESS_AUDIT_MODELS.has("User")) {
             return query(args);
           }
 
-          // Fetch old state for audit diff, especially for role changes
           const oldEntity = args.where
             ? await baseClient.user.findUnique({ where: args.where })
             : null;
           const result = await query(args);
           if (result?.id) {
-            // Check for role/access level change
             if (oldEntity && oldEntity.access !== result.access) {
               await auditRoleChange(
                 result.id,
@@ -831,33 +633,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 result.access,
                 result.email
               );
-            } else {
-              await auditUpdate("User", oldEntity, result);
             }
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.user.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("User", oldEntity);
-          }
-          return result;
-        },
-        async updateMany({ args, query }: any) {
-          const result = await query(args);
-          if (result?.count > 0) {
-            await auditBulkUpdate("User", result.count, args.where);
-          }
-          return result;
-        },
-        async deleteMany({ args, query }: any) {
-          const result = await query(args);
-          if (result?.count > 0) {
-            await auditBulkDelete("User", result.count, args.where);
           }
           return result;
         },
@@ -869,7 +645,10 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       userProjectPermission: {
         async create({ args, query }: any) {
           const result = await query(args);
-          if (result?.id) {
+          if (
+            SEMANTIC_ACCESS_AUDIT_MODELS.has("UserProjectPermission") &&
+            result?.id
+          ) {
             await auditPermissionGrant(
               "UserProjectPermission",
               result,
@@ -879,11 +658,13 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
         async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.userProjectPermission.findUnique({
-                where: args.where,
-              })
-            : null;
+          const oldEntity =
+            SEMANTIC_ACCESS_AUDIT_MODELS.has("UserProjectPermission") &&
+            args.where
+              ? await baseClient.userProjectPermission.findUnique({
+                  where: args.where,
+                })
+              : null;
           const result = await query(args);
           if (oldEntity) {
             await auditPermissionRevoke(
@@ -902,7 +683,10 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       groupProjectPermission: {
         async create({ args, query }: any) {
           const result = await query(args);
-          if (result?.id) {
+          if (
+            SEMANTIC_ACCESS_AUDIT_MODELS.has("GroupProjectPermission") &&
+            result?.id
+          ) {
             await auditPermissionGrant(
               "GroupProjectPermission",
               result,
@@ -912,11 +696,13 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
         async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.groupProjectPermission.findUnique({
-                where: args.where,
-              })
-            : null;
+          const oldEntity =
+            SEMANTIC_ACCESS_AUDIT_MODELS.has("GroupProjectPermission") &&
+            args.where
+              ? await baseClient.groupProjectPermission.findUnique({
+                  where: args.where,
+                })
+              : null;
           const result = await query(args);
           if (oldEntity) {
             await auditPermissionRevoke(
@@ -924,35 +710,6 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               oldEntity,
               oldEntity.projectId
             );
-          }
-          return result;
-        },
-      },
-      account: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("Account", result);
-          }
-          return result;
-        },
-        async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.account.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            await auditUpdate("Account", oldEntity, result);
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.account.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("Account", oldEntity);
           }
           return result;
         },
@@ -983,30 +740,6 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           const result = await query(args);
           if (oldEntity && !isEntityAuditSuppressed()) {
             await auditSsoConfigChange("DELETE", oldEntity);
-          }
-          return result;
-        },
-      },
-      // Audit parity exempt: allowedEmailDomain.update is not hooked because
-      // domain entries are immutable (allowed or not — no intermediate state).
-      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
-      allowedEmailDomain: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("AllowedEmailDomain", result);
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.allowedEmailDomain.findUnique({
-                where: args.where,
-              })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("AllowedEmailDomain", oldEntity);
           }
           return result;
         },
@@ -1048,51 +781,8 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
       },
       // =============================================================================
-      // Phase 2: Core Data - UserIntegrationAuth (external integration credentials)
+      // Test Execution & Content — JUnit live-update nudge
       // =============================================================================
-      userIntegrationAuth: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("UserIntegrationAuth", result);
-          }
-          return result;
-        },
-        async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.userIntegrationAuth.findUnique({
-                where: args.where,
-              })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            await auditUpdate("UserIntegrationAuth", oldEntity, result);
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.userIntegrationAuth.findUnique({
-                where: args.where,
-              })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("UserIntegrationAuth", oldEntity);
-          }
-          return result;
-        },
-      },
-      // =============================================================================
-      // Phase 3: Core Data - Test Execution & Content
-      // =============================================================================
-      // A test run result is audited under the plural model name
-      // `TestRunResults` (matching every other entityType) regardless of which
-      // path mutated it. It carries no projectId or name column of its own, so
-      // both are resolved from its parents (run -> projectId, case ->
-      // repository case name) via resolveTestRunResultAuditScope. auditEntity
-      // diffs the scalar row while taking the resolved name/projectId
-      // explicitly, so the nested relations never leak into the change set.
       // JUnit (automation) results carry no audit/webhook semantics, but they
       // DO need a live-update nudge: a reporter streams results in via the
       // model API, and without this the test-run detail page stays stale until
@@ -1110,69 +800,25 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       },
       testRunResults: {
         async create({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const result = await query(args);
-            if (result?.id) {
-              const scope = await resolveTestRunResultAuditScope(
-                baseClient,
-                result
-              );
-              await auditEntity({
-                action: "CREATE",
-                entityType: "TestRunResults",
-                entityId: String(result.id),
-                entityName: scope.entityName,
-                newRow: result,
-                projectId: scope.projectId,
-              });
-              if (result.testRunId !== undefined) {
-                await emitTestRunResultAdded(result, tx);
+          return await withHookTx(
+            { query, args, accessor: "testRunResults", op: "create" },
+            async (tx, write) => {
+              const result = await write();
+              if (result?.id) {
+                if (result.testRunId !== undefined) {
+                  await emitTestRunResultAdded(result, tx);
+                }
               }
+              return result;
             }
-            return result;
-          });
+          );
         },
         async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.testRunResults.findUnique({ where: args.where })
-            : null;
           const result = await query(args);
-          if (result?.id) {
-            const scope = await resolveTestRunResultAuditScope(
-              baseClient,
-              result
-            );
-            await auditEntity({
-              action: "UPDATE",
-              entityType: "TestRunResults",
-              entityId: String(result.id),
-              entityName: scope.entityName,
-              oldRow: oldEntity,
-              newRow: result,
-              projectId: scope.projectId,
-            });
-          }
           return result;
         },
         async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.testRunResults.findUnique({ where: args.where })
-            : null;
-          // Resolve scope while the row (and its FKs) still exists.
-          const scope = oldEntity
-            ? await resolveTestRunResultAuditScope(baseClient, oldEntity)
-            : null;
           const result = await query(args);
-          if (oldEntity) {
-            await auditEntity({
-              action: "DELETE",
-              entityType: "TestRunResults",
-              entityId: String(oldEntity.id),
-              entityName: scope?.entityName,
-              oldRow: oldEntity,
-              projectId: scope?.projectId,
-            });
-          }
           return result;
         },
       },
@@ -1182,131 +828,16 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       // sibling line if SessionResults coverage is desired.
       sessionResults: {
         async create({ args, query }: any) {
-          return await baseClient.$transaction(async (tx) => {
-            const result = await query(args);
-            if (result?.id && result.sessionId !== undefined) {
-              await emitSessionResultAdded(result, tx);
+          return await withHookTx(
+            { query, args, accessor: "sessionResults", op: "create" },
+            async (tx, write) => {
+              const result = await write();
+              if (result?.id && result.sessionId !== undefined) {
+                await emitSessionResultAdded(result, tx);
+              }
+              return result;
             }
-            return result;
-          });
-        },
-      },
-      comment: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("Comment", result, result.projectId ?? undefined);
-          }
-          return result;
-        },
-        async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.comment.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            await auditUpdate(
-              "Comment",
-              oldEntity,
-              result,
-              result.projectId ?? undefined
-            );
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.comment.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete(
-              "Comment",
-              oldEntity,
-              oldEntity.projectId ?? undefined
-            );
-          }
-          return result;
-        },
-      },
-      // Keyed to the Prisma client field `attachments` (the model is named
-      // `Attachments`); a prior `attachment:` (singular) key never matched the
-      // delegate, so attachment audit was dead on every upload/delete.
-      // Audit parity exempt: attachments.update is not hooked because
-      // attachments are immutable once uploaded (no in-place mutation path).
-      // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
-      attachments: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            // The RPC create result is a partial { id }, so the display name
-            // must come from the create payload (the file name the client
-            // sent); fall back to the result on the direct-Prisma path. Resolve
-            // it here rather than leaning on the worker re-read so the name is
-            // never lost, and pass only id + name to keep the BigInt `size`
-            // column out of the serialized diff. The owning parent FK rides
-            // along in metadata for project traceability.
-            await auditCreate(
-              "Attachments",
-              { id: result.id, name: args?.data?.name ?? result.name },
-              undefined,
-              attachmentParentMetadata(result, args?.data)
-            );
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.attachments.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete(
-              "Attachments",
-              { id: oldEntity.id, name: oldEntity.name },
-              undefined,
-              attachmentParentMetadata(oldEntity)
-            );
-          }
-          return result;
-        },
-      },
-      // =============================================================================
-      // Phase 62: Prompt Configuration prompts
-      // Integration, ProjectIntegration, PromptConfig and TestRunCases are
-      // audited via buildEntityAuditHooks (ENTITY_AUDIT_MODELS) wired above.
-      // =============================================================================
-      promptConfigPrompt: {
-        async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("PromptConfigPrompt", result);
-          }
-          return result;
-        },
-        async update({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.promptConfigPrompt.findUnique({
-                where: args.where,
-              })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            await auditUpdate("PromptConfigPrompt", oldEntity, result);
-          }
-          return result;
-        },
-        async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.promptConfigPrompt.findUnique({
-                where: args.where,
-              })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete("PromptConfigPrompt", oldEntity);
-          }
-          return result;
+          );
         },
       },
       // =============================================================================
@@ -1403,22 +934,10 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
         async updateMany({ args, query }: any) {
-          // Capture tokens affected by the bulk update so we can invalidate
-          // their cached entries after the write completes. We also widen the
-          // selection to non-sensitive forensic fields (id, tokenPrefix,
-          // userId, name) so the bulk-update audit retains enough context to
-          // reconstruct which tokens were touched. The raw `token` secret is
-          // used only to key the in-memory cache and is never passed to audit.
           const affected = args.where
             ? await baseClient.apiToken.findMany({
                 where: args.where,
-                select: {
-                  token: true,
-                  id: true,
-                  tokenPrefix: true,
-                  userId: true,
-                  name: true,
-                },
+                select: { token: true },
               })
             : [];
           const result = await query(args);
@@ -1434,27 +953,13 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
             });
           }
-          if (result?.count > 0) {
-            await auditBulkUpdate("ApiToken", result.count, args.where);
-          }
           return result;
         },
         async deleteMany({ args, query }: any) {
-          // Pre-query MUST run BEFORE the delete — post-delete these rows are
-          // unrecoverable. Widened selection captures non-sensitive forensic
-          // fields (id, tokenPrefix, userId, name) for the audit record; the
-          // raw `token` value remains for cache eviction only and is never
-          // logged.
           const affected = args.where
             ? await baseClient.apiToken.findMany({
                 where: args.where,
-                select: {
-                  token: true,
-                  id: true,
-                  tokenPrefix: true,
-                  userId: true,
-                  name: true,
-                },
+                select: { token: true },
               })
             : [];
           const result = await query(args);
@@ -1469,9 +974,6 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 error
               );
             });
-          }
-          if (result?.count > 0) {
-            await auditBulkDelete("ApiToken", result.count, args.where);
           }
           return result;
         },

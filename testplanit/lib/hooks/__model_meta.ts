@@ -9822,6 +9822,87 @@ const metadata: ModelMeta = {
                     isRelationOwner: true,
                     onDeleteAction: 'SetNull',
                     foreignKeyMapping: { "id": "projectId" },
+                }, operationId: {
+                    name: "operationId",
+                    type: "String",
+                    isOptional: true,
+                }, sourceTable: {
+                    name: "sourceTable",
+                    type: "String",
+                    isOptional: true,
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                },
+            },
+        },
+        dataChangeLog: {
+            name: 'DataChangeLog', fields: {
+                id: {
+                    name: "id",
+                    type: "BigInt",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                    isAutoIncrement: true,
+                }, seq: {
+                    name: "seq",
+                    type: "BigInt",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                    isAutoIncrement: true,
+                }, tableName: {
+                    name: "tableName",
+                    type: "String",
+                }, op: {
+                    name: "op",
+                    type: "String",
+                }, pk: {
+                    name: "pk",
+                    type: "String",
+                }, changedCols: {
+                    name: "changedCols",
+                    type: "Json",
+                    isOptional: true,
+                }, actor: {
+                    name: "actor",
+                    type: "String",
+                    isOptional: true,
+                }, operationId: {
+                    name: "operationId",
+                    type: "String",
+                    isOptional: true,
+                }, tenant: {
+                    name: "tenant",
+                    type: "String",
+                    isOptional: true,
+                }, actorName: {
+                    name: "actorName",
+                    type: "String",
+                    isOptional: true,
+                }, actorEmail: {
+                    name: "actorEmail",
+                    type: "String",
+                    isOptional: true,
+                }, entityName: {
+                    name: "entityName",
+                    type: "String",
+                    isOptional: true,
+                }, projectId: {
+                    name: "projectId",
+                    type: "String",
+                    isOptional: true,
+                }, txid: {
+                    name: "txid",
+                    type: "BigInt",
+                }, ts: {
+                    name: "ts",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, processed: {
+                    name: "processed",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 },
             }, uniqueConstraints: {
                 id: {

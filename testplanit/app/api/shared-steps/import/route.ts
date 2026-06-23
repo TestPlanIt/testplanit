@@ -1,11 +1,10 @@
-import { enhance } from "@zenstackhq/runtime";
+import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
-import { db } from "~/server/db";
 import { syncSharedStepToElasticsearch } from "~/services/sharedStepSearch";
 import {
   convertTextToTipTapJSON,
@@ -105,7 +104,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const enhancedDb = enhance(db, { user: user ?? undefined });
+    const enhancedDb = enhanceWithAudit(user ?? undefined);
 
     // Validate project access
     const project = await enhancedDb.projects.findFirst({

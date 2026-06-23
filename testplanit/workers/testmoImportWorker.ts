@@ -3422,6 +3422,14 @@ const importRepositoryCases = async (
     }
     await prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
+        // Phase 13 SAF-01 — opt this bulk import chunk out of row-level CDC
+        // capture. The audit_row_change() trigger early-returns when
+        // app.skip_audit is true, collapsing the ~9x per-row trigger overhead
+        // back to ~1x (SPIKE-02) so the import transaction does not blow its
+        // timeout. The job-level captureAuditEvent retains the semantic
+        // coverage for the import as a whole. SET LOCAL only inside a
+        // $transaction (Pitfall A).
+        await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
         for (const record of records) {
           const caseSourceId = toNumberValue(record.id);
           const projectSourceId = toNumberValue(record.project_id);
@@ -4642,6 +4650,11 @@ const importTestRunCases = async (
       // Execute database operations in a transaction per batch
       const { createResult, persistedPairs } = await prisma.$transaction(
         async (tx) => {
+          // Phase 13 SAF-01 — bulk-import skip_audit hatch (see the repository
+          // case chunk above). Opts these testRunCases.createMany rows out of
+          // row-level CDC capture; the job-level captureAuditEvent retains the
+          // semantic event. SET LOCAL only inside a $transaction (Pitfall A).
+          await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
           const createResult = await tx.testRunCases.createMany({
             data: mappedRecords.map((item) => item.data),
             skipDuplicates: true,
@@ -4793,6 +4806,11 @@ const importTestRunResults = async (
     }
     await prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
+        // Phase 13 SAF-01 — bulk-import skip_audit hatch (see the repository
+        // case chunk above). Opts these testRunResults rows out of row-level
+        // CDC capture; the job-level captureAuditEvent retains the semantic
+        // event. SET LOCAL only inside a $transaction (Pitfall A).
+        await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
         for (const record of records) {
           const resultSourceId = toNumberValue(record.id);
           const runSourceId = toNumberValue(record.run_id);
