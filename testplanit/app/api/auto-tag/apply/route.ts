@@ -105,8 +105,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               break;
           }
         }
-      },
-      { timeout: 30000 }
+      }
     );
 
     const tagsCreated = uniqueTagNames.filter(

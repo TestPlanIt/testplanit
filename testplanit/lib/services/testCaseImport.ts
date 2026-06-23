@@ -791,8 +791,7 @@ export async function persistGeneratedTestCases(
             });
           }
         }
-      },
-      { timeout: 60000 }
+      }
     );
 
     return {

@@ -456,10 +456,8 @@ export const importRepositoryCaseIssues = async (
 
           summary.created += 1;
         }
-      },
-      {
-        timeout: options?.transactionTimeoutMs,
       }
+
     );
 
     const statusMessage = `Processing repository case issues (${processedCount.toLocaleString()} / ${summary.total.toLocaleString()} processed)`;
@@ -538,10 +536,8 @@ export const importRunIssues = async (
 
           summary.created += 1;
         }
-      },
-      {
-        timeout: options?.transactionTimeoutMs,
       }
+
     );
 
     const statusMessage = `Processing test run issues (${processedCount.toLocaleString()} / ${summary.total.toLocaleString()} processed)`;
@@ -620,10 +616,8 @@ export const importRunResultIssues = async (
 
           summary.created += 1;
         }
-      },
-      {
-        timeout: options?.transactionTimeoutMs,
       }
+
     );
 
     const statusMessage = `Processing test run result issues (${processedCount.toLocaleString()} / ${summary.total.toLocaleString()} processed)`;
@@ -702,10 +696,8 @@ export const importSessionIssues = async (
 
           summary.created += 1;
         }
-      },
-      {
-        timeout: options?.transactionTimeoutMs,
       }
+
     );
 
     const statusMessage = `Processing session issues (${processedCount.toLocaleString()} / ${summary.total.toLocaleString()} processed)`;
@@ -788,10 +780,8 @@ export const importSessionResultIssues = async (
 
           summary.created += 1;
         }
-      },
-      {
-        timeout: options?.transactionTimeoutMs,
       }
+
     );
 
     const statusMessage = `Processing session result issues (${processedCount.toLocaleString()} / ${summary.total.toLocaleString()} processed)`;

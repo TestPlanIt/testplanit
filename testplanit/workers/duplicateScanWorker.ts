@@ -293,8 +293,7 @@ export const processor = async (
           });
         }
       }
-    },
-    { timeout: 30000 }
+    }
   );
 
   return {

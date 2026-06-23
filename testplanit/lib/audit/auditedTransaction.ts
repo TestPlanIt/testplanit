@@ -36,10 +36,11 @@ export async function auditedTransaction<T>(
   options?: TransactionOptions
 ): Promise<T> {
   const payload = JSON.stringify(buildGucPayload());
+  // v3 $transaction options only accept isolationLevel (no maxWait/timeout).
   return prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
     return auditTxStore.run(tx, () => fn(tx));
-  }, options);
+  }, { isolationLevel: options?.isolationLevel });
 }
 
 /**
@@ -65,6 +66,6 @@ export async function auditedEnhancedTransaction<T>(
   }
   return getAuthDb(user).$transaction(
     (tx) => auditTxStore.run(tx as TxClient, () => fn(tx as TxClient)),
-    options
+    { isolationLevel: options?.isolationLevel }
   );
 }

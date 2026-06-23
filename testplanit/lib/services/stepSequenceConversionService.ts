@@ -268,8 +268,7 @@ export async function convertMatch(
         convertedCaseIds,
         skippedCaseIds,
       };
-    },
-    { timeout: 30000 }
+    }
   );
 
   // -------------------------------------------------------------------------

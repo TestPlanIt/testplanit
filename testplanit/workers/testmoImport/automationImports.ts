@@ -641,10 +641,8 @@ export const importAutomationCases = async (
             progressEntry.total
           );
         }
-      },
-      {
-        timeout: options?.transactionTimeoutMs,
       }
+
     );
 
     await reportProgress(true);
@@ -857,10 +855,8 @@ export const importAutomationRuns = async (
           testRunTestmoProjectIdMap.set(testmoRunId, testmoProjectId);
           summary.created += 1;
         }
-      },
-      {
-        timeout: options?.transactionTimeoutMs,
       }
+
     );
 
     processedRuns += processedInChunk;
@@ -1368,10 +1364,8 @@ export const importAutomationRunTests = async (
           junitResultIdMap.set(testmoRunTestId, junitResult.id);
           summary.created += 1;
         }
-      },
-      {
-        timeout: options?.transactionTimeoutMs,
       }
+
     );
 
     processedTests += processedInChunk;
@@ -1391,10 +1385,8 @@ export const importAutomationRunTests = async (
       async (tx) => {
         await reconcileLegacyJUnitSuiteLinks(tx, suiteIdsToUpdate);
         await recomputeJUnitSuiteStats(tx, suiteIdsToUpdate);
-      },
-      {
-        timeout: options?.transactionTimeoutMs,
       }
+
     );
   }
 
@@ -1793,10 +1785,8 @@ export const importAutomationRunLinks = async (
 
           summary.created += 1;
         }
-      },
-      {
-        timeout: options?.transactionTimeoutMs,
       }
+
     );
 
     progressEntry.created = summary.created;
@@ -2099,10 +2089,8 @@ export const importAutomationRunTestFields = async (
             summary.created += 1;
             updatesApplied += 1;
           }
-        },
-        {
-          timeout: options?.transactionTimeoutMs,
         }
+
       );
     }
 
@@ -2326,10 +2314,8 @@ export const importAutomationRunTags = async (
 
           summary.created += 1;
         }
-      },
-      {
-        timeout: options?.transactionTimeoutMs,
       }
+
     );
 
     progressEntry.created = summary.created;

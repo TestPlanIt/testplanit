@@ -70,8 +70,7 @@ export const processor = async (
           });
         },
       });
-    },
-    { timeout: TRANSACTION_TIMEOUT_MS, maxWait: TRANSACTION_MAX_WAIT_MS }
+    }
   );
 
   // Emit a final completion progress event so polling clients see the

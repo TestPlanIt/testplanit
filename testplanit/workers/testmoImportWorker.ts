@@ -3121,10 +3121,6 @@ const importRepositoryFolders = async (
           });
 
           return { folderId: folder.id, created: true };
-        },
-        {
-          timeout: REPOSITORY_FOLDER_TRANSACTION_TIMEOUT_MS,
-          maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
         }
       );
 
@@ -4102,10 +4098,6 @@ const importRepositoryCases = async (
           canonicalCaseIds.delete(caseSourceId);
           stepsByCaseId.delete(caseSourceId);
         }
-      },
-      {
-        timeout: IMPORT_TRANSACTION_TIMEOUT_MS,
-        maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
       }
     );
 
@@ -4677,10 +4669,6 @@ const importTestRunCases = async (
           });
 
           return { createResult, persistedPairs };
-        },
-        {
-          timeout: IMPORT_TRANSACTION_TIMEOUT_MS,
-          maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
         }
       );
 
@@ -4957,10 +4945,6 @@ const importTestRunResults = async (
             processedSinceLastPersist = 0;
           }
         }
-      },
-      {
-        timeout: IMPORT_TRANSACTION_TIMEOUT_MS,
-        maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
       }
     );
 
