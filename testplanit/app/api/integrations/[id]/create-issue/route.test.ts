@@ -295,6 +295,53 @@ describe("POST /api/integrations/[id]/create-issue", () => {
       expect(prisma.issue.upsert).toHaveBeenCalledOnce();
       expect(data.internalId).toBe(99);
     });
+
+    it("persists tracker columns (key in name, externalKey/Url/Status, issue type) so it renders like a synced issue", async () => {
+      mockAdapter.createIssue.mockResolvedValue({
+        id: "ext-123",
+        key: "PROJ-7",
+        title: "Render Me",
+        description: "<p>body</p>",
+        status: "To Do",
+        priority: "High",
+        url: "https://example.com/browse/PROJ-7",
+        issueType: {
+          id: "10001",
+          name: "Bug",
+          iconUrl: "https://example.com/bug.png",
+        },
+        labels: ["x"],
+      });
+
+      const response = await POST(
+        createRequest({
+          title: "Render Me",
+          projectId: "PROJ",
+          testCaseId: "42",
+        }),
+        params
+      );
+      expect(response.status).toBe(200);
+
+      const upsertArg = (prisma.issue.upsert as any).mock.calls[0][0];
+      // Regression: the issue key — not the title — must land in `name`, and the
+      // first-class columns the UI reads must be populated (were empty before).
+      expect(upsertArg.create.name).toBe("PROJ-7");
+      expect(upsertArg.create.externalKey).toBe("PROJ-7");
+      expect(upsertArg.create.externalUrl).toBe(
+        "https://example.com/browse/PROJ-7"
+      );
+      expect(upsertArg.create.externalStatus).toBe("To Do");
+      expect(upsertArg.create.status).toBe("To Do");
+      expect(upsertArg.create.issueTypeId).toBe("10001");
+      expect(upsertArg.create.issueTypeName).toBe("Bug");
+      expect(upsertArg.create.issueTypeIconUrl).toBe(
+        "https://example.com/bug.png"
+      );
+      // The update branch refreshes the same columns.
+      expect(upsertArg.update.name).toBe("PROJ-7");
+      expect(upsertArg.update.externalKey).toBe("PROJ-7");
+    });
   });
 
   describe("Error handling", () => {

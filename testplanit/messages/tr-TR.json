@@ -1072,7 +1072,7 @@
         "apple": "Apple ile devam edin",
         "microsoft": "Microsoft ile devam edin",
         "samlProvider": "{name} ile giriş yapın",
-        "magicLink": "Magic Link ile giriş yapın",
+        "magicLink": "Tek kullanımlık Magic Link ile oturum aç",
         "emailLogin": "E-posta ile devam edin"
       },
       "magicLink": {

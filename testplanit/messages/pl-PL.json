@@ -1072,7 +1072,7 @@
         "apple": "Kontynuuj z Apple",
         "microsoft": "Kontynuuj z Microsoft",
         "samlProvider": "Zaloguj się za pomocą {name}",
-        "magicLink": "Zaloguj się za pomocą Magic Link",
+        "magicLink": "Zaloguj się jednorazowym Magic Linkiem",
         "emailLogin": "Kontynuuj z e-mailem"
       },
       "magicLink": {

@@ -1072,7 +1072,7 @@
         "apple": "Continuez avec Apple",
         "microsoft": "Continuez avec Microsoft",
         "samlProvider": "Connectez-vous avec {name}",
-        "magicLink": "Se connecter avec Magic Link",
+        "magicLink": "Se connecter avec un Magic Link à usage unique",
         "emailLogin": "Poursuivre par courriel"
       },
       "magicLink": {

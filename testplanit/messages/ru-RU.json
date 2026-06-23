@@ -1072,7 +1072,7 @@
         "apple": "Продолжить с Apple",
         "microsoft": "Продолжить работу с Microsoft",
         "samlProvider": "Войдите с помощью {name}",
-        "magicLink": "Войдите с помощью Magic Link",
+        "magicLink": "Войти с помощью одноразовой Magic Link",
         "emailLogin": "Продолжить отправку электронного письма"
       },
       "magicLink": {

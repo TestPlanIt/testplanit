@@ -1072,7 +1072,7 @@
         "apple": "繼續使用 Apple",
         "microsoft": "繼續使用 Microsoft",
         "samlProvider": "使用 {name} 登入",
-        "magicLink": "使用 Magic Link 登入",
+        "magicLink": "使用一次性魔法連結登入",
         "emailLogin": "繼續透過電子郵件"
       },
       "magicLink": {
