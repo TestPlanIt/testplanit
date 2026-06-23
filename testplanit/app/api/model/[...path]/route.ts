@@ -1,6 +1,7 @@
 import type { AuditAction, ReviewEntityType } from "~/zenstack/models";
 import { NextRequestHandler } from "@zenstackhq/server/next";
 import { RPCApiHandler } from "@zenstackhq/server/api";
+import { TransactionIsolationLevel } from "@zenstackhq/orm";
 import { schema } from "~/zenstack/schema";
 import { AsyncLocalStorage } from "async_hooks";
 import { NextRequest, NextResponse } from "next/server";
@@ -780,7 +781,7 @@ async function innerHandler(
                   }
                 }
               },
-              { isolationLevel: "Serializable" }
+              { isolationLevel: TransactionIsolationLevel.Serializable }
             );
           } catch (err) {
             if (isReviewGateError(err)) {
@@ -1061,7 +1062,7 @@ async function innerHandler(
         suppressEntityAudit: auditedByShim,
       },
       async () => {
-        let r = await tryFastPathCreate({
+        let r: Response | null = await tryFastPathCreate({
           parsedPath,
           requestBody,
           userId: authenticatedUserId ?? null,

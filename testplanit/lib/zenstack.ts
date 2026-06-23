@@ -14,11 +14,7 @@
 //
 // $use() returns a NEW client that shares the same underlying connection, so all
 // three views run over one pool.
-import {
-  ZenStackClient,
-  type AuthType,
-  type TransactionClientContract,
-} from "@zenstackhq/orm";
+import { ZenStackClient, type AuthType } from "@zenstackhq/orm";
 import { PostgresDialect } from "@zenstackhq/orm/dialects/postgres";
 import { PolicyPlugin } from "@zenstackhq/plugin-policy";
 import { Pool } from "pg";
@@ -68,6 +64,12 @@ export type DbClient = typeof rawClient;
 
 /**
  * Transaction-scoped client passed to `$transaction(async (tx) => …)` callbacks.
- * The v3 equivalent of `Prisma.TransactionClient`.
+ * The v3 equivalent of `Prisma.TransactionClient`. Derived from the concrete
+ * client type (minus the transaction-unsupported methods) so model accessors
+ * stay precisely typed — `TransactionClientContract<typeof schema>` with default
+ * generics widens query results to `any`.
  */
-export type TxClient = TransactionClientContract<typeof schema>;
+export type TxClient = Omit<
+  typeof rawClient,
+  "$transaction" | "$connect" | "$disconnect" | "$use"
+>;

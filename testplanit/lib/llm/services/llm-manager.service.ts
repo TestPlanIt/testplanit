@@ -1,4 +1,5 @@
 import type { DbClient } from "~/lib/zenstack";
+import { Decimal } from "decimal.js";
 import {
   AnthropicAdapter,
   AzureOpenAIAdapter,
@@ -581,9 +582,9 @@ export class LlmManager {
         promptTokens: response.promptTokens,
         completionTokens: response.completionTokens,
         totalTokens: response.totalTokens,
-        inputCost,
-        outputCost,
-        totalCost: inputCost + outputCost,
+        inputCost: new Decimal(inputCost),
+        outputCost: new Decimal(outputCost),
+        totalCost: new Decimal(inputCost + outputCost),
         latency: 0, // TODO: Track actual latency
         success: true,
       },
@@ -636,9 +637,9 @@ export class LlmManager {
         promptTokens: 0,
         completionTokens: estimatedTokens,
         totalTokens: estimatedTokens,
-        inputCost: 0,
-        outputCost: estimatedCost,
-        totalCost: estimatedCost,
+        inputCost: new Decimal(0),
+        outputCost: new Decimal(estimatedCost),
+        totalCost: new Decimal(estimatedCost),
         latency: 0, // TODO: Track actual latency for streaming
         success: true,
       },

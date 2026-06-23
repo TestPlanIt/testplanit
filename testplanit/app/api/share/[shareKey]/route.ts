@@ -39,6 +39,8 @@ export const GET = withAuditContext(
             },
           },
         },
+        // passwordHash is @omit; opt back in to verify PASSWORD_PROTECTED access.
+        omit: { passwordHash: false },
       });
 
       if (!shareLink) {
