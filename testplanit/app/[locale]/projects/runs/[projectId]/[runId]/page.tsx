@@ -10,6 +10,7 @@ import { transformMilestones } from "@/components/forms/MilestoneSelect";
 import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
+import { RunAuditLogSheet } from "@/components/runs/RunAuditLogSheet";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
 import { useTestRunLiveStream } from "~/hooks/useTestRunLiveStream";
@@ -1592,6 +1593,7 @@ export default function TestRunPage() {
                 )}
               </CardTitle>
               <div className="flex items-start gap-2 flex-wrap">
+                {testRunData && <RunAuditLogSheet runId={testRunData.id} />}
                 {testRunData?.isCompleted ? (
                   <div className="flex items-center gap-1">
                     <Badge

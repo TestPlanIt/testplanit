@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prismaBase";
+import { captureAuditEvent } from "@/lib/services/auditLog";
 import { EncryptionService, getMasterKey } from "@/utils/encryption";
 import crypto from "crypto";
 
@@ -126,11 +127,17 @@ export class AuthenticationService {
       ? EncryptionService.encrypt(authData.refreshToken, masterKey)
       : null;
 
+    // Whether a record already exists determines CREATE vs UPDATE for the audit.
+    const existing = await prisma.userIntegrationAuth.findUnique({
+      where: { userId_integrationId: { userId, integrationId } },
+      select: { id: true },
+    });
+
     // Upsert the per-user auth record. The unique constraint is
     // (userId, integrationId) and does not include isActive, so re-authorizing
     // or refreshing tokens must update the existing row rather than create a
     // second one (which would violate the constraint).
-    await prisma.userIntegrationAuth.upsert({
+    const record = await prisma.userIntegrationAuth.upsert({
       where: {
         userId_integrationId: { userId, integrationId },
       },
@@ -152,7 +159,48 @@ export class AuthenticationService {
         isActive: true,
         lastUsedAt: new Date(),
       },
+      select: { id: true, integration: { select: { name: true } } },
     });
+
+    await this.auditUserAuthChange(
+      existing ? "UPDATE" : "CREATE",
+      record.id,
+      userId,
+      integrationId,
+      record.integration?.name ?? null
+    );
+  }
+
+  /**
+   * Record a UserIntegrationAuth change in the audit log. UserIntegrationAuth is
+   * a credential table (CDC-excluded per SAF-04), so it is audited semantically
+   * here — who connected / refreshed / revoked which integration — WITHOUT the
+   * encrypted tokens. `lastUsedAt` bumps are intentionally NOT audited
+   * (housekeeping noise, mirroring the lastActiveAt precedent). Best-effort: an
+   * audit failure must never break the authentication flow.
+   */
+  private static async auditUserAuthChange(
+    action: "CREATE" | "UPDATE" | "DELETE",
+    entityId: string,
+    userId: string,
+    integrationId: number,
+    integrationName: string | null
+  ): Promise<void> {
+    try {
+      await captureAuditEvent({
+        action,
+        entityType: "UserIntegrationAuth",
+        entityId,
+        userId,
+        entityName: integrationName ?? `Integration #${integrationId}`,
+        metadata: { integrationId },
+      });
+    } catch (err) {
+      console.error(
+        "[AuthenticationService] Failed to audit UserIntegrationAuth change:",
+        err
+      );
+    }
   }
 
   /**
@@ -285,6 +333,13 @@ export class AuthenticationService {
     userId: string,
     integrationId: number
   ): Promise<void> {
+    // Capture the record (id + integration name) before deactivating it for the
+    // audit — updateMany returns only a count.
+    const record = await prisma.userIntegrationAuth.findFirst({
+      where: { userId, integrationId, isActive: true },
+      select: { id: true, integration: { select: { name: true } } },
+    });
+
     await prisma.userIntegrationAuth.updateMany({
       where: {
         userId,
@@ -295,6 +350,16 @@ export class AuthenticationService {
         isActive: false,
       },
     });
+
+    if (record) {
+      await this.auditUserAuthChange(
+        "DELETE",
+        record.id,
+        userId,
+        integrationId,
+        record.integration?.name ?? null
+      );
+    }
   }
 
   /**

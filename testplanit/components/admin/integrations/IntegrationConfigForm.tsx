@@ -29,7 +29,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface IntegrationConfigFormProps {
   provider: IntegrationProvider;
@@ -322,7 +322,23 @@ export function IntegrationConfigForm({
   const t = useTranslations("admin.integrations");
   const tCommon = useTranslations();
   const [copied, setCopied] = useState(false);
+  const [callbackCopied, setCallbackCopied] = useState(false);
   const [unlockedFields, setUnlockedFields] = useState<Set<string>>(new Set());
+
+  // The OAuth callback (redirect) URI the admin must register in their
+  // provider's OAuth app. It must match what the server sends during the
+  // flow, which IntegrationManager.buildAdapterConfig derives as
+  // `${NEXTAUTH_URL}/api/integrations/oauth/<provider>/callback`. We read the
+  // origin from the browser after mount (the admin is already on the app's
+  // own domain) to avoid an SSR/CSR hydration mismatch.
+  const [origin, setOrigin] = useState("");
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+  const callbackUrl = origin
+    ? `${origin}/api/integrations/oauth/${provider.toLowerCase()}/callback`
+    : "";
+  const isOAuth = authType === IntegrationAuthType.OAUTH2;
 
   // Get fields based on provider and authType combination, or fall back to provider-only fields
   const authKey = authType ? `${provider}_${authType}` : "";
@@ -492,6 +508,48 @@ export function IntegrationConfigForm({
           </FormItem>
         );
       })}
+
+      {isOAuth && (
+        <div className="border-t pt-4 mt-4">
+          <FormItem>
+            <FormLabel>{t("config.callbackUrlLabel")}</FormLabel>
+            <FormDescription className="mb-2">
+              {t("config.callbackUrlDescription")}
+            </FormDescription>
+            <FormControl>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  readOnly
+                  value={callbackUrl}
+                  className="font-mono text-xs"
+                  onFocus={(e) => e.currentTarget.select()}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!callbackUrl}
+                  onClick={() => {
+                    void navigator.clipboard.writeText(callbackUrl);
+                    setCallbackCopied(true);
+                    setTimeout(() => setCallbackCopied(false), 2000);
+                  }}
+                >
+                  {callbackCopied ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
+                  {callbackCopied
+                    ? t("config.callbackUrlCopied")
+                    : t("config.callbackUrlCopy")}
+                </Button>
+              </div>
+            </FormControl>
+          </FormItem>
+        </div>
+      )}
 
       {provider === IntegrationProvider.JIRA && (
         <div className="border-t pt-4 mt-4">

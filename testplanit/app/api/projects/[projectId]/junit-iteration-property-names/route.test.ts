@@ -38,6 +38,10 @@ import { NextRequest } from "next/server";
 function makeRequest(body: unknown): NextRequest {
   return {
     json: async () => body,
+    // The route is wrapped in withAuditContext, which reads req.headers via
+    // extractAuditContextFromHeaders. Provide a real Headers instance so the
+    // wrapper's .get() calls resolve instead of throwing on undefined.
+    headers: new Headers(),
   } as unknown as NextRequest;
 }
 

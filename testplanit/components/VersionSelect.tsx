@@ -7,7 +7,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 
@@ -40,6 +39,7 @@ export function VersionSelect({
   const currentIndex = versions.findIndex(
     (v) => v.version.toString() === currentVersion
   );
+  const selectedIndex = currentIndex >= 0 ? currentIndex : 0;
 
   return (
     <Select
@@ -52,9 +52,10 @@ export function VersionSelect({
       }}
     >
       <SelectTrigger className="w-fit" data-testid="version-select-trigger">
-        <SelectValue
-          placeholder={tGlobal("common.placeholders.selectVersion")}
-        />
+        <Badge className="text-primary-foreground text-xs">
+          {tGlobal("common.version.prefix")}
+          {versions[selectedIndex].version.toString()}
+        </Badge>
       </SelectTrigger>
       <SelectContent>
         {versions.map((v, index) => (

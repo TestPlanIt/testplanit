@@ -1072,7 +1072,7 @@
         "apple": "Продолжить с Apple",
         "microsoft": "Продолжить работу с Microsoft",
         "samlProvider": "Войдите с помощью {name}",
-        "magicLink": "Войдите с помощью Magic Link",
+        "magicLink": "Sign in with single-use Magic Link",
         "emailLogin": "Продолжить отправку электронного письма"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Доступ запрещен. Возможно, ваша учетная запись неактивна или у вас нет разрешения на вход.",
       "configuration": "Возникла проблема с конфигурацией сервера.",
-      "verification": "Срок действия проверочного токена истек или он уже был использован.",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "Неверный код подтверждения. Пожалуйста, попробуйте еще раз.",
       "twoFactorTokenRequired": "Требуется токен",
       "verificationCodeRequired": "Требуется код подтверждения."
@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {Сессия} other {Сессии}}",
     "labels": {
       "totalElapsed": "Затраченное время",
@@ -2468,6 +2473,11 @@
       "versionCreated": "Версия {version} создана",
       "latestVersionUpdated": "Последняя версия {version, number} Обновлено",
       "historyView": "Просмотр истории тестовых случаев"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "Вариант не найден",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "Тестовый запуск не найден.",
     "add": {
       "title": "Добавить тестовый запуск",
@@ -5060,17 +5075,23 @@
       "manageDescription": "Настройте и управляйте интеграцией ваших внешних сервисов для обработки заявок.",
       "status": {
         "active": "Активный",
-        "inactive": "Неактивный"
+        "inactive": "Неактивный",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "Связанные проекты",
       "noIntegrations": "Интеграции для решения проблем не настроены.",
       "testConnection": "Проверить соединение",
       "testSuccess": "Соединение установлено успешно.",
       "testSuccessDescription": "Интеграция проблем настроена и подключена должным образом.",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "Соединение не удалось.",
       "testFailedDescription": "Не удалось подключиться к внешнему сервису.",
       "testError": "Ошибка теста",
       "testErrorDescription": "Произошла ошибка при проверке соединения.",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
       "syncInProgress": "Re-syncing linked issues...",
       "syncIntegration": "Re-sync linked issues",
       "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
@@ -5207,6 +5228,10 @@
         "apiKeyWarningPoint4": "Для точного указания авторства каждого пользователя без прав администратора используйте OAuth 2.0.",
         "tokenCreatorNoticeTitle": "указание авторства выпуска",
         "tokenCreatorNoticeDescription": "Задачи, созданные с помощью этой интеграции, всегда записываются от имени учетной записи, владеющей этим токеном доступа, а не от имени пользователя TestPlanIt, который их создал. API этого поставщика не позволяет устанавливать имя создателя от имени другого пользователя.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Подделать ключ API",
         "forgeApiKeyDescription": "Используется приложением Atlassian Forge для аутентификации запросов из панелей задач Jira. Сгенерируйте ключ здесь и вставьте его в настройки вашего приложения Forge.",
         "forgeApiKeyPlaceholder": "Нажмите «Сгенерировать», чтобы создать ключ API.",
@@ -5618,12 +5643,14 @@
     },
     "auditLogs": {
       "description": "Просматривайте общесистемный журнал аудита для отслеживания безопасности и соответствия требованиям.",
+      "projectDescription": "View the audit trail of actions performed in this project.",
       "filterPlaceholder": "Поиск по сущности, пользователю или действию...",
       "filterAction": "Действие",
       "filterEntityType": "Тип сущности",
       "allActions": "Все действия",
       "allEntityTypes": "Все типы сущностей",
       "allUsers": "All Users",
+      "allProjects": "Все проекты",
       "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "Просмотреть подробности",
       "detailTitle": "Подробная информация из журнала аудита",
@@ -5651,7 +5678,9 @@
       },
       "systemActor": "Система",
       "systemActorTooltip": "Действие выполняется системой, а не авторизованным пользователем.",
-      "sourceScim": "СКИМ"
+      "sourceScim": "СКИМ",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {
@@ -7633,8 +7662,9 @@
       "intro": "Нажмите кнопку ниже, чтобы войти:",
       "signInButton": "Войти",
       "copyPasteIntro": "Или скопируйте и вставьте эту ссылку в свой браузер:",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "Если вы не запрашивали это письмо, можете смело его проигнорировать.",
-      "textBody": "Войдите в TestPlanIt\n\nНажмите на ссылку ниже, чтобы войти:\n{url}\n\nЕсли вы не запрашивали это письмо, можете смело его проигнорировать."
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

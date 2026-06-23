@@ -1072,7 +1072,7 @@
         "apple": "Weiter mit Apple",
         "microsoft": "Mit Microsoft fortfahren",
         "samlProvider": "Melden Sie sich mit {name}an.",
-        "magicLink": "Mit Magic Link anmelden",
+        "magicLink": "Sign in with single-use Magic Link",
         "emailLogin": "Mit der E-Mail fortfahren"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Zugriff verweigert. Ihr Konto ist möglicherweise inaktiv oder Sie haben keine Berechtigung zum Anmelden.",
       "configuration": "Es gibt ein Problem mit der Serverkonfiguration.",
-      "verification": "Das Verifizierungstoken ist abgelaufen oder wurde bereits verwendet.",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "Ungültiger Bestätigungscode. Bitte versuchen Sie es erneut.",
       "twoFactorTokenRequired": "Token erforderlich",
       "verificationCodeRequired": "Ein Bestätigungscode ist erforderlich."
@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {Sitzung} other {Sitzungen}}",
     "labels": {
       "totalElapsed": "Zeitaufwand",
@@ -2468,6 +2473,11 @@
       "versionCreated": "Version {version} Erstellt",
       "latestVersionUpdated": "Neueste Version {version, number} Aktualisiert",
       "historyView": "Testfallverlauf anzeigen"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "Option nicht gefunden",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "Testlauf nicht gefunden.",
     "add": {
       "title": "Testlauf hinzufügen",
@@ -5060,17 +5075,23 @@
       "manageDescription": "Konfigurieren und verwalten Sie Ihre Integrationen für externe Serviceprobleme",
       "status": {
         "active": "Aktiv",
-        "inactive": "Inaktiv"
+        "inactive": "Inaktiv",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "Verbundene Projekte",
       "noIntegrations": "Keine Probleme bei der Integrationskonfiguration",
       "testConnection": "Testverbindung",
       "testSuccess": "Verbindung erfolgreich",
       "testSuccessDescription": "Die Problemintegration ist ordnungsgemäß konfiguriert und verbunden.",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "Verbindung fehlgeschlagen",
       "testFailedDescription": "Verbindung zum externen Dienst konnte nicht hergestellt werden.",
       "testError": "Testfehler",
       "testErrorDescription": "Beim Testen der Verbindung ist ein Fehler aufgetreten.",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
       "syncInProgress": "Re-syncing linked issues...",
       "syncIntegration": "Re-sync linked issues",
       "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
@@ -5207,6 +5228,10 @@
         "apiKeyWarningPoint4": "Verwenden Sie stattdessen OAuth 2.0, um eine genaue Zuordnung der Meldungen pro Benutzer ohne Administratorrechte zu gewährleisten.",
         "tokenCreatorNoticeTitle": "Urheber des Problems",
         "tokenCreatorNoticeDescription": "Durch diese Integration erstellte Probleme werden immer dem Konto zugeordnet, dem dieses Zugriffstoken gehört, und nicht dem TestPlanIt-Benutzer, der sie erstellt hat. Die API dieses Anbieters erlaubt es nicht, den Ersteller im Namen eines anderen Benutzers festzulegen.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Forge API-Schlüssel",
         "forgeApiKeyDescription": "Wird von der Atlassian Forge-App zur Authentifizierung von Anfragen aus Jira-Vorgangspanels verwendet. Generieren Sie hier einen Schlüssel und fügen Sie ihn in die Einstellungen Ihrer Forge-App ein.",
         "forgeApiKeyPlaceholder": "Klicken Sie auf Generieren, um einen API-Schlüssel zu erstellen.",
@@ -5618,12 +5643,14 @@
     },
     "auditLogs": {
       "description": "Systemweites Prüfprotokoll zur Überwachung von Sicherheit und Compliance anzeigen",
+      "projectDescription": "View the audit trail of actions performed in this project.",
       "filterPlaceholder": "Suche nach Entität, Benutzer oder Aktion...",
       "filterAction": "Aktion",
       "filterEntityType": "Entitätstyp",
       "allActions": "Alle Aktionen",
       "allEntityTypes": "Alle Entitätstypen",
       "allUsers": "All Users",
+      "allProjects": "All Projects",
       "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "Details anzeigen",
       "detailTitle": "Details zum Audit-Protokoll",
@@ -5651,7 +5678,9 @@
       },
       "systemActor": "System",
       "systemActorTooltip": "Die Aktion wurde vom System und nicht von einem angemeldeten Benutzer ausgeführt.",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {
@@ -7633,8 +7662,9 @@
       "intro": "Klicken Sie auf die Schaltfläche unten, um sich anzumelden:",
       "signInButton": "Anmelden",
       "copyPasteIntro": "Oder kopieren Sie diesen Link und fügen Sie ihn in Ihren Browser ein:",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "Wenn Sie diese E-Mail nicht angefordert haben, können Sie sie getrost ignorieren.",
-      "textBody": "Melden Sie sich bei TestPlanIt an\n\nKlicken Sie auf den unten stehenden Link, um sich anzumelden:\n{url}\n\nWenn Sie diese E-Mail nicht angefordert haben, können Sie sie getrost ignorieren."
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

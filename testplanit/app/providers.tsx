@@ -1,12 +1,14 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Provider as ZenStackProvider } from "@zenstackhq/tanstack-query/runtime-v5/react";
 import { SessionProvider } from "next-auth/react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { ThemeProvider } from "~/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SearchStateProvider } from "~/lib/contexts/SearchStateContext";
+import { operationIdFetcher } from "~/lib/zenstackFetcher";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -41,9 +43,20 @@ export default function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SessionProvider>
-        <TooltipProvider delayDuration={300}>{content}</TooltipProvider>
-      </SessionProvider>
+      {/*
+        Phase 14 CTX-03: install the ZenStack hooks Provider so EVERY generated
+        mutation/query routes through operationIdFetcher, which stamps the
+        X-Operation-Id header from the active operationId (useOperationId).
+        endpoint is the generated-hook default (DEFAULT_QUERY_ENDPOINT =
+        "/api/model"), so existing requests are unchanged — we only inject fetch.
+      */}
+      <ZenStackProvider
+        value={{ endpoint: "/api/model", fetch: operationIdFetcher }}
+      >
+        <SessionProvider>
+          <TooltipProvider delayDuration={300}>{content}</TooltipProvider>
+        </SessionProvider>
+      </ZenStackProvider>
     </QueryClientProvider>
   );
 }

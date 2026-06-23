@@ -29,6 +29,13 @@ export function AuditLogDetailModal({
   const tGlobal = useTranslations();
   const { data: session } = useSession();
 
+  // Metadata can carry sensitive request details (IP address, user agent), so
+  // the section is only surfaced to administrators. The case-scoped audit sheet
+  // is shown to any viewer who can read the case, where this gate matters most.
+  const canViewMetadata =
+    session?.user?.access === "ADMIN" ||
+    session?.user?.access === "PROJECTADMIN";
+
   // Fetch the full record (changes + metadata JSON) only when the modal opens.
   // The list query deliberately omits these columns to keep the page light at
   // scale — a single import can produce 100+ rows whose `changes` payload each
@@ -45,7 +52,7 @@ export function AuditLogDetailModal({
 
   const changes = (log?.changes ?? null) as Record<
     string,
-    { old: unknown; new: unknown }
+    { old: unknown; new: unknown; oldName?: unknown; newName?: unknown }
   > | null;
   const metadata = (log?.metadata ?? null) as Record<string, unknown> | null;
 
@@ -169,20 +176,20 @@ export function AuditLogDetailModal({
                             </code>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <div className="overflow-hidden">
+                            <div className="">
                               <span className="text-muted-foreground text-xs">
                                 {t("oldValue")}:
                               </span>
-                              <pre className="text-xs mt-1 bg-background p-2 rounded overflow-x-auto">
-                                {formatValue(change.old)}
+                              <pre className="text-xs mt-1 bg-background p-2 rounded w-full whitespace-pre-wrap break-words">
+                                {formatValue(change.oldName ?? change.old)}
                               </pre>
                             </div>
                             <div className="overflow-hidden">
                               <span className="text-muted-foreground text-xs">
                                 {t("newValue")}:
                               </span>
-                              <pre className="text-xs mt-1 bg-background p-2 rounded overflow-x-auto">
-                                {formatValue(change.new)}
+                              <pre className="text-xs mt-1 bg-background p-2 rounded w-full whitespace-pre-wrap break-words">
+                                {formatValue(change.newName ?? change.new)}
                               </pre>
                             </div>
                           </div>
@@ -194,21 +201,23 @@ export function AuditLogDetailModal({
               )}
 
               {/* Metadata */}
-              {metadata && Object.keys(metadata).length > 0 && (
-                <>
-                  <Separator />
-                  <div className="min-w-0">
-                    <h4 className="text-sm font-medium mb-2">
-                      {t("metadata")}
-                    </h4>
-                    <div className="overflow-x-auto">
-                      <pre className="text-xs bg-muted p-3 rounded-md whitespace-pre">
-                        {JSON.stringify(metadata, null, 2)}
-                      </pre>
+              {canViewMetadata &&
+                metadata &&
+                Object.keys(metadata).length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="min-w-0">
+                      <h4 className="text-sm font-medium mb-2">
+                        {t("metadata")}
+                      </h4>
+                      <div>
+                        <pre className="text-xs bg-muted p-3 rounded-md whitespace-pre-wrap break-words">
+                          {JSON.stringify(metadata, null, 2)}
+                        </pre>
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
             </div>
           </div>
         )}

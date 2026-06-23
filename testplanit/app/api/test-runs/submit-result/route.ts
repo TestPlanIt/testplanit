@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
@@ -215,6 +216,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         testRun: {
           select: {
             id: true,
+            name: true,
             projectId: true,
             createdById: true,
             testRunType: true,
@@ -479,7 +481,17 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       projectId: number;
     };
 
-    const txOutcome = await prisma.$transaction(async (tx) => {
+    // Recording a result writes TestRunResults + its children but NOT the owning
+    // TestRuns row, so the trigger has no run row to snapshot the name/project
+    // from. Stamp the run's name + project (as they are at this instant) onto the
+    // audit frame so the GUC carries them and every captured row in this write is
+    // attributed to the run immutably — no later lookup.
+    updateAuditContext({
+      subjectEntityName: runCase.testRun.name ?? undefined,
+      subjectProjectId: runCase.testRun.projectId,
+    });
+
+    const txOutcome = await auditedTransaction(async (tx) => {
       let auditPayload: AuditPayload | null = null;
       const createdResult = await tx.testRunResults.create({
         data: {

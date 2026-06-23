@@ -100,6 +100,9 @@ export const ENTITY_NAME_FIELDS: Record<string, string | string[]> = {
   // entity (see buildEntityAuditHooks / ENTITY_AUDIT_MODELS in entityAuditHooks).
   ProjectIntegration: "integration.name",
   TestRunCases: "repositoryCase.name",
+  // Custom field value on a test case: named from its field definition's
+  // display name (see ENTITY_AUDIT_MODELS in entityAuditHooks).
+  CaseFieldValues: "field.displayName",
 };
 
 /**
@@ -112,6 +115,7 @@ export const PROJECT_SCOPE_PARENTS: Record<string, string> = {
   TestRunCases: "testRun",
   TestRunResults: "testRun",
   TestRunCaseIteration: "testRunCase.testRun",
+  CaseFieldValues: "testCase",
 };
 
 /**
@@ -146,6 +150,7 @@ export const PROJECT_SCOPED_ENTITY_TYPES: ReadonlySet<string> = new Set([
   "TestRunCases",
   "TestRunResults",
   "TestRunCaseIteration",
+  "CaseFieldValues",
 ]);
 
 /**
@@ -173,99 +178,27 @@ export interface AuditedConfigModel {
   kind: "catalog" | "join";
 }
 
-export const AUDITED_CONFIG_MODELS: AuditedConfigModel[] = [
-  // Catalog / config models
-  { entityType: "Workflows", accessor: "workflows", kind: "catalog" },
-  { entityType: "Status", accessor: "status", kind: "catalog" },
-  { entityType: "Configurations", accessor: "configurations", kind: "catalog" },
-  { entityType: "ConfigVariants", accessor: "configVariants", kind: "catalog" },
-  {
-    entityType: "ConfigCategories",
-    accessor: "configCategories",
-    kind: "catalog",
-  },
-  { entityType: "Roles", accessor: "roles", kind: "catalog" },
-  { entityType: "Tags", accessor: "tags", kind: "catalog" },
-  { entityType: "Templates", accessor: "templates", kind: "catalog" },
-  {
-    entityType: "CaseExportTemplate",
-    accessor: "caseExportTemplate",
-    kind: "catalog",
-  },
-  { entityType: "CaseFields", accessor: "caseFields", kind: "catalog" },
-  { entityType: "ResultFields", accessor: "resultFields", kind: "catalog" },
-  { entityType: "FieldOptions", accessor: "fieldOptions", kind: "catalog" },
-  { entityType: "MilestoneTypes", accessor: "milestoneTypes", kind: "catalog" },
-  { entityType: "Groups", accessor: "groups", kind: "catalog" },
-  { entityType: "LlmIntegration", accessor: "llmIntegration", kind: "catalog" },
-  { entityType: "CodeRepository", accessor: "codeRepository", kind: "catalog" },
-  {
-    entityType: "SamlConfiguration",
-    accessor: "samlConfiguration",
-    kind: "catalog",
-  },
-  {
-    entityType: "LlmProviderConfig",
-    accessor: "llmProviderConfig",
-    kind: "catalog",
-  },
-  {
-    entityType: "LlmFeatureConfig",
-    accessor: "llmFeatureConfig",
-    hasProjectId: true,
-    kind: "catalog",
-  },
-  {
-    entityType: "OllamaModelRegistry",
-    accessor: "ollamaModelRegistry",
-    kind: "catalog",
-  },
-  // Join / assignment models (access control + project-scoped config links)
-  { entityType: "RolePermission", accessor: "rolePermission", kind: "join" },
-  { entityType: "GroupAssignment", accessor: "groupAssignment", kind: "join" },
-  {
-    entityType: "ProjectAssignment",
-    accessor: "projectAssignment",
-    hasProjectId: true,
-    kind: "join",
-  },
-  {
-    entityType: "ProjectStatusAssignment",
-    accessor: "projectStatusAssignment",
-    hasProjectId: true,
-    kind: "join",
-  },
-  {
-    entityType: "ProjectWorkflowAssignment",
-    accessor: "projectWorkflowAssignment",
-    hasProjectId: true,
-    kind: "join",
-  },
-  {
-    entityType: "ProjectConfigurationAssignment",
-    accessor: "projectConfigurationAssignment",
-    hasProjectId: true,
-    kind: "join",
-  },
-  {
-    entityType: "MilestoneTypesAssignment",
-    accessor: "milestoneTypesAssignment",
-    hasProjectId: true,
-    kind: "join",
-  },
-  {
-    entityType: "ProjectLlmIntegration",
-    accessor: "projectLlmIntegration",
-    hasProjectId: true,
-    kind: "join",
-  },
-  {
-    entityType: "ProjectCodeRepositoryConfig",
-    accessor: "projectCodeRepositoryConfig",
-    hasProjectId: true,
-    kind: "join",
-  },
-];
+// Decommissioned: every catalog/config/access-control model below is now covered
+// by the database CDC triggers (scripts/trigger-registry.ts), which capture the
+// same create/update/delete under the acting admin (the request GUC is set by the
+// route, not by these hooks). Keeping both layers double-audited each change, so the
+// app-layer config audit is retired here — the app layer now records only semantic /
+// security events (login, export, SSO, SCIM). The driving list is intentionally empty;
+// the factory + wiring remain a no-op so the wiring/typing tests still exercise them.
+export const AUDITED_CONFIG_MODELS: AuditedConfigModel[] = [];
+
+/**
+ * Access-control changes (user access tier, project/group permission grants &
+ * revokes) are recorded by the CDC substrate as the sole source — the trigger on
+ * User / UserProjectPermission / GroupProjectPermission captures each change and
+ * the correlation layer humanizes the FK ids to names. The app-layer semantic
+ * events (ROLE_CHANGED / PERMISSION_GRANT / PERMISSION_REVOKE) emitted by the
+ * lib/prisma.ts `$extends` hooks would double-audit the same change, so they are
+ * decommissioned here exactly like AUDITED_CONFIG_MODELS above: this set gates
+ * the hook emissions and is intentionally empty. Re-add an entityType (the model
+ * name) to restore its semantic event.
+ */
+export const SEMANTIC_ACCESS_AUDIT_MODELS: ReadonlySet<string> = new Set();
 
 /**
  * Non-config entity accessors the ZenStack RPC route (`app/api/model`) audits
@@ -280,24 +213,13 @@ export const AUDITED_CONFIG_MODELS: AuditedConfigModel[] = [
  * intentionally absent here.
  */
 export const AUDITED_RPC_ENTITY_ACCESSORS: readonly string[] = [
-  "repositoryCases",
-  "testRuns",
-  "sessions",
-  "sharedStepGroup",
-  "issue",
-  "milestones",
-  "projects",
   "user",
   "userProjectPermission",
   "groupProjectPermission",
   "ssoProvider",
   "allowedEmailDomain",
   "appConfig",
-  "userIntegrationAuth",
-  "testRunResults",
-  "comment",
   "apiToken",
-  "reviewRequest",
 ];
 
 /**
@@ -307,24 +229,13 @@ export const AUDITED_RPC_ENTITY_ACCESSORS: readonly string[] = [
  * guarded against the datamodel in `auditLog.rpc-wiring.test.ts`.
  */
 export const RPC_ENTITY_TYPE_MAP: Record<string, string> = {
-  repositoryCases: "RepositoryCases",
-  testRuns: "TestRuns",
-  sessions: "Sessions",
-  sharedStepGroup: "SharedStepGroup",
-  issue: "Issue",
-  milestones: "Milestones",
-  projects: "Projects",
   user: "User",
   userProjectPermission: "UserProjectPermission",
   groupProjectPermission: "GroupProjectPermission",
   ssoProvider: "SsoProvider",
   allowedEmailDomain: "AllowedEmailDomain",
   appConfig: "AppConfig",
-  userIntegrationAuth: "UserIntegrationAuth",
-  testRunResults: "TestRunResults",
-  comment: "Comment",
   apiToken: "ApiToken",
-  reviewRequest: "ReviewRequest",
 };
 
 /**
@@ -339,6 +250,8 @@ const SENSITIVE_FIELDS = new Set([
   "apiKey",
   "api_key",
   "secret",
+  "clientSecret",
+  "client_secret",
   "privateKey",
   "private_key",
   "token",
@@ -394,17 +307,48 @@ function bigIntJsonReplacer(_key: string, value: unknown): unknown {
   return typeof value === "bigint" ? value.toString() : value;
 }
 
+/** A JSON-style plain object (Json column value) — NOT a Date/Decimal/class instance. */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+/**
+ * Recursively mask any NESTED property whose key is a sensitive field name —
+ * e.g. SsoProvider.config.clientSecret, where the top-level column (`config`) is
+ * not itself sensitive but carries a secret inside its JSON. Only walks plain
+ * JSON objects/arrays; Dates/Decimals/other instances pass through untouched.
+ * BigInt scalars are coerced to string (matching the non-recursive scalar path).
+ */
+function maskNestedSensitive(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((v) => maskNestedSensitive(v));
+  }
+  if (isPlainObject(value)) {
+    const out: Record<string, unknown> = {};
+    for (const [key, v] of Object.entries(value)) {
+      out[key] = SENSITIVE_FIELDS.has(key)
+        ? maskSensitiveValue(key, v)
+        : maskNestedSensitive(v);
+    }
+    return out;
+  }
+  return typeof value === "bigint" ? value.toString() : value;
+}
+
 /**
  * Mask sensitive field values for audit logging.
  */
 function maskSensitiveValue(fieldName: string, value: unknown): unknown {
   if (!SENSITIVE_FIELDS.has(fieldName)) {
-    // Diffs are persisted as JSON (BullMQ payload + Prisma Json column), and
-    // JSON.stringify throws on BigInt. Coerce BigInt scalars (e.g. a file
-    // `size`, `modelSize`, `cacheTotalSize`) to strings — matching how the RPC
-    // layer serializes them — so a real change to such a column is recorded
-    // instead of throwing and being swallowed into a diff-less row.
-    return typeof value === "bigint" ? value.toString() : value;
+    // Not a sensitive column itself, but a JSON value may carry nested secrets
+    // (e.g. config.clientSecret) — walk it and mask any nested sensitive key.
+    // Scalars pass straight through (BigInt coerced so JSON.stringify won't throw
+    // on columns like `size` / `modelSize`, swallowing the row into a no-diff).
+    return maskNestedSensitive(value);
   }
 
   if (value === null || value === undefined) {

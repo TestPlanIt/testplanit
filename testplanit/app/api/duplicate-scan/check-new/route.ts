@@ -1,7 +1,9 @@
 import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { updateAuditContext } from "~/lib/auditContext";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
 import { authOptions } from "~/server/auth";
@@ -14,12 +16,14 @@ const checkNewSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
-export async function POST(request: Request) {
+export const POST = withAuditContext(async (request: NextRequest) => {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  updateAuditContext({ userId: session.user.id });
 
   const body = await request.json();
   const parsed = checkNewSchema.safeParse(body);
@@ -121,4 +125,4 @@ export async function POST(request: Request) {
     console.error("Duplicate check-new error:", error);
     return NextResponse.json({ cases: [] });
   }
-}
+});

@@ -22,10 +22,12 @@ import { DateRange } from "react-day-picker";
 import { useForm, useWatch } from "react-hook-form";
 import { AuditLogDetailModal } from "~/app/[locale]/admin/audit-logs/AuditLogDetailModal";
 import {
+  buildAuditLogOrderBy,
   ExtendedAuditLog,
   useColumns,
 } from "~/app/[locale]/admin/audit-logs/columns";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
+import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import {
   useCountAuditLog,
   useFindManyAuditLog,
@@ -54,6 +56,7 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
   const debouncedSearchString = useDebounce(searchString, 500);
   const [actionFilter, setActionFilter] = useState<AuditAction | "all">("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [projectFilter, setProjectFilter] = useState<string>("all");
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const dateForm = useForm<{ dateRange: DateRange | undefined }>({
@@ -95,6 +98,10 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
       conditions.push({ entityType: typeFilter });
     }
 
+    if (projectFilter !== "all") {
+      conditions.push({ projectId: parseInt(projectFilter, 10) });
+    }
+
     if (dateRange?.from) {
       conditions.push({
         timestamp: {
@@ -105,11 +112,18 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     }
 
     return { AND: conditions };
-  }, [userId, debouncedSearchString, actionFilter, typeFilter, dateRange]);
+  }, [
+    userId,
+    debouncedSearchString,
+    actionFilter,
+    typeFilter,
+    projectFilter,
+    dateRange,
+  ]);
 
   const baseArgs = {
     where: whereClause,
-    orderBy: { [sortConfig.column]: sortConfig.direction },
+    orderBy: buildAuditLogOrderBy(sortConfig),
     select: {
       id: true,
       timestamp: true,
@@ -122,6 +136,8 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
       userName: true,
       projectId: true,
       project: { select: { name: true } },
+      operationId: true,
+      sourceTable: true,
     },
     take: PAGE_SIZE,
   };
@@ -143,7 +159,26 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     refetchOnWindowFocus: false,
   });
 
-  const rows = (pages?.pages.flat() ?? []) as ExtendedAuditLog[];
+  // Cast via unknown: the not-yet-regenerated Prisma client types
+  // operationId/sourceTable as never in the select payload (the columns exist in
+  // the schema), so a direct cast doesn't overlap. Memoized so the grouping pass
+  // below only reruns when the page set actually changes.
+  const rows = useMemo(
+    () => (pages?.pages.flat() ?? []) as unknown as ExtendedAuditLog[],
+    [pages]
+  );
+
+  // Collapse rows sharing an operationId into one expandable lead (COR-04) via
+  // the shared helper; flatten each group into a lead carrying its children.
+  const groupedData = useMemo(
+    () =>
+      groupAuditRows(rows).map((group) =>
+        group.children.length > 0
+          ? { ...group.lead, auditChildren: group.children }
+          : group.lead
+      ),
+    [rows]
+  );
 
   const { data: totalCount } = useCountAuditLog({ where: whereClause });
 
@@ -161,6 +196,23 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     distinct: ["entityType"],
     orderBy: { entityType: "asc" },
   });
+  const { data: projectRows } = useFindManyAuditLog({
+    where: { userId, projectId: { not: null } },
+    select: { projectId: true, project: { select: { name: true } } },
+    distinct: ["projectId"],
+    orderBy: { projectId: "asc" },
+  });
+
+  const projectOptions = useMemo(() => {
+    const options = (projectRows ?? [])
+      .filter(
+        (row): row is { projectId: number; project: { name: string } } =>
+          row.projectId != null && !!row.project?.name
+      )
+      .map((row) => ({ id: row.projectId, name: row.project.name }));
+    options.sort((a, b) => a.name.localeCompare(b.name));
+    return options;
+  }, [projectRows]);
 
   const handleViewDetails = useCallback((log: { id: string }) => {
     setDetailId(log.id);
@@ -199,6 +251,7 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     !!debouncedSearchString ||
     actionFilter !== "all" ||
     typeFilter !== "all" ||
+    projectFilter !== "all" ||
     !!dateRange?.from;
 
   return (
@@ -259,13 +312,32 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
             </SelectContent>
           </Select>
         </div>
+
+        <div className="w-[170px]">
+          <Label className="sr-only">{tCommon("fields.project")}</Label>
+          <Select value={projectFilter} onValueChange={setProjectFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder={t("allProjects")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allProjects")}</SelectItem>
+              {projectOptions.map((project) => (
+                <SelectItem key={project.id} value={project.id.toString()}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Data Table — virtualized, infinite scroll. */}
       <div className="h-96">
         <VirtualizedDataTable
           columns={columns as any}
-          data={rows as any}
+          data={groupedData as any}
+          getSubRows={(row) => row.auditChildren}
+          subRowsLabel={t("relatedChanges")}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
           columnVisibility={columnVisibility}
@@ -277,7 +349,7 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
           emptyMessage={
             hasFilter ? tProfile("noMatchingEntries") : tProfile("noEntries")
           }
-          resetKey={`${debouncedSearchString}|${actionFilter}|${typeFilter}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
+          resetKey={`${debouncedSearchString}|${actionFilter}|${typeFilter}|${projectFilter}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
           testIdPrefix="user-audit-log-table"
           rowTestIdPrefix="user-audit-log-row"
         />

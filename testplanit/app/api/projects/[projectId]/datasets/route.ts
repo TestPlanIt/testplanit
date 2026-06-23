@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod/v4";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { updateAuditContext } from "~/lib/auditContext";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { sharedDatasetCreateSchema } from "~/lib/schemas/sharedDatasetCreateSchema";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -109,91 +111,95 @@ export async function GET(
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const POST = withAuditContext(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ projectId: string }> }
+  ) => {
+    try {
+      const session = await getServerSession(authOptions);
+      if (!session?.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
 
-    const { projectId: projectIdParam } = await params;
-    const projectId = parseInt(projectIdParam, 10);
-    if (isNaN(projectId)) {
-      return NextResponse.json(
-        { error: "Invalid project id" },
-        { status: 400 }
-      );
-    }
+      updateAuditContext({ userId: session.user.id });
 
-    const body = await request.json();
-    const data = sharedDatasetCreateSchema.parse(body);
+      const { projectId: projectIdParam } = await params;
+      const projectId = parseInt(projectIdParam, 10);
+      if (isNaN(projectId)) {
+        return NextResponse.json(
+          { error: "Invalid project id" },
+          { status: 400 }
+        );
+      }
 
-    // First verify the user can READ this project via the enhanced client.
-    // The DataSet @@deny chain inherits read access from the project, so
-    // findFirst returning null means the caller has no business creating a
-    // shared dataset here. This replaces the @@deny('create') validation
-    // which can't run in ZenStack v2 against a null `ownerCase` relation —
-    // the policy expression `ownerCaseId != null && ownerCase.projectId !=
-    // projectId` is logically null-safe via &&, but the runtime Zod
-    // validator dereferences `ownerCase` regardless and rejects the null.
-    // We use the raw `prisma` client only for the create itself; the read
-    // gate above is the access check.
-    const db = await getEnhancedDb(session);
-    const project = await db.projects.findFirst({
-      where: { id: projectId, isDeleted: false },
-      select: { id: true },
-    });
-    if (!project) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+      const body = await request.json();
+      const data = sharedDatasetCreateSchema.parse(body);
 
-    const created = await prisma.$transaction(async (tx) => {
-      const dataSet = await tx.dataSet.create({
-        data: {
+      // First verify the user can READ this project via the enhanced client.
+      // The DataSet @@deny chain inherits read access from the project, so
+      // findFirst returning null means the caller has no business creating a
+      // shared dataset here. This replaces the @@deny('create') validation
+      // which can't run in ZenStack v2 against a null `ownerCase` relation —
+      // the policy expression `ownerCaseId != null && ownerCase.projectId !=
+      // projectId` is logically null-safe via &&, but the runtime Zod
+      // validator dereferences `ownerCase` regardless and rejects the null.
+      // We use the raw `prisma` client only for the create itself; the read
+      // gate above is the access check.
+      const db = await getEnhancedDb(session);
+      const project = await db.projects.findFirst({
+        where: { id: projectId, isDeleted: false },
+        select: { id: true },
+      });
+      if (!project) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      const created = await prisma.$transaction(async (tx) => {
+        const dataSet = await tx.dataSet.create({
+          data: {
+            projectId,
+            name: data.name,
+            description: data.description ?? null,
+            isShared: true,
+            ownerCaseId: null,
+            version: 1,
+            createdById: session.user.id,
+          },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            version: true,
+            isShared: true,
+          },
+        });
+
+        captureAuditEvent({
+          action: "CREATE",
+          entityType: "DataSet",
+          entityId: String(dataSet.id),
+          entityName: dataSet.name,
           projectId,
-          name: data.name,
-          description: data.description ?? null,
-          isShared: true,
-          ownerCaseId: null,
-          version: 1,
-          createdById: session.user.id,
-        },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          version: true,
-          isShared: true,
-        },
+          userId: session.user.id,
+          metadata: { isShared: true },
+        }).catch(() => {
+          // Audit is best-effort.
+        });
+
+        return dataSet;
       });
 
-      captureAuditEvent({
-        action: "CREATE",
-        entityType: "DataSet",
-        entityId: String(dataSet.id),
-        entityName: dataSet.name,
-        projectId,
-        userId: session.user.id,
-        metadata: { isShared: true },
-      }).catch(() => {
-        // Audit is best-effort.
-      });
-
-      return dataSet;
-    });
-
-    return NextResponse.json({ dataSet: created });
-  } catch (err) {
-    if (err instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Validation failed", details: err.issues },
-        { status: 400 }
-      );
+      return NextResponse.json({ dataSet: created });
+    } catch (err) {
+      if (err instanceof ZodError) {
+        return NextResponse.json(
+          { error: "Validation failed", details: err.issues },
+          { status: 400 }
+        );
+      }
+      console.error("[projects datasets POST]", err);
+      return NextResponse.json({ error: "Internal error" }, { status: 500 });
     }
-    console.error("[projects datasets POST]", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-}
+);

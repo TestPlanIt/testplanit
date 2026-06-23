@@ -1072,7 +1072,7 @@
         "apple": "继续使用 Apple",
         "microsoft": "继续使用 Microsoft",
         "samlProvider": "使用 {name}登录",
-        "magicLink": "使用 Magic Link 登录",
+        "magicLink": "Sign in with single-use Magic Link",
         "emailLogin": "继续通过电子邮件"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "访问被拒绝。您的帐户可能已停用或您没有登录权限。",
       "configuration": "服务器配置存在问题。",
-      "verification": "验证令牌已过期或已被使用。",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "验证码无效，请重试。",
       "twoFactorTokenRequired": "需要令牌",
       "verificationCodeRequired": "需要验证码"
@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {会话} other {会话}}",
     "labels": {
       "totalElapsed": "花费时间",
@@ -2468,6 +2473,11 @@
       "versionCreated": "版本 {version} 创建",
       "latestVersionUpdated": "最新版本 {version, number} 已更新",
       "historyView": "测试用例历史记录视图"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "未找到选项",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "未找到测试运行。",
     "add": {
       "title": "添加测试运行",
@@ -5060,17 +5075,23 @@
       "manageDescription": "配置和管理您的外部服务集成问题",
       "status": {
         "active": "积极的",
-        "inactive": "非活跃状态"
+        "inactive": "非活跃状态",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "关联项目",
       "noIntegrations": "未配置任何问题集成",
       "testConnection": "测试连接",
       "testSuccess": "连接成功",
       "testSuccessDescription": "问题集成已正确配置并连接",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "连接失败",
       "testFailedDescription": "无法连接到外部服务",
       "testError": "测试错误",
       "testErrorDescription": "测试连接时发生错误",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
       "syncInProgress": "Re-syncing linked issues...",
       "syncIntegration": "Re-sync linked issues",
       "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
@@ -5207,6 +5228,10 @@
         "apiKeyWarningPoint4": "请改用 OAuth 2.0，以便在没有管理员权限的情况下准确地按用户进行报告者归属。",
         "tokenCreatorNoticeTitle": "问题创建者归属",
         "tokenCreatorNoticeDescription": "通过此集成创建的问题始终记录为拥有此访问令牌的帐户，而不是创建问题的 TestPlanIt 用户。此提供商的 API 不允许代表其他用户设置创建者。",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Forge API 密钥",
         "forgeApiKeyDescription": "Atlassian Forge 应用使用此密钥来验证来自 Jira 问题面板的请求。请在此处生成密钥并将其粘贴到 Forge 应用设置中。",
         "forgeApiKeyPlaceholder": "点击“生成”按钮创建 API 密钥",
@@ -5618,12 +5643,14 @@
     },
     "auditLogs": {
       "description": "查看系统范围内的审计跟踪，以进行安全性和合规性跟踪",
+      "projectDescription": "View the audit trail of actions performed in this project.",
       "filterPlaceholder": "按实体、用户或操作搜索……",
       "filterAction": "行动",
       "filterEntityType": "实体类型",
       "allActions": "所有操作",
       "allEntityTypes": "所有实体类型",
       "allUsers": "All Users",
+      "allProjects": "All Projects",
       "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "查看详情",
       "detailTitle": "审计日志详情",
@@ -5651,7 +5678,9 @@
       },
       "systemActor": "系统",
       "systemActorTooltip": "系统执行的操作，而非登录用户执行的操作。",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {
@@ -7633,8 +7662,9 @@
       "intro": "点击下方按钮登录：",
       "signInButton": "登入",
       "copyPasteIntro": "或者复制此链接并粘贴到浏览器中：",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "如果您没有请求收到这封邮件，您可以忽略它。",
-      "textBody": "登录 TestPlanIt\n\n点击以下链接登录：\n{url}\n\n如果您没有请求此电子邮件，则可以忽略它。"
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

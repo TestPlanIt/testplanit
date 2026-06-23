@@ -45,6 +45,7 @@ export async function sendMagicLinkEmail(
     "email.magicLink.intro",
     "email.magicLink.signInButton",
     "email.magicLink.copyPasteIntro",
+    "email.magicLink.singleUseNotice",
     "email.magicLink.disclaimer",
     "email.magicLink.textBody",
   ]);
@@ -71,6 +72,7 @@ export async function sendMagicLinkEmail(
       <a href="${args.url}" style="display: inline-block; background-color: ${PURPLE}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">${t["email.magicLink.signInButton"]}</a>
       <p style="color: #666; font-size: 14px;">${t["email.magicLink.copyPasteIntro"]}</p>
       <p style="color: #666; font-size: 14px; word-break: break-all;">${args.url}</p>
+      <p style="color: #666; font-size: 14px; background-color: #f3f0ff; border-left: 3px solid ${PURPLE}; padding: 12px 16px; border-radius: 4px; margin: 24px 0;">${t["email.magicLink.singleUseNotice"]}</p>
       <p style="color: #999; font-size: 12px; margin-top: 32px;">${t["email.magicLink.disclaimer"]}</p>
     </div>
   `;

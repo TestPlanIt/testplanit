@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod/v4";
 
-import { getEnhancedDb } from "~/lib/auth/utils";
+import { auditedEnhancedTransaction } from "~/lib/audit/auditedTransaction";
 import { parameterUpdateSchema } from "~/lib/schemas/parameterSchema";
 import {
   softDeleteParameterInTransaction,
@@ -38,9 +38,7 @@ export async function PATCH(
     const body = await request.json();
     const data = parameterUpdateSchema.parse(body);
 
-    const db = await getEnhancedDb(session);
-
-    const result = await db.$transaction(async (tx: unknown) => {
+    const result = await auditedEnhancedTransaction(session, async (tx) => {
       return updateParameterInTransaction(tx, caseId, paramId, data, {
         id: session.user.id,
         name: session.user.name,
@@ -85,9 +83,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
 
-    const db = await getEnhancedDb(session);
-
-    await db.$transaction(async (tx: unknown) => {
+    await auditedEnhancedTransaction(session, async (tx) => {
       await softDeleteParameterInTransaction(tx, caseId, paramId, {
         id: session.user.id,
         name: session.user.name,

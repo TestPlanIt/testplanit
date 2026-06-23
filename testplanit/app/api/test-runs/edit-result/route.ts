@@ -6,6 +6,7 @@ import { z } from "zod/v4";
 
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import {
@@ -124,6 +125,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
             repositoryCase: { select: { templateId: true } },
             testRun: {
               select: {
+                name: true,
                 createdById: true,
                 projectId: true,
                 isCompleted: true,
@@ -354,7 +356,15 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       existing.resultFieldValues.map((fv) => [fv.fieldId, fv.id])
     );
 
-    const result = await prisma.$transaction(async (tx) => {
+    // Editing a result writes the result/child rows but not the owning TestRuns
+    // row, so stamp the run's name + project onto the audit frame (as they are
+    // now) for an immutable, lookup-free attribution.
+    updateAuditContext({
+      subjectEntityName: existing.testRunCase.testRun.name ?? undefined,
+      subjectProjectId: existing.testRunCase.testRun.projectId,
+    });
+
+    const result = await auditedTransaction(async (tx) => {
       const updated = await tx.testRunResults.update({
         where: { id: input.resultId },
         data: {

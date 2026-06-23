@@ -48,6 +48,7 @@ import {
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
 } from "~/lib/test-run-result-submit";
+import { useOperationId } from "~/hooks/useOperationId";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { ExtendedCases } from "./columns";
@@ -799,6 +800,8 @@ export function AddResultModal({
     );
   };
 
+  const { beginOperation, endOperation } = useOperationId();
+
   const handleSubmit = async () => {
     if (!session?.user?.id) return;
 
@@ -809,6 +812,11 @@ export function AddResultModal({
 
     const values = form.getValues();
     setIsSubmitting(true);
+    // One operationId for the whole "record result" action: the submit-result
+    // write and the per-step result writes the loop below issues all share it,
+    // so the correlation worker groups them and the step rows inherit the run's
+    // name/project from the result row.
+    beginOperation();
 
     try {
       let elapsedInSeconds: number | null = null;
@@ -1448,6 +1456,7 @@ export function AddResultModal({
       }
     } finally {
       setIsSubmitting(false);
+      endOperation();
     }
   };
 

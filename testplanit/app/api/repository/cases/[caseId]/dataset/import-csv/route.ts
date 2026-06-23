@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z, ZodError } from "zod/v4";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { auditedEnhancedTransaction } from "~/lib/audit/auditedTransaction";
 import {
   buildRowSchemaFromParameters,
   type ParameterShape,
@@ -185,76 +186,79 @@ export async function POST(
     }
 
     // Atomic commit.
-    const result = await db.$transaction(async (tx: any) => {
-      let dataset = await tx.dataSet.findFirst({
-        where: {
-          ownerCaseId: caseId,
-          projectId: testCase.projectId,
-          isDeleted: false,
-        },
-      });
-      if (!dataset) {
-        dataset = await tx.dataSet.create({
-          data: {
-            name: `${testCase.name} dataset`,
+    const result = await auditedEnhancedTransaction(
+      session,
+      async (tx: any) => {
+        let dataset = await tx.dataSet.findFirst({
+          where: {
             ownerCaseId: caseId,
             projectId: testCase.projectId,
-            isShared: false,
-            createdById: session.user.id,
+            isDeleted: false,
           },
         });
+        if (!dataset) {
+          dataset = await tx.dataSet.create({
+            data: {
+              name: `${testCase.name} dataset`,
+              ownerCaseId: caseId,
+              projectId: testCase.projectId,
+              isShared: false,
+              createdById: session.user.id,
+            },
+          });
 
-        captureAuditEvent({
-          action: "CREATE",
-          entityType: "DataSet",
-          entityId: String(dataset.id),
-          entityName: dataset.name,
-          projectId: testCase.projectId,
-          userId: session.user.id,
-          metadata: {
-            isShared: false,
-            ownerCaseId: caseId,
-            source: "csv-import",
-          },
-        }).catch(() => {
-          // Audit is best-effort.
-        });
+          captureAuditEvent({
+            action: "CREATE",
+            entityType: "DataSet",
+            entityId: String(dataset.id),
+            entityName: dataset.name,
+            projectId: testCase.projectId,
+            userId: session.user.id,
+            metadata: {
+              isShared: false,
+              ownerCaseId: caseId,
+              source: "csv-import",
+            },
+          }).catch(() => {
+            // Audit is best-effort.
+          });
+        }
+
+        let startIndex = 0;
+        if (data.mode === "replace") {
+          await tx.dataSetRow.updateMany({
+            where: { dataSetId: dataset.id, isDeleted: false },
+            data: { isDeleted: true },
+          });
+        } else {
+          const max = await tx.dataSetRow.aggregate({
+            where: { dataSetId: dataset.id, isDeleted: false },
+            _max: { rowIndex: true },
+          });
+          startIndex = (max._max.rowIndex ?? -1) + 1;
+        }
+
+        let createdCount = 0;
+        for (let i = 0; i < validatedRows.length; i++) {
+          await tx.dataSetRow.create({
+            data: {
+              dataSetId: dataset.id,
+              label: null,
+              rowIndex: startIndex + i,
+              valuesJson: validatedRows[i] as never,
+            },
+          });
+          createdCount += 1;
+        }
+
+        // Helper-invocation invariant: even though dataset row writes do not
+        // change `hasParameters`, calling the helper here keeps the discipline
+        // uniform across every parameter/dataset mutation path.
+        await updateHasParameters(caseId, tx);
+
+        return { datasetId: dataset.id, created: createdCount };
       }
-
-      let startIndex = 0;
-      if (data.mode === "replace") {
-        await tx.dataSetRow.updateMany({
-          where: { dataSetId: dataset.id, isDeleted: false },
-          data: { isDeleted: true },
-        });
-      } else {
-        const max = await tx.dataSetRow.aggregate({
-          where: { dataSetId: dataset.id, isDeleted: false },
-          _max: { rowIndex: true },
-        });
-        startIndex = (max._max.rowIndex ?? -1) + 1;
-      }
-
-      let createdCount = 0;
-      for (let i = 0; i < validatedRows.length; i++) {
-        await tx.dataSetRow.create({
-          data: {
-            dataSetId: dataset.id,
-            label: null,
-            rowIndex: startIndex + i,
-            valuesJson: validatedRows[i] as never,
-          },
-        });
-        createdCount += 1;
-      }
-
-      // Helper-invocation invariant: even though dataset row writes do not
-      // change `hasParameters`, calling the helper here keeps the discipline
-      // uniform across every parameter/dataset mutation path.
-      await updateHasParameters(caseId, tx);
-
-      return { datasetId: dataset.id, created: createdCount };
-    });
+    );
 
     return NextResponse.json({ success: true, ...result });
   } catch (err) {

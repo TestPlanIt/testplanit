@@ -29,9 +29,21 @@ The system-wide viewer is available only to users with administrative privileges
 
 ### Viewing your own activity
 
-You don't need administrator access to review your own audit history. Open your profile (**user menu → View Profile**) and expand the **Audit Log** section. This view is automatically scoped to your own actions, so the user filter is omitted; the search box and the action, entity-type, and date-range filters work just like the system-wide viewer.
+You don't need administrator access to review your own audit history. Open your profile (**user menu → View Profile**) and expand the **Audit Log** section. This view is automatically scoped to your own actions, so the user filter is omitted; the search box and the action, entity-type, project, and date-range filters work just like the system-wide viewer.
 
 Administrators can review any user's activity the same way by opening that user's profile.
+
+### Viewing a project's activity
+
+Project administrators don't need system-wide access to audit a single project. Open the project and choose **Audit Logs** from the project menu to see the audit trail scoped to that project.
+
+This view is available to system administrators and to Project Administrators assigned to the project. It works like the system-wide viewer — the search box and the action, entity-type, user, and date-range filters all behave the same — but every entry belongs to the current project, so the Project column and Project filter are omitted. The menu entry appears for any Project Administrator, but it shows entries only for the projects they are assigned to.
+
+### Viewing an item's activity
+
+You can review the change history of an individual test case, test run, or session without leaving its page. Open the item and click the **Activity** button in the header to open its **Activity Log** — a slide-out panel scoped to that one item.
+
+This view is available to anyone who can open the item — no administrator access required. It lists every recorded change to the item and its contents, each with the user who made it, the timestamp, and the before/after values. For a test run, that includes test cases being added or removed — collapsed into a single _"N test cases added"_ / _"N test cases removed"_ entry that names the affected cases — along with results being recorded and status changes; for a session, the results and field values captured during execution. Filter by action type and date range, and open any entry for full details. Related changes made in a single save are grouped together.
 
 ## Tracked Actions
 

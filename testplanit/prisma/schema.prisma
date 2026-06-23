@@ -390,6 +390,7 @@ enum AuditAction {
   WEBHOOK_REPLAYED
   WEBHOOK_HEALTH_CHANGED
   WEBHOOK_RETENTION_PURGED
+  DCL_RETENTION_PURGED
   DUPLICATED
   ITERATION_VALUES_OVERRIDDEN
   ITERATION_BULK_SKIPPED
@@ -2771,23 +2772,49 @@ model CommentMention {
 }
 
 model AuditLog {
-  id         String      @id() @default(cuid())
-  userId     String?     @db.Text()
-  userEmail  String?     @db.Text()
-  userName   String?     @db.Text()
-  action     AuditAction
-  entityType String      @db.VarChar(100)
-  entityId   String      @db.Text()
-  entityName String?     @db.Text()
-  changes    Json?
-  metadata   Json?
-  timestamp  DateTime    @default(now()) @db.Timestamptz(6)
-  projectId  Int?
-  project    Projects?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  id          String      @id() @default(cuid())
+  userId      String?     @db.Text()
+  userEmail   String?     @db.Text()
+  userName    String?     @db.Text()
+  action      AuditAction
+  entityType  String      @db.VarChar(100)
+  entityId    String      @db.Text()
+  entityName  String?     @db.Text()
+  changes     Json?
+  metadata    Json?
+  timestamp   DateTime    @default(now()) @db.Timestamptz(6)
+  projectId   Int?
+  project     Projects?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  operationId String?     @db.Text()
+  sourceTable String?     @db.VarChar(100)
 
   @@index([entityType, entityId])
   @@index([userId, timestamp])
   @@index([projectId, timestamp])
   @@index([timestamp])
   @@index([action])
+  @@index([operationId])
+}
+
+model DataChangeLog {
+  id          BigInt   @id() @default(autoincrement())
+  seq         BigInt   @default(autoincrement())
+  tableName   String   @map("table") @db.VarChar(100)
+  op          String   @db.Char(1)
+  pk          String   @db.Text()
+  changedCols Json?    @map("changed_cols")
+  actor       String?  @db.Text()
+  operationId String?  @map("operation_id") @db.Text()
+  tenant      String?  @db.Text()
+  actorName   String?  @map("actor_name") @db.Text()
+  actorEmail  String?  @map("actor_email") @db.Text()
+  entityName  String?  @map("entity_name") @db.Text()
+  projectId   String?  @map("project_id") @db.Text()
+  txid        BigInt
+  ts          DateTime @default(now()) @db.Timestamptz(6)
+  processed   Boolean  @default(false)
+
+  @@index([seq], map: "dcl_unprocessed_seq")
+  @@index([tableName, pk], map: "dcl_table_pk")
+  @@index([ts], map: "dcl_ts")
 }

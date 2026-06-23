@@ -1072,7 +1072,7 @@
         "apple": "Tiếp tục với Apple",
         "microsoft": "Tiếp tục với Microsoft",
         "samlProvider": "Đăng nhập bằng {name}",
-        "magicLink": "Đăng nhập bằng Magic Link",
+        "magicLink": "Sign in with single-use Magic Link",
         "emailLogin": "Tiếp tục với email"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Truy cập bị từ chối. Tài khoản của bạn có thể không hoạt động hoặc bạn không có quyền đăng nhập.",
       "configuration": "Có vấn đề với cấu hình máy chủ.",
-      "verification": "Mã xác thực đã hết hạn hoặc đã được sử dụng.",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "Mã xác minh không hợp lệ. Vui lòng thử lại.",
       "twoFactorTokenRequired": "Cần có mã thông báo.",
       "verificationCodeRequired": "Cần có mã xác minh."
@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {Phiên} other {Các phiên}}",
     "labels": {
       "totalElapsed": "Thời gian đã dành",
@@ -2468,6 +2473,11 @@
       "versionCreated": "Phiên bản {version} Đã tạo",
       "latestVersionUpdated": "Phiên bản mới nhất {version, number} Đã cập nhật",
       "historyView": "Chế độ xem lịch sử trường hợp kiểm thử"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "Không tìm thấy tùy chọn",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "Không tìm thấy kết quả chạy thử nghiệm.",
     "add": {
       "title": "Thêm Chạy thử",
@@ -5060,17 +5075,23 @@
       "manageDescription": "Cấu hình và quản lý các tích hợp vấn đề dịch vụ bên ngoài của bạn.",
       "status": {
         "active": "Tích cực",
-        "inactive": "Không hoạt động"
+        "inactive": "Không hoạt động",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "Các dự án liên kết",
       "noIntegrations": "Không có vấn đề nào được cấu hình tích hợp",
       "testConnection": "Kiểm tra kết nối",
       "testSuccess": "Kết nối thành công",
       "testSuccessDescription": "Việc tích hợp vấn đề đã được cấu hình và kết nối đúng cách.",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "Kết nối thất bại",
       "testFailedDescription": "Không thể kết nối với dịch vụ bên ngoài",
       "testError": "Lỗi kiểm thử",
       "testErrorDescription": "Đã xảy ra lỗi trong quá trình kiểm tra kết nối.",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
       "syncInProgress": "Re-syncing linked issues...",
       "syncIntegration": "Re-sync linked issues",
       "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
@@ -5207,6 +5228,10 @@
         "apiKeyWarningPoint4": "Hãy sử dụng OAuth 2.0 để ghi nhận chính xác thông tin người báo cáo mà không cần quyền quản trị viên.",
         "tokenCreatorNoticeTitle": "Ghi nhận người tạo vấn đề",
         "tokenCreatorNoticeDescription": "Các sự cố được tạo ra thông qua quá trình tích hợp này luôn được ghi nhận là do tài khoản sở hữu mã thông báo truy cập đó gây ra, chứ không phải do người dùng TestPlanIt đã tạo ra chúng. API của nhà cung cấp này không cho phép thiết lập người tạo thay mặt người dùng khác.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Khóa API Forge",
         "forgeApiKeyDescription": "Được ứng dụng Atlassian Forge sử dụng để xác thực các yêu cầu từ bảng quản lý sự cố Jira. Tạo khóa tại đây và dán vào cài đặt ứng dụng Forge của bạn.",
         "forgeApiKeyPlaceholder": "Nhấp vào Tạo để tạo khóa API.",
@@ -5618,12 +5643,14 @@
     },
     "auditLogs": {
       "description": "Xem nhật ký kiểm toán toàn hệ thống để theo dõi bảo mật và tuân thủ.",
+      "projectDescription": "View the audit trail of actions performed in this project.",
       "filterPlaceholder": "Tìm kiếm theo thực thể, người dùng hoặc hành động...",
       "filterAction": "Hoạt động",
       "filterEntityType": "Loại thực thể",
       "allActions": "Tất cả các hành động",
       "allEntityTypes": "Tất cả các loại thực thể",
       "allUsers": "All Users",
+      "allProjects": "All Projects",
       "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "Xem chi tiết",
       "detailTitle": "Chi tiết nhật ký kiểm toán",
@@ -5651,7 +5678,9 @@
       },
       "systemActor": "Hệ thống",
       "systemActorTooltip": "Hành động này được thực hiện bởi hệ thống, không phải bởi người dùng đã đăng nhập.",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {
@@ -7633,8 +7662,9 @@
       "intro": "Nhấp vào nút bên dưới để đăng nhập:",
       "signInButton": "Đăng nhập",
       "copyPasteIntro": "Hoặc sao chép và dán liên kết này vào trình duyệt của bạn:",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "Nếu bạn không yêu cầu nhận email này, bạn có thể bỏ qua nó một cách an toàn.",
-      "textBody": "Đăng nhập vào TestPlanIt\n\nNhấp vào liên kết bên dưới để đăng nhập:\n{url}\n\nNếu bạn không yêu cầu nhận email này, bạn có thể bỏ qua nó."
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

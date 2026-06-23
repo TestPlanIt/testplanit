@@ -31,6 +31,7 @@
 
 import { sql } from "kysely";
 
+import { runWithAuditContext } from "~/lib/auditContext";
 import { prisma } from "~/lib/prisma";
 import { SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
 import {
@@ -151,97 +152,99 @@ export async function reEmitScimMemberEventAction(
     return { success: false, error: "Unauthorized" };
   }
 
-  try {
-    const original = await prisma.auditLog.findUnique({
-      where: { id: auditLogId },
-    });
-    if (!original) {
-      return { success: false, error: "Audit row not found" };
-    }
+  return runWithAuditContext({ userId: session.user.id }, async () => {
+    try {
+      const original = await prisma.auditLog.findUnique({
+        where: { id: auditLogId },
+      });
+      if (!original) {
+        return { success: false, error: "Audit row not found" };
+      }
 
-    const metadata =
-      original.metadata && typeof original.metadata === "object"
-        ? (original.metadata as Record<string, unknown>)
-        : null;
-    const skippedRaw = metadata?.scimSkippedMemberIds;
-    const skippedIds = Array.isArray(skippedRaw)
-      ? skippedRaw.filter((v): v is string => typeof v === "string")
-      : [];
+      const metadata =
+        original.metadata && typeof original.metadata === "object"
+          ? (original.metadata as Record<string, unknown>)
+          : null;
+      const skippedRaw = metadata?.scimSkippedMemberIds;
+      const skippedIds = Array.isArray(skippedRaw)
+        ? skippedRaw.filter((v): v is string => typeof v === "string")
+        : [];
 
-    if (
-      original.entityType !== "Groups" ||
-      !metadata ||
-      skippedIds.length === 0
-    ) {
-      return {
-        success: false,
-        error: "No skipped members to re-emit",
+      if (
+        original.entityType !== "Groups" ||
+        !metadata ||
+        skippedIds.length === 0
+      ) {
+        return {
+          success: false,
+          error: "No skipped members to re-emit",
+        };
+      }
+
+      const groupId = Number.parseInt(original.entityId, 10);
+      if (!Number.isFinite(groupId)) {
+        return { success: false, error: "Group not found" };
+      }
+
+      const group = await prisma.groups.findUnique({
+        where: { id: groupId },
+      });
+      if (!group || group.isDeleted) {
+        return { success: false, error: "Group not found" };
+      }
+
+      const validUsers = await prisma.user.findMany({
+        where: { id: { in: skippedIds }, isDeleted: false },
+        select: { id: true },
+      });
+      const emittedMembers = validUsers.map((u) => u.id);
+      const stillSkipped = skippedIds.filter(
+        (id) => !emittedMembers.includes(id)
+      );
+
+      const groupSnapshot: ScimGroupSnapshot = {
+        id: group.id,
+        name: group.name,
+        externalId: group.externalId,
+        scimDisplayName: group.scimDisplayName,
       };
-    }
 
-    const groupId = Number.parseInt(original.entityId, 10);
-    if (!Number.isFinite(groupId)) {
-      return { success: false, error: "Group not found" };
-    }
+      const newAuditLogId = await prisma.$transaction(async (tx) => {
+        await emitScimGroupMemberAdded(groupSnapshot, emittedMembers, tx, {
+          projectId: SYSTEM_PROJECT_ID,
+          actorUserId: session.user.id,
+        });
 
-    const group = await prisma.groups.findUnique({
-      where: { id: groupId },
-    });
-    if (!group || group.isDeleted) {
-      return { success: false, error: "Group not found" };
-    }
-
-    const validUsers = await prisma.user.findMany({
-      where: { id: { in: skippedIds }, isDeleted: false },
-      select: { id: true },
-    });
-    const emittedMembers = validUsers.map((u) => u.id);
-    const stillSkipped = skippedIds.filter(
-      (id) => !emittedMembers.includes(id)
-    );
-
-    const groupSnapshot: ScimGroupSnapshot = {
-      id: group.id,
-      name: group.name,
-      externalId: group.externalId,
-      scimDisplayName: group.scimDisplayName,
-    };
-
-    const newAuditLogId = await prisma.$transaction(async (tx) => {
-      await emitScimGroupMemberAdded(groupSnapshot, emittedMembers, tx, {
-        projectId: SYSTEM_PROJECT_ID,
-        actorUserId: session.user.id,
-      });
-
-      const newRow = await tx.auditLog.create({
-        data: {
-          userId: session.user.id,
-          userEmail: session.user.email ?? null,
-          userName: session.user.name ?? null,
-          action: "UPDATE",
-          entityType: "Groups",
-          entityId: String(group.id),
-          entityName: group.name,
-          metadata: {
-            source: "scim",
-            scimReEmittedBy: session.user.id,
-            referencedAuditLogId: original.id,
-            scimReEmittedMembers: emittedMembers,
-            scimSkippedMemberIds: stillSkipped,
+        const newRow = await tx.auditLog.create({
+          data: {
+            userId: session.user.id,
+            userEmail: session.user.email ?? null,
+            userName: session.user.name ?? null,
+            action: "UPDATE",
+            entityType: "Groups",
+            entityId: String(group.id),
+            entityName: group.name,
+            metadata: {
+              source: "scim",
+              scimReEmittedBy: session.user.id,
+              referencedAuditLogId: original.id,
+              scimReEmittedMembers: emittedMembers,
+              scimSkippedMemberIds: stillSkipped,
+            },
           },
-        },
+        });
+
+        return newRow.id;
       });
 
-      return newRow.id;
-    });
-
-    return {
-      success: true,
-      newAuditLogId,
-      emittedMembers,
-    };
-  } catch (err) {
-    console.error("[scim/conflict-log] re-emit failed", err);
-    return { success: false, error: "Re-emit failed" };
-  }
+      return {
+        success: true,
+        newAuditLogId,
+        emittedMembers,
+      };
+    } catch (err) {
+      console.error("[scim/conflict-log] re-emit failed", err);
+      return { success: false, error: "Re-emit failed" };
+    }
+  }); // end runWithAuditContext
 }

@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
-import { prisma } from "~/lib/prisma";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { getIterationGenerationQueue } from "~/lib/queues";
 import {
   classifyBand,
@@ -52,115 +53,155 @@ import { authOptions } from "~/server/auth";
  * gate on `TestRunCases.totalIterations > 0` before re-invoking.
  */
 
-export async function POST(
-  _request: NextRequest,
-  { params }: { params: Promise<{ testRunId: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const POST = withAuditContext(
+  async (
+    _request: NextRequest,
+    { params }: { params: Promise<{ testRunId: string }> }
+  ) => {
+    try {
+      const session = await getServerSession(authOptions);
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
 
-    const { testRunId: runIdParam } = await params;
-    const testRunId = parseInt(runIdParam, 10);
-    if (Number.isNaN(testRunId) || testRunId <= 0) {
-      return NextResponse.json(
-        { error: "Invalid test run id" },
-        { status: 400 }
-      );
-    }
+      const { testRunId: runIdParam } = await params;
+      const testRunId = parseInt(runIdParam, 10);
+      if (Number.isNaN(testRunId) || testRunId <= 0) {
+        return NextResponse.json(
+          { error: "Invalid test run id" },
+          { status: 400 }
+        );
+      }
 
-    const db = await getEnhancedDb(session);
+      const db = await getEnhancedDb(session);
 
-    // Verify run exists AND caller has read access. We need projectId for
-    // the cardinality query and configId presence for the fan-out factor.
-    const run = await db.testRuns.findFirst({
-      where: { id: testRunId },
-      select: { id: true, projectId: true, configId: true },
-    });
-    if (!run) {
-      return NextResponse.json(
-        { error: "Test run not found" },
-        { status: 404 }
-      );
-    }
+      // Verify run exists AND caller has read access. We need projectId for
+      // the cardinality query and configId presence for the fan-out factor.
+      const run = await db.testRuns.findFirst({
+        where: { id: testRunId },
+        select: { id: true, projectId: true, configId: true },
+      });
+      if (!run) {
+        return NextResponse.json(
+          { error: "Test run not found" },
+          { status: 404 }
+        );
+      }
 
-    // Resolve the run's cases. We need RepositoryCase.id, name, and
-    // hasParameters; plus the dataset row count per case to compute the
-    // preflight contribution. configCount for THIS run is exactly 1 (each
-    // configId in the modal already creates a separate TestRun row, so
-    // fan-out per run is rowCount × 1).
-    const runCases: Array<{
-      repositoryCaseId: number;
-      repositoryCase: {
-        id: number;
-        name: string;
-        hasParameters: boolean;
-        ownedDataSets: Array<{
-          _count: { rows: number };
-        }>;
-      };
-    }> = await db.testRunCases.findMany({
-      where: { testRunId, isDeleted: false },
-      select: {
-        repositoryCaseId: true,
+      // Resolve the run's cases. We need RepositoryCase.id, name, and
+      // hasParameters; plus the dataset row count per case to compute the
+      // preflight contribution. configCount for THIS run is exactly 1 (each
+      // configId in the modal already creates a separate TestRun row, so
+      // fan-out per run is rowCount × 1).
+      const runCases: Array<{
+        repositoryCaseId: number;
         repositoryCase: {
-          select: {
-            id: true,
-            name: true,
-            hasParameters: true,
-            ownedDataSets: {
-              where: { isDeleted: false, projectId: run.projectId },
-              select: {
-                _count: {
-                  select: { rows: { where: { isDeleted: false } } },
+          id: number;
+          name: string;
+          hasParameters: boolean;
+          ownedDataSets: Array<{
+            _count: { rows: number };
+          }>;
+        };
+      }> = await db.testRunCases.findMany({
+        where: { testRunId, isDeleted: false },
+        select: {
+          repositoryCaseId: true,
+          repositoryCase: {
+            select: {
+              id: true,
+              name: true,
+              hasParameters: true,
+              ownedDataSets: {
+                where: { isDeleted: false, projectId: run.projectId },
+                select: {
+                  _count: {
+                    select: { rows: { where: { isDeleted: false } } },
+                  },
                 },
+                take: 1,
               },
-              take: 1,
             },
           },
         },
-      },
-    });
-
-    const inputs: PreflightCaseInput[] = runCases.map((rc) => ({
-      caseId: rc.repositoryCase.id,
-      caseTitle: rc.repositoryCase.name,
-      hasParameters: rc.repositoryCase.hasParameters,
-      rowCount: rc.repositoryCase.ownedDataSets[0]?._count.rows ?? 0,
-    }));
-
-    const thresholds = readCardinalityThresholds();
-    const preflight = computePreflight(inputs, 1, thresholds);
-    const iterationCount = preflight.total;
-    const classification = classifyBand(iterationCount, thresholds);
-
-    // Hard refuse — return 422 with the actionable breakdown.
-    if (classification === "hardRefuse") {
-      return NextResponse.json(
-        {
-          refused: true,
-          async: false,
-          iterationCount,
-          perCase: preflight.perCase,
-          cap: thresholds.hardCap,
-          thresholds,
-        },
-        { status: 422 }
-      );
-    }
-
-    // Sync path — fan out inline. Audit emission piggy-backs the same
-    // transaction so we don't audit a fan-out that rolled back.
-    if (classification === "sync") {
-      const result = await prisma.$transaction(async (tx) => {
-        return materializeIterations(testRunId, tx);
       });
 
-      // Best-effort audit (BULK_CREATE on TestRunCaseIteration). The
-      // dedicated ITERATION_RESULT_RECORDED action is reserved for actual
-      // result writes (Task 6), not generation events.
+      const inputs: PreflightCaseInput[] = runCases.map((rc) => ({
+        caseId: rc.repositoryCase.id,
+        caseTitle: rc.repositoryCase.name,
+        hasParameters: rc.repositoryCase.hasParameters,
+        rowCount: rc.repositoryCase.ownedDataSets[0]?._count.rows ?? 0,
+      }));
+
+      const thresholds = readCardinalityThresholds();
+      const preflight = computePreflight(inputs, 1, thresholds);
+      const iterationCount = preflight.total;
+      const classification = classifyBand(iterationCount, thresholds);
+
+      // Hard refuse — return 422 with the actionable breakdown.
+      if (classification === "hardRefuse") {
+        return NextResponse.json(
+          {
+            refused: true,
+            async: false,
+            iterationCount,
+            perCase: preflight.perCase,
+            cap: thresholds.hardCap,
+            thresholds,
+          },
+          { status: 422 }
+        );
+      }
+
+      // Sync path — fan out inline. Audit emission piggy-backs the same
+      // transaction so we don't audit a fan-out that rolled back.
+      if (classification === "sync") {
+        const result = await auditedTransaction(async (tx) => {
+          return materializeIterations(testRunId, tx);
+        });
+
+        // Best-effort audit (BULK_CREATE on TestRunCaseIteration). The
+        // dedicated ITERATION_RESULT_RECORDED action is reserved for actual
+        // result writes (Task 6), not generation events.
+        captureAuditEvent({
+          action: "BULK_CREATE",
+          entityType: "TestRunCaseIteration",
+          entityId: String(testRunId),
+          projectId: run.projectId,
+          metadata: {
+            testRunId,
+            iterationCount: result.iterationCount,
+            parameterizedRunCaseCount: result.parameterizedRunCaseCount,
+            async: false,
+          },
+        }).catch(() => {
+          // Audit is best-effort — never block the API response on it.
+        });
+
+        return NextResponse.json({
+          async: false,
+          iterationCount: result.iterationCount,
+          parameterizedRunCaseCount: result.parameterizedRunCaseCount,
+          perCase: preflight.perCase,
+        });
+      }
+
+      // Async path (async or softConfirm bands) — enqueue.
+      const queue = getIterationGenerationQueue();
+      if (!queue) {
+        return NextResponse.json(
+          { error: "Background job queue is not available" },
+          { status: 503 }
+        );
+      }
+
+      const tenantId = getCurrentTenantId();
+      const job = await queue.add("generate", {
+        testRunId,
+        userId: session.user.id,
+        tenantId,
+      });
+
       captureAuditEvent({
         action: "BULK_CREATE",
         entityType: "TestRunCaseIteration",
@@ -168,60 +209,22 @@ export async function POST(
         projectId: run.projectId,
         metadata: {
           testRunId,
-          iterationCount: result.iterationCount,
-          parameterizedRunCaseCount: result.parameterizedRunCaseCount,
-          async: false,
+          iterationCount,
+          async: true,
+          jobId: job.id,
+          classification,
         },
-      }).catch(() => {
-        // Audit is best-effort — never block the API response on it.
-      });
+      }).catch(() => {});
 
       return NextResponse.json({
-        async: false,
-        iterationCount: result.iterationCount,
-        parameterizedRunCaseCount: result.parameterizedRunCaseCount,
-        perCase: preflight.perCase,
-      });
-    }
-
-    // Async path (async or softConfirm bands) — enqueue.
-    const queue = getIterationGenerationQueue();
-    if (!queue) {
-      return NextResponse.json(
-        { error: "Background job queue is not available" },
-        { status: 503 }
-      );
-    }
-
-    const tenantId = getCurrentTenantId();
-    const job = await queue.add("generate", {
-      testRunId,
-      userId: session.user.id,
-      tenantId,
-    });
-
-    captureAuditEvent({
-      action: "BULK_CREATE",
-      entityType: "TestRunCaseIteration",
-      entityId: String(testRunId),
-      projectId: run.projectId,
-      metadata: {
-        testRunId,
-        iterationCount,
         async: true,
         jobId: job.id,
-        classification,
-      },
-    }).catch(() => {});
-
-    return NextResponse.json({
-      async: true,
-      jobId: job.id,
-      iterationCount,
-      perCase: preflight.perCase,
-    });
-  } catch (err) {
-    console.error("[generate-iterations]", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+        iterationCount,
+        perCase: preflight.perCase,
+      });
+    } catch (err) {
+      console.error("[generate-iterations]", err);
+      return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    }
   }
-}
+);

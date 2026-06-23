@@ -1072,7 +1072,7 @@
         "apple": "Appleで続ける",
         "microsoft": "Microsoft で続行",
         "samlProvider": "{name}でサインイン",
-        "magicLink": "マジックリンクでサインイン",
+        "magicLink": "Sign in with single-use Magic Link",
         "emailLogin": "メールで続行"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "アクセスが拒否されました。アカウントが非アクティブであるか、サインインする権限がない可能性があります。",
       "configuration": "サーバー構成に問題があります。",
-      "verification": "検証トークンの有効期限が切れているか、すでに使用されています。",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "認証コードが無効です。もう一度お試しください。",
       "twoFactorTokenRequired": "トークンが必要です",
       "verificationCodeRequired": "認証コードが必要です"
@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {セッション} other {セッション}}",
     "labels": {
       "totalElapsed": "費やした時間",
@@ -2468,6 +2473,11 @@
       "versionCreated": "バージョン {version} が作成されました",
       "latestVersionUpdated": "最新バージョン {version, number} 更新済み",
       "historyView": "テストケース履歴ビュー"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "オプションが見つかりません",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "テスト実行が見つかりません。",
     "add": {
       "title": "テスト実行を追加",
@@ -5060,17 +5075,23 @@
       "manageDescription": "外部サービスの問題統合を構成および管理する",
       "status": {
         "active": "アクティブ",
-        "inactive": "非アクティブ"
+        "inactive": "非アクティブ",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "関連プロジェクト",
       "noIntegrations": "問題統合が設定されていません",
       "testConnection": "テスト接続",
       "testSuccess": "接続成功",
       "testSuccessDescription": "問題統合は適切に構成され、接続されています",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "接続に失敗しました",
       "testFailedDescription": "外部サービスに接続できません",
       "testError": "テストエラー",
       "testErrorDescription": "接続テスト中にエラーが発生しました",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
       "syncInProgress": "Re-syncing linked issues...",
       "syncIntegration": "Re-sync linked issues",
       "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
@@ -5207,6 +5228,10 @@
         "apiKeyWarningPoint4": "管理者権限なしでユーザーごとの正確な報告者特定を行うには、OAuth 2.0を使用してください。",
         "tokenCreatorNoticeTitle": "問題作成者の帰属表示",
         "tokenCreatorNoticeDescription": "この連携機能を通じて作成された課題は、作成者である TestPlanIt ユーザーではなく、このアクセス トークンを所有するアカウントに記録されます。このプロバイダーの API では、他のユーザーに代わって作成者を設定することはできません。",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Forge APIキー",
         "forgeApiKeyDescription": "Atlassian ForgeアプリがJira課題パネルからのリクエストを認証するために使用します。ここでキーを生成し、Forgeアプリの設定に貼り付けてください。",
         "forgeApiKeyPlaceholder": "「生成」をクリックしてAPIキーを作成します。",
@@ -5618,12 +5643,14 @@
     },
     "auditLogs": {
       "description": "セキュリティとコンプライアンスの追跡のためのシステム全体の監査証跡を表示する",
+      "projectDescription": "View the audit trail of actions performed in this project.",
       "filterPlaceholder": "エンティティ、ユーザー、またはアクションで検索...",
       "filterAction": "アクション",
       "filterEntityType": "エンティティタイプ",
       "allActions": "すべてのアクション",
       "allEntityTypes": "すべてのエンティティタイプ",
       "allUsers": "All Users",
+      "allProjects": "All Projects",
       "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "詳細を表示",
       "detailTitle": "監査ログの詳細",
@@ -5651,7 +5678,9 @@
       },
       "systemActor": "システム",
       "systemActorTooltip": "ログインユーザーではなく、システムによって実行された操作",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {
@@ -7633,8 +7662,9 @@
       "intro": "下のボタンをクリックしてログインしてください。",
       "signInButton": "サインイン",
       "copyPasteIntro": "または、このリンクをコピーしてブラウザに貼り付けてください。",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "このメールをリクエストしていない場合は、無視していただいて構いません。",
-      "textBody": "TestPlanIt にサインインしてください\n\nサインインするには、以下のリンクをクリックしてください:\n{url}\n\nこのメールをリクエストしていない場合は、無視しても問題ありません。"
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

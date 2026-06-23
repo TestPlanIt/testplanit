@@ -18,6 +18,31 @@ export interface ExtendedAuditLog extends AuditLog {
   project?: {
     name: string;
   } | null;
+  // operationId / sourceTable are now part of the generated AuditLog (regenerated
+  // Prisma client): operationId groups multi-request logical saves in the UI and
+  // sourceTable is the Postgres table for CDC-sourced rows; both are null for
+  // legacy and semantic (captureAuditEvent) rows.
+  // Populated only on a grouped lead row (see lib/audit/groupAuditRows): the
+  // other AuditLog rows that share this lead's operationId, rendered as
+  // expandable sub-rows by VirtualizedDataTable's getSubRows. Absent on
+  // singletons.
+  auditChildren?: ExtendedAuditLog[];
+}
+
+export interface AuditLogSort {
+  column: string;
+  direction: "asc" | "desc";
+}
+
+/**
+ * Translate a sort selection into a Prisma `orderBy`. The project column sorts
+ * by the related project's name; every other column is a scalar field.
+ */
+export function buildAuditLogOrderBy(sort: AuditLogSort): Record<string, any> {
+  if (sort.column === "project") {
+    return { project: { name: sort.direction } };
+  }
+  return { [sort.column]: sort.direction };
 }
 
 /**
@@ -193,9 +218,12 @@ export const useColumns = (
       },
       {
         id: "project",
-        accessorKey: "project",
+        // A string accessor (the related project's name) so the table's
+        // client-side sort of loaded rows agrees with the server orderBy
+        // (`{ project: { name } }`); a relation accessor can't be sorted.
+        accessorFn: (row) => row.project?.name ?? "",
         header: tCommon("fields.project"),
-        enableSorting: false,
+        enableSorting: true,
         size: 150,
         cell: ({ row }) => {
           const project = row.original.project;
@@ -218,6 +246,7 @@ export const useColumns = (
             className="px-2 py-1 h-auto"
             onClick={() => onViewDetails(row.original)}
             title={t("viewDetails")}
+            data-testid="audit-log-view-details"
           >
             <Eye className="h-4 w-4" />
           </Button>

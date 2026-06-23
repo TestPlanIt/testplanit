@@ -9,13 +9,21 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ type: string }> }
 ) {
+  // Build post-OAuth redirects from the app's public URL, NOT request.url.
+  // Behind the k8s ingress, request.url resolves to the internal pod hostname
+  // (e.g. http://demo-prod-xxxx/...), so a Location built from it is
+  // unreachable — the user lands on a connection error right after a
+  // successful authorization. NEXTAUTH_URL is the public origin; fall back to
+  // the request origin only if it's somehow unset.
+  const baseUrl = process.env.NEXTAUTH_URL || new URL(request.url).origin;
+  const redirectTo = (path: string) =>
+    NextResponse.redirect(new URL(path, baseUrl));
+
   try {
     // Check if user is authenticated
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.redirect(
-        new URL("/signin?error=unauthorized", request.url)
-      );
+      return redirectTo("/signin?error=unauthorized");
     }
 
     // Get OAuth parameters
@@ -30,18 +38,13 @@ export async function GET(
         "OAuth authorization failed";
       const { type } = await params;
       console.error(`OAuth error for ${type}:`, error, errorDescription);
-      return NextResponse.redirect(
-        new URL(
-          `/projects/settings?error=${encodeURIComponent(errorDescription)}`,
-          request.url
-        )
+      return redirectTo(
+        `/projects/settings?error=${encodeURIComponent(errorDescription)}`
       );
     }
 
     if (!code || !state) {
-      return NextResponse.redirect(
-        new URL("/projects/settings?error=missing_oauth_params", request.url)
-      );
+      return redirectTo("/projects/settings?error=missing_oauth_params");
     }
 
     // Get enhanced Prisma client for the user
@@ -71,19 +74,23 @@ export async function GET(
     }
 
     if (!validIntegration) {
-      return NextResponse.redirect(
-        new URL("/projects/settings?error=invalid_state", request.url)
-      );
+      return redirectTo("/projects/settings?error=invalid_state");
     }
 
     // Get the appropriate adapter
     const manager = IntegrationManager.getInstance();
-    const adapter = await manager.getAdapter(integrationId!.toString());
+    // The integration is still inactive at callback time (it's flipped to
+    // ACTIVE below, once a token is stored), so allow building the adapter to
+    // exchange the authorization code for tokens.
+    const adapter = await manager.getAdapter(
+      integrationId!.toString(),
+      undefined,
+      undefined,
+      { allowInactive: true }
+    );
 
     if (!adapter || !adapter.exchangeCodeForTokens) {
-      return NextResponse.redirect(
-        new URL("/projects/settings?error=adapter_init_failed", request.url)
-      );
+      return redirectTo("/projects/settings?error=adapter_init_failed");
     }
 
     // Exchange code for tokens
@@ -122,22 +129,15 @@ export async function GET(
     const projectId = (validIntegration as any).issueConfigs?.[0]?.projects?.[0]
       ?.id;
     if (projectId) {
-      return NextResponse.redirect(
-        new URL(
-          `/projects/settings/${projectId}/integrations?success=connected`,
-          request.url
-        )
+      return redirectTo(
+        `/projects/settings/${projectId}/integrations?success=connected`
       );
     } else {
-      return NextResponse.redirect(
-        new URL("/admin/integrations?success=connected", request.url)
-      );
+      return redirectTo("/admin/integrations?success=connected");
     }
   } catch (error) {
     const { type } = await params;
     console.error(`Error in OAuth callback endpoint for ${type}:`, error);
-    return NextResponse.redirect(
-      new URL("/projects/settings?error=oauth_callback_failed", request.url)
-    );
+    return redirectTo("/projects/settings?error=oauth_callback_failed");
   }
 }

@@ -24,19 +24,20 @@ The header displays:
 - **Test Run Name**: The name of the test run. In Edit mode, this becomes an editable text area.
 - **Action Buttons**:
   - **View Mode (Active Run)**:
-    - **Edit** (`SquarePen` icon): Switches the page to Edit mode (if user has permission).
-    - **Duplicate** (`Copy` icon): Opens the duplication dialog to create a copy of the test run.
-    - **Export PDF** (`FileDown` icon): Exports the test run to a PDF document including all metadata, description, documentation, test cases (ordered by run order) with their execution status, results, step results, custom field values, and attachments. Available for both regular and JUnit/automated test runs.
-    - **Complete** (`CircleCheckBig` icon): Opens a confirmation dialog to mark the run as finished. Here you select the final "Done" state from the workflow and set the completion date. This action is irreversible (if user has permission).
+    - **Edit**: Switches the page to Edit mode (if user has permission).
+    - **Duplicate**: Opens the duplication dialog to create a copy of the test run.
+    - **Export PDF**: Exports the test run to a PDF document including all metadata, description, documentation, test cases (ordered by run order) with their execution status, results, step results, custom field values, and attachments. Available for both regular and JUnit/automated test runs.
+    - **Complete**: Opens a confirmation dialog to mark the run as finished. Here you select the final "Done" state from the workflow and set the completion date. This action is irreversible (if user has permission).
   - **View Mode (Completed Run)**:
     - Displays a "Completed On [Date]" badge.
-    - **Duplicate** (`Copy` icon): Opens the duplication dialog to create a copy of the test run.
-    - **Export PDF** (`FileDown` icon): Exports the test run to PDF (available on completed runs as well).
-    - **Delete** (`Trash2` icon): Opens a confirmation dialog to permanently delete the test run and all its associated results. This action is irreversible (Admin only).
+    - **Duplicate**: Opens the duplication dialog to create a copy of the test run.
+    - **Export PDF**: Exports the test run to PDF (available on completed runs as well).
+    - **Delete**: Opens a confirmation dialog to permanently delete the test run and all its associated results. This action is irreversible (Admin only).
   - **Edit Mode**:
-    - **Save** (`Save` icon): Saves changes made in Edit mode.
-    - **Cancel** (`CircleSlash2` icon): Discards changes and returns to View mode.
-    - **Delete** (`Trash2` icon): Opens a confirmation dialog to permanently delete the test run and all its associated results. This action is irreversible (Admin only).
+    - **Save**: Saves changes made in Edit mode.
+    - **Cancel**: Discards changes and returns to View mode.
+    - **Delete**: Opens a confirmation dialog to permanently delete the test run and all its associated results. This action is irreversible (Admin only).
+  - **Activity**: Available in view mode for both regular and automated runs. Opens the run's [Activity Log](../audit-logs.md#viewing-an-items-activity) — a scoped history of every change, including test cases added or removed, results recorded, and status changes. Visible to anyone who can view the run.
 - **Test Case Summary**: Below the title, a summary shows the progress of the test cases within the run (passed, failed, blocked, etc.).
 
 ## Left Panel Content

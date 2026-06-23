@@ -51,21 +51,7 @@ export interface EntityAuditModel {
  * lookups, so it stays correct even when the mutation runs inside an
  * interactive transaction.
  */
-export const ENTITY_AUDIT_MODELS: EntityAuditModel[] = [
-  { entityType: "Integration", accessor: "integration" },
-  { entityType: "PromptConfig", accessor: "promptConfig" },
-  {
-    entityType: "ProjectIntegration",
-    accessor: "projectIntegration",
-    hasProjectId: true,
-    relatedAccessor: "integration",
-  },
-  {
-    entityType: "TestRunCases",
-    accessor: "testRunCases",
-    relatedAccessor: "repositoryCases",
-  },
-];
+export const ENTITY_AUDIT_MODELS: EntityAuditModel[] = [];
 
 interface QueryContext {
   args: any;

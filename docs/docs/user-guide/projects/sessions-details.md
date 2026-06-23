@@ -25,17 +25,18 @@ The header area displays key information and actions:
 - **Action Buttons**:
   - **View Mode (Active Session)**:
     - **Version Selector**: If the session has multiple versions (i.e., has been edited), a dropdown appears allowing you to view [previous versions](./sessions-versions.md).
-    - **Edit** (`SquarePen` icon): Switches the page to Edit mode (if user has permission).
-    - **Complete** (`CircleCheckBig` icon): Opens a confirmation dialog to mark the session as finished. You select the final "Done" state and set the completion date. This action creates a new version and is irreversible (if user has permission).
-    - **Export PDF** (`FileDown` icon): Exports the session to a PDF document including all metadata, description, mission, tags, issues, custom field values, and session results with their statuses, details, and result-level custom fields. Embedded images from attachments are included.
+    - **Edit**: Switches the page to Edit mode (if user has permission).
+    - **Complete**: Opens a confirmation dialog to mark the session as finished. You select the final "Done" state and set the completion date. This action creates a new version and is irreversible (if user has permission).
+    - **Export PDF**: Exports the session to a PDF document including all metadata, description, mission, tags, issues, custom field values, and session results with their statuses, details, and result-level custom fields. Embedded images from attachments are included.
   - **View Mode (Completed Session)**:
     - Displays a "Completed On [Date]" badge.
-    - **Export PDF** (`FileDown` icon): Exports the session to PDF (available on completed sessions as well).
-    - **Delete** (`Trash2` icon): Opens a confirmation dialog to permanently delete the session and all its results/versions. This action is irreversible (Admin only).
+    - **Export PDF**: Exports the session to PDF (available on completed sessions as well).
+    - **Delete**: Opens a confirmation dialog to permanently delete the session and all its results/versions. This action is irreversible (Admin only).
   - **Edit Mode**:
-    - **Save** (`Save` icon): Saves changes made in Edit mode. This creates a new version of the session.
-    - **Cancel** (`CircleSlash2` icon): Discards changes and returns to View mode.
-    - **Delete** (`Trash2` icon): Opens a confirmation dialog to permanently delete the session and all its results/versions. This action is irreversible (Admin only).
+    - **Save**: Saves changes made in Edit mode. This creates a new version of the session.
+    - **Cancel**: Discards changes and returns to View mode.
+    - **Delete**: Opens a confirmation dialog to permanently delete the session and all its results/versions. This action is irreversible (Admin only).
+  - **Activity**: Available in view mode. Opens the session's [Activity Log](../audit-logs.md#viewing-an-items-activity) — a scoped history of every change, including the results and field values captured during the session. Visible to anyone who can view the session.
 
 ## Left Panel Content
 

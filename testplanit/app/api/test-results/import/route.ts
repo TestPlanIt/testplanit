@@ -11,6 +11,7 @@
  * - Cucumber JSON
  */
 
+import { auditedTransaction } from "@/lib/audit/auditedTransaction";
 import { prisma } from "@/lib/prisma";
 import { JUnitResultType, RepositoryCaseSource, TestRunType, WorkflowScope } from "~/zenstack/models";
 import { NextRequest } from "next/server";
@@ -1112,7 +1113,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                       // mitigation is preserved — IterationCapExceeded
                       // is thrown out of the $transaction callback and
                       // re-thrown to the outer catch below.
-                      await prisma.$transaction(async (tx) => {
+                      await auditedTransaction(async (tx) => {
                         await routeToIteration(tx, {
                           testRunCaseId: testRunCaseForIter.id,
                           iterationIndex,

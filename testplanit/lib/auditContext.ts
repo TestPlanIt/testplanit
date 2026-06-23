@@ -18,12 +18,33 @@ export interface AuditContext {
   userAgent?: string;
   /** Unique request ID for correlation across logs */
   requestId?: string;
+  /**
+   * Per-logical-operation correlation id (Phase 14 CTX-03). Generated once per
+   * logical save action by the browser (crypto.randomUUID) and sent on every
+   * ZenStack mutation in that save via the X-Operation-Id header, so the three
+   * writes of a single case save share one id. Populated from a validated
+   * X-Operation-Id header (non-UUID values are dropped). Flows into the GUC
+   * payload (lib/audit/gucContext.ts) → DataChangeLog.operation_id.
+   */
+  operationId?: string;
   /** Authenticated user ID (set after auth) */
   userId?: string;
   /** Authenticated user email (set after auth) */
   userEmail?: string;
   /** Authenticated user name (set after auth) */
   userName?: string;
+  /**
+   * Subject snapshot for child-only operations — those whose owning root row is
+   * NOT itself written, so the trigger has no row to read the name/project from
+   * (e.g. recording a test result writes TestRunResults but not the TestRuns
+   * row). The originating route sets these on the frame; buildGucPayload carries
+   * them into the GUC and the trigger uses them as the entity_name/project_id
+   * fallback. Leave unset for normal operations — the trigger reads the name/
+   * project straight off the written root row, which is more robust (it handles
+   * bulk operations row-by-row).
+   */
+  subjectEntityName?: string;
+  subjectProjectId?: number | string;
   /**
    * Reason string stamped when a job/event has no originating human actor
    * (scheduled jobs, worker-to-worker fan-outs, infrastructure tasks).
@@ -150,16 +171,35 @@ export function extractIpAddress(headersList: Headers): string | undefined {
 }
 
 /**
+ * Canonical UUID (any version) matcher. Used to validate the client-supplied
+ * X-Operation-Id header before it can reach the JSON-serialized
+ * app.audit_context GUC payload — input validation (threat T-14-03-02) that
+ * prevents arbitrary header strings from being injected into the GUC.
+ */
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
  * Extract audit context from request headers.
  * Works with both standard Headers and Next.js ReadonlyHeaders.
  */
 export function extractAuditContextFromHeaders(
   headersList: Headers
 ): AuditContext {
+  // Phase 14 CTX-03: read the per-logical-save correlation id supplied by the
+  // browser. Validate it as a UUID so garbage / injection attempts never reach
+  // the audit_context GUC — non-UUID values become undefined.
+  const rawOperationId = headersList.get("x-operation-id");
+  const operationId =
+    rawOperationId && UUID_REGEX.test(rawOperationId)
+      ? rawOperationId
+      : undefined;
+
   return {
     ipAddress: extractIpAddress(headersList),
     userAgent: headersList.get("user-agent") || undefined,
     requestId: generateRequestId(),
+    operationId,
   };
 }
 

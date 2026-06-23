@@ -13,6 +13,7 @@
 
 import { LinkType } from "~/zenstack/models";
 import { prisma } from "~/lib/prismaBase";
+import { withAuditGuc, buildGucPayload } from "~/lib/audit/gucContext";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
 // ---------------------------------------------------------------------------
@@ -46,243 +47,255 @@ export async function mergeCases(
   victimId: number,
   userId: string
 ): Promise<MergeResult> {
-  const result = await prisma.$transaction(async (tx) => {
-    // -----------------------------------------------------------------------
-    // Step 1: Find conflicting TestRunCases rows
-    // (same testRunId on both survivor and victim)
-    // -----------------------------------------------------------------------
-    const survivorRuns = await tx.testRunCases.findMany({
-      where: { repositoryCaseId: survivorId, isDeleted: false },
-      select: { testRunId: true },
-    });
-    const conflictRunIds = survivorRuns.map(
-      (r: { testRunId: number }) => r.testRunId
-    );
+  const result = await withAuditGuc(
+    prisma,
+    buildGucPayload(userId),
+    async (tx) => {
+      // -----------------------------------------------------------------------
+      // Step 1: Find conflicting TestRunCases rows
+      // (same testRunId on both survivor and victim)
+      // -----------------------------------------------------------------------
+      const survivorRuns = await tx.testRunCases.findMany({
+        where: { repositoryCaseId: survivorId, isDeleted: false },
+        select: { testRunId: true },
+      });
+      const conflictRunIds = survivorRuns.map(
+        (r: { testRunId: number }) => r.testRunId
+      );
 
-    // -----------------------------------------------------------------------
-    // Step 2: Delete conflicting victim rows (keep survivor's existing result)
-    // -----------------------------------------------------------------------
-    if (conflictRunIds.length > 0) {
-      await tx.testRunCases.deleteMany({
-        where: {
-          repositoryCaseId: victimId,
-          testRunId: { in: conflictRunIds },
+      // -----------------------------------------------------------------------
+      // Step 2: Delete conflicting victim rows (keep survivor's existing result)
+      // -----------------------------------------------------------------------
+      if (conflictRunIds.length > 0) {
+        await tx.testRunCases.deleteMany({
+          where: {
+            repositoryCaseId: victimId,
+            testRunId: { in: conflictRunIds },
+          },
+        });
+      }
+
+      // -----------------------------------------------------------------------
+      // Step 3: Reroute remaining non-conflicting TestRunCases to survivor
+      // -----------------------------------------------------------------------
+      const { count: runsTransferred } = await tx.testRunCases.updateMany({
+        where: { repositoryCaseId: victimId },
+        data: { repositoryCaseId: survivorId },
+      });
+
+      // -----------------------------------------------------------------------
+      // Step 4: Steps and field values stay with victim (soft-deleted).
+      // The primary case keeps its own steps and custom fields as-is.
+      // -----------------------------------------------------------------------
+
+      // -----------------------------------------------------------------------
+      // Step 5: Reroute result field values (test run result data, not case fields)
+      // -----------------------------------------------------------------------
+      await tx.resultFieldValues.updateMany({
+        where: { testCaseId: victimId },
+        data: { testCaseId: survivorId },
+      });
+      await tx.attachments.updateMany({
+        where: { testCaseId: victimId },
+        data: { testCaseId: survivorId },
+      });
+
+      // -----------------------------------------------------------------------
+      // Step 8: Renumber and re-parent victim RepositoryCaseVersions
+      // @@unique([repositoryCaseId, version]) — must offset by survivor.currentVersion
+      // -----------------------------------------------------------------------
+      const survivorCase = await tx.repositoryCases.findUnique({
+        where: { id: survivorId },
+        select: { currentVersion: true },
+      });
+      const versionOffset = survivorCase!.currentVersion;
+
+      const victimVersions = await tx.repositoryCaseVersions.findMany({
+        where: { repositoryCaseId: victimId },
+        orderBy: { version: "asc" },
+        select: { id: true, version: true },
+      });
+      for (const v of victimVersions) {
+        await tx.repositoryCaseVersions.update({
+          where: { id: v.id },
+          data: {
+            repositoryCaseId: survivorId,
+            version: versionOffset + v.version,
+          },
+        });
+      }
+      const versionsReparented = victimVersions.length;
+
+      // Step 9: Update survivor.currentVersion
+      const newCurrentVersion =
+        victimVersions.length > 0
+          ? versionOffset + victimVersions[victimVersions.length - 1].version
+          : versionOffset;
+      await tx.repositoryCases.update({
+        where: { id: survivorId },
+        data: { currentVersion: newCurrentVersion },
+      });
+
+      // -----------------------------------------------------------------------
+      // Step 10: JUnit records
+      // -----------------------------------------------------------------------
+      await tx.jUnitTestResult.updateMany({
+        where: { repositoryCaseId: victimId },
+        data: { repositoryCaseId: survivorId },
+      });
+      await tx.jUnitProperty.updateMany({
+        where: { repositoryCaseId: victimId },
+        data: { repositoryCaseId: survivorId },
+      });
+      await tx.jUnitAttachment.updateMany({
+        where: { repositoryCaseId: victimId },
+        data: { repositoryCaseId: survivorId },
+      });
+      await tx.jUnitTestStep.updateMany({
+        where: { repositoryCaseId: victimId },
+        data: { repositoryCaseId: survivorId },
+      });
+
+      // -----------------------------------------------------------------------
+      // Step 11: Comments
+      // -----------------------------------------------------------------------
+      await tx.comment.updateMany({
+        where: { repositoryCaseId: victimId },
+        data: { repositoryCaseId: survivorId },
+      });
+
+      // -----------------------------------------------------------------------
+      // Step 12: Tags and Issues (M2M implicit — connect is idempotent)
+      // Prisma silently ignores already-connected relations.
+      // -----------------------------------------------------------------------
+      const victimData = await tx.repositoryCases.findUnique({
+        where: { id: victimId },
+        include: {
+          tags: { select: { id: true } },
+          issues: { select: { id: true } },
         },
       });
-    }
 
-    // -----------------------------------------------------------------------
-    // Step 3: Reroute remaining non-conflicting TestRunCases to survivor
-    // -----------------------------------------------------------------------
-    const { count: runsTransferred } = await tx.testRunCases.updateMany({
-      where: { repositoryCaseId: victimId },
-      data: { repositoryCaseId: survivorId },
-    });
+      const tagsAdded = victimData?.tags?.length ?? 0;
+      const issuesAdded = victimData?.issues?.length ?? 0;
 
-    // -----------------------------------------------------------------------
-    // Step 4: Steps and field values stay with victim (soft-deleted).
-    // The primary case keeps its own steps and custom fields as-is.
-    // -----------------------------------------------------------------------
+      if (tagsAdded > 0) {
+        await tx.repositoryCases.update({
+          where: { id: survivorId },
+          data: { tags: { connect: victimData!.tags } },
+        });
+      }
+      if (issuesAdded > 0) {
+        await tx.repositoryCases.update({
+          where: { id: survivorId },
+          data: { issues: { connect: victimData!.issues } },
+        });
+      }
 
-    // -----------------------------------------------------------------------
-    // Step 5: Reroute result field values (test run result data, not case fields)
-    // -----------------------------------------------------------------------
-    await tx.resultFieldValues.updateMany({
-      where: { testCaseId: victimId },
-      data: { testCaseId: survivorId },
-    });
-    await tx.attachments.updateMany({
-      where: { testCaseId: victimId },
-      data: { testCaseId: survivorId },
-    });
+      // -----------------------------------------------------------------------
+      // Step 13: Reroute victim's RepositoryCaseLinks to survivor
+      // Use createMany skipDuplicates to handle @@unique([caseAId, caseBId, type])
+      // -----------------------------------------------------------------------
+      const victimLinksFrom = await tx.repositoryCaseLink.findMany({
+        where: { caseAId: victimId },
+        select: { caseBId: true, type: true, createdById: true },
+      });
+      const victimLinksTo = await tx.repositoryCaseLink.findMany({
+        where: { caseBId: victimId },
+        select: { caseAId: true, type: true, createdById: true },
+      });
 
-    // -----------------------------------------------------------------------
-    // Step 8: Renumber and re-parent victim RepositoryCaseVersions
-    // @@unique([repositoryCaseId, version]) — must offset by survivor.currentVersion
-    // -----------------------------------------------------------------------
-    const survivorCase = await tx.repositoryCases.findUnique({
-      where: { id: survivorId },
-      select: { currentVersion: true },
-    });
-    const versionOffset = survivorCase!.currentVersion;
+      if (victimLinksFrom.length > 0) {
+        await tx.repositoryCaseLink.createMany({
+          data: victimLinksFrom.map(
+            (link: {
+              caseBId: number;
+              type: LinkType;
+              createdById: string;
+            }) => ({
+              caseAId: survivorId,
+              caseBId: link.caseBId,
+              type: link.type,
+              createdById: link.createdById,
+            })
+          ),
+          skipDuplicates: true,
+        });
+      }
+      if (victimLinksTo.length > 0) {
+        await tx.repositoryCaseLink.createMany({
+          data: victimLinksTo.map(
+            (link: {
+              caseAId: number;
+              type: LinkType;
+              createdById: string;
+            }) => ({
+              caseAId: link.caseAId,
+              caseBId: survivorId,
+              type: link.type,
+              createdById: link.createdById,
+            })
+          ),
+          skipDuplicates: true,
+        });
+      }
 
-    const victimVersions = await tx.repositoryCaseVersions.findMany({
-      where: { repositoryCaseId: victimId },
-      orderBy: { version: "asc" },
-      select: { id: true, version: true },
-    });
-    for (const v of victimVersions) {
-      await tx.repositoryCaseVersions.update({
-        where: { id: v.id },
+      // -----------------------------------------------------------------------
+      // Step 14: Create audit RepositoryCaseLink (SAME_TEST_DIFFERENT_SOURCE)
+      // Records the merge relationship as a permanent audit trail.
+      // -----------------------------------------------------------------------
+      await tx.repositoryCaseLink.create({
         data: {
-          repositoryCaseId: survivorId,
-          version: versionOffset + v.version,
+          caseAId: survivorId,
+          caseBId: victimId,
+          type: "SAME_TEST_DIFFERENT_SOURCE",
+          createdById: userId,
         },
       });
-    }
-    const versionsReparented = victimVersions.length;
 
-    // Step 9: Update survivor.currentVersion
-    const newCurrentVersion =
-      victimVersions.length > 0
-        ? versionOffset + victimVersions[victimVersions.length - 1].version
-        : versionOffset;
-    await tx.repositoryCases.update({
-      where: { id: survivorId },
-      data: { currentVersion: newCurrentVersion },
-    });
+      // -----------------------------------------------------------------------
+      // Step 15: Update resolved pair DuplicateScanResult → MERGED
+      // -----------------------------------------------------------------------
+      await tx.duplicateScanResult.updateMany({
+        where: {
+          OR: [
+            { caseAId: victimId, caseBId: survivorId },
+            { caseAId: survivorId, caseBId: victimId },
+          ],
+        },
+        data: { status: "MERGED" },
+      });
 
-    // -----------------------------------------------------------------------
-    // Step 10: JUnit records
-    // -----------------------------------------------------------------------
-    await tx.jUnitTestResult.updateMany({
-      where: { repositoryCaseId: victimId },
-      data: { repositoryCaseId: survivorId },
-    });
-    await tx.jUnitProperty.updateMany({
-      where: { repositoryCaseId: victimId },
-      data: { repositoryCaseId: survivorId },
-    });
-    await tx.jUnitAttachment.updateMany({
-      where: { repositoryCaseId: victimId },
-      data: { repositoryCaseId: survivorId },
-    });
-    await tx.jUnitTestStep.updateMany({
-      where: { repositoryCaseId: victimId },
-      data: { repositoryCaseId: survivorId },
-    });
+      // -----------------------------------------------------------------------
+      // Step 16: Update all other PENDING scan results referencing victim → MERGED
+      // (prevents stale candidates from resurfacing after soft-delete)
+      // -----------------------------------------------------------------------
+      await tx.duplicateScanResult.updateMany({
+        where: {
+          OR: [{ caseAId: victimId }, { caseBId: victimId }],
+          status: "PENDING",
+        },
+        data: { status: "MERGED" },
+      });
 
-    // -----------------------------------------------------------------------
-    // Step 11: Comments
-    // -----------------------------------------------------------------------
-    await tx.comment.updateMany({
-      where: { repositoryCaseId: victimId },
-      data: { repositoryCaseId: survivorId },
-    });
-
-    // -----------------------------------------------------------------------
-    // Step 12: Tags and Issues (M2M implicit — connect is idempotent)
-    // Prisma silently ignores already-connected relations.
-    // -----------------------------------------------------------------------
-    const victimData = await tx.repositoryCases.findUnique({
-      where: { id: victimId },
-      include: {
-        tags: { select: { id: true } },
-        issues: { select: { id: true } },
-      },
-    });
-
-    const tagsAdded = victimData?.tags?.length ?? 0;
-    const issuesAdded = victimData?.issues?.length ?? 0;
-
-    if (tagsAdded > 0) {
+      // -----------------------------------------------------------------------
+      // Step 17: Soft-delete victim (isDeleted: true — preserves audit trail)
+      // -----------------------------------------------------------------------
       await tx.repositoryCases.update({
-        where: { id: survivorId },
-        data: { tags: { connect: victimData!.tags } },
+        where: { id: victimId },
+        data: { isDeleted: true },
       });
+
+      return {
+        survivorId,
+        summary: {
+          runsTransferred,
+          tagsAdded,
+          versionsReparented,
+        },
+      };
     }
-    if (issuesAdded > 0) {
-      await tx.repositoryCases.update({
-        where: { id: survivorId },
-        data: { issues: { connect: victimData!.issues } },
-      });
-    }
-
-    // -----------------------------------------------------------------------
-    // Step 13: Reroute victim's RepositoryCaseLinks to survivor
-    // Use createMany skipDuplicates to handle @@unique([caseAId, caseBId, type])
-    // -----------------------------------------------------------------------
-    const victimLinksFrom = await tx.repositoryCaseLink.findMany({
-      where: { caseAId: victimId },
-      select: { caseBId: true, type: true, createdById: true },
-    });
-    const victimLinksTo = await tx.repositoryCaseLink.findMany({
-      where: { caseBId: victimId },
-      select: { caseAId: true, type: true, createdById: true },
-    });
-
-    if (victimLinksFrom.length > 0) {
-      await tx.repositoryCaseLink.createMany({
-        data: victimLinksFrom.map(
-          (link: { caseBId: number; type: LinkType; createdById: string }) => ({
-            caseAId: survivorId,
-            caseBId: link.caseBId,
-            type: link.type,
-            createdById: link.createdById,
-          })
-        ),
-        skipDuplicates: true,
-      });
-    }
-    if (victimLinksTo.length > 0) {
-      await tx.repositoryCaseLink.createMany({
-        data: victimLinksTo.map(
-          (link: { caseAId: number; type: LinkType; createdById: string }) => ({
-            caseAId: link.caseAId,
-            caseBId: survivorId,
-            type: link.type,
-            createdById: link.createdById,
-          })
-        ),
-        skipDuplicates: true,
-      });
-    }
-
-    // -----------------------------------------------------------------------
-    // Step 14: Create audit RepositoryCaseLink (SAME_TEST_DIFFERENT_SOURCE)
-    // Records the merge relationship as a permanent audit trail.
-    // -----------------------------------------------------------------------
-    await tx.repositoryCaseLink.create({
-      data: {
-        caseAId: survivorId,
-        caseBId: victimId,
-        type: "SAME_TEST_DIFFERENT_SOURCE",
-        createdById: userId,
-      },
-    });
-
-    // -----------------------------------------------------------------------
-    // Step 15: Update resolved pair DuplicateScanResult → MERGED
-    // -----------------------------------------------------------------------
-    await tx.duplicateScanResult.updateMany({
-      where: {
-        OR: [
-          { caseAId: victimId, caseBId: survivorId },
-          { caseAId: survivorId, caseBId: victimId },
-        ],
-      },
-      data: { status: "MERGED" },
-    });
-
-    // -----------------------------------------------------------------------
-    // Step 16: Update all other PENDING scan results referencing victim → MERGED
-    // (prevents stale candidates from resurfacing after soft-delete)
-    // -----------------------------------------------------------------------
-    await tx.duplicateScanResult.updateMany({
-      where: {
-        OR: [{ caseAId: victimId }, { caseBId: victimId }],
-        status: "PENDING",
-      },
-      data: { status: "MERGED" },
-    });
-
-    // -----------------------------------------------------------------------
-    // Step 17: Soft-delete victim (isDeleted: true — preserves audit trail)
-    // -----------------------------------------------------------------------
-    await tx.repositoryCases.update({
-      where: { id: victimId },
-      data: { isDeleted: true },
-    });
-
-    return {
-      survivorId,
-      summary: {
-        runsTransferred,
-        tagsAdded,
-        versionsReparented,
-      },
-    };
-  });
+  );
 
   // -------------------------------------------------------------------------
   // Post-transaction: Elasticsearch sync (best-effort, non-blocking)

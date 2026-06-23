@@ -29,7 +29,7 @@ This is the default view. Active sessions are grouped by their associated milest
   - Milestone Icon and Name ([See Milestone Details](./milestone-details.md))
   - Milestone Status Badge (e.g., Upcoming, In Progress, Completed)
   - Milestone Dates (Start/End/Due)
-  - An **Add Session** button (`+` icon) specific to that milestone, allowing you to quickly create a session linked to it.
+  - An **Add Session** button specific to that milestone, allowing you to quickly create a session linked to it.
 - **Unscheduled Sessions**: Sessions not linked to any milestone are grouped under a special "Unscheduled" section header.
   - This section also has an **Add Session** button to create an unscheduled session.
 - **Session Items**: Within each group (Milestone or Unscheduled), individual sessions are listed. See [Session Item Details](./sessions-item.md) for more information on how each session is displayed.

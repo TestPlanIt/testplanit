@@ -11,11 +11,13 @@ vi.mock("next-intl", () => ({
     namespace ? `${namespace}.${key}` : key,
 }));
 
-// Mock next-auth/react
+// Mock next-auth/react. access=ADMIN so the admin-gated metadata section renders
+// (the modal only surfaces metadata — IP / user agent — to ADMIN / PROJECTADMIN).
 vi.mock("next-auth/react", () => ({
   useSession: () => ({
     data: {
       user: {
+        access: "ADMIN",
         preferences: {
           timezone: "Etc/UTC",
           dateFormat: "MM-dd-yyyy",
@@ -59,6 +61,8 @@ const baseLog: ExtendedAuditLog = {
   metadata: null,
   projectId: null,
   project: null,
+  operationId: null,
+  sourceTable: null,
 };
 
 function setHookData(log: ExtendedAuditLog | undefined, isLoading = false) {

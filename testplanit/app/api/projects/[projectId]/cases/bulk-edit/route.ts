@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { withAuditContext } from "~/lib/auditContextWrappers";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { prisma } from "~/lib/prisma";
 import { auditBulkUpdate } from "~/lib/services/auditLog";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
@@ -195,8 +196,11 @@ export const POST = withAuditContext(
         );
       }
 
-      // Perform bulk update in a transaction with extended timeout (60 seconds)
-      const result = await prisma.$transaction(
+      // Perform bulk update in a transaction with extended timeout (60 seconds).
+      // auditedTransaction sets app.audit_context once at the transaction
+      // boundary so every row this writes — the case AND its child/value tables
+      // (CaseFieldValues, Steps, versions) — is attributed to the actor.
+      const result = await auditedTransaction(
         async (tx) => {
           const updateResults = {
             casesUpdated: 0,

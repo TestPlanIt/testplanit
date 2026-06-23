@@ -1712,6 +1712,30 @@ describe("JiraAdapter", () => {
 
       vi.unstubAllEnvs();
     });
+
+    it("prefers per-integration config credentials/redirect URI over JIRA_* env vars", () => {
+      // Legacy env-level app would point elsewhere…
+      vi.stubEnv("JIRA_CLIENT_ID", "env-client-id");
+      vi.stubEnv("JIRA_REDIRECT_URI", "https://env.example.com/callback");
+
+      // …but the per-integration config (built by IntegrationManager from the
+      // integration's stored credentials) must win.
+      const perIntegrationAdapter = new JiraAdapter({
+        provider: "JIRA",
+        baseUrl: "https://test.atlassian.net",
+        clientId: "integration-client-id",
+        redirectUri:
+          "https://app.example.com/api/integrations/oauth/jira/callback",
+      });
+
+      const url = perIntegrationAdapter.getAuthorizationUrl("test-state");
+
+      expect(url).toContain("client_id=integration-client-id");
+      expect(url).not.toContain("env-client-id");
+      expect(url).toContain("oauth%2Fjira%2Fcallback");
+
+      vi.unstubAllEnvs();
+    });
   });
 
   describe("exchangeCodeForTokens", () => {

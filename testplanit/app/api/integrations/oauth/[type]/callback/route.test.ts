@@ -123,4 +123,24 @@ describe("GET /api/integrations/oauth/[type]/callback", () => {
     expect(location.startsWith("http")).toBe(true);
     expect(location).toContain("oauth_callback_failed");
   });
+
+  it("builds the redirect from NEXTAUTH_URL, not the (internal) request host", async () => {
+    // Behind the k8s ingress the request arrives with the pod hostname; the
+    // post-auth redirect must use the public app URL or the browser lands on
+    // a connection error after a successful authorization.
+    vi.stubEnv("NEXTAUTH_URL", "https://demo.testplanit.com");
+    const req = new NextRequest(
+      "http://demo-prod-abc123/api/integrations/oauth/gitea/callback?code=abc&state=xyz"
+    );
+
+    const response = await GET(req, params);
+
+    expect([302, 307]).toContain(response.status);
+    const location = response.headers.get("location") ?? "";
+    expect(location.startsWith("https://demo.testplanit.com/")).toBe(true);
+    expect(location).not.toContain("demo-prod-abc123");
+    expect(location).toContain("success=connected");
+
+    vi.unstubAllEnvs();
+  });
 });

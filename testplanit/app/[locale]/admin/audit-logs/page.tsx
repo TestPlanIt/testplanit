@@ -23,8 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AuditAction } from "~/zenstack/models";
-import { endOfDay, format, startOfDay, subDays } from "date-fns";
+import { AuditAction } from "@prisma/client";
+import { endOfDay, format, startOfDay } from "date-fns";
 import { Download, ShieldCheck, Users } from "lucide-react";
 import type { Session } from "next-auth";
 import {
@@ -38,9 +38,10 @@ import {
   useFindManyAuditLog,
   useInfiniteFindManyAuditLog,
 } from "~/lib/hooks";
+import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 import { logDataExport } from "~/lib/services/auditClient";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
-import { ExtendedAuditLog, useColumns } from "./columns";
+import { buildAuditLogOrderBy, ExtendedAuditLog, useColumns } from "./columns";
 
 const PAGE_SIZE = 50;
 
@@ -97,20 +98,13 @@ function AuditLogsContent({ session }: { session: Session }) {
   const debouncedSearchString = useDebounce(searchString, 500);
   const [actionFilter, setActionFilter] = useState<AuditAction | "all">("all");
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
+  const [projectFilter, setProjectFilter] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<AuditLogUserOption | null>(
     null
   );
   const userFilter = selectedUser?.userId ?? "all";
-  // Default to the last 7 days so an unfiltered page load never scans the full
-  // audit history. Admins can widen the window (or pick a custom range) via the
-  // date-range picker.
-  const [defaultDateRange] = useState<DateRange>(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return { from: subDays(today, 6), to: today };
-  });
   const dateForm = useForm<{ dateRange: DateRange | undefined }>({
-    defaultValues: { dateRange: defaultDateRange },
+    defaultValues: { dateRange: undefined },
   });
   const dateRange = useWatch({
     control: dateForm.control,
@@ -159,6 +153,10 @@ function AuditLogsContent({ session }: { session: Session }) {
       conditions.push({ entityType: entityTypeFilter });
     }
 
+    if (projectFilter !== "all") {
+      conditions.push({ projectId: parseInt(projectFilter, 10) });
+    }
+
     if (userFilter !== "all") {
       conditions.push({ userId: userFilter });
     }
@@ -177,6 +175,7 @@ function AuditLogsContent({ session }: { session: Session }) {
     debouncedSearchString,
     actionFilter,
     entityTypeFilter,
+    projectFilter,
     userFilter,
     dateRange,
   ]);
@@ -192,9 +191,7 @@ function AuditLogsContent({ session }: { session: Session }) {
   // on demand in AuditLogDetailModal via useFindUniqueAuditLog.
   const baseArgs = {
     where: whereClause,
-    orderBy: sortConfig
-      ? { [sortConfig.column]: sortConfig.direction }
-      : { timestamp: "desc" as const },
+    orderBy: buildAuditLogOrderBy(sortConfig),
     select: {
       id: true,
       timestamp: true,
@@ -207,6 +204,8 @@ function AuditLogsContent({ session }: { session: Session }) {
       userName: true,
       projectId: true,
       project: { select: { name: true } },
+      operationId: true,
+      sourceTable: true,
     },
     take: PAGE_SIZE,
   };
@@ -228,7 +227,27 @@ function AuditLogsContent({ session }: { session: Session }) {
     refetchOnWindowFocus: false,
   });
 
-  const rows = (pages?.pages.flat() ?? []) as ExtendedAuditLog[];
+  // Cast via unknown: the live AuditLog columns include operationId/sourceTable
+  // (added to the schema), but the not-yet-regenerated Prisma client types them
+  // as never in the select payload, so a direct cast doesn't overlap. Memoized
+  // so the grouping pass below only reruns when the page set actually changes.
+  const rows = useMemo(
+    () => (pages?.pages.flat() ?? []) as unknown as ExtendedAuditLog[],
+    [pages]
+  );
+
+  // Collapse rows sharing an operationId into one expandable lead (COR-04). The
+  // grouping rule lives entirely in the shared helper; here we only flatten each
+  // group into a lead row carrying its children as expandable sub-rows.
+  const groupedData = useMemo(
+    () =>
+      groupAuditRows(rows).map((group) =>
+        group.children.length > 0
+          ? { ...group.lead, auditChildren: group.children }
+          : group.lead
+      ),
+    [rows]
+  );
 
   // Get unique entity types for filter
   const { data: entityTypes } = useFindManyAuditLog({
@@ -236,6 +255,27 @@ function AuditLogsContent({ session }: { session: Session }) {
     distinct: ["entityType"],
     orderBy: { entityType: "asc" },
   });
+
+  // Distinct projects that appear in the audit log, for the project filter.
+  // Sourced from the log itself (policy-enforced) so the dropdown never lists a
+  // project with no audit rows and never leaks projects outside the viewer's reach.
+  const { data: projectRows } = useFindManyAuditLog({
+    where: { projectId: { not: null } },
+    select: { projectId: true, project: { select: { name: true } } },
+    distinct: ["projectId"],
+    orderBy: { projectId: "asc" },
+  });
+
+  const projectOptions = useMemo(() => {
+    const options = (projectRows ?? [])
+      .filter(
+        (row): row is { projectId: number; project: { name: string } } =>
+          row.projectId != null && !!row.project?.name
+      )
+      .map((row) => ({ id: row.projectId, name: row.project.name }));
+    options.sort((a, b) => a.name.localeCompare(b.name));
+    return options;
+  }, [projectRows]);
 
   // Distinct actors in the audit log, paginated and searched server-side —
   // the table can hold far more users than a plain select can list.
@@ -252,9 +292,7 @@ function AuditLogsContent({ session }: { session: Session }) {
   // Fetch all logs for export (no pagination)
   const { refetch: refetchAllLogs } = useFindManyAuditLog(
     {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { timestamp: "desc" },
+      orderBy: buildAuditLogOrderBy(sortConfig),
       include: {
         project: {
           select: { name: true },
@@ -362,6 +400,7 @@ function AuditLogsContent({ session }: { session: Session }) {
           search: debouncedSearchString || undefined,
           action: actionFilter !== "all" ? actionFilter : undefined,
           entityType: entityTypeFilter !== "all" ? entityTypeFilter : undefined,
+          project: projectFilter !== "all" ? projectFilter : undefined,
           user: userFilter !== "all" ? userFilter : undefined,
           dateFrom: dateRange?.from?.toISOString(),
           dateTo: dateRange?.to?.toISOString(),
@@ -379,6 +418,7 @@ function AuditLogsContent({ session }: { session: Session }) {
     debouncedSearchString,
     actionFilter,
     entityTypeFilter,
+    projectFilter,
     userFilter,
     dateRange,
   ]);
@@ -536,6 +576,26 @@ function AuditLogsContent({ session }: { session: Session }) {
                 </Select>
               </div>
 
+              <div className="w-[180px]">
+                <Label className="sr-only">{tCommon("fields.project")}</Label>
+                <Select value={projectFilter} onValueChange={setProjectFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("allProjects")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allProjects")}</SelectItem>
+                    {projectOptions.map((project) => (
+                      <SelectItem
+                        key={project.id}
+                        value={project.id.toString()}
+                      >
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="w-[260px]">
                 <Label className="sr-only">{tCommon("access.user")}</Label>
                 <AsyncCombobox<AuditLogUserOption>
@@ -601,7 +661,9 @@ function AuditLogsContent({ session }: { session: Session }) {
           <div className="mt-4 h-[calc(100vh-20rem)] min-h-[400px] w-full">
             <VirtualizedDataTable
               columns={columns as any}
-              data={rows as any}
+              data={groupedData as any}
+              getSubRows={(row) => row.auditChildren}
+              subRowsLabel={t("relatedChanges")}
               sortConfig={sortConfig}
               onSortChange={handleSortChange}
               columnVisibility={columnVisibility}
@@ -610,7 +672,7 @@ function AuditLogsContent({ session }: { session: Session }) {
               hasMore={!!hasNextPage}
               isLoading={isLoading || isFetchingNextPage}
               onLoadMore={fetchNextPage}
-              resetKey={`${debouncedSearchString}|${actionFilter}|${entityTypeFilter}|${userFilter}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
+              resetKey={`${debouncedSearchString}|${actionFilter}|${entityTypeFilter}|${projectFilter}|${userFilter}|${dateRange?.from?.toISOString() ?? ""}|${dateRange?.to?.toISOString() ?? ""}`}
               testIdPrefix="audit-logs-table"
               rowTestIdPrefix="audit-log-row"
             />

@@ -1072,7 +1072,7 @@
         "apple": "Apple에서 계속 진행하세요",
         "microsoft": "Microsoft에서 계속 진행하세요",
         "samlProvider": "{name}로 로그인하세요",
-        "magicLink": "매직링크로 로그인",
+        "magicLink": "Sign in with single-use Magic Link",
         "emailLogin": "이메일로 계속 진행"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "접근이 거부되었습니다. 계정이 비활성화되었거나 로그인 권한이 없을 수 있습니다.",
       "configuration": "서버 구성에 문제가 있습니다.",
-      "verification": "인증 토큰이 만료되었거나 이미 사용되었습니다.",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "인증 코드가 잘못되었습니다. 다시 시도해 주세요.",
       "twoFactorTokenRequired": "토큰이 필요합니다",
       "verificationCodeRequired": "인증 코드가 필요합니다."
@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {세션} other {세션들}}",
     "labels": {
       "totalElapsed": "소요 시간",
@@ -2468,6 +2473,11 @@
       "versionCreated": "버전 {version} 생성됨",
       "latestVersionUpdated": "최신 버전 {version, number} 업데이트됨",
       "historyView": "테스트 케이스 기록 보기"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "옵션을 찾을 수 없습니다",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "테스트 실행을 찾을 수 없습니다.",
     "add": {
       "title": "테스트 실행 추가",
@@ -5060,17 +5075,23 @@
       "manageDescription": "외부 서비스 문제 통합을 구성하고 관리하세요.",
       "status": {
         "active": "활동적인",
-        "inactive": "비활성화됨"
+        "inactive": "비활성화됨",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "연결된 프로젝트",
       "noIntegrations": "문제 없는 통합 구성 완료",
       "testConnection": "테스트 연결",
       "testSuccess": "연결 성공",
       "testSuccessDescription": "이슈 통합이 올바르게 구성되고 연결되었습니다.",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "연결 실패",
       "testFailedDescription": "외부 서비스에 연결할 수 없습니다.",
       "testError": "테스트 오류",
       "testErrorDescription": "연결 테스트 중 오류가 발생했습니다.",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
       "syncInProgress": "Re-syncing linked issues...",
       "syncIntegration": "Re-sync linked issues",
       "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
@@ -5207,6 +5228,10 @@
         "apiKeyWarningPoint4": "관리자 권한 없이 사용자별 정확한 보고자 식별을 위해서는 OAuth 2.0을 사용하십시오.",
         "tokenCreatorNoticeTitle": "문제 제기자 정보",
         "tokenCreatorNoticeDescription": "이 연동을 통해 생성된 이슈는 항상 해당 액세스 토큰을 소유한 계정으로 기록되며, 이슈를 생성한 TestPlanIt 사용자 계정으로는 기록되지 않습니다. 이 공급자의 API는 다른 사용자를 대신하여 생성자를 설정하는 것을 허용하지 않습니다.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Forge API 키",
         "forgeApiKeyDescription": "Atlassian Forge 앱에서 Jira 이슈 패널의 요청을 인증하는 데 사용됩니다. 여기에서 키를 생성하고 Forge 앱 설정에 붙여넣으세요.",
         "forgeApiKeyPlaceholder": "API 키를 생성하려면 '생성'을 클릭하세요.",
@@ -5618,12 +5643,14 @@
     },
     "auditLogs": {
       "description": "보안 및 규정 준수 추적을 위한 시스템 전반의 감사 기록을 확인하세요.",
+      "projectDescription": "View the audit trail of actions performed in this project.",
       "filterPlaceholder": "개체, 사용자 또는 작업으로 검색...",
       "filterAction": "행동",
       "filterEntityType": "엔티티 유형",
       "allActions": "모든 작업",
       "allEntityTypes": "모든 엔티티 유형",
       "allUsers": "All Users",
+      "allProjects": "All Projects",
       "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "상세 정보 보기",
       "detailTitle": "감사 로그 세부 정보",
@@ -5651,7 +5678,9 @@
       },
       "systemActor": "체계",
       "systemActorTooltip": "로그인한 사용자가 아닌 시스템에서 수행한 작업입니다.",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {
@@ -7633,8 +7662,9 @@
       "intro": "아래 버튼을 클릭하여 로그인하세요.",
       "signInButton": "로그인",
       "copyPasteIntro": "또는 이 링크를 복사하여 브라우저에 붙여넣으세요.",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "이 이메일을 요청하지 않으셨다면 무시하셔도 됩니다.",
-      "textBody": "TestPlanIt에 로그인하세요\n\n아래 링크를 클릭하여 로그인하세요:\n{url}\n\n이 이메일을 요청하지 않으셨다면 무시하셔도 됩니다."
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

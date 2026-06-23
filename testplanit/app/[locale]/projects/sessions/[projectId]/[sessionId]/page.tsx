@@ -8,6 +8,7 @@ import { useRouter } from "~/lib/navigation";
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import { Loading } from "@/components/Loading";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
+import { SessionAuditLogSheet } from "@/components/sessions/SessionAuditLogSheet";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1822,6 +1823,9 @@ export default function SessionPage() {
                 )}
               </CardTitle>
               <div className="flex items-start gap-2">
+                {sessionData && (
+                  <SessionAuditLogSheet sessionId={sessionData.id} />
+                )}
                 {sessionData?.isCompleted ? (
                   <div className="flex items-center gap-1">
                     <Badge

@@ -24,9 +24,12 @@ import {
   useUpdateIntegration,
 } from "@/lib/hooks/integration";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { IntegrationAuthType, IntegrationProvider } from "~/zenstack/models";
-import type { Integration } from "~/zenstack/models";
-import { Activity, Loader2 } from "lucide-react";
+import {
+  Integration,
+  IntegrationAuthType,
+  IntegrationProvider,
+} from "@prisma/client";
+import { Activity, Loader2, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -158,9 +161,19 @@ export function IntegrationModal({
       const data = await response.json();
 
       if (data.success) {
-        toast.success(t("testSuccess"), {
-          description: t("testSuccessDescription"),
-        });
+        // OAuth 2.0 (3LO): a passing test only confirms the client
+        // credentials are well-formed — the integration isn't connected
+        // until a user completes the authorization flow. Tell the admin
+        // that's the expected next step rather than implying it's live.
+        if (data.requiresUserAuth) {
+          toast.success(t("testCredentialsSaved"), {
+            description: t("testCredentialsSavedDescription"),
+          });
+        } else {
+          toast.success(t("testSuccess"), {
+            description: t("testSuccessDescription"),
+          });
+        }
         setTestPassed(true);
       } else {
         // The route returns a `capabilities` object describing each
@@ -196,6 +209,17 @@ export function IntegrationModal({
     }
   };
 
+  // Kick off the per-user OAuth (3LO) authorization for a saved integration.
+  // Uses the generic OAuth route (only needs an integrationId — no project),
+  // and the callback flips the integration to ACTIVE once a token is stored.
+  const handleAuthorize = () => {
+    if (!integration) return;
+    const params = new URLSearchParams({
+      integrationId: integration.id.toString(),
+    });
+    window.location.href = `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?${params.toString()}`;
+  };
+
   const onSubmit = async (values: FormData) => {
     const mutate = integration
       ? updateIntegrationMutation.mutate
@@ -216,7 +240,15 @@ export function IntegrationModal({
           ? undefined
           : {},
       settings: values.settings || {},
-      ...(testPassed && !integration && { status: "ACTIVE" }),
+      // Only a non-OAuth integration can be activated by a passing test.
+      // OAuth 2.0 (3LO) stays in its default (awaiting-authorization) state
+      // until a user completes the authorization flow and the callback
+      // stores a token — see the OAuth callback route.
+      ...(testPassed &&
+        !integration &&
+        values.authType !== IntegrationAuthType.OAUTH2 && {
+          status: "ACTIVE",
+        }),
     };
 
     // Edit path stays an update-by-id. Add path is an upsert keyed by
@@ -353,23 +385,41 @@ export function IntegrationModal({
                 />
 
                 <div className="flex justify-between">
-                  {selectedType !== IntegrationProvider.SIMPLE_URL ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleTestConnection}
-                      disabled={isTesting || isLoading}
-                    >
-                      {isTesting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Activity className="h-4 w-4" />
+                  <div className="flex gap-2">
+                    {selectedType !== IntegrationProvider.SIMPLE_URL && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleTestConnection}
+                        disabled={isTesting || isLoading}
+                      >
+                        {isTesting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Activity className="h-4 w-4" />
+                        )}
+                        {t("testConnection")}
+                      </Button>
+                    )}
+                    {/* Per-user OAuth (3LO) authorization for a saved
+                        integration — the step that actually connects it and
+                        flips it ACTIVE. Only meaningful once the integration
+                        exists (edit mode). */}
+                    {integration &&
+                      integration.authType === IntegrationAuthType.OAUTH2 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleAuthorize}
+                          disabled={isLoading}
+                        >
+                          <ShieldCheck className="h-4 w-4" />
+                          {integration.status === "ACTIVE"
+                            ? t("reauthorize")
+                            : t("authorize")}
+                        </Button>
                       )}
-                      {t("testConnection")}
-                    </Button>
-                  ) : (
-                    <span />
-                  )}
+                  </div>
 
                   <div className="space-x-2">
                     <Button

@@ -1,5 +1,7 @@
 "use server";
 
+import { runWithAuditContext } from "~/lib/auditContext";
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -33,99 +35,101 @@ export async function removeIntegrationProjectMapping(
     };
   }
 
-  const mapping = await prisma.integrationProject.findFirst({
-    where: { id: integrationProjectId },
-    include: {
-      projectIntegration: {
-        select: { id: true, projectId: true },
+  return runWithAuditContext({ userId: session.user.id }, async () => {
+    const mapping = await prisma.integrationProject.findFirst({
+      where: { id: integrationProjectId },
+      include: {
+        projectIntegration: {
+          select: { id: true, projectId: true },
+        },
       },
-    },
-  });
-  if (!mapping || !mapping.projectIntegration) {
-    return {
-      success: false,
-      error: "Integration mapping not found",
-      cascadedToParent: false,
-      inboundWebhookDeletedCount: 0,
-    };
-  }
+    });
+    if (!mapping || !mapping.projectIntegration) {
+      return {
+        success: false,
+        error: "Integration mapping not found",
+        cascadedToParent: false,
+        inboundWebhookDeletedCount: 0,
+      };
+    }
 
-  const { id: projectIntegrationId, projectId } = mapping.projectIntegration;
+    const { id: projectIntegrationId, projectId } = mapping.projectIntegration;
 
-  // Authorize: only ADMIN or members with project access can manage
-  // integration mappings. Match the read-side authorization in the
-  // GET handler in `/api/projects/[projectId]/integrations/route.ts`.
-  const isAdmin = session.user.access === "ADMIN";
-  if (!isAdmin) {
-    const project = await prisma.projects.findFirst({
-      where: {
-        id: projectId,
-        isDeleted: false,
-        OR: [
-          { userPermissions: { some: { userId: session.user.id } } },
-          {
-            groupPermissions: {
-              some: {
-                group: {
-                  assignedUsers: { some: { userId: session.user.id } },
+    // Authorize: only ADMIN or members with project access can manage
+    // integration mappings. Match the read-side authorization in the
+    // GET handler in `/api/projects/[projectId]/integrations/route.ts`.
+    const isAdmin = session.user.access === "ADMIN";
+    if (!isAdmin) {
+      const project = await prisma.projects.findFirst({
+        where: {
+          id: projectId,
+          isDeleted: false,
+          OR: [
+            { userPermissions: { some: { userId: session.user.id } } },
+            {
+              groupPermissions: {
+                some: {
+                  group: {
+                    assignedUsers: { some: { userId: session.user.id } },
+                  },
                 },
               },
             },
-          },
-          {
-            assignedUsers: { some: { userId: session.user.id } },
-          },
-        ],
-      },
-    });
-    if (!project) {
-      return {
-        success: false,
-        error: "Forbidden",
-        cascadedToParent: false,
-        inboundWebhookDeletedCount: 0,
-      };
+            {
+              assignedUsers: { some: { userId: session.user.id } },
+            },
+          ],
+        },
+      });
+      if (!project) {
+        return {
+          success: false,
+          error: "Forbidden",
+          cascadedToParent: false,
+          inboundWebhookDeletedCount: 0,
+        };
+      }
     }
-  }
 
-  return await prisma.$transaction(async (tx) => {
-    await tx.integrationProject.update({
-      where: { id: integrationProjectId },
-      data: { isActive: false },
-    });
+    return await auditedTransaction(async (tx) => {
+      await tx.integrationProject.update({
+        where: { id: integrationProjectId },
+        data: { isActive: false },
+      });
 
-    const remainingActive = await tx.integrationProject.count({
-      where: {
-        projectIntegrationId,
-        isActive: true,
-      },
-    });
+      const remainingActive = await tx.integrationProject.count({
+        where: {
+          projectIntegrationId,
+          isActive: true,
+        },
+      });
 
-    if (remainingActive > 0) {
+      if (remainingActive > 0) {
+        return {
+          success: true,
+          cascadedToParent: false,
+          inboundWebhookDeletedCount: 0,
+        };
+      }
+
+      // Last active mapping removed — also deactivate the parent
+      // ProjectIntegration so the project effectively has no integration.
+      await tx.projectIntegration.update({
+        where: { id: projectIntegrationId },
+        data: { isActive: false },
+      });
+
+      const deleted = await tx.webhookConfig.deleteMany({
+        where: { projectId, direction: "INBOUND" },
+      });
+
       return {
         success: true,
-        cascadedToParent: false,
-        inboundWebhookDeletedCount: 0,
+        cascadedToParent: true,
+        inboundWebhookDeletedCount: deleted.count,
       };
-    }
-
-    // Last active mapping removed — also deactivate the parent
-    // ProjectIntegration so the project effectively has no integration.
-    await tx.projectIntegration.update({
-      where: { id: projectIntegrationId },
-      data: { isActive: false },
     });
-
-    const deleted = await tx.webhookConfig.deleteMany({
-      where: { projectId, direction: "INBOUND" },
-    });
-
-    return {
-      success: true,
-      cascadedToParent: true,
-      inboundWebhookDeletedCount: deleted.count,
-    };
-  });
+  }); // end runWithAuditContext
 }
 
 /**
@@ -182,43 +186,45 @@ export async function removeProjectIntegration(
     };
   }
 
-  const target = await prisma.projectIntegration.findFirst({
-    where: { id: projectIntegrationId },
-    select: { projectId: true },
-  });
-  if (!target) {
-    return {
-      success: false,
-      error: "Project integration not found",
-      inboundWebhookDeletedCount: 0,
-    };
-  }
-
-  const authorized = await authorizeProjectIntegrationManagement(
-    target.projectId,
-    session.user.id,
-    session.user.access === "ADMIN"
-  );
-  if (!authorized) {
-    return {
-      success: false,
-      error: "Forbidden",
-      inboundWebhookDeletedCount: 0,
-    };
-  }
-
-  return await prisma.$transaction(async (tx) => {
-    await tx.projectIntegration.delete({
+  return runWithAuditContext({ userId: session.user.id }, async () => {
+    const target = await prisma.projectIntegration.findFirst({
       where: { id: projectIntegrationId },
+      select: { projectId: true },
     });
-    const deleted = await tx.webhookConfig.deleteMany({
-      where: { projectId: target.projectId, direction: "INBOUND" },
+    if (!target) {
+      return {
+        success: false,
+        error: "Project integration not found",
+        inboundWebhookDeletedCount: 0,
+      };
+    }
+
+    const authorized = await authorizeProjectIntegrationManagement(
+      target.projectId,
+      session.user.id,
+      session.user.access === "ADMIN"
+    );
+    if (!authorized) {
+      return {
+        success: false,
+        error: "Forbidden",
+        inboundWebhookDeletedCount: 0,
+      };
+    }
+
+    return await auditedTransaction(async (tx) => {
+      await tx.projectIntegration.delete({
+        where: { id: projectIntegrationId },
+      });
+      const deleted = await tx.webhookConfig.deleteMany({
+        where: { projectId: target.projectId, direction: "INBOUND" },
+      });
+      return {
+        success: true,
+        inboundWebhookDeletedCount: deleted.count,
+      };
     });
-    return {
-      success: true,
-      inboundWebhookDeletedCount: deleted.count,
-    };
-  });
+  }); // end runWithAuditContext
 }
 
 /**
@@ -248,72 +254,74 @@ export async function switchProjectIntegration(input: {
     };
   }
 
-  const authorized = await authorizeProjectIntegrationManagement(
-    projectId,
-    session.user.id,
-    session.user.access === "ADMIN"
-  );
-  if (!authorized) {
-    return {
-      success: false,
-      error: "Forbidden",
-      inboundWebhookDeletedCount: 0,
-      providerChanged: false,
-    };
-  }
-
-  const newIntegration = await prisma.integration.findFirst({
-    where: { id: integrationId, status: "ACTIVE", isDeleted: false },
-    select: { id: true, provider: true },
-  });
-  if (!newIntegration) {
-    return {
-      success: false,
-      error: "Integration not found or inactive",
-      inboundWebhookDeletedCount: 0,
-      providerChanged: false,
-    };
-  }
-
-  return await prisma.$transaction(async (tx) => {
-    const priorActive = await tx.projectIntegration.findFirst({
-      where: { projectId, isActive: true },
-      include: { integration: { select: { provider: true } } },
-    });
-    const priorProvider = priorActive?.integration?.provider ?? null;
-
-    await tx.projectIntegration.updateMany({
-      where: { projectId, isActive: true },
-      data: { isActive: false },
-    });
-
-    const existing = await tx.projectIntegration.findFirst({
-      where: { projectId, integrationId },
-    });
-    if (existing) {
-      await tx.projectIntegration.update({
-        where: { id: existing.id },
-        data: { isActive: true },
-      });
-    } else {
-      await tx.projectIntegration.create({
-        data: { projectId, integrationId, isActive: true, config: {} },
-      });
+  return runWithAuditContext({ userId: session.user.id }, async () => {
+    const authorized = await authorizeProjectIntegrationManagement(
+      projectId,
+      session.user.id,
+      session.user.access === "ADMIN"
+    );
+    if (!authorized) {
+      return {
+        success: false,
+        error: "Forbidden",
+        inboundWebhookDeletedCount: 0,
+        providerChanged: false,
+      };
     }
 
-    const providerChanged = priorProvider !== newIntegration.provider;
-    let inboundWebhookDeletedCount = 0;
-    if (providerChanged) {
-      const deleted = await tx.webhookConfig.deleteMany({
-        where: { projectId, direction: "INBOUND" },
-      });
-      inboundWebhookDeletedCount = deleted.count;
+    const newIntegration = await prisma.integration.findFirst({
+      where: { id: integrationId, status: "ACTIVE", isDeleted: false },
+      select: { id: true, provider: true },
+    });
+    if (!newIntegration) {
+      return {
+        success: false,
+        error: "Integration not found or inactive",
+        inboundWebhookDeletedCount: 0,
+        providerChanged: false,
+      };
     }
 
-    return {
-      success: true,
-      inboundWebhookDeletedCount,
-      providerChanged,
-    };
-  });
+    return await auditedTransaction(async (tx) => {
+      const priorActive = await tx.projectIntegration.findFirst({
+        where: { projectId, isActive: true },
+        include: { integration: { select: { provider: true } } },
+      });
+      const priorProvider = priorActive?.integration?.provider ?? null;
+
+      await tx.projectIntegration.updateMany({
+        where: { projectId, isActive: true },
+        data: { isActive: false },
+      });
+
+      const existing = await tx.projectIntegration.findFirst({
+        where: { projectId, integrationId },
+      });
+      if (existing) {
+        await tx.projectIntegration.update({
+          where: { id: existing.id },
+          data: { isActive: true },
+        });
+      } else {
+        await tx.projectIntegration.create({
+          data: { projectId, integrationId, isActive: true, config: {} },
+        });
+      }
+
+      const providerChanged = priorProvider !== newIntegration.provider;
+      let inboundWebhookDeletedCount = 0;
+      if (providerChanged) {
+        const deleted = await tx.webhookConfig.deleteMany({
+          where: { projectId, direction: "INBOUND" },
+        });
+        inboundWebhookDeletedCount = deleted.count;
+      }
+
+      return {
+        success: true,
+        inboundWebhookDeletedCount,
+        providerChanged,
+      };
+    });
+  }); // end runWithAuditContext
 }

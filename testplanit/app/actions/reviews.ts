@@ -4,6 +4,7 @@ import type { JSONContent } from "@tiptap/core";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 
+import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withActionAuditContext } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { CommentService } from "~/lib/services/commentService";
@@ -267,7 +268,7 @@ export const requestReview = withActionAuditContext(
           : "sessionId";
 
     try {
-      const { reviewRequestId, commentId } = await prisma.$transaction(
+      const { reviewRequestId, commentId } = await auditedTransaction(
         async (tx) => {
           const reviewRequest = await tx.reviewRequest.create({
             data: {

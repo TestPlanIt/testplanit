@@ -1,7 +1,11 @@
-import { RepositoryCaseSource, WorkflowScope } from "~/zenstack/models";
-import type { CaseFields, CaseFieldTypes } from "~/zenstack/models";
-import type { JsonValue } from "@zenstackhq/orm";
-import { enhance } from "@zenstackhq/runtime";
+import {
+  CaseFields,
+  CaseFieldTypes,
+  Prisma,
+  RepositoryCaseSource,
+  WorkflowScope,
+} from "@prisma/client";
+import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
@@ -13,7 +17,6 @@ import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { authOptions } from "~/server/auth";
-import { db } from "~/server/db";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
@@ -197,7 +200,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           },
         });
 
-        const enhancedDb = enhance(db, { user: user ?? undefined });
+        const enhancedDb = enhanceWithAudit(user ?? undefined);
 
         // Validate project access
         const project = await enhancedDb.projects.findFirst({
@@ -717,7 +720,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   data: {
                     testCaseId: newCase.id,
                     fieldId: parseInt(fieldId),
-                    value: value as JsonValue,
+                    value: value as Prisma.InputJsonValue,
                   },
                 });
               }

@@ -31,6 +31,7 @@ import {
   Settings,
   Settings2,
   Share2,
+  ShieldCheck,
   Sparkles,
   SquareStack,
   Tags as TagsIcon,
@@ -164,6 +165,11 @@ export default function ProjectsMenu({
   const canSeeReports =
     reportingPerms && (reportingPerms.canAddEdit || reportingPerms.canDelete);
 
+  // Project audit log is restricted to system ADMINs and PROJECTADMINs.
+  const canSeeAuditLogs =
+    session?.user?.access === "ADMIN" ||
+    session?.user?.access === "PROJECTADMIN";
+
   // Check if user can see Settings
   // Settings should be visible to:
   // 1. System ADMIN users (always have access to all projects)
@@ -255,6 +261,17 @@ export default function ProjectsMenu({
             label: t("admin.menu.reports"),
             path: "reports",
             id: "reports-link",
+            section: "management" as MenuSection,
+          },
+        ]
+      : []),
+    ...(canSeeAuditLogs
+      ? [
+          {
+            icon: ShieldCheck,
+            label: t("admin.menu.auditLogs"),
+            path: "audit-logs",
+            id: "audit-logs-link",
             section: "management" as MenuSection,
           },
         ]

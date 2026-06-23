@@ -1072,7 +1072,7 @@
         "apple": "Continue with Apple",
         "microsoft": "Continue with Microsoft",
         "samlProvider": "Sign in with {name}",
-        "magicLink": "Sign in with Magic Link",
+        "magicLink": "Sign in with single-use Magic Link",
         "emailLogin": "Continue with email"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Access denied. Your account may be inactive or you don't have permission to sign in.",
       "configuration": "There is a problem with the server configuration.",
-      "verification": "The verification token has expired or has already been used.",
+      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
       "invalid2FACode": "Invalid verification code. Please try again.",
       "twoFactorTokenRequired": "Token is required",
       "verificationCodeRequired": "Verification code is required"
@@ -2103,6 +2103,11 @@
     }
   },
   "sessions": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this session."
+    },
     "title": "{count, plural, =1 {Session} other {Sessions}}",
     "labels": {
       "totalElapsed": "Time Spent",
@@ -2468,6 +2473,11 @@
       "versionCreated": "Version {version} Created",
       "latestVersionUpdated": "Latest Version {version, number} Updated",
       "historyView": "Test Case History View"
+    },
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test case."
     },
     "fields": {
       "optionNotFound": "Option not found",
@@ -3313,6 +3323,11 @@
     }
   },
   "runs": {
+    "auditLog": {
+      "trigger": "Activity",
+      "title": "Activity Log",
+      "description": "All changes recorded for this test run."
+    },
     "notFound": "Test run not found.",
     "add": {
       "title": "Add Test Run",
@@ -5060,17 +5075,23 @@
       "manageDescription": "Configure and manage your external service issue integrations",
       "status": {
         "active": "Active",
-        "inactive": "Inactive"
+        "inactive": "Inactive",
+        "awaitingAuthorization": "Awaiting authorization"
       },
       "connectedProjects": "Connected Projects",
       "noIntegrations": "No issue integrations configured",
       "testConnection": "Test Connection",
       "testSuccess": "Connection Successful",
       "testSuccessDescription": "The issue integration is properly configured and connected",
+      "testCredentialsSaved": "Credentials look good",
+      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
       "testFailed": "Connection Failed",
       "testFailedDescription": "Unable to connect to the external service",
       "testError": "Test Error",
       "testErrorDescription": "An error occurred while testing the connection",
+      "authorize": "Authorize",
+      "reauthorize": "Re-authorize",
+      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
       "syncInProgress": "Re-syncing linked issues...",
       "syncIntegration": "Re-sync linked issues",
       "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
@@ -5207,6 +5228,10 @@
         "apiKeyWarningPoint4": "Use OAuth 2.0 instead for accurate per-user reporter attribution without administrator permissions.",
         "tokenCreatorNoticeTitle": "Issue creator attribution",
         "tokenCreatorNoticeDescription": "Issues created through this integration are always recorded as the account that owns this access token, not the TestPlanIt user who created them. This provider's API does not allow setting the creator on another user's behalf.",
+        "callbackUrlLabel": "Callback URL (redirect URI)",
+        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
+        "callbackUrlCopy": "Copy",
+        "callbackUrlCopied": "Copied",
         "forgeApiKeyLabel": "Forge API Key",
         "forgeApiKeyDescription": "Used by the Atlassian Forge app to authenticate requests from Jira issue panels. Generate a key here and paste it in your Forge app settings.",
         "forgeApiKeyPlaceholder": "Click Generate to create an API key",
@@ -5618,12 +5643,14 @@
     },
     "auditLogs": {
       "description": "View system-wide audit trail for security and compliance tracking",
+      "projectDescription": "View the audit trail of actions performed in this project.",
       "filterPlaceholder": "Search by entity, user, or action...",
       "filterAction": "Action",
       "filterEntityType": "Entity Type",
       "allActions": "All Actions",
       "allEntityTypes": "All Entity Types",
       "allUsers": "All Users",
+      "allProjects": "All Projects",
       "showing": "Showing {loaded} of {total} entries",
       "viewDetails": "View Details",
       "detailTitle": "Audit Log Details",
@@ -5651,7 +5678,9 @@
       },
       "systemActor": "System",
       "systemActorTooltip": "Action performed by the system, not a logged-in user",
-      "sourceScim": "SCIM"
+      "sourceScim": "SCIM",
+      "relatedChanges": "related changes",
+      "groupedEntry": "Grouped changes from a single action"
     }
   },
   "components": {
@@ -7633,8 +7662,9 @@
       "intro": "Click the button below to sign in:",
       "signInButton": "Sign In",
       "copyPasteIntro": "Or copy and paste this link into your browser:",
+      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "If you did not request this email, you can safely ignore it.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

@@ -1,3 +1,39 @@
+## [0.40.6](https://github.com/TestPlanIt/testplanit/compare/v0.40.5...v0.40.6) (2026-06-23)
+
+### Enhancements
+
+* **audit:** comprehensive audit logging with inline activity views ([#466](https://github.com/TestPlanIt/testplanit/issues/466)) ([4933e51](https://github.com/TestPlanIt/testplanit/commit/4933e515f0f4bf7380e6d0af7eeab3208f579403)), closes [#441](https://github.com/TestPlanIt/testplanit/issues/441)
+
+## [0.40.5](https://github.com/TestPlanIt/testplanit/compare/v0.40.4...v0.40.5) (2026-06-23)
+
+### Bug Fixes
+
+* **integrations:** keep Jira reads working past token expiry and persist created issues ([#465](https://github.com/TestPlanIt/testplanit/issues/465)) ([0c774a2](https://github.com/TestPlanIt/testplanit/commit/0c774a28d7e808d197b8f244694a0b89e0c7d268))
+
+## [0.40.4](https://github.com/TestPlanIt/testplanit/compare/v0.40.3...v0.40.4) (2026-06-22)
+
+### Bug Fixes
+
+* **i18n:** translate single-use magic-link strings across locales ([18eada4](https://github.com/TestPlanIt/testplanit/commit/18eada4b432902c096caf4eedd0ab46aeb1873d9))
+
+## [0.40.3](https://github.com/TestPlanIt/testplanit/compare/v0.40.2...v0.40.3) (2026-06-22)
+
+### Bug Fixes
+
+* Jira OAuth callback/adapter fixes + single-use magic-link notice ([#464](https://github.com/TestPlanIt/testplanit/issues/464)) ([2dbfdfb](https://github.com/TestPlanIt/testplanit/commit/2dbfdfb750e1d35b4bf945e4302336dd499a6059))
+
+## [0.40.2](https://github.com/TestPlanIt/testplanit/compare/v0.40.1...v0.40.2) (2026-06-22)
+
+### Bug Fixes
+
+* **integrations:** unblock Jira OAuth authorize + align admin action icons ([#463](https://github.com/TestPlanIt/testplanit/issues/463)) ([d7dae8c](https://github.com/TestPlanIt/testplanit/commit/d7dae8c4be81cf9a43c83d88aaf0b86452bca400))
+
+## [0.40.1](https://github.com/TestPlanIt/testplanit/compare/v0.40.0...v0.40.1) (2026-06-21)
+
+### Bug Fixes
+
+* **integrations:** configure Jira OAuth per-integration via admin UI ([#462](https://github.com/TestPlanIt/testplanit/issues/462)) ([7a0d08e](https://github.com/TestPlanIt/testplanit/commit/7a0d08eba7fbd90a8e8905ec46de9e897dd8b5dc))
+
 ## [0.40.0](https://github.com/TestPlanIt/testplanit/compare/v0.39.2...v0.40.0) (2026-06-20)
 
 ### Features

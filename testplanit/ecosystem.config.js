@@ -111,8 +111,12 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      // CDC correlation (Loop B) caches one raw Prisma client per tenant in
+      // multi-tenant mode (one Rust query engine each), the same per-tenant-client
+      // footprint as the webhook outbox worker — so it shares that 3G tier. The
+      // ceiling is harmless headroom in single-tenant mode (one client).
+      max_memory_restart: "3G",
+      node_args: "--max-old-space-size=2304",
       env: {
         NODE_ENV: "production",
       },
@@ -318,6 +322,21 @@ module.exports = {
       args: isDev
         ? "workers/webhookRetentionWorker.ts"
         : "dist/workers/webhookRetentionWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "3G",
+      node_args: "--max-old-space-size=2304",
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
+      name: "dcl-retention-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/dataChangeLogRetentionWorker.ts"
+        : "dist/workers/dataChangeLogRetentionWorker.js",
       instances: 1,
       autorestart: true,
       watch: false,

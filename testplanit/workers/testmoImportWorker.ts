@@ -1,14 +1,13 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { Access, ApplicationArea, WorkflowScope, WorkflowType } from "~/zenstack/models";
-import type { TestmoImportJob } from "~/zenstack/models";
-import { JsonNull } from "@zenstackhq/orm";
-import type { JsonObject, JsonValue } from "@zenstackhq/orm";
-import type { DbClient, TxClient } from "~/lib/zenstack";
-import type {
-  StepsUncheckedCreateInput,
-  TestRunCasesUncheckedCreateInput,
-  TestmoImportJobUpdateArgs,
-} from "~/zenstack/input";
+import {
+  Access,
+  ApplicationArea,
+  Prisma,
+  PrismaClient,
+  WorkflowScope,
+  WorkflowType,
+  type TestmoImportJob,
+} from "@prisma/client";
 import { getSchema } from "@tiptap/core";
 import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
@@ -149,7 +148,7 @@ const userNameCache = new Map<string, string>();
 const folderNameCache = new Map<number, string>();
 
 const getProjectName = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   projectId: number
 ): Promise<string> => {
   if (projectNameCache.has(projectId)) {
@@ -167,7 +166,7 @@ const getProjectName = async (
 };
 
 const getTemplateName = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   templateId: number
 ): Promise<string> => {
   if (templateNameCache.has(templateId)) {
@@ -185,7 +184,7 @@ const getTemplateName = async (
 };
 
 const getWorkflowName = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   workflowId: number
 ): Promise<string> => {
   if (workflowNameCache.has(workflowId)) {
@@ -203,7 +202,7 @@ const getWorkflowName = async (
 };
 
 const getConfigurationName = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   configurationId: number
 ): Promise<string | null> => {
   if (configurationNameCache.has(configurationId)) {
@@ -223,7 +222,7 @@ const getConfigurationName = async (
 };
 
 const getMilestoneName = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   milestoneId: number
 ): Promise<string | null> => {
   if (milestoneNameCache.has(milestoneId)) {
@@ -243,7 +242,7 @@ const getMilestoneName = async (
 };
 
 const getUserName = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   userId: string | null | undefined
 ): Promise<string> => {
   if (!userId) {
@@ -265,7 +264,7 @@ const getUserName = async (
 };
 
 const getFolderName = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   folderId: number
 ): Promise<string> => {
   if (folderNameCache.has(folderId)) {
@@ -1145,12 +1144,12 @@ const isTipTapDocumentEmpty = (doc: Record<string, unknown>): boolean => {
 
 const convertToTipTapJsonValue = (
   value: unknown
-): JsonValue | null => {
+): Prisma.InputJsonValue | null => {
   const doc = convertToTipTapDocument(value);
   if (!doc || isTipTapDocumentEmpty(doc)) {
     return null;
   }
-  return doc as JsonValue;
+  return doc as Prisma.InputJsonValue;
 };
 
 const convertToTipTapJsonString = (value: unknown): string | null => {
@@ -1481,7 +1480,7 @@ const normalizeCaseFieldValue = (
 };
 
 async function importUsers(
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   configuration: TestmoMappingConfiguration,
   importJob: TestmoImportJob
 ): Promise<EntitySummaryResult> {
@@ -1656,7 +1655,7 @@ interface MilestonesImportResult {
 }
 
 const importProjects = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   datasetRows: Map<string, any[]>,
   importJob: TestmoImportJob,
   userIdMap: Map<number, string>,
@@ -1884,7 +1883,7 @@ const importProjects = async (
 };
 
 const importMilestones = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   milestoneTypeIdMap: Map<number, number>,
@@ -2072,7 +2071,7 @@ interface SessionsImportResult {
 }
 
 const importSessions = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   milestoneIdMap: Map<number, number>,
@@ -2340,7 +2339,7 @@ interface SessionResultsImportResult {
 }
 
 const importSessionResults = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   datasetRows: Map<string, any[]>,
   sessionIdMap: Map<number, number>,
   statusIdMap: Map<number, number>,
@@ -2453,7 +2452,7 @@ interface SessionValuesImportResult {
 }
 
 const importSessionValues = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   datasetRows: Map<string, any[]>,
   sessionIdMap: Map<number, number>,
   testmoFieldValueMap: Map<number, { fieldId: number; name: string }>,
@@ -2594,7 +2593,7 @@ const importSessionValues = async (
 };
 
 const importRepositories = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   context: ImportContext,
@@ -2879,7 +2878,7 @@ const importRepositories = async (
 };
 
 const importRepositoryFolders = async (
-  prisma: DbClient,
+  prisma: PrismaClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   repositoryIdMap: Map<number, number>,
@@ -3174,7 +3173,7 @@ const importRepositoryFolders = async (
   return { summary, folderIdMap, repositoryRootFolderMap };
 };
 const importRepositoryCases = async (
-  prisma: DbClient,
+  prisma: PrismaClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   repositoryIdMap: Map<number, number>,
@@ -3422,7 +3421,15 @@ const importRepositoryCases = async (
       return;
     }
     await prisma.$transaction(
-      async (tx: TxClient) => {
+      async (tx: Prisma.TransactionClient) => {
+        // Phase 13 SAF-01 — opt this bulk import chunk out of row-level CDC
+        // capture. The audit_row_change() trigger early-returns when
+        // app.skip_audit is true, collapsing the ~9x per-row trigger overhead
+        // back to ~1x (SPIKE-02) so the import transaction does not blow its
+        // timeout. The job-level captureAuditEvent retains the semantic
+        // coverage for the import as a whole. SET LOCAL only inside a
+        // $transaction (Pitfall A).
+        await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
         for (const record of records) {
           const caseSourceId = toNumberValue(record.id);
           const projectSourceId = toNumberValue(record.project_id);
@@ -3937,7 +3944,7 @@ const importRepositoryCases = async (
           }> = [];
           if (caseSteps.length > 0) {
             let generatedOrder = 0;
-            const stepEntries: Array<StepsUncheckedCreateInput> = [];
+            const stepEntries: Array<Prisma.StepsCreateManyInput> = [];
 
             for (const stepRecord of caseSteps) {
               const stepAction = toStringValue(stepRecord.text1);
@@ -3962,7 +3969,7 @@ const importRepositoryCases = async (
                 generatedOrder = orderValue;
               }
 
-              const stepEntry: StepsUncheckedCreateInput = {
+              const stepEntry: Prisma.StepsCreateManyInput = {
                 testCaseId: repositoryCase.id,
                 order: orderValue,
               };
@@ -4058,7 +4065,7 @@ const importRepositoryCases = async (
                 order,
                 steps:
                   stepsForVersion.length > 0
-                    ? (stepsForVersion as JsonValue)
+                    ? (stepsForVersion as Prisma.InputJsonValue)
                     : null,
                 tags: [],
                 issues: [],
@@ -4086,7 +4093,7 @@ const importRepositoryCases = async (
                 versionId: caseVersion.id,
                 field:
                   fieldValue.field.displayName || fieldValue.field.systemName,
-                value: fieldValue.value ?? JsonNull,
+                value: fieldValue.value ?? Prisma.JsonNull,
               })),
             });
           }
@@ -4198,7 +4205,7 @@ const importRepositoryCases = async (
 };
 
 const importTestRuns = async (
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   _canonicalRepoIdByProject: Map<number, Set<number>>,
@@ -4405,7 +4412,7 @@ const importTestRuns = async (
 };
 
 const importTestRunCases = async (
-  prisma: DbClient,
+  prisma: PrismaClient,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
   caseIdMap: Map<number, number>,
@@ -4511,7 +4518,7 @@ const importTestRunCases = async (
 
     const mappedRecords: Array<{
       record: Record<string, unknown>;
-      data: TestRunCasesUncheckedCreateInput;
+      data: Prisma.TestRunCasesCreateManyInput;
       runTestSourceId: number;
     }> = [];
     let duplicateMappingsInBatch = 0;
@@ -4643,6 +4650,11 @@ const importTestRunCases = async (
       // Execute database operations in a transaction per batch
       const { createResult, persistedPairs } = await prisma.$transaction(
         async (tx) => {
+          // Phase 13 SAF-01 — bulk-import skip_audit hatch (see the repository
+          // case chunk above). Opts these testRunCases.createMany rows out of
+          // row-level CDC capture; the job-level captureAuditEvent retains the
+          // semantic event. SET LOCAL only inside a $transaction (Pitfall A).
+          await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
           const createResult = await tx.testRunCases.createMany({
             data: mappedRecords.map((item) => item.data),
             skipDuplicates: true,
@@ -4729,7 +4741,7 @@ const importTestRunCases = async (
 };
 
 const importTestRunResults = async (
-  prisma: DbClient,
+  prisma: PrismaClient,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
   testRunCaseIdMap: Map<number, number>,
@@ -4793,7 +4805,12 @@ const importTestRunResults = async (
       return;
     }
     await prisma.$transaction(
-      async (tx: TxClient) => {
+      async (tx: Prisma.TransactionClient) => {
+        // Phase 13 SAF-01 — bulk-import skip_audit hatch (see the repository
+        // case chunk above). Opts these testRunResults rows out of row-level
+        // CDC capture; the job-level captureAuditEvent retains the semantic
+        // event. SET LOCAL only inside a $transaction (Pitfall A).
+        await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
         for (const record of records) {
           const resultSourceId = toNumberValue(record.id);
           const runSourceId = toNumberValue(record.run_id);
@@ -4989,7 +5006,7 @@ const importTestRunResults = async (
 };
 
 const importTestRunStepResults = async (
-  prisma: DbClient,
+  prisma: PrismaClient,
   datasetRows: Map<string, any[]>,
   testRunResultIdMap: Map<number, number>,
   testRunCaseIdMap: Map<number, number>,
@@ -5320,7 +5337,7 @@ const importTestRunStepResults = async (
 };
 
 async function importStatuses(
-  tx: TxClient,
+  tx: Prisma.TransactionClient,
   configuration: TestmoMappingConfiguration
 ): Promise<EntitySummaryResult> {
   const summary: EntitySummaryResult = {
@@ -5524,7 +5541,7 @@ async function importStatuses(
 async function processImportMode(
   importJob: TestmoImportJob,
   jobId: string,
-  prisma: DbClient,
+  prisma: PrismaClient,
   tenantId?: string
 ) {
   if (FINAL_STATUSES.has(importJob.status)) {
@@ -5762,7 +5779,7 @@ async function processImportMode(
       // Calculate progress metrics
       const metrics = calculateProgressMetrics(context, plannedTotalCount);
 
-      const data: TestmoImportJobUpdateArgs["data"] = {
+      const data: Prisma.TestmoImportJobUpdateInput = {
         currentEntity: entity,
         processedCount: context.processedCount,
         totalCount: plannedTotalCount,
@@ -5839,7 +5856,7 @@ async function processImportMode(
 
   try {
     const withTransaction = async <T>(
-      operation: (tx: TxClient) => Promise<T>,
+      operation: (tx: Prisma.TransactionClient) => Promise<T>,
       options?: { timeoutMs?: number }
     ): Promise<T> => {
       return prisma.$transaction(operation, {
@@ -7829,20 +7846,20 @@ async function processorInner(job: Job<TestmoImportJobData>) {
 
     const schemaValue =
       dataset.schema !== undefined && dataset.schema !== null
-        ? (JSON.parse(JSON.stringify(dataset.schema)) as JsonValue)
-        : JsonNull;
+        ? (JSON.parse(JSON.stringify(dataset.schema)) as Prisma.InputJsonValue)
+        : Prisma.JsonNull;
 
     const sampleRowsValue =
       dataset.sampleRows.length > 0
         ? (JSON.parse(
             JSON.stringify(dataset.sampleRows)
-          ) as JsonValue)
-        : JsonNull;
+          ) as Prisma.InputJsonValue)
+        : Prisma.JsonNull;
 
     const allRowsValue =
       dataset.allRows && dataset.allRows.length > 0
-        ? (JSON.parse(JSON.stringify(dataset.allRows)) as JsonValue)
-        : JsonNull;
+        ? (JSON.parse(JSON.stringify(dataset.allRows)) as Prisma.InputJsonValue)
+        : Prisma.JsonNull;
 
     await prisma.testmoImportDataset.create({
       data: {
@@ -7919,9 +7936,9 @@ async function processorInner(job: Job<TestmoImportJobData>) {
         processedRows,
         durationMs: summary.meta.durationMs,
         analysisGeneratedAt: new Date(),
-        configuration: JsonNull,
-        options: JsonNull,
-        analysis: analysisPayload as JsonObject,
+        configuration: Prisma.JsonNull,
+        options: Prisma.JsonNull,
+        analysis: analysisPayload as Prisma.JsonObject,
         processedCount: 0,
         errorCount: 0,
         skippedCount: 0,
@@ -7929,8 +7946,8 @@ async function processorInner(job: Job<TestmoImportJobData>) {
         currentEntity: null,
         estimatedTimeRemaining: null,
         processingRate: null,
-        activityLog: JsonNull,
-        entityProgress: JsonNull,
+        activityLog: Prisma.JsonNull,
+        entityProgress: Prisma.JsonNull,
       },
     });
 

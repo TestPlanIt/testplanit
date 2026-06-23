@@ -88,14 +88,36 @@ const NAME_VIA_SPECIAL_RESOLUTION = new Set([
 ]);
 
 describe("RPC audit wiring guard", () => {
-  it("exposes a non-empty accessor list incl. the previously-broken types", () => {
-    expect(AUDITED_RPC_ENTITY_ACCESSORS.length).toBeGreaterThanOrEqual(15);
-    // The exact accessors whose plural/singular typo disabled audit.
-    expect(AUDITED_RPC_ENTITY_ACCESSORS).toContain("issue");
-    expect(AUDITED_RPC_ENTITY_ACCESSORS).toContain("sharedStepGroup");
-    // Regression: the dead plural forms must never come back.
-    expect(AUDITED_RPC_ENTITY_ACCESSORS).not.toContain("issues");
-    expect(AUDITED_RPC_ENTITY_ACCESSORS).not.toContain("sharedStepGroups");
+  it("contains exactly the semantic/security accessors (DATA accessors removed)", () => {
+    const SEMANTIC_ACCESSORS = [
+      "user",
+      "userProjectPermission",
+      "groupProjectPermission",
+      "ssoProvider",
+      "allowedEmailDomain",
+      "appConfig",
+      "apiToken",
+    ];
+    expect([...AUDITED_RPC_ENTITY_ACCESSORS].sort()).toEqual(
+      SEMANTIC_ACCESSORS.slice().sort()
+    );
+    // DATA accessors must no longer be present.
+    const DATA_ACCESSORS = [
+      "repositoryCases",
+      "testRuns",
+      "sessions",
+      "sharedStepGroup",
+      "issue",
+      "milestones",
+      "projects",
+      "userIntegrationAuth",
+      "testRunResults",
+      "comment",
+      "reviewRequest",
+    ];
+    for (const accessor of DATA_ACCESSORS) {
+      expect(AUDITED_RPC_ENTITY_ACCESSORS).not.toContain(accessor);
+    }
   });
 
   it.each([...AUDITED_RPC_ENTITY_ACCESSORS])(
