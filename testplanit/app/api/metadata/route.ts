@@ -1,4 +1,4 @@
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "~/server/db";
 
@@ -10,7 +10,7 @@ import { db } from "~/server/db";
 
 // Get enhanced Prisma client for anonymous access (public metadata only)
 function getAnonymousDb() {
-  return enhance(db, { user: undefined });
+  return getAuthDb(undefined);
 }
 
 export async function GET(req: NextRequest) {

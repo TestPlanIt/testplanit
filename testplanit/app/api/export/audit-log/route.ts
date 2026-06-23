@@ -13,7 +13,7 @@
 
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     if (!userRecord) {
       return NextResponse.json({ error: "User not found" }, { status: 401 });
     }
-    reader = enhance(prisma, { user: userRecord }) as unknown as typeof prisma;
+    reader = getAuthDb(userRecord) as unknown as typeof prisma;
 
     const accessible = await reader.projects.findFirst({
       where: { id: projectId!, isDeleted: false },

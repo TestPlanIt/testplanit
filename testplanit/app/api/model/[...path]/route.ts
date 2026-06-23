@@ -1,5 +1,7 @@
 import type { AuditAction, ReviewEntityType } from "~/zenstack/models";
 import { NextRequestHandler } from "@zenstackhq/server/next";
+import { RPCApiHandler } from "@zenstackhq/server/api";
+import { schema } from "~/zenstack/schema";
 import { AsyncLocalStorage } from "async_hooks";
 import { NextRequest, NextResponse } from "next/server";
 import { tryFastPathCreate } from "~/lib/access-fast-path";
@@ -354,7 +356,11 @@ async function getPrisma() {
   return enhanceWithAudit(user ?? undefined);
 }
 
-const baseHandler = NextRequestHandler({ getPrisma, useAppDir: true });
+const baseHandler = NextRequestHandler({
+  getClient: getPrisma,
+  useAppDir: true,
+  apiHandler: new RPCApiHandler({ schema }),
+});
 
 // Parse ZenStack path to extract model and operation
 function parseZenStackPath(

@@ -1,5 +1,5 @@
 import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       include: { role: { include: { rolePermissions: true } } },
     });
 
-    const enhancedDb = enhance(db, { user: user ?? undefined });
+    const enhancedDb = getAuthDb(user ?? undefined);
 
     // 5. Project access check (ZenStack policy handles permission)
     const project = await enhancedDb.projects.findFirst({

@@ -18,7 +18,7 @@
  * completes so clients know they're now live.
  */
 
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import IORedis from "ioredis";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -64,7 +64,7 @@ export async function GET(
   const reader =
     userRecord.access === "ADMIN"
       ? (prisma as unknown as typeof prisma)
-      : (enhance(prisma, { user: userRecord }) as unknown as typeof prisma);
+      : (getAuthDb(userRecord) as unknown as typeof prisma);
   const accessibleRun = await reader.testRuns.findFirst({
     where: { id: runId, isDeleted: false },
     select: { id: true },

@@ -1,5 +1,5 @@
 import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     });
 
     getCurrentTenantId();
-    const enhancedDb = enhance(db, { user: user ?? undefined });
+    const enhancedDb = getAuthDb(user ?? undefined);
 
     // 4. Load match via enhanced DB (ZenStack policy enforces read access)
     const match = await enhancedDb.stepSequenceMatch.findUnique({

@@ -1,4 +1,4 @@
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import { RepositoryCaseSource } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     // project-level policy alone) are enforced.
     const reader = isAdmin
       ? prisma
-      : (enhance(db, { user: user ?? undefined }) as unknown as typeof prisma);
+      : (getAuthDb(user ?? undefined) as unknown as typeof prisma);
 
     // Project access checks
     const sourceProject = await reader.projects.findFirst({
