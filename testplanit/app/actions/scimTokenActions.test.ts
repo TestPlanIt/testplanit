@@ -18,7 +18,7 @@ vi.mock("~/server/auth", () => ({
   getServerAuthSession: vi.fn(),
 }));
 
-import { ORMError } from "@zenstackhq/orm";
+import { ORMError, ORMErrorReason } from "@zenstackhq/orm";
 
 import { mintScimToken, revokeScimToken } from "~/lib/scim/tokens";
 import { probeScimToken } from "~/lib/scim/probe";
@@ -137,13 +137,16 @@ describe("scimTokenActions", () => {
       });
     });
 
-    it("surfaces a friendly 'name already exists' error on P2002 without audit", async () => {
+    it("surfaces a friendly 'name already exists' error on a unique-constraint violation without audit", async () => {
       mockAdminSession();
-      const p2002 = new ORMError(
-        "Unique constraint failed",
-        { code: "P2002", clientVersion: "test", meta: { target: ["name"] } }
+      const uniqueErr = Object.assign(
+        new ORMError(
+          ORMErrorReason.DB_QUERY_ERROR,
+          'duplicate key value violates unique constraint "scim_token_name_key"'
+        ),
+        { dbErrorCode: "23505" }
       );
-      vi.mocked(mintScimToken).mockRejectedValue(p2002);
+      vi.mocked(mintScimToken).mockRejectedValue(uniqueErr);
 
       const result = await mintScimTokenAction({
         name: "Existing name",

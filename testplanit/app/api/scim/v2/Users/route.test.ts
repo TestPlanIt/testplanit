@@ -1,4 +1,4 @@
-import { ORMError } from "@zenstackhq/orm";
+import { ORMError, ORMErrorReason } from "@zenstackhq/orm";
 import { NextRequest } from "next/server";
 import {
   afterAll,
@@ -201,11 +201,8 @@ describe("POST /api/scim/v2/Users", () => {
     expect(body.detail).toBe("userName already exists");
   });
 
-  it("returns 409 uniqueness when the service throws Prisma P2002 directly", async () => {
-    const p2002 = new ORMError(
-      "Unique constraint failed",
-      { code: "P2002", clientVersion: "test" }
-    );
+  it("returns 409 uniqueness when the service throws a unique-constraint violation directly", async () => {
+    const p2002 = Object.assign(new ORMError(ORMErrorReason.DB_QUERY_ERROR, 'duplicate key value violates unique constraint "uq"'), { dbErrorCode: "23505" });
     vi.mocked(createScimUser).mockRejectedValueOnce(p2002);
     const res = await POST(makeRequest({ body: validBody }));
     expect(res.status).toBe(409);
