@@ -1,3 +1,9 @@
+## [0.40.7](https://github.com/TestPlanIt/testplanit/compare/v0.40.6...v0.40.7) (2026-06-23)
+
+### Bug Fixes
+
+* **audit:** stop silent audit-capture loss — self-heal triggers on every boot ([#467](https://github.com/TestPlanIt/testplanit/issues/467)) ([d024ffc](https://github.com/TestPlanIt/testplanit/commit/d024ffcbf6a693e6ae5a2bebe756c247ca37b6eb))
+
 ## [0.40.6](https://github.com/TestPlanIt/testplanit/compare/v0.40.5...v0.40.6) (2026-06-23)
 
 ### Enhancements
