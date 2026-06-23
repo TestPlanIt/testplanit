@@ -156,26 +156,28 @@ describe("RPC audit wiring guard", () => {
   );
 });
 
-describe("lib/prisma.ts $extends hook keys are real Prisma models", () => {
-  const prismaSource = readFileSync(resolve(here, "../prisma.ts"), "utf8");
-  // The $extends query block keys each model hook at 6-space indentation, e.g.
-  //   "      repositoryCases: {". A key that is not a real accessor is dead code
-  // (the block is cast `as any`). Extract them and validate against the schema.
-  const hookKeys = [
-    ...prismaSource.matchAll(/^ {6}([a-zA-Z][a-zA-Z0-9_]*): \{$/gm),
+describe("sideEffectsPlugin model dispatch keys are real models", () => {
+  // The v3 side-effects (ES sync / webhook emit / business logic) moved from the
+  // lib/prisma.ts `$extends` block into the sideEffectsPlugin afterEntityMutation
+  // switch, which dispatches by PascalCase model name at 8-space indentation,
+  // e.g. `        case "RepositoryCases": {`. TypeScript already enforces these
+  // against GetModels<Schema>, but this stays as a cheap dead-branch guard.
+  const pluginSource = readFileSync(
+    resolve(here, "../zenstack-plugins/sideEffectsPlugin.ts"),
+    "utf8"
+  );
+  const hookModels = [
+    ...pluginSource.matchAll(/^ {8}case "([A-Z][a-zA-Z0-9_]*)":/gm),
   ].map((m) => m[1]);
 
-  it("extracts the expected hook block keys (sanity)", () => {
-    expect(hookKeys).toContain("repositoryCases");
-    expect(hookKeys).toContain("issue");
-    expect(hookKeys.length).toBeGreaterThanOrEqual(15);
-    // The dead plural/singular forms must never reappear as hook keys.
-    expect(hookKeys).not.toContain("sharedStepGroups");
-    expect(hookKeys).not.toContain("attachment");
+  it("dispatches on the expected models (sanity)", () => {
+    expect(hookModels).toContain("RepositoryCases");
+    expect(hookModels).toContain("Issue");
+    expect(hookModels.length).toBeGreaterThanOrEqual(10);
   });
 
-  it.each(hookKeys)("hook key %s maps to a real Prisma model", (key) => {
-    expect(validAccessors.has(key)).toBe(true);
+  it.each(hookModels)("hook model %s is a real Prisma model", (model) => {
+    expect(modelNames.has(model)).toBe(true);
   });
 });
 
