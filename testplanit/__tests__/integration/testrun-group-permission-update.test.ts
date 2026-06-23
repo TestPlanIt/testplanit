@@ -13,7 +13,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createRawDbClient } from "~/lib/rawDbClient";
 import { WorkflowScope } from "~/zenstack/models";
 
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
 const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
@@ -220,7 +220,7 @@ afterAll(async () => {
 describeIntegration("TestRun update via group-assigned SPECIFIC_ROLE", () => {
   it("allows a user whose only access is through a group with TestRuns.canAddEdit to update a TestRun created by someone else", async () => {
     if (!fixture) throw new Error("fixture not initialized");
-    const enhancedDb = enhance(prisma, { user: fixture.groupMember });
+    const enhancedDb = getAuthDb(fixture.groupMember);
 
     const updated = await enhancedDb.testRuns.update({
       where: { id: fixture.testRun.id },
@@ -232,7 +232,7 @@ describeIntegration("TestRun update via group-assigned SPECIFIC_ROLE", () => {
 
   it("denies an outsider with no group, no direct permission, and no global role on the project", async () => {
     if (!fixture) throw new Error("fixture not initialized");
-    const enhancedDb = enhance(prisma, { user: fixture.outsider });
+    const enhancedDb = getAuthDb(fixture.outsider);
 
     await expect(
       enhancedDb.testRuns.update({
