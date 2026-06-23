@@ -1,4 +1,6 @@
-import { ApplicationArea, Prisma } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import { JsonNull } from "@zenstackhq/orm";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -232,8 +234,8 @@ export const POST = withAuditContext(
               iterationId: iter.id,
               statusId: appliedStatusId,
               notes: parsed.data.reason
-                ? (parsed.data.reason as unknown as Prisma.InputJsonValue)
-                : Prisma.JsonNull,
+                ? (parsed.data.reason as unknown as JsonValue)
+                : JsonNull,
               evidence: {},
               executedById,
               attempt: 1,

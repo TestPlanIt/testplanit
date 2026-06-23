@@ -22,6 +22,6 @@
  * rather than opening its own.
  */
 import { AsyncLocalStorage } from "node:async_hooks";
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
-export const auditTxStore = new AsyncLocalStorage<Prisma.TransactionClient>();
+export const auditTxStore = new AsyncLocalStorage<TxClient>();

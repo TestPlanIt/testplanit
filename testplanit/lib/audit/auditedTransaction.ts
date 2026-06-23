@@ -17,7 +17,8 @@
  * `auditTxStore`, those hooks run on THIS transaction rather than opening their
  * own (see lib/audit/auditTxStore.ts).
  */
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
+import { TransactionIsolationLevel } from "@zenstackhq/orm";
 import type { Session } from "next-auth";
 import { enhance } from "@zenstackhq/runtime";
 import { prisma } from "~/lib/prisma";
@@ -28,11 +29,11 @@ import { auditTxStore } from "~/lib/audit/auditTxStore";
 type TransactionOptions = {
   maxWait?: number;
   timeout?: number;
-  isolationLevel?: Prisma.TransactionIsolationLevel;
+  isolationLevel?: TransactionIsolationLevel;
 };
 
 export async function auditedTransaction<T>(
-  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  fn: (tx: TxClient) => Promise<T>,
   options?: TransactionOptions
 ): Promise<T> {
   const payload = JSON.stringify(buildGucPayload());
@@ -53,7 +54,7 @@ export async function auditedTransaction<T>(
  */
 export async function auditedEnhancedTransaction<T>(
   session: Session | null,
-  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  fn: (tx: TxClient) => Promise<T>,
   options?: TransactionOptions
 ): Promise<T> {
   if (!session?.user?.id) {
@@ -74,7 +75,7 @@ export async function auditedEnhancedTransaction<T>(
     await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
     const etx = enhance(tx as never, {
       user,
-    }) as unknown as Prisma.TransactionClient;
+    }) as unknown as TxClient;
     return auditTxStore.run(tx, () => fn(etx));
   }, options);
 }

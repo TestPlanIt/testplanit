@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -302,13 +302,13 @@ export const PUT = withAuditContext(
             caseId,
             sharedDataSetId,
             pinnedVersionId,
-            mappingJson: mappingJson as unknown as Prisma.InputJsonValue,
+            mappingJson: mappingJson as unknown as JsonValue,
             createdById: session.user.id,
           },
           update: {
             sharedDataSetId,
             pinnedVersionId,
-            mappingJson: mappingJson as unknown as Prisma.InputJsonValue,
+            mappingJson: mappingJson as unknown as JsonValue,
           },
           select: {
             id: true,

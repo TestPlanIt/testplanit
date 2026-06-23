@@ -18,7 +18,8 @@
  * and sets the GUC before running any caller mutation.
  * ───────────────────────────────────────────────────────────────────────────
  */
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
+import { TransactionIsolationLevel } from "@zenstackhq/orm";
 import { getAuditContext } from "~/lib/auditContext";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 
@@ -97,7 +98,7 @@ export function buildGucPayload(
 }
 
 export async function injectAuditGuc(
-  tx: Prisma.TransactionClient
+  tx: TxClient
 ): Promise<void> {
   const payload = buildGucPayload();
   await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
@@ -118,14 +119,14 @@ export async function injectAuditGuc(
 export async function withAuditGuc<T>(
   client: { $transaction: Function },
   payload: GucPayload,
-  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  fn: (tx: TxClient) => Promise<T>,
   options?: {
     maxWait?: number;
     timeout?: number;
-    isolationLevel?: Prisma.TransactionIsolationLevel;
+    isolationLevel?: TransactionIsolationLevel;
   }
 ): Promise<T> {
-  return client.$transaction(async (tx: Prisma.TransactionClient) => {
+  return client.$transaction(async (tx: TxClient) => {
     await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
       payload
     )}, true)`;

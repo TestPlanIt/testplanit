@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
 
 import { SYSTEM_ACTOR_ID } from "../lib/auditContextConstants";
 import {
@@ -63,7 +63,7 @@ let stopRequested = false;
 let inflight: Promise<unknown> | null = null;
 
 export async function purgeOnce(
-  client: PrismaClient = prisma,
+  client: DbClient = prisma,
   tenantId?: string,
   budgetMs: number = TENANT_PURGE_BUDGET_MS
 ): Promise<PurgeResult> {

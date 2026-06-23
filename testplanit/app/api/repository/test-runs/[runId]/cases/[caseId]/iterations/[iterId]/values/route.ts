@@ -1,4 +1,5 @@
-import { ApplicationArea, Prisma } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -234,7 +235,7 @@ export const PATCH = withAuditContext(
         await tx.testRunCaseIteration.update({
           where: { id: iterationId },
           data: {
-            valuesJson: afterValues as unknown as Prisma.InputJsonValue,
+            valuesJson: afterValues as unknown as JsonValue,
           },
         });
         // PARAM-07: snapshot is immutable. Never touch

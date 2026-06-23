@@ -24,11 +24,8 @@ import {
   useUpdateIntegration,
 } from "@/lib/hooks/integration";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import {
-  Integration,
-  IntegrationAuthType,
-  IntegrationProvider,
-} from "@prisma/client";
+import { IntegrationAuthType, IntegrationProvider } from "~/zenstack/models";
+import type { Integration } from "~/zenstack/models";
 import { Activity, Loader2, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
