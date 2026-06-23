@@ -68,7 +68,7 @@ import AddTestRunModal from "./AddTestRunModal";
 import DuplicateTestRunDialog, {
   AddTestRunModalInitProps,
 } from "./DuplicateTestRunDialog";
-import TestRunDisplay from "./TestRunDisplay";
+import TestRunDisplay, { type TestRunsWithDetails } from "./TestRunDisplay";
 
 interface ProjectTestRunsProps {
   params: Promise<{ projectId: string }>;
@@ -1399,7 +1399,10 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                       </div>
                     ) : (
                       <TestRunDisplay
-                        testRuns={incompleteTestRuns || []}
+                        testRuns={
+                          (incompleteTestRuns ||
+                            []) as unknown as TestRunsWithDetails[]
+                        }
                         milestones={milestones || []}
                         onDuplicateTestRun={handleOpenDuplicateDialog}
                       />

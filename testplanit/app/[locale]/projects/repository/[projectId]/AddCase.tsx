@@ -339,8 +339,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
   const {
     data: sharedStepGroupsData,
     isLoading: isLoadingSharedStepGroups,
-  }: { data?: SharedStepGroupWithItems[]; isLoading?: boolean } =
-    useClientQueries(schema).sharedStepGroup.useFindMany(
+  } = useClientQueries(schema).sharedStepGroup.useFindMany(
       {
         where: {
           project: { id: Number(projectId) },

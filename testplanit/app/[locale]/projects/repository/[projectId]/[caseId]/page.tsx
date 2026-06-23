@@ -717,8 +717,7 @@ export default function TestCaseDetails() {
   const {
     data: sharedStepGroupsDataFromHook,
     isLoading: isLoadingSharedStepGroups,
-  }: { data?: SharedStepGroupWithItems[]; isLoading?: boolean } =
-    useClientQueries(schema).sharedStepGroup.useFindMany(
+  } = useClientQueries(schema).sharedStepGroup.useFindMany(
       {
         where: {
           project: { id: Number(projectId) },

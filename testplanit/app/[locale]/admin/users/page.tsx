@@ -404,7 +404,7 @@ function UserList() {
           <div className="mt-4 flex justify-between">
             <DataTable<ExtendedUser, unknown>
               columns={columns}
-              data={users || []}
+              data={(users ?? []) as unknown as ExtendedUser[]}
               onSortChange={handleSortChange}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
