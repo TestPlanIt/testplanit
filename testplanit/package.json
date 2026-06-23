@@ -9,6 +9,8 @@
     "generate:dev": "zenstack format && NODE_OPTIONS='--max-old-space-size=12288' zenstack generate && node scripts/fix-zenstack-symlink.js && dotenv -e .env.development -- prisma db push && dotenv -e .env.development -- tsx scripts/apply-triggers.ts",
     "triggers:apply": "tsx scripts/apply-triggers.ts",
     "triggers:apply:dev": "dotenv -e .env.development -- tsx scripts/apply-triggers.ts",
+    "db:push": "prisma db push --skip-generate && tsx scripts/apply-triggers.ts",
+    "db:push:dev": "dotenv -e .env.development -- prisma db push --skip-generate && dotenv -e .env.development -- tsx scripts/apply-triggers.ts",
     "build": "node scripts/generate-version.js && node scripts/fix-zenstack-symlink.js && pnpm build:workers && NODE_OPTIONS='--max-old-space-size=24576' next build",
     "build:workers": "node scripts/build-workers.js",
     "build:docs": "pnpm --filter docs build",

@@ -24,7 +24,7 @@
  * Run:  cd testplanit && tsx scripts/apply-triggers.ts
  * Safe to run repeatedly — every function/trigger is CREATE OR REPLACE / DROP IF EXISTS first.
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { Client } from "pg";
@@ -36,8 +36,37 @@ import {
 } from "./trigger-registry";
 import { ROLLUP_MAP } from "../lib/audit/rollupMap";
 
-const PRISMA_DIR = join(__dirname, "..", "prisma");
-const AUDIT_FN_SQL = join(PRISMA_DIR, "audit_row_change.sql");
+/**
+ * Locate prisma/audit_row_change.sql robustly. `__dirname` is correct under tsx (scripts/), but when
+ * this module is imported from the running app (the instrumentation boot hook) it may be bundled and
+ * `__dirname` repointed, so we also try the process working directory and the monorepo layout. First
+ * existing candidate wins; otherwise fall back to the original path so readFileSync raises a clear
+ * ENOENT.
+ */
+function resolveAuditFnSqlPath(): string {
+  const candidates = [
+    join(process.cwd(), "prisma", "audit_row_change.sql"),
+    join(__dirname, "..", "prisma", "audit_row_change.sql"),
+    join(process.cwd(), "testplanit", "prisma", "audit_row_change.sql"),
+  ];
+  return candidates.find((p) => existsSync(p)) ?? candidates[0];
+}
+
+/**
+ * Session-level advisory-lock key for the apply critical section. Concurrent runners — e.g. two app
+ * replicas hitting the instrumentation boot hook at once — serialize on this so their parallel
+ * DROP/CREATE TRIGGER churn cannot deadlock on the system catalogs. Auto-released on disconnect.
+ */
+const APPLY_TRIGGERS_LOCK_KEY = 798_113_001;
+
+export interface ApplyAuditTriggersOptions {
+  /** Connection string override. Defaults to DIRECT_DATABASE_URL ?? DATABASE_URL. */
+  connectionString?: string;
+  /** Serialize concurrent runners with a session advisory lock. Default true. */
+  lock?: boolean;
+  /** Log sink. Defaults to console.log; pass () => {} to silence. */
+  log?: (message: string) => void;
+}
 
 /** tpl_audit_<lowercased table, non-alphanumeric → _>. Must match the drift test transform. */
 function triggerNameFor(table: string): string {
@@ -117,24 +146,48 @@ CREATE UNIQUE INDEX IF NOT EXISTS audit_log_cdc_idempotency
   WHERE "operationId" IS NOT NULL;
 `;
 
-async function main() {
-  const usingDirect = Boolean(process.env.DIRECT_DATABASE_URL);
+/**
+ * Apply the full audit-trigger substrate to one database, idempotently. Importable so the app can
+ * self-install on boot (see lib/audit/ensureAuditTriggers + instrumentation.ts) in addition to the
+ * CLI / deploy-entrypoint paths — `prisma db push` silently drops these triggers, so they must be
+ * re-attached on every schema sync AND on every app start, regardless of how the app is launched.
+ */
+export async function applyAuditTriggers(
+  opts: ApplyAuditTriggersOptions = {}
+): Promise<void> {
+  const log = opts.log ?? ((m: string) => console.log(m));
+  const useLock = opts.lock ?? true;
   const connectionString =
-    process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
+    opts.connectionString ??
+    process.env.DIRECT_DATABASE_URL ??
+    process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error(
-      "Set DIRECT_DATABASE_URL (preferred — bypasses pgbouncer for DDL) or DATABASE_URL before running apply-triggers."
+      "Set DIRECT_DATABASE_URL (preferred — bypasses pgbouncer for DDL) or DATABASE_URL before applying audit triggers."
     );
   }
+  const usingDirect = Boolean(
+    opts.connectionString ?? process.env.DIRECT_DATABASE_URL
+  );
 
   // Fail fast before connecting if a prohibited table slipped into the registry.
   assertRegistrySafe();
 
-  const auditFnSql = readFileSync(AUDIT_FN_SQL, "utf8");
+  const auditFnSql = readFileSync(resolveAuditFnSqlPath(), "utf8");
 
   const client = new Client({ connectionString });
   await client.connect();
+  let locked = false;
   try {
+    // 0. Serialize concurrent appliers (multiple booting replicas) so their DROP/CREATE TRIGGER
+    //    churn can't deadlock. Session-level lock; auto-released on disconnect, unlocked in finally.
+    if (useLock) {
+      await client.query("SELECT pg_advisory_lock($1::bigint)", [
+        APPLY_TRIGGERS_LOCK_KEY,
+      ]);
+      locked = true;
+    }
+
     // 1. Generic trigger function (CREATE OR REPLACE — idempotent).
     await client.query(auditFnSql);
 
@@ -189,7 +242,7 @@ async function main() {
         await client.query(
           `DROP TRIGGER IF EXISTS ${t.trigger_name} ON "${t.event_object_table}";`
         );
-        console.log(
+        log(
           `[apply-triggers] dropped orphaned trigger ${t.trigger_name} on "${t.event_object_table}"`
         );
       }
@@ -271,18 +324,35 @@ async function main() {
       );
     }
 
-    console.log(
+    log(
       `[apply-triggers] applied audit_row_change() + ${TRIGGER_REGISTRY.length} tpl_audit_* triggers ` +
         `+ DataChangeLog append-only enforcement (tpl_dcl_no_delete/tpl_dcl_no_update) + GRANT/REVOKE defense-in-depth ` +
         `+ AuditLog CDC idempotency index (audit_log_cdc_idempotency) ` +
         `(idempotent, via ${usingDirect ? "DIRECT_DATABASE_URL" : "DATABASE_URL"}).`
     );
   } finally {
+    if (locked) {
+      try {
+        await client.query("SELECT pg_advisory_unlock($1::bigint)", [
+          APPLY_TRIGGERS_LOCK_KEY,
+        ]);
+      } catch {
+        // Best-effort: the session advisory lock is released on disconnect anyway.
+      }
+    }
     await client.end();
   }
 }
 
-main().catch((err) => {
-  console.error("[apply-triggers] apply failed:", err);
-  process.exit(1);
-});
+async function main() {
+  await applyAuditTriggers();
+}
+
+// CLI entry only — guarded so importing applyAuditTriggers() (e.g. the instrumentation boot hook)
+// never auto-runs the apply or calls process.exit. `require.main` is undefined when bundled.
+if (typeof require !== "undefined" && require.main === module) {
+  main().catch((err) => {
+    console.error("[apply-triggers] apply failed:", err);
+    process.exit(1);
+  });
+}
