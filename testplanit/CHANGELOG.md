@@ -1,3 +1,9 @@
+## [0.40.6](https://github.com/TestPlanIt/testplanit/compare/v0.40.5...v0.40.6) (2026-06-23)
+
+### Enhancements
+
+* **audit:** comprehensive audit logging with inline activity views ([#466](https://github.com/TestPlanIt/testplanit/issues/466)) ([4933e51](https://github.com/TestPlanIt/testplanit/commit/4933e515f0f4bf7380e6d0af7eeab3208f579403)), closes [#441](https://github.com/TestPlanIt/testplanit/issues/441)
+
 ## [0.40.5](https://github.com/TestPlanIt/testplanit/compare/v0.40.4...v0.40.5) (2026-06-23)
 
 ### Bug Fixes
