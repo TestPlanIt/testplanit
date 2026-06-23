@@ -101,7 +101,7 @@ describe("emitIterationResultRecorded — Wave 2 INT-04 contract", () => {
         undefined,
         { actorUserId: "user-1" }
       )
-    ).rejects.toThrow(/transaction/i);
+    ).rejects.toThrow(/TxClient/);
     expect(emitMock).not.toHaveBeenCalled();
   });
 

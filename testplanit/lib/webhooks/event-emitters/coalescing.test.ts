@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 
-import { ORMError } from "@zenstackhq/orm";
+import { ORMError, ORMErrorReason } from "@zenstackhq/orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  *
  * Per-event emit when the rolling-window count is below threshold; folds
  * subsequent events into a single deterministic-digest summary event when
- * the count is at/above. Race-safe via P2002 on the summary digest.
+ * the count is at/above. Race-safe via a unique violation on the summary digest.
  */
 
 vi.mock("~/lib/webhooks/events", () => ({
@@ -186,16 +186,19 @@ describe("emitWithCoalescing — at-threshold summary emit", () => {
     }
   });
 
-  it("silently skips emit when summary digest INSERT throws P2002 (concurrent emitter already fired)", async () => {
-    const p2002 = new ORMError(
-      "Unique constraint failed",
-      { code: "P2002", clientVersion: "test" }
+  it("silently skips emit when summary digest INSERT throws a unique violation (concurrent emitter already fired)", async () => {
+    const uniqueErr = Object.assign(
+      new ORMError(
+        ORMErrorReason.DB_QUERY_ERROR,
+        'duplicate key value violates unique constraint "x"'
+      ),
+      { dbErrorCode: "23505" }
     );
     const { tx } = buildFakeTx({
       configs: [{ id: "cfg_1" }],
       countByConfigId: { cfg_1: 50 },
       createImpl: async () => {
-        throw p2002;
+        throw uniqueErr;
       },
     });
     await expect(
@@ -209,10 +212,13 @@ describe("emitWithCoalescing — at-threshold summary emit", () => {
     expect(emitMock).not.toHaveBeenCalled();
   });
 
-  it("propagates non-P2002 errors from the dedup INSERT", async () => {
-    const otherErr = new ORMError(
-      "Foreign key constraint failed",
-      { code: "P2003", clientVersion: "test" }
+  it("propagates non-unique-violation errors from the dedup INSERT", async () => {
+    const otherErr = Object.assign(
+      new ORMError(
+        ORMErrorReason.DB_QUERY_ERROR,
+        'insert or update violates foreign key constraint "x_fk"'
+      ),
+      { dbErrorCode: "23503" }
     );
     const { tx } = buildFakeTx({
       configs: [{ id: "cfg_1" }],

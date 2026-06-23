@@ -137,7 +137,7 @@ describe("webhookEvents.emit", () => {
   it("throws a clear error when called with tx: undefined (runtime guard against `as any` bypass)", async () => {
     await expect(
       webhookEvents.emit("foo", {}, { projectId: 1, tx: undefined as any })
-    ).rejects.toThrow(/Prisma\.TransactionClient/);
+    ).rejects.toThrow(/TxClient/);
     expect(createSpy).not.toHaveBeenCalled();
   });
 });
