@@ -133,19 +133,31 @@ const mockUseFindManyReviewRequest = vi.fn();
 const mockUseCountReviewRequest = vi.fn();
 const mockUseFindUniqueUser = vi.fn();
 const mockUseFindManyProjects = vi.fn();
-vi.mock("~/lib/hooks", () => ({
-  useFindManyReviewRequest: (...args: unknown[]) =>
-    mockUseFindManyReviewRequest(...args),
-  useCountReviewRequest: (...args: unknown[]) =>
-    mockUseCountReviewRequest(...args),
-  useFindUniqueUser: (...args: unknown[]) => mockUseFindUniqueUser(...args),
-  useFindManyProjects: (...args: unknown[]) => mockUseFindManyProjects(...args),
-  // Side-fetches for entity name lookups — page calls these per visible row
-  // set; tests don't assert on entity names so empty data is fine.
-  useFindManyRepositoryCases: (...args: unknown[]) =>
-    mockUseFindManyRepositoryCases(...args),
-  useFindManyTestRuns: (...args: unknown[]) => mockUseFindManyTestRuns(...args),
-  useFindManySessions: (...args: unknown[]) => mockUseFindManySessions(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    reviewRequest: {
+      useFindMany: (...args: unknown[]) => mockUseFindManyReviewRequest(...args),
+      useCount: (...args: unknown[]) => mockUseCountReviewRequest(...args),
+    },
+    user: {
+      useFindUnique: (...args: unknown[]) => mockUseFindUniqueUser(...args),
+    },
+    projects: {
+      useFindMany: (...args: unknown[]) => mockUseFindManyProjects(...args),
+    },
+    // Side-fetches for entity name lookups — page calls these per visible row
+    // set; tests don't assert on entity names so empty data is fine.
+    repositoryCases: {
+      useFindMany: (...args: unknown[]) =>
+        mockUseFindManyRepositoryCases(...args),
+    },
+    testRuns: {
+      useFindMany: (...args: unknown[]) => mockUseFindManyTestRuns(...args),
+    },
+    sessions: {
+      useFindMany: (...args: unknown[]) => mockUseFindManySessions(...args),
+    },
+  }),
 }));
 
 // The inbox mounts `@/components/tables/DataTable` directly with a
