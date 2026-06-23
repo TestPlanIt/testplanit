@@ -1,4 +1,3 @@
-import { ORMError } from "@zenstackhq/orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
@@ -7,7 +6,7 @@ import {
   decideReviewRequest,
   type DecideOutcome,
 } from "~/lib/services/reviewDecisions";
-import { isIneligibleReviewerError } from "~/lib/utils/errors";
+import { isIneligibleReviewerError, isNotFoundError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 
 /**
@@ -101,10 +100,7 @@ export const POST = withAuditContext(
           { status: 409 }
         );
       }
-      if (
-        error instanceof ORMError &&
-        error.code === "P2025"
-      ) {
+      if (isNotFoundError(error)) {
         return NextResponse.json(
           { error: { code: "NOT_FOUND" } },
           { status: 404 }

@@ -74,9 +74,7 @@ function extractSampleIds(payload: unknown): string[] {
 }
 
 function isUniqueConstraint(err: unknown): boolean {
-  return (
-    err instanceof ORMError && err.code === "P2002"
-  );
+  return err instanceof ORMError && err.dbErrorCode === "23505";
 }
 
 export async function emitWithCoalescing(

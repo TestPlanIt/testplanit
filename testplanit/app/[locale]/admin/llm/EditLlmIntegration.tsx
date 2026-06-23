@@ -40,6 +40,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { JsonValue } from "@zenstackhq/orm";
+import { Decimal } from "decimal.js";
 import { AlertCircle, Info, Loader2, RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -511,9 +512,9 @@ export function EditLlmIntegration({
             defaultModel: values.defaultModel,
             maxTokensPerRequest: values.maxTokensPerRequest,
             maxRequestsPerMinute: values.maxRequestsPerMinute,
-            costPerInputToken: values.costPerInputToken,
-            costPerOutputToken: values.costPerOutputToken,
-            monthlyBudget: values.monthlyBudget || 0,
+            costPerInputToken: new Decimal(values.costPerInputToken),
+            costPerOutputToken: new Decimal(values.costPerOutputToken),
+            monthlyBudget: new Decimal(values.monthlyBudget || 0),
             billingPeriodStartDay: values.billingPeriodStartDay,
             defaultTemperature: values.defaultTemperature,
             defaultMaxTokens: values.defaultMaxTokens,

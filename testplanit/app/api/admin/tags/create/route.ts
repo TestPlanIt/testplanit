@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { ORMError } from "@zenstackhq/orm";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { prisma } from "~/lib/prisma";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { getServerAuthSession } from "~/server/auth";
@@ -101,10 +101,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // detection and create (DB constraint is case-sensitive, so two
     // requests with "Foo" and "foo" can both pass detection). Fall back
     // to the same detection logic.
-    if (
-      err instanceof ORMError &&
-      err.code === "P2002"
-    ) {
+    if (isUniqueConstraintError(err)) {
       const racing = await prisma.tags.findFirst({
         where: { name: { equals: body.name, mode: "insensitive" } },
         select: { id: true, name: true, isDeleted: true },

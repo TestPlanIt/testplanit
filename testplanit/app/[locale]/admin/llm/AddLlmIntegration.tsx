@@ -38,7 +38,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { JsonNull } from "@zenstackhq/orm";
+import { JsonNull, type JsonValue } from "@zenstackhq/orm";
+import { Decimal } from "decimal.js";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
@@ -514,7 +515,7 @@ export function AddLlmIntegration({
           apiKey: values.apiKey,
           endpoint: values.endpoint,
           baseUrl: values.endpoint,
-        },
+        } as JsonValue,
         settings: Object.keys(settings).length > 0 ? settings : JsonNull,
       };
 
@@ -534,9 +535,9 @@ export function AddLlmIntegration({
             maxTokensPerRequest: values.maxTokensPerRequest,
             maxRequestsPerMinute: values.maxRequestsPerMinute,
             maxRequestsPerDay: null,
-            costPerInputToken: values.costPerInputToken,
-            costPerOutputToken: values.costPerOutputToken,
-            monthlyBudget: values.monthlyBudget || 0,
+            costPerInputToken: new Decimal(values.costPerInputToken),
+            costPerOutputToken: new Decimal(values.costPerOutputToken),
+            monthlyBudget: new Decimal(values.monthlyBudget || 0),
             billingPeriodStartDay: values.billingPeriodStartDay,
             defaultTemperature: values.defaultTemperature,
             defaultMaxTokens: values.defaultMaxTokens,

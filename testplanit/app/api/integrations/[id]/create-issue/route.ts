@@ -1,5 +1,6 @@
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { prisma } from "@/lib/prisma";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -416,7 +417,7 @@ export async function POST(
           reporter: createdIssue.reporter,
           labels: createdIssue.labels,
           customFields: createdIssue.customFields,
-        },
+        } as JsonValue,
       };
 
       // Use upsert to handle cases where the issue already exists

@@ -1,6 +1,7 @@
 import { JiraAdapter } from "@/lib/integrations/adapters/JiraAdapter";
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { prisma } from "@/lib/prisma";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
             status: createdIssue.status,
             type: issueData.issueType,
             priority: createdIssue.priority,
-          },
+          } as JsonValue,
           integrationId: userIntegrationAuth.integrationId,
           projectId: validatedData.projectId || 0, // Project ID should be provided
           createdById: session.user.id,
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
             status: createdIssue.status,
             type: issueData.issueType,
             priority: createdIssue.priority,
-          },
+          } as JsonValue,
           // Also connect any new relationships
           ...(validatedData.testCaseId && {
             repositoryCases: {
