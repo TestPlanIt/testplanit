@@ -597,7 +597,7 @@ test.describe("Copy-Move API Endpoints", () => {
               q: JSON.stringify({
                 where: { projectId: targetProjectId, isDeleted: false },
                 orderBy: { createdAt: "desc" },
-                include: { tags: true },
+                include: { caseTags: { include: { tag: true } } },
               }),
             },
           }
@@ -614,8 +614,9 @@ test.describe("Copy-Move API Endpoints", () => {
         expect(caseData.data.name.length).toBeGreaterThan(0);
 
         // Tags should be copied
-        expect(Array.isArray(caseData.data.tags)).toBe(true);
-        expect(caseData.data.tags.length).toBeGreaterThan(0);
+        const copiedTags = caseData.data.caseTags.map((ct: any) => ct.tag);
+        expect(Array.isArray(copiedTags)).toBe(true);
+        expect(copiedTags.length).toBeGreaterThan(0);
 
         copiedCaseId = caseData.data.id;
       });

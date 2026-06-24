@@ -124,17 +124,12 @@ test.describe("Tags CRUD", () => {
     });
 
     await test.step("Link the tag to the repository case", async () => {
-      // Link tag to case
-      const linkResponse = await request.patch(
-        `${baseURL}/api/model/repositoryCases/update`,
+      // Link tag to case via explicit join model
+      const linkResponse = await request.post(
+        `${baseURL}/api/model/repositoryCaseTag/create`,
         {
           data: {
-            where: { id: caseId },
-            data: {
-              tags: {
-                connect: [{ id: tagId }],
-              },
-            },
+            data: { caseId, tagId },
           },
         }
       );
@@ -143,14 +138,14 @@ test.describe("Tags CRUD", () => {
     });
 
     await test.step("Read the case back and verify the tag is linked", async () => {
-      // Read back with include tags
+      // Read back with include caseTags
       const readResponse = await request.get(
         `${baseURL}/api/model/repositoryCases/findFirst`,
         {
           params: {
             q: JSON.stringify({
               where: { id: caseId },
-              include: { tags: true },
+              include: { caseTags: { include: { tag: true } } },
             }),
           },
         }
@@ -158,8 +153,11 @@ test.describe("Tags CRUD", () => {
 
       expect(readResponse.ok()).toBe(true);
       const result = await readResponse.json();
-      expect(result.data.tags).toBeDefined();
-      const linkedTag = result.data.tags.find(
+      expect(result.data.caseTags).toBeDefined();
+      const linkedTags = result.data.caseTags.map(
+        (ct: { tag: { id: number } }) => ct.tag
+      );
+      const linkedTag = linkedTags.find(
         (t: { id: number }) => t.id === tagId
       );
       expect(linkedTag).toBeDefined();
@@ -190,31 +188,21 @@ test.describe("Tags CRUD", () => {
     });
 
     await test.step("Link the tag to the repository case", async () => {
-      // Link tag to case first
-      await request.patch(`${baseURL}/api/model/repositoryCases/update`, {
+      // Link tag to case first via explicit join model
+      await request.post(`${baseURL}/api/model/repositoryCaseTag/create`, {
         data: {
-          where: { id: caseId },
-          data: {
-            tags: {
-              connect: [{ id: tagId }],
-            },
-          },
+          data: { caseId, tagId },
         },
       });
     });
 
     await test.step("Unlink the tag from the repository case", async () => {
-      // Unlink tag from case
-      const unlinkResponse = await request.patch(
-        `${baseURL}/api/model/repositoryCases/update`,
+      // Unlink tag from case via explicit join model
+      const unlinkResponse = await request.post(
+        `${baseURL}/api/model/repositoryCaseTag/deleteMany`,
         {
           data: {
-            where: { id: caseId },
-            data: {
-              tags: {
-                disconnect: [{ id: tagId }],
-              },
-            },
+            where: { caseId, tagId },
           },
         }
       );
@@ -230,7 +218,7 @@ test.describe("Tags CRUD", () => {
           params: {
             q: JSON.stringify({
               where: { id: caseId },
-              include: { tags: true },
+              include: { caseTags: { include: { tag: true } } },
             }),
           },
         }
@@ -238,7 +226,10 @@ test.describe("Tags CRUD", () => {
 
       expect(readResponse.ok()).toBe(true);
       const result = await readResponse.json();
-      const linkedTag = result.data.tags.find(
+      const linkedTags = result.data.caseTags.map(
+        (ct: { tag: { id: number } }) => ct.tag
+      );
+      const linkedTag = linkedTags.find(
         (t: { id: number }) => t.id === tagId
       );
       expect(linkedTag).toBeUndefined();
@@ -270,34 +261,32 @@ test.describe("Tags CRUD", () => {
       tagId3 = await api.createTag(`API Tag ${ts}-multi-3`);
     });
 
-    await test.step("Link all three tags to the case in a single update", async () => {
-      // Connect all 3 tags in a single update
-      const linkResponse = await request.patch(
-        `${baseURL}/api/model/repositoryCases/update`,
-        {
-          data: {
-            where: { id: caseId },
+    await test.step("Link all three tags to the case via the explicit join model", async () => {
+      // Connect all 3 tags via the explicit join model
+      const linkResponses = await Promise.all(
+        [tagId1, tagId2, tagId3].map((tagId) =>
+          request.post(`${baseURL}/api/model/repositoryCaseTag/create`, {
             data: {
-              tags: {
-                connect: [{ id: tagId1 }, { id: tagId2 }, { id: tagId3 }],
-              },
+              data: { caseId, tagId },
             },
-          },
-        }
+          })
+        )
       );
 
-      expect(linkResponse.ok()).toBe(true);
+      for (const linkResponse of linkResponses) {
+        expect(linkResponse.ok()).toBe(true);
+      }
     });
 
     await test.step("Read the case back and verify all three tags are linked", async () => {
-      // Read back with include tags
+      // Read back with include caseTags
       const readResponse = await request.get(
         `${baseURL}/api/model/repositoryCases/findFirst`,
         {
           params: {
             q: JSON.stringify({
               where: { id: caseId },
-              include: { tags: true },
+              include: { caseTags: { include: { tag: true } } },
             }),
           },
         }
@@ -305,11 +294,13 @@ test.describe("Tags CRUD", () => {
 
       expect(readResponse.ok()).toBe(true);
       const result = await readResponse.json();
-      expect(result.data.tags).toBeDefined();
-      expect(result.data.tags.length).toBeGreaterThanOrEqual(3);
+      expect(result.data.caseTags).toBeDefined();
+      expect(result.data.caseTags.length).toBeGreaterThanOrEqual(3);
 
       // Verify all three tag IDs are present
-      const tagIds = result.data.tags.map((t: { id: number }) => t.id);
+      const tagIds = result.data.caseTags.map(
+        (ct: { tag: { id: number } }) => ct.tag.id
+      );
       expect(tagIds).toContain(tagId1);
       expect(tagIds).toContain(tagId2);
       expect(tagIds).toContain(tagId3);

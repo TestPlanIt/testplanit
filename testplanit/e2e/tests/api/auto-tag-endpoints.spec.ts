@@ -391,7 +391,7 @@ test.describe("Auto-Tag API Endpoints", () => {
             params: {
               q: JSON.stringify({
                 where: { id: caseId! },
-                include: { tags: true },
+                include: { caseTags: { include: { tag: true } } },
               }),
             },
           }
@@ -399,8 +399,11 @@ test.describe("Auto-Tag API Endpoints", () => {
 
         expect(readResponse.status()).toBe(200);
         const caseData = await readResponse.json();
-        expect(caseData.data.tags).toBeDefined();
-        const linkedTag = caseData.data.tags.find(
+        expect(caseData.data.caseTags).toBeDefined();
+        const tags = caseData.data.caseTags.map(
+          (ct: { tag: { name: string } }) => ct.tag
+        );
+        const linkedTag = tags.find(
           (t: { name: string }) => t.name === tagName
         );
         expect(linkedTag).toBeDefined();

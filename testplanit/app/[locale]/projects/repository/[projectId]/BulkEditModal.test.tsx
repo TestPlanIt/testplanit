@@ -425,8 +425,8 @@ const mockCasesWithStepsField = [
         value: "Test login functionality",
       },
     ],
-    caseTags: [],
-    caseIssues: [],
+    tags: [],
+    issues: [],
     steps: [
       {
         id: 1,
@@ -551,8 +551,8 @@ const mockCasesWithStepsField = [
         value: "Test logout functionality",
       },
     ],
-    caseTags: [],
-    caseIssues: [],
+    tags: [],
+    issues: [],
     steps: [
       {
         id: 4,
@@ -710,8 +710,8 @@ const mockCasesWithTextFields = [
         value: "https://example.com/test-case-1",
       },
     ],
-    caseTags: [{ tag: mockTagsData[0] }],
-    caseIssues: [{ issue: mockIssuesData[0] }],
+    tags: [mockTagsData[0]],
+    issues: [mockIssuesData[0]],
     steps: [
       {
         id: 1,
@@ -862,8 +862,8 @@ const mockCasesWithTextFields = [
         value: "https://example.com/test-case-2",
       },
     ],
-    caseTags: [{ tag: mockTagsData[1] }, { tag: mockTagsData[2] }],
-    caseIssues: [],
+    tags: [mockTagsData[1], mockTagsData[2]],
+    issues: [],
     steps: [
       {
         id: 3,
@@ -1738,7 +1738,7 @@ describe("BulkEditModal", () => {
       // disconnect — previously it only ever sent connect, so links survived.
       const casesSharingIssue = mockCasesWithTextFields.map((c) => ({
         ...c,
-        caseIssues: [{ issue: mockIssuesData[0] }],
+        issues: [mockIssuesData[0]],
       }));
 
       global.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {

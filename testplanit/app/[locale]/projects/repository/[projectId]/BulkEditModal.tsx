@@ -32,7 +32,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ApplicationArea } from "~/zenstack/models";
-import type { CaseFields as PrismaCaseField } from "~/zenstack/models";
+import type {
+  CaseFields as PrismaCaseField,
+  Tags,
+  Issue,
+} from "~/zenstack/models";
 import type { RepositoryCasesGetPayload } from "~/zenstack/input";
 import { isEqual } from "lodash";
 import {
@@ -124,8 +128,6 @@ type BulkEditCase = RepositoryCasesGetPayload<{
         };
       };
     };
-    caseTags: { include: { tag: true } };
-    caseIssues: { include: { issue: true } };
     steps: {
       where: { isDeleted: false };
       orderBy: { order: "asc" };
@@ -135,7 +137,7 @@ type BulkEditCase = RepositoryCasesGetPayload<{
       orderBy: { createdAt: "desc" };
     };
   };
-}>;
+}> & { tags: Tags[]; issues: Issue[] };
 
 // Type for field definitions (standard or custom)
 interface FieldDefinition {
@@ -776,10 +778,10 @@ export function BulkEditModal({
       if (fieldKey === "automated") return caseItem.automated;
       if (fieldKey === "estimate") return caseItem.estimate;
       if (fieldKey === "tags")
-        return caseItem.caseTags.map((ct) => ct.tag.id).sort((a, b) => a - b);
+        return (caseItem.tags ?? []).map((t) => t.id).sort((a, b) => a - b);
       if (fieldKey === "issues")
-        return caseItem.caseIssues
-          .map((ci) => ci.issue.id)
+        return (caseItem.issues ?? [])
+          .map((i) => i.id)
           .sort((a, b) => a - b);
       if (fieldKey.startsWith("dynamic_")) {
         const fieldId = parseInt(fieldKey.split("_")[1], 10);
@@ -892,7 +894,7 @@ export function BulkEditModal({
         if (!Array.isArray(firstValue) || firstValue.length === 0) return "-";
         // Look up issue names from the already-loaded case data
         const allCaseIssues =
-          casesData?.flatMap((c) => c.caseIssues.map((ci) => ci.issue)) || [];
+          casesData?.flatMap((c) => c.issues ?? []) || [];
         return (
           firstValue
             .map((issueId) => allCaseIssues.find((i) => i.id === issueId)?.name)
@@ -1435,7 +1437,7 @@ export function BulkEditModal({
           // Get all unique tag IDs from all cases
           const allCurrentTagIds = new Set<number>();
           casesData.forEach((c) => {
-            c.caseTags.forEach((ct) => allCurrentTagIds.add(ct.tag.id));
+            (c.tags ?? []).forEach((t) => allCurrentTagIds.add(t.id));
           });
 
           const newTagIds = Array.isArray(newValue) ? newValue.map(Number) : [];
@@ -1464,7 +1466,7 @@ export function BulkEditModal({
           // Get all unique issue IDs from all cases
           const allCurrentIssueIds = new Set<number>();
           casesData.forEach((c) => {
-            c.caseIssues.forEach((ci) => allCurrentIssueIds.add(ci.issue.id));
+            (c.issues ?? []).forEach((i) => allCurrentIssueIds.add(i.id));
           });
 
           const newIssueIds = Array.isArray(newValue)

@@ -155,7 +155,7 @@ test.describe("Issue Operations - SIMPLE_URL Full Cycle", () => {
             q: JSON.stringify({
               where: {
                 id: issueId,
-                repositoryCases: { some: { id: testCaseId } },
+                caseIssues: { some: { caseId: testCaseId } },
               },
             }),
           },
@@ -206,7 +206,7 @@ test.describe("Issue Operations - SIMPLE_URL Full Cycle", () => {
             q: JSON.stringify({
               where: {
                 id: issueId,
-                repositoryCases: { some: { id: testCaseId } },
+                caseIssues: { some: { caseId: testCaseId } },
               },
             }),
           },

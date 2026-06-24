@@ -686,7 +686,7 @@ export class ApiHelper {
               template: { select: { id: true, templateName: true } },
               state: { select: { id: true, name: true } },
               creator: { select: { id: true, name: true } },
-              tags: { select: { id: true, name: true } },
+              caseTags: { select: { tag: { select: { id: true, name: true } } } },
             },
           }),
         },
@@ -708,8 +708,8 @@ export class ApiHelper {
     const newVersion = testcase.currentVersion + 1;
 
     // Extract tag names for the version snapshot
-    const tagNames = (testcase.tags || []).map(
-      (tag: { name: string }) => tag.name
+    const tagNames = (testcase.caseTags || []).map(
+      (ct: { tag: { name: string } }) => ct.tag.name
     );
 
     // Create the new version record
@@ -775,16 +775,11 @@ export class ApiHelper {
    * Add a tag to a test case via API
    */
   async addTagToTestCase(caseId: number, tagId: number): Promise<void> {
-    const response = await this.request.patch(
-      `${this.baseURL}/api/model/repositoryCases/update`,
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/repositoryCaseTag/create`,
       {
         data: {
-          where: { id: caseId },
-          data: {
-            tags: {
-              connect: [{ id: tagId }],
-            },
-          },
+          data: { caseId, tagId },
         },
       }
     );
@@ -900,16 +895,11 @@ export class ApiHelper {
    * Uses the many-to-many relationship between Issues and RepositoryCases
    */
   async linkIssueToTestCase(issueId: number, caseId: number): Promise<void> {
-    const response = await this.request.patch(
-      `${this.baseURL}/api/model/repositoryCases/update`,
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/repositoryCaseIssue/create`,
       {
         data: {
-          where: { id: caseId },
-          data: {
-            issues: {
-              connect: [{ id: issueId }],
-            },
-          },
+          data: { caseId, issueId },
         },
       }
     );

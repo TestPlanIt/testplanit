@@ -121,7 +121,11 @@ test.describe("Nested Includes Regression Tests", () => {
                     field: true,
                   },
                 },
-                tags: true,
+                caseTags: {
+                  include: {
+                    tag: true,
+                  },
+                },
                 template: true,
               },
             }),
@@ -147,12 +151,13 @@ test.describe("Nested Includes Regression Tests", () => {
       expect(Array.isArray(matchingCase.steps)).toBe(true);
       expect(matchingCase.steps.length).toBe(2);
 
-      // Assert tags are returned correctly
-      expect(Array.isArray(matchingCase.tags)).toBe(true);
-      expect(matchingCase.tags.length).toBe(1);
-      expect(matchingCase.tags[0].name).toContain(
-        `E2E NestedIncludes Tag ${ts}`
+      // Assert tags are returned correctly (explicit join: caseTags -> tag)
+      expect(Array.isArray(matchingCase.caseTags)).toBe(true);
+      const caseTags = matchingCase.caseTags.map(
+        (ct: { tag: { id: number; name: string } }) => ct.tag
       );
+      expect(caseTags.length).toBe(1);
+      expect(caseTags[0].name).toContain(`E2E NestedIncludes Tag ${ts}`);
 
       // Assert template is returned correctly (cases always have a template)
       expect(matchingCase.template).toBeTruthy();

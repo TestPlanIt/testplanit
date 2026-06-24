@@ -124,7 +124,7 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
       {
         projectId,
         isDeleted: false,
-        issues: { some: { isDeleted: false } },
+        caseIssues: { some: { issue: { isDeleted: false } } },
       }
     );
 
@@ -338,7 +338,9 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
         JSON.stringify({
           where: {
             isDeleted: false,
-            issues: { some: { id: ctx.issueId, isDeleted: false } },
+            caseIssues: {
+              some: { issue: { id: ctx.issueId, isDeleted: false } },
+            },
           },
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take: 26,
@@ -452,7 +454,9 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
           where: {
             projectId: ctx.projectId,
             isDeleted: false,
-            issues: { some: { id: issueId, isDeleted: false } },
+            caseIssues: {
+              some: { issue: { id: issueId, isDeleted: false } },
+            },
           },
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take: 26,
