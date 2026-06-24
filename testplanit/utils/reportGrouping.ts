@@ -106,11 +106,10 @@ function fieldValues(
       return single(folderId);
     }
     case "tagId": {
-      const caseTags: Array<{ tag: { id: number } }> =
+      const caseTags: Array<{ tagId: number }> =
         result.testRunCase?.repositoryCase?.caseTags ?? result.caseTags ?? [];
-      const tags: Array<{ id: number }> = caseTags.map((ct) => ct.tag);
-      if (tags.length === 0) return [{ key: "null", value: null }];
-      return tags.map((tag) => ({ key: String(tag.id), value: tag.id }));
+      if (caseTags.length === 0) return [{ key: "null", value: null }];
+      return caseTags.map((ct) => ({ key: String(ct.tagId), value: ct.tagId }));
     }
     default:
       // Scalar fields that live directly on the row (repository-stats:

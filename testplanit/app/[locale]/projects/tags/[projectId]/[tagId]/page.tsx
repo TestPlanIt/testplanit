@@ -136,7 +136,9 @@ function TagDetail() {
     typeof testRunsPageSize === "number" ? testRunsPageSize : 999999;
 
   // Fetch the tag metadata only
-  const { data: tags, isLoading: isLoadingTag } = useClientQueries(schema).tags.useFindMany(
+  const { data: tags, isLoading: isLoadingTag } = useClientQueries(
+    schema
+  ).tags.useFindMany(
     {
       where: { id: Number(tagId), isDeleted: false },
       select: { id: true, name: true },
@@ -166,6 +168,15 @@ function TagDetail() {
   const casesWhere = useMemo(() => {
     const where: any = { ...baseWhere };
 
+    // RepositoryCases now link tags via the explicit `caseTags` join model
+    // (sessions/test runs still use the implicit `tags` relation in baseWhere).
+    delete where.tags;
+    where.caseTags = {
+      some: {
+        tagId: Number(tagId),
+      },
+    };
+
     // Case type filter
     if (filters.caseType === "manual") {
       where.automated = false;
@@ -190,7 +201,7 @@ function TagDetail() {
       ];
     }
     return where;
-  }, [baseWhere, debouncedSearchString, filters.caseType]);
+  }, [baseWhere, debouncedSearchString, filters.caseType, tagId]);
 
   // Add search + filter for sessions
   const sessionsWhere = useMemo(() => {
@@ -227,27 +238,30 @@ function TagDetail() {
   }, [baseWhere, debouncedSearchString, filters.hideCompletedTestRuns]);
 
   // Fetch paginated test cases
-  const { data: repositoryCases, isLoading: isLoadingCases } =
-    useClientQueries(schema).repositoryCases.useFindMany(
-      {
-        where: casesWhere,
-        select: {
-          id: true,
-          name: true,
-          source: true,
-          automated: true,
-          hasParameters: true,
-        },
-        orderBy: { name: "asc" as const },
-        skip: (casesPage - 1) * effectiveCasesPageSize,
-        take: effectiveCasesPageSize,
+  const { data: repositoryCases, isLoading: isLoadingCases } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
+    {
+      where: casesWhere,
+      select: {
+        id: true,
+        name: true,
+        source: true,
+        automated: true,
+        hasParameters: true,
       },
-      {
-        enabled: !!tagId && status === "authenticated" && activeTab === "cases",
-      }
-    );
+      orderBy: { name: "asc" as const },
+      skip: (casesPage - 1) * effectiveCasesPageSize,
+      take: effectiveCasesPageSize,
+    },
+    {
+      enabled: !!tagId && status === "authenticated" && activeTab === "cases",
+    }
+  );
 
-  const { data: casesCount } = useClientQueries(schema).repositoryCases.useCount(
+  const { data: casesCount } = useClientQueries(
+    schema
+  ).repositoryCases.useCount(
     {
       where: casesWhere,
     },
@@ -257,7 +271,9 @@ function TagDetail() {
   );
 
   // Fetch paginated sessions
-  const { data: sessions, isLoading: isLoadingSessions } = useClientQueries(schema).sessions.useFindMany(
+  const { data: sessions, isLoading: isLoadingSessions } = useClientQueries(
+    schema
+  ).sessions.useFindMany(
     {
       where: sessionsWhere,
       select: {
@@ -285,7 +301,9 @@ function TagDetail() {
   );
 
   // Fetch paginated test runs
-  const { data: testRuns, isLoading: isLoadingTestRuns } = useClientQueries(schema).testRuns.useFindMany(
+  const { data: testRuns, isLoading: isLoadingTestRuns } = useClientQueries(
+    schema
+  ).testRuns.useFindMany(
     {
       where: testRunsWhere,
       select: {

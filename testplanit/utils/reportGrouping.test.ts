@@ -46,10 +46,10 @@ describe("reportGrouping", () => {
       const results = [
         {
           testRunCase: {
-            repositoryCase: { caseTags: [{ tag: { id: 10 } }, { tag: { id: 20 } }] },
+            repositoryCase: { caseTags: [{ tagId: 10 }, { tagId: 20 }] },
           },
         },
-        { testRunCase: { repositoryCase: { caseTags: [{ tag: { id: 10 } }] } } },
+        { testRunCase: { repositoryCase: { caseTags: [{ tagId: 10 }] } } },
         { testRunCase: { repositoryCase: { caseTags: [] } } },
       ];
       const rows = groupResults(results, ["tagId"], countAcc);
@@ -89,7 +89,7 @@ describe("reportGrouping", () => {
         {
           statusId: 1,
           testRunCase: {
-            repositoryCase: { caseTags: [{ tag: { id: 10 } }, { tag: { id: 20 } }] },
+            repositoryCase: { caseTags: [{ tagId: 10 }, { tagId: 20 }] },
           },
         },
       ];

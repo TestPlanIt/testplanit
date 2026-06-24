@@ -5,7 +5,6 @@ import { schema } from "~/zenstack/schema";
 import { WorkflowScope } from "~/zenstack/models";
 import { useMemo } from "react";
 
-
 import { useReviewFeatureEnabled } from "./useReviewFeatureEnabled";
 
 export type ReviewableEntityType = "CASE" | "RUN" | "SESSION";
@@ -84,11 +83,21 @@ export function useTransitionGateStatus(
   // Workflow states in the entity-type's scope. We fetch ALL (gated and
   // non-gated) so the hook can look up the target state's order from the
   // same list, then filter to gates client-side. One round trip total.
-  const { data: workflows, isLoading: workflowsLoading } = useClientQueries(schema).workflows.useFindMany(
+  //
+  // Scoped to the project's assigned workflows (`projects.some.projectId`):
+  // `requiresReview` is a GLOBAL column on Workflows, so an unscoped query
+  // pulls in gated states assigned to OTHER projects — which the gate then
+  // treats as un-approved blockers in the transition path even though they
+  // don't apply to this project. Mirrors the project-assignment filter the
+  // case page and bulk-edit modal use to populate the state Select.
+  const { data: workflows, isLoading: workflowsLoading } = useClientQueries(
+    schema
+  ).workflows.useFindMany(
     {
       where: {
         scope: SCOPE_BY_ENTITY_TYPE[entityType],
         isDeleted: false,
+        projects: { some: { projectId } },
       },
       select: {
         id: true,
@@ -236,11 +245,18 @@ export function useBulkTransitionGateStatus(
   const { enabled, isLoading: featureLoading } =
     useReviewFeatureEnabled(projectId);
 
-  const { data: workflows, isLoading: workflowsLoading } = useClientQueries(schema).workflows.useFindMany(
+  // Project-scoped (see the single-entity hook above): `requiresReview` is a
+  // global Workflows column, so an unscoped query would surface gated states
+  // belonging to other projects (or other concurrently-running tests) as
+  // un-approved blockers in the bulk transition path.
+  const { data: workflows, isLoading: workflowsLoading } = useClientQueries(
+    schema
+  ).workflows.useFindMany(
     {
       where: {
         scope: SCOPE_BY_ENTITY_TYPE[entityType],
         isDeleted: false,
+        projects: { some: { projectId } },
       },
       select: {
         id: true,
