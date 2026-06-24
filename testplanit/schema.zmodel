@@ -4384,11 +4384,15 @@ model ReviewRequest {
     @@index([entityType, entityId, status, createdAt(sort: Desc)])
     @@index([projectId, status])
 
-    // XOR: exactly one of assigneeUserId or assigneeRoleId must be set (SCHEMA-02, D-14).
+    // At most one of assigneeUserId or assigneeRoleId may be set (never both).
+    // NOTE: written as "not both" rather than strict XOR because v3 re-runs
+    // model-level @@validate against the partial UPDATE input (not the merged
+    // row); a strict "exactly one" rule rejects every status-only decision
+    // update, which omits the assignee. "At least one on create" is enforced
+    // in the app (createReviewRequest always supplies an assignee).
     @@validate(
-        (assigneeUserId != null && assigneeRoleId == null) ||
-        (assigneeUserId == null && assigneeRoleId != null),
-        "Exactly one of assigneeUserId or assigneeRoleId must be set"
+        assigneeUserId == null || assigneeRoleId == null,
+        "At most one of assigneeUserId or assigneeRoleId may be set"
     )
 
     // Self-approval prevention (T-1-01, D-15).
