@@ -1,3 +1,9 @@
+## [0.40.9](https://github.com/TestPlanIt/testplanit/compare/v0.40.8...v0.40.9) (2026-06-24)
+
+### Bug Fixes
+
+* **audit:** bundling-safe CLI guard in apply-triggers (stop worker crash-loop) ([#469](https://github.com/TestPlanIt/testplanit/issues/469)) ([474f188](https://github.com/TestPlanIt/testplanit/commit/474f1883029db5e812af84ddc886d9632342ca2a))
+
 ## [0.40.8](https://github.com/TestPlanIt/testplanit/compare/v0.40.7...v0.40.8) (2026-06-24)
 
 ### Bug Fixes
