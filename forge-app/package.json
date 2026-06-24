@@ -18,7 +18,7 @@
     "@forge/kvs": "^1.6.0",
     "@forge/react": "^11.14.0",
     "@forge/resolver": "^1.7.1",
-    "date-fns": "^4.1.0",
+    "date-fns": "^4.4.0",
     "lucide-react": "^0.577.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
@@ -28,16 +28,16 @@
     "@babel/preset-env": "^7.29.2",
     "@babel/preset-react": "^7.28.5",
     "@forge/cli": "^12.17.0",
-    "@tailwindcss/postcss": "^4.2.2",
+    "@tailwindcss/postcss": "^4.3.1",
     "babel-loader": "^10.1.1",
     "css-loader": "^7.1.4",
-    "html-webpack-plugin": "^5.6.6",
+    "html-webpack-plugin": "^5.6.7",
     "mini-css-extract-plugin": "^2.10.2",
-    "postcss": "~8.5.10",
+    "postcss": "^8.5.15",
     "postcss-loader": "^8.2.1",
     "style-loader": "^4.0.0",
-    "tailwindcss": "^4.2.2",
-    "webpack": "^5.105.4",
+    "tailwindcss": "^4.3.1",
+    "webpack": "^5.107.2",
     "webpack-cli": "^6.0.1"
   }
 }
