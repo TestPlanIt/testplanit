@@ -939,7 +939,9 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   }, [pathname]);
 
   // Get user preferences to check tour completion status
-  const { data: userPreferences } = useClientQueries(schema).userPreferences.useFindFirst(
+  const { data: userPreferences } = useClientQueries(
+    schema
+  ).userPreferences.useFindFirst(
     {
       where: { userId: session?.user?.id || "" },
     },
@@ -947,10 +949,13 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   );
 
   // Hook to update user preferences
-  const { mutateAsync: updateUserPreferences } = useClientQueries(schema).userPreferences.useUpdate();
+  const { mutateAsync: updateUserPreferences } =
+    useClientQueries(schema).userPreferences.useUpdate();
 
   // Find Demo Project (React Query deduplicates with Header's identical query)
-  const { data: allProjects = [] } = useClientQueries(schema).projects.useFindMany({
+  const { data: allProjects = [] } = useClientQueries(
+    schema
+  ).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: [{ isCompleted: "asc" as const }, { name: "asc" as const }],
     select: {
@@ -1016,7 +1021,7 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
   const handleTourComplete = useCallback(
     (tourName: string | null) => {
-      (window as any).__activeTour = null;
+      window.__activeTour = null;
       localStorage.setItem("hasSeenOnboardingTour", "true");
 
       // Clear active tour reference
@@ -1064,7 +1069,7 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
   const handleTourSkip = useCallback(
     async (_step: number, _tourName: string | null) => {
-      (window as any).__activeTour = null;
+      window.__activeTour = null;
       localStorage.setItem("hasSeenOnboardingTour", "true");
 
       // Update user preferences if user is logged in and preferences exist
@@ -1170,7 +1175,7 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
     (window as any).startOnboardingTour = (tourName: string = "mainTour") => {
       // Set active tour reference + global flag
       activeTourRef.current = tourName;
-      (window as any).__activeTour = tourName;
+      window.__activeTour = tourName;
 
       // Call the original Controller function
       originalStartTour(tourName);
@@ -1206,11 +1211,11 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
     if (
       (tourParam === "projectTour" || tourParam === "demoProjectTour") &&
       !manualParam &&
-      !(window as any).__activeTour
+      !window.__activeTour
     ) {
       // Set active tour reference for restoration
       activeTourRef.current = tourParam;
-      (window as any).__activeTour = tourParam;
+      window.__activeTour = tourParam;
 
       // Small delay to ensure DOM is ready
       setTimeout(() => {

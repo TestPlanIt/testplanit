@@ -39,6 +39,10 @@ type CaseJoinRels = {
   caseTags?: { tag: TagModel }[];
   caseIssues?: { issue: IssueModel }[];
 };
+
+// In multi-config run mode the mapped case carries a testRunCaseId; the list
+// item union doesn't declare it, so reads use this scoped assertion.
+type MaybeRunModeCase = { testRunCaseId?: number };
 import {
   RowSelectionState,
   Updater as TableUpdater,
@@ -703,7 +707,8 @@ export default function Cases({
         // Also dispatch a popstate event to simulate URL change
         // Skip this if a tour is active — popstate closes the NextStep overlay
         // Use global flag instead of URL params since navigation can strip them
-        const activeTour = (window as any).__activeTour;
+        const activeTour = (window as Window & { __activeTour?: unknown })
+          .__activeTour;
         if (!activeTour) {
           window.dispatchEvent(new PopStateEvent("popstate", { state: null }));
         }
@@ -2679,10 +2684,10 @@ export default function Cases({
         assigneeUser: { select: { name: true } },
         assigneeRole: { select: { name: true } },
       },
-    } as any,
+    },
     {
       enabled: reviewFeatureEnabled === true && visibleCaseIds.length > 0,
-    } as any
+    }
   );
   const pendingByCaseId = useMemo(() => {
     const map = new Map<number, PendingReviewSummary>();
@@ -2738,8 +2743,8 @@ export default function Cases({
     if (!isSelectionMode || !onSelectionChange || !cases) return;
     // In multi-config mode, use testRunCaseId for unique identification
     const currentPageIds = cases.map((tc) =>
-      isMultiConfigMode && (tc as any).testRunCaseId
-        ? (tc as any).testRunCaseId
+      isMultiConfigMode && (tc as MaybeRunModeCase).testRunCaseId
+        ? (tc as MaybeRunModeCase).testRunCaseId
         : tc.id
     );
     const allSelected = currentPageIds.every((id) =>
@@ -2777,8 +2782,8 @@ export default function Cases({
       // In multi-config mode, use testRunCaseId for unique identification
       // Otherwise use repositoryCaseId (caseItem.id)
       const caseKey =
-        isMultiConfigMode && (caseItem as any).testRunCaseId
-          ? (caseItem as any).testRunCaseId
+        isMultiConfigMode && (caseItem as MaybeRunModeCase).testRunCaseId
+          ? (caseItem as MaybeRunModeCase).testRunCaseId
           : caseItem.id;
 
       if (currentExternalSelection.includes(caseKey)) {
@@ -2818,8 +2823,9 @@ export default function Cases({
           const caseItem = MappedCases[rowIndex];
           if (!caseItem) return undefined;
           // Use testRunCaseId in multi-config mode for unique row identification
-          return isMultiConfigMode && (caseItem as any).testRunCaseId
-            ? (caseItem as any).testRunCaseId
+          return isMultiConfigMode &&
+            (caseItem as MaybeRunModeCase).testRunCaseId
+            ? (caseItem as MaybeRunModeCase).testRunCaseId
             : caseItem.id;
         })
         .filter((id): id is number => id !== undefined);
@@ -2827,8 +2833,8 @@ export default function Cases({
       if (isSelectionMode && onSelectionChange) {
         // Get IDs of all cases currently visible in the DataTable
         const allCaseIdsOnCurrentPage = MappedCases.map((tc) =>
-          isMultiConfigMode && (tc as any).testRunCaseId
-            ? (tc as any).testRunCaseId
+          isMultiConfigMode && (tc as MaybeRunModeCase).testRunCaseId
+            ? (tc as MaybeRunModeCase).testRunCaseId
             : tc.id
         );
 
@@ -2854,8 +2860,8 @@ export default function Cases({
       } else if (!isSelectionMode) {
         // Bulk edit mode - preserve selections from other pages
         const allCaseIdsOnCurrentPage = MappedCases.map((tc) =>
-          isMultiConfigMode && (tc as any).testRunCaseId
-            ? (tc as any).testRunCaseId
+          isMultiConfigMode && (tc as MaybeRunModeCase).testRunCaseId
+            ? (tc as MaybeRunModeCase).testRunCaseId
             : tc.id
         );
 
@@ -2921,8 +2927,8 @@ export default function Cases({
 
         // Convert to IDs for the global selection
         const getCaseId = (tc: (typeof MappedCases)[number]) =>
-          isMultiConfigMode && (tc as any).testRunCaseId
-            ? (tc as any).testRunCaseId
+          isMultiConfigMode && (tc as MaybeRunModeCase).testRunCaseId
+            ? (tc as MaybeRunModeCase).testRunCaseId
             : tc.id;
         const selectedIds = Object.entries(rangeSelection)
           .filter(([_, isSelected]) => isSelected)
@@ -3036,8 +3042,8 @@ export default function Cases({
           setRowSelection(newSelection);
 
           const getDeselectCaseId = (tc: (typeof MappedCases)[number]) =>
-            isMultiConfigMode && (tc as any).testRunCaseId
-              ? (tc as any).testRunCaseId
+            isMultiConfigMode && (tc as MaybeRunModeCase).testRunCaseId
+              ? (tc as MaybeRunModeCase).testRunCaseId
               : tc.id;
           const currentPageIds = selectableRows.map(getDeselectCaseId);
 
@@ -3063,8 +3069,8 @@ export default function Cases({
           setRowSelection(newSelection);
 
           const getSelectAllCaseId = (tc: (typeof MappedCases)[number]) =>
-            isMultiConfigMode && (tc as any).testRunCaseId
-              ? (tc as any).testRunCaseId
+            isMultiConfigMode && (tc as MaybeRunModeCase).testRunCaseId
+              ? (tc as MaybeRunModeCase).testRunCaseId
               : tc.id;
           const selectedIds = selectableRows.map(getSelectAllCaseId);
 
@@ -3465,7 +3471,8 @@ export default function Cases({
         const updates = reorderedCases
           .map((item, index) => {
             // testRunCaseId is only present in run mode
-            const testRunCaseIdToUpdate = (item as any).testRunCaseId;
+            const testRunCaseIdToUpdate = (item as MaybeRunModeCase)
+              .testRunCaseId;
             if (testRunCaseIdToUpdate && item.order !== index + 1) {
               return updateTestRunCases({
                 where: { id: testRunCaseIdToUpdate },
