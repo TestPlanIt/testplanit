@@ -59,7 +59,9 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const { data: folder } = useClientQueries(schema).repositoryFolders.useFindFirst(
+  const { data: folder } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindFirst(
     {
       where: {
         id: folderId,
@@ -75,7 +77,9 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     }
   );
 
-  const { data: maxOrder } = useClientQueries(schema).repositoryCases.useFindFirst(
+  const { data: maxOrder } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst(
     {
       where: {
         folderId: folderId,
@@ -276,13 +280,20 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   };
 
   async function onSubmit(data: FormValues) {
+    // The folder (and its repositoryId) load via a separate query that can
+    // still be pending when the user presses Enter. Bail until it resolves so
+    // we never submit repositoryId:0 — that 0 hits no Repositories row and the
+    // create fails with a foreign-key violation.
+    if (!folder?.repositoryId) {
+      return;
+    }
     setIsSubmitting(true);
     try {
       if (session) {
         const result = await importGeneratedTestCases({
           projectId: Number(projectId),
           projectName: folder?.project?.name || "",
-          repositoryId: folder?.repositoryId || 0,
+          repositoryId: folder.repositoryId,
           folderId,
           folderName: folder?.name || "",
           templateId: template?.id || 0,
