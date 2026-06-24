@@ -86,7 +86,6 @@
     "release:info": "echo 'Releases are now managed by release-please. Push to main and a Release PR will be created automatically.'"
   },
   "dependencies": {
-    "@atlaskit/editor-jira-transformer": "^15.0.1",
     "@auth/prisma-adapter": "^2.11.2",
     "@aws-sdk/client-s3": "^3.1075.0",
     "@aws-sdk/s3-request-presigner": "^3.1075.0",
@@ -226,7 +225,7 @@
     "humanize-duration": "^3.33.2",
     "iframe-resizer": "^5.5.9",
     "input-otp": "^1.4.2",
-    "ioredis": "5.10.1",
+    "ioredis": "5.11.1",
     "jsdom": "^29.1.1",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",
@@ -431,7 +430,7 @@
     "@babel/plugin-transform-modules-systemjs": ">=7.29.4",
     "nodemailer": ">=8.0.5",
     "cheerio": ">=1.0.0",
-    "ioredis": "5.10.1",
+    "ioredis": "5.11.1",
     "lodash": ">=4.18.0",
     "lodash-es": ">=4.18.0",
     "undici": "^7.24.7",
