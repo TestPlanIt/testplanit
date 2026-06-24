@@ -29,6 +29,16 @@ import type {
   TestRunCasesWhereInput,
 } from "~/zenstack/input";
 import { JsonNull } from "@zenstackhq/orm";
+import type { Tags as TagModel, Issue as IssueModel } from "~/zenstack/models";
+
+// The repositoryCases/testRunCases query results are typed loosely for the
+// list (the select's relations aren't fully reflected), but at runtime they
+// carry the explicit-join rows. This documents that known shape so the legacy
+// tags/issues arrays can be derived without an `as any`.
+type CaseJoinRels = {
+  caseTags?: { tag: TagModel }[];
+  caseIssues?: { issue: IssueModel }[];
+};
 import {
   RowSelectionState,
   Updater as TableUpdater,
@@ -2586,10 +2596,12 @@ export default function Cases({
         // Derive the legacy tags/issues array shape from the explicit join rows
         // so downstream consumers (columns, computeLastTestResult) are unaffected.
         tags:
-          (trc.repositoryCase as any).caseTags?.map((ct: any) => ct.tag) ?? [],
-        issues:
-          (trc.repositoryCase as any).caseIssues?.map((ci: any) => ci.issue) ??
+          (trc.repositoryCase as CaseJoinRels).caseTags?.map((ct) => ct.tag) ??
           [],
+        issues:
+          (trc.repositoryCase as CaseJoinRels).caseIssues?.map(
+            (ci) => ci.issue
+          ) ?? [],
         testRunCaseId: trc.id,
         testRunStatus: trc.status,
         testRunStatusId: trc.statusId,
@@ -2615,8 +2627,9 @@ export default function Cases({
         ...caseItem,
         // Derive the legacy tags/issues array shape from the explicit join rows
         // so downstream consumers (columns, computeLastTestResult) are unaffected.
-        tags: (caseItem as any).caseTags?.map((ct: any) => ct.tag) ?? [],
-        issues: (caseItem as any).caseIssues?.map((ci: any) => ci.issue) ?? [],
+        tags: (caseItem as CaseJoinRels).caseTags?.map((ct) => ct.tag) ?? [],
+        issues:
+          (caseItem as CaseJoinRels).caseIssues?.map((ci) => ci.issue) ?? [],
         lastTestResult: computeLastTestResult(caseItem),
       }));
     }

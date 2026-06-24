@@ -27,7 +27,7 @@ export async function POST(
     const db = await getEnhancedDb(session);
 
     // Verify the issue exists and user has access
-    const issue = await (db as any).issue.findFirst({
+    const issue = await db.issue.findFirst({
       where: {
         id: issueId,
       },
@@ -46,7 +46,7 @@ export async function POST(
     if (entityType === "testCase") {
       // RepositoryCases <-> Issue is an explicit join model (RepositoryCaseIssue).
       // Create the join row instead of connecting through an implicit relation.
-      await (db as any).repositoryCaseIssue.create({
+      await db.repositoryCaseIssue.create({
         data: { issueId, caseId: parseInt(entityId) },
       });
     } else {
@@ -73,13 +73,13 @@ export async function POST(
           );
       }
 
-      await (db as any).issue.update({
+      await db.issue.update({
         where: { id: issueId },
         data: updateData,
       });
     }
 
-    const updatedIssue = await (db as any).issue.findUnique({
+    const updatedIssue = await db.issue.findUnique({
       where: { id: issueId },
       include: {
         createdBy: {
