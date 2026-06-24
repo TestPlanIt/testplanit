@@ -1,3 +1,9 @@
+## [0.40.8](https://github.com/TestPlanIt/testplanit/compare/v0.40.7...v0.40.8) (2026-06-24)
+
+### Bug Fixes
+
+* **seed:** preserve admin-selected defaults across re-seeds ([#468](https://github.com/TestPlanIt/testplanit/issues/468)) ([ead6c69](https://github.com/TestPlanIt/testplanit/commit/ead6c6960ac5af3afc69c4eef866bb09b3d219ad))
+
 ## [0.40.7](https://github.com/TestPlanIt/testplanit/compare/v0.40.6...v0.40.7) (2026-06-23)
 
 ### Bug Fixes
