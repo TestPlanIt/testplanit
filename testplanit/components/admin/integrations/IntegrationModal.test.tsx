@@ -27,21 +27,6 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
-// Mock @prisma/client enums
-vi.mock("@prisma/client", () => ({
-  IntegrationProvider: {
-    JIRA: "JIRA",
-    GITHUB: "GITHUB",
-    AZURE_DEVOPS: "AZURE_DEVOPS",
-    SIMPLE_URL: "SIMPLE_URL",
-  },
-  IntegrationAuthType: {
-    API_KEY: "API_KEY",
-    OAUTH2: "OAUTH2",
-    PERSONAL_ACCESS_TOKEN: "PERSONAL_ACCESS_TOKEN",
-  },
-}));
-
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key.split(".").pop() ?? key,
 }));

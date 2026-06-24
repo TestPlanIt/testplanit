@@ -10,10 +10,6 @@ const { mockPrisma } = vi.hoisted(() => ({
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 
-vi.mock("@prisma/client", () => ({
-  WorkflowScope: { CASES: "CASES", RUNS: "RUNS" },
-}));
-
 import {
   listGenerationProjects,
   loadTemplateData,

@@ -48,7 +48,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Webhook endpoint health — auto-disable + manual re-enable (consolidates D-36 #4 + #5)", () => {
   let projectId: number;
   let stub: StubServerHandle;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let webhookConfigId: string;
 
   test.beforeAll(async ({ api }) => {
@@ -323,7 +323,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
 });
 
 async function waitForDelivery(
-  prisma: PrismaClient,
+  prisma: ReturnType<typeof createRawDbClient>,
   args: {
     where: Record<string, unknown>;
     timeoutMs: number;
@@ -352,7 +352,7 @@ async function waitForDelivery(
 }
 
 async function waitForAudit(
-  prisma: PrismaClient,
+  prisma: ReturnType<typeof createRawDbClient>,
   args: {
     where: Record<string, unknown>;
     predicate: (row: { metadata: unknown }) => boolean;

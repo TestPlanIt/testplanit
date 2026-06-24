@@ -21,7 +21,7 @@ test.describe.configure({ mode: "serial" });
  * Test mode: serial — tests share resolved seed-context state.
  *
  * Skips: when seed lacks the required entity, tests log a `console.warn(...)`
- * skip-reason and continue. The seed file (testplanit/prisma/seed.ts) does
+ * skip-reason and continue. The seed file (testplanit/db/seed.ts) does
  * NOT currently create Sessions/SessionResults/Issues, so most of these tests
  * will skip against a pristine seed. Framework remains in place for when seed
  * grows or fixture data is added via the host UI.

@@ -34,7 +34,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook deliveries tab empty state — copy + Reset filters CTA (E-06)", () => {
   let projectId: number;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
 
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;

@@ -57,8 +57,8 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
-      - name: Generate Prisma client
-        run: pnpm --filter "testplanit" exec prisma generate
+      - name: Generate ZenStack client
+        run: pnpm --filter "testplanit" exec zenstack generate --schema schema.zmodel -o zenstack
 
       - name: Run package tests
         run: |

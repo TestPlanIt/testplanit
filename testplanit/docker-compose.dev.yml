@@ -72,7 +72,7 @@ services:
       [
         "sh",
         "-c",
-        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh postgres 5432 -- echo 'DB ready, pushing schema...' && pnpm prisma db push --accept-data-loss && echo 'Schema pushed, seeding...' && pnpm tsx prisma/seed.ts && echo 'DB initialized and seeded.'",
+        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh postgres 5432 -- echo 'DB ready, pushing schema...' && npx zenstack db push --schema schema.zmodel --accept-data-loss --no-version-check && echo 'Schema pushed, seeding...' && pnpm tsx db/seed.ts && echo 'DB initialized and seeded.'",
       ]
     networks:
       - testplanit-net

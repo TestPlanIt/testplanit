@@ -209,7 +209,7 @@ export async function setSystemReviewFeatureEnabled(
 }
 
 /**
- * Seeded workflow names per scope (mirrors prisma/seed.ts). Filtering the
+ * Seeded workflow names per scope (mirrors db/seed.ts). Filtering the
  * picker to these names ensures `ids[0]` / `ids[1]` always reference the
  * known-good seeded states with stable `order` relationships — without it,
  * a parallel test that creates its own workflow (or mutates an existing

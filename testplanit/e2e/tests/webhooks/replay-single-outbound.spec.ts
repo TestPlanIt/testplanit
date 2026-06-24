@@ -33,7 +33,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Webhook delivery replay — single outbound", () => {
   let projectId: number;
   let stub: StubServerHandle;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let originalDeliveryId: string;
   let webhookConfigId: string;
 
@@ -196,7 +196,7 @@ test.describe("Webhook delivery replay — single outbound", () => {
  * arbitrary `setTimeout` waits that flake under load.
  */
 async function waitForDelivery(
-  prisma: PrismaClient,
+  prisma: ReturnType<typeof createRawDbClient>,
   args: {
     projectId: number;
     where: Record<string, unknown>;

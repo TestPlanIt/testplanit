@@ -44,7 +44,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook DISABLED diagnosis surface — badge + tooltip + activity + Re-enable button (M-03)", () => {
   let projectId: number;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let configId: string;
   const failureDeliveryIds: string[] = [];
   let endpointDisabledDeliveryId: string;

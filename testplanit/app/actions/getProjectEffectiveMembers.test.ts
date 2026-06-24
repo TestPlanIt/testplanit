@@ -14,16 +14,6 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
-// Mock ProjectAccessType enum from @prisma/client
-vi.mock("@prisma/client", () => ({
-  ProjectAccessType: {
-    NO_ACCESS: "NO_ACCESS",
-    GLOBAL_ROLE: "GLOBAL_ROLE",
-    SPECIFIC_ROLE: "SPECIFIC_ROLE",
-  },
-}));
-
-// Import after mocking
 import { getProjectEffectiveMembers } from "./getProjectEffectiveMembers";
 
 describe("getProjectEffectiveMembers", () => {

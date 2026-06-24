@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 /**
  * Parameter type enum mirroring the ZenStack ParameterType enum on
  * TestCaseParameter (schema.zmodel). Kept in sync manually because the
- * Prisma-generated enum lives in @prisma/client and importing it here
+ * generated enum lives in ~/zenstack/models and importing it here
  * would pull a heavy module into Edge-runtime callers.
  */
 export const parameterTypeSchema = z.enum([

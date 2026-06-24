@@ -1,5 +1,5 @@
 -- Production generic row-change trigger function (Phase 13 — promoted from the
--- proven Phase 12 spike at prisma/spike/audit_row_change.sql).
+-- proven Phase 12 spike at db/spike/audit_row_change.sql).
 --
 -- Applied idempotently by scripts/apply-triggers.ts (13-03), which also attaches
 -- one AFTER INSERT OR UPDATE OR DELETE trigger per allowlisted table. Every such

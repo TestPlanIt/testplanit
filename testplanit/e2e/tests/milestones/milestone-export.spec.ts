@@ -15,7 +15,7 @@ import { getProjectWorkflowIds } from "../reviews/helpers";
  * eligibility/gate logic (covered by the reviews specs).
  */
 test.describe("Milestone Export API", () => {
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
 
   test.beforeAll(() => {
     prisma = createRawDbClient();

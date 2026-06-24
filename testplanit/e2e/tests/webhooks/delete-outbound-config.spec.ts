@@ -44,7 +44,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook outbound config delete — card disappears + no future fan-out (M-04)", () => {
   let projectId: number;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let configId: string;
   const preDeleteDeliveryIds: string[] = [];
 

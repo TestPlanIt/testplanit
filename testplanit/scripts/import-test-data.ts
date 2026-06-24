@@ -30,7 +30,7 @@ class CSVTestDataImporter {
 
     if (!userRole) {
       throw new Error(
-        "Default user role not found. Please run: pnpm prisma db seed"
+        "Default user role not found. Please run: pnpm tsx db/seed.ts"
       );
     }
 

@@ -3,17 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "~/test/test-utils";
 
-// Mock @prisma/client
-vi.mock("@prisma/client", () => ({
-  SsoProviderType: {
-    GOOGLE: "GOOGLE",
-    APPLE: "APPLE",
-    MICROSOFT: "MICROSOFT",
-    SAML: "SAML",
-    MAGIC_LINK: "MAGIC_LINK",
-  },
-}));
-
 // Mock next/image
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: any) => <img alt={alt} {...props} />,

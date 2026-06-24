@@ -10,7 +10,7 @@
  *             registry, never a hardcoded number).
  *   - CAP-02: a second apply is idempotent — the count is unchanged and the script exits 0.
  *   - CAP-04 (drift detection): dropping one trigger makes the live count fall below the
- *             registry length, proving the drift assertion would FAIL if a `prisma db push`
+ *             registry length, proving the drift assertion would FAIL if a `zenstack db push`
  *             silently removed a trigger (Pitfall E); a re-apply then restores it.
  *
  * Gating: copies the Phase 12 spike pattern EXACTLY — skips cleanly (no DB connection, no apply)
@@ -95,7 +95,7 @@ describeDb(
       applyTriggers();
       expect(await liveTriggerCount()).toBe(TRIGGER_REGISTRY.length);
 
-      // Simulate a `prisma db push` that silently dropped a trigger (Pitfall E). Identifier comes
+      // Simulate a `zenstack db push` that silently dropped a trigger (Pitfall E). Identifier comes
       // only from the static in-repo registry — no user input in this DDL.
       const dropped = TRIGGER_REGISTRY[0];
       const droppedTrigger = triggerNameFor(dropped.table);

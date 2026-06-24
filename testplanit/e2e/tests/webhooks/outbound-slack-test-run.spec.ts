@@ -34,7 +34,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo target)", () => {
   let projectId: number;
   let stub: StubServerHandle;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
 
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E Outbound Webhook ${uniqueId}`);
@@ -195,7 +195,7 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
  * identifies the dispatched-event audit row for this delivery.
  */
 async function waitForAuditRow(
-  prisma: PrismaClient,
+  prisma: ReturnType<typeof createRawDbClient>,
   args: {
     where: Record<string, unknown>;
     timeoutMs: number;

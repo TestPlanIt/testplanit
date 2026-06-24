@@ -12,7 +12,7 @@ This plan covers two related milestone features:
 
 ### Database Schema Changes
 
-Add a new field to the `Milestones` model in `prisma/schema.prisma`:
+Add a new field to the `Milestones` model in `schema.zmodel`:
 
 ```prisma
 model Milestones {
@@ -146,7 +146,7 @@ Add translations for all 3 locales:
 ## Implementation Steps
 
 ### Step 1: Database Schema Changes
-1. Add both new fields to `Milestones` model in `prisma/schema.prisma`
+1. Add both new fields to `Milestones` model in `schema.zmodel`
 2. Add `MILESTONE_DUE_REMINDER` to `NotificationType` enum
 3. Run `npx zenstack generate` to regenerate ZenStack hooks
 4. Create and run database migration
@@ -195,7 +195,7 @@ Add translations for all 3 locales:
 
 | File | Changes |
 |------|---------|
-| `prisma/schema.prisma` | Add `automaticCompletion`, `notifyDaysBefore` fields and `MILESTONE_DUE_REMINDER` enum |
+| `schema.zmodel` | Add `automaticCompletion`, `notifyDaysBefore` fields and `MILESTONE_DUE_REMINDER` enum |
 | `app/[locale]/projects/milestones/[projectId]/AddMilestoneModal.tsx` | Add form fields for both features |
 | `app/[locale]/projects/milestones/[projectId]/[milestoneId]/MilestoneFormControls.tsx` | Add form fields for both features |
 | `app/[locale]/admin/milestones/MilestoneFormDialog.tsx` | Add form fields for both features |

@@ -258,11 +258,11 @@ If you're using an external PostgreSQL database for the first time, initialize t
 # Run db push and seed using a temporary container
 docker compose -f docker-compose.prod.yml run --rm \
   -e DATABASE_URL="your-external-database-url" \
-  prod sh -c "pnpm prisma db push --accept-data-loss && pnpm tsx prisma/seed.ts"
+  prod sh -c "pnpm exec zenstack db push --schema schema.zmodel --accept-data-loss && pnpm tsx db/seed.ts"
 ```
 
 If your database sits behind a transaction-mode pooler (e.g. pgbouncer), point this
-command at a connection that bypasses the pooler — `prisma db push` and the index
+command at a connection that bypasses the pooler — `zenstack db push` and the index
 setup require a real (non-pooled) session. See [Configure connection pooling](#best-practices)
 below for the matching `DIRECT_DATABASE_URL` setup the running container uses.
 
@@ -333,8 +333,7 @@ Error: Table already exists
 If you're migrating an existing database:
 
 1. Remove `--accept-data-loss` from the `db-init-prod` command
-2. Use `pnpm prisma db push` without the flag to preserve data
-3. Or use `pnpm prisma migrate deploy` if using migrations
+2. Use `pnpm exec zenstack db push --schema schema.zmodel` without the flag to preserve data
 
 ### Issue 5: Different User Created Tables
 
@@ -389,7 +388,7 @@ To run multiple TestPlanIt instances against different databases:
      ```
 
    - Set `DIRECT_DATABASE_URL` to a connection that **bypasses the pooler** (straight
-     to Postgres). Startup schema sync (`prisma db push`) and extension/index setup
+     to Postgres). Startup schema sync (`zenstack db push`) and extension/index setup
      (`CREATE INDEX CONCURRENTLY`) use it, since those need a real session. Leave it
      unset when no pooler is used — it falls back to `DATABASE_URL`.
 

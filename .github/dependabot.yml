@@ -9,10 +9,6 @@ updates:
     schedule:
       interval: "weekly"
     ignore:
-      - dependency-name: "@prisma/client"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "prisma"
-        update-types: ["version-update:semver-major"]
       - dependency-name: "@zenstackhq/server"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@zenstackhq/tanstack-query"

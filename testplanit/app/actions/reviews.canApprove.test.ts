@@ -238,7 +238,7 @@ beforeAll(async () => {
     select: { id: true },
   });
   if (workflows.length < 2) {
-    throw new Error("Need >= 2 workflows seeded; run pnpm prisma db seed");
+    throw new Error("Need >= 2 workflows seeded; run pnpm tsx db/seed.ts");
   }
   fromStateId = workflows[0].id;
   toStateId = workflows[1].id;

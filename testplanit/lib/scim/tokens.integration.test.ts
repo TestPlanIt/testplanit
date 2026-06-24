@@ -16,8 +16,8 @@
  *      seed regressed.
  *
  * Prerequisite: the SCIM-token schema must be applied to the target
- * database (`pnpm generate` runs `prisma db push` which materializes the
- * `ScimToken` table and the `IdpName` enum, AND `prisma/seed.ts` upserts the
+ * database (`pnpm generate` runs `zenstack db push` which materializes the
+ * `ScimToken` table and the `IdpName` enum, AND `db/seed.ts` upserts the
  * `__scim__` User row). The test runner picks this file up via the
  * `*.integration.test.ts` glob in `vitest.config.mts`.
  *
@@ -82,7 +82,7 @@ describeIntegration("SCIM tokens service (live DB)", () => {
     if (!admin) {
       throw new Error(
         "Integration test prerequisite failed: no non-SCIM User row found. " +
-          "Run `pnpm generate` (which runs prisma/seed.ts) before this test."
+          "Run `pnpm generate` (which runs db/seed.ts) before this test."
       );
     }
     adminUserId = admin.id;

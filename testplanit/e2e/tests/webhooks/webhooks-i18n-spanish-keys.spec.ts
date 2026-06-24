@@ -126,7 +126,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook admin surface — Spanish (es-ES) i18n key coverage (F-01)", () => {
   let projectId: number;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let outboundConfigId: string;
   const es = loadMessages("es-ES");
   const en = loadMessages("en-US");

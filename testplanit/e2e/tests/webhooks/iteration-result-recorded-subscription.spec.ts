@@ -42,7 +42,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscription round-trip)", () => {
   let projectId: number;
   let stub: StubServerHandle;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let testRunId: number;
   let testRunCaseId: number;
   let iterationIds: number[];

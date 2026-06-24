@@ -3,7 +3,7 @@ import { randomBytes } from "node:crypto";
 import { APIRequestContext } from "@playwright/test";
 
 /**
- * The CASES-scope workflow names seeded by prisma/seed.ts. State-lookup helpers
+ * The CASES-scope workflow names seeded by db/seed.ts. State-lookup helpers
  * filter to this set so a parallel test that creates its own workflow can't
  * pollute the project-assigned pool and hand back a non-seeded workflow with
  * an unexpected `order`. Mirrors the order/list in seed.ts; if seed adds or
@@ -19,7 +19,7 @@ const SEEDED_CASES_WORKFLOW_NAMES = [
 ] as const;
 
 /**
- * Name of the seeded default template (prisma/seed.ts upsert key). Lookups
+ * Name of the seeded default template (db/seed.ts upsert key). Lookups
  * filter to this exact name rather than the `isDefault` flag because parallel
  * tests can — and do — create their own templates with `isDefault: true`,
  * which either races our findFirst or (in some surfaces) flips the seeded
@@ -95,7 +95,7 @@ export class ApiHelper {
     }
 
     // Match the seeded "Default Template" by its exact name (the upsert key in
-    // prisma/seed.ts). It's the only template with the Steps caseField +
+    // db/seed.ts). It's the only template with the Steps caseField +
     // standard four fields the case-page renders. Parallel tests that create
     // their own templates with isDefault: true would otherwise race this
     // lookup, handing back a fields-less template that has no Configure
@@ -1780,7 +1780,7 @@ export class ApiHelper {
         `No DONE workflow assigned to project ${projectId}. ` +
           `The E2E test requires the project to have at least one Workflows ` +
           `row with workflowType="DONE" assigned via ProjectWorkflowAssignment ` +
-          `(prisma/seed.ts seeds these for every project).`
+          `(db/seed.ts seeds these for every project).`
       );
     }
     const updateResponse = await this.request.patch(

@@ -119,7 +119,7 @@ beforeAll(async () => {
   });
   if (roles.length < 2) {
     throw new Error(
-      "Need at least two Roles seeded for decideReviewRequest test suite (run `pnpm prisma db seed`)."
+      "Need at least two Roles seeded for decideReviewRequest test suite (run `pnpm tsx db/seed.ts`)."
     );
   }
   assignedRoleId = roles[0].id;
@@ -250,7 +250,7 @@ beforeAll(async () => {
   });
   if (workflows.length < 2) {
     throw new Error(
-      "Need at least two Workflows rows for decideReviewRequest tests; run `pnpm prisma db seed`."
+      "Need at least two Workflows rows for decideReviewRequest tests; run `pnpm tsx db/seed.ts`."
     );
   }
   fromStateId = workflows[0].id;
@@ -266,7 +266,7 @@ beforeAll(async () => {
   });
   if (!template) {
     throw new Error(
-      "Need at least one enabled Templates row for decideReviewRequest tests; run `pnpm prisma db seed`."
+      "Need at least one enabled Templates row for decideReviewRequest tests; run `pnpm tsx db/seed.ts`."
     );
   }
   templateId = template.id;

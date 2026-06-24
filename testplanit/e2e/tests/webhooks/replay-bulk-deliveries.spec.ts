@@ -47,7 +47,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Webhook delivery bulk replay — outbound-only count", () => {
   let projectId: number;
   let stub: StubServerHandle;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let outboundConfigId: string;
   let inboundConfigId: string;
   const seededOutboundDeliveryIds: string[] = [];
@@ -304,7 +304,7 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
 });
 
 async function waitForCount(
-  prisma: PrismaClient,
+  prisma: ReturnType<typeof createRawDbClient>,
   args: {
     where: Record<string, unknown>;
     target: number;

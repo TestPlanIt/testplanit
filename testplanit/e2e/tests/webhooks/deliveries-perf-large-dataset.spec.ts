@@ -50,7 +50,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook deliveries tab — large dataset performance (N-03)", () => {
   let projectId: number;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let outboundConfigId: string;
 
   test.beforeAll(async ({ api }) => {

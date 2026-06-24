@@ -64,7 +64,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocked", () => {
   let projectAId: number;
   let projectBId: number;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let projectAOutboundConfigId: string;
   let projectBOutboundConfigId: string;
   let seededAOriginalDeliveryIds: string[] = [];

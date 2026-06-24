@@ -59,18 +59,6 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
-vi.mock("@prisma/client", () => ({
-  ApplicationArea: {
-    REPOSITORY: "REPOSITORY",
-    TEST_RUNS: "TEST_RUNS",
-    SESSIONS: "SESSIONS",
-    ADMIN: "ADMIN",
-    SharedSteps: "SharedSteps",
-    Reporting: "Reporting",
-    Settings: "Settings",
-  },
-}));
-
 // Mock nextstepjs — capture cardComponent for TourCard testing
 vi.mock("nextstepjs", () => ({
   NextStepProvider: ({ children }: any) => (

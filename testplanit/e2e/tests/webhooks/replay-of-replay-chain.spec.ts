@@ -42,7 +42,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Replay-of-replay chain integrity (L-03)", () => {
   let projectId: number;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let configId: string;
 
   test.beforeAll(async ({ api }) => {

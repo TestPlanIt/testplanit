@@ -116,7 +116,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Inbound body-cap boundary at 5 MiB exactly (I-05)", () => {
   let projectId: number;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
 
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;

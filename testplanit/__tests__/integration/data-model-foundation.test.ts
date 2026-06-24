@@ -93,7 +93,7 @@ async function setupTwoProjectFixture(): Promise<Fixture> {
   const userRole = await prisma.roles.findFirst({ where: { name: "user" } });
   if (!userRole) {
     throw new Error(
-      "Dev DB missing seeded `user` role. Run `pnpm tsx prisma/seed.ts` first."
+      "Dev DB missing seeded `user` role. Run `pnpm tsx db/seed.ts` first."
     );
   }
   const adminRole = await prisma.roles.findFirst({ where: { name: "admin" } });
@@ -105,7 +105,7 @@ async function setupTwoProjectFixture(): Promise<Fixture> {
   });
   if (!template) {
     throw new Error(
-      "Dev DB missing default Templates row. Run `pnpm tsx prisma/seed.ts` first."
+      "Dev DB missing default Templates row. Run `pnpm tsx db/seed.ts` first."
     );
   }
   const caseWorkflow = await prisma.workflows.findFirst({

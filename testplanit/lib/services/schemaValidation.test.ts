@@ -36,7 +36,7 @@
  *
  * Prerequisites:
  *   - A real PostgreSQL reachable via DATABASE_URL.
- *   - `pnpm tsx prisma/setup-extensions.ts` has been run at least once so
+ *   - `pnpm tsx db/setup-extensions.ts` has been run at least once so
  *     `review_request_one_pending_per_entity` is installed. The `beforeAll`
  *     probe asserts the index exists and fails loudly otherwise — preventing
  *     #16 from passing for the wrong reason.
@@ -118,7 +118,7 @@ beforeAll(async () => {
   if (indexes.length === 0) {
     throw new Error(
       "Partial unique index review_request_one_pending_per_entity not present on the test DB. " +
-        "Run `pnpm tsx prisma/setup-extensions.ts` before this test suite."
+        "Run `pnpm tsx db/setup-extensions.ts` before this test suite."
     );
   }
 
@@ -131,7 +131,7 @@ beforeAll(async () => {
   });
   if (!fieldIcon || !color || !role) {
     throw new Error(
-      "Missing seed data: FieldIcon / Color / Roles must be seeded before this test suite (run `pnpm prisma db seed`)."
+      "Missing seed data: FieldIcon / Color / Roles must be seeded before this test suite (run `pnpm tsx db/seed.ts`)."
     );
   }
 
@@ -185,7 +185,7 @@ beforeAll(async () => {
   });
   if (workflows.length < 2) {
     throw new Error(
-      "Need at least two Workflows rows in the DB for fromState / toState; run `pnpm prisma db seed`."
+      "Need at least two Workflows rows in the DB for fromState / toState; run `pnpm tsx db/seed.ts`."
     );
   }
   fromStateId = workflows[0].id;

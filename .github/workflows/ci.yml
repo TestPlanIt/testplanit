@@ -50,11 +50,10 @@ jobs:
           cd testplanit
           pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Generate ZenStack and Prisma
+      - name: Generate ZenStack client
         run: |
           cd testplanit
-          pnpm zenstack generate
-          pnpm prisma generate
+          pnpm exec zenstack generate --schema schema.zmodel -o zenstack
 
       - name: Check formatting
         run: |

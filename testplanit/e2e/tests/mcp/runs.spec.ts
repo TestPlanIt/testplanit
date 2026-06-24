@@ -32,7 +32,7 @@ test.describe.configure({ mode: "serial" });
  *
  * Skips: when seed lacks the required entity (run / testCases / results),
  * tests log a `console.warn(...)` skip-reason and continue. The seed file
- * (testplanit/prisma/seed.ts) does NOT currently create TestRuns/TestRunCases/
+ * (testplanit/db/seed.ts) does NOT currently create TestRuns/TestRunCases/
  * TestRunResults, so most of these tests will use `test.skip()` against a
  * pristine seed. The framework remains in place for when the seed grows or
  * a developer manually creates fixture data via the host UI.

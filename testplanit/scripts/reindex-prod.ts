@@ -3,12 +3,12 @@
 /**
  * Production-ready reindex script for Elasticsearch
  * This script can be run in the production Docker container
- * Usage: node scripts/reindex-prod.js [--fresh]
+ * Usage: tsx scripts/reindex-prod.ts [--fresh]
  */
 
-const { PrismaClient } = require("@prisma/client");
+import { createRawDbClient } from "../lib/rawDbClient";
 
-const prisma = new PrismaClient();
+const prisma = createRawDbClient();
 
 // Import the sync functions from services
 async function reindexAllEntities() {
@@ -98,7 +98,7 @@ async function reindexAllEntities() {
     console.log("");
     console.log("2. Trigger reindexing by updating entities through the UI");
     console.log(
-      "   (the Prisma client extension will sync them automatically)"
+      "   (the ZenStack sideEffectsPlugin will sync them automatically)"
     );
     console.log("");
     console.log(

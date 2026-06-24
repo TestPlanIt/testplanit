@@ -51,7 +51,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
   let projectId: number;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let adminUserId: string;
 
   test.beforeAll(async ({ api, adminUserId: ai }) => {

@@ -6,7 +6,7 @@ import { expect, test } from "../../fixtures";
  * These tests verify that the test run summary API endpoints work correctly
  * and don't cause infinite skeleton loading due to database connection issues.
  *
- * The bug being tested: API routes were creating new PrismaClient instances
+ * The bug being tested: API routes were creating new ReturnType<typeof createRawDbClient> instances
  * which exhausted the connection pool in dev mode, causing requests to hang.
  *
  * These tests use seeded data from seedTestData.ts for predictable, comprehensive testing.

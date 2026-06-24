@@ -498,9 +498,12 @@ describe("createUser - source-shape sanity", () => {
     expect(matches).toHaveLength(1);
   });
 
-  it("E2: exactly one prisma.user.update call in the file", () => {
+  it("E2: exactly two prisma.user.update calls in the file", () => {
+    // One in the base adapter's generic updateUser, and one in the createUser
+    // override's existing-user link branch. Anything beyond these two would
+    // signal an accidental extra user mutation in the sign-in path.
     const matches = adapterSource.match(/\.user\.update\(/g) || [];
-    expect(matches).toHaveLength(1);
+    expect(matches).toHaveLength(2);
   });
 
   it("E3: no scim* column writes from the adapter", () => {

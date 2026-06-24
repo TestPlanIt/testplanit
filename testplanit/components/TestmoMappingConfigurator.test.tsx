@@ -102,26 +102,6 @@ vi.mock("@/components/ui/select", () => {
   };
 });
 
-vi.mock("@prisma/client", () => ({
-  Access: {
-    ADMIN: "ADMIN",
-    PROJECTADMIN: "PROJECTADMIN",
-    USER: "USER",
-    NONE: "NONE",
-  },
-  ApplicationArea: {
-    ClosedTestRuns: "ClosedTestRuns",
-    ClosedSessions: "ClosedSessions",
-    Documentation: "Documentation",
-    TestCaseRestrictedFields: "TestCaseRestrictedFields",
-    TestRunResultRestrictedFields: "TestRunResultRestrictedFields",
-    SessionsRestrictedFields: "SessionsRestrictedFields",
-    Tags: "Tags",
-    TestRuns: "TestRuns",
-    Sessions: "Sessions",
-  },
-}));
-
 import { createEmptyMappingConfiguration } from "~/services/imports/testmo/configuration";
 import type { TestmoMappingAnalysis } from "~/services/imports/testmo/types";
 import { generateRandomPassword } from "~/utils/randomPassword";

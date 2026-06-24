@@ -23,15 +23,6 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
-vi.mock("@prisma/client", () => ({
-  ProjectAccessType: {
-    NO_ACCESS: "NO_ACCESS",
-    VIEW: "VIEW",
-    EDIT: "EDIT",
-    GLOBAL_ROLE: "GLOBAL_ROLE",
-  },
-}));
-
 import { getServerSession } from "next-auth";
 import { prisma } from "~/lib/prisma";
 

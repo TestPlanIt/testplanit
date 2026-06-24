@@ -1,8 +1,17 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import type { AccountUncheckedCreateInput } from "~/zenstack/input";
+import type {
+  AccountUncheckedCreateInput,
+  UserUncheckedUpdateInput,
+  VerificationTokenUncheckedCreateInput,
+} from "~/zenstack/input";
 import type { DbClient } from "~/lib/zenstack";
+import { isNotFoundError } from "~/lib/utils/errors";
 import { hash } from "bcrypt";
-import type { Adapter, AdapterAccount, AdapterUser } from "next-auth/adapters";
+import type {
+  Adapter,
+  AdapterAccount,
+  AdapterUser,
+  VerificationToken,
+} from "next-auth/adapters";
 import { NotificationService } from "~/lib/services/notificationService";
 
 const ACCOUNT_FIELDS: Record<keyof AccountUncheckedCreateInput, true> = {
@@ -39,11 +48,87 @@ function sanitizeAccountData(
 }
 
 /**
- * Custom Prisma adapter that ensures UserPreferences are created
+ * Minimal NextAuth adapter backed directly by the ZenStack client — the
+ * in-repo replacement for `@auth/prisma-adapter`. Only the methods this app
+ * actually exercises are implemented: there is no `Session` model (auth uses
+ * the JWT strategy), so the database-session methods are intentionally
+ * omitted. `createCustomPrismaAdapter` layers its app-specific overrides
+ * (createUser / linkAccount / getUserByEmail) on top of this base.
+ *
+ * The adapter is given the raw (non-policy) client so account/user lookups
+ * during an unauthenticated sign-in are not filtered by access policies.
+ */
+function createBaseAdapter(prisma: DbClient): Adapter {
+  return {
+    getUser: (id: string) =>
+      prisma.user.findUnique({ where: { id } }) as unknown as Promise<
+        AdapterUser | null
+      >,
+    // getUserByEmail, linkAccount and createUser are provided by
+    // createCustomPrismaAdapter's overrides below — intentionally not in the base.
+    async getUserByAccount({
+      provider,
+      providerAccountId,
+    }: {
+      provider: string;
+      providerAccountId: string;
+    }) {
+      const account = await prisma.account.findUnique({
+        where: { provider_providerAccountId: { provider, providerAccountId } },
+        include: { user: true },
+      });
+      return (account?.user ?? null) as AdapterUser | null;
+    },
+    updateUser: ({
+      id,
+      ...data
+    }: Partial<AdapterUser> & { id: string }) =>
+      prisma.user.update({
+        where: { id },
+        data: data as UserUncheckedUpdateInput,
+      }) as unknown as Promise<AdapterUser>,
+    deleteUser: (id: string) =>
+      prisma.user.delete({ where: { id } }) as unknown as Promise<AdapterUser>,
+    unlinkAccount: ({
+      provider,
+      providerAccountId,
+    }: {
+      provider: string;
+      providerAccountId: string;
+    }) =>
+      prisma.account.delete({
+        where: { provider_providerAccountId: { provider, providerAccountId } },
+      }) as unknown as Promise<AdapterAccount>,
+    createVerificationToken: (data: VerificationToken) =>
+      prisma.verificationToken.create({
+        data: data as VerificationTokenUncheckedCreateInput,
+      }) as unknown as Promise<VerificationToken>,
+    async useVerificationToken({
+      identifier,
+      token,
+    }: {
+      identifier: string;
+      token: string;
+    }) {
+      try {
+        return (await prisma.verificationToken.delete({
+          where: { identifier_token: { identifier, token } },
+        })) as VerificationToken;
+      } catch (error) {
+        // Already used / never existed — NextAuth expects null, not a throw.
+        if (isNotFoundError(error)) return null;
+        throw error;
+      }
+    },
+  };
+}
+
+/**
+ * Custom adapter that ensures UserPreferences are created
  * when a new user is created via OAuth or Magic Link
  */
 export function createCustomPrismaAdapter(prisma: DbClient): Adapter {
-  const baseAdapter = PrismaAdapter(prisma);
+  const baseAdapter = createBaseAdapter(prisma);
 
   return {
     ...baseAdapter,

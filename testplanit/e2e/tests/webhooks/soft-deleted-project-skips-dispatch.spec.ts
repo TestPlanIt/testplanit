@@ -42,7 +42,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
   let projectId: number;
   let stub: StubServerHandle;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let configId: string;
   let outboxEventId: string;
   const eventId = `evt_l05_${Date.now()}`;

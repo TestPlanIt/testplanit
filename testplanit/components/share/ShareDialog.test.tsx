@@ -48,15 +48,6 @@ vi.mock("@/actions/share-links", () => ({
     .mockResolvedValue({ shareKey: "test-key", passwordHash: null }),
 }));
 
-// Mock @prisma/client ShareLinkMode enum
-vi.mock("@prisma/client", () => ({
-  ShareLinkMode: {
-    AUTHENTICATED: "AUTHENTICATED",
-    PASSWORD_PROTECTED: "PASSWORD_PROTECTED",
-    PUBLIC: "PUBLIC",
-  },
-}));
-
 // Mock ShareLinkCreated and ShareLinkList
 vi.mock("@/components/share/ShareLinkCreated", () => ({
   ShareLinkCreated: ({ onClose, onCreateAnother }: any) => (

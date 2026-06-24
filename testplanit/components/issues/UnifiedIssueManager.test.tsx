@@ -42,16 +42,6 @@ vi.mock("./DeferredIssueManager", () => ({
   DeferredIssueManager: () => <div data-testid="deferred-issue-manager" />,
 }));
 
-// Mock @prisma/client enums for jsdom
-vi.mock("@prisma/client", () => ({
-  IntegrationProvider: {
-    JIRA: "JIRA",
-    GITHUB: "GITHUB",
-    AZURE_DEVOPS: "AZURE_DEVOPS",
-    SIMPLE_URL: "SIMPLE_URL",
-  },
-}));
-
 vi.mock("@/components/ui/alert", () => ({
   Alert: ({ children, ...rest }: any) => (
     <div role="alert" {...rest}>

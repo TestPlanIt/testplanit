@@ -37,18 +37,6 @@ vi.mock("@/lib/prisma", () => ({
   prisma: mockPrisma,
 }));
 
-vi.mock("@prisma/client", () => ({
-  IntegrationProvider: {
-    JIRA: "JIRA",
-    GITHUB: "GITHUB",
-    AZURE_DEVOPS: "AZURE_DEVOPS",
-    GITLAB: "GITLAB",
-    GITEA: "GITEA",
-    REDMINE: "REDMINE",
-    MANTISBT: "MANTISBT",
-  },
-}));
-
 import { JiraLinkService } from "./jira-link-service";
 
 describe("JiraLinkService", () => {

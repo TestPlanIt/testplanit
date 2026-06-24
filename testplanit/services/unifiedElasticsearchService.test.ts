@@ -14,23 +14,6 @@ vi.mock("./elasticsearchService", () => ({
   getElasticsearchClient: vi.fn(),
 }));
 
-// Mock the dynamic import of @prisma/client
-vi.mock("@prisma/client", async () => {
-  const mockPrismaClient = {
-    appConfig: {
-      findUnique: vi.fn().mockResolvedValue(null), // Default to null for replica settings
-    },
-    $disconnect: vi.fn(),
-  };
-
-  return {
-    PrismaClient: class {
-      appConfig = mockPrismaClient.appConfig;
-      $disconnect = mockPrismaClient.$disconnect;
-    },
-  };
-});
-
 describe("unifiedElasticsearchService", () => {
   let mockClient: any;
 

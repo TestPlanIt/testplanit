@@ -32,7 +32,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook deliveries — inbound row shows replay-not-supported banner", () => {
   let projectId: number;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let configToken: string;
   let plainSecret: string;
   let failedDeliveryId: string;

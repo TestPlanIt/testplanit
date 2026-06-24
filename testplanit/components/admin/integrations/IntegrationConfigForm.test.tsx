@@ -2,21 +2,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock @prisma/client enums for jsdom
-vi.mock("@prisma/client", () => ({
-  IntegrationProvider: {
-    JIRA: "JIRA",
-    GITHUB: "GITHUB",
-    AZURE_DEVOPS: "AZURE_DEVOPS",
-    SIMPLE_URL: "SIMPLE_URL",
-  },
-  IntegrationAuthType: {
-    API_KEY: "API_KEY",
-    OAUTH2: "OAUTH2",
-    PERSONAL_ACCESS_TOKEN: "PERSONAL_ACCESS_TOKEN",
-  },
-}));
-
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key.split(".").pop() ?? key,
 }));

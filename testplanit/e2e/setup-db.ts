@@ -30,11 +30,16 @@ async function ensureSchema() {
   try {
     // The E2E database is ephemeral (reset + reseeded every run), so accept
     // destructive schema changes (column drops/renames) without prompting.
-    execSync("pnpm prisma db push --skip-generate --accept-data-loss", {
-      cwd: process.cwd(),
-      stdio: "inherit",
-      env: process.env,
-    });
+    // ZenStack v3 pushes directly from schema.zmodel (the source of truth);
+    // there is no generated schema.zmodel to push from anymore.
+    execSync(
+      "pnpm exec zenstack db push --schema schema.zmodel --accept-data-loss --no-version-check",
+      {
+        cwd: process.cwd(),
+        stdio: "inherit",
+        env: process.env,
+      }
+    );
     console.log("   Schema is ready");
   } catch (error) {
     console.error("   Failed to push schema:", error);
@@ -48,7 +53,7 @@ async function ensureExtensions() {
   const { execSync } = await import("child_process");
 
   try {
-    execSync("npx tsx prisma/setup-extensions.ts", {
+    execSync("npx tsx db/setup-extensions.ts", {
       cwd: process.cwd(),
       stdio: "inherit",
       env: process.env,
@@ -61,7 +66,7 @@ async function ensureExtensions() {
 }
 
 async function ensureAuditTriggers() {
-  // prisma db push drops unmanaged triggers, so re-apply after every schema
+  // zenstack db push drops unmanaged triggers, so re-apply after every schema
   // sync or the audit specs see no rows once the app-layer hooks are removed.
   console.log("🔔 Applying audit-capture triggers...");
 
@@ -125,13 +130,13 @@ async function seedCoreData() {
   const { execSync } = await import("child_process");
 
   try {
-    execSync("pnpm prisma db seed", {
+    execSync("pnpm tsx db/seed.ts", {
       cwd: process.cwd(),
       stdio: "inherit",
       env: { ...process.env, SEED_TEST_DATA: "true" },
     });
   } catch {
-    console.error("   Failed to run prisma db seed, continuing...");
+    console.error("   Failed to run tsx db/seed.ts, continuing...");
   }
 }
 
@@ -165,7 +170,7 @@ async function enableSystemReviewFeatureForE2E() {
  * fresh install ships restrictive, but E2E specs assume any test user the
  * spec creates can act as a reviewer / read sensitive values without per-
  * spec fixture setup. This override only runs in the E2E setup path; the
- * shared `prisma/seed.ts` (also used by docker / dev installs) is unchanged.
+ * shared `db/seed.ts` (also used by docker / dev installs) is unchanged.
  */
 async function openUserRolePermissionsForE2E() {
   console.log(
@@ -336,7 +341,7 @@ async function main() {
     await ensureExtensions();
 
     // Step 0.6: Re-apply the 68 tpl_audit_* capture triggers and the
-    // DataChangeLog append-only enforcement triggers. prisma db push drops
+    // DataChangeLog append-only enforcement triggers. zenstack db push drops
     // all unmanaged triggers, so they must be re-applied here. Idempotent
     // via DROP IF EXISTS + CREATE and CREATE OR REPLACE for functions.
     await ensureAuditTriggers();
@@ -344,7 +349,7 @@ async function main() {
     // Step 1: Reset database
     await resetDatabase();
 
-    // Step 2: Seed core data (this runs prisma db seed)
+    // Step 2: Seed core data (this runs tsx db/seed.ts)
     await seedCoreData();
 
     // Step 2.5: E2E-only widening of seeded user-role permissions for the two

@@ -55,7 +55,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Webhook cross-tenant — send-test fires only on the requesting project", () => {
   let projectAId: number;
   let projectBId: number;
-  let prisma: PrismaClient;
+  let prisma: ReturnType<typeof createRawDbClient>;
   let projectAJiraConfigId: string;
   let projectBJiraConfigId: string;
   let bOnlyEmail: string;
@@ -304,7 +304,7 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
  * `replay-bulk-deliveries.spec.ts` but for `count()` rather than `findMany`.
  */
 async function waitForCount(
-  prisma: PrismaClient,
+  prisma: ReturnType<typeof createRawDbClient>,
   args: {
     where: Record<string, unknown>;
     atLeast: number;

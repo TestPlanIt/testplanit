@@ -10,15 +10,6 @@ const { mockPrisma } = vi.hoisted(() => ({
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 
-vi.mock("@prisma/client", () => ({
-  IntegrationProvider: { JIRA: "JIRA", GITHUB: "GITHUB" },
-  ProjectAccessType: {
-    NO_ACCESS: "NO_ACCESS",
-    GLOBAL_ROLE: "GLOBAL_ROLE",
-    SPECIFIC_ROLE: "SPECIFIC_ROLE",
-  },
-}));
-
 import {
   authenticateForgeIntegration,
   authenticateForgeWrite,

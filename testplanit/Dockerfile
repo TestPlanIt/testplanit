@@ -133,7 +133,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV UV_THREADPOOL_SIZE=4
 ENV BASE_DOMAIN=${BASE_DOMAIN}
 WORKDIR /app/testplanit
-RUN pnpm prisma generate
+# The ZenStack v3 client is generated in the base stage (`pnpm zenstack
+# generate`), which this stage inherits — there is no `prisma generate` anymore.
 RUN node scripts/fix-zenstack-symlink.js
 RUN npm run build
 
@@ -165,39 +166,16 @@ COPY --from=build --chown=nextjs:nodejs /app/testplanit/workers ./testplanit/wor
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/scheduler.ts ./testplanit/scheduler.ts
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/ecosystem.config.js ./testplanit/ecosystem.config.js
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/lib ./testplanit/lib
-COPY --from=build --chown=nextjs:nodejs /app/testplanit/prisma ./testplanit/prisma
-# Self-contained production node_modules from the deploy stage (overlays the
-# standalone-traced node_modules with the full prod set: prisma client, etc.).
+COPY --from=build --chown=nextjs:nodejs /app/testplanit/db ./testplanit/db
+# Self-contained production node_modules from the deploy stage.
 COPY --from=deps --chown=nextjs:nodejs /app/deploy/node_modules ./testplanit/node_modules
-# ZenStack generated files (deploy ran with --ignore-scripts, so the deployed
-# @zenstackhq/runtime has no .zenstack yet — create and populate it).
-RUN --mount=from=base,source=/app/node_modules/.pnpm,target=/base-pnpm \
-    zenstack_src=$(find /base-pnpm -type d -name ".zenstack" | head -1) && \
-    runtime_pkg=$(find ./testplanit/node_modules/.pnpm -type d -path "*@zenstackhq+runtime*/node_modules/@zenstackhq/runtime" | head -1) && \
-    if [ -n "$zenstack_src" ] && [ -n "$runtime_pkg" ]; then \
-        zenstack_dest="$(dirname "$(dirname "$runtime_pkg")")/.zenstack" && \
-        mkdir -p "$zenstack_dest" && \
-        cp -r "$zenstack_src"/* "$zenstack_dest"/ && \
-        chown -R nextjs:nodejs "$zenstack_dest" && \
-        echo "Done copying zenstack files ($zenstack_dest)"; \
-    else \
-        echo "Warning: zenstack_src=$zenstack_src runtime_pkg=$runtime_pkg"; \
-    fi
-
-# Generated Prisma client into the deployed tree (deploy ran --ignore-scripts),
-# so tsx-run services (e.g. Elasticsearch reindex) have a working client.
-RUN --mount=from=build,source=/app/node_modules/.pnpm,target=/build-pnpm \
-    prisma_src=$(find /build-pnpm -type d -name ".prisma" -path "*@prisma+client*" | head -1) && \
-    dest_client=$(find ./testplanit/node_modules/.pnpm -type d -path "*@prisma+client*/node_modules/@prisma/client" | head -1) && \
-    if [ -n "$prisma_src" ] && [ -n "$dest_client" ]; then \
-        dest_dir="$(dirname "$(dirname "$dest_client")")/.prisma" && \
-        mkdir -p "$dest_dir" && \
-        cp -r "$prisma_src"/* "$dest_dir"/ && \
-        chown -R nextjs:nodejs "$dest_dir" && \
-        echo "Done copying Prisma client to production ($dest_dir)"; \
-    else \
-        echo "Warning: prisma_src=$prisma_src dest_client=$dest_client"; \
-    fi
+# ZenStack v3 generated client + the schema it pushes from. tsx-run services
+# (Elasticsearch reindex, audit triggers, seed) import from ~/zenstack at
+# runtime, and `zenstack db push` reads schema.zmodel — both from source, so
+# they must be present in the deployed tree. (v3 has no @zenstackhq/runtime
+# .zenstack cache and no @prisma/client to copy.)
+COPY --from=build --chown=nextjs:nodejs /app/testplanit/zenstack ./testplanit/zenstack
+COPY --from=build --chown=nextjs:nodejs /app/testplanit/schema.zmodel ./testplanit/schema.zmodel
 
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/services ./testplanit/services
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/utils ./testplanit/utils
@@ -209,7 +187,10 @@ RUN chmod +x ./testplanit/docker-entrypoint.sh
 WORKDIR /app/testplanit
 RUN node scripts/fix-zenstack-symlink.js
 RUN npm install -g tsx
-RUN npm install -g prisma@6
+# ZenStack CLI for the db-init `zenstack db push` (the prod deploy tree is
+# --prod, so the devDep CLI isn't present; install it globally). It pulls
+# Prisma's schema engine internally to perform the push.
+RUN npm install -g @zenstackhq/cli@3.8.0
 
 USER nextjs
 EXPOSE 3000
@@ -236,38 +217,14 @@ COPY --from=build /app/testplanit/ecosystem.config.js ./ecosystem.config.js
 COPY --from=build /app/testplanit/package.json ./package.json
 COPY --from=deps-workers /app/deploy/node_modules ./node_modules
 
-# ZenStack generated files for the workers runtime.
-RUN --mount=from=base,source=/app/node_modules/.pnpm,target=/base-pnpm \
-    zenstack_src=$(find /base-pnpm -type d -name ".zenstack" | head -1) && \
-    runtime_pkg=$(find ./node_modules/.pnpm -type d -path "*@zenstackhq+runtime*/node_modules/@zenstackhq/runtime" | head -1) && \
-    if [ -n "$zenstack_src" ] && [ -n "$runtime_pkg" ]; then \
-        zenstack_dest=$(dirname $(dirname "$runtime_pkg"))/.zenstack && \
-        mkdir -p "$zenstack_dest" && \
-        cp -r "$zenstack_src"/* "$zenstack_dest"/ && \
-        echo "Done copying zenstack files to workers"; \
-    else \
-        echo "Warning: zenstack_src=$zenstack_src runtime_pkg=$runtime_pkg"; \
-    fi
-
-# Generated Prisma client from the build stage. In a pnpm workspace the virtual
-# store lives at the workspace root (/app/node_modules/.pnpm); the --prod deploy
-# tree may use a different peer-hash dir than the build tree, so locate the
-# destination by the deployed @prisma/client rather than reusing the build path.
-RUN --mount=from=build,source=/app/node_modules/.pnpm,target=/build-pnpm \
-    prisma_src=$(find /build-pnpm -type d -name ".prisma" -path "*@prisma+client*" | head -1) && \
-    dest_client=$(find ./node_modules/.pnpm -type d -path "*@prisma+client*/node_modules/@prisma/client" | head -1) && \
-    if [ -n "$prisma_src" ] && [ -n "$dest_client" ]; then \
-        dest_dir="$(dirname "$(dirname "$dest_client")")/.prisma" && \
-        mkdir -p "$dest_dir" && \
-        cp -r "$prisma_src"/* "$dest_dir"/ && \
-        echo "Done copying Prisma client to workers ($dest_dir)"; \
-    else \
-        echo "ERROR: prisma_src=$prisma_src dest_client=$dest_client" && exit 1; \
-    fi
+# ZenStack v3 generated client for the workers runtime (tsx-run workers import
+# ~/zenstack from source). v3 has no @zenstackhq/runtime .zenstack cache and no
+# @prisma/client to copy.
+COPY --from=build /app/testplanit/zenstack ./zenstack
 
 COPY --from=build /app/testplanit/lib ./lib
 COPY --from=build /app/testplanit/workers ./workers
-COPY --from=build /app/testplanit/prisma ./prisma
+COPY --from=build /app/testplanit/db ./db
 COPY --from=build /app/testplanit/services ./services
 COPY --from=build /app/testplanit/utils ./utils
 COPY --from=build /app/testplanit/types ./types

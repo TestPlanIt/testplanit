@@ -1,15 +1,15 @@
 /**
  * Idempotent trigger DDL applier — the SOLE source of audit trigger DDL (CAP-02).
  *
- * Generalizes the proven Phase 12 spike applier (prisma/spike/apply-spike-trigger.ts) from a
+ * Generalizes the proven Phase 12 spike applier (db/spike/apply-spike-trigger.ts) from a
  * single hard-coded table to the full TRIGGER_REGISTRY. Run on every `pnpm generate` and from
- * the deploy entrypoint AFTER `prisma db push` (which silently drops triggers), so the audit
+ * the deploy entrypoint AFTER `zenstack db push` (which silently drops triggers), so the audit
  * substrate is re-attached on every schema sync.
  *
  * In order, against a DIRECT (pooler-bypassing) connection, it:
  *   1. resolves DIRECT_DATABASE_URL ?? DATABASE_URL,
  *   2. asserts the registry is safe (no prohibited table),
- *   3. executes prisma/audit_row_change.sql (CREATE OR REPLACE FUNCTION — idempotent),
+ *   3. executes db/audit_row_change.sql (CREATE OR REPLACE FUNCTION — idempotent),
  *   4. attaches one tpl_audit_<table> trigger per registry entry (DROP IF EXISTS + CREATE),
  *   5. installs the ownership-independent append-only ENFORCEMENT triggers on DataChangeLog
  *      (the REAL SAF-03 guarantee — a BEFORE DELETE and a BEFORE UPDATE trigger that RAISE a
@@ -33,8 +33,8 @@ import {
 } from "./trigger-registry";
 import { ROLLUP_MAP } from "../lib/audit/rollupMap";
 
-const PRISMA_DIR = join(__dirname, "..", "prisma");
-const AUDIT_FN_SQL = join(PRISMA_DIR, "audit_row_change.sql");
+const DB_DIR = join(__dirname, "..", "db");
+const AUDIT_FN_SQL = join(DB_DIR, "audit_row_change.sql");
 
 /** tpl_audit_<lowercased table, non-alphanumeric → _>. Must match the drift test transform. */
 function triggerNameFor(table: string): string {
@@ -42,7 +42,7 @@ function triggerNameFor(table: string): string {
 }
 
 /**
- * Append-only ENFORCEMENT for DataChangeLog. Ownership-independent: `prisma db push` makes the
+ * Append-only ENFORCEMENT for DataChangeLog. Ownership-independent: `zenstack db push` makes the
  * app role the table owner, and an owner keeps every privilege, so GRANT/REVOKE cannot revoke
  * the owner's UPDATE/DELETE. These BEFORE triggers RAISE a 42501 privilege error regardless of
  * ownership — they are the real SAF-03 guarantee. The BEFORE UPDATE path allows worker-cursor-

@@ -45,7 +45,7 @@ async function setupFixture(): Promise<Fixture> {
   const userRole = await prisma.roles.findFirst({ where: { name: "user" } });
   if (!userRole) {
     throw new Error(
-      "Dev DB missing seeded `user` role. Run `pnpm tsx prisma/seed.ts` first."
+      "Dev DB missing seeded `user` role. Run `pnpm tsx db/seed.ts` first."
     );
   }
   const runWorkflow = await prisma.workflows.findFirst({

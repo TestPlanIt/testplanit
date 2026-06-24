@@ -85,7 +85,6 @@
   },
   "dependencies": {
     "@atlaskit/editor-jira-transformer": "^15.0.1",
-    "@auth/prisma-adapter": "^2.11.2",
     "@aws-sdk/client-s3": "^3.1075.0",
     "@aws-sdk/s3-request-presigner": "^3.1075.0",
     "@dnd-kit/core": "^6.3.1",
@@ -390,9 +389,6 @@
   },
   "ct3aMetadata": {
     "initVersion": "7.28.0"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   },
   "overrides": {
     "csstype": "^3.2.0",

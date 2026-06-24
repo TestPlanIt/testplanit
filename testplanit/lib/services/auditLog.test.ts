@@ -1583,7 +1583,7 @@ describe("captureAuditEvent — review enum acceptance", () => {
     }
 
     // All five enum values reached the queue mock — proves the regenerated
-    // @prisma/client AuditAction includes the five new members AND that
+    // ~/zenstack/models AuditAction includes the five new members AND that
     // captureAuditEvent's surface accepts them.
     expect(mocks.mockQueue.add).toHaveBeenCalledTimes(reviewActions.length);
     const queuedActions = mocks.mockQueue.add.mock.calls.map(

@@ -18,30 +18,6 @@ vi.mock("@/components/ui/help-popover", () => ({
   HelpPopover: () => null,
 }));
 
-vi.mock("@prisma/client", () => ({
-  ApplicationArea: {
-    Documentation: "Documentation",
-    Milestones: "Milestones",
-    TestCaseRepository: "TestCaseRepository",
-    TestCaseRestrictedFields: "TestCaseRestrictedFields",
-    TestRuns: "TestRuns",
-    ClosedTestRuns: "ClosedTestRuns",
-    TestRunResults: "TestRunResults",
-    TestRunResultRestrictedFields: "TestRunResultRestrictedFields",
-    Sessions: "Sessions",
-    SessionsRestrictedFields: "SessionsRestrictedFields",
-    ClosedSessions: "ClosedSessions",
-    SessionResults: "SessionResults",
-    Tags: "Tags",
-    SharedSteps: "SharedSteps",
-    Issues: "Issues",
-    IssueIntegration: "IssueIntegration",
-    Forecasting: "Forecasting",
-    Reporting: "Reporting",
-    Settings: "Settings",
-  },
-}));
-
 const { mockCreateRole, mockUpdateManyRoles, mockUpsertRolePermission } =
   vi.hoisted(() => ({
     mockCreateRole: vi.fn().mockResolvedValue({ id: 7 }),

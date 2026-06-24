@@ -1,7 +1,7 @@
 /**
  * app.audit_context GUC injection helpers for the Phase 13 CDC substrate.
  *
- * The generic audit_row_change() trigger (prisma/audit_row_change.sql) reads
+ * The generic audit_row_change() trigger (db/audit_row_change.sql) reads
  * actor/operation/tenant attribution from the `app.audit_context` Postgres GUC.
  * These two helpers set that GUC so every captured DataChangeLog row is
  * attributed to the originating request (hooked client) or job (worker).

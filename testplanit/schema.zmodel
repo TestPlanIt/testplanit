@@ -5783,7 +5783,7 @@ model AuditLog {
 }
 
 // Append-only change-data-capture substrate. The generic audit_row_change()
-// trigger (prisma/audit_row_change.sql) writes one row here per
+// trigger (db/audit_row_change.sql) writes one row here per
 // INSERT/UPDATE/DELETE on every allowlisted table; a downstream correlation
 // worker reads it via the raw prismaBase client.
 //
