@@ -65,8 +65,11 @@ interface RawIssueDetail {
   note: unknown;
   integration: { id: number; name: string; provider: string } | null;
   createdBy: { id: string; name: string | null; email: string } | null;
-  _count?: { repositoryCases: number };
-  repositoryCases: RawCase[];
+  // RepositoryCases links arrive through the RepositoryCaseIssue join model
+  // now: caseIssues[].case and _count.caseIssues. Sessions / testRuns are
+  // still implicit m2m.
+  _count?: { caseIssues: number };
+  caseIssues: Array<{ case: RawCase }>;
   sessions: RawSession[];
   testRuns: RawTestRun[];
 }
@@ -92,16 +95,19 @@ function makeRawIssueDetail(
     note: proseDoc("hello"),
     integration: { id: 11, name: "Primary Jira", provider: "JIRA" },
     createdBy: { id: "u1", name: "Alice", email: "a@b" },
-    _count: { repositoryCases: 6 },
-    repositoryCases: [],
+    _count: { caseIssues: 6 },
+    caseIssues: [],
     sessions: [],
     testRuns: [],
     ...overrides,
   };
 }
 
-function makeRawCase(id: number): RawCase {
-  return { id, name: `Case ${id}`, source: "MANUAL", automated: false };
+// Raw linked cases arrive wrapped in the RepositoryCaseIssue join row.
+function makeRawCase(id: number): { case: RawCase } {
+  return {
+    case: { id, name: `Case ${id}`, source: "MANUAL", automated: false },
+  };
 }
 function makeRawSession(id: number): RawSession {
   return {
@@ -152,7 +158,7 @@ describe("registerIssuesGet", () => {
   it("happy path: all 3 linked arrays under cap, truncated is empty", async () => {
     mockZenstack.mockResolvedValueOnce(
       makeRawIssueDetail({
-        repositoryCases: [makeRawCase(1), makeRawCase(2), makeRawCase(3), makeRawCase(4), makeRawCase(5)],
+        caseIssues: [makeRawCase(1), makeRawCase(2), makeRawCase(3), makeRawCase(4), makeRawCase(5)],
         sessions: [makeRawSession(1), makeRawSession(2), makeRawSession(3)],
         testRuns: [makeRawTestRun(1), makeRawTestRun(2)],
       }),
@@ -174,7 +180,7 @@ describe("registerIssuesGet", () => {
   it("truncates linkedCases when overflow (101 → 100, truncated.linkedCases=true)", async () => {
     const cases = Array.from({ length: 101 }, (_, i) => makeRawCase(i + 1));
     mockZenstack.mockResolvedValueOnce(
-      makeRawIssueDetail({ repositoryCases: cases }),
+      makeRawIssueDetail({ caseIssues: cases }),
     );
     const { client } = await setupClient();
     const result = await client.callTool({
@@ -230,7 +236,7 @@ describe("registerIssuesGet", () => {
   it("truncates all three arrays at once (linkedCases + linkedSessions + linkedTestRuns)", async () => {
     mockZenstack.mockResolvedValueOnce(
       makeRawIssueDetail({
-        repositoryCases: Array.from({ length: 101 }, (_, i) => makeRawCase(i + 1)),
+        caseIssues: Array.from({ length: 101 }, (_, i) => makeRawCase(i + 1)),
         sessions: Array.from({ length: 101 }, (_, i) => makeRawSession(i + 1)),
         testRuns: Array.from({ length: 101 }, (_, i) => makeRawTestRun(i + 1)),
       }),
@@ -327,7 +333,8 @@ describe("registerIssuesGet", () => {
     });
     const body = getCallBody(0);
     const include = body?.include as Record<string, { take?: number }>;
-    expect(include.repositoryCases.take).toBe(101);
+    // RepositoryCases links now go through the caseIssues join include.
+    expect(include.caseIssues.take).toBe(101);
     expect(include.sessions.take).toBe(101);
     expect(include.testRuns.take).toBe(101);
   });
@@ -343,10 +350,14 @@ describe("registerIssuesGet", () => {
     const body = getCallBody(0);
     const include = body?.include as Record<
       string,
-      { orderBy?: Array<Record<string, string>> }
+      { orderBy?: Array<Record<string, unknown>> }
     >;
     const expected = [{ createdAt: "desc" }, { id: "desc" }];
-    expect(include.repositoryCases.orderBy).toEqual(expected);
+    // caseIssues orders through the linked case (createdAt / id).
+    expect(include.caseIssues.orderBy).toEqual([
+      { case: { createdAt: "desc" } },
+      { case: { id: "desc" } },
+    ]);
     expect(include.sessions.orderBy).toEqual(expected);
     expect(include.testRuns.orderBy).toEqual(expected);
   });
@@ -369,9 +380,10 @@ describe("registerIssuesGet", () => {
     expect(where.isDeleted).toBe(false);
     const include = body?.include as Record<
       string,
-      { where?: { isDeleted?: boolean } }
+      { where?: { isDeleted?: boolean; case?: { isDeleted?: boolean } } }
     >;
-    expect(include.repositoryCases.where?.isDeleted).toBe(false);
+    // caseIssues soft-delete filter targets the linked case.
+    expect(include.caseIssues.where?.case?.isDeleted).toBe(false);
     expect(include.sessions.where?.isDeleted).toBe(false);
     expect(include.testRuns.where?.isDeleted).toBe(false);
   });

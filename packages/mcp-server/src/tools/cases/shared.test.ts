@@ -405,9 +405,11 @@ describe("mapCaseRow", () => {
     folder: { id: 12, name: "Auth", parentId: 5 },
     state: { id: 3, name: "Active" },
     creator: { id: "user-1", name: "Alice", email: "alice@example.com" },
-    tags: [
-      { id: 1, name: "smoke" },
-      { id: 2, name: "auth" },
+    // Raw rows now carry tags through the RepositoryCaseTag join (caseTags[].tag);
+    // mapCaseRow flattens them back to the tags[] output shape.
+    caseTags: [
+      { tag: { id: 1, name: "smoke" } },
+      { tag: { id: 2, name: "auth" } },
     ],
   };
 
@@ -460,14 +462,19 @@ describe("mapCaseDetail", () => {
     folder: { id: 12, name: "Auth", parentId: 5 },
     state: { id: 3, name: "Active" },
     creator: { id: "user-1", name: "Alice", email: "alice@example.com" },
-    tags: [{ id: 1, name: "smoke" }],
-    issues: [
+    // Raw detail carries tags / issues through the explicit join models
+    // (caseTags[].tag, caseIssues[].issue); the mappers flatten them back
+    // to the tags[] / issues[] output shape.
+    caseTags: [{ tag: { id: 1, name: "smoke" } }],
+    caseIssues: [
       {
-        id: 55,
-        externalKey: "JIRA-99",
-        integration: { provider: "JIRA" },
-        title: "Login bug",
-        externalStatus: "Open",
+        issue: {
+          id: 55,
+          externalKey: "JIRA-99",
+          integration: { provider: "JIRA" },
+          title: "Login bug",
+          externalStatus: "Open",
+        },
       },
     ],
     steps: [
@@ -643,7 +650,8 @@ describe("mapCaseRow Phase-8 extensions", () => {
       folder: { id: 12, name: "Auth", parentId: 5 },
       state: { id: 3, name: "Active" },
       creator: { id: "user-1", name: "Alice", email: "alice@example.com" },
-      tags: [],
+      // Raw rows carry tags through the caseTags join model.
+      caseTags: [],
       ...overrides,
     };
   }
@@ -752,8 +760,10 @@ describe("mapCaseDetail Phase-8 codeRepository extension", () => {
       folder: { id: 12, name: "Auth", parentId: 5 },
       state: { id: 3, name: "Active" },
       creator: { id: "user-1", name: "Alice", email: "alice@example.com" },
-      tags: [],
-      issues: [],
+      // Raw detail carries tags / issues through the caseTags / caseIssues
+      // join models.
+      caseTags: [],
+      caseIssues: [],
       steps: [],
       caseFieldValues: [],
       linksFrom: [],
@@ -812,13 +822,16 @@ describe("mapCaseDetail Phase-8 codeRepository extension", () => {
     const detail = makeDetail({
       project: { id: 7, name: "TestProject", codeRepositoryConfig: null },
       caseFieldValues: [{ value: "High", field: { displayName: "Priority" } }],
-      issues: [
+      // Raw issues now arrive through the caseIssues join model.
+      caseIssues: [
         {
-          id: 55,
-          externalKey: "JIRA-99",
-          integration: { provider: "JIRA" },
-          title: "Login bug",
-          externalStatus: "Open",
+          issue: {
+            id: 55,
+            externalKey: "JIRA-99",
+            integration: { provider: "JIRA" },
+            title: "Login bug",
+            externalStatus: "Open",
+          },
         },
       ],
     });

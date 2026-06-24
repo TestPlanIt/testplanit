@@ -122,7 +122,7 @@ describe("testplanit_cases_update", () => {
     expect(resolveCustomFieldsMock).not.toHaveBeenCalled();
   });
 
-  it("updates tags via set syntax", async () => {
+  it("updates tags via the caseTags join (replace-all = deleteMany + create)", async () => {
     await callTool({ caseId: 99, tags: [4, 5] });
 
     const updateCall = zenstackMock.mock.calls.find(
@@ -130,8 +130,16 @@ describe("testplanit_cases_update", () => {
     );
     expect(updateCall).toBeDefined();
     const data = (updateCall![2] as { data: Record<string, unknown> }).data;
+    // Tags live on the explicit RepositoryCaseTag join model; "set"
+    // (replace-all) maps to deleteMany {} + create per requested tag.
     expect(data).toMatchObject({
-      tags: { set: [{ id: 4 }, { id: 5 }] },
+      caseTags: {
+        deleteMany: {},
+        create: [
+          { tag: { connect: { id: 4 } } },
+          { tag: { connect: { id: 5 } } },
+        ],
+      },
     });
   });
 

@@ -31,7 +31,9 @@ function makeRawRow(overrides: Record<string, unknown> = {}, id = 1) {
     folder: { id: 12, name: "Auth", parentId: 5 },
     state: { id: 3, name: "Active" },
     creator: { id: "user-1", name: "Alice", email: "alice@example.com" },
-    tags: [{ id: 1, name: "smoke" }],
+    // Raw rows carry tags through the RepositoryCaseTag join (caseTags[].tag);
+    // mapCaseRow flattens them to the tags[] output shape.
+    caseTags: [{ tag: { id: 1, name: "smoke" } }],
     ...overrides,
   };
 }
@@ -116,7 +118,7 @@ describe("registerCasesList", () => {
     expect(where.name).toEqual({ contains: "login", mode: "insensitive" });
   });
 
-  it("filter: tagIds uses tags.some.id.in", async () => {
+  it("filter: tagIds uses caseTags.some.tag.id.in", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({
@@ -125,7 +127,9 @@ describe("registerCasesList", () => {
     });
     const body = getLastCallBody();
     const where = body?.where as Record<string, unknown>;
-    expect(where.tags).toEqual({ some: { id: { in: [4, 5] } } });
+    // RepositoryCases tags live on the RepositoryCaseTag join — filter
+    // through caseTags.tag.
+    expect(where.caseTags).toEqual({ some: { tag: { id: { in: [4, 5] } } } });
   });
 
   it("filter: stateId is included in where clause", async () => {
@@ -319,7 +323,7 @@ describe("registerCasesList", () => {
     expect(textContent.text).toContain("422");
   });
 
-  it("D7-03: issueId filter — happy path; where.issues = { some: { id, isDeleted: false } }", async () => {
+  it("D7-03: issueId filter — happy path; where.caseIssues = { some: { issue: { id, isDeleted: false } } }", async () => {
     mockZenstack.mockResolvedValueOnce([makeRawRow({}, 1)]);
     const { client } = await setupClient();
     await client.callTool({
@@ -330,7 +334,11 @@ describe("registerCasesList", () => {
     const where = body?.where as Record<string, unknown>;
     expect(where.projectId).toBe(7);
     expect(where.isDeleted).toBe(false);
-    expect(where.issues).toEqual({ some: { id: 42, isDeleted: false } });
+    // RepositoryCases issue links live on the RepositoryCaseIssue join —
+    // filter through caseIssues.issue.
+    expect(where.caseIssues).toEqual({
+      some: { issue: { id: 42, isDeleted: false } },
+    });
   });
 
   it("D7-03: issueId filter coexists with folderId / tagIds / name / stateId / customField", async () => {
@@ -352,13 +360,15 @@ describe("registerCasesList", () => {
     const where = body?.where as Record<string, unknown>;
     expect(where.projectId).toBe(7);
     expect(where.folderId).toBe(1);
-    expect(where.tags).toEqual({ some: { id: { in: [3] } } });
+    expect(where.caseTags).toEqual({ some: { tag: { id: { in: [3] } } } });
     expect(where.name).toEqual({ contains: "login", mode: "insensitive" });
     expect(where.stateId).toBe(4);
     expect(where.caseFieldValues).toEqual({
       some: { field: { displayName: "Priority" } },
     });
-    expect(where.issues).toEqual({ some: { id: 42, isDeleted: false } });
+    expect(where.caseIssues).toEqual({
+      some: { issue: { id: 42, isDeleted: false } },
+    });
   });
 
   it("D7-03: issueId rejects 0 / negative / non-integer values via zod", async () => {

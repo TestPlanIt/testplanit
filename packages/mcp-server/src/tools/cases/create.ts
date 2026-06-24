@@ -126,12 +126,20 @@ export function registerCasesCreate(
             );
           }
           if (tagIds.length > 0) {
+            // Tags live on the explicit RepositoryCaseTag join model. The
+            // case was just created with no tags, so create the join rows
+            // directly (nested through caseTags.tag.connect). The implicit
+            // `tags` relation no longer exists and would 422.
             await zenstack(
               "repositoryCases",
               "update",
               {
                 where: { id: created.id },
-                data: { tags: { set: tagIds.map((id) => ({ id })) } },
+                data: {
+                  caseTags: {
+                    create: tagIds.map((id) => ({ tag: { connect: { id } } })),
+                  },
+                },
               },
               deps.env,
             );

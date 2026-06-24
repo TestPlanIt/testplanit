@@ -1,7 +1,9 @@
-import type { Prisma } from "@prisma/client";
+import type {
+  ProjectCodeRepositoryConfigInclude,
+} from "@db/input";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Typed include — `as const satisfies Prisma.ProjectCodeRepositoryConfigInclude`
+// Typed include — `as const satisfies ProjectCodeRepositoryConfigInclude`
 // makes reintroduction of an unknown field a TS2353 at compile time. The
 // `repository` join is `select`-only; `credentials` is INTENTIONALLY ABSENT so
 // the secrets column never crosses the wire (defense-in-depth — REPO-01 /
@@ -20,7 +22,7 @@ export const PROJECT_REPO_CONFIG_INCLUDE = {
       // credentials INTENTIONALLY ABSENT — defense in depth, never expose secrets in MCP responses
     },
   },
-} as const satisfies Prisma.ProjectCodeRepositoryConfigInclude;
+} as const satisfies ProjectCodeRepositoryConfigInclude;
 
 // Per-provider allow-list for the wholesale `settings` JSON. Keys outside this
 // list are stripped at the mapper boundary (T-08-CRED-LEAK mitigation #2).

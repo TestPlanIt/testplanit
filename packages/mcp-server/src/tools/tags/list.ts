@@ -1,9 +1,14 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type { TagsInclude } from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+
+type TagsCountOutputTypeSelect = Extract<
+  NonNullable<TagsInclude["_count"]>,
+  { select: unknown }
+>["select"];
 
 export interface TagsListDeps {
   env: EnvConfig;
@@ -13,7 +18,10 @@ interface RawTagRow {
   id: number;
   name: string;
   _count?: {
-    repositoryCases?: number;
+    // RepositoryCases links now live on the explicit RepositoryCaseTag join
+    // model, so the case count comes from caseTags. testRuns / sessions are
+    // still implicit m2m and counted directly.
+    caseTags?: number;
     testRuns?: number;
     sessions?: number;
   };
@@ -39,10 +47,14 @@ export function registerTagsList(server: McpServer, deps: TagsListDeps): void {
     },
     async (input) => {
       try {
-        const countSelect: Prisma.TagsCountOutputTypeSelect = input.projectId
+        const countSelect: TagsCountOutputTypeSelect = input.projectId
           ? {
-              repositoryCases: {
-                where: { isDeleted: false, projectId: input.projectId },
+              // caseTags is the RepositoryCaseTag join; scope through the
+              // linked case's project + soft-delete.
+              caseTags: {
+                where: {
+                  case: { isDeleted: false, projectId: input.projectId },
+                },
               },
               testRuns: {
                 where: { isDeleted: false, projectId: input.projectId },
@@ -52,7 +64,7 @@ export function registerTagsList(server: McpServer, deps: TagsListDeps): void {
               },
             }
           : {
-              repositoryCases: true,
+              caseTags: true,
               testRuns: true,
               sessions: true,
             };
@@ -72,7 +84,7 @@ export function registerTagsList(server: McpServer, deps: TagsListDeps): void {
           id: r.id,
           name: r.name,
           usageCounts: {
-            repositoryCases: r._count?.repositoryCases ?? 0,
+            repositoryCases: r._count?.caseTags ?? 0,
             testRuns: r._count?.testRuns ?? 0,
             sessions: r._count?.sessions ?? 0,
           },

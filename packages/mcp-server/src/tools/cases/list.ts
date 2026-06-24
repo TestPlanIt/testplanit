@@ -1,5 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  RepositoryCasesInclude,
+  RepositoryCasesWhereInput,
+} from "@db/input";
+import type { JsonValue } from "@zenstackhq/orm";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -25,7 +29,10 @@ const CASE_ROW_INCLUDE = {
   folder: { select: { id: true, name: true, parentId: true } },
   state: { select: { id: true, name: true } },
   creator: { select: { id: true, name: true, email: true } },
-  tags: { select: { id: true, name: true } },
+  // RepositoryCases tags now live on the explicit RepositoryCaseTag join
+  // model — select through caseTags.tag (the implicit `tags` relation no
+  // longer exists and would 422).
+  caseTags: { select: { tag: { select: { id: true, name: true } } } },
   // Phase 8 D8-02: latest version for lastUpdatedAt + sub-orderings for
   // latestResult union. Each take:1 sub-include carries deterministic
   // orderBy [{<field>:"desc"},{id:"desc"}] (Pitfall 5 / Phase 7 MED-02).
@@ -62,7 +69,7 @@ const CASE_ROW_INCLUDE = {
       },
     },
   },
-} as const satisfies Prisma.RepositoryCasesInclude;
+} as const satisfies RepositoryCasesInclude;
 
 // Phase 8 D8-02: enum literals for the source filter. Mirrors
 // RepositoryCaseSource on schema.zmodel:1470 — keep synchronized.
@@ -145,13 +152,15 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
         // compile time. The previous `Record<string, unknown>` annotation
         // accepted any shape including `updatedAt` (which doesn't exist on
         // RepositoryCases — Pitfall 1).
-        const where: Prisma.RepositoryCasesWhereInput = {
+        const where: RepositoryCasesWhereInput = {
           projectId: input.projectId,
           isDeleted: false,
         };
         if (input.folderId !== undefined) where.folderId = input.folderId;
         if (input.tagIds && input.tagIds.length > 0) {
-          where.tags = { some: { id: { in: input.tagIds } } };
+          // RepositoryCases tags are now on the explicit RepositoryCaseTag
+          // join model — filter through caseTags.tag.
+          where.caseTags = { some: { tag: { id: { in: input.tagIds } } } };
         }
         if (input.name) {
           where.name = { contains: input.name, mode: "insensitive" };
@@ -177,7 +186,7 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
               undefined,
               deps.env,
             );
-            const canonical = resolved!.value as Prisma.InputJsonValue;
+            const canonical = resolved!.value as JsonValue;
             where.caseFieldValues = {
               some: {
                 fieldId: resolved!.fieldId,
@@ -189,10 +198,13 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
           }
         }
         if (input.issueId !== undefined) {
-          // D7-03: RepositoryCases.issues is many-to-many to Issue. Filtering
-          // `some: { isDeleted: false }` excludes soft-deleted issue links
+          // D7-03: RepositoryCases issues now live on the explicit
+          // RepositoryCaseIssue join model — filter through caseIssues.issue.
+          // `issue: { isDeleted: false }` excludes soft-deleted issue links
           // from matching, consistent with the soft-delete invariant.
-          where.issues = { some: { id: input.issueId, isDeleted: false } };
+          where.caseIssues = {
+            some: { issue: { id: input.issueId, isDeleted: false } },
+          };
         }
         // Phase-8 D8-02 filter appends.
         if (input.automated !== undefined) where.automated = input.automated;

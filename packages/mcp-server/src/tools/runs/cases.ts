@@ -1,5 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  TestRunCasesWhereInput,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -41,8 +43,8 @@ export function registerRunsCasesList(
       try {
         const limit = input.limit ?? DEFAULT_LIMIT;
         // R1: TestRunCases has NO isDeleted column. The
-        // `Prisma.TestRunCasesWhereInput` annotation makes adding one a TS2353.
-        const where: Prisma.TestRunCasesWhereInput = {
+        // `TestRunCasesWhereInput` annotation makes adding one a TS2353.
+        const where: TestRunCasesWhereInput = {
           testRunId: input.runId,
         };
         if (input.isCompleted !== undefined) where.isCompleted = input.isCompleted;

@@ -1,5 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  MilestonesWhereInput,
+  SessionResultsGroupByArgs,
+  StatusFindManyArgs,
+  TestRunCasesGroupByArgs,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -69,7 +74,7 @@ export function registerMilestonesList(
       try {
         const limit = input.limit ?? DEFAULT_LIMIT;
 
-        const where: Prisma.MilestonesWhereInput = {
+        const where: MilestonesWhereInput = {
           projectId: input.projectId,
           isDeleted: false,
         };
@@ -154,7 +159,7 @@ export function registerMilestonesList(
                 by: ["testRunId", "statusId"],
                 where: { testRunId: { in: allRunIds } },
                 _count: { id: true },
-              } satisfies Prisma.TestRunCasesGroupByArgs,
+              } satisfies TestRunCasesGroupByArgs,
               deps.env,
             )) ?? [];
         }
@@ -171,7 +176,7 @@ export function registerMilestonesList(
                 by: ["sessionId", "statusId"],
                 where: { sessionId: { in: allSessionIds }, isDeleted: false },
                 _count: { id: true },
-              } satisfies Prisma.SessionResultsGroupByArgs,
+              } satisfies SessionResultsGroupByArgs,
               deps.env,
             )) ?? [];
         }
@@ -195,7 +200,7 @@ export function registerMilestonesList(
                 {
                   where: { id: { in: nonNullStatusIds } },
                   select: { id: true, name: true },
-                } satisfies Prisma.StatusFindManyArgs,
+                } satisfies StatusFindManyArgs,
                 deps.env,
               )) ?? []);
         const nameById = new Map<number, string>(

@@ -53,7 +53,9 @@ export function registerIssuesGet(
         // cap on each sub-include. Trim each array to the inline cap (100)
         // BEFORE mapping so the surfaced arrays never exceed the documented
         // bound. Each array gets its own truncated.<key> flag.
-        const linkedCasesRaw = raw.repositoryCases ?? [];
+        // RepositoryCases links arrive through the RepositoryCaseIssue join
+        // model now: caseIssues[].case.
+        const linkedCasesRaw = raw.caseIssues ?? [];
         const linkedSessionsRaw = raw.sessions ?? [];
         const linkedTestRunsRaw = raw.testRuns ?? [];
         const truncated: {
@@ -72,7 +74,7 @@ export function registerIssuesGet(
         }
         const trimmedRaw: RawIssueDetail = {
           ...raw,
-          repositoryCases: linkedCasesRaw.slice(
+          caseIssues: linkedCasesRaw.slice(
             0,
             ISSUE_LINKED_ARRAYS_INLINE_CAP,
           ),

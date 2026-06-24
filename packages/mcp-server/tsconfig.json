@@ -4,11 +4,16 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["ES2022"],
+    "baseUrl": ".",
+    "paths": {
+      "@db/input": ["../../testplanit/zenstack/input"],
+      "@db/input/*": ["../../testplanit/zenstack/input/*"],
+      "@db/models": ["../../testplanit/zenstack/models"]
+    },
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

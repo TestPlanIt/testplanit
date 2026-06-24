@@ -1,4 +1,9 @@
-import type { Prisma } from "@prisma/client";
+import type {
+  IssueInclude,
+  SessionResultsInclude,
+  SessionResultsWhereInput,
+  SessionsInclude,
+} from "@db/input";
 import {
   extractProseMirrorText,
   denormalizeCustomFields,
@@ -11,7 +16,7 @@ import {
 // CRITICAL invariants:
 //   R4 — SessionResults has NO `testCaseId` FK; sessions are exploratory and
 //        not case-linked. Filtering by testCaseId is impossible and any
-//        attempt to do so trips Prisma.SessionResultsWhereInput's TS2353.
+//        attempt to do so trips SessionResultsWhereInput's TS2353.
 //   D7-12 — sessions inline up to 100 sessionResults; cap take at 101 so the
 //        tool layer can detect overflow and surface truncated:true.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,7 +33,7 @@ export const SESSION_ROW_INCLUDE = {
   configuration: { select: { id: true, name: true } },
   milestone: { select: { id: true, name: true } },
   tags: { select: { id: true, name: true } },
-} as const satisfies Prisma.SessionsInclude;
+} as const satisfies SessionsInclude;
 
 // SESS-02 full include — sessionFieldValues use `field.type.type` +
 // `field.fieldOptions[].fieldOption` shape identical to caseFieldValues
@@ -83,13 +88,13 @@ export const SESSION_DETAIL_INCLUDE = {
       },
     },
   },
-} as const satisfies Prisma.SessionsInclude;
+} as const satisfies SessionsInclude;
 
 export const SESSION_RESULT_LIST_INCLUDE = {
   status: { select: { id: true, name: true } },
   createdBy: { select: { id: true, name: true, email: true } },
   session: { select: { id: true, name: true, projectId: true } },
-} as const satisfies Prisma.SessionResultsInclude;
+} as const satisfies SessionResultsInclude;
 
 export const SESSION_RESULT_DETAIL_INCLUDE = {
   status: { select: { id: true, name: true } },
@@ -122,12 +127,12 @@ export const SESSION_RESULT_DETAIL_INCLUDE = {
       },
     },
   },
-} as const satisfies Prisma.SessionResultsInclude;
+} as const satisfies SessionResultsInclude;
 
 // FINDING_INCLUDE — for SESS-05 sessionId mode; per-Issue row shape
 export const FINDING_INCLUDE = {
   integration: { select: { provider: true } },
-} as const satisfies Prisma.IssueInclude;
+} as const satisfies IssueInclude;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // denormalizeResultFieldValues

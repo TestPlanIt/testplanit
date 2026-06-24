@@ -1,5 +1,12 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  MilestonesFindUniqueArgs,
+  SessionResultsGroupByArgs,
+  SessionsFindManyArgs,
+  StatusFindManyArgs,
+  TestRunCasesGroupByArgs,
+  TestRunsFindManyArgs,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -17,6 +24,8 @@ import {
   type BatchedSessionGroup,
   type RawMilestoneDetail,
 } from "./shared.js";
+
+type MilestonesWhereUniqueInput = NonNullable<MilestonesFindUniqueArgs["where"]>;
 
 export interface MilestonesGetDeps {
   env: EnvConfig;
@@ -58,7 +67,7 @@ export function registerMilestonesGet(
             where: {
               id: input.milestoneId,
               isDeleted: false,
-            } satisfies Prisma.MilestonesWhereUniqueInput,
+            } satisfies MilestonesWhereUniqueInput,
             include: MILESTONE_DETAIL_INCLUDE,
           },
           deps.env,
@@ -114,7 +123,7 @@ export function registerMilestonesGet(
             {
               where: { milestoneId: raw.id, isDeleted: false },
               select: { id: true },
-            } satisfies Prisma.TestRunsFindManyArgs,
+            } satisfies TestRunsFindManyArgs,
             deps.env,
           )) ?? [];
         const runIds = allRuns.map((r) => r.id);
@@ -125,7 +134,7 @@ export function registerMilestonesGet(
             {
               where: { milestoneId: raw.id, isDeleted: false },
               select: { id: true },
-            } satisfies Prisma.SessionsFindManyArgs,
+            } satisfies SessionsFindManyArgs,
             deps.env,
           )) ?? [];
         const sessionIds = allSessions.map((s) => s.id);
@@ -143,7 +152,7 @@ export function registerMilestonesGet(
                 by: ["testRunId", "statusId"],
                 where: { testRunId: { in: runIds } },
                 _count: { id: true },
-              } satisfies Prisma.TestRunCasesGroupByArgs,
+              } satisfies TestRunCasesGroupByArgs,
               deps.env,
             )) ?? [];
         }
@@ -157,7 +166,7 @@ export function registerMilestonesGet(
                 by: ["sessionId", "statusId"],
                 where: { sessionId: { in: sessionIds }, isDeleted: false },
                 _count: { id: true },
-              } satisfies Prisma.SessionResultsGroupByArgs,
+              } satisfies SessionResultsGroupByArgs,
               deps.env,
             )) ?? [];
         }
@@ -178,7 +187,7 @@ export function registerMilestonesGet(
                 {
                   where: { id: { in: nonNullStatusIds } },
                   select: { id: true, name: true },
-                } satisfies Prisma.StatusFindManyArgs,
+                } satisfies StatusFindManyArgs,
                 deps.env,
               )) ?? []);
         const nameById = new Map<number, string>(

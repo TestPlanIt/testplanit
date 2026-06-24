@@ -1,13 +1,16 @@
-import type { Prisma } from "@prisma/client";
+import type {
+  IssueInclude,
+  IssueSelect,
+} from "@db/input";
 import { extractProseMirrorText } from "../cases/shared.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Typed includes — every literal carries `as const satisfies Prisma.IssueInclude`.
+// Typed includes — every literal carries `as const satisfies IssueInclude`.
 // Adding an unknown column produces TS2353 at compile time (Phase 6 WR-09).
 //
 // Pitfall 7 (Phase 6 retrofit): `externalSystem` is NOT a column on Issue —
 // it is derived from `integration.provider` at the mapper boundary. Reintroducing
-// the externalSystem column in the select trips Prisma.IssueSelect's TS2353 wall.
+// the externalSystem column in the select trips IssueSelect's TS2353 wall.
 //
 // D8-06 / D7-12: each linked-array include declares `take: 101` so the get
 // handler can detect overflow and stamp `truncated.<key>: true`. The cap is
@@ -18,18 +21,29 @@ import { extractProseMirrorText } from "../cases/shared.js";
 export const ISSUE_ROW_INCLUDE = {
   integration: { select: { id: true, name: true, provider: true } },
   createdBy: { select: { id: true, name: true, email: true } },
-  _count: { select: { repositoryCases: true } },
-} as const satisfies Prisma.IssueInclude;
+  // RepositoryCases links now live on the explicit RepositoryCaseIssue join
+  // model — count caseIssues (the implicit `repositoryCases` relation no
+  // longer exists on Issue and would 422). Sessions / testRuns are still
+  // implicit m2m and unchanged.
+  _count: { select: { caseIssues: true } },
+} as const satisfies IssueInclude;
 
 const LINKED_ARRAYS_INLINE_CAP_PLUS_ONE = 101;
 
 export const ISSUE_DETAIL_INCLUDE = {
   ...ISSUE_ROW_INCLUDE,
-  repositoryCases: {
-    where: { isDeleted: false },
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+  // RepositoryCases links go through the RepositoryCaseIssue join model;
+  // select through caseIssues.case. The where / orderBy target the linked
+  // case, and the +1 take still applies for overflow detection.
+  caseIssues: {
+    where: { case: { isDeleted: false } },
+    orderBy: [{ case: { createdAt: "desc" } }, { case: { id: "desc" } }],
     take: LINKED_ARRAYS_INLINE_CAP_PLUS_ONE,
-    select: { id: true, name: true, source: true, automated: true },
+    select: {
+      case: {
+        select: { id: true, name: true, source: true, automated: true },
+      },
+    },
   },
   sessions: {
     where: { isDeleted: false },
@@ -54,7 +68,7 @@ export const ISSUE_DETAIL_INCLUDE = {
       completedAt: true,
     },
   },
-} as const satisfies Prisma.IssueInclude;
+} as const satisfies IssueInclude;
 
 export const ISSUE_LINKED_ARRAYS_INLINE_CAP = 100;
 
@@ -77,7 +91,7 @@ export interface RawIssueRow {
   lastSyncedAt: Date | string | null;
   integration: RawIssueIntegration | null;
   createdBy: { id: string; name: string | null; email: string } | null;
-  _count?: { repositoryCases: number };
+  _count?: { caseIssues: number };
 }
 
 export interface RawIssueDetail extends RawIssueRow {
@@ -86,11 +100,13 @@ export interface RawIssueDetail extends RawIssueRow {
   issueTypeName: string | null;
   issueTypeIconUrl: string | null;
   note: unknown;
-  repositoryCases: Array<{
-    id: number;
-    name: string;
-    source: string;
-    automated: boolean;
+  caseIssues: Array<{
+    case: {
+      id: number;
+      name: string;
+      source: string;
+      automated: boolean;
+    };
   }>;
   sessions: Array<{
     id: number;
@@ -133,7 +149,7 @@ export function mapIssueRow(raw: RawIssueRow) {
       : null,
     createdAt: raw.createdAt,
     lastSyncedAt: raw.lastSyncedAt ?? null,
-    linkedCaseCount: raw._count?.repositoryCases ?? 0,
+    linkedCaseCount: raw._count?.caseIssues ?? 0,
   };
 }
 
@@ -154,11 +170,11 @@ export function mapIssueDetail(raw: RawIssueDetail, flags: IssueDetailFlags) {
     issueTypeName: raw.issueTypeName ?? null,
     issueTypeIconUrl: raw.issueTypeIconUrl ?? null,
     note: extractProseMirrorText(raw.note),
-    linkedCases: raw.repositoryCases.map((c) => ({
-      id: c.id,
-      name: c.name,
-      source: c.source,
-      automated: c.automated,
+    linkedCases: raw.caseIssues.map((ci) => ({
+      id: ci.case.id,
+      name: ci.case.name,
+      source: ci.case.source,
+      automated: ci.case.automated,
     })),
     linkedSessions: raw.sessions.map((s) => ({
       id: s.id,

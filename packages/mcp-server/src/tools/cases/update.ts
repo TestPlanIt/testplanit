@@ -1,5 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  RepositoryCasesSelect,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack, resolveCaseWorkflowState } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -74,7 +76,7 @@ export function registerCasesUpdate(
               id: true,
               projectId: true,
               templateId: true,
-            } satisfies Prisma.RepositoryCasesSelect,
+            } satisfies RepositoryCasesSelect,
           },
           deps.env,
         );
@@ -106,7 +108,14 @@ export function registerCasesUpdate(
         }
         if (input.tags !== undefined) {
           const tagIds = await resolveTagIds(input.tags, deps.env);
-          data.tags = { set: tagIds.map((id) => ({ id })) };
+          // Tags live on the explicit RepositoryCaseTag join model. "set"
+          // (replace-all) semantics map to: clear the existing join rows,
+          // then create one per requested tag (nested caseTags.tag.connect).
+          // The implicit `tags` relation no longer exists and would 422.
+          data.caseTags = {
+            deleteMany: {},
+            create: tagIds.map((id) => ({ tag: { connect: { id } } })),
+          };
         }
 
         // Only write if there are scalar/relation fields to update.

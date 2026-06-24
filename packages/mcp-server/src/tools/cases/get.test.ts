@@ -32,8 +32,10 @@ function makeRawCase(overrides: Record<string, unknown> = {}) {
     folder: { id: 12, name: "Auth", parentId: 5 },
     state: { id: 3, name: "Active" },
     creator: { id: "user-1", name: "Alice", email: "alice@example.com" },
-    tags: [{ id: 1, name: "smoke" }],
-    issues: [],
+    // Raw rows carry tags / issues through the explicit join models
+    // (caseTags[].tag, caseIssues[].issue).
+    caseTags: [{ tag: { id: 1, name: "smoke" } }],
+    caseIssues: [],
     steps: [],
     caseFieldValues: [],
     linksFrom: [],
@@ -155,13 +157,16 @@ describe("registerCasesGet", () => {
   it("issues are included in the response", async () => {
     const caseWithIssues = makeRawCase({
       folder: { id: 5, name: "Root", parentId: null },
-      issues: [
+      // Raw issues arrive through the caseIssues join model.
+      caseIssues: [
         {
-          id: 1,
-          externalKey: "JIRA-1",
-          integration: { provider: "JIRA" },
-          title: "Bug",
-          externalStatus: "Open",
+          issue: {
+            id: 1,
+            externalKey: "JIRA-1",
+            integration: { provider: "JIRA" },
+            title: "Bug",
+            externalStatus: "Open",
+          },
         },
       ],
     });
@@ -453,13 +458,16 @@ describe("registerCasesGet", () => {
       caseFieldValues: [
         { value: "High", field: { displayName: "Priority" } },
       ],
-      issues: [
+      // Raw issues arrive through the caseIssues join model.
+      caseIssues: [
         {
-          id: 1,
-          externalKey: "JIRA-1",
-          integration: { provider: "JIRA" },
-          title: "Bug",
-          externalStatus: "Open",
+          issue: {
+            id: 1,
+            externalKey: "JIRA-1",
+            integration: { provider: "JIRA" },
+            title: "Bug",
+            externalStatus: "Open",
+          },
         },
       ],
       linksFrom: [

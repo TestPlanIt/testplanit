@@ -1,5 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  SessionsSelect,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -83,7 +85,7 @@ export function registerSessionsUpdate(
             "findUnique",
             {
               where: { id: input.sessionId },
-              select: { projectId: true } satisfies Prisma.SessionsSelect,
+              select: { projectId: true } satisfies SessionsSelect,
             },
             deps.env,
           );
