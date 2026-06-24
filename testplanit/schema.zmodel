@@ -1101,7 +1101,7 @@ model Workflows {
     @@index([order])
 
     @@validate(
-        !(isDefault && requiresReview),
+        isDefault != true || requiresReview != true,
         "The default workflow state cannot require review — new entities land here and the schema gate only fires on transitions."
     )
 
