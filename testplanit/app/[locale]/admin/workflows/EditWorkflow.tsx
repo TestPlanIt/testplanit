@@ -5,7 +5,7 @@ import { schema } from "~/zenstack/schema";
 import { WorkflowType } from "~/zenstack/models";
 import type { Projects, Workflows } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
@@ -67,7 +67,7 @@ const getWorkflowTypeOptions = (
 ];
 
 interface ExtendedWorkflows extends Workflows {
-  projects: { projectId: number }[];
+  _count: { projects: number };
 }
 
 interface EditWorkflowsProps {
@@ -121,6 +121,18 @@ export function EditWorkflows({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
+
+  // The edited workflow's current project assignments — fetched here (one
+  // workflow's worth) rather than eagerly included for EVERY workflow in the
+  // admin table query. Populated into the form once loaded; Save is gated on it
+  // so a premature submit can't delete-and-recreate against an empty list.
+  const { data: currentAssignments } = useClientQueries(
+    schema
+  ).projectWorkflowAssignment.useFindMany({
+    where: { workflowId: workflows.id },
+    select: { projectId: true },
+  });
+  const assignmentsLoaded = currentAssignments !== undefined;
 
   const projectOptions =
     projects && projects.length > 0
@@ -183,7 +195,7 @@ export function EditWorkflows({
       requiresReview: workflows.requiresReview,
       scope: workflows.scope,
       workflowType: workflows.workflowType,
-      projects: workflows.projects.map((p) => p.projectId),
+      projects: [],
     },
   });
 
@@ -192,6 +204,18 @@ export function EditWorkflows({
     control,
     formState: { errors },
   } = form;
+
+  // Seed the projects multiselect from the fetched assignments once they load.
+  // Save is disabled until then, so there's no window for the user to edit this
+  // field before it's populated.
+  useEffect(() => {
+    if (currentAssignments) {
+      setValue(
+        "projects",
+        currentAssignments.map((a) => a.projectId)
+      );
+    }
+  }, [currentAssignments, setValue]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
@@ -550,7 +574,10 @@ export function EditWorkflows({
               <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !assignmentsLoaded}
+              >
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}

@@ -16,10 +16,7 @@ export interface ExtendedWorkflows extends DataRow, Workflows {
     id: number;
     value: string;
   };
-  projects: {
-    projectId: number;
-    project: {
-      name: string;
-    };
-  }[];
+  _count: {
+    projects: number;
+  };
 }

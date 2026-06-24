@@ -165,11 +165,14 @@ export const useColumns = (
         size: 100,
         cell: ({ row }) => (
           <div className="text-center">
+            {/* Count from the query's _count; the project list itself loads
+                lazily (filtered to this workflow) only when the popover opens. */}
             <ProjectListDisplay
-              projects={row.original.projects.map((p) => ({
-                projectId: p.projectId,
-                name: p.project.name,
-              }))}
+              count={row.original._count.projects}
+              filter={{
+                isDeleted: false,
+                assignedWorkflows: { some: { workflowId: row.original.id } },
+              }}
             />
           </div>
         ),

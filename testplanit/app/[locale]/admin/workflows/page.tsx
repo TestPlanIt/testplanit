@@ -79,8 +79,10 @@ function WorkflowComponent() {
     Record<string, boolean>
   >({});
 
-  const { mutateAsync: updateWorkflows } = useClientQueries(schema).workflows.useUpdate();
-  const { mutateAsync: updateManyWorkflows } = useClientQueries(schema).workflows.useUpdateMany();
+  const { mutateAsync: updateWorkflows } =
+    useClientQueries(schema).workflows.useUpdate();
+  const { mutateAsync: updateManyWorkflows } =
+    useClientQueries(schema).workflows.useUpdateMany();
   const { mutateAsync: createManyProjectWorkflowAssignment } =
     useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
   const { mutateAsync: deleteManyProjectWorkflowAssignment } =
@@ -96,16 +98,12 @@ function WorkflowComponent() {
       include: {
         icon: true,
         color: true,
-        projects: {
-          select: {
-            projectId: true,
-            project: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+        // Only the assignment COUNT here — the full per-workflow project list
+        // (hundreds per workflow on large instances) is fetched lazily by the
+        // Projects column's ProjectListDisplay when its popover opens. Eagerly
+        // including every assignment made this query fetch tens of thousands of
+        // nested rows and stalled the page.
+        _count: { select: { projects: true } },
       },
     },
     {
