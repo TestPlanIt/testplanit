@@ -44,6 +44,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import { IconName } from "~/types/globals";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 function buildFormSchema(t: (key: any) => string) {
   return z.object({
@@ -84,9 +85,12 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
   const t = useTranslations();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createMilestones } = useClientQueries(schema).milestones.useCreate();
+  const { mutateAsync: createMilestones } =
+    useClientQueries(schema).milestones.useCreate();
 
-  const { data: milestoneTypes } = useClientQueries(schema).milestoneTypes.useFindMany({
+  const { data: milestoneTypes } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindMany({
     where: {
       AND: [
         {
@@ -107,22 +111,23 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
     include: { icon: true },
   });
 
-  const { data: milestones, isLoading: milestonesLoading } =
-    useClientQueries(schema).milestones.useFindMany({
-      where: {
-        projectId: Number(projectId),
-        isDeleted: false,
-        isCompleted: false,
-      },
-      orderBy: [
-        { startedAt: "asc" },
-        { completedAt: "asc" },
-        { isStarted: "asc" },
-      ],
-      include: {
-        milestoneType: { select: { icon: true, name: true } },
-      },
-    });
+  const { data: milestones, isLoading: milestonesLoading } = useClientQueries(
+    schema
+  ).milestones.useFindMany({
+    where: {
+      projectId: Number(projectId),
+      isDeleted: false,
+      isCompleted: false,
+    },
+    orderBy: [
+      { startedAt: "asc" },
+      { completedAt: "asc" },
+      { isStarted: "asc" },
+    ],
+    include: {
+      milestoneType: { select: { icon: true, name: true } },
+    },
+  });
 
   const milestoneTypesOptions =
     milestoneTypes?.map((milestoneType) => ({
@@ -242,7 +247,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
         setIsSubmitting(false);
       }
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: t("milestones.errors.nameExists"),

@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 
 /**
@@ -152,7 +153,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // Race: another request created the same email between detection and
     // create. Fall back to the same detection logic so the client still
     // gets a structured RESTORE_REQUIRED / EXISTS_ACTIVE response.
-    if (err?.code === "P2002") {
+    if (isUniqueConstraintError(err)) {
       const racing = await prisma.user.findUnique({
         where: { email: body.email },
         select: { id: true, name: true, email: true, isDeleted: true },

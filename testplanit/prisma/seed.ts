@@ -1,6 +1,7 @@
 import { ApplicationArea, WorkflowScope } from "~/zenstack/models";
 import type { JsonValue } from "@zenstackhq/orm";
 import { createRawDbClient } from "~/lib/rawDbClient";
+import { sql } from "kysely";
 
 import bcrypt from "bcrypt";
 import {
@@ -504,21 +505,35 @@ async function seedCoreData() {
   // Every minted ScimToken FKs to this single row via systemUserId. The row
   // has no credentials and is flagged inactive so it can never be a login
   // surface; the badge in /admin/users surfaces it honestly to admins.
-  await prisma.user.upsert({
+  //
+  // The sentinel email "scim@__system__" is intentionally non-routable and
+  // fails the @email field validator on create. The /admin/users badge matches
+  // this exact value, and upgraded installs already store it, so it cannot
+  // change. Create the row through the ORM (so column defaults apply) with a
+  // valid placeholder, then set the sentinel via raw SQL, which bypasses input
+  // validation. Idempotent via the id existence check.
+  const existingScimUser = await prisma.user.findUnique({
     where: { id: SCIM_SYSTEM_USER_ID },
-    update: {},
-    create: {
-      id: SCIM_SYSTEM_USER_ID,
-      email: SCIM_SYSTEM_USER_EMAIL,
-      name: "SCIM Provisioner",
-      access: "USER",
-      authMethod: "INTERNAL",
-      isActive: false,
-      isDeleted: false,
-      isApi: false,
-      roleId: userRole.id,
-    },
+    select: { id: true },
   });
+  if (!existingScimUser) {
+    await prisma.user.create({
+      data: {
+        id: SCIM_SYSTEM_USER_ID,
+        email: `${SCIM_SYSTEM_USER_ID}@example.com`,
+        name: "SCIM Provisioner",
+        access: "USER",
+        authMethod: "INTERNAL",
+        isActive: false,
+        isDeleted: false,
+        isApi: false,
+        roleId: userRole.id,
+      },
+    });
+    await sql`UPDATE "User" SET email = ${SCIM_SYSTEM_USER_EMAIL} WHERE id = ${SCIM_SYSTEM_USER_ID}`.execute(
+      prisma.$qb
+    );
+  }
   console.log("Ensured synthetic SCIM Provisioner user exists.");
 
   // --- Sentinel __system__ Projects row ---
@@ -1467,6 +1482,7 @@ async function seedWorkflows() {
             colorId: color.id,
             isEnabled: workflow.isEnabled,
             isDefault: workflow.isDefault,
+            requiresReview: false,
             scope: workflow.scope as WorkflowScope,
             workflowType: workflow.workflowType as
               | "NOT_STARTED"

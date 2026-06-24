@@ -37,6 +37,7 @@ import {
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@radix-ui/react-label";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 // Helper to get enum values safely (copied from EditRoles)
 const applicationAreaValues = Object.values(ApplicationArea);
@@ -72,9 +73,12 @@ export function AddRole({ open, onClose }: AddRoleProps) {
   const t = useTranslations();
   const tAreas = useTranslations("enums.ApplicationArea");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createRole } = useClientQueries(schema).roles.useCreate();
-  const { mutateAsync: updateManyRoles } = useClientQueries(schema).roles.useUpdateMany();
-  const upsertRolePermission = useClientQueries(schema).rolePermission.useUpsert();
+  const { mutateAsync: createRole } =
+    useClientQueries(schema).roles.useCreate();
+  const { mutateAsync: updateManyRoles } =
+    useClientQueries(schema).roles.useUpdateMany();
+  const upsertRolePermission =
+    useClientQueries(schema).rolePermission.useUpsert();
 
   // Initialize permissions with all false values
   const initialPermissions = useMemo(
@@ -223,7 +227,7 @@ export function AddRole({ open, onClose }: AddRoleProps) {
       setIsSubmitting(false);
     } catch (err: any) {
       // Error Handling (check for unique constraint, log others)
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         setError("name", {
           type: "custom",
           message: t("admin.roles.add.errors.nameExists"),

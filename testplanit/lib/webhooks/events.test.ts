@@ -125,13 +125,16 @@ describe("webhookEvents.emit", () => {
     expect(createSpy.mock.calls[0][0].data.eventTimestamp).toBe(ts);
   });
 
-  it("forwards payload as-is to tx.webhookOutboxEvent.create", async () => {
+  it("forwards payload as normalized JSON to tx.webhookOutboxEvent.create", async () => {
     const data = { runId: 5, statusCounts: [{ id: 1 }] };
     await webhookEvents.emit("test_run.completed", data, {
       projectId: 7,
       tx: tx as any,
     });
-    expect(createSpy.mock.calls[0][0].data.payload).toBe(data);
+    // Payload is JSON-normalized (Dates -> ISO, undefined stripped) before the
+    // create so v3's strict JsonValue validation accepts it; deep-equal for
+    // plain-JSON input.
+    expect(createSpy.mock.calls[0][0].data.payload).toEqual(data);
   });
 
   it("throws a clear error when called with tx: undefined (runtime guard against `as any` bypass)", async () => {

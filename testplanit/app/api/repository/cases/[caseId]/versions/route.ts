@@ -1,9 +1,11 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { DbNull } from "@zenstackhq/orm";
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 
 /**
@@ -190,9 +192,10 @@ export const POST = withAuditContext(
         isArchived: overrides.isArchived ?? testCase.isArchived,
         isDeleted: false, // Versions should never be marked as deleted
         version: versionNumber,
-        steps: stepsJson,
+        // v3 rejects raw `null` for nullable Json columns; DbNull writes SQL NULL.
+        steps: stepsJson ?? DbNull,
         tags: tagsArray,
-        issues: issuesArray,
+        issues: issuesArray ?? DbNull,
         links: overrides.links ?? [],
         attachments: overrides.attachments ?? [],
       };
@@ -212,8 +215,8 @@ export const POST = withAuditContext(
           });
           break; // Success, exit retry loop
         } catch (error: any) {
-          // Check if it's a unique constraint violation (P2002)
-          if (error.code === "P2002" && retryCount < maxRetries) {
+          // Check if it's a unique constraint violation
+          if (isUniqueConstraintError(error) && retryCount < maxRetries) {
             retryCount++;
             const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
             console.log(

@@ -1,6 +1,7 @@
 "use client";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,7 +66,8 @@ export function AddFolder({
 }: AddFolderProps) {
   const t = useTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createFolder } = useClientQueries(schema).repositoryFolders.useCreate();
+  const { mutateAsync: createFolder } =
+    useClientQueries(schema).repositoryFolders.useCreate();
   const { data: session } = useSession();
   // Local state for the effective parent - allows user to override to create root folder.
   // Initialized from prop; reset on each open via React unmount.
@@ -73,7 +75,9 @@ export function AddFolder({
     parentId
   );
 
-  const { data: parent } = useClientQueries(schema).repositoryFolders.useFindFirst(
+  const { data: parent } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindFirst(
     {
       where: {
         id: effectiveParentId === null ? undefined : effectiveParentId,
@@ -86,7 +90,9 @@ export function AddFolder({
   );
 
   // Query sibling folders to calculate max order for new folder placement
-  const { data: siblingFolders } = useClientQueries(schema).repositoryFolders.useFindMany({
+  const { data: siblingFolders } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany({
     where: {
       projectId,
       parentId: effectiveParentId,
@@ -148,17 +154,7 @@ export function AddFolder({
           onFolderCreated(newFolder.id, effectiveParentId);
         }
       } catch (err: any) {
-        // Detect unique constraint violations across Prisma and ZenStack error formats
-        const errorMsg = err.info?.message || err.message || "";
-        const isUniqueViolation =
-          err.code === "P2002" ||
-          err.info?.code === "P2002" ||
-          err.info?.prisma ||
-          errorMsg.includes("Unique constraint") ||
-          errorMsg.includes("unique constraint") ||
-          errorMsg.includes("duplicate key");
-
-        if (isUniqueViolation) {
+        if (isUniqueConstraintError(err)) {
           form.setError("name", {
             type: "custom",
             message: t("common.errors.nameExists"),

@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,25 +51,34 @@ export default function SSOAdminPage() {
   const { data: session } = useSession();
   const t = useTranslations();
 
-  const { data: ssoProviders, refetch } = useClientQueries(schema).ssoProvider.useFindMany({
+  const { data: ssoProviders, refetch } = useClientQueries(
+    schema
+  ).ssoProvider.useFindMany({
     include: { samlConfig: true },
   });
-  const { mutateAsync: createProvider } = useClientQueries(schema).ssoProvider.useCreate();
-  const { mutateAsync: updateProvider } = useClientQueries(schema).ssoProvider.useUpdate();
+  const { mutateAsync: createProvider } =
+    useClientQueries(schema).ssoProvider.useCreate();
+  const { mutateAsync: updateProvider } =
+    useClientQueries(schema).ssoProvider.useUpdate();
 
   // Domain restriction hooks
-  const { data: allowedDomains, refetch: refetchDomains } =
-    useClientQueries(schema).allowedEmailDomain.useFindMany({
-      orderBy: { domain: "asc" },
-    });
-  const { mutateAsync: createDomain } = useClientQueries(schema).allowedEmailDomain.useCreate();
-  const { mutateAsync: updateDomain } = useClientQueries(schema).allowedEmailDomain.useUpdate();
-  const { mutateAsync: deleteDomain } = useClientQueries(schema).allowedEmailDomain.useDelete();
+  const { data: allowedDomains, refetch: refetchDomains } = useClientQueries(
+    schema
+  ).allowedEmailDomain.useFindMany({
+    orderBy: { domain: "asc" },
+  });
+  const { mutateAsync: createDomain } =
+    useClientQueries(schema).allowedEmailDomain.useCreate();
+  const { mutateAsync: updateDomain } =
+    useClientQueries(schema).allowedEmailDomain.useUpdate();
+  const { mutateAsync: deleteDomain } =
+    useClientQueries(schema).allowedEmailDomain.useDelete();
 
   // Registration settings hooks
   const { data: registrationSettings, refetch: refetchSettings } =
     useClientQueries(schema).registrationSettings.useFindFirst();
-  const { mutateAsync: upsertSettings } = useClientQueries(schema).registrationSettings.useUpsert();
+  const { mutateAsync: upsertSettings } =
+    useClientQueries(schema).registrationSettings.useUpsert();
 
   // Google OAuth configuration state
   const [isGoogleConfigOpen, setIsGoogleConfigOpen] = useState(false);
@@ -759,7 +769,7 @@ export default function SSOAdminPage() {
       setNewDomain("");
       void refetchDomains();
     } catch (error: any) {
-      if (error.info?.code === "P2002") {
+      if (isUniqueConstraintError(error)) {
         toast.error(t("admin.sso.messages.domainExists"));
       } else {
         toast.error(t("admin.sso.messages.domainAddFailed"));

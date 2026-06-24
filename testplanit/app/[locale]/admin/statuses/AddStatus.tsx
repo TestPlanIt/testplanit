@@ -38,6 +38,7 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 const createAddStatusFormSchema = (
   t: ReturnType<typeof useTranslations<"admin.statuses.add">>
@@ -81,9 +82,11 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [systemNameFocused, setSystemNameFocused] = useState(false);
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
-  const { data: defaultColorData } = useClientQueries(schema).color.useFindFirst();
+  const { data: defaultColorData } =
+    useClientQueries(schema).color.useFindFirst();
 
-  const { mutateAsync: createStatus } = useClientQueries(schema).status.useCreate();
+  const { mutateAsync: createStatus } =
+    useClientQueries(schema).status.useCreate();
   const { mutateAsync: createManyStatusScopeAssignment } =
     useClientQueries(schema).statusScopeAssignment.useCreateMany();
   const { mutateAsync: createManyProjectStatusAssignment } =
@@ -240,7 +243,7 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: t("errors.nameExists"),

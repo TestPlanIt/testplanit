@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 const FormSchema = (t: any) =>
   z.object({
@@ -46,7 +47,8 @@ interface EditCategoryProps {
 
 export function EditCategory({ category, open, onClose }: EditCategoryProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfigCategories } = useClientQueries(schema).configCategories.useUpdate();
+  const { mutateAsync: updateConfigCategories } =
+    useClientQueries(schema).configCategories.useUpdate();
   const tCommon = useTranslations("common");
 
   const form = useForm<z.infer<ReturnType<typeof FormSchema>>>({
@@ -73,7 +75,7 @@ export function EditCategory({ category, open, onClose }: EditCategoryProps) {
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tCommon("errors.categoryNameExists"),

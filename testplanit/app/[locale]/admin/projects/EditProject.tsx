@@ -2,9 +2,15 @@
 /* eslint-disable react-hooks/incompatible-library */
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import type { GroupProjectPermissionUpsertArgs, UserProjectPermissionUpsertArgs } from "~/zenstack/input";
+import type {
+  GroupProjectPermissionUpsertArgs,
+  UserProjectPermissionUpsertArgs,
+} from "~/zenstack/input";
 import { ProjectAccessType } from "~/zenstack/models";
-import type { GroupProjectPermission, UserProjectPermission } from "~/zenstack/models";
+import type {
+  GroupProjectPermission,
+  UserProjectPermission,
+} from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
@@ -60,6 +66,7 @@ import { toast } from "sonner";
 import { ExtendedProjects } from "./columns";
 import { ProjectGroupPermissions } from "./ProjectGroupPermissions";
 import { ProjectUserPermissions } from "./ProjectUserPermissions";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface EditProjectModalProps {
   project: ExtendedProjects;
@@ -133,8 +140,11 @@ export function EditProjectModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
 
-  const { mutateAsync: updateProject } = useClientQueries(schema).projects.useUpdate();
-  const { data: roles, isLoading: rolesLoading } = useClientQueries(schema).roles.useFindMany(
+  const { mutateAsync: updateProject } =
+    useClientQueries(schema).projects.useUpdate();
+  const { data: roles, isLoading: rolesLoading } = useClientQueries(
+    schema
+  ).roles.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { name: "asc" },
@@ -149,7 +159,9 @@ export function EditProjectModal({
       },
       { enabled: isOpen }
     );
-  const { data: groupPermissionsData } = useClientQueries(schema).groupProjectPermission.useFindMany(
+  const { data: groupPermissionsData } = useClientQueries(
+    schema
+  ).groupProjectPermission.useFindMany(
     {
       where: { projectId: project.id },
       include: { group: true, role: true },
@@ -166,7 +178,9 @@ export function EditProjectModal({
       { enabled: isOpen }
     );
 
-  const { data: allUsers, isLoading: allUsersLoading } = useClientQueries(schema).user.useFindMany(
+  const { data: allUsers, isLoading: allUsersLoading } = useClientQueries(
+    schema
+  ).user.useFindMany(
     {
       where: { isActive: true, isDeleted: false },
       include: { role: true },
@@ -175,7 +189,9 @@ export function EditProjectModal({
     { enabled: isOpen }
   );
 
-  const { data: allGroups, isLoading: groupsLoading } = useClientQueries(schema).groups.useFindMany(
+  const { data: allGroups, isLoading: groupsLoading } = useClientQueries(
+    schema
+  ).groups.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { name: "asc" },
@@ -189,7 +205,9 @@ export function EditProjectModal({
     { enabled: isOpen }
   );
 
-  const upsertUserPermission = useClientQueries(schema).userProjectPermission.useUpsert({
+  const upsertUserPermission = useClientQueries(
+    schema
+  ).userProjectPermission.useUpsert({
     onSuccess: () => {},
     onError: (error) => {
       console.error("Error upserting user permission:", error);
@@ -197,7 +215,9 @@ export function EditProjectModal({
     },
   });
 
-  const deleteManyUserPermission = useClientQueries(schema).userProjectPermission.useDeleteMany({
+  const deleteManyUserPermission = useClientQueries(
+    schema
+  ).userProjectPermission.useDeleteMany({
     onSuccess: () => {},
     onError: (error) => {
       console.error("Error deleting user permissions:", error);
@@ -205,7 +225,9 @@ export function EditProjectModal({
     },
   });
 
-  const upsertGroupPermission = useClientQueries(schema).groupProjectPermission.useUpsert({
+  const upsertGroupPermission = useClientQueries(
+    schema
+  ).groupProjectPermission.useUpsert({
     onSuccess: () => {},
     onError: (error) => {
       console.error("Error upserting group permission:", error);
@@ -213,7 +235,9 @@ export function EditProjectModal({
     },
   });
 
-  const deleteManyGroupPermission = useClientQueries(schema).groupProjectPermission.useDeleteMany({
+  const deleteManyGroupPermission = useClientQueries(
+    schema
+  ).groupProjectPermission.useDeleteMany({
     onSuccess: () => {},
     onError: (error) => {
       console.error("Error deleting group permissions:", error);
@@ -221,7 +245,9 @@ export function EditProjectModal({
     },
   });
 
-  const createManyProjectAssignment = useClientQueries(schema).projectAssignment.useCreateMany({
+  const createManyProjectAssignment = useClientQueries(
+    schema
+  ).projectAssignment.useCreateMany({
     onSuccess: () => {},
     onError: (error) => {
       console.error("Error creating project assignments:", error);
@@ -229,7 +255,9 @@ export function EditProjectModal({
     },
   });
 
-  const deleteManyProjectAssignment = useClientQueries(schema).projectAssignment.useDeleteMany({
+  const deleteManyProjectAssignment = useClientQueries(
+    schema
+  ).projectAssignment.useDeleteMany({
     onSuccess: () => {},
     onError: (error) => {
       console.error("Error deleting project assignments:", error);
@@ -610,8 +638,7 @@ export function EditProjectModal({
       }
 
       // --- Handle Group Permission Changes (Similar logic to users) ---
-      const groupPermissionsToUpsert: GroupProjectPermissionUpsertArgs[] =
-        [];
+      const groupPermissionsToUpsert: GroupProjectPermissionUpsertArgs[] = [];
       const groupPermissionIdsToDelete: {
         groupId: string;
         projectId: number;
@@ -731,7 +758,7 @@ export function EditProjectModal({
       }
     } catch (err: any) {
       console.error("Failed to update project or permissions:", err);
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         setError("name", {
           type: "custom",
           message: tCommon("errors.projectNameExists"),

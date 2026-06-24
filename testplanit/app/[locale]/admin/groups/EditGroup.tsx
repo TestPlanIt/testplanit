@@ -53,6 +53,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 import {
   type DowngradedUser,
@@ -95,13 +96,18 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
     useState<EditGroupFormData | null>(null);
   const [downgradedUsers, setDowngradedUsers] = useState<DowngradedUser[]>([]);
 
-  const { mutateAsync: updateGroup } = useClientQueries(schema).groups.useUpdate();
-  const { data: allUsersData, isLoading: usersLoading } = useClientQueries(schema).user.useFindMany({
+  const { mutateAsync: updateGroup } =
+    useClientQueries(schema).groups.useUpdate();
+  const { data: allUsersData, isLoading: usersLoading } = useClientQueries(
+    schema
+  ).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     orderBy: { name: "asc" },
   });
   const { data: groupAssignments, isLoading: assignmentsLoading } =
-    useClientQueries(schema).groupAssignment.useFindMany({ where: { groupId: group.id } });
+    useClientQueries(schema).groupAssignment.useFindMany({
+      where: { groupId: group.id },
+    });
   const { mutateAsync: createManyGroupAssignment } =
     useClientQueries(schema).groupAssignment.useCreateMany();
   const { mutateAsync: deleteManyGroupAssignment } =
@@ -232,7 +238,7 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
       }
       await applyGroupUpdate(data);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         setError("name", {
           type: "custom",
           message: t("add.errors.nameExists"),

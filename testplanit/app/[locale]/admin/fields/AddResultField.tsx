@@ -48,6 +48,7 @@ import {
 
 import { HelpPopover } from "@/components/ui/help-popover";
 import type { FieldDraftOption } from "./AddCaseField";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 // Schema is built per-render so Zod messages reflect the active locale.
 // `t` is the unscoped translator from useTranslations(); keep paths
@@ -158,17 +159,24 @@ export function AddResultFieldModal({
   const applyOptionOrder = (options: FieldOptions[]): FieldOptions[] =>
     options.map((option, index) => ({ ...option, order: index }));
 
-  const { mutateAsync: createResultField } = useClientQueries(schema).resultFields.useCreate();
+  const { mutateAsync: createResultField } =
+    useClientQueries(schema).resultFields.useCreate();
 
-  const { data: types, isLoading: typesLoading } = useClientQueries(schema).caseFieldTypes.useFindMany({
+  const { data: types, isLoading: typesLoading } = useClientQueries(
+    schema
+  ).caseFieldTypes.useFindMany({
     orderBy: { type: "asc" },
   });
 
-  const { data: existingCaseFields } = useClientQueries(schema).caseFields.useFindMany({
+  const { data: existingCaseFields } = useClientQueries(
+    schema
+  ).caseFields.useFindMany({
     select: { systemName: true },
   });
 
-  const { data: existingResultFields } = useClientQueries(schema).resultFields.useFindMany({
+  const { data: existingResultFields } = useClientQueries(
+    schema
+  ).resultFields.useFindMany({
     select: { systemName: true },
   });
 
@@ -684,7 +692,7 @@ export function AddResultFieldModal({
       setOpen(false);
     } catch (err: any) {
       setIsSubmitting(false);
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("systemName", {
           type: "custom",
           message: tCommon("fields.options.validation.systemNameError"),

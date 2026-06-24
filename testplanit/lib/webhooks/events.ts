@@ -103,7 +103,11 @@ export const webhookEvents = {
         eventTimestamp,
         projectId: opts.projectId,
         actorUserId: resolvedActorUserId,
-        payload: data as JsonValue,
+        // Normalize to plain JSON: entity snapshots carry Date objects (and may
+        // hold undefined), which v3's strict JsonValue validation rejects on a
+        // Json column. Webhooks deliver the payload as JSON over HTTP anyway, so
+        // serializing here both satisfies the ORM and matches what consumers see.
+        payload: JSON.parse(JSON.stringify(data ?? null)) as JsonValue,
       },
       select: { id: true },
     });

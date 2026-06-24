@@ -312,12 +312,15 @@ describe("POST /api/auth/signup", () => {
       expect(data.error).toBe("Invalid input");
     });
 
-    it("should handle Prisma unique constraint violation (P2002)", async () => {
+    it("should handle a unique constraint violation on email", async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.$transaction.mockRejectedValue({
-        code: "P2002",
-        meta: { target: ["email"] },
-      });
+      // v3 surfaces the Postgres unique violation as the driver error text;
+      // isUniqueConstraintError matches on "unique constraint" / "duplicate key".
+      mockPrisma.$transaction.mockRejectedValue(
+        new Error(
+          'duplicate key value violates unique constraint "User_email_key"'
+        )
+      );
 
       const response = await signup(createRequest(validSignupData));
       const data = await response.json();

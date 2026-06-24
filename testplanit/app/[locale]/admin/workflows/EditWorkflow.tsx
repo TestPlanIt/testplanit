@@ -51,6 +51,7 @@ import MultiSelect from "react-select";
 import { scopeDisplayData } from "~/app/constants";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 const scopeKeys = Object.keys(scopeDisplayData) as [
   keyof typeof scopeDisplayData,
@@ -104,8 +105,10 @@ export function EditWorkflows({
     workflows.colorId
   );
 
-  const { mutateAsync: updateWorkflows } = useClientQueries(schema).workflows.useUpdate();
-  const { mutateAsync: updateManyWorkflows } = useClientQueries(schema).workflows.useUpdateMany();
+  const { mutateAsync: updateWorkflows } =
+    useClientQueries(schema).workflows.useUpdate();
+  const { mutateAsync: updateManyWorkflows } =
+    useClientQueries(schema).workflows.useUpdateMany();
   const { mutateAsync: createManyProjectWorkflowAssignment } =
     useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
   const { mutateAsync: deleteManyProjectWorkflowAssignment } =
@@ -243,7 +246,7 @@ export function EditWorkflows({
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "nameExists",
           message: tCommon("errors.workflowStateNameExists"),

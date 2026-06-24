@@ -44,6 +44,7 @@ import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import { IconName } from "~/types/globals";
 import { MilestoneFormData } from "./AddMilestonesToProjectsWizard";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 function buildFormSchema(t: (key: any) => string) {
   return z.object({
@@ -261,7 +262,7 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
         session.user.id
       );
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: t("milestones.errors.nameExists"),

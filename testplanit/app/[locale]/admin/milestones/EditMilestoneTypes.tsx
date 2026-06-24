@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 export interface ExtendedMilestoneTypes extends MilestoneTypes {
   projects: { projectId: number }[];
@@ -70,7 +71,8 @@ export function EditMilestoneType({
     projects: z.array(z.number()).optional(),
   });
 
-  const { mutateAsync: updateMilestoneType } = useClientQueries(schema).milestoneTypes.useUpdate();
+  const { mutateAsync: updateMilestoneType } =
+    useClientQueries(schema).milestoneTypes.useUpdate();
   const { mutateAsync: updateManyMilestoneTypes } =
     useClientQueries(schema).milestoneTypes.useUpdateMany();
   const { mutateAsync: createManyMilestoneTypesAssignment } =
@@ -165,7 +167,7 @@ export function EditMilestoneType({
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tCommon("errors.nameExists"),

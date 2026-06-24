@@ -52,6 +52,7 @@ import MultiSelect from "react-select";
 import { scopeDisplayData } from "~/app/constants";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 const scopeKeys = Object.keys(scopeDisplayData) as [
   keyof typeof scopeDisplayData,
@@ -105,15 +106,20 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
     useReviewFeatureEnabled();
   const reviewFeatureDisabled = reviewFeatureSystemEnabled === false;
 
-  const { data: defaultIconData } = useClientQueries(schema).fieldIcon.useFindFirst({
+  const { data: defaultIconData } = useClientQueries(
+    schema
+  ).fieldIcon.useFindFirst({
     where: { name: "layout-list" },
   });
-  const { data: defaultColorData } = useClientQueries(schema).color.useFindFirst();
+  const { data: defaultColorData } =
+    useClientQueries(schema).color.useFindFirst();
   const [selectedIconId, setSelectedIconId] = useState<number | null>(null);
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
 
-  const { mutateAsync: createWorkflows } = useClientQueries(schema).workflows.useCreate();
-  const { mutateAsync: updateManyWorkflows } = useClientQueries(schema).workflows.useUpdateMany();
+  const { mutateAsync: createWorkflows } =
+    useClientQueries(schema).workflows.useCreate();
+  const { mutateAsync: updateManyWorkflows } =
+    useClientQueries(schema).workflows.useUpdateMany();
   const { mutateAsync: createManyProjectWorkflowAssignment } =
     useClientQueries(schema).projectWorkflowAssignment.useCreateMany();
 
@@ -223,7 +229,7 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tCommon("errors.workflowStateExists"),

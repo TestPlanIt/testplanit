@@ -41,6 +41,7 @@ import { SelectScrollable } from "@/components/SelectScrollableCaseFields";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface AddTemplateProps {
   open: boolean;
@@ -76,8 +77,10 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
     DraggableField[]
   >([]);
 
-  const { mutateAsync: createTemplate } = useClientQueries(schema).templates.useCreate();
-  const { mutateAsync: updateManyTemplates } = useClientQueries(schema).templates.useUpdateMany();
+  const { mutateAsync: createTemplate } =
+    useClientQueries(schema).templates.useCreate();
+  const { mutateAsync: updateManyTemplates } =
+    useClientQueries(schema).templates.useUpdateMany();
   const { mutateAsync: createTemplateProjectAssignment } =
     useClientQueries(schema).templateProjectAssignment.useCreateMany();
   const { mutateAsync: createTemplateCaseAssignment } =
@@ -106,7 +109,9 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
     orderBy: { displayName: "asc" },
   });
 
-  const { data: resultFields } = useClientQueries(schema).resultFields.useFindMany({
+  const { data: resultFields } = useClientQueries(
+    schema
+  ).resultFields.useFindMany({
     where: { isDeleted: false },
     orderBy: { displayName: "asc" },
   });
@@ -268,7 +273,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tCommon("errors.nameExists"),

@@ -48,7 +48,14 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { UserMentionedComments } from "@/components/UserMentionedComments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat } from "~/zenstack/models";
+import {
+  DateFormat,
+  ItemsPerPage,
+  Locale,
+  NotificationMode,
+  Theme,
+  TimeFormat,
+} from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Accessibility,
@@ -143,11 +150,15 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const tNotifications = useTranslations("users.profile.notifications");
   const tNotificationModes = useTranslations("admin.notifications.defaultMode");
   const tUserMenu = useTranslations("userMenu");
-  const { data: globalSettings } = useClientQueries(schema).appConfig.useFindUnique({
+  const { data: globalSettings } = useClientQueries(
+    schema
+  ).appConfig.useFindUnique({
     where: { key: "notificationSettings" },
   });
 
-  const { data: user, refetch: refetchUser } = useClientQueries(schema).user.useFindFirst({
+  const { data: user, refetch: refetchUser } = useClientQueries(
+    schema
+  ).user.useFindFirst({
     where: {
       AND: [{ isDeleted: false }, { id: userId }],
     },
@@ -170,6 +181,15 @@ const UserProfile: React.FC<UserProfileProps> = ({
       },
     },
   });
+
+  // v3 does not apply @map enum translation to nested relation includes, so the
+  // nested user.userPreferences.itemsPerPage arrives as the raw DB value ("10")
+  // instead of the enum member ("P10"), which then fails the update endpoint's
+  // ItemsPerPage validation on save. Fetch userPreferences directly so @map is
+  // applied and the form/save use the canonical enum value.
+  const { data: mappedPreferences } = useClientQueries(
+    schema
+  ).userPreferences.useFindUnique({ where: { userId } });
 
   const isOwnProfile = user?.id === session?.user?.id;
   const isAdmin = session?.user?.access === "ADMIN";
@@ -232,7 +252,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
         session?.user?.preferences?.locale ??
         Locale.en_US,
       itemsPerPage:
-        user?.userPreferences?.itemsPerPage ??
+        mappedPreferences?.itemsPerPage ??
         session?.user?.preferences?.itemsPerPage ??
         ItemsPerPage.P10,
       dateFormat:
@@ -250,7 +270,13 @@ const UserProfile: React.FC<UserProfileProps> = ({
       notificationMode:
         user?.userPreferences?.notificationMode ?? NotificationMode.USE_GLOBAL,
     }),
-    [user?.name, user?.email, user?.userPreferences, session?.user?.preferences]
+    [
+      user?.name,
+      user?.email,
+      user?.userPreferences,
+      mappedPreferences?.itemsPerPage,
+      session?.user?.preferences,
+    ]
   );
 
   const form = useForm<z.infer<typeof FormSchema>>({

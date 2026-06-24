@@ -1,5 +1,9 @@
 import type { User } from "next-auth";
 
+import { DbNull } from "@zenstackhq/orm";
+
+import { isUniqueConstraintError } from "~/lib/utils/errors";
+
 /**
  * Service for creating test case versions.
  * This provides a consistent interface for version creation across the application.
@@ -263,9 +267,11 @@ export async function createTestCaseVersionInTransaction(
     isArchived: overrides.isArchived ?? testCase.isArchived,
     isDeleted: false, // Versions should never be marked as deleted
     version: versionNumber,
-    steps: stepsJson,
+    // v3 rejects raw `null` for nullable Json columns on create; DbNull writes
+    // SQL NULL when a case has no steps / no issues snapshot.
+    steps: stepsJson ?? DbNull,
     tags: tagsArray,
-    issues: issuesArray,
+    issues: issuesArray ?? DbNull,
     links: overrides.links ?? [],
     attachments: overrides.attachments ?? [],
     parameters: parametersJson,
@@ -286,8 +292,8 @@ export async function createTestCaseVersionInTransaction(
       });
       break; // Success, exit retry loop
     } catch (error: any) {
-      // Check if it's a unique constraint violation (P2002)
-      if (error.code === "P2002" && retryCount < maxRetries) {
+      // Check if it's a unique constraint violation
+      if (isUniqueConstraintError(error) && retryCount < maxRetries) {
         retryCount++;
         const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
         console.log(

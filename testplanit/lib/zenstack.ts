@@ -29,7 +29,17 @@ function createClients() {
     dialect: new PostgresDialect({ pool }),
   });
   const baseClient = rawClient.$use(sideEffectsPlugin);
-  const policyClient = baseClient.$use(new PolicyPlugin());
+  // dangerouslyAllowRawSql: the sideEffectsPlugin's beforeEntityMutation hook
+  // injects the audit-context GUC via a raw `SELECT set_config(...)` inside the
+  // mutation's transaction. When a mutation originates from this policy client
+  // (every /api/model RPC call), that raw statement flows through the policy
+  // layer, which otherwise rejects all non-CRUD nodes ("non-CRUD queries are not
+  // allowed"). The only raw SQL reaching this layer is that internal,
+  // parameterized GUC write — the RPC endpoint and all getAuthDb callers issue
+  // pure CRUD — so allowing raw SQL here does not open a user-facing policy bypass.
+  const policyClient = baseClient.$use(
+    new PolicyPlugin({ dangerouslyAllowRawSql: true })
+  );
   return { pool, rawClient, baseClient, policyClient };
 }
 

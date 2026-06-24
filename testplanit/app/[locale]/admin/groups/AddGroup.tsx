@@ -37,6 +37,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 function buildAddGroupFormSchema(t: (key: any) => string) {
   return z.object({
@@ -61,10 +62,13 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
   const queryClient = useQueryClient();
 
-  const { mutateAsync: createGroup } = useClientQueries(schema).groups.useCreate();
+  const { mutateAsync: createGroup } =
+    useClientQueries(schema).groups.useCreate();
   const { mutateAsync: createManyGroupAssignment } =
     useClientQueries(schema).groupAssignment.useCreateMany();
-  const { data: allUsersData, isLoading: usersLoading } = useClientQueries(schema).user.useFindMany({
+  const { data: allUsersData, isLoading: usersLoading } = useClientQueries(
+    schema
+  ).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     orderBy: { name: "asc" },
   });
@@ -133,7 +137,7 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
       );
       onClose();
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         setError("name", {
           type: "custom",
           message: t("add.errors.nameExists"),

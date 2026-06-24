@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 const FormSchema = (t: any) =>
   z.object({
@@ -58,7 +59,8 @@ export function EditConfiguration({
   onClose,
 }: EditConfigurationProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfiguration } = useClientQueries(schema).configurations.useUpdate();
+  const { mutateAsync: updateConfiguration } =
+    useClientQueries(schema).configurations.useUpdate();
   const { mutateAsync: createManyProjectConfigurationAssignment } =
     useClientQueries(schema).projectConfigurationAssignment.useCreateMany();
   const { mutateAsync: deleteManyProjectConfigurationAssignment } =
@@ -128,7 +130,7 @@ export function EditConfiguration({
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tCommon("errors.configurationNameExists"),

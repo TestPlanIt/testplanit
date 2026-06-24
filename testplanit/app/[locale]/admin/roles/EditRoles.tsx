@@ -38,6 +38,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@radix-ui/react-label";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 // Helper to get enum values safely
 const applicationAreaValues = Object.values(ApplicationArea);
@@ -74,9 +75,12 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
   const t = useTranslations();
   const tAreas = useTranslations("enums.ApplicationArea");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateRole } = useClientQueries(schema).roles.useUpdate();
-  const { mutateAsync: updateManyRoles } = useClientQueries(schema).roles.useUpdateMany();
-  const { mutateAsync: upsertRolePermission } = useClientQueries(schema).rolePermission.useUpsert();
+  const { mutateAsync: updateRole } =
+    useClientQueries(schema).roles.useUpdate();
+  const { mutateAsync: updateManyRoles } =
+    useClientQueries(schema).roles.useUpdateMany();
+  const { mutateAsync: upsertRolePermission } =
+    useClientQueries(schema).rolePermission.useUpsert();
 
   // Fetch existing permissions for this role
   const { data: existingPermissions, isLoading: isLoadingPermissions } =
@@ -192,7 +196,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
       setIsSubmitting(false);
     } catch (err: any) {
       // Handle potential errors (e.g., unique constraint on name)
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         setError("name", {
           type: "custom",
           message: t("admin.roles.add.errors.nameExists"),

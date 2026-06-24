@@ -39,6 +39,7 @@ import { Select, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
 import { useTranslations } from "next-intl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface EditResultFieldProps {
   resultfield: ExtendedResultFields;
@@ -102,20 +103,28 @@ export function EditResultField({
   const [error, setError] = useState<string | null>(null);
   const [defaultItem, setDefaultItem] = useState<number | null>(null);
 
-  const { mutateAsync: updateResultField } = useClientQueries(schema).resultFields.useUpdate();
-  const { mutateAsync: createFieldOptions } = useClientQueries(schema).fieldOptions.useCreate();
-  const { mutateAsync: updateManyFieldOptions } = useClientQueries(schema).fieldOptions.useUpdateMany();
-  const { mutateAsync: updateFieldOptions } = useClientQueries(schema).fieldOptions.useUpdate();
+  const { mutateAsync: updateResultField } =
+    useClientQueries(schema).resultFields.useUpdate();
+  const { mutateAsync: createFieldOptions } =
+    useClientQueries(schema).fieldOptions.useCreate();
+  const { mutateAsync: updateManyFieldOptions } =
+    useClientQueries(schema).fieldOptions.useUpdateMany();
+  const { mutateAsync: updateFieldOptions } =
+    useClientQueries(schema).fieldOptions.useUpdate();
 
   const { data: types } = useClientQueries(schema).caseFieldTypes.useFindMany({
     orderBy: { type: "asc" },
   });
 
-  const { data: existingCaseFields } = useClientQueries(schema).caseFields.useFindMany({
+  const { data: existingCaseFields } = useClientQueries(
+    schema
+  ).caseFields.useFindMany({
     select: { id: true, systemName: true },
   });
 
-  const { data: existingResultFields } = useClientQueries(schema).resultFields.useFindMany({
+  const { data: existingResultFields } = useClientQueries(
+    schema
+  ).resultFields.useFindMany({
     select: { id: true, systemName: true },
   });
 
@@ -646,7 +655,7 @@ export function EditResultField({
       setIsSubmitting(false);
       onClose();
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("systemName", {
           type: "custom",
           message: tCommon("fields.options.validation.systemNameError"),

@@ -31,6 +31,7 @@ import {
 
 import { HelpPopover } from "@/components/ui/help-popover";
 import { useTranslations } from "next-intl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 // Create a simpler schema that works with form inference
 const EditTagSchema = z.object({
@@ -113,7 +114,7 @@ export function EditTag({ tag, open, onClose }: EditTagProps) {
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tTags("errors.nameExists"),

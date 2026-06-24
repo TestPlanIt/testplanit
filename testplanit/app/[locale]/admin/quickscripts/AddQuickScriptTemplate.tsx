@@ -40,6 +40,7 @@ import {
 
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface AddQuickScriptTemplateProps {
   open: boolean;
@@ -80,11 +81,14 @@ export function AddQuickScriptTemplate({
     isEnabled: z.boolean().prefault(true),
   });
 
-  const { mutateAsync: createTemplate } = useClientQueries(schema).caseExportTemplate.useCreate();
+  const { mutateAsync: createTemplate } =
+    useClientQueries(schema).caseExportTemplate.useCreate();
   const { mutateAsync: updateManyTemplates } =
     useClientQueries(schema).caseExportTemplate.useUpdateMany();
 
-  const { data: existingTemplates } = useClientQueries(schema).caseExportTemplate.useFindMany({
+  const { data: existingTemplates } = useClientQueries(
+    schema
+  ).caseExportTemplate.useFindMany({
     where: { isDeleted: false },
     select: {
       category: true,
@@ -123,7 +127,9 @@ export function AddQuickScriptTemplate({
     ].sort();
   }, [templates]);
 
-  const { data: caseFieldsData } = useClientQueries(schema).caseFields.useFindMany({
+  const { data: caseFieldsData } = useClientQueries(
+    schema
+  ).caseFields.useFindMany({
     where: { isEnabled: true, isDeleted: false },
     select: { systemName: true, type: { select: { type: true } } },
   });
@@ -211,7 +217,7 @@ export function AddQuickScriptTemplate({
 
       onClose();
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tCommon("errors.nameExists"),

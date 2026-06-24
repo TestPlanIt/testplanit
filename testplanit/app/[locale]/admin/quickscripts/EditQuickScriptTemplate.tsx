@@ -40,6 +40,7 @@ import {
 
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface EditQuickScriptTemplateProps {
   template: CaseExportTemplate;
@@ -82,11 +83,14 @@ export function EditQuickScriptTemplate({
     isEnabled: z.boolean(),
   });
 
-  const { mutateAsync: updateTemplate } = useClientQueries(schema).caseExportTemplate.useUpdate();
+  const { mutateAsync: updateTemplate } =
+    useClientQueries(schema).caseExportTemplate.useUpdate();
   const { mutateAsync: updateManyTemplates } =
     useClientQueries(schema).caseExportTemplate.useUpdateMany();
 
-  const { data: existingTemplates } = useClientQueries(schema).caseExportTemplate.useFindMany({
+  const { data: existingTemplates } = useClientQueries(
+    schema
+  ).caseExportTemplate.useFindMany({
     where: { isDeleted: false },
     select: {
       category: true,
@@ -125,7 +129,9 @@ export function EditQuickScriptTemplate({
     ].sort();
   }, [allTemplates]);
 
-  const { data: caseFieldsData } = useClientQueries(schema).caseFields.useFindMany({
+  const { data: caseFieldsData } = useClientQueries(
+    schema
+  ).caseFields.useFindMany({
     where: { isEnabled: true, isDeleted: false },
     select: { systemName: true, type: { select: { type: true } } },
   });
@@ -213,7 +219,7 @@ export function EditQuickScriptTemplate({
 
       onClose();
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tCommon("errors.nameExists"),

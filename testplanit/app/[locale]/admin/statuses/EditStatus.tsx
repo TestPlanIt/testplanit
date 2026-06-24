@@ -40,6 +40,7 @@ import {
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 const createEditStatusFormSchema = (
   t: ReturnType<typeof useTranslations<"admin.statuses.edit">>,
@@ -86,7 +87,8 @@ export function EditStatus({ status, open, onClose }: EditStatusProps) {
     status.colorId
   );
 
-  const { mutateAsync: updateStatus } = useClientQueries(schema).status.useUpdate();
+  const { mutateAsync: updateStatus } =
+    useClientQueries(schema).status.useUpdate();
   const { mutateAsync: createManyStatusScopeAssignment } =
     useClientQueries(schema).statusScopeAssignment.useCreateMany();
   const { mutateAsync: deleteManyStatusScopeAssignment } =
@@ -240,7 +242,7 @@ export function EditStatus({ status, open, onClose }: EditStatusProps) {
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tAdd("errors.nameExists"),

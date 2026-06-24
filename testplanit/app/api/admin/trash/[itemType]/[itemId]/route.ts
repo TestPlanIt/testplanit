@@ -7,6 +7,7 @@ import {
   withAuditContext,
 } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
+import { isForeignKeyError, isNotFoundError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 
@@ -263,7 +264,7 @@ export const PATCH = withAuditContext(
       return NextResponse.json(restoredItem);
     } catch (error: any) {
       console.error(`Failed to restore ${itemType} with ID ${itemId}:`, error);
-      if (error.code === "P2025") {
+      if (isNotFoundError(error)) {
         return NextResponse.json(
           {
             error: `${modelMapEntry.modelName} with ID ${itemId} not found or already not deleted.`,
@@ -456,13 +457,13 @@ export const DELETE = withAuditContext(
         `Failed to purge ${modelMapEntry.modelName} with ID ${itemId}:`,
         error
       ); // Use modelMapEntry.modelName
-      if (error.code === "P2025") {
+      if (isNotFoundError(error)) {
         return NextResponse.json(
           { error: `${modelMapEntry.modelName} with ID ${itemId} not found.` }, // Use modelMapEntry.modelName
           { status: 404 }
         );
       }
-      if (error.code === "P2003" || error.code === "P2014") {
+      if (isForeignKeyError(error)) {
         return NextResponse.json(
           {
             error: `Failed to purge ${modelMapEntry.modelName} due to existing related data. Please ensure related items are also removed or handle cascading deletes appropriately.`,

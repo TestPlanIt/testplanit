@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface AddMilestoneTypeProps {
   open: boolean;
@@ -51,7 +52,8 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
     isDefault: z.boolean(),
   });
 
-  const { mutateAsync: createMilestoneType } = useClientQueries(schema).milestoneTypes.useCreate();
+  const { mutateAsync: createMilestoneType } =
+    useClientQueries(schema).milestoneTypes.useCreate();
   const { mutateAsync: updateManyMilestoneTypes } =
     useClientQueries(schema).milestoneTypes.useUpdateMany();
 
@@ -92,7 +94,7 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: t("errors.nameExists"),

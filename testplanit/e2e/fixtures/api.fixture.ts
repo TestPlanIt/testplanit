@@ -3068,11 +3068,12 @@ export class ApiHelper {
       `${this.baseURL}/api/model/steps/create`,
       {
         data: {
+          // v3 RPC create expects scalar FKs (not relation `connect`) and
+          // rejects raw `null` for the nullable Json step/expectedResult columns
+          // — omit them so a shared-group placeholder step stores SQL NULL.
           data: {
-            testCase: { connect: { id: testCaseId } },
-            sharedStepGroup: { connect: { id: sharedStepGroupId } },
-            step: null,
-            expectedResult: null,
+            testCaseId,
+            sharedStepGroupId,
             order,
             isDeleted: false,
           },

@@ -1,4 +1,5 @@
 import { Job, Worker } from "bullmq";
+import { DbNull } from "@zenstackhq/orm";
 import { WorkflowScope } from "~/zenstack/models";
 import { runWithAuditContext } from "../lib/auditContext";
 import { buildGucPayload } from "../lib/audit/gucContext";
@@ -812,11 +813,14 @@ const processor = async (
                   isArchived: ver.isArchived,
                   isDeleted: ver.isDeleted,
                   version: ver.version,
-                  steps: ver.steps,
-                  tags: ver.tags,
-                  issues: ver.issues,
-                  links: ver.links,
-                  attachments: ver.attachments,
+                  // v3 rejects raw `null` for nullable Json columns on create;
+                  // the DbNull sentinel writes SQL NULL (the snapshot's empty
+                  // state). Mirrors lib/scim/services/* coercion.
+                  steps: ver.steps ?? DbNull,
+                  tags: ver.tags ?? DbNull,
+                  issues: ver.issues ?? DbNull,
+                  links: ver.links ?? DbNull,
+                  attachments: ver.attachments ?? DbNull,
                 },
               });
               lastVersionNumber = ver.version;

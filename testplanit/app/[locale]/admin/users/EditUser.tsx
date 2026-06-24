@@ -56,6 +56,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface ExtendedUser extends User {
   projects: { projectId: number }[];
@@ -305,7 +306,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
       // Refetch all queries to refresh the table data immediately
       void queryClient.refetchQueries();
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tGlobal("common.errors.nameExists"),

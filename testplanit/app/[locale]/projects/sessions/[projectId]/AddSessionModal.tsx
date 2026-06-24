@@ -65,6 +65,7 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { IconName } from "~/types/globals";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface ConfigurationOption {
   id: number;
@@ -106,9 +107,12 @@ export function AddSessionModal({
   const t = useTranslations();
   const locale = useLocale();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createSessions } = useClientQueries(schema).sessions.useCreate();
-  const { mutateAsync: createSessionVersions } = useClientQueries(schema).sessionVersions.useCreate();
-  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: createSessions } =
+    useClientQueries(schema).sessions.useCreate();
+  const { mutateAsync: createSessionVersions } =
+    useClientQueries(schema).sessionVersions.useCreate();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
 
   const { data: project } = useClientQueries(schema).projects.useFindFirst({
     where: {
@@ -791,7 +795,7 @@ export function AddSessionModal({
         window.dispatchEvent(event);
       }
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: t("sessions.errors.nameAlreadyExists"),

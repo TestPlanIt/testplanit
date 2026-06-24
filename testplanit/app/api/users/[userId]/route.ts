@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { Access, DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat } from "~/zenstack/models";
+import {
+  Access,
+  DateFormat,
+  ItemsPerPage,
+  Locale,
+  NotificationMode,
+  Theme,
+  TimeFormat,
+} from "~/zenstack/models";
 import { updateAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 import { invalidateSessionUserCache } from "~/lib/session-cache";
 
@@ -200,8 +209,8 @@ export const PATCH = withAuditContext(
     } catch (error: any) {
       console.error("[User Update API] Error updating user:", error);
 
-      // Handle Prisma unique constraint violation
-      if (error.code === "P2002") {
+      // Handle unique constraint violation
+      if (isUniqueConstraintError(error)) {
         return NextResponse.json(
           { error: "Email already exists" },
           { status: 400 }
