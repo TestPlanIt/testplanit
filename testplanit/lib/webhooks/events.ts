@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import type { JsonValue } from "@zenstackhq/orm";
 import type { TxClient } from "~/lib/zenstack";
 
 import { getAuditContext, SYSTEM_ACTOR_ID } from "~/lib/auditContext";
@@ -96,21 +95,26 @@ export const webhookEvents = {
           : (ctx?.userId ?? null);
     const eventId = `evt_${randomUUID()}`;
     const eventTimestamp = opts.eventTimestamp ?? new Date();
-    const row = await opts.tx.webhookOutboxEvent.create({
-      data: {
-        eventName,
-        eventId,
-        eventTimestamp,
-        projectId: opts.projectId,
-        actorUserId: resolvedActorUserId,
-        // Normalize to plain JSON: entity snapshots carry Date objects (and may
-        // hold undefined), which v3's strict JsonValue validation rejects on a
-        // Json column. Webhooks deliver the payload as JSON over HTTP anyway, so
-        // serializing here both satisfies the ORM and matches what consumers see.
-        payload: JSON.parse(JSON.stringify(data ?? null)) as JsonValue,
-      },
-      select: { id: true },
-    });
-    return { eventId, outboxRowId: row.id };
+    const outboxRowId = `who_${randomUUID()}`;
+    // Write the outbox row via a raw INSERT inside the caller's transaction.
+    // WebhookOutboxEvent is `@@deny('create,update,delete', true)` — an
+    // append-only lock that blocks writes through the public RPC. When the
+    // producing entity mutation runs on the policy client (e.g. the import
+    // route's getAuthDb), the in-tx hook client threaded here is policy-enhanced,
+    // so an ORM `.create` would hit that deny and roll the whole mutation back. A
+    // raw INSERT bypasses the CRUD policy layer (the same seam the audit-context
+    // `set_config` write uses) while still committing in the same transaction as
+    // the entity. The payload is serialized to a JSON string and cast to jsonb —
+    // entity snapshots carry Date objects that a typed Json input would reject.
+    await opts.tx.$executeRaw`
+      INSERT INTO "WebhookOutboxEvent"
+        ("id", "projectId", "eventName", "eventId", "eventTimestamp", "actorUserId", "payload", "createdAt")
+      VALUES (
+        ${outboxRowId}, ${opts.projectId}, ${eventName}, ${eventId},
+        ${eventTimestamp}, ${resolvedActorUserId},
+        ${JSON.stringify(data ?? null)}::jsonb, now()
+      )
+    `;
+    return { eventId, outboxRowId };
   },
 };
