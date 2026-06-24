@@ -385,12 +385,16 @@ export async function getMilestoneLinkedIssues(
 ): Promise<MilestoneIssue[]> {
   const issueIds = new Set<number>();
 
+  // Implicit m2m join columns are named alphabetically by related model, so for
+  // _IssueTo{TestRuns,Sessions,SessionResults} the columns are A=Issue and B=the
+  // other side. (The original raw SQL assumed the reverse and silently dropped
+  // every linked issue under v3.) issueId = "A"; filter on "B".
   const testRunIssues =
     testRunIds.length > 0
       ? await prisma.$queryRaw<Array<{ issueId: number }>>`
-        SELECT DISTINCT "B" as "issueId"
+        SELECT DISTINCT "A" as "issueId"
         FROM "_IssueToTestRuns"
-        WHERE "A" = ANY(${testRunIds}::int[])
+        WHERE "B" = ANY(${testRunIds}::int[])
       `
       : [];
   testRunIssues.forEach((link) => issueIds.add(link.issueId));
@@ -398,9 +402,9 @@ export async function getMilestoneLinkedIssues(
   const sessionIssues =
     sessionIds.length > 0
       ? await prisma.$queryRaw<Array<{ issueId: number }>>`
-        SELECT DISTINCT "B" as "issueId"
+        SELECT DISTINCT "A" as "issueId"
         FROM "_IssueToSessions"
-        WHERE "A" = ANY(${sessionIds}::int[])
+        WHERE "B" = ANY(${sessionIds}::int[])
       `
       : [];
   sessionIssues.forEach((link) => issueIds.add(link.issueId));
@@ -408,9 +412,9 @@ export async function getMilestoneLinkedIssues(
   const sessionResultIssues =
     sessionIds.length > 0
       ? await prisma.$queryRaw<Array<{ issueId: number }>>`
-        SELECT DISTINCT irs."B" as "issueId"
+        SELECT DISTINCT irs."A" as "issueId"
         FROM "_IssueToSessionResults" irs
-        JOIN "SessionResults" sr ON irs."A" = sr.id
+        JOIN "SessionResults" sr ON irs."B" = sr.id
         WHERE sr."sessionId" = ANY(${sessionIds}::int[])
           AND sr."isDeleted" = false
       `

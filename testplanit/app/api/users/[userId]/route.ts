@@ -195,11 +195,19 @@ export const PATCH = withAuditContext(
           }
         }
 
-        // Fetch the updated user with preferences
-        return await tx.user.findUnique({
+        // Fetch the updated user. Read userPreferences DIRECTLY rather than via
+        // a nested `include`: v3 does not translate the ItemsPerPage @map on
+        // nested relation includes, so a nested read returns the raw DB value
+        // ("25") instead of the enum member ("P25"). A direct read maps it.
+        const refreshedUser = await tx.user.findUnique({
           where: { id: userId },
-          include: { userPreferences: true },
         });
+        const refreshedPrefs = await tx.userPreferences.findUnique({
+          where: { userId },
+        });
+        return refreshedUser
+          ? { ...refreshedUser, userPreferences: refreshedPrefs }
+          : null;
       });
 
       // Invalidate session cache so header/menu reflect changes immediately
