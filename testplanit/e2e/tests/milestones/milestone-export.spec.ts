@@ -150,6 +150,9 @@ test.describe("Milestone Export API", () => {
           fromStateId: runWf[0],
           toStateId: runWf[1],
           requestedByUserId: adminId,
+          // v3 enforces the assignee XOR @@validate (v2 raw Prisma bypassed it);
+          // exactly one of assigneeUserId / assigneeRoleId must be set.
+          assigneeUserId: adminId,
           status: "APPROVED",
           decidedByUserId: adminId,
           decidedAt: new Date(),
@@ -164,6 +167,7 @@ test.describe("Milestone Export API", () => {
           fromStateId: sessWf[0],
           toStateId: sessWf[1],
           requestedByUserId: adminId,
+          assigneeUserId: adminId,
           status: "PENDING",
         },
       });
