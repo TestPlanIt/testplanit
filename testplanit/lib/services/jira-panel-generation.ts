@@ -281,15 +281,17 @@ export async function suggestFolderForIssue(
       projectId,
       isDeleted: false,
       isArchived: false,
-      issues: {
+      caseIssues: {
         some: {
-          integration: { provider: IntegrationProvider.JIRA },
-          OR: [
-            ...(issueId ? [{ externalId: issueId }] : []),
-            ...(issueKey
-              ? [{ name: issueKey }, { externalKey: issueKey }]
-              : []),
-          ],
+          issue: {
+            integration: { provider: IntegrationProvider.JIRA },
+            OR: [
+              ...(issueId ? [{ externalId: issueId }] : []),
+              ...(issueKey
+                ? [{ name: issueKey }, { externalKey: issueKey }]
+                : []),
+            ],
+          },
         },
       },
     },

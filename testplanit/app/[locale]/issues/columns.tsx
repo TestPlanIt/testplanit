@@ -339,9 +339,11 @@ export function useIssueColumns({
               <CasesListDisplay
                 count={count}
                 filter={{
-                  issues: {
+                  caseIssues: {
                     some: {
-                      id: row.original.id,
+                      issue: {
+                        id: row.original.id,
+                      },
                     },
                   },
                 }}

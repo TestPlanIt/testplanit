@@ -101,73 +101,77 @@ export async function GET(request: NextRequest) {
           },
         },
         include: {
-          repositoryCases: {
+          caseIssues: {
             include: {
-              state: {
-                select: {
-                  name: true,
-                  icon: {
-                    select: {
-                      name: true,
-                    },
-                  },
-                  color: {
-                    select: {
-                      value: true,
-                    },
-                  },
-                },
-              },
-              project: {
-                select: {
-                  id: true,
-                },
-              },
-              testRuns: {
+              case: {
                 include: {
-                  testRun: {
+                  state: {
                     select: {
-                      id: true,
                       name: true,
-                      isCompleted: true,
-                    },
-                  },
-                  results: {
-                    include: {
-                      status: {
+                      icon: {
                         select: {
                           name: true,
-                          color: {
+                        },
+                      },
+                      color: {
+                        select: {
+                          value: true,
+                        },
+                      },
+                    },
+                  },
+                  project: {
+                    select: {
+                      id: true,
+                    },
+                  },
+                  testRuns: {
+                    include: {
+                      testRun: {
+                        select: {
+                          id: true,
+                          name: true,
+                          isCompleted: true,
+                        },
+                      },
+                      results: {
+                        include: {
+                          status: {
                             select: {
-                              value: true,
+                              name: true,
+                              color: {
+                                select: {
+                                  value: true,
+                                },
+                              },
+                            },
+                          },
+                          executedBy: {
+                            select: {
+                              id: true,
+                              name: true,
+                            },
+                          },
+                          editedBy: {
+                            select: {
+                              id: true,
+                              name: true,
                             },
                           },
                         },
-                      },
-                      executedBy: {
-                        select: {
-                          id: true,
-                          name: true,
+                        orderBy: {
+                          executedAt: "desc",
                         },
-                      },
-                      editedBy: {
-                        select: {
-                          id: true,
-                          name: true,
+                        take: 5,
+                        where: {
+                          isDeleted: false,
                         },
                       },
                     },
                     orderBy: {
-                      executedAt: "desc",
-                    },
-                    take: 5,
-                    where: {
-                      isDeleted: false,
+                      createdAt: "desc",
                     },
                   },
-                },
-                orderBy: {
-                  createdAt: "desc",
                 },
               },
             },
@@ -490,8 +494,8 @@ export async function GET(request: NextRequest) {
             externalKey: allMatchingIssues[0].externalKey,
             externalId: allMatchingIssues[0].externalId,
             // Combine all relationships from all matching issues
-            repositoryCases: allMatchingIssues.flatMap(
-              (i) => i.repositoryCases
+            repositoryCases: allMatchingIssues.flatMap((i) =>
+              i.caseIssues.map((ci) => ci.case)
             ),
             sessions: allMatchingIssues.flatMap((i) => i.sessions),
             testRuns: allMatchingIssues.flatMap((i) => i.testRuns),

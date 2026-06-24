@@ -99,9 +99,11 @@ export const POST = withAuditContext(
           template: true,
           state: true,
           creator: true,
-          tags: { select: { name: true } },
-          issues: {
-            select: { id: true, name: true, externalId: true },
+          caseTags: { select: { tag: { select: { name: true } } } },
+          caseIssues: {
+            select: {
+              issue: { select: { id: true, name: true, externalId: true } },
+            },
           },
           steps: {
             orderBy: { order: "asc" },
@@ -153,10 +155,18 @@ export const POST = withAuditContext(
       // Convert tags to array of tag names
       const tagsArray =
         overrides.tags ??
-        testCase.tags.map((tag: { name: string }) => tag.name);
+        testCase.caseTags.map(
+          (caseTag: { tag: { name: string } }) => caseTag.tag.name
+        );
 
       // Convert issues to array of objects
-      const issuesArray = overrides.issues ?? testCase.issues;
+      const issuesArray =
+        overrides.issues ??
+        testCase.caseIssues.map(
+          (caseIssue: {
+            issue: { id: number; name: string; externalId: string | null };
+          }) => caseIssue.issue
+        );
 
       // Prepare version data
       const versionData = {

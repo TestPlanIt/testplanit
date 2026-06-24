@@ -152,17 +152,28 @@ const repositoryCaseSelectClause = {
       },
     },
   },
-  tags: {
+  caseTags: {
     where: {
-      isDeleted: false,
+      tag: {
+        isDeleted: false,
+      },
+    },
+    select: {
+      tag: true,
     },
   },
-  issues: {
+  caseIssues: {
     where: {
-      isDeleted: false,
+      issue: {
+        isDeleted: false,
+      },
     },
-    include: {
-      integration: true,
+    select: {
+      issue: {
+        include: {
+          integration: true,
+        },
+      },
     },
   },
   // For computing lastTestResult - fetch latest result from each test run
@@ -295,7 +306,13 @@ export async function fetchRepositoryCasesWithLastResult(
     // Compute lastTestResult for each case
     const casesWithLastResult = cases.map((caseItem) => {
       const lastTestResult = computeLastTestResult(caseItem);
-      return { ...caseItem, lastTestResult };
+      const { caseTags, caseIssues, ...rest } = caseItem;
+      return {
+        ...rest,
+        tags: caseTags.map((ct) => ct.tag),
+        issues: caseIssues.map((ci) => ci.issue),
+        lastTestResult,
+      };
     });
 
     // If sorting by last result, sort server-side then apply pagination

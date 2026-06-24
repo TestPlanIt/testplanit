@@ -166,8 +166,8 @@ export async function POST(
             field: { include: { type: true } },
           },
         },
-        tags: true,
-        issues: true,
+        caseTags: { include: { tag: true } },
+        caseIssues: { include: { issue: true } },
         steps: {
           where: { isDeleted: false },
           orderBy: { order: "asc" },
@@ -185,13 +185,17 @@ export async function POST(
       .filter((c) => c !== undefined);
 
     // Convert BigInt fields to strings for JSON serialization
-    const serializedCases = orderedCases.map((c) => ({
-      ...c,
-      attachments: c.attachments?.map((a) => ({
-        ...a,
-        size: a.size.toString(),
-      })),
-    }));
+    const serializedCases = orderedCases.map(
+      ({ caseTags, caseIssues, ...c }) => ({
+        ...c,
+        tags: caseTags.map((ct) => ct.tag),
+        issues: caseIssues.map((ci) => ci.issue),
+        attachments: c.attachments?.map((a) => ({
+          ...a,
+          size: a.size.toString(),
+        })),
+      })
+    );
 
     return NextResponse.json({ cases: serializedCases, totalCount });
   } catch (error) {

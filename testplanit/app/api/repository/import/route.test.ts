@@ -215,6 +215,18 @@ describe("CSV Import API Route", () => {
       create: vi.fn(),
       update: vi.fn(),
     },
+    repositoryCaseTag: {
+      create: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+      findMany: vi.fn(),
+    },
+    repositoryCaseIssue: {
+      create: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+      findMany: vi.fn(),
+    },
     issues: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
@@ -291,8 +303,8 @@ describe("CSV Import API Route", () => {
         template: mockTemplate,
         state: { id: 1, name: "Not Started" },
         creator: mockSession.user,
-        tags: [],
-        issues: [],
+        caseTags: [],
+        caseIssues: [],
         steps: [],
       })
     );
@@ -631,10 +643,9 @@ describe("CSV Import API Route", () => {
       expect(result.complete).toBeDefined();
       // Should not create a new tag since "smoke" matches "Smoke" case-insensitively
       expect(mockEnhancedDb.tags.create).not.toHaveBeenCalled();
-      // Should connect the existing tag
-      expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
-        where: { id: expect.any(Number) },
-        data: { tags: { connect: { id: 1 } } },
+      // Should link the existing tag via the explicit join model
+      expect(mockEnhancedDb.repositoryCaseTag.create).toHaveBeenCalledWith({
+        data: { caseId: expect.any(Number), tagId: 1 },
       });
     });
 
@@ -1253,14 +1264,14 @@ describe("CSV Import API Route", () => {
 
       expect(result.complete).toBeDefined();
 
-      // Verify relationships were cleared
-      expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
-        where: { id: 1001 },
-        data: { tags: { set: [] } },
+      // Verify relationships were cleared via the explicit join models
+      expect(mockEnhancedDb.repositoryCaseTag.deleteMany).toHaveBeenCalledWith({
+        where: { caseId: 1001 },
       });
-      expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
-        where: { id: 1001 },
-        data: { issues: { set: [] } },
+      expect(
+        mockEnhancedDb.repositoryCaseIssue.deleteMany
+      ).toHaveBeenCalledWith({
+        where: { caseId: 1001 },
       });
       expect(mockEnhancedDb.attachments.deleteMany).toHaveBeenCalledWith({
         where: { testCaseId: 1001 },
@@ -1269,15 +1280,14 @@ describe("CSV Import API Route", () => {
         where: { repositoryCaseId: 1001 },
       });
 
-      // Verify new relationships were created
-      expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
-        where: { id: 1001 },
-        data: { tags: { connect: { id: 1 } } },
+      // Verify new relationships were created via the explicit join models
+      expect(mockEnhancedDb.repositoryCaseTag.create).toHaveBeenCalledWith({
+        data: { caseId: 1001, tagId: 1 },
       });
-      // Find the call that connects the issue
+      // Find the call that links the issue
       const issueCalls =
-        mockEnhancedDb.repositoryCases.update.mock.calls.filter(
-          (call: any) => call[0].data?.issues?.connect?.id === 1
+        mockEnhancedDb.repositoryCaseIssue.create.mock.calls.filter(
+          (call: any) => call[0].data?.issueId === 1
         );
       expect(issueCalls.length).toBeGreaterThan(0);
       expect(mockEnhancedDb.attachments.create).toHaveBeenCalled();

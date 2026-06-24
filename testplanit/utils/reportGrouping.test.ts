@@ -44,9 +44,13 @@ describe("reportGrouping", () => {
 
     it("fans a multi-tag case out into one group per tag", () => {
       const results = [
-        { testRunCase: { repositoryCase: { tags: [{ id: 10 }, { id: 20 }] } } },
-        { testRunCase: { repositoryCase: { tags: [{ id: 10 }] } } },
-        { testRunCase: { repositoryCase: { tags: [] } } },
+        {
+          testRunCase: {
+            repositoryCase: { caseTags: [{ tag: { id: 10 } }, { tag: { id: 20 } }] },
+          },
+        },
+        { testRunCase: { repositoryCase: { caseTags: [{ tag: { id: 10 } }] } } },
+        { testRunCase: { repositoryCase: { caseTags: [] } } },
       ];
       const rows = groupResults(results, ["tagId"], countAcc);
       // Tag 10 appears on the first two results, tag 20 only on the first,
@@ -84,7 +88,9 @@ describe("reportGrouping", () => {
       const results = [
         {
           statusId: 1,
-          testRunCase: { repositoryCase: { tags: [{ id: 10 }, { id: 20 }] } },
+          testRunCase: {
+            repositoryCase: { caseTags: [{ tag: { id: 10 } }, { tag: { id: 20 } }] },
+          },
         },
       ];
       const rows = groupResults(results, ["statusId", "tagId"], countAcc);

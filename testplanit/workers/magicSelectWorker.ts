@@ -822,7 +822,7 @@ export const processor = async (
           },
         },
       },
-      tags: { select: { name: true } },
+      caseTags: { select: { tag: { select: { name: true } } } },
       caseFieldValues: {
         include: {
           field: {
@@ -890,7 +890,7 @@ export const processor = async (
         id: tc.id,
         name: truncateText(tc.name, TRUNCATION_LIMITS.testCaseName),
         folderPath: buildFolderPath(tc.folder),
-        tags: tc.tags.map((t: any) => t.name),
+        tags: tc.caseTags.map((ct: any) => ct.tag.name),
         fields,
         linksTo: tc.linksFrom.map((l: any) => l.caseBId),
         linksFrom: tc.linksTo.map((l: any) => l.caseAId),

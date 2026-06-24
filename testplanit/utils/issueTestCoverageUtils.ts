@@ -261,8 +261,8 @@ export async function handleIssueTestCoveragePOST(
       FROM "Issue" i
       ${projectJoin}
       LEFT JOIN "Integration" ig ON ig.id = i."integrationId"
-      INNER JOIN "_IssueToRepositoryCases" irc ON irc."A" = i.id
-      INNER JOIN "RepositoryCases" rc ON rc.id = irc."B"
+      INNER JOIN "RepositoryCaseIssue" irc ON irc."issueId" = i.id
+      INNER JOIN "RepositoryCases" rc ON rc.id = irc."caseId"
         AND rc."isDeleted" = false
         AND rc."isArchived" = false
       LEFT JOIN latest_results lr ON lr.test_case_id = rc.id

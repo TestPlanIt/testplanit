@@ -47,7 +47,10 @@ export async function fetchCasesForQuickScript(args: {
         folder: true,
         state: true,
         creator: true,
-        tags: { where: { isDeleted: false } },
+        caseTags: {
+          where: { tag: { isDeleted: false } },
+          include: { tag: true },
+        },
         steps: {
           where: { isDeleted: false },
           orderBy: { order: "asc" },
@@ -135,7 +138,7 @@ export async function fetchCasesForQuickScript(args: {
         state: c.state?.name || "",
         estimate: c.estimate,
         automated: c.automated,
-        tags: (c.tags || []).map((t: any) => t.name).join(", "),
+        tags: (c.caseTags || []).map((ct: any) => ct.tag.name).join(", "),
         createdBy: c.creator?.name || c.creator?.email || "",
         createdAt: format(c.createdAt, "yyyy-MM-dd"),
         steps: (c.steps || []).map((s: any) => ({

@@ -127,14 +127,24 @@ const exportSelectClause = {
       sharedStepGroupId: true,
     },
   },
-  tags: {
+  caseTags: {
     where: {
-      isDeleted: false,
+      tag: {
+        isDeleted: false,
+      },
+    },
+    include: {
+      tag: true,
     },
   },
-  issues: {
+  caseIssues: {
     where: {
-      isDeleted: false,
+      issue: {
+        isDeleted: false,
+      },
+    },
+    include: {
+      issue: true,
     },
   },
   // Include the testRuns relation for export

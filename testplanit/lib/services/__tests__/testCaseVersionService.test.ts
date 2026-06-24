@@ -39,8 +39,10 @@ function buildTestCaseFixture(overrides: TestCaseFixtureOverrides = {}) {
     template: { templateName: "Template" },
     state: { name: "Active" },
     creator: { name: "Creator" },
-    tags: [{ name: "smoke" }],
-    issues: [{ id: 7, name: "ISSUE-7", externalId: "EXT-7" }],
+    caseTags: [{ tag: { name: "smoke" } }],
+    caseIssues: [
+      { issue: { id: 7, name: "ISSUE-7", externalId: "EXT-7" } },
+    ],
     steps: [{ step: "step-text", expectedResult: "expected" }],
     parameters: overrides.parameters ?? [],
   };

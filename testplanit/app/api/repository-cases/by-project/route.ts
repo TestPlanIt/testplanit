@@ -212,10 +212,14 @@ export async function POST(request: Request) {
           },
           orderBy: { order: "asc" },
         },
-        tags: {
+        caseTags: {
           select: {
-            id: true,
-            name: true,
+            tag: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         testRuns: {
@@ -244,9 +248,12 @@ export async function POST(request: Request) {
         templateFieldIds.has(cfv.fieldId)
       );
 
+      const { caseTags, ...rest } = testCase;
+
       return {
-        ...testCase,
+        ...rest,
         caseFieldValues: filteredFieldValues,
+        tags: caseTags.map((ct) => ct.tag),
       };
     });
 

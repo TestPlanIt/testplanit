@@ -413,8 +413,8 @@ const processor = async (
         },
         caseFieldValues: true,
         attachments: { where: { isDeleted: false } },
-        tags: { select: { id: true } },
-        issues: { select: { id: true } },
+        caseTags: { select: { tag: { select: { id: true } } } },
+        caseIssues: { select: { issue: { select: { id: true } } } },
         comments:
           job.data.operation === "move"
             ? {
@@ -712,30 +712,26 @@ const processor = async (
           }
 
           // e. Connect Tags (tags are global — connect by existing tag ID)
-          if (sourceCase.tags.length > 0) {
-            await tx.repositoryCases.update({
-              where: { id: newCase.id },
-              data: {
-                tags: {
-                  connect: sourceCase.tags.map((t: { id: number }) => ({
-                    id: t.id,
-                  })),
-                },
-              },
+          if (sourceCase.caseTags.length > 0) {
+            await tx.repositoryCaseTag.createMany({
+              data: sourceCase.caseTags.map((ct: { tag: { id: number } }) => ({
+                caseId: newCase.id,
+                tagId: ct.tag.id,
+              })),
+              skipDuplicates: true,
             });
           }
 
           // f. Connect Issues (issues are global — connect by existing issue ID)
-          if (sourceCase.issues.length > 0) {
-            await tx.repositoryCases.update({
-              where: { id: newCase.id },
-              data: {
-                issues: {
-                  connect: sourceCase.issues.map((i: { id: number }) => ({
-                    id: i.id,
-                  })),
-                },
-              },
+          if (sourceCase.caseIssues.length > 0) {
+            await tx.repositoryCaseIssue.createMany({
+              data: sourceCase.caseIssues.map(
+                (ci: { issue: { id: number } }) => ({
+                  caseId: newCase.id,
+                  issueId: ci.issue.id,
+                })
+              ),
+              skipDuplicates: true,
             });
           }
 

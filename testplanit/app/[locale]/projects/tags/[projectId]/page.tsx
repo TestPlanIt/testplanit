@@ -110,29 +110,36 @@ function TagList() {
     }
   );
 
-  const { data: repositoryCases, isLoading: isLoadingCases } =
-    useClientQueries(schema).repositoryCases.useFindMany(
-      {
-        where: {
-          projectId: Number(projectId),
-          isDeleted: false,
-        },
-        select: {
-          id: true,
-          name: true,
-          tags: {
-            select: {
-              id: true,
+  const { data: repositoryCases, isLoading: isLoadingCases } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
+    {
+      where: {
+        projectId: Number(projectId),
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        caseTags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+              },
             },
           },
         },
       },
-      {
-        enabled: !!projectId,
-      }
-    );
+    },
+    {
+      enabled: !!projectId,
+    }
+  );
 
-  const { data: sessions, isLoading: isLoadingSessions } = useClientQueries(schema).sessions.useFindMany(
+  const { data: sessions, isLoading: isLoadingSessions } = useClientQueries(
+    schema
+  ).sessions.useFindMany(
     {
       where: {
         projectId: Number(projectId),
@@ -153,7 +160,9 @@ function TagList() {
     }
   );
 
-  const { data: testRuns, isLoading: isLoadingRuns } = useClientQueries(schema).testRuns.useFindMany(
+  const { data: testRuns, isLoading: isLoadingRuns } = useClientQueries(
+    schema
+  ).testRuns.useFindMany(
     {
       where: {
         projectId: Number(projectId),
@@ -175,7 +184,9 @@ function TagList() {
   );
 
   // Fetch ONLY basic tag data - no includes to avoid bind variable explosion
-  const { data: tags, isLoading: isLoadingTags } = useClientQueries(schema).tags.useFindMany(
+  const { data: tags, isLoading: isLoadingTags } = useClientQueries(
+    schema
+  ).tags.useFindMany(
     {
       where: {
         isDeleted: false,
@@ -210,7 +221,7 @@ function TagList() {
   const untaggedCaseIds = useMemo(
     () =>
       repositoryCases
-        ?.filter((c) => !c.tags || c.tags.length === 0)
+        ?.filter((c) => !c.caseTags || c.caseTags.length === 0)
         .map((c) => c.id) || [],
     [repositoryCases]
   );
@@ -296,7 +307,8 @@ function TagList() {
 
     // Collect cases per tag
     repositoryCases?.forEach((repositoryCase) => {
-      repositoryCase.tags?.forEach((tag) => {
+      repositoryCase.caseTags?.forEach((ct) => {
+        const tag = ct.tag;
         const current = tagItems.get(tag.id) || {
           repositoryCases: [],
           sessions: [],

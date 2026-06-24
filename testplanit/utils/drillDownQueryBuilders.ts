@@ -3,7 +3,24 @@
  * These functions construct database queries to fetch underlying records for each metric type
  */
 
-import type { IssueFindManyArgs, IssueWhereInput, MilestonesFindManyArgs, MilestonesWhereInput, RepositoryCasesFindManyArgs, RepositoryCasesWhereInput, SessionResultsFindManyArgs, SessionResultsWhereInput, SessionsFindManyArgs, SessionsWhereInput, TestRunCasesFindManyArgs, TestRunCasesWhereInput, TestRunResultsFindManyArgs, TestRunResultsWhereInput, TestRunsFindManyArgs, TestRunsWhereInput } from "~/zenstack/input";
+import type {
+  IssueFindManyArgs,
+  IssueWhereInput,
+  MilestonesFindManyArgs,
+  MilestonesWhereInput,
+  RepositoryCasesFindManyArgs,
+  RepositoryCasesWhereInput,
+  SessionResultsFindManyArgs,
+  SessionResultsWhereInput,
+  SessionsFindManyArgs,
+  SessionsWhereInput,
+  TestRunCasesFindManyArgs,
+  TestRunCasesWhereInput,
+  TestRunResultsFindManyArgs,
+  TestRunResultsWhereInput,
+  TestRunsFindManyArgs,
+  TestRunsWhereInput,
+} from "~/zenstack/input";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
 
 /**
@@ -141,10 +158,10 @@ export function buildTestExecutionQuery(
   }
   if (context.dimensions.tag) {
     const tag = context.dimensions.tag;
-    repositoryCaseFilter.tags =
+    repositoryCaseFilter.caseTags =
       tag.id === null || tag.id === ""
         ? { none: {} }
-        : { some: { id: Number(tag.id) } };
+        : { some: { tag: { id: Number(tag.id) } } };
   }
   if (Object.keys(repositoryCaseFilter).length > 0) {
     where.testRunCase = { repositoryCase: repositoryCaseFilter };
@@ -394,10 +411,10 @@ export function buildRepositoryStatsQuery(
   // Apply tag filter
   if (context.dimensions.tag) {
     const tag = context.dimensions.tag;
-    where.tags =
+    where.caseTags =
       tag.id === null || tag.id === ""
         ? { none: {} }
-        : { some: { id: Number(tag.id) } };
+        : { some: { tag: { id: Number(tag.id) } } };
   }
 
   // Apply state filter

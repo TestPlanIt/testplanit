@@ -7,8 +7,8 @@
  *   (b) raw `$executeRaw` UPDATE bypassing all hooks → SUCCESS CRITERION #1 / COV-01 / COV-03
  *   (c) createMany bulk insert                       → COV-01 / COV-03 (client/method-agnostic capture)
  *   (d) worker/raw path via withAuditGuc()           → CTX-02 (payload.userId stamped as actor)
- *   (e) tag implicit m2m join table INSERT+DELETE    → COV-02 (tag-link pattern, pk = column "A")
- *   (e2) issue implicit m2m join table INSERT+DELETE → COV-02 (issue-link pattern, pk = column "A")
+ *   (e) tag explicit join table INSERT+DELETE        → COV-02 (tag-link pattern, pk = caseId)
+ *   (e2) issue explicit join table INSERT+DELETE     → COV-02 (issue-link pattern, pk = caseId)
  *   (f) SAF-01 skip_audit hatch                       → ZERO rows captured (bulk-import escape hatch)
  *   (g) SAF-04 excluded credential table (negative)   → ZERO rows (VerificationToken is NOT audited)
  *
@@ -128,8 +128,8 @@ describeDb(
              AND conrelid IN (
                '"RepositoryCases"'::regclass,
                '"Steps"'::regclass,
-               '"_RepositoryCasesToTags"'::regclass,
-               '"_IssueToRepositoryCases"'::regclass
+               '"RepositoryCaseTag"'::regclass,
+               '"RepositoryCaseIssue"'::regclass
              )
         LOOP EXECUTE format('ALTER TABLE %s DROP CONSTRAINT IF EXISTS %I', r.tbl, r.conname); END LOOP;
       END $$;`);
@@ -162,11 +162,11 @@ describeDb(
           }
           if (seededCaseId != null) {
             await direct.query(
-              `DELETE FROM "_IssueToRepositoryCases" WHERE "B" = $1`,
+              `DELETE FROM "RepositoryCaseIssue" WHERE "caseId" = $1`,
               [seededCaseId]
             );
             await direct.query(
-              `DELETE FROM "_RepositoryCasesToTags" WHERE "A" = $1`,
+              `DELETE FROM "RepositoryCaseTag" WHERE "caseId" = $1`,
               [seededCaseId]
             );
             await direct.query(`DELETE FROM "Steps" WHERE "testCaseId" = $1`, [
@@ -316,31 +316,31 @@ describeDb(
       expect(rows[0].actor).toBe("worker-actor-d");
     });
 
-    it("(e) TAG join-table _RepositoryCasesToTags INSERT then DELETE → I then D keyed by column A (COV-02)", async () => {
-      // _RepositoryCasesToTags: A = RepositoryCases.id, B = Tags.id (alphabetical RepositoryCases < Tags).
-      // Use a seeded tag (id 1) and our case; pk in DataChangeLog is the "A" side (RepositoryCases.id).
+    it("(e) TAG join-table RepositoryCaseTag INSERT then DELETE → I then D keyed by caseId (COV-02)", async () => {
+      // RepositoryCaseTag (explicit join model): caseId = RepositoryCases.id, tagId = Tags.id.
+      // Use a seeded tag (id 1) and our case; pk in DataChangeLog is the configured caseId column.
       await prismaBase.$transaction(async (tx: any) => {
         await tx.$executeRaw`SELECT set_config('app.audit_context', ${ctx({ userId: "actor-e" })}, true)`;
         await tx.$executeRawUnsafe(
-          `INSERT INTO "_RepositoryCasesToTags" ("A", "B") VALUES ($1, 1)`,
+          `INSERT INTO "RepositoryCaseTag" ("caseId", "tagId") VALUES ($1, 1)`,
           seededCaseId
         );
       });
       await prismaBase.$transaction(async (tx: any) => {
         await tx.$executeRaw`SELECT set_config('app.audit_context', ${ctx({ userId: "actor-e" })}, true)`;
         await tx.$executeRawUnsafe(
-          `DELETE FROM "_RepositoryCasesToTags" WHERE "A" = $1 AND "B" = 1`,
+          `DELETE FROM "RepositoryCaseTag" WHERE "caseId" = $1 AND "tagId" = 1`,
           seededCaseId
         );
       });
 
       const inserts = await dclRowsByPk(
-        "_RepositoryCasesToTags",
+        "RepositoryCaseTag",
         "I",
         String(seededCaseId)
       );
       const deletes = await dclRowsByPk(
-        "_RepositoryCasesToTags",
+        "RepositoryCaseTag",
         "D",
         String(seededCaseId)
       );
@@ -348,31 +348,39 @@ describeDb(
       expect(deletes.length).toBeGreaterThanOrEqual(1);
     });
 
-    it("(e2) ISSUE-link join-table _IssueToRepositoryCases INSERT then DELETE → I then D keyed by column A (COV-02)", async () => {
-      // _IssueToRepositoryCases (CONFIRMED production name): A = Issue.id, B = RepositoryCases.id.
-      // The pk in DataChangeLog is the "A" side (Issue.id) → proves coverage extends past tag links
-      // to the issue link tables. ALL 9 implicit m2m join tables are in the 13-03 registry (full
-      // production coverage); this test exercises only the representative tag + issue patterns. The
-      // 2 ASSUMED-name join tables (_SessionsToTags / _TagsToTestRuns) are verified by the 13-03
-      // Wave 0 checkpoint, NOT by this test.
+    it("(e2) ISSUE-link join-table RepositoryCaseIssue INSERT then DELETE → I then D keyed by caseId (COV-02)", async () => {
+      // RepositoryCaseIssue (explicit join model): issueId = Issue.id, caseId = RepositoryCases.id.
+      // The pk in DataChangeLog is the configured caseId column → proves coverage extends past tag
+      // links to the issue link tables. The remaining implicit m2m join tables are in the 13-03
+      // registry (full production coverage); this test exercises only the representative tag + issue
+      // patterns. The 2 ASSUMED-name join tables (_SessionsToTags / _TagsToTestRuns) are verified by
+      // the 13-03 Wave 0 checkpoint, NOT by this test.
       await prismaBase.$transaction(async (tx: any) => {
         await tx.$executeRaw`SELECT set_config('app.audit_context', ${ctx({ userId: "actor-e2" })}, true)`;
         await tx.$executeRawUnsafe(
-          `INSERT INTO "_IssueToRepositoryCases" ("A", "B") VALUES (1, $1)`,
+          `INSERT INTO "RepositoryCaseIssue" ("issueId", "caseId") VALUES (1, $1)`,
           seededCaseId
         );
       });
       await prismaBase.$transaction(async (tx: any) => {
         await tx.$executeRaw`SELECT set_config('app.audit_context', ${ctx({ userId: "actor-e2" })}, true)`;
         await tx.$executeRawUnsafe(
-          `DELETE FROM "_IssueToRepositoryCases" WHERE "A" = 1 AND "B" = $1`,
+          `DELETE FROM "RepositoryCaseIssue" WHERE "issueId" = 1 AND "caseId" = $1`,
           seededCaseId
         );
       });
 
-      // pk = "A" = Issue.id = "1".
-      const inserts = await dclRowsByPk("_IssueToRepositoryCases", "I", "1");
-      const deletes = await dclRowsByPk("_IssueToRepositoryCases", "D", "1");
+      // pk = caseId = RepositoryCases.id = seededCaseId.
+      const inserts = await dclRowsByPk(
+        "RepositoryCaseIssue",
+        "I",
+        String(seededCaseId)
+      );
+      const deletes = await dclRowsByPk(
+        "RepositoryCaseIssue",
+        "D",
+        String(seededCaseId)
+      );
       expect(inserts.length).toBeGreaterThanOrEqual(1);
       expect(deletes.length).toBeGreaterThanOrEqual(1);
     });

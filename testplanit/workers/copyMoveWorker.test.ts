@@ -61,6 +61,21 @@ const mockTx = {
   steps: { create: vi.fn() },
   caseFieldValues: { create: vi.fn() },
   attachments: { create: vi.fn() },
+  // Tags/issues are now EXPLICIT join models — the worker writes to them
+  // via createMany({ data: [{ caseId, tagId }] }) instead of the old
+  // repositoryCases.update({ data: { tags: { connect } } }) implicit m2m.
+  repositoryCaseTag: {
+    create: vi.fn(),
+    createMany: vi.fn(),
+    deleteMany: vi.fn(),
+    findMany: vi.fn(),
+  },
+  repositoryCaseIssue: {
+    create: vi.fn(),
+    createMany: vi.fn(),
+    deleteMany: vi.fn(),
+    findMany: vi.fn(),
+  },
   sharedStepGroup: { findFirst: vi.fn(), create: vi.fn() },
   repositoryCaseVersions: { create: vi.fn(), findMany: vi.fn() },
   comment: { create: vi.fn() },
@@ -168,8 +183,8 @@ const mockSourceCase = {
       repositoryCaseId: 1,
     },
   ],
-  tags: [{ id: 50 }],
-  issues: [{ id: 60 }],
+  caseTags: [{ tag: { id: 50 } }],
+  caseIssues: [{ issue: { id: 60 } }],
   attachments: [
     {
       id: 70,
@@ -298,6 +313,10 @@ describe("CopyMoveWorker", () => {
     mockTx.repositoryCases.findFirst.mockResolvedValue(null);
     mockTx.repositoryCases.create.mockResolvedValue({ id: 1001 });
     mockTx.repositoryCases.update.mockResolvedValue({});
+
+    // Explicit-join tag/issue writes resolve successfully by default
+    mockTx.repositoryCaseTag.createMany.mockResolvedValue({ count: 1 });
+    mockTx.repositoryCaseIssue.createMany.mockResolvedValue({ count: 1 });
 
     // Shared step group: no existing group by default
     mockTx.sharedStepGroup.findFirst.mockResolvedValue(null);
@@ -465,12 +484,9 @@ describe("CopyMoveWorker", () => {
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
 
-      expect(mockTx.repositoryCases.update).toHaveBeenCalledWith(
+      expect(mockTx.repositoryCaseTag.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 1001 },
-          data: expect.objectContaining({
-            tags: { connect: [{ id: 50 }] },
-          }),
+          data: [{ caseId: 1001, tagId: 50 }],
         })
       );
     });
@@ -479,12 +495,9 @@ describe("CopyMoveWorker", () => {
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
 
-      expect(mockTx.repositoryCases.update).toHaveBeenCalledWith(
+      expect(mockTx.repositoryCaseIssue.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 1001 },
-          data: expect.objectContaining({
-            issues: { connect: [{ id: 60 }] },
-          }),
+          data: [{ caseId: 1001, issueId: 60 }],
         })
       );
     });
@@ -1007,8 +1020,8 @@ describe("CopyMoveWorker", () => {
         ...mockSourceCaseWithSharedSteps,
         id: 2,
         caseFieldValues: [],
-        tags: [],
-        issues: [],
+        caseTags: [],
+        caseIssues: [],
         attachments: [],
         comments: [],
       };
@@ -1336,8 +1349,8 @@ describe("CopyMoveWorker", () => {
       ...mockSourceCase,
       id: 2,
       folderId: 101,
-      tags: [],
-      issues: [],
+      caseTags: [],
+      caseIssues: [],
       attachments: [],
       caseFieldValues: [],
       steps: [],

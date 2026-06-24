@@ -10,7 +10,7 @@ const querySchema = z.object({
 });
 
 async function fetchCaseDetails(caseId: number) {
-  return prisma.repositoryCases.findUnique({
+  const result = await prisma.repositoryCases.findUnique({
     where: { id: caseId },
     select: {
       id: true,
@@ -25,7 +25,7 @@ async function fetchCaseDetails(caseId: number) {
         orderBy: { order: "asc" },
         select: { id: true, step: true, expectedResult: true, order: true },
       },
-      tags: { select: { id: true, name: true } },
+      caseTags: { select: { tag: { select: { id: true, name: true } } } },
       template: {
         select: {
           caseFields: {
@@ -80,6 +80,18 @@ async function fetchCaseDetails(caseId: number) {
       },
     },
   });
+
+  if (!result) {
+    return result;
+  }
+
+  // Remap the explicit join (caseTags) back to the prior tags shape so the
+  // API response shape stays identical for consumers.
+  const { caseTags, ...rest } = result;
+  return {
+    ...rest,
+    tags: caseTags.map((ct) => ct.tag),
+  };
 }
 
 export async function GET(request: Request) {

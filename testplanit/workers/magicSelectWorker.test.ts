@@ -174,7 +174,7 @@ const mockCompressedCase = {
   id: 1,
   name: "Login Test",
   folder: null,
-  tags: [],
+  caseTags: [],
   caseFieldValues: [],
   linksFrom: [],
   linksTo: [],

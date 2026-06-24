@@ -30,8 +30,8 @@ export async function POST(request: Request) {
         -- Issues linked through RepositoryCases
         SELECT DISTINCT rc."projectId" as project_id, i.id as issue_id
         FROM "Issue" i
-        INNER JOIN "_IssueToRepositoryCases" irc ON i.id = irc."A"
-        INNER JOIN "RepositoryCases" rc ON irc."B" = rc.id
+        INNER JOIN "RepositoryCaseIssue" irc ON i.id = irc."issueId"
+        INNER JOIN "RepositoryCases" rc ON irc."caseId" = rc.id
         WHERE i."isDeleted" = false
           AND rc."projectId" = ANY(${projectIds}::int[])
 

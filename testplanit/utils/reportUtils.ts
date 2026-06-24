@@ -26,9 +26,9 @@ function caseSelectFor(groupBy: string[]) {
                   ...(needsFolder ? { folderId: true } : {}),
                   ...(needsTag
                     ? {
-                        tags: {
-                          where: { isDeleted: false },
-                          select: { id: true },
+                        caseTags: {
+                          where: { tag: { isDeleted: false } },
+                          select: { tagId: true },
                         },
                       }
                     : {}),
@@ -60,7 +60,12 @@ function repositoryCaseSelect(
     folderId: true,
     createdAt: true,
     ...(groupBy.includes("tagId")
-      ? { tags: { where: { isDeleted: false }, select: { id: true } } }
+      ? {
+          caseTags: {
+            where: { tag: { isDeleted: false } },
+            select: { tagId: true },
+          },
+        }
       : {}),
     ...extra,
   };
@@ -581,12 +586,14 @@ export function createTestExecutionDimensionRegistry(
         const tags = await prisma.tags.findMany({
           where: {
             isDeleted: false,
-            repositoryCases: {
+            caseTags: {
               some: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
+                case: {
+                  ...(isProjectSpecific && projectId
+                    ? { projectId: Number(projectId) }
+                    : {}),
+                  isDeleted: false,
+                },
               },
             },
           },
@@ -1354,12 +1361,14 @@ export function createRepositoryStatsDimensionRegistry(
         const tags = await prisma.tags.findMany({
           where: {
             isDeleted: false,
-            repositoryCases: {
+            caseTags: {
               some: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
+                case: {
+                  ...(isProjectSpecific && projectId
+                    ? { projectId: Number(projectId) }
+                    : {}),
+                  isDeleted: false,
+                },
               },
             },
           },
@@ -3103,9 +3112,11 @@ export function createIssueTrackingDimensionRegistry(
                   {
                     repositoryCases: {
                       some: {
-                        issues: {
+                        caseIssues: {
                           some: {
-                            isDeleted: false,
+                            issue: {
+                              isDeleted: false,
+                            },
                           },
                         },
                       },
@@ -3716,8 +3727,8 @@ export function createIssueTrackingMetricRegistry(
                 priority: true,
                 projectId: true,
                 // Get project ID through related entities as fallback
-                repositoryCases: {
-                  select: { projectId: true },
+                caseIssues: {
+                  select: { case: { select: { projectId: true } } },
                   take: 1,
                 },
                 sessions: {
@@ -3735,7 +3746,7 @@ export function createIssueTrackingMetricRegistry(
               // Determine project ID from direct field or related entities
               const projectId =
                 result.projectId ||
-                result.repositoryCases[0]?.projectId ||
+                result.caseIssues[0]?.case?.projectId ||
                 result.sessions[0]?.projectId ||
                 result.testRuns[0]?.projectId ||
                 null;
@@ -3842,8 +3853,8 @@ export function createIssueTrackingMetricRegistry(
               status: true,
               priority: true,
               projectId: true,
-              repositoryCases: {
-                select: { projectId: true },
+              caseIssues: {
+                select: { case: { select: { projectId: true } } },
                 take: 1,
               },
               sessions: {
@@ -3860,7 +3871,7 @@ export function createIssueTrackingMetricRegistry(
           const groupedResults = results.reduce((acc: any, result: any) => {
             const projectId =
               result.projectId ||
-              result.repositoryCases[0]?.projectId ||
+              result.caseIssues[0]?.case?.projectId ||
               result.sessions[0]?.projectId ||
               result.testRuns[0]?.projectId ||
               null;

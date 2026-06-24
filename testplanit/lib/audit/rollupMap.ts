@@ -62,9 +62,9 @@ export const ROLLUP_MAP: Record<string, RollupConfig> = {
   CaseFieldValues: { ownerTable: "RepositoryCases", fkCol: "testCaseId" },
   Steps: { ownerTable: "RepositoryCases", fkCol: "testCaseId" },
   TestCaseParameter: { ownerTable: "RepositoryCases", fkCol: "testCaseId" }, // A1 confirmed (schema:2085)
-  // Issue/Tag join tables: column B is the entity FK for Issue tables; column A for *ToTags.
-  _IssueToRepositoryCases: { ownerTable: "RepositoryCases", fkCol: "B" },
-  _RepositoryCasesToTags: { ownerTable: "RepositoryCases", fkCol: "A" },
+  // Cases <-> Tags/Issue explicit join tables roll up to the owning case.
+  RepositoryCaseTag: { ownerTable: "RepositoryCases", fkCol: "caseId" },
+  RepositoryCaseIssue: { ownerTable: "RepositoryCases", fkCol: "caseId" },
 
   // ── Runs family ─────────────────────────────────────────────────────────────
   TestRunCases: { ownerTable: "TestRuns", fkCol: "testRunId" },

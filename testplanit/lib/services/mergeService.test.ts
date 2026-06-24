@@ -25,6 +25,18 @@ const { mockTx, mockPrisma } = vi.hoisted(() => {
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    repositoryCaseTag: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    repositoryCaseIssue: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
     repositoryCaseVersions: {
       findMany: vi.fn(),
       update: vi.fn(),
@@ -98,8 +110,8 @@ function resetMocks() {
   // Survivor has currentVersion = 3
   mockTx.repositoryCases.findUnique.mockResolvedValue({
     currentVersion: 3,
-    tags: [],
-    issues: [],
+    caseTags: [],
+    caseIssues: [],
   });
   mockTx.repositoryCases.update.mockResolvedValue({});
 
@@ -113,20 +125,30 @@ function resetMocks() {
   mockTx.jUnitTestStep.updateMany.mockResolvedValue({ count: 0 });
   mockTx.comment.updateMany.mockResolvedValue({ count: 0 });
 
-  // Victim M2M: no tags/issues
+  // Victim M2M: no tags/issues (explicit join shape)
   mockTx.repositoryCases.findUnique.mockImplementation(({ where }: any) => {
     if (where.id === 2) {
       // victim
       return Promise.resolve({
         id: 2,
         currentVersion: 2,
-        tags: [],
-        issues: [],
+        caseTags: [],
+        caseIssues: [],
       });
     }
     // survivor
     return Promise.resolve({ id: 1, currentVersion: 3 });
   });
+
+  // Explicit M2M join models: no rows created by default
+  mockTx.repositoryCaseTag.findMany.mockResolvedValue([]);
+  mockTx.repositoryCaseTag.create.mockResolvedValue({});
+  mockTx.repositoryCaseTag.createMany.mockResolvedValue({ count: 0 });
+  mockTx.repositoryCaseTag.deleteMany.mockResolvedValue({ count: 0 });
+  mockTx.repositoryCaseIssue.findMany.mockResolvedValue([]);
+  mockTx.repositoryCaseIssue.create.mockResolvedValue({});
+  mockTx.repositoryCaseIssue.createMany.mockResolvedValue({ count: 0 });
+  mockTx.repositoryCaseIssue.deleteMany.mockResolvedValue({ count: 0 });
 
   // Victim has no existing links
   mockTx.repositoryCaseLink.findMany.mockResolvedValue([]);
@@ -350,14 +372,14 @@ describe("mergeService", () => {
   // 5. Tags and Issues M2M connect (idempotent)
   // ----------------------------------------------------------------
   describe("mergeCases - M2M connect for tags/issues", () => {
-    it("connects victim tags to survivor", async () => {
+    it("connects victim tags to survivor via the join model", async () => {
       mockTx.repositoryCases.findUnique.mockImplementation(({ where }: any) => {
         if (where.id === 2) {
           return Promise.resolve({
             id: 2,
             currentVersion: 1,
-            tags: [{ id: 10 }, { id: 11 }],
-            issues: [],
+            caseTags: [{ tagId: 10 }, { tagId: 11 }],
+            caseIssues: [],
           });
         }
         return Promise.resolve({ id: 1, currentVersion: 3 });
@@ -365,24 +387,25 @@ describe("mergeService", () => {
 
       await mergeCases(1, 2, "user-123");
 
-      expect(mockTx.repositoryCases.update).toHaveBeenCalledWith(
+      expect(mockTx.repositoryCaseTag.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 1 },
-          data: expect.objectContaining({
-            tags: { connect: [{ id: 10 }, { id: 11 }] },
-          }),
+          data: [
+            { caseId: 1, tagId: 10 },
+            { caseId: 1, tagId: 11 },
+          ],
+          skipDuplicates: true,
         })
       );
     });
 
-    it("connects victim issues to survivor", async () => {
+    it("connects victim issues to survivor via the join model", async () => {
       mockTx.repositoryCases.findUnique.mockImplementation(({ where }: any) => {
         if (where.id === 2) {
           return Promise.resolve({
             id: 2,
             currentVersion: 1,
-            tags: [],
-            issues: [{ id: 20 }],
+            caseTags: [],
+            caseIssues: [{ issueId: 20 }],
           });
         }
         return Promise.resolve({ id: 1, currentVersion: 3 });
@@ -390,25 +413,20 @@ describe("mergeService", () => {
 
       await mergeCases(1, 2, "user-123");
 
-      expect(mockTx.repositoryCases.update).toHaveBeenCalledWith(
+      expect(mockTx.repositoryCaseIssue.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 1 },
-          data: expect.objectContaining({
-            issues: { connect: [{ id: 20 }] },
-          }),
+          data: [{ caseId: 1, issueId: 20 }],
+          skipDuplicates: true,
         })
       );
     });
 
-    it("does not call tag/issue update when victim has none", async () => {
+    it("does not call tag/issue createMany when victim has none", async () => {
       // Default mock: victim has no tags or issues
       await mergeCases(1, 2, "user-123");
 
-      // The update calls that do happen should be for other things
-      const tagConnectCall = mockTx.repositoryCases.update.mock.calls.find(
-        (call: any) => call[0].data?.tags || call[0].data?.issues
-      );
-      expect(tagConnectCall).toBeUndefined();
+      expect(mockTx.repositoryCaseTag.createMany).not.toHaveBeenCalled();
+      expect(mockTx.repositoryCaseIssue.createMany).not.toHaveBeenCalled();
     });
   });
 

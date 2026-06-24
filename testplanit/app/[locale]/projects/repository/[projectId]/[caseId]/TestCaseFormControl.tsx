@@ -67,6 +67,13 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
 }) => {
   const t = useTranslations();
 
+  const testcaseTags: Tags[] = (testcase?.caseTags ?? []).map(
+    (ct: any) => ct.tag
+  );
+  const testcaseIssues: any[] = (testcase?.caseIssues ?? []).map(
+    (ci: any) => ci.issue
+  );
+
   return (
     <div role="region" aria-label={t("repository.version.detailsRegion")}>
       <ul className="ml-1 list-none" role="list">
@@ -275,7 +282,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
               orientation="horizontal"
               className="mt-2 bg-primary/30"
             />
-            {testcase.tags && testcase.tags.length > 0 && (
+            {testcaseTags.length > 0 && (
               <li className="mt-2">
                 <div id="tags-display" className="font-bold mb-1">
                   {t("common.fields.tags")}
@@ -285,7 +292,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                   aria-labelledby="tags-display"
                   role="list"
                 >
-                  {testcase.tags.map((tag: Tags) => (
+                  {testcaseTags.map((tag: Tags) => (
                     <div
                       key={tag.id}
                       className={
@@ -308,7 +315,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                 />
               </li>
             )}
-            {testcase.issues && testcase.issues.length > 0 && (
+            {testcaseIssues.length > 0 && (
               <li className="mt-2">
                 <div id="issues-display" className="font-bold mb-1">
                   {t("common.fields.issues")}
@@ -318,7 +325,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                   aria-labelledby="issues-display"
                   role="list"
                 >
-                  {testcase.issues.map((issue: any) => (
+                  {testcaseIssues.map((issue: any) => (
                     <div
                       key={issue.id}
                       className={

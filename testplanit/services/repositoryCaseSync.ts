@@ -54,7 +54,7 @@ export async function buildRepositoryCaseDocument(
         },
       },
       creator: true,
-      tags: true,
+      caseTags: { include: { tag: true } },
       steps: {
         where: { isDeleted: false },
         orderBy: { order: "asc" },
@@ -122,9 +122,9 @@ export async function buildRepositoryCaseDocument(
     creatorId: repoCase.creatorId,
     creatorName: repoCase.creator.name,
     creatorImage: repoCase.creator.image,
-    tags: repoCase.tags.map((tag) => ({
-      id: tag.id,
-      name: tag.name,
+    tags: repoCase.caseTags.map((ct) => ({
+      id: ct.tag.id,
+      name: ct.tag.name,
     })),
     customFields: buildCustomFieldDocuments(
       repoCase.caseFieldValues.map((cfv) => ({

@@ -200,7 +200,11 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
             update: vi.fn().mockResolvedValue(updatedUser),
             findUnique: vi.fn().mockResolvedValue(updatedUser),
           },
-          userPreferences: {},
+          userPreferences: {
+            findUnique: vi
+              .fn()
+              .mockResolvedValue(updatedUser.userPreferences),
+          },
         });
       });
 
@@ -766,6 +770,9 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
           },
           userPreferences: {
             update: vi.fn(),
+            findUnique: vi
+              .fn()
+              .mockResolvedValue(mockExistingUser.userPreferences),
           },
         };
 

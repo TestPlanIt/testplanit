@@ -77,36 +77,47 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     // Connect tags to entities in a single transaction with extended timeout
-    await auditedTransaction(
-      async (tx) => {
-        for (const [key, tagIds] of entityOps) {
-          const [entityType, entityIdStr] = key.split(":");
-          const entityId = Number(entityIdStr);
-          const connectData = tagIds.map((id) => ({ id }));
+    await auditedTransaction(async (tx) => {
+      for (const [key, tagIds] of entityOps) {
+        const [entityType, entityIdStr] = key.split(":");
+        const entityId = Number(entityIdStr);
+        const connectData = tagIds.map((id) => ({ id }));
 
-          switch (entityType) {
-            case "repositoryCase":
-              await tx.repositoryCases.update({
-                where: { id: entityId },
-                data: { tags: { connect: connectData } },
-              });
-              break;
-            case "testRun":
-              await tx.testRuns.update({
-                where: { id: entityId },
-                data: { tags: { connect: connectData } },
-              });
-              break;
-            case "session":
-              await tx.sessions.update({
-                where: { id: entityId },
-                data: { tags: { connect: connectData } },
-              });
-              break;
+        switch (entityType) {
+          case "repositoryCase": {
+            // Ensure the case exists so a missing entity still rolls back
+            // the transaction (preserves "Record to update not found").
+            const existingCase = await tx.repositoryCases.findUnique({
+              where: { id: entityId },
+              select: { id: true },
+            });
+            if (!existingCase) {
+              throw new Error("Record to update not found");
+            }
+            await tx.repositoryCaseTag.createMany({
+              data: tagIds.map((tagId) => ({
+                caseId: entityId,
+                tagId,
+              })),
+              skipDuplicates: true,
+            });
+            break;
           }
+          case "testRun":
+            await tx.testRuns.update({
+              where: { id: entityId },
+              data: { tags: { connect: connectData } },
+            });
+            break;
+          case "session":
+            await tx.sessions.update({
+              where: { id: entityId },
+              data: { tags: { connect: connectData } },
+            });
+            break;
         }
       }
-    );
+    });
 
     const tagsCreated = uniqueTagNames.filter(
       (name) => !existingTagNames.has(name)

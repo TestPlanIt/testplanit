@@ -1,7 +1,6 @@
 import { TestRunType } from "~/zenstack/models";
 import { createRawDbClient } from "~/lib/rawDbClient";
 
-
 const prisma = createRawDbClient();
 
 const DAY_MS = 86400000;
@@ -480,8 +479,13 @@ export async function seedDemoProject() {
       stateId: caseActiveWorkflow.id,
       order: 1,
       currentVersion: 1,
-      tags: { connect: [{ id: tagSmoke.id }, { id: tagRegression.id }] },
     },
+  });
+  await prisma.repositoryCaseTag.createMany({
+    data: [
+      { caseId: case1.id, tagId: tagSmoke.id },
+      { caseId: case1.id, tagId: tagRegression.id },
+    ],
   });
   await createCaseFieldValues(
     case1.id,
@@ -518,8 +522,10 @@ export async function seedDemoProject() {
       stateId: caseActiveWorkflow.id,
       order: 2,
       currentVersion: 1,
-      tags: { connect: [{ id: tagRegression.id }] },
     },
+  });
+  await prisma.repositoryCaseTag.create({
+    data: { caseId: case2.id, tagId: tagRegression.id },
   });
   await createCaseFieldValues(
     case2.id,
@@ -560,8 +566,10 @@ export async function seedDemoProject() {
       stateId: caseActiveWorkflow.id,
       order: 3,
       currentVersion: 1,
-      tags: { connect: [{ id: tagRegression.id }] },
     },
+  });
+  await prisma.repositoryCaseTag.create({
+    data: { caseId: case3.id, tagId: tagRegression.id },
   });
   await createCaseFieldValues(
     case3.id,
@@ -606,8 +614,13 @@ export async function seedDemoProject() {
       stateId: caseActiveWorkflow.id,
       order: 1,
       currentVersion: 1,
-      tags: { connect: [{ id: tagSmoke.id }, { id: tagUI.id }] },
     },
+  });
+  await prisma.repositoryCaseTag.createMany({
+    data: [
+      { caseId: case4.id, tagId: tagSmoke.id },
+      { caseId: case4.id, tagId: tagUI.id },
+    ],
   });
   await createCaseFieldValues(
     case4.id,
@@ -639,8 +652,10 @@ export async function seedDemoProject() {
       stateId: caseDefaultWorkflow.id, // Draft
       order: 2,
       currentVersion: 1,
-      tags: { connect: [{ id: tagUI.id }] },
     },
+  });
+  await prisma.repositoryCaseTag.create({
+    data: { caseId: case5.id, tagId: tagUI.id },
   });
   await createCaseFieldValues(
     case5.id,
@@ -989,7 +1004,7 @@ export async function seedDemoProject() {
   });
 
   // Issue 3: A resolved issue linked to a test case
-  await prisma.issue.create({
+  const issue3 = await prisma.issue.create({
     data: {
       name: "BUG-3",
       title: "Remember me checkbox has no effect",
@@ -1001,8 +1016,10 @@ export async function seedDemoProject() {
       projectId: demoProject.id,
       createdById: adminUser.id,
       createdAt: daysAgo(20),
-      repositoryCases: { connect: [{ id: case1.id }] },
     },
+  });
+  await prisma.repositoryCaseIssue.create({
+    data: { issueId: issue3.id, caseId: case1.id },
   });
 
   console.log(

@@ -55,9 +55,11 @@ export const useColumns = (
               <CasesListDisplay
                 count={count}
                 filter={{
-                  tags: {
+                  caseTags: {
                     some: {
-                      id: row.original.id,
+                      tag: {
+                        id: row.original.id,
+                      },
                     },
                   },
                 }}

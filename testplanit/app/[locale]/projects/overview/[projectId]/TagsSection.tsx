@@ -15,7 +15,7 @@ type TagWithCounts = {
   id: number;
   name: string;
   _count: {
-    repositoryCases: number;
+    caseTags: number;
     testRuns: number;
     sessions: number;
   };
@@ -26,17 +26,21 @@ const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
   const router = useRouter();
   // const currentLocale = useLocale(); // Removed as per user's previous change, assuming router handles it
 
-  const { data: tags, isLoading: isLoadingTags } = useClientQueries(schema).tags.useFindMany(
+  const { data: tags, isLoading: isLoadingTags } = useClientQueries(
+    schema
+  ).tags.useFindMany(
     {
       where: {
         isDeleted: false,
         OR: [
           {
-            repositoryCases: {
+            caseTags: {
               some: {
-                isDeleted: false,
-                isArchived: false,
-                projectId,
+                case: {
+                  isDeleted: false,
+                  isArchived: false,
+                  projectId,
+                },
               },
             },
           },
@@ -63,11 +67,13 @@ const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
         name: true,
         _count: {
           select: {
-            repositoryCases: {
+            caseTags: {
               where: {
-                isDeleted: false,
-                isArchived: false,
-                projectId,
+                case: {
+                  isDeleted: false,
+                  isArchived: false,
+                  projectId,
+                },
               },
             },
             testRuns: {
@@ -99,7 +105,7 @@ const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
   const filteredTags =
     typedTags
       ?.map((tag) => {
-        const caseCount = tag._count.repositoryCases ?? 0;
+        const caseCount = tag._count.caseTags ?? 0;
         const runCount = tag._count.testRuns ?? 0;
         const sessionCount = tag._count.sessions ?? 0;
 

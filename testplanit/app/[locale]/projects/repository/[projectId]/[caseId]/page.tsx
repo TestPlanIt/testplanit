@@ -122,9 +122,7 @@ interface SharedStepGroupWithItems {
 }
 
 // Helper function to parse JsonValue to TipTap content (ensure this is present)
-const parseJsonToTipTap = (
-  jsonValue: JsonValue | undefined | null
-): object => {
+const parseJsonToTipTap = (jsonValue: JsonValue | undefined | null): object => {
   if (jsonValue === null || jsonValue === undefined) {
     return emptyEditorContent;
   }
@@ -367,7 +365,9 @@ export default function TestCaseDetails() {
 
   const numericCaseId = Number(caseId);
   const isValidCaseId = !isNaN(numericCaseId);
-  const { data: caseParameters = [] } = useClientQueries(schema).testCaseParameter.useFindMany(
+  const { data: caseParameters = [] } = useClientQueries(
+    schema
+  ).testCaseParameter.useFindMany(
     {
       where: { testCaseId: numericCaseId, isDeleted: false },
       orderBy: { order: "asc" },
@@ -396,7 +396,9 @@ export default function TestCaseDetails() {
 
   const isFormInitialized = useRef(false);
 
-  const { data: project, isLoading: isProjectLoading } = useClientQueries(schema).projects.useFindFirst(
+  const { data: project, isLoading: isProjectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: { id: Number(projectId) },
       select: {
@@ -419,7 +421,9 @@ export default function TestCaseDetails() {
   const activeIntegration = project?.projectIntegrations?.[0];
 
   // QuickScript feature flag
-  const { data: projectSettings } = useClientQueries(schema).projects.useFindUnique(
+  const { data: projectSettings } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
     { where: { id: Number(projectId) }, select: { quickScriptEnabled: true } },
     { enabled: isValidProjectId }
   );
@@ -520,31 +524,36 @@ export default function TestCaseDetails() {
               sharedStepGroup: true,
             },
           },
-          tags: {
-            where: { isDeleted: false },
-            orderBy: { name: "asc" },
+          caseTags: {
+            where: { tag: { isDeleted: false } },
+            orderBy: { tag: { name: "asc" } },
+            include: { tag: true },
           },
-          issues: {
-            where: { isDeleted: false },
-            orderBy: { name: "asc" },
+          caseIssues: {
+            where: { issue: { isDeleted: false } },
+            orderBy: { issue: { name: "asc" } },
             select: {
-              id: true,
-              name: true,
-              title: true,
-              externalId: true,
-              externalUrl: true,
-              externalStatus: true,
-              externalKey: true,
-              data: true,
-              integrationId: true,
-              lastSyncedAt: true,
-              issueTypeName: true,
-              issueTypeIconUrl: true,
-              integration: {
+              issue: {
                 select: {
                   id: true,
-                  provider: true,
                   name: true,
+                  title: true,
+                  externalId: true,
+                  externalUrl: true,
+                  externalStatus: true,
+                  externalKey: true,
+                  data: true,
+                  integrationId: true,
+                  lastSyncedAt: true,
+                  issueTypeName: true,
+                  issueTypeIconUrl: true,
+                  integration: {
+                    select: {
+                      id: true,
+                      provider: true,
+                      name: true,
+                    },
+                  },
                 },
               },
             },
@@ -649,7 +658,9 @@ export default function TestCaseDetails() {
       }
     );
 
-  const { data: versions } = useClientQueries(schema).repositoryCaseVersions.useFindMany({
+  const { data: versions } = useClientQueries(
+    schema
+  ).repositoryCaseVersions.useFindMany({
     where: { repositoryCaseId: Number(caseId) },
     orderBy: { version: "desc" },
   });
@@ -702,36 +713,37 @@ export default function TestCaseDetails() {
 
   const testcase = data as any as ExtendedCases;
 
-  const { data: folders, isLoading: isFoldersLoading } =
-    useClientQueries(schema).repositoryFolders.useFindMany(
-      {
-        where: { projectId: Number(projectId), isDeleted: false },
-        orderBy: { order: "asc" },
-      },
-      {
-        optimisticUpdate: true,
-      }
-    );
+  const { data: folders, isLoading: isFoldersLoading } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany(
+    {
+      where: { projectId: Number(projectId), isDeleted: false },
+      orderBy: { order: "asc" },
+    },
+    {
+      optimisticUpdate: true,
+    }
+  );
 
   // Correct placement for useClientQueries(schema).sharedStepGroup.useFindMany hook
   const {
     data: sharedStepGroupsDataFromHook,
     isLoading: isLoadingSharedStepGroups,
   } = useClientQueries(schema).sharedStepGroup.useFindMany(
-      {
-        where: {
-          project: { id: Number(projectId) },
-          isDeleted: false,
-        },
-        include: {
-          items: {
-            select: { step: true, expectedResult: true, order: true },
-            orderBy: { order: "asc" },
-          },
+    {
+      where: {
+        project: { id: Number(projectId) },
+        isDeleted: false,
+      },
+      include: {
+        items: {
+          select: { step: true, expectedResult: true, order: true },
+          orderBy: { order: "asc" },
         },
       },
-      { enabled: !!projectId && isEditMode }
-    );
+    },
+    { enabled: !!projectId && isEditMode }
+  );
 
   // Before formSchema useState
   const transformedFolders = React.useMemo(() => {
@@ -902,11 +914,13 @@ export default function TestCaseDetails() {
       // invalidates the Tags query and refetches the case, re-firing this reset). Without this the
       // user's edits to tags are silently reverted to the case's saved tags, like issues below.
       tags:
-        currentValues.tags || testcase.tags?.map((tag: any) => tag.id) || [],
+        currentValues.tags ||
+        testcase.caseTags?.map((ct: any) => ct.tag.id) ||
+        [],
       // Preserve existing issues value if it's already set (from external issues)
       issues:
         currentValues.issues ||
-        testcase.issues?.map((issue: any) => issue.id) ||
+        testcase.caseIssues?.map((ci: any) => ci.issue.id) ||
         [],
       steps:
         testcase.steps?.map((stepP: any) => ({
@@ -997,15 +1011,33 @@ export default function TestCaseDetails() {
   // fire-and-forget `mutate` races the window — the name change then lands in
   // the audit log un-grouped and attributed to "System" instead of the editor
   // (and the refetch below could read the row before the write commits).
-  const { mutateAsync: updateRepositoryCases } = useClientQueries(schema).repositoryCases.useUpdate();
-  const { mutateAsync: updateCaseFieldValues } = useClientQueries(schema).caseFieldValues.useUpdate();
+  const { mutateAsync: updateRepositoryCases } =
+    useClientQueries(schema).repositoryCases.useUpdate();
+  const { mutateAsync: updateCaseFieldValues } =
+    useClientQueries(schema).caseFieldValues.useUpdate();
   const { mutateAsync: createCaseFieldVersionValues } =
     useClientQueries(schema).caseFieldVersionValues.useCreate();
-  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
-  const { mutateAsync: updateAttachments } = useClientQueries(schema).attachments.useUpdate();
-  const { mutateAsync: createSteps } = useClientQueries(schema).steps.useCreate();
-  const { mutateAsync: updateManySteps } = useClientQueries(schema).steps.useUpdateMany();
-  const { mutateAsync: createCaseFieldValues } = useClientQueries(schema).caseFieldValues.useCreate();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateAttachments } =
+    useClientQueries(schema).attachments.useUpdate();
+  const { mutateAsync: createSteps } =
+    useClientQueries(schema).steps.useCreate();
+  const { mutateAsync: updateManySteps } =
+    useClientQueries(schema).steps.useUpdateMany();
+  const { mutateAsync: createCaseFieldValues } =
+    useClientQueries(schema).caseFieldValues.useCreate();
+  // RepositoryCases.tags/issues are now EXPLICIT join models. ZenStack's
+  // nested `set:` is unavailable on update, so the case's tag/issue links are
+  // replaced by delete-all-then-create on the join models below.
+  const { mutateAsync: deleteManyRepositoryCaseTag } =
+    useClientQueries(schema).repositoryCaseTag.useDeleteMany();
+  const { mutateAsync: createManyRepositoryCaseTag } =
+    useClientQueries(schema).repositoryCaseTag.useCreateMany();
+  const { mutateAsync: deleteManyRepositoryCaseIssue } =
+    useClientQueries(schema).repositoryCaseIssue.useDeleteMany();
+  const { mutateAsync: createManyRepositoryCaseIssue } =
+    useClientQueries(schema).repositoryCaseIssue.useCreateMany();
 
   // Restore handleEditModeToggle
   const handleEditModeToggle = () => {
@@ -1218,18 +1250,41 @@ export default function TestCaseDetails() {
           automated: data.automated as boolean,
           currentVersion: testcase.currentVersion + 1,
           templateId: data.templateId || undefined,
-          tags: {
-            set: tagsArray.map((tagId: number) => ({ id: tagId })),
-          },
-          issues: {
-            set: issuesArray
-              .filter((id: any) => id != null)
-              .map((issueId: number) => ({
-                id: issueId,
-              })),
-          },
         },
       });
+
+      // Replace the case's tag links on the explicit join model. ZenStack v3
+      // has no nested `set:` on update, so delete-all-then-create the new set.
+      await deleteManyRepositoryCaseTag({
+        where: { caseId: Number(caseId) },
+      });
+      const tagLinks = tagsArray.map((tagId: number) => ({
+        caseId: Number(caseId),
+        tagId,
+      }));
+      if (tagLinks.length > 0) {
+        await createManyRepositoryCaseTag({
+          data: tagLinks,
+          skipDuplicates: true,
+        });
+      }
+
+      // Replace the case's issue links on the explicit join model.
+      await deleteManyRepositoryCaseIssue({
+        where: { caseId: Number(caseId) },
+      });
+      const issueLinks = issuesArray
+        .filter((id: any) => id != null)
+        .map((issueId: number) => ({
+          caseId: Number(caseId),
+          issueId,
+        }));
+      if (issueLinks.length > 0) {
+        await createManyRepositoryCaseIssue({
+          data: issueLinks,
+          skipDuplicates: true,
+        });
+      }
 
       // Refetch to ensure we have the updated currentVersion from the database
       const refetchResult = await refetch();
@@ -1505,7 +1560,7 @@ export default function TestCaseDetails() {
         .filter((name: string | undefined): name is string => !!name);
       // Resolve issue details for version snapshot
       // First check existing case issues, then fetch any newly linked ones
-      const knownIssues = testcase.issues || [];
+      const knownIssues = testcase.caseIssues?.map((ci: any) => ci.issue) || [];
       const newIssueIds = issuesArray
         .filter((id: any) => id != null)
         .filter((id: number) => !knownIssues.some((iss: any) => iss.id === id));
@@ -1779,15 +1834,21 @@ export default function TestCaseDetails() {
 
   // Fetch JUnit-specific data if this is an automated case
   const isJUnitCase = isAutomatedCaseSource(testcase?.source);
-  const { data: junitSteps } = useClientQueries(schema).jUnitTestStep.useFindMany(
+  const { data: junitSteps } = useClientQueries(
+    schema
+  ).jUnitTestStep.useFindMany(
     isJUnitCase ? { where: { repositoryCaseId: testcase.id } } : undefined,
     { enabled: isJUnitCase }
   );
-  const { data: junitAttachments } = useClientQueries(schema).jUnitAttachment.useFindMany(
+  const { data: junitAttachments } = useClientQueries(
+    schema
+  ).jUnitAttachment.useFindMany(
     isJUnitCase ? { where: { repositoryCaseId: testcase.id } } : undefined,
     { enabled: isJUnitCase }
   );
-  const { data: junitProperties } = useClientQueries(schema).jUnitProperty.useFindMany(
+  const { data: junitProperties } = useClientQueries(
+    schema
+  ).jUnitProperty.useFindMany(
     isJUnitCase ? { where: { repositoryCaseId: testcase.id } } : undefined,
     { enabled: isJUnitCase }
   );

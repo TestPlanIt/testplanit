@@ -54,8 +54,8 @@ describe("Fetch Many Cases API Route", () => {
       creator: null,
       project: null,
       caseFieldValues: [],
-      tags: [],
-      issues: [],
+      caseTags: [],
+      caseIssues: [],
       steps: [],
     },
     {
@@ -71,8 +71,8 @@ describe("Fetch Many Cases API Route", () => {
       creator: null,
       project: null,
       caseFieldValues: [],
-      tags: [],
-      issues: [],
+      caseTags: [],
+      caseIssues: [],
       steps: [],
     },
   ];

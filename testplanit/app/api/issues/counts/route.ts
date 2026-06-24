@@ -95,7 +95,7 @@ export async function POST(request: Request) {
           prisma.repositoryCases.count({
             where: {
               isDeleted: false,
-              issues: { some: { id: issueId } },
+              caseIssues: { some: { issue: { id: issueId } } },
               ...projectFilter,
               ...projectAccessWhere,
             },

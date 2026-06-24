@@ -19,7 +19,15 @@ import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import type { RepositoryCasesFindManyArgs, RepositoryCasesGetPayload, RepositoryCasesSelect, RepositoryCasesWhereInput, TestRunCasesFindManyArgs, TestRunCasesGetPayload, TestRunCasesWhereInput } from "~/zenstack/input";
+import type {
+  RepositoryCasesFindManyArgs,
+  RepositoryCasesGetPayload,
+  RepositoryCasesSelect,
+  RepositoryCasesWhereInput,
+  TestRunCasesFindManyArgs,
+  TestRunCasesGetPayload,
+  TestRunCasesWhereInput,
+} from "~/zenstack/input";
 import { JsonNull } from "@zenstackhq/orm";
 import {
   RowSelectionState,
@@ -192,17 +200,18 @@ const REPOSITORY_CASE_LIST_SELECT = {
       },
     },
   },
-  tags: {
-    where: {
-      isDeleted: false,
-    },
+  caseTags: {
+    where: { tag: { isDeleted: false } },
+    include: { tag: true },
   },
-  issues: {
-    where: {
-      isDeleted: false,
-    },
+  caseIssues: {
+    where: { issue: { isDeleted: false } },
     include: {
-      integration: true,
+      issue: {
+        include: {
+          integration: true,
+        },
+      },
     },
   },
   testRuns: {
@@ -425,10 +434,14 @@ export default function Cases({
   const debouncedSearchString = useDebounce(searchString, 500);
   const deferredSearchString = useDeferredValue(debouncedSearchString);
 
-  const { mutateAsync: updateRepositoryCases } = useClientQueries(schema).repositoryCases.useUpdate({
+  const { mutateAsync: updateRepositoryCases } = useClientQueries(
+    schema
+  ).repositoryCases.useUpdate({
     optimisticUpdate: false,
   });
-  const { mutateAsync: updateTestRunCases } = useClientQueries(schema).testRunCases.useUpdate({
+  const { mutateAsync: updateTestRunCases } = useClientQueries(
+    schema
+  ).testRunCases.useUpdate({
     optimisticUpdate: false,
   });
   const [, startTransition] = useTransition();
@@ -502,7 +515,9 @@ export default function Cases({
   const showCopyMove = canAddEdit && (projectCount ?? 0) > 1;
 
   // *** NEW: Fetch total project case count ***
-  const { data: totalProjectCasesCountData } = useClientQueries(schema).repositoryCases.useCount(
+  const { data: totalProjectCasesCountData } = useClientQueries(
+    schema
+  ).repositoryCases.useCount(
     {
       where: {
         projectId: projectId,
@@ -518,7 +533,9 @@ export default function Cases({
   );
   const totalProjectCases = totalProjectCasesCountData ?? 0;
 
-  const { data: projectSettings } = useClientQueries(schema).projects.useFindUnique(
+  const { data: projectSettings } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
     {
       where: { id: projectId },
       select: {
@@ -533,7 +550,9 @@ export default function Cases({
     projectSettings?.excludeNotStartedFromRuns ?? false;
 
   // Check if project has an active LLM integration (for auto-tag)
-  const { data: projectLlmIntegrations } = useClientQueries(schema).projectLlmIntegration.useFindMany(
+  const { data: projectLlmIntegrations } = useClientQueries(
+    schema
+  ).projectLlmIntegration.useFindMany(
     {
       where: { projectId },
     },
@@ -765,772 +784,769 @@ export default function Cases({
   // Build repository case where clause (used for filtering by folder, view, template, etc.)
   // This excludes test run-specific filters like assignedTo and status
   // NOTE: When searchResultIds is active, ZenStack hooks are disabled and data comes from POST fetch instead
-  const repositoryCaseWhereClause: RepositoryCasesWhereInput =
-    useMemo(() => {
-      const baseConditions: RepositoryCasesWhereInput[] = [
-        {
-          name: {
-            contains: deferredSearchString,
-            mode: "insensitive" as "default" | "insensitive",
-          },
+  const repositoryCaseWhereClause: RepositoryCasesWhereInput = useMemo(() => {
+    const baseConditions: RepositoryCasesWhereInput[] = [
+      {
+        name: {
+          contains: deferredSearchString,
+          mode: "insensitive" as "default" | "insensitive",
         },
-        {
-          isDeleted: false,
-          isArchived: false,
-          projectId,
-        },
-      ];
+      },
+      {
+        isDeleted: false,
+        isArchived: false,
+        projectId,
+      },
+    ];
 
-      if (isSelectionMode && excludeNotStartedFromRuns) {
-        baseConditions.push({
-          state: { workflowType: { not: "NOT_STARTED" } },
-        });
+    if (isSelectionMode && excludeNotStartedFromRuns) {
+      baseConditions.push({
+        state: { workflowType: { not: "NOT_STARTED" } },
+      });
+    }
+
+    // --- Apply folder/view/filter logic ---
+    // Skip assignedTo and status filters here - they're handled separately for test run cases
+    const isTestRunSpecificView =
+      viewType === "assignedTo" || viewType === "status";
+
+    if (viewType === "folders" && folderId) {
+      // 1. Folder view with specific folder (or folder + all descendants)
+      if (descendantFolderIds && descendantFolderIds.length > 0) {
+        baseConditions.push({ folderId: { in: descendantFolderIds } });
+      } else {
+        baseConditions.push({ folderId: { equals: folderId } });
       }
+    } else if (
+      !isTestRunSpecificView &&
+      (filterId === null || (Array.isArray(filterId) && filterId.length === 0))
+    ) {
+      // 2. Filter is null - means "All Values/All Items", so add no condition
+    } else if (!isTestRunSpecificView) {
+      // 4. Filter has specific value(s)
+      const filterArray = Array.isArray(filterId) ? filterId : [filterId];
+      const filterConditions: any[] = [];
 
-      // --- Apply folder/view/filter logic ---
-      // Skip assignedTo and status filters here - they're handled separately for test run cases
-      const isTestRunSpecificView =
-        viewType === "assignedTo" || viewType === "status";
+      // Build a condition for each filter value
+      for (const singleFilterId of filterArray) {
+        if (viewType.startsWith("dynamic_")) {
+          // Apply specific filter for dynamic views
+          const [_, ...fieldParts] = viewType.split("_");
+          const fieldKey = fieldParts.join("_");
+          const [fieldId, fieldType] = fieldKey.split("_");
+          const numericFieldId = parseInt(fieldId);
 
-      if (viewType === "folders" && folderId) {
-        // 1. Folder view with specific folder (or folder + all descendants)
-        if (descendantFolderIds && descendantFolderIds.length > 0) {
-          baseConditions.push({ folderId: { in: descendantFolderIds } });
-        } else {
-          baseConditions.push({ folderId: { equals: folderId } });
-        }
-      } else if (
-        !isTestRunSpecificView &&
-        (filterId === null ||
-          (Array.isArray(filterId) && filterId.length === 0))
-      ) {
-        // 2. Filter is null - means "All Values/All Items", so add no condition
-      } else if (!isTestRunSpecificView) {
-        // 4. Filter has specific value(s)
-        const filterArray = Array.isArray(filterId) ? filterId : [filterId];
-        const filterConditions: any[] = [];
-
-        // Build a condition for each filter value
-        for (const singleFilterId of filterArray) {
-          if (viewType.startsWith("dynamic_")) {
-            // Apply specific filter for dynamic views
-            const [_, ...fieldParts] = viewType.split("_");
-            const fieldKey = fieldParts.join("_");
-            const [fieldId, fieldType] = fieldKey.split("_");
-            const numericFieldId = parseInt(fieldId);
-
-            // Add the dynamic filtering logic here (Link, Dropdown, etc.)
-            if (fieldType === "Link") {
-              // Support both numeric IDs (legacy) and string IDs (new)
-              if (
-                (singleFilterId as number) === 1 ||
-                singleFilterId === "hasValue"
-              ) {
-                // Has link
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      AND: [
-                        { value: { not: JsonNull } },
-                        { value: { not: { equals: "" } } },
-                      ],
-                    },
+          // Add the dynamic filtering logic here (Link, Dropdown, etc.)
+          if (fieldType === "Link") {
+            // Support both numeric IDs (legacy) and string IDs (new)
+            if (
+              (singleFilterId as number) === 1 ||
+              singleFilterId === "hasValue"
+            ) {
+              // Has link
+              filterConditions.push({
+                caseFieldValues: {
+                  some: {
+                    fieldId: numericFieldId,
+                    AND: [
+                      { value: { not: JsonNull } },
+                      { value: { not: { equals: "" } } },
+                    ],
                   },
-                });
-              } else if (
-                (singleFilterId as number) === 2 ||
-                singleFilterId === "none"
-              ) {
-                // No link
-                filterConditions.push({
-                  OR: [
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { equals: JsonNull } },
-                            { value: { equals: "" } },
-                          ],
-                        },
-                      },
-                    },
-                  ],
-                });
-              } else if (
-                typeof singleFilterId === "string" &&
-                singleFilterId.includes("|")
-              ) {
-                // Operator-based link filtering
-                const parts = singleFilterId.split("|");
-                const searchValue = parts[1];
-
-                if (searchValue) {
-                  // For link operators, we fetch all non-null values and filter in application logic
-                  filterConditions.push({
+                },
+              });
+            } else if (
+              (singleFilterId as number) === 2 ||
+              singleFilterId === "none"
+            ) {
+              // No link
+              filterConditions.push({
+                OR: [
+                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                  {
                     caseFieldValues: {
                       some: {
                         fieldId: numericFieldId,
-                        value: { not: JsonNull },
+                        OR: [
+                          { value: { equals: JsonNull } },
+                          { value: { equals: "" } },
+                        ],
                       },
                     },
-                  });
-                  // Note: Actual URL filtering will happen after fetch in application logic
-                }
-              }
-            } else if (fieldType === "Dropdown") {
-              // Handle special "none" value to filter for cases without this field
-              if (singleFilterId === "none") {
-                filterConditions.push({
-                  OR: [
-                    // Case 1: No record exists for this fieldId
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    // Case 2: Record exists, but value is explicitly null
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          value: { equals: JsonNull },
-                        },
-                      },
-                    },
-                  ],
-                });
-              } else {
+                  },
+                ],
+              });
+            } else if (
+              typeof singleFilterId === "string" &&
+              singleFilterId.includes("|")
+            ) {
+              // Operator-based link filtering
+              const parts = singleFilterId.split("|");
+              const searchValue = parts[1];
+
+              if (searchValue) {
+                // For link operators, we fetch all non-null values and filter in application logic
                 filterConditions.push({
                   caseFieldValues: {
                     some: {
                       fieldId: numericFieldId,
-                      OR: [
-                        {
-                          value: {
-                            equals: (
-                              singleFilterId as string | number
-                            ).toString(),
-                          },
-                        },
-                        {
-                          value: { equals: singleFilterId as string | number },
-                        },
-                      ],
+                      value: { not: JsonNull },
                     },
                   },
                 });
+                // Note: Actual URL filtering will happen after fetch in application logic
               }
-            } else if (fieldType === "Multi-Select") {
-              // Handle special "none" value to filter for cases without this field
-              if (singleFilterId === "none") {
-                filterConditions.push({
-                  OR: [
-                    // Case 1: No record exists for this fieldId
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    // Case 2: Record exists, but value is explicitly null
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          value: { equals: JsonNull },
-                        },
-                      },
-                    },
-                  ],
-                });
-              } else {
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      value: {
-                        array_contains: [singleFilterId as string | number],
+            }
+          } else if (fieldType === "Dropdown") {
+            // Handle special "none" value to filter for cases without this field
+            if (singleFilterId === "none") {
+              filterConditions.push({
+                OR: [
+                  // Case 1: No record exists for this fieldId
+                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                  // Case 2: Record exists, but value is explicitly null
+                  {
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        value: { equals: JsonNull },
                       },
                     },
                   },
-                });
-              }
-            } else if (fieldType === "Steps") {
-              // Support both numeric IDs (legacy) and string IDs (new)
-              if (
-                (singleFilterId as number) === 1 ||
-                singleFilterId === "hasValue"
-              ) {
-                // Has steps
-                filterConditions.push({
-                  steps: { some: { isDeleted: false } },
-                });
-              } else if (
-                (singleFilterId as number) === 2 ||
-                singleFilterId === "none"
-              ) {
-                // No steps
-                filterConditions.push({
-                  steps: { none: { isDeleted: false } },
-                });
-              }
-            } else if (fieldType === "Checkbox") {
-              // singleFilterId 1 = Checked, singleFilterId 2 = Unchecked
+                ],
+              });
+            } else {
+              filterConditions.push({
+                caseFieldValues: {
+                  some: {
+                    fieldId: numericFieldId,
+                    OR: [
+                      {
+                        value: {
+                          equals: (
+                            singleFilterId as string | number
+                          ).toString(),
+                        },
+                      },
+                      {
+                        value: { equals: singleFilterId as string | number },
+                      },
+                    ],
+                  },
+                },
+              });
+            }
+          } else if (fieldType === "Multi-Select") {
+            // Handle special "none" value to filter for cases without this field
+            if (singleFilterId === "none") {
+              filterConditions.push({
+                OR: [
+                  // Case 1: No record exists for this fieldId
+                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                  // Case 2: Record exists, but value is explicitly null
+                  {
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        value: { equals: JsonNull },
+                      },
+                    },
+                  },
+                ],
+              });
+            } else {
               filterConditions.push({
                 caseFieldValues: {
                   some: {
                     fieldId: numericFieldId,
                     value: {
-                      equals: (singleFilterId as number) === 1 ? true : false,
+                      array_contains: [singleFilterId as string | number],
                     },
                   },
                 },
               });
-            } else if (fieldType === "Integer" || fieldType === "Number") {
-              // Handle special "none" value for cases without this field
-              if (singleFilterId === "none") {
-                filterConditions.push({
-                  OR: [
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          value: { equals: JsonNull },
-                        },
-                      },
-                    },
-                  ],
-                });
-              } else if (singleFilterId === "hasValue") {
-                // Has any value (not null)
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      value: { not: JsonNull },
-                    },
-                  },
-                });
-              } else if (
-                typeof singleFilterId === "string" &&
-                singleFilterId.includes(":")
-              ) {
-                // Operator-based filter: format is "operator:value1" or "operator:value1:value2"
-                const parts = singleFilterId.split(":");
-                const operator = parts[0];
-                const value1 = parseFloat(parts[1]);
-
-                if (!isNaN(value1)) {
-                  if (operator === "eq") {
-                    // Equals
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { equals: value1 } },
-                            { value: { equals: value1.toString() } },
-                          ],
-                        },
-                      },
-                    });
-                  } else if (operator === "ne") {
-                    // Not equals
-                    filterConditions.push({
-                      OR: [
-                        {
-                          caseFieldValues: {
-                            none: { fieldId: numericFieldId },
-                          },
-                        },
-                        {
-                          caseFieldValues: {
-                            some: {
-                              fieldId: numericFieldId,
-                              value: { equals: JsonNull },
-                            },
-                          },
-                        },
-                        {
-                          caseFieldValues: {
-                            some: {
-                              fieldId: numericFieldId,
-                              AND: [
-                                { value: { not: { equals: value1 } } },
-                                {
-                                  value: { not: { equals: value1.toString() } },
-                                },
-                              ],
-                            },
-                          },
-                        },
-                      ],
-                    });
-                  } else if (operator === "lt") {
-                    // Less than
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { lt: value1 } },
-                            { value: { lt: value1.toString() } },
-                          ],
-                        },
-                      },
-                    });
-                  } else if (operator === "lte") {
-                    // Less than or equal
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { lte: value1 } },
-                            { value: { lte: value1.toString() } },
-                          ],
-                        },
-                      },
-                    });
-                  } else if (operator === "gt") {
-                    // Greater than
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { gt: value1 } },
-                            { value: { gt: value1.toString() } },
-                          ],
-                        },
-                      },
-                    });
-                  } else if (operator === "gte") {
-                    // Greater than or equal
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { gte: value1 } },
-                            { value: { gte: value1.toString() } },
-                          ],
-                        },
-                      },
-                    });
-                  } else if (operator === "between" && parts.length === 3) {
-                    // Between two values
-                    const value2 = parseFloat(parts[2]);
-                    if (!isNaN(value2)) {
-                      filterConditions.push({
-                        caseFieldValues: {
-                          some: {
-                            fieldId: numericFieldId,
-                            OR: [
-                              {
-                                AND: [
-                                  { value: { gte: value1 } },
-                                  { value: { lte: value2 } },
-                                ],
-                              },
-                              {
-                                AND: [
-                                  { value: { gte: value1.toString() } },
-                                  { value: { lte: value2.toString() } },
-                                ],
-                              },
-                            ],
-                          },
-                        },
-                      });
-                    }
-                  }
-                }
-              } else {
-                // Filter by specific numeric value (legacy support)
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      OR: [
-                        {
-                          value: {
-                            equals: (
-                              singleFilterId as string | number
-                            ).toString(),
-                          },
-                        },
-                        {
-                          value: { equals: singleFilterId as string | number },
-                        },
-                      ],
-                    },
-                  },
-                });
-              }
-            } else if (fieldType === "Date") {
-              // Handle special "none" value for cases without this field
-              if (singleFilterId === "none") {
-                filterConditions.push({
-                  OR: [
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          value: { equals: JsonNull },
-                        },
-                      },
-                    },
-                  ],
-                });
-              } else if (singleFilterId === "hasValue") {
-                // Has any date (not null, not JSON null, and not empty string)
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      AND: [
-                        { value: { not: JsonNull } },
-                        { NOT: { value: { equals: JsonNull } } },
-                        { NOT: { value: { equals: "" } } },
-                        { NOT: { value: { equals: null } } },
-                      ],
-                    },
-                  },
-                });
-              } else if (singleFilterId === "last7") {
-                // Last 7 days
-                const now = new Date();
-                const sevenDaysAgo = new Date(
-                  now.getTime() - 7 * 24 * 60 * 60 * 1000
-                );
-                const sevenDaysAgoStr = sevenDaysAgo
-                  .toISOString()
-                  .split("T")[0];
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      OR: [
-                        { value: { gte: sevenDaysAgoStr } },
-                        { value: { gte: sevenDaysAgo.toISOString() } },
-                      ],
-                    },
-                  },
-                });
-              } else if (singleFilterId === "last30") {
-                // Last 30 days
-                const now = new Date();
-                const thirtyDaysAgo = new Date(
-                  now.getTime() - 30 * 24 * 60 * 60 * 1000
-                );
-                const thirtyDaysAgoStr = thirtyDaysAgo
-                  .toISOString()
-                  .split("T")[0];
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      OR: [
-                        { value: { gte: thirtyDaysAgoStr } },
-                        { value: { gte: thirtyDaysAgo.toISOString() } },
-                      ],
-                    },
-                  },
-                });
-              } else if (singleFilterId === "last90") {
-                // Last 90 days
-                const now = new Date();
-                const ninetyDaysAgo = new Date(
-                  now.getTime() - 90 * 24 * 60 * 60 * 1000
-                );
-                const ninetyDaysAgoStr = ninetyDaysAgo
-                  .toISOString()
-                  .split("T")[0];
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      OR: [
-                        { value: { gte: ninetyDaysAgoStr } },
-                        { value: { gte: ninetyDaysAgo.toISOString() } },
-                      ],
-                    },
-                  },
-                });
-              } else if (singleFilterId === "thisYear") {
-                // This year
-                const now = new Date();
-                const startOfYear = new Date(now.getFullYear(), 0, 1);
-                const startOfYearStr = startOfYear.toISOString().split("T")[0];
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      OR: [
-                        { value: { gte: startOfYearStr } },
-                        { value: { gte: startOfYear.toISOString() } },
-                      ],
-                    },
-                  },
-                });
-              } else if (
-                typeof singleFilterId === "string" &&
-                singleFilterId.includes("|")
-              ) {
-                // Operator-based filter: format is "operator|date1" or "operator|date1|date2"
-                const parts = singleFilterId.split("|");
-                const operator = parts[0];
-
-                if (operator === "on" && parts.length >= 2) {
-                  // On date (exact match)
-                  const date = new Date(parts[1]);
-                  if (!isNaN(date.getTime())) {
-                    const dateStr = date.toISOString().split("T")[0];
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { equals: dateStr } },
-                            { value: { equals: date.toISOString() } },
-                          ],
-                        },
-                      },
-                    });
-                  }
-                } else if (operator === "before" && parts.length >= 2) {
-                  // Before date
-                  const date = new Date(parts[1]);
-                  if (!isNaN(date.getTime())) {
-                    const dateStr = date.toISOString().split("T")[0];
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { lt: dateStr } },
-                            { value: { lt: date.toISOString() } },
-                          ],
-                        },
-                      },
-                    });
-                  }
-                } else if (operator === "after" && parts.length >= 2) {
-                  // After date
-                  const date = new Date(parts[1]);
-                  if (!isNaN(date.getTime())) {
-                    const dateStr = date.toISOString().split("T")[0];
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { gt: dateStr } },
-                            { value: { gt: date.toISOString() } },
-                          ],
-                        },
-                      },
-                    });
-                  }
-                } else if (operator === "between" && parts.length === 3) {
-                  // Between two dates
-                  const date1 = new Date(parts[1]);
-                  const date2 = new Date(parts[2]);
-                  if (!isNaN(date1.getTime()) && !isNaN(date2.getTime())) {
-                    const dateStr1 = date1.toISOString().split("T")[0];
-                    const dateStr2 = date2.toISOString().split("T")[0];
-                    filterConditions.push({
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            {
-                              AND: [
-                                { value: { gte: dateStr1 } },
-                                { value: { lte: dateStr2 } },
-                              ],
-                            },
-                            {
-                              AND: [
-                                { value: { gte: date1.toISOString() } },
-                                { value: { lte: date2.toISOString() } },
-                              ],
-                            },
-                          ],
-                        },
-                      },
-                    });
-                  }
-                }
-              } else if ((singleFilterId as number) === 1) {
-                // Legacy: Has date
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      value: { not: JsonNull },
-                    },
-                  },
-                });
-              } else if ((singleFilterId as number) === 2) {
-                // Legacy: No date
-                filterConditions.push({
-                  OR: [
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          value: { equals: JsonNull },
-                        },
-                      },
-                    },
-                  ],
-                });
-              }
-            } else if (
-              fieldType === "Text Long" ||
-              fieldType === "Text String"
+            }
+          } else if (fieldType === "Steps") {
+            // Support both numeric IDs (legacy) and string IDs (new)
+            if (
+              (singleFilterId as number) === 1 ||
+              singleFilterId === "hasValue"
             ) {
-              // Handle hasValue/none special filters
-              if (singleFilterId === "hasValue") {
-                // Has text - filter for non-null, non-empty values
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      AND: [
-                        { value: { not: JsonNull } },
-                        { value: { not: { equals: "" } } },
-                      ],
-                    },
+              // Has steps
+              filterConditions.push({
+                steps: { some: { isDeleted: false } },
+              });
+            } else if (
+              (singleFilterId as number) === 2 ||
+              singleFilterId === "none"
+            ) {
+              // No steps
+              filterConditions.push({
+                steps: { none: { isDeleted: false } },
+              });
+            }
+          } else if (fieldType === "Checkbox") {
+            // singleFilterId 1 = Checked, singleFilterId 2 = Unchecked
+            filterConditions.push({
+              caseFieldValues: {
+                some: {
+                  fieldId: numericFieldId,
+                  value: {
+                    equals: (singleFilterId as number) === 1 ? true : false,
                   },
-                });
-              } else if (singleFilterId === "none") {
-                // No text - filter for null, empty, or non-existent
-                filterConditions.push({
-                  OR: [
-                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                    {
-                      caseFieldValues: {
-                        some: {
-                          fieldId: numericFieldId,
-                          OR: [
-                            { value: { equals: JsonNull } },
-                            { value: { equals: "" } },
-                          ],
-                        },
+                },
+              },
+            });
+          } else if (fieldType === "Integer" || fieldType === "Number") {
+            // Handle special "none" value for cases without this field
+            if (singleFilterId === "none") {
+              filterConditions.push({
+                OR: [
+                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                  {
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        value: { equals: JsonNull },
                       },
                     },
-                  ],
-                });
-              } else if (
-                typeof singleFilterId === "string" &&
-                singleFilterId.includes("|")
-              ) {
-                // Operator-based text filtering
-                const parts = singleFilterId.split("|");
-                const _operator = parts[0];
-                const searchValue = parts[1];
+                  },
+                ],
+              });
+            } else if (singleFilterId === "hasValue") {
+              // Has any value (not null)
+              filterConditions.push({
+                caseFieldValues: {
+                  some: {
+                    fieldId: numericFieldId,
+                    value: { not: JsonNull },
+                  },
+                },
+              });
+            } else if (
+              typeof singleFilterId === "string" &&
+              singleFilterId.includes(":")
+            ) {
+              // Operator-based filter: format is "operator:value1" or "operator:value1:value2"
+              const parts = singleFilterId.split(":");
+              const operator = parts[0];
+              const value1 = parseFloat(parts[1]);
 
-                if (searchValue) {
-                  // For text operators, we fetch all non-null values and filter in application logic
-                  // This is necessary because Prisma doesn't support advanced string operations on JSON fields
+              if (!isNaN(value1)) {
+                if (operator === "eq") {
+                  // Equals
                   filterConditions.push({
                     caseFieldValues: {
                       some: {
                         fieldId: numericFieldId,
-                        value: { not: JsonNull },
+                        OR: [
+                          { value: { equals: value1 } },
+                          { value: { equals: value1.toString() } },
+                        ],
                       },
                     },
                   });
-                  // Note: Actual text filtering will happen after fetch in application logic
+                } else if (operator === "ne") {
+                  // Not equals
+                  filterConditions.push({
+                    OR: [
+                      {
+                        caseFieldValues: {
+                          none: { fieldId: numericFieldId },
+                        },
+                      },
+                      {
+                        caseFieldValues: {
+                          some: {
+                            fieldId: numericFieldId,
+                            value: { equals: JsonNull },
+                          },
+                        },
+                      },
+                      {
+                        caseFieldValues: {
+                          some: {
+                            fieldId: numericFieldId,
+                            AND: [
+                              { value: { not: { equals: value1 } } },
+                              {
+                                value: { not: { equals: value1.toString() } },
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    ],
+                  });
+                } else if (operator === "lt") {
+                  // Less than
+                  filterConditions.push({
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        OR: [
+                          { value: { lt: value1 } },
+                          { value: { lt: value1.toString() } },
+                        ],
+                      },
+                    },
+                  });
+                } else if (operator === "lte") {
+                  // Less than or equal
+                  filterConditions.push({
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        OR: [
+                          { value: { lte: value1 } },
+                          { value: { lte: value1.toString() } },
+                        ],
+                      },
+                    },
+                  });
+                } else if (operator === "gt") {
+                  // Greater than
+                  filterConditions.push({
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        OR: [
+                          { value: { gt: value1 } },
+                          { value: { gt: value1.toString() } },
+                        ],
+                      },
+                    },
+                  });
+                } else if (operator === "gte") {
+                  // Greater than or equal
+                  filterConditions.push({
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        OR: [
+                          { value: { gte: value1 } },
+                          { value: { gte: value1.toString() } },
+                        ],
+                      },
+                    },
+                  });
+                } else if (operator === "between" && parts.length === 3) {
+                  // Between two values
+                  const value2 = parseFloat(parts[2]);
+                  if (!isNaN(value2)) {
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            {
+                              AND: [
+                                { value: { gte: value1 } },
+                                { value: { lte: value2 } },
+                              ],
+                            },
+                            {
+                              AND: [
+                                { value: { gte: value1.toString() } },
+                                { value: { lte: value2.toString() } },
+                              ],
+                            },
+                          ],
+                        },
+                      },
+                    });
+                  }
                 }
               }
+            } else {
+              // Filter by specific numeric value (legacy support)
+              filterConditions.push({
+                caseFieldValues: {
+                  some: {
+                    fieldId: numericFieldId,
+                    OR: [
+                      {
+                        value: {
+                          equals: (
+                            singleFilterId as string | number
+                          ).toString(),
+                        },
+                      },
+                      {
+                        value: { equals: singleFilterId as string | number },
+                      },
+                    ],
+                  },
+                },
+              });
             }
-          } else {
-            // Apply specific filter for standard views (using switch)
-            switch (viewType) {
-              case "templates":
-                filterConditions.push({
-                  templateId: { equals: Number(singleFilterId) },
-                });
-                break;
-              case "states":
-                filterConditions.push({
-                  stateId: { equals: Number(singleFilterId) },
-                });
-                break;
-              case "creators":
-                filterConditions.push({
-                  creatorId: { equals: singleFilterId?.toString() },
-                });
-                break;
-              case "automated":
-                filterConditions.push({
-                  automated: (singleFilterId as number) === 1 ? true : false,
-                });
-                break;
-              case "parameterized":
-                filterConditions.push({
-                  hasParameters: (singleFilterId as number) === 1,
-                });
-                break;
-              case "tags":
-                if (singleFilterId === "any") {
+          } else if (fieldType === "Date") {
+            // Handle special "none" value for cases without this field
+            if (singleFilterId === "none") {
+              filterConditions.push({
+                OR: [
+                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                  {
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        value: { equals: JsonNull },
+                      },
+                    },
+                  },
+                ],
+              });
+            } else if (singleFilterId === "hasValue") {
+              // Has any date (not null, not JSON null, and not empty string)
+              filterConditions.push({
+                caseFieldValues: {
+                  some: {
+                    fieldId: numericFieldId,
+                    AND: [
+                      { value: { not: JsonNull } },
+                      { NOT: { value: { equals: JsonNull } } },
+                      { NOT: { value: { equals: "" } } },
+                      { NOT: { value: { equals: null } } },
+                    ],
+                  },
+                },
+              });
+            } else if (singleFilterId === "last7") {
+              // Last 7 days
+              const now = new Date();
+              const sevenDaysAgo = new Date(
+                now.getTime() - 7 * 24 * 60 * 60 * 1000
+              );
+              const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
+              filterConditions.push({
+                caseFieldValues: {
+                  some: {
+                    fieldId: numericFieldId,
+                    OR: [
+                      { value: { gte: sevenDaysAgoStr } },
+                      { value: { gte: sevenDaysAgo.toISOString() } },
+                    ],
+                  },
+                },
+              });
+            } else if (singleFilterId === "last30") {
+              // Last 30 days
+              const now = new Date();
+              const thirtyDaysAgo = new Date(
+                now.getTime() - 30 * 24 * 60 * 60 * 1000
+              );
+              const thirtyDaysAgoStr = thirtyDaysAgo
+                .toISOString()
+                .split("T")[0];
+              filterConditions.push({
+                caseFieldValues: {
+                  some: {
+                    fieldId: numericFieldId,
+                    OR: [
+                      { value: { gte: thirtyDaysAgoStr } },
+                      { value: { gte: thirtyDaysAgo.toISOString() } },
+                    ],
+                  },
+                },
+              });
+            } else if (singleFilterId === "last90") {
+              // Last 90 days
+              const now = new Date();
+              const ninetyDaysAgo = new Date(
+                now.getTime() - 90 * 24 * 60 * 60 * 1000
+              );
+              const ninetyDaysAgoStr = ninetyDaysAgo
+                .toISOString()
+                .split("T")[0];
+              filterConditions.push({
+                caseFieldValues: {
+                  some: {
+                    fieldId: numericFieldId,
+                    OR: [
+                      { value: { gte: ninetyDaysAgoStr } },
+                      { value: { gte: ninetyDaysAgo.toISOString() } },
+                    ],
+                  },
+                },
+              });
+            } else if (singleFilterId === "thisYear") {
+              // This year
+              const now = new Date();
+              const startOfYear = new Date(now.getFullYear(), 0, 1);
+              const startOfYearStr = startOfYear.toISOString().split("T")[0];
+              filterConditions.push({
+                caseFieldValues: {
+                  some: {
+                    fieldId: numericFieldId,
+                    OR: [
+                      { value: { gte: startOfYearStr } },
+                      { value: { gte: startOfYear.toISOString() } },
+                    ],
+                  },
+                },
+              });
+            } else if (
+              typeof singleFilterId === "string" &&
+              singleFilterId.includes("|")
+            ) {
+              // Operator-based filter: format is "operator|date1" or "operator|date1|date2"
+              const parts = singleFilterId.split("|");
+              const operator = parts[0];
+
+              if (operator === "on" && parts.length >= 2) {
+                // On date (exact match)
+                const date = new Date(parts[1]);
+                if (!isNaN(date.getTime())) {
+                  const dateStr = date.toISOString().split("T")[0];
                   filterConditions.push({
-                    tags: { some: { isDeleted: false } },
-                  });
-                } else if (singleFilterId === "none") {
-                  filterConditions.push({
-                    tags: { none: { isDeleted: false } },
-                  });
-                } else {
-                  filterConditions.push({
-                    tags: {
-                      some: { id: Number(singleFilterId), isDeleted: false },
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        OR: [
+                          { value: { equals: dateStr } },
+                          { value: { equals: date.toISOString() } },
+                        ],
+                      },
                     },
                   });
                 }
-                break;
-              case "issues":
-                if (singleFilterId === "any") {
+              } else if (operator === "before" && parts.length >= 2) {
+                // Before date
+                const date = new Date(parts[1]);
+                if (!isNaN(date.getTime())) {
+                  const dateStr = date.toISOString().split("T")[0];
                   filterConditions.push({
-                    issues: { some: { isDeleted: false } },
-                  });
-                } else if (singleFilterId === "none") {
-                  filterConditions.push({
-                    issues: { none: { isDeleted: false } },
-                  });
-                } else {
-                  filterConditions.push({
-                    issues: {
-                      some: { id: Number(singleFilterId), isDeleted: false },
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        OR: [
+                          { value: { lt: dateStr } },
+                          { value: { lt: date.toISOString() } },
+                        ],
+                      },
                     },
                   });
                 }
-                break;
+              } else if (operator === "after" && parts.length >= 2) {
+                // After date
+                const date = new Date(parts[1]);
+                if (!isNaN(date.getTime())) {
+                  const dateStr = date.toISOString().split("T")[0];
+                  filterConditions.push({
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        OR: [
+                          { value: { gt: dateStr } },
+                          { value: { gt: date.toISOString() } },
+                        ],
+                      },
+                    },
+                  });
+                }
+              } else if (operator === "between" && parts.length === 3) {
+                // Between two dates
+                const date1 = new Date(parts[1]);
+                const date2 = new Date(parts[2]);
+                if (!isNaN(date1.getTime()) && !isNaN(date2.getTime())) {
+                  const dateStr1 = date1.toISOString().split("T")[0];
+                  const dateStr2 = date2.toISOString().split("T")[0];
+                  filterConditions.push({
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        OR: [
+                          {
+                            AND: [
+                              { value: { gte: dateStr1 } },
+                              { value: { lte: dateStr2 } },
+                            ],
+                          },
+                          {
+                            AND: [
+                              { value: { gte: date1.toISOString() } },
+                              { value: { lte: date2.toISOString() } },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                  });
+                }
+              }
+            } else if ((singleFilterId as number) === 1) {
+              // Legacy: Has date
+              filterConditions.push({
+                caseFieldValues: {
+                  some: {
+                    fieldId: numericFieldId,
+                    value: { not: JsonNull },
+                  },
+                },
+              });
+            } else if ((singleFilterId as number) === 2) {
+              // Legacy: No date
+              filterConditions.push({
+                OR: [
+                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                  {
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        value: { equals: JsonNull },
+                      },
+                    },
+                  },
+                ],
+              });
+            }
+          } else if (fieldType === "Text Long" || fieldType === "Text String") {
+            // Handle hasValue/none special filters
+            if (singleFilterId === "hasValue") {
+              // Has text - filter for non-null, non-empty values
+              filterConditions.push({
+                caseFieldValues: {
+                  some: {
+                    fieldId: numericFieldId,
+                    AND: [
+                      { value: { not: JsonNull } },
+                      { value: { not: { equals: "" } } },
+                    ],
+                  },
+                },
+              });
+            } else if (singleFilterId === "none") {
+              // No text - filter for null, empty, or non-existent
+              filterConditions.push({
+                OR: [
+                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                  {
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        OR: [
+                          { value: { equals: JsonNull } },
+                          { value: { equals: "" } },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              });
+            } else if (
+              typeof singleFilterId === "string" &&
+              singleFilterId.includes("|")
+            ) {
+              // Operator-based text filtering
+              const parts = singleFilterId.split("|");
+              const _operator = parts[0];
+              const searchValue = parts[1];
+
+              if (searchValue) {
+                // For text operators, we fetch all non-null values and filter in application logic
+                // This is necessary because Prisma doesn't support advanced string operations on JSON fields
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      value: { not: JsonNull },
+                    },
+                  },
+                });
+                // Note: Actual text filtering will happen after fetch in application logic
+              }
             }
           }
-        }
-
-        // Combine all filter conditions with OR (union of results)
-        if (filterConditions.length > 0) {
-          baseConditions.push({ OR: filterConditions });
+        } else {
+          // Apply specific filter for standard views (using switch)
+          switch (viewType) {
+            case "templates":
+              filterConditions.push({
+                templateId: { equals: Number(singleFilterId) },
+              });
+              break;
+            case "states":
+              filterConditions.push({
+                stateId: { equals: Number(singleFilterId) },
+              });
+              break;
+            case "creators":
+              filterConditions.push({
+                creatorId: { equals: singleFilterId?.toString() },
+              });
+              break;
+            case "automated":
+              filterConditions.push({
+                automated: (singleFilterId as number) === 1 ? true : false,
+              });
+              break;
+            case "parameterized":
+              filterConditions.push({
+                hasParameters: (singleFilterId as number) === 1,
+              });
+              break;
+            case "tags":
+              if (singleFilterId === "any") {
+                filterConditions.push({
+                  caseTags: { some: { tag: { isDeleted: false } } },
+                });
+              } else if (singleFilterId === "none") {
+                filterConditions.push({
+                  caseTags: { none: { tag: { isDeleted: false } } },
+                });
+              } else {
+                filterConditions.push({
+                  caseTags: {
+                    some: {
+                      tag: { id: Number(singleFilterId), isDeleted: false },
+                    },
+                  },
+                });
+              }
+              break;
+            case "issues":
+              if (singleFilterId === "any") {
+                filterConditions.push({
+                  caseIssues: { some: { issue: { isDeleted: false } } },
+                });
+              } else if (singleFilterId === "none") {
+                filterConditions.push({
+                  caseIssues: { none: { issue: { isDeleted: false } } },
+                });
+              } else {
+                filterConditions.push({
+                  caseIssues: {
+                    some: {
+                      issue: { id: Number(singleFilterId), isDeleted: false },
+                    },
+                  },
+                });
+              }
+              break;
+          }
         }
       }
 
-      const finalWhereClause: RepositoryCasesWhereInput = {
-        AND: baseConditions,
-      };
-      return finalWhereClause;
-    }, [
-      deferredSearchString,
-      projectId,
-      viewType,
-      folderId,
-      filterId,
-      descendantFolderIds,
-      isSelectionMode,
-      excludeNotStartedFromRuns,
-    ]);
+      // Combine all filter conditions with OR (union of results)
+      if (filterConditions.length > 0) {
+        baseConditions.push({ OR: filterConditions });
+      }
+    }
+
+    const finalWhereClause: RepositoryCasesWhereInput = {
+      AND: baseConditions,
+    };
+    return finalWhereClause;
+  }, [
+    deferredSearchString,
+    projectId,
+    viewType,
+    folderId,
+    filterId,
+    descendantFolderIds,
+    isSelectionMode,
+    excludeNotStartedFromRuns,
+  ]);
 
   // When `showDescendants` is on with a selected folder, the descendant folder
   // IDs are fetched via a POST endpoint that resolves them server-side (recursive
@@ -1696,9 +1712,9 @@ export default function Cases({
       } else if (column === "steps") {
         return { repositoryCase: { steps: { _count: direction } } };
       } else if (column === "tags") {
-        return { repositoryCase: { tags: { _count: direction } } };
+        return { repositoryCase: { caseTags: { _count: direction } } };
       } else if (column === "issues") {
-        return { repositoryCase: { issues: { _count: direction } } };
+        return { repositoryCase: { caseIssues: { _count: direction } } };
       } else {
         // For any other column, try to order by the repositoryCase field
         return { repositoryCase: { [column]: direction } };
@@ -1848,8 +1864,8 @@ export default function Cases({
               caseFieldValues: true,
               attachments: true,
               steps: true,
-              tags: true,
-              issues: true,
+              caseTags: { include: { tag: true } },
+              caseIssues: { include: { issue: true } },
               testRuns: {
                 select: {
                   id: true,
@@ -1995,10 +2011,10 @@ export default function Cases({
         return { steps: { _count: direction } };
       }
       if (column === "tags") {
-        return { tags: { _count: direction } };
+        return { caseTags: { _count: direction } };
       }
       if (column === "issues") {
-        return { issues: { _count: direction } };
+        return { caseIssues: { _count: direction } };
       }
 
       // Text-based sorting on related entities
@@ -2043,7 +2059,9 @@ export default function Cases({
     );
 
   // For run mode: count test run cases matching the filters
-  const { data: testRunCasesCountData } = useClientQueries(schema).testRunCases.useCount(
+  const { data: testRunCasesCountData } = useClientQueries(
+    schema
+  ).testRunCases.useCount(
     {
       where: {
         testRunId:
@@ -2303,14 +2321,18 @@ export default function Cases({
                 };
               };
             };
-            tags: {
-              where: {
-                isDeleted: false;
-              };
+            caseTags: {
+              where: { tag: { isDeleted: false } };
+              include: { tag: true };
             };
-            issues: {
-              where: {
-                isDeleted: false;
+            caseIssues: {
+              where: { issue: { isDeleted: false } };
+              include: {
+                issue: {
+                  include: {
+                    integration: true;
+                  };
+                };
               };
             };
             testRuns: {
@@ -2561,6 +2583,13 @@ export default function Cases({
       // Just map it to include all the test run-specific fields
       return testRunCasesData.map((trc) => ({
         ...trc.repositoryCase,
+        // Derive the legacy tags/issues array shape from the explicit join rows
+        // so downstream consumers (columns, computeLastTestResult) are unaffected.
+        tags:
+          (trc.repositoryCase as any).caseTags?.map((ct: any) => ct.tag) ?? [],
+        issues:
+          (trc.repositoryCase as any).caseIssues?.map((ci: any) => ci.issue) ??
+          [],
         testRunCaseId: trc.id,
         testRunStatus: trc.status,
         testRunStatusId: trc.statusId,
@@ -2584,6 +2613,10 @@ export default function Cases({
     if (data) {
       return data.map((caseItem) => ({
         ...caseItem,
+        // Derive the legacy tags/issues array shape from the explicit join rows
+        // so downstream consumers (columns, computeLastTestResult) are unaffected.
+        tags: (caseItem as any).caseTags?.map((ct: any) => ct.tag) ?? [],
+        issues: (caseItem as any).caseIssues?.map((ci: any) => ci.issue) ?? [],
         lastTestResult: computeLastTestResult(caseItem),
       }));
     }
@@ -2614,7 +2647,9 @@ export default function Cases({
     () => cases.map((c: { id: number }) => c.id),
     [cases]
   );
-  const { data: pendingReviewsForVisibleCases } = useClientQueries(schema).reviewRequest.useFindMany(
+  const { data: pendingReviewsForVisibleCases } = useClientQueries(
+    schema
+  ).reviewRequest.useFindMany(
     {
       where: {
         entityType: "CASE",

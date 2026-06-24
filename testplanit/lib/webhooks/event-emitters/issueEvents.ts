@@ -61,7 +61,7 @@ export async function emitIssueCreated(
   const linked = await tx.issue.findUnique({
     where: { id: row.id },
     select: {
-      repositoryCases: { select: { id: true } },
+      caseIssues: { select: { case: { select: { id: true } } } },
       testRuns: { select: { id: true } },
       testRunResults: { select: { id: true } },
       testRunStepResults: { select: { id: true } },
@@ -71,7 +71,7 @@ export async function emitIssueCreated(
   });
 
   const linkedRefs = {
-    repositoryCaseIds: (linked?.repositoryCases ?? []).map((r) => r.id),
+    repositoryCaseIds: (linked?.caseIssues ?? []).map((ci) => ci.case.id),
     testRunIds: (linked?.testRuns ?? []).map((r) => r.id),
     testRunResultIds: (linked?.testRunResults ?? []).map((r) => r.id),
     testRunStepResultIds: (linked?.testRunStepResults ?? []).map((r) => r.id),

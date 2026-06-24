@@ -48,9 +48,11 @@ export async function importRepositoryCaseTags(
     const existing = await tx.repositoryCases.findFirst({
       where: {
         id: caseId,
-        tags: {
+        caseTags: {
           some: {
-            id: tagId,
+            tag: {
+              id: tagId,
+            },
           },
         },
       },
@@ -62,12 +64,10 @@ export async function importRepositoryCaseTags(
     }
 
     // Create the tag assignment by connecting the tag to the case
-    await tx.repositoryCases.update({
-      where: { id: caseId },
+    await tx.repositoryCaseTag.create({
       data: {
-        tags: {
-          connect: { id: tagId },
-        },
+        caseId,
+        tagId,
       },
     });
 

@@ -54,7 +54,21 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "~/zenstack/models";
-import type { Attachments, CaseFields, Color, FieldIcon, Issue, Projects, RepositoryCases, RepositoryFolders, Status, Steps, Tags, User, Workflows } from "~/zenstack/models";
+import type {
+  Attachments,
+  CaseFields,
+  Color,
+  FieldIcon,
+  Issue,
+  Projects,
+  RepositoryCases,
+  RepositoryFolders,
+  Status,
+  Steps,
+  Tags,
+  User,
+  Workflows,
+} from "~/zenstack/models";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import {
   Activity,
@@ -98,6 +112,11 @@ export interface ExtendedCases extends RepositoryCases {
   };
   attachments: Attachments[];
   tags?: Tags[];
+  // Explicit join-model relations (RepositoryCases.caseTags/caseIssues). The
+  // repository case query selects these; consumers derive tags/issues via
+  // caseTags.map((ct) => ct.tag) / caseIssues.map((ci) => ci.issue).
+  caseTags?: { tag: Tags }[];
+  caseIssues?: { issue: Issue }[];
   steps?: Steps[] | undefined;
   project: Projects;
   creator: User;
@@ -319,7 +338,9 @@ const NameCell = React.memo(function NameCell({
   // DISABLED: Fetch all folders to build the path hierarchy
   // TODO: Replace with API endpoint that fetches only the path for a specific folder
   // This was causing performance issues by loading all folders for each case row
-  const { data: allFolders } = useClientQueries(schema).repositoryFolders.useFindMany(
+  const { data: allFolders } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany(
     {
       where: {
         projectId: projectId,
@@ -552,7 +573,8 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   const [isInitialRender, setIsInitialRender] = useState(true);
   const t = useTranslations();
 
-  const { mutateAsync: _updateTestRunCase } = useClientQueries(schema).testRunCases.useUpdate();
+  const { mutateAsync: _updateTestRunCase } =
+    useClientQueries(schema).testRunCases.useUpdate();
 
   useEffect(() => {
     setIsInitialRender(false);
@@ -894,7 +916,8 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
   projectId: number;
 }) {
   const t = useTranslations();
-  const { mutateAsync: upsertTestRunCase } = useClientQueries(schema).testRunCases.useUpsert();
+  const { mutateAsync: upsertTestRunCase } =
+    useClientQueries(schema).testRunCases.useUpsert();
 
   const {
     data: testRuns,
@@ -1130,7 +1153,8 @@ const AssigneeCell = React.memo(function AssigneeCell({
 }) {
   const [isAssigning, setIsAssigning] = useState(false);
   const t = useTranslations();
-  const { mutateAsync: updateTestRunCase } = useClientQueries(schema).testRunCases.useUpdate();
+  const { mutateAsync: updateTestRunCase } =
+    useClientQueries(schema).testRunCases.useUpdate();
 
   const handleAssignmentChange = async (
     user: {

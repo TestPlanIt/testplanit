@@ -63,9 +63,9 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   }, // step/expectedResult are TipTap
   { table: "TestCaseParameter", denylist: ["createdAt", "updatedAt"] },
 
-  // Cases implicit m2m join tables (no timestamps; composite (A,B) PK → pkCol 'A')
-  { table: "_RepositoryCasesToTags", pkCol: "A", denylist: [] },
-  { table: "_IssueToRepositoryCases", pkCol: "A", denylist: [] },
+  // Cases <-> Tags/Issue explicit join tables (composite (caseId,X) PK → pkCol 'caseId')
+  { table: "RepositoryCaseTag", pkCol: "caseId", denylist: [] },
+  { table: "RepositoryCaseIssue", pkCol: "caseId", denylist: [] },
 
   // ── Runs family ───────────────────────────────────────────────────────────
   {

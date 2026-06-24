@@ -165,13 +165,13 @@ const processor = async (
             name: true,
             automated: true,
             source: true,
-            tags: { select: { name: true } },
+            caseTags: { select: { tag: { select: { name: true } } } },
           },
         });
         for (const e of entities) {
           entityMeta.set(e.id, {
             name: e.name,
-            currentTags: e.tags.map((t) => t.name),
+            currentTags: e.caseTags.map((ct) => ct.tag.name),
             automated: e.automated,
             source: e.source,
           });

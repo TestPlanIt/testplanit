@@ -135,16 +135,16 @@ const mockRepositoryCases = [
     name: "Login Test",
     automated: false,
     source: "manual",
-    tags: [{ name: "frontend" }],
+    caseTags: [{ tag: { name: "frontend" } }],
   },
   {
     id: 2,
     name: "API Test",
     automated: true,
     source: "cypress",
-    tags: [{ name: "backend" }],
+    caseTags: [{ tag: { name: "backend" } }],
   },
-  { id: 3, name: "UI Test", automated: false, source: null, tags: [] },
+  { id: 3, name: "UI Test", automated: false, source: null, caseTags: [] },
 ];
 
 // Helper to load a fresh module and call startWorker to initialise the
@@ -488,7 +488,13 @@ describe("AutoTagWorker", () => {
         ],
       });
       mockPrisma.repositoryCases.findMany.mockResolvedValue([
-        { id: 1, name: "Unit Test", automated: true, source: "jest", tags: [] },
+        {
+          id: 1,
+          name: "Unit Test",
+          automated: true,
+          source: "jest",
+          caseTags: [],
+        },
       ]);
 
       const { processor } = await loadWorker();

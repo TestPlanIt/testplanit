@@ -466,10 +466,6 @@ export async function persistGeneratedTestCases(
             automated: testCase.automated ?? false,
             estimate: testCase.estimate,
             currentVersion: 1,
-            ...(issueConnects.length
-              ? { issues: { connect: issueConnects } }
-              : {}),
-            ...(tagConnects.length ? { tags: { connect: tagConnects } } : {}),
           };
           const softDeletedExisting = await tx.repositoryCases.findFirst({
             where: {
@@ -496,6 +492,30 @@ export async function persistGeneratedTestCases(
                 },
                 select: { id: true },
               });
+
+          // Link tags/issues through the explicit join models. The implicit
+          // m2m `connect` syntax was replaced by RepositoryCaseTag /
+          // RepositoryCaseIssue rows; `skipDuplicates` keeps the additive
+          // semantics of `connect` when restoring a soft-deleted case that
+          // already carried some of these links.
+          if (issueConnects.length) {
+            await tx.repositoryCaseIssue.createMany({
+              data: issueConnects.map(({ id }) => ({
+                caseId: newCase.id,
+                issueId: id,
+              })),
+              skipDuplicates: true,
+            });
+          }
+          if (tagConnects.length) {
+            await tx.repositoryCaseTag.createMany({
+              data: tagConnects.map(({ id }) => ({
+                caseId: newCase.id,
+                tagId: id,
+              })),
+              skipDuplicates: true,
+            });
+          }
 
           // 2. Create attachments (must exist before version snapshot embeds them)
           let attachmentsForVersion: Array<{

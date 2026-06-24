@@ -165,30 +165,38 @@ export async function mergeCases(
       });
 
       // -----------------------------------------------------------------------
-      // Step 12: Tags and Issues (M2M implicit — connect is idempotent)
-      // Prisma silently ignores already-connected relations.
+      // Step 12: Tags and Issues (explicit M2M join — createMany skipDuplicates
+      // is idempotent; already-linked rows are silently skipped).
       // -----------------------------------------------------------------------
       const victimData = await tx.repositoryCases.findUnique({
         where: { id: victimId },
         include: {
-          tags: { select: { id: true } },
-          issues: { select: { id: true } },
+          caseTags: { select: { tagId: true } },
+          caseIssues: { select: { issueId: true } },
         },
       });
 
-      const tagsAdded = victimData?.tags?.length ?? 0;
-      const issuesAdded = victimData?.issues?.length ?? 0;
+      const victimTags = victimData?.caseTags ?? [];
+      const victimIssues = victimData?.caseIssues ?? [];
+      const tagsAdded = victimTags.length;
+      const issuesAdded = victimIssues.length;
 
       if (tagsAdded > 0) {
-        await tx.repositoryCases.update({
-          where: { id: survivorId },
-          data: { tags: { connect: victimData!.tags } },
+        await tx.repositoryCaseTag.createMany({
+          data: victimTags.map((ct: { tagId: number }) => ({
+            caseId: survivorId,
+            tagId: ct.tagId,
+          })),
+          skipDuplicates: true,
         });
       }
       if (issuesAdded > 0) {
-        await tx.repositoryCases.update({
-          where: { id: survivorId },
-          data: { issues: { connect: victimData!.issues } },
+        await tx.repositoryCaseIssue.createMany({
+          data: victimIssues.map((ci: { issueId: number }) => ({
+            caseId: survivorId,
+            issueId: ci.issueId,
+          })),
+          skipDuplicates: true,
         });
       }
 

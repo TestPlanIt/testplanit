@@ -133,9 +133,9 @@ const baseJobData = {
 };
 
 const mockCases = [
-  { id: 1, name: "Login Test", steps: [], tags: [] },
-  { id: 2, name: "Signup Test", steps: [], tags: [] },
-  { id: 3, name: "Logout Test", steps: [], tags: [] },
+  { id: 1, name: "Login Test", steps: [], caseTags: [] },
+  { id: 2, name: "Signup Test", steps: [], caseTags: [] },
+  { id: 3, name: "Logout Test", steps: [], caseTags: [] },
 ];
 
 function makePair(caseAId: number, caseBId: number, score = 0.8) {
@@ -227,8 +227,8 @@ describe("DuplicateScanWorker", () => {
 
     it("Test 2: Duplicate pairs (same caseAId:caseBId key) are deduplicated — only first occurrence kept", async () => {
       mockFindMany.mockResolvedValue([
-        { id: 1, name: "Case A", steps: [], tags: [] },
-        { id: 2, name: "Case B", steps: [], tags: [] },
+        { id: 1, name: "Case A", steps: [], caseTags: [] },
+        { id: 2, name: "Case B", steps: [], caseTags: [] },
       ]);
 
       // Case 1 finds pair (1,2), Case 2 also finds pair (1,2) — should deduplicate
@@ -249,7 +249,7 @@ describe("DuplicateScanWorker", () => {
         id: i + 1,
         name: `Case ${i + 1}`,
         steps: [],
-        tags: [],
+        caseTags: [],
       }));
       mockFindMany.mockResolvedValue(manyPairs);
 
@@ -343,7 +343,7 @@ describe("DuplicateScanWorker", () => {
         id: i + 1,
         name: `Case ${i + 1}`,
         steps: [],
-        tags: [],
+        caseTags: [],
       }));
       mockFindMany.mockResolvedValue(manyCases);
 
@@ -369,8 +369,8 @@ describe("DuplicateScanWorker", () => {
   describe("result persistence", () => {
     it("Test 8: createMany uses skipDuplicates: true as safety net against @@unique constraint", async () => {
       mockFindMany.mockResolvedValue([
-        { id: 1, name: "Case A", steps: [], tags: [] },
-        { id: 2, name: "Case B", steps: [], tags: [] },
+        { id: 1, name: "Case A", steps: [], caseTags: [] },
+        { id: 2, name: "Case B", steps: [], caseTags: [] },
       ]);
       mockFindSimilarCases.mockResolvedValue([makePair(1, 2, 0.9)]);
 
@@ -389,8 +389,8 @@ describe("DuplicateScanWorker", () => {
   describe("provenance-link exclusion (DUP-05, D-11)", () => {
     it("excludes DUPLICATED_FROM-linked pairs from allPairs (no LLM call)", async () => {
       mockFindMany.mockResolvedValue([
-        { id: 1, name: "Source", steps: [], tags: [] },
-        { id: 2, name: "Duplicate", steps: [], tags: [] },
+        { id: 1, name: "Source", steps: [], caseTags: [] },
+        { id: 2, name: "Duplicate", steps: [], caseTags: [] },
       ]);
       mockFindManyRepositoryCaseLink.mockResolvedValue([
         { caseAId: 2, caseBId: 1 },
@@ -415,8 +415,8 @@ describe("DuplicateScanWorker", () => {
 
     it("excludes SAME_TEST_DIFFERENT_SOURCE-linked pairs (D-10 latent fix)", async () => {
       mockFindMany.mockResolvedValue([
-        { id: 5, name: "A", steps: [], tags: [] },
-        { id: 6, name: "B", steps: [], tags: [] },
+        { id: 5, name: "A", steps: [], caseTags: [] },
+        { id: 6, name: "B", steps: [], caseTags: [] },
       ]);
       mockFindManyRepositoryCaseLink.mockResolvedValue([
         { caseAId: 5, caseBId: 6 },
@@ -449,8 +449,8 @@ describe("DuplicateScanWorker", () => {
 
     it("does NOT exclude DEPENDS_ON-typed links", async () => {
       mockFindMany.mockResolvedValue([
-        { id: 7, name: "X", steps: [], tags: [] },
-        { id: 8, name: "Y", steps: [], tags: [] },
+        { id: 7, name: "X", steps: [], caseTags: [] },
+        { id: 8, name: "Y", steps: [], caseTags: [] },
       ]);
       mockFindManyRepositoryCaseLink.mockResolvedValue([]);
       mockFindSimilarCases.mockResolvedValue([makePair(7, 8, 0.85)]);

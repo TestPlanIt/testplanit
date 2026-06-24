@@ -144,7 +144,7 @@ describe("POST /api/reports/automation-candidates (pre-stream gates)", () => {
         createdAt: new Date("2026-01-01T00:00:00Z"),
         steps: [{ id: 1 }],
         caseFieldValues: [],
-        issues: [],
+        caseIssues: [],
         _count: { testRuns: 0 },
       },
     ]);

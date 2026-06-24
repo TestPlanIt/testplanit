@@ -215,8 +215,8 @@ const mockTestCase = {
   caseFieldValues: [],
   attachments: [],
   steps: [],
-  tags: [],
-  issues: [],
+  caseTags: [],
+  caseIssues: [],
   testRuns: [],
   source: "manual",
   automated: false,
@@ -421,9 +421,9 @@ describe("TestRunCaseDetails", () => {
   it("renders tags when test case has tags", () => {
     const testCaseWithTags = {
       ...mockTestCase,
-      tags: [
-        { id: 1, name: "smoke" },
-        { id: 2, name: "regression" },
+      caseTags: [
+        { tag: { id: 1, name: "smoke" } },
+        { tag: { id: 2, name: "regression" } },
       ],
     };
     mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
@@ -439,7 +439,9 @@ describe("TestRunCaseDetails", () => {
   it("renders issues when test case has issues", () => {
     const testCaseWithIssues = {
       ...mockTestCase,
-      issues: [{ id: 1, name: "BUG-001", externalId: "ext-1" }],
+      caseIssues: [
+        { issue: { id: 1, name: "BUG-001", externalId: "ext-1" } },
+      ],
     };
     mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
       data: testCaseWithIssues,

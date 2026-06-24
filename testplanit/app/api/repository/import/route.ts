@@ -796,9 +796,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             // Handle tags if present
             if (caseData.tags && Array.isArray(caseData.tags)) {
               if (isUpdate) {
-                await enhancedDb.repositoryCases.update({
-                  where: { id: newCase.id },
-                  data: { tags: { set: [] } },
+                await enhancedDb.repositoryCaseTag.deleteMany({
+                  where: { caseId: newCase.id },
                 });
               }
 
@@ -834,9 +833,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   }
                 }
 
-                await enhancedDb.repositoryCases.update({
-                  where: { id: newCase.id },
-                  data: { tags: { connect: { id: tag.id } } },
+                await enhancedDb.repositoryCaseTag.create({
+                  data: { caseId: newCase.id, tagId: tag.id },
                 });
               }
             }
@@ -846,9 +844,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               const issueNames = parseIssues(caseData.issues);
 
               if (isUpdate) {
-                await enhancedDb.repositoryCases.update({
-                  where: { id: newCase.id },
-                  data: { issues: { set: [] } },
+                await enhancedDb.repositoryCaseIssue.deleteMany({
+                  where: { caseId: newCase.id },
                 });
               }
 
@@ -858,9 +855,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 });
 
                 if (issue) {
-                  await enhancedDb.repositoryCases.update({
-                    where: { id: newCase.id },
-                    data: { issues: { connect: { id: issue.id } } },
+                  await enhancedDb.repositoryCaseIssue.create({
+                    data: { caseId: newCase.id, issueId: issue.id },
                   });
                 }
               }

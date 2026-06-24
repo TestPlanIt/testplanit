@@ -88,7 +88,7 @@ export async function POST(request: Request) {
           prisma.repositoryCases.findMany({
             where: {
               isDeleted: false,
-              issues: { some: { id: issueId } },
+              caseIssues: { some: { issue: { id: issueId } } },
             },
             select: { projectId: true },
             distinct: ["projectId"],

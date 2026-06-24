@@ -1116,7 +1116,7 @@ model Tags {
   id              Int               @id() @default(autoincrement())
   name            String            @unique()
   isDeleted       Boolean           @default(false)
-  repositoryCases RepositoryCases[]
+  caseTags        RepositoryCaseTag[]
   sessions        Sessions[]
   testRuns        TestRuns[]
 }
@@ -1256,8 +1256,8 @@ model RepositoryCases {
   attachments             Attachments[]
   steps                   Steps[]
   testRuns                TestRunCases[]
-  tags                    Tags[]
-  issues                  Issue[]
+  caseTags                RepositoryCaseTag[]
+  caseIssues              RepositoryCaseIssue[]
   junitResults            JUnitTestResult[]            @relation("JUnitResultCase")
   junitProperties         JUnitProperty[]              @relation("JUnitPropertyCase")
   junitAttachments        JUnitAttachment[]            @relation("JUnitAttachmentCase")
@@ -1740,7 +1740,7 @@ model Issue {
   createdAt          DateTime             @default(now()) @db.Timestamptz(6)
   createdById        String
   createdBy          User                 @relation("IssueCreator", fields: [createdById], references: [id])
-  repositoryCases    RepositoryCases[]
+  caseIssues         RepositoryCaseIssue[]
   sessions           Sessions[]
   sessionResults     SessionResults[]
   testRuns           TestRuns[]
@@ -2817,4 +2817,24 @@ model DataChangeLog {
   @@index([seq], map: "dcl_unprocessed_seq")
   @@index([tableName, pk], map: "dcl_table_pk")
   @@index([ts], map: "dcl_ts")
+}
+
+model RepositoryCaseTag {
+  caseId Int
+  case   RepositoryCases @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  tagId  Int
+  tag    Tags            @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([caseId, tagId])
+  @@index([tagId])
+}
+
+model RepositoryCaseIssue {
+  caseId  Int
+  case    RepositoryCases @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  issueId Int
+  issue   Issue           @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@id([caseId, issueId])
+  @@index([issueId])
 }

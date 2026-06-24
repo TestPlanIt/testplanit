@@ -106,8 +106,9 @@ function fieldValues(
       return single(folderId);
     }
     case "tagId": {
-      const tags: Array<{ id: number }> =
-        result.testRunCase?.repositoryCase?.tags ?? result.tags ?? [];
+      const caseTags: Array<{ tag: { id: number } }> =
+        result.testRunCase?.repositoryCase?.caseTags ?? result.caseTags ?? [];
+      const tags: Array<{ id: number }> = caseTags.map((ct) => ct.tag);
       if (tags.length === 0) return [{ key: "null", value: null }];
       return tags.map((tag) => ({ key: String(tag.id), value: tag.id }));
     }

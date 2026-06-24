@@ -1,4 +1,8 @@
-import { IntegrationAuthType, IntegrationProvider, IntegrationStatus } from "~/zenstack/models";
+import {
+  IntegrationAuthType,
+  IntegrationProvider,
+  IntegrationStatus,
+} from "~/zenstack/models";
 import type { JsonValue } from "@zenstackhq/orm";
 import type { DbClient, TxClient } from "~/lib/zenstack";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
@@ -424,42 +428,37 @@ export const importRepositoryCaseIssues = async (
   ) {
     const chunk = repositoryCaseIssueRows.slice(index, index + chunkSize);
 
-    await prisma.$transaction(
-      async (tx: TxClient) => {
-        for (const row of chunk) {
-          const record = row as Record<string, unknown>;
-          const caseSourceId = toNumberValue(record.case_id);
-          const issueSourceId = toNumberValue(record.issue_id);
+    await prisma.$transaction(async (tx: TxClient) => {
+      for (const row of chunk) {
+        const record = row as Record<string, unknown>;
+        const caseSourceId = toNumberValue(record.case_id);
+        const issueSourceId = toNumberValue(record.issue_id);
 
-          processedCount += 1;
-          context.processedCount += 1;
+        processedCount += 1;
+        context.processedCount += 1;
 
-          if (caseSourceId === null || issueSourceId === null) {
-            continue;
-          }
-
-          const caseId = caseIdMap.get(caseSourceId);
-          const issueId = issueIdMap.get(issueSourceId);
-
-          if (!caseId || !issueId) {
-            continue;
-          }
-
-          // Connect issue to repository case
-          await tx.repositoryCases.update({
-            where: { id: caseId },
-            data: {
-              issues: {
-                connect: { id: issueId },
-              },
-            },
-          });
-
-          summary.created += 1;
+        if (caseSourceId === null || issueSourceId === null) {
+          continue;
         }
-      }
 
-    );
+        const caseId = caseIdMap.get(caseSourceId);
+        const issueId = issueIdMap.get(issueSourceId);
+
+        if (!caseId || !issueId) {
+          continue;
+        }
+
+        // Connect issue to repository case via explicit join model
+        await tx.repositoryCaseIssue.create({
+          data: {
+            caseId,
+            issueId,
+          },
+        });
+
+        summary.created += 1;
+      }
+    });
 
     const statusMessage = `Processing repository case issues (${processedCount.toLocaleString()} / ${summary.total.toLocaleString()} processed)`;
     await persistProgress("repositoryCaseIssues", statusMessage);
@@ -504,42 +503,39 @@ export const importRunIssues = async (
   for (let index = 0; index < runIssueRows.length; index += chunkSize) {
     const chunk = runIssueRows.slice(index, index + chunkSize);
 
-    await prisma.$transaction(
-      async (tx: TxClient) => {
-        for (const row of chunk) {
-          const record = row as Record<string, unknown>;
-          const runSourceId = toNumberValue(record.run_id);
-          const issueSourceId = toNumberValue(record.issue_id);
+    await prisma.$transaction(async (tx: TxClient) => {
+      for (const row of chunk) {
+        const record = row as Record<string, unknown>;
+        const runSourceId = toNumberValue(record.run_id);
+        const issueSourceId = toNumberValue(record.issue_id);
 
-          processedCount += 1;
-          context.processedCount += 1;
+        processedCount += 1;
+        context.processedCount += 1;
 
-          if (runSourceId === null || issueSourceId === null) {
-            continue;
-          }
-
-          const runId = testRunIdMap.get(runSourceId);
-          const issueId = issueIdMap.get(issueSourceId);
-
-          if (!runId || !issueId) {
-            continue;
-          }
-
-          // Connect issue to test run
-          await tx.testRuns.update({
-            where: { id: runId },
-            data: {
-              issues: {
-                connect: { id: issueId },
-              },
-            },
-          });
-
-          summary.created += 1;
+        if (runSourceId === null || issueSourceId === null) {
+          continue;
         }
-      }
 
-    );
+        const runId = testRunIdMap.get(runSourceId);
+        const issueId = issueIdMap.get(issueSourceId);
+
+        if (!runId || !issueId) {
+          continue;
+        }
+
+        // Connect issue to test run
+        await tx.testRuns.update({
+          where: { id: runId },
+          data: {
+            issues: {
+              connect: { id: issueId },
+            },
+          },
+        });
+
+        summary.created += 1;
+      }
+    });
 
     const statusMessage = `Processing test run issues (${processedCount.toLocaleString()} / ${summary.total.toLocaleString()} processed)`;
     await persistProgress("runIssues", statusMessage);
@@ -584,42 +580,39 @@ export const importRunResultIssues = async (
   for (let index = 0; index < runResultIssueRows.length; index += chunkSize) {
     const chunk = runResultIssueRows.slice(index, index + chunkSize);
 
-    await prisma.$transaction(
-      async (tx: TxClient) => {
-        for (const row of chunk) {
-          const record = row as Record<string, unknown>;
-          const resultSourceId = toNumberValue(record.result_id);
-          const issueSourceId = toNumberValue(record.issue_id);
+    await prisma.$transaction(async (tx: TxClient) => {
+      for (const row of chunk) {
+        const record = row as Record<string, unknown>;
+        const resultSourceId = toNumberValue(record.result_id);
+        const issueSourceId = toNumberValue(record.issue_id);
 
-          processedCount += 1;
-          context.processedCount += 1;
+        processedCount += 1;
+        context.processedCount += 1;
 
-          if (resultSourceId === null || issueSourceId === null) {
-            continue;
-          }
-
-          const resultId = testRunResultIdMap.get(resultSourceId);
-          const issueId = issueIdMap.get(issueSourceId);
-
-          if (!resultId || !issueId) {
-            continue;
-          }
-
-          // Connect issue to test run result
-          await tx.testRunResults.update({
-            where: { id: resultId },
-            data: {
-              issues: {
-                connect: { id: issueId },
-              },
-            },
-          });
-
-          summary.created += 1;
+        if (resultSourceId === null || issueSourceId === null) {
+          continue;
         }
-      }
 
-    );
+        const resultId = testRunResultIdMap.get(resultSourceId);
+        const issueId = issueIdMap.get(issueSourceId);
+
+        if (!resultId || !issueId) {
+          continue;
+        }
+
+        // Connect issue to test run result
+        await tx.testRunResults.update({
+          where: { id: resultId },
+          data: {
+            issues: {
+              connect: { id: issueId },
+            },
+          },
+        });
+
+        summary.created += 1;
+      }
+    });
 
     const statusMessage = `Processing test run result issues (${processedCount.toLocaleString()} / ${summary.total.toLocaleString()} processed)`;
     await persistProgress("runResultIssues", statusMessage);
@@ -664,42 +657,39 @@ export const importSessionIssues = async (
   for (let index = 0; index < sessionIssueRows.length; index += chunkSize) {
     const chunk = sessionIssueRows.slice(index, index + chunkSize);
 
-    await prisma.$transaction(
-      async (tx: TxClient) => {
-        for (const row of chunk) {
-          const record = row as Record<string, unknown>;
-          const sessionSourceId = toNumberValue(record.session_id);
-          const issueSourceId = toNumberValue(record.issue_id);
+    await prisma.$transaction(async (tx: TxClient) => {
+      for (const row of chunk) {
+        const record = row as Record<string, unknown>;
+        const sessionSourceId = toNumberValue(record.session_id);
+        const issueSourceId = toNumberValue(record.issue_id);
 
-          processedCount += 1;
-          context.processedCount += 1;
+        processedCount += 1;
+        context.processedCount += 1;
 
-          if (sessionSourceId === null || issueSourceId === null) {
-            continue;
-          }
-
-          const sessionId = sessionIdMap.get(sessionSourceId);
-          const issueId = issueIdMap.get(issueSourceId);
-
-          if (!sessionId || !issueId) {
-            continue;
-          }
-
-          // Connect issue to session
-          await tx.sessions.update({
-            where: { id: sessionId },
-            data: {
-              issues: {
-                connect: { id: issueId },
-              },
-            },
-          });
-
-          summary.created += 1;
+        if (sessionSourceId === null || issueSourceId === null) {
+          continue;
         }
-      }
 
-    );
+        const sessionId = sessionIdMap.get(sessionSourceId);
+        const issueId = issueIdMap.get(issueSourceId);
+
+        if (!sessionId || !issueId) {
+          continue;
+        }
+
+        // Connect issue to session
+        await tx.sessions.update({
+          where: { id: sessionId },
+          data: {
+            issues: {
+              connect: { id: issueId },
+            },
+          },
+        });
+
+        summary.created += 1;
+      }
+    });
 
     const statusMessage = `Processing session issues (${processedCount.toLocaleString()} / ${summary.total.toLocaleString()} processed)`;
     await persistProgress("sessionIssues", statusMessage);
@@ -748,42 +738,39 @@ export const importSessionResultIssues = async (
   ) {
     const chunk = sessionResultIssueRows.slice(index, index + chunkSize);
 
-    await prisma.$transaction(
-      async (tx: TxClient) => {
-        for (const row of chunk) {
-          const record = row as Record<string, unknown>;
-          const resultSourceId = toNumberValue(record.result_id);
-          const issueSourceId = toNumberValue(record.issue_id);
+    await prisma.$transaction(async (tx: TxClient) => {
+      for (const row of chunk) {
+        const record = row as Record<string, unknown>;
+        const resultSourceId = toNumberValue(record.result_id);
+        const issueSourceId = toNumberValue(record.issue_id);
 
-          processedCount += 1;
-          context.processedCount += 1;
+        processedCount += 1;
+        context.processedCount += 1;
 
-          if (resultSourceId === null || issueSourceId === null) {
-            continue;
-          }
-
-          const resultId = sessionResultIdMap.get(resultSourceId);
-          const issueId = issueIdMap.get(issueSourceId);
-
-          if (!resultId || !issueId) {
-            continue;
-          }
-
-          // Connect issue to session result
-          await tx.sessionResults.update({
-            where: { id: resultId },
-            data: {
-              issues: {
-                connect: { id: issueId },
-              },
-            },
-          });
-
-          summary.created += 1;
+        if (resultSourceId === null || issueSourceId === null) {
+          continue;
         }
-      }
 
-    );
+        const resultId = sessionResultIdMap.get(resultSourceId);
+        const issueId = issueIdMap.get(issueSourceId);
+
+        if (!resultId || !issueId) {
+          continue;
+        }
+
+        // Connect issue to session result
+        await tx.sessionResults.update({
+          where: { id: resultId },
+          data: {
+            issues: {
+              connect: { id: issueId },
+            },
+          },
+        });
+
+        summary.created += 1;
+      }
+    });
 
     const statusMessage = `Processing session result issues (${processedCount.toLocaleString()} / ${summary.total.toLocaleString()} processed)`;
     await persistProgress("sessionResultIssues", statusMessage);

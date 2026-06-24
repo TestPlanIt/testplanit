@@ -220,17 +220,21 @@ export async function buildAutomationCandidatesContext(
           },
         },
       },
-      issues: {
-        where: { isDeleted: false },
+      caseIssues: {
+        where: { issue: { isDeleted: false } },
         select: {
-          externalKey: true,
-          title: true,
-          description: true,
-          status: true,
-          externalStatus: true,
-          priority: true,
-          issueTypeName: true,
-          externalData: true,
+          issue: {
+            select: {
+              externalKey: true,
+              title: true,
+              description: true,
+              status: true,
+              externalStatus: true,
+              priority: true,
+              issueTypeName: true,
+              externalData: true,
+            },
+          },
         },
       },
     },
@@ -296,7 +300,7 @@ export async function buildAutomationCandidatesContext(
         flakinessScore: flakinessByCaseId.get(row.id) ?? null,
         createdAtIso: row.createdAt.toISOString(),
         customFields,
-        linkedIssues: row.issues.map((iss) => ({
+        linkedIssues: row.caseIssues.map(({ issue: iss }) => ({
           externalKey: iss.externalKey,
           title: iss.title,
           description: iss.description,

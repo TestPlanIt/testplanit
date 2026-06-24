@@ -144,9 +144,11 @@ export async function createTestCaseVersionInTransaction(
       template: true,
       state: true,
       creator: true,
-      tags: { select: { name: true } },
-      issues: {
-        select: { id: true, name: true, externalId: true },
+      caseTags: { select: { tag: { select: { name: true } } } },
+      caseIssues: {
+        select: {
+          issue: { select: { id: true, name: true, externalId: true } },
+        },
       },
       steps: {
         orderBy: { order: "asc" },
@@ -204,10 +206,16 @@ export async function createTestCaseVersionInTransaction(
 
   // Convert tags to array of tag names
   const tagsArray =
-    overrides.tags ?? testCase.tags.map((tag: { name: string }) => tag.name);
+    overrides.tags ??
+    testCase.caseTags.map((ct: { tag: { name: string } }) => ct.tag.name);
 
   // Convert issues to array of objects
-  const issuesArray = overrides.issues ?? testCase.issues;
+  const issuesArray =
+    overrides.issues ??
+    testCase.caseIssues.map(
+      (ci: { issue: { id: number; name: string; externalId?: string } }) =>
+        ci.issue
+    );
 
   const parametersJson = (testCase.parameters ?? []).map(
     (p: {

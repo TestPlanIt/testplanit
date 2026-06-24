@@ -124,8 +124,8 @@ type BulkEditCase = RepositoryCasesGetPayload<{
         };
       };
     };
-    tags: true;
-    issues: true;
+    caseTags: { include: { tag: true } };
+    caseIssues: { include: { issue: true } };
     steps: {
       where: { isDeleted: false };
       orderBy: { order: "asc" };
@@ -349,18 +349,20 @@ export function BulkEditModal({
     });
   }, [bulkGateCheck, tReviews, casesData]);
 
-  const { data: availableTagsData, isLoading: isLoadingTags } = useClientQueries(schema).tags.useFindMany(
-    {
-      where: { isDeleted: false },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    },
-    { enabled: isOpen }
-  );
+  const { data: availableTagsData, isLoading: isLoadingTags } =
+    useClientQueries(schema).tags.useFindMany(
+      {
+        where: { isDeleted: false },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      },
+      { enabled: isOpen }
+    );
 
-  // Issue names are resolved from casesData (which includes issues: true) instead of fetching all issues
+  // Issue names are resolved from casesData (which includes caseIssues with the issue) instead of fetching all issues
 
-  const { isPending: isUpdating } = useClientQueries(schema).repositoryCases.useUpdate();
+  const { isPending: isUpdating } =
+    useClientQueries(schema).repositoryCases.useUpdate();
   const { mutateAsync: updateManyRepositoryCases, isPending: isDeleting } =
     useClientQueries(schema).repositoryCases.useUpdateMany();
 
@@ -774,9 +776,11 @@ export function BulkEditModal({
       if (fieldKey === "automated") return caseItem.automated;
       if (fieldKey === "estimate") return caseItem.estimate;
       if (fieldKey === "tags")
-        return caseItem.tags.map((t) => t.id).sort((a, b) => a - b);
+        return caseItem.caseTags.map((ct) => ct.tag.id).sort((a, b) => a - b);
       if (fieldKey === "issues")
-        return caseItem.issues.map((i) => i.id).sort((a, b) => a - b);
+        return caseItem.caseIssues
+          .map((ci) => ci.issue.id)
+          .sort((a, b) => a - b);
       if (fieldKey.startsWith("dynamic_")) {
         const fieldId = parseInt(fieldKey.split("_")[1], 10);
         const caseValue = caseItem.caseFieldValues.find(
@@ -887,7 +891,8 @@ export function BulkEditModal({
       } else if (fieldKey === "issues") {
         if (!Array.isArray(firstValue) || firstValue.length === 0) return "-";
         // Look up issue names from the already-loaded case data
-        const allCaseIssues = casesData?.flatMap((c) => c.issues || []) || [];
+        const allCaseIssues =
+          casesData?.flatMap((c) => c.caseIssues.map((ci) => ci.issue)) || [];
         return (
           firstValue
             .map((issueId) => allCaseIssues.find((i) => i.id === issueId)?.name)
@@ -1430,7 +1435,7 @@ export function BulkEditModal({
           // Get all unique tag IDs from all cases
           const allCurrentTagIds = new Set<number>();
           casesData.forEach((c) => {
-            c.tags.forEach((t) => allCurrentTagIds.add(t.id));
+            c.caseTags.forEach((ct) => allCurrentTagIds.add(ct.tag.id));
           });
 
           const newTagIds = Array.isArray(newValue) ? newValue.map(Number) : [];
@@ -1459,7 +1464,7 @@ export function BulkEditModal({
           // Get all unique issue IDs from all cases
           const allCurrentIssueIds = new Set<number>();
           casesData.forEach((c) => {
-            (c.issues || []).forEach((i) => allCurrentIssueIds.add(i.id));
+            c.caseIssues.forEach((ci) => allCurrentIssueIds.add(ci.issue.id));
           });
 
           const newIssueIds = Array.isArray(newValue)

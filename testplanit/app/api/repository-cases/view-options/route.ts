@@ -283,30 +283,30 @@ export async function POST(request: Request) {
           result = await prisma.$queryRaw<
             Array<{ tagId: number; count: bigint }>
           >`
-            SELECT rct."B" as "tagId", COUNT(*)::bigint as count
-            FROM "public"."_RepositoryCasesToTags" rct
-            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rct."A"
+            SELECT rct."tagId" as "tagId", COUNT(*)::bigint as count
+            FROM "public"."RepositoryCaseTag" rct
+            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rct."caseId"
             LEFT JOIN "public"."RepositoryFolders" rf ON rf.id = rc."folderId"
             WHERE rc."isDeleted" = false
               AND rc."isArchived" = false
               AND rc."projectId" = ${projectId}
               AND rf."isDeleted" = false
               AND rc.id = ANY(${effectiveSelectedTestCases})
-            GROUP BY rct."B"
+            GROUP BY rct."tagId"
           `;
         } else {
           result = await prisma.$queryRaw<
             Array<{ tagId: number; count: bigint }>
           >`
-            SELECT rct."B" as "tagId", COUNT(*)::bigint as count
-            FROM "public"."_RepositoryCasesToTags" rct
-            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rct."A"
+            SELECT rct."tagId" as "tagId", COUNT(*)::bigint as count
+            FROM "public"."RepositoryCaseTag" rct
+            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rct."caseId"
             LEFT JOIN "public"."RepositoryFolders" rf ON rf.id = rc."folderId"
             WHERE rc."isDeleted" = false
               AND rc."isArchived" = false
               AND rc."projectId" = ${projectId}
               AND rf."isDeleted" = false
-            GROUP BY rct."B"
+            GROUP BY rct."tagId"
           `;
         }
 
@@ -317,7 +317,7 @@ export async function POST(request: Request) {
       })(),
 
       // Issues - use raw SQL to count issues efficiently with GROUP BY
-      // In the _IssueToRepositoryCases join table: "A" = Issue.id, "B" = RepositoryCases.id
+      // In the RepositoryCaseIssue join table: "issueId" = Issue.id, "caseId" = RepositoryCases.id
       (async () => {
         let result: Array<{ issueId: number; count: bigint }>;
 
@@ -329,10 +329,10 @@ export async function POST(request: Request) {
           result = await prisma.$queryRaw<
             Array<{ issueId: number; count: bigint }>
           >`
-            SELECT rci."A" as "issueId", COUNT(*)::bigint as count
-            FROM "public"."_IssueToRepositoryCases" rci
-            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rci."B"
-            INNER JOIN "public"."Issue" i ON i.id = rci."A"
+            SELECT rci."issueId" as "issueId", COUNT(*)::bigint as count
+            FROM "public"."RepositoryCaseIssue" rci
+            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rci."caseId"
+            INNER JOIN "public"."Issue" i ON i.id = rci."issueId"
             LEFT JOIN "public"."RepositoryFolders" rf ON rf.id = rc."folderId"
             WHERE rc."isDeleted" = false
               AND rc."isArchived" = false
@@ -340,23 +340,23 @@ export async function POST(request: Request) {
               AND rf."isDeleted" = false
               AND i."isDeleted" = false
               AND rc.id = ANY(${effectiveSelectedTestCases})
-            GROUP BY rci."A"
+            GROUP BY rci."issueId"
           `;
         } else {
           result = await prisma.$queryRaw<
             Array<{ issueId: number; count: bigint }>
           >`
-            SELECT rci."A" as "issueId", COUNT(*)::bigint as count
-            FROM "public"."_IssueToRepositoryCases" rci
-            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rci."B"
-            INNER JOIN "public"."Issue" i ON i.id = rci."A"
+            SELECT rci."issueId" as "issueId", COUNT(*)::bigint as count
+            FROM "public"."RepositoryCaseIssue" rci
+            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rci."caseId"
+            INNER JOIN "public"."Issue" i ON i.id = rci."issueId"
             LEFT JOIN "public"."RepositoryFolders" rf ON rf.id = rc."folderId"
             WHERE rc."isDeleted" = false
               AND rc."isArchived" = false
               AND rc."projectId" = ${projectId}
               AND rf."isDeleted" = false
               AND i."isDeleted" = false
-            GROUP BY rci."A"
+            GROUP BY rci."issueId"
           `;
         }
 
@@ -717,7 +717,7 @@ export async function POST(request: Request) {
     const casesWithTags = await prisma.repositoryCases.count({
       where: {
         ...baseWhere,
-        tags: {
+        caseTags: {
           some: {},
         },
       },
@@ -734,7 +734,7 @@ export async function POST(request: Request) {
           await prisma.repositoryCases.findMany({
             where: {
               id: { in: effectiveSelectedTestCases },
-              tags: { some: {} },
+              caseTags: { some: {} },
             },
             select: { id: true },
           })
@@ -760,12 +760,15 @@ export async function POST(request: Request) {
         where: { id: { in: effectiveSelectedTestCases } },
         select: {
           id: true,
-          tags: { select: { id: true } },
+          caseTags: { select: { tag: { select: { id: true } } } },
         },
       });
 
       const caseTagsMap = new Map<number, Set<number>>(
-        caseTagAssociations.map((c) => [c.id, new Set(c.tags.map((t) => t.id))])
+        caseTagAssociations.map((c) => [
+          c.id,
+          new Set(c.caseTags.map((ct) => ct.tag.id)),
+        ])
       );
 
       // Count tags based on TestRunCases
@@ -812,9 +815,11 @@ export async function POST(request: Request) {
     const casesWithIssues = await prisma.repositoryCases.count({
       where: {
         ...baseWhere,
-        issues: {
+        caseIssues: {
           some: {
-            isDeleted: false,
+            issue: {
+              isDeleted: false,
+            },
           },
         },
       },
@@ -831,7 +836,7 @@ export async function POST(request: Request) {
           await prisma.repositoryCases.findMany({
             where: {
               id: { in: effectiveSelectedTestCases },
-              issues: { some: { isDeleted: false } },
+              caseIssues: { some: { issue: { isDeleted: false } } },
             },
             select: { id: true },
           })
@@ -857,14 +862,17 @@ export async function POST(request: Request) {
         where: { id: { in: effectiveSelectedTestCases } },
         select: {
           id: true,
-          issues: { select: { id: true }, where: { isDeleted: false } },
+          caseIssues: {
+            select: { issue: { select: { id: true } } },
+            where: { issue: { isDeleted: false } },
+          },
         },
       });
 
       const caseIssuesMap = new Map<number, Set<number>>(
         caseIssueAssociations.map((c) => [
           c.id,
-          new Set(c.issues.map((i) => i.id)),
+          new Set(c.caseIssues.map((ci) => ci.issue.id)),
         ])
       );
 

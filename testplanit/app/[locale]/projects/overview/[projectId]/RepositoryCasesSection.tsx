@@ -19,7 +19,9 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
 }) => {
   const t = useTranslations("projects.overview");
 
-  const { data: repositoryCasesBreakdown } = useClientQueries(schema).repositoryCases.useGroupBy(
+  const { data: repositoryCasesBreakdown } = useClientQueries(
+    schema
+  ).repositoryCases.useGroupBy(
     {
       by: ["automated", "stateId"],
       where: {
@@ -52,7 +54,9 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
     return Array.from(ids);
   }, [repositoryCasesBreakdown]);
 
-  const { data: workflowStates } = useClientQueries(schema).workflows.useFindMany(
+  const { data: workflowStates } = useClientQueries(
+    schema
+  ).workflows.useFindMany(
     breakdownStateIds.length
       ? {
           where: { id: { in: breakdownStateIds } },
@@ -183,28 +187,34 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
             },
           },
         },
-        issues: {
+        caseIssues: {
           where: {
-            isDeleted: false,
+            issue: {
+              isDeleted: false,
+            },
           },
           select: {
-            id: true,
-            name: true,
-            externalId: true,
-            externalUrl: true,
-            externalKey: true,
-            title: true,
-            externalStatus: true,
-            data: true,
-            integrationId: true,
-            lastSyncedAt: true,
-            issueTypeName: true,
-            issueTypeIconUrl: true,
-            integration: {
+            issue: {
               select: {
                 id: true,
-                provider: true,
                 name: true,
+                externalId: true,
+                externalUrl: true,
+                externalKey: true,
+                title: true,
+                externalStatus: true,
+                data: true,
+                integrationId: true,
+                lastSyncedAt: true,
+                issueTypeName: true,
+                issueTypeIconUrl: true,
+                integration: {
+                  select: {
+                    id: true,
+                    provider: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -259,40 +269,44 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
         <div className="flex flex-col pr-6 w-1/2 mr-2 overflow-hidden">
           <h2 className="text-primary mb-2">{t("latestTestCases")}</h2>
           <ul className="flex flex-col space-y-1">
-            {repositoryCasesLatestFive.map((caseItem) => (
-              <li
-                key={caseItem.id}
-                className="ml-6 w-full flex items-start space-y-1 group"
-              >
-                <Link
-                  className="flex items-start flex-1 min-w-0"
-                  href={`/projects/repository/${projectId}/${caseItem.id}`}
+            {repositoryCasesLatestFive.map((caseItem) => {
+              const caseIssues = caseItem.caseIssues.map((ci) => ci.issue);
+
+              return (
+                <li
+                  key={caseItem.id}
+                  className="ml-6 w-full flex items-start space-y-1 group"
                 >
-                  <div className="flex items-center flex-1 min-w-0 mr-2">
-                    <CaseDisplay
-                      id={caseItem.id}
-                      name={caseItem.name}
-                      size="large"
-                      source={caseItem.source}
-                      automated={caseItem.automated}
-                      hasParameters={caseItem.hasParameters}
-                      className="line-clamp-2"
-                    />
-                    <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                  </div>
-                </Link>
-                {caseItem.issues && caseItem.issues.length > 0 && (
-                  <div className="shrink-0 mr-6">
-                    <IssuesListDisplay
-                      issues={caseItem.issues.map((issue) => ({
-                        ...issue,
-                        projectIds: [projectId],
-                      }))}
-                    />
-                  </div>
-                )}
-              </li>
-            ))}
+                  <Link
+                    className="flex items-start flex-1 min-w-0"
+                    href={`/projects/repository/${projectId}/${caseItem.id}`}
+                  >
+                    <div className="flex items-center flex-1 min-w-0 mr-2">
+                      <CaseDisplay
+                        id={caseItem.id}
+                        name={caseItem.name}
+                        size="large"
+                        source={caseItem.source}
+                        automated={caseItem.automated}
+                        hasParameters={caseItem.hasParameters}
+                        className="line-clamp-2"
+                      />
+                      <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    </div>
+                  </Link>
+                  {caseIssues.length > 0 && (
+                    <div className="shrink-0 mr-6">
+                      <IssuesListDisplay
+                        issues={caseIssues.map((issue) => ({
+                          ...issue,
+                          projectIds: [projectId],
+                        }))}
+                      />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
         <Separator className="h-auto" orientation="vertical" />

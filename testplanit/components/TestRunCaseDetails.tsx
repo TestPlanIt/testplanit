@@ -30,7 +30,10 @@ import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal
 import FieldValueRenderer from "@/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import type { Attachments, Status } from "~/zenstack/models";
-import type { RepositoryCasesGetPayload, RepositoryCasesSelect } from "~/zenstack/input";
+import type {
+  RepositoryCasesGetPayload,
+  RepositoryCasesSelect,
+} from "~/zenstack/input";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Check,
@@ -178,10 +181,13 @@ export function TestRunCaseDetails({
     setSelectedAttachments([]);
   };
 
-  const { mutateAsync: updateTestRunCase } = useClientQueries(schema).testRunCases.useUpdate();
+  const { mutateAsync: updateTestRunCase } =
+    useClientQueries(schema).testRunCases.useUpdate();
 
   // Find the first IN_PROGRESS workflow state for this project
-  const { data: inProgressWorkflow } = useClientQueries(schema).workflows.useFindFirst({
+  const { data: inProgressWorkflow } = useClientQueries(
+    schema
+  ).workflows.useFindFirst({
     where: {
       projects: {
         some: {
@@ -315,21 +321,29 @@ export function TestRunCaseDetails({
         },
       },
     },
-    tags: {
-      where: { isDeleted: false },
-      orderBy: { name: "asc" },
+    caseTags: {
+      where: { tag: { isDeleted: false } },
+      orderBy: { tag: { name: "asc" } },
       select: {
-        id: true,
-        name: true,
-      },
-    },
-    issues: {
-      include: {
-        integration: {
+        tag: {
           select: {
             id: true,
-            provider: true,
             name: true,
+          },
+        },
+      },
+    },
+    caseIssues: {
+      include: {
+        issue: {
+          include: {
+            integration: {
+              select: {
+                id: true,
+                provider: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -418,17 +432,18 @@ export function TestRunCaseDetails({
   // Does this case's template require a result field? Quick-pass / quick-status
   // can't capture one, so when it does we escalate to the full Add Result modal
   // (which captures the field) rather than letting submit-result reject it.
-  const { data: requiredResultFieldAssignments } =
-    useClientQueries(schema).templateResultAssignment.useFindMany(
-      {
-        where: {
-          templateId: testcase?.template?.id,
-          resultField: { isRequired: true, isEnabled: true, isDeleted: false },
-        },
-        take: 1,
+  const { data: requiredResultFieldAssignments } = useClientQueries(
+    schema
+  ).templateResultAssignment.useFindMany(
+    {
+      where: {
+        templateId: testcase?.template?.id,
+        resultField: { isRequired: true, isEnabled: true, isDeleted: false },
       },
-      { enabled: !!testcase?.template?.id }
-    );
+      take: 1,
+    },
+    { enabled: !!testcase?.template?.id }
+  );
   const hasRequiredResultField =
     (requiredResultFieldAssignments?.length ?? 0) > 0;
 
@@ -522,7 +537,9 @@ export function TestRunCaseDetails({
   if (isLoading || !testcase) return null;
 
   const hasAttachments = testcase.attachments.length > 0;
-  const hasTags = testcase.tags.length > 0;
+  const tags = testcase.caseTags.map((ct) => ct.tag);
+  const issues = testcase.caseIssues.map((ci) => ci.issue);
+  const hasTags = tags.length > 0;
 
   // Determine if the user can manage links (reuse canAddEditResults or add a new permission if needed)
   const canManageLinks = canAddEditResults; // Adjust if you want a different permission check
@@ -1177,12 +1194,10 @@ export function TestRunCaseDetails({
                   onSelect={handleSelect}
                 />
               )}
-              {hasTags && (
-                <TagsListDisplay tags={testcase.tags} projectId={projectId} />
-              )}
-              {testcase.issues && testcase.issues.length > 0 && (
+              {hasTags && <TagsListDisplay tags={tags} projectId={projectId} />}
+              {issues && issues.length > 0 && (
                 <IssuesListDisplay
-                  issues={testcase.issues.map((issue) => ({
+                  issues={issues.map((issue) => ({
                     ...issue,
                     projectIds: [projectId],
                   }))}

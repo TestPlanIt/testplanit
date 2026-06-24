@@ -90,10 +90,14 @@ export async function GET(request: NextRequest) {
           isDeleted: false,
         },
         include: {
-          repositoryCases: {
+          caseIssues: {
             select: {
-              id: true,
-              name: true,
+              case: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           testRuns: {
@@ -136,7 +140,9 @@ export async function GET(request: NextRequest) {
         linkedTo: existingIssue
           ? {
               issueId: existingIssue.id,
-              testCases: existingIssue.repositoryCases,
+              testCases: existingIssue.caseIssues.map(
+                (ci: { case: { id: number; name: string } }) => ci.case
+              ),
               testRuns: existingIssue.testRuns,
               sessions: existingIssue.sessions,
             }

@@ -5,6 +5,18 @@ const { mockPrisma } = vi.hoisted(() => ({
   mockPrisma: {
     integration: { findFirst: vi.fn() },
     repositoryCases: { findUnique: vi.fn(), update: vi.fn() },
+    repositoryCaseTag: {
+      create: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+      findMany: vi.fn(),
+    },
+    repositoryCaseIssue: {
+      create: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+      findMany: vi.fn(),
+    },
     testRuns: { findUnique: vi.fn(), update: vi.fn() },
     sessions: { findUnique: vi.fn(), update: vi.fn() },
     testRunResults: { findUnique: vi.fn(), update: vi.fn() },
@@ -55,7 +67,7 @@ describe("JiraLinkService", () => {
       id: 1,
       creatorId: "user-123",
       projectId: 10,
-      issues: [],
+      caseIssues: [],
     };
 
     it("should throw error when integration is invalid", async () => {
@@ -84,7 +96,7 @@ describe("JiraLinkService", () => {
       mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
       mockPrisma.repositoryCases.findUnique.mockResolvedValue(mockTestCase);
       mockPrisma.issue.upsert.mockResolvedValue({ id: 100 });
-      mockPrisma.repositoryCases.update.mockResolvedValue({});
+      mockPrisma.repositoryCaseIssue.createMany.mockResolvedValue({ count: 1 });
 
       await JiraLinkService.linkTestCaseToJiraIssue(
         1,
@@ -116,9 +128,9 @@ describe("JiraLinkService", () => {
         })
       );
 
-      expect(mockPrisma.repositoryCases.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { issues: { connect: { id: 100 } } },
+      expect(mockPrisma.repositoryCaseIssue.createMany).toHaveBeenCalledWith({
+        data: [{ caseId: 1, issueId: 100 }],
+        skipDuplicates: true,
       });
     });
 
@@ -126,7 +138,7 @@ describe("JiraLinkService", () => {
       mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
       mockPrisma.repositoryCases.findUnique.mockResolvedValue(mockTestCase);
       mockPrisma.issue.upsert.mockResolvedValue({ id: 100 });
-      mockPrisma.repositoryCases.update.mockResolvedValue({});
+      mockPrisma.repositoryCaseIssue.createMany.mockResolvedValue({ count: 1 });
 
       await JiraLinkService.linkTestCaseToJiraIssue(
         1,
@@ -344,10 +356,10 @@ describe("JiraLinkService", () => {
 
     it("should disconnect issue from test case", async () => {
       mockPrisma.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockPrisma.repositoryCases.update.mockResolvedValue({});
+      mockPrisma.repositoryCaseIssue.deleteMany.mockResolvedValue({ count: 1 });
       mockPrisma.issue.findUnique.mockResolvedValue({
         id: 100,
-        repositoryCases: [{ id: 2 }], // Still has other links
+        caseIssues: [{ caseId: 2, issueId: 100 }], // Still has other links
         testRuns: [],
         sessions: [],
         testRunResults: [],
@@ -357,19 +369,18 @@ describe("JiraLinkService", () => {
 
       await JiraLinkService.unlinkTestCaseFromJiraIssue(1, "jira-id-123");
 
-      expect(mockPrisma.repositoryCases.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { issues: { disconnect: { id: 100 } } },
+      expect(mockPrisma.repositoryCaseIssue.deleteMany).toHaveBeenCalledWith({
+        where: { caseId: 1, issueId: 100 },
       });
       expect(mockPrisma.issue.delete).not.toHaveBeenCalled();
     });
 
     it("should delete issue when no remaining links", async () => {
       mockPrisma.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockPrisma.repositoryCases.update.mockResolvedValue({});
+      mockPrisma.repositoryCaseIssue.deleteMany.mockResolvedValue({ count: 1 });
       mockPrisma.issue.findUnique.mockResolvedValue({
         id: 100,
-        repositoryCases: [],
+        caseIssues: [],
         testRuns: [],
         sessions: [],
         testRunResults: [],
@@ -400,7 +411,7 @@ describe("JiraLinkService", () => {
       mockPrisma.testRuns.update.mockResolvedValue({});
       mockPrisma.issue.findUnique.mockResolvedValue({
         id: 100,
-        repositoryCases: [],
+        caseIssues: [],
         testRuns: [{ id: 2 }], // Still has other links
         sessions: [],
         testRunResults: [],
@@ -431,7 +442,7 @@ describe("JiraLinkService", () => {
       mockPrisma.sessions.update.mockResolvedValue({});
       mockPrisma.issue.findUnique.mockResolvedValue({
         id: 100,
-        repositoryCases: [],
+        caseIssues: [],
         testRuns: [],
         sessions: [{ id: 2 }], // Still has other links
         testRunResults: [],
@@ -565,7 +576,7 @@ describe("JiraLinkService", () => {
       mockPrisma.testRunResults.update.mockResolvedValue({});
       mockPrisma.issue.findUnique.mockResolvedValue({
         id: 100,
-        repositoryCases: [],
+        caseIssues: [],
         testRuns: [],
         sessions: [],
         testRunResults: [{ id: 2 }],
@@ -595,7 +606,7 @@ describe("JiraLinkService", () => {
       mockPrisma.sessionResults.update.mockResolvedValue({});
       mockPrisma.issue.findUnique.mockResolvedValue({
         id: 100,
-        repositoryCases: [],
+        caseIssues: [],
         testRuns: [],
         sessions: [],
         testRunResults: [],
@@ -675,7 +686,7 @@ describe("JiraLinkService", () => {
       mockPrisma.testRunStepResults.update.mockResolvedValue({});
       mockPrisma.issue.findUnique.mockResolvedValue({
         id: 100,
-        repositoryCases: [],
+        caseIssues: [],
         testRuns: [],
         sessions: [],
         testRunResults: [],

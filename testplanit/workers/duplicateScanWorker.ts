@@ -74,7 +74,7 @@ export const processor = async (
         select: { step: true, expectedResult: true },
         orderBy: { order: "asc" },
       },
-      tags: { select: { name: true } },
+      caseTags: { select: { tag: { select: { name: true } } } },
     },
   });
 
@@ -149,7 +149,7 @@ export const processor = async (
             id: testCase.id,
             name: testCase.name,
             steps: testCase.steps as { step: string; expectedResult: string }[],
-            tags: testCase.tags as { name: string }[],
+            tags: testCase.caseTags.map((ct) => ct.tag) as { name: string }[],
           },
           job.data.projectId,
           job.data.tenantId
@@ -263,38 +263,36 @@ export const processor = async (
 
   // 8. Soft-delete old pending results, then insert new ones atomically
   //    Use a longer timeout for large result sets
-  await prisma.$transaction(
-    async (tx: any) => {
-      await tx.duplicateScanResult.updateMany({
-        where: {
-          projectId: job.data.projectId,
-          status: "PENDING",
-          isDeleted: false,
-        },
-        data: { isDeleted: true },
-      });
+  await prisma.$transaction(async (tx: any) => {
+    await tx.duplicateScanResult.updateMany({
+      where: {
+        projectId: job.data.projectId,
+        status: "PENDING",
+        isDeleted: false,
+      },
+      data: { isDeleted: true },
+    });
 
-      if (finalPairs.length > 0) {
-        // Batch createMany in chunks of 500 to avoid query size limits
-        const CHUNK_SIZE = 500;
-        for (let i = 0; i < finalPairs.length; i += CHUNK_SIZE) {
-          const chunk = finalPairs.slice(i, i + CHUNK_SIZE);
-          await tx.duplicateScanResult.createMany({
-            data: chunk.map((p) => ({
-              projectId: job.data.projectId,
-              caseAId: p.caseAId,
-              caseBId: p.caseBId,
-              score: p.score,
-              matchedFields: p.matchedFields,
-              detectionMethod: p.detectionMethod,
-              scanJobId: job.id,
-            })),
-            skipDuplicates: true,
-          });
-        }
+    if (finalPairs.length > 0) {
+      // Batch createMany in chunks of 500 to avoid query size limits
+      const CHUNK_SIZE = 500;
+      for (let i = 0; i < finalPairs.length; i += CHUNK_SIZE) {
+        const chunk = finalPairs.slice(i, i + CHUNK_SIZE);
+        await tx.duplicateScanResult.createMany({
+          data: chunk.map((p) => ({
+            projectId: job.data.projectId,
+            caseAId: p.caseAId,
+            caseBId: p.caseBId,
+            score: p.score,
+            matchedFields: p.matchedFields,
+            detectionMethod: p.detectionMethod,
+            scanJobId: job.id,
+          })),
+          skipDuplicates: true,
+        });
       }
     }
-  );
+  });
 
   return {
     pairsFound: finalPairs.length,

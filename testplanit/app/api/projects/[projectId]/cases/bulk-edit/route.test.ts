@@ -76,8 +76,8 @@ describe("Bulk Edit API Route", () => {
       template: { templateName: "Template 1" },
       state: { name: "Not Started" },
       creator: { name: "Creator 1" },
-      tags: [{ name: "tag1" }],
-      issues: [],
+      caseTags: [{ tag: { name: "tag1" } }],
+      caseIssues: [],
       steps: [],
       caseFieldValues: [],
     },
@@ -95,8 +95,8 @@ describe("Bulk Edit API Route", () => {
       template: { templateName: "Template 1" },
       state: { name: "Not Started" },
       creator: { name: "Creator 1" },
-      tags: [],
-      issues: [],
+      caseTags: [],
+      caseIssues: [],
       steps: [],
       caseFieldValues: [],
     },
@@ -144,6 +144,18 @@ describe("Bulk Edit API Route", () => {
         },
         workflows: { findUnique: vi.fn().mockResolvedValue(null) },
         reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+        repositoryCaseTag: {
+          create: vi.fn(),
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        repositoryCaseIssue: {
+          create: vi.fn(),
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
         appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
       };
       return callback(tx);
@@ -279,6 +291,18 @@ describe("Bulk Edit API Route", () => {
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);
@@ -325,6 +349,18 @@ describe("Bulk Edit API Route", () => {
         },
         workflows: { findUnique: vi.fn().mockResolvedValue(null) },
         reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+        repositoryCaseTag: {
+          create: vi.fn(),
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        repositoryCaseIssue: {
+          create: vi.fn(),
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
         appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
       };
 
@@ -373,6 +409,18 @@ describe("Bulk Edit API Route", () => {
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);
@@ -415,6 +463,18 @@ describe("Bulk Edit API Route", () => {
         },
         workflows: { findUnique: vi.fn().mockResolvedValue(null) },
         reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+        repositoryCaseTag: {
+          create: vi.fn(),
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        repositoryCaseIssue: {
+          create: vi.fn(),
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
         appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
       };
 
@@ -453,6 +513,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -497,6 +569,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -537,6 +621,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -577,6 +673,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -607,7 +715,10 @@ describe("Bulk Edit API Route", () => {
 
   describe("Tags Updates", () => {
     it("handles tags connect correctly", async () => {
-      const mockTxUpdate = vi.fn().mockResolvedValue({});
+      // Tag links now live on the explicit RepositoryCaseTag join model, so a
+      // connect becomes a createMany of {caseId, tagId} join rows (once per
+      // case in the loop) rather than a nested connect on the case update.
+      const mockTagCreateMany = vi.fn().mockResolvedValue({ count: 2 });
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
@@ -618,7 +729,7 @@ describe("Bulk Edit API Route", () => {
           },
           repositoryCases: {
             findUnique: vi.fn().mockResolvedValue(mockCases[0]),
-            update: mockTxUpdate,
+            update: vi.fn().mockResolvedValue({}),
           },
           caseFieldValues: {
             create: vi.fn(),
@@ -628,6 +739,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: mockTagCreateMany,
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -645,15 +768,24 @@ describe("Bulk Edit API Route", () => {
 
       expect(response.status).toBe(200);
 
-      mockTxUpdate.mock.calls.forEach((call: any) => {
-        expect(call[0].data.tags).toEqual({
-          connect: [{ id: 1 }, { id: 2 }],
+      // One createMany per case, each adding both tag links for that case.
+      expect(mockTagCreateMany).toHaveBeenCalledTimes(2);
+      mockTagCreateMany.mock.calls.forEach((call: any) => {
+        const caseId = call[0].data[0].caseId;
+        expect(call[0]).toEqual({
+          data: [
+            { caseId, tagId: 1 },
+            { caseId, tagId: 2 },
+          ],
+          skipDuplicates: true,
         });
       });
     });
 
     it("handles tags disconnect correctly", async () => {
-      const mockTxUpdate = vi.fn().mockResolvedValue({});
+      // A disconnect becomes a deleteMany of the matching join rows scoped to
+      // the case and the tag ids being removed.
+      const mockTagDeleteMany = vi.fn().mockResolvedValue({ count: 1 });
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
@@ -664,7 +796,7 @@ describe("Bulk Edit API Route", () => {
           },
           repositoryCases: {
             findUnique: vi.fn().mockResolvedValue(mockCases[0]),
-            update: mockTxUpdate,
+            update: vi.fn().mockResolvedValue({}),
           },
           caseFieldValues: {
             create: vi.fn(),
@@ -674,6 +806,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockTagDeleteMany,
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -691,9 +835,12 @@ describe("Bulk Edit API Route", () => {
 
       expect(response.status).toBe(200);
 
-      mockTxUpdate.mock.calls.forEach((call: any) => {
-        expect(call[0].data.tags).toEqual({
-          disconnect: [{ id: 3 }],
+      // One deleteMany per case removing the tagId=3 join row.
+      expect(mockTagDeleteMany).toHaveBeenCalledTimes(2);
+      mockTagDeleteMany.mock.calls.forEach((call: any) => {
+        const caseId = call[0].where.caseId;
+        expect(call[0]).toEqual({
+          where: { caseId, tagId: { in: [3] } },
         });
       });
     });
@@ -701,7 +848,10 @@ describe("Bulk Edit API Route", () => {
 
   describe("Issues Updates", () => {
     it("handles issues connect correctly", async () => {
-      const mockTxUpdate = vi.fn().mockResolvedValue({});
+      // Issue links now live on the explicit RepositoryCaseIssue join model, so
+      // a connect becomes a createMany of {caseId, issueId} join rows (once per
+      // case in the loop) rather than a nested connect on the case update.
+      const mockIssueCreateMany = vi.fn().mockResolvedValue({ count: 1 });
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
@@ -712,7 +862,7 @@ describe("Bulk Edit API Route", () => {
           },
           repositoryCases: {
             findUnique: vi.fn().mockResolvedValue(mockCases[0]),
-            update: mockTxUpdate,
+            update: vi.fn().mockResolvedValue({}),
           },
           caseFieldValues: {
             create: vi.fn(),
@@ -722,6 +872,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: mockIssueCreateMany,
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -739,15 +901,21 @@ describe("Bulk Edit API Route", () => {
 
       expect(response.status).toBe(200);
 
-      mockTxUpdate.mock.calls.forEach((call: any) => {
-        expect(call[0].data.issues).toEqual({
-          connect: [{ id: 10 }],
+      // One createMany per case linking issueId=10.
+      expect(mockIssueCreateMany).toHaveBeenCalledTimes(2);
+      mockIssueCreateMany.mock.calls.forEach((call: any) => {
+        const caseId = call[0].data[0].caseId;
+        expect(call[0]).toEqual({
+          data: [{ caseId, issueId: 10 }],
+          skipDuplicates: true,
         });
       });
     });
 
     it("handles issues disconnect correctly", async () => {
-      const mockTxUpdate = vi.fn().mockResolvedValue({});
+      // A disconnect becomes a deleteMany of the matching join rows scoped to
+      // the case and the issue ids being removed.
+      const mockIssueDeleteMany = vi.fn().mockResolvedValue({ count: 1 });
       (prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
@@ -757,7 +925,7 @@ describe("Bulk Edit API Route", () => {
           },
           repositoryCases: {
             findUnique: vi.fn().mockResolvedValue(mockCases[0]),
-            update: mockTxUpdate,
+            update: vi.fn().mockResolvedValue({}),
           },
           caseFieldValues: {
             create: vi.fn(),
@@ -767,6 +935,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockIssueDeleteMany,
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -784,9 +964,12 @@ describe("Bulk Edit API Route", () => {
 
       expect(response.status).toBe(200);
 
-      mockTxUpdate.mock.calls.forEach((call: any) => {
-        expect(call[0].data.issues).toEqual({
-          disconnect: [{ id: 10 }],
+      // One deleteMany per case removing the issueId=10 join row.
+      expect(mockIssueDeleteMany).toHaveBeenCalledTimes(2);
+      mockIssueDeleteMany.mock.calls.forEach((call: any) => {
+        const caseId = call[0].where.caseId;
+        expect(call[0]).toEqual({
+          where: { caseId, issueId: { in: [10] } },
         });
       });
     });
@@ -815,6 +998,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -870,6 +1065,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -922,6 +1129,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -964,6 +1183,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -991,12 +1222,14 @@ describe("Bulk Edit API Route", () => {
       const preUpdateCase = {
         ...mockCases[0],
         id: 1,
-        issues: [{ id: 10, name: "BUG-10", externalId: "BUG-10" }],
+        caseIssues: [
+          { issue: { id: 10, name: "BUG-10", externalId: "BUG-10" } },
+        ],
       };
       const postUpdateCase = {
         ...mockCases[0],
         id: 1,
-        issues: [],
+        caseIssues: [],
       };
       (prisma.repositoryCases.findMany as any).mockResolvedValue([
         preUpdateCase,
@@ -1023,6 +1256,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1080,6 +1325,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1116,6 +1373,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1162,6 +1431,18 @@ describe("Bulk Edit API Route", () => {
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1230,6 +1511,18 @@ describe("Bulk Edit API Route", () => {
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1277,6 +1570,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1340,6 +1645,18 @@ describe("Bulk Edit API Route", () => {
             steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
             reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+            repositoryCaseTag: {
+              create: vi.fn(),
+              createMany: vi.fn().mockResolvedValue({ count: 0 }),
+              deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+              findMany: vi.fn().mockResolvedValue([]),
+            },
+            repositoryCaseIssue: {
+              create: vi.fn(),
+              createMany: vi.fn().mockResolvedValue({ count: 0 }),
+              deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+              findMany: vi.fn().mockResolvedValue([]),
+            },
             appConfig: {
               findUnique: vi.fn().mockResolvedValue({ value: true }),
             },
@@ -1388,6 +1705,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1441,6 +1770,18 @@ describe("Bulk Edit API Route", () => {
           reviewRequest: {
             findFirst: vi.fn().mockResolvedValue(null),
           },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);
@@ -1491,6 +1832,18 @@ describe("Bulk Edit API Route", () => {
             findFirst: vi.fn().mockResolvedValue({ id: "case-approval-1" }),
             // Consumption stamp fires after the case update succeeds.
             updateMany: txReviewRequestUpdateMany,
+          },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
           },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
@@ -1552,6 +1905,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: findUniqueMock },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);

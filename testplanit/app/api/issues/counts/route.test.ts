@@ -212,7 +212,7 @@ describe("Issues Counts Route", () => {
       expect(prisma.repositoryCases.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            issues: { some: { id: 42 } },
+            caseIssues: { some: { issue: { id: 42 } } },
           }),
         })
       );

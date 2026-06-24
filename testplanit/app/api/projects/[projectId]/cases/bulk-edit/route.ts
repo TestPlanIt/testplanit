@@ -176,8 +176,8 @@ export const POST = withAuditContext(
             where: { isDeleted: false },
             orderBy: { order: "asc" },
           },
-          tags: true,
-          issues: true,
+          caseTags: { include: { tag: true } },
+          caseIssues: { include: { issue: true } },
           caseFieldValues: true,
           project: true,
           folder: true,
@@ -230,12 +230,10 @@ export const POST = withAuditContext(
             if (validatedData.updates.estimate !== undefined) {
               updateData.estimate = validatedData.updates.estimate;
             }
-            if (validatedData.updates.tags) {
-              updateData.tags = validatedData.updates.tags;
-            }
-            if (validatedData.updates.issues) {
-              updateData.issues = validatedData.updates.issues;
-            }
+            // Tag/issue links live on the explicit RepositoryCaseTag /
+            // RepositoryCaseIssue join models, so they are applied as separate
+            // join-row writes after the case update (see below) rather than as
+            // nested connect/disconnect on the case itself.
 
             // Review & Approval preflight (Plan 01-04). When the bulk edit
             // includes a stateId change, assert the target state's review
@@ -261,6 +259,48 @@ export const POST = withAuditContext(
               data: updateData,
             });
             updateResults.casesUpdated++;
+
+            // Apply tag link changes against the explicit join model.
+            // disconnect removes the matching join rows; connect adds new ones
+            // (skipDuplicates keeps an already-linked tag from erroring).
+            if (validatedData.updates.tags) {
+              const tagDisconnect = validatedData.updates.tags.disconnect;
+              if (tagDisconnect && tagDisconnect.length > 0) {
+                await tx.repositoryCaseTag.deleteMany({
+                  where: {
+                    caseId,
+                    tagId: { in: tagDisconnect.map((t) => t.id) },
+                  },
+                });
+              }
+              const tagConnect = validatedData.updates.tags.connect;
+              if (tagConnect && tagConnect.length > 0) {
+                await tx.repositoryCaseTag.createMany({
+                  data: tagConnect.map((t) => ({ caseId, tagId: t.id })),
+                  skipDuplicates: true,
+                });
+              }
+            }
+
+            // Apply issue link changes against the explicit join model.
+            if (validatedData.updates.issues) {
+              const issueDisconnect = validatedData.updates.issues.disconnect;
+              if (issueDisconnect && issueDisconnect.length > 0) {
+                await tx.repositoryCaseIssue.deleteMany({
+                  where: {
+                    caseId,
+                    issueId: { in: issueDisconnect.map((i) => i.id) },
+                  },
+                });
+              }
+              const issueConnect = validatedData.updates.issues.connect;
+              if (issueConnect && issueConnect.length > 0) {
+                await tx.repositoryCaseIssue.createMany({
+                  data: issueConnect.map((i) => ({ caseId, issueId: i.id })),
+                  skipDuplicates: true,
+                });
+              }
+            }
 
             // Strict transitive gates can return multiple approvals when one
             // transition crosses several gates. Stamp every returned id in

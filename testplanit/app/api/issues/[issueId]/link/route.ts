@@ -42,34 +42,45 @@ export async function POST(
 
     // Update the issue with the entity link
     // Relation field names must match the Issue model in schema.zmodel:
-    // repositoryCases, sessions, testRuns, testRunResults, testRunStepResults
-    const updateData: any = {};
-    switch (entityType) {
-      case "testCase":
-        updateData.repositoryCases = { connect: { id: parseInt(entityId) } };
-        break;
-      case "session":
-        updateData.sessions = { connect: { id: parseInt(entityId) } };
-        break;
-      case "testRun":
-        updateData.testRuns = { connect: { id: parseInt(entityId) } };
-        break;
-      case "testRunResult":
-        updateData.testRunResults = { connect: { id: parseInt(entityId) } };
-        break;
-      case "testRunStepResult":
-        updateData.testRunStepResults = { connect: { id: parseInt(entityId) } };
-        break;
-      default:
-        return NextResponse.json(
-          { error: "Invalid entity type" },
-          { status: 400 }
-        );
+    // caseIssues (join), sessions, testRuns, testRunResults, testRunStepResults
+    if (entityType === "testCase") {
+      // RepositoryCases <-> Issue is an explicit join model (RepositoryCaseIssue).
+      // Create the join row instead of connecting through an implicit relation.
+      await (db as any).repositoryCaseIssue.create({
+        data: { issueId, caseId: parseInt(entityId) },
+      });
+    } else {
+      const updateData: any = {};
+      switch (entityType) {
+        case "session":
+          updateData.sessions = { connect: { id: parseInt(entityId) } };
+          break;
+        case "testRun":
+          updateData.testRuns = { connect: { id: parseInt(entityId) } };
+          break;
+        case "testRunResult":
+          updateData.testRunResults = { connect: { id: parseInt(entityId) } };
+          break;
+        case "testRunStepResult":
+          updateData.testRunStepResults = {
+            connect: { id: parseInt(entityId) },
+          };
+          break;
+        default:
+          return NextResponse.json(
+            { error: "Invalid entity type" },
+            { status: 400 }
+          );
+      }
+
+      await (db as any).issue.update({
+        where: { id: issueId },
+        data: updateData,
+      });
     }
 
-    const updatedIssue = await (db as any).issue.update({
+    const updatedIssue = await (db as any).issue.findUnique({
       where: { id: issueId },
-      data: updateData,
       include: {
         createdBy: {
           select: {

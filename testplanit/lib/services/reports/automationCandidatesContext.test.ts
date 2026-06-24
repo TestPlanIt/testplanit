@@ -50,7 +50,7 @@ function caseRow(
         fieldOptions: Array<{ fieldOption: FieldOption }>;
       };
     }>;
-    issues: Array<Record<string, unknown>>;
+    caseIssues: Array<{ issue: Record<string, unknown> }>;
   }> = {}
 ) {
   const { executionCount, estimate, forecastManual, ...rest } = overrides;
@@ -66,7 +66,7 @@ function caseRow(
     forecastManual: forecastManual ?? null,
     steps: [],
     caseFieldValues: [],
-    issues: [],
+    caseIssues: [],
     _count: { testRuns: executionCount ?? 0 },
     ...rest,
   };
@@ -379,18 +379,20 @@ describe("buildAutomationCandidatesContext", () => {
   it("passes linked-issue metadata through provider-agnostically (no Jira special-casing)", async () => {
     casesFindMany.mockResolvedValue([
       caseRow({
-        issues: [
+        caseIssues: [
           {
-            externalKey: "PROJ-123",
-            title: "Login intermittently fails",
-            description: "Repro: ...",
-            status: "Open",
-            externalStatus: "In Progress",
-            priority: "Critical",
-            issueTypeName: "Bug",
-            externalData: {
-              labels: ["auth", "regression"],
-              components: ["login"],
+            issue: {
+              externalKey: "PROJ-123",
+              title: "Login intermittently fails",
+              description: "Repro: ...",
+              status: "Open",
+              externalStatus: "In Progress",
+              priority: "Critical",
+              issueTypeName: "Bug",
+              externalData: {
+                labels: ["auth", "regression"],
+                components: ["login"],
+              },
             },
           },
         ],

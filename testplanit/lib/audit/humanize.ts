@@ -291,12 +291,13 @@ async function resolveName(
  */
 const M2M_JOIN_TABLES: Record<
   string,
-  { col: "A" | "B"; label: string; model: string }
+  { col: string; label: string; model: string }
 > = {
-  _RepositoryCasesToTags: { col: "B", label: "Tags", model: "Tags" },
+  // Explicit join tables use named columns; implicit ones still use "A"/"B".
+  RepositoryCaseTag: { col: "tagId", label: "Tags", model: "Tags" },
+  RepositoryCaseIssue: { col: "issueId", label: "Issues", model: "Issue" },
   _SessionsToTags: { col: "B", label: "Tags", model: "Tags" },
   _TagsToTestRuns: { col: "A", label: "Tags", model: "Tags" },
-  _IssueToRepositoryCases: { col: "A", label: "Issues", model: "Issue" },
   _IssueToTestRuns: { col: "A", label: "Issues", model: "Issue" },
   _IssueToTestRunResults: { col: "A", label: "Issues", model: "Issue" },
   _IssueToTestRunStepResults: { col: "A", label: "Issues", model: "Issue" },

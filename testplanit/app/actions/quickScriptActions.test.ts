@@ -37,7 +37,7 @@ function makeMockCase(overrides: Record<string, any> = {}) {
     automated: false,
     creator: { name: "Jane Doe", email: "jane@example.com" },
     createdAt: new Date("2025-06-15T12:00:00Z"),
-    tags: [{ name: "smoke" }, { name: "auth" }],
+    caseTags: [{ tag: { name: "smoke" } }, { tag: { name: "auth" } }],
     steps: [
       { order: 0, step: "Go to login", expectedResult: "Login page shown" },
       {
@@ -204,7 +204,7 @@ describe("fetchCasesForQuickScript", () => {
 
     it("should return empty string when tags is empty", async () => {
       mockPrisma.repositoryCases.findMany.mockResolvedValue([
-        makeMockCase({ tags: [] }),
+        makeMockCase({ caseTags: [] }),
       ]);
 
       const result = await fetchCasesForQuickScript({

@@ -77,9 +77,11 @@ export const useColumns = (
                   ...(isNaN(projectIdNumber)
                     ? {}
                     : { projectId: projectIdNumber }),
-                  tags: {
+                  caseTags: {
                     some: {
-                      id: row.original.id,
+                      tag: {
+                        id: row.original.id,
+                      },
                     },
                   },
                 }}

@@ -279,7 +279,7 @@ describe("Project Issue Counts API Route", () => {
       const queryString = queryCall.join("");
 
       // Check for all 6 relationship types in the UNION query
-      expect(queryString).toContain("_IssueToRepositoryCases");
+      expect(queryString).toContain("RepositoryCaseIssue");
       expect(queryString).toContain("_IssueToSessions");
       expect(queryString).toContain("_IssueToTestRuns");
       expect(queryString).toContain("_IssueToSessionResults");

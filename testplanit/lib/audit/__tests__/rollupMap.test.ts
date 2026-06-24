@@ -15,7 +15,9 @@
  * VERIFIED FK FACTS (14-01 live spike DB, information_schema + pg_constraint):
  *   - Issue join tables: column A → Issue FK, column B → ENTITY FK. The owning-entity FK is
  *     therefore column **B**, NOT column A (the RESEARCH.md draft assumed A — corrected here).
- *   - Tag join tables follow Prisma's alphabetical A/B rule: _RepositoryCasesToTags A=RepositoryCases,
+ *   - RepositoryCases tags/issues are now EXPLICIT join models (RepositoryCaseTag / RepositoryCaseIssue,
+ *     fkCol caseId), not implicit A/B tables.
+ *   - The remaining implicit Tag join tables follow Prisma's alphabetical A/B rule:
  *     _SessionsToTags A=Sessions, _TagsToTestRuns A=Tags (so the TestRuns FK is column **B** there).
  *   - ResultFieldValues.testRunResultsId (PLURAL) vs TestRunStepResults.testRunResultId (SINGULAR).
  *   - TestCaseParameter.testCaseId confirmed (A1).
@@ -105,9 +107,10 @@ describe("rollupMap (COR-02) — child/join table → owning root entity attribu
   it("Issue join tables attribute via column B (the ENTITY FK), NOT column A (the Issue FK)", async () => {
     const map = await loadMap();
     // Live spike DB: A → Issue, B → entity. Owning-entity FK is column B.
-    expect(map._IssueToRepositoryCases).toMatchObject({
+    // RepositoryCases issues now use the EXPLICIT RepositoryCaseIssue join (named caseId column).
+    expect(map.RepositoryCaseIssue).toMatchObject({
       ownerTable: "RepositoryCases",
-      fkCol: "B",
+      fkCol: "caseId",
     });
     expect(map._IssueToTestRuns).toMatchObject({
       ownerTable: "TestRuns",
@@ -133,10 +136,10 @@ describe("rollupMap (COR-02) — child/join table → owning root entity attribu
 
   it("Tag join tables use the alphabetical A/B column that points at the OWNING entity", async () => {
     const map = await loadMap();
-    // _RepositoryCasesToTags: A=RepositoryCases → fkCol A.
-    expect(map._RepositoryCasesToTags).toMatchObject({
+    // RepositoryCases tags now use the EXPLICIT RepositoryCaseTag join (named caseId column).
+    expect(map.RepositoryCaseTag).toMatchObject({
       ownerTable: "RepositoryCases",
-      fkCol: "A",
+      fkCol: "caseId",
     });
     // _SessionsToTags: A=Sessions → fkCol A.
     expect(map._SessionsToTags).toMatchObject({

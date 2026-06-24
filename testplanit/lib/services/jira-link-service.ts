@@ -43,7 +43,7 @@ export class JiraLinkService {
       // Check if the test case exists
       const testCase = await prisma.repositoryCases.findUnique({
         where: { id: testCaseId },
-        include: { issues: true },
+        include: { caseIssues: { include: { issue: true } } },
       });
 
       if (!testCase) {
@@ -88,14 +88,10 @@ export class JiraLinkService {
       });
 
       // Link the test case to the issue (if not already linked)
-      // Update the repository case to include the issue
-      await prisma.repositoryCases.update({
-        where: { id: testCaseId },
-        data: {
-          issues: {
-            connect: { id: issue.id },
-          },
-        },
+      // Create the join row connecting the repository case to the issue
+      await prisma.repositoryCaseIssue.createMany({
+        data: [{ caseId: testCaseId, issueId: issue.id }],
+        skipDuplicates: true,
       });
     } catch (error) {
       console.error("Error linking test case to Jira issue:", error);
@@ -377,9 +373,11 @@ export class JiraLinkService {
     try {
       const linkedIssues = await prisma.issue.findMany({
         where: {
-          repositoryCases: {
+          caseIssues: {
             some: {
-              id: testCaseId,
+              case: {
+                id: testCaseId,
+              },
             },
           },
           integration: {
@@ -435,20 +433,15 @@ export class JiraLinkService {
       }
 
       // Disconnect the test case from the issue
-      await prisma.repositoryCases.update({
-        where: { id: testCaseId },
-        data: {
-          issues: {
-            disconnect: { id: issue.id },
-          },
-        },
+      await prisma.repositoryCaseIssue.deleteMany({
+        where: { caseId: testCaseId, issueId: issue.id },
       });
 
       // Check if this issue is still linked to other entities
       const issueWithLinks = await prisma.issue.findUnique({
         where: { id: issue.id },
         include: {
-          repositoryCases: true,
+          caseIssues: true,
           testRuns: true,
           sessions: true,
           testRunResults: true,
@@ -458,7 +451,7 @@ export class JiraLinkService {
       });
 
       const remainingLinks =
-        (issueWithLinks?.repositoryCases?.length || 0) +
+        (issueWithLinks?.caseIssues?.length || 0) +
         (issueWithLinks?.testRuns?.length || 0) +
         (issueWithLinks?.sessions?.length || 0) +
         (issueWithLinks?.testRunResults?.length || 0) +
@@ -511,7 +504,7 @@ export class JiraLinkService {
       const issueWithLinks = await prisma.issue.findUnique({
         where: { id: issue.id },
         include: {
-          repositoryCases: true,
+          caseIssues: true,
           testRuns: true,
           sessions: true,
           testRunResults: true,
@@ -521,7 +514,7 @@ export class JiraLinkService {
       });
 
       const remainingLinks =
-        (issueWithLinks?.repositoryCases?.length || 0) +
+        (issueWithLinks?.caseIssues?.length || 0) +
         (issueWithLinks?.testRuns?.length || 0) +
         (issueWithLinks?.sessions?.length || 0) +
         (issueWithLinks?.testRunResults?.length || 0) +
@@ -574,7 +567,7 @@ export class JiraLinkService {
       const issueWithLinks = await prisma.issue.findUnique({
         where: { id: issue.id },
         include: {
-          repositoryCases: true,
+          caseIssues: true,
           testRuns: true,
           sessions: true,
           testRunResults: true,
@@ -584,7 +577,7 @@ export class JiraLinkService {
       });
 
       const remainingLinks =
-        (issueWithLinks?.repositoryCases?.length || 0) +
+        (issueWithLinks?.caseIssues?.length || 0) +
         (issueWithLinks?.testRuns?.length || 0) +
         (issueWithLinks?.sessions?.length || 0) +
         (issueWithLinks?.testRunResults?.length || 0) +
@@ -637,7 +630,7 @@ export class JiraLinkService {
       const issueWithLinks = await prisma.issue.findUnique({
         where: { id: issue.id },
         include: {
-          repositoryCases: true,
+          caseIssues: true,
           testRuns: true,
           sessions: true,
           testRunResults: true,
@@ -646,7 +639,7 @@ export class JiraLinkService {
       });
 
       const remainingLinks =
-        (issueWithLinks?.repositoryCases?.length || 0) +
+        (issueWithLinks?.caseIssues?.length || 0) +
         (issueWithLinks?.testRuns?.length || 0) +
         (issueWithLinks?.sessions?.length || 0) +
         (issueWithLinks?.testRunResults?.length || 0) +
@@ -698,7 +691,7 @@ export class JiraLinkService {
       const issueWithLinks = await prisma.issue.findUnique({
         where: { id: issue.id },
         include: {
-          repositoryCases: true,
+          caseIssues: true,
           testRuns: true,
           sessions: true,
           testRunResults: true,
@@ -707,7 +700,7 @@ export class JiraLinkService {
       });
 
       const remainingLinks =
-        (issueWithLinks?.repositoryCases?.length || 0) +
+        (issueWithLinks?.caseIssues?.length || 0) +
         (issueWithLinks?.testRuns?.length || 0) +
         (issueWithLinks?.sessions?.length || 0) +
         (issueWithLinks?.testRunResults?.length || 0) +
@@ -1143,7 +1136,7 @@ export class JiraLinkService {
       const issueWithLinks = await prisma.issue.findUnique({
         where: { id: issue.id },
         include: {
-          repositoryCases: true,
+          caseIssues: true,
           testRuns: true,
           sessions: true,
           testRunResults: true,
@@ -1153,7 +1146,7 @@ export class JiraLinkService {
       });
 
       const remainingLinks =
-        (issueWithLinks?.repositoryCases?.length || 0) +
+        (issueWithLinks?.caseIssues?.length || 0) +
         (issueWithLinks?.testRuns?.length || 0) +
         (issueWithLinks?.sessions?.length || 0) +
         (issueWithLinks?.testRunResults?.length || 0) +

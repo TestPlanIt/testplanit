@@ -48,7 +48,9 @@ function makeTx(
   return {
     issue: {
       findUnique: vi.fn(async () => ({
-        repositoryCases: linked.repositoryCases ?? [],
+        // tags/issues implicit m2m -> explicit join model: a case's link to an
+        // issue is now read via caseIssues:[{case:{id}}] (RepositoryCaseIssue).
+        caseIssues: (linked.repositoryCases ?? []).map((c) => ({ case: c })),
         testRuns: linked.testRuns ?? [],
         testRunResults: linked.testRunResults ?? [],
         testRunStepResults: linked.testRunStepResults ?? [],

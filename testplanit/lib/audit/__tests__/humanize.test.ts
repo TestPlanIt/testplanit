@@ -67,22 +67,22 @@ describe("humanize (COR-03) — FK → display name with TTL cache", () => {
     expect(lookup).toHaveBeenCalledWith("CaseFields", "displayName", 42);
   });
 
-  it("relabels an implicit m2m join (_RepositoryCasesToTags) to the named tag, dropping the A/B owner column", async () => {
+  it("relabels an explicit m2m join (RepositoryCaseTag) to the named tag, dropping the caseId owner column", async () => {
     const { createHumanizeCache, humanize } = await loadModule();
     const lookup = vi.fn<LookupFn>(async () => "regression");
     const cache = createHumanizeCache(lookup, { ttlMs: 60_000 });
 
-    // A = RepositoryCases (owner, dropped); B = Tags (kept + named).
-    const out = await humanize(cache, "_RepositoryCasesToTags", {
-      A: { old: null, new: 4 },
-      B: { old: null, new: 13 },
+    // caseId = RepositoryCases (owner, dropped); tagId = Tags (kept + named).
+    const out = await humanize(cache, "RepositoryCaseTag", {
+      caseId: { old: null, new: 4 },
+      tagId: { old: null, new: 13 },
     });
 
     expect(out).toEqual({
       Tags: { old: null, new: 13, oldName: null, newName: "regression" },
     });
-    expect(out.A).toBeUndefined();
-    expect(out.B).toBeUndefined();
+    expect(out.caseId).toBeUndefined();
+    expect(out.tagId).toBeUndefined();
     expect(lookup).toHaveBeenCalledWith("Tags", "name", 13);
   });
 
