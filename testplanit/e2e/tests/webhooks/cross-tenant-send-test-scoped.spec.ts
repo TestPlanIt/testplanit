@@ -1,8 +1,8 @@
-
 import type { BrowserContext } from "@playwright/test";
 import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { expect, test } from "../../fixtures/index";
+import { signInSecondaryContext } from "../../utils/secondary-context-login";
 
 /**
  * v0.23.0 Section K-03 — send-test fires only against the requesting
@@ -140,17 +140,17 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     await api.setUserAccess(bOnlyUserId, "PROJECTADMIN");
     await api.assignUserToProject(bOnlyUserId, projectBId);
 
-    bOnlyCtx = await browser.newContext({
-      storageState: undefined,
-      extraHTTPHeaders: { "Sec-Fetch-Site": "same-origin" },
-    });
-    const signinPage = await bOnlyCtx.newPage();
-    await signinPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-    await signinPage.getByTestId("email-input").fill(bOnlyEmail);
-    await signinPage.getByTestId("password-input").fill(bOnlyPassword);
-    await signinPage.locator('button[type="submit"]').first().click();
-    await signinPage.waitForURL(/\/en-US\/?$/, { timeout: 30_000 });
-    await signinPage.close();
+    // Sign in the B-only admin in a fresh sessionless context. The context is
+    // kept clean (no extraHTTPHeaders) so the signin page and the webhook page
+    // navigated to below hydrate and load their assets. This context only
+    // navigates pages here (no ctx.request.* API calls), so no per-request
+    // same-origin header is needed.
+    bOnlyCtx = await signInSecondaryContext(
+      browser,
+      baseURL!,
+      bOnlyEmail,
+      bOnlyPassword
+    );
   });
 
   test.afterAll(async ({ api }) => {

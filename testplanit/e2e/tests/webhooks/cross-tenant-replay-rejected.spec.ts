@@ -1,4 +1,3 @@
-
 import type { BrowserContext } from "@playwright/test";
 import { createRawDbClient } from "~/lib/rawDbClient";
 
@@ -7,6 +6,10 @@ import {
   seedDeliveries,
   seedOutboundConfig,
 } from "../../fixtures/webhooks-seed";
+import {
+  sameOriginRequestHeaders,
+  signInSecondaryContext,
+} from "../../utils/secondary-context-login";
 
 /**
  * v0.23.0 Section K-02 — cross-tenant replay rejection.
@@ -121,17 +124,17 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     await api.setUserAccess(bOnlyUserId, "PROJECTADMIN");
     await api.assignUserToProject(bOnlyUserId, projectBId);
 
-    bOnlyCtx = await browser.newContext({
-      storageState: undefined,
-      extraHTTPHeaders: { "Sec-Fetch-Site": "same-origin" },
-    });
-    const signinPage = await bOnlyCtx.newPage();
-    await signinPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-    await signinPage.getByTestId("email-input").fill(bOnlyEmail);
-    await signinPage.getByTestId("password-input").fill(bOnlyPassword);
-    await signinPage.locator('button[type="submit"]').first().click();
-    await signinPage.waitForURL(/\/en-US\/?$/, { timeout: 30_000 });
-    await signinPage.close();
+    // Sign in the B-only admin in a fresh sessionless context. The context is
+    // kept clean (no extraHTTPHeaders) so the signin page hydrates and any
+    // later page navigations load their assets; same-origin classification for
+    // ctx.request.* API calls is applied per-request via
+    // sameOriginRequestHeaders().
+    bOnlyCtx = await signInSecondaryContext(
+      browser,
+      baseURL!,
+      bOnlyEmail,
+      bOnlyPassword
+    );
   });
 
   test.afterAll(async ({ api }) => {
@@ -154,6 +157,7 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
       response = await bOnlyCtx.request.get(
         `${baseURL}/api/model/webhookDelivery/findMany`,
         {
+          headers: sameOriginRequestHeaders(),
           params: {
             q: JSON.stringify({
               where: {
@@ -187,6 +191,7 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
       response = await bOnlyCtx.request.get(
         `${baseURL}/api/model/webhookConfig/findMany`,
         {
+          headers: sameOriginRequestHeaders(),
           params: {
             q: JSON.stringify({ where: { projectId: projectAId } }),
           },
@@ -289,6 +294,7 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
       response = await bOnlyCtx.request.get(
         `${baseURL}/api/model/webhookConfig/findMany`,
         {
+          headers: sameOriginRequestHeaders(),
           params: {
             q: JSON.stringify({ where: { projectId: projectBId } }),
           },

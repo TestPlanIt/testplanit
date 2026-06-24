@@ -244,22 +244,24 @@ test.describe("Sorting", () => {
       );
     });
 
-    const table = page.locator("table").first();
-    const rows = table.locator("tbody tr");
+    // Scope to the cases table (data-row-id rows only) so the count ignores
+    // the `pageSize` skeleton rows the DataTable renders while a query/refetch
+    // is in flight, which previously produced a "Received: 10" mismatch.
+    const table = repositoryPage.casesTable;
+    const rows = table.locator("tbody tr[data-row-id]");
 
     await test.step("Open the folder and confirm 3 rows are shown", async () => {
       await repositoryPage.goto(projectId);
 
       await repositoryPage.selectFolder(folderId!);
-      await page.waitForLoadState("networkidle");
+      await waitForTableStable(page);
 
       // Verify the table is visible
       await expect(table).toBeVisible({ timeout: 10000 });
 
-      // Wait for rows to appear in tbody
-      await expect(rows.first()).toBeVisible({ timeout: 10000 });
-      const count = await rows.count();
-      expect(count).toBe(3);
+      // Auto-retrying assertion waits out the loading skeleton until the
+      // folder's 3 real rows render.
+      await expect(rows).toHaveCount(3, { timeout: 10000 });
     });
 
     await test.step("Reload and confirm the order is maintained", async () => {
@@ -267,12 +269,11 @@ test.describe("Sorting", () => {
       await page.reload();
       await repositoryPage.waitForRepositoryLoad();
       await repositoryPage.selectFolder(folderId!);
-      await page.waitForLoadState("networkidle");
+      await waitForTableStable(page);
 
       // Verify order is maintained (same number of rows)
       await expect(table).toBeVisible({ timeout: 10000 });
-      await expect(rows.first()).toBeVisible({ timeout: 10000 });
-      expect(await rows.count()).toBe(3);
+      await expect(rows).toHaveCount(3, { timeout: 10000 });
     });
   });
 
@@ -805,23 +806,28 @@ test.describe("Sorting", () => {
       await repositoryPage.selectFolder(folderId!);
       await waitForTableStable(page);
 
-      // Initial count
-      const initialCount = await rows.count();
-      expect(initialCount).toBe(testCaseCount);
+      // Auto-retrying assertion so the count is sampled after the loading
+      // skeleton clears, not during the refetch window.
+      await expect(rows).toHaveCount(testCaseCount, { timeout: 10000 });
     });
 
     await test.step("Cycle the sort and verify row count is preserved", async () => {
+      // Each sort click triggers a refetch; the DataTable swaps in `pageSize`
+      // skeleton rows (no data-row-id) while the query is in flight. Use the
+      // auto-retrying assertion so the count is read after the rows repaint,
+      // not during the empty skeleton window (which sampled 0 immediately).
+
       // Sort ascending
       await clickSortButton(page, "Name");
-      expect(await rows.count()).toBe(testCaseCount);
+      await expect(rows).toHaveCount(testCaseCount, { timeout: 10000 });
 
       // Sort descending
       await clickSortButton(page, "Name");
-      expect(await rows.count()).toBe(testCaseCount);
+      await expect(rows).toHaveCount(testCaseCount, { timeout: 10000 });
 
       // Reset sort
       await clickSortButton(page, "Name");
-      expect(await rows.count()).toBe(testCaseCount);
+      await expect(rows).toHaveCount(testCaseCount, { timeout: 10000 });
     });
   });
 

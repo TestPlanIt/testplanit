@@ -226,24 +226,19 @@ test.describe("Admin SSO Provider Management", () => {
     let initialState: string | null = null;
 
     try {
-      await test.step("Open the SSO page and capture the Force SSO switch state", async () => {
-        await page.goto("/en-US/admin/sso");
+      await test.step("Open the Security page and capture the Force SSO switch state", async () => {
+        // The Force SSO toggle lives in the Sign-in Enforcement section of the
+        // Security admin page (/admin/security), not the SSO/Authentication page.
+        await page.goto("/en-US/admin/security");
         await page.waitForLoadState("networkidle");
         // Wait a moment for the useFindManySsoProvider hook to populate the ssoProviders array
         await page.waitForTimeout(1000);
 
-        // Find the Force SSO Login label
-        const forceSsoLabel = page.getByText("Force SSO Login");
-        await expect(forceSsoLabel).toBeVisible({ timeout: 20000 });
+        // The Force SSO switch is rendered as <Switch id="forceSso" /> paired with
+        // a <Label htmlFor="forceSso"> ("Force SSO Login"). Target the switch by id.
+        forceSsoSwitch = page.locator('button[role="switch"]#forceSso').first();
 
-        // Navigate from the label to the container div and find the switch within it
-        // Structure: div.flex > { div > { Label("Force SSO Login"), p }, Switch }
-        const forceSsoContainer = forceSsoLabel.locator("../..");
-        forceSsoSwitch = forceSsoContainer
-          .locator('button[role="switch"]')
-          .first();
-
-        await expect(forceSsoSwitch).toBeVisible({ timeout: 5000 });
+        await expect(forceSsoSwitch).toBeVisible({ timeout: 20000 });
 
         initialState = await forceSsoSwitch.getAttribute("data-state");
       });

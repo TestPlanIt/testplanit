@@ -1,4 +1,8 @@
 import { expect, test } from "../../fixtures/index";
+import {
+  sameOriginRequestHeaders,
+  signInSecondaryContext,
+} from "../../utils/secondary-context-login";
 
 /**
  * API Token Authentication E2E Tests
@@ -380,31 +384,25 @@ test.describe("API Token Authentication", () => {
       // Enable API access for the test user
       await api.updateUser({ userId: testUserId, data: { isApi: true } });
 
-      // Sign in as the test user in a browser context to get a session for token creation
-      const testUserCtx = await browser.newContext({
-        storageState: undefined,
-        extraHTTPHeaders: {
-          "Sec-Fetch-Site": "same-origin",
-        },
-      });
+      // Sign in as the test user in a fresh sessionless context (kept clean so
+      // the signin page hydrates). Same-origin classification for the
+      // token-creation API call is applied per-request via
+      // sameOriginRequestHeaders().
+      const testUserCtx = await signInSecondaryContext(
+        browser,
+        baseURL!,
+        email,
+        "password123"
+      );
 
       let userToken: string;
       try {
-        await test.step("Sign in as the test user and create a token", async () => {
-          const loginPage = await testUserCtx.newPage();
-          await loginPage.goto(`${baseURL}/en-US/signin`, {
-            waitUntil: "load",
-          });
-          await loginPage.getByTestId("email-input").fill(email);
-          await loginPage.getByTestId("password-input").fill("password123");
-          await loginPage.locator('button[type="submit"]').first().click();
-          await loginPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
-          await loginPage.close();
-
+        await test.step("Create a token as the test user", async () => {
           // Create a token as the test user
           const createResponse = await testUserCtx.request.post(
             `${baseURL}/api/api-tokens`,
             {
+              headers: sameOriginRequestHeaders(),
               data: { name: `Deactivation Test Token ${Date.now()}` },
             }
           );
@@ -544,27 +542,26 @@ test.describe("API Token Authentication", () => {
     try {
       await api.updateUser({ userId: testUserId, data: { isApi: true } });
 
-      const testUserCtx = await browser.newContext({
-        storageState: undefined,
-        extraHTTPHeaders: { "Sec-Fetch-Site": "same-origin" },
-      });
+      // Sign in as the non-admin user in a fresh sessionless context (kept
+      // clean so the signin page hydrates). Same-origin classification for the
+      // token-creation API call is applied per-request via
+      // sameOriginRequestHeaders().
+      const testUserCtx = await signInSecondaryContext(
+        browser,
+        baseURL!,
+        email,
+        "password123"
+      );
 
       let userToken: string;
       try {
-        await test.step("Sign in as the non-admin user and create a token", async () => {
-          const loginPage = await testUserCtx.newPage();
-          await loginPage.goto(`${baseURL}/en-US/signin`, {
-            waitUntil: "load",
-          });
-          await loginPage.getByTestId("email-input").fill(email);
-          await loginPage.getByTestId("password-input").fill("password123");
-          await loginPage.locator('button[type="submit"]').first().click();
-          await loginPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
-          await loginPage.close();
-
+        await test.step("Create a token as the non-admin user", async () => {
           const createResponse = await testUserCtx.request.post(
             `${baseURL}/api/api-tokens`,
-            { data: { name: `Non-admin Report Test Token ${Date.now()}` } }
+            {
+              headers: sameOriginRequestHeaders(),
+              data: { name: `Non-admin Report Test Token ${Date.now()}` },
+            }
           );
           expect(createResponse.status()).toBe(200);
           const { token } = await createResponse.json();

@@ -258,14 +258,25 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
           include: {
             integration: { select: { id: true, name: true, provider: true } },
             createdBy: { select: { id: true, name: true, email: true } },
-            _count: { select: { repositoryCases: true } },
+            _count: { select: { caseIssues: true } },
             // D8-06 / D7-12: each linked-array sub-include declares take:101 so
             // the get handler can detect overflow and stamp truncated.<key>:true.
-            repositoryCases: {
-              where: { isDeleted: false },
-              orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+            // v3: RepositoryCases links through the explicit join model
+            // RepositoryCaseIssue; the case fields live under caseIssues[].case.
+            caseIssues: {
+              where: { case: { isDeleted: false } },
+              orderBy: [{ caseId: "desc" }],
               take: 101,
-              select: { id: true, name: true, source: true, automated: true },
+              select: {
+                case: {
+                  select: {
+                    id: true,
+                    name: true,
+                    source: true,
+                    automated: true,
+                  },
+                },
+              },
             },
             sessions: {
               where: { isDeleted: false },
@@ -306,15 +317,16 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     await test.step("Verify header and that each inline array is present and capped at 101", async () => {
       expect(data).not.toBeNull();
       expect(data!.id).toBe(ctx.issueId);
-      expect(Array.isArray(data!.repositoryCases)).toBe(true);
+      // v3: linked cases arrive via the explicit join model (caseIssues[].case).
+      expect(Array.isArray(data!.caseIssues)).toBe(true);
       expect(Array.isArray(data!.sessions)).toBe(true);
       expect(Array.isArray(data!.testRuns)).toBe(true);
-      expect(data!.repositoryCases.length).toBeLessThanOrEqual(101);
+      expect(data!.caseIssues.length).toBeLessThanOrEqual(101);
       expect(data!.sessions.length).toBeLessThanOrEqual(101);
       expect(data!.testRuns.length).toBeLessThanOrEqual(101);
       // Overflow detection probe: if any one array is exactly 101 the MCP tool
       // would surface truncated:true. We document it but do not require it.
-      if (data!.repositoryCases.length === 101) {
+      if (data!.caseIssues.length === 101) {
         console.warn(
           "ISSUE-03: linkedCases overflow probe HIT (>= 100 — MCP would surface truncated)"
         );
@@ -379,8 +391,11 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
         JSON.stringify({
           where: {
             isDeleted: false,
-            repositoryCases: {
-              some: { id: ctx.caseIdLinkedToAnyIssue, isDeleted: false },
+            caseIssues: {
+              some: {
+                caseId: ctx.caseIdLinkedToAnyIssue,
+                case: { isDeleted: false },
+              },
             },
           },
           include: {

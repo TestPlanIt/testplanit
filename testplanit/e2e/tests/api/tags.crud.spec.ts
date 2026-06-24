@@ -157,9 +157,7 @@ test.describe("Tags CRUD", () => {
       const linkedTags = result.data.caseTags.map(
         (ct: { tag: { id: number } }) => ct.tag
       );
-      const linkedTag = linkedTags.find(
-        (t: { id: number }) => t.id === tagId
-      );
+      const linkedTag = linkedTags.find((t: { id: number }) => t.id === tagId);
       expect(linkedTag).toBeDefined();
     });
   });
@@ -197,12 +195,14 @@ test.describe("Tags CRUD", () => {
     });
 
     await test.step("Unlink the tag from the repository case", async () => {
-      // Unlink tag from case via explicit join model
-      const unlinkResponse = await request.post(
+      // Unlink tag from case via explicit join model.
+      // ZenStack v3 RPC reads delete/deleteMany args from the `q` query param
+      // and only accepts the DELETE method (not POST).
+      const unlinkResponse = await request.delete(
         `${baseURL}/api/model/repositoryCaseTag/deleteMany`,
         {
-          data: {
-            where: { caseId, tagId },
+          params: {
+            q: JSON.stringify({ where: { caseId, tagId } }),
           },
         }
       );
@@ -229,9 +229,7 @@ test.describe("Tags CRUD", () => {
       const linkedTags = result.data.caseTags.map(
         (ct: { tag: { id: number } }) => ct.tag
       );
-      const linkedTag = linkedTags.find(
-        (t: { id: number }) => t.id === tagId
-      );
+      const linkedTag = linkedTags.find((t: { id: number }) => t.id === tagId);
       expect(linkedTag).toBeUndefined();
     });
   });
