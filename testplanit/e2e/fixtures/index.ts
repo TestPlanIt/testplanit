@@ -56,8 +56,34 @@ export interface TestFixtures {
 export const test = base.extend<TestFixtures>({
   // Auto-apply the SSE stubs to the fixture's `page`. See stubLiveStreams
   // above for rationale. Manually-created contexts must call it themselves.
-  page: async ({ page }, use) => {
+  page: async ({ page }, use, testInfo) => {
     await stubLiveStreams(page);
+
+    // Diagnostic capture (opt-in via DIAG_E2E=on): surface problems that never
+    // fail an assertion — browser console errors/warnings, uncaught page
+    // exceptions, and 5xx responses — to stdout, tagged with the test title and
+    // prefixed for grepping. Server-side DB/ORM errors already appear on the
+    // [WebServer] stream, so a single captured run log holds both sides.
+    if (process.env.DIAG_E2E === "on") {
+      const tag = testInfo.titlePath.join(" › ");
+      const oneLine = (s: string) =>
+        s.replace(/\s+/g, " ").trim().slice(0, 600);
+      page.on("console", (msg) => {
+        const t = msg.type();
+        if (t === "error" || t === "warning") {
+          console.log(`[E2E-CONSOLE:${t}] ${tag} | ${oneLine(msg.text())}`);
+        }
+      });
+      page.on("pageerror", (err) => {
+        console.log(`[E2E-PAGEERROR] ${tag} | ${oneLine(err.message)}`);
+      });
+      page.on("response", (res) => {
+        if (res.status() >= 500) {
+          console.log(`[E2E-HTTP5xx] ${tag} | ${res.status()} ${res.url()}`);
+        }
+      });
+    }
+
     // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page);
   },
