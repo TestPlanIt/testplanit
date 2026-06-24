@@ -355,9 +355,14 @@ async function main() {
   await applyAuditTriggers();
 }
 
-// CLI entry only — guarded so importing applyAuditTriggers() (e.g. the instrumentation boot hook)
-// never auto-runs the apply or calls process.exit. `require.main` is undefined when bundled.
-if (typeof require !== "undefined" && require.main === module) {
+// CLI entry only. `require.main === module` is NOT safe here: esbuild inlines this file into the
+// worker bundle (dist/workers/auditLogWorker.js), where `require.main === module` is TRUE for the
+// bundle entry — so it would wrongly run the CLI, connect to the worker's placeholder DB, and crash
+// it on a loop. Gate on the actual process entry-script path instead: argv[1] only contains
+// "apply-triggers" when this is invoked directly as the CLI (tsx scripts/apply-triggers.ts), and
+// never when bundled into auditLogWorker.js or the Next server.
+const isCliEntry = /apply-triggers/.test(process.argv[1] ?? "");
+if (isCliEntry) {
   main().catch((err) => {
     console.error("[apply-triggers] apply failed:", err);
     process.exit(1);
