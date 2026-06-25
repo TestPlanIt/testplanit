@@ -32,8 +32,8 @@ vi.mock("~/lib/auth/utils", () => ({
   })),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     $transaction: async (cb: any) =>
       cb({
         caseSharedDataSetAssignment: {

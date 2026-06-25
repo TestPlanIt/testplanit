@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       update: vi.fn(),
     },
@@ -10,7 +10,7 @@ vi.mock("~/lib/prisma", () => ({
 }));
 
 import { getAuditContext, type AuditContext } from "~/lib/auditContext";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { POST } from "./route";
 
 describe("withAuditContext wrapper on test-helpers/verify-email POST", () => {
@@ -37,7 +37,7 @@ describe("withAuditContext wrapper on test-helpers/verify-email POST", () => {
 
   it("seeds ALS with request headers inside the handler", async () => {
     let capturedCtx: AuditContext | undefined;
-    (prisma.user.update as any).mockImplementation(() => {
+    (baseDb.user.update as any).mockImplementation(() => {
       capturedCtx = getAuditContext();
       return Promise.resolve({ id: "user-123" });
     });

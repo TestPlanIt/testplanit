@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import {
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({
+  const user = await baseDb.user.findUnique({
     where: { id: session.user.id },
     select: { access: true },
   });
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     cacheEnabled?: boolean;
   } = body;
 
-  const repo = await prisma.codeRepository.findUnique({
+  const repo = await baseDb.codeRepository.findUnique({
     where: { id: parseInt(id) },
     select: {
       credentials: true,

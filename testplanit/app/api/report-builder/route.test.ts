@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock prisma before importing route handler
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+// Mock baseDb before importing route handler
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     status: { findMany: vi.fn() },
     user: { findMany: vi.fn() },
     testRuns: { findMany: vi.fn() },
@@ -19,7 +19,7 @@ vi.mock("~/lib/schemas/reportRequestSchema", async (importOriginal) => {
   return original;
 });
 
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { GET, POST } from "./route";
 
 const createPOSTRequest = (body: Record<string, unknown>): NextRequest => {
@@ -43,12 +43,12 @@ const createGETRequest = (params?: Record<string, string>): NextRequest => {
 describe("GET /api/report-builder", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (prisma.status.findMany as any).mockResolvedValue([]);
-    (prisma.user.findMany as any).mockResolvedValue([]);
-    (prisma.testRuns.findMany as any).mockResolvedValue([]);
-    (prisma.testRunCases.findMany as any).mockResolvedValue([]);
-    (prisma.testRunResults.findMany as any).mockResolvedValue([]);
-    (prisma.milestones.findMany as any).mockResolvedValue([]);
+    (baseDb.status.findMany as any).mockResolvedValue([]);
+    (baseDb.user.findMany as any).mockResolvedValue([]);
+    (baseDb.testRuns.findMany as any).mockResolvedValue([]);
+    (baseDb.testRunCases.findMany as any).mockResolvedValue([]);
+    (baseDb.testRunResults.findMany as any).mockResolvedValue([]);
+    (baseDb.milestones.findMany as any).mockResolvedValue([]);
   });
 
   it("returns dimensions and metrics metadata", async () => {
@@ -85,7 +85,7 @@ describe("GET /api/report-builder", () => {
   });
 
   it("returns dimension values when projectId is provided", async () => {
-    (prisma.status.findMany as any).mockResolvedValue([
+    (baseDb.status.findMany as any).mockResolvedValue([
       { id: 1, name: "Passed", color: { value: "#22c55e" } },
     ]);
 
@@ -100,7 +100,7 @@ describe("GET /api/report-builder", () => {
   });
 
   it("handles errors from dimension value fetching gracefully", async () => {
-    (prisma.status.findMany as any).mockRejectedValue(new Error("DB error"));
+    (baseDb.status.findMany as any).mockRejectedValue(new Error("DB error"));
 
     const response = await GET(createGETRequest({ projectId: "1" }));
     const data = await response.json();
@@ -115,17 +115,17 @@ describe("GET /api/report-builder", () => {
 describe("POST /api/report-builder", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (prisma.status.findMany as any).mockResolvedValue([
+    (baseDb.status.findMany as any).mockResolvedValue([
       { id: 1, name: "Passed", color: { value: "#22c55e" } },
     ]);
-    (prisma.testRunResults.findMany as any).mockResolvedValue([
+    (baseDb.testRunResults.findMany as any).mockResolvedValue([
       {
         statusId: 1,
         status: { name: "Passed", color: { value: "#22c55e" } },
         testResultCount: 5,
       },
     ]);
-    (prisma.testRunResults.groupBy as any).mockResolvedValue([
+    (baseDb.testRunResults.groupBy as any).mockResolvedValue([
       { statusId: 1, _count: { id: 5 } },
     ]);
   });
@@ -218,8 +218,8 @@ describe("POST /api/report-builder", () => {
     });
 
     it("returns empty results array when no data found", async () => {
-      (prisma.status.findMany as any).mockResolvedValue([]);
-      (prisma.testRunResults.findMany as any).mockResolvedValue([]);
+      (baseDb.status.findMany as any).mockResolvedValue([]);
+      (baseDb.testRunResults.findMany as any).mockResolvedValue([]);
 
       const response = await POST(
         createPOSTRequest({

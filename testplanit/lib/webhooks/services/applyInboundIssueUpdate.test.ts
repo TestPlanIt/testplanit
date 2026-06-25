@@ -6,11 +6,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApplyInboundIssueUpdateInput } from "./types";
 
 /**
- * Hoisted mocks for `prisma`, `captureAuditEvent`, `isUniqueConstraintError`,
+ * Hoisted mocks for `baseDb`, `captureAuditEvent`, `isUniqueConstraintError`,
  * and `getAdapter` (service-side extractor delegation).
  *
  * Each test mutates the per-call return values via `mocks.tx.*` setters; the same
- * `tx` object is yielded from every `prisma.$transaction(fn)` invocation so we can
+ * `tx` object is yielded from every `baseDb.$transaction(fn)` invocation so we can
  * spy on the per-model calls (`webhookDelivery.create/update`, `webhookEventDedup.create`,
  * `issue.findFirst`, `issue.update`, `webhookConfig.update`).
  *
@@ -55,7 +55,7 @@ const mocks = vi.hoisted(() => {
   const performIssueRefreshSystem = vi.fn(async () => ({ success: true }));
   return {
     tx,
-    prisma: {
+    baseDb: {
       $transaction,
       projectIntegration: { findFirst: projectIntegrationFindFirst },
     },
@@ -74,8 +74,8 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: mocks.prisma,
+vi.mock("~/lib/db", () => ({
+  baseDb: mocks.baseDb,
 }));
 
 vi.mock("~/lib/services/auditLog", () => ({
@@ -127,8 +127,8 @@ const resetTxMocks = () => {
       (fn as ReturnType<typeof vi.fn>).mockReset();
     }
   }
-  mocks.prisma.$transaction.mockClear();
-  mocks.prisma.$transaction.mockImplementation(async (fn: any) => fn(mocks.tx));
+  mocks.baseDb.$transaction.mockClear();
+  mocks.baseDb.$transaction.mockImplementation(async (fn: any) => fn(mocks.tx));
   mocks.captureAuditEvent.mockReset();
   mocks.captureAuditEvent.mockResolvedValue(undefined);
   // Default: webhookDelivery.create returns a stable id.
@@ -447,7 +447,7 @@ describe("applyInboundIssueUpdate", () => {
     mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
     const txError = new Error("Connection lost mid-transaction");
     mocks.tx.webhookEventDedup.create.mockRejectedValueOnce(txError);
-    mocks.prisma.$transaction.mockImplementationOnce(async (fn: any) =>
+    mocks.baseDb.$transaction.mockImplementationOnce(async (fn: any) =>
       fn(mocks.tx)
     );
 

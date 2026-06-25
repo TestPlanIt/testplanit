@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
 import { emptyEditorContent } from "~/app/constants/backend";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 import { syncSharedStepToElasticsearch } from "~/services/sharedStepSearch";
 import {
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     const body: ImportRequest = await request.json();
 
     // Get full user object for enhance
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       include: {
         role: {

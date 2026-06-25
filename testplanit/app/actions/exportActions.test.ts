@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Mock dependencies
 const mockFindMany = vi.fn();
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     repositoryCases: {
       findMany: (...args: any[]) => mockFindMany(...args),
     },

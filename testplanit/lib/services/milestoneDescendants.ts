@@ -1,4 +1,4 @@
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 /**
  * Returns all descendant milestone IDs for a given milestone using a
@@ -7,7 +7,7 @@ import { prisma } from "~/lib/prisma";
 export async function getAllDescendantMilestoneIds(
   milestoneId: number
 ): Promise<number[]> {
-  const result = await prisma.$queryRaw<Array<{ id: number }>>`
+  const result = await baseDb.$queryRaw<Array<{ id: number }>>`
     WITH RECURSIVE descendants AS (
       SELECT id FROM "Milestones"
       WHERE "parentId" = ${milestoneId} AND "isDeleted" = false

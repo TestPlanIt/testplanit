@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { IntegrationProvider } from "~/zenstack/models";
 
 // Supported issue tracking providers (every provider routed through
@@ -28,7 +28,7 @@ export class JiraLinkService {
   ): Promise<void> {
     try {
       // First, check if the integration is valid and active
-      const integration = await prisma.integration.findFirst({
+      const integration = await baseDb.integration.findFirst({
         where: {
           id: integrationId,
           provider: { in: ISSUE_TRACKING_PROVIDERS },
@@ -41,7 +41,7 @@ export class JiraLinkService {
       }
 
       // Check if the test case exists
-      const testCase = await prisma.repositoryCases.findUnique({
+      const testCase = await baseDb.repositoryCases.findUnique({
         where: { id: testCaseId },
         include: { caseIssues: { include: { issue: true } } },
       });
@@ -51,7 +51,7 @@ export class JiraLinkService {
       }
 
       // Use upsert to create or find the issue atomically
-      const issue = await prisma.issue.upsert({
+      const issue = await baseDb.issue.upsert({
         where: {
           externalId_integrationId: {
             externalId: jiraIssueId,
@@ -89,7 +89,7 @@ export class JiraLinkService {
 
       // Link the test case to the issue (if not already linked)
       // Create the join row connecting the repository case to the issue
-      await prisma.repositoryCaseIssue.createMany({
+      await baseDb.repositoryCaseIssue.createMany({
         data: [{ caseId: testCaseId, issueId: issue.id }],
         skipDuplicates: true,
       });
@@ -111,7 +111,7 @@ export class JiraLinkService {
     issueUrl?: string
   ): Promise<void> {
     try {
-      const integration = await prisma.integration.findFirst({
+      const integration = await baseDb.integration.findFirst({
         where: {
           id: integrationId,
           provider: { in: ISSUE_TRACKING_PROVIDERS },
@@ -123,7 +123,7 @@ export class JiraLinkService {
         throw new Error("Invalid or inactive issue tracking integration");
       }
 
-      const testRun = await prisma.testRuns.findUnique({
+      const testRun = await baseDb.testRuns.findUnique({
         where: { id: testRunId },
         include: { issues: true },
       });
@@ -133,7 +133,7 @@ export class JiraLinkService {
       }
 
       // Use upsert to create or find the issue atomically
-      const issue = await prisma.issue.upsert({
+      const issue = await baseDb.issue.upsert({
         where: {
           externalId_integrationId: {
             externalId: jiraIssueId,
@@ -170,7 +170,7 @@ export class JiraLinkService {
       });
 
       // Link the test run to the issue
-      await prisma.testRuns.update({
+      await baseDb.testRuns.update({
         where: { id: testRunId },
         data: {
           issues: {
@@ -191,7 +191,7 @@ export class JiraLinkService {
     testRunId: number
   ): Promise<any[]> {
     try {
-      const testRun = await prisma.testRuns.findUnique({
+      const testRun = await baseDb.testRuns.findUnique({
         where: { id: testRunId },
         include: {
           issues: {
@@ -245,7 +245,7 @@ export class JiraLinkService {
     issueUrl?: string
   ): Promise<void> {
     try {
-      const integration = await prisma.integration.findFirst({
+      const integration = await baseDb.integration.findFirst({
         where: {
           id: integrationId,
           provider: { in: ISSUE_TRACKING_PROVIDERS },
@@ -257,7 +257,7 @@ export class JiraLinkService {
         throw new Error("Invalid or inactive issue tracking integration");
       }
 
-      const session = await prisma.sessions.findUnique({
+      const session = await baseDb.sessions.findUnique({
         where: { id: sessionId },
         include: { issues: true },
       });
@@ -267,7 +267,7 @@ export class JiraLinkService {
       }
 
       // Use upsert to create or update the issue atomically
-      const issue = await prisma.issue.upsert({
+      const issue = await baseDb.issue.upsert({
         where: {
           externalId_integrationId: {
             externalId: jiraIssueId,
@@ -303,7 +303,7 @@ export class JiraLinkService {
       });
 
       // Link the session to the issue
-      await prisma.sessions.update({
+      await baseDb.sessions.update({
         where: { id: sessionId },
         data: {
           issues: {
@@ -324,7 +324,7 @@ export class JiraLinkService {
     sessionId: number
   ): Promise<any[]> {
     try {
-      const session = await prisma.sessions.findUnique({
+      const session = await baseDb.sessions.findUnique({
         where: { id: sessionId },
         include: {
           issues: {
@@ -371,7 +371,7 @@ export class JiraLinkService {
    */
   static async getLinkedJiraIssues(testCaseId: number): Promise<any[]> {
     try {
-      const linkedIssues = await prisma.issue.findMany({
+      const linkedIssues = await baseDb.issue.findMany({
         where: {
           caseIssues: {
             some: {
@@ -419,7 +419,7 @@ export class JiraLinkService {
     jiraIssueId: string
   ): Promise<void> {
     try {
-      const issue = await prisma.issue.findFirst({
+      const issue = await baseDb.issue.findFirst({
         where: {
           externalId: jiraIssueId,
           integration: {
@@ -433,12 +433,12 @@ export class JiraLinkService {
       }
 
       // Disconnect the test case from the issue
-      await prisma.repositoryCaseIssue.deleteMany({
+      await baseDb.repositoryCaseIssue.deleteMany({
         where: { caseId: testCaseId, issueId: issue.id },
       });
 
       // Check if this issue is still linked to other entities
-      const issueWithLinks = await prisma.issue.findUnique({
+      const issueWithLinks = await baseDb.issue.findUnique({
         where: { id: issue.id },
         include: {
           caseIssues: true,
@@ -459,7 +459,7 @@ export class JiraLinkService {
         (issueWithLinks?.testRunStepResults?.length || 0);
 
       if (remainingLinks === 0) {
-        await prisma.issue.delete({
+        await baseDb.issue.delete({
           where: { id: issue.id },
         });
       }
@@ -477,7 +477,7 @@ export class JiraLinkService {
     jiraIssueId: string
   ): Promise<void> {
     try {
-      const issue = await prisma.issue.findFirst({
+      const issue = await baseDb.issue.findFirst({
         where: {
           externalId: jiraIssueId,
           integration: {
@@ -491,7 +491,7 @@ export class JiraLinkService {
       }
 
       // Disconnect the test run from the issue
-      await prisma.testRuns.update({
+      await baseDb.testRuns.update({
         where: { id: testRunId },
         data: {
           issues: {
@@ -501,7 +501,7 @@ export class JiraLinkService {
       });
 
       // Check if this issue is still linked to other entities
-      const issueWithLinks = await prisma.issue.findUnique({
+      const issueWithLinks = await baseDb.issue.findUnique({
         where: { id: issue.id },
         include: {
           caseIssues: true,
@@ -522,7 +522,7 @@ export class JiraLinkService {
         (issueWithLinks?.testRunStepResults?.length || 0);
 
       if (remainingLinks === 0) {
-        await prisma.issue.delete({
+        await baseDb.issue.delete({
           where: { id: issue.id },
         });
       }
@@ -540,7 +540,7 @@ export class JiraLinkService {
     jiraIssueId: string
   ): Promise<void> {
     try {
-      const issue = await prisma.issue.findFirst({
+      const issue = await baseDb.issue.findFirst({
         where: {
           externalId: jiraIssueId,
           integration: {
@@ -554,7 +554,7 @@ export class JiraLinkService {
       }
 
       // Disconnect the session from the issue
-      await prisma.sessions.update({
+      await baseDb.sessions.update({
         where: { id: sessionId },
         data: {
           issues: {
@@ -564,7 +564,7 @@ export class JiraLinkService {
       });
 
       // Check if this issue is still linked to other entities
-      const issueWithLinks = await prisma.issue.findUnique({
+      const issueWithLinks = await baseDb.issue.findUnique({
         where: { id: issue.id },
         include: {
           caseIssues: true,
@@ -585,7 +585,7 @@ export class JiraLinkService {
         (issueWithLinks?.testRunStepResults?.length || 0);
 
       if (remainingLinks === 0) {
-        await prisma.issue.delete({
+        await baseDb.issue.delete({
           where: { id: issue.id },
         });
       }
@@ -603,7 +603,7 @@ export class JiraLinkService {
     jiraIssueId: string
   ): Promise<void> {
     try {
-      const issue = await prisma.issue.findFirst({
+      const issue = await baseDb.issue.findFirst({
         where: {
           externalId: jiraIssueId,
           integration: {
@@ -617,7 +617,7 @@ export class JiraLinkService {
       }
 
       // Disconnect the test run result from the issue
-      await prisma.testRunResults.update({
+      await baseDb.testRunResults.update({
         where: { id: testRunResultId },
         data: {
           issues: {
@@ -627,7 +627,7 @@ export class JiraLinkService {
       });
 
       // Check if this issue is still linked to other entities
-      const issueWithLinks = await prisma.issue.findUnique({
+      const issueWithLinks = await baseDb.issue.findUnique({
         where: { id: issue.id },
         include: {
           caseIssues: true,
@@ -646,7 +646,7 @@ export class JiraLinkService {
         (issueWithLinks?.sessionResults?.length || 0);
 
       if (remainingLinks === 0) {
-        await prisma.issue.delete({
+        await baseDb.issue.delete({
           where: { id: issue.id },
         });
       }
@@ -664,7 +664,7 @@ export class JiraLinkService {
     jiraIssueId: string
   ): Promise<void> {
     try {
-      const issue = await prisma.issue.findFirst({
+      const issue = await baseDb.issue.findFirst({
         where: {
           externalId: jiraIssueId,
           integration: {
@@ -678,7 +678,7 @@ export class JiraLinkService {
       }
 
       // Disconnect the session result from the issue
-      await prisma.sessionResults.update({
+      await baseDb.sessionResults.update({
         where: { id: sessionResultId },
         data: {
           issues: {
@@ -688,7 +688,7 @@ export class JiraLinkService {
       });
 
       // Check if this issue is still linked to other entities
-      const issueWithLinks = await prisma.issue.findUnique({
+      const issueWithLinks = await baseDb.issue.findUnique({
         where: { id: issue.id },
         include: {
           caseIssues: true,
@@ -707,7 +707,7 @@ export class JiraLinkService {
         (issueWithLinks?.sessionResults?.length || 0);
 
       if (remainingLinks === 0) {
-        await prisma.issue.delete({
+        await baseDb.issue.delete({
           where: { id: issue.id },
         });
       }
@@ -729,7 +729,7 @@ export class JiraLinkService {
     issueUrl?: string
   ): Promise<void> {
     try {
-      const integration = await prisma.integration.findFirst({
+      const integration = await baseDb.integration.findFirst({
         where: {
           id: integrationId,
           provider: { in: ISSUE_TRACKING_PROVIDERS },
@@ -741,7 +741,7 @@ export class JiraLinkService {
         throw new Error("Invalid or inactive issue tracking integration");
       }
 
-      const testRunResult = await prisma.testRunResults.findUnique({
+      const testRunResult = await baseDb.testRunResults.findUnique({
         where: { id: testRunResultId },
         include: {
           issues: true,
@@ -760,7 +760,7 @@ export class JiraLinkService {
       const projectId = testRunResult.testRunCase.testRun.projectId;
 
       // Use upsert to create or update the issue atomically
-      const issue = await prisma.issue.upsert({
+      const issue = await baseDb.issue.upsert({
         where: {
           externalId_integrationId: {
             externalId: jiraIssueId,
@@ -796,7 +796,7 @@ export class JiraLinkService {
       });
 
       // Link the test run result to the issue
-      await prisma.testRunResults.update({
+      await baseDb.testRunResults.update({
         where: { id: testRunResultId },
         data: {
           issues: {
@@ -822,7 +822,7 @@ export class JiraLinkService {
     issueUrl?: string
   ): Promise<void> {
     try {
-      const integration = await prisma.integration.findFirst({
+      const integration = await baseDb.integration.findFirst({
         where: {
           id: integrationId,
           provider: { in: ISSUE_TRACKING_PROVIDERS },
@@ -834,7 +834,7 @@ export class JiraLinkService {
         throw new Error("Invalid or inactive issue tracking integration");
       }
 
-      const sessionResult = await prisma.sessionResults.findUnique({
+      const sessionResult = await baseDb.sessionResults.findUnique({
         where: { id: sessionResultId },
         include: {
           issues: true,
@@ -849,7 +849,7 @@ export class JiraLinkService {
       const projectId = sessionResult.session.projectId;
 
       // Use upsert to create or update the issue atomically
-      const issue = await prisma.issue.upsert({
+      const issue = await baseDb.issue.upsert({
         where: {
           externalId_integrationId: {
             externalId: jiraIssueId,
@@ -885,7 +885,7 @@ export class JiraLinkService {
       });
 
       // Link the session result to the issue
-      await prisma.sessionResults.update({
+      await baseDb.sessionResults.update({
         where: { id: sessionResultId },
         data: {
           issues: {
@@ -906,7 +906,7 @@ export class JiraLinkService {
     testRunResultId: number
   ): Promise<any[]> {
     try {
-      const testRunResult = await prisma.testRunResults.findUnique({
+      const testRunResult = await baseDb.testRunResults.findUnique({
         where: { id: testRunResultId },
         include: {
           issues: {
@@ -958,7 +958,7 @@ export class JiraLinkService {
     sessionResultId: number
   ): Promise<any[]> {
     try {
-      const sessionResult = await prisma.sessionResults.findUnique({
+      const sessionResult = await baseDb.sessionResults.findUnique({
         where: { id: sessionResultId },
         include: {
           issues: {
@@ -1015,7 +1015,7 @@ export class JiraLinkService {
     issueUrl?: string
   ): Promise<void> {
     try {
-      const integration = await prisma.integration.findFirst({
+      const integration = await baseDb.integration.findFirst({
         where: {
           id: integrationId,
           provider: { in: ISSUE_TRACKING_PROVIDERS },
@@ -1027,7 +1027,7 @@ export class JiraLinkService {
         throw new Error("Invalid or inactive issue tracking integration");
       }
 
-      const testRunStepResult = await prisma.testRunStepResults.findUnique({
+      const testRunStepResult = await baseDb.testRunStepResults.findUnique({
         where: { id: testRunStepResultId },
         include: {
           issues: true,
@@ -1051,7 +1051,7 @@ export class JiraLinkService {
         testRunStepResult.testRunResult.testRunCase.testRun.projectId;
 
       // Use upsert to create or update the issue atomically
-      const issue = await prisma.issue.upsert({
+      const issue = await baseDb.issue.upsert({
         where: {
           externalId_integrationId: {
             externalId: jiraIssueId,
@@ -1087,7 +1087,7 @@ export class JiraLinkService {
       });
 
       // Link the test run step result to the issue
-      await prisma.testRunStepResults.update({
+      await baseDb.testRunStepResults.update({
         where: { id: testRunStepResultId },
         data: {
           issues: {
@@ -1109,7 +1109,7 @@ export class JiraLinkService {
     jiraIssueId: string
   ): Promise<void> {
     try {
-      const issue = await prisma.issue.findFirst({
+      const issue = await baseDb.issue.findFirst({
         where: {
           externalId: jiraIssueId,
           integration: {
@@ -1123,7 +1123,7 @@ export class JiraLinkService {
       }
 
       // Disconnect the test run step result from the issue
-      await prisma.testRunStepResults.update({
+      await baseDb.testRunStepResults.update({
         where: { id: testRunStepResultId },
         data: {
           issues: {
@@ -1133,7 +1133,7 @@ export class JiraLinkService {
       });
 
       // Check if this issue is still linked to other entities
-      const issueWithLinks = await prisma.issue.findUnique({
+      const issueWithLinks = await baseDb.issue.findUnique({
         where: { id: issue.id },
         include: {
           caseIssues: true,
@@ -1154,7 +1154,7 @@ export class JiraLinkService {
         (issueWithLinks?.testRunStepResults?.length || 0);
 
       if (remainingLinks === 0) {
-        await prisma.issue.delete({
+        await baseDb.issue.delete({
           where: { id: issue.id },
         });
       }
@@ -1174,7 +1174,7 @@ export class JiraLinkService {
     testRunStepResultId: number
   ): Promise<any[]> {
     try {
-      const testRunStepResult = await prisma.testRunStepResults.findUnique({
+      const testRunStepResult = await baseDb.testRunStepResults.findUnique({
         where: { id: testRunStepResultId },
         include: {
           issues: {
@@ -1227,7 +1227,7 @@ export class JiraLinkService {
     issueData: any
   ): Promise<void> {
     try {
-      await prisma.issue.updateMany({
+      await baseDb.issue.updateMany({
         where: {
           externalId: jiraIssueId,
           integration: {

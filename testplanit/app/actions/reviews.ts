@@ -11,7 +11,7 @@ import { CommentService } from "~/lib/services/commentService";
 import { resolveEffectiveProjectRoleId } from "~/lib/services/effectiveRole";
 import { NotificationService } from "~/lib/services/notificationService";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
 import {
   AlreadyPendingError,
@@ -83,7 +83,7 @@ async function assertAssigneeCanApprove(params: {
   const area = areaForEntityType(params.entityType);
 
   if (params.assigneeRoleId !== null) {
-    const perm = await prisma.rolePermission.findUnique({
+    const perm = await baseDb.rolePermission.findUnique({
       where: { roleId_area: { roleId: params.assigneeRoleId, area } },
       select: { canApprove: true },
     });
@@ -97,12 +97,12 @@ async function assertAssigneeCanApprove(params: {
     const effectiveRoleId = await resolveEffectiveProjectRoleId(
       params.assigneeUserId,
       params.projectId,
-      prisma
+      baseDb
     );
     if (effectiveRoleId === null) {
       throw new IneligibleAssigneeError(params.assigneeUserId, area);
     }
-    const perm = await prisma.rolePermission.findUnique({
+    const perm = await baseDb.rolePermission.findUnique({
       where: { roleId_area: { roleId: effectiveRoleId, area } },
       select: { canApprove: true },
     });
@@ -152,11 +152,11 @@ export const requestReview = withActionAuditContext(
     // by failing fast here with a typed FEATURE_DISABLED before we touch the
     // database. Project flag is loaded via the same query so a single
     // round-trip answers both checks.
-    const systemEnabled = await isReviewFeatureSystemEnabled(prisma);
+    const systemEnabled = await isReviewFeatureSystemEnabled(baseDb);
     if (!systemEnabled) {
       return { success: false, error: "FEATURE_DISABLED" };
     }
-    const project = await prisma.projects.findUnique({
+    const project = await baseDb.projects.findUnique({
       where: { id: input.projectId },
       select: { reviewWorkflowEnabled: true },
     });
@@ -186,7 +186,7 @@ export const requestReview = withActionAuditContext(
     // fall through with no mention node (see method docstring).
     let assigneeMentionNode: JSONContent | null = null;
     if (input.assigneeUserId !== null) {
-      const assigneeUser = await prisma.user.findUnique({
+      const assigneeUser = await baseDb.user.findUnique({
         where: { id: input.assigneeUserId },
         select: { id: true, name: true },
       });
@@ -215,16 +215,16 @@ export const requestReview = withActionAuditContext(
     let defaultCommentText: string | null = null;
     if (trimmed.length === 0) {
       const [fromState, toState, assigneeRole, t] = await Promise.all([
-        prisma.workflows.findUnique({
+        baseDb.workflows.findUnique({
           where: { id: input.fromStateId },
           select: { name: true },
         }),
-        prisma.workflows.findUnique({
+        baseDb.workflows.findUnique({
           where: { id: input.toStateId },
           select: { name: true },
         }),
         input.assigneeRoleId !== null
-          ? prisma.roles.findUnique({
+          ? baseDb.roles.findUnique({
               where: { id: input.assigneeRoleId },
               select: { name: true },
             })
@@ -393,13 +393,13 @@ export const requestReview = withActionAuditContext(
         if (context) {
           const [assigneeUser, assigneeRole] = await Promise.all([
             input.assigneeUserId !== null
-              ? prisma.user.findUnique({
+              ? baseDb.user.findUnique({
                   where: { id: input.assigneeUserId },
                   select: { name: true },
                 })
               : Promise.resolve(null),
             input.assigneeRoleId !== null
-              ? prisma.roles.findUnique({
+              ? baseDb.roles.findUnique({
                   where: { id: input.assigneeRoleId },
                   select: { name: true },
                 })
@@ -492,15 +492,15 @@ async function loadReviewContext(
   toStateColor: string | null;
 } | null> {
   const [project, fromState, toState] = await Promise.all([
-    prisma.projects.findUnique({
+    baseDb.projects.findUnique({
       where: { id: projectId },
       select: { id: true, name: true },
     }),
-    prisma.workflows.findUnique({
+    baseDb.workflows.findUnique({
       where: { id: fromStateId },
       select: { name: true },
     }),
-    prisma.workflows.findUnique({
+    baseDb.workflows.findUnique({
       where: { id: toStateId },
       select: { name: true, color: { select: { value: true } } },
     }),
@@ -509,19 +509,19 @@ async function loadReviewContext(
 
   let entityName: string | null = null;
   if (entityType === "CASE") {
-    const row = await prisma.repositoryCases.findUnique({
+    const row = await baseDb.repositoryCases.findUnique({
       where: { id: entityId },
       select: { name: true },
     });
     entityName = row?.name ?? null;
   } else if (entityType === "RUN") {
-    const row = await prisma.testRuns.findUnique({
+    const row = await baseDb.testRuns.findUnique({
       where: { id: entityId },
       select: { name: true },
     });
     entityName = row?.name ?? null;
   } else {
-    const row = await prisma.sessions.findUnique({
+    const row = await baseDb.sessions.findUnique({
       where: { id: entityId },
       select: { name: true },
     });
@@ -578,12 +578,12 @@ export const cancelReviewRequest = withActionAuditContext(
     }
     const userId = session.user.id;
 
-    const systemEnabled = await isReviewFeatureSystemEnabled(prisma);
+    const systemEnabled = await isReviewFeatureSystemEnabled(baseDb);
     if (!systemEnabled) {
       return { success: false, error: "FEATURE_DISABLED" };
     }
 
-    const req = await prisma.reviewRequest.findUnique({
+    const req = await baseDb.reviewRequest.findUnique({
       where: { id: reviewRequestId },
       include: {
         project: {
@@ -619,7 +619,7 @@ export const cancelReviewRequest = withActionAuditContext(
       // Atomic flip — `updateMany` scoped to status=PENDING so a concurrent
       // decide on the same row can't co-commit. Loser sees count === 0 and
       // surfaces as ALREADY_DECIDED.
-      const result = await prisma.reviewRequest.updateMany({
+      const result = await baseDb.reviewRequest.updateMany({
         where: { id: reviewRequestId, status: "PENDING" },
         data: { status: "CANCELLED" },
       });
@@ -736,20 +736,20 @@ async function loadEntityName(
   entityId: number
 ): Promise<string | null> {
   if (entityType === "CASE") {
-    const row = await prisma.repositoryCases.findUnique({
+    const row = await baseDb.repositoryCases.findUnique({
       where: { id: entityId },
       select: { name: true },
     });
     return row?.name ?? null;
   }
   if (entityType === "RUN") {
-    const row = await prisma.testRuns.findUnique({
+    const row = await baseDb.testRuns.findUnique({
       where: { id: entityId },
       select: { name: true },
     });
     return row?.name ?? null;
   }
-  const row = await prisma.sessions.findUnique({
+  const row = await baseDb.sessions.findUnique({
     where: { id: entityId },
     select: { name: true },
   });

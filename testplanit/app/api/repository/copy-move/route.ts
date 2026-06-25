@@ -1,10 +1,10 @@
-import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "@/lib/multiTenantDb";
 import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getCopyMoveQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
 import { submitSchema } from "./schemas";
@@ -48,7 +48,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
   try {
     // 4. User fetch + enhance
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       include: { role: { include: { rolePermissions: true } } },
     });

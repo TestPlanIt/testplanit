@@ -12,7 +12,7 @@ import {
 import { updateAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 import { invalidateSessionUserCache } from "~/lib/session-cache";
@@ -80,7 +80,7 @@ export const PATCH = withAuditContext(
       const validatedData = updateUserSchema.parse(body);
 
       // Check if user exists
-      const existingUser = await prisma.user.findUnique({
+      const existingUser = await baseDb.user.findUnique({
         where: { id: userId },
         include: { userPreferences: true },
       });
@@ -90,7 +90,7 @@ export const PATCH = withAuditContext(
       }
 
       // SCIM-managed users have IdP-owned identity fields. Reject attempts to
-      // mutate them via this endpoint; the SCIM service writes via raw prisma
+      // mutate them via this endpoint; the SCIM service writes via raw baseDb
       // and bypasses this guard. Schema @deny rules cover the enhanced-client
       // paths; this guard covers this dedicated REST endpoint.
       const isScimManaged = existingUser.scimGivenName !== null;

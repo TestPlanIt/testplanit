@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import type { QuickScriptCaseData } from "~/app/actions/quickScriptActions";
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
   const { projectId, templateId } = body;
 
   // Load template
-  const template = await prisma.caseExportTemplate.findUnique({
+  const template = await baseDb.caseExportTemplate.findUnique({
     where: { id: templateId },
   });
 
@@ -137,14 +137,14 @@ export async function POST(req: NextRequest) {
         keepAlive(controller);
 
         // Resolve prompt
-        const resolver = new PromptResolver(prisma);
+        const resolver = new PromptResolver(baseDb);
         const resolvedPrompt = await resolver.resolve(
           LLM_FEATURES.EXPORT_CODE_GENERATION,
           projectId
         );
 
         // Resolve LLM integration via 3-tier chain
-        const llmManager = LlmManager.getInstance(prisma);
+        const llmManager = LlmManager.getInstance(baseDb);
         const resolved = await llmManager.resolveIntegration(
           LLM_FEATURES.EXPORT_CODE_GENERATION,
           projectId,
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
         // maxTokensPerRequest is the hard ceiling enforced by validateRequest() in the base
         // adapter — requests exceeding it throw before hitting the LLM API.
         // defaultMaxTokens is the fallback when a request doesn't specify maxTokens.
-        const providerConfig = await prisma.llmProviderConfig.findFirst({
+        const providerConfig = await baseDb.llmProviderConfig.findFirst({
           where: { llmIntegrationId: resolved.integrationId },
           select: { defaultMaxTokens: true, maxTokensPerRequest: true },
         });
@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
         const outputTokenCap = providerConfig?.maxTokensPerRequest ?? Infinity;
 
         // Assemble code context if a repo is configured (optional)
-        const repoConfig = await prisma.projectCodeRepositoryConfig.findUnique({
+        const repoConfig = await baseDb.projectCodeRepositoryConfig.findUnique({
           where: { projectId },
           select: { id: true },
         });

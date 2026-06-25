@@ -1,7 +1,7 @@
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export async function POST(request: Request) {
@@ -80,21 +80,21 @@ export async function POST(request: Request) {
       tagIds.map(async (tagId) => {
         const [repositoryCasesCount, sessionsCount, testRunsCount] =
           await Promise.all([
-            prisma.repositoryCases.count({
+            baseDb.repositoryCases.count({
               where: {
                 isDeleted: false,
                 caseTags: { some: { tag: { id: tagId } } },
                 ...projectAccessWhere,
               },
             }),
-            prisma.sessions.count({
+            baseDb.sessions.count({
               where: {
                 isDeleted: false,
                 tags: { some: { id: tagId } },
                 ...projectAccessWhere,
               },
             }),
-            prisma.testRuns.count({
+            baseDb.testRuns.count({
               where: {
                 isDeleted: false,
                 tags: { some: { id: tagId } },

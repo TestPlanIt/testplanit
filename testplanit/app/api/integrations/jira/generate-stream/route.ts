@@ -3,7 +3,7 @@ import { integrationManager } from "@/lib/integrations";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import {
   FORGE_CORS_HEADERS,
   forgeUserHasProjectAccess,
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const user = await prisma.user.findFirst({
+  const user = await baseDb.user.findFirst({
     where: { id: payload.userId, isActive: true, isDeleted: false },
     select: { id: true, name: true, email: true, access: true },
   });
@@ -121,8 +121,8 @@ export async function POST(req: NextRequest) {
 
         send(controller, { type: "stage", stage: "resolving" });
 
-        const manager = LlmManager.getInstance(prisma);
-        const resolver = new PromptResolver(prisma);
+        const manager = LlmManager.getInstance(baseDb);
+        const resolver = new PromptResolver(baseDb);
         const resolvedPrompt = await resolver.resolve(
           LLM_FEATURES.TEST_CASE_GENERATION,
           projectId
@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
         let maxTokensPerRequest = 4096;
         let maxTokens = resolvedPrompt.maxOutputTokens ?? 4096;
         const providerConfig = await (
-          prisma as any
+          baseDb as any
         ).llmProviderConfig.findFirst({
           where: { llmIntegrationId: resolved.integrationId },
         });
@@ -260,7 +260,7 @@ export async function POST(req: NextRequest) {
         const hierarchyContext =
           hierarchyBudget > 0
             ? await fetchHierarchyContext(
-                prisma,
+                baseDb,
                 projectId,
                 folderId ?? 0,
                 hierarchyBudget

@@ -5,11 +5,11 @@ import { LlmManager } from "../lib/llm/services/llm-manager.service";
 import { PromptResolver } from "../lib/llm/services/prompt-resolver.service";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { AUTO_TAG_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -75,7 +75,7 @@ const processor = async (
   validateMultiTenantJobData(job.data);
 
   // 2. Get tenant-specific Prisma client
-  const prisma = getPrismaClientForJob(job.data);
+  const prisma = getDbClientForJob(job.data);
 
   // 3. Create per-tenant service instances (bypass singleton for worker isolation)
   const llmManager = LlmManager.createForWorker(prisma, job.data.tenantId);

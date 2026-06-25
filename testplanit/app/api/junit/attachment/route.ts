@@ -10,7 +10,7 @@ import { z } from "zod/v4";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 
 const attachmentSchema = z.object({
@@ -56,7 +56,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     const validatedData = attachmentSchema.parse(body);
 
     // Verify the JUnit test result exists
-    const junitResult = await prisma.jUnitTestResult.findUnique({
+    const junitResult = await baseDb.jUnitTestResult.findUnique({
       where: { id: validatedData.junitTestResultId },
       select: { id: true },
     });
@@ -69,7 +69,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     // Create the attachment with BigInt size
-    const attachment = await prisma.attachments.create({
+    const attachment = await baseDb.attachments.create({
       data: {
         url: validatedData.url,
         name: validatedData.name,

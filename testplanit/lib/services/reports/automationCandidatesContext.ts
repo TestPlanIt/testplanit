@@ -19,7 +19,7 @@
  *      handling here.
  */
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 /**
  * Strategies for picking which manual cases get sent to the LLM when the
@@ -152,7 +152,7 @@ export async function buildAutomationCandidatesContext(
   } = { maxCases: 25 }
 ): Promise<AutomationCandidatesContext> {
   const strategy = options.strategy ?? DEFAULT_SELECTION_STRATEGY;
-  const project = await prisma.projects.findUnique({
+  const project = await baseDb.projects.findUnique({
     where: { id: projectId },
     select: { id: true, name: true },
   });
@@ -162,7 +162,7 @@ export async function buildAutomationCandidatesContext(
     );
   }
 
-  const rows = await prisma.repositoryCases.findMany({
+  const rows = await baseDb.repositoryCases.findMany({
     where: {
       projectId,
       automated: false,
@@ -251,7 +251,7 @@ export async function buildAutomationCandidatesContext(
   const flakeAggregates =
     caseIdList.length === 0
       ? []
-      : await prisma.testRunCases.groupBy({
+      : await baseDb.testRunCases.groupBy({
           by: ["repositoryCaseId"],
           where: {
             repositoryCaseId: { in: caseIdList },

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
 import {
@@ -8,8 +8,8 @@ import {
 } from "./test-run-notifications";
 
 // Mock dependencies
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     testRunCases: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
@@ -62,10 +62,10 @@ describe("test-run-notifications", () => {
 
     it("should create notification when test case is assigned to a new user", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.testRunCases.findUnique).mockResolvedValue(
+      vi.mocked(baseDb.testRunCases.findUnique).mockResolvedValue(
         mockTestRunCase as any
       );
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      vi.mocked(baseDb.user.findUnique).mockResolvedValue({
         name: "Jane Smith",
       } as any);
 
@@ -98,7 +98,7 @@ describe("test-run-notifications", () => {
 
       await notifyTestCaseAssignment(1, "assignee-456", "assignee-456");
 
-      expect(prisma.testRunCases.findUnique).not.toHaveBeenCalled();
+      expect(baseDb.testRunCases.findUnique).not.toHaveBeenCalled();
       expect(NotificationService.createNotification).not.toHaveBeenCalled();
     });
 
@@ -107,7 +107,7 @@ describe("test-run-notifications", () => {
 
       await notifyTestCaseAssignment(1, null, "assignee-456");
 
-      expect(prisma.testRunCases.findUnique).not.toHaveBeenCalled();
+      expect(baseDb.testRunCases.findUnique).not.toHaveBeenCalled();
       expect(NotificationService.createNotification).not.toHaveBeenCalled();
     });
 
@@ -116,13 +116,13 @@ describe("test-run-notifications", () => {
 
       await notifyTestCaseAssignment(1, "assignee-456", null);
 
-      expect(prisma.testRunCases.findUnique).not.toHaveBeenCalled();
+      expect(baseDb.testRunCases.findUnique).not.toHaveBeenCalled();
       expect(NotificationService.createNotification).not.toHaveBeenCalled();
     });
 
     it("should handle missing test run case gracefully", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.testRunCases.findUnique).mockResolvedValue(null);
+      vi.mocked(baseDb.testRunCases.findUnique).mockResolvedValue(null);
 
       await notifyTestCaseAssignment(1, "assignee-456", null);
 
@@ -131,7 +131,7 @@ describe("test-run-notifications", () => {
 
     it("should handle errors gracefully", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.testRunCases.findUnique).mockRejectedValue(
+      vi.mocked(baseDb.testRunCases.findUnique).mockRejectedValue(
         new Error("Database error")
       );
 
@@ -209,7 +209,7 @@ describe("test-run-notifications", () => {
 
     it("should create bulk notification for multiple test case assignments", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.testRunCases.findMany).mockResolvedValue(
+      vi.mocked(baseDb.testRunCases.findMany).mockResolvedValue(
         mockTestRunCases as any
       );
 
@@ -264,7 +264,7 @@ describe("test-run-notifications", () => {
 
     it("should group test cases by test run", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.testRunCases.findMany).mockResolvedValue(
+      vi.mocked(baseDb.testRunCases.findMany).mockResolvedValue(
         mockTestRunCases as any
       );
 
@@ -291,7 +291,7 @@ describe("test-run-notifications", () => {
 
       await notifyBulkTestCaseAssignment([1, 2, 3], null, 100);
 
-      expect(prisma.testRunCases.findMany).not.toHaveBeenCalled();
+      expect(baseDb.testRunCases.findMany).not.toHaveBeenCalled();
       expect(NotificationService.createNotification).not.toHaveBeenCalled();
     });
 
@@ -300,13 +300,13 @@ describe("test-run-notifications", () => {
 
       await notifyBulkTestCaseAssignment([1, 2, 3], "assignee-456", 100);
 
-      expect(prisma.testRunCases.findMany).not.toHaveBeenCalled();
+      expect(baseDb.testRunCases.findMany).not.toHaveBeenCalled();
       expect(NotificationService.createNotification).not.toHaveBeenCalled();
     });
 
     it("should handle empty test run cases gracefully", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.testRunCases.findMany).mockResolvedValue([]);
+      vi.mocked(baseDb.testRunCases.findMany).mockResolvedValue([]);
 
       await notifyBulkTestCaseAssignment([1, 2, 3], "assignee-456", 100);
 

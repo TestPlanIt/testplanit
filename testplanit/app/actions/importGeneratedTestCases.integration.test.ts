@@ -49,13 +49,13 @@ describeIntegration(
   "importGeneratedTestCases — inline parameters + dataset",
   () => {
     const importPrisma = async () => {
-      const { prisma } = await import("~/lib/prisma");
-      return prisma;
+      const { baseDb } = await import("~/lib/db");
+      return baseDb;
     };
 
     beforeAll(async () => {
-      const prisma = await importPrisma();
-      const user = await prisma.user.findFirst({ select: { id: true } });
+      const baseDb = await importPrisma();
+      const user = await baseDb.user.findFirst({ select: { id: true } });
       if (!user) throw new Error("Seed DB before running this test");
       fixtureUserId.current = user.id;
     });
@@ -85,7 +85,7 @@ describeIntegration(
     };
 
     afterEach(async () => {
-      const prisma = await importPrisma();
+      const baseDb = await importPrisma();
       for (const [model, ids] of [
         ["dataSetRow", cleanup.dataSetRowIds],
         ["dataSetVersion", cleanup.dataSetVersionIds],
@@ -99,7 +99,7 @@ describeIntegration(
         ["projects", cleanup.projectIds],
       ] as const) {
         if (ids.length) {
-          await (prisma as any)[model]
+          await (baseDb as any)[model]
             .deleteMany({ where: { id: { in: ids } } })
             .catch(() => {});
         }
@@ -109,11 +109,11 @@ describeIntegration(
       }
     });
 
-    async function seedFixture(prisma: any) {
-      const creator = await prisma.user.findFirst({ select: { id: true } });
+    async function seedFixture(baseDb: any) {
+      const creator = await baseDb.user.findFirst({ select: { id: true } });
       if (!creator) throw new Error("Seed DB before running this test");
-      const anyColor = await prisma.color.findFirst({ select: { id: true } });
-      const anyIcon = await prisma.fieldIcon.findFirst({
+      const anyColor = await baseDb.color.findFirst({ select: { id: true } });
+      const anyIcon = await baseDb.fieldIcon.findFirst({
         select: { id: true },
       });
       if (!anyColor || !anyIcon)
@@ -123,13 +123,13 @@ describeIntegration(
         .toString(36)
         .slice(2, 8)}`;
 
-      const project = await prisma.projects.create({
+      const project = await baseDb.projects.create({
         data: { name: tag, createdBy: creator.id },
         select: { id: true, name: true },
       });
       cleanup.projectIds.push(project.id);
 
-      const template = await prisma.templates.create({
+      const template = await baseDb.templates.create({
         data: {
           templateName: `${tag}-tpl`,
           isEnabled: true,
@@ -139,7 +139,7 @@ describeIntegration(
       });
       cleanup.templateIds.push(template.id);
 
-      const workflow = await prisma.workflows.create({
+      const workflow = await baseDb.workflows.create({
         data: {
           name: `${tag}-state`,
           order: 0,
@@ -152,13 +152,13 @@ describeIntegration(
       });
       cleanup.workflowIds.push(workflow.id);
 
-      const repo = await prisma.repositories.create({
+      const repo = await baseDb.repositories.create({
         data: { projectId: project.id },
         select: { id: true },
       });
       cleanup.repositoryIds.push(repo.id);
 
-      const folder = await prisma.repositoryFolders.create({
+      const folder = await baseDb.repositoryFolders.create({
         data: {
           name: `${tag}-folder`,
           repositoryId: repo.id,
@@ -176,11 +176,11 @@ describeIntegration(
       "persists TestCaseParameter + DataSet + DataSetVersion + DataSetRow when both are provided",
       { timeout: 60_000 },
       async () => {
-        const prisma = await importPrisma();
+        const baseDb = await importPrisma();
         const { importGeneratedTestCases } =
           await import("./importGeneratedTestCases");
         const { tag, project, template, workflow, repo, folder } =
-          await seedFixture(prisma);
+          await seedFixture(baseDb);
 
         const result = await importGeneratedTestCases({
           projectId: project.id,
@@ -227,7 +227,7 @@ describeIntegration(
         const caseId = result.importedIds[0];
         cleanup.repositoryCaseIds.push(caseId);
 
-        const params = await prisma.testCaseParameter.findMany({
+        const params = await baseDb.testCaseParameter.findMany({
           where: { testCaseId: caseId },
           orderBy: { order: "asc" },
           select: {
@@ -243,14 +243,14 @@ describeIntegration(
         expect(params[0].required).toBe(true);
         expect(params[1].sensitive).toBe(true);
 
-        const dataset = await prisma.dataSet.findFirst({
+        const dataset = await baseDb.dataSet.findFirst({
           where: { ownerCaseId: caseId },
           select: { id: true },
         });
         expect(dataset).not.toBeNull();
         cleanup.dataSetIds.push(dataset!.id);
 
-        const version = await prisma.dataSetVersion.findFirst({
+        const version = await baseDb.dataSetVersion.findFirst({
           where: { dataSetId: dataset!.id, version: 1 },
           select: { id: true, rowCount: true },
         });
@@ -258,7 +258,7 @@ describeIntegration(
         expect(version!.rowCount).toBe(2);
         cleanup.dataSetVersionIds.push(version!.id);
 
-        const rows = await prisma.dataSetRow.findMany({
+        const rows = await baseDb.dataSetRow.findMany({
           where: { dataSetId: dataset!.id },
           orderBy: { rowIndex: "asc" },
           select: { id: true, rowIndex: true, label: true },
@@ -267,7 +267,7 @@ describeIntegration(
         expect(rows.map((r: any) => r.rowIndex)).toEqual([0, 1]);
         expect(rows[0].label).toBe("happy path");
 
-        const caseRow = await prisma.repositoryCases.findUnique({
+        const caseRow = await baseDb.repositoryCases.findUnique({
           where: { id: caseId },
           select: { hasParameters: true },
         });
@@ -279,11 +279,11 @@ describeIntegration(
       "rejects datasetRows without parameters and rolls back the whole case",
       { timeout: 60_000 },
       async () => {
-        const prisma = await importPrisma();
+        const baseDb = await importPrisma();
         const { importGeneratedTestCases } =
           await import("./importGeneratedTestCases");
         const { tag, project, template, workflow, repo, folder } =
-          await seedFixture(prisma);
+          await seedFixture(baseDb);
 
         const result = await importGeneratedTestCases({
           projectId: project.id,
@@ -323,11 +323,11 @@ describeIntegration(
       "rejects duplicate parameter names and rolls back the case",
       { timeout: 60_000 },
       async () => {
-        const prisma = await importPrisma();
+        const baseDb = await importPrisma();
         const { importGeneratedTestCases } =
           await import("./importGeneratedTestCases");
         const { tag, project, template, workflow, repo, folder } =
-          await seedFixture(prisma);
+          await seedFixture(baseDb);
 
         const result = await importGeneratedTestCases({
           projectId: project.id,

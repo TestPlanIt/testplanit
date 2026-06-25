@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export type UserDashboardData = {
@@ -52,7 +52,7 @@ export async function GET(
     }
 
     // Get untested status ID
-    const untestedStatus = await prisma.status.findFirst({
+    const untestedStatus = await baseDb.status.findFirst({
       where: {
         systemName: "untested",
         isDeleted: false,
@@ -61,7 +61,7 @@ export async function GET(
     });
 
     // Get assigned test run cases with optimized query
-    const testRunCases = await prisma.$queryRaw<
+    const testRunCases = await baseDb.$queryRaw<
       Array<{
         id: number;
         repositoryCaseId: number;
@@ -117,7 +117,7 @@ export async function GET(
     `;
 
     // Get assigned sessions with aggregated elapsed time
-    const sessions = await prisma.$queryRaw<
+    const sessions = await baseDb.$queryRaw<
       Array<{
         id: number;
         name: string;

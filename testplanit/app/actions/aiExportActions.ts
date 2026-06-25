@@ -6,7 +6,7 @@ import { CodeContextService } from "~/lib/llm/services/code-context.service";
 import { LlmManager } from "~/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "~/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "~/lib/llm/types";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 import { formatAiError, stripMarkdownFences } from "~/utils/ai-export-helpers";
 
@@ -34,7 +34,7 @@ export async function checkAiExportAvailable(args: {
   }
 
   // Active LLM integration is the only hard requirement
-  const llmIntegration = await prisma.projectLlmIntegration.findFirst({
+  const llmIntegration = await baseDb.projectLlmIntegration.findFirst({
     where: { projectId: args.projectId, isActive: true },
   });
 
@@ -76,7 +76,7 @@ export async function generateAiExportBatch(args: {
     throw new Error("Not authenticated");
   }
 
-  const template = await prisma.caseExportTemplate.findUnique({
+  const template = await baseDb.caseExportTemplate.findUnique({
     where: { id: args.templateId },
   });
 
@@ -106,14 +106,14 @@ export async function generateAiExportBatch(args: {
   const caseName = `Combined (${args.cases.length} tests)`;
 
   // Resolve prompt
-  const resolver = new PromptResolver(prisma);
+  const resolver = new PromptResolver(baseDb);
   const resolvedPrompt = await resolver.resolve(
     LLM_FEATURES.EXPORT_CODE_GENERATION,
     args.projectId
   );
 
   // Resolve LLM integration via 3-tier chain
-  const llmManager = LlmManager.getInstance(prisma);
+  const llmManager = LlmManager.getInstance(baseDb);
   const resolved = await llmManager.resolveIntegration(
     LLM_FEATURES.EXPORT_CODE_GENERATION,
     args.projectId,
@@ -131,13 +131,13 @@ export async function generateAiExportBatch(args: {
   }
 
   // Determine token budget and assemble code context (if repo configured)
-  const providerConfig = await prisma.llmProviderConfig.findFirst({
+  const providerConfig = await baseDb.llmProviderConfig.findFirst({
     where: { llmIntegrationId: resolved.integrationId },
     select: { defaultMaxTokens: true },
   });
   const maxContextTokens = providerConfig?.defaultMaxTokens || 8000;
 
-  const repoConfig = await prisma.projectCodeRepositoryConfig.findUnique({
+  const repoConfig = await baseDb.projectCodeRepositoryConfig.findUnique({
     where: { projectId: args.projectId },
     select: { id: true },
   });
@@ -262,7 +262,7 @@ export async function generateAiExport(args: {
   }
 
   // 2. Load template
-  const template = await prisma.caseExportTemplate.findUnique({
+  const template = await baseDb.caseExportTemplate.findUnique({
     where: { id: args.templateId },
   });
 
@@ -290,14 +290,14 @@ export async function generateAiExport(args: {
   );
 
   // 5. Resolve prompt
-  const resolver = new PromptResolver(prisma);
+  const resolver = new PromptResolver(baseDb);
   const resolvedPrompt = await resolver.resolve(
     LLM_FEATURES.EXPORT_CODE_GENERATION,
     args.projectId
   );
 
   // 6. Resolve LLM integration via 3-tier chain
-  const llmManager = LlmManager.getInstance(prisma);
+  const llmManager = LlmManager.getInstance(baseDb);
   const resolved = await llmManager.resolveIntegration(
     LLM_FEATURES.EXPORT_CODE_GENERATION,
     args.projectId,
@@ -318,13 +318,13 @@ export async function generateAiExport(args: {
   }
 
   // 7. Determine token budget and assemble code context (if repo configured)
-  const providerConfig = await prisma.llmProviderConfig.findFirst({
+  const providerConfig = await baseDb.llmProviderConfig.findFirst({
     where: { llmIntegrationId: resolved.integrationId },
     select: { defaultMaxTokens: true },
   });
   const maxContextTokens = providerConfig?.defaultMaxTokens || 8000;
 
-  const repoConfig = await prisma.projectCodeRepositoryConfig.findUnique({
+  const repoConfig = await baseDb.projectCodeRepositoryConfig.findUnique({
     where: { projectId: args.projectId },
     select: { id: true },
   });

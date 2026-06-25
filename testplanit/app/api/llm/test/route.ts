@@ -2,7 +2,7 @@ import { LLM_FEATURES } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -21,7 +21,7 @@ export async function GET(_request: NextRequest) {
     }
 
     // Get user
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
     });
 
@@ -29,7 +29,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const manager = LlmManager.getInstance(prisma);
+    const manager = LlmManager.getInstance(baseDb);
 
     // List available integrations
     const integrations = await manager.listAvailableIntegrations();
@@ -101,10 +101,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const manager = LlmManager.getInstance(prisma);
+    const manager = LlmManager.getInstance(baseDb);
 
     // Check if user has access to this integration
-    const integration = await prisma.llmIntegration.findFirst({
+    const integration = await baseDb.llmIntegration.findFirst({
       where: {
         id: integrationId,
         isDeleted: false,
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Resolve prompt from database (falls back to hard-coded default)
-    const resolver = new PromptResolver(prisma);
+    const resolver = new PromptResolver(baseDb);
     const resolvedPrompt = await resolver.resolve(LLM_FEATURES.LLM_TEST);
 
     const llmRequest: LlmRequest = {
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
       const response = await manager.chat(integrationId, llmRequest);
 
       // Get usage stats for this test
-      const usage = await prisma.llmUsage.findFirst({
+      const usage = await baseDb.llmUsage.findFirst({
         where: {
           llmIntegrationId: integrationId,
           userId: session.user.id,

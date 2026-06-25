@@ -23,8 +23,8 @@ import {
   hasWriteAccess,
   type AccessManifest,
 } from "./access-manifest";
-import { prisma } from "./prisma";
-import { prisma as prismaBase } from "./prismaBase";
+import { baseDb } from "./db";
+import { rawDb } from "./rawDb";
 import { buildGucPayload } from "./audit/gucContext";
 
 /**
@@ -109,7 +109,7 @@ export async function tryFastPathCreate(params: {
     // CDC trigger records an empty actor (→ __system__). `userId` here is the
     // authenticated actor (session or API token) the route already resolved.
     const payload = JSON.stringify(buildGucPayload(userId));
-    const result = await prismaBase.$transaction(async (tx) => {
+    const result = await rawDb.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
       const accessor = (
         tx as unknown as Record<
@@ -128,7 +128,7 @@ export async function tryFastPathCreate(params: {
       {
         error: {
           message,
-          prisma: true,
+          baseDb: true,
         },
       },
       { status: 400 }
@@ -177,7 +177,7 @@ async function resolveProjectFromTestCase(
 
   if (!testCaseId) return null;
 
-  const testCase = await prisma.repositoryCases.findUnique({
+  const testCase = await baseDb.repositoryCases.findUnique({
     where: { id: testCaseId },
     select: { projectId: true },
   });
@@ -221,7 +221,7 @@ function extractCreateData(body: unknown): Record<string, unknown> | null {
 function getPrismaModel(modelName: string): {
   create: (args: { data: Record<string, unknown> }) => Promise<unknown>;
 } | null {
-  const p = prisma as unknown as Record<string, any>;
+  const p = baseDb as unknown as Record<string, any>;
   const model = p[modelName];
   if (
     model &&

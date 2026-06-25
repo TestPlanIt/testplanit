@@ -32,7 +32,7 @@ vi.mock("bullmq", async (importOriginal) => {
 
 vi.mock("../lib/valkey", () => ({ default: { status: "ready" } }));
 
-// ─── Mock prisma (tenant-scoped client returned by getPrismaClientForJob) ─────
+// ─── Mock prisma (tenant-scoped client returned by getDbClientForJob) ─────
 
 const mockPrisma = {
   steps: {
@@ -45,8 +45,8 @@ const mockPrisma = {
   },
 };
 
-vi.mock("../lib/multiTenantPrisma", () => ({
-  getPrismaClientForJob: vi.fn(() => mockPrisma),
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: vi.fn(() => mockPrisma),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),

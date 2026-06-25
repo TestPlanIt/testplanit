@@ -21,8 +21,8 @@ vi.mock("~/server/db", () => ({
   db: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       findUnique: vi.fn(),
     },
@@ -254,7 +254,7 @@ describe("CSV Import API Route", () => {
       deleteMany: vi.fn(),
     },
   };
-  // enhanceWithAudit() calls enhanceWithAudit(prismaBase, { user }).$extends({...}); the
+  // enhanceWithAudit() calls enhanceWithAudit(rawDb, { user }).$extends({...}); the
   // audit-GUC $extends layer wraps writes in a SET LOCAL transaction at runtime
   // but here it is a no-op pass-through so route writes land on mockEnhancedDb
   // directly (and assertions can read the mock call records).

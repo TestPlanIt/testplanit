@@ -76,7 +76,7 @@ vi.mock("next-intl/server", () => ({
 }));
 
 // Imports MUST come after vi.mock so the wrapped action picks up the stubs.
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { requestReview } from "./reviews";
 
 const TEST_RUN_ID = `p7-canapprove-${Date.now()}-${Math.floor(
@@ -116,7 +116,7 @@ async function ensureRoleCanApprove(
   area: ApplicationArea,
   canApprove: boolean
 ): Promise<void> {
-  await prisma.rolePermission.upsert({
+  await baseDb.rolePermission.upsert({
     where: { roleId_area: { roleId, area } },
     update: { canApprove },
     create: { roleId, area, canApprove },
@@ -125,7 +125,7 @@ async function ensureRoleCanApprove(
 
 beforeAll(async () => {
   if (SKIP_INTEGRATION) return;
-  const existing = await prisma.appConfig.findUnique({
+  const existing = await baseDb.appConfig.findUnique({
     where: { key: REVIEW_FEATURE_KEY },
     select: { value: true },
   });
@@ -133,7 +133,7 @@ beforeAll(async () => {
     priorReviewFeatureExisted = true;
     priorReviewFeatureValue = existing.value;
   }
-  await prisma.appConfig.upsert({
+  await baseDb.appConfig.upsert({
     where: { key: REVIEW_FEATURE_KEY },
     create: { key: REVIEW_FEATURE_KEY, value: true },
     update: { value: true },
@@ -142,11 +142,11 @@ beforeAll(async () => {
   // Two fresh roles — one carries canApprove on TestCaseRepository, one
   // does not. Roles are global so we mint new ones to keep the test
   // isolated from seeded role baselines.
-  const approverRole = await prisma.roles.create({
+  const approverRole = await baseDb.roles.create({
     data: { name: `approver-${TEST_RUN_ID}` },
   });
   approverRoleId = approverRole.id;
-  const nonApproverRole = await prisma.roles.create({
+  const nonApproverRole = await baseDb.roles.create({
     data: { name: `nonapprover-${TEST_RUN_ID}` },
   });
   nonApproverRoleId = nonApproverRole.id;
@@ -162,7 +162,7 @@ beforeAll(async () => {
     false
   );
 
-  const requester = await prisma.user.create({
+  const requester = await baseDb.user.create({
     data: {
       name: `requester-${TEST_RUN_ID}`,
       email: `requester-${TEST_RUN_ID}@example.invalid`,
@@ -173,7 +173,7 @@ beforeAll(async () => {
   });
   requesterUserId = requester.id;
 
-  const approver = await prisma.user.create({
+  const approver = await baseDb.user.create({
     data: {
       name: `approver-user-${TEST_RUN_ID}`,
       email: `approver-${TEST_RUN_ID}@example.invalid`,
@@ -184,7 +184,7 @@ beforeAll(async () => {
   });
   approverUserId = approver.id;
 
-  const nonApprover = await prisma.user.create({
+  const nonApprover = await baseDb.user.create({
     data: {
       name: `nonapprover-user-${TEST_RUN_ID}`,
       email: `nonapprover-${TEST_RUN_ID}@example.invalid`,
@@ -195,7 +195,7 @@ beforeAll(async () => {
   });
   nonApproverUserId = nonApprover.id;
 
-  const project = await prisma.projects.create({
+  const project = await baseDb.projects.create({
     data: {
       name: `proj-${TEST_RUN_ID}`,
       createdBy: requester.id,
@@ -206,7 +206,7 @@ beforeAll(async () => {
 
   // Per-project SPECIFIC_ROLE grants so resolveEffectiveProjectRoleId can
   // resolve the user's effective role on the project.
-  await prisma.userProjectPermission.create({
+  await baseDb.userProjectPermission.create({
     data: {
       userId: approverUserId,
       projectId,
@@ -214,7 +214,7 @@ beforeAll(async () => {
       roleId: approverRoleId,
     },
   });
-  await prisma.userProjectPermission.create({
+  await baseDb.userProjectPermission.create({
     data: {
       userId: nonApproverUserId,
       projectId,
@@ -222,7 +222,7 @@ beforeAll(async () => {
       roleId: nonApproverRoleId,
     },
   });
-  await prisma.userProjectPermission.create({
+  await baseDb.userProjectPermission.create({
     data: {
       userId: requesterUserId,
       projectId,
@@ -231,7 +231,7 @@ beforeAll(async () => {
     },
   });
 
-  const workflows = await prisma.workflows.findMany({
+  const workflows = await baseDb.workflows.findMany({
     where: { isDeleted: false, isEnabled: true },
     take: 2,
     orderBy: { id: "asc" },
@@ -243,7 +243,7 @@ beforeAll(async () => {
   fromStateId = workflows[0].id;
   toStateId = workflows[1].id;
 
-  const template = await prisma.templates.findFirst({
+  const template = await baseDb.templates.findFirst({
     where: { isEnabled: true, isDeleted: false },
     select: { id: true },
     orderBy: { id: "asc" },
@@ -251,11 +251,11 @@ beforeAll(async () => {
   if (!template) throw new Error("Need >= 1 template seeded");
   templateId = template.id;
 
-  const repo = await prisma.repositories.create({
+  const repo = await baseDb.repositories.create({
     data: { projectId, isActive: true, isArchived: false },
   });
   repositoryId = repo.id;
-  const folder = await prisma.repositoryFolders.create({
+  const folder = await baseDb.repositoryFolders.create({
     data: {
       projectId,
       repositoryId,
@@ -269,14 +269,14 @@ beforeAll(async () => {
 afterAll(async () => {
   if (SKIP_INTEGRATION) return;
   try {
-    await prisma.comment.updateMany({
+    await baseDb.comment.updateMany({
       where: { reviewRequestId: { in: createdReviewRequestIds } },
       data: { isDeleted: true },
     });
   } catch {}
   for (const id of createdReviewRequestIds) {
     try {
-      await prisma.reviewRequest.update({
+      await baseDb.reviewRequest.update({
         where: { id },
         data: { isDeleted: true },
       });
@@ -284,7 +284,7 @@ afterAll(async () => {
   }
   for (const id of createdCaseIds) {
     try {
-      await prisma.repositoryCases.update({
+      await baseDb.repositoryCases.update({
         where: { id },
         data: { isDeleted: true },
       });
@@ -292,7 +292,7 @@ afterAll(async () => {
   }
   if (repositoryFolderId) {
     try {
-      await prisma.repositoryFolders.update({
+      await baseDb.repositoryFolders.update({
         where: { id: repositoryFolderId },
         data: { isDeleted: true },
       });
@@ -300,7 +300,7 @@ afterAll(async () => {
   }
   if (repositoryId) {
     try {
-      await prisma.repositories.update({
+      await baseDb.repositories.update({
         where: { id: repositoryId },
         data: { isDeleted: true },
       });
@@ -308,10 +308,10 @@ afterAll(async () => {
   }
   if (projectId) {
     try {
-      await prisma.userProjectPermission.deleteMany({ where: { projectId } });
+      await baseDb.userProjectPermission.deleteMany({ where: { projectId } });
     } catch {}
     try {
-      await prisma.projects.update({
+      await baseDb.projects.update({
         where: { id: projectId },
         data: { isDeleted: true },
       });
@@ -320,7 +320,7 @@ afterAll(async () => {
   for (const userId of [requesterUserId, approverUserId, nonApproverUserId]) {
     if (!userId) continue;
     try {
-      await prisma.user.update({
+      await baseDb.user.update({
         where: { id: userId },
         data: { isDeleted: true, isActive: false },
       });
@@ -329,10 +329,10 @@ afterAll(async () => {
   for (const roleId of [approverRoleId, nonApproverRoleId]) {
     if (!roleId) continue;
     try {
-      await prisma.rolePermission.deleteMany({ where: { roleId } });
+      await baseDb.rolePermission.deleteMany({ where: { roleId } });
     } catch {}
     try {
-      await prisma.roles.update({
+      await baseDb.roles.update({
         where: { id: roleId },
         data: { isDeleted: true },
       });
@@ -341,20 +341,20 @@ afterAll(async () => {
 
   try {
     if (priorReviewFeatureExisted) {
-      await prisma.appConfig.update({
+      await baseDb.appConfig.update({
         where: { key: REVIEW_FEATURE_KEY },
         data: { value: priorReviewFeatureValue as never },
       });
     } else {
-      await prisma.appConfig.delete({ where: { key: REVIEW_FEATURE_KEY } });
+      await baseDb.appConfig.delete({ where: { key: REVIEW_FEATURE_KEY } });
     }
   } catch {}
 
-  await prisma.$disconnect();
+  await baseDb.$disconnect();
 }, 30_000);
 
 async function freshCase(): Promise<number> {
-  const caseRow = await prisma.repositoryCases.create({
+  const caseRow = await baseDb.repositoryCases.create({
     data: {
       projectId,
       repositoryId,
@@ -414,7 +414,7 @@ describeIntegration("requestReview canApprove gate", () => {
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe("INELIGIBLE_ASSIGNEE");
 
-    const after = await prisma.reviewRequest.findFirst({
+    const after = await baseDb.reviewRequest.findFirst({
       where: { entityType: "CASE", entityId: caseId },
     });
     expect(after).toBeNull();

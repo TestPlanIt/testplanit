@@ -8,7 +8,7 @@ import {
   MatrixCellCapExceededError,
   runMatrixAggregation,
 } from "~/lib/matrix/matrixAggregation";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { matrixFiltersSchema } from "~/lib/schemas/matrixFiltersSchema";
 import { authOptions } from "~/server/auth";
 
@@ -52,7 +52,7 @@ import { authOptions } from "~/server/auth";
  * System admins always pass.
  */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
-  const u = await prisma.user.findUnique({
+  const u = await baseDb.user.findUnique({
     where: { id: userId },
     include: { role: { include: { rolePermissions: true } } },
   });
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     if (isSharedReportBypass) {
       // Raw existence check — the share link already authorized the read;
       // ZenStack's policy enforcement would reject without a session.
-      const project = await prisma.projects.findFirst({
+      const project = await baseDb.projects.findFirst({
         where: { id: projectId, isDeleted: false },
         select: { id: true },
       });
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
 
     try {
       const axes = await runMatrixAggregation(
-        prisma,
+        baseDb,
         projectId,
         filters,
         viewerCanReadSensitive

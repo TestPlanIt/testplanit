@@ -35,8 +35,8 @@ vi.mock("~/lib/matrix/matrixAggregation", async () => {
   };
 });
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: { findUnique: (...args: unknown[]) => userFindUniqueMock(...args) },
   },
 }));

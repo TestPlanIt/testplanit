@@ -8,7 +8,7 @@ import { getEnhancedDb } from "~/lib/auth/utils";
 import { updateAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import {
   buildIterationOverrideSchema,
   type OverrideParameterSchemaEntry,
@@ -47,7 +47,7 @@ const bodySchema = z.object({
  * values. System admins always pass.
  */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
-  const u = await prisma.user.findUnique({
+  const u = await baseDb.user.findUnique({
     where: { id: userId },
     include: { role: { include: { rolePermissions: true } } },
   });

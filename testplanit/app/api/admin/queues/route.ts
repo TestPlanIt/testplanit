@@ -1,5 +1,5 @@
-import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
-import { prisma } from "@/lib/prisma";
+import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantDb";
+import { baseDb } from "@/lib/db";
 import { getAllQueues } from "@/lib/queues";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     // Get user access level if not already known from API token
     if (!userAccess) {
-      const user = await prisma.user.findUnique({
+      const user = await baseDb.user.findUnique({
         where: { id: userId },
         select: { access: true },
       });

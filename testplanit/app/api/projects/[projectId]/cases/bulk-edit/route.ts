@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { auditBulkUpdate } from "~/lib/services/auditLog";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
@@ -149,7 +149,7 @@ export const POST = withAuditContext(
             ],
           };
 
-      const project = await prisma.projects.findFirst({
+      const project = await baseDb.projects.findFirst({
         where: projectAccessWhere,
       });
 
@@ -165,7 +165,7 @@ export const POST = withAuditContext(
       const validatedData: BulkEditRequest = bulkEditSchema.parse(body);
 
       // Verify all cases belong to this project
-      const cases = await prisma.repositoryCases.findMany({
+      const cases = await baseDb.repositoryCases.findMany({
         where: {
           id: { in: validatedData.caseIds },
           projectId,
@@ -238,9 +238,9 @@ export const POST = withAuditContext(
             // Review & Approval preflight (Plan 01-04). When the bulk edit
             // includes a stateId change, assert the target state's review
             // gate passes for this specific case BEFORE the update fires.
-            // The bulk-edit route uses raw prisma (not the auto-API), so the
+            // The bulk-edit route uses raw baseDb (not the auto-API), so the
             // schema `@@deny` rule does NOT fire here — this app preflight is
-            // the sole gate. A throw inside `prisma.$transaction` rolls back
+            // the sole gate. A throw inside `baseDb.$transaction` rolls back
             // every prior case in the loop; partial-bulk semantics ("fail
             // closed") are correct for Phase 1.
             let gateApprovals: { approvedRequestIds: string[] } | null = null;

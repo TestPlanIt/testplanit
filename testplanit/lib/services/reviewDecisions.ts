@@ -4,7 +4,7 @@ import type { JSONContent } from "@tiptap/core";
 import type { Session } from "next-auth";
 
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { CommentService } from "~/lib/services/commentService";
 import { resolveEffectiveProjectRoleId } from "~/lib/services/effectiveRole";
@@ -74,12 +74,12 @@ export type DecideOutcome = "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
  *      future ZenStack release, this check authoritatively gates the
  *      mutation.
  *
- *   4. On qualification, mutate atomically via raw `prisma.updateMany`
+ *   4. On qualification, mutate atomically via raw `baseDb.updateMany`
  *      scoped to `status: 'PENDING'`. The combined WHERE + UPDATE is a
  *      single statement at the database, so two concurrent decide calls
  *      cannot both pass the load-time PENDING check and both commit —
  *      the loser gets `count === 0` and we throw "already decided".
- *      Raw prisma is still required here because the schema-layer
+ *      Raw baseDb is still required here because the schema-layer
  *      `@@deny('update', status != 'PENDING')` rule denies any update
  *      where the post-state differs from PENDING; raw bypasses ZenStack
  *      policy enforcement, which is appropriate because the eligibility
@@ -110,7 +110,7 @@ export async function decideReviewRequest(
   // same round-trip whether the request exists or not; project flag is
   // checked alongside the main load below to keep the request-lookup
   // single-statement.
-  const systemEnabled = await isReviewFeatureSystemEnabled(prisma);
+  const systemEnabled = await isReviewFeatureSystemEnabled(baseDb);
   if (!systemEnabled) {
     throw new FeatureDisabledError();
   }
@@ -120,7 +120,7 @@ export async function decideReviewRequest(
   // branches without making a second query. `project.name` and
   // `requester.name` are pulled here so the paired-Comment fan-out below
   // doesn't need a second round-trip.
-  const req = await prisma.reviewRequest.findUniqueOrThrow({
+  const req = await baseDb.reviewRequest.findUniqueOrThrow({
     where: { id: reviewRequestId },
     include: {
       project: {
@@ -173,7 +173,7 @@ export async function decideReviewRequest(
     groupPermissions.some((g) => g.accessType === "GLOBAL_ROLE");
   let callerGlobalRoleId: number | null = null;
   if (req.assigneeRoleId !== null && hasAnyGlobalRolePermission) {
-    const callerUser = await prisma.user.findUnique({
+    const callerUser = await baseDb.user.findUnique({
       where: { id: userId },
       select: { roleId: true },
     });
@@ -221,10 +221,10 @@ export async function decideReviewRequest(
     const callerEffectiveRoleId = await resolveEffectiveProjectRoleId(
       userId,
       req.projectId,
-      prisma
+      baseDb
     );
     if (callerEffectiveRoleId !== null) {
-      const perm = await prisma.rolePermission.findUnique({
+      const perm = await baseDb.rolePermission.findUnique({
         where: { roleId_area: { roleId: callerEffectiveRoleId, area } },
         select: { canApprove: true },
       });
@@ -276,7 +276,7 @@ export async function decideReviewRequest(
 
   // Combined status flip + paired Comment create in a single transaction
   // so a decision never commits without its conversation-thread record
-  // (hybrid-comments D-21 follow-up). Raw prisma is still used inside the
+  // (hybrid-comments D-21 follow-up). Raw baseDb is still used inside the
   // tx for the same documented-exception reason as before — the schema
   // `@@deny('update', status != 'PENDING')` rule would block the
   // PENDING→APPROVED/etc. flip via ZenStack policy, but the eligibility
@@ -445,7 +445,7 @@ export async function decideReviewRequest(
     console.error("decideReviewRequest: audit emission failed", auditErr);
   }
 
-  return prisma.reviewRequest.findUniqueOrThrow({
+  return baseDb.reviewRequest.findUniqueOrThrow({
     where: { id: reviewRequestId },
   });
 }
@@ -455,20 +455,20 @@ async function loadEntityName(
   entityId: number
 ): Promise<string | null> {
   if (entityType === "CASE") {
-    const row = await prisma.repositoryCases.findUnique({
+    const row = await baseDb.repositoryCases.findUnique({
       where: { id: entityId },
       select: { name: true },
     });
     return row?.name ?? null;
   }
   if (entityType === "RUN") {
-    const row = await prisma.testRuns.findUnique({
+    const row = await baseDb.testRuns.findUnique({
       where: { id: entityId },
       select: { name: true },
     });
     return row?.name ?? null;
   }
-  const row = await prisma.sessions.findUnique({
+  const row = await baseDb.sessions.findUnique({
     where: { id: entityId },
     select: { name: true },
   });

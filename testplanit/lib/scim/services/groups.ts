@@ -1,7 +1,7 @@
 /**
  * SCIM Groups service layer.
  *
- * Owns every SCIM Group mutation's `prisma.$transaction` boundary and composes
+ * Owns every SCIM Group mutation's `baseDb.$transaction` boundary and composes
  * the SCIM Group mapper, filter translator, PATCH applier, and webhook
  * emitters into six entry points the SCIM route layer calls:
  *
@@ -13,9 +13,9 @@
  *   - deleteScimGroup  (DELETE /scim/v2/Groups/{id})
  *
  * Discipline (mirrors the Users service layer):
- *   - Uses the raw prisma client. The SCIM bearer is the auth boundary;
+ *   - Uses the raw baseDb client. The SCIM bearer is the auth boundary;
  *     ZenStack access policies do NOT apply to SCIM mutations.
- *   - Every mutation opens its own `prisma.$transaction(async tx => ...)`.
+ *   - Every mutation opens its own `baseDb.$transaction(async tx => ...)`.
  *     Webhook emission, audit-row writes, and GroupAssignment member-sync
  *     all happen INSIDE the tx so the outbox row, audit row, and assignment
  *     rows commit or roll back together with the entity write.
@@ -49,7 +49,7 @@ import { DbNull } from "@zenstackhq/orm";
 import type { JsonValue } from "@zenstackhq/orm";
 import type { TxClient } from "~/lib/zenstack";
 import { updateAuditContext } from "~/lib/auditContext";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
   emitScimGroupCreated,
@@ -277,7 +277,7 @@ export async function createScimGroup(
   body: ScimGroupBody,
   ctx: ScimAuthContext
 ): Promise<CreateScimGroupResult> {
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await baseDb.$transaction(async (tx) => {
     const payload = scimToGroupCreate(body);
     const requestedMemberIds = extractMemberIds(payload.members);
 
@@ -544,7 +544,7 @@ export async function getScimGroupById(
   if (parsedId === null) {
     throw new ScimNotFoundError(`Group ${id} not found`);
   }
-  const row = await prisma.groups.findUnique({
+  const row = await baseDb.groups.findUnique({
     where: { id: parsedId },
     include: SCIM_GROUP_INCLUDE,
   });
@@ -577,14 +577,14 @@ export async function listScimGroups(
   };
 
   const [rows, totalResults] = await Promise.all([
-    prisma.groups.findMany({
+    baseDb.groups.findMany({
       where: finalWhere,
       include: SCIM_GROUP_INCLUDE,
       skip: resolvedSkip,
       take: resolvedCount,
       orderBy: { id: "asc" },
     }),
-    prisma.groups.count({ where: finalWhere }),
+    baseDb.groups.count({ where: finalWhere }),
   ]);
 
   return {
@@ -607,7 +607,7 @@ export async function putScimGroup(
     throw new ScimNotFoundError(`Group ${id} not found`);
   }
 
-  const result: PutScimGroupResult = await prisma.$transaction(async (tx) => {
+  const result: PutScimGroupResult = await baseDb.$transaction(async (tx) => {
     const current = (await tx.groups.findUnique({
       where: { id: parsedId },
       include: SCIM_GROUP_INCLUDE,
@@ -770,7 +770,7 @@ export async function patchScimGroup(
     throw new ScimNotFoundError(`Group ${id} not found`);
   }
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await baseDb.$transaction(async (tx) => {
     const current = (await tx.groups.findUnique({
       where: { id: parsedId },
       include: SCIM_GROUP_INCLUDE,
@@ -953,7 +953,7 @@ export async function deleteScimGroup(
     throw new ScimNotFoundError(`Group ${id} not found`);
   }
 
-  const result: DeleteScimGroupResult = await prisma.$transaction(
+  const result: DeleteScimGroupResult = await baseDb.$transaction(
     async (tx) => {
       const current = (await tx.groups.findUnique({
         where: { id: parsedId },

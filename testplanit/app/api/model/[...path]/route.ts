@@ -17,8 +17,8 @@ import {
   enrichFromApiAuth,
   withAuditContext,
 } from "~/lib/auditContextWrappers";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
-import { prisma } from "~/lib/prisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
+import { baseDb } from "~/lib/db";
 import {
   AUDITED_CONFIG_MODELS,
   AUDITED_RPC_ENTITY_ACCESSORS,
@@ -186,8 +186,8 @@ function extractEntityIdFromBody(
 //     ReviewRequest cancel path, promoted to REVIEW_CANCELLED below).
 //   - AUDITED_CONFIG_MODELS: admin-config catalog + access models, audited
 //     canonically here on the RPC path (the dominant admin mutation path).
-// For both, the lib/prisma.ts `$extends` hooks cover non-RPC paths (workers,
-// custom routes, direct prisma) and are suppressed on this path via
+// For both, the lib/baseDb.ts `$extends` hooks cover non-RPC paths (workers,
+// custom routes, direct baseDb) and are suppressed on this path via
 // suppressEntityAudit to avoid a double, partial (`select:{id:true}`-shaped)
 // generic row. Both lists live in auditLog.ts and are guarded against the
 // datamodel so a singular/plural accessor typo can't silently disable audit.
@@ -315,7 +315,7 @@ async function getPrisma() {
   if (userId) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        user = await prisma.user.findUnique({
+        user = await baseDb.user.findUnique({
           where: { id: userId },
           select: {
             id: true,
@@ -353,7 +353,7 @@ async function getPrisma() {
   }
 
   // enhanceWithAudit wraps writes in a GUC-carrying transaction so trigger CDC
-  // records the actor (plain enhance() bypasses the lib/prisma $extends hook).
+  // records the actor (plain enhance() bypasses the lib/baseDb $extends hook).
   return enhanceWithAudit(user ?? undefined);
 }
 
@@ -479,7 +479,7 @@ async function innerHandler(
         userId: apiAuth.userId!,
       };
       // Look up user info for audit context
-      const user = await prisma.user.findUnique({
+      const user = await baseDb.user.findUnique({
         where: { id: apiAuth.userId },
         select: { email: true, name: true },
       });
@@ -576,7 +576,7 @@ async function innerHandler(
     // persisted (defense in depth alongside the normalize-on-use path in
     // createSAMLClient). The model route is the universal mutation seam for
     // SamlConfiguration (the admin UI writes via the generated RPC hooks), and
-    // the lib/prisma.ts $extends middleware is bypassed by ZenStack's enhance()
+    // the lib/baseDb.ts $extends middleware is bypassed by ZenStack's enhance()
     // on this path — same reason the ES-sync shims below live here — so the
     // guard belongs here rather than in a Prisma extension.
     if (
@@ -638,7 +638,7 @@ async function innerHandler(
         scope !== undefined
       ) {
         const remapped = await resolveCreateStateRemap(
-          prisma,
+          baseDb,
           projectId,
           scope,
           candidateStateId
@@ -833,12 +833,12 @@ async function innerHandler(
             ? Number(rawResultId)
             : NaN;
       if (Number.isFinite(resultId) && authenticatedUserId) {
-        const actor = await prisma.user.findUnique({
+        const actor = await baseDb.user.findUnique({
           where: { id: authenticatedUserId },
           select: { access: true },
         });
         try {
-          await assertResultEditWindowOpen(prisma, resultId, actor?.access);
+          await assertResultEditWindowOpen(baseDb, resultId, actor?.access);
         } catch (err) {
           if (isEditWindowExpiredError(err)) {
             return NextResponse.json(
@@ -859,7 +859,7 @@ async function innerHandler(
     let sessionResultSubjectProjectId: number | undefined;
 
     // Required-result-field guard for SessionResults.create. The model handler
-    // is the universal chokepoint — `lib/prisma.ts`'s `$extends` middleware is
+    // is the universal chokepoint — `lib/baseDb.ts`'s `$extends` middleware is
     // bypassed by ZenStack's `enhance()` (see the repositoryCases ES-sync shim
     // above), so a Prisma-extension hook would silently miss raw POSTs landing
     // here. Reading the supplied `resultFieldValues.create[]` from the
@@ -887,7 +887,7 @@ async function innerHandler(
             ? Number(rawSessionId)
             : NaN;
       if (Number.isFinite(sessionId)) {
-        const session = await prisma.sessions.findUnique({
+        const session = await baseDb.sessions.findUnique({
           where: { id: sessionId },
           select: { templateId: true, name: true, projectId: true },
         });
@@ -932,7 +932,7 @@ async function innerHandler(
                 entry !== null
             );
           const missing = await hasMissingRequiredResultField(
-            prisma,
+            baseDb,
             session.templateId,
             suppliedFieldValues
           );
@@ -956,7 +956,7 @@ async function innerHandler(
     // pre-mutation row state to compute state-transition diffs and pass
     // oldRow into the testRun/session/issue/case emitters. Captured BEFORE
     // the rpcHandler runs so it's not affected by transaction isolation.
-    // The post-mutation `lib/prisma.ts` `$extends` middleware emission is
+    // The post-mutation `lib/baseDb.ts` `$extends` middleware emission is
     // suppressed via auditContext.suppressWebhooks (Plan 02-02 D-01a) to
     // prevent double-emission; this shim is the canonical RPC-path emitter.
     //
@@ -982,7 +982,7 @@ async function innerHandler(
           webhookMutation.operation
         );
         if (whereId !== null) {
-          webhookPreSnapshot = await (prisma as any)[
+          webhookPreSnapshot = await (baseDb as any)[
             webhookMutation.model
           ].findUnique({ where: { id: whereId } });
         }
@@ -1008,7 +1008,7 @@ async function innerHandler(
         auditPreSnapshot = webhookPreSnapshot;
       } else {
         try {
-          auditPreSnapshot = await (prisma as any)[parsedPath.model].findUnique(
+          auditPreSnapshot = await (baseDb as any)[parsedPath.model].findUnique(
             { where: resolvedWhere }
           );
         } catch (e) {
@@ -1023,7 +1023,7 @@ async function innerHandler(
     // projectId, etc.), in which case we fall through to the regular handler.
     //
     // Plan 02-08 — wrap the RPC handler call (and the fast-path) in a nested
-    // ALS frame that adds suppressWebhooks=true. The lib/prisma.ts $extends
+    // ALS frame that adds suppressWebhooks=true. The lib/baseDb.ts $extends
     // middleware emission is unreliable for ZenStack RPC mutations because
     // RPC injects `select: { id: true }` into args, leaving the middleware
     // with a partial row that can't compute the state-changed diff. We
@@ -1032,7 +1032,7 @@ async function innerHandler(
     // copies the parent's identity/correlation fields so they remain visible
     // to audit code paths inside the RPC handler.
     const parentAuditCtx = getAuditContext() ?? {};
-    // Suppress the lib/prisma.ts `$extends` generic entity-audit emission for
+    // Suppress the lib/baseDb.ts `$extends` generic entity-audit emission for
     // models this route audits canonically below (AUDITED_ENTITIES). On the RPC
     // path the `$extends` hook only sees a partial `select:{id:true}` row, so
     // letting it emit would add a second, malformed audit record. Scoped to the
@@ -1143,7 +1143,7 @@ async function innerHandler(
             typeof data.projectId === "number" &&
             typeof data.stateId === "number"
           ) {
-            softDeleteUnexecutedRunCasesForDraftRevert(prisma, {
+            softDeleteUnexecutedRunCasesForDraftRevert(baseDb, {
               projectId: data.projectId,
               repositoryCaseId: data.id,
               newStateId: data.stateId,
@@ -1401,7 +1401,7 @@ async function innerHandler(
     // before rpcHandler ran. The $extends emission was suppressed via
     // auditContext.suppressWebhooks during the rpc call (D-01a) so this is
     // the only emission seam for UI-driven mutations.
-    // $extends emission still fires for direct-prisma callers where
+    // $extends emission still fires for direct-baseDb callers where
     // suppressWebhooks is false.
     if (
       response.ok &&
@@ -1426,7 +1426,7 @@ async function innerHandler(
           const postRow =
             parsedPath.operation === "delete"
               ? null
-              : await (prisma as any)[parsedPath.model]
+              : await (baseDb as any)[parsedPath.model]
                   .findUnique({ where: { id: entityId } })
                   .catch(() => null);
 
@@ -1436,7 +1436,7 @@ async function innerHandler(
           // the entity write committed first, the outbox row is emitted in
           // a separate tx that runs in the same request lifecycle. Same
           // post-commit pattern the route uses for ES sync + audit log.
-          await prisma.$transaction(async (tx) => {
+          await baseDb.$transaction(async (tx) => {
             switch (parsedPath.model) {
               case "testRuns": {
                 if (parsedPath.operation === "create" && postRow) {
@@ -1584,7 +1584,7 @@ async function innerHandler(
             // the row itself.
             if (parsedPath.model === "testRunResults") {
               const fkSource = auditPreSnapshot ?? data;
-              const scope = await resolveTestRunResultAuditScope(prisma, {
+              const scope = await resolveTestRunResultAuditScope(baseDb, {
                 testRunId: fkSource?.testRunId,
                 testRunCaseId: fkSource?.testRunCaseId,
               });
@@ -1627,7 +1627,7 @@ async function innerHandler(
 
             // Specialized semantic actions for security/config models. On this
             // (RPC) path the shim is the canonical emitter — the matching
-            // lib/prisma.ts `$extends` hooks gate on suppressEntityAudit so they
+            // lib/baseDb.ts `$extends` hooks gate on suppressEntityAudit so they
             // don't double-emit here. appConfig/ssoProvider collapse to a single
             // config-changed action (the before/after diff distinguishes the
             // create/update/delete), mirroring those hooks' prior behavior.
@@ -1684,7 +1684,7 @@ async function innerHandler(
                 auditPreSnapshot
               ) {
                 const afterRow = resolvedWhere
-                  ? await (prisma as any)[parsedPath.model].findUnique({
+                  ? await (baseDb as any)[parsedPath.model].findUnique({
                       where: resolvedWhere,
                     })
                   : null;

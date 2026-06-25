@@ -4,7 +4,7 @@
  * Core resolution service for duplicate test case pairs.
  * Provides merge, link, and dismiss operations.
  *
- * IMPORTANT: Uses raw `prisma` from `~/lib/prismaBase` (not ZenStack enhanced) to avoid
+ * IMPORTANT: Uses raw `rawDb` from `~/lib/rawDb` (not ZenStack enhanced) to avoid
  * the ZenStack v3 63-character PostgreSQL alias limit on deeply nested queries and to
  * keep policy-layer overhead out of the atomic merge transaction.
  *
@@ -12,7 +12,7 @@
  */
 
 import { LinkType } from "~/zenstack/models";
-import { prisma } from "~/lib/prismaBase";
+import { rawDb } from "~/lib/rawDb";
 import { withAuditGuc, buildGucPayload } from "~/lib/audit/gucContext";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
@@ -38,7 +38,7 @@ export interface MergeResult {
 
 /**
  * Atomically reroutes all FK relations from victim to survivor in a single
- * prisma.$transaction(). See 49-RESEARCH.md FK Reroute Map for full details.
+ * rawDb.$transaction(). See 49-RESEARCH.md FK Reroute Map for full details.
  *
  * After the transaction, syncs both cases to Elasticsearch (best-effort).
  */
@@ -48,7 +48,7 @@ export async function mergeCases(
   userId: string
 ): Promise<MergeResult> {
   const result = await withAuditGuc(
-    prisma,
+    rawDb,
     buildGucPayload(userId),
     async (tx) => {
       // -----------------------------------------------------------------------
@@ -324,7 +324,7 @@ export async function mergeCases(
  * DuplicateScanResult status to LINKED.
  *
  * Both operations run in a single transaction-style call. Uses a static
- * array form of prisma.$transaction for simplicity (no interactive tx needed).
+ * array form of rawDb.$transaction for simplicity (no interactive tx needed).
  */
 export async function linkCases(
   caseAId: number,
@@ -333,8 +333,8 @@ export async function linkCases(
   _projectId: number
 ): Promise<{ linked: true }> {
   // Use upsert to handle cases where the link already exists (idempotent)
-  await prisma.$transaction([
-    prisma.repositoryCaseLink.upsert({
+  await rawDb.$transaction([
+    rawDb.repositoryCaseLink.upsert({
       where: {
         caseAId_caseBId_type: {
           caseAId,
@@ -350,7 +350,7 @@ export async function linkCases(
       },
       update: {}, // Already linked — no-op
     }),
-    prisma.duplicateScanResult.updateMany({
+    rawDb.duplicateScanResult.updateMany({
       where: {
         OR: [
           { caseAId, caseBId },
@@ -377,7 +377,7 @@ export async function dismissPair(
   caseBId: number,
   projectId: number
 ): Promise<{ dismissed: true }> {
-  await prisma.duplicateScanResult.updateMany({
+  await rawDb.duplicateScanResult.updateMany({
     where: {
       OR: [
         { caseAId, caseBId },

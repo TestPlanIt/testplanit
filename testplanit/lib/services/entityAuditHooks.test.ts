@@ -34,7 +34,7 @@ vi.mock("../auditContext", () => ({
   getAuditContext: vi.fn(() => mocks.currentContext),
   SYSTEM_ACTOR_ID: "__system__",
 }));
-vi.mock("../multiTenantPrisma", () => ({
+vi.mock("../multiTenantDb", () => ({
   isMultiTenantMode: vi.fn(() => false),
   getCurrentTenantId: vi.fn(() => undefined),
 }));

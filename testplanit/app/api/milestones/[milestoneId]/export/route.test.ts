@@ -9,8 +9,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     milestones: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
@@ -32,7 +32,7 @@ vi.mock("~/lib/services/milestoneSummary", () => ({
   getMilestoneLinkedIssues: vi.fn(),
 }));
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import {
   calculateMilestoneCompletion,
@@ -112,9 +112,9 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
     (getSessionSegments as any).mockResolvedValue([]);
     (calculateMilestoneCompletion as any).mockResolvedValue(0);
     (getMilestoneLinkedIssues as any).mockResolvedValue([]);
-    (prisma.milestones.findUnique as any).mockResolvedValue(baseMilestone);
-    (prisma.milestones.findMany as any).mockResolvedValue([]);
-    (prisma.reviewRequest.findMany as any).mockResolvedValue([]);
+    (baseDb.milestones.findUnique as any).mockResolvedValue(baseMilestone);
+    (baseDb.milestones.findMany as any).mockResolvedValue([]);
+    (baseDb.reviewRequest.findMany as any).mockResolvedValue([]);
   });
 
   describe("Input validation & auth", () => {
@@ -135,7 +135,7 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
 
     it("returns 404 when the milestone does not exist", async () => {
       (getServerSession as any).mockResolvedValue(adminSession);
-      (prisma.milestones.findUnique as any).mockResolvedValue(null);
+      (baseDb.milestones.findUnique as any).mockResolvedValue(null);
       const [req, ctx] = createRequest("999");
       const res = await GET(req, ctx);
       expect(res.status).toBe(404);
@@ -173,7 +173,7 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
           projectIds: [10],
         },
       ]);
-      (prisma.reviewRequest.findMany as any).mockResolvedValue([
+      (baseDb.reviewRequest.findMany as any).mockResolvedValue([
         {
           entityType: "RUN",
           entityId: 100,
@@ -215,7 +215,7 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
       const [req, ctx] = createRequest("1");
       const data = await (await GET(req, ctx)).json();
 
-      const whereArg = (prisma.reviewRequest.findMany as any).mock.calls[0][0]
+      const whereArg = (baseDb.reviewRequest.findMany as any).mock.calls[0][0]
         .where;
       expect(whereArg.projectId).toBe(10);
       expect(whereArg.isDeleted).toBe(false);
@@ -247,14 +247,14 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
       expect(data.descendants).toEqual([]);
       expect(data.issues).toEqual([]);
       expect(data.reviewDecisions).toEqual([]);
-      expect(prisma.reviewRequest.findMany).not.toHaveBeenCalled();
+      expect(baseDb.reviewRequest.findMany).not.toHaveBeenCalled();
     });
   });
 
   describe("Parent path", () => {
     it("walks the parent chain into a root-first path", async () => {
       (getServerSession as any).mockResolvedValue(userSession);
-      (prisma.milestones.findUnique as any)
+      (baseDb.milestones.findUnique as any)
         .mockResolvedValueOnce({ ...baseMilestone, parentId: 2 }) // the milestone
         .mockResolvedValueOnce({ name: "Q2", parentId: 3 }) // parent
         .mockResolvedValueOnce({ name: "FY26", parentId: null }); // grandparent

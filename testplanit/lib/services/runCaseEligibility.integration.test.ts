@@ -1,13 +1,13 @@
 /**
  * Live-DB integration test for the RepositoryCases post-update hook in
- * `lib/prisma.ts` that implements the `Projects.excludeNotStartedFromRuns`
+ * `lib/baseDb.ts` that implements the `Projects.excludeNotStartedFromRuns`
  * contract.
  *
  * Per feedback_prisma_helper_live_db_test: mocked-Prisma tests can't catch
  * unknown-column errors, FK violations, or join-shape mismatches. The
  * helper unit tests in `runCaseEligibility.test.ts` already cover the
  * pure logic with mocked tx; this file exercises the wired-up extension
- * end-to-end via `prisma.repositoryCases.update(...)` so the hook's:
+ * end-to-end via `baseDb.repositoryCases.update(...)` so the hook's:
  *   - cross-join through `state.workflowType`
  *   - WHERE clause shape (`results: { none: {} }`, `testRun.isCompleted: false`)
  *   - `Projects.excludeNotStartedFromRuns` column read
@@ -37,8 +37,8 @@ describeIntegration(
   () => {
     // Lazy-import so this module is pure when skipped.
     const importPrisma = async () => {
-      const { prisma } = await import("~/lib/prisma");
-      return prisma;
+      const { baseDb } = await import("~/lib/db");
+      return baseDb;
     };
 
     // Tracked ids for explicit cleanup. Ordered child-before-parent so
@@ -64,45 +64,45 @@ describeIntegration(
     };
 
     afterEach(async () => {
-      const prisma = await importPrisma();
+      const baseDb = await importPrisma();
       // Order matters — clear leaf rows first.
       if (cleanup.testRunResultIds.length) {
-        await prisma.testRunResults
+        await baseDb.testRunResults
           .deleteMany({ where: { id: { in: cleanup.testRunResultIds } } })
           .catch(() => {});
       }
       if (cleanup.testRunCaseIds.length) {
-        await prisma.testRunCases
+        await baseDb.testRunCases
           .deleteMany({ where: { id: { in: cleanup.testRunCaseIds } } })
           .catch(() => {});
       }
       if (cleanup.testRunIds.length) {
-        await prisma.testRuns
+        await baseDb.testRuns
           .deleteMany({ where: { id: { in: cleanup.testRunIds } } })
           .catch(() => {});
       }
       if (cleanup.repositoryCaseIds.length) {
-        await prisma.repositoryCases
+        await baseDb.repositoryCases
           .deleteMany({ where: { id: { in: cleanup.repositoryCaseIds } } })
           .catch(() => {});
       }
       if (cleanup.repositoryFolderIds.length) {
-        await prisma.repositoryFolders
+        await baseDb.repositoryFolders
           .deleteMany({ where: { id: { in: cleanup.repositoryFolderIds } } })
           .catch(() => {});
       }
       if (cleanup.repositoryIds.length) {
-        await prisma.repositories
+        await baseDb.repositories
           .deleteMany({ where: { id: { in: cleanup.repositoryIds } } })
           .catch(() => {});
       }
       if (cleanup.workflowIds.length) {
-        await prisma.workflows
+        await baseDb.workflows
           .deleteMany({ where: { id: { in: cleanup.workflowIds } } })
           .catch(() => {});
       }
       if (cleanup.projectIds.length) {
-        await prisma.projects
+        await baseDb.projects
           .deleteMany({ where: { id: { in: cleanup.projectIds } } })
           .catch(() => {});
       }
@@ -125,16 +125,16 @@ describeIntegration(
      * Optionally adds a TestRunResults row to make the run-case "executed".
      */
     async function seedFixture(
-      prisma: any,
+      baseDb: any,
       args: { excludeNotStartedFromRuns: boolean; withResult?: boolean }
     ) {
-      const creator = await prisma.user.findFirst({ select: { id: true } });
+      const creator = await baseDb.user.findFirst({ select: { id: true } });
       if (!creator) {
         throw new Error(
           "No User row available — seed the DB before running this integration test"
         );
       }
-      const template = await prisma.templates.findFirst({
+      const template = await baseDb.templates.findFirst({
         select: { id: true },
       });
       if (!template) {
@@ -142,14 +142,14 @@ describeIntegration(
           "No Templates row — seed the DB before running this integration test"
         );
       }
-      const anyStatus = await prisma.status.findFirst({ select: { id: true } });
+      const anyStatus = await baseDb.status.findFirst({ select: { id: true } });
       if (!anyStatus) {
         throw new Error(
           "No Status row — seed the DB before running this integration test"
         );
       }
-      const anyColor = await prisma.color.findFirst({ select: { id: true } });
-      const anyIcon = await prisma.fieldIcon.findFirst({
+      const anyColor = await baseDb.color.findFirst({ select: { id: true } });
+      const anyIcon = await baseDb.fieldIcon.findFirst({
         select: { id: true },
       });
       if (!anyColor || !anyIcon) {
@@ -162,7 +162,7 @@ describeIntegration(
         .toString(36)
         .slice(2, 8)}`;
 
-      const project = await prisma.projects.create({
+      const project = await baseDb.projects.create({
         data: {
           name: tag,
           createdBy: creator.id,
@@ -172,7 +172,7 @@ describeIntegration(
       });
       cleanup.projectIds.push(project.id);
 
-      const inProgressState = await prisma.workflows.create({
+      const inProgressState = await baseDb.workflows.create({
         data: {
           name: `${tag}-IP`,
           order: 1,
@@ -184,7 +184,7 @@ describeIntegration(
         select: { id: true },
       });
       cleanup.workflowIds.push(inProgressState.id);
-      const notStartedState = await prisma.workflows.create({
+      const notStartedState = await baseDb.workflows.create({
         data: {
           name: `${tag}-NS`,
           order: 0,
@@ -196,7 +196,7 @@ describeIntegration(
         select: { id: true },
       });
       cleanup.workflowIds.push(notStartedState.id);
-      const runState = await prisma.workflows.create({
+      const runState = await baseDb.workflows.create({
         data: {
           name: `${tag}-RUN`,
           order: 0,
@@ -209,12 +209,12 @@ describeIntegration(
       });
       cleanup.workflowIds.push(runState.id);
 
-      const repo = await prisma.repositories.create({
+      const repo = await baseDb.repositories.create({
         data: { projectId: project.id },
         select: { id: true },
       });
       cleanup.repositoryIds.push(repo.id);
-      const folder = await prisma.repositoryFolders.create({
+      const folder = await baseDb.repositoryFolders.create({
         data: {
           name: `${tag}-f`,
           repositoryId: repo.id,
@@ -225,7 +225,7 @@ describeIntegration(
       });
       cleanup.repositoryFolderIds.push(folder.id);
 
-      const testCase = await prisma.repositoryCases.create({
+      const testCase = await baseDb.repositoryCases.create({
         data: {
           projectId: project.id,
           repositoryId: repo.id,
@@ -239,7 +239,7 @@ describeIntegration(
       });
       cleanup.repositoryCaseIds.push(testCase.id);
 
-      const testRun = await prisma.testRuns.create({
+      const testRun = await baseDb.testRuns.create({
         data: {
           name: `${tag}-run`,
           projectId: project.id,
@@ -250,7 +250,7 @@ describeIntegration(
         select: { id: true },
       });
       cleanup.testRunIds.push(testRun.id);
-      const testRunCase = await prisma.testRunCases.create({
+      const testRunCase = await baseDb.testRunCases.create({
         data: {
           testRunId: testRun.id,
           repositoryCaseId: testCase.id,
@@ -261,7 +261,7 @@ describeIntegration(
       cleanup.testRunCaseIds.push(testRunCase.id);
 
       if (args.withResult) {
-        const result = await prisma.testRunResults.create({
+        const result = await baseDb.testRunResults.create({
           data: {
             testRunId: testRun.id,
             testRunCaseId: testRunCase.id,
@@ -280,18 +280,18 @@ describeIntegration(
       "leaves the run-case in place when the project flag is OFF",
       { timeout: 60_000 },
       async () => {
-        const prisma = await importPrisma();
+        const baseDb = await importPrisma();
         const { testCase, testRunCase, notStartedState } = await seedFixture(
-          prisma,
+          baseDb,
           { excludeNotStartedFromRuns: false }
         );
 
-        await prisma.repositoryCases.update({
+        await baseDb.repositoryCases.update({
           where: { id: testCase.id },
           data: { stateId: notStartedState.id },
         });
 
-        const trc = await prisma.testRunCases.findUnique({
+        const trc = await baseDb.testRunCases.findUnique({
           where: { id: testRunCase.id },
           select: { isDeleted: true },
         });
@@ -303,18 +303,18 @@ describeIntegration(
       "soft-deletes the UNEXECUTED run-case when flag is ON and state transitions to NOT_STARTED",
       { timeout: 60_000 },
       async () => {
-        const prisma = await importPrisma();
+        const baseDb = await importPrisma();
         const { testCase, testRunCase, notStartedState } = await seedFixture(
-          prisma,
+          baseDb,
           { excludeNotStartedFromRuns: true }
         );
 
-        await prisma.repositoryCases.update({
+        await baseDb.repositoryCases.update({
           where: { id: testCase.id },
           data: { stateId: notStartedState.id },
         });
 
-        const trc = await prisma.testRunCases.findUnique({
+        const trc = await baseDb.testRunCases.findUnique({
           where: { id: testRunCase.id },
           select: { isDeleted: true },
         });
@@ -326,18 +326,18 @@ describeIntegration(
       "LEAVES an EXECUTED run-case in place even when the flag is ON (lock, don't delete)",
       { timeout: 60_000 },
       async () => {
-        const prisma = await importPrisma();
+        const baseDb = await importPrisma();
         const { testCase, testRunCase, notStartedState } = await seedFixture(
-          prisma,
+          baseDb,
           { excludeNotStartedFromRuns: true, withResult: true }
         );
 
-        await prisma.repositoryCases.update({
+        await baseDb.repositoryCases.update({
           where: { id: testCase.id },
           data: { stateId: notStartedState.id },
         });
 
-        const trc = await prisma.testRunCases.findUnique({
+        const trc = await baseDb.testRunCases.findUnique({
           where: { id: testRunCase.id },
           select: { isDeleted: true },
         });
@@ -349,7 +349,7 @@ describeIntegration(
     );
 
     // `softDeleteUnexecutedRunCasesForDraftRevert` is the same logic factored
-    // out for the auto-API route handler (which bypasses lib/prisma.ts's
+    // out for the auto-API route handler (which bypasses lib/baseDb.ts's
     // $extends hooks). Per feedback_prisma_helper_live_db_test it needs its
     // own live-DB coverage — mocked-Prisma tests can't catch unknown-column
     // errors, FK violations, or join-shape mismatches in the WHERE predicate.
@@ -357,20 +357,20 @@ describeIntegration(
       "softDeleteUnexecutedRunCasesForDraftRevert returns the soft-delete count and respects the executed-lock predicate against real Postgres",
       { timeout: 60_000 },
       async () => {
-        const prisma = await importPrisma();
+        const baseDb = await importPrisma();
         const { softDeleteUnexecutedRunCasesForDraftRevert } =
           await import("~/lib/services/runCaseEligibility");
 
         const { testCase, testRunCase, notStartedState } = await seedFixture(
-          prisma,
+          baseDb,
           { excludeNotStartedFromRuns: true }
         );
 
         const count = await softDeleteUnexecutedRunCasesForDraftRevert(
-          prisma as never,
+          baseDb as never,
           {
             projectId: testCase.id
-              ? (await prisma.repositoryCases.findUnique({
+              ? (await baseDb.repositoryCases.findUnique({
                   where: { id: testCase.id },
                   select: { projectId: true },
                 }))!.projectId
@@ -382,7 +382,7 @@ describeIntegration(
 
         expect(count).toBe(1);
 
-        const trc = await prisma.testRunCases.findUnique({
+        const trc = await baseDb.testRunCases.findUnique({
           where: { id: testRunCase.id },
           select: { isDeleted: true },
         });
@@ -394,22 +394,22 @@ describeIntegration(
       "softDeleteUnexecutedRunCasesForDraftRevert leaves an EXECUTED run-case in place against real Postgres",
       { timeout: 60_000 },
       async () => {
-        const prisma = await importPrisma();
+        const baseDb = await importPrisma();
         const { softDeleteUnexecutedRunCasesForDraftRevert } =
           await import("~/lib/services/runCaseEligibility");
 
         const { testCase, testRunCase, notStartedState } = await seedFixture(
-          prisma,
+          baseDb,
           { excludeNotStartedFromRuns: true, withResult: true }
         );
 
-        const projectId = (await prisma.repositoryCases.findUnique({
+        const projectId = (await baseDb.repositoryCases.findUnique({
           where: { id: testCase.id },
           select: { projectId: true },
         }))!.projectId;
 
         const count = await softDeleteUnexecutedRunCasesForDraftRevert(
-          prisma as never,
+          baseDb as never,
           {
             projectId,
             repositoryCaseId: testCase.id,
@@ -420,7 +420,7 @@ describeIntegration(
         // Executed run-cases never match the predicate, so the count is 0
         // and the row stays in place.
         expect(count).toBe(0);
-        const trc = await prisma.testRunCases.findUnique({
+        const trc = await baseDb.testRunCases.findUnique({
           where: { id: testRunCase.id },
           select: { isDeleted: true },
         });

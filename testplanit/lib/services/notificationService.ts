@@ -1,6 +1,6 @@
 import { ApplicationArea, NotificationType } from "~/zenstack/models";
 import { JOB_CREATE_NOTIFICATION } from "../../workers/notificationWorker";
-import { getCurrentTenantId } from "../multiTenantPrisma";
+import { getCurrentTenantId } from "../multiTenantDb";
 import { getNotificationQueue } from "../queues";
 
 interface CreateNotificationParams {
@@ -236,13 +236,13 @@ export class NotificationService {
     requesterUserId: string,
     options?: { requireCanApproveOn?: ApplicationArea }
   ): Promise<string[]> {
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
 
     // Optional canApprove gate on the assigned role itself — when the role
     // doesn't carry canApprove on the requested area, the fanout is empty
     // by construction. Short-circuit instead of running four findManys.
     if (options?.requireCanApproveOn) {
-      const perm = await prisma.rolePermission.findUnique({
+      const perm = await baseDb.rolePermission.findUnique({
         where: {
           roleId_area: { roleId, area: options.requireCanApproveOn },
         },
@@ -251,7 +251,7 @@ export class NotificationService {
       if (!perm?.canApprove) return [];
     }
 
-    const specificRoleRows = await prisma.userProjectPermission.findMany({
+    const specificRoleRows = await baseDb.userProjectPermission.findMany({
       where: {
         projectId,
         accessType: "SPECIFIC_ROLE",
@@ -261,7 +261,7 @@ export class NotificationService {
       select: { userId: true },
     });
 
-    const globalRoleRows = await prisma.userProjectPermission.findMany({
+    const globalRoleRows = await baseDb.userProjectPermission.findMany({
       where: {
         projectId,
         accessType: "GLOBAL_ROLE",
@@ -273,7 +273,7 @@ export class NotificationService {
     // Group-based SPECIFIC_ROLE: every active user in a group that has this
     // role on the project. The per-relation `assignedUsers.where` keeps the
     // returned member list filtered to active users only.
-    const groupSpecificRoleRows = await prisma.groupProjectPermission.findMany({
+    const groupSpecificRoleRows = await baseDb.groupProjectPermission.findMany({
       where: { projectId, accessType: "SPECIFIC_ROLE", roleId },
       select: {
         group: {
@@ -289,7 +289,7 @@ export class NotificationService {
 
     // Group-based GLOBAL_ROLE: every active user in a group with GLOBAL_ROLE
     // access on the project whose `User.roleId` matches the assigned role.
-    const groupGlobalRoleRows = await prisma.groupProjectPermission.findMany({
+    const groupGlobalRoleRows = await baseDb.groupProjectPermission.findMany({
       where: { projectId, accessType: "GLOBAL_ROLE" },
       select: {
         group: {

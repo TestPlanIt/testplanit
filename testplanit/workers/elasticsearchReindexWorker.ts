@@ -14,11 +14,11 @@ import {
 import { SearchableEntityType } from "~/types/search";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { ELASTICSEARCH_REINDEX_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -47,7 +47,7 @@ const processor = async (job: Job<ReindexJobData>) => {
   validateMultiTenantJobData(job.data);
 
   // Get the appropriate Prisma client (tenant-specific or default)
-  const prisma = getPrismaClientForJob(job.data);
+  const prisma = getDbClientForJob(job.data);
 
   const { entityType, projectId, tenantId } = job.data;
 

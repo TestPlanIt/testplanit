@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import {
   aggregateStatusCounts,
   groupTestRunContributors,
@@ -26,7 +26,7 @@ async function buildParentPath(parentId: number | null): Promise<string[]> {
   let current = parentId;
   // Bound the walk defensively against unexpected cycles.
   for (let i = 0; i < 25 && current != null; i++) {
-    const parent = await prisma.milestones.findUnique({
+    const parent = await baseDb.milestones.findUnique({
       where: { id: current },
       select: { name: true, parentId: true },
     });
@@ -57,7 +57,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const milestone = await prisma.milestones.findUnique({
+    const milestone = await baseDb.milestones.findUnique({
       where: { id: milestoneId, isDeleted: false },
       select: {
         id: true,
@@ -114,7 +114,7 @@ export async function GET(
     const descendants =
       descendantIds.length > 0
         ? (
-            await prisma.milestones.findMany({
+            await baseDb.milestones.findMany({
               where: { id: { in: descendantIds }, isDeleted: false },
               select: {
                 id: true,
@@ -158,7 +158,7 @@ export async function GET(
 
     const reviewRequests =
       reviewOr.length > 0
-        ? await prisma.reviewRequest.findMany({
+        ? await baseDb.reviewRequest.findMany({
             where: {
               projectId: milestone.projectId,
               isDeleted: false,

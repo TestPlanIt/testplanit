@@ -12,8 +12,8 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateApiToken: vi.fn(),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     repositoryCases: {
       findMany: vi.fn(),
     },
@@ -26,7 +26,7 @@ vi.mock("~/lib/services/llmStepDerivation", () => ({
 
 import { extractBearerToken, authenticateApiToken } from "~/lib/api-token-auth";
 import { getServerAuthSession } from "~/server/auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { enqueueDeriveCaseSteps } from "~/lib/services/llmStepDerivation";
 
 const mockSession = { user: { id: "user-123" } };
@@ -54,7 +54,7 @@ describe("POST /api/test-cases/derive-steps", () => {
     vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as never);
     vi.mocked(enqueueDeriveCaseSteps).mockResolvedValue(true);
     // Both cases belong to the project by default.
-    vi.mocked(prisma.repositoryCases.findMany).mockResolvedValue([
+    vi.mocked(baseDb.repositoryCases.findMany).mockResolvedValue([
       { id: 1 },
       { id: 2 },
     ] as never);
@@ -114,7 +114,7 @@ describe("POST /api/test-cases/derive-steps", () => {
   });
 
   it("drops cases that do not belong to the project (cross-project guard)", async () => {
-    vi.mocked(prisma.repositoryCases.findMany).mockResolvedValue([
+    vi.mocked(baseDb.repositoryCases.findMany).mockResolvedValue([
       { id: 1 },
     ] as never); // only case 1 is owned
 
@@ -127,7 +127,7 @@ describe("POST /api/test-cases/derive-steps", () => {
   });
 
   it("returns enqueued:false (no enqueue) when no case belongs to the project", async () => {
-    vi.mocked(prisma.repositoryCases.findMany).mockResolvedValue([] as never);
+    vi.mocked(baseDb.repositoryCases.findMany).mockResolvedValue([] as never);
 
     const res = await POST(makeRequest(validBody));
     expect(res.status).toBe(200);

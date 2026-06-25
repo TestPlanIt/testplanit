@@ -5,12 +5,12 @@ import {
 } from "../lib/email/notificationTemplates";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   getTenantConfig,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { EMAIL_QUEUE_NAME } from "../lib/queues";
 import {
   formatLocaleForUrl,
@@ -48,7 +48,7 @@ const processor = async (job: Job) => {
   validateMultiTenantJobData(job.data);
 
   // Get the appropriate Prisma client (tenant-specific or default)
-  const prisma = getPrismaClientForJob(job.data);
+  const prisma = getDbClientForJob(job.data);
 
   switch (job.name) {
     case "send-notification-email":

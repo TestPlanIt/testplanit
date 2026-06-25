@@ -13,7 +13,7 @@
  *
  * Mirrors the iterationFanOut.shared.integration.test.ts pattern:
  *   - Skipped by default; opt-in with `RUN_DB_INTEGRATION=1`.
- *   - Each test runs inside a `prisma.$transaction` rolled back at end.
+ *   - Each test runs inside a `baseDb.$transaction` rolled back at end.
  *   - Lazy import Prisma so the module stays cheap when skipped.
  */
 
@@ -27,7 +27,7 @@ const describeIntegration =
 
 describeIntegration("runMatrixAggregation (live DB)", () => {
   const importDeps = async () => {
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
     const { runMatrixAggregation, MatrixCellCapExceededError } =
       await import("./matrixAggregation");
     const { computeWorstOfStatus } =
@@ -36,7 +36,7 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
       await import("~/lib/services/iterationFanOut");
     const { cellKey } = await import("./types");
     return {
-      prisma,
+      baseDb,
       runMatrixAggregation,
       MatrixCellCapExceededError,
       computeWorstOfStatus,
@@ -48,14 +48,14 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   const ROLLBACK_SENTINEL = "__MATRIX_TEST_ROLLBACK__";
 
   async function withRollback<T>(
-    prisma: any,
+    baseDb: any,
     body: (tx: any) => Promise<T>,
     timeoutMs = 60_000
   ): Promise<T> {
     let captured: T | undefined;
     let captureErr: unknown;
     try {
-      await prisma.$transaction(
+      await baseDb.$transaction(
         async (tx: any) => {
           try {
             captured = await body(tx);
@@ -317,8 +317,8 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
 
   afterAll(async () => {
     if (RUN_INTEGRATION && HAS_DB_URL) {
-      const { prisma } = await import("~/lib/prisma");
-      await prisma.$disconnect();
+      const { baseDb } = await import("~/lib/db");
+      await baseDb.$disconnect();
     }
   });
 
@@ -328,9 +328,9 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   // the case axis (the matrix is parameterized-only).
   // -------------------------------------------------------------------
   it("happy path: 3-axis aggregation produces (3 + 5) x 2 = 16 cells; non-parameterized case is filtered out", async () => {
-    const { prisma, runMatrixAggregation, materializeForOneCase, cellKey } =
+    const { baseDb, runMatrixAggregation, materializeForOneCase, cellKey } =
       await importDeps();
-    await withRollback(prisma, async (tx) => {
+    await withRollback(baseDb, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-happy");
 
       const caseA = await createParamCase(tx, sc, "A", [{ name: "email" }]);
@@ -387,8 +387,8 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   // separate report (case × configuration only).
   // -------------------------------------------------------------------
   it("non-parameterized case is excluded from the case axis", async () => {
-    const { prisma, runMatrixAggregation } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, runMatrixAggregation } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-param07");
       const caseC = await createNonParamCase(tx, sc, "C");
       await createRunWithCase(tx, sc, caseC, sc.chromeConfigId);
@@ -403,9 +403,9 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   // Cell-cap refusal at the 50001-cell boundary.
   // -------------------------------------------------------------------
   it("cell-cap refusal: throws MatrixCellCapExceededError above 50,000 cells", async () => {
-    const { prisma, runMatrixAggregation, MatrixCellCapExceededError } =
+    const { baseDb, runMatrixAggregation, MatrixCellCapExceededError } =
       await importDeps();
-    await withRollback(prisma, async (tx) => {
+    await withRollback(baseDb, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-cap");
       // One parameterized case with 50,001 dataset rows × 1 config = 50,001 cells.
       const caseA = await createParamCase(tx, sc, "Big", [{ name: "n" }]);
@@ -438,8 +438,8 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   // values; =true exposes them.
   // -------------------------------------------------------------------
   it("sensitive parameter redaction: hidden when viewerCanReadSensitive=false", async () => {
-    const { prisma, runMatrixAggregation } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, runMatrixAggregation } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-redact");
       const caseA = await createParamCase(tx, sc, "Login", [
         { name: "username" },
@@ -474,8 +474,8 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   // Cross-project denial (helper layer): WHERE projectId scopes correctly.
   // -------------------------------------------------------------------
   it("cross-project denial (helper): WHERE projectId bound excludes other projects", async () => {
-    const { prisma, runMatrixAggregation } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, runMatrixAggregation } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const a = await seedProjectScaffold(tx, "matrix-cross-a");
       const b = await seedProjectScaffold(tx, "matrix-cross-b");
 
@@ -511,9 +511,9 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   // In-flight runs: iterations with statusId=null contribute to notRun.
   // -------------------------------------------------------------------
   it("in-flight runs contribute to iterationCount and notRun", async () => {
-    const { prisma, runMatrixAggregation, materializeForOneCase, cellKey } =
+    const { baseDb, runMatrixAggregation, materializeForOneCase, cellKey } =
       await importDeps();
-    await withRollback(prisma, async (tx) => {
+    await withRollback(baseDb, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-inflight");
       const caseA = await createParamCase(tx, sc, "A", [{ name: "n" }]);
       await attachOwnerDataset(
@@ -560,13 +560,13 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   // -------------------------------------------------------------------
   it("worst-of rollup parity with computeWorstOfStatus", async () => {
     const {
-      prisma,
+      baseDb,
       runMatrixAggregation,
       materializeForOneCase,
       computeWorstOfStatus,
       cellKey,
     } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    await withRollback(baseDb, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-rollup");
       const caseA = await createParamCase(tx, sc, "A", [{ name: "n" }]);
       // 3 rows so the cell has 3 iterations.
@@ -637,9 +637,9 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   // Date-range filter on TestRuns.createdAt (NOT iter.completedAt).
   // -------------------------------------------------------------------
   it("date-range filter bounds tr.createdAt, not iter.completedAt", async () => {
-    const { prisma, runMatrixAggregation, materializeForOneCase, cellKey } =
+    const { baseDb, runMatrixAggregation, materializeForOneCase, cellKey } =
       await importDeps();
-    await withRollback(prisma, async (tx) => {
+    await withRollback(baseDb, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-daterange");
       const caseA = await createParamCase(tx, sc, "A", [{ name: "n" }]);
       await attachOwnerDataset(tx, sc, caseA, [
@@ -702,8 +702,8 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   // Configuration sentinel: configId IS NULL collapses to id 0 / "(none)".
   // -------------------------------------------------------------------
   it("configuration sentinel: NULL configId surfaces as id=0, name=(none)", async () => {
-    const { prisma, runMatrixAggregation } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, runMatrixAggregation } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-sentinel");
       // Parameterized case so the case axis isn't filtered out — the
       // sentinel collapse is a config-axis behavior independent of the
@@ -731,8 +731,8 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   // zero cells (empty paramRows).
   // -------------------------------------------------------------------
   it("parameterized case with no snapshot row: aggregation succeeds with empty paramRows", async () => {
-    const { prisma, runMatrixAggregation } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, runMatrixAggregation } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-snapshot-join");
       // Parameterized case with NO dataset attached → no snapshot row.
       const caseP = await createParamCase(tx, sc, "Bare", [{ name: "x" }]);
@@ -756,9 +756,9 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   // would surface a non-May value; the SQL MAX must still pick May.
   // -------------------------------------------------------------------
   it("mostRecentCompletedAt: SQL MAX across iterations in the same cell, ignoring insertion order", async () => {
-    const { prisma, runMatrixAggregation, materializeForOneCase, cellKey } =
+    const { baseDb, runMatrixAggregation, materializeForOneCase, cellKey } =
       await importDeps();
-    await withRollback(prisma, async (tx) => {
+    await withRollback(baseDb, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-maxts-multi");
       const caseA = await createParamCase(tx, sc, "A", [{ name: "n" }]);
       await attachOwnerDataset(tx, sc, caseA, [
@@ -807,9 +807,9 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   });
 
   it("mostRecentCompletedAt: cell with all-null completedAt is null", async () => {
-    const { prisma, runMatrixAggregation, materializeForOneCase, cellKey } =
+    const { baseDb, runMatrixAggregation, materializeForOneCase, cellKey } =
       await importDeps();
-    await withRollback(prisma, async (tx) => {
+    await withRollback(baseDb, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-maxts-null");
       const caseA = await createParamCase(tx, sc, "A", [{ name: "n" }]);
       await attachOwnerDataset(tx, sc, caseA, [
@@ -827,9 +827,9 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   });
 
   it("mostRecentCompletedAt: per-row cell carries its iteration's completedAt as ISO string", async () => {
-    const { prisma, runMatrixAggregation, materializeForOneCase, cellKey } =
+    const { baseDb, runMatrixAggregation, materializeForOneCase, cellKey } =
       await importDeps();
-    await withRollback(prisma, async (tx) => {
+    await withRollback(baseDb, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-maxts-iso");
       const caseA = await createParamCase(tx, sc, "A", [{ name: "n" }]);
       await attachOwnerDataset(tx, sc, caseA, [

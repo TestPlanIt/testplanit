@@ -5,8 +5,8 @@ const { mockProjects } = vi.hoisted(() => ({
   mockProjects: { findMany: vi.fn(), count: vi.fn() },
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projects: mockProjects,
   },
 }));

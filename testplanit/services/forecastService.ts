@@ -2,7 +2,7 @@
 
 import type { DbClient } from "~/lib/zenstack";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
-import { prisma as defaultPrisma } from "../lib/prismaBase";
+import { rawDb as defaultPrisma } from "../lib/rawDb";
 
 type UpdateRepositoryCaseForecastOptions = {
   skipTestRunUpdate?: boolean;
@@ -34,7 +34,7 @@ export async function updateRepositoryCaseForecast(
   repositoryCaseId: number,
   options: UpdateRepositoryCaseForecastOptions = {}
 ): Promise<UpdateRepositoryCaseForecastResult> {
-  const prisma = options.prismaClient || defaultPrisma;
+  const rawDb = options.prismaClient || defaultPrisma;
 
   if (process.env.DEBUG_FORECAST) {
     console.log(
@@ -44,7 +44,7 @@ export async function updateRepositoryCaseForecast(
 
   try {
     // 1. Find all cases in the SAME_TEST_DIFFERENT_SOURCE link group (including itself)
-    const caseAndLinks = await prisma.repositoryCases.findUnique({
+    const caseAndLinks = await rawDb.repositoryCases.findUnique({
       where: { id: repositoryCaseId },
       select: {
         id: true,
@@ -70,7 +70,7 @@ export async function updateRepositoryCaseForecast(
       console.log("[Forecast] Group case IDs:", uniqueCaseIds);
 
     // 2. Fetch all cases in the group with their source
-    const allCases = await prisma.repositoryCases.findMany({
+    const allCases = await rawDb.repositoryCases.findMany({
       where: { id: { in: uniqueCaseIds } },
       select: { id: true, source: true },
     });
@@ -87,7 +87,7 @@ export async function updateRepositoryCaseForecast(
     let manualResults: { elapsed: number | null }[] = [];
     if (manualCaseIds.length) {
       // 1. Find all TestRunCase IDs for these repositoryCaseIds
-      const testRunCases = await prisma.testRunCases.findMany({
+      const testRunCases = await rawDb.testRunCases.findMany({
         where: { repositoryCaseId: { in: manualCaseIds } },
         select: { id: true },
       });
@@ -95,7 +95,7 @@ export async function updateRepositoryCaseForecast(
 
       // 2. Find all TestRunResults for those TestRunCase IDs
       manualResults = testRunCaseIds.length
-        ? await prisma.testRunResults.findMany({
+        ? await rawDb.testRunResults.findMany({
             where: {
               testRunCaseId: { in: testRunCaseIds },
               isDeleted: false,
@@ -120,7 +120,7 @@ export async function updateRepositoryCaseForecast(
     if (process.env.DEBUG_FORECAST)
       console.log("[Forecast] junitCaseIds:", junitCaseIds);
     const junitResults = junitCaseIds.length
-      ? await prisma.jUnitTestResult.findMany({
+      ? await rawDb.jUnitTestResult.findMany({
           where: {
             repositoryCaseId: { in: junitCaseIds },
             time: { gt: 0 },
@@ -155,7 +155,7 @@ export async function updateRepositoryCaseForecast(
       console.log("[Forecast] avgManual:", avgManual, "avgJunit:", avgJunit);
 
     // 5. Update only cases whose forecast values have actually changed
-    const currentForecasts = await prisma.repositoryCases.findMany({
+    const currentForecasts = await rawDb.repositoryCases.findMany({
       where: { id: { in: uniqueCaseIds } },
       select: { id: true, forecastManual: true, forecastAutomated: true },
     });
@@ -164,7 +164,7 @@ export async function updateRepositoryCaseForecast(
         current.forecastManual !== avgManual ||
         current.forecastAutomated !== avgJunit
       ) {
-        await prisma.repositoryCases.update({
+        await rawDb.repositoryCases.update({
           where: { id: current.id },
           data: {
             forecastManual: avgManual,
@@ -180,7 +180,7 @@ export async function updateRepositoryCaseForecast(
     }
 
     // --- Update TestRun forecasts for all TestRuns affected by these case updates ---
-    const affectedTestRunCases = await prisma.testRunCases.findMany({
+    const affectedTestRunCases = await rawDb.testRunCases.findMany({
       where: {
         repositoryCaseId: { in: uniqueCaseIds },
       },
@@ -198,7 +198,7 @@ export async function updateRepositoryCaseForecast(
       for (const testRunId of uniqueAffectedTestRunIds) {
         await updateTestRunForecast(testRunId, {
           alreadyRefreshedCaseIds: new Set(uniqueCaseIds),
-          prismaClient: prisma,
+          prismaClient: rawDb,
         });
       }
     }
@@ -227,13 +227,13 @@ export async function updateTestRunForecast(
   testRunId: number,
   options: UpdateTestRunForecastOptions = {}
 ): Promise<void> {
-  const prisma = options.prismaClient || defaultPrisma;
+  const rawDb = options.prismaClient || defaultPrisma;
 
   if (process.env.DEBUG_FORECAST)
     console.log(`Updating forecast for TestRun ID: ${testRunId}`);
   try {
     // 1. Fetch all TestRunCases for this TestRun, including their status system name
-    let testRunCasesWithDetails = await prisma.testRunCases.findMany({
+    let testRunCasesWithDetails = await rawDb.testRunCases.findMany({
       where: { testRunId: testRunId },
       select: {
         repositoryCaseId: true,
@@ -266,7 +266,7 @@ export async function updateTestRunForecast(
 
         const result = await updateRepositoryCaseForecast(repositoryCaseId, {
           skipTestRunUpdate: true,
-          prismaClient: prisma,
+          prismaClient: rawDb,
         });
 
         if (result.updatedCaseIds.length > 0) {
@@ -279,7 +279,7 @@ export async function updateTestRunForecast(
 
       if (refreshedAnyCase) {
         // Refetch to capture any status changes that may have occurred during case refresh
-        testRunCasesWithDetails = await prisma.testRunCases.findMany({
+        testRunCasesWithDetails = await rawDb.testRunCases.findMany({
           where: { testRunId: testRunId },
           select: {
             repositoryCaseId: true,
@@ -302,7 +302,7 @@ export async function updateTestRunForecast(
 
     if (!repositoryCaseIdsToForecast.length) {
       // No applicable cases in this test run, so clear its forecasts (only if not already null)
-      const currentRun = await prisma.testRuns.findUnique({
+      const currentRun = await rawDb.testRuns.findUnique({
         where: { id: testRunId },
         select: { forecastManual: true, forecastAutomated: true },
       });
@@ -311,7 +311,7 @@ export async function updateTestRunForecast(
         (currentRun.forecastManual !== null ||
           currentRun.forecastAutomated !== null)
       ) {
-        await prisma.testRuns.update({
+        await rawDb.testRuns.update({
           where: { id: testRunId },
           data: {
             forecastManual: null,
@@ -328,7 +328,7 @@ export async function updateTestRunForecast(
     }
 
     // 3. Fetch the RepositoryCases for these filtered IDs
-    const repositoryCases = await prisma.repositoryCases.findMany({
+    const repositoryCases = await rawDb.repositoryCases.findMany({
       where: { id: { in: repositoryCaseIdsToForecast } },
       select: { forecastManual: true, forecastAutomated: true },
     });
@@ -356,7 +356,7 @@ export async function updateTestRunForecast(
       ? parseFloat(totalForecastAutomated.toFixed(3))
       : null;
 
-    const currentRun = await prisma.testRuns.findUnique({
+    const currentRun = await rawDb.testRuns.findUnique({
       where: { id: testRunId },
       select: { forecastManual: true, forecastAutomated: true },
     });
@@ -366,7 +366,7 @@ export async function updateTestRunForecast(
       currentRun.forecastManual !== newForecastManual ||
       currentRun.forecastAutomated !== newForecastAutomated
     ) {
-      await prisma.testRuns.update({
+      await rawDb.testRuns.update({
         where: { id: testRunId },
         data: {
           forecastManual: newForecastManual,
@@ -397,12 +397,12 @@ export async function updateTestRunForecast(
 export async function getActiveRepositoryCaseIds(
   options: GetUniqueCaseGroupIdsOptions = {}
 ): Promise<number[]> {
-  const prisma = options.prismaClient || defaultPrisma;
+  const rawDb = options.prismaClient || defaultPrisma;
 
   if (process.env.DEBUG_FORECAST)
     console.log("Fetching active repository case IDs...");
   try {
-    const cases = await prisma.repositoryCases.findMany({
+    const cases = await rawDb.repositoryCases.findMany({
       where: {
         isDeleted: false,
         isArchived: false,
@@ -431,7 +431,7 @@ export async function getActiveRepositoryCaseIds(
 export async function getUniqueCaseGroupIds(
   options: GetUniqueCaseGroupIdsOptions = {}
 ): Promise<number[]> {
-  const prisma = options.prismaClient || defaultPrisma;
+  const rawDb = options.prismaClient || defaultPrisma;
 
   if (process.env.DEBUG_FORECAST)
     console.log("Fetching unique case group representatives...");
@@ -441,7 +441,7 @@ export async function getUniqueCaseGroupIds(
     const uniqueRepresentatives: number[] = [];
 
     // First, get all active case IDs
-    const allCaseIds = await prisma.repositoryCases.findMany({
+    const allCaseIds = await rawDb.repositoryCases.findMany({
       where: {
         isDeleted: false,
         isArchived: false,
@@ -461,7 +461,7 @@ export async function getUniqueCaseGroupIds(
     for (let i = 0; i < allCaseIds.length; i += BATCH_SIZE) {
       const batchIds = allCaseIds.slice(i, i + BATCH_SIZE).map((c) => c.id);
 
-      const casesWithLinks = await prisma.repositoryCases.findMany({
+      const casesWithLinks = await rawDb.repositoryCases.findMany({
         where: {
           id: { in: batchIds },
         },
@@ -521,5 +521,5 @@ export async function getUniqueCaseGroupIds(
 // Optional: Disconnect Prisma client on exit (important for graceful shutdown)
 // This might be better handled in the worker's shutdown process
 // process.on('exit', async () => {
-//   await prisma.$disconnect();
+//   await rawDb.$disconnect();
 // });

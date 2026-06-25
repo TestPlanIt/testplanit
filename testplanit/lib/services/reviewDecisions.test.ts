@@ -33,7 +33,7 @@ import type { Session } from "next-auth";
 import { ApplicationArea } from "~/zenstack/models";
 import type { ReviewRequest } from "~/zenstack/models";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { isIneligibleReviewerError } from "~/lib/utils/errors";
 import { decideReviewRequest } from "./reviewDecisions";
 
@@ -42,7 +42,7 @@ async function ensureRoleCanApprove(
   area: ApplicationArea,
   canApprove: boolean
 ): Promise<void> {
-  await prisma.rolePermission.upsert({
+  await baseDb.rolePermission.upsert({
     where: { roleId_area: { roleId, area } },
     update: { canApprove },
     create: { roleId, area, canApprove },
@@ -95,7 +95,7 @@ const describeIntegration = SKIP_INTEGRATION ? describe.skip : describe;
 
 beforeAll(async () => {
   if (SKIP_INTEGRATION) return;
-  const existing = await prisma.appConfig.findUnique({
+  const existing = await baseDb.appConfig.findUnique({
     where: { key: REVIEW_FEATURE_KEY },
     select: { value: true },
   });
@@ -103,7 +103,7 @@ beforeAll(async () => {
     priorReviewFeatureExisted = true;
     priorReviewFeatureValue = existing.value;
   }
-  await prisma.appConfig.upsert({
+  await baseDb.appConfig.upsert({
     where: { key: REVIEW_FEATURE_KEY },
     create: { key: REVIEW_FEATURE_KEY, value: true },
     update: { value: true },
@@ -111,7 +111,7 @@ beforeAll(async () => {
 
   // Reuse seeded Roles. We need at least TWO roles so the role-holder branch
   // can prove "user holds role X" while the ineligible user holds role Y.
-  const roles = await prisma.roles.findMany({
+  const roles = await baseDb.roles.findMany({
     where: { isDeleted: false },
     take: 2,
     orderBy: { id: "asc" },
@@ -144,7 +144,7 @@ beforeAll(async () => {
 
   // Requester (NONE access; trivially passes Project read because they own
   // the project; cannot self-approve per @@validate).
-  const requester = await prisma.user.create({
+  const requester = await baseDb.user.create({
     data: {
       name: `requester-${TEST_RUN_ID}`,
       email: `requester-${TEST_RUN_ID}@example.invalid`,
@@ -156,7 +156,7 @@ beforeAll(async () => {
   requesterUserId = requester.id;
 
   // Direct user-assignee (NONE access; will satisfy the direct-user branch).
-  const directAssignee = await prisma.user.create({
+  const directAssignee = await baseDb.user.create({
     data: {
       name: `direct-${TEST_RUN_ID}`,
       email: `direct-${TEST_RUN_ID}@example.invalid`,
@@ -169,7 +169,7 @@ beforeAll(async () => {
 
   // Role-holder (NONE access; holds the assigned role on the project via a
   // SPECIFIC_ROLE UserProjectPermission row). This is the CR-02 path.
-  const roleHolder = await prisma.user.create({
+  const roleHolder = await baseDb.user.create({
     data: {
       name: `roleholder-${TEST_RUN_ID}`,
       email: `roleholder-${TEST_RUN_ID}@example.invalid`,
@@ -181,7 +181,7 @@ beforeAll(async () => {
   roleHolderUserId = roleHolder.id;
 
   // Ineligible user (NONE access; not assigned, doesn't hold the role, not admin).
-  const ineligible = await prisma.user.create({
+  const ineligible = await baseDb.user.create({
     data: {
       name: `ineligible-${TEST_RUN_ID}`,
       email: `ineligible-${TEST_RUN_ID}@example.invalid`,
@@ -193,7 +193,7 @@ beforeAll(async () => {
   ineligibleUserId = ineligible.id;
 
   // Admin (system ADMIN — eligibility check honors the admin override).
-  const admin = await prisma.user.create({
+  const admin = await baseDb.user.create({
     data: {
       name: `admin-${TEST_RUN_ID}`,
       email: `admin-${TEST_RUN_ID}@example.invalid`,
@@ -209,7 +209,7 @@ beforeAll(async () => {
   // the per-project feature flag. The schema default is false (opt-in
   // posture) so the field must be set explicitly here for the gate-on
   // tests to exercise the real path.
-  const project = await prisma.projects.create({
+  const project = await baseDb.projects.create({
     data: {
       name: `proj-${TEST_RUN_ID}`,
       createdBy: requester.id,
@@ -220,7 +220,7 @@ beforeAll(async () => {
 
   // Grant the role-holder SPECIFIC_ROLE permission for the assigned role on
   // this project — the canonical CR-02 fixture shape.
-  await prisma.userProjectPermission.create({
+  await baseDb.userProjectPermission.create({
     data: {
       userId: roleHolderUserId,
       projectId,
@@ -231,7 +231,7 @@ beforeAll(async () => {
 
   // The ineligible user gets a NO_ACCESS permission so the test can prove
   // the eligibility check rejects them even though they have a project row.
-  await prisma.userProjectPermission.create({
+  await baseDb.userProjectPermission.create({
     data: {
       userId: ineligibleUserId,
       projectId,
@@ -242,7 +242,7 @@ beforeAll(async () => {
   // Reuse two seeded Workflows for from/to states. requiresReview can stay
   // at its default (false) — decideReviewRequest does not look at the
   // workflow's requiresReview flag, only the ReviewRequest row.
-  const workflows = await prisma.workflows.findMany({
+  const workflows = await baseDb.workflows.findMany({
     where: { isDeleted: false, isEnabled: true },
     take: 2,
     orderBy: { id: "asc" },
@@ -259,7 +259,7 @@ beforeAll(async () => {
   // Pick any seeded Template — Templates are global (not project-scoped) so we
   // can reuse one for the test case row. RepositoryCases.templateId is
   // required.
-  const template = await prisma.templates.findFirst({
+  const template = await baseDb.templates.findFirst({
     where: { isEnabled: true, isDeleted: false },
     select: { id: true },
     orderBy: { id: "asc" },
@@ -276,7 +276,7 @@ beforeAll(async () => {
   // real case row — the paired-Comment write inside decideReviewRequest
   // writes `repositoryCaseId: entityId`, which previously used synthetic
   // entityIds that no longer satisfy the FK constraint.
-  const repository = await prisma.repositories.create({
+  const repository = await baseDb.repositories.create({
     data: {
       projectId,
       isActive: true,
@@ -285,7 +285,7 @@ beforeAll(async () => {
   });
   repositoryId = repository.id;
 
-  const folder = await prisma.repositoryFolders.create({
+  const folder = await baseDb.repositoryFolders.create({
     data: {
       projectId,
       repositoryId,
@@ -302,7 +302,7 @@ afterAll(async () => {
   // SetNull on delete; ReviewRequest has back-relation). Soft-delete the
   // Comments first so they detach cleanly when the project cascade fires later.
   try {
-    await prisma.comment.updateMany({
+    await baseDb.comment.updateMany({
       where: { reviewRequestId: { in: createdReviewRequestIds } },
       data: { isDeleted: true },
     });
@@ -312,7 +312,7 @@ afterAll(async () => {
 
   for (const id of createdReviewRequestIds) {
     try {
-      await prisma.reviewRequest.update({
+      await baseDb.reviewRequest.update({
         where: { id },
         data: { isDeleted: true },
       });
@@ -326,7 +326,7 @@ afterAll(async () => {
   // hard delete).
   for (const id of createdCaseIds) {
     try {
-      await prisma.repositoryCases.update({
+      await baseDb.repositoryCases.update({
         where: { id },
         data: { isDeleted: true },
       });
@@ -336,7 +336,7 @@ afterAll(async () => {
   }
   if (repositoryFolderId) {
     try {
-      await prisma.repositoryFolders.update({
+      await baseDb.repositoryFolders.update({
         where: { id: repositoryFolderId },
         data: { isDeleted: true },
       });
@@ -346,7 +346,7 @@ afterAll(async () => {
   }
   if (repositoryId) {
     try {
-      await prisma.repositories.update({
+      await baseDb.repositories.update({
         where: { id: repositoryId },
         data: { isDeleted: true },
       });
@@ -357,14 +357,14 @@ afterAll(async () => {
 
   if (projectId) {
     try {
-      await prisma.userProjectPermission.deleteMany({
+      await baseDb.userProjectPermission.deleteMany({
         where: { projectId },
       });
     } catch {
       /* ignore */
     }
     try {
-      await prisma.projects.update({
+      await baseDb.projects.update({
         where: { id: projectId },
         data: { isDeleted: true },
       });
@@ -382,7 +382,7 @@ afterAll(async () => {
   ]) {
     if (!userId) continue;
     try {
-      await prisma.user.update({
+      await baseDb.user.update({
         where: { id: userId },
         data: { isDeleted: true, isActive: false },
       });
@@ -394,12 +394,12 @@ afterAll(async () => {
   // Restore the original AppConfig row (or delete it if we created it).
   try {
     if (priorReviewFeatureExisted) {
-      await prisma.appConfig.update({
+      await baseDb.appConfig.update({
         where: { key: REVIEW_FEATURE_KEY },
         data: { value: priorReviewFeatureValue as never },
       });
     } else {
-      await prisma.appConfig.delete({
+      await baseDb.appConfig.delete({
         where: { key: REVIEW_FEATURE_KEY },
       });
     }
@@ -407,7 +407,7 @@ afterAll(async () => {
     /* ignore */
   }
 
-  await prisma.$disconnect();
+  await baseDb.$disconnect();
 }, 30_000);
 
 function sessionFor(userId: string, access: string = "NONE"): Session {
@@ -426,7 +426,7 @@ async function seedPendingRequest(opts: {
   // isDeleted = false) collides if two helpers seed PENDING rows against
   // the same (entityType, entityId), so per-call isolation is the
   // cheapest fix.
-  const repoCase = await prisma.repositoryCases.create({
+  const repoCase = await baseDb.repositoryCases.create({
     data: {
       projectId,
       repositoryId,
@@ -439,7 +439,7 @@ async function seedPendingRequest(opts: {
   });
   createdCaseIds.push(repoCase.id);
 
-  const created = await prisma.reviewRequest.create({
+  const created = await baseDb.reviewRequest.create({
     data: {
       projectId,
       entityType: "CASE",
@@ -522,7 +522,7 @@ describeIntegration(
       expect(isIneligibleReviewerError(caught)).toBe(true);
 
       // Row was NOT mutated.
-      const after = await prisma.reviewRequest.findUnique({
+      const after = await baseDb.reviewRequest.findUnique({
         where: { id: requestId },
         select: { status: true, decisionComment: true, decidedByUserId: true },
       });
@@ -683,7 +683,7 @@ describeIntegration(
 
       // DB final state matches whichever decide won — exactly one decision
       // was applied, no clobbering.
-      const after = await prisma.reviewRequest.findUnique({
+      const after = await baseDb.reviewRequest.findUnique({
         where: { id: requestId },
         select: {
           status: true,
@@ -749,7 +749,7 @@ describeIntegration("decideReviewRequest — canApprove eligibility", () => {
     }
     expect(isIneligibleReviewerError(caught)).toBe(true);
 
-    const after = await prisma.reviewRequest.findUnique({
+    const after = await baseDb.reviewRequest.findUnique({
       where: { id: requestId },
       select: { status: true },
     });

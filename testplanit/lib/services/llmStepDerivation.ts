@@ -1,7 +1,7 @@
 import type { DbClient } from "~/lib/zenstack";
 import { LLM_FEATURES } from "~/lib/llm/constants";
 import { LlmManager } from "~/lib/llm/services/llm-manager.service";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { getDeriveCaseStepsQueue } from "~/lib/queues";
 import type { DeriveCaseStepsJobData } from "~/workers/deriveCaseStepsWorker";
 
@@ -26,7 +26,7 @@ export function isLlmStepDerivationEligible(
  * wrap this in try/catch so a queue/LLM hiccup can't fail a successful import.
  */
 export async function enqueueDeriveCaseSteps(params: {
-  prisma: DbClient;
+  baseDb: DbClient;
   projectId: number;
   testRunId: number;
   userId: string;
@@ -34,10 +34,10 @@ export async function enqueueDeriveCaseSteps(params: {
   /** Destructive: re-derive cases that already have steps (default false). */
   overwrite?: boolean;
 }): Promise<boolean> {
-  const { prisma, projectId, testRunId, userId, cases, overwrite } = params;
+  const { baseDb, projectId, testRunId, userId, cases, overwrite } = params;
   if (cases.length === 0) return false;
 
-  const llmManager = LlmManager.getInstance(prisma);
+  const llmManager = LlmManager.getInstance(baseDb);
   const resolved = await llmManager.resolveIntegration(
     LLM_FEATURES.DERIVE_CASE_STEPS,
     projectId

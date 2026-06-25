@@ -1,6 +1,6 @@
 import type { DbClient, TxClient } from "~/lib/zenstack";
 
-import { prisma as defaultPrisma } from "~/lib/prisma";
+import { baseDb as defaultPrisma } from "~/lib/db";
 
 /**
  * Daily auto-retire helper.
@@ -18,10 +18,10 @@ import { prisma as defaultPrisma } from "~/lib/prisma";
  * inject a fully isolated mock.
  */
 export async function retireExpiredSecrets(
-  prisma: DbClient | TxClient = defaultPrisma
+  baseDb: DbClient | TxClient = defaultPrisma
 ): Promise<{ retiredCount: number }> {
   const now = new Date();
-  const result = await prisma.webhookConfigSecret.updateMany({
+  const result = await baseDb.webhookConfigSecret.updateMany({
     where: {
       retiredAt: null,
       autoRetireAt: { lt: now, not: null },

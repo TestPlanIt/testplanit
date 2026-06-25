@@ -8,7 +8,7 @@ import { authenticateRequest } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
@@ -90,7 +90,7 @@ class IterationNotFoundError extends Error {
  * System admins always pass.
  */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
-  const u = await prisma.user.findUnique({
+  const u = await baseDb.user.findUnique({
     where: { id: userId },
     include: { role: { include: { rolePermissions: true } } },
   });
@@ -167,7 +167,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     }
 
     const input = parsed.data;
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: {
         id: authenticatedUserId,
       },
@@ -194,7 +194,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const runCase = await prisma.testRunCases.findFirst({
+    const runCase = await baseDb.testRunCases.findFirst({
       where: {
         id: input.testRunCaseId,
         testRunId: input.testRunId,
@@ -354,7 +354,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // result that must then be rolled back; the prior-attempt query is skipped
     // entirely when the setting is off.
     if (runCase.testRun.project.requireResultFlipJustification) {
-      const priorAttempt = await prisma.testRunResults.findFirst({
+      const priorAttempt = await baseDb.testRunResults.findFirst({
         where: {
           testRunCaseId: input.testRunCaseId,
           iterationId: input.iterationId ?? null,
@@ -364,7 +364,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         select: { statusId: true },
       });
       if (priorAttempt && isTiptapEmpty(input.notes)) {
-        const statuses = await prisma.status.findMany({
+        const statuses = await baseDb.status.findMany({
           where: { id: { in: [priorAttempt.statusId, input.statusId] } },
           select: {
             id: true,
@@ -400,7 +400,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // checks are advisory). Read-only and pre-transaction so a rejection never
     // creates a result row; skipped entirely when no required fields exist.
     const missingRequiredField = await hasMissingRequiredResultField(
-      prisma,
+      baseDb,
       runCase.repositoryCase.templateId,
       input.fieldValues
     );
@@ -420,7 +420,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // least one Issue must be linked. Read-only and pre-transaction; the status
     // flag is resolved by id and the check is skipped entirely when off.
     if (runCase.testRun.project.requireIssueOnFailure) {
-      const submittedStatus = await prisma.status.findUnique({
+      const submittedStatus = await baseDb.status.findUnique({
         where: { id: input.statusId },
         select: { isFailure: true },
       });
@@ -728,7 +728,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
           // Review & Approval preflight (Plan 01-04). The auto-flip to
           // in-progress on first result submission is a stateId update
           // path; the schema @@deny rule from Plan 01 covers it via the
-          // ZenStack runtime, but this route uses raw prisma so we call
+          // ZenStack runtime, but this route uses raw baseDb so we call
           // the app preflight explicitly.
           const gateApprovals = await assertReviewGatePasses(
             tx,

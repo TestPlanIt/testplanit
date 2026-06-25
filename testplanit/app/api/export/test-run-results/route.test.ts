@@ -15,8 +15,8 @@ vi.mock("~/lib/zenstack", () => ({
   getAuthDb: vi.fn(),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: { findUnique: vi.fn() },
     projects: { findFirst: vi.fn() },
     testRunResults: { findMany: vi.fn() },
@@ -25,7 +25,7 @@ vi.mock("~/lib/prisma", () => ({
 
 import { getAuthDb } from "~/lib/zenstack";
 import { authenticateRequest } from "~/lib/api-token-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { GET } from "./route";
 
 async function readNdjson(res: Response): Promise<unknown[]> {
@@ -99,7 +99,7 @@ describe("GET /api/export/test-run-results", () => {
         authenticated: true,
         user: PROJECT_USER,
       });
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      vi.mocked(baseDb.user.findUnique).mockResolvedValue({
         id: "user-1",
       } as never);
       vi.mocked(getAuthDb).mockReturnValue({
@@ -122,7 +122,7 @@ describe("GET /api/export/test-run-results", () => {
     it("streams NDJSON with a manifest, rows, and an end trailer", async () => {
       const t1 = new Date("2026-05-01T10:00:00.000Z");
       const t2 = new Date("2026-05-01T10:00:01.000Z");
-      vi.mocked(prisma.testRunResults.findMany).mockResolvedValue([
+      vi.mocked(baseDb.testRunResults.findMany).mockResolvedValue([
         buildResultRow(1, t1),
         buildResultRow(2, t2),
       ] as never);
@@ -160,7 +160,7 @@ describe("GET /api/export/test-run-results", () => {
       const rows = Array.from({ length: 3 }, (_, i) =>
         buildResultRow(i + 1, ts)
       );
-      vi.mocked(prisma.testRunResults.findMany).mockResolvedValue(
+      vi.mocked(baseDb.testRunResults.findMany).mockResolvedValue(
         rows as never
       );
 
@@ -183,14 +183,14 @@ describe("GET /api/export/test-run-results", () => {
     });
 
     it("applies the `since` filter to executedAt", async () => {
-      vi.mocked(prisma.testRunResults.findMany).mockResolvedValue([] as never);
+      vi.mocked(baseDb.testRunResults.findMany).mockResolvedValue([] as never);
       await GET(
         req(
           "/api/export/test-run-results?since=2026-05-01T00:00:00Z&pageSize=100"
         )
       );
 
-      const call = vi.mocked(prisma.testRunResults.findMany).mock.calls[0]![0]!;
+      const call = vi.mocked(baseDb.testRunResults.findMany).mock.calls[0]![0]!;
       expect(
         (
           call.where as { executedAt: { gte: Date } }
@@ -199,7 +199,7 @@ describe("GET /api/export/test-run-results", () => {
     });
 
     it("applies the decoded cursor as a strict forward filter", async () => {
-      vi.mocked(prisma.testRunResults.findMany).mockResolvedValue([] as never);
+      vi.mocked(baseDb.testRunResults.findMany).mockResolvedValue([] as never);
       const cursor = Buffer.from(
         JSON.stringify({ k: "2026-05-01T10:00:00.000Z", i: 42 })
       ).toString("base64url");
@@ -208,7 +208,7 @@ describe("GET /api/export/test-run-results", () => {
         req(`/api/export/test-run-results?cursor=${cursor}&pageSize=100`)
       );
 
-      const call = vi.mocked(prisma.testRunResults.findMany).mock.calls[0]![0]!;
+      const call = vi.mocked(baseDb.testRunResults.findMany).mock.calls[0]![0]!;
       const orClause = (call.where as { OR: unknown[] }).OR;
       expect(orClause).toEqual([
         { executedAt: { gt: new Date("2026-05-01T10:00:00.000Z") } },
@@ -217,23 +217,23 @@ describe("GET /api/export/test-run-results", () => {
     });
 
     it("ignores malformed cursors without 400ing", async () => {
-      vi.mocked(prisma.testRunResults.findMany).mockResolvedValue([] as never);
+      vi.mocked(baseDb.testRunResults.findMany).mockResolvedValue([] as never);
       await GET(req("/api/export/test-run-results?cursor=not-a-cursor"));
-      const call = vi.mocked(prisma.testRunResults.findMany).mock.calls[0]![0]!;
+      const call = vi.mocked(baseDb.testRunResults.findMany).mock.calls[0]![0]!;
       expect((call.where as { OR?: unknown }).OR).toBeUndefined();
     });
 
     it("clamps pageSize to the upper bound", async () => {
-      vi.mocked(prisma.testRunResults.findMany).mockResolvedValue([] as never);
+      vi.mocked(baseDb.testRunResults.findMany).mockResolvedValue([] as never);
       await GET(req("/api/export/test-run-results?pageSize=99999"));
-      const call = vi.mocked(prisma.testRunResults.findMany).mock.calls[0]![0]!;
+      const call = vi.mocked(baseDb.testRunResults.findMany).mock.calls[0]![0]!;
       expect(call.take).toBe(5000);
     });
 
     it("filters by projectId when supplied by an admin", async () => {
-      vi.mocked(prisma.testRunResults.findMany).mockResolvedValue([] as never);
+      vi.mocked(baseDb.testRunResults.findMany).mockResolvedValue([] as never);
       await GET(req("/api/export/test-run-results?projectId=42"));
-      const call = vi.mocked(prisma.testRunResults.findMany).mock.calls[0]![0]!;
+      const call = vi.mocked(baseDb.testRunResults.findMany).mock.calls[0]![0]!;
       expect((call.where as { testRun: unknown }).testRun).toEqual({
         projectId: 42,
         isDeleted: false,

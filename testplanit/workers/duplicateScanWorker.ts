@@ -2,11 +2,11 @@ import { Job, Worker } from "bullmq";
 import { DuplicateScanService } from "../lib/services/duplicateScanService";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { DUPLICATE_SCAN_QUEUE_NAME } from "../lib/queueNames";
 import { getElasticsearchClient } from "../services/elasticsearchService";
 import { withTenantContext } from "../lib/tenantContext";
@@ -50,7 +50,7 @@ export const processor = async (
   validateMultiTenantJobData(job.data);
 
   // 2. Get tenant-specific Prisma client
-  const prisma = getPrismaClientForJob(job.data);
+  const prisma = getDbClientForJob(job.data);
 
   // 3. Create DuplicateScanService instance
   const esClient = getElasticsearchClient();

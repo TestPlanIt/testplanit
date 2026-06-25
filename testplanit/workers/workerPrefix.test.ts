@@ -35,10 +35,10 @@ vi.mock("../lib/valkey", () => ({
   createSubscriberClient: () => null,
 }));
 
-vi.mock("../lib/multiTenantPrisma", () => ({
+vi.mock("../lib/multiTenantDb", () => ({
   isMultiTenantMode: () => true,
   validateMultiTenantJobData: () => undefined,
-  getPrismaClientForJob: () => null,
+  getDbClientForJob: () => null,
   getAllTenantIds: () => [],
 }));
 

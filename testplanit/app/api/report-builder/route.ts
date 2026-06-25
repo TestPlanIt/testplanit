@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { NextRequest } from "next/server";
 import { cartesianProduct } from "~/lib/matrix/buildAxes";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
@@ -9,7 +9,7 @@ const DIMENSION_REGISTRY: Record<
   {
     id: string;
     label: string;
-    getValues: (prisma: any, projectId: number) => Promise<any[]>;
+    getValues: (baseDb: any, projectId: number) => Promise<any[]>;
     groupBy: string;
     join: any;
     display: (val: any) => any;
@@ -18,9 +18,9 @@ const DIMENSION_REGISTRY: Record<
   status: {
     id: "status",
     label: "Status",
-    getValues: async (prisma: any, projectId: number) => {
+    getValues: async (baseDb: any, projectId: number) => {
       // Get only statuses that are used in test results for this project
-      const statuses = await prisma.status.findMany({
+      const statuses = await baseDb.status.findMany({
         where: {
           testRunResults: {
             some: {
@@ -47,9 +47,9 @@ const DIMENSION_REGISTRY: Record<
   user: {
     id: "user",
     label: "Executor",
-    getValues: async (prisma: any, projectId: number) => {
+    getValues: async (baseDb: any, projectId: number) => {
       // Get only users who have executed tests in this project
-      const users = await prisma.user.findMany({
+      const users = await baseDb.user.findMany({
         where: {
           isDeleted: false,
           testRunResults: {
@@ -73,8 +73,8 @@ const DIMENSION_REGISTRY: Record<
   testRun: {
     id: "testRun",
     label: "Test Run",
-    getValues: async (prisma: any, projectId: number) =>
-      await prisma.testRuns.findMany({
+    getValues: async (baseDb: any, projectId: number) =>
+      await baseDb.testRuns.findMany({
         where: { projectId: Number(projectId), isDeleted: false },
         select: { id: true, name: true },
       }),
@@ -85,8 +85,8 @@ const DIMENSION_REGISTRY: Record<
   testCase: {
     id: "testCase",
     label: "Executed Test Case",
-    getValues: async (prisma: any, projectId: number) => {
-      const testCases = await prisma.testRunCases.findMany({
+    getValues: async (baseDb: any, projectId: number) => {
+      const testCases = await baseDb.testRunCases.findMany({
         where: {
           isDeleted: false,
           testRun: { projectId: Number(projectId), isDeleted: false },
@@ -182,8 +182,8 @@ const DIMENSION_REGISTRY: Record<
   date: {
     id: "date",
     label: "Execution Date",
-    getValues: async (prisma: any, projectId: number) => {
-      const dates = await prisma.testRunResults.findMany({
+    getValues: async (baseDb: any, projectId: number) => {
+      const dates = await baseDb.testRunResults.findMany({
         where: { testRun: { projectId: Number(projectId) }, isDeleted: false },
         select: { executedAt: true },
         distinct: ["executedAt"],
@@ -214,8 +214,8 @@ const DIMENSION_REGISTRY: Record<
   milestone: {
     id: "milestone",
     label: "Milestone",
-    getValues: async (prisma: any, projectId: number) =>
-      await prisma.milestones.findMany({
+    getValues: async (baseDb: any, projectId: number) =>
+      await baseDb.milestones.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -265,9 +265,9 @@ const DIMENSION_REGISTRY: Record<
   configuration: {
     id: "configuration",
     label: "Configuration",
-    getValues: async (prisma: any, projectId: number) => {
+    getValues: async (baseDb: any, projectId: number) => {
       // Get all configurations from test runs in the project
-      const testRuns = await prisma.testRuns.findMany({
+      const testRuns = await baseDb.testRuns.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -324,7 +324,7 @@ const METRIC_REGISTRY: Record<
     id: string;
     label: string;
     aggregate: (
-      prisma: any,
+      baseDb: any,
       projectId: number,
       groupBy: string[],
       filters?: any,
@@ -335,7 +335,7 @@ const METRIC_REGISTRY: Record<
   testResultCount: {
     id: "testResultCount",
     label: "Test Results Count",
-    aggregate: async (prisma, projectId, groupBy, _filters, _dims) => {
+    aggregate: async (baseDb, projectId, groupBy, _filters, _dims) => {
       // If date is in groupBy, we need to handle it specially
       const dateIndex = groupBy.indexOf("executedAt");
       if (dateIndex !== -1) {
@@ -344,7 +344,7 @@ const METRIC_REGISTRY: Record<
         const needsConfig = groupBy.includes("configId");
         const needsTestCase = groupBy.includes("testRunCaseId");
 
-        const results = await prisma.testRunResults.findMany({
+        const results = await baseDb.testRunResults.findMany({
           where: {
             testRun: { projectId: Number(projectId) },
             isDeleted: false,
@@ -436,7 +436,7 @@ const METRIC_REGISTRY: Record<
 
       if (needsManualGrouping) {
         const needsTestCase = groupBy.includes("testRunCaseId");
-        const results = await prisma.testRunResults.findMany({
+        const results = await baseDb.testRunResults.findMany({
           where: {
             testRun: { projectId: Number(projectId), isDeleted: false },
           },
@@ -540,8 +540,8 @@ const METRIC_REGISTRY: Record<
         return Object.values(counts);
       }
 
-      // Default: use prisma.groupBy for fields directly on the table
-      return prisma.testRunResults
+      // Default: use baseDb.groupBy for fields directly on the table
+      return baseDb.testRunResults
         .groupBy({
           by: groupBy,
           where: {
@@ -558,7 +558,7 @@ const METRIC_REGISTRY: Record<
   testRunCount: {
     id: "testRunCount",
     label: "Test Runs Count",
-    aggregate: async (prisma, projectId, groupBy, _filters, dims) => {
+    aggregate: async (baseDb, projectId, groupBy, _filters, dims) => {
       // If date is in groupBy, we need to handle it specially
       const _dateIndex = groupBy.indexOf("executedAt");
       // Case 1: Grouping by fields that live on the TestRunResults table
@@ -567,7 +567,7 @@ const METRIC_REGISTRY: Record<
           ["statusId", "executedById", "executedAt"].includes(g)
         )
       ) {
-        const results = await prisma.testRunResults.findMany({
+        const results = await baseDb.testRunResults.findMany({
           where: {
             testRun: { projectId: Number(projectId), isDeleted: false },
           },
@@ -630,7 +630,7 @@ const METRIC_REGISTRY: Record<
 
       // Case 2: Grouping by test cases
       if (dims?.includes("testCase")) {
-        const results = await prisma.testRunCases.findMany({
+        const results = await baseDb.testRunCases.findMany({
           where: {
             isDeleted: false,
             testRun: { projectId: Number(projectId), isDeleted: false },
@@ -662,14 +662,14 @@ const METRIC_REGISTRY: Record<
 
       // If no valid fields to group by on this table, do a global count.
       if (directGroupBy.length === 0) {
-        const count = await prisma.testRuns.count({
+        const count = await baseDb.testRuns.count({
           where: { projectId: Number(projectId), isDeleted: false },
         });
         return [{ testRunCount: count }];
       }
 
-      const dbResults = await prisma.testRuns.groupBy({
-        by: directGroupBy as any, // Cast to any to satisfy prisma's type limitations here
+      const dbResults = await baseDb.testRuns.groupBy({
+        by: directGroupBy as any, // Cast to any to satisfy baseDb's type limitations here
         where: { projectId: Number(projectId), isDeleted: false },
         _count: { _all: true },
       });
@@ -679,12 +679,12 @@ const METRIC_REGISTRY: Record<
   testCaseCount: {
     id: "testCaseCount",
     label: "Test Cases Count",
-    aggregate: async (prisma, projectId, groupBy, _filters, _dims) => {
+    aggregate: async (baseDb, projectId, groupBy, _filters, _dims) => {
       // If date is in groupBy, we need to handle it specially
       const _dateIndex = groupBy.indexOf("executedAt");
       // Special handling for milestone grouping
       if (groupBy.includes("milestoneId")) {
-        const results = await prisma.testRunCases.findMany({
+        const results = await baseDb.testRunCases.findMany({
           where: {
             isDeleted: false,
             testRun: {
@@ -762,7 +762,7 @@ const METRIC_REGISTRY: Record<
 
       // For status grouping, we need to count test cases by their latest result status
       if (groupBy.includes("statusId")) {
-        const cases = await prisma.testRunCases.findMany({
+        const cases = await baseDb.testRunCases.findMany({
           where: {
             isDeleted: false,
             testRun: { projectId: Number(projectId), isDeleted: false },
@@ -790,7 +790,7 @@ const METRIC_REGISTRY: Record<
 
       // Handle grouping by fields on TestRun, like configuration
       if (groupBy.includes("configId")) {
-        const cases = await prisma.testRunCases.findMany({
+        const cases = await baseDb.testRunCases.findMany({
           where: {
             isDeleted: false,
             testRun: {
@@ -834,7 +834,7 @@ const METRIC_REGISTRY: Record<
       if (directGroupBy.length === 0 && groupBy.length > 0) {
         return [];
       }
-      return prisma.testRunCases
+      return baseDb.testRunCases
         .groupBy({
           by: directGroupBy,
           where: {
@@ -858,7 +858,7 @@ const METRIC_REGISTRY: Record<
   avgElapsed: {
     id: "avgElapsed",
     label: "Avg. Elapsed Time",
-    aggregate: async (prisma, projectId, groupBy, _filters, _dims) => {
+    aggregate: async (baseDb, projectId, groupBy, _filters, _dims) => {
       // If date is in groupBy, we need to handle it specially
       const _dateIndex = groupBy.indexOf("executedAt");
       const needsMilestoneOrConfig = groupBy.some((g) =>
@@ -866,7 +866,7 @@ const METRIC_REGISTRY: Record<
       );
 
       if (needsMilestoneOrConfig) {
-        const results = await prisma.testRunResults.findMany({
+        const results = await baseDb.testRunResults.findMany({
           where: {
             testRun: { projectId: Number(projectId), isDeleted: false },
           },
@@ -967,7 +967,7 @@ const METRIC_REGISTRY: Record<
           ...(groupBy.includes("id") ? { testRunId: true } : {}),
         };
 
-        const results = await prisma.testRunResults.findMany({
+        const results = await baseDb.testRunResults.findMany({
           where: {
             testRun: { projectId: Number(projectId), isDeleted: false },
             isDeleted: false,
@@ -1025,7 +1025,7 @@ const METRIC_REGISTRY: Record<
       }
 
       // For simple groupBy scenarios, use Prisma's groupBy
-      return prisma.testRunResults
+      return baseDb.testRunResults
         .groupBy({
           by: groupBy,
           where: {
@@ -1048,7 +1048,7 @@ const METRIC_REGISTRY: Record<
   sumElapsed: {
     id: "sumElapsed",
     label: "Total Elapsed Time",
-    aggregate: async (prisma, projectId, groupBy, _filters, _dims) => {
+    aggregate: async (baseDb, projectId, groupBy, _filters, _dims) => {
       // If date is in groupBy, we need to handle it specially
       const _dateIndex = groupBy.indexOf("executedAt");
       const needsMilestoneOrConfig = groupBy.some((g) =>
@@ -1056,7 +1056,7 @@ const METRIC_REGISTRY: Record<
       );
 
       if (needsMilestoneOrConfig) {
-        const results = await prisma.testRunResults.findMany({
+        const results = await baseDb.testRunResults.findMany({
           where: {
             testRun: { projectId: Number(projectId), isDeleted: false },
           },
@@ -1155,7 +1155,7 @@ const METRIC_REGISTRY: Record<
           ...(groupBy.includes("id") ? { testRunId: true } : {}),
         };
 
-        const results = await prisma.testRunResults.findMany({
+        const results = await baseDb.testRunResults.findMany({
           where: {
             testRun: { projectId: Number(projectId), isDeleted: false },
             isDeleted: false,
@@ -1211,7 +1211,7 @@ const METRIC_REGISTRY: Record<
       }
 
       // For simple groupBy scenarios, use Prisma's groupBy
-      return prisma.testRunResults
+      return baseDb.testRunResults
         .groupBy({
           by: groupBy,
           where: {
@@ -1288,7 +1288,7 @@ export async function POST(req: NextRequest) {
     // 1. Fetch all possible values for each dimension
     const allDimensionValues = await Promise.all(
       dims.map(async (d: string) =>
-        DIMENSION_REGISTRY[d].getValues(prisma, projectId)
+        DIMENSION_REGISTRY[d].getValues(baseDb, projectId)
       )
     );
 
@@ -1302,7 +1302,7 @@ export async function POST(req: NextRequest) {
       const metric = METRIC_REGISTRY[m];
       if (metric && metric.aggregate) {
         const metricResults = await metric.aggregate(
-          prisma,
+          baseDb,
           projectId,
           by,
           undefined,
@@ -1647,7 +1647,7 @@ export async function GET(req: NextRequest) {
       Object.values(DIMENSION_REGISTRY).map(async (dim) => {
         let values: any[] = [];
         try {
-          values = await dim.getValues(prisma, projectId ?? 0);
+          values = await dim.getValues(baseDb, projectId ?? 0);
         } catch {
           // fallback: ignore errors for dimensions that require projectId if not provided
         }

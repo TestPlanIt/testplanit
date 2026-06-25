@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projects: { findUnique: vi.fn() },
     repositoryCases: { findMany: vi.fn() },
     testRunCases: { groupBy: vi.fn().mockResolvedValue([]) },
   },
 }));
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import {
   buildAutomationCandidatesContext,
   resolveFieldValue,
@@ -16,13 +16,13 @@ import {
   type AutomationCandidatesContext,
 } from "./automationCandidatesContext";
 
-const projectFindUnique = prisma.projects.findUnique as unknown as ReturnType<
+const projectFindUnique = baseDb.projects.findUnique as unknown as ReturnType<
   typeof vi.fn
 >;
-const casesFindMany = prisma.repositoryCases.findMany as unknown as ReturnType<
+const casesFindMany = baseDb.repositoryCases.findMany as unknown as ReturnType<
   typeof vi.fn
 >;
-const trcGroupBy = prisma.testRunCases.groupBy as unknown as ReturnType<
+const trcGroupBy = baseDb.testRunCases.groupBy as unknown as ReturnType<
   typeof vi.fn
 >;
 

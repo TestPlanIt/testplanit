@@ -1,4 +1,4 @@
-import { prisma as defaultPrisma } from "~/lib/prismaBase";
+import { rawDb as defaultPrisma } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
@@ -39,8 +39,8 @@ export async function buildSharedStepDocument(
   stepGroupId: number,
   prismaClient?: PrismaClientType
 ): Promise<SharedStepDocument | null> {
-  const prisma = prismaClient || defaultPrisma;
-  const stepGroup = await prisma.sharedStepGroup.findUnique({
+  const rawDb = prismaClient || defaultPrisma;
+  const stepGroup = await rawDb.sharedStepGroup.findUnique({
     where: { id: stepGroupId },
     include: {
       project: true,
@@ -218,12 +218,12 @@ export async function syncProjectSharedStepsToElasticsearch(
   prismaClient?: PrismaClientType,
   tenantId?: string
 ): Promise<boolean> {
-  const prisma = prismaClient || defaultPrisma;
+  const rawDb = prismaClient || defaultPrisma;
   try {
     // Ensure index exists
-    await createEntityIndex(SearchableEntityType.SHARED_STEP, prisma, tenantId);
+    await createEntityIndex(SearchableEntityType.SHARED_STEP, rawDb, tenantId);
 
-    const totalSteps = await prisma.sharedStepGroup.count({
+    const totalSteps = await rawDb.sharedStepGroup.count({
       where: {
         projectId,
         // Include deleted items (filtering happens at search time based on admin permissions)
@@ -237,7 +237,7 @@ export async function syncProjectSharedStepsToElasticsearch(
     let processed = 0;
 
     while (true) {
-      const steps = await prisma.sharedStepGroup.findMany({
+      const steps = await rawDb.sharedStepGroup.findMany({
         where: {
           projectId,
           // Include deleted items (filtering happens at search time based on admin permissions)
@@ -253,7 +253,7 @@ export async function syncProjectSharedStepsToElasticsearch(
 
       // Build and index documents for this batch
       for (const step of steps) {
-        const doc = await buildSharedStepDocument(step.id, prisma);
+        const doc = await buildSharedStepDocument(step.id, rawDb);
         if (doc) {
           await indexSharedStep(doc, tenantId);
         }

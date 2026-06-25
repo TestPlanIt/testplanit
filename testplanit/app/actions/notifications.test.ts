@@ -5,8 +5,8 @@ const mockUpdate = vi.fn();
 const mockUpdateMany = vi.fn();
 const mockCount = vi.fn();
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     notification: {
       update: (...args: any[]) => mockUpdate(...args),
       updateMany: (...args: any[]) => mockUpdateMany(...args),

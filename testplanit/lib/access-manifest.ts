@@ -21,7 +21,7 @@
  */
 
 import type { ApplicationArea } from "~/zenstack/models";
-import { prisma } from "./prisma";
+import { baseDb } from "./db";
 import valkeyConnection from "./valkey";
 
 const MANIFEST_CACHE_TTL_SECONDS = 60;
@@ -104,7 +104,7 @@ export async function getAccessManifest(
 async function computeAccessManifest(
   userId: string
 ): Promise<AccessManifest | null> {
-  const user = await prisma.user.findUnique({
+  const user = await baseDb.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
@@ -156,7 +156,7 @@ async function computeAccessManifest(
   // this specific user. We deliberately over-fetch (all defaults + all
   // matching permissions) because Postgres is cheap and cache lifetime
   // means we only do this once per TTL window.
-  const projects = await prisma.projects.findMany({
+  const projects = await baseDb.projects.findMany({
     where: {
       isDeleted: false,
     },

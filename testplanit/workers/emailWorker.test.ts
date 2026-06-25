@@ -19,9 +19,9 @@ vi.mock("../lib/valkey", () => ({
   default: null,
 }));
 
-// Mock the multiTenantPrisma module to return our mock prisma client
-vi.mock("../lib/multiTenantPrisma", () => ({
-  getPrismaClientForJob: vi.fn(() => mockPrisma),
+// Mock the multiTenantDb module to return our mock prisma client
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: vi.fn(() => mockPrisma),
   getTenantConfig: vi.fn(() => undefined),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),

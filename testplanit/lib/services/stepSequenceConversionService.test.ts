@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// ----- Mock prismaBase module -----
+// ----- Mock rawDb module -----
 // Use vi.hoisted() so that mock objects are available before vi.mock() factories run
 // (vi.mock is hoisted to the top of the file by Vitest).
 
@@ -58,8 +58,8 @@ const {
   };
 });
 
-vi.mock("~/lib/prismaBase", () => ({
-  prisma: mockPrisma,
+vi.mock("~/lib/rawDb", () => ({
+  rawDb: mockPrisma,
 }));
 
 vi.mock("~/lib/services/testCaseVersionService", () => ({

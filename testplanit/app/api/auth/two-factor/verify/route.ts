@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { checkRateLimit } from "~/lib/auth-security";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { decryptSecret, verifyBackupCode, verifyTOTP } from "~/lib/two-factor";
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
@@ -58,7 +58,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       );
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: pendingAuth.userId },
       select: {
         id: true,
@@ -100,7 +100,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
         // Remove the used backup code
         hashedCodes.splice(codeIndex, 1);
-        await prisma.user.update({
+        await baseDb.user.update({
           where: { id: user.id },
           data: { twoFactorBackupCodes: JSON.stringify(hashedCodes) },
         });

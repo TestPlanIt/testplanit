@@ -1,7 +1,7 @@
 import type { AuditAction } from "~/zenstack/models";
 import { getAuditContext, type AuditContext } from "~/lib/auditContext";
-import type { MultiTenantJobData } from "~/lib/multiTenantPrisma";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import type { MultiTenantJobData } from "~/lib/multiTenantDb";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { getAuditLogQueue } from "~/lib/queues";
 
 /**

@@ -4,7 +4,7 @@ import { z } from "zod/v4";
 import { updateAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 const applySchema = z.object({
@@ -45,7 +45,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     const uniqueTagNames = [...new Set(suggestions.map((s) => s.tagName))];
 
     // Check which tags already exist before the transaction
-    const existingTags = await prisma.tags.findMany({
+    const existingTags = await baseDb.tags.findMany({
       where: { name: { in: uniqueTagNames } },
       select: { id: true, name: true },
     });
@@ -58,7 +58,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
     const newTagNames = uniqueTagNames.filter((n) => !existingTagNames.has(n));
     for (const name of newTagNames) {
-      const tag = await prisma.tags.upsert({
+      const tag = await baseDb.tags.upsert({
         where: { name },
         create: { name },
         update: {},

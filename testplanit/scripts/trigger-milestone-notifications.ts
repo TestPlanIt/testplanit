@@ -1,5 +1,5 @@
 import { enqueueWithAuditContext } from "../lib/auditContextEnqueue";
-import { getAllTenantIds, isMultiTenantMode } from "../lib/multiTenantPrisma";
+import { getAllTenantIds, isMultiTenantMode } from "../lib/multiTenantDb";
 import { getForecastQueue } from "../lib/queues";
 import { JOB_MILESTONE_DUE_NOTIFICATIONS } from "../workers/forecastWorker";
 

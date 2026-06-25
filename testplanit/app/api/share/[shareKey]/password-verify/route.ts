@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import {
   checkPasswordAttemptLimit,
   clearPasswordAttempts,
@@ -56,7 +56,7 @@ export const POST = withAuditContext(
       }
 
       // Fetch share link
-      const shareLink = await prisma.shareLink.findUnique({
+      const shareLink = await baseDb.shareLink.findUnique({
         where: { shareKey },
         select: {
           id: true,

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("~/lib/prisma", () => {
+vi.mock("~/lib/db", () => {
   const tx = {
     appConfig: {
       findUnique: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock("~/lib/prisma", () => {
     },
   };
   return {
-    prisma: {
+    baseDb: {
       $transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb(tx)),
       __tx: tx,
     },
@@ -30,7 +30,7 @@ vi.mock("~/lib/auditContext", () => ({
   updateAuditContext: vi.fn(),
 }));
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { updateAuditContext } from "~/lib/auditContext";
 
@@ -47,7 +47,7 @@ interface TxLike {
   groupAssignment: { findMany: ReturnType<typeof vi.fn> };
 }
 
-const tx = (prisma as unknown as { __tx: TxLike }).__tx;
+const tx = (baseDb as unknown as { __tx: TxLike }).__tx;
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -180,7 +180,7 @@ describe("recomputeUserAccess", () => {
     expect(tx.user.update).toHaveBeenCalledTimes(1);
 
     // recomputeUserAccess must NOT itself call captureAuditEvent for the access flip
-    // (the generic role-change hook in lib/prisma.ts is the single emitter)
+    // (the generic role-change hook in lib/baseDb.ts is the single emitter)
     expect(captureAuditEvent).not.toHaveBeenCalled();
   });
 

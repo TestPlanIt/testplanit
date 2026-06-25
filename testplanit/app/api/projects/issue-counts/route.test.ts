@@ -11,14 +11,14 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     $queryRaw: vi.fn(),
   },
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 describe("Project Issue Counts API Route", () => {
   const mockSession = {
@@ -86,7 +86,7 @@ describe("Project Issue Counts API Route", () => {
 
       expect(response.status).toBe(200);
       expect(data.counts).toEqual({});
-      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+      expect(baseDb.$queryRaw).not.toHaveBeenCalled();
     });
 
     it("returns empty counts object when projectIds is not an array", async () => {
@@ -96,7 +96,7 @@ describe("Project Issue Counts API Route", () => {
 
       expect(response.status).toBe(200);
       expect(data.counts).toEqual({});
-      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+      expect(baseDb.$queryRaw).not.toHaveBeenCalled();
     });
 
     it("returns empty counts object when projectIds is null", async () => {
@@ -106,7 +106,7 @@ describe("Project Issue Counts API Route", () => {
 
       expect(response.status).toBe(200);
       expect(data.counts).toEqual({});
-      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+      expect(baseDb.$queryRaw).not.toHaveBeenCalled();
     });
 
     it("returns empty counts object when projectIds is undefined", async () => {
@@ -116,14 +116,14 @@ describe("Project Issue Counts API Route", () => {
 
       expect(response.status).toBe(200);
       expect(data.counts).toEqual({});
-      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+      expect(baseDb.$queryRaw).not.toHaveBeenCalled();
     });
   });
 
   describe("Issue Count Queries", () => {
     it("returns correct counts for single project with issues", async () => {
       const mockResults = [{ projectId: 1, issueCount: BigInt(5) }];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1] });
       const response = await POST(request);
@@ -133,7 +133,7 @@ describe("Project Issue Counts API Route", () => {
       expect(data.counts).toEqual({
         1: 5,
       });
-      expect(prisma.$queryRaw).toHaveBeenCalledOnce();
+      expect(baseDb.$queryRaw).toHaveBeenCalledOnce();
     });
 
     it("returns correct counts for multiple projects", async () => {
@@ -142,7 +142,7 @@ describe("Project Issue Counts API Route", () => {
         { projectId: 2, issueCount: BigInt(10) },
         { projectId: 3, issueCount: BigInt(3) },
       ];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1, 2, 3] });
       const response = await POST(request);
@@ -154,7 +154,7 @@ describe("Project Issue Counts API Route", () => {
         2: 10,
         3: 3,
       });
-      expect(prisma.$queryRaw).toHaveBeenCalledOnce();
+      expect(baseDb.$queryRaw).toHaveBeenCalledOnce();
     });
 
     it("returns 0 for projects with no issues", async () => {
@@ -162,7 +162,7 @@ describe("Project Issue Counts API Route", () => {
         { projectId: 1, issueCount: BigInt(5) },
         // Project 2 has no issues, so it won't be in the query results
       ];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1, 2, 3] });
       const response = await POST(request);
@@ -177,7 +177,7 @@ describe("Project Issue Counts API Route", () => {
     });
 
     it("returns all zeros when no projects have issues", async () => {
-      (prisma.$queryRaw as any).mockResolvedValue([]);
+      (baseDb.$queryRaw as any).mockResolvedValue([]);
 
       const request = createRequest({ projectIds: [1, 2, 3] });
       const response = await POST(request);
@@ -193,7 +193,7 @@ describe("Project Issue Counts API Route", () => {
 
     it("converts bigint to number correctly", async () => {
       const mockResults = [{ projectId: 1, issueCount: BigInt(999999) }];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1] });
       const response = await POST(request);
@@ -210,7 +210,7 @@ describe("Project Issue Counts API Route", () => {
         projectId: id,
         issueCount: BigInt(id * 2),
       }));
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds });
       const response = await POST(request);
@@ -221,7 +221,7 @@ describe("Project Issue Counts API Route", () => {
       expect(data.counts[1]).toBe(2);
       expect(data.counts[50]).toBe(100);
       expect(data.counts[51]).toBe(0); // No issues
-      expect(prisma.$queryRaw).toHaveBeenCalledOnce();
+      expect(baseDb.$queryRaw).toHaveBeenCalledOnce();
     });
   });
 
@@ -232,24 +232,24 @@ describe("Project Issue Counts API Route", () => {
         { projectId: 2, issueCount: BigInt(10) },
         { projectId: 3, issueCount: BigInt(3) },
       ];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1, 2, 3] });
       await POST(request);
 
       // Verify that $queryRaw is called only ONCE, not once per project
-      expect(prisma.$queryRaw).toHaveBeenCalledOnce();
+      expect(baseDb.$queryRaw).toHaveBeenCalledOnce();
     });
 
     it("passes all projectIds to single query", async () => {
       const projectIds = [1, 5, 10, 15, 20];
-      (prisma.$queryRaw as any).mockResolvedValue([]);
+      (baseDb.$queryRaw as any).mockResolvedValue([]);
 
       const request = createRequest({ projectIds });
       await POST(request);
 
       // Verify the query was called with all project IDs at once
-      const queryCall = (prisma.$queryRaw as any).mock.calls[0];
+      const queryCall = (baseDb.$queryRaw as any).mock.calls[0];
       expect(queryCall).toBeDefined();
 
       // The query should contain the projectIds array
@@ -265,7 +265,7 @@ describe("Project Issue Counts API Route", () => {
       const mockResults = [
         { projectId: 1, issueCount: BigInt(15) }, // Issues from multiple relationship types
       ];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1] });
       const response = await POST(request);
@@ -275,7 +275,7 @@ describe("Project Issue Counts API Route", () => {
       expect(data.counts[1]).toBe(15);
 
       // Verify the query includes all relationship types
-      const queryCall = (prisma.$queryRaw as any).mock.calls[0][0];
+      const queryCall = (baseDb.$queryRaw as any).mock.calls[0][0];
       const queryString = queryCall.join("");
 
       // Check for all 6 relationship types in the UNION query
@@ -289,12 +289,12 @@ describe("Project Issue Counts API Route", () => {
 
     it("uses DISTINCT to avoid counting same issue multiple times", async () => {
       // Verify the query uses COUNT(DISTINCT issue_id)
-      (prisma.$queryRaw as any).mockResolvedValue([]);
+      (baseDb.$queryRaw as any).mockResolvedValue([]);
 
       const request = createRequest({ projectIds: [1] });
       await POST(request);
 
-      const queryCall = (prisma.$queryRaw as any).mock.calls[0][0];
+      const queryCall = (baseDb.$queryRaw as any).mock.calls[0][0];
       const queryString = queryCall.join("");
 
       expect(queryString).toContain("COUNT(DISTINCT issue_id)");
@@ -302,12 +302,12 @@ describe("Project Issue Counts API Route", () => {
 
     it("filters out deleted issues", async () => {
       // Verify the query filters isDeleted = false
-      (prisma.$queryRaw as any).mockResolvedValue([]);
+      (baseDb.$queryRaw as any).mockResolvedValue([]);
 
       const request = createRequest({ projectIds: [1] });
       await POST(request);
 
-      const queryCall = (prisma.$queryRaw as any).mock.calls[0][0];
+      const queryCall = (baseDb.$queryRaw as any).mock.calls[0][0];
       const queryString = queryCall.join("");
 
       expect(queryString).toContain("isDeleted");
@@ -316,7 +316,7 @@ describe("Project Issue Counts API Route", () => {
 
   describe("Error Handling", () => {
     it("returns 500 when database query fails", async () => {
-      (prisma.$queryRaw as any).mockRejectedValue(new Error("Database error"));
+      (baseDb.$queryRaw as any).mockRejectedValue(new Error("Database error"));
 
       const request = createRequest({ projectIds: [1, 2, 3] });
       const response = await POST(request);
@@ -330,7 +330,7 @@ describe("Project Issue Counts API Route", () => {
       const consoleErrorSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
-      (prisma.$queryRaw as any).mockRejectedValue(
+      (baseDb.$queryRaw as any).mockRejectedValue(
         new Error("DB connection lost")
       );
 
@@ -363,7 +363,7 @@ describe("Project Issue Counts API Route", () => {
   describe("Edge Cases", () => {
     it("handles projectIds with duplicate values", async () => {
       const mockResults = [{ projectId: 1, issueCount: BigInt(5) }];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1, 1, 1] });
       const response = await POST(request);
@@ -377,7 +377,7 @@ describe("Project Issue Counts API Route", () => {
 
     it("handles zero count correctly", async () => {
       const mockResults = [{ projectId: 1, issueCount: BigInt(0) }];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1] });
       const response = await POST(request);
@@ -392,7 +392,7 @@ describe("Project Issue Counts API Route", () => {
         { projectId: 2, issueCount: BigInt(7) },
         { projectId: 4, issueCount: BigInt(3) },
       ];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1, 2, 3, 4, 5] });
       const response = await POST(request);
@@ -410,7 +410,7 @@ describe("Project Issue Counts API Route", () => {
 
     it("handles very large issue count", async () => {
       const mockResults = [{ projectId: 1, issueCount: BigInt(999999999) }];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1] });
       const response = await POST(request);
@@ -427,7 +427,7 @@ describe("Project Issue Counts API Route", () => {
         { projectId: 1, issueCount: BigInt(5) },
         { projectId: 2, issueCount: BigInt(10) },
       ];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1, 2] });
       const response = await POST(request);
@@ -441,7 +441,7 @@ describe("Project Issue Counts API Route", () => {
 
     it("uses projectId as key and count as value", async () => {
       const mockResults = [{ projectId: 42, issueCount: BigInt(7) }];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [42] });
       const response = await POST(request);
@@ -453,7 +453,7 @@ describe("Project Issue Counts API Route", () => {
 
     it("includes all requested projects in response", async () => {
       const mockResults = [{ projectId: 1, issueCount: BigInt(5) }];
-      (prisma.$queryRaw as any).mockResolvedValue(mockResults);
+      (baseDb.$queryRaw as any).mockResolvedValue(mockResults);
 
       const request = createRequest({ projectIds: [1, 2, 3, 4, 5] });
       const response = await POST(request);

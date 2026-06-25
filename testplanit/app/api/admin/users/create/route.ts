@@ -1,7 +1,7 @@
 import { hash } from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
@@ -75,7 +75,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
   // this email? Doing this *before* the create avoids relying on a P2002
   // round-trip and lets us return RESTORE_REQUIRED with the user info the
   // client needs to populate its restore dialog in one shot.
-  const existing = await prisma.user.findUnique({
+  const existing = await baseDb.user.findUnique({
     where: { email: body.email },
     select: { id: true, name: true, email: true, isDeleted: true },
   });
@@ -154,7 +154,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // create. Fall back to the same detection logic so the client still
     // gets a structured RESTORE_REQUIRED / EXISTS_ACTIVE response.
     if (isUniqueConstraintError(err)) {
-      const racing = await prisma.user.findUnique({
+      const racing = await baseDb.user.findUnique({
         where: { email: body.email },
         select: { id: true, name: true, email: true, isDeleted: true },
       });

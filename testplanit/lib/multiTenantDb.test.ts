@@ -7,11 +7,11 @@ const originalEnv = { ...process.env };
 const resetModule = async () => {
   vi.resetModules();
   // Clear tenant configs cache by re-importing
-  const multiTenantModule = await import("./multiTenantPrisma");
+  const multiTenantModule = await import("./multiTenantDb");
   return multiTenantModule;
 };
 
-describe("multiTenantPrisma", () => {
+describe("multiTenantDb", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset environment
@@ -251,9 +251,9 @@ describe("multiTenantPrisma", () => {
     });
   });
 
-  describe("getPrismaClientForJob", () => {
+  describe("getDbClientForJob", () => {
     it("should use lazy require pattern in single-tenant mode", async () => {
-      // In single-tenant mode, getPrismaClientForJob uses require("./prisma")
+      // In single-tenant mode, getDbClientForJob uses require("./prisma")
       // We can't easily mock this in vitest, so we test the behavior differently:
       // - Verify it doesn't throw for missing tenantId in single-tenant mode
       // - The actual prisma import is tested via integration tests
@@ -273,9 +273,9 @@ describe("multiTenantPrisma", () => {
         "tenant-a": { databaseUrl: "postgresql://localhost/a" },
       });
 
-      const { getPrismaClientForJob } = await resetModule();
+      const { getDbClientForJob } = await resetModule();
 
-      expect(() => getPrismaClientForJob({})).toThrow(
+      expect(() => getDbClientForJob({})).toThrow(
         "tenantId is required in multi-tenant mode"
       );
     });
@@ -286,9 +286,9 @@ describe("multiTenantPrisma", () => {
         "tenant-a": { databaseUrl: "postgresql://localhost/a" },
       });
 
-      const { getPrismaClientForJob } = await resetModule();
+      const { getDbClientForJob } = await resetModule();
 
-      expect(() => getPrismaClientForJob({ tenantId: "non-existent" })).toThrow(
+      expect(() => getDbClientForJob({ tenantId: "non-existent" })).toThrow(
         "No configuration found for tenant: non-existent"
       );
     });

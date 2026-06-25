@@ -22,8 +22,8 @@ const mockWebhookDeliveryFindUnique = vi.fn();
 const mockWebhookDeliveryFindMany = vi.fn();
 const mockAuditLogFindMany = vi.fn();
 const mockTransaction = vi.fn();
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     webhookConfig: {
       findFirst: (...args: unknown[]) => mockWebhookConfigFindFirst(...args),
       findUnique: (...args: unknown[]) => mockWebhookConfigFindUnique(...args),
@@ -561,7 +561,7 @@ describe("webhook-config server actions", () => {
   });
 
   describe("setWebhookActive (CR-02 — replaces ZenStack RPC update)", () => {
-    it("happy path: project admin toggles isActive=false, raw prisma.update is invoked with the correct shape", async () => {
+    it("happy path: project admin toggles isActive=false, raw baseDb.update is invoked with the correct shape", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 42 });
       mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-1" });
       const { setWebhookActive } = await import("./webhook-config");

@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "async_hooks";
 import { getTenantEncryptionKey } from "./tenantSecrets";
 
-// Duplicated from lib/multiTenantPrisma.ts (source of truth) so this module
+// Duplicated from lib/multiTenantDb.ts (source of truth) so this module
 // stays free of the Prisma transitive dep. The check is a one-line env read
 // and only used for a warning log here.
 function isMultiTenantMode(): boolean {

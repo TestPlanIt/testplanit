@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 // Mock server-side dependencies before importing the module
-vi.mock("@/lib/prisma", () => ({
-  prisma: {},
+vi.mock("@/lib/db", () => ({
+  baseDb: {},
 }));
 
 vi.mock("next-auth", () => ({

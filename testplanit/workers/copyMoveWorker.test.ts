@@ -109,8 +109,8 @@ const mockPrisma = {
   $disconnect: vi.fn(),
 };
 
-vi.mock("../lib/multiTenantPrisma", () => ({
-  getPrismaClientForJob: vi.fn(() => mockPrisma),
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: vi.fn(() => mockPrisma),
   getCurrentTenantId: vi.fn(() => undefined),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),

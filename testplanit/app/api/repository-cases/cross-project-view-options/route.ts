@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"; // Use raw prisma client (no enhance) for cross-project admin queries
+import { baseDb } from "@/lib/db"; // Use raw baseDb client (no enhance) for cross-project admin queries
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
               : "";
 
           // Use raw SQL with subquery to avoid bind variable limit
-          const caseFieldValues = await prisma.$queryRawUnsafe<
+          const caseFieldValues = await baseDb.$queryRawUnsafe<
             Array<{ testCaseId: number; value: any }>
           >(
             `
@@ -211,37 +211,37 @@ export async function POST(request: NextRequest) {
       dynamicFieldInfo,
     ] = await Promise.all([
       // Projects aggregation - exclude projectId filter so all projects remain selectable
-      prisma.repositoryCases.groupBy({
+      baseDb.repositoryCases.groupBy({
         by: ["projectId"],
         where: baseWhereWithoutProjectFilter,
         _count: true,
       }),
       // Templates aggregation
-      prisma.repositoryCases.groupBy({
+      baseDb.repositoryCases.groupBy({
         by: ["templateId"],
         where: baseWhere,
         _count: true,
       }),
       // States aggregation
-      prisma.repositoryCases.groupBy({
+      baseDb.repositoryCases.groupBy({
         by: ["stateId"],
         where: baseWhere,
         _count: true,
       }),
       // Automated aggregation
-      prisma.repositoryCases.groupBy({
+      baseDb.repositoryCases.groupBy({
         by: ["automated"],
         where: baseWhere,
         _count: true,
       }),
       // Parameterized aggregation
-      prisma.repositoryCases.groupBy({
+      baseDb.repositoryCases.groupBy({
         by: ["hasParameters"],
         where: baseWhere,
         _count: true,
       }),
       // Get all templates across all projects with their field configurations
-      prisma.templates.findMany({
+      baseDb.templates.findMany({
         where: {
           isDeleted: false,
         },
@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
 
     // Get project details (exclude deleted projects)
     const projectIds_result = projects.map((p) => p.projectId);
-    const projectDetails = await prisma.projects.findMany({
+    const projectDetails = await baseDb.projects.findMany({
       where: { id: { in: projectIds_result }, isDeleted: false },
       select: { id: true, name: true },
     });
@@ -321,7 +321,7 @@ export async function POST(request: NextRequest) {
 
     // Get template details
     const templateIds_result = templates.map((t) => t.templateId);
-    const templateDetails = await prisma.templates.findMany({
+    const templateDetails = await baseDb.templates.findMany({
       where: { id: { in: templateIds_result } },
       select: { id: true, templateName: true },
     });
@@ -337,7 +337,7 @@ export async function POST(request: NextRequest) {
 
     // Get state details
     const stateIds_result = states.map((s) => s.stateId);
-    const stateDetails = await prisma.workflows.findMany({
+    const stateDetails = await baseDb.workflows.findMany({
       where: { id: { in: stateIds_result } },
       select: {
         id: true,
@@ -490,7 +490,7 @@ export async function POST(request: NextRequest) {
           whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
         // Use raw SQL with subquery to avoid bind variable limit
-        const rawFieldValues = await prisma.$queryRawUnsafe<
+        const rawFieldValues = await baseDb.$queryRawUnsafe<
           Array<{ value: any }>
         >(
           `
@@ -537,7 +537,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get total count
-    const totalCount = await prisma.repositoryCases.count({
+    const totalCount = await baseDb.repositoryCases.count({
       where: baseWhere,
     });
 

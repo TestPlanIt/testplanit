@@ -20,8 +20,8 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateApiTokenForMethod: vi.fn(),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: { findUnique: vi.fn() },
     projects: { findFirst: vi.fn() },
     templates: { findFirst: vi.fn() },
@@ -46,7 +46,7 @@ import {
   extractBearerToken,
 } from "~/lib/api-token-auth";
 import { enrichFromApiAuth } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
 import { persistGeneratedTestCases } from "~/lib/services/testCaseImport";
 import { POST } from "./route";
@@ -94,12 +94,12 @@ beforeEach(() => {
   vi.clearAllMocks();
   (getServerSession as any).mockResolvedValue(mockSession);
   (extractBearerToken as any).mockReturnValue(null);
-  (prisma.projects.findFirst as any).mockResolvedValue({
+  (baseDb.projects.findFirst as any).mockResolvedValue({
     id: 1,
     name: "Test Project",
   });
   // Default template resolution (no explicit templateId → default lookup).
-  (prisma.templates.findFirst as any).mockResolvedValue({ id: 22 });
+  (baseDb.templates.findFirst as any).mockResolvedValue({ id: 22 });
   (loadTemplateData as any).mockResolvedValue({
     template: { id: 22, name: "Default", fields: [] },
     fieldMappings: [
@@ -111,17 +111,17 @@ beforeEach(() => {
       },
     ],
   });
-  (prisma.repositoryFolders.findFirst as any).mockResolvedValue({
+  (baseDb.repositoryFolders.findFirst as any).mockResolvedValue({
     id: 12,
     name: "Root",
     repositoryId: 5,
   });
-  (prisma.workflows.findFirst as any).mockResolvedValue({
+  (baseDb.workflows.findFirst as any).mockResolvedValue({
     id: 3,
     name: "Draft",
   });
-  (prisma.repositoryCases.findFirst as any).mockResolvedValue({ order: 4 });
-  (prisma.tags.upsert as any).mockImplementation(async ({ where }: any) => ({
+  (baseDb.repositoryCases.findFirst as any).mockResolvedValue({ order: 4 });
+  (baseDb.tags.upsert as any).mockImplementation(async ({ where }: any) => ({
     id: where.name === "Regression" ? 50 : 51,
   }));
   importerEchoSuccess();
@@ -170,7 +170,7 @@ describe("Bulk Create API Route", () => {
         access: "ADMIN",
         scopes: ["client:mcp"],
       });
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         name: "Agent",
         email: "agent@example.com",
       });
@@ -198,7 +198,7 @@ describe("Bulk Create API Route", () => {
 
   describe("Validation / access", () => {
     it("returns 404 when project not found or access denied", async () => {
-      (prisma.projects.findFirst as any).mockResolvedValue(null);
+      (baseDb.projects.findFirst as any).mockResolvedValue(null);
 
       const [req, ctx] = createRequest({
         folderId: 12,
@@ -217,7 +217,7 @@ describe("Bulk Create API Route", () => {
     });
 
     it("returns 400 when an explicit templateId is not assigned/enabled", async () => {
-      (prisma.templates.findFirst as any).mockResolvedValue(null);
+      (baseDb.templates.findFirst as any).mockResolvedValue(null);
 
       const [req, ctx] = createRequest({
         templateId: 99,
@@ -231,7 +231,7 @@ describe("Bulk Create API Route", () => {
     });
 
     it("returns 422 when no default template is assigned", async () => {
-      (prisma.templates.findFirst as any).mockResolvedValue(null);
+      (baseDb.templates.findFirst as any).mockResolvedValue(null);
 
       const [req, ctx] = createRequest({
         folderId: 12,
@@ -299,7 +299,7 @@ describe("Bulk Create API Route", () => {
     });
 
     it("groups cases by (folderId, stateName) — one importer call per group", async () => {
-      (prisma.repositoryFolders.findFirst as any).mockImplementation(
+      (baseDb.repositoryFolders.findFirst as any).mockImplementation(
         async ({ where }: any) => ({
           id: where.id,
           name: `Folder ${where.id}`,
@@ -390,7 +390,7 @@ describe("Bulk Create API Route", () => {
     });
 
     it("fails a group whose folder doesn't belong to the project", async () => {
-      (prisma.repositoryFolders.findFirst as any).mockResolvedValue(null);
+      (baseDb.repositoryFolders.findFirst as any).mockResolvedValue(null);
 
       const [req, ctx] = createRequest({
         folderId: 999,

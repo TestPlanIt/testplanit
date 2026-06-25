@@ -5,7 +5,7 @@
  * Mirrors the execution model of
  * `app/api/test-runs/submit-result/submitResult.integration.test.ts`:
  *   - Skipped by default; opt in via `RUN_DB_INTEGRATION=1`.
- *   - Each test runs inside a `prisma.$transaction` that rolls back at the
+ *   - Each test runs inside a `baseDb.$transaction` that rolls back at the
  *     end. The DB is never mutated.
  *   - Lazy import of Prisma so the module stays cheap when skipped.
  *
@@ -41,24 +41,24 @@ describeIntegration(
   "Wave 2 INT-02 JUnit iteration routing (live DB)",
   () => {
     const importDeps = async () => {
-      const { prisma } = await import("~/lib/prisma");
+      const { baseDb } = await import("~/lib/db");
       const { materializeIterations } = await import(
         "~/lib/services/iterationFanOut"
       );
-      return { prisma, materializeIterations };
+      return { baseDb, materializeIterations };
     };
 
     const ROLLBACK_SENTINEL = "__JUNIT_ITER_ROUTER_TEST_ROLLBACK__";
 
     async function withRollback<T>(
-      prisma: any,
+      baseDb: any,
       body: (tx: any) => Promise<T>,
       timeoutMs = 60_000
     ): Promise<T> {
       let captured: T | undefined;
       let captureErr: unknown;
       try {
-        await prisma.$transaction(
+        await baseDb.$transaction(
           async (tx: any) => {
             try {
               captured = await body(tx);
@@ -217,14 +217,14 @@ describeIntegration(
 
     afterAll(async () => {
       if (RUN_INTEGRATION && HAS_DB_URL) {
-        const { prisma } = await import("~/lib/prisma");
-        await prisma.$disconnect();
+        const { baseDb } = await import("~/lib/db");
+        await baseDb.$disconnect();
       }
     });
 
     it("routes <property name='iteration' value='2'> to TestRunCaseIteration with rowIndex 1", async () => {
-      const { prisma, materializeIterations } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeIterations } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedFixture(tx);
         await materializeIterations(fx.testRunId, tx);
         const passed = await tx.status.findUnique({
@@ -264,8 +264,8 @@ describeIntegration(
     });
 
     it("auto-creates iteration rows when value exceeds snapshot count (D-02)", async () => {
-      const { prisma, materializeIterations } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeIterations } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedFixture(tx);
         await materializeIterations(fx.testRunId, tx);
         // 3 snapshot rows. Route to iteration=5 → row 3 and 4 auto-created.
@@ -325,8 +325,8 @@ describeIntegration(
     });
 
     it("case-insensitive property-name match (D-01)", async () => {
-      const { prisma, materializeIterations } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeIterations } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedFixture(tx);
         await materializeIterations(fx.testRunId, tx);
         const passed = await tx.status.findUnique({
@@ -371,8 +371,8 @@ describeIntegration(
     });
 
     it("out-of-range value uses upsert to avoid P2002 races (Pitfall 2)", async () => {
-      const { prisma, materializeIterations } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeIterations } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedFixture(tx);
         await materializeIterations(fx.testRunId, tx);
         const passed = await tx.status.findUnique({
@@ -408,8 +408,8 @@ describeIntegration(
     });
 
     it("iteration result triggers skippedIterations counter when status is skipped (Wave 1 wiring smoke)", async () => {
-      const { prisma, materializeIterations } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeIterations } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedFixture(tx);
         await materializeIterations(fx.testRunId, tx);
 
@@ -461,8 +461,8 @@ describeIntegration(
     });
 
     it("iteration index above the 5000 cap throws IterationCapExceededError (T-06-01-03)", async () => {
-      const { prisma, materializeIterations } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeIterations } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedFixture(tx);
         await materializeIterations(fx.testRunId, tx);
         const passed = await tx.status.findUnique({

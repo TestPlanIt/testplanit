@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prismaBase";
+import { rawDb } from "@/lib/rawDb";
 import { captureAuditEvent } from "@/lib/services/auditLog";
 import { EncryptionService, getMasterKey } from "@/utils/encryption";
 import crypto from "crypto";
@@ -27,12 +27,12 @@ export class AuthenticationService {
 
     // Store state in a temporary storage (could be Valkey in production)
     // For now, we'll use the integration's settings field
-    await prisma.integration.update({
+    await rawDb.integration.update({
       where: { id: integrationId },
       data: {
         settings: {
           ...(((
-            await prisma.integration.findUnique({
+            await rawDb.integration.findUnique({
               where: { id: integrationId },
               select: { settings: true },
             })
@@ -55,7 +55,7 @@ export class AuthenticationService {
     integrationId: number,
     state: string
   ): Promise<{ valid: boolean; userId?: string }> {
-    const integration = await prisma.integration.findUnique({
+    const integration = await rawDb.integration.findUnique({
       where: { id: integrationId },
       select: { settings: true },
     });
@@ -87,7 +87,7 @@ export class AuthenticationService {
     integrationId: number,
     state: string
   ): Promise<void> {
-    const integration = await prisma.integration.findUnique({
+    const integration = await rawDb.integration.findUnique({
       where: { id: integrationId },
       select: { settings: true },
     });
@@ -96,7 +96,7 @@ export class AuthenticationService {
     if (settings?.oauthState?.[state]) {
       delete settings.oauthState[state];
 
-      await prisma.integration.update({
+      await rawDb.integration.update({
         where: { id: integrationId },
         data: { settings },
       });
@@ -128,7 +128,7 @@ export class AuthenticationService {
       : null;
 
     // Whether a record already exists determines CREATE vs UPDATE for the audit.
-    const existing = await prisma.userIntegrationAuth.findUnique({
+    const existing = await rawDb.userIntegrationAuth.findUnique({
       where: { userId_integrationId: { userId, integrationId } },
       select: { id: true },
     });
@@ -137,7 +137,7 @@ export class AuthenticationService {
     // (userId, integrationId) and does not include isActive, so re-authorizing
     // or refreshing tokens must update the existing row rather than create a
     // second one (which would violate the constraint).
-    const record = await prisma.userIntegrationAuth.upsert({
+    const record = await rawDb.userIntegrationAuth.upsert({
       where: {
         userId_integrationId: { userId, integrationId },
       },
@@ -215,7 +215,7 @@ export class AuthenticationService {
     expiresAt?: Date;
     additionalData?: any;
   } | null> {
-    const auth = await prisma.userIntegrationAuth.findFirst({
+    const auth = await rawDb.userIntegrationAuth.findFirst({
       where: {
         userId,
         integrationId,
@@ -294,7 +294,7 @@ export class AuthenticationService {
       masterKey
     );
 
-    await prisma.integration.update({
+    await rawDb.integration.update({
       where: { id: integrationId },
       data: {
         credentials: encryptedCredentials,
@@ -310,7 +310,7 @@ export class AuthenticationService {
     apiKey: string;
     [key: string]: any;
   } | null> {
-    const integration = await prisma.integration.findUnique({
+    const integration = await rawDb.integration.findUnique({
       where: { id: integrationId },
       select: { credentials: true },
     });
@@ -335,12 +335,12 @@ export class AuthenticationService {
   ): Promise<void> {
     // Capture the record (id + integration name) before deactivating it for the
     // audit — updateMany returns only a count.
-    const record = await prisma.userIntegrationAuth.findFirst({
+    const record = await rawDb.userIntegrationAuth.findFirst({
       where: { userId, integrationId, isActive: true },
       select: { id: true, integration: { select: { name: true } } },
     });
 
-    await prisma.userIntegrationAuth.updateMany({
+    await rawDb.userIntegrationAuth.updateMany({
       where: {
         userId,
         integrationId,
@@ -369,7 +369,7 @@ export class AuthenticationService {
     userId: string,
     integrationId: number
   ): Promise<boolean> {
-    const auth = await prisma.userIntegrationAuth.findFirst({
+    const auth = await rawDb.userIntegrationAuth.findFirst({
       where: {
         userId,
         integrationId,
@@ -388,7 +388,7 @@ export class AuthenticationService {
     userId: string,
     integrationId: number
   ): Promise<void> {
-    await prisma.userIntegrationAuth.updateMany({
+    await rawDb.userIntegrationAuth.updateMany({
       where: {
         userId,
         integrationId,

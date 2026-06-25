@@ -2,10 +2,10 @@ import { Job, Worker } from "bullmq";
 
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { WEBHOOK_DISPATCH_QUEUE_NAME } from "../lib/queues";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -40,7 +40,7 @@ const processor = async (job: Job<DispatchJobData | { tenantId?: string }>) => {
   // short-circuit BEFORE multi-tenant validation because the cron job's
   // data shape is just `{ tenantId? }` (no outboxEventId/webhookConfigId).
   if (job.name === "retire-expired-secrets") {
-    const prisma = getPrismaClientForJob(job.data as { tenantId?: string });
+    const prisma = getDbClientForJob(job.data as { tenantId?: string });
     const { retiredCount } = await retireExpiredSecrets(prisma);
     console.log(
       `[WebhookDispatchWorker] Retired ${retiredCount} expired WebhookConfigSecret rows`
@@ -49,7 +49,7 @@ const processor = async (job: Job<DispatchJobData | { tenantId?: string }>) => {
   }
 
   validateMultiTenantJobData(job.data as DispatchJobData);
-  const prisma = getPrismaClientForJob(job.data as DispatchJobData);
+  const prisma = getDbClientForJob(job.data as DispatchJobData);
 
   // Thread the current attempt number from BullMQ into the job data.
   // job.attemptsMade is the count of COMPLETED attempts (0 on first run, 1

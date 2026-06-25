@@ -5,7 +5,7 @@ import type {
   RepositoryCasesSelect,
   RepositoryCasesWhereInput,
 } from "~/zenstack/input";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -295,7 +295,7 @@ export async function fetchRepositoryCasesWithLastResult(
     // then sort, then apply pagination. This is because lastTestResult is computed.
     const shouldFetchAll = !!args.sortByLastResult;
 
-    const cases = await prisma.repositoryCases.findMany({
+    const cases = await baseDb.repositoryCases.findMany({
       where: args.where,
       orderBy: args.sortByLastResult ? undefined : args.orderBy,
       skip: shouldFetchAll ? undefined : args.skip,
@@ -359,7 +359,7 @@ export async function countRepositoryCasesWithLastResult(
   }
 
   try {
-    const count = await prisma.repositoryCases.count({ where });
+    const count = await baseDb.repositoryCases.count({ where });
     return { success: true, count };
   } catch (error) {
     console.error("Failed to count cases:", error);

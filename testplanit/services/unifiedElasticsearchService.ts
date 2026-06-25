@@ -1,4 +1,4 @@
-import { prisma as defaultPrisma } from "~/lib/prismaBase";
+import { rawDb as defaultPrisma } from "~/lib/rawDb";
 import { CustomFieldDocument, SearchableEntityType } from "~/types/search";
 import { getElasticsearchClient } from "./elasticsearchService";
 
@@ -371,9 +371,9 @@ export const ENTITY_MAPPINGS = {
  * Get Elasticsearch replica settings from database
  */
 async function getElasticsearchSettings(prismaClient?: PrismaClientType) {
-  const prisma = prismaClient || defaultPrisma;
+  const rawDb = prismaClient || defaultPrisma;
   try {
-    const config = await prisma.appConfig.findUnique({
+    const config = await rawDb.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" },
     });
 

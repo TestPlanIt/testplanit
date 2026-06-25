@@ -7,7 +7,7 @@
  * cores.
  */
 
-import { prisma as db } from "@/lib/prisma";
+import { baseDb as db } from "@/lib/db";
 import { IntegrationProvider, WorkflowScope } from "~/zenstack/models";
 import type { TemplateData } from "@/api/llm/generate-test-cases/shared";
 

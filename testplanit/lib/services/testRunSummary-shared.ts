@@ -2,7 +2,7 @@
  * Shared (client-safe) types and helpers for test-run summary data.
  *
  * Lives separately from `testRunSummary.ts` because that module imports
- * `~/lib/prisma`, which pulls server-only deps into client bundles. Pure
+ * `~/lib/db`, which pulls server-only deps into client bundles. Pure
  * data shapes and aggregation helpers belong here so both the in-app
  * TestRunCasesSummary component and the test_run.completed Slack
  * formatter can call them.

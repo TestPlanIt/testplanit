@@ -7,11 +7,11 @@ import type { ActorContextJobData } from "../lib/auditContextEnqueue";
 import {
   disconnectAllTenantClients,
   getCurrentTenantId,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { COPY_MOVE_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { resolveCreateStateRemap } from "../lib/services/reviewGate";
@@ -297,7 +297,7 @@ const processor = async (
     validateMultiTenantJobData(job.data);
 
     // 2. Get tenant-specific Prisma client (raw Prisma, no ZenStack policy enforcement)
-    const prisma = getPrismaClientForJob(job.data);
+    const prisma = getDbClientForJob(job.data);
 
     // 3. Check for pre-start cancellation
     const redis = await worker!.client;

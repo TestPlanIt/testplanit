@@ -10,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projects: {
       findUnique: vi.fn(),
     },
@@ -33,7 +33,7 @@ vi.mock("~/app/actions/getUserAccessibleProjects", () => ({
 
 import { getServerSession } from "next-auth";
 import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 describe("Folder Stats API Route", () => {
   const mockSession = {
@@ -78,10 +78,10 @@ describe("Folder Stats API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getServerSession as any).mockResolvedValue(mockSession);
-    (prisma.projects.findUnique as any).mockResolvedValue(mockProject);
+    (baseDb.projects.findUnique as any).mockResolvedValue(mockProject);
     (getUserAccessibleProjects as any).mockResolvedValue([{ projectId: 1 }]);
-    (prisma.repositoryFolders.findMany as any).mockResolvedValue(mockFolders);
-    (prisma.repositoryCases.findMany as any).mockResolvedValue(mockCases);
+    (baseDb.repositoryFolders.findMany as any).mockResolvedValue(mockFolders);
+    (baseDb.repositoryCases.findMany as any).mockResolvedValue(mockCases);
   });
 
   describe("Authentication", () => {
@@ -121,7 +121,7 @@ describe("Folder Stats API Route", () => {
 
   describe("Not Found", () => {
     it("returns 404 when project does not exist", async () => {
-      (prisma.projects.findUnique as any).mockResolvedValue(null);
+      (baseDb.projects.findUnique as any).mockResolvedValue(null);
 
       const [request, context] = createRequest();
       const response = await GET(request, context);
@@ -196,7 +196,7 @@ describe("Folder Stats API Route", () => {
 
   describe("Optional runId parameter", () => {
     it("uses testRunCases query when runId is provided", async () => {
-      (prisma.testRunCases.findMany as any).mockResolvedValue([
+      (baseDb.testRunCases.findMany as any).mockResolvedValue([
         { repositoryCase: { folderId: 20 } },
       ]);
 
@@ -205,12 +205,12 @@ describe("Folder Stats API Route", () => {
       const _data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(prisma.testRunCases.findMany).toHaveBeenCalledWith(
+      expect(baseDb.testRunCases.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ testRunId: 5 }),
         })
       );
-      expect(prisma.repositoryCases.findMany).not.toHaveBeenCalled();
+      expect(baseDb.repositoryCases.findMany).not.toHaveBeenCalled();
     });
 
     it("uses repositoryCases query when no runId is provided", async () => {
@@ -218,14 +218,14 @@ describe("Folder Stats API Route", () => {
       const response = await GET(request, context);
 
       expect(response.status).toBe(200);
-      expect(prisma.repositoryCases.findMany).toHaveBeenCalled();
-      expect(prisma.testRunCases.findMany).not.toHaveBeenCalled();
+      expect(baseDb.repositoryCases.findMany).toHaveBeenCalled();
+      expect(baseDb.testRunCases.findMany).not.toHaveBeenCalled();
     });
   });
 
   describe("Error Handling", () => {
     it("returns 500 when database query fails", async () => {
-      (prisma.repositoryFolders.findMany as any).mockRejectedValue(
+      (baseDb.repositoryFolders.findMany as any).mockRejectedValue(
         new Error("DB Error")
       );
 

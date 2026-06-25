@@ -42,10 +42,10 @@ vi.mock("~/lib/audit/enhanceWithAudit", () => ({
   enhanceWithAudit: (...args: any[]) => mockEnhance(...args),
 }));
 
-// ─── Mock prisma ──────────────────────────────────────────────────────────────
+// ─── Mock baseDb ──────────────────────────────────────────────────────────────
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       findUnique: (...args: any[]) => mockPrismaUserFindUnique(...args),
     },
@@ -63,9 +63,9 @@ vi.mock("~/lib/queues", () => ({
   getCopyMoveQueue: (...args: any[]) => mockGetCopyMoveQueue(...args),
 }));
 
-// ─── Mock multiTenantPrisma ───────────────────────────────────────────────────
+// ─── Mock multiTenantDb ───────────────────────────────────────────────────
 
-vi.mock("@/lib/multiTenantPrisma", () => ({
+vi.mock("@/lib/multiTenantDb", () => ({
   getCurrentTenantId: (...args: any[]) => mockGetCurrentTenantId(...args),
 }));
 

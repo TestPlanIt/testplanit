@@ -1,5 +1,5 @@
 import { syncService } from "@/lib/integrations/services/SyncService";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
@@ -27,7 +27,7 @@ export const POST = withAuditContext(
       }
 
       // Fetch the issue to get integration and external ID
-      const issue = await prisma.issue.findUnique({
+      const issue = await baseDb.issue.findUnique({
         where: { id: issueId },
         include: {
           integration: true,
@@ -117,7 +117,7 @@ export const POST = withAuditContext(
       }
 
       // Fetch the updated issue
-      const updatedIssue = await prisma.issue.findUnique({
+      const updatedIssue = await baseDb.issue.findUnique({
         where: { id: issueId },
         include: {
           integration: {

@@ -1,4 +1,4 @@
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 
 export type MilestoneSegment = {
@@ -50,7 +50,7 @@ export async function calculateMilestoneCompletion(
   milestoneIds: number[]
 ): Promise<number> {
   // Get total test cases in all test runs for these milestones
-  const totalCasesResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
+  const totalCasesResult = await baseDb.$queryRaw<Array<{ count: bigint }>>`
     SELECT COUNT(*) as count
     FROM "TestRunCases" trc
     JOIN "TestRuns" tr ON trc."testRunId" = tr.id
@@ -64,7 +64,7 @@ export async function calculateMilestoneCompletion(
   }
 
   // Get count of completed test cases (where TestRunCases.status.isCompleted = true)
-  const completedCasesResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
+  const completedCasesResult = await baseDb.$queryRaw<Array<{ count: bigint }>>`
     SELECT COUNT(*) as count
     FROM "TestRunCases" trc
     JOIN "TestRuns" tr ON trc."testRunId" = tr.id
@@ -86,7 +86,7 @@ export async function getTestRunSegments(
   // runs (JUnit, TestNG, etc.) record their outcomes in JUnitTestResult, not
   // TestRunResults, so they need a separate aggregation path — otherwise every
   // automated case looks "pending" with zero elapsed.
-  const runs = await prisma.$queryRaw<
+  const runs = await baseDb.$queryRaw<
     Array<{ id: number; testRunType: string }>
   >`
     SELECT id, "testRunType"
@@ -115,7 +115,7 @@ async function getManualTestRunSegments(
   if (runIds.length === 0) return [];
 
   // Get test runs with aggregated case data (manual runs only)
-  const testRuns = await prisma.$queryRaw<
+  const testRuns = await baseDb.$queryRaw<
     Array<{
       testRunId: number;
       testRunName: string;
@@ -254,7 +254,7 @@ async function getAutomatedTestRunSegments(
 ): Promise<MilestoneSegment[]> {
   if (runIds.length === 0) return [];
 
-  const rows = await prisma.$queryRaw<
+  const rows = await baseDb.$queryRaw<
     Array<{
       testRunId: number;
       testRunName: string;
@@ -307,7 +307,7 @@ export async function getSessionSegments(
   milestoneIds: number[]
 ): Promise<MilestoneSegment[]> {
   // Get sessions for this milestone with their latest results
-  const sessions = await prisma.$queryRaw<
+  const sessions = await baseDb.$queryRaw<
     Array<{
       sessionId: number;
       sessionName: string;
@@ -391,7 +391,7 @@ export async function getMilestoneLinkedIssues(
   // every linked issue under v3.) issueId = "A"; filter on "B".
   const testRunIssues =
     testRunIds.length > 0
-      ? await prisma.$queryRaw<Array<{ issueId: number }>>`
+      ? await baseDb.$queryRaw<Array<{ issueId: number }>>`
         SELECT DISTINCT "A" as "issueId"
         FROM "_IssueToTestRuns"
         WHERE "B" = ANY(${testRunIds}::int[])
@@ -401,7 +401,7 @@ export async function getMilestoneLinkedIssues(
 
   const sessionIssues =
     sessionIds.length > 0
-      ? await prisma.$queryRaw<Array<{ issueId: number }>>`
+      ? await baseDb.$queryRaw<Array<{ issueId: number }>>`
         SELECT DISTINCT "A" as "issueId"
         FROM "_IssueToSessions"
         WHERE "B" = ANY(${sessionIds}::int[])
@@ -411,7 +411,7 @@ export async function getMilestoneLinkedIssues(
 
   const sessionResultIssues =
     sessionIds.length > 0
-      ? await prisma.$queryRaw<Array<{ issueId: number }>>`
+      ? await baseDb.$queryRaw<Array<{ issueId: number }>>`
         SELECT DISTINCT irs."A" as "issueId"
         FROM "_IssueToSessionResults" irs
         JOIN "SessionResults" sr ON irs."B" = sr.id
@@ -423,7 +423,7 @@ export async function getMilestoneLinkedIssues(
 
   const issues =
     issueIds.size > 0
-      ? await prisma.issue.findMany({
+      ? await baseDb.issue.findMany({
           where: {
             id: { in: Array.from(issueIds) },
           },

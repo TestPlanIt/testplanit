@@ -2,7 +2,7 @@ import { LLM_FEATURES, SYNC_RETRY_PROFILE } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest, LlmResponse } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
           ],
         };
 
-    const project = await prisma.projects.findFirst({
+    const project = await baseDb.projects.findFirst({
       where: projectAccessWhere,
       select: { id: true },
     });
@@ -95,8 +95,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const manager = LlmManager.getInstance(prisma);
-    const resolver = new PromptResolver(prisma);
+    const manager = LlmManager.getInstance(baseDb);
+    const resolver = new PromptResolver(baseDb);
     const resolvedPrompt = await resolver.resolve(
       LLM_FEATURES.TEST_CASE_GENERATION,
       projectId
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     const systemPrompt = buildOutlineSystemPrompt(quantity, styleGuidance);
 
     let maxTokens = resolvedPrompt.maxOutputTokens ?? 2048;
-    const providerConfig = await (prisma as any).llmProviderConfig.findFirst({
+    const providerConfig = await (baseDb as any).llmProviderConfig.findFirst({
       where: { llmIntegrationId: resolved.integrationId },
     });
     if (providerConfig) {
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
       const hierarchyContext =
         effectiveBudget > 0 && typeof context.folderContext === "number"
           ? await fetchHierarchyContext(
-              prisma,
+              baseDb,
               projectId,
               context.folderContext,
               effectiveBudget,

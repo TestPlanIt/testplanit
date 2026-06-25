@@ -33,14 +33,14 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     issue: { findUnique: mockFindUnique },
   },
 }));
 
 // SyncService imports getSyncQueue from lib/queues and getCurrentTenantId
-// from lib/multiTenantPrisma. Mock those surfaces so no real Valkey
+// from lib/multiTenantDb. Mock those surfaces so no real Valkey
 // connection is attempted.
 vi.mock("@/lib/queues", () => ({
   getSyncQueue: () => mockGetSyncQueue(),
@@ -50,11 +50,11 @@ vi.mock("~/lib/queues", () => ({
   getSyncQueue: () => mockGetSyncQueue(),
 }));
 
-vi.mock("@/lib/multiTenantPrisma", () => ({
+vi.mock("@/lib/multiTenantDb", () => ({
   getCurrentTenantId: () => mockGetCurrentTenantId(),
 }));
 
-vi.mock("~/lib/multiTenantPrisma", () => ({
+vi.mock("~/lib/multiTenantDb", () => ({
   getCurrentTenantId: () => mockGetCurrentTenantId(),
 }));
 

@@ -6,7 +6,7 @@ import type {
   RepositoryCasesSelect,
   RepositoryCasesWhereInput,
 } from "~/zenstack/input";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { resolveSharedSteps } from "~/lib/utils/resolveSharedSteps";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -226,7 +226,7 @@ export async function fetchAllCasesForExport(
       // );
     }
 
-    const allDataRaw = await prisma.repositoryCases.findMany({
+    const allDataRaw = await baseDb.repositoryCases.findMany({
       where: finalWhereClause, // Use the determined where clause
       orderBy: args.orderBy,
       select: exportSelectClause,

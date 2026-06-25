@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { buildIterationIssueBody } from "~/lib/services/iterationIssueBodyBuilder";
 import { authOptions } from "~/server/auth";
 
@@ -34,7 +34,7 @@ import { authOptions } from "~/server/auth";
 async function resolveUserContext(
   userId: string
 ): Promise<{ canReadSensitive: boolean; locale: string }> {
-  const u = await prisma.user.findUnique({
+  const u = await baseDb.user.findUnique({
     where: { id: userId },
     include: {
       role: { include: { rolePermissions: true } },

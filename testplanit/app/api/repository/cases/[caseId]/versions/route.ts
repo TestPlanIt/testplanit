@@ -4,7 +4,7 @@ import { z } from "zod/v4";
 import { DbNull } from "@zenstackhq/orm";
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 
@@ -91,7 +91,7 @@ export const POST = withAuditContext(
       const validatedData = createVersionSchema.parse(body);
 
       // Fetch the current test case with all necessary relations
-      const testCase = await prisma.repositoryCases.findUnique({
+      const testCase = await baseDb.repositoryCases.findUnique({
         where: { id: caseId },
         include: {
           project: true,
@@ -220,7 +220,7 @@ export const POST = withAuditContext(
 
       while (retryCount <= maxRetries) {
         try {
-          result = await prisma.repositoryCaseVersions.create({
+          result = await baseDb.repositoryCaseVersions.create({
             data: versionData,
           });
           break; // Success, exit retry loop
@@ -237,7 +237,7 @@ export const POST = withAuditContext(
             await new Promise((resolve) => setTimeout(resolve, delay));
 
             // Refetch the test case to get the latest currentVersion
-            const refetchedCase = await prisma.repositoryCases.findUnique({
+            const refetchedCase = await baseDb.repositoryCases.findUnique({
               where: { id: caseId },
               select: { currentVersion: true },
             });

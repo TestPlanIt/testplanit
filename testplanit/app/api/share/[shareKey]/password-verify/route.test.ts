@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     shareLink: {
       findUnique: vi.fn(),
     },
@@ -22,7 +22,7 @@ vi.mock("~/lib/rate-limit", () => ({
 }));
 
 import bcrypt from "bcrypt";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import {
   checkPasswordAttemptLimit,
   clearPasswordAttempts,
@@ -99,7 +99,7 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
 
   describe("Share link validation", () => {
     it("returns 404 for non-existent share link", async () => {
-      (prisma.shareLink.findUnique as any).mockResolvedValue(null);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue(null);
 
       const [req, ctx] = createRequest("nonexistent", { password: "pass" });
       const response = await POST(req, ctx);
@@ -110,7 +110,7 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
     });
 
     it("returns 403 for revoked share link", async () => {
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         isRevoked: true,
       });
@@ -124,7 +124,7 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
     });
 
     it("returns 403 for expired share link", async () => {
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         expiresAt: new Date("2020-01-01"),
       });
@@ -138,7 +138,7 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
     });
 
     it("returns 400 when share link is not PASSWORD_PROTECTED", async () => {
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         mode: "PUBLIC",
       });
@@ -152,7 +152,7 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
     });
 
     it("returns 500 when passwordHash is missing on a PASSWORD_PROTECTED link", async () => {
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         passwordHash: null,
       });
@@ -168,7 +168,7 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
 
   describe("Password verification", () => {
     it("returns 401 for wrong password and records failed attempt", async () => {
-      (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
       (bcrypt.compare as any).mockResolvedValue(false);
       (checkPasswordAttemptLimit as any)
         .mockReturnValueOnce(mockAllowed) // initial check
@@ -189,7 +189,7 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
     });
 
     it("returns success token for correct password", async () => {
-      (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
       (bcrypt.compare as any).mockResolvedValue(true);
 
       const [req, ctx] = createRequest("abc123", {
@@ -205,7 +205,7 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
     });
 
     it("clears rate limit after successful verification", async () => {
-      (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
       (bcrypt.compare as any).mockResolvedValue(true);
 
       const [req, ctx] = createRequest("abc123", {
@@ -218,7 +218,7 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
     });
 
     it("calls bcrypt.compare with provided password and stored hash", async () => {
-      (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
       (bcrypt.compare as any).mockResolvedValue(true);
 
       const [req, ctx] = createRequest("abc123", { password: "mypassword" });
@@ -233,7 +233,7 @@ describe("POST /api/share/[shareKey]/password-verify", () => {
 
   describe("Error handling", () => {
     it("returns 500 when database throws", async () => {
-      (prisma.shareLink.findUnique as any).mockRejectedValue(
+      (baseDb.shareLink.findUnique as any).mockRejectedValue(
         new Error("DB error")
       );
 

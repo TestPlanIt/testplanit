@@ -4,10 +4,10 @@ import { SYSTEM_ACTOR_ID } from "../lib/auditContext";
 import {
   disconnectAllTenantClients,
   getAllTenantIds,
-  getTenantPrismaClient,
+  getTenantDbClient,
   isMultiTenantMode,
-} from "../lib/multiTenantPrisma";
-import { prisma } from "../lib/prisma";
+} from "../lib/multiTenantDb";
+import { baseDb } from "../lib/db";
 import { captureAuditEvent } from "../lib/services/auditLog";
 
 /**
@@ -22,14 +22,14 @@ import { captureAuditEvent } from "../lib/services/auditLog";
  *      AND dispatchedAt < (now - 30 days). Un-dispatched (in-flight) rows
  *      always survive.
  *
- * Each table uses batched LIMIT 1000 deletes via `prisma.$executeRaw` (loop
+ * Each table uses batched LIMIT 1000 deletes via `baseDb.$executeRaw` (loop
  * until $executeRaw returns 0 rows affected) to avoid lock contention on
  * large retention tables. The `WHERE id IN (SELECT id ... LIMIT 1000)`
  * pattern is the standard Postgres idiom for batched deletes — `LIMIT` is
  * illegal in Postgres `DELETE` directly, but legal in the inner subquery.
  *
  * Multi-tenant mode: iterates getAllTenantIds() once per cadence and
- * runs purgeOnce against each tenant's database via getTenantPrismaClient().
+ * runs purgeOnce against each tenant's database via getTenantDbClient().
  *
  * One audit row per (tenant, run) with totals + duration so operators can
  * answer "did purge run last night, and how much was deleted?".
@@ -130,7 +130,7 @@ async function batchedDeleteWebhookOutboxEvent(
 }
 
 export async function purgeOnce(
-  client: DbClient = prisma,
+  client: DbClient = baseDb,
   tenantId?: string,
   budgetMs: number = TENANT_PURGE_BUDGET_MS
 ): Promise<PurgeResult> {
@@ -210,7 +210,7 @@ export async function purgeOnce(
  * worker is a 24h-cadence loop, so reusing a long-lived client cache offers
  * no throughput benefit but keeps RSS climbing across passes. The dispatch
  * worker still benefits from caching per-job clients — that decision lives
- * inside `getTenantPrismaClient`'s callsite, not here.
+ * inside `getTenantDbClient`'s callsite, not here.
  */
 export async function purgeAllTenantsOnce(): Promise<PurgeResult[]> {
   if (!isMultiTenantMode()) {
@@ -226,7 +226,7 @@ export async function purgeAllTenantsOnce(): Promise<PurgeResult[]> {
   try {
     for (const tenantId of tenantIds) {
       try {
-        const client = getTenantPrismaClient(tenantId);
+        const client = getTenantDbClient(tenantId);
         const result = await purgeOnce(client, tenantId);
         results.push(result);
       } catch (err) {

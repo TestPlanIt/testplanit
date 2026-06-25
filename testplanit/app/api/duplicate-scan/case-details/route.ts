@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 const querySchema = z.object({
@@ -10,7 +10,7 @@ const querySchema = z.object({
 });
 
 async function fetchCaseDetails(caseId: number) {
-  const result = await prisma.repositoryCases.findUnique({
+  const result = await baseDb.repositoryCases.findUnique({
     where: { id: caseId },
     select: {
       id: true,

@@ -4,7 +4,7 @@
  * the transaction touches — parent entities AND child/value tables — is
  * attributed to the originating request.
  *
- * Use this in place of `prisma.$transaction(...)` in any request-scoped path
+ * Use this in place of `baseDb.$transaction(...)` in any request-scoped path
  * that mutates audited tables. The actor is sourced from the request's ALS audit
  * frame (so the caller must run inside `withAuditContext` / `runWithAuditContext`
  * — the route wrappers already do). Workers and other raw-client entry points
@@ -20,7 +20,7 @@
 import { getAuthDb, type TxClient } from "~/lib/zenstack";
 import { TransactionIsolationLevel } from "@zenstackhq/orm";
 import type { Session } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getUserWithRole } from "~/lib/auth/utils";
 import { buildGucPayload } from "~/lib/audit/gucContext";
 import { auditTxStore } from "~/lib/audit/auditTxStore";
@@ -37,7 +37,7 @@ export async function auditedTransaction<T>(
 ): Promise<T> {
   const payload = JSON.stringify(buildGucPayload());
   // v3 $transaction options only accept isolationLevel (no maxWait/timeout).
-  return prisma.$transaction(async (tx) => {
+  return baseDb.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
     return auditTxStore.run(tx, () => fn(tx));
   }, { isolationLevel: options?.isolationLevel });

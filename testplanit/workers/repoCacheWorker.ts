@@ -2,10 +2,10 @@ import { Job, Worker } from "bullmq";
 import { repoFileCache } from "../lib/integrations/cache/RepoFileCache";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import {
   JOB_REFRESH_SINGLE_REPO_CACHE,
   REPO_CACHE_QUEUE_NAME,
@@ -36,7 +36,7 @@ const processor = async (job: Job) => {
 
   try {
     // Get the appropriate Prisma client (tenant-specific or default)
-    const prisma = getPrismaClientForJob(job.data);
+    const prisma = getDbClientForJob(job.data);
 
     let successCount = 0;
     let failCount = 0;

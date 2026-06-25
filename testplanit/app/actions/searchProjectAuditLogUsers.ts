@@ -2,7 +2,7 @@
 
 import { sql } from "kysely";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 import type { AuditLogUserOption } from "./searchAuditLogUsers";
 
@@ -34,7 +34,7 @@ export async function searchProjectAuditLogUsers(
     if (session.user.access !== "PROJECTADMIN") {
       return { results: [], total: 0 };
     }
-    const assignment = await prisma.projectAssignment.count({
+    const assignment = await baseDb.projectAssignment.count({
       where: { userId: session.user.id, projectId },
     });
     if (assignment === 0) {
@@ -62,7 +62,7 @@ export async function searchProjectAuditLogUsers(
       ) s
       ORDER BY "userName" ASC NULLS LAST, "userEmail" ASC NULLS LAST
       LIMIT ${take} OFFSET ${skip}
-    `.execute(prisma.$qb)
+    `.execute(baseDb.$qb)
     ).rows;
 
     const countRows = (
@@ -70,7 +70,7 @@ export async function searchProjectAuditLogUsers(
       SELECT COUNT(DISTINCT "userId")::int AS count
       FROM "AuditLog"
       WHERE "projectId" = ${projectId} AND "userId" IS NOT NULL ${searchClause}
-    `.execute(prisma.$qb)
+    `.execute(baseDb.$qb)
     ).rows;
 
     return { results, total: countRows[0]?.count ?? 0 };

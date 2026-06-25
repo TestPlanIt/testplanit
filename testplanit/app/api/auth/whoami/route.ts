@@ -20,7 +20,7 @@ import {
   enrichFromApiAuth,
   withAuditContext,
 } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 
 export const GET = withAuditContext(async (request: NextRequest) => {
@@ -49,7 +49,7 @@ export const GET = withAuditContext(async (request: NextRequest) => {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, email: true },
     });

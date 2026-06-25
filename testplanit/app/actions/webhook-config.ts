@@ -5,7 +5,7 @@ import { createHmac, randomBytes } from "node:crypto";
 import type { AdapterType } from "~/zenstack/models";
 
 import { runWithAuditContext } from "~/lib/auditContext";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { SYNTHETIC_ISSUE_KEY } from "~/lib/webhooks/adapters/jira";
@@ -181,7 +181,7 @@ export async function createOrRotateInboundWebhook(input: {
     async () => {
       // Schema denies all client writes; this server action authorizes the
       // caller explicitly (mirroring the prior @@allow policy) and writes via raw
-      // `prisma` to bypass the deny.
+      // `baseDb` to bypass the deny.
       let authorized: boolean;
       try {
         authorized = await canManageWebhookConfig(session, projectId);
@@ -283,7 +283,7 @@ export async function createOrRotateInboundWebhook(input: {
       });
 
       try {
-        const existing = await prisma.webhookConfig.findFirst({
+        const existing = await baseDb.webhookConfig.findFirst({
           where: { projectId, adapterType, direction: "INBOUND" },
           select: { id: true },
         });
@@ -291,13 +291,13 @@ export async function createOrRotateInboundWebhook(input: {
         let config: { id: string };
         if (existing) {
           // Rotation overwrites — old token immediately invalid.
-          config = await prisma.webhookConfig.update({
+          config = await baseDb.webhookConfig.update({
             where: { id: existing.id },
             data: { token, secret: encryptedSecret, isActive: true },
             select: { id: true },
           });
         } else {
-          config = await prisma.webhookConfig.create({
+          config = await baseDb.webhookConfig.create({
             data: {
               projectId,
               adapterType,
@@ -321,12 +321,12 @@ export async function createOrRotateInboundWebhook(input: {
             "[webhook-config] createOrRotate hit concurrent-create race; retrying via rotate path"
           );
           try {
-            const existing = await prisma.webhookConfig.findFirst({
+            const existing = await baseDb.webhookConfig.findFirst({
               where: { projectId, adapterType, direction: "INBOUND" },
               select: { id: true },
             });
             if (existing) {
-              const config = await prisma.webhookConfig.update({
+              const config = await baseDb.webhookConfig.update({
                 where: { id: existing.id },
                 data: { token, secret: encryptedSecret, isActive: true },
                 select: { id: true },
@@ -406,7 +406,7 @@ export async function deleteInboundWebhook(input: {
         direction?: "INBOUND" | "OUTBOUND";
       } | null;
       try {
-        config = await prisma.webhookConfig.findUnique({
+        config = await baseDb.webhookConfig.findUnique({
           where: { id: webhookConfigId },
           select: { projectId: true, direction: true },
         });
@@ -445,7 +445,7 @@ export async function deleteInboundWebhook(input: {
       }
 
       try {
-        await prisma.webhookConfig.delete({ where: { id: webhookConfigId } });
+        await baseDb.webhookConfig.delete({ where: { id: webhookConfigId } });
         return { success: true };
       } catch (err) {
         console.error("[webhook-config] delete failed", err);
@@ -477,7 +477,7 @@ export async function deleteJiraWebhook(
 
   let projectId: number;
   try {
-    const cfg = await prisma.webhookConfig.findUnique({
+    const cfg = await baseDb.webhookConfig.findUnique({
       where: { id: configId },
       select: { projectId: true },
     });
@@ -525,7 +525,7 @@ export async function setWebhookActive(
     async () => {
       let projectId: number;
       try {
-        const config = await prisma.webhookConfig.findUnique({
+        const config = await baseDb.webhookConfig.findUnique({
           where: { id: configId },
           select: { projectId: true },
         });
@@ -556,7 +556,7 @@ export async function setWebhookActive(
       }
 
       try {
-        await prisma.webhookConfig.update({
+        await baseDb.webhookConfig.update({
           where: { id: configId },
           data: { isActive },
         });
@@ -619,7 +619,7 @@ export async function sendTestWebhook(
     return { ok: false, statusCode: 401, error: "Unauthorized" };
   }
 
-  // Read via raw prisma (the schema's @@allow('read', ...) clause is
+  // Read via raw baseDb (the schema's @@allow('read', ...) clause is
   // bypassed here, but we authorize through `canManageWebhookConfig` below
   // before exposing anything sensitive).
   let config: {
@@ -629,7 +629,7 @@ export async function sendTestWebhook(
     adapterType: AdapterType;
   } | null;
   try {
-    config = await prisma.webhookConfig.findUnique({
+    config = await baseDb.webhookConfig.findUnique({
       where: { id: configId },
       select: {
         token: true,
@@ -944,7 +944,7 @@ export async function createOutboundWebhook(input: {
       if (adapterType === "SLACK") {
         // Slack URL is the credential — no HMAC signing secret needed.
         try {
-          const config = await prisma.webhookConfig.create({
+          const config = await baseDb.webhookConfig.create({
             data: {
               projectId: input.projectId,
               adapterType: "SLACK",
@@ -989,7 +989,7 @@ export async function createOutboundWebhook(input: {
       }
 
       try {
-        const created = await prisma.$transaction(async (tx) => {
+        const created = await baseDb.$transaction(async (tx) => {
           const config = await tx.webhookConfig.create({
             data: {
               projectId: input.projectId,
@@ -1056,7 +1056,7 @@ export async function deleteOutboundWebhook(
       userEmail: session.user.email ?? undefined,
     },
     async () => {
-      const config = await prisma.webhookConfig.findUnique({
+      const config = await baseDb.webhookConfig.findUnique({
         where: { id: configId },
         select: { projectId: true, direction: true },
       });
@@ -1081,7 +1081,7 @@ export async function deleteOutboundWebhook(
       if (!authorized) return { success: false, error: "Forbidden" };
 
       try {
-        await prisma.webhookConfig.delete({ where: { id: configId } });
+        await baseDb.webhookConfig.delete({ where: { id: configId } });
         return { success: true };
       } catch (err) {
         console.error("[webhook-config] deleteOutboundWebhook failed", err);
@@ -1120,7 +1120,7 @@ export async function updateOutboundSubscriptions(
       userEmail: session.user.email ?? undefined,
     },
     async () => {
-      const config = await prisma.webhookConfig.findUnique({
+      const config = await baseDb.webhookConfig.findUnique({
         where: { id: configId },
         select: { projectId: true, direction: true },
       });
@@ -1138,7 +1138,7 @@ export async function updateOutboundSubscriptions(
       if (!authorized) return { success: false, error: "Forbidden" };
 
       try {
-        await prisma.webhookConfig.update({
+        await baseDb.webhookConfig.update({
           where: { id: configId },
           data: { subscribedEvents },
         });
@@ -1201,7 +1201,7 @@ export async function rotateOutboundSecret(
       userEmail: session.user.email ?? undefined,
     },
     async () => {
-      const config = await prisma.webhookConfig.findUnique({
+      const config = await baseDb.webhookConfig.findUnique({
         where: { id: configId },
         select: { projectId: true, direction: true, adapterType: true },
       });
@@ -1233,7 +1233,7 @@ export async function rotateOutboundSecret(
       }
 
       try {
-        await prisma.$transaction(async (tx) => {
+        await baseDb.$transaction(async (tx) => {
           const activeSecrets = await tx.webhookConfigSecret.findMany({
             where: {
               webhookConfigId: configId,
@@ -1301,7 +1301,7 @@ export async function retireOutboundSecretNow(
       userEmail: session.user.email ?? undefined,
     },
     async () => {
-      const secret = await prisma.webhookConfigSecret.findUnique({
+      const secret = await baseDb.webhookConfigSecret.findUnique({
         where: { id: secretId },
         select: {
           retiredAt: true,
@@ -1330,7 +1330,7 @@ export async function retireOutboundSecretNow(
       if (!authorized) return { success: false, error: "Forbidden" };
 
       try {
-        await prisma.webhookConfigSecret.update({
+        await baseDb.webhookConfigSecret.update({
           where: { id: secretId },
           data: { retiredAt: new Date() },
         });
@@ -1367,7 +1367,7 @@ export async function extendRetiringSecret(
       userEmail: session.user.email ?? undefined,
     },
     async () => {
-      const secret = await prisma.webhookConfigSecret.findUnique({
+      const secret = await baseDb.webhookConfigSecret.findUnique({
         where: { id: secretId },
         select: {
           retiredAt: true,
@@ -1396,7 +1396,7 @@ export async function extendRetiringSecret(
         secret.autoRetireAt.getTime() + SEVEN_DAYS_MS
       );
       try {
-        await prisma.webhookConfigSecret.update({
+        await baseDb.webhookConfigSecret.update({
           where: { id: secretId },
           data: { autoRetireAt: newAutoRetireAt },
         });
@@ -1441,7 +1441,7 @@ export async function sendTestOutboundWebhook(
       userEmail: session.user.email ?? undefined,
     },
     async () => {
-      const config = await prisma.webhookConfig.findUnique({
+      const config = await baseDb.webhookConfig.findUnique({
         where: { id: configId },
         select: { projectId: true, direction: true },
       });
@@ -1460,7 +1460,7 @@ export async function sendTestOutboundWebhook(
 
       let eventId: string | null = null;
       try {
-        await prisma.$transaction(async (tx) => {
+        await baseDb.$transaction(async (tx) => {
           const result = await webhookEvents.emit(
             "webhook.test",
             {
@@ -1515,7 +1515,7 @@ export async function replayWebhookDelivery(
   let projectId: number;
   let direction: "INBOUND" | "OUTBOUND";
   try {
-    const delivery = await prisma.webhookDelivery.findUnique({
+    const delivery = await baseDb.webhookDelivery.findUnique({
       where: { id: deliveryId },
       select: {
         direction: true,
@@ -1590,7 +1590,7 @@ export async function bulkReplayFailedDeliveries(input: {
 
   let projectId: number;
   try {
-    const config = await prisma.webhookConfig.findUnique({
+    const config = await baseDb.webhookConfig.findUnique({
       where: { id: input.webhookConfigId },
       select: { projectId: true },
     });
@@ -1624,7 +1624,7 @@ export async function bulkReplayFailedDeliveries(input: {
 
   try {
     // Outbound-only filter — hard cap applies against outbound count.
-    const failedDeliveries = await prisma.webhookDelivery.findMany({
+    const failedDeliveries = await baseDb.webhookDelivery.findMany({
       where: {
         webhookConfigId: input.webhookConfigId,
         direction: "OUTBOUND",
@@ -1687,7 +1687,7 @@ export async function reEnableWebhookConfig(
       let projectId: number;
       let endpointHealth: "HEALTHY" | "DEGRADED" | "DISABLED";
       try {
-        const config = await prisma.webhookConfig.findUnique({
+        const config = await baseDb.webhookConfig.findUnique({
           where: { id: webhookConfigId },
           select: { projectId: true, endpointHealth: true },
         });
@@ -1722,7 +1722,7 @@ export async function reEnableWebhookConfig(
       if (!authorized) return { ok: false, error: "Forbidden" };
 
       try {
-        await prisma.webhookConfig.update({
+        await baseDb.webhookConfig.update({
           where: { id: webhookConfigId },
           data: { endpointHealth: "HEALTHY", consecutiveFailureCount: 0 },
         });
@@ -1781,7 +1781,7 @@ export async function getReplayBatchStatus(
   if (!session?.user) return { ok: false, error: "Unauthorized" };
 
   try {
-    const auditRows = await prisma.auditLog.findMany({
+    const auditRows = await baseDb.auditLog.findMany({
       where: {
         action: "WEBHOOK_REPLAYED",
         metadata: { path: "batchId", equals: batchId },
@@ -1806,7 +1806,7 @@ export async function getReplayBatchStatus(
       )
       .filter((x): x is string => typeof x === "string");
 
-    const replayRows = await prisma.webhookDelivery.findMany({
+    const replayRows = await baseDb.webhookDelivery.findMany({
       where: { replayedFromDeliveryId: { in: originalIds } },
       select: { error: true, replayedFromDeliveryId: true },
     });

@@ -4,7 +4,7 @@ import { AuditAction } from "~/zenstack/models";
 import bcrypt from "bcrypt";
 import { getServerSession } from "next-auth";
 import { withActionAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { generateShareKey } from "~/lib/share-tokens";
 import { authOptions } from "~/server/auth";
 
@@ -13,7 +13,7 @@ import { authOptions } from "~/server/auth";
  * Generates share key and hashes password if needed
  *
  * NOT wrapped in withActionAuditContext — this action does not emit
- * audit events (no direct prisma.auditLog.create, no hooked-model
+ * audit events (no direct baseDb.auditLog.create, no hooked-model
  * mutations). Only audit-emitting actions need the ALS frame.
  */
 export async function prepareShareLinkData(data: { password?: string | null }) {
@@ -35,7 +35,7 @@ export async function prepareShareLinkData(data: { password?: string | null }) {
  * Called after successful ZenStack creation.
  *
  * Wrapped in withActionAuditContext so the direct
- * prisma.auditLog.create below runs inside an AsyncLocalStorage frame
+ * baseDb.auditLog.create below runs inside an AsyncLocalStorage frame
  * seeded with ipAddress/userAgent/requestId from next/headers. Identity
  * fields (userId/userEmail/userName) flow from the NextAuth session
  * callback triggered by the getServerSession call in the body. Together
@@ -59,7 +59,7 @@ export const auditShareLinkCreation = withActionAuditContext(
       return;
     }
 
-    await prisma.auditLog.create({
+    await baseDb.auditLog.create({
       data: {
         userId: session.user.id,
         userEmail: session.user.email,
@@ -86,7 +86,7 @@ export const auditShareLinkCreation = withActionAuditContext(
  * Server action to revoke a share link and create audit log.
  *
  * Wrapped in withActionAuditContext — same rationale as
- * auditShareLinkCreation. The direct prisma.auditLog.create for
+ * auditShareLinkCreation. The direct baseDb.auditLog.create for
  * SHARE_LINK_REVOKED now runs inside a fully populated AuditContext.
  */
 export const revokeShareLink = withActionAuditContext(
@@ -98,7 +98,7 @@ export const revokeShareLink = withActionAuditContext(
     }
 
     // Fetch share link details for audit log
-    const shareLink = await prisma.shareLink.findUnique({
+    const shareLink = await baseDb.shareLink.findUnique({
       where: { id: shareLinkId },
     });
 
@@ -108,7 +108,7 @@ export const revokeShareLink = withActionAuditContext(
 
     // Check permissions
     const project = shareLink.projectId
-      ? await prisma.projects.findUnique({
+      ? await baseDb.projects.findUnique({
           where: { id: shareLink.projectId },
         })
       : null;
@@ -123,7 +123,7 @@ export const revokeShareLink = withActionAuditContext(
     }
 
     // Create audit log
-    await prisma.auditLog.create({
+    await baseDb.auditLog.create({
       data: {
         userId: session.user.id,
         userEmail: session.user.email,

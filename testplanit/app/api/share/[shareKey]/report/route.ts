@@ -5,7 +5,7 @@ import {
   getCrossProjectReportTypes,
   getProjectReportTypes,
 } from "~/lib/config/reportTypes";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export const GET = withAuditContext(
       const token = searchParams.get("token");
 
       // Fetch share link
-      const shareLink = await prisma.shareLink.findUnique({
+      const shareLink = await baseDb.shareLink.findUnique({
         where: { shareKey },
         include: {
           project: {

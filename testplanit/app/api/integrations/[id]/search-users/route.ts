@@ -1,5 +1,5 @@
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -26,7 +26,7 @@ export async function GET(
       request.nextUrl.searchParams.get("maxResults") || "50"
     );
 
-    const integration = await prisma.integration.findUnique({
+    const integration = await baseDb.integration.findUnique({
       where: {
         id: integrationId,
         status: "ACTIVE",

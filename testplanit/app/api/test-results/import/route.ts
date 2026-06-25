@@ -12,7 +12,7 @@
  */
 
 import { auditedTransaction } from "@/lib/audit/auditedTransaction";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { JUnitResultType, RepositoryCaseSource, TestRunType, WorkflowScope } from "~/zenstack/models";
 import { NextRequest } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
@@ -38,7 +38,7 @@ import {
   type CaseMatcher,
   type CaseIdFormat,
 } from "~/lib/services/automationCaseId";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import {
   countTotalTestCases,
   detectFormat,
@@ -73,7 +73,7 @@ import { progressMessages } from "./progress-messages";
 async function findMatchingStatus(junitStatus: string, projectId: number) {
   const statusToFind = junitStatus.toLowerCase();
 
-  const status = await prisma.status.findFirst({
+  const status = await baseDb.status.findFirst({
     where: {
       isEnabled: true,
       isDeleted: false,
@@ -102,7 +102,7 @@ async function findMatchingStatus(junitStatus: string, projectId: number) {
 
 // Helper to get the PASSED status for the project
 async function getPassedStatus(projectId: number) {
-  return prisma.status.findFirst({
+  return baseDb.status.findFirst({
     where: {
       isEnabled: true,
       isDeleted: false,
@@ -116,7 +116,7 @@ async function getPassedStatus(projectId: number) {
 
 // Helper to get the UNTESTED status for the project
 async function getUntestedStatus(projectId: number) {
-  return prisma.status.findFirst({
+  return baseDb.status.findFirst({
     where: {
       isEnabled: true,
       isDeleted: false,
@@ -304,7 +304,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         )[0][0];
 
         // Get the case workflow state (DONE) for imported test cases
-        const caseWorkflow = await prisma.workflows.findFirst({
+        const caseWorkflow = await baseDb.workflows.findFirst({
           where: {
             isEnabled: true,
             isDeleted: false,
@@ -319,7 +319,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         const defaultCaseStateId = caseWorkflow?.id;
 
         // Get the default test run workflow state (first RUNS workflow) for the test run
-        const runWorkflow = await prisma.workflows.findFirst({
+        const runWorkflow = await baseDb.workflows.findFirst({
           where: {
             isEnabled: true,
             isDeleted: false,
@@ -452,12 +452,12 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           const candidateRunStateId = stateIdFromForm || defaultRunStateId;
           const effectiveRunStateId =
             (await resolveCreateStateRemap(
-              prisma,
+              baseDb,
               projectId,
               WorkflowScope.RUNS,
               candidateRunStateId
             )) ?? candidateRunStateId;
-          const testRun = await prisma.testRuns.create({
+          const testRun = await baseDb.testRuns.create({
             data: {
               name,
               projectId,
@@ -474,7 +474,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           });
           testRunId = testRun.id;
         } else {
-          const existingTestRun = await prisma.testRuns.findUnique({
+          const existingTestRun = await baseDb.testRuns.findUnique({
             where: { id: testRunId },
             select: { testRunType: true },
           });
@@ -505,12 +505,12 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         // Use provided templateId or fall back to the default template
         let template;
         if (templateId) {
-          template = await prisma.templates.findUnique({
+          template = await baseDb.templates.findUnique({
             where: { id: templateId },
           });
         }
         if (!template) {
-          template = await prisma.templates.findFirst({
+          template = await baseDb.templates.findFirst({
             where: { isDefault: true },
           });
         }
@@ -535,7 +535,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         // The legacy (non-parameterized) path is unchanged when the project
         // is null or `junitIterationPropertyNames` is empty — `routeToIteration`
         // is only called when extractIterationIndex returns a non-null index.
-        const projectRow = await prisma.projects.findUnique({
+        const projectRow = await baseDb.projects.findUnique({
           where: { id: projectId },
           select: { junitIterationPropertyNames: true },
         });
@@ -579,7 +579,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           return;
         }
 
-        const allStatuses = await prisma.status.findMany({
+        const allStatuses = await baseDb.status.findMany({
           where: { isDeleted: false },
           select: {
             id: true,
@@ -649,7 +649,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             return;
           }
 
-          let repository = await prisma.repositories.findFirst({
+          let repository = await baseDb.repositories.findFirst({
             where: {
               projectId: projectId,
               isActive: true,
@@ -659,7 +659,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             orderBy: { id: "asc" },
           });
           if (!repository) {
-            repository = await prisma.repositories.create({
+            repository = await baseDb.repositories.create({
               data: {
                 projectId: projectId,
                 isActive: true,
@@ -669,7 +669,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             });
           }
           // Reuse existing root folder with the same name, or create new
-          let folder = await prisma.repositoryFolders.findFirst({
+          let folder = await baseDb.repositoryFolders.findFirst({
             where: {
               projectId: projectId,
               repositoryId: repository.id,
@@ -679,7 +679,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             },
           });
           if (!folder) {
-            folder = await prisma.repositoryFolders.create({
+            folder = await baseDb.repositoryFolders.create({
               data: {
                 projectId: projectId,
                 repositoryId: repository.id,
@@ -718,7 +718,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
           try {
             // Create the test suite record (using JUnitTestSuite for all formats)
-            const dbSuite = await prisma.jUnitTestSuite.create({
+            const dbSuite = await baseDb.jUnitTestSuite.create({
               data: {
                 name: suite.name || "Test Suite",
                 time: parseDuration(suite.duration),
@@ -733,7 +733,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             });
 
             // Get or create repository and folder
-            let repository = await prisma.repositories.findFirst({
+            let repository = await baseDb.repositories.findFirst({
               where: {
                 projectId: projectId,
                 isActive: true,
@@ -743,7 +743,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               orderBy: { id: "asc" },
             });
             if (!repository) {
-              repository = await prisma.repositories.create({
+              repository = await baseDb.repositories.create({
                 data: {
                   projectId: projectId,
                   isActive: true,
@@ -772,7 +772,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 for (let i = 0; i < pathParts.length; i++) {
                   const folderName = pathParts[i];
 
-                  const f = await prisma.repositoryFolders.upsert({
+                  const f = await baseDb.repositoryFolders.upsert({
                     where: {
                       projectId_repositoryId_parentId_name_isDeleted: {
                         projectId: projectId,
@@ -802,7 +802,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
               // Fallback: use first existing folder or create a generic one
               if (!_suiteFolder) {
-                const existing = await prisma.repositoryFolders.findFirst({
+                const existing = await baseDb.repositoryFolders.findFirst({
                   where: {
                     projectId: projectId,
                     repositoryId: repository.id,
@@ -812,7 +812,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 });
                 _suiteFolder =
                   existing ??
-                  (await prisma.repositoryFolders.create({
+                  (await baseDb.repositoryFolders.create({
                     data: {
                       projectId: projectId,
                       repositoryId: repository.id,
@@ -883,12 +883,12 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               );
 
               const casesToProcess: Awaited<
-                ReturnType<typeof prisma.repositoryCases.create>
+                ReturnType<typeof baseDb.repositoryCases.create>
               >[] = [];
 
               if (caseIdRefs.ids.length > 0) {
                 for (const refId of caseIdRefs.ids) {
-                  const existing = await prisma.repositoryCases.findFirst({
+                  const existing = await baseDb.repositoryCases.findFirst({
                     where: { id: refId, projectId: projectId },
                   });
                   if (!existing) {
@@ -903,7 +903,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   // case is linkable without overwriting the user's curated
                   // fields (name, className, template, state, estimate,
                   // folder, order).
-                  const linkable = await prisma.repositoryCases.update({
+                  const linkable = await baseDb.repositoryCases.update({
                     where: { id: existing.id },
                     data: {
                       automated: true,
@@ -920,7 +920,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   continue;
                 }
               } else {
-                let repositoryCase = await prisma.repositoryCases.findFirst({
+                let repositoryCase = await baseDb.repositoryCases.findFirst({
                   where: {
                     projectId: projectId,
                     name: testCase.name,
@@ -930,7 +930,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 });
 
                 if (repositoryCase) {
-                  repositoryCase = await prisma.repositoryCases.update({
+                  repositoryCase = await baseDb.repositoryCases.update({
                     where: { id: repositoryCase.id },
                     data: {
                       automated: true,
@@ -947,7 +947,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   });
                 } else {
                   const folder = await getFolderForNewCase();
-                  repositoryCase = await prisma.repositoryCases.create({
+                  repositoryCase = await baseDb.repositoryCases.create({
                     data: {
                       projectId: projectId,
                       repositoryId: repository.id,
@@ -970,7 +970,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
               for (const repositoryCase of casesToProcess) {
                 // Upsert TestRunCases
-                await prisma.testRunCases.upsert({
+                await baseDb.testRunCases.upsert({
                   where: {
                     testRunId_repositoryCaseId: {
                       testRunId: testRunId,
@@ -1022,7 +1022,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 }
 
                 // Create the test result (using JUnitTestResult for all formats)
-                const junitTestResult = await prisma.jUnitTestResult.create({
+                const junitTestResult = await baseDb.jUnitTestResult.create({
                   data: {
                     type: resultType,
                     message: testCase.failure || undefined,
@@ -1080,7 +1080,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   // Resolve the TestRunCase id once so routeToIteration can
                   // target the right composite-unique-key pair.
                   const testRunCaseForIter =
-                    await prisma.testRunCases.findFirst({
+                    await baseDb.testRunCases.findFirst({
                       where: {
                         testRunId: testRunId,
                         repositoryCaseId: repositoryCase.id,
@@ -1142,7 +1142,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   // write, no rollup, no iteration counters. Guarded by an
                   // explicit `iterationIndex === null` so a future bug in
                   // the iteration branch cannot leak into this path.
-                  const testRunCase = await prisma.testRunCases.findFirst({
+                  const testRunCase = await baseDb.testRunCases.findFirst({
                     where: {
                       testRunId: testRunId,
                       repositoryCaseId: repositoryCase.id,
@@ -1151,7 +1151,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   });
 
                   if (testRunCase) {
-                    await prisma.testRunCases.update({
+                    await baseDb.testRunCases.update({
                       where: { id: testRunCase.id },
                       data: {
                         statusId: matchingStatus.id,
@@ -1185,7 +1185,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     if (typeof stepStatusId === "number") {
                       stepData.statusId = stepStatusId;
                     }
-                    await prisma.jUnitTestStep.create({
+                    await baseDb.jUnitTestStep.create({
                       data: stepData,
                     });
                   }
@@ -1204,7 +1204,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     testCase.steps ?? [],
                     suiteFormat
                   );
-                  const existingStepCount = await prisma.steps.count({
+                  const existingStepCount = await baseDb.steps.count({
                     where: {
                       testCaseId: repositoryCase.id,
                       isDeleted: false,
@@ -1236,7 +1236,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     // Safeguard: a stepless import never clears existing steps.
                     const mapped = automationStepsToCaseSteps(automationSteps);
                     if (mapped.length > 0 && existingStepCount > 0) {
-                      await prisma.steps.updateMany({
+                      await baseDb.steps.updateMany({
                         where: {
                           testCaseId: repositoryCase.id,
                           isDeleted: false,
@@ -1253,7 +1253,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     );
                   }
                   if (derivedRows.length > 0) {
-                    await prisma.steps.createMany({
+                    await baseDb.steps.createMany({
                       data: derivedRows.map((row) => ({
                         testCaseId: repositoryCase.id,
                         order: row.order,
@@ -1358,7 +1358,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         if (llmEligibleCases.length > 0 && userId) {
           try {
             await enqueueDeriveCaseSteps({
-              prisma,
+              baseDb,
               projectId,
               testRunId,
               userId,
@@ -1381,7 +1381,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         try {
           const esClient = getElasticsearchClient();
           if (esClient) {
-            const scanService = new DuplicateScanService(prisma, esClient);
+            const scanService = new DuplicateScanService(baseDb, esClient);
             const tenantId = getCurrentTenantId();
 
             // Collect unique case names from the import (limit 50)
@@ -1405,7 +1405,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 const caseIds = similar
                   .slice(0, 3)
                   .map((s) => (s.caseAId === 0 ? s.caseBId : s.caseAId));
-                const cases = await prisma.repositoryCases.findMany({
+                const cases = await baseDb.repositoryCases.findMany({
                   where: { id: { in: caseIds } },
                   select: { id: true, name: true },
                 });

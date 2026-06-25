@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mocks must be hoisted before the SUT import.
-vi.mock("../lib/multiTenantPrisma", () => ({
+vi.mock("../lib/multiTenantDb", () => ({
   validateMultiTenantJobData: vi.fn(),
-  getPrismaClientForJob: vi.fn().mockReturnValue({ __mock: "prisma" }),
+  getDbClientForJob: vi.fn().mockReturnValue({ __mock: "prisma" }),
   isMultiTenantMode: vi.fn().mockReturnValue(false),
   disconnectAllTenantClients: vi.fn().mockResolvedValue(undefined),
 }));
@@ -42,9 +42,9 @@ vi.mock("../lib/tenantContext", () => ({
 }));
 
 import {
-  getPrismaClientForJob,
+  getDbClientForJob,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { dispatchWebhook } from "../lib/webhooks/dispatch";
 
 import {
@@ -56,7 +56,7 @@ import {
 const mockedValidate = validateMultiTenantJobData as unknown as ReturnType<
   typeof vi.fn
 >;
-const mockedGetPrisma = getPrismaClientForJob as unknown as ReturnType<
+const mockedGetPrisma = getDbClientForJob as unknown as ReturnType<
   typeof vi.fn
 >;
 const mockedDispatch = dispatchWebhook as unknown as ReturnType<typeof vi.fn>;

@@ -30,7 +30,7 @@ import { LLM_FEATURES, SYNC_RETRY_PROFILE } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -208,7 +208,7 @@ export async function POST(req: NextRequest) {
 
   // --- Pre-snapshot gates (no row written until these all pass) ---------
 
-  const projectLlm = await prisma.projectLlmIntegration.findFirst({
+  const projectLlm = await baseDb.projectLlmIntegration.findFirst({
     where: {
       projectId,
       isActive: true,
@@ -297,7 +297,7 @@ export async function POST(req: NextRequest) {
   // Resolve the prompt + substitute variables. (LLM mode only — the
   // heuristic fallback emits a static rationale per case and doesn't
   // call the LLM.)
-  const resolver = new PromptResolver(prisma);
+  const resolver = new PromptResolver(baseDb);
   const resolvedPrompt = useHeuristic
     ? null
     : await resolver.resolve(LLM_FEATURES.AUTOMATION_CANDIDATES, projectId);
@@ -357,7 +357,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const manager = LlmManager.getInstance(prisma);
+  const manager = LlmManager.getInstance(baseDb);
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -390,7 +390,7 @@ export async function POST(req: NextRequest) {
           // copy to whoever ran the report (same characteristic as the
           // LLM path, which renders in whatever language the model
           // chose to respond in).
-          const generatorPrefs = await prisma.user.findUnique({
+          const generatorPrefs = await baseDb.user.findUnique({
             where: { id: session.user.id },
             select: { userPreferences: { select: { locale: true } } },
           });
@@ -626,7 +626,7 @@ async function handleSharedReportBypass(
     typeof requestedSnapshotId === "number" &&
     Number.isInteger(requestedSnapshotId);
 
-  const snapshot = await prisma.llmReportSnapshot.findFirst({
+  const snapshot = await baseDb.llmReportSnapshot.findFirst({
     where: {
       projectId,
       reportType: REPORT_TYPE,

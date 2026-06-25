@@ -5,7 +5,7 @@ import { z } from "zod/v4";
 import { runWithAuditContext } from "~/lib/auditContext";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getScimAccessRecomputeQueue } from "~/lib/queues";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { ACCESS_RANK, resolveEffectiveAccess } from "~/lib/scim/access/resolve";
 import { readScimFallbackDefault } from "~/lib/scim/access/fallbackDefault";
 import { getServerAuthSession } from "~/server/auth";
@@ -44,9 +44,9 @@ export async function previewGroupMappingChange(
     return { success: false, error: "Invalid input" };
   }
 
-  const fallbackDefault = await readScimFallbackDefault(prisma);
+  const fallbackDefault = await readScimFallbackDefault(baseDb);
 
-  const members = await prisma.groupAssignment.findMany({
+  const members = await baseDb.groupAssignment.findMany({
     where: { groupId: validatedGroupId },
     select: { userId: true },
   });
@@ -55,11 +55,11 @@ export async function previewGroupMappingChange(
 
   for (const { userId } of members) {
     const [user, allAssignments] = await Promise.all([
-      prisma.user.findUnique({
+      baseDb.user.findUnique({
         where: { id: userId },
         select: { name: true, access: true, accessSource: true },
       }),
-      prisma.groupAssignment.findMany({
+      baseDb.groupAssignment.findMany({
         where: { userId },
         select: { group: { select: { id: true, mappedAccess: true } } },
       }),
@@ -109,9 +109,9 @@ export async function previewFallbackDefaultChange(
   }
 
   const proposedFallback: Access = newDefault ?? "NONE";
-  const currentFallback = await readScimFallbackDefault(prisma);
+  const currentFallback = await readScimFallbackDefault(baseDb);
 
-  const users = await prisma.user.findMany({
+  const users = await baseDb.user.findMany({
     where: { accessSource: "GROUP_MAPPING", isDeleted: false },
     select: { id: true, name: true, access: true },
   });
@@ -119,7 +119,7 @@ export async function previewFallbackDefaultChange(
   const downgraded: DowngradedUser[] = [];
 
   for (const user of users) {
-    const assignments = await prisma.groupAssignment.findMany({
+    const assignments = await baseDb.groupAssignment.findMany({
       where: { userId: user.id },
       select: { group: { select: { mappedAccess: true } } },
     });
@@ -163,12 +163,12 @@ export async function saveMappingChange(
 
   return runWithAuditContext({ userId: session.user.id }, async () => {
     try {
-      const oldGroup = await prisma.groups.findUnique({
+      const oldGroup = await baseDb.groups.findUnique({
         where: { id: validatedGroupId },
         select: { mappedAccess: true, name: true },
       });
 
-      await prisma.groups.update({
+      await baseDb.groups.update({
         where: { id: validatedGroupId },
         data: { mappedAccess: newMappedAccess },
       });

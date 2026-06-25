@@ -1,4 +1,4 @@
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
@@ -56,7 +56,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     const { name, description, isDefault, isActive, prompts } = parsed.data;
 
     // Fetch all active integrations to resolve names to IDs
-    const activeIntegrations = await prisma.llmIntegration.findMany({
+    const activeIntegrations = await baseDb.llmIntegration.findMany({
       where: { isDeleted: false, status: "ACTIVE" },
       select: { id: true, name: true },
     });
@@ -95,7 +95,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       };
     });
 
-    const created = await prisma.promptConfig.create({
+    const created = await baseDb.promptConfig.create({
       data: {
         name,
         description,

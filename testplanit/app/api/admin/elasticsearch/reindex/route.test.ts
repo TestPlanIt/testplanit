@@ -10,8 +10,8 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateApiToken: vi.fn(),
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     user: {
       findUnique: vi.fn(),
     },
@@ -26,15 +26,15 @@ vi.mock("@/lib/queues", () => ({
   getElasticsearchReindexQueue: vi.fn(),
 }));
 
-vi.mock("@/lib/multiTenantPrisma", () => ({
+vi.mock("@/lib/multiTenantDb", () => ({
   getCurrentTenantId: vi.fn(),
 }));
 
 vi.mock("~/workers/elasticsearchReindexWorker", () => ({}));
 
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getElasticsearchReindexQueue } from "@/lib/queues";
-import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "@/lib/multiTenantDb";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getServerAuthSession } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
@@ -65,7 +65,7 @@ const setupAdminSession = () => {
   (getServerAuthSession as any).mockResolvedValue({
     user: { id: "admin-user-1" },
   });
-  (prisma.user.findUnique as any).mockResolvedValue({ access: "ADMIN" });
+  (baseDb.user.findUnique as any).mockResolvedValue({ access: "ADMIN" });
 };
 
 describe("Admin Elasticsearch Reindex Route", () => {
@@ -95,7 +95,7 @@ describe("Admin Elasticsearch Reindex Route", () => {
       (getServerAuthSession as any).mockResolvedValue({
         user: { id: "user-1" },
       });
-      (prisma.user.findUnique as any).mockResolvedValue({ access: "USER" });
+      (baseDb.user.findUnique as any).mockResolvedValue({ access: "USER" });
 
       const request = createMockRequest();
       const response = await POST(request);

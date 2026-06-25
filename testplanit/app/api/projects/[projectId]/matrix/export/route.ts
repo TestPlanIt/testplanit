@@ -9,7 +9,7 @@ import {
   runMatrixAggregation,
 } from "~/lib/matrix/matrixAggregation";
 import { cellKey } from "~/lib/matrix/types";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { matrixFiltersSchema } from "~/lib/schemas/matrixFiltersSchema";
 import { authOptions } from "~/server/auth";
 
@@ -64,7 +64,7 @@ import { authOptions } from "~/server/auth";
  * System admins always pass.
  */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
-  const u = await prisma.user.findUnique({
+  const u = await baseDb.user.findUnique({
     where: { id: userId },
     include: { role: { include: { rolePermissions: true } } },
   });
@@ -134,7 +134,7 @@ export async function GET(
     let axes;
     try {
       axes = await runMatrixAggregation(
-        prisma,
+        baseDb,
         projectId,
         parsed.data,
         viewerCanReadSensitive

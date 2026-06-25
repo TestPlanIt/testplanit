@@ -6,11 +6,11 @@ vi.mock("~/lib/valkey", () => ({
   default: { publish: (...args: unknown[]) => mockPublish(...args) },
 }));
 
-vi.mock("~/lib/multiTenantPrisma", () => ({
+vi.mock("~/lib/multiTenantDb", () => ({
   getCurrentTenantId: vi.fn(),
 }));
 
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { publishTestRunWakeUp } from "./publish";
 
 async function flushImmediate() {

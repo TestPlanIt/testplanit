@@ -6,7 +6,7 @@ import { z } from "zod/v4";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import {
   SKIP_MAPPING_SENTINEL,
   sharedDatasetAssignmentSchema,
@@ -295,7 +295,7 @@ export const PUT = withAuditContext(
         );
       }
 
-      const assignment = await prisma.$transaction(async (tx) => {
+      const assignment = await baseDb.$transaction(async (tx) => {
         return tx.caseSharedDataSetAssignment.upsert({
           where: { caseId },
           create: {
@@ -382,7 +382,7 @@ export const DELETE = withAuditContext(
         return NextResponse.json({ error: "Not found" }, { status: 404 });
       }
 
-      await prisma.$transaction(async (tx) => {
+      await baseDb.$transaction(async (tx) => {
         await tx.caseSharedDataSetAssignment.delete({ where: { caseId } });
       });
 

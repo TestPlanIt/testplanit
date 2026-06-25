@@ -12,7 +12,7 @@
  *
  * ── LOAD-BEARING INVARIANTS ────────────────────────────────────────────────────────────────────
  *  1. SOLE AUTHORIZED READER. DataChangeLog is `@@deny('all', true)` at the ZenStack policy layer.
- *     This module reads + marks it ONLY through the raw `prismaBase` client (passed in), which
+ *     This module reads + marks it ONLY through the raw `rawDb` client (passed in), which
  *     bypasses policy by design — the same raw-client pattern the existing AuditLog writes use. No
  *     other code path reads DataChangeLog. The `processed=true` UPDATE is the single sanctioned
  *     exception to Phase 13's append-only enforcement triggers (the worker-cursor write).
@@ -528,7 +528,7 @@ export async function writeAuditLogRows(
   return written;
 }
 
-/** The minimal raw-client surface this module needs (prismaBase satisfies it). */
+/** The minimal raw-client surface this module needs (rawDb satisfies it). */
 export interface RawTxClient {
   $queryRaw: <T = unknown>(
     query: TemplateStringsArray,
@@ -755,7 +755,7 @@ export async function pollDataChangeLogsOnce(
           }
           const owner = ownerSnapshot.get(`${entityType}:${entityId}`);
 
-          // A captured row with no GUC actor (raw prismaBase writes, seeds,
+          // A captured row with no GUC actor (raw rawDb writes, seeds,
           // migrations, or any path without a session) is attributed to the
           // system sentinel so every materialized AuditLog row answers "who".
           let actor = row.actor || SYSTEM_ACTOR_ID;

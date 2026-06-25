@@ -14,8 +14,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projectLlmIntegration: { findFirst: vi.fn() },
     projects: { findUnique: vi.fn() },
     repositoryCases: { findMany: vi.fn() },
@@ -28,7 +28,7 @@ vi.mock("~/lib/auth/utils", () => ({ getEnhancedDb: vi.fn() }));
 
 import { getServerSession } from "next-auth";
 import { getEnhancedDb } from "~/lib/auth/utils";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { POST } from "./route";
 
 function reqWithBody(
@@ -44,16 +44,16 @@ function reqWithBody(
   );
 }
 
-const findLlm = prisma.projectLlmIntegration.findFirst as unknown as ReturnType<
+const findLlm = baseDb.projectLlmIntegration.findFirst as unknown as ReturnType<
   typeof vi.fn
 >;
-const findProject = prisma.projects.findUnique as unknown as ReturnType<
+const findProject = baseDb.projects.findUnique as unknown as ReturnType<
   typeof vi.fn
 >;
-const findCases = prisma.repositoryCases.findMany as unknown as ReturnType<
+const findCases = baseDb.repositoryCases.findMany as unknown as ReturnType<
   typeof vi.fn
 >;
-const findSnapshot = prisma.llmReportSnapshot
+const findSnapshot = baseDb.llmReportSnapshot
   .findFirst as unknown as ReturnType<typeof vi.fn>;
 
 describe("POST /api/reports/automation-candidates (pre-stream gates)", () => {

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import os from "os";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { createSubscriberClient } from "~/lib/valkey";
 import { projectIssueUpdateChannel } from "~/lib/webhooks/issueUpdateChannels";
 import { authOptions } from "~/server/auth";

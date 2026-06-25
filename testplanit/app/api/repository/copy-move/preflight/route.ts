@@ -2,7 +2,7 @@ import { getAuthDb } from "~/lib/zenstack";
 import { RepositoryCaseSource } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import { preflightSchema, type PreflightResponse } from "../schemas";
@@ -30,22 +30,22 @@ export async function POST(request: Request) {
 
   try {
     // Fetch full user for access decisions and enhance
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       include: { role: { include: { rolePermissions: true } } },
     });
 
     const isAdmin = user?.access === "ADMIN";
 
-    // Pick the read client up-front: admins use raw prisma so reads are
+    // Pick the read client up-front: admins use raw baseDb so reads are
     // deterministic — the policy layer has been observed to return no rows
     // under heavy parallel load even though @@allow('all', auth().access ==
     // 'ADMIN') is unconditional. Non-admin requests stay on the enhanced
     // client so per-model policies (which can be stricter than the
     // project-level policy alone) are enforced.
     const reader = isAdmin
-      ? prisma
-      : (getAuthDb(user ?? undefined) as unknown as typeof prisma);
+      ? baseDb
+      : (getAuthDb(user ?? undefined) as unknown as typeof baseDb);
 
     // Project access checks
     const sourceProject = await reader.projects.findFirst({
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     });
 
     // Move update-access check (move = soft-delete via isDeleted: true = needs update permission)
-    // Since the worker uses raw prisma, we verify the user's role permits canAddEdit on TestCaseRepository.
+    // Since the worker uses raw baseDb, we verify the user's role permits canAddEdit on TestCaseRepository.
     // Admin users always have access.
     let hasSourceUpdateAccess = true;
     if (body.operation === "move") {

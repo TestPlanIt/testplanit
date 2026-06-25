@@ -33,7 +33,7 @@
 import { IdpName } from "~/zenstack/models";
 import { promises as fs } from "fs";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { mintScimToken, revokeScimToken } from "~/lib/scim/tokens";
 import {
   SCIM_CONTENT_TYPE,
@@ -135,7 +135,7 @@ async function clearWindow(): Promise<void> {
   // The payloadDigest column is opaque (sha256), so we can't filter by
   // event-name prefix — clear the whole table. This script is a manual
   // walkthrough harness so collateral on other event types is acceptable.
-  const deleted = await prisma.webhookEventDedup.deleteMany({});
+  const deleted = await baseDb.webhookEventDedup.deleteMany({});
   process.stdout.write(`[reset] cleared ${deleted.count} dedup rows\n`);
 }
 
@@ -466,4 +466,4 @@ void main()
     process.stderr.write(`ERROR ${String(err)}\n`);
     process.exitCode = 1;
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => baseDb.$disconnect());

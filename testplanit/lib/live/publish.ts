@@ -20,7 +20,7 @@
  * update on next manual refresh or the next event.
  */
 
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import valkeyConnection from "~/lib/valkey";
 import { testRunChannel, testRunProjectChannel } from "./channels";
 

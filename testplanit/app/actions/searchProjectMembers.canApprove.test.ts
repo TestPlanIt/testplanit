@@ -5,8 +5,8 @@ const mockRolePermissionFindMany = vi.fn();
 const mockUserFindMany = vi.fn();
 const mockUserCount = vi.fn();
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     rolePermission: {
       findMany: (...args: unknown[]) => mockRolePermissionFindMany(...args),
     },

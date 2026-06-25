@@ -10,11 +10,11 @@ import { LLM_FEATURES } from "../lib/llm/constants";
 import type { LlmRequest } from "../lib/llm/types/index";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { MAGIC_SELECT_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -576,7 +576,7 @@ export const processor = async (
   }
 
   // 3. Get tenant-specific Prisma client
-  const prisma = getPrismaClientForJob(job.data);
+  const prisma = getDbClientForJob(job.data);
 
   const projectFlag = await (prisma as any).projects.findUnique({
     where: { id: projectId },

@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { NotificationService } from "~/lib/services/notificationService";
 import { authOptions } from "~/server/auth";
 
@@ -23,7 +23,7 @@ export const GET = withAuditContext(
       const { shareKey } = await params;
 
       // Fetch share link with project info (no auth required)
-      const shareLink = await prisma.shareLink.findUnique({
+      const shareLink = await baseDb.shareLink.findUnique({
         where: { shareKey },
         include: {
           project: {
@@ -116,7 +116,7 @@ export const POST = withAuditContext(
       const { password, token } = body;
 
       // Fetch share link with full details
-      const shareLink = await prisma.shareLink.findUnique({
+      const shareLink = await baseDb.shareLink.findUnique({
         where: { shareKey },
         include: {
           project: {
@@ -265,7 +265,7 @@ export const POST = withAuditContext(
         null;
       const userAgent = req.headers.get("user-agent") || null;
 
-      await prisma.shareLinkAccessLog.create({
+      await baseDb.shareLinkAccessLog.create({
         data: {
           shareLinkId: shareLink.id,
           accessedById: session?.user?.id || null,
@@ -276,7 +276,7 @@ export const POST = withAuditContext(
       });
 
       // Increment view count and update last viewed
-      await prisma.shareLink.update({
+      await baseDb.shareLink.update({
         where: { id: shareLink.id },
         data: {
           viewCount: { increment: 1 },
@@ -285,7 +285,7 @@ export const POST = withAuditContext(
       });
 
       // Create audit log
-      await prisma.auditLog.create({
+      await baseDb.auditLog.create({
         data: {
           userId: session?.user?.id || null,
           userEmail: session?.user?.email || null,

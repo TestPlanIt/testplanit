@@ -8,7 +8,7 @@ const { mockPrisma } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/lib/db", () => ({ baseDb: mockPrisma }));
 
 import {
   authenticateForgeIntegration,

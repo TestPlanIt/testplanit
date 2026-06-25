@@ -10,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     sessions: {
       findUnique: vi.fn(),
     },
@@ -23,7 +23,7 @@ vi.mock("~/lib/prisma", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 describe("Session Summary API Route", () => {
   const mockSession = {
@@ -88,12 +88,12 @@ describe("Session Summary API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getServerSession as any).mockResolvedValue(mockSession);
-    (prisma.sessions.findUnique as any).mockResolvedValue(mockSessionData);
-    (prisma.$queryRaw as any)
+    (baseDb.sessions.findUnique as any).mockResolvedValue(mockSessionData);
+    (baseDb.$queryRaw as any)
       .mockResolvedValueOnce(mockResults) // session results
       .mockResolvedValueOnce([]) // issue links
       .mockResolvedValueOnce([{ count: BigInt(3) }]); // comments count
-    (prisma.issue.findMany as any).mockResolvedValue([]);
+    (baseDb.issue.findMany as any).mockResolvedValue([]);
   });
 
   describe("Authentication", () => {
@@ -133,7 +133,7 @@ describe("Session Summary API Route", () => {
 
   describe("Not Found", () => {
     it("returns 404 when session does not exist", async () => {
-      (prisma.sessions.findUnique as any).mockResolvedValue(null);
+      (baseDb.sessions.findUnique as any).mockResolvedValue(null);
 
       const [request, context] = createRequest();
       const response = await GET(request, context);
@@ -205,7 +205,7 @@ describe("Session Summary API Route", () => {
 
     it("links result issues when results have issue associations", async () => {
       // Reset mocks to provide issue link data
-      (prisma.$queryRaw as any)
+      (baseDb.$queryRaw as any)
         .mockReset()
         .mockResolvedValueOnce(mockResults)
         .mockResolvedValueOnce([{ sessionResultId: 100, issueId: 20 }]) // issue link
@@ -224,7 +224,7 @@ describe("Session Summary API Route", () => {
         lastSyncedAt: null,
         integration: null,
       };
-      (prisma.issue.findMany as any).mockResolvedValue([mockIssue]);
+      (baseDb.issue.findMany as any).mockResolvedValue([mockIssue]);
 
       const [request, context] = createRequest();
       const response = await GET(request, context);
@@ -248,7 +248,7 @@ describe("Session Summary API Route", () => {
     });
 
     it("handles session with no results gracefully", async () => {
-      (prisma.$queryRaw as any)
+      (baseDb.$queryRaw as any)
         .mockReset()
         .mockResolvedValueOnce([]) // no results
         .mockResolvedValueOnce([{ count: BigInt(0) }]); // comments count
@@ -265,7 +265,7 @@ describe("Session Summary API Route", () => {
 
   describe("Error Handling", () => {
     it("returns 500 when database query fails", async () => {
-      (prisma.sessions.findUnique as any).mockRejectedValue(
+      (baseDb.sessions.findUnique as any).mockRejectedValue(
         new Error("DB Error")
       );
 

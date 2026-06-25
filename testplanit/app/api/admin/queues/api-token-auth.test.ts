@@ -10,8 +10,8 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateApiToken: vi.fn(),
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     user: {
       findUnique: vi.fn(),
     },
@@ -22,12 +22,12 @@ vi.mock("@/lib/queues", () => ({
   getAllQueues: vi.fn(),
 }));
 
-vi.mock("@/lib/multiTenantPrisma", () => ({
+vi.mock("@/lib/multiTenantDb", () => ({
   getCurrentTenantId: vi.fn(),
   isMultiTenantMode: vi.fn(),
 }));
 
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getAllQueues } from "@/lib/queues";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getServerAuthSession } from "~/server/auth";
@@ -89,7 +89,7 @@ describe("Admin Queue Routes - API Token Authentication", () => {
       });
 
       // The route always looks up access from DB since session doesn't include it
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         access: "ADMIN",
       });
 
@@ -104,7 +104,7 @@ describe("Admin Queue Routes - API Token Authentication", () => {
         user: { id: "user-123" }, // No access field in session
       });
 
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         access: "ADMIN",
       });
 
@@ -112,7 +112,7 @@ describe("Admin Queue Routes - API Token Authentication", () => {
       const response = await GET(request);
 
       expect(response.status).toBe(200);
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      expect(baseDb.user.findUnique).toHaveBeenCalledWith({
         where: { id: "user-123" },
         select: { access: true },
       });
@@ -123,7 +123,7 @@ describe("Admin Queue Routes - API Token Authentication", () => {
         user: { id: "user-123" },
       });
 
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         access: "USER",
       });
 
@@ -256,7 +256,7 @@ describe("Admin Queue Routes - API Token Authentication", () => {
         scopes: [],
       });
 
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         access: "ADMIN",
       });
 
@@ -266,7 +266,7 @@ describe("Admin Queue Routes - API Token Authentication", () => {
       const response = await GET(request);
 
       expect(response.status).toBe(200);
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      expect(baseDb.user.findUnique).toHaveBeenCalledWith({
         where: { id: "user-456" },
         select: { access: true },
       });

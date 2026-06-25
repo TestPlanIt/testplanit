@@ -19,11 +19,11 @@ import { Readable } from "node:stream";
 import { emptyEditorContent } from "../app/constants/backend";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   validateMultiTenantJobData,
   type MultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { runWithAuditContext } from "../lib/auditContext";
 import {
   enqueueWithAuditContext,
@@ -7618,7 +7618,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
   }
 
   validateMultiTenantJobData(job.data);
-  const prisma = getPrismaClientForJob(job.data);
+  const prisma = getDbClientForJob(job.data);
 
   // Clear caches to prevent cross-tenant cache pollution
   projectNameCache.clear();

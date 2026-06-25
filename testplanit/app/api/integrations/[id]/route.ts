@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { decrypt, encrypt } from "@/utils/encryption";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
@@ -17,7 +17,7 @@ export const GET = withAuditContext(
       }
 
       // Check if user is admin
-      const user = await prisma.user.findUnique({
+      const user = await baseDb.user.findUnique({
         where: { id: session.user.id },
         select: { access: true },
       });
@@ -27,7 +27,7 @@ export const GET = withAuditContext(
       }
 
       const { id } = await params;
-      const integration = await prisma.integration.findUnique({
+      const integration = await baseDb.integration.findUnique({
         where: {
           id: parseInt(id),
           isDeleted: false,
@@ -93,7 +93,7 @@ export const PUT = withAuditContext(
       }
 
       // Check if user is admin
-      const user = await prisma.user.findUnique({
+      const user = await baseDb.user.findUnique({
         where: { id: session.user.id },
         select: { access: true },
       });
@@ -119,7 +119,7 @@ export const PUT = withAuditContext(
       }
 
       const { id } = await params;
-      const integration = await prisma.integration.update({
+      const integration = await baseDb.integration.update({
         where: {
           id: parseInt(id),
           isDeleted: false,
@@ -150,7 +150,7 @@ export const DELETE = withAuditContext(
       }
 
       // Check if user is admin
-      const user = await prisma.user.findUnique({
+      const user = await baseDb.user.findUnique({
         where: { id: session.user.id },
         select: { access: true },
       });
@@ -161,7 +161,7 @@ export const DELETE = withAuditContext(
 
       // Check if integration has active connections
       const { id } = await params;
-      const integration = await prisma.integration.findUnique({
+      const integration = await baseDb.integration.findUnique({
         where: {
           id: parseInt(id),
           isDeleted: false,
@@ -192,7 +192,7 @@ export const DELETE = withAuditContext(
       }
 
       // Soft delete
-      await prisma.integration.update({
+      await baseDb.integration.update({
         where: { id: parseInt(id) },
         data: { isDeleted: true },
       });

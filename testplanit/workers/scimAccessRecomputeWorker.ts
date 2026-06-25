@@ -6,8 +6,8 @@ import {
   isMultiTenantMode,
   type MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
-import { prisma } from "../lib/prisma";
+} from "../lib/multiTenantDb";
+import { baseDb } from "../lib/db";
 import { SCIM_ACCESS_RECOMPUTE_QUEUE_NAME } from "../lib/queueNames";
 import {
   readScimFallbackDefault,
@@ -61,14 +61,14 @@ export const processor = async (
     },
     async () => {
       if (groupId != null) {
-        const members = await prisma.groupAssignment.findMany({
+        const members = await baseDb.groupAssignment.findMany({
           where: { groupId },
           select: { userId: true },
         });
 
         for (let i = 0; i < members.length; i += BATCH_SIZE) {
           const batch = members.slice(i, i + BATCH_SIZE);
-          await prisma.$transaction(async (tx) => {
+          await baseDb.$transaction(async (tx) => {
             const fallbackDefault = await readScimFallbackDefault(tx);
             for (const { userId } of batch) {
               await recomputeUserAccess(tx, userId, fallbackDefault);
@@ -76,7 +76,7 @@ export const processor = async (
           });
         }
       } else {
-        await prisma.$transaction(async (tx) => {
+        await baseDb.$transaction(async (tx) => {
           const fallbackDefault = await readScimFallbackDefault(tx);
           const users = await tx.user.findMany({
             where: { accessSource: "GROUP_MAPPING", isDeleted: false },

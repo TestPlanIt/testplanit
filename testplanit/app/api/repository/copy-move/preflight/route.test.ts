@@ -36,10 +36,10 @@ vi.mock("~/lib/zenstack", () => ({
   getAuthDb: (...args: any[]) => mockEnhance(...args),
 }));
 
-// ─── Mock prisma ──────────────────────────────────────────────────────────────
+// ─── Mock baseDb ──────────────────────────────────────────────────────────────
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       findUnique: (...args: any[]) => mockPrismaUserFindUnique(...args),
     },
@@ -144,7 +144,7 @@ function setupDefaultMocks() {
   mockPrismaUserFindUnique.mockResolvedValue(baseUser);
   mockEnhance.mockReturnValue(mockEnhancedDb);
 
-  // Admin path uses raw prisma; non-admin uses enhancedDb. Seed both so
+  // Admin path uses raw baseDb; non-admin uses enhancedDb. Seed both so
   // tests work regardless of which user.access the test sets.
   mockPrismaProjectsFindFirst
     .mockResolvedValueOnce({ id: 10 }) // source
@@ -237,7 +237,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
     expect(data.error).toMatch(/target/i);
   });
 
-  // Test 3b — admin path uses raw prisma; verify same denial behaviour.
+  // Test 3b — admin path uses raw baseDb; verify same denial behaviour.
   it("returns 403 when admin source project missing/deleted", async () => {
     mockGetServerSession.mockResolvedValue(baseSession);
     mockPrismaUserFindUnique.mockResolvedValue(baseUser); // ADMIN
@@ -376,7 +376,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 13
   it("returns collisions array when target has cases with matching name/className/source", async () => {
     setupDefaultMocks();
-    // Admin path: both source cases and collision check go through prisma.
+    // Admin path: both source cases and collision check go through baseDb.
     mockPrismaRepositoryCasesFindMany
       .mockReset()
       .mockResolvedValueOnce(baseSourceCases) // source cases

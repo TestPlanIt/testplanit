@@ -12,7 +12,7 @@ const { mockPrisma, mockGetServerAuthSession, mockCheckProjectHasCodeContext } =
   }));
 
 // Mock all server-side dependencies to prevent env var access errors
-vi.mock("~/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("~/lib/db", () => ({ baseDb: mockPrisma }));
 vi.mock("~/server/auth", () => ({
   getServerAuthSession: mockGetServerAuthSession,
 }));

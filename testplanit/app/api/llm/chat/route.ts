@@ -2,7 +2,7 @@ import { LLM_FEATURES } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check user has access to this project using centralized permission check
-    const project = await prisma.projects.findUnique({
+    const project = await baseDb.projects.findUnique({
       where: { id: parseInt(projectId) },
     });
 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     let hasAccess = false;
 
     // Check user-specific permissions first
-    const userProjectPermission = await prisma.userProjectPermission.findUnique(
+    const userProjectPermission = await baseDb.userProjectPermission.findUnique(
       {
         where: {
           userId_projectId: {
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Then verify the LLM integration exists for this project and get config
-    const projectLlmIntegration = await prisma.projectLlmIntegration.findFirst({
+    const projectLlmIntegration = await baseDb.projectLlmIntegration.findFirst({
       where: {
         llmIntegrationId: parseInt(llmIntegrationId),
         projectId: parseInt(projectId),
@@ -101,10 +101,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const manager = LlmManager.getInstance(prisma);
+    const manager = LlmManager.getInstance(baseDb);
 
     // Resolve prompt from database (falls back to hard-coded default)
-    const resolver = new PromptResolver(prisma);
+    const resolver = new PromptResolver(baseDb);
     const resolvedPrompt = await resolver.resolve(
       LLM_FEATURES.EDITOR_ASSISTANT,
       parseInt(projectId)

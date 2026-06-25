@@ -9,7 +9,7 @@ import type { VerifyResult } from "~/lib/webhooks/adapters/types";
  * `lib/services/auditLog.test.ts` and `lib/webhooks/services/applyInboundIssueUpdate.test.ts`.
  *
  * Each test mutates the per-call return values:
- * - prisma.webhookConfig.findUnique → controls 404 vs valid-config
+ * - baseDb.webhookConfig.findUnique → controls 404 vs valid-config
  * - getAdapter().verify → controls 401 vs success
  * - applyInboundIssueUpdate → controls 200 outcome / 500 error
  * - decrypt → returns the plaintext secret
@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => {
     extractExternalStatus: vi.fn(),
   };
   return {
-    prisma: {
+    baseDb: {
       webhookConfig: {
         findUnique: vi.fn(),
       },
@@ -34,8 +34,8 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: mocks.prisma,
+vi.mock("~/lib/db", () => ({
+  baseDb: mocks.baseDb,
 }));
 
 vi.mock("~/lib/webhooks/adapters", () => ({
@@ -96,7 +96,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 1 — returns 404 with no DB writes when the token is unknown", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(null);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(null);
     const { req, params } = makeRequest("{}", FULL_TOKEN);
 
     const res = await POST(req, { params });
@@ -108,7 +108,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 2 — returns 404 (same body) when the config exists but is inactive", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce({
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce({
       ...VALID_CONFIG,
       isActive: false,
     });
@@ -123,7 +123,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 3 — returns 401 with no DB writes on missing-signature", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: false,
       reason: "missing-signature",
@@ -138,7 +138,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 4 — returns 401 on signature-mismatch", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: false,
       reason: "signature-mismatch",
@@ -153,7 +153,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 5 — returns 401 on malformed-signature", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: false,
       reason: "malformed-signature",
@@ -170,7 +170,7 @@ describe("POST /api/webhooks/[token]", () => {
   it("Test 5b — returns 400 on unparseable-body (client bug, not auth)", async () => {
     // HMAC succeeded but the body wasn't valid JSON. Senders should NOT retry
     // a 400 — the bug is on their side; retrying won't fix it.
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: false,
       reason: "unparseable-body",
@@ -188,7 +188,7 @@ describe("POST /api/webhooks/[token]", () => {
     // HMAC succeeded and the JSON parsed, but the payload lacks issue.key or
     // status — typical for jira:issue_deleted, comment-only events, etc.
     // 200 prevents Jira from retry-storming a non-actionable event forever.
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: false,
       reason: "missing-required-field",
@@ -203,7 +203,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 6 — happy path: verifies, computes payloadDigest, returns 200 (/04/07)", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
       payload: VALID_PAYLOAD,
@@ -247,7 +247,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 7 — no-link outcome still returns 200", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
       payload: VALID_PAYLOAD,
@@ -266,7 +266,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 8 — duplicate outcome still returns 200", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
       payload: VALID_PAYLOAD,
@@ -285,7 +285,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 9 — synthetic outcome still returns 200", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
       payload: { ...VALID_PAYLOAD, synthetic: true },
@@ -304,7 +304,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 9b — no_handler outcome returns 200 (eventType not handled by adapter)", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
       payload: VALID_PAYLOAD,
@@ -323,7 +323,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 10 — service error returns 500 with no leak in body", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
       payload: VALID_PAYLOAD,
@@ -341,7 +341,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 11 — passes the EXACT raw body bytes to adapter.verify (no parse-and-re-stringify)", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
       payload: VALID_PAYLOAD,
@@ -370,7 +370,7 @@ describe("POST /api/webhooks/[token]", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     try {
       // Trigger the unknown-token path → console.warn is emitted.
-      mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(null);
+      mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(null);
       const { req, params } = makeRequest("{}", FULL_TOKEN);
       await POST(req, { params });
 
@@ -390,7 +390,7 @@ describe("POST /api/webhooks/[token]", () => {
   });
 
   it("Test 13 — latencyMs passed to the service is non-negative and below 5000ms ceiling", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
       payload: VALID_PAYLOAD,
@@ -411,7 +411,7 @@ describe("POST /api/webhooks/[token]", () => {
 
   it("Test 14 — decrypts WebhookConfig.secret before passing plaintext to adapter.verify (+)", async () => {
     // Encrypted form is the prefix-mocked "enc:..." string; plaintext follows the prefix.
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce({
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce({
       ...VALID_CONFIG,
       secret: "enc:test-secret-123",
     });
@@ -435,11 +435,11 @@ describe("POST /api/webhooks/[token]", () => {
 
   // mitigation: 401 and 404 bodies are byte-identical so callers can't enumerate.
   it("Body equality — 401 and 404 share the exact same JSON body shape", async () => {
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(null);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(null);
     const a = makeRequest("{}", FULL_TOKEN);
     const r404 = await POST(a.req, { params: a.params });
 
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: false,
       reason: "signature-mismatch",
@@ -488,7 +488,7 @@ describe("MAX_WEBHOOK_BYTES (5 MB cap)", () => {
     expect(await res.json()).toEqual({ ok: false });
 
     // Body cap fires BEFORE DB lookup, adapter verify, and service dispatch.
-    expect(mocks.prisma.webhookConfig.findUnique).not.toHaveBeenCalled();
+    expect(mocks.baseDb.webhookConfig.findUnique).not.toHaveBeenCalled();
     expect(mocks.adapter.verify).not.toHaveBeenCalled();
     expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
   });
@@ -498,7 +498,7 @@ describe("MAX_WEBHOOK_BYTES (5 MB cap)", () => {
     // the service without doing real signature math. The test asserts the
     // body-cap gate is INCLUSIVE at the 5_242_880 boundary — exactly cap is
     // accepted; cap+1 is rejected (covered by the over-cap test above).
-    mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
       payload: VALID_PAYLOAD,

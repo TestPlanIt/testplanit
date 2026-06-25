@@ -13,7 +13,7 @@ vi.mock("../services/forecastService", () => ({
   updateTestRunForecast: (...args: any[]) => mockUpdateTestRunForecast(...args),
 }));
 
-// Mock prisma. Each test seeds the relevant mocks before invoking the processor.
+// Mock baseDb. Each test seeds the relevant mocks before invoking the processor.
 const mockPrisma = {
   testRuns: {
     findMany: vi.fn(),
@@ -45,18 +45,18 @@ const mockPrisma = {
     findUnique: vi.fn(),
   },
   // Default: invoke the callback with a tx whose reviewRequest.update is the
-  // same spy as prisma.reviewRequest.update — so tests can assert on the
+  // same spy as baseDb.reviewRequest.update — so tests can assert on the
   // stamp call regardless of whether it happens inside or outside the tx.
   $transaction: vi.fn(),
 };
 
-vi.mock("../lib/prisma", () => ({
-  prisma: mockPrisma,
+vi.mock("../lib/db", () => ({
+  baseDb: mockPrisma,
 }));
 
-// Multi-tenant module — return our mock prisma client for every job.
-vi.mock("../lib/multiTenantPrisma", () => ({
-  getPrismaClientForJob: vi.fn(() => mockPrisma),
+// Multi-tenant module — return our mock baseDb client for every job.
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: vi.fn(() => mockPrisma),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -266,7 +266,7 @@ describe("JOB_REVIEW_REMINDERS", () => {
     mockPrisma.sessions.findUnique.mockResolvedValue({ name: "Exploration" });
     mockPrisma.reviewRequest.update.mockResolvedValue({});
     // Default $transaction handler: invoke the callback with a tx whose
-    // reviewRequest.update is the same spy as prisma.reviewRequest.update so
+    // reviewRequest.update is the same spy as baseDb.reviewRequest.update so
     // tests can assert on the stamp call regardless of whether it landed
     // inside or outside the transaction.
     mockPrisma.$transaction.mockImplementation(

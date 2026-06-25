@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authenticateRequest } from "~/lib/api-token-auth";
@@ -186,7 +186,7 @@ export async function handleAutomationTrendsPOST(
       // Fetch with caseFieldValues for dynamic field filtering
       const fieldIds = Object.keys(dynamicFieldFilters).map(Number);
 
-      const allCasesRaw = await prisma.repositoryCases.findMany({
+      const allCasesRaw = await baseDb.repositoryCases.findMany({
         where: baseWhere,
         select: {
           id: true,
@@ -248,7 +248,7 @@ export async function handleAutomationTrendsPOST(
       });
     } else {
       // Fetch without caseFieldValues
-      allCases = await prisma.repositoryCases.findMany({
+      allCases = await baseDb.repositoryCases.findMany({
         where: baseWhere,
         select: {
           id: true,

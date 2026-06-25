@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getAdapter } from "~/lib/webhooks/adapters";
 import type { VerifyResult } from "~/lib/webhooks/adapters/types";
 import { redactToken } from "~/lib/webhooks/redaction";
@@ -77,7 +77,7 @@ async function handleWebhookReceive(
   }
 
   // 2. Resolve the WebhookConfig by token. Public endpoint, no user session,
-  //    so we use raw prisma per `feedback_default_to_enhanced_db.md` (the
+  //    so we use raw baseDb per `feedback_default_to_enhanced_db.md` (the
   //    enhanced/policy-bound client would reject the read). The model's
   //    @@deny('create, update, delete', true) policy still gates writes.
   let webhookConfig: {
@@ -88,7 +88,7 @@ async function handleWebhookReceive(
     isActive: boolean;
   } | null = null;
   try {
-    webhookConfig = await prisma.webhookConfig.findUnique({
+    webhookConfig = await baseDb.webhookConfig.findUnique({
       where: { token },
       select: {
         id: true,

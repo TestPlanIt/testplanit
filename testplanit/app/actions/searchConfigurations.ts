@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 /**
  * Search and paginate configurations.
@@ -40,7 +40,7 @@ export async function searchConfigurations(
     }
 
     const [results, total] = await Promise.all([
-      prisma.configurations.findMany({
+      baseDb.configurations.findMany({
         where: whereClause,
         select: {
           id: true,
@@ -50,7 +50,7 @@ export async function searchConfigurations(
         take: pageSize,
         orderBy: { name: "asc" },
       }),
-      prisma.configurations.count({ where: whereClause }),
+      baseDb.configurations.count({ where: whereClause }),
     ]);
 
     return { results, total };

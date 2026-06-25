@@ -138,7 +138,7 @@ describeDb(
       );
       expect(beforeCount.rows[0].n).toBe(7);
 
-      // Run purgeOnce via the exported function (uses prismaBase against the spike DB).
+      // Run purgeOnce via the exported function (uses rawDb against the spike DB).
       // Dynamic import keeps the module out of the skipped unit lane.
       const workerMod = "../../../workers/dataChangeLogRetentionWorker";
       const { purgeOnce } = await import(/* @vite-ignore */ workerMod);

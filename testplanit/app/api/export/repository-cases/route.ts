@@ -19,7 +19,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthDb } from "~/lib/zenstack";
 import { authenticateRequest } from "~/lib/api-token-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 import { ndjsonResponse, type PageSource } from "~/lib/export/ndjson";
 import {
@@ -78,16 +78,16 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  let reader = prisma as unknown as typeof prisma;
+  let reader = baseDb as unknown as typeof baseDb;
   if (!isAdmin) {
-    const userRecord = await prisma.user.findUnique({
+    const userRecord = await baseDb.user.findUnique({
       where: { id: auth.user.userId },
       include: { role: { include: { rolePermissions: true } } },
     });
     if (!userRecord) {
       return NextResponse.json({ error: "User not found" }, { status: 401 });
     }
-    reader = getAuthDb(userRecord) as unknown as typeof prisma;
+    reader = getAuthDb(userRecord) as unknown as typeof baseDb;
 
     const accessible = await reader.projects.findFirst({
       where: { id: projectId!, isDeleted: false },

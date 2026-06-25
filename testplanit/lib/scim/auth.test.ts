@@ -16,7 +16,7 @@
  *  11. Content-Type assertion on every 401 (application/scim+json)
  *  12. Schemas envelope assertion on every 401
  *
- * Mock shape: vi.mock("~/lib/prisma") so the helper never touches a real DB.
+ * Mock shape: vi.mock("~/lib/db") so the helper never touches a real DB.
  * NEXTAUTH_SECRET is saved and restored per the api-tokens.test.ts pattern
  * because hashToken reads it for the HMAC.
  */
@@ -33,8 +33,8 @@ import {
 } from "vitest";
 import { NextRequest } from "next/server";
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     scimToken: {
       findUnique: vi.fn(),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
@@ -52,7 +52,7 @@ vi.mock("./rate-limit", () => ({
   }),
 }));
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { ScimAuthError, requireScimBearer } from "./auth";
 import { checkScimTokenRateLimit } from "./rate-limit";
 
@@ -121,7 +121,7 @@ describe("requireScimBearer", () => {
     expect(body.detail).toBe("Missing Authorization header");
     expect(body.status).toBe("401");
     expect(body.schemas[0]).toBe(SCIM_ERROR_SCHEMA);
-    expect(prisma.scimToken.findUnique).not.toHaveBeenCalled();
+    expect(baseDb.scimToken.findUnique).not.toHaveBeenCalled();
   });
 
   it("throws Invalid token format for a Bearer value lacking the tps_ prefix and never hits the DB", async () => {
@@ -137,11 +137,11 @@ describe("requireScimBearer", () => {
     expect(body.schemas[0]).toBe(SCIM_ERROR_SCHEMA);
     // Namespace-isolation invariant: prefix branch fires before any DB
     // lookup so a tpi_* API token never touches the ScimToken table.
-    expect(prisma.scimToken.findUnique).not.toHaveBeenCalled();
+    expect(baseDb.scimToken.findUnique).not.toHaveBeenCalled();
   });
 
   it("throws Token rejected when findUnique returns null for a tps_ token", async () => {
-    vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce(null);
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce(null);
 
     const err = await catchAuthError(req("Bearer tps_unknown_token_value"));
 
@@ -153,11 +153,11 @@ describe("requireScimBearer", () => {
     const body = await err.response.json();
     expect(body.detail).toBe("Token rejected");
     expect(body.schemas[0]).toBe(SCIM_ERROR_SCHEMA);
-    expect(prisma.scimToken.findUnique).toHaveBeenCalledTimes(1);
+    expect(baseDb.scimToken.findUnique).toHaveBeenCalledTimes(1);
   });
 
   it("throws Token expired when the row's expiresAt is in the past", async () => {
-    vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
       id: "tk_expired",
       systemUserId: "system-scim-user",
       isActive: true,
@@ -176,11 +176,11 @@ describe("requireScimBearer", () => {
     const body = await err.response.json();
     expect(body.detail).toBe("Token expired");
     expect(body.schemas[0]).toBe(SCIM_ERROR_SCHEMA);
-    expect(prisma.scimToken.updateMany).not.toHaveBeenCalled();
+    expect(baseDb.scimToken.updateMany).not.toHaveBeenCalled();
   });
 
   it("throws Token revoked when revokedAt is set (and expiresAt is null)", async () => {
-    vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
       id: "tk_revoked",
       systemUserId: "system-scim-user",
       isActive: true,
@@ -195,11 +195,11 @@ describe("requireScimBearer", () => {
     const body = await err.response.json();
     expect(body.detail).toBe("Token revoked");
     expect(body.schemas[0]).toBe(SCIM_ERROR_SCHEMA);
-    expect(prisma.scimToken.updateMany).not.toHaveBeenCalled();
+    expect(baseDb.scimToken.updateMany).not.toHaveBeenCalled();
   });
 
   it("throws Token inactive when isActive is false without revokedAt or expiresAt", async () => {
-    vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
       id: "tk_inactive",
       systemUserId: "system-scim-user",
       isActive: false,
@@ -214,11 +214,11 @@ describe("requireScimBearer", () => {
     const body = await err.response.json();
     expect(body.detail).toBe("Token inactive");
     expect(body.schemas[0]).toBe(SCIM_ERROR_SCHEMA);
-    expect(prisma.scimToken.updateMany).not.toHaveBeenCalled();
+    expect(baseDb.scimToken.updateMany).not.toHaveBeenCalled();
   });
 
   it("returns the auth context for a valid token and skips updateMany when lastUsedAt is recent", async () => {
-    vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
       id: "tk_recent",
       systemUserId: "system-scim-user",
       isActive: true,
@@ -235,14 +235,14 @@ describe("requireScimBearer", () => {
 
     // wait one microtask for any fire-and-forget; should still be zero.
     await new Promise(setImmediate);
-    expect(prisma.scimToken.updateMany).not.toHaveBeenCalled();
+    expect(baseDb.scimToken.updateMany).not.toHaveBeenCalled();
   });
 
   it("stamps scimTokenId onto the ALS audit frame so captureAuditEvent derives metadata.source=scim", async () => {
     const { runWithAuditContext, getAuditContext } =
       await import("~/lib/auditContext");
 
-    vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
       id: "tk_audit_frame",
       systemUserId: "system-scim-user",
       isActive: true,
@@ -261,7 +261,7 @@ describe("requireScimBearer", () => {
   });
 
   it("fires the throttled updateMany when lastUsedAt is older than the throttle window", async () => {
-    vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
       id: "tk_stale",
       systemUserId: "system-scim-user",
       isActive: true,
@@ -281,9 +281,9 @@ describe("requireScimBearer", () => {
     });
 
     await new Promise(setImmediate);
-    expect(prisma.scimToken.updateMany).toHaveBeenCalledTimes(1);
+    expect(baseDb.scimToken.updateMany).toHaveBeenCalledTimes(1);
 
-    const call = vi.mocked(prisma.scimToken.updateMany).mock.calls[0]![0]! as {
+    const call = vi.mocked(baseDb.scimToken.updateMany).mock.calls[0]![0]! as {
       where: { id: string; OR: Array<{ lastUsedAt: null | { lt: Date } }> };
       data: { lastUsedAt: Date; lastUsedIp: string };
     };
@@ -300,7 +300,7 @@ describe("requireScimBearer", () => {
   });
 
   it("fires the throttled updateMany when lastUsedAt is null", async () => {
-    vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
       id: "tk_null_lastused",
       systemUserId: "system-scim-user",
       isActive: true,
@@ -316,8 +316,8 @@ describe("requireScimBearer", () => {
     });
 
     await new Promise(setImmediate);
-    expect(prisma.scimToken.updateMany).toHaveBeenCalledTimes(1);
-    const call = vi.mocked(prisma.scimToken.updateMany).mock.calls[0]![0]! as {
+    expect(baseDb.scimToken.updateMany).toHaveBeenCalledTimes(1);
+    const call = vi.mocked(baseDb.scimToken.updateMany).mock.calls[0]![0]! as {
       data: { lastUsedIp: string };
     };
     // No x-forwarded-for / x-real-ip on this request -> "unknown".
@@ -325,7 +325,7 @@ describe("requireScimBearer", () => {
   });
 
   it("suppresses the throttled updateMany when the probe-marker header is set AND the origin is loopback", async () => {
-    vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
       id: "tk_probe",
       systemUserId: "system-scim-user",
       isActive: true,
@@ -348,7 +348,7 @@ describe("requireScimBearer", () => {
 
     await new Promise(setImmediate);
     // Carve-out: probe path does not tick lastUsedAt.
-    expect(prisma.scimToken.updateMany).not.toHaveBeenCalled();
+    expect(baseDb.scimToken.updateMany).not.toHaveBeenCalled();
   });
 
   describe("rate-limit gate", () => {
@@ -364,7 +364,7 @@ describe("requireScimBearer", () => {
     });
 
     it("F1: throws 429 with SCIM envelope when rate limit is exceeded", async () => {
-      vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+      vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
         id: "tk_rl1",
         systemUserId: "system-scim-user",
         isActive: true,
@@ -393,7 +393,7 @@ describe("requireScimBearer", () => {
     });
 
     it("F2: 429 response includes Retry-After + X-RateLimit-Limit/Remaining/Reset headers", async () => {
-      vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+      vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
         id: "tk_rl2",
         systemUserId: "system-scim-user",
         isActive: true,
@@ -417,7 +417,7 @@ describe("requireScimBearer", () => {
     });
 
     it("F3: rate-limit check fires AFTER the isActive check (inactive token returns 401, not 429)", async () => {
-      vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+      vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
         id: "tk_rl3",
         systemUserId: "system-scim-user",
         isActive: false,
@@ -444,7 +444,7 @@ describe("requireScimBearer", () => {
     });
 
     it("F4: allowed=true proceeds normally and returns ScimAuthContext", async () => {
-      vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+      vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
         id: "tk_rl4",
         systemUserId: "system-scim-user",
         isActive: true,
@@ -472,7 +472,7 @@ describe("requireScimBearer", () => {
   it("still fires updateMany when X-SCIM-Probe is set but the origin is NOT loopback", async () => {
     // Defense check: the header alone must not suppress telemetry. An
     // external caller cannot mask their activity by spoofing the marker.
-    vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+    vi.mocked(baseDb.scimToken.findUnique).mockResolvedValueOnce({
       id: "tk_spoof",
       systemUserId: "system-scim-user",
       isActive: true,
@@ -494,6 +494,6 @@ describe("requireScimBearer", () => {
     });
 
     await new Promise(setImmediate);
-    expect(prisma.scimToken.updateMany).toHaveBeenCalledTimes(1);
+    expect(baseDb.scimToken.updateMany).toHaveBeenCalledTimes(1);
   });
 });

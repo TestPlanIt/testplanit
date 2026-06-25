@@ -6,10 +6,10 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { authOptions } from "~/server/auth";
@@ -185,7 +185,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
       try {
         // Get full user object for enhance
-        const user = await prisma.user.findUnique({
+        const user = await baseDb.user.findUnique({
           where: { id: session.user.id },
           include: {
             role: {
@@ -540,13 +540,13 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
             const remappedStateId =
               (await resolveCreateStateRemap(
-                prisma,
+                baseDb,
                 body.projectId,
                 WorkflowScope.CASES,
                 stateId
               )) ?? stateId;
             if (remappedStateId !== stateId) {
-              const remappedWorkflow = await prisma.workflows.findUnique({
+              const remappedWorkflow = await baseDb.workflows.findUnique({
                 where: { id: remappedStateId },
                 select: { name: true },
               });
@@ -971,7 +971,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         try {
           const esClient = getElasticsearchClient();
           if (esClient) {
-            const scanService = new DuplicateScanService(prisma, esClient);
+            const scanService = new DuplicateScanService(baseDb, esClient);
             const tenantId = getCurrentTenantId();
 
             // Check each imported case name (limit to first 50 for performance)
@@ -987,7 +987,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 const caseIds = similar
                   .slice(0, 3)
                   .map((s) => (s.caseAId === 0 ? s.caseBId : s.caseAId));
-                const cases = await prisma.repositoryCases.findMany({
+                const cases = await baseDb.repositoryCases.findMany({
                   where: { id: { in: caseIds } },
                   select: { id: true, name: true },
                 });

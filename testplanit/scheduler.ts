@@ -1,4 +1,4 @@
-import { getAllTenantIds, isMultiTenantMode } from "./lib/multiTenantPrisma";
+import { getAllTenantIds, isMultiTenantMode } from "./lib/multiTenantDb";
 import {
   FORECAST_QUEUE_NAME,
   getForecastQueue,

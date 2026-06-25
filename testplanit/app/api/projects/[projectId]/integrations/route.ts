@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 const createProjectIntegrationSchema = z.object({
@@ -94,7 +94,7 @@ export async function GET(
       isProjectAdmin
     );
 
-    const project = await prisma.projects.findFirst({
+    const project = await baseDb.projects.findFirst({
       where: projectAccessWhere,
     });
 
@@ -103,7 +103,7 @@ export async function GET(
     }
 
     // Get project integrations
-    const projectIntegrations = await prisma.projectIntegration.findMany({
+    const projectIntegrations = await baseDb.projectIntegration.findMany({
       where: {
         projectId,
       },
@@ -147,7 +147,7 @@ export const POST = withAuditContext(
         isProjectAdmin
       );
 
-      const project = await prisma.projects.findFirst({
+      const project = await baseDb.projects.findFirst({
         where: projectAccessWhere,
       });
 
@@ -162,7 +162,7 @@ export const POST = withAuditContext(
       const validatedData = createProjectIntegrationSchema.parse(body);
 
       // Check if integration exists and is active
-      const integration = await prisma.integration.findFirst({
+      const integration = await baseDb.integration.findFirst({
         where: {
           id: validatedData.integrationId,
           status: "ACTIVE",
@@ -183,7 +183,7 @@ export const POST = withAuditContext(
       // locked to the old provider, so events would route into deadweight).
       // Hard-delete those rows post-switch — see cascade below.
       const priorActiveProjectIntegration =
-        await prisma.projectIntegration.findFirst({
+        await baseDb.projectIntegration.findFirst({
           where: { projectId, isActive: true },
           include: { integration: { select: { provider: true } } },
         });
@@ -192,7 +192,7 @@ export const POST = withAuditContext(
 
       // Check if this integration was previously assigned to the project
       const existingProjectIntegration =
-        await prisma.projectIntegration.findFirst({
+        await baseDb.projectIntegration.findFirst({
           where: {
             projectId,
             integrationId: validatedData.integrationId,
@@ -203,7 +203,7 @@ export const POST = withAuditContext(
 
       if (existingProjectIntegration) {
         // Deactivate other project integrations
-        await prisma.projectIntegration.updateMany({
+        await baseDb.projectIntegration.updateMany({
           where: {
             projectId,
             isActive: true,
@@ -217,7 +217,7 @@ export const POST = withAuditContext(
         });
 
         // Reactivate the existing integration
-        projectIntegration = await prisma.projectIntegration.update({
+        projectIntegration = await baseDb.projectIntegration.update({
           where: {
             id: existingProjectIntegration.id,
           },
@@ -232,7 +232,7 @@ export const POST = withAuditContext(
         });
       } else {
         // Deactivate existing project integrations
-        await prisma.projectIntegration.updateMany({
+        await baseDb.projectIntegration.updateMany({
           where: {
             projectId,
             isActive: true,
@@ -243,7 +243,7 @@ export const POST = withAuditContext(
         });
 
         // Create new project integration
-        projectIntegration = await prisma.projectIntegration.create({
+        projectIntegration = await baseDb.projectIntegration.create({
           data: {
             projectId,
             integrationId: validatedData.integrationId,
@@ -264,7 +264,7 @@ export const POST = withAuditContext(
       // soft-delete column; FK cascades clean up dedup + secrets rows
       // (deliveries SetNull-cascade, retained for audit history).
       if (priorProvider !== integration.provider) {
-        await prisma.webhookConfig.deleteMany({
+        await baseDb.webhookConfig.deleteMany({
           where: { projectId, direction: "INBOUND" },
         });
       }

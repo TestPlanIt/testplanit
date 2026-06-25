@@ -121,7 +121,7 @@ vi.mock("../auditContext", () => ({
 }));
 
 // Mock multi-tenant
-vi.mock("../multiTenantPrisma", () => ({
+vi.mock("../multiTenantDb", () => ({
   isMultiTenantMode: vi.fn(() => false),
   getCurrentTenantId: vi.fn(() => undefined),
 }));
@@ -1087,7 +1087,7 @@ describe("AuditLog Service", () => {
     });
 
     it("should fall back to getCurrentTenantId when no explicit tenantId", async () => {
-      const multiTenant = await import("../multiTenantPrisma");
+      const multiTenant = await import("../multiTenantDb");
       vi.mocked(multiTenant.getCurrentTenantId).mockReturnValue(
         "tenant-from-env"
       );
@@ -1110,7 +1110,7 @@ describe("AuditLog Service", () => {
     });
 
     it("should prefer explicit tenantId over getCurrentTenantId", async () => {
-      const multiTenant = await import("../multiTenantPrisma");
+      const multiTenant = await import("../multiTenantDb");
       vi.mocked(multiTenant.getCurrentTenantId).mockReturnValue(
         "tenant-from-env"
       );

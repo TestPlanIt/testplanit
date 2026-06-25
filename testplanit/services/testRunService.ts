@@ -1,6 +1,6 @@
 "use server";
 import type { TestRunCases } from "~/zenstack/models";
-import { prisma } from "~/lib/prismaBase";
+import { rawDb } from "~/lib/rawDb";
 
 // Define a type for the structure returned by the findMany query
 type TestRunCaseWithForecast = TestRunCases & {
@@ -20,7 +20,7 @@ export async function updateTestRunForecast(testRunId: number): Promise<void> {
   try {
     // Fetch the TestRunCases and their associated RepositoryCase forecasts
     const testRunCases: TestRunCaseWithForecast[] =
-      await prisma.testRunCases.findMany({
+      await rawDb.testRunCases.findMany({
         where: { testRunId: testRunId },
         include: {
           repositoryCase: {
@@ -49,7 +49,7 @@ export async function updateTestRunForecast(testRunId: number): Promise<void> {
     );
 
     // Update the TestRun record
-    await prisma.testRuns.update({
+    await rawDb.testRuns.update({
       where: { id: testRunId },
       data: {
         forecastManual: totalForecastManual,

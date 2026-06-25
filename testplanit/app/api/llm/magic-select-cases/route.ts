@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -332,7 +332,7 @@ export async function POST(request: NextRequest) {
           ],
         };
 
-    const project = await prisma.projects.findFirst({
+    const project = await baseDb.projects.findFirst({
       where: projectAccessWhere,
     });
 
@@ -344,7 +344,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get total count of active test cases in repository
-    const repositoryTotalCount = await prisma.repositoryCases.count({
+    const repositoryTotalCount = await baseDb.repositoryCases.count({
       where: {
         projectId,
         isArchived: false,
@@ -355,7 +355,7 @@ export async function POST(request: NextRequest) {
     // Fetch linked issue details (needed for keyword extraction in both count and actual call)
     let issues: IssueData[] = [];
     if (testRunMetadata.linkedIssueIds.length > 0) {
-      const issueRecords = await prisma.issue.findMany({
+      const issueRecords = await baseDb.issue.findMany({
         where: {
           id: { in: testRunMetadata.linkedIssueIds },
           isDeleted: false,

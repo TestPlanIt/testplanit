@@ -17,8 +17,8 @@ vi.mock("~/server/auth", () => ({
   getServerAuthSession: mockGetServerAuthSession,
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: mockPrisma,
+vi.mock("~/lib/db", () => ({
+  baseDb: mockPrisma,
 }));
 
 vi.mock("~/utils/extractTextFromJson", () => ({
@@ -426,7 +426,7 @@ describe("fetchCasesForQuickScript", () => {
   });
 
   describe("error handling", () => {
-    it("should return error when prisma throws", async () => {
+    it("should return error when baseDb throws", async () => {
       mockPrisma.repositoryCases.findMany.mockRejectedValue(
         new Error("DB error")
       );

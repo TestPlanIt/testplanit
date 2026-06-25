@@ -14,8 +14,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: { findUnique: vi.fn() },
     projects: { findFirst: vi.fn() },
     llmReportSnapshot: {
@@ -26,7 +26,7 @@ vi.mock("~/lib/prisma", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { DELETE } from "./route";
 
 function req(): NextRequest {
@@ -37,13 +37,13 @@ function req(): NextRequest {
   );
 }
 
-const findUser = prisma.user.findUnique as unknown as ReturnType<typeof vi.fn>;
-const findProject = prisma.projects.findFirst as unknown as ReturnType<
+const findUser = baseDb.user.findUnique as unknown as ReturnType<typeof vi.fn>;
+const findProject = baseDb.projects.findFirst as unknown as ReturnType<
   typeof vi.fn
 >;
-const findSnapshot = prisma.llmReportSnapshot
+const findSnapshot = baseDb.llmReportSnapshot
   .findFirst as unknown as ReturnType<typeof vi.fn>;
-const updateSnapshot = prisma.llmReportSnapshot.update as unknown as ReturnType<
+const updateSnapshot = baseDb.llmReportSnapshot.update as unknown as ReturnType<
   typeof vi.fn
 >;
 

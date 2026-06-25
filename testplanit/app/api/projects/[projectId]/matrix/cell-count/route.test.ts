@@ -22,8 +22,8 @@ vi.mock("~/lib/matrix/matrixCellCount", () => ({
     runCellCountPreflightMock(...args),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: { __marker: "rawPrisma" },
+vi.mock("~/lib/db", () => ({
+  baseDb: { __marker: "rawPrisma" },
 }));
 
 import { getServerSession } from "next-auth";
@@ -122,7 +122,7 @@ describe("POST /api/projects/[projectId]/matrix/cell-count", () => {
     const json = await res.json();
     expect(json).toEqual(result);
 
-    // Must be called with raw prisma (not enhanced db).
+    // Must be called with raw baseDb (not enhanced db).
     const args = runCellCountPreflightMock.mock.calls[0];
     expect(args[0]).toEqual({ __marker: "rawPrisma" });
     expect(args[1]).toBe(42);

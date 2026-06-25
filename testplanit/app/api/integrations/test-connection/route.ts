@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { decrypt, isEncrypted } from "@/utils/encryption";
 import { IntegrationProvider } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
@@ -668,7 +668,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     // If integrationId is provided, fetch the integration details
     if (integrationId) {
-      const integration = await prisma.integration.findUnique({
+      const integration = await baseDb.integration.findUnique({
         where: { id: integrationId },
       });
 
@@ -791,7 +791,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // not that a user has authorized. Their status flips to ACTIVE in the
     // OAuth callback once a real user token is stored.
     if (integrationId && result.success && !result.requiresUserAuth) {
-      await prisma.integration.update({
+      await baseDb.integration.update({
         where: { id: integrationId },
         data: {
           status: "ACTIVE",

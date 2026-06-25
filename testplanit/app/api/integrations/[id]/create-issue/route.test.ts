@@ -10,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     userIntegrationAuth: {
       findFirst: vi.fn(),
     },
@@ -43,7 +43,7 @@ vi.mock("@/lib/integrations/IntegrationManager", () => ({
 }));
 
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 
 import { POST } from "./route";
@@ -139,8 +139,8 @@ describe("POST /api/integrations/[id]/create-issue", () => {
   describe("Integration lookup", () => {
     it("returns 404 when integration not found and no user auth", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
-      (prisma.integration.findUnique as any).mockResolvedValue(null);
+      (baseDb.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
+      (baseDb.integration.findUnique as any).mockResolvedValue(null);
 
       const response = await POST(
         createRequest({ title: "Test", projectId: "PROJ" }),
@@ -154,8 +154,8 @@ describe("POST /api/integrations/[id]/create-issue", () => {
 
     it("returns 401 when OAuth integration requires user auth", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
-      (prisma.integration.findUnique as any).mockResolvedValue({
+      (baseDb.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
+      (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 1,
         provider: "JIRA",
         authType: "OAUTH2",
@@ -176,8 +176,8 @@ describe("POST /api/integrations/[id]/create-issue", () => {
   describe("Successful creation with API_KEY integration", () => {
     beforeEach(() => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
-      (prisma.integration.findUnique as any).mockResolvedValue({
+      (baseDb.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
+      (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 1,
         authType: "API_KEY",
         status: "ACTIVE",
@@ -215,7 +215,7 @@ describe("POST /api/integrations/[id]/create-issue", () => {
   describe("Successful creation with user auth (OAuth)", () => {
     beforeEach(() => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.userIntegrationAuth.findFirst as any).mockResolvedValue({
+      (baseDb.userIntegrationAuth.findFirst as any).mockResolvedValue({
         id: 10,
         userId: "user-1",
         integrationId: 1,
@@ -259,21 +259,21 @@ describe("POST /api/integrations/[id]/create-issue", () => {
   describe("Linking to entities", () => {
     beforeEach(() => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
-      (prisma.integration.findUnique as any).mockResolvedValue({
+      (baseDb.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
+      (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 1,
         authType: "API_KEY",
         status: "ACTIVE",
       });
-      (prisma.repositoryCases.findUnique as any).mockResolvedValue({
+      (baseDb.repositoryCases.findUnique as any).mockResolvedValue({
         id: 42,
         projectId: 100,
       });
-      (prisma.projectAssignment.findUnique as any).mockResolvedValue({
+      (baseDb.projectAssignment.findUnique as any).mockResolvedValue({
         userId: "user-1",
         projectId: 100,
       });
-      (prisma.issue.upsert as any).mockResolvedValue({
+      (baseDb.issue.upsert as any).mockResolvedValue({
         id: 99,
         externalId: "PROJ-1",
         integrationId: 1,
@@ -292,7 +292,7 @@ describe("POST /api/integrations/[id]/create-issue", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(prisma.issue.upsert).toHaveBeenCalledOnce();
+      expect(baseDb.issue.upsert).toHaveBeenCalledOnce();
       expect(data.internalId).toBe(99);
     });
 
@@ -323,7 +323,7 @@ describe("POST /api/integrations/[id]/create-issue", () => {
       );
       expect(response.status).toBe(200);
 
-      const upsertArg = (prisma.issue.upsert as any).mock.calls[0][0];
+      const upsertArg = (baseDb.issue.upsert as any).mock.calls[0][0];
       // Regression: the issue key — not the title — must land in `name`, and the
       // first-class columns the UI reads must be populated (were empty before).
       expect(upsertArg.create.name).toBe("PROJ-7");
@@ -347,8 +347,8 @@ describe("POST /api/integrations/[id]/create-issue", () => {
   describe("Error handling", () => {
     it("returns 500 when adapter createIssue throws", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
-      (prisma.integration.findUnique as any).mockResolvedValue({
+      (baseDb.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
+      (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 1,
         authType: "API_KEY",
         status: "ACTIVE",
@@ -369,8 +369,8 @@ describe("POST /api/integrations/[id]/create-issue", () => {
 
     it("returns 500 when adapter cannot be initialized", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
-      (prisma.integration.findUnique as any).mockResolvedValue({
+      (baseDb.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
+      (baseDb.integration.findUnique as any).mockResolvedValue({
         id: 1,
         authType: "API_KEY",
         status: "ACTIVE",

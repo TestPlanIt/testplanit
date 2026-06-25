@@ -13,12 +13,12 @@ vi.mock("~/server/db", () => ({
   },
 }));
 
-// Mock ~/lib/prisma for resolveRoleHolderUserIds (uses await import internally)
+// Mock ~/lib/baseDb for resolveRoleHolderUserIds (uses await import internally)
 const mockPrismaUserProjectPermissionFindMany = vi.fn();
 const mockPrismaGroupProjectPermissionFindMany = vi.fn();
 const mockPrismaRolePermissionFindUnique = vi.fn();
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     userProjectPermission: {
       findMany: (...args: unknown[]) =>
         mockPrismaUserProjectPermissionFindMany(...args),

@@ -6,7 +6,7 @@
  * compose these primitives; routes never inline mapping logic.
  *
  * Purity discipline (mirrors `lib/scim/responses.ts` and `lib/scim/errors.ts`):
- *   - No imports from `~/lib/prisma` or any runtime DB client.
+ *   - No imports from `~/lib/db` or any runtime DB client.
  *   - No stdout/stderr writes, no logger imports.
  *   - No module-level mutable state.
  *   - No side effects on inputs (returns fresh objects).

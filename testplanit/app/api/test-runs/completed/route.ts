@@ -1,7 +1,7 @@
 import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 
@@ -131,14 +131,14 @@ export async function GET(req: NextRequest) {
     }
 
     // Get total count for pagination
-    const totalCount = await prisma.testRuns.count({ where });
+    const totalCount = await baseDb.testRuns.count({ where });
 
     // Calculate pagination
     const skip = (page - 1) * pageSize;
     const pageCount = Math.ceil(totalCount / pageSize);
 
     // Fetch paginated runs with optimized select
-    const runs = await prisma.testRuns.findMany({
+    const runs = await baseDb.testRuns.findMany({
       where,
       orderBy: [{ completedAt: "desc" }],
       skip,

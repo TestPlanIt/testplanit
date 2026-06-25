@@ -1,5 +1,5 @@
-// lib/multiTenantPrisma.ts
-// Multi-tenant Prisma client factory for shared worker containers
+// lib/multiTenantDb.ts
+// Multi-tenant ZenStack client factory for shared worker containers
 
 import { ZenStackClient } from "@zenstackhq/orm";
 import { PostgresDialect } from "@zenstackhq/orm/dialects/postgres";
@@ -45,7 +45,7 @@ export function getCurrentTenantId(): string | undefined {
 }
 
 /**
- * Cache of Prisma clients per tenant to avoid creating new connections for each job
+ * Cache of ZenStack clients per tenant to avoid creating new connections for each job
  * Stores both the client and the database URL used to create it (for credential change detection)
  */
 interface CachedClient {
@@ -199,9 +199,9 @@ export function getAllTenantIds(): string[] {
 }
 
 /**
- * Create a Prisma client for a specific tenant
+ * Create a ZenStack client for a specific tenant
  */
-function createTenantPrismaClient(config: TenantConfig): DbClient {
+function createTenantDbClient(config: TenantConfig): DbClient {
   const client = new ZenStackClient(schema, {
     dialect: new PostgresDialect({
       pool: new Pool({ connectionString: config.databaseUrl }),
@@ -212,12 +212,12 @@ function createTenantPrismaClient(config: TenantConfig): DbClient {
 }
 
 /**
- * Get or create a Prisma client for a specific tenant
+ * Get or create a ZenStack client for a specific tenant
  * Caches clients to reuse connections
  * Supports dynamic tenant addition by reloading configs if tenant not found
  * Automatically invalidates cached clients when credentials change
  */
-export function getTenantPrismaClient(tenantId: string): DbClient {
+export function getTenantDbClient(tenantId: string): DbClient {
   // Always reload config from file to get latest credentials
   reloadTenantConfigs();
   const config = getTenantConfig(tenantId);
@@ -248,26 +248,26 @@ export function getTenantPrismaClient(tenantId: string): DbClient {
   }
 
   // Create and cache new client
-  const client = createTenantPrismaClient(config);
+  const client = createTenantDbClient(config);
   tenantClients.set(tenantId, { client, databaseUrl: config.databaseUrl });
-  console.log(`Created Prisma client for tenant: ${tenantId}`);
+  console.log(`Created ZenStack client for tenant: ${tenantId}`);
 
   return client;
 }
 
 /**
- * Get a Prisma client based on job data
+ * Get a ZenStack client based on job data
  * In single-tenant mode, returns the default client
  * In multi-tenant mode, returns tenant-specific client
  */
-export function getPrismaClientForJob(jobData: {
+export function getDbClientForJob(jobData: {
   tenantId?: string;
 }): DbClient {
   if (!isMultiTenantMode()) {
-    // Single-tenant mode: use lightweight Prisma client (no ES sync extensions)
+    // Single-tenant mode: use lightweight ZenStack client (no ES sync extensions)
     // Import lazily to avoid circular dependencies
-    const { prisma } = require("./prismaBase");
-    return prisma;
+    const { rawDb } = require("./rawDb");
+    return rawDb;
   }
 
   // Multi-tenant mode: require tenantId
@@ -275,7 +275,7 @@ export function getPrismaClientForJob(jobData: {
     throw new Error("tenantId is required in multi-tenant mode");
   }
 
-  return getTenantPrismaClient(jobData.tenantId);
+  return getTenantDbClient(jobData.tenantId);
 }
 
 /**
@@ -285,13 +285,13 @@ export async function disconnectAllTenantClients(): Promise<void> {
   const disconnectPromises: Promise<void>[] = [];
 
   for (const [tenantId, cached] of tenantClients) {
-    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
+    console.log(`Disconnecting ZenStack client for tenant: ${tenantId}`);
     disconnectPromises.push(cached.client.$disconnect());
   }
 
   await Promise.all(disconnectPromises);
   tenantClients.clear();
-  console.log("All tenant Prisma clients disconnected");
+  console.log("All tenant ZenStack clients disconnected");
 }
 
 /**

@@ -39,8 +39,8 @@ vi.mock("~/lib/matrix/matrixAggregation", async () => {
   };
 });
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: { __marker: "rawPrisma" },
+vi.mock("~/lib/db", () => ({
+  baseDb: { __marker: "rawPrisma" },
 }));
 
 import { getServerSession } from "next-auth";
@@ -267,7 +267,7 @@ describe("POST /api/projects/[projectId]/matrix/aggregate", () => {
     expect(args[3]).toBe(true);
   });
 
-  it("uses raw prisma (not enhanced db) for the aggregation call", async () => {
+  it("uses raw baseDb (not enhanced db) for the aggregation call", async () => {
     (getServerSession as any).mockResolvedValue(mockSession);
     projectsFindFirstMock.mockResolvedValue({ id: 42 });
     runMatrixAggregationMock.mockResolvedValue({

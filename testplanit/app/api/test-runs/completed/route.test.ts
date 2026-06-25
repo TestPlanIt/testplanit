@@ -10,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     testRuns: {
       count: vi.fn(),
       findMany: vi.fn(),
@@ -31,7 +31,7 @@ vi.mock("~/utils/testResultTypes", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 describe("Completed Test Runs API Route", () => {
   const mockSession = {
@@ -92,8 +92,8 @@ describe("Completed Test Runs API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getServerSession as any).mockResolvedValue(mockSession);
-    (prisma.testRuns.count as any).mockResolvedValue(1);
-    (prisma.testRuns.findMany as any).mockResolvedValue([mockRun]);
+    (baseDb.testRuns.count as any).mockResolvedValue(1);
+    (baseDb.testRuns.findMany as any).mockResolvedValue([mockRun]);
   });
 
   describe("Authentication", () => {
@@ -133,7 +133,7 @@ describe("Completed Test Runs API Route", () => {
     });
 
     it("returns correct totalCount and pageCount", async () => {
-      (prisma.testRuns.count as any).mockResolvedValue(50);
+      (baseDb.testRuns.count as any).mockResolvedValue(50);
 
       const request = createRequest({ projectId: "1", pageSize: "25" });
       const response = await GET(request);
@@ -148,7 +148,7 @@ describe("Completed Test Runs API Route", () => {
       const request = createRequest({ projectId: "1" });
       await GET(request);
 
-      expect(prisma.testRuns.count).toHaveBeenCalledWith(
+      expect(baseDb.testRuns.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             isCompleted: true,
@@ -162,7 +162,7 @@ describe("Completed Test Runs API Route", () => {
       const request = createRequest({ projectId: "1", search: "sprint" });
       await GET(request);
 
-      const countCall = (prisma.testRuns.count as any).mock.calls[0][0];
+      const countCall = (baseDb.testRuns.count as any).mock.calls[0][0];
       expect(countCall.where).toHaveProperty("name");
       expect(countCall.where.name).toHaveProperty("contains", "sprint");
     });
@@ -171,7 +171,7 @@ describe("Completed Test Runs API Route", () => {
       const request = createRequest({ projectId: "1", runType: "manual" });
       await GET(request);
 
-      const countCall = (prisma.testRuns.count as any).mock.calls[0][0];
+      const countCall = (baseDb.testRuns.count as any).mock.calls[0][0];
       expect(countCall.where).toHaveProperty("testRunType", "REGULAR");
     });
 
@@ -179,7 +179,7 @@ describe("Completed Test Runs API Route", () => {
       const request = createRequest({ projectId: "1", runType: "automated" });
       await GET(request);
 
-      const countCall = (prisma.testRuns.count as any).mock.calls[0][0];
+      const countCall = (baseDb.testRuns.count as any).mock.calls[0][0];
       expect(countCall.where.testRunType).toHaveProperty("in");
     });
 
@@ -187,13 +187,13 @@ describe("Completed Test Runs API Route", () => {
       const request = createRequest({ projectId: "1" });
       await GET(request);
 
-      const findCall = (prisma.testRuns.findMany as any).mock.calls[0][0];
+      const findCall = (baseDb.testRuns.findMany as any).mock.calls[0][0];
       expect(findCall).toHaveProperty("skip", 0);
       expect(findCall).toHaveProperty("take", 25); // default pageSize
     });
 
     it("applies correct skip for page 2", async () => {
-      (prisma.testRuns.count as any).mockResolvedValue(50);
+      (baseDb.testRuns.count as any).mockResolvedValue(50);
 
       const request = createRequest({
         projectId: "1",
@@ -202,7 +202,7 @@ describe("Completed Test Runs API Route", () => {
       });
       await GET(request);
 
-      const findCall = (prisma.testRuns.findMany as any).mock.calls[0][0];
+      const findCall = (baseDb.testRuns.findMany as any).mock.calls[0][0];
       expect(findCall).toHaveProperty("skip", 10);
     });
 
@@ -210,14 +210,14 @@ describe("Completed Test Runs API Route", () => {
       const request = createRequest();
       await GET(request);
 
-      const findCall = (prisma.testRuns.findMany as any).mock.calls[0][0];
+      const findCall = (baseDb.testRuns.findMany as any).mock.calls[0][0];
       expect(findCall.orderBy).toContainEqual({ completedAt: "desc" });
     });
   });
 
   describe("Error Handling", () => {
     it("returns 500 when database query fails", async () => {
-      (prisma.testRuns.count as any).mockRejectedValue(new Error("DB Error"));
+      (baseDb.testRuns.count as any).mockRejectedValue(new Error("DB Error"));
 
       const request = createRequest();
       const response = await GET(request);

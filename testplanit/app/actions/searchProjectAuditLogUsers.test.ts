@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 import { searchProjectAuditLogUsers } from "./searchProjectAuditLogUsers";
 
-// The action issues its two raw queries via Kysely sql`...`.execute(prisma.$qb).
+// The action issues its two raw queries via Kysely sql`...`.execute(baseDb.$qb).
 // Mock $qb as a capturing executor: compileQuery passes the raw node through (so
 // tests can inspect its SQL fragments / bound project id) and executeQuery
 // returns the { rows } shape the action reads.
@@ -12,8 +12,8 @@ const { qbCompileQuery, qbExecuteQuery } = vi.hoisted(() => ({
   qbExecuteQuery: vi.fn(),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projectAssignment: { count: vi.fn() },
     $qb: {
       getExecutor: () => ({
@@ -76,7 +76,7 @@ describe("searchProjectAuditLogUsers", () => {
       const result = await searchProjectAuditLogUsers(PROJECT_ID, "", 0, 25);
 
       expect(result).toEqual({ results: [], total: 0 });
-      expect(prisma.projectAssignment.count).not.toHaveBeenCalled();
+      expect(baseDb.projectAssignment.count).not.toHaveBeenCalled();
       expect(qbExecuteQuery).not.toHaveBeenCalled();
     });
 
@@ -86,7 +86,7 @@ describe("searchProjectAuditLogUsers", () => {
       const result = await searchProjectAuditLogUsers(PROJECT_ID, "", 0, 25);
 
       expect(result).toEqual({ results: [], total: 0 });
-      expect(prisma.projectAssignment.count).not.toHaveBeenCalled();
+      expect(baseDb.projectAssignment.count).not.toHaveBeenCalled();
       expect(qbExecuteQuery).not.toHaveBeenCalled();
     });
 
@@ -101,13 +101,13 @@ describe("searchProjectAuditLogUsers", () => {
 
     it("returns empty for a PROJECTADMIN NOT assigned to the project", async () => {
       mockSession({ id: "padmin-1", access: "PROJECTADMIN" });
-      vi.mocked(prisma.projectAssignment.count).mockResolvedValue(0 as never);
+      vi.mocked(baseDb.projectAssignment.count).mockResolvedValue(0 as never);
 
       const result = await searchProjectAuditLogUsers(PROJECT_ID, "", 0, 25);
 
       expect(result).toEqual({ results: [], total: 0 });
       // The assignment check is scoped to this caller + this project...
-      expect(prisma.projectAssignment.count).toHaveBeenCalledWith({
+      expect(baseDb.projectAssignment.count).toHaveBeenCalledWith({
         where: { userId: "padmin-1", projectId: PROJECT_ID },
       });
       // ...and the actor query is never run when the check fails.
@@ -120,7 +120,7 @@ describe("searchProjectAuditLogUsers", () => {
       const result = await searchProjectAuditLogUsers(NaN, "", 0, 25);
 
       expect(result).toEqual({ results: [], total: 0 });
-      expect(prisma.projectAssignment.count).not.toHaveBeenCalled();
+      expect(baseDb.projectAssignment.count).not.toHaveBeenCalled();
       expect(qbExecuteQuery).not.toHaveBeenCalled();
     });
   });
@@ -128,7 +128,7 @@ describe("searchProjectAuditLogUsers", () => {
   describe("authorized access", () => {
     it("lets a PROJECTADMIN assigned to the project read its actors, scoped to that project", async () => {
       mockSession({ id: "padmin-1", access: "PROJECTADMIN" });
-      vi.mocked(prisma.projectAssignment.count).mockResolvedValue(1 as never);
+      vi.mocked(baseDb.projectAssignment.count).mockResolvedValue(1 as never);
       mockQueryResults(
         [{ userId: "u-1", userName: "Alice", userEmail: "alice@example.com" }],
         1
@@ -136,7 +136,7 @@ describe("searchProjectAuditLogUsers", () => {
 
       const result = await searchProjectAuditLogUsers(PROJECT_ID, "", 0, 25);
 
-      expect(prisma.projectAssignment.count).toHaveBeenCalledWith({
+      expect(baseDb.projectAssignment.count).toHaveBeenCalledWith({
         where: { userId: "padmin-1", projectId: PROJECT_ID },
       });
       expect(result.total).toBe(1);
@@ -163,7 +163,7 @@ describe("searchProjectAuditLogUsers", () => {
 
       const result = await searchProjectAuditLogUsers(PROJECT_ID, "", 0, 25);
 
-      expect(prisma.projectAssignment.count).not.toHaveBeenCalled();
+      expect(baseDb.projectAssignment.count).not.toHaveBeenCalled();
       expect(result.results).toHaveLength(1);
       expect(result.total).toBe(1);
     });

@@ -5,7 +5,7 @@ import { ZodError } from "zod/v4";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { sharedDatasetCreateSchema } from "~/lib/schemas/sharedDatasetCreateSchema";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
@@ -144,7 +144,7 @@ export const POST = withAuditContext(
       // the policy expression `ownerCaseId != null && ownerCase.projectId !=
       // projectId` is logically null-safe via &&, but the runtime Zod
       // validator dereferences `ownerCase` regardless and rejects the null.
-      // We use the raw `prisma` client only for the create itself; the read
+      // We use the raw `baseDb` client only for the create itself; the read
       // gate above is the access check.
       const db = await getEnhancedDb(session);
       const project = await db.projects.findFirst({
@@ -155,7 +155,7 @@ export const POST = withAuditContext(
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
 
-      const created = await prisma.$transaction(async (tx) => {
+      const created = await baseDb.$transaction(async (tx) => {
         const dataSet = await tx.dataSet.create({
           data: {
             projectId,

@@ -1,5 +1,5 @@
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
@@ -55,7 +55,7 @@ export async function POST(
     const validatedData = createIssueSchema.parse(body);
 
     // First try to get user's integration auth
-    const userIntegrationAuth = await prisma.userIntegrationAuth.findFirst({
+    const userIntegrationAuth = await baseDb.userIntegrationAuth.findFirst({
       where: {
         userId: session.user.id,
         integrationId: parseInt(integrationId),
@@ -75,7 +75,7 @@ export async function POST(
 
     // If no user auth, check if the integration supports API key auth
     if (!userIntegrationAuth) {
-      const integration = await prisma.integration.findUnique({
+      const integration = await baseDb.integration.findUnique({
         where: {
           id: parseInt(integrationId),
           status: "ACTIVE",
@@ -119,19 +119,19 @@ export async function POST(
       let entityProjectId: number | null = null;
 
       if (validatedData.testCaseId) {
-        const testCase = await prisma.repositoryCases.findUnique({
+        const testCase = await baseDb.repositoryCases.findUnique({
           where: { id: parseInt(validatedData.testCaseId) },
           select: { projectId: true },
         });
         entityProjectId = testCase?.projectId || null;
       } else if (validatedData.testRunId) {
-        const testRun = await prisma.testRuns.findUnique({
+        const testRun = await baseDb.testRuns.findUnique({
           where: { id: parseInt(validatedData.testRunId) },
           select: { projectId: true },
         });
         entityProjectId = testRun?.projectId || null;
       } else if (validatedData.sessionId) {
-        const sessionEntity = await prisma.sessions.findUnique({
+        const sessionEntity = await baseDb.sessions.findUnique({
           where: { id: parseInt(validatedData.sessionId) },
           select: { projectId: true },
         });
@@ -145,7 +145,7 @@ export async function POST(
 
       if (entityProjectId) {
         // Check if user has access to the project
-        const projectAssignment = await prisma.projectAssignment.findUnique({
+        const projectAssignment = await baseDb.projectAssignment.findUnique({
           where: {
             userId_projectId: {
               userId: session.user.id,
@@ -421,7 +421,7 @@ export async function POST(
       };
 
       // Use upsert to handle cases where the issue already exists
-      const issue = await prisma.issue.upsert({
+      const issue = await baseDb.issue.upsert({
         where: {
           externalId_integrationId: {
             externalId: createdIssue.key || createdIssue.id,

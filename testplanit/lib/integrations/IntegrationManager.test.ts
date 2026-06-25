@@ -4,9 +4,9 @@ import { GitHubAdapter } from "./adapters/GitHubAdapter";
 import { JiraAdapter } from "./adapters/JiraAdapter";
 import { IntegrationManager } from "./IntegrationManager";
 
-// Mock prisma
-vi.mock("@/lib/prismaBase", () => ({
-  prisma: {
+// Mock rawDb
+vi.mock("@/lib/rawDb", () => ({
+  rawDb: {
     integration: {
       findUnique: vi.fn(),
     },
@@ -29,12 +29,12 @@ vi.mock("./AuthenticationService", () => ({
   },
 }));
 
-// Get the mocked prisma
-import { prisma } from "@/lib/prismaBase";
+// Get the mocked rawDb
+import { rawDb } from "@/lib/rawDb";
 import { EncryptionService } from "@/utils/encryption";
 import { AuthenticationService } from "./AuthenticationService";
 
-const mockPrisma = prisma as unknown as {
+const mockPrisma = rawDb as unknown as {
   integration: {
     findUnique: ReturnType<typeof vi.fn>;
   };

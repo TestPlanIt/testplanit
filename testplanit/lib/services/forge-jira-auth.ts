@@ -14,7 +14,7 @@
  * enforces that the mapped user actually has access to the target project.
  */
 
-import { prisma as db } from "@/lib/prisma";
+import { baseDb as db } from "@/lib/db";
 import { IntegrationProvider, ProjectAccessType } from "~/zenstack/models";
 import { createHmac, timingSafeEqual } from "crypto";
 

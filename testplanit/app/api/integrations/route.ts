@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { encrypt } from "@/utils/encryption";
 import { IntegrationStatus } from "~/zenstack/models";
 import { getServerSession } from "next-auth/next";
@@ -14,7 +14,7 @@ export const GET = withAuditContext(async (_request: NextRequest) => {
     }
 
     // Check if user is admin
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       select: { access: true },
     });
@@ -23,7 +23,7 @@ export const GET = withAuditContext(async (_request: NextRequest) => {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const integrations = await prisma.integration.findMany({
+    const integrations = await baseDb.integration.findMany({
       where: { isDeleted: false },
       select: {
         id: true,
@@ -59,7 +59,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     // Check if user is admin
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       select: { access: true },
     });
@@ -84,7 +84,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     // the admin gets a confusing "this exists but I can't find it"
     // error. (Same latent bug pattern fix as LlmIntegration, Issue,
     // RepositoryCases, TestCaseParameter — see PR description.)
-    const existingActive = await prisma.integration.findFirst({
+    const existingActive = await baseDb.integration.findFirst({
       where: { name, isDeleted: false },
     });
     if (existingActive) {
@@ -104,7 +104,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       credentials: { encrypted: encryptedConfig },
       status: IntegrationStatus.ACTIVE,
     };
-    const integration = await prisma.integration.upsert({
+    const integration = await baseDb.integration.upsert({
       where: { name },
       create: { name, ...integrationFields },
       update: { ...integrationFields, isDeleted: false },

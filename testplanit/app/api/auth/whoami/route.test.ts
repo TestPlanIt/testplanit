@@ -15,8 +15,8 @@ vi.mock("~/lib/api-token-auth", () => ({
     Array.isArray(scopes) && scopes.includes("client:mcp"),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       findUnique: vi.fn(),
     },
@@ -33,7 +33,7 @@ vi.mock("~/lib/auditContextWrappers", () => ({
 
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { enrichFromApiAuth } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 
 // Importing the route AFTER mocks are registered so the route picks up mocks.
@@ -92,7 +92,7 @@ describe("GET /api/auth/whoami — identity probe (SRV-04)", () => {
       (getServerAuthSession as any).mockResolvedValue({
         user: { id: sessionUser.id, email: sessionUser.email },
       });
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         id: sessionUser.id,
         name: sessionUser.name,
         email: sessionUser.email,
@@ -126,7 +126,7 @@ describe("GET /api/auth/whoami — identity probe (SRV-04)", () => {
         userId: bearerUser.id,
         scopes: [],
       });
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         id: bearerUser.id,
         name: bearerUser.name,
         email: bearerUser.email,
@@ -162,7 +162,7 @@ describe("GET /api/auth/whoami — identity probe (SRV-04)", () => {
         userId: bearerUser.id,
         scopes: ["mode:read"],
       });
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         id: bearerUser.id,
         name: bearerUser.name,
         email: bearerUser.email,
@@ -187,7 +187,7 @@ describe("GET /api/auth/whoami — identity probe (SRV-04)", () => {
         userId: bearerUser.id,
         scopes: ["client:mcp"],
       });
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         id: bearerUser.id,
         name: bearerUser.name,
         email: bearerUser.email,
@@ -212,7 +212,7 @@ describe("GET /api/auth/whoami — identity probe (SRV-04)", () => {
         userId: bearerUser.id,
         scopes: ["mode:read", "client:mcp"],
       });
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         id: bearerUser.id,
         name: bearerUser.name,
         email: bearerUser.email,
@@ -274,7 +274,7 @@ describe("GET /api/auth/whoami — identity probe (SRV-04)", () => {
         userId: bearerUser.id,
         scopes: ["mode:read"],
       });
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         id: bearerUser.id,
         name: bearerUser.name,
         email: bearerUser.email,
@@ -305,7 +305,7 @@ describe("GET /api/auth/whoami — identity probe (SRV-04)", () => {
       (getServerAuthSession as any).mockResolvedValue({
         user: { id: sessionUser.id, email: sessionUser.email },
       });
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         id: sessionUser.id,
         name: sessionUser.name,
         email: sessionUser.email,
@@ -323,7 +323,7 @@ describe("GET /api/auth/whoami — identity probe (SRV-04)", () => {
         userId: bearerUser.id,
         scopes: ["mode:read", "client:mcp"],
       });
-      (prisma.user.findUnique as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue({
         id: bearerUser.id,
         name: bearerUser.name,
         email: bearerUser.email,

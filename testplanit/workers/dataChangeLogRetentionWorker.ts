@@ -4,10 +4,10 @@ import { SYSTEM_ACTOR_ID } from "../lib/auditContextConstants";
 import {
   disconnectAllTenantClients,
   getAllTenantIds,
-  getTenantPrismaClient,
+  getTenantDbClient,
   isMultiTenantMode,
-} from "../lib/multiTenantPrisma";
-import { prisma } from "../lib/prismaBase";
+} from "../lib/multiTenantDb";
+import { rawDb } from "../lib/rawDb";
 import { captureAuditEvent } from "../lib/services/auditLog";
 
 /**
@@ -19,8 +19,8 @@ import { captureAuditEvent } from "../lib/services/auditLog";
  *
  * Multi-tenant mode: DataChangeLog lives in every tenant database (the capture
  * triggers are applied per-DB), so each pass iterates getAllTenantIds() and purges
- * each tenant's database via getTenantPrismaClient(), emitting one audit row per
- * (tenant, run) — single-tenant mode purges the one prismaBase client. Mirrors
+ * each tenant's database via getTenantDbClient(), emitting one audit row per
+ * (tenant, run) — single-tenant mode purges the one rawDb client. Mirrors
  * webhookRetentionWorker.
  *
  * Unprocessed rows (processed = false) are NEVER deleted — the append-only
@@ -30,7 +30,7 @@ import { captureAuditEvent } from "../lib/services/auditLog";
  * The LIMIT-1000 subquery pattern avoids a single giant DELETE locking the
  * table and starving the capture path — identical idiom to webhookRetentionWorker.
  *
- * Uses the raw prismaBase client / vanilla per-tenant clients (bypasses
+ * Uses the raw rawDb client / vanilla per-tenant clients (bypasses
  * @@deny('all', true)) — the same raw-client pattern the correlation worker uses.
  */
 
@@ -63,7 +63,7 @@ let stopRequested = false;
 let inflight: Promise<unknown> | null = null;
 
 export async function purgeOnce(
-  client: DbClient = prisma,
+  client: DbClient = rawDb,
   tenantId?: string,
   budgetMs: number = TENANT_PURGE_BUDGET_MS
 ): Promise<PurgeResult> {
@@ -121,7 +121,7 @@ export async function purgeOnce(
 
 /**
  * Run one purge pass across every configured tenant in multi-tenant mode, or against the singleton
- * prismaBase client in single-tenant mode. Per-tenant errors are isolated so one tenant's failure
+ * rawDb client in single-tenant mode. Per-tenant errors are isolated so one tenant's failure
  * never aborts the rest of the pass.
  *
  * Memory hygiene: in multi-tenant mode the tenant clients are disconnected after the full pass —
@@ -142,7 +142,7 @@ export async function purgeAllTenantsOnce(): Promise<PurgeResult[]> {
   try {
     for (const tenantId of tenantIds) {
       try {
-        const client = getTenantPrismaClient(tenantId);
+        const client = getTenantDbClient(tenantId);
         results.push(await purgeOnce(client, tenantId));
       } catch (err) {
         console.error(

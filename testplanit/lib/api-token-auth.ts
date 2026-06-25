@@ -12,7 +12,7 @@ import {
   setCachedTokenInfo,
 } from "./api-token-cache";
 import { hashToken, isValidTokenFormat } from "./api-tokens";
-import { prisma } from "./prisma";
+import { baseDb } from "./db";
 
 // Re-export so callers that previously imported from api-token-auth keep working.
 export { invalidateApiTokenCache };
@@ -122,7 +122,7 @@ export async function authenticateApiToken(
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
       "unknown";
-    prisma.apiToken
+    baseDb.apiToken
       .update({
         where: { id: cached.tokenId },
         data: { lastUsedAt: new Date(), lastUsedIp: clientIp },
@@ -140,7 +140,7 @@ export async function authenticateApiToken(
   }
 
   // Slow path: DB lookup, validate everything, populate cache on success.
-  const apiToken = await prisma.apiToken.findUnique({
+  const apiToken = await baseDb.apiToken.findUnique({
     where: { token: tokenHash },
     include: {
       user: {
@@ -214,7 +214,7 @@ export async function authenticateApiToken(
     request.headers.get("x-real-ip") ||
     "unknown";
 
-  prisma.apiToken
+  baseDb.apiToken
     .update({
       where: { id: apiToken.id },
       data: {

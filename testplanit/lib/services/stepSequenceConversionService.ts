@@ -1,7 +1,7 @@
-// Uses prismaBase (raw client) — ZenStack v3 Kysely generates aliases that exceed
+// Uses rawDb (raw client) — ZenStack v3 Kysely generates aliases that exceed
 // PostgreSQL's 63-char limit for deeply nested conversion queries
 
-import { prisma } from "~/lib/prismaBase";
+import { rawDb } from "~/lib/rawDb";
 import { withAuditGuc, buildGucPayload } from "~/lib/audit/gucContext";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { emptyEditorContent } from "~/app/constants/backend";
@@ -44,7 +44,7 @@ export async function convertMatch(
   editedSteps?: Array<{ step: string | null; expectedResult: string | null }>
 ): Promise<ConversionResult> {
   const result = await withAuditGuc(
-    prisma,
+    rawDb,
     buildGucPayload(userId),
     async (tx) => {
       // -----------------------------------------------------------------------

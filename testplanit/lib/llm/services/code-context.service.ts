@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import {
   createGitRepoAdapter,
   type GitRepoAdapter,
@@ -339,7 +339,7 @@ export class CodeContextService {
     };
 
     // Load config (need cacheEnabled and pathPatterns before anything else)
-    const config = await prisma.projectCodeRepositoryConfig.findUnique({
+    const config = await baseDb.projectCodeRepositoryConfig.findUnique({
       where: { id: projectConfigId },
       include: {
         repository: {
@@ -426,7 +426,7 @@ export class CodeContextService {
    *   export time, no way to pre-verify without a network round-trip)
    */
   static async checkProjectHasCodeContext(projectId: number): Promise<boolean> {
-    const config = await prisma.projectCodeRepositoryConfig.findUnique({
+    const config = await baseDb.projectCodeRepositoryConfig.findUnique({
       where: { projectId },
       select: { id: true, cacheEnabled: true } as any,
     });

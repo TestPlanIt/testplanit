@@ -10,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projects: {
       findFirst: vi.fn(),
     },
@@ -22,7 +22,7 @@ vi.mock("~/lib/prisma", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 describe("Fetch Many Cases API Route", () => {
   const mockSession = {
@@ -90,8 +90,8 @@ describe("Fetch Many Cases API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getServerSession as any).mockResolvedValue(mockSession);
-    (prisma.projects.findFirst as any).mockResolvedValue(mockProject);
-    (prisma.repositoryCases.findMany as any).mockResolvedValue(mockCases);
+    (baseDb.projects.findFirst as any).mockResolvedValue(mockProject);
+    (baseDb.repositoryCases.findMany as any).mockResolvedValue(mockCases);
   });
 
   describe("Authentication", () => {
@@ -158,7 +158,7 @@ describe("Fetch Many Cases API Route", () => {
 
   describe("Project Access", () => {
     it("returns 404 when project not found or no access", async () => {
-      (prisma.projects.findFirst as any).mockResolvedValue(null);
+      (baseDb.projects.findFirst as any).mockResolvedValue(null);
 
       const [request, context] = createRequest({ caseIds: [1, 2] });
       const response = await POST(request, context);
@@ -176,7 +176,7 @@ describe("Fetch Many Cases API Route", () => {
       const [request, context] = createRequest({ caseIds: [1] });
       await POST(request, context);
 
-      expect(prisma.projects.findFirst).toHaveBeenCalledWith({
+      expect(baseDb.projects.findFirst).toHaveBeenCalledWith({
         where: { id: 1, isDeleted: false },
       });
     });
@@ -185,7 +185,7 @@ describe("Fetch Many Cases API Route", () => {
       const [request, context] = createRequest({ caseIds: [1] });
       await POST(request, context);
 
-      const callArgs = (prisma.projects.findFirst as any).mock.calls[0][0];
+      const callArgs = (baseDb.projects.findFirst as any).mock.calls[0][0];
       expect(callArgs.where).toHaveProperty("OR");
     });
   });
@@ -204,7 +204,7 @@ describe("Fetch Many Cases API Route", () => {
     });
 
     it("maintains original order of caseIds in results", async () => {
-      (prisma.repositoryCases.findMany as any).mockResolvedValue([
+      (baseDb.repositoryCases.findMany as any).mockResolvedValue([
         { ...mockCases[1] }, // id: 2
         { ...mockCases[0] }, // id: 1
       ]);
@@ -233,7 +233,7 @@ describe("Fetch Many Cases API Route", () => {
           ],
         },
       ];
-      (prisma.repositoryCases.findMany as any).mockResolvedValue(
+      (baseDb.repositoryCases.findMany as any).mockResolvedValue(
         casesWithAttachments
       );
 
@@ -258,7 +258,7 @@ describe("Fetch Many Cases API Route", () => {
       // totalCount is the full caseIds length
       expect(data.totalCount).toBe(2);
       // findMany was called with only the first caseId (after slice)
-      const findManyCalls = (prisma.repositoryCases.findMany as any).mock.calls;
+      const findManyCalls = (baseDb.repositoryCases.findMany as any).mock.calls;
       expect(findManyCalls[0][0].where.id.in).toEqual([1]);
     });
 
@@ -267,14 +267,14 @@ describe("Fetch Many Cases API Route", () => {
       const response = await POST(request, context);
 
       expect(response.status).toBe(200);
-      const findManyCalls = (prisma.repositoryCases.findMany as any).mock.calls;
+      const findManyCalls = (baseDb.repositoryCases.findMany as any).mock.calls;
       expect(findManyCalls[0][0].where.id.in).toEqual([1, 2]);
     });
   });
 
   describe("Error Handling", () => {
     it("returns 500 when database query fails", async () => {
-      (prisma.repositoryCases.findMany as any).mockRejectedValue(
+      (baseDb.repositoryCases.findMany as any).mockRejectedValue(
         new Error("DB Error")
       );
 

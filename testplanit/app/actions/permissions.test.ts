@@ -3,9 +3,9 @@ import type { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { checkUserPermission, getUserProjectPermissions } from "./permissions";
 
-// Mock prisma
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+// Mock baseDb
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       findUnique: vi.fn(),
     },
@@ -27,10 +27,10 @@ vi.mock("~/utils/permissions", () => ({
   isProjectAdmin: vi.fn(),
 }));
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { isAdmin, isProjectAdmin } from "~/utils/permissions";
 
-const mockPrisma = prisma as unknown as {
+const mockPrisma = baseDb as unknown as {
   user: { findUnique: ReturnType<typeof vi.fn> };
   projects: { findUnique: ReturnType<typeof vi.fn> };
   userProjectPermission: { findUnique: ReturnType<typeof vi.fn> };

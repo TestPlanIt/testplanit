@@ -9,8 +9,8 @@ vi.mock("~/lib/webhooks/events", () => ({
   },
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
       const tx = Symbol("tx");
       return fn(tx);
@@ -18,7 +18,7 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { webhookEvents } from "~/lib/webhooks/events";
 import {
   emitReviewCompletedEvent,
@@ -27,7 +27,7 @@ import {
 } from "./reviewEvents";
 
 const emitMock = webhookEvents.emit as unknown as ReturnType<typeof vi.fn>;
-const txMock = prisma.$transaction as unknown as ReturnType<typeof vi.fn>;
+const txMock = baseDb.$transaction as unknown as ReturnType<typeof vi.fn>;
 
 function baseRequestedInput() {
   return {

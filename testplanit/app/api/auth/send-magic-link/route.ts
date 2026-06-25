@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getAppBaseUrl } from "~/lib/auth-security";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 
 /**
@@ -27,7 +27,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // Check if user exists and is active. Pull `userPreferences.locale`
     // so the email is rendered in the recipient's language; falls back
     // to en_US.
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { email },
       select: {
         id: true,
@@ -60,7 +60,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       .digest("hex");
 
     // Store the hashed token in the database
-    await prisma.verificationToken.create({
+    await baseDb.verificationToken.create({
       data: {
         identifier: email,
         token: hashedToken,

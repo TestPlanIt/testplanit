@@ -2,7 +2,7 @@ import { LLM_FEATURES, SYNC_RETRY_PROFILE } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
           ],
         };
 
-    const project = await prisma.projects.findFirst({
+    const project = await baseDb.projects.findFirst({
       where: projectAccessWhere,
       include: {
         projectLlmIntegrations: {
@@ -114,10 +114,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const manager = LlmManager.getInstance(prisma);
+    const manager = LlmManager.getInstance(baseDb);
 
     // Resolve prompt from database (falls back to hard-coded default)
-    const resolver = new PromptResolver(prisma);
+    const resolver = new PromptResolver(baseDb);
     const resolvedPrompt = await resolver.resolve(
       LLM_FEATURES.MARKDOWN_PARSING,
       projectId
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     let maxTokensPerRequest = 4096;
     let maxTokens = resolvedPrompt.maxOutputTokens ?? 4096;
 
-    const providerConfig = await (prisma as any).llmProviderConfig.findFirst({
+    const providerConfig = await (baseDb as any).llmProviderConfig.findFirst({
       where: { llmIntegrationId: resolved.integrationId },
     });
     if (providerConfig) {

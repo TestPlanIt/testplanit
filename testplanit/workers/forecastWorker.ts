@@ -3,11 +3,11 @@ import { runWithAuditContext } from "../lib/auditContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { FORECAST_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
@@ -166,7 +166,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
     validateMultiTenantJobData(job.data);
 
     // Get the appropriate Prisma client (tenant-specific or default)
-    const prisma = getPrismaClientForJob(job.data);
+    const prisma = getDbClientForJob(job.data);
 
     switch (job.name) {
       case JOB_UPDATE_SINGLE_CASE:

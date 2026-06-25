@@ -14,8 +14,8 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateRequest: vi.fn(),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       findUnique: vi.fn(),
     },
@@ -53,7 +53,7 @@ vi.mock("~/lib/auditContext", async (importOriginal) => {
 
 import { getServerSession } from "next-auth";
 import { authenticateRequest } from "~/lib/api-token-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
 describe("Submit Result API Route", () => {
@@ -150,15 +150,15 @@ describe("Submit Result API Route", () => {
       authenticated: true,
       user: { userId: "user-1", access: "USER" },
     });
-    (prisma.user.findUnique as any).mockResolvedValue(baseUser);
-    (prisma.testRunCases.findFirst as any).mockResolvedValue(baseRunCase);
+    (baseDb.user.findUnique as any).mockResolvedValue(baseUser);
+    (baseDb.testRunCases.findFirst as any).mockResolvedValue(baseRunCase);
     // Justification-on-override defaults: no prior attempt → check is a no-op,
     // so every pre-existing test path is unaffected.
-    (prisma.testRunResults.findFirst as any).mockResolvedValue(null);
-    (prisma.status.findMany as any).mockResolvedValue([]);
+    (baseDb.testRunResults.findFirst as any).mockResolvedValue(null);
+    (baseDb.status.findMany as any).mockResolvedValue([]);
     // Required-result-fields default: no required fields → check is a no-op,
     // so every pre-existing test path is unaffected.
-    (prisma.templateResultAssignment.findMany as any).mockResolvedValue([]);
+    (baseDb.templateResultAssignment.findMany as any).mockResolvedValue([]);
 
     txMocks = {
       // auditedTransaction sets the app.audit_context GUC as the first
@@ -213,7 +213,7 @@ describe("Submit Result API Route", () => {
       },
     };
 
-    (prisma.$transaction as any).mockImplementation(async (callback: any) =>
+    (baseDb.$transaction as any).mockImplementation(async (callback: any) =>
       callback(txMocks)
     );
   });
@@ -261,7 +261,7 @@ describe("Submit Result API Route", () => {
   });
 
   it("returns 404 when test run case is not found", async () => {
-    (prisma.testRunCases.findFirst as any).mockResolvedValue(null);
+    (baseDb.testRunCases.findFirst as any).mockResolvedValue(null);
 
     const response = await POST(createRequest(validBody));
     const data = await response.json();
@@ -271,7 +271,7 @@ describe("Submit Result API Route", () => {
   });
 
   it("returns 403 when user has no permission", async () => {
-    (prisma.testRunCases.findFirst as any).mockResolvedValue({
+    (baseDb.testRunCases.findFirst as any).mockResolvedValue({
       ...baseRunCase,
       testRun: {
         ...baseRunCase.testRun,
@@ -292,11 +292,11 @@ describe("Submit Result API Route", () => {
 
     expect(response.status).toBe(403);
     expect(data.code).toBe("PERMISSION_DENIED");
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(baseDb.$transaction).not.toHaveBeenCalled();
   });
 
   it("returns 409 RUN_COMPLETED when the test run is completed", async () => {
-    (prisma.testRunCases.findFirst as any).mockResolvedValue({
+    (baseDb.testRunCases.findFirst as any).mockResolvedValue({
       ...baseRunCase,
       testRun: { ...baseRunCase.testRun, isCompleted: true },
     });
@@ -306,7 +306,7 @@ describe("Submit Result API Route", () => {
 
     expect(response.status).toBe(409);
     expect(data.code).toBe("RUN_COMPLETED");
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(baseDb.$transaction).not.toHaveBeenCalled();
   });
 
   it("submits result and updates test run case atomically when permission is valid", async () => {
@@ -315,7 +315,7 @@ describe("Submit Result API Route", () => {
 
     expect(response.status).toBe(200);
     expect(data.result.id).toBe(999);
-    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(baseDb.$transaction).toHaveBeenCalledTimes(1);
     expect(txMocks.testRunResults.create).toHaveBeenCalledTimes(1);
     expect(txMocks.testRunCases.update).toHaveBeenCalledWith({
       where: { id: 10 },
@@ -349,7 +349,7 @@ describe("Submit Result API Route", () => {
     };
 
     it("flips repositoryCase.automated to true when an automated run submits a result for a manual case", async () => {
-      (prisma.testRunCases.findFirst as any).mockResolvedValue(
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue(
         automatedRunCase
       );
 
@@ -363,7 +363,7 @@ describe("Submit Result API Route", () => {
     });
 
     it("triggers ES re-sync after flipping the automated flag", async () => {
-      (prisma.testRunCases.findFirst as any).mockResolvedValue(
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue(
         automatedRunCase
       );
 
@@ -384,7 +384,7 @@ describe("Submit Result API Route", () => {
     });
 
     it("does not flip automated flag when case is already marked automated", async () => {
-      (prisma.testRunCases.findFirst as any).mockResolvedValue({
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue({
         ...automatedRunCase,
         repositoryCase: { automated: true },
       });
@@ -404,7 +404,7 @@ describe("Submit Result API Route", () => {
       "MOCHA",
       "CUCUMBER",
     ])("flips the flag for automated run type %s", async (testRunType) => {
-      (prisma.testRunCases.findFirst as any).mockResolvedValue({
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue({
         ...automatedRunCase,
         testRun: { ...automatedRunCase.testRun, testRunType },
       });
@@ -534,7 +534,7 @@ describe("Submit Result API Route", () => {
     };
 
     it("does not enforce justification when the project setting is disabled", async () => {
-      (prisma.testRunCases.findFirst as any).mockResolvedValue({
+      (baseDb.testRunCases.findFirst as any).mockResolvedValue({
         ...baseRunCase,
         testRun: {
           ...baseRunCase.testRun,
@@ -546,10 +546,10 @@ describe("Submit Result API Route", () => {
       });
       // A different-outcome override with empty notes would normally be
       // rejected, but the setting is off so it is accepted.
-      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+      (baseDb.testRunResults.findFirst as any).mockResolvedValue({
         statusId: 7,
       });
-      (prisma.status.findMany as any).mockResolvedValue([
+      (baseDb.status.findMany as any).mockResolvedValue([
         passedStatus,
         failedStatus,
       ]);
@@ -558,8 +558,8 @@ describe("Submit Result API Route", () => {
 
       expect(response.status).toBe(200);
       // The prior-attempt lookup is skipped entirely when the setting is off.
-      expect(prisma.testRunResults.findFirst).not.toHaveBeenCalled();
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(baseDb.testRunResults.findFirst).not.toHaveBeenCalled();
+      expect(baseDb.$transaction).toHaveBeenCalledTimes(1);
     });
 
     it("accepts a first-ever submission with empty notes", async () => {
@@ -567,27 +567,27 @@ describe("Submit Result API Route", () => {
       const response = await POST(createRequest(validBody));
 
       expect(response.status).toBe(200);
-      expect(prisma.status.findMany).not.toHaveBeenCalled();
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(baseDb.status.findMany).not.toHaveBeenCalled();
+      expect(baseDb.$transaction).toHaveBeenCalledTimes(1);
     });
 
     it("accepts a same-outcome re-submission with empty notes", async () => {
-      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+      (baseDb.testRunResults.findFirst as any).mockResolvedValue({
         statusId: 2,
       });
-      (prisma.status.findMany as any).mockResolvedValue([failedStatus]);
+      (baseDb.status.findMany as any).mockResolvedValue([failedStatus]);
 
       const response = await POST(createRequest(validBody));
 
       expect(response.status).toBe(200);
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(baseDb.$transaction).toHaveBeenCalledTimes(1);
     });
 
     it("rejects a different-outcome override with empty notes", async () => {
-      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+      (baseDb.testRunResults.findFirst as any).mockResolvedValue({
         statusId: 7,
       });
-      (prisma.status.findMany as any).mockResolvedValue([
+      (baseDb.status.findMany as any).mockResolvedValue([
         passedStatus,
         failedStatus,
       ]);
@@ -598,14 +598,14 @@ describe("Submit Result API Route", () => {
       expect(response.status).toBe(400);
       expect(data.code).toBe("JUSTIFICATION_REQUIRED");
       // Rejection is pre-transaction — no result row is ever created.
-      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(baseDb.$transaction).not.toHaveBeenCalled();
     });
 
     it("accepts a different-outcome override when notes are provided", async () => {
-      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+      (baseDb.testRunResults.findFirst as any).mockResolvedValue({
         statusId: 7,
       });
-      (prisma.status.findMany as any).mockResolvedValue([
+      (baseDb.status.findMany as any).mockResolvedValue([
         passedStatus,
         failedStatus,
       ]);
@@ -615,15 +615,15 @@ describe("Submit Result API Route", () => {
       );
 
       expect(response.status).toBe(200);
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(baseDb.$transaction).toHaveBeenCalledTimes(1);
     });
 
     it("accepts clearing a completed result to a non-completed status without notes", async () => {
       // Prior is completed (passed); submission clears to untested (statusId 2).
-      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+      (baseDb.testRunResults.findFirst as any).mockResolvedValue({
         statusId: 7,
       });
-      (prisma.status.findMany as any).mockResolvedValue([
+      (baseDb.status.findMany as any).mockResolvedValue([
         passedStatus,
         untestedStatus,
       ]);
@@ -631,16 +631,16 @@ describe("Submit Result API Route", () => {
       const response = await POST(createRequest(validBody));
 
       expect(response.status).toBe(200);
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(baseDb.$transaction).toHaveBeenCalledTimes(1);
     });
 
     it("accepts the first completed result after a non-completed attempt without notes", async () => {
       // Prior is not completed → recording the first real result is not an
       // override and needs no justification.
-      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+      (baseDb.testRunResults.findFirst as any).mockResolvedValue({
         statusId: 9,
       });
-      (prisma.status.findMany as any).mockResolvedValue([
+      (baseDb.status.findMany as any).mockResolvedValue([
         { id: 9, isSuccess: false, isFailure: false, isCompleted: false },
         failedStatus,
       ]);
@@ -648,16 +648,16 @@ describe("Submit Result API Route", () => {
       const response = await POST(createRequest(validBody));
 
       expect(response.status).toBe(200);
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(baseDb.$transaction).toHaveBeenCalledTimes(1);
     });
 
     it("scopes the prior-attempt lookup to the submitted iteration", async () => {
       // Different-outcome override with empty notes → rejected pre-transaction,
       // so this also confirms the lookup is scoped to iteration 42.
-      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+      (baseDb.testRunResults.findFirst as any).mockResolvedValue({
         statusId: 7,
       });
-      (prisma.status.findMany as any).mockResolvedValue([
+      (baseDb.status.findMany as any).mockResolvedValue([
         passedStatus,
         failedStatus,
       ]);
@@ -667,7 +667,7 @@ describe("Submit Result API Route", () => {
       );
 
       expect(response.status).toBe(400);
-      expect(prisma.testRunResults.findFirst).toHaveBeenCalledWith(
+      expect(baseDb.testRunResults.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             testRunCaseId: validBody.testRunCaseId,
@@ -677,13 +677,13 @@ describe("Submit Result API Route", () => {
           orderBy: { executedAt: "desc" },
         })
       );
-      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(baseDb.$transaction).not.toHaveBeenCalled();
     });
   });
 
   describe("mandatory result fields", () => {
     const requireField = (fieldId: number) =>
-      (prisma.templateResultAssignment.findMany as any).mockResolvedValue([
+      (baseDb.templateResultAssignment.findMany as any).mockResolvedValue([
         { resultFieldId: fieldId },
       ]);
 
@@ -695,7 +695,7 @@ describe("Submit Result API Route", () => {
 
       expect(response.status).toBe(400);
       expect(data.code).toBe("REQUIRED_FIELDS_MISSING");
-      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(baseDb.$transaction).not.toHaveBeenCalled();
     });
 
     it("rejects when a required field value is empty", async () => {

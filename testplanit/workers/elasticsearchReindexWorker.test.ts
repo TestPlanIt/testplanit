@@ -34,7 +34,7 @@ vi.mock("~/services/elasticsearchService", () => ({
   getElasticsearchClient: vi.fn(),
 }));
 
-// Mock prisma
+// Mock baseDb
 const mockPrisma = {
   projects: {
     findMany: vi.fn(),
@@ -60,8 +60,8 @@ const mockPrisma = {
   },
 };
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: mockPrisma,
+vi.mock("@/lib/db", () => ({
+  baseDb: mockPrisma,
 }));
 
 // Mock Valkey connection to null to prevent worker creation

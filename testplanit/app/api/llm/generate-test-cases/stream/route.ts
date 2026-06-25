@@ -2,7 +2,7 @@ import { LLM_FEATURES } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
               ],
             };
 
-        const project = await prisma.projects.findFirst({
+        const project = await baseDb.projects.findFirst({
           where: projectAccessWhere,
           include: {
             projectLlmIntegrations: {
@@ -201,8 +201,8 @@ export async function POST(req: NextRequest) {
 
         send(controller, { type: "stage", stage: "resolving" });
 
-        const manager = LlmManager.getInstance(prisma);
-        const resolver = new PromptResolver(prisma);
+        const manager = LlmManager.getInstance(baseDb);
+        const resolver = new PromptResolver(baseDb);
         const llmFeature =
           (featureOverride as any) ?? LLM_FEATURES.TEST_CASE_GENERATION;
         const resolvedPrompt = await resolver.resolve(llmFeature, projectId);
@@ -246,7 +246,7 @@ export async function POST(req: NextRequest) {
         let maxTokens = resolvedPrompt.maxOutputTokens ?? 4096;
 
         const providerConfig = await (
-          prisma as any
+          baseDb as any
         ).llmProviderConfig.findFirst({
           where: { llmIntegrationId: resolved.integrationId },
         });
@@ -350,7 +350,7 @@ export async function POST(req: NextRequest) {
         const hierarchyContext =
           hierarchyBudget > 0
             ? await fetchHierarchyContext(
-                prisma,
+                baseDb,
                 projectId,
                 context.folderContext,
                 hierarchyBudget

@@ -11,10 +11,10 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateApiToken: vi.fn(),
 }));
 
-vi.mock("@/lib/prisma", () => {
+vi.mock("@/lib/db", () => {
   // CR-01: import/route.ts wraps `routeToIteration` in
-  // `prisma.$transaction(async (tx) => …)`. The mock executes the
-  // callback synchronously with the same `prisma` mock as the tx
+  // `baseDb.$transaction(async (tx) => …)`. The mock executes the
+  // callback synchronously with the same `baseDb` mock as the tx
   // client, which is enough for the smoke tests since
   // `routeToIteration` itself is mocked out below.
   const prismaMock: any = {
@@ -96,7 +96,7 @@ vi.mock("@/lib/prisma", () => {
   prismaMock.$transaction = vi.fn(async (cb: (tx: any) => Promise<any>) =>
     cb(prismaMock)
   );
-  return { prisma: prismaMock };
+  return { baseDb: prismaMock };
 });
 
 vi.mock("~/lib/services/auditLog", () => ({
@@ -149,7 +149,7 @@ vi.mock("~/lib/services/testResultsParser", () => ({
 }));
 
 import { authenticateApiToken } from "~/lib/api-token-auth";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { routeToIteration } from "~/lib/services/junitIterationRouter";
 import { getServerAuthSession } from "~/server/auth";
 import {
@@ -217,41 +217,41 @@ describe("Test Results Import API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getServerAuthSession as any).mockResolvedValue(mockSession);
-    (prisma.workflows.findFirst as any)
+    (baseDb.workflows.findFirst as any)
       .mockResolvedValueOnce(mockWorkflow)
       .mockResolvedValueOnce(mockRunWorkflow);
-    (prisma.templates.findFirst as any).mockResolvedValue(mockTemplate);
-    (prisma.testRuns.create as any).mockResolvedValue(mockTestRun);
-    (prisma.testRuns.findUnique as any).mockResolvedValue(mockTestRun);
-    (prisma.repositories.findFirst as any).mockResolvedValue(mockRepository);
-    (prisma.repositoryFolders.findFirst as any).mockResolvedValue(mockFolder);
-    (prisma.repositoryFolders.upsert as any).mockResolvedValue(mockFolder);
-    (prisma.repositoryCases.findFirst as any).mockResolvedValue(null);
-    (prisma.repositoryCases.create as any).mockResolvedValue(
+    (baseDb.templates.findFirst as any).mockResolvedValue(mockTemplate);
+    (baseDb.testRuns.create as any).mockResolvedValue(mockTestRun);
+    (baseDb.testRuns.findUnique as any).mockResolvedValue(mockTestRun);
+    (baseDb.repositories.findFirst as any).mockResolvedValue(mockRepository);
+    (baseDb.repositoryFolders.findFirst as any).mockResolvedValue(mockFolder);
+    (baseDb.repositoryFolders.upsert as any).mockResolvedValue(mockFolder);
+    (baseDb.repositoryCases.findFirst as any).mockResolvedValue(null);
+    (baseDb.repositoryCases.create as any).mockResolvedValue(
       mockRepositoryCase
     );
-    (prisma.repositoryCases.update as any).mockResolvedValue(
+    (baseDb.repositoryCases.update as any).mockResolvedValue(
       mockRepositoryCase
     );
-    (prisma.steps.count as any).mockResolvedValue(0);
-    (prisma.steps.createMany as any).mockResolvedValue({ count: 3 });
-    (prisma.steps.updateMany as any).mockResolvedValue({ count: 3 });
-    (prisma.testRunCases.upsert as any).mockResolvedValue(mockTestRunCase);
-    (prisma.testRunCases.findFirst as any).mockResolvedValue(mockTestRunCase);
-    (prisma.testRunCases.update as any).mockResolvedValue(mockTestRunCase);
-    (prisma.jUnitTestSuite.create as any).mockResolvedValue(mockSuite);
-    (prisma.jUnitTestResult.create as any).mockResolvedValue({ id: 400 });
-    (prisma.status.findFirst as any).mockResolvedValue(mockStatus);
+    (baseDb.steps.count as any).mockResolvedValue(0);
+    (baseDb.steps.createMany as any).mockResolvedValue({ count: 3 });
+    (baseDb.steps.updateMany as any).mockResolvedValue({ count: 3 });
+    (baseDb.testRunCases.upsert as any).mockResolvedValue(mockTestRunCase);
+    (baseDb.testRunCases.findFirst as any).mockResolvedValue(mockTestRunCase);
+    (baseDb.testRunCases.update as any).mockResolvedValue(mockTestRunCase);
+    (baseDb.jUnitTestSuite.create as any).mockResolvedValue(mockSuite);
+    (baseDb.jUnitTestResult.create as any).mockResolvedValue({ id: 400 });
+    (baseDb.status.findFirst as any).mockResolvedValue(mockStatus);
     // INT-02: project iteration-property config + status map are loaded
     // ONCE per import (before the per-case loop). Default mocks reflect
     // the legacy (non-parameterized) path so existing tests keep passing.
-    (prisma.projects.findUnique as any).mockResolvedValue({
+    (baseDb.projects.findUnique as any).mockResolvedValue({
       junitIterationPropertyNames: [],
     });
-    (prisma.status.findMany as any).mockResolvedValue([]);
-    (prisma.testRunCaseIteration.findFirst as any).mockResolvedValue(null);
-    (prisma.testRunCaseIteration.upsert as any).mockResolvedValue({ id: 999 });
-    (prisma.testRunCaseIteration.findMany as any).mockResolvedValue([]);
+    (baseDb.status.findMany as any).mockResolvedValue([]);
+    (baseDb.testRunCaseIteration.findFirst as any).mockResolvedValue(null);
+    (baseDb.testRunCaseIteration.upsert as any).mockResolvedValue({ id: 999 });
+    (baseDb.testRunCaseIteration.findMany as any).mockResolvedValue([]);
 
     (detectFormat as any).mockReturnValue("junit");
     (isValidFormat as any).mockReturnValue(true);
@@ -358,13 +358,13 @@ describe("Test Results Import API Route", () => {
 
     it("writes derived steps via createMany on a fresh Cucumber create", async () => {
       parseWithCaseSteps(gherkin);
-      (prisma.steps.count as any).mockResolvedValue(0);
+      (baseDb.steps.count as any).mockResolvedValue(0);
 
       const response = await postImport();
       await readSseResponse(response);
 
-      expect(prisma.steps.createMany).toHaveBeenCalledTimes(1);
-      const arg = (prisma.steps.createMany as any).mock.calls[0][0];
+      expect(baseDb.steps.createMany).toHaveBeenCalledTimes(1);
+      const arg = (baseDb.steps.createMany as any).mock.calls[0][0];
       // Given→Step 0 + When→step; the Then folds into the preceding When's
       // expectedResult (D-07 pairing) → 2 rows from 3 Gherkin steps.
       expect(arg.data).toHaveLength(2);
@@ -378,31 +378,31 @@ describe("Test Results Import API Route", () => {
 
     it("is idempotent on re-import: createMany is not called when the case already has steps", async () => {
       parseWithCaseSteps(gherkin);
-      (prisma.steps.count as any).mockResolvedValue(3);
+      (baseDb.steps.count as any).mockResolvedValue(3);
 
       const response = await postImport();
       await readSseResponse(response);
 
-      expect(prisma.steps.createMany).not.toHaveBeenCalled();
+      expect(baseDb.steps.createMany).not.toHaveBeenCalled();
     });
 
     it("backfills steps on a matched stepless case (name+className match path)", async () => {
-      (prisma.repositoryCases.findFirst as any).mockResolvedValue(
+      (baseDb.repositoryCases.findFirst as any).mockResolvedValue(
         mockRepositoryCase
       );
       parseWithCaseSteps(gherkin);
-      (prisma.steps.count as any).mockResolvedValue(0);
+      (baseDb.steps.count as any).mockResolvedValue(0);
 
       const response = await postImport();
       await readSseResponse(response);
 
-      expect(prisma.steps.createMany).toHaveBeenCalledTimes(1);
+      expect(baseDb.steps.createMany).toHaveBeenCalledTimes(1);
     });
 
     it("records a stepDerivationWarning and still completes when the write fails", async () => {
       parseWithCaseSteps(gherkin);
-      (prisma.steps.count as any).mockResolvedValue(0);
-      (prisma.steps.createMany as any).mockRejectedValue(
+      (baseDb.steps.count as any).mockResolvedValue(0);
+      (baseDb.steps.createMany as any).mockRejectedValue(
         new Error("DB constraint")
       );
 
@@ -416,49 +416,49 @@ describe("Test Results Import API Route", () => {
 
     it("is a graceful no-op for a stepless (empty steps) case", async () => {
       parseWithCaseSteps([]);
-      (prisma.steps.count as any).mockResolvedValue(0);
+      (baseDb.steps.count as any).mockResolvedValue(0);
 
       const response = await postImport();
       await readSseResponse(response);
 
-      expect(prisma.steps.createMany).not.toHaveBeenCalled();
+      expect(baseDb.steps.createMany).not.toHaveBeenCalled();
     });
 
     it("overwriteSteps=true soft-deletes existing steps and rewrites them (Phase 2.1)", async () => {
       parseWithCaseSteps(gherkin);
-      (prisma.steps.count as any).mockResolvedValue(3);
+      (baseDb.steps.count as any).mockResolvedValue(3);
 
       const response = await postImport({ overwriteSteps: true });
       await readSseResponse(response);
 
       // Existing steps are soft-deleted (isDeleted:true) then re-derived.
-      expect(prisma.steps.updateMany).toHaveBeenCalledTimes(1);
-      const del = (prisma.steps.updateMany as any).mock.calls[0][0];
+      expect(baseDb.steps.updateMany).toHaveBeenCalledTimes(1);
+      const del = (baseDb.steps.updateMany as any).mock.calls[0][0];
       expect(del.where).toMatchObject({ testCaseId: 100, isDeleted: false });
       expect(del.data).toMatchObject({ isDeleted: true });
-      expect(prisma.steps.createMany).toHaveBeenCalledTimes(1);
+      expect(baseDb.steps.createMany).toHaveBeenCalledTimes(1);
     });
 
     it("overwriteSteps=true on a fresh case writes without soft-deleting (nothing to clear)", async () => {
       parseWithCaseSteps(gherkin);
-      (prisma.steps.count as any).mockResolvedValue(0);
+      (baseDb.steps.count as any).mockResolvedValue(0);
 
       const response = await postImport({ overwriteSteps: true });
       await readSseResponse(response);
 
-      expect(prisma.steps.updateMany).not.toHaveBeenCalled();
-      expect(prisma.steps.createMany).toHaveBeenCalledTimes(1);
+      expect(baseDb.steps.updateMany).not.toHaveBeenCalled();
+      expect(baseDb.steps.createMany).toHaveBeenCalledTimes(1);
     });
 
     it("overwriteSteps=true never clears existing steps for a stepless import (safeguard)", async () => {
       parseWithCaseSteps([]);
-      (prisma.steps.count as any).mockResolvedValue(3);
+      (baseDb.steps.count as any).mockResolvedValue(3);
 
       const response = await postImport({ overwriteSteps: true });
       await readSseResponse(response);
 
-      expect(prisma.steps.updateMany).not.toHaveBeenCalled();
-      expect(prisma.steps.createMany).not.toHaveBeenCalled();
+      expect(baseDb.steps.updateMany).not.toHaveBeenCalled();
+      expect(baseDb.steps.createMany).not.toHaveBeenCalled();
     });
   });
 
@@ -537,7 +537,7 @@ describe("Test Results Import API Route", () => {
       formData.append("files", createMockFile("results.xml"));
       // Missing name and projectId — workflows will be missing
 
-      (prisma.workflows.findFirst as any).mockResolvedValue(null);
+      (baseDb.workflows.findFirst as any).mockResolvedValue(null);
 
       const request = createFormDataRequest(formData);
       const response = await POST(request);
@@ -574,7 +574,7 @@ describe("Test Results Import API Route", () => {
       const response = await POST(request);
       await readSseResponse(response);
 
-      expect(prisma.testRuns.create).toHaveBeenCalled();
+      expect(baseDb.testRuns.create).toHaveBeenCalled();
     });
 
     it("reuses existing test run when testRunId is provided and type matches", async () => {
@@ -588,14 +588,14 @@ describe("Test Results Import API Route", () => {
       const events = await readSseResponse(response);
 
       // Should not create a new test run
-      expect(prisma.testRuns.create).not.toHaveBeenCalled();
+      expect(baseDb.testRuns.create).not.toHaveBeenCalled();
       // Should complete successfully
       const completeEvent = events.find((e) => e.complete === true);
       expect(completeEvent?.testRunId).toBe(42);
     });
 
     it("emits error when existing test run type does not match format", async () => {
-      (prisma.testRuns.findUnique as any).mockResolvedValue({
+      (baseDb.testRuns.findUnique as any).mockResolvedValue({
         id: 42,
         testRunType: "REGULAR", // does not match JUNIT
       });
@@ -615,7 +615,7 @@ describe("Test Results Import API Route", () => {
     });
 
     it("emits error when no template is available", async () => {
-      (prisma.templates.findFirst as any).mockResolvedValue(null);
+      (baseDb.templates.findFirst as any).mockResolvedValue(null);
 
       const formData = new FormData();
       formData.append("files", createMockFile("results.xml"));
@@ -636,7 +636,7 @@ describe("Test Results Import API Route", () => {
     it("calls routeToIteration when metadata.iteration is present", async () => {
       // Project has the default property name list (empty array → fallback
       // to ['iteration'] inside the helper).
-      (prisma.projects.findUnique as any).mockResolvedValue({
+      (baseDb.projects.findUnique as any).mockResolvedValue({
         junitIterationPropertyNames: [],
       });
       // Parsed test case carries an iteration property.
@@ -689,13 +689,13 @@ describe("Test Results Import API Route", () => {
       expect(callArgs.iterationIndex).toBe(2);
       // PARAM-07: the legacy TestRunCases.update path was NOT taken — the
       // router owns the rollup on the iteration path.
-      expect(prisma.testRunCases.update).not.toHaveBeenCalled();
+      expect(baseDb.testRunCases.update).not.toHaveBeenCalled();
     });
 
     it("does NOT call routeToIteration when metadata.iteration is absent (legacy path)", async () => {
       // No metadata on the parsed case (default fixture). Router must
       // not be invoked; legacy TestRunCases.update runs.
-      (prisma.projects.findUnique as any).mockResolvedValue({
+      (baseDb.projects.findUnique as any).mockResolvedValue({
         junitIterationPropertyNames: [],
       });
 
@@ -710,11 +710,11 @@ describe("Test Results Import API Route", () => {
 
       expect(routeToIteration).not.toHaveBeenCalled();
       // Legacy path writes case-level status directly.
-      expect(prisma.testRunCases.update).toHaveBeenCalled();
+      expect(baseDb.testRunCases.update).toHaveBeenCalled();
     });
 
     it("refuses with a 422 pre-flight event when a single case exceeds the cap (WR-07)", async () => {
-      (prisma.projects.findUnique as any).mockResolvedValue({
+      (baseDb.projects.findUnique as any).mockResolvedValue({
         junitIterationPropertyNames: [],
       });
       (parseTestResults as any).mockResolvedValueOnce({
@@ -786,7 +786,7 @@ describe("Test Results Import API Route", () => {
     });
 
     it("refuses with a multi-violator 422 listing every offender in one pass (WR-07)", async () => {
-      (prisma.projects.findUnique as any).mockResolvedValue({
+      (baseDb.projects.findUnique as any).mockResolvedValue({
         junitIterationPropertyNames: [],
       });
       (parseTestResults as any).mockResolvedValueOnce({
@@ -917,13 +917,13 @@ describe("Test Results Import API Route", () => {
     };
 
     it("links to an existing case by an ID in the name without creating a case", async () => {
-      (prisma.repositoryCases.findFirst as any).mockImplementation(
+      (baseDb.repositoryCases.findFirst as any).mockImplementation(
         async (args: any) =>
           args?.where?.id === 123
             ? { id: 123, name: "Curated name", className: null }
             : null
       );
-      (prisma.repositoryCases.update as any).mockResolvedValue({
+      (baseDb.repositoryCases.update as any).mockResolvedValue({
         id: 123,
         name: "Curated name",
         className: null,
@@ -941,11 +941,11 @@ describe("Test Results Import API Route", () => {
       const response = await POST(request);
       const events = await readSseResponse(response);
 
-      expect(prisma.repositoryCases.findFirst).toHaveBeenCalledWith({
+      expect(baseDb.repositoryCases.findFirst).toHaveBeenCalledWith({
         where: { id: 123, projectId: 1 },
       });
-      expect(prisma.repositoryCases.create).not.toHaveBeenCalled();
-      expect(prisma.testRunCases.upsert).toHaveBeenCalledWith(
+      expect(baseDb.repositoryCases.create).not.toHaveBeenCalled();
+      expect(baseDb.testRunCases.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             testRunId_repositoryCaseId: {
@@ -959,13 +959,13 @@ describe("Test Results Import API Route", () => {
     });
 
     it("prefers the test_id property over the name in auto mode", async () => {
-      (prisma.repositoryCases.findFirst as any).mockImplementation(
+      (baseDb.repositoryCases.findFirst as any).mockImplementation(
         async (args: any) =>
           args?.where?.id === 456
             ? { id: 456, name: "Curated", className: null }
             : null
       );
-      (prisma.repositoryCases.update as any).mockResolvedValue({
+      (baseDb.repositoryCases.update as any).mockResolvedValue({
         id: 456,
         name: "Curated",
         className: null,
@@ -983,14 +983,14 @@ describe("Test Results Import API Route", () => {
       const response = await POST(request);
       await readSseResponse(response);
 
-      expect(prisma.repositoryCases.findFirst).toHaveBeenCalledWith({
+      expect(baseDb.repositoryCases.findFirst).toHaveBeenCalledWith({
         where: { id: 456, projectId: 1 },
       });
-      expect(prisma.repositoryCases.create).not.toHaveBeenCalled();
+      expect(baseDb.repositoryCases.create).not.toHaveBeenCalled();
     });
 
     it("warns and skips when the referenced case ID is not in the project", async () => {
-      (prisma.repositoryCases.findFirst as any).mockResolvedValue(null);
+      (baseDb.repositoryCases.findFirst as any).mockResolvedValue(null);
 
       setSingleCase("[999] login works");
 
@@ -1004,8 +1004,8 @@ describe("Test Results Import API Route", () => {
       const response = await POST(request);
       const events = await readSseResponse(response);
 
-      expect(prisma.repositoryCases.create).not.toHaveBeenCalled();
-      expect(prisma.testRunCases.upsert).not.toHaveBeenCalled();
+      expect(baseDb.repositoryCases.create).not.toHaveBeenCalled();
+      expect(baseDb.testRunCases.upsert).not.toHaveBeenCalled();
       const complete = events.find((e) => e.complete === true);
       expect(complete?.caseIdWarnings).toEqual([
         {
@@ -1017,7 +1017,7 @@ describe("Test Results Import API Route", () => {
     });
 
     it("falls back to name+className matching when matching is off (default)", async () => {
-      (prisma.repositoryCases.findFirst as any).mockResolvedValue(null);
+      (baseDb.repositoryCases.findFirst as any).mockResolvedValue(null);
 
       setSingleCase("[123] login works");
 
@@ -1031,7 +1031,7 @@ describe("Test Results Import API Route", () => {
       const response = await POST(request);
       await readSseResponse(response);
 
-      expect(prisma.repositoryCases.findFirst).toHaveBeenCalledWith(
+      expect(baseDb.repositoryCases.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             name: "[123] login works",
@@ -1039,11 +1039,11 @@ describe("Test Results Import API Route", () => {
           }),
         })
       );
-      expect(prisma.repositoryCases.create).toHaveBeenCalled();
+      expect(baseDb.repositoryCases.create).toHaveBeenCalled();
     });
 
     it("links one result to every case when multiple IDs are present", async () => {
-      (prisma.repositoryCases.findFirst as any).mockImplementation(
+      (baseDb.repositoryCases.findFirst as any).mockImplementation(
         async (args: any) => {
           const id = args?.where?.id;
           return id === 123 || id === 456
@@ -1051,7 +1051,7 @@ describe("Test Results Import API Route", () => {
             : null;
         }
       );
-      (prisma.repositoryCases.update as any).mockImplementation(
+      (baseDb.repositoryCases.update as any).mockImplementation(
         async (args: any) => ({
           id: args.where.id,
           name: `Case ${args.where.id}`,
@@ -1071,30 +1071,30 @@ describe("Test Results Import API Route", () => {
       const response = await POST(request);
       const events = await readSseResponse(response);
 
-      expect(prisma.repositoryCases.findFirst).toHaveBeenCalledWith({
+      expect(baseDb.repositoryCases.findFirst).toHaveBeenCalledWith({
         where: { id: 123, projectId: 1 },
       });
-      expect(prisma.repositoryCases.findFirst).toHaveBeenCalledWith({
+      expect(baseDb.repositoryCases.findFirst).toHaveBeenCalledWith({
         where: { id: 456, projectId: 1 },
       });
-      expect(prisma.repositoryCases.create).not.toHaveBeenCalled();
-      const linkedIds = (prisma.testRunCases.upsert as any).mock.calls.map(
+      expect(baseDb.repositoryCases.create).not.toHaveBeenCalled();
+      const linkedIds = (baseDb.testRunCases.upsert as any).mock.calls.map(
         (c: any[]) => c[0].where.testRunId_repositoryCaseId.repositoryCaseId
       );
       expect(linkedIds).toEqual(expect.arrayContaining([123, 456]));
       // One result row created per matched case.
-      expect((prisma.jUnitTestResult.create as any).mock.calls.length).toBe(2);
+      expect((baseDb.jUnitTestResult.create as any).mock.calls.length).toBe(2);
       expect(events.find((e) => e.complete === true)).toBeDefined();
     });
 
     it("links the found IDs and warns on the missing ones", async () => {
-      (prisma.repositoryCases.findFirst as any).mockImplementation(
+      (baseDb.repositoryCases.findFirst as any).mockImplementation(
         async (args: any) =>
           args?.where?.id === 123
             ? { id: 123, name: "Found", className: null }
             : null
       );
-      (prisma.repositoryCases.update as any).mockResolvedValue({
+      (baseDb.repositoryCases.update as any).mockResolvedValue({
         id: 123,
         name: "Found",
         className: null,
@@ -1112,8 +1112,8 @@ describe("Test Results Import API Route", () => {
       const response = await POST(request);
       const events = await readSseResponse(response);
 
-      expect(prisma.repositoryCases.create).not.toHaveBeenCalled();
-      expect(prisma.testRunCases.upsert).toHaveBeenCalledTimes(1);
+      expect(baseDb.repositoryCases.create).not.toHaveBeenCalled();
+      expect(baseDb.testRunCases.upsert).toHaveBeenCalledTimes(1);
       const complete = events.find((e) => e.complete === true);
       expect(complete?.caseIdWarnings).toEqual([
         {
@@ -1125,13 +1125,13 @@ describe("Test Results Import API Route", () => {
     });
 
     it("updates an ID-matched case non-destructively (preserves curated fields)", async () => {
-      (prisma.repositoryCases.findFirst as any).mockImplementation(
+      (baseDb.repositoryCases.findFirst as any).mockImplementation(
         async (args: any) =>
           args?.where?.id === 123
             ? { id: 123, name: "Curated", className: "Curated.Class" }
             : null
       );
-      (prisma.repositoryCases.update as any).mockResolvedValue({
+      (baseDb.repositoryCases.update as any).mockResolvedValue({
         id: 123,
         name: "Curated",
         className: "Curated.Class",
@@ -1148,7 +1148,7 @@ describe("Test Results Import API Route", () => {
       const request = createFormDataRequest(formData);
       await readSseResponse(await POST(request));
 
-      const updateArg = (prisma.repositoryCases.update as any).mock.calls[0][0];
+      const updateArg = (baseDb.repositoryCases.update as any).mock.calls[0][0];
       expect(updateArg.where).toEqual({ id: 123 });
       // Only linkability fields are touched; name/class/template/state/estimate
       // are left to the user's curation.

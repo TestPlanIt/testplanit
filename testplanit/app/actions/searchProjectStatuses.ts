@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 /**
  * Search and paginate statuses scoped to a single project's
@@ -36,7 +36,7 @@ export async function searchProjectStatuses(
     }
 
     const [rows, total] = await Promise.all([
-      prisma.status.findMany({
+      baseDb.status.findMany({
         where: whereClause,
         select: {
           id: true,
@@ -47,7 +47,7 @@ export async function searchProjectStatuses(
         take: pageSize,
         orderBy: { order: "asc" },
       }),
-      prisma.status.count({ where: whereClause }),
+      baseDb.status.count({ where: whereClause }),
     ]);
 
     const results = rows.map((r) => ({

@@ -11,7 +11,7 @@
  * dep. A repeat lookup of the same (catalog, id) inside the TTL window is served from cache (no
  * second DB call); after expiry the next lookup re-queries.
  *
- * The prisma client is INJECTED (not a top-level import) so the worker passes prismaBase and the
+ * The prisma client is INJECTED (not a top-level import) so the worker passes rawDb and the
  * unit suite passes a spy. A missing catalog row falls back to the raw id and NEVER throws — a
  * humanization miss must not block an audit write.
  */
@@ -368,7 +368,7 @@ export async function humanize(
 }
 
 /**
- * The catalog lookup the worker injects, backed by the raw (extension-free) prismaBase client.
+ * The catalog lookup the worker injects, backed by the raw (extension-free) rawDb client.
  * Maps a catalog table name to its Prisma delegate + display column, selecting only that column.
  * Returns null on an unknown table or a missing row (humanize() then falls back to the raw id).
  */

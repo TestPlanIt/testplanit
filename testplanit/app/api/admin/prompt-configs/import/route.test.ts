@@ -10,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     llmIntegration: {
       findMany: vi.fn(),
     },
@@ -22,7 +22,7 @@ vi.mock("~/lib/prisma", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 import { POST } from "./route";
 
@@ -161,10 +161,10 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+      (baseDb.llmIntegration.findMany as any).mockResolvedValue(
         mockIntegrations
       );
-      (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
+      (baseDb.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
       const response = await POST(request);
@@ -179,15 +179,15 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+      (baseDb.llmIntegration.findMany as any).mockResolvedValue(
         mockIntegrations
       );
-      (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
+      (baseDb.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
       await POST(request);
 
-      expect(prisma.promptConfig.create).toHaveBeenCalledWith(
+      expect(baseDb.promptConfig.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             prompts: expect.objectContaining({
@@ -208,15 +208,15 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+      (baseDb.llmIntegration.findMany as any).mockResolvedValue(
         mockIntegrations
       );
-      (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
+      (baseDb.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
       await POST(request);
 
-      expect(prisma.promptConfig.create).toHaveBeenCalledWith(
+      expect(baseDb.promptConfig.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             prompts: expect.objectContaining({
@@ -236,15 +236,15 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue([]);
-      (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
+      (baseDb.llmIntegration.findMany as any).mockResolvedValue([]);
+      (baseDb.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
       const response = await POST(request);
       await response.json();
 
       expect(response.status).toBe(201);
-      expect(prisma.promptConfig.create).toHaveBeenCalledWith(
+      expect(baseDb.promptConfig.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             prompts: expect.objectContaining({
@@ -264,8 +264,8 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue([]);
-      (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
+      (baseDb.llmIntegration.findMany as any).mockResolvedValue([]);
+      (baseDb.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
       const response = await POST(request);
@@ -279,8 +279,8 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue([]);
-      (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
+      (baseDb.llmIntegration.findMany as any).mockResolvedValue([]);
+      (baseDb.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
       const response = await POST(request);
@@ -295,15 +295,15 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+      (baseDb.llmIntegration.findMany as any).mockResolvedValue(
         mockIntegrations
       );
-      (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
+      (baseDb.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
       await POST(request);
 
-      expect(prisma.promptConfig.create).toHaveBeenCalledWith(
+      expect(baseDb.promptConfig.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             prompts: expect.objectContaining({
@@ -322,15 +322,15 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+      (baseDb.llmIntegration.findMany as any).mockResolvedValue(
         mockIntegrations
       );
-      (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
+      (baseDb.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
       await POST(request);
 
-      expect(prisma.llmIntegration.findMany).toHaveBeenCalledWith(
+      expect(baseDb.llmIntegration.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             isDeleted: false,
@@ -348,10 +348,10 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+      (baseDb.llmIntegration.findMany as any).mockResolvedValue(
         mockIntegrations
       );
-      (prisma.promptConfig.create as any).mockRejectedValue(
+      (baseDb.promptConfig.create as any).mockRejectedValue(
         new Error("DB error")
       );
 
@@ -367,10 +367,10 @@ describe("POST /api/admin/prompt-configs/import", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.llmIntegration.findMany as any).mockResolvedValue(
+      (baseDb.llmIntegration.findMany as any).mockResolvedValue(
         mockIntegrations
       );
-      (prisma.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
+      (baseDb.promptConfig.create as any).mockResolvedValue(mockCreatedConfig);
 
       const request = createMockRequest(validImportBody);
       const response = await POST(request);

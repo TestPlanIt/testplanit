@@ -1,7 +1,7 @@
 "use server";
 
 import { ProjectAccessType } from "~/zenstack/models";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 /**
  * Get all users who should be displayed as "members" of a project
@@ -16,7 +16,7 @@ export async function getProjectEffectiveMembers(
 ): Promise<string[]> {
   try {
     // Get the project with default settings
-    const project = await prisma.projects.findUnique({
+    const project = await baseDb.projects.findUnique({
       where: { id: projectId },
       select: {
         defaultAccessType: true,
@@ -64,7 +64,7 @@ export async function getProjectEffectiveMembers(
       project.defaultAccessType === ProjectAccessType.SPECIFIC_ROLE
     ) {
       // Get all active users except those with access === 'NONE'
-      const allUsers = await prisma.user.findMany({
+      const allUsers = await baseDb.user.findMany({
         where: {
           isActive: true,
           isDeleted: false,

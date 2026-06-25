@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import {
   calculateMilestoneCompletion,
@@ -34,7 +34,7 @@ export async function GET(
     }
 
     // Verify milestone exists and get project ID
-    const milestone = await prisma.milestones.findUnique({
+    const milestone = await baseDb.milestones.findUnique({
       where: { id: milestoneId },
       select: { id: true, projectId: true },
     });
@@ -77,7 +77,7 @@ export async function GET(
     const completionRate = await calculateMilestoneCompletion(allMilestoneIds);
 
     // Get comment count for this milestone
-    const commentsCount = await prisma.comment.count({
+    const commentsCount = await baseDb.comment.count({
       where: {
         milestoneId,
         isDeleted: false,

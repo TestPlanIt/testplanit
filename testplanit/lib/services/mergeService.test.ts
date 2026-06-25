@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// ----- Mock prismaBase module -----
+// ----- Mock rawDb module -----
 // Use vi.hoisted() so that the mock objects are available before vi.mock() factories run
 // (vi.mock is hoisted to the top of the file by Vitest).
 
@@ -72,8 +72,8 @@ const { mockTx, mockPrisma } = vi.hoisted(() => {
   return { mockTx, mockPrisma };
 });
 
-vi.mock("~/lib/prismaBase", () => ({
-  prisma: mockPrisma,
+vi.mock("~/lib/rawDb", () => ({
+  rawDb: mockPrisma,
 }));
 
 // Mock the ES sync — best-effort fire-and-forget
@@ -157,7 +157,7 @@ function resetMocks() {
 
   mockTx.duplicateScanResult.updateMany.mockResolvedValue({ count: 0 });
 
-  // Reset outer prisma mocks
+  // Reset outer rawDb mocks
   mockPrisma.$transaction.mockImplementation(
     (fn: (tx: typeof mockTx) => Promise<any>) => fn(mockTx)
   );
@@ -176,7 +176,7 @@ describe("mergeService", () => {
   // 1. Happy-path merge: transaction is called, victim soft-deleted
   // ----------------------------------------------------------------
   describe("mergeCases - happy path", () => {
-    it("calls prisma.$transaction once", async () => {
+    it("calls rawDb.$transaction once", async () => {
       await mergeCases(1, 2, "user-123");
       expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
     });
@@ -495,9 +495,9 @@ describe("mergeService", () => {
   // 7. Transaction atomicity
   // ----------------------------------------------------------------
   describe("mergeCases - transaction atomicity", () => {
-    it("all operations run inside $transaction (not bare prisma calls)", async () => {
+    it("all operations run inside $transaction (not bare rawDb calls)", async () => {
       await mergeCases(1, 2, "user-123");
-      // The outer prisma.$transaction was called once
+      // The outer rawDb.$transaction was called once
       expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
       // Core operations happen on mockTx (inside transaction), not on bare mockPrisma
       // e.g. testRunCases.updateMany should be on mockTx, not mockPrisma

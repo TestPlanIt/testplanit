@@ -15,9 +15,9 @@ const {
   mockProjectAssignment: { findUnique: vi.fn(), findMany: vi.fn() },
 }));
 
-// Mock the prisma singleton
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+// Mock the baseDb singleton
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projects: mockProjects,
     user: mockUser,
     userProjectPermission: mockUserProjectPermission,

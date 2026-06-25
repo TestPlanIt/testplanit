@@ -1,10 +1,10 @@
-import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "@/lib/multiTenantDb";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
 import { authOptions } from "~/server/auth";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
@@ -46,7 +46,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const tenantId = getCurrentTenantId();
 
-    const service = new DuplicateScanService(prisma, esClient);
+    const service = new DuplicateScanService(baseDb, esClient);
     const pairs = await service.findSimilarCases(
       { id: caseId, name, tags: tags?.map((t) => ({ name: t })) },
       projectId,
@@ -63,7 +63,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       pair.caseAId === (caseId ?? 0) ? pair.caseBId : pair.caseAId
     );
 
-    const caseRecords = await prisma.repositoryCases.findMany({
+    const caseRecords = await baseDb.repositoryCases.findMany({
       where: { id: { in: caseIds } },
       select: { id: true, name: true },
     });
@@ -90,7 +90,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             Math.min(caseId, c.id),
             Math.max(caseId, c.id),
           ];
-          await prisma.duplicateScanResult.upsert({
+          await baseDb.duplicateScanResult.upsert({
             where: {
               caseAId_caseBId_scanJobId: {
                 caseAId: lowId,

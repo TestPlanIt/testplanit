@@ -15,7 +15,7 @@
  */
 
 import type { AuthMethod, User, Access, UserPreferences } from "~/zenstack/models";
-import { prisma } from "./prisma";
+import { baseDb } from "./db";
 import valkeyConnection from "./valkey";
 
 const SESSION_USER_CACHE_TTL_SECONDS = 60;
@@ -64,7 +64,7 @@ export async function getCachedSessionUser(
   }
 
   // 2. Fetch from DB
-  const user = await prisma.user.findUnique({
+  const user = await baseDb.user.findUnique({
     where: { id: userId },
     select: {
       name: true,
@@ -86,7 +86,7 @@ export async function getCachedSessionUser(
   // session.
   let preferences = (user as SelectedUser).userPreferences;
   if (!preferences) {
-    preferences = await prisma.userPreferences.upsert({
+    preferences = await baseDb.userPreferences.upsert({
       where: { userId },
       create: { userId },
       update: {},
@@ -138,7 +138,7 @@ export async function touchLastActive(
     now.getTime() - lastActive.getTime() > LAST_ACTIVE_UPDATE_THROTTLE_MS
   ) {
     // Fire-and-forget DB update; do not block the session callback.
-    prisma.user
+    baseDb.user
       .update({
         where: { id: userId },
         data: { lastActiveAt: now },

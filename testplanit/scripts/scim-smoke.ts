@@ -41,7 +41,7 @@
 
 import { IdpName } from "~/zenstack/models";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { mintScimToken, revokeScimToken } from "~/lib/scim/tokens";
 import {
   SCIM_CONTENT_TYPE,
@@ -304,4 +304,4 @@ async function main(): Promise<void> {
   process.exit(failCount === 0 ? 0 : 1);
 }
 
-void main().finally(() => prisma.$disconnect());
+void main().finally(() => baseDb.$disconnect());

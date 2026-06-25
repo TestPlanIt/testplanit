@@ -21,7 +21,7 @@
 import type { TxClient } from "~/lib/zenstack";
 import { TransactionIsolationLevel } from "@zenstackhq/orm";
 import { getAuditContext } from "~/lib/auditContext";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 
 /**
  * Shape of the JSON written into the `app.audit_context` GUC and read back by
@@ -110,7 +110,7 @@ export async function injectAuditGuc(
  * Open a transaction, set `app.audit_context` from an explicit payload, then run
  * the caller's mutations inside it (the worker/raw-client path, CTX-02).
  *
- * Workers and other raw-client (prismaBase) entry points have no ALS request
+ * Workers and other raw-client (rawDb) entry points have no ALS request
  * context, so the payload is passed explicitly (e.g. userId from job.data.userId,
  * tenantId from job.data.tenantId ?? getCurrentTenantId()). The GUC is set as the
  * first statement inside the transaction this helper owns, satisfying the

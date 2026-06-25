@@ -9,7 +9,7 @@ import { getEnhancedDb } from "~/lib/auth/utils";
 import { updateAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import {
   computeWorstOfStatus,
   type RollupStatus,
@@ -42,7 +42,7 @@ import { authOptions } from "~/server/auth";
  * Emits an ITERATION_BULK_SKIPPED audit event per touched iteration after
  * commit (action name preserved for audit-log consumer compatibility).
  *
- * Atomicity: all writes happen inside a single `prisma.$transaction`.
+ * Atomicity: all writes happen inside a single `baseDb.$transaction`.
  */
 
 const bodySchema = z.object({
@@ -60,7 +60,7 @@ const bodySchema = z.object({
  * issue-body routes. System admins always pass.
  */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
-  const u = await prisma.user.findUnique({
+  const u = await baseDb.user.findUnique({
     where: { id: userId },
     include: { role: { include: { rolePermissions: true } } },
   });
@@ -168,7 +168,7 @@ export const POST = withAuditContext(
       // Validate the chosen status is a Test-Run-scoped status enabled for
       // the project. Statuses are admin-configured per Workflow; we don't
       // hardcode any systemName here.
-      const chosenStatus = await prisma.status.findFirst({
+      const chosenStatus = await baseDb.status.findFirst({
         where: {
           id: parsed.data.statusId,
           isEnabled: true,

@@ -3,7 +3,7 @@
  * Fetches underlying records for a clicked metric value
  */
 
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import type {
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       folderDimension.id !== ""
     ) {
       folderDimension.subtreeIds = await getFolderSubtreeIds(
-        prisma,
+        baseDb,
         Number(folderDimension.id)
       );
     }
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     const query = queryBuilder(context, offset, limit);
 
     // Execute the query using dynamic model access
-    const model = (prisma as any)[modelName];
+    const model = (baseDb as any)[modelName];
     if (!model) {
       return Response.json(
         { error: `Invalid model: ${modelName}` },
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
 
       // Fetch status details for each group
       const statusIds = statusCounts.map((sc: any) => sc.statusId);
-      const statuses = await prisma.status.findMany({
+      const statuses = await baseDb.status.findMany({
         where: { id: { in: statusIds } },
         include: { color: true },
       });

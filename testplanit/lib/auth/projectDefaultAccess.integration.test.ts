@@ -20,7 +20,7 @@
  *     been seeded (needs at least one Workflows + Templates row).
  *   - Creates committed fixtures in `beforeAll` and removes them in `afterAll`.
  *     The rollback-in-a-transaction trick does NOT work here: `getEnhancedDb`
- *     resolves the acting user via the OUTER prisma client, which cannot see an
+ *     resolves the acting user via the OUTER baseDb client, which cannot see an
  *     uncommitted transactional user.
  *
  * The "fix" cases (allowed reads/writes via SPECIFIC_ROLE/DEFAULT defaults) fail
@@ -40,9 +40,9 @@ describeIntegration(
   "project default access → RepositoryCases (live DB)",
   () => {
     const importDeps = async () => {
-      const { prisma } = await import("~/lib/prisma");
+      const { baseDb } = await import("~/lib/db");
       const { getEnhancedDb } = await import("~/lib/auth/utils");
-      return { prisma, getEnhancedDb };
+      return { baseDb, getEnhancedDb };
     };
 
     interface SeedCtx {
@@ -67,16 +67,16 @@ describeIntegration(
 
     let ctx: SeedCtx;
 
-    async function seed(prisma: any): Promise<SeedCtx> {
-      const wf = await prisma.workflows.findFirst({ select: { id: true } });
+    async function seed(baseDb: any): Promise<SeedCtx> {
+      const wf = await baseDb.workflows.findFirst({ select: { id: true } });
       if (!wf) throw new Error("Seed the DB first (no Workflows row)");
-      const tpl = await prisma.templates.findFirst({ select: { id: true } });
+      const tpl = await baseDb.templates.findFirst({ select: { id: true } });
       if (!tpl) throw new Error("Seed the DB first (no Templates row)");
 
       const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
       // Role WITHOUT repository edit permission ("Read-only"-style default).
-      const roleReadOnly = await prisma.roles.create({
+      const roleReadOnly = await baseDb.roles.create({
         data: {
           name: `PDA-ReadOnly-${stamp}`,
           rolePermissions: {
@@ -86,7 +86,7 @@ describeIntegration(
         select: { id: true },
       });
       // Role WITH repository edit permission ("Editor"-style default).
-      const roleEditor = await prisma.roles.create({
+      const roleEditor = await baseDb.roles.create({
         data: {
           name: `PDA-Editor-${stamp}`,
           rolePermissions: {
@@ -98,7 +98,7 @@ describeIntegration(
 
       // Project owner — distinct from the test users so they are never creators
       // (which would grant access independently of default-access rules).
-      const owner = await prisma.user.create({
+      const owner = await baseDb.user.create({
         data: {
           name: `PDA-Owner-${stamp}`,
           email: `pda-owner-${stamp}@example.com`,
@@ -109,7 +109,7 @@ describeIntegration(
       });
       // The user under test: USER tier, a global role that has NO bearing on
       // SPECIFIC_ROLE/DEFAULT default access, no assignment, no explicit grant.
-      const uUser = await prisma.user.create({
+      const uUser = await baseDb.user.create({
         data: {
           name: `PDA-User-${stamp}`,
           email: `pda-user-${stamp}@example.com`,
@@ -119,7 +119,7 @@ describeIntegration(
         select: { id: true },
       });
       // NONE-tier user — must be denied everywhere.
-      const uNone = await prisma.user.create({
+      const uNone = await baseDb.user.create({
         data: {
           name: `PDA-None-${stamp}`,
           email: `pda-none-${stamp}@example.com`,
@@ -134,7 +134,7 @@ describeIntegration(
         defaultAccessType: string,
         defaultRoleId: number | null
       ): Promise<{ projectId: number; caseId: number }> {
-        const project = await prisma.projects.create({
+        const project = await baseDb.projects.create({
           data: {
             name: `${prefix}-${stamp}`,
             createdBy: owner.id,
@@ -143,11 +143,11 @@ describeIntegration(
           },
           select: { id: true },
         });
-        const repo = await prisma.repositories.create({
+        const repo = await baseDb.repositories.create({
           data: { projectId: project.id },
           select: { id: true },
         });
-        const folder = await prisma.repositoryFolders.create({
+        const folder = await baseDb.repositoryFolders.create({
           data: {
             name: `f-${stamp}`,
             repositoryId: repo.id,
@@ -156,7 +156,7 @@ describeIntegration(
           },
           select: { id: true },
         });
-        const c = await prisma.repositoryCases.create({
+        const c = await baseDb.repositoryCases.create({
           data: {
             projectId: project.id,
             repositoryId: repo.id,
@@ -195,7 +195,7 @@ describeIntegration(
       );
 
       // Explicit NO_ACCESS for uUser on pNoAccess — must override default access.
-      await prisma.userProjectPermission.create({
+      await baseDb.userProjectPermission.create({
         data: {
           projectId: pNoAccess.projectId,
           userId: uUser.id,
@@ -228,29 +228,29 @@ describeIntegration(
       };
     }
 
-    async function cleanup(prisma: any, c: SeedCtx) {
+    async function cleanup(baseDb: any, c: SeedCtx) {
       try {
-        await prisma.repositoryCases.deleteMany({
+        await baseDb.repositoryCases.deleteMany({
           where: { projectId: { in: c.projectIds } },
         });
-        await prisma.repositoryFolders.deleteMany({
+        await baseDb.repositoryFolders.deleteMany({
           where: { projectId: { in: c.projectIds } },
         });
-        await prisma.repositories.deleteMany({
+        await baseDb.repositories.deleteMany({
           where: { projectId: { in: c.projectIds } },
         });
-        await prisma.userProjectPermission.deleteMany({
+        await baseDb.userProjectPermission.deleteMany({
           where: { projectId: { in: c.projectIds } },
         });
-        await prisma.projects.deleteMany({
+        await baseDb.projects.deleteMany({
           where: { id: { in: c.projectIds } },
         });
         // Users (FK from Projects.createdBy) and RolePermission/Roles last.
-        await prisma.user.deleteMany({ where: { id: { in: c.userIds } } });
-        await prisma.rolePermission.deleteMany({
+        await baseDb.user.deleteMany({ where: { id: { in: c.userIds } } });
+        await baseDb.rolePermission.deleteMany({
           where: { roleId: { in: c.roleIds } },
         });
-        await prisma.roles.deleteMany({ where: { id: { in: c.roleIds } } });
+        await baseDb.roles.deleteMany({ where: { id: { in: c.roleIds } } });
       } catch (err) {
         console.warn("[project default access integration cleanup]", err);
       }
@@ -261,17 +261,17 @@ describeIntegration(
     let edbNone: any;
 
     beforeAll(async () => {
-      const { prisma, getEnhancedDb } = await importDeps();
-      ctx = await seed(prisma);
+      const { baseDb, getEnhancedDb } = await importDeps();
+      ctx = await seed(baseDb);
       edbUser = await getEnhancedDb({ user: { id: ctx.uUser } } as any);
       edbNone = await getEnhancedDb({ user: { id: ctx.uNone } } as any);
     });
 
     afterAll(async () => {
       if (RUN_INTEGRATION && HAS_DB_URL) {
-        const { prisma } = await import("~/lib/prisma");
-        if (ctx) await cleanup(prisma, ctx);
-        await prisma.$disconnect();
+        const { baseDb } = await import("~/lib/db");
+        if (ctx) await cleanup(baseDb, ctx);
+        await baseDb.$disconnect();
       }
     });
 

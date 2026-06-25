@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch all test runs in one query
-    const testRuns = await prisma.testRuns.findMany({
+    const testRuns = await baseDb.testRuns.findMany({
       where: { id: { in: testRunIds } },
       select: {
         id: true,
@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Fetch batch comments counts
-    const commentsCountsResult = await prisma.$queryRaw<
+    const commentsCountsResult = await baseDb.$queryRaw<
       Array<{ testRunId: number; count: bigint }>
     >`
       SELECT "testRunId", COUNT(*) as count
@@ -172,7 +172,7 @@ async function getBatchRegularRunSummaries(
   }
 
   // Get aggregated status counts for all test runs in one query
-  const statusCounts = await prisma.$queryRaw<
+  const statusCounts = await baseDb.$queryRaw<
     Array<{
       testRunId: number;
       statusId: number | null;
@@ -199,7 +199,7 @@ async function getBatchRegularRunSummaries(
   `;
 
   // Get total elapsed time for all test runs in one query
-  const elapsedResults = await prisma.$queryRaw<
+  const elapsedResults = await baseDb.$queryRaw<
     Array<{ testRunId: number; totalElapsed: bigint | null }>
   >`
     SELECT
@@ -221,7 +221,7 @@ async function getBatchRegularRunSummaries(
   `;
 
   // Get pending case estimates for all test runs in one query
-  const estimateResults = await prisma.$queryRaw<
+  const estimateResults = await baseDb.$queryRaw<
     Array<{ testRunId: number; totalEstimate: bigint | null }>
   >`
     SELECT
@@ -251,7 +251,7 @@ async function getBatchRegularRunSummaries(
     isPending: boolean;
     statusOrder: number | null;
   };
-  const caseDetails = await prisma.$queryRaw<Array<CaseDetail>>`
+  const caseDetails = await baseDb.$queryRaw<Array<CaseDetail>>`
     SELECT
       trc."testRunId",
       trc.id,
@@ -276,7 +276,7 @@ async function getBatchRegularRunSummaries(
   `;
 
   // Get forecasts for test runs
-  const testRuns = await prisma.testRuns.findMany({
+  const testRuns = await baseDb.testRuns.findMany({
     where: { id: { in: testRunIds } },
     select: { id: true, forecastManual: true },
   });
@@ -389,7 +389,7 @@ async function getBatchJUnitRunSummaries(
   }
 
   // Get aggregated result counts by status and type for all test runs
-  const resultAggregates = await prisma.$queryRaw<
+  const resultAggregates = await baseDb.$queryRaw<
     Array<{
       testRunId: number;
       statusId: number | null;
@@ -415,7 +415,7 @@ async function getBatchJUnitRunSummaries(
   `;
 
   // Get total time from actual results for all test runs
-  const timeResults = await prisma.$queryRaw<
+  const timeResults = await baseDb.$queryRaw<
     Array<{ testRunId: number; totalTime: number | null }>
   >`
     SELECT

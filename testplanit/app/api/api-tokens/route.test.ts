@@ -7,8 +7,8 @@ vi.mock("~/server/auth", () => ({
   getServerAuthSession: vi.fn(),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     apiToken: {
       create: vi.fn(),
     },
@@ -24,7 +24,7 @@ vi.mock("~/lib/services/auditLog", () => ({
 }));
 
 import { generateApiToken } from "~/lib/api-tokens";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -144,7 +144,7 @@ describe("API Token Creation Endpoint", () => {
         isActive: true,
       };
 
-      (prisma.apiToken.create as any).mockResolvedValue(createdToken);
+      (baseDb.apiToken.create as any).mockResolvedValue(createdToken);
 
       const request = createRequest({ name: "My API Token" });
       const response = await POST(request);
@@ -157,7 +157,7 @@ describe("API Token Creation Endpoint", () => {
       expect(data.tokenPrefix).toBe(mockGeneratedToken.prefix);
       expect(data.isActive).toBe(true);
 
-      expect(prisma.apiToken.create).toHaveBeenCalledWith({
+      expect(baseDb.apiToken.create).toHaveBeenCalledWith({
         data: {
           name: "My API Token",
           token: mockGeneratedToken.hash,
@@ -189,7 +189,7 @@ describe("API Token Creation Endpoint", () => {
         isActive: true,
       };
 
-      (prisma.apiToken.create as any).mockResolvedValue(createdToken);
+      (baseDb.apiToken.create as any).mockResolvedValue(createdToken);
 
       const request = createRequest({
         name: "Expiring Token",
@@ -200,7 +200,7 @@ describe("API Token Creation Endpoint", () => {
 
       expect(response.status).toBe(200);
       expect(data.name).toBe("Expiring Token");
-      expect(prisma.apiToken.create).toHaveBeenCalledWith({
+      expect(baseDb.apiToken.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           expiresAt: expect.any(Date),
         }),
@@ -218,7 +218,7 @@ describe("API Token Creation Endpoint", () => {
         isActive: true,
       };
 
-      (prisma.apiToken.create as any).mockResolvedValue(createdToken);
+      (baseDb.apiToken.create as any).mockResolvedValue(createdToken);
 
       const request = createRequest({
         name: "Date Only Expiry",
@@ -241,7 +241,7 @@ describe("API Token Creation Endpoint", () => {
         isActive: true,
       };
 
-      (prisma.apiToken.create as any).mockResolvedValue(createdToken);
+      (baseDb.apiToken.create as any).mockResolvedValue(createdToken);
 
       const request = createRequest({
         name: "No Expiry Token",
@@ -252,7 +252,7 @@ describe("API Token Creation Endpoint", () => {
 
       expect(response.status).toBe(200);
       expect(data.expiresAt).toBeNull();
-      expect(prisma.apiToken.create).toHaveBeenCalledWith({
+      expect(baseDb.apiToken.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           expiresAt: null,
         }),
@@ -270,7 +270,7 @@ describe("API Token Creation Endpoint", () => {
         isActive: true,
       };
 
-      (prisma.apiToken.create as any).mockResolvedValue(createdToken);
+      (baseDb.apiToken.create as any).mockResolvedValue(createdToken);
 
       const request = createRequest({ name: "  Trimmed Name  " });
       const response = await POST(request);
@@ -290,7 +290,7 @@ describe("API Token Creation Endpoint", () => {
         isActive: true,
       };
 
-      (prisma.apiToken.create as any).mockResolvedValue(createdToken);
+      (baseDb.apiToken.create as any).mockResolvedValue(createdToken);
 
       const request = createRequest({ name: longName });
       const response = await POST(request);
@@ -301,7 +301,7 @@ describe("API Token Creation Endpoint", () => {
 
   describe("Error Handling", () => {
     it("returns 500 when database create fails", async () => {
-      (prisma.apiToken.create as any).mockRejectedValue(
+      (baseDb.apiToken.create as any).mockRejectedValue(
         new Error("Database error")
       );
 
@@ -314,7 +314,7 @@ describe("API Token Creation Endpoint", () => {
     });
 
     it("returns 500 for unexpected errors", async () => {
-      (prisma.apiToken.create as any).mockRejectedValue(
+      (baseDb.apiToken.create as any).mockRejectedValue(
         new Error("Unexpected error")
       );
 
@@ -338,7 +338,7 @@ describe("API Token Creation Endpoint", () => {
         isActive: true,
       };
 
-      (prisma.apiToken.create as any).mockResolvedValue(createdToken);
+      (baseDb.apiToken.create as any).mockResolvedValue(createdToken);
 
       const request = createRequest({ name: "Test Token" });
       const response = await POST(request);
@@ -358,7 +358,7 @@ describe("API Token Creation Endpoint", () => {
         isActive: true,
       };
 
-      (prisma.apiToken.create as any).mockResolvedValue(createdToken);
+      (baseDb.apiToken.create as any).mockResolvedValue(createdToken);
 
       const request = createRequest({ name: "Test Token" });
       const response = await POST(request);
@@ -390,7 +390,7 @@ describe("POST /api/api-tokens scopes", () => {
     (getServerAuthSession as any).mockResolvedValue(mockSession);
     (generateApiToken as any).mockReturnValue(mockGeneratedToken);
     // Echo back what create was called with so the response can include scopes
-    (prisma.apiToken.create as any).mockImplementation(async (args: any) => ({
+    (baseDb.apiToken.create as any).mockImplementation(async (args: any) => ({
       id: "token-id-scope",
       name: args.data.name,
       tokenPrefix: args.data.tokenPrefix,
@@ -417,8 +417,8 @@ describe("POST /api/api-tokens scopes", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(prisma.apiToken.create).toHaveBeenCalledTimes(1);
-    const createArgs = (prisma.apiToken.create as any).mock.calls[0][0];
+    expect(baseDb.apiToken.create).toHaveBeenCalledTimes(1);
+    const createArgs = (baseDb.apiToken.create as any).mock.calls[0][0];
     expect(createArgs.data.scopes).toEqual(["mode:read"]);
     expect(createArgs.select.scopes).toBe(true);
     expect(data.scopes).toEqual(["mode:read"]);
@@ -433,7 +433,7 @@ describe("POST /api/api-tokens scopes", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    const createArgs = (prisma.apiToken.create as any).mock.calls[0][0];
+    const createArgs = (baseDb.apiToken.create as any).mock.calls[0][0];
     expect(createArgs.data.scopes).toEqual(["mode:read", "client:mcp"]);
     expect(data.scopes).toEqual(["mode:read", "client:mcp"]);
   });
@@ -444,7 +444,7 @@ describe("POST /api/api-tokens scopes", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    const createArgs = (prisma.apiToken.create as any).mock.calls[0][0];
+    const createArgs = (baseDb.apiToken.create as any).mock.calls[0][0];
     expect(createArgs.data.scopes).toEqual([]);
     expect(data.scopes).toEqual([]);
   });
@@ -455,7 +455,7 @@ describe("POST /api/api-tokens scopes", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    const createArgs = (prisma.apiToken.create as any).mock.calls[0][0];
+    const createArgs = (baseDb.apiToken.create as any).mock.calls[0][0];
     expect(createArgs.data.scopes).toEqual([]);
     expect(data.scopes).toEqual([]);
   });
@@ -469,7 +469,7 @@ describe("POST /api/api-tokens scopes", () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(prisma.apiToken.create).not.toHaveBeenCalled();
+    expect(baseDb.apiToken.create).not.toHaveBeenCalled();
     expect(data.error).toBe("Invalid request");
     expect(data.details).toBeDefined();
     // The zod issue should mention the invalid scope value or the scopes path
@@ -485,7 +485,7 @@ describe("POST /api/api-tokens scopes", () => {
     const response = await POST(request);
 
     expect(response.status).toBe(400);
-    expect(prisma.apiToken.create).not.toHaveBeenCalled();
+    expect(baseDb.apiToken.create).not.toHaveBeenCalled();
   });
 
   it("rejects mixed valid+invalid scopes with 400, no DB write", async () => {
@@ -496,7 +496,7 @@ describe("POST /api/api-tokens scopes", () => {
     const response = await POST(request);
 
     expect(response.status).toBe(400);
-    expect(prisma.apiToken.create).not.toHaveBeenCalled();
+    expect(baseDb.apiToken.create).not.toHaveBeenCalled();
   });
 
   it("includes scopes in audit metadata (T-05-03)", async () => {

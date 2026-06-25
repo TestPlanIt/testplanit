@@ -14,8 +14,8 @@ const { mockConfigurations } = vi.hoisted(() => ({
   mockConfigurations: { findFirst: vi.fn() },
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     configurations: mockConfigurations,
   },
 }));

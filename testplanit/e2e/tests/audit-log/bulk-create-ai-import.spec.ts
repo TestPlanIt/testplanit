@@ -7,7 +7,7 @@ import { expect, test } from "../../fixtures";
  * (the importer-backed bulk route the MCP `testplanit_cases_create_many`
  * tool calls) produces an AuditLog row for the created RepositoryCases.
  *
- * The importer writes each case through the hooked `lib/prisma` client, so —
+ * The importer writes each case through the hooked `lib/db` client, so —
  * like the in-app generation wizard's import — it emits a per-case CREATE
  * audit event (entityName = the case name), not a single BULK_CREATE.
  *

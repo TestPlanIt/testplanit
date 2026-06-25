@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { getTestmoImportQueue, TESTMO_IMPORT_QUEUE_NAME } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";

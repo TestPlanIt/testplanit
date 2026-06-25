@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import { Redis } from "ioredis";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import valkeyConnection from "../../valkey";
 
 // RepoFileEntry is defined here (not imported from adapter layer) to avoid

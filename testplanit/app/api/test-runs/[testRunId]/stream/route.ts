@@ -23,8 +23,8 @@ import IORedis from "ioredis";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { testRunChannel } from "~/lib/live/channels";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
-import { prisma } from "~/lib/prisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
+import { baseDb } from "~/lib/db";
 import { createSubscriberClient } from "~/lib/valkey";
 import { authOptions } from "~/server/auth";
 
@@ -54,7 +54,7 @@ export async function GET(
   // ZenStack policy applies — admins get cross-project, everyone else is
   // checked against project membership). If the user can't read the run,
   // they shouldn't be told it exists, so we 404 (not 403) on miss.
-  const userRecord = await prisma.user.findUnique({
+  const userRecord = await baseDb.user.findUnique({
     where: { id: session.user.id },
     include: { role: { include: { rolePermissions: true } } },
   });
@@ -63,8 +63,8 @@ export async function GET(
   }
   const reader =
     userRecord.access === "ADMIN"
-      ? (prisma as unknown as typeof prisma)
-      : (getAuthDb(userRecord) as unknown as typeof prisma);
+      ? (baseDb as unknown as typeof baseDb)
+      : (getAuthDb(userRecord) as unknown as typeof baseDb);
   const accessibleRun = await reader.testRuns.findFirst({
     where: { id: runId, isDeleted: false },
     select: { id: true },

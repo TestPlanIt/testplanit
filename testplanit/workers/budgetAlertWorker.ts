@@ -1,11 +1,11 @@
 import { Job, Worker } from "bullmq";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   validateMultiTenantJobData,
   type MultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { BUDGET_ALERT_QUEUE_NAME } from "../lib/queues";
 import { BudgetAlertService } from "../lib/services/budgetAlertService";
 import { withTenantContext } from "../lib/tenantContext";
@@ -30,7 +30,7 @@ const processor = async (job: Job<BudgetCheckJobData>) => {
   );
 
   validateMultiTenantJobData(job.data);
-  const prisma = getPrismaClientForJob(job.data);
+  const prisma = getDbClientForJob(job.data);
   const service = new BudgetAlertService(prisma);
 
   await service.checkAndAlert(job.data.llmIntegrationId, job.data.tenantId);

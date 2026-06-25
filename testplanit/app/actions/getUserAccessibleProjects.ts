@@ -1,11 +1,11 @@
 "use server";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 export async function getUserAccessibleProjects(userId: string) {
   try {
     // Get the user with their role and groups
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: userId },
       include: {
         role: true,
@@ -41,7 +41,7 @@ export async function getUserAccessibleProjects(userId: string) {
 
     // If user has ADMIN access, return all projects
     if (user.access === "ADMIN") {
-      const allProjects = await prisma.projects.findMany({
+      const allProjects = await baseDb.projects.findMany({
         where: { isDeleted: false },
         select: { id: true },
       });
@@ -51,7 +51,7 @@ export async function getUserAccessibleProjects(userId: string) {
     const projectIds = new Set<number>();
 
     // 1. Projects user created
-    const createdProjects = await prisma.projects.findMany({
+    const createdProjects = await baseDb.projects.findMany({
       where: {
         createdBy: userId,
         isDeleted: false,
@@ -61,7 +61,7 @@ export async function getUserAccessibleProjects(userId: string) {
     createdProjects.forEach((p) => projectIds.add(p.id));
 
     // 2. Projects with explicit user permissions (not NO_ACCESS)
-    const userPermissions = await prisma.userProjectPermission.findMany({
+    const userPermissions = await baseDb.userProjectPermission.findMany({
       where: {
         userId: userId,
         accessType: {
@@ -76,7 +76,7 @@ export async function getUserAccessibleProjects(userId: string) {
     userPermissions.forEach((p) => projectIds.add(p.projectId));
 
     // 3. Projects user is explicitly assigned to
-    const assignments = await prisma.projectAssignment.findMany({
+    const assignments = await baseDb.projectAssignment.findMany({
       where: {
         userId: userId,
         project: {
@@ -102,7 +102,7 @@ export async function getUserAccessibleProjects(userId: string) {
     }
 
     // Check if user has explicit NO_ACCESS that overrides group permissions
-    const explicitDenials = await prisma.userProjectPermission.findMany({
+    const explicitDenials = await baseDb.userProjectPermission.findMany({
       where: {
         userId: userId,
         accessType: "NO_ACCESS",
@@ -120,7 +120,7 @@ export async function getUserAccessibleProjects(userId: string) {
 
     // 5. Projects with GLOBAL_ROLE default (uses user's global role)
     if (user.roleId) {
-      const globalRoleProjects = await prisma.projects.findMany({
+      const globalRoleProjects = await baseDb.projects.findMany({
         where: {
           defaultAccessType: "GLOBAL_ROLE",
           isDeleted: false,
@@ -137,7 +137,7 @@ export async function getUserAccessibleProjects(userId: string) {
     }
 
     // 6. Projects with SPECIFIC_ROLE default (uses project's default role)
-    const specificRoleProjects = await prisma.projects.findMany({
+    const specificRoleProjects = await baseDb.projects.findMany({
       where: {
         defaultAccessType: "SPECIFIC_ROLE",
         defaultRoleId: {
@@ -156,7 +156,7 @@ export async function getUserAccessibleProjects(userId: string) {
     });
 
     // 7. Projects with DEFAULT access type (legacy - everyone has access)
-    const defaultProjects = await prisma.projects.findMany({
+    const defaultProjects = await baseDb.projects.findMany({
       where: {
         defaultAccessType: "DEFAULT",
         isDeleted: false,

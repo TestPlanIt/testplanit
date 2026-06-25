@@ -1,7 +1,7 @@
 "use server";
 
 import { ApplicationArea } from "~/zenstack/models";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { resolveEffectiveProjectRolesForUsers } from "~/lib/services/effectiveRole";
 import { getProjectEffectiveMembers } from "./getProjectEffectiveMembers";
 
@@ -45,7 +45,7 @@ export async function searchProjectMembers(
     // the requested area, resolve each candidate's effective project role,
     // then intersect. Short-circuit when no role at all has the permission.
     if (options?.requireCanApproveOn) {
-      const eligibleRoleRows = await prisma.rolePermission.findMany({
+      const eligibleRoleRows = await baseDb.rolePermission.findMany({
         where: {
           area: options.requireCanApproveOn,
           canApprove: true,
@@ -58,7 +58,7 @@ export async function searchProjectMembers(
       const effectiveRoleByUser = await resolveEffectiveProjectRolesForUsers(
         effectiveMemberIds,
         projectId,
-        prisma
+        baseDb
       );
       effectiveMemberIds = effectiveMemberIds.filter((uid) => {
         const rid = effectiveRoleByUser.get(uid);
@@ -82,7 +82,7 @@ export async function searchProjectMembers(
     }
 
     // Fetch paginated users
-    const users = await prisma.user.findMany({
+    const users = await baseDb.user.findMany({
       where: whereClause,
       select: {
         id: true,
@@ -96,7 +96,7 @@ export async function searchProjectMembers(
     });
 
     // Get total count for pagination
-    const total = await prisma.user.count({
+    const total = await baseDb.user.count({
       where: whereClause,
     });
 

@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 /**
  * Search and paginate projects by name.
@@ -32,7 +32,7 @@ export async function searchProjects(
     }
 
     const [results, total] = await Promise.all([
-      prisma.projects.findMany({
+      baseDb.projects.findMany({
         where: whereClause,
         select: {
           id: true,
@@ -43,7 +43,7 @@ export async function searchProjects(
         take: pageSize,
         orderBy: { name: "asc" },
       }),
-      prisma.projects.count({ where: whereClause }),
+      baseDb.projects.count({ where: whereClause }),
     ]);
 
     return { results, total };

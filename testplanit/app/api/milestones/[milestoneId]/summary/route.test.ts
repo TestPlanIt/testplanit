@@ -9,8 +9,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     milestones: {
       findUnique: vi.fn(),
     },
@@ -29,7 +29,7 @@ vi.mock("~/lib/services/milestoneDescendants", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import { GET } from "./route";
 
@@ -58,9 +58,9 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
     (getAllDescendantMilestoneIds as any).mockResolvedValue([]);
     // $queryRaw is called multiple times: getTestRunSegments, getSessionSegments, calculateMilestoneCompletion
     // and for issue joins (_IssueToTestRuns, _IssueToSessions, _IssueToSessionResults)
-    (prisma.$queryRaw as any).mockResolvedValue([]);
-    (prisma.comment.count as any).mockResolvedValue(0);
-    (prisma.issue.findMany as any).mockResolvedValue([]);
+    (baseDb.$queryRaw as any).mockResolvedValue([]);
+    (baseDb.comment.count as any).mockResolvedValue(0);
+    (baseDb.issue.findMany as any).mockResolvedValue([]);
   });
 
   describe("Input validation", () => {
@@ -103,7 +103,7 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
   describe("Milestone existence", () => {
     it("returns 404 when milestone does not exist", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.milestones.findUnique as any).mockResolvedValue(null);
+      (baseDb.milestones.findUnique as any).mockResolvedValue(null);
 
       const [req, ctx] = createRequest("999");
       const response = await GET(req, ctx);
@@ -117,8 +117,8 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
   describe("Success", () => {
     it("returns MilestoneSummaryData structure for existing milestone", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.milestones.findUnique as any).mockResolvedValue(mockMilestone);
-      (prisma.comment.count as any).mockResolvedValue(3);
+      (baseDb.milestones.findUnique as any).mockResolvedValue(mockMilestone);
+      (baseDb.comment.count as any).mockResolvedValue(3);
 
       const [req, ctx] = createRequest("1");
       const response = await GET(req, ctx);
@@ -139,9 +139,9 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
 
     it("fetches descendants and includes them in queries", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.milestones.findUnique as any).mockResolvedValue(mockMilestone);
+      (baseDb.milestones.findUnique as any).mockResolvedValue(mockMilestone);
       (getAllDescendantMilestoneIds as any).mockResolvedValue([2, 3]);
-      (prisma.comment.count as any).mockResolvedValue(0);
+      (baseDb.comment.count as any).mockResolvedValue(0);
 
       const [req, ctx] = createRequest("1");
       await GET(req, ctx);
@@ -151,9 +151,9 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
 
     it("returns zero completion rate when no test cases", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.milestones.findUnique as any).mockResolvedValue(mockMilestone);
+      (baseDb.milestones.findUnique as any).mockResolvedValue(mockMilestone);
       // calculateMilestoneCompletion uses $queryRaw returning count=0
-      (prisma.$queryRaw as any).mockResolvedValue([{ count: BigInt(0) }]);
+      (baseDb.$queryRaw as any).mockResolvedValue([{ count: BigInt(0) }]);
 
       const [req, ctx] = createRequest("1");
       const response = await GET(req, ctx);
@@ -165,10 +165,10 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
 
     it("returns empty segments and issues when milestone has no runs or sessions", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.milestones.findUnique as any).mockResolvedValue(mockMilestone);
-      (prisma.$queryRaw as any).mockResolvedValue([]);
-      (prisma.comment.count as any).mockResolvedValue(0);
-      (prisma.issue.findMany as any).mockResolvedValue([]);
+      (baseDb.milestones.findUnique as any).mockResolvedValue(mockMilestone);
+      (baseDb.$queryRaw as any).mockResolvedValue([]);
+      (baseDb.comment.count as any).mockResolvedValue(0);
+      (baseDb.issue.findMany as any).mockResolvedValue([]);
 
       const [req, ctx] = createRequest("1");
       const response = await GET(req, ctx);
@@ -184,7 +184,7 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
   describe("Error handling", () => {
     it("returns 500 when database throws", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (prisma.milestones.findUnique as any).mockRejectedValue(
+      (baseDb.milestones.findUnique as any).mockRejectedValue(
         new Error("DB connection failed")
       );
 

@@ -10,7 +10,7 @@ import {
   enrichFromApiAuth,
   withAuditContext,
 } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
 import {
   persistGeneratedTestCases,
@@ -26,7 +26,7 @@ import { authOptions } from "~/server/auth";
 // transactional importer the in-app generation wizard and Jira panel use
 // (persistGeneratedTestCases). That importer creates each case + its steps /
 // tags / custom-field values in one transaction and — because it runs against
-// the hooked `lib/prisma` client — drives Elasticsearch sync and per-case audit
+// the hooked `lib/db` client — drives Elasticsearch sync and per-case audit
 // via the existing `$extends` hooks. This route therefore adds no ES/audit of
 // its own; doing so would double-count.
 
@@ -98,7 +98,7 @@ export const POST = withAuditContext(
         userId = apiAuth.userId;
         userAccess = apiAuth.access;
         tokenScopes = apiAuth.scopes;
-        const user = await prisma.user.findUnique({
+        const user = await baseDb.user.findUnique({
           where: { id: userId },
           select: { name: true, email: true },
         });
@@ -161,7 +161,7 @@ export const POST = withAuditContext(
             ],
           };
 
-      const project = await prisma.projects.findFirst({
+      const project = await baseDb.projects.findFirst({
         where: projectAccessWhere,
         select: { id: true, name: true },
       });
@@ -179,7 +179,7 @@ export const POST = withAuditContext(
       // ── Resolve template once ─────────────────────────────────────────────
       let templateId = data.templateId;
       if (templateId != null) {
-        const assigned = await prisma.templates.findFirst({
+        const assigned = await baseDb.templates.findFirst({
           where: {
             id: templateId,
             isDeleted: false,
@@ -197,7 +197,7 @@ export const POST = withAuditContext(
           );
         }
       } else {
-        const def = await prisma.templates.findFirst({
+        const def = await baseDb.templates.findFirst({
           where: {
             isDeleted: false,
             isEnabled: true,
@@ -263,7 +263,7 @@ export const POST = withAuditContext(
       }
       for (const name of allTagNames) {
         if (!name) continue;
-        const tag = await prisma.tags.upsert({
+        const tag = await baseDb.tags.upsert({
           where: { name },
           create: { name, isDeleted: false },
           update: {},
@@ -300,7 +300,7 @@ export const POST = withAuditContext(
         };
 
         // Folder: must belong to this project (carries its own repositoryId).
-        const folder = await prisma.repositoryFolders.findFirst({
+        const folder = await baseDb.repositoryFolders.findFirst({
           where: { id: folderId, projectId, isDeleted: false },
           select: { id: true, name: true, repositoryId: true },
         });
@@ -310,7 +310,7 @@ export const POST = withAuditContext(
         }
 
         // CASES-scope workflow state: named one, else first by order.
-        const state = await prisma.workflows.findFirst({
+        const state = await baseDb.workflows.findFirst({
           where: {
             projects: { some: { projectId } },
             isEnabled: true,
@@ -330,7 +330,7 @@ export const POST = withAuditContext(
           continue;
         }
 
-        const maxOrderRow = await prisma.repositoryCases.findFirst({
+        const maxOrderRow = await baseDb.repositoryCases.findFirst({
           where: {
             projectId,
             folderId: folder.id,

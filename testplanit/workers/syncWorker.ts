@@ -7,11 +7,11 @@ import {
 } from "../lib/integrations/services/SyncService";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { SYNC_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { withTenantContext } from "../lib/tenantContext";
@@ -36,7 +36,7 @@ const processor = async (job: Job<MultiTenantSyncJobData>) =>
     validateMultiTenantJobData(job.data);
 
     // Get the appropriate Prisma client (tenant-specific or default)
-    const prisma = getPrismaClientForJob(job.data);
+    const prisma = getDbClientForJob(job.data);
     const serviceOptions = { prismaClient: prisma };
 
     const jobData = job.data as MultiTenantSyncJobData;

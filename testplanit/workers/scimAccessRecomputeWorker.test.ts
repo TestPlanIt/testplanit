@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-// ── Hooked prisma client mock ────────────────────────────────────────────────
-vi.mock("../lib/prisma", () => {
+// ── Hooked baseDb client mock ────────────────────────────────────────────────
+vi.mock("../lib/db", () => {
   const tx = {
     appConfig: { findUnique: vi.fn() },
     user: { findMany: vi.fn() },
     groupAssignment: { findMany: vi.fn() },
   };
   return {
-    prisma: {
+    baseDb: {
       $transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb(tx)),
       groupAssignment: { findMany: vi.fn() },
       __tx: tx,
@@ -29,7 +29,7 @@ vi.mock("../lib/auditContext", () => ({
 }));
 
 // ── Multi-tenant mock ────────────────────────────────────────────────────────
-vi.mock("../lib/multiTenantPrisma", () => ({
+vi.mock("../lib/multiTenantDb", () => ({
   validateMultiTenantJobData: vi.fn(),
   isMultiTenantMode: vi.fn(() => false),
   disconnectAllTenantClients: vi.fn(),
@@ -63,9 +63,9 @@ vi.mock("../lib/bullPrefix", () => ({
 }));
 
 import { processor } from "./scimAccessRecomputeWorker";
-import { prisma } from "../lib/prisma";
+import { baseDb } from "../lib/db";
 import { runWithAuditContext } from "../lib/auditContext";
-import { validateMultiTenantJobData } from "../lib/multiTenantPrisma";
+import { validateMultiTenantJobData } from "../lib/multiTenantDb";
 import { recomputeUserAccess } from "../lib/scim/services/recompute";
 
 interface TxLike {
@@ -74,11 +74,11 @@ interface TxLike {
   groupAssignment: { findMany: ReturnType<typeof vi.fn> };
 }
 
-const tx = (prisma as unknown as { __tx: TxLike }).__tx;
-// Top-level prisma.groupAssignment.findMany is called outside the transaction
+const tx = (baseDb as unknown as { __tx: TxLike }).__tx;
+// Top-level baseDb.groupAssignment.findMany is called outside the transaction
 // for the groupId batch path.
 const prismaGroupAssignment = (
-  prisma as unknown as {
+  baseDb as unknown as {
     groupAssignment: { findMany: ReturnType<typeof vi.fn> };
   }
 ).groupAssignment;
@@ -184,13 +184,13 @@ describe("scimAccessRecomputeWorker processor", () => {
     expect(ctxArg.scimTokenId).toBe("worker:scim-access-recompute");
   });
 
-  it("W5: uses the hooked lib/prisma client, NOT getPrismaClientForJob", async () => {
+  it("W5: uses the hooked lib/baseDb client, NOT getDbClientForJob", async () => {
     prismaGroupAssignment.findMany.mockResolvedValue([{ userId: "user-b" }]);
 
     await processor(makeJob({ groupId: 5 }));
 
-    // The mocked prisma.$transaction was called — this proves the processor
-    // used the module we mocked (../lib/prisma), not an unmocked raw client.
-    expect((prisma as any).$transaction).toHaveBeenCalledTimes(1);
+    // The mocked baseDb.$transaction was called — this proves the processor
+    // used the module we mocked (../lib/baseDb), not an unmocked raw client.
+    expect((baseDb as any).$transaction).toHaveBeenCalledTimes(1);
   });
 });

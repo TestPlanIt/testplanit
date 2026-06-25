@@ -4,11 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * DataChangeLog retention worker unit tests.
  *
  * Mocks:
- * - prismaBase.$executeRaw — driven via mockResolvedValueOnce chains to simulate
+ * - rawDb.$executeRaw — driven via mockResolvedValueOnce chains to simulate
  *   the LIMIT 1000 batch loop (n, n, ..., 0).
  * - captureAuditEvent — assert exactly ONE call per purgeOnce() carrying the
  *   tenantId + totals.
- * - multiTenantPrisma — drive single- vs multi-tenant fan-out.
+ * - multiTenantDb — drive single- vs multi-tenant fan-out.
  *
  * Clock is locked via vi.useFakeTimers() so the cutoff + budget math is
  * deterministic (frozen time keeps the budget loop terminating on the 0-row
@@ -22,8 +22,8 @@ const mockGetAllTenantIds = vi.fn();
 const mockGetTenantPrismaClient = vi.fn();
 const mockDisconnectAllTenantClients = vi.fn();
 
-vi.mock("../lib/prismaBase", () => ({
-  prisma: {
+vi.mock("../lib/rawDb", () => ({
+  rawDb: {
     $executeRaw: (...args: unknown[]) => mockExecuteRaw(...args),
   },
 }));
@@ -32,10 +32,10 @@ vi.mock("../lib/services/auditLog", () => ({
   captureAuditEvent: (...args: unknown[]) => mockCaptureAuditEvent(...args),
 }));
 
-vi.mock("../lib/multiTenantPrisma", () => ({
+vi.mock("../lib/multiTenantDb", () => ({
   isMultiTenantMode: () => mockIsMultiTenantMode(),
   getAllTenantIds: () => mockGetAllTenantIds(),
-  getTenantPrismaClient: (tenantId: string) =>
+  getTenantDbClient: (tenantId: string) =>
     mockGetTenantPrismaClient(tenantId),
   disconnectAllTenantClients: () => mockDisconnectAllTenantClients(),
 }));
@@ -82,7 +82,7 @@ describe("workers/dataChangeLogRetentionWorker.purgeOnce", () => {
     await purgeOnce({ $executeRaw: tenantExecute } as never, "tenant-x");
 
     expect(tenantExecute).toHaveBeenCalled();
-    expect(mockExecuteRaw).not.toHaveBeenCalled(); // used the tenant client, not prismaBase
+    expect(mockExecuteRaw).not.toHaveBeenCalled(); // used the tenant client, not rawDb
     expect(mockCaptureAuditEvent.mock.calls[0][0].tenantId).toBe("tenant-x");
   });
 });
@@ -135,7 +135,7 @@ describe("workers/dataChangeLogRetentionWorker.purgeAllTenantsOnce", () => {
     expect(results).toHaveLength(2);
     expect(tenantAExecute).toHaveBeenCalled();
     expect(tenantBExecute).toHaveBeenCalled();
-    expect(mockExecuteRaw).not.toHaveBeenCalled(); // never touches prismaBase in multi-tenant mode
+    expect(mockExecuteRaw).not.toHaveBeenCalled(); // never touches rawDb in multi-tenant mode
     expect(mockCaptureAuditEvent).toHaveBeenCalledTimes(2);
     expect(mockCaptureAuditEvent.mock.calls[0][0].tenantId).toBe("tenant-a");
     expect(mockCaptureAuditEvent.mock.calls[1][0].tenantId).toBe("tenant-b");

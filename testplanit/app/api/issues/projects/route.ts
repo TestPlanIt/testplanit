@@ -1,7 +1,7 @@
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export async function POST(request: Request) {
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
           stepResultProjectIds,
         ] = await Promise.all([
           // From repository cases
-          prisma.repositoryCases.findMany({
+          baseDb.repositoryCases.findMany({
             where: {
               isDeleted: false,
               caseIssues: { some: { issue: { id: issueId } } },
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
             distinct: ["projectId"],
           }),
           // From sessions
-          prisma.sessions.findMany({
+          baseDb.sessions.findMany({
             where: {
               isDeleted: false,
               issues: { some: { id: issueId } },
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
             distinct: ["projectId"],
           }),
           // From session results
-          prisma.sessionResults.findMany({
+          baseDb.sessionResults.findMany({
             where: {
               issues: {
                 some: {
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
             },
           }),
           // From test runs
-          prisma.testRuns.findMany({
+          baseDb.testRuns.findMany({
             where: {
               isDeleted: false,
               issues: { some: { id: issueId } },
@@ -126,7 +126,7 @@ export async function POST(request: Request) {
             distinct: ["projectId"],
           }),
           // From test run results
-          prisma.testRunResults.findMany({
+          baseDb.testRunResults.findMany({
             where: {
               issues: {
                 some: {
@@ -140,7 +140,7 @@ export async function POST(request: Request) {
             },
           }),
           // From test run step results
-          prisma.testRunStepResults.findMany({
+          baseDb.testRunStepResults.findMany({
             where: {
               issues: {
                 some: {
@@ -171,7 +171,7 @@ export async function POST(request: Request) {
         // Fetch sessions to get their project IDs
         const sessionsFromResults =
           sessionIdsFromResults.length > 0
-            ? await prisma.sessions.findMany({
+            ? await baseDb.sessions.findMany({
                 where: { id: { in: sessionIdsFromResults } },
                 select: { projectId: true },
               })
@@ -180,7 +180,7 @@ export async function POST(request: Request) {
         // Fetch test runs to get their project IDs
         const testRunsFromResults =
           testRunIdsFromResults.length > 0
-            ? await prisma.testRuns.findMany({
+            ? await baseDb.testRuns.findMany({
                 where: { id: { in: testRunIdsFromResults } },
                 select: { projectId: true },
               })
@@ -189,7 +189,7 @@ export async function POST(request: Request) {
         // Fetch test run results to get test run IDs, then get their project IDs
         const testRunsFromStepResults =
           testRunResultIdsFromStepResults.length > 0
-            ? await prisma.testRunResults
+            ? await baseDb.testRunResults
                 .findMany({
                   where: { id: { in: testRunResultIdsFromStepResults } },
                   select: { testRunId: true },
@@ -197,7 +197,7 @@ export async function POST(request: Request) {
                 .then(async (results) => {
                   const testRunIds = results.map((r) => r.testRunId);
                   return testRunIds.length > 0
-                    ? await prisma.testRuns.findMany({
+                    ? await baseDb.testRuns.findMany({
                         where: { id: { in: testRunIds } },
                         select: { projectId: true },
                       })
@@ -222,7 +222,7 @@ export async function POST(request: Request) {
           return { issueId, projects: [] };
         }
 
-        const projects = await prisma.projects.findMany({
+        const projects = await baseDb.projects.findMany({
           where: {
             id: { in: uniqueProjectIds },
             isDeleted: false,

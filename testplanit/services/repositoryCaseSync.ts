@@ -1,4 +1,4 @@
-import { prisma as defaultPrisma } from "../lib/prismaBase";
+import { rawDb as defaultPrisma } from "../lib/rawDb";
 import { extractTextFromNode } from "../utils/extractTextFromJson";
 import {
   bulkIndexRepositoryCases,
@@ -40,8 +40,8 @@ export async function buildRepositoryCaseDocument(
   caseId: number,
   prismaClient?: PrismaClientType
 ): Promise<RepositoryCaseDocument | null> {
-  const prisma = prismaClient || defaultPrisma;
-  const repoCase = await prisma.repositoryCases.findUnique({
+  const rawDb = prismaClient || defaultPrisma;
+  const repoCase = await rawDb.repositoryCases.findUnique({
     where: { id: caseId },
     include: {
       project: true,
@@ -93,7 +93,7 @@ export async function buildRepositoryCaseDocument(
   if (!repoCase) return null;
 
   // Build folder path
-  const folderPath = await buildFolderPath(repoCase.folderId, prisma);
+  const folderPath = await buildFolderPath(repoCase.folderId, rawDb);
 
   return {
     id: repoCase.id,
@@ -187,9 +187,9 @@ export async function buildRepositoryCaseDocument(
  */
 async function buildFolderPath(
   folderId: number,
-  prisma: PrismaClientType = defaultPrisma
+  rawDb: PrismaClientType = defaultPrisma
 ): Promise<string> {
-  const folder = await prisma.repositoryFolders.findUnique({
+  const folder = await rawDb.repositoryFolders.findUnique({
     where: { id: folderId },
     include: { parent: true },
   });
@@ -201,7 +201,7 @@ async function buildFolderPath(
 
   while (current.parent) {
     path.unshift(current.parent.name);
-    const nextParent = await prisma.repositoryFolders.findUnique({
+    const nextParent = await rawDb.repositoryFolders.findUnique({
       where: { id: current.parent.id },
       include: { parent: true },
     });
@@ -256,12 +256,12 @@ export async function syncProjectCasesToElasticsearch(
   prismaClient?: PrismaClientType,
   tenantId?: string
 ): Promise<boolean> {
-  const prisma = prismaClient || defaultPrisma;
+  const rawDb = prismaClient || defaultPrisma;
   try {
     // Ensure index exists
-    await createRepositoryCaseIndex(prisma, tenantId);
+    await createRepositoryCaseIndex(rawDb, tenantId);
 
-    const totalCases = await prisma.repositoryCases.count({
+    const totalCases = await rawDb.repositoryCases.count({
       where: {
         projectId,
         isArchived: false, // Only exclude archived, include deleted items
@@ -277,7 +277,7 @@ export async function syncProjectCasesToElasticsearch(
     let processed = 0;
 
     while (true) {
-      const cases = await prisma.repositoryCases.findMany({
+      const cases = await rawDb.repositoryCases.findMany({
         where: {
           projectId,
           isArchived: false, // Only exclude archived, include deleted items
@@ -295,7 +295,7 @@ export async function syncProjectCasesToElasticsearch(
       const documents: RepositoryCaseDocument[] = [];
 
       for (const caseItem of cases) {
-        const doc = await buildRepositoryCaseDocument(caseItem.id, prisma);
+        const doc = await buildRepositoryCaseDocument(caseItem.id, rawDb);
         if (doc) {
           documents.push(doc);
         }

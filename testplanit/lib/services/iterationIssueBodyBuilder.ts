@@ -5,7 +5,7 @@
 // each adapter (Jira, GitHub, Azure DevOps) renders it to the tracker's
 // native format at send time (D-15).
 
-import { prisma as defaultPrisma } from "~/lib/prisma";
+import { baseDb as defaultPrisma } from "~/lib/db";
 import { getServerTranslation } from "~/lib/server-translations";
 import {
   redactValues,
@@ -39,7 +39,7 @@ export interface IterationIssueBodyInput {
    */
   locale?: string;
   /** Optional Prisma-like client override (tests). Production callers omit
-   *  this and the helper uses the real `~/lib/prisma` client. */
+   *  this and the helper uses the real `~/lib/db` client. */
   client?: PrismaLike;
 }
 

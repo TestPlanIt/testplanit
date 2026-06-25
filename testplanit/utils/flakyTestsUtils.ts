@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { sql } from "kysely";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
@@ -271,7 +271,7 @@ export async function handleFlakyTestsPOST(
             FROM combined_results
           )
           SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? sql`, project_id` : sql``}, row_num
-        `.execute(prisma.$qb)
+        `.execute(baseDb.$qb)
         ).rows;
       } else if (startDateParsed) {
         rawResults = (
@@ -354,7 +354,7 @@ export async function handleFlakyTestsPOST(
             FROM combined_results
           )
           SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? sql`, project_id` : sql``}, row_num
-        `.execute(prisma.$qb)
+        `.execute(baseDb.$qb)
         ).rows;
       } else if (endDateParsed) {
         rawResults = (
@@ -437,7 +437,7 @@ export async function handleFlakyTestsPOST(
             FROM combined_results
           )
           SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? sql`, project_id` : sql``}, row_num
-        `.execute(prisma.$qb)
+        `.execute(baseDb.$qb)
         ).rows;
       } else {
         rawResults = (
@@ -518,7 +518,7 @@ export async function handleFlakyTestsPOST(
             FROM combined_results
           )
           SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? sql`, project_id` : sql``}, row_num
-        `.execute(prisma.$qb)
+        `.execute(baseDb.$qb)
         ).rows;
       }
     } else {
@@ -603,7 +603,7 @@ export async function handleFlakyTestsPOST(
             FROM combined_results
           )
           SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
-        `.execute(prisma.$qb)
+        `.execute(baseDb.$qb)
         ).rows;
       } else if (startDateParsed) {
         rawResults = (
@@ -683,7 +683,7 @@ export async function handleFlakyTestsPOST(
             FROM combined_results
           )
           SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
-        `.execute(prisma.$qb)
+        `.execute(baseDb.$qb)
         ).rows;
       } else if (endDateParsed) {
         rawResults = (
@@ -763,7 +763,7 @@ export async function handleFlakyTestsPOST(
             FROM combined_results
           )
           SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
-        `.execute(prisma.$qb)
+        `.execute(baseDb.$qb)
         ).rows;
       } else {
         rawResults = (
@@ -841,7 +841,7 @@ export async function handleFlakyTestsPOST(
             FROM combined_results
           )
           SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
-        `.execute(prisma.$qb)
+        `.execute(baseDb.$qb)
         ).rows;
       }
     }

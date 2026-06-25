@@ -12,14 +12,14 @@
  *   3. Soft-delete cleanup (`isDeleted: true`) — never hard-delete; matches the
  *      milestone-wide soft-delete-only rule from PROJECT.md / MEMORY.md.
  *   4. Mixed client usage:
- *        - Raw `prisma` for seeding (system context, bypasses @@validate /
+ *        - Raw `baseDb` for seeding (system context, bypasses @@validate /
  *          @@allow / @@deny — appropriate for fixture setup).
  *        - Enhanced db via `getEnhancedDb(session)` for assertions that must
  *          hit the policy engine (@@validate XOR / self-approval; @@deny
  *          append-only update).
- *        - Raw `prisma` for the partial-unique-index race assertion — the
+ *        - Raw `baseDb` for the partial-unique-index race assertion — the
  *          PostgreSQL constraint fires at the DB regardless of client.
- *        - Raw `prisma` for the consumedAt carve-out — matches the gate
+ *        - Raw `baseDb` for the consumedAt carve-out — matches the gate
  *          helper's documented system-context path (D-05).
  *
  * Coverage map (VALIDATION.md):
@@ -49,7 +49,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ORMError } from "@zenstackhq/orm";
 import type { Session } from "next-auth";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { isAlreadyPendingError } from "~/lib/utils/errors";
 
@@ -95,7 +95,7 @@ const describeIntegration = SKIP_INTEGRATION ? describe.skip : describe;
 
 beforeAll(async () => {
   if (SKIP_INTEGRATION) return;
-  const existingFlag = await prisma.appConfig.findUnique({
+  const existingFlag = await baseDb.appConfig.findUnique({
     where: { key: REVIEW_FEATURE_KEY },
     select: { value: true },
   });
@@ -103,7 +103,7 @@ beforeAll(async () => {
     priorReviewFeatureExisted = true;
     priorReviewFeatureValue = existingFlag.value;
   }
-  await prisma.appConfig.upsert({
+  await baseDb.appConfig.upsert({
     where: { key: REVIEW_FEATURE_KEY },
     create: { key: REVIEW_FEATURE_KEY, value: true },
     update: { value: true },
@@ -112,7 +112,7 @@ beforeAll(async () => {
   // 1. Confirm the partial unique index is present. If setup-extensions.ts
   //    has not been run, the #16 race test would silently pass for the wrong
   //    reason (both inserts would succeed). Fail loudly here instead.
-  const indexes = await prisma.$queryRawUnsafe<Array<{ indexname: string }>>(
+  const indexes = await baseDb.$queryRawUnsafe<Array<{ indexname: string }>>(
     `SELECT indexname FROM pg_indexes WHERE indexname = 'review_request_one_pending_per_entity'`
   );
   if (indexes.length === 0) {
@@ -123,9 +123,9 @@ beforeAll(async () => {
   }
 
   // 2. Reuse seeded FieldIcon / Color / Roles — every dev/test DB has these.
-  const fieldIcon = await prisma.fieldIcon.findFirst({ select: { id: true } });
-  const color = await prisma.color.findFirst({ select: { id: true } });
-  const role = await prisma.roles.findFirst({
+  const fieldIcon = await baseDb.fieldIcon.findFirst({ select: { id: true } });
+  const color = await baseDb.color.findFirst({ select: { id: true } });
+  const role = await baseDb.roles.findFirst({
     where: { isDeleted: false },
     select: { id: true },
   });
@@ -141,7 +141,7 @@ beforeAll(async () => {
   //    keeps the self-approval test (#4) unambiguous: that test sets
   //    assigneeUserId == requestedByUserId == requester, and the XOR-valid
   //    positive case sets assigneeUserId == assignee (different from requester).
-  const requester = await prisma.user.create({
+  const requester = await baseDb.user.create({
     data: {
       name: `requester-${TEST_RUN_ID}`,
       email: `requester-${TEST_RUN_ID}@example.invalid`,
@@ -152,7 +152,7 @@ beforeAll(async () => {
   });
   requesterUserId = requester.id;
 
-  const assignee = await prisma.user.create({
+  const assignee = await baseDb.user.create({
     data: {
       name: `assignee-${TEST_RUN_ID}`,
       email: `assignee-${TEST_RUN_ID}@example.invalid`,
@@ -165,7 +165,7 @@ beforeAll(async () => {
 
   // 4. Seed a project owned by the requester so they trivially pass the
   //    Project read/write policies even without an explicit UserProjectPermission row.
-  const project = await prisma.projects.create({
+  const project = await baseDb.projects.create({
     data: {
       name: `proj-${TEST_RUN_ID}`,
       createdBy: requester.id,
@@ -177,7 +177,7 @@ beforeAll(async () => {
   //    not under test here (Plan 01-03 covers it); requiresReview can stay at
   //    its default (false). What matters is that two valid Workflows ids
   //    exist and can be referenced by the FKs on ReviewRequest.
-  const workflows = await prisma.workflows.findMany({
+  const workflows = await baseDb.workflows.findMany({
     where: { isDeleted: false, isEnabled: true },
     take: 2,
     orderBy: { id: "asc" },
@@ -196,10 +196,10 @@ afterAll(async () => {
   if (SKIP_INTEGRATION) return;
   // Soft-delete every ReviewRequest row this run created. Hard-delete is
   // forbidden by `@@deny('delete', true)` on the ReviewRequest model and by
-  // the milestone-wide soft-delete rule — use raw prisma update().
+  // the milestone-wide soft-delete rule — use raw baseDb update().
   for (const id of createdReviewRequestIds) {
     try {
-      await prisma.reviewRequest.update({
+      await baseDb.reviewRequest.update({
         where: { id },
         data: { isDeleted: true },
       });
@@ -212,7 +212,7 @@ afterAll(async () => {
   // isDeleted above; FK constraint stays satisfied).
   if (projectId) {
     try {
-      await prisma.projects.update({
+      await baseDb.projects.update({
         where: { id: projectId },
         data: { isDeleted: true },
       });
@@ -226,7 +226,7 @@ afterAll(async () => {
   for (const userId of [requesterUserId, assigneeUserId]) {
     if (!userId) continue;
     try {
-      await prisma.user.update({
+      await baseDb.user.update({
         where: { id: userId },
         data: { isDeleted: true, isActive: false },
       });
@@ -238,12 +238,12 @@ afterAll(async () => {
   // Restore the original AppConfig row (or delete it if we created it).
   try {
     if (priorReviewFeatureExisted) {
-      await prisma.appConfig.update({
+      await baseDb.appConfig.update({
         where: { key: REVIEW_FEATURE_KEY },
         data: { value: priorReviewFeatureValue as never },
       });
     } else {
-      await prisma.appConfig.delete({
+      await baseDb.appConfig.delete({
         where: { key: REVIEW_FEATURE_KEY },
       });
     }
@@ -252,7 +252,7 @@ afterAll(async () => {
   }
 
   // Release the connection so the Vitest worker exits cleanly.
-  await prisma.$disconnect();
+  await baseDb.$disconnect();
 }, 30_000);
 
 // Build a minimal next-auth Session shape from a user id. `getEnhancedDb`
@@ -287,7 +287,7 @@ describeIntegration("ReviewRequest XOR assignee @@validate (live-DB)", () => {
 
   it("XOR assignee rejects create when both assigneeUserId and assigneeRoleId are set", async () => {
     const enhanced = await getEnhancedDb(sessionFor(requesterUserId));
-    const someRole = await prisma.roles.findFirst({
+    const someRole = await baseDb.roles.findFirst({
       where: { isDeleted: false },
       select: { id: true },
     });
@@ -351,11 +351,11 @@ describeIntegration("ReviewRequest self-approval @@validate (live-DB)", () => {
 describeIntegration("ReviewRequest append-only @@deny (live-DB)", () => {
   let approvedRequestId: string;
 
-  // Local setup: create a PENDING row via raw prisma, then flip it to
-  // APPROVED via raw prisma (raw bypasses the @@deny — appropriate for
+  // Local setup: create a PENDING row via raw baseDb, then flip it to
+  // APPROVED via raw baseDb (raw bypasses the @@deny — appropriate for
   // arrange/act in a test, mirroring the gate helper's system-context path).
   beforeAll(async () => {
-    const pending = await prisma.reviewRequest.create({
+    const pending = await baseDb.reviewRequest.create({
       data: {
         projectId,
         entityType: "CASE",
@@ -369,7 +369,7 @@ describeIntegration("ReviewRequest append-only @@deny (live-DB)", () => {
     });
     createdReviewRequestIds.push(pending.id);
 
-    await prisma.reviewRequest.update({
+    await baseDb.reviewRequest.update({
       where: { id: pending.id },
       data: {
         status: "APPROVED",
@@ -390,7 +390,7 @@ describeIntegration("ReviewRequest append-only @@deny (live-DB)", () => {
     ).rejects.toThrow();
 
     // Verify the row is untouched.
-    const after = await prisma.reviewRequest.findUnique({
+    const after = await baseDb.reviewRequest.findUnique({
       where: { id: approvedRequestId },
       select: { decisionComment: true, status: true },
     });
@@ -398,11 +398,11 @@ describeIntegration("ReviewRequest append-only @@deny (live-DB)", () => {
     expect(after?.decisionComment).toBeNull();
   });
 
-  it("append-only allows raw prisma to stamp consumedAt on APPROVED row", async () => {
-    // D-05 carve-out: the gate helper stamps consumedAt via raw prisma to
+  it("append-only allows raw baseDb to stamp consumedAt on APPROVED row", async () => {
+    // D-05 carve-out: the gate helper stamps consumedAt via raw baseDb to
     // bypass @@deny — proves the one-shot semantics work end-to-end at the DB.
     const stamp = new Date();
-    const updated = await prisma.reviewRequest.update({
+    const updated = await baseDb.reviewRequest.update({
       where: { id: approvedRequestId },
       data: { consumedAt: stamp },
     });
@@ -416,11 +416,11 @@ describeIntegration(
   "ReviewRequest partial unique index — one PENDING per entity (live-DB)",
   () => {
     it("partial unique index rejects duplicate PENDING create with P2002 / AlreadyPendingError surface", async () => {
-      // First PENDING: must succeed. Raw prisma is used for both inserts —
+      // First PENDING: must succeed. Raw baseDb is used for both inserts —
       // the partial unique index is a DB-layer constraint that fires regardless
       // of which client issues the write, and raw avoids policy-engine noise
       // from clouding the assertion.
-      const first = await prisma.reviewRequest.create({
+      const first = await baseDb.reviewRequest.create({
         data: {
           projectId,
           entityType: "CASE",
@@ -440,7 +440,7 @@ describeIntegration(
       // isAlreadyPendingError detector from Plan 02 MUST recognise it.
       let caught: unknown;
       try {
-        await prisma.reviewRequest.create({
+        await baseDb.reviewRequest.create({
           data: {
             projectId,
             entityType: "CASE",
@@ -467,7 +467,7 @@ describeIntegration(
       // The partial index is gated by `WHERE status = 'PENDING' AND "isDeleted" = false`.
       // Soft-deleting the first PENDING must free the (entityType, entityId)
       // slot so a fresh PENDING create can land.
-      const first = await prisma.reviewRequest.create({
+      const first = await baseDb.reviewRequest.create({
         data: {
           projectId,
           entityType: "CASE",
@@ -481,12 +481,12 @@ describeIntegration(
       });
       createdReviewRequestIds.push(first.id);
 
-      await prisma.reviewRequest.update({
+      await baseDb.reviewRequest.update({
         where: { id: first.id },
         data: { isDeleted: true },
       });
 
-      const second = await prisma.reviewRequest.create({
+      const second = await baseDb.reviewRequest.create({
         data: {
           projectId,
           entityType: "CASE",
@@ -538,21 +538,21 @@ describeIntegration(
     const featureCaseIds: number[] = [];
 
     beforeAll(async () => {
-      const role = await prisma.roles.findFirst({
+      const role = await baseDb.roles.findFirst({
         where: { isDeleted: false },
         select: { id: true },
       });
-      const fieldIcon = await prisma.fieldIcon.findFirst({
+      const fieldIcon = await baseDb.fieldIcon.findFirst({
         select: { id: true },
       });
-      const color = await prisma.color.findFirst({ select: { id: true } });
+      const color = await baseDb.color.findFirst({ select: { id: true } });
       if (!role || !fieldIcon || !color) {
         throw new Error("Missing seed data for feature-flag describe block");
       }
 
       // Admin user so policy reads succeed; the @@deny('update', ...) is what
       // we want to assert against, not @@allow.
-      const user = await prisma.user.create({
+      const user = await baseDb.user.create({
         data: {
           name: `feature-user-${TEST_RUN_ID}`,
           email: `feature-user-${TEST_RUN_ID}@example.invalid`,
@@ -564,7 +564,7 @@ describeIntegration(
       featureUserId = user.id;
 
       // Project — start with reviewWorkflowEnabled = true (the schema default).
-      const project = await prisma.projects.create({
+      const project = await baseDb.projects.create({
         data: {
           name: `feature-proj-${TEST_RUN_ID}`,
           createdBy: user.id,
@@ -575,7 +575,7 @@ describeIntegration(
       // Create two workflow rows: one neutral (fromState) and one with
       // requiresReview=true (gatedToState) so the @@deny rule's middle
       // conjunct fires when the case transitions toward it.
-      const fromWorkflow = await prisma.workflows.create({
+      const fromWorkflow = await baseDb.workflows.create({
         data: {
           name: `feature-from-${TEST_RUN_ID}`,
           iconId: fieldIcon.id,
@@ -586,7 +586,7 @@ describeIntegration(
       });
       fromStateForFeatureId = fromWorkflow.id;
 
-      const gatedWorkflow = await prisma.workflows.create({
+      const gatedWorkflow = await baseDb.workflows.create({
         data: {
           name: `feature-gated-${TEST_RUN_ID}`,
           iconId: fieldIcon.id,
@@ -600,12 +600,12 @@ describeIntegration(
       // We need a Repository + RepositoryFolder + Template to create cases.
       // Use `connect` syntax — Prisma's checked input requires the relation
       // form, not bare FK fields, on `.create()`.
-      const repo = await prisma.repositories.create({
+      const repo = await baseDb.repositories.create({
         data: {
           project: { connect: { id: featureProjectId } },
         },
       });
-      const folder = await prisma.repositoryFolders.create({
+      const folder = await baseDb.repositoryFolders.create({
         data: {
           name: `feature-folder-${TEST_RUN_ID}`,
           project: { connect: { id: featureProjectId } },
@@ -613,7 +613,7 @@ describeIntegration(
           creator: { connect: { id: user.id } },
         },
       });
-      const template = await prisma.templates.findFirst({
+      const template = await baseDb.templates.findFirst({
         select: { id: true },
       });
       if (!template) {
@@ -625,7 +625,7 @@ describeIntegration(
       // Two cases — one for the "flag off" assertion, one for the "flag on"
       // assertion. Distinct rows so the second assertion is not contaminated
       // by the first's update.
-      const caseFlagOff = await prisma.repositoryCases.create({
+      const caseFlagOff = await baseDb.repositoryCases.create({
         data: {
           name: `feature-case-off-${TEST_RUN_ID}`,
           project: { connect: { id: featureProjectId } },
@@ -638,7 +638,7 @@ describeIntegration(
       });
       featureCaseIds.push(caseFlagOff.id);
 
-      const caseFlagOn = await prisma.repositoryCases.create({
+      const caseFlagOn = await baseDb.repositoryCases.create({
         data: {
           name: `feature-case-on-${TEST_RUN_ID}`,
           project: { connect: { id: featureProjectId } },
@@ -655,7 +655,7 @@ describeIntegration(
     afterAll(async () => {
       for (const id of featureCaseIds) {
         try {
-          await prisma.repositoryCases.update({
+          await baseDb.repositoryCases.update({
             where: { id },
             data: { isDeleted: true },
           });
@@ -665,7 +665,7 @@ describeIntegration(
       }
       if (featureProjectId) {
         try {
-          await prisma.projects.update({
+          await baseDb.projects.update({
             where: { id: featureProjectId },
             data: { isDeleted: true },
           });
@@ -675,7 +675,7 @@ describeIntegration(
       }
       if (featureUserId) {
         try {
-          await prisma.user.update({
+          await baseDb.user.update({
             where: { id: featureUserId },
             data: { isDeleted: true, isActive: false },
           });
@@ -686,14 +686,14 @@ describeIntegration(
     }, 30_000);
 
     it("feature flag OFF: app-layer assertReviewGatePasses short-circuits to null (chokepoint path is the load-bearing enforcement)", async () => {
-      // Toggle the per-project flag off via raw prisma (system context).
-      await prisma.projects.update({
+      // Toggle the per-project flag off via raw baseDb (system context).
+      await baseDb.projects.update({
         where: { id: featureProjectId },
         data: { reviewWorkflowEnabled: false },
       });
 
       // Sanity: confirm the flag actually toggled at the DB layer.
-      const flagState = await prisma.projects.findUnique({
+      const flagState = await baseDb.projects.findUnique({
         where: { id: featureProjectId },
         select: { reviewWorkflowEnabled: true },
       });
@@ -707,7 +707,7 @@ describeIntegration(
       // the single source of truth for the feature-flag-off case.
       const { assertReviewGatePasses } = await import("./reviewGate");
       const gateResult = await assertReviewGatePasses(
-        prisma,
+        baseDb,
         "CASE",
         caseId,
         gatedToStateId
@@ -725,7 +725,7 @@ describeIntegration(
       // schema layer must let the transition through; the app preflight is
       // the gate, and it short-circuits when the flag is off (covered by
       // the sibling test above).
-      await prisma.projects.update({
+      await baseDb.projects.update({
         where: { id: featureProjectId },
         data: { reviewWorkflowEnabled: false },
       });
@@ -742,7 +742,7 @@ describeIntegration(
       // Belt: confirm the persisted row matches; the sibling "flag ON" test
       // works on a different case row (featureCaseIds[1]) so this update
       // can't contaminate it.
-      const persisted = await prisma.repositoryCases.findUnique({
+      const persisted = await baseDb.repositoryCases.findUnique({
         where: { id: caseId },
         select: { stateId: true },
       });
@@ -758,7 +758,7 @@ describeIntegration(
       // the flag on and no approved request, the helper throws a structured
       // ReviewGateError that the chokepoints translate into a 403
       // REVIEW_REQUIRED envelope.
-      await prisma.projects.update({
+      await baseDb.projects.update({
         where: { id: featureProjectId },
         data: { reviewWorkflowEnabled: true },
       });
@@ -769,7 +769,7 @@ describeIntegration(
 
       let caught: unknown = null;
       try {
-        await assertReviewGatePasses(prisma, "CASE", caseId, gatedToStateId);
+        await assertReviewGatePasses(baseDb, "CASE", caseId, gatedToStateId);
       } catch (err) {
         caught = err;
       }
@@ -782,7 +782,7 @@ describeIntegration(
       // Belt: row untouched at the DB layer — the schema layer wouldn't
       // block, but no chokepoint ever called the enhanced update because the
       // preflight threw first.
-      const after = await prisma.repositoryCases.findUnique({
+      const after = await baseDb.repositoryCases.findUnique({
         where: { id: caseId },
         select: { stateId: true },
       });

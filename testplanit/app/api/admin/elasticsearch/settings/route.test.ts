@@ -10,8 +10,8 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateApiToken: vi.fn(),
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     user: {
       findUnique: vi.fn(),
     },
@@ -30,7 +30,7 @@ vi.mock("~/lib/services/auditLog", () => ({
   auditSystemConfigChange: vi.fn(),
 }));
 
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { auditSystemConfigChange } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
@@ -62,7 +62,7 @@ const setupAdminSession = () => {
   (getServerAuthSession as any).mockResolvedValue({
     user: { id: "admin-user-1" },
   });
-  (prisma.user.findUnique as any).mockResolvedValue({ access: "ADMIN" });
+  (baseDb.user.findUnique as any).mockResolvedValue({ access: "ADMIN" });
 };
 
 describe("Admin Elasticsearch Settings Route", () => {
@@ -92,7 +92,7 @@ describe("Admin Elasticsearch Settings Route", () => {
       (getServerAuthSession as any).mockResolvedValue({
         user: { id: "user-1" },
       });
-      (prisma.user.findUnique as any).mockResolvedValue({ access: "USER" });
+      (baseDb.user.findUnique as any).mockResolvedValue({ access: "USER" });
 
       const request = createMockRequest();
       const response = await GET(request);
@@ -110,7 +110,7 @@ describe("Admin Elasticsearch Settings Route", () => {
         access: "ADMIN",
         scopes: [],
       });
-      (prisma.appConfig.findUnique as any).mockResolvedValue(null);
+      (baseDb.appConfig.findUnique as any).mockResolvedValue(null);
 
       const request = createMockRequest({
         authHeader: "Bearer tpi_test_token",
@@ -125,7 +125,7 @@ describe("Admin Elasticsearch Settings Route", () => {
   describe("GET - retrieve replica settings", () => {
     it("returns numberOfReplicas from config when found", async () => {
       setupAdminSession();
-      (prisma.appConfig.findUnique as any).mockResolvedValue({
+      (baseDb.appConfig.findUnique as any).mockResolvedValue({
         key: "elasticsearch_replicas",
         value: 2,
       });
@@ -140,7 +140,7 @@ describe("Admin Elasticsearch Settings Route", () => {
 
     it("returns 0 when config not found", async () => {
       setupAdminSession();
-      (prisma.appConfig.findUnique as any).mockResolvedValue(null);
+      (baseDb.appConfig.findUnique as any).mockResolvedValue(null);
 
       const request = createMockRequest();
       const response = await GET(request);
@@ -154,8 +154,8 @@ describe("Admin Elasticsearch Settings Route", () => {
   describe("POST - save replica settings", () => {
     it("saves valid numberOfReplicas and returns success", async () => {
       setupAdminSession();
-      (prisma.appConfig.findUnique as any).mockResolvedValue(null);
-      (prisma.appConfig.upsert as any).mockResolvedValue({});
+      (baseDb.appConfig.findUnique as any).mockResolvedValue(null);
+      (baseDb.appConfig.upsert as any).mockResolvedValue({});
 
       const request = createMockRequest({ body: { numberOfReplicas: 3 } });
       const response = await POST(request);
@@ -201,8 +201,8 @@ describe("Admin Elasticsearch Settings Route", () => {
 
     it("triggers audit log on successful save", async () => {
       setupAdminSession();
-      (prisma.appConfig.findUnique as any).mockResolvedValue({ value: 1 });
-      (prisma.appConfig.upsert as any).mockResolvedValue({});
+      (baseDb.appConfig.findUnique as any).mockResolvedValue({ value: 1 });
+      (baseDb.appConfig.upsert as any).mockResolvedValue({});
 
       const request = createMockRequest({ body: { numberOfReplicas: 2 } });
       await POST(request);
@@ -216,13 +216,13 @@ describe("Admin Elasticsearch Settings Route", () => {
 
     it("upserts config with new value", async () => {
       setupAdminSession();
-      (prisma.appConfig.findUnique as any).mockResolvedValue(null);
-      (prisma.appConfig.upsert as any).mockResolvedValue({});
+      (baseDb.appConfig.findUnique as any).mockResolvedValue(null);
+      (baseDb.appConfig.upsert as any).mockResolvedValue({});
 
       const request = createMockRequest({ body: { numberOfReplicas: 5 } });
       await POST(request);
 
-      expect(prisma.appConfig.upsert).toHaveBeenCalledWith(
+      expect(baseDb.appConfig.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { key: "elasticsearch_replicas" },
           update: { value: 5 },

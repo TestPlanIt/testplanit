@@ -2,7 +2,7 @@ import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 // Schema for fetch many request
@@ -87,7 +87,7 @@ export async function POST(
           ],
         };
 
-    const project = await prisma.projects.findFirst({
+    const project = await baseDb.projects.findFirst({
       where: projectAccessWhere,
     });
 
@@ -122,7 +122,7 @@ export async function POST(
         : validatedData.caseIds;
 
     // Fetch the cases with all necessary includes
-    const cases = await prisma.repositoryCases.findMany({
+    const cases = await baseDb.repositoryCases.findMany({
       where: {
         id: { in: paginatedCaseIds },
         projectId,

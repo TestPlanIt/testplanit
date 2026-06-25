@@ -58,15 +58,15 @@ vi.mock("../lib/valkey", () => ({
   default: { status: "ready" },
 }));
 
-// ─── Mock multiTenantPrisma ───────────────────────────────────────────────────
+// ─── Mock multiTenantDb ───────────────────────────────────────────────────
 
 const mockPrisma = {
   projects: { findUnique: vi.fn() },
   $disconnect: vi.fn(),
 };
 
-vi.mock("../lib/multiTenantPrisma", () => ({
-  getPrismaClientForJob: (...args: any[]) => mockGetPrismaClientForJob(...args),
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: (...args: any[]) => mockGetPrismaClientForJob(...args),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -180,7 +180,7 @@ function setupDefaultMocks() {
   // extractLinks returns empty (no follow)
   mockExtractLinks.mockReturnValue([]);
 
-  // getPrismaClientForJob returns mock prisma
+  // getDbClientForJob returns mock prisma
   mockGetPrismaClientForJob.mockReturnValue(mockPrisma);
 
   // projects.findUnique returns project name for notifications

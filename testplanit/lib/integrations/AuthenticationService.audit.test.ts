@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * UserIntegrationAuth audit emission (no token leakage).
  *
  * UserIntegrationAuth is a credential table (CDC-excluded per SAF-04), and its
- * real mutations run through the raw prismaBase client in AuthenticationService
+ * real mutations run through the raw rawDb client in AuthenticationService
  * — so they bypass the $extends entity-audit hooks entirely. These tests pin the
  * explicit semantic audit added here: connect → CREATE, re-auth → UPDATE,
  * revoke → DELETE, lastUsedAt bump → no audit, and NEVER the encrypted tokens.
@@ -16,8 +16,8 @@ const mockFindFirst = vi.fn();
 const mockUpdateMany = vi.fn();
 const mockCaptureAuditEvent = vi.fn();
 
-vi.mock("@/lib/prismaBase", () => ({
-  prisma: {
+vi.mock("@/lib/rawDb", () => ({
+  rawDb: {
     userIntegrationAuth: {
       findUnique: (...a: unknown[]) => mockFindUnique(...a),
       upsert: (...a: unknown[]) => mockUpsert(...a),

@@ -2,7 +2,7 @@ import type { AdapterType } from "~/zenstack/models";
 
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
 import { syncService } from "~/lib/integrations/services/SyncService";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getAdapter } from "~/lib/webhooks/adapters";
 
@@ -96,7 +96,7 @@ async function triggerSystemSyncForInboundEvent(args: {
   // Single active integration per project (enforced in app code). Filter
   // by provider so a project with a Jira integration but a GitHub webhook
   // (cross-tenant misconfiguration) doesn't trigger the wrong adapter.
-  const projectIntegration = await prisma.projectIntegration.findFirst({
+  const projectIntegration = await baseDb.projectIntegration.findFirst({
     where: {
       projectId: args.projectId,
       isActive: true,
@@ -247,7 +247,7 @@ export async function applyInboundIssueUpdate(
   let txResult: TxOutcome;
 
   try {
-    txResult = await prisma.$transaction(async (tx): Promise<TxOutcome> => {
+    txResult = await baseDb.$transaction(async (tx): Promise<TxOutcome> => {
       // Step 1: ALWAYS insert a delivery log row first.
       const delivery = await tx.webhookDelivery.create({
         data: {

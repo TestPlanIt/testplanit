@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 /**
@@ -15,7 +15,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const registrationSettings = await prisma.registrationSettings.findFirst({
+    const registrationSettings = await baseDb.registrationSettings.findFirst({
       select: {
         force2FAAllLogins: true,
         force2FANonSSO: true,

@@ -1,9 +1,9 @@
-import { prisma as defaultPrisma } from "@/lib/prismaBase";
+import { rawDb as defaultDb } from "@/lib/rawDb";
 import type { DbClient, TxClient } from "~/lib/zenstack";
 import { Job, JobsOptions } from "bullmq";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
 import { enqueueWithAuditContext } from "../../auditContextEnqueue";
-import { getCurrentTenantId } from "../../multiTenantPrisma";
+import { getCurrentTenantId } from "../../multiTenantDb";
 import { getSyncQueue } from "../../queues";
 import valkeyConnection from "../../valkey";
 import { projectIssueUpdateChannel } from "../../webhooks/issueUpdateChannels";
@@ -361,13 +361,13 @@ export class SyncService {
     job?: Job, // BullMQ Job for progress reporting
     serviceOptions: SyncServiceOptions = {}
   ): Promise<{ synced: number; errors: string[] }> {
-    const prisma = serviceOptions.prismaClient || defaultPrisma;
+    const db = serviceOptions.prismaClient || defaultDb;
     const errors: string[] = [];
     let syncedCount = 0;
 
     try {
       // Get user for auth validation
-      const user = await prisma.user.findUnique({
+      const user = await db.user.findUnique({
         where: { id: userId },
         include: {
           role: {
@@ -386,7 +386,7 @@ export class SyncService {
       // and enhance() causes ~3GB memory overhead
 
       // Get the integration
-      const integration = await prisma.integration.findUnique({
+      const integration = await db.integration.findUnique({
         where: { id: integrationId },
         include: {
           userIntegrationAuths: {
@@ -432,7 +432,7 @@ export class SyncService {
       // Get the adapter
       const adapter = await integrationManager.getAdapter(
         String(integrationId),
-        prisma
+        db
       );
 
       if (!adapter) {
@@ -440,7 +440,7 @@ export class SyncService {
       }
 
       // Look up linked IntegrationProject records (raw Prisma — workers skip ZenStack enhance)
-      const linkedProjects = await prisma.integrationProject.findMany({
+      const linkedProjects = await db.integrationProject.findMany({
         where: {
           projectIntegration: { integrationId },
           isActive: true,
@@ -453,13 +453,13 @@ export class SyncService {
         for (const integrationProject of linkedProjects) {
           try {
             // Mark this project as syncing (D-08)
-            await prisma.integrationProject.update({
+            await db.integrationProject.update({
               where: { id: integrationProject.id },
               data: { syncStatus: "syncing" },
             });
 
             // Fetch all issues stored for this integration (filtered to this external project)
-            const allProjectIssues = await prisma.issue.findMany({
+            const allProjectIssues = await db.issue.findMany({
               where: {
                 integrationId,
                 ...(projectId && { projectId: parseInt(projectId) }),
@@ -529,7 +529,7 @@ export class SyncService {
                   const issueData = await adapter.syncIssue(issueIdentifier);
                   await issueCache.set(integrationId, issueData.id, issueData);
                   await this.updateExistingIssue(
-                    prisma,
+                    db,
                     integrationId,
                     issueData
                   );
@@ -550,7 +550,7 @@ export class SyncService {
             syncedCount += projectSynced;
 
             // Mark project as completed with timestamp (D-08), clear any previous error
-            await prisma.integrationProject.update({
+            await db.integrationProject.update({
               where: { id: integrationProject.id },
               data: {
                 syncStatus: "completed",
@@ -564,7 +564,7 @@ export class SyncService {
               `Project ${integrationProject.externalProjectKey}: ${error.message}`
             );
             try {
-              await prisma.integrationProject.update({
+              await db.integrationProject.update({
                 where: { id: integrationProject.id },
                 data: {
                   syncStatus: "error",
@@ -585,7 +585,7 @@ export class SyncService {
         // This handles integrations that predate the IntegrationProject model or have no projects configured.
 
         // Get total count of issues to sync
-        const totalIssues = await prisma.issue.count({
+        const totalIssues = await db.issue.count({
           where: {
             integrationId,
             ...(projectId && { projectId: parseInt(projectId) }),
@@ -598,7 +598,7 @@ export class SyncService {
 
         while (processedCount < totalIssues) {
           // Fetch a batch of issues
-          const localIssues = await prisma.issue.findMany({
+          const localIssues = await db.issue.findMany({
             where: {
               integrationId,
               ...(projectId && { projectId: parseInt(projectId) }),
@@ -652,7 +652,7 @@ export class SyncService {
               await issueCache.set(integrationId, issueData.id, issueData);
 
               // Update local database
-              await this.updateExistingIssue(prisma, integrationId, issueData);
+              await this.updateExistingIssue(db, integrationId, issueData);
               syncedCount++;
             } catch (error: any) {
               errors.push(
@@ -778,13 +778,13 @@ export class SyncService {
     serviceOptions: SyncServiceOptions,
     inner: () => Promise<{ success: boolean; error?: string }>
   ): Promise<IssueRefreshResult> {
-    const prisma = serviceOptions.prismaClient || defaultPrisma;
+    const db = serviceOptions.prismaClient || defaultDb;
     const minFreshnessSeconds = serviceOptions.minFreshnessSeconds ?? 0;
     try {
       // Freshness gate — read the local `Issue.lastSyncedAt`; if it's
       // within the caller's tolerance, skip the upstream fetch.
       if (minFreshnessSeconds > 0) {
-        const stored = await prisma.issue.findFirst({
+        const stored = await db.issue.findFirst({
           where: {
             integrationId,
             OR: [
@@ -831,10 +831,10 @@ export class SyncService {
     externalIssueId: string,
     serviceOptions: SyncServiceOptions = {}
   ): Promise<{ success: boolean; error?: string }> {
-    const prisma = serviceOptions.prismaClient || defaultPrisma;
+    const db = serviceOptions.prismaClient || defaultDb;
     try {
       // Get user for auth validation
-      const user = await prisma.user.findUnique({
+      const user = await db.user.findUnique({
         where: { id: userId },
         include: {
           role: {
@@ -853,7 +853,7 @@ export class SyncService {
       // and enhance() causes ~3GB memory overhead
 
       // Get the integration
-      const integration = await prisma.integration.findUnique({
+      const integration = await db.integration.findUnique({
         where: { id: integrationId },
         include: {
           userIntegrationAuths: {
@@ -897,7 +897,7 @@ export class SyncService {
       }
 
       return await this._executeSyncWithAdapter(
-        prisma,
+        db,
         integration,
         externalIssueId
       );
@@ -929,9 +929,9 @@ export class SyncService {
     externalIssueId: string,
     serviceOptions: SyncServiceOptions = {}
   ): Promise<{ success: boolean; error?: string }> {
-    const prisma = serviceOptions.prismaClient || defaultPrisma;
+    const db = serviceOptions.prismaClient || defaultDb;
     try {
-      const integration = await prisma.integration.findUnique({
+      const integration = await db.integration.findUnique({
         where: { id: integrationId },
         include: {
           userIntegrationAuths: {
@@ -973,7 +973,7 @@ export class SyncService {
       }
 
       return await this._executeSyncWithAdapter(
-        prisma,
+        db,
         integration,
         externalIssueId,
         serviceOptions.createIfMissing
@@ -994,7 +994,7 @@ export class SyncService {
    * updates the Redis cache, and writes the local Issue row.
    */
   private async _executeSyncWithAdapter(
-    prisma: DbClient,
+    db: DbClient,
     integration: { id: number; provider: string },
     externalIssueId: string,
     createIfMissing?: { projectId: number }
@@ -1003,7 +1003,7 @@ export class SyncService {
 
     const adapter = await integrationManager.getAdapter(
       String(integrationId),
-      prisma
+      db
     );
 
     if (!adapter) {
@@ -1026,7 +1026,7 @@ export class SyncService {
     let issueIdForSync = externalIssueId;
     if (integration.provider === "GITHUB") {
       issueIdForSync = await this._resolveGitHubIssueIdForSync(
-        prisma,
+        db,
         integrationId,
         externalIssueId
       );
@@ -1038,7 +1038,7 @@ export class SyncService {
     // Find existing local issue. The lookup OR-set covers historical
     // mismatches between externalId / externalKey storage conventions —
     // matches `updateExistingIssue`'s behaviour exactly.
-    const existingIssue = await prisma.issue.findFirst({
+    const existingIssue = await db.issue.findFirst({
       where: {
         integrationId,
         OR: [
@@ -1051,7 +1051,7 @@ export class SyncService {
     });
 
     if (existingIssue) {
-      await this.updateExistingIssue(prisma, integrationId, issueData);
+      await this.updateExistingIssue(db, integrationId, issueData);
       return { success: true };
     }
 
@@ -1059,7 +1059,7 @@ export class SyncService {
     // (inbound webhook handler does, manual sync button does not).
     if (createIfMissing) {
       await this._createIssueFromExternal(
-        prisma,
+        db,
         integrationId,
         createIfMissing.projectId,
         issueData
@@ -1078,7 +1078,7 @@ export class SyncService {
    * receivers always pass it that way via `extractLinkedIssueRef`).
    */
   private async _resolveGitHubIssueIdForSync(
-    prisma: DbClient,
+    db: DbClient,
     integrationId: number,
     externalIssueId: string
   ): Promise<string> {
@@ -1091,7 +1091,7 @@ export class SyncService {
     // Fall back to the legacy lookup path: find a stored Issue and harvest
     // owner/repo from its externalData or externalUrl. Used by manual sync
     // when the caller has only the bare issue number/key.
-    const storedIssue = await prisma.issue.findFirst({
+    const storedIssue = await db.issue.findFirst({
       where: {
         integrationId,
         OR: [{ externalId: externalIssueId }, { externalKey: externalIssueId }],
@@ -1328,14 +1328,14 @@ export class SyncService {
     // for webhookEvents.emit). Best-effort: a failure here must not roll
     // back the sync — wrap in try/catch.
     try {
-      const updatedIssue = await defaultPrisma.issue.findUnique({
+      const updatedIssue = await defaultDb.issue.findUnique({
         where: { id: existingIssue.id },
       });
       if (updatedIssue && updatedIssue.projectId != null) {
-        const { prisma: extendedPrisma } = await import("@/lib/prisma");
+        const { baseDb: extendedDb } = await import("@/lib/db");
         const { emitIssueUpdated } =
           await import("~/lib/webhooks/event-emitters/issueEvents");
-        await extendedPrisma.$transaction(async (tx) => {
+        await extendedDb.$transaction(async (tx) => {
           await emitIssueUpdated(existingIssue as any, updatedIssue as any, tx);
         });
       }

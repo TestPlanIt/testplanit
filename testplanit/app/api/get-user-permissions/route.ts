@@ -4,7 +4,7 @@ import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
 import type { Roles } from "~/zenstack/models";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 
 // Define the input schema using Zod
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
 
   try {
     // 1. Fetch all necessary data in parallel (or sequentially if dependencies exist)
-    const userPromise = prisma.user.findUnique({
+    const userPromise = baseDb.user.findUnique({
       where: { id: userId },
       include: {
         role: { include: { rolePermissions: true } }, // Include global role and its permissions
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const projectPromise = prisma.projects.findUnique({
+    const projectPromise = baseDb.projects.findUnique({
       where: { id: projectId },
       include: {
         defaultRole: { include: { rolePermissions: true } }, // Include project default role and permissions
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     });
 
     const userProjectPermissionPromise =
-      prisma.userProjectPermission.findUnique({
+      baseDb.userProjectPermission.findUnique({
         where: { userId_projectId: { userId, projectId } },
         include: {
           role: { include: { rolePermissions: true } }, // Include specific role if assigned
@@ -158,7 +158,7 @@ export async function POST(request: Request) {
     // --- Group Permissions (if not decided by user-specific) ---
     if (!accessDenied && !effectiveRole && user.groups.length > 0) {
       const groupIds = user.groups.map((g) => g.groupId);
-      const groupPermissions = await prisma.groupProjectPermission.findMany({
+      const groupPermissions = await baseDb.groupProjectPermission.findMany({
         where: {
           projectId: projectId,
           groupId: { in: groupIds },

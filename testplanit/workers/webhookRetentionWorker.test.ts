@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * webhook retention worker unit tests.
  *
  * TDD RED scaffold. Mocks:
- * - prisma.$executeRaw — driven per-table via mockImplementationOnce chains
+ * - baseDb.$executeRaw — driven per-table via mockImplementationOnce chains
  * so we can simulate the LIMIT 1000 batch loop (n, n,..., 0).
  * - captureAuditEvent — assert exactly ONE call per purgeOnce() with the
  * totals + durationMs metadata.
@@ -21,8 +21,8 @@ const mockGetAllTenantIds = vi.fn();
 const mockGetTenantPrismaClient = vi.fn();
 const mockDisconnectAllTenantClients = vi.fn();
 
-vi.mock("../lib/prisma", () => ({
-  prisma: {
+vi.mock("../lib/db", () => ({
+  baseDb: {
     $executeRaw: (...args: unknown[]) => mockExecuteRaw(...args),
   },
 }));
@@ -31,10 +31,10 @@ vi.mock("../lib/services/auditLog", () => ({
   captureAuditEvent: (...args: unknown[]) => mockCaptureAuditEvent(...args),
 }));
 
-vi.mock("../lib/multiTenantPrisma", () => ({
+vi.mock("../lib/multiTenantDb", () => ({
   isMultiTenantMode: () => mockIsMultiTenantMode(),
   getAllTenantIds: () => mockGetAllTenantIds(),
-  getTenantPrismaClient: (tenantId: string) =>
+  getTenantDbClient: (tenantId: string) =>
     mockGetTenantPrismaClient(tenantId),
   disconnectAllTenantClients: () => mockDisconnectAllTenantClients(),
 }));

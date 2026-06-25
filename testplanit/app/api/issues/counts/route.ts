@@ -1,7 +1,7 @@
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export async function POST(request: Request) {
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
           testRunStepResultsCount,
         ] = await Promise.all([
           // Repository cases
-          prisma.repositoryCases.count({
+          baseDb.repositoryCases.count({
             where: {
               isDeleted: false,
               caseIssues: { some: { issue: { id: issueId } } },
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
             },
           }),
           // Sessions - direct
-          prisma.sessions.count({
+          baseDb.sessions.count({
             where: {
               isDeleted: false,
               issues: { some: { id: issueId } },
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
             },
           }),
           // Sessions - from session results
-          prisma.sessionResults
+          baseDb.sessionResults
             .groupBy({
               by: ["sessionId"],
               where: {
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
             })
             .then((results) => results.length),
           // Test runs - direct
-          prisma.testRuns.count({
+          baseDb.testRuns.count({
             where: {
               isDeleted: false,
               issues: { some: { id: issueId } },
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
             },
           }),
           // Test runs - from test run results
-          prisma.testRunResults
+          baseDb.testRunResults
             .groupBy({
               by: ["testRunId"],
               where: {
@@ -155,7 +155,7 @@ export async function POST(request: Request) {
             })
             .then((results) => results.length),
           // Test runs - from test run step results
-          prisma.testRunStepResults.findMany({
+          baseDb.testRunStepResults.findMany({
             where: {
               issues: {
                 some: {
@@ -187,7 +187,7 @@ export async function POST(request: Request) {
         let stepResultsTestRunsCount = 0;
         if (uniqueTestRunResultIds.length > 0) {
           // Fetch the test runs for these results
-          const testRunResults = await prisma.testRunResults.findMany({
+          const testRunResults = await baseDb.testRunResults.findMany({
             where: {
               id: { in: uniqueTestRunResultIds },
             },

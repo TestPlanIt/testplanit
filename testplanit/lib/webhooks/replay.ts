@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { DbClient, TxClient } from "~/lib/zenstack";
 
-import { prisma as defaultPrisma } from "~/lib/prisma";
+import { baseDb as defaultPrisma } from "~/lib/db";
 import { getWebhookDispatchQueue } from "~/lib/queues";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 
@@ -46,10 +46,10 @@ export type ReplayResult =
 export async function replayDelivery(
   originalDeliveryId: string,
   opts: ReplayOptions,
-  prisma: DbClient | TxClient = defaultPrisma
+  baseDb: DbClient | TxClient = defaultPrisma
 ): Promise<ReplayResult> {
   // 1. Load the original delivery row + projectId from the related WebhookConfig.
-  const delivery = await prisma.webhookDelivery.findUnique({
+  const delivery = await baseDb.webhookDelivery.findUnique({
     where: { id: originalDeliveryId },
     select: {
       id: true,
@@ -90,7 +90,7 @@ export async function replayDelivery(
     return { outcome: "rejected", reason: "outbox_purged" };
   }
 
-  const outbox = await prisma.webhookOutboxEvent.findUnique({
+  const outbox = await baseDb.webhookOutboxEvent.findUnique({
     where: { eventId: delivery.eventId },
     select: { id: true, payload: true, eventName: true },
   });
@@ -156,7 +156,7 @@ export interface BulkReplayResult {
 export async function bulkReplayDeliveries(
   deliveryIds: string[],
   opts: Omit<ReplayOptions, "source" | "batchId">,
-  prisma: DbClient | TxClient = defaultPrisma
+  baseDb: DbClient | TxClient = defaultPrisma
 ): Promise<BulkReplayResult> {
   if (deliveryIds.length > BULK_REPLAY_HARD_CAP) {
     return { outcome: "rejected", reason: "exceeds_cap" };
@@ -168,7 +168,7 @@ export async function bulkReplayDeliveries(
     const r = await replayDelivery(
       id,
       { ...opts, source: "bulk", batchId },
-      prisma
+      baseDb
     );
     if (r.outcome === "queued") {
       enqueuedCount += 1;

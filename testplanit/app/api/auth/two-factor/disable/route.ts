@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { decryptSecret, verifyBackupCode, verifyTOTP } from "~/lib/two-factor";
 import { authOptions } from "~/server/auth";
 
@@ -18,7 +18,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     // Check if system settings require 2FA
-    const registrationSettings = await prisma.registrationSettings.findFirst();
+    const registrationSettings = await baseDb.registrationSettings.findFirst();
     if (
       registrationSettings?.force2FAAllLogins ||
       registrationSettings?.force2FANonSSO
@@ -42,7 +42,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       );
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       select: {
         twoFactorEnabled: true,
@@ -85,7 +85,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     // Disable 2FA and clear all related data
-    await prisma.user.update({
+    await baseDb.user.update({
       where: { id: session.user.id },
       data: {
         twoFactorEnabled: false,

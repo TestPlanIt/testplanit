@@ -2,11 +2,11 @@ import { Job, Worker } from "bullmq";
 
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { ITERATION_GENERATION_QUEUE_NAME } from "../lib/queueNames";
 import { materializeIterations } from "../lib/services/iterationFanOut";
 import { withTenantContext } from "../lib/tenantContext";
@@ -51,7 +51,7 @@ export const processor = async (
   // Validate multi-tenant context. Throws if missing in multi-tenant mode.
   validateMultiTenantJobData(job.data);
 
-  const prisma = getPrismaClientForJob(job.data);
+  const prisma = getDbClientForJob(job.data);
 
   // Initial progress so the polling endpoint sees something other than
   // an empty progress object on the very first read.

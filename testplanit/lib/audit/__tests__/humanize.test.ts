@@ -8,7 +8,7 @@
  *
  * Gating: the cache-behavior assertions are pure unit (plain `describe`) and inject a spy lookup
  * so no DB is needed to prove the cache hit/miss/refetch contract. The optional `describeDb` block
- * exercises the real prismaBase lookup and copies the captureMatrix.test.ts RUN_DB_INTEGRATION gate
+ * exercises the real rawDb lookup and copies the captureMatrix.test.ts RUN_DB_INTEGRATION gate
  * verbatim, so it skips cleanly in the unit lane. The not-yet-existing `~/lib/audit/humanize`
  * module is imported via a runtime-built specifier + /* @vite-ignore *​/ so Vite cannot resolve it
  * at transform time (keeps the suite RED rather than failing to load).
@@ -141,7 +141,7 @@ describe("humanize (COR-03) — FK → display name with TTL cache", () => {
   });
 });
 
-describeDb("humanize (COR-03) — live prismaBase catalog lookup", () => {
+describeDb("humanize (COR-03) — live rawDb catalog lookup", () => {
   it("resolves a seeded CaseFields.id to its displayName via the real lookup", async () => {
     const { Client } = await import("pg");
     const direct = new Client({ connectionString: DIRECT_URL });
@@ -167,18 +167,18 @@ describeDb("humanize (COR-03) — live prismaBase catalog lookup", () => {
       const fieldId = ins.rows[0].id as number;
 
       const humanizeModSpecifier = "~/lib/audit/humanize";
-      const prismaModSpecifier = "~/lib/prismaBase";
+      const prismaModSpecifier = "~/lib/rawDb";
       const { createHumanizeCache } = (await import(
         /* @vite-ignore */ humanizeModSpecifier
       )) as HumanizeModule;
-      // lib/prismaBase exports the base (extension-free) client as `prisma`.
-      const { prisma: prismaBase } = (await import(
+      // lib/rawDb exports the base (extension-free) client as `rawDb`.
+      const { rawDb: rawDb } = (await import(
         /* @vite-ignore */ prismaModSpecifier
-      )) as { prisma: any };
+      )) as { rawDb: any };
 
-      // The real lookup hits prismaBase; assert it round-trips the seeded displayName.
+      // The real lookup hits rawDb; assert it round-trips the seeded displayName.
       const lookup: LookupFn = async (table, field, id) => {
-        const row = await prismaBase.caseFields.findUnique({
+        const row = await rawDb.caseFields.findUnique({
           where: { id: Number(id) },
           select: { displayName: true },
         });

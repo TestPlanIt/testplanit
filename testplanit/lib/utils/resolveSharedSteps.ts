@@ -1,4 +1,4 @@
-import { prisma as defaultPrisma } from "../prismaBase";
+import { rawDb as defaultDb } from "../rawDb";
 
 /**
  * Minimal shape required for a step to be resolved.
@@ -30,7 +30,7 @@ export interface StepWithSharedRef {
 export async function resolveSharedSteps<
   T extends { steps?: StepWithSharedRef[] },
 >(cases: T[], prismaClient?: any): Promise<T[]> {
-  const prisma = prismaClient ?? defaultPrisma;
+  const rawDb = prismaClient ?? defaultDb;
   // Collect all unique sharedStepGroupIds across all cases
   const sharedGroupIds = new Set<number>();
   for (const c of cases) {
@@ -47,7 +47,7 @@ export async function resolveSharedSteps<
   }
 
   // Batch-fetch all shared step items for the referenced groups
-  const sharedItems = await prisma.sharedStepItem.findMany({
+  const sharedItems = await rawDb.sharedStepItem.findMany({
     where: {
       sharedStepGroupId: { in: [...sharedGroupIds] },
       sharedStepGroup: { isDeleted: false },

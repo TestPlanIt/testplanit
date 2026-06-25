@@ -42,8 +42,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: mockPrisma,
+vi.mock("~/lib/db", () => ({
+  baseDb: mockPrisma,
 }));
 
 vi.mock("~/lib/two-factor", () => ({

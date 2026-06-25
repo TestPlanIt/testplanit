@@ -6,9 +6,9 @@ const { mockProjects, mockUser } = vi.hoisted(() => ({
   mockUser: { findMany: vi.fn() },
 }));
 
-// Mock the prisma singleton
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+// Mock the baseDb singleton
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projects: mockProjects,
     user: mockUser,
   },

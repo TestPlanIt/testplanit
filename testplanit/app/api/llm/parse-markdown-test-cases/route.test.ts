@@ -42,8 +42,8 @@ vi.mock("@/lib/llm/services/prompt-resolver.service", () => ({
   },
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     projects: {
       findFirst: (...args: any[]) => mockPrismaProjectsFindFirst(...args),
     },

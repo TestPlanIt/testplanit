@@ -54,13 +54,13 @@ export class CommentService {
       return [];
     }
 
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
     const { buildProjectAccessWhere } = await import("~/lib/project-access");
 
     // Fetch the mentioned user records — `access` is the Access enum
     // (ADMIN / PROJECTADMIN / USER / NONE) used to gate the project
     // access check below.
-    const mentionedUsers = await prisma.user.findMany({
+    const mentionedUsers = await baseDb.user.findMany({
       where: {
         id: { in: usersToNotify },
         isActive: true,
@@ -89,7 +89,7 @@ export class CommentService {
     const accessByUserId = new Map<string, boolean>();
     await Promise.all(
       mentionedUsers.map(async (user) => {
-        const hit = await prisma.projects.findFirst({
+        const hit = await baseDb.projects.findFirst({
           where: buildProjectAccessWhere(
             projectId,
             user.id,

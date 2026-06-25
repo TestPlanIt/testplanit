@@ -11,9 +11,9 @@ vi.mock("./getProjectEffectiveMembers", () => ({
 const mockFindMany = vi.fn();
 const mockCount = vi.fn();
 
-// Mock the prisma singleton
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+// Mock the baseDb singleton
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       findMany: (...args: any[]) => mockFindMany(...args),
       count: (...args: any[]) => mockCount(...args),

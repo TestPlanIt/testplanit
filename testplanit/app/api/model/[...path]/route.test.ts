@@ -32,7 +32,7 @@ vi.mock("~/lib/auditContextWrappers", () => ({
     handler,
 }));
 
-vi.mock("~/lib/prisma", () => {
+vi.mock("~/lib/db", () => {
   const prismaStub: any = {
     user: {
       findUnique: vi.fn(),
@@ -42,7 +42,7 @@ vi.mock("~/lib/prisma", () => {
       update: vi.fn(),
     },
     // The auto-API CR-04 mitigation wraps the gate + consumedAt stamp in
-    // `prisma.$transaction(...)` with Serializable isolation. The
+    // `baseDb.$transaction(...)` with Serializable isolation. The
     // reviewGate service module is mocked above so the inner call resolves
     // without actually hitting the tx; we just need $transaction to invoke
     // the callback with a tx-like proxy that exposes the same
@@ -64,10 +64,10 @@ vi.mock("~/lib/prisma", () => {
       })
     ),
   };
-  return { prisma: prismaStub };
+  return { baseDb: prismaStub };
 });
 
-vi.mock("~/lib/multiTenantPrisma", () => ({
+vi.mock("~/lib/multiTenantDb", () => ({
   getCurrentTenantId: vi.fn(() => undefined),
 }));
 
@@ -472,7 +472,7 @@ describe("ZenStack API Route Audit Interception", () => {
       expect(
         extractEntityName("comment", { id: 1, content: "Test comment" })
       ).toBeUndefined();
-      // Attachments audit solely via the dedicated lib/prisma.ts hook, so the
+      // Attachments audit solely via the dedicated lib/baseDb.ts hook, so the
       // RPC shim has no name mapping for them (real accessor is `attachments`).
       expect(
         extractEntityName("attachments", { id: 1, filename: "test.pdf" })
@@ -856,7 +856,7 @@ describe("ZenStack API Route Audit Interception", () => {
 // Task 4: route-level mode:read enforcement at the ZenStack chokepoint.
 // Verifies that innerHandler calls authenticateApiTokenForMethod (NOT the
 // bare authenticateApiToken) and that READ_ONLY_TOKEN errors short-circuit
-// before any prisma/baseHandler call. Empty-scopes tokens still pass through.
+// before any baseDb/baseHandler call. Empty-scopes tokens still pass through.
 // ─────────────────────────────────────────────────────────────────────────────
 describe("ZenStack chokepoint mode:read enforcement", () => {
   function makeRequest(
@@ -905,7 +905,7 @@ describe("ZenStack chokepoint mode:read enforcement", () => {
       error: "Token is read-only; write operations are not permitted.",
       errorCode: "READ_ONLY_TOKEN",
     });
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
     const { POST } = await importRoute();
 
     const req = makeRequest("POST");
@@ -924,8 +924,8 @@ describe("ZenStack chokepoint mode:read enforcement", () => {
     expect(authenticateApiTokenForMethod).toHaveBeenCalledWith(req);
     // No mutation reached the underlying ZenStack handler.
     expect(baseHandlerMock).not.toHaveBeenCalled();
-    // No prisma write touched.
-    expect((prisma as any).apiToken.update).not.toHaveBeenCalled();
+    // No baseDb write touched.
+    expect((baseDb as any).apiToken.update).not.toHaveBeenCalled();
   });
 
   it("allows POST through to ZenStack handler when token has empty scopes (TOK-06 regression)", async () => {
@@ -937,8 +937,8 @@ describe("ZenStack chokepoint mode:read enforcement", () => {
       access: "USER",
       scopes: [],
     });
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).user.findUnique.mockResolvedValue({
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
       id: "user-123",
       email: "u@e.com",
       name: "U",
@@ -965,8 +965,8 @@ describe("ZenStack chokepoint mode:read enforcement", () => {
       access: "USER",
       scopes: ["mode:read"],
     });
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).user.findUnique.mockResolvedValue({
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
       id: "user-123",
       email: "u@e.com",
       name: "U",
@@ -1041,8 +1041,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
     });
     const { extractBearerToken } = await import("~/lib/api-token-auth");
     (extractBearerToken as any).mockReturnValue(null);
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).user.findUnique.mockResolvedValue({
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
       id: "user-1",
       email: "u@e.com",
       name: "U",
@@ -1446,8 +1446,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
       approvedRequestIds: ["approval-1"],
     });
 
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).reviewRequest.updateMany.mockResolvedValue({ count: 1 });
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).reviewRequest.updateMany.mockResolvedValue({ count: 1 });
 
     const { PATCH } = await import("./route");
     const req = makeUpdateRequest({
@@ -1459,7 +1459,7 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
     });
 
     expect(res.status).toBe(200);
-    expect((prisma as any).reviewRequest.updateMany).toHaveBeenCalledWith({
+    expect((baseDb as any).reviewRequest.updateMany).toHaveBeenCalledWith({
       where: { id: { in: ["approval-1"] }, consumedAt: null },
       data: { consumedAt: expect.any(Date) },
     });
@@ -1473,11 +1473,11 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
       approvedRequestIds: ["approval-2"],
     });
 
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
     // Another caller consumed this approval first — our stamp comes back
     // with count: 0 and we must surface as REVIEW_REQUIRED instead of
     // handing off to ZenStack.
-    (prisma as any).reviewRequest.updateMany.mockResolvedValue({ count: 0 });
+    (baseDb as any).reviewRequest.updateMany.mockResolvedValue({ count: 0 });
 
     const { PATCH } = await import("./route");
     const req = makeUpdateRequest({
@@ -1506,7 +1506,7 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
       await import("~/lib/services/reviewGate");
     (assertReviewGatePasses as any).mockResolvedValue(null);
 
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
 
     const { PATCH } = await import("./route");
     const req = makeUpdateRequest({
@@ -1518,7 +1518,7 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
     });
 
     expect(res.status).toBe(200);
-    expect((prisma as any).reviewRequest.updateMany).not.toHaveBeenCalled();
+    expect((baseDb as any).reviewRequest.updateMany).not.toHaveBeenCalled();
     expect(baseHandlerMock).toHaveBeenCalled();
   });
 });
@@ -1567,8 +1567,8 @@ describe("ZenStack chokepoint SessionResults required-field gate", () => {
       access: "USER",
       scopes: [],
     });
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).user.findUnique.mockResolvedValue({
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
       id: "user-1",
       email: "u@e.com",
       name: "U",
@@ -1581,8 +1581,8 @@ describe("ZenStack chokepoint SessionResults required-field gate", () => {
 
   function mockSessionLookup(templateId: number) {
     return async () => {
-      const { prisma } = await import("~/lib/prisma");
-      (prisma as any).sessions = {
+      const { baseDb } = await import("~/lib/db");
+      (baseDb as any).sessions = {
         findUnique: vi.fn().mockResolvedValue({ templateId }),
       };
     };
@@ -1592,8 +1592,8 @@ describe("ZenStack chokepoint SessionResults required-field gate", () => {
     requiredFieldIds: number[]
   ): () => Promise<void> {
     return async () => {
-      const { prisma } = await import("~/lib/prisma");
-      (prisma as any).templateResultAssignment = {
+      const { baseDb } = await import("~/lib/db");
+      (baseDb as any).templateResultAssignment = {
         findMany: vi
           .fn()
           .mockResolvedValue(
@@ -1798,8 +1798,8 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
     });
     const { extractBearerToken } = await import("~/lib/api-token-auth");
     (extractBearerToken as any).mockReturnValue(null);
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).user.findUnique.mockResolvedValue({
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
       id: "user-1",
       email: "u@e.com",
       name: "U",
@@ -1810,8 +1810,8 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
   });
 
   it("records the changed fields for a real UPDATE", async () => {
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).userProjectPermission = {
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).userProjectPermission = {
       findUnique: vi
         .fn()
         .mockResolvedValueOnce({ id: 1, accessType: "READ" }) // pre-snapshot
@@ -1837,8 +1837,8 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
   });
 
   it("suppresses a no-op UPDATE (empty diff) instead of logging an empty row", async () => {
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).userProjectPermission = {
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).userProjectPermission = {
       findUnique: vi
         .fn()
         .mockResolvedValueOnce({ id: 1, accessType: "READ" }) // pre-snapshot
@@ -1857,8 +1857,8 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
   });
 
   it("diffs a BigInt column on UPDATE without throwing it away", async () => {
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).userProjectPermission = {
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).userProjectPermission = {
       findUnique: vi
         .fn()
         .mockResolvedValueOnce({ id: 1, quota: 100n })
@@ -1883,8 +1883,8 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
   });
 
   it("records created field values for a CREATE", async () => {
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).userProjectPermission = { findUnique: vi.fn() };
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).userProjectPermission = { findUnique: vi.fn() };
 
     const res = await run(
       "userProjectPermission",
@@ -1903,8 +1903,8 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
   });
 
   it("emits SSO_CONFIG_CHANGED named from the provider name on an ssoProvider write", async () => {
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).ssoProvider = { findUnique: vi.fn() };
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).ssoProvider = { findUnique: vi.fn() };
 
     const res = await run(
       "ssoProvider",
@@ -1925,8 +1925,8 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
   });
 
   it("emits SYSTEM_CONFIG_CHANGED on an appConfig write", async () => {
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).appConfig = { findUnique: vi.fn() };
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).appConfig = { findUnique: vi.fn() };
 
     const res = await run(
       "appConfig",
@@ -1947,8 +1947,8 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
   });
 
   it("captures the removed row's values on a hard DELETE (where from ?q=)", async () => {
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).userProjectPermission = {
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).userProjectPermission = {
       findUnique: vi.fn().mockResolvedValueOnce({ id: 1, accessType: "WRITE" }),
     };
 
@@ -1961,7 +1961,7 @@ describe("ZenStack chokepoint audit before/after diff capture", () => {
 
     expect(res.status).toBe(200);
     expect(
-      (prisma as any).userProjectPermission.findUnique
+      (baseDb as any).userProjectPermission.findUnique
     ).toHaveBeenCalledWith({
       where: { id: 1 },
     });
@@ -2021,8 +2021,8 @@ describe("ZenStack chokepoint SamlConfiguration cert normalization", () => {
     });
     const { extractBearerToken } = await import("~/lib/api-token-auth");
     (extractBearerToken as any).mockReturnValue(null);
-    const { prisma } = await import("~/lib/prisma");
-    (prisma as any).user.findUnique.mockResolvedValue({
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
       id: "user-1",
       email: "u@e.com",
       name: "U",
@@ -2031,7 +2031,7 @@ describe("ZenStack chokepoint SamlConfiguration cert normalization", () => {
     // The audited-update path takes a best-effort before/after snapshot of the
     // row; stub it so the test output stays clean (the value is irrelevant to
     // the cert-normalization assertions).
-    (prisma as any).samlConfiguration = {
+    (baseDb as any).samlConfiguration = {
       findUnique: vi.fn().mockResolvedValue(null),
     };
     baseHandlerMock.mockClear();

@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mocks for every prisma delegate the action touches. Tests build per-case
+// Mocks for every baseDb delegate the action touches. Tests build per-case
 // resolved values so each one isolates a single eligibility path.
 const mockRolesFindMany = vi.fn();
 const mockUserProjectPermissionFindMany = vi.fn();
 const mockGroupProjectPermissionFindMany = vi.fn();
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     roles: {
       findMany: (...args: unknown[]) => mockRolesFindMany(...args),
     },

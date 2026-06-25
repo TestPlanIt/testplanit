@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authenticateRequest } from "~/lib/api-token-auth";
@@ -109,7 +109,7 @@ export async function handleExecutionLogPOST(
     ];
 
     const [rawResults, total, rawStatusBreakdown] = await Promise.all([
-      prisma.testRunResults.findMany({
+      baseDb.testRunResults.findMany({
         where,
         select: {
           id: true,
@@ -158,8 +158,8 @@ export async function handleExecutionLogPOST(
         skip,
         take: pageSizeNum,
       }),
-      prisma.testRunResults.count({ where }),
-      prisma.testRunResults.groupBy({
+      baseDb.testRunResults.count({ where }),
+      baseDb.testRunResults.groupBy({
         by: ["statusId"],
         where,
         _count: { id: true },
@@ -167,7 +167,7 @@ export async function handleExecutionLogPOST(
     ]);
 
     const breakdownStatusIds = rawStatusBreakdown.map((s: any) => s.statusId);
-    const breakdownStatuses = await prisma.status.findMany({
+    const breakdownStatuses = await baseDb.status.findMany({
       where: { id: { in: breakdownStatusIds } },
       include: { color: true },
     });
@@ -191,7 +191,7 @@ export async function handleExecutionLogPOST(
 
     const caseSteps: StepRow[] =
       testCaseIds.size > 0
-        ? ((await prisma.steps.findMany({
+        ? ((await baseDb.steps.findMany({
             where: {
               testCaseId: { in: [...testCaseIds] },
               isDeleted: false,
@@ -215,7 +215,7 @@ export async function handleExecutionLogPOST(
 
     const [sharedItems, sharedGroups] = await Promise.all([
       sharedGroupIds.size > 0
-        ? (prisma.sharedStepItem.findMany({
+        ? (baseDb.sharedStepItem.findMany({
             where: { sharedStepGroupId: { in: [...sharedGroupIds] } },
             select: {
               id: true,
@@ -228,7 +228,7 @@ export async function handleExecutionLogPOST(
           }) as Promise<SharedItemRow[]>)
         : Promise.resolve<SharedItemRow[]>([]),
       sharedGroupIds.size > 0
-        ? prisma.sharedStepGroup.findMany({
+        ? baseDb.sharedStepGroup.findMany({
             where: { id: { in: [...sharedGroupIds] } },
             select: { id: true, name: true },
           })

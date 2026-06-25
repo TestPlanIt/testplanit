@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * webhook handlers and any other path that has no user session.
  *
  * Differences from the user-context `performIssueRefresh` exercised here:
- *   • No `userId` parameter, no `prisma.user.findUnique` lookup.
+ *   • No `userId` parameter, no `rawDb.user.findUnique` lookup.
  *   • OAUTH2 integrations are rejected (user-tied tokens).
  *   • Auth check collapses to "Integration.credentials present?".
  *
@@ -24,8 +24,8 @@ const mockIntegrationFindUnique = vi.fn();
 const mockUserFindUnique = vi.fn();
 const mockProjectsFindUnique = vi.fn();
 
-vi.mock("@/lib/prismaBase", () => ({
-  prisma: {
+vi.mock("@/lib/rawDb", () => ({
+  rawDb: {
     issue: {
       findFirst: (...args: any[]) => mockIssueFindFirst(...args),
       findUnique: (...args: any[]) => mockIssueFindUnique(...args),
@@ -67,7 +67,7 @@ vi.mock("~/services/issueSearch", () => ({
   syncIssueToElasticsearch: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../../multiTenantPrisma", () => ({
+vi.mock("../../multiTenantDb", () => ({
   getCurrentTenantId: vi.fn(),
 }));
 

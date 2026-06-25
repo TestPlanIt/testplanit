@@ -10,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => ({
+  baseDb: {
     status: { findMany: vi.fn() },
   },
 }));
@@ -21,7 +21,7 @@ vi.mock("~/utils/drillDownQueryBuilders", () => ({
   getQueryBuilderForMetric: vi.fn(),
 }));
 
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import {
   getModelForMetric,
@@ -74,10 +74,10 @@ describe("POST /api/report-builder/drill-down", () => {
       include: { testRunCase: true },
     }));
 
-    // Inject mockModel by mocking prisma as dynamic
-    (prisma as any).testRunResults = mockModel;
+    // Inject mockModel by mocking baseDb as dynamic
+    (baseDb as any).testRunResults = mockModel;
 
-    (prisma.status.findMany as any).mockResolvedValue([]);
+    (baseDb.status.findMany as any).mockResolvedValue([]);
   });
 
   describe("Authentication", () => {
@@ -181,7 +181,7 @@ describe("POST /api/report-builder/drill-down", () => {
       (getServerSession as any).mockResolvedValue(mockSession);
 
       // Mock: 10 items returned, total is 100
-      const mockModel = (prisma as any).testRunResults;
+      const mockModel = (baseDb as any).testRunResults;
       mockModel.findMany.mockResolvedValue(
         Array.from({ length: 10 }, (_, i) => ({ id: i + 1, testRunCase: null }))
       );
@@ -242,13 +242,13 @@ describe("POST /api/report-builder/drill-down", () => {
     it("includes passRate aggregates when metricId is passRate", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
 
-      const mockModel = (prisma as any).testRunResults;
+      const mockModel = (baseDb as any).testRunResults;
       mockModel.groupBy = vi.fn().mockResolvedValue([
         { statusId: 1, _count: { id: 3 } },
         { statusId: 2, _count: { id: 1 } },
       ]);
 
-      (prisma.status.findMany as any).mockResolvedValue([
+      (baseDb.status.findMany as any).mockResolvedValue([
         { id: 1, name: "Passed", color: { value: "#22c55e" } },
         { id: 2, name: "Failed", color: { value: "#ef4444" } },
       ]);

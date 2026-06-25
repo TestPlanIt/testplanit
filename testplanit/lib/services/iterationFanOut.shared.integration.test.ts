@@ -7,11 +7,11 @@
  * iteration, applies the column→parameter mapping, and writes the
  * snapshot row that the run will use forever after. A regression here
  * surfaces as silent data corruption (wrong values per iteration), so
- * we exercise it against a real prisma.$transaction.
+ * we exercise it against a real baseDb.$transaction.
  *
  * Execution model mirrors `iterationFanOut.integration.test.ts`:
  *   - Skipped by default; opt-in with `RUN_DB_INTEGRATION=1`.
- *   - Each test runs inside a `prisma.$transaction` that is forced to
+ *   - Each test runs inside a `baseDb.$transaction` that is forced to
  *     roll back at the end. The DB is never mutated.
  *   - Lazy-import Prisma so the module stays cheap when skipped.
  */
@@ -28,22 +28,22 @@ describeIntegration(
   "materializeForOneCase shared-dataset branch (live DB)",
   () => {
     const importDeps = async () => {
-      const { prisma } = await import("~/lib/prisma");
+      const { baseDb } = await import("~/lib/db");
       const { materializeForOneCase } = await import("./iterationFanOut");
-      return { prisma, materializeForOneCase };
+      return { baseDb, materializeForOneCase };
     };
 
     const ROLLBACK_SENTINEL = "__SHARED_DATASET_TEST_ROLLBACK__";
 
     async function withRollback<T>(
-      prisma: any,
+      baseDb: any,
       body: (tx: any) => Promise<T>,
       timeoutMs = 60_000
     ): Promise<T> {
       let captured: T | undefined;
       let captureErr: unknown;
       try {
-        await prisma.$transaction(
+        await baseDb.$transaction(
           async (tx: any) => {
             try {
               captured = await body(tx);
@@ -210,14 +210,14 @@ describeIntegration(
 
     afterAll(async () => {
       if (RUN_INTEGRATION && HAS_DB_URL) {
-        const { prisma } = await import("~/lib/prisma");
-        await prisma.$disconnect();
+        const { baseDb } = await import("~/lib/db");
+        await baseDb.$disconnect();
       }
     });
 
     it("owner-only path stays bit-for-bit (PARAM-07): sourceVersionId is null and rowsJson columns are owner columns", async () => {
-      const { prisma, materializeForOneCase } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeForOneCase } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedBaseFixture(tx);
         // Owner dataset with three rows.
         const ownerDs = await tx.dataSet.create({
@@ -288,8 +288,8 @@ describeIntegration(
     });
 
     it("shared assignment with pinned version + mapping: snapshot rows are parameter-keyed and sourceVersionId points to the pinned version", async () => {
-      const { prisma, materializeForOneCase } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeForOneCase } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedBaseFixture(tx);
         const sharedDs = await createSharedDataset(
           tx,
@@ -360,8 +360,8 @@ describeIntegration(
     });
 
     it("follow-latest assignment (pinnedVersionId=null): resolver picks the highest-version row", async () => {
-      const { prisma, materializeForOneCase } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeForOneCase } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedBaseFixture(tx);
         const sharedDs = await createSharedDataset(
           tx,
@@ -418,8 +418,8 @@ describeIntegration(
     });
 
     it("skip sentinel in mapping: dropped columns are absent from the parameter-keyed valuesJson", async () => {
-      const { prisma, materializeForOneCase } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeForOneCase } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedBaseFixture(tx);
         const sharedDs = await createSharedDataset(
           tx,
@@ -469,8 +469,8 @@ describeIntegration(
     });
 
     it("owner + shared on the same case: owner wins (Amendment A); shared assignment is ignored at iteration time", async () => {
-      const { prisma, materializeForOneCase } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeForOneCase } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedBaseFixture(tx);
 
         // Owner dataset (2 rows).
@@ -556,8 +556,8 @@ describeIntegration(
     });
 
     it("cross-project shared assignment is rejected by the resolver (defense-in-depth)", async () => {
-      const { prisma, materializeForOneCase } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeForOneCase } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedBaseFixture(tx);
 
         // Build a SECOND project and a shared dataset that lives in it.
@@ -617,8 +617,8 @@ describeIntegration(
     });
 
     it("no assignment and no owner dataset: snapshot has the canonical no-dataset shape (PARAM-07 unchanged)", async () => {
-      const { prisma, materializeForOneCase } = await importDeps();
-      await withRollback(prisma, async (tx) => {
+      const { baseDb, materializeForOneCase } = await importDeps();
+      await withRollback(baseDb, async (tx) => {
         const fx = await seedBaseFixture(tx);
 
         const result = await materializeForOneCase(

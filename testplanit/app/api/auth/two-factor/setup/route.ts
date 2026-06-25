@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import {
   encryptSecret,
   generateQRCodeDataURL,
@@ -21,7 +21,7 @@ export const GET = withAuditContext(async (_request: NextRequest) => {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       select: { email: true, twoFactorEnabled: true },
     });
@@ -43,7 +43,7 @@ export const GET = withAuditContext(async (_request: NextRequest) => {
 
     // Store the secret temporarily (encrypted) - not enabled yet
     const encryptedSecret = encryptSecret(secret);
-    await prisma.user.update({
+    await baseDb.user.update({
       where: { id: session.user.id },
       data: { twoFactorSecret: encryptedSecret },
     });

@@ -1,7 +1,7 @@
 "use server";
 
 import { ApplicationArea } from "~/zenstack/models";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 /**
  * Resolve the user list that would receive a role-assigned review for a
@@ -41,7 +41,7 @@ export async function getProjectRoleHolders(
     // itself lacks the permission on the supplied area. The tooltip should
     // not advertise holders of a role that cannot decide the review.
     if (options?.requireCanApproveOn) {
-      const perm = await prisma.rolePermission.findUnique({
+      const perm = await baseDb.rolePermission.findUnique({
         where: {
           roleId_area: { roleId, area: options.requireCanApproveOn },
         },
@@ -53,7 +53,7 @@ export async function getProjectRoleHolders(
     const userIds = new Set<string>();
 
     // Direct user assignments: SPECIFIC_ROLE rows whose roleId matches.
-    const specificRoleRows = await prisma.userProjectPermission.findMany({
+    const specificRoleRows = await baseDb.userProjectPermission.findMany({
       where: {
         projectId,
         accessType: "SPECIFIC_ROLE",
@@ -66,7 +66,7 @@ export async function getProjectRoleHolders(
 
     // Direct user assignments: GLOBAL_ROLE rows where the user's own global
     // role matches.
-    const globalRoleRows = await prisma.userProjectPermission.findMany({
+    const globalRoleRows = await baseDb.userProjectPermission.findMany({
       where: {
         projectId,
         accessType: "GLOBAL_ROLE",
@@ -77,7 +77,7 @@ export async function getProjectRoleHolders(
     globalRoleRows.forEach((r) => userIds.add(r.userId));
 
     // Group-based assignments — SPECIFIC_ROLE.
-    const groupSpecific = await prisma.groupProjectPermission.findMany({
+    const groupSpecific = await baseDb.groupProjectPermission.findMany({
       where: { projectId, accessType: "SPECIFIC_ROLE", roleId },
       select: {
         group: {
@@ -95,7 +95,7 @@ export async function getProjectRoleHolders(
     );
 
     // Group-based assignments — GLOBAL_ROLE.
-    const groupGlobal = await prisma.groupProjectPermission.findMany({
+    const groupGlobal = await baseDb.groupProjectPermission.findMany({
       where: { projectId, accessType: "GLOBAL_ROLE" },
       select: {
         group: {
@@ -116,7 +116,7 @@ export async function getProjectRoleHolders(
 
     if (userIds.size === 0) return [];
 
-    const users = await prisma.user.findMany({
+    const users = await baseDb.user.findMany({
       where: { id: { in: Array.from(userIds) } },
       select: { id: true, name: true, image: true },
       orderBy: { name: "asc" },

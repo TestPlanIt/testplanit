@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
 
@@ -154,7 +154,7 @@ export const DELETE = withAuditContext(
         );
       }
 
-      await prisma.$transaction(async (tx) => {
+      await baseDb.$transaction(async (tx) => {
         // Soft-delete the parent dataset; rows are gated everywhere by the
         // parent's `isDeleted` filter, so flipping the row-level flag is
         // unnecessary. DataSetVersion rows are immutable history and

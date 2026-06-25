@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { sql } from "kysely";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
@@ -269,7 +269,7 @@ export async function handleIssueTestCoveragePOST(
       WHERE i."isDeleted" = false
         ${projectFilterSql}
       ORDER BY i.id, rc.id
-    `.execute(prisma.$qb)
+    `.execute(baseDb.$qb)
     ).rows;
 
     // First pass: Calculate issue-level summary metrics

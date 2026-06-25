@@ -18,9 +18,9 @@ import {
 } from "./api-token-auth";
 import { generateApiToken } from "./api-tokens";
 
-// Mock prisma
-vi.mock("./prisma", () => ({
-  prisma: {
+// Mock baseDb
+vi.mock("./db", () => ({
+  baseDb: {
     apiToken: {
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock("./prisma", () => ({
   },
 }));
 
-import { prisma } from "./prisma";
+import { baseDb } from "./db";
 
 describe("API Token Authentication", () => {
   // Set up test secret for HMAC hashing
@@ -49,7 +49,7 @@ describe("API Token Authentication", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default mock: update succeeds
-    (prisma.apiToken.update as any).mockResolvedValue({});
+    (baseDb.apiToken.update as any).mockResolvedValue({});
   });
 
   const createMockRequest = (
@@ -162,7 +162,7 @@ describe("API Token Authentication", () => {
     });
 
     it("returns INVALID_TOKEN error when token not found in database", async () => {
-      (prisma.apiToken.findUnique as any).mockResolvedValue(null);
+      (baseDb.apiToken.findUnique as any).mockResolvedValue(null);
 
       const { plaintext } = createValidToken();
       const request = createMockRequest(`Bearer ${plaintext}`);
@@ -176,7 +176,7 @@ describe("API Token Authentication", () => {
     it("returns INACTIVE_TOKEN error when token is revoked", async () => {
       const { plaintext, hash } = createValidToken();
 
-      (prisma.apiToken.findUnique as any).mockResolvedValue({
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
         id: "token-id",
         token: hash,
         isActive: false,
@@ -204,7 +204,7 @@ describe("API Token Authentication", () => {
       const { plaintext, hash } = createValidToken();
       const expiredDate = new Date(Date.now() - 1000 * 60 * 60); // 1 hour ago
 
-      (prisma.apiToken.findUnique as any).mockResolvedValue({
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
         id: "token-id",
         token: hash,
         isActive: true,
@@ -231,7 +231,7 @@ describe("API Token Authentication", () => {
     it("returns INACTIVE_USER error when user is inactive", async () => {
       const { plaintext, hash } = createValidToken();
 
-      (prisma.apiToken.findUnique as any).mockResolvedValue({
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
         id: "token-id",
         token: hash,
         isActive: true,
@@ -258,7 +258,7 @@ describe("API Token Authentication", () => {
     it("returns INACTIVE_USER error when user is deleted", async () => {
       const { plaintext, hash } = createValidToken();
 
-      (prisma.apiToken.findUnique as any).mockResolvedValue({
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
         id: "token-id",
         token: hash,
         isActive: true,
@@ -285,7 +285,7 @@ describe("API Token Authentication", () => {
     it("returns API_ACCESS_DISABLED error when user has API access disabled", async () => {
       const { plaintext, hash } = createValidToken();
 
-      (prisma.apiToken.findUnique as any).mockResolvedValue({
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
         id: "token-id",
         token: hash,
         isActive: true,
@@ -312,7 +312,7 @@ describe("API Token Authentication", () => {
     it("authenticates successfully with valid active token", async () => {
       const { plaintext, hash } = createValidToken();
 
-      (prisma.apiToken.findUnique as any).mockResolvedValue({
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
         id: "token-id",
         token: hash,
         isActive: true,
@@ -343,7 +343,7 @@ describe("API Token Authentication", () => {
       const { plaintext, hash } = createValidToken();
       const futureDate = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours from now
 
-      (prisma.apiToken.findUnique as any).mockResolvedValue({
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
         id: "token-id",
         token: hash,
         isActive: true,
@@ -368,7 +368,7 @@ describe("API Token Authentication", () => {
     it("updates lastUsedAt timestamp on successful auth", async () => {
       const { plaintext, hash } = createValidToken();
 
-      (prisma.apiToken.findUnique as any).mockResolvedValue({
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
         id: "token-id-123",
         token: hash,
         isActive: true,
@@ -397,7 +397,7 @@ describe("API Token Authentication", () => {
       // Give time for async update
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(prisma.apiToken.update).toHaveBeenCalledWith({
+      expect(baseDb.apiToken.update).toHaveBeenCalledWith({
         where: { id: "token-id-123" },
         data: {
           lastUsedAt: expect.any(Date),
@@ -409,7 +409,7 @@ describe("API Token Authentication", () => {
     it("uses x-real-ip header when x-forwarded-for is not available", async () => {
       const { plaintext, hash } = createValidToken();
 
-      (prisma.apiToken.findUnique as any).mockResolvedValue({
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
         id: "token-id-123",
         token: hash,
         isActive: true,
@@ -437,7 +437,7 @@ describe("API Token Authentication", () => {
 
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(prisma.apiToken.update).toHaveBeenCalledWith({
+      expect(baseDb.apiToken.update).toHaveBeenCalledWith({
         where: { id: "token-id-123" },
         data: {
           lastUsedAt: expect.any(Date),
@@ -449,7 +449,7 @@ describe("API Token Authentication", () => {
     it("uses 'unknown' when no IP headers are present", async () => {
       const { plaintext, hash } = createValidToken();
 
-      (prisma.apiToken.findUnique as any).mockResolvedValue({
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
         id: "token-id-123",
         token: hash,
         isActive: true,
@@ -470,7 +470,7 @@ describe("API Token Authentication", () => {
 
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(prisma.apiToken.update).toHaveBeenCalledWith({
+      expect(baseDb.apiToken.update).toHaveBeenCalledWith({
         where: { id: "token-id-123" },
         data: {
           lastUsedAt: expect.any(Date),
@@ -482,7 +482,7 @@ describe("API Token Authentication", () => {
     it("continues authentication even if lastUsedAt update fails", async () => {
       const { plaintext, hash } = createValidToken();
 
-      (prisma.apiToken.findUnique as any).mockResolvedValue({
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
         id: "token-id",
         token: hash,
         isActive: true,
@@ -499,7 +499,7 @@ describe("API Token Authentication", () => {
       });
 
       // Make update fail
-      (prisma.apiToken.update as any).mockRejectedValue(new Error("DB error"));
+      (baseDb.apiToken.update as any).mockRejectedValue(new Error("DB error"));
 
       const request = createMockRequest(`Bearer ${plaintext}`);
       const result = await authenticateApiToken(request);
@@ -547,7 +547,7 @@ describe("API Token Authentication", () => {
 
     function mockUserToken(scopes: string[]) {
       const { plaintext, hash } = createValidToken();
-      (prisma.apiToken.findUnique as any).mockResolvedValue({
+      (baseDb.apiToken.findUnique as any).mockResolvedValue({
         id: "token-id",
         token: hash,
         isActive: true,
@@ -643,7 +643,7 @@ describe("API Token Authentication", () => {
 
     it("bubbles up INVALID_TOKEN without downgrading to READ_ONLY_TOKEN (T-05-01)", async () => {
       // Underlying token lookup fails — must not be masked as read-only.
-      (prisma.apiToken.findUnique as any).mockResolvedValue(null);
+      (baseDb.apiToken.findUnique as any).mockResolvedValue(null);
 
       const { plaintext } = createValidToken();
       const request = createMockRequest(`Bearer ${plaintext}`, "POST");

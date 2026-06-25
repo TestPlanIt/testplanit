@@ -13,7 +13,7 @@
  * `enhanced.update({isDeleted: true})` — that would let canAddEdit users
  * delete, which is exactly what the Reports Delete permission is meant to
  * gate against. We check canDelete explicitly, then soft-delete with raw
- * prisma to bypass the update-policy boundary on this one operation.
+ * baseDb to bypass the update-policy boundary on this one operation.
  *
  * (Read + list use the auto-generated ZenStack tanstack-query hooks
  * client-side — no custom GET route. The read policy on the snapshot model
@@ -26,7 +26,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export const runtime = "nodejs";
@@ -53,7 +53,7 @@ export const DELETE = withAuditContext(
       );
     }
 
-    const snapshot = await prisma.llmReportSnapshot.findFirst({
+    const snapshot = await baseDb.llmReportSnapshot.findFirst({
       where: { id: snapshotId, isDeleted: false },
       select: { id: true, projectId: true },
     });
@@ -75,7 +75,7 @@ export const DELETE = withAuditContext(
       );
     }
 
-    await prisma.llmReportSnapshot.update({
+    await baseDb.llmReportSnapshot.update({
       where: { id: snapshotId },
       data: { isDeleted: true, updatedAt: new Date() },
     });
@@ -99,14 +99,14 @@ async function userCanDeleteReportingFor(
   userId: string,
   projectId: number
 ): Promise<boolean> {
-  const user = await prisma.user.findUnique({
+  const user = await baseDb.user.findUnique({
     where: { id: userId },
     select: { access: true },
   });
   if (!user) return false;
   if (user.access === "ADMIN") return true;
 
-  const project = await prisma.projects.findFirst({
+  const project = await baseDb.projects.findFirst({
     where: { id: projectId, isDeleted: false },
     select: {
       createdBy: true,
@@ -180,7 +180,7 @@ async function userCanDeleteReportingFor(
       }
       if (gp.accessType === "GLOBAL_ROLE") {
         // Walk the user's global role's Reporting canDelete.
-        const userRole = await prisma.user.findUnique({
+        const userRole = await baseDb.user.findUnique({
           where: { id: userId },
           select: {
             role: {

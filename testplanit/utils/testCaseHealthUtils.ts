@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { sql } from "kysely";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
@@ -333,7 +333,7 @@ export async function handleTestCaseHealthPOST(
         ${sourceFilterSql}
         ${projectFilterSql}
       ORDER BY rc.id${includeProject ? sql`, p.id` : sql``}
-    `.execute(prisma.$qb);
+    `.execute(baseDb.$qb);
     const rawResults = rawResultsQuery.rows;
 
     // Process results and calculate health metrics

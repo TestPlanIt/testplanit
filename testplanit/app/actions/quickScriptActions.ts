@@ -1,7 +1,7 @@
 "use server";
 
 import { format } from "date-fns";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { resolveSharedSteps } from "~/lib/utils/resolveSharedSteps";
 import { getServerAuthSession } from "~/server/auth";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
@@ -37,7 +37,7 @@ export async function fetchCasesForQuickScript(args: {
   }
 
   try {
-    const cases = (await prisma.repositoryCases.findMany({
+    const cases = (await baseDb.repositoryCases.findMany({
       where: {
         id: { in: args.caseIds },
         projectId: args.projectId,

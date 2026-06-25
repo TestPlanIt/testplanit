@@ -1,5 +1,5 @@
 import type { Sessions } from "~/zenstack/models";
-import { prisma as defaultPrisma } from "~/lib/prismaBase";
+import { rawDb as defaultPrisma } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {

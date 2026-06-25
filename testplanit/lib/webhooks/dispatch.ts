@@ -49,7 +49,7 @@ export interface DispatchJobData {
   outboxEventId: string;
   webhookConfigId: string;
   attempt: number;
-  // Aligned with MultiTenantJobData (lib/multiTenantPrisma.ts) and the
+  // Aligned with MultiTenantJobData (lib/multiTenantDb.ts) and the
   // withTenantContext shape (lib/tenantContext.ts) — both expect
   // `tenantId?: string`. Single-tenant deployments simply omit this.
   tenantId?: string;

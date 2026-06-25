@@ -1,7 +1,7 @@
 "use server";
 
 import { ProjectAccessType } from "~/zenstack/models";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 export interface UserEffectiveAccess {
   userId: string;
@@ -17,7 +17,7 @@ export async function getUserEffectiveProjectAccess(
 ): Promise<UserEffectiveAccess | null> {
   try {
     // Get the project with default settings
-    const project = await prisma.projects.findUnique({
+    const project = await baseDb.projects.findUnique({
       where: { id: projectId },
       select: {
         defaultAccessType: true,
@@ -30,7 +30,7 @@ export async function getUserEffectiveProjectAccess(
     }
 
     // Get the user with their role
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -44,7 +44,7 @@ export async function getUserEffectiveProjectAccess(
     }
 
     // Check for explicit user permission
-    const userPermission = await prisma.userProjectPermission.findUnique({
+    const userPermission = await baseDb.userProjectPermission.findUnique({
       where: {
         userId_projectId: {
           userId: userId,
@@ -76,7 +76,7 @@ export async function getUserEffectiveProjectAccess(
     }
 
     // Check if user is in a group that has permissions on this project
-    const groupPermission = await prisma.groupProjectPermission.findFirst({
+    const groupPermission = await baseDb.groupProjectPermission.findFirst({
       where: {
         projectId: projectId,
         group: {
@@ -123,7 +123,7 @@ export async function getUserEffectiveProjectAccess(
     }
 
     // Check if user is assigned to project (uses project default)
-    const assignment = await prisma.projectAssignment.findUnique({
+    const assignment = await baseDb.projectAssignment.findUnique({
       where: {
         userId_projectId: {
           userId: userId,
@@ -172,7 +172,7 @@ export async function getBatchUserEffectiveProjectAccess(
 
   try {
     // Get the project with default settings
-    const project = await prisma.projects.findUnique({
+    const project = await baseDb.projects.findUnique({
       where: { id: projectId },
       select: {
         defaultAccessType: true,
@@ -185,7 +185,7 @@ export async function getBatchUserEffectiveProjectAccess(
     }
 
     // Get all users with their roles
-    const users = await prisma.user.findMany({
+    const users = await baseDb.user.findMany({
       where: {
         id: { in: userIds },
       },
@@ -199,7 +199,7 @@ export async function getBatchUserEffectiveProjectAccess(
     const userMap = new Map(users.map((u) => [u.id, u]));
 
     // Get all explicit user permissions for this project
-    const userPermissions = await prisma.userProjectPermission.findMany({
+    const userPermissions = await baseDb.userProjectPermission.findMany({
       where: {
         userId: { in: userIds },
         projectId: projectId,
@@ -214,7 +214,7 @@ export async function getBatchUserEffectiveProjectAccess(
     const permissionMap = new Map(userPermissions.map((p) => [p.userId, p]));
 
     // Get all group permissions for this project with their users
-    const groupPermissions = await prisma.groupProjectPermission.findMany({
+    const groupPermissions = await baseDb.groupProjectPermission.findMany({
       where: {
         projectId: projectId,
       },
@@ -254,7 +254,7 @@ export async function getBatchUserEffectiveProjectAccess(
     }
 
     // Get all assignments for this project
-    const assignments = await prisma.projectAssignment.findMany({
+    const assignments = await baseDb.projectAssignment.findMany({
       where: {
         userId: { in: userIds },
         projectId: projectId,

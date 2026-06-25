@@ -1,7 +1,7 @@
 "use server";
 
 import { ApplicationArea } from "~/zenstack/models";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 /**
  * Resolve the roles that are pickable as a review assignee for a project.
@@ -44,7 +44,7 @@ export async function getProjectEligibleRoles(
     // membership paths above each contribute to the per-role Set; we keep
     // only roles whose Set is non-empty so dead-end roles never reach the
     // picker.
-    const allRoles = await prisma.roles.findMany({
+    const allRoles = await baseDb.roles.findMany({
       where: {
         isDeleted: false,
         ...(options?.requireCanApproveOn && {
@@ -66,7 +66,7 @@ export async function getProjectEligibleRoles(
     for (const id of roleIds) holdersByRole.set(id, new Set<string>());
 
     // Path 1 — UserProjectPermission SPECIFIC_ROLE.
-    const specificRoleRows = await prisma.userProjectPermission.findMany({
+    const specificRoleRows = await baseDb.userProjectPermission.findMany({
       where: {
         projectId,
         accessType: "SPECIFIC_ROLE",
@@ -81,7 +81,7 @@ export async function getProjectEligibleRoles(
 
     // Path 2 — UserProjectPermission GLOBAL_ROLE (user's global roleId
     // is the role).
-    const globalRoleRows = await prisma.userProjectPermission.findMany({
+    const globalRoleRows = await baseDb.userProjectPermission.findMany({
       where: {
         projectId,
         accessType: "GLOBAL_ROLE",
@@ -95,7 +95,7 @@ export async function getProjectEligibleRoles(
     }
 
     // Path 3 — Group SPECIFIC_ROLE.
-    const groupSpecific = await prisma.groupProjectPermission.findMany({
+    const groupSpecific = await baseDb.groupProjectPermission.findMany({
       where: {
         projectId,
         accessType: "SPECIFIC_ROLE",
@@ -121,7 +121,7 @@ export async function getProjectEligibleRoles(
     }
 
     // Path 4 — Group GLOBAL_ROLE (group member's global roleId is the role).
-    const groupGlobal = await prisma.groupProjectPermission.findMany({
+    const groupGlobal = await baseDb.groupProjectPermission.findMany({
       where: { projectId, accessType: "GLOBAL_ROLE" },
       select: {
         group: {

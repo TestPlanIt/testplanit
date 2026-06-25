@@ -5,7 +5,7 @@
  * Supports: projects, workflow states, configurations, milestones, tags, folders, test runs
  */
 
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { WorkflowScope } from "~/zenstack/models";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     switch (type) {
       case "project": {
         // Look up project by name
-        const project = await prisma.projects.findFirst({
+        const project = await baseDb.projects.findFirst({
           where: {
             name: name,
             isDeleted: false,
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
 
       case "state": {
         // Look up workflow state by name (scoped to RUNS for test runs)
-        const state = await prisma.workflows.findFirst({
+        const state = await baseDb.workflows.findFirst({
           where: {
             name: name,
             scope: WorkflowScope.RUNS,
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
         // Look up configuration by name. When a projectId is supplied, scope to
         // configurations assigned to that project (configurations are
         // project-scoped); otherwise fall back to a global lookup.
-        const config = await prisma.configurations.findFirst({
+        const config = await baseDb.configurations.findFirst({
           where: {
             name: name,
             isDeleted: false,
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
 
       case "milestone": {
         // Look up milestone by name within the project
-        const milestone = await prisma.milestones.findFirst({
+        const milestone = await baseDb.milestones.findFirst({
           where: {
             projectId: projectId,
             name: name,
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
 
       case "tag": {
         // Look up tag by name (tags are global)
-        let tag = await prisma.tags.findFirst({
+        let tag = await baseDb.tags.findFirst({
           where: {
             name: name,
             isDeleted: false,
@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
 
         if (!tag && createIfMissing) {
           // Create the tag if it doesn't exist
-          tag = await prisma.tags.create({
+          tag = await baseDb.tags.create({
             data: { name: name },
             select: { id: true, name: true },
           });
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
       case "folder": {
         // Look up folder by name within the project
         // First, get the active repository for the project
-        const repository = await prisma.repositories.findFirst({
+        const repository = await baseDb.repositories.findFirst({
           where: {
             projectId: projectId,
             isActive: true,
@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const folder = await prisma.repositoryFolders.findFirst({
+        const folder = await baseDb.repositoryFolders.findFirst({
           where: {
             projectId: projectId,
             repositoryId: repository.id,
@@ -252,7 +252,7 @@ export async function POST(request: NextRequest) {
 
       case "testRun": {
         // Look up test run by name within the project
-        const testRun = await prisma.testRuns.findFirst({
+        const testRun = await baseDb.testRuns.findFirst({
           where: {
             projectId: projectId,
             name: name,

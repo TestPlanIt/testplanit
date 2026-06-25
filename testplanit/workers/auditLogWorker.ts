@@ -3,11 +3,11 @@ import { Job, Worker } from "bullmq";
 import {
   disconnectAllTenantClients,
   getAllTenantIds,
-  getPrismaClientForJob,
-  getTenantPrismaClient,
+  getDbClientForJob,
+  getTenantDbClient,
   isMultiTenantMode,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { AUDIT_LOG_QUEUE_NAME } from "../lib/queues";
 import { SYSTEM_ACTOR_ID } from "../lib/auditContextConstants";
 import type { AuditLogJobData } from "../lib/services/auditLog";
@@ -40,7 +40,7 @@ const processor = async (job: Job<AuditLogJobData>) => {
   validateMultiTenantJobData(job.data);
 
   // Get the appropriate Prisma client (tenant-specific or default)
-  const prisma = getPrismaClientForJob(job.data);
+  const prisma = getDbClientForJob(job.data);
 
   try {
     // Merge user info from event (explicit) and context (request-level)
@@ -197,9 +197,9 @@ let loopBPromise: Promise<void> | null = null;
 /**
  * Loop B correlation targets. DataChangeLog lives in every tenant database (capture triggers are
  * applied per-DB), so the consumer must drain each one into its own AuditLog. Single-tenant: the raw
- * prismaBase client (the sole authorized DataChangeLog reader — it bypasses the @@deny('all', true)
+ * rawDb client (the sole authorized DataChangeLog reader — it bypasses the @@deny('all', true)
  * policy by design). Multi-tenant: one raw client per configured tenant, re-resolved each cycle so a
- * tenant added at runtime is picked up without a worker restart. getTenantPrismaClient returns a
+ * tenant added at runtime is picked up without a worker restart. getTenantDbClient returns a
  * cached vanilla PrismaClient per tenant, which satisfies the raw-client surface correlation needs
  * (raw SQL on DataChangeLog + policy-free model lookups for humanization).
  */
@@ -208,13 +208,13 @@ function listCorrelationClients(): TenantPollClient[] {
     return [
       {
         tenantId: undefined,
-        client: getPrismaClientForJob({ tenantId: undefined }),
+        client: getDbClientForJob({ tenantId: undefined }),
       },
     ];
   }
   return getAllTenantIds().map((tenantId) => ({
     tenantId,
-    client: getTenantPrismaClient(tenantId),
+    client: getTenantDbClient(tenantId),
   }));
 }
 
@@ -260,7 +260,7 @@ const startWorker = async () => {
   // the BullMQ consumer above (Loop A). It only needs the DB (no Valkey), so it starts regardless of
   // the Valkey branch. In multi-tenant mode it polls EVERY configured tenant's database per cycle
   // (re-resolved each pass so runtime tenant additions are picked up); in single-tenant mode it
-  // polls the one prismaBase client. Each client is the sole authorized DataChangeLog reader for its
+  // polls the one rawDb client. Each client is the sole authorized DataChangeLog reader for its
   // database — it bypasses the @@deny('all', true) policy by design, the same raw-client pattern the
   // BullMQ processor uses above. Fire-and-forget against the running flag; the process stays alive on
   // the BullMQ worker (Loop A) and/or this loop's own event loop.

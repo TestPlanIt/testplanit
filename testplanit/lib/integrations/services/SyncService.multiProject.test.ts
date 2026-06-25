@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ---------------------------------------------------------------------------
-// Mock prismaBase — SyncService imports `prisma` from "@/lib/prismaBase"
+// Mock rawDb — SyncService imports `rawDb` from "@/lib/rawDb"
 // ---------------------------------------------------------------------------
 const mockIntegrationProjectFindMany = vi.fn();
 const mockIntegrationProjectUpdate = vi.fn();
 const mockIssueFindMany = vi.fn();
 const mockIssueCount = vi.fn();
 
-vi.mock("@/lib/prismaBase", () => ({
-  prisma: {
+vi.mock("@/lib/rawDb", () => ({
+  rawDb: {
     user: {
       findUnique: vi.fn().mockResolvedValue({
         id: "user-1",
@@ -68,9 +68,9 @@ vi.mock("~/services/issueSearch", () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Mock multiTenantPrisma (getCurrentTenantId used in queueSync methods only)
+// Mock multiTenantDb (getCurrentTenantId used in queueSync methods only)
 // ---------------------------------------------------------------------------
-vi.mock("../../multiTenantPrisma", () => ({
+vi.mock("../../multiTenantDb", () => ({
   getCurrentTenantId: vi.fn().mockReturnValue(undefined),
 }));
 
@@ -203,10 +203,10 @@ describe("SyncService — multi-project sync (65-03)", () => {
       getCapabilities: vi.fn().mockReturnValue({ syncIssue: true }),
     });
 
-    // Patch the prisma mock to include findFirst and update on issue
-    const { prisma } = await import("@/lib/prismaBase");
-    (prisma.issue as any).findFirst = mockFindFirst;
-    (prisma.issue as any).update = mockIssueUpdate;
+    // Patch the rawDb mock to include findFirst and update on issue
+    const { rawDb } = await import("@/lib/rawDb");
+    (rawDb.issue as any).findFirst = mockFindFirst;
+    (rawDb.issue as any).update = mockIssueUpdate;
 
     const result = await service.performSync("user-1", 1);
 
@@ -250,12 +250,12 @@ describe("SyncService — multi-project sync (65-03)", () => {
       makeIssue({ id: "local-2", externalKey: "OK-1", externalId: "ok1" }),
     ]);
 
-    // Patch prisma.issue with findFirst + update
-    const { prisma } = await import("@/lib/prismaBase");
-    (prisma.issue as any).findFirst = vi
+    // Patch rawDb.issue with findFirst + update
+    const { rawDb } = await import("@/lib/rawDb");
+    (rawDb.issue as any).findFirst = vi
       .fn()
       .mockResolvedValue({ id: "local-2" });
-    (prisma.issue as any).update = vi.fn().mockResolvedValue({});
+    (rawDb.issue as any).update = vi.fn().mockResolvedValue({});
 
     // project1 (FAIL prefix) — syncIssue throws
     // project2 (OK prefix) — syncIssue succeeds
@@ -357,12 +357,12 @@ describe("SyncService — multi-project sync (65-03)", () => {
     mockIssueCount.mockResolvedValue(1);
     mockIssueFindMany.mockResolvedValue([legacyIssue]);
 
-    // Patch prisma.issue with findFirst + update for updateExistingIssue
-    const { prisma } = await import("@/lib/prismaBase");
-    (prisma.issue as any).findFirst = vi
+    // Patch rawDb.issue with findFirst + update for updateExistingIssue
+    const { rawDb } = await import("@/lib/rawDb");
+    (rawDb.issue as any).findFirst = vi
       .fn()
       .mockResolvedValue({ id: "legacy-1" });
-    (prisma.issue as any).update = vi.fn().mockResolvedValue({});
+    (rawDb.issue as any).update = vi.fn().mockResolvedValue({});
 
     mockSyncIssue.mockResolvedValue({
       id: "leg1",

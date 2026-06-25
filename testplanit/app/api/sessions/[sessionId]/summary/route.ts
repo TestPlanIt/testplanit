@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export type SessionSummaryData = {
@@ -72,7 +72,7 @@ export async function GET(
     }
 
     // Get session details
-    const sessionData = await prisma.sessions.findUnique({
+    const sessionData = await baseDb.sessions.findUnique({
       where: { id: sessionId },
       select: {
         id: true,
@@ -106,7 +106,7 @@ export async function GET(
     }
 
     // Get session results with optimized query
-    const results = await prisma.$queryRaw<
+    const results = await baseDb.$queryRaw<
       Array<{
         id: number;
         createdAt: Date;
@@ -137,7 +137,7 @@ export async function GET(
     const resultIssuesMap = new Map<number, number[]>();
     if (results.length > 0) {
       const resultIds = results.map((r) => r.id);
-      const issueLinks = await prisma.$queryRaw<
+      const issueLinks = await baseDb.$queryRaw<
         Array<{
           sessionResultId: number;
           issueId: number;
@@ -165,7 +165,7 @@ export async function GET(
     // Fetch all unique issues from results
     const resultIssues =
       allResultIssueIds.size > 0
-        ? await prisma.issue.findMany({
+        ? await baseDb.issue.findMany({
             where: {
               id: { in: Array.from(allResultIssueIds) },
             },
@@ -195,7 +195,7 @@ export async function GET(
     const totalElapsed = results.reduce((sum, r) => sum + (r.elapsed || 0), 0);
 
     // Get comments count for this session
-    const commentsCountResult = await prisma.$queryRaw<
+    const commentsCountResult = await baseDb.$queryRaw<
       Array<{ count: bigint }>
     >`
       SELECT COUNT(*) as count

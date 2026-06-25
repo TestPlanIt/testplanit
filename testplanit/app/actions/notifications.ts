@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { runWithAuditContext } from "~/lib/auditContext";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -14,7 +14,7 @@ export async function markNotificationAsRead(notificationId: string) {
 
   return runWithAuditContext({ userId: session.user.id }, async () => {
     try {
-      const notification = await prisma.notification.update({
+      const notification = await baseDb.notification.update({
         where: { id: notificationId },
         data: { isRead: true },
       });
@@ -36,7 +36,7 @@ export async function markNotificationAsUnread(notificationId: string) {
 
   return runWithAuditContext({ userId: session.user.id }, async () => {
     try {
-      const notification = await prisma.notification.update({
+      const notification = await baseDb.notification.update({
         where: { id: notificationId },
         data: { isRead: false },
       });
@@ -58,7 +58,7 @@ export async function deleteNotification(notificationId: string) {
 
   return runWithAuditContext({ userId: session.user.id }, async () => {
     try {
-      const notification = await prisma.notification.update({
+      const notification = await baseDb.notification.update({
         where: { id: notificationId },
         data: { isDeleted: true },
       });
@@ -80,7 +80,7 @@ export async function markAllNotificationsAsRead() {
 
   return runWithAuditContext({ userId: session.user.id }, async () => {
     try {
-      const result = await prisma.notification.updateMany({
+      const result = await baseDb.notification.updateMany({
         where: {
           userId: session.user.id,
           isRead: false,
@@ -106,7 +106,7 @@ export async function deleteAllNotifications() {
 
   return runWithAuditContext({ userId: session.user.id }, async () => {
     try {
-      const result = await prisma.notification.updateMany({
+      const result = await baseDb.notification.updateMany({
         where: {
           userId: session.user.id,
           isDeleted: false,
@@ -130,7 +130,7 @@ export async function getUnreadNotificationCount() {
   }
 
   try {
-    const count = await prisma.notification.count({
+    const count = await baseDb.notification.count({
       where: {
         userId: session.user.id,
         isRead: false,

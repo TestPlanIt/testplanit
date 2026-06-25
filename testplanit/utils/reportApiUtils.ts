@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authenticateRequest } from "~/lib/api-token-auth";
@@ -6,7 +6,7 @@ import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
 import { authOptions } from "~/server/auth";
 
 // Type for Prisma client
-type Prisma = typeof prisma;
+type Prisma = typeof baseDb;
 
 // Filters passed through to a metric's aggregate. Date bounds plus
 // per-dimension options (folder subtree roll-up) carried like dateGrouping.
@@ -31,7 +31,7 @@ interface DimensionDisplayValue {
 interface DimensionConfig {
   id: string;
   label: string;
-  getValues: (prisma: Prisma, projectId?: number) => Promise<unknown[]>;
+  getValues: (baseDb: Prisma, projectId?: number) => Promise<unknown[]>;
   groupBy: string;
   join: Record<string, unknown>;
   display: (val: unknown) => DimensionDisplayValue;
@@ -42,7 +42,7 @@ interface MetricConfig {
   id: string;
   label: string;
   aggregate: (
-    prisma: Prisma,
+    baseDb: Prisma,
     projectId: number | undefined,
     groupBy: string[],
     filters?: DateFilters,
@@ -320,7 +320,7 @@ async function handleCrossProjectAggregation({
   const metricResults = await Promise.all(
     metricConfigs.map((metricConfig: MetricConfig) =>
       metricConfig.aggregate(
-        prisma,
+        baseDb,
         undefined, // No projectId for cross-project
         groupBy,
         { startDate, endDate, folderIncludeDescendants },
@@ -332,7 +332,7 @@ async function handleCrossProjectAggregation({
   // Get all dimension values lookup for display formatting
   const dimensionValues = await Promise.all(
     dimensionConfigs.map(
-      (config: DimensionConfig) => config.getValues(prisma) // No projectId for cross-project
+      (config: DimensionConfig) => config.getValues(baseDb) // No projectId for cross-project
     )
   );
 
@@ -648,7 +648,7 @@ async function handleProjectSpecificAggregation({
   const metricResults = await Promise.all(
     metricConfigs.map((metricConfig: MetricConfig) =>
       metricConfig.aggregate(
-        prisma,
+        baseDb,
         projectId,
         groupBy,
         { startDate, endDate, folderIncludeDescendants },
@@ -660,7 +660,7 @@ async function handleProjectSpecificAggregation({
   // Get all dimension values lookup for display formatting
   const dimensionValues = await Promise.all(
     dimensionConfigs.map((config: DimensionConfig) =>
-      config.getValues(prisma, projectId)
+      config.getValues(baseDb, projectId)
     )
   );
 

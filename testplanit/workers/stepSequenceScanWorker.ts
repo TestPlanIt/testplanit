@@ -1,11 +1,11 @@
 import { Job, Worker } from "bullmq";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { STEP_SCAN_QUEUE_NAME } from "../lib/queueNames";
 import { StepSequenceScanService } from "../lib/services/stepSequenceScanService";
 import { resolveSharedSteps } from "../lib/utils/resolveSharedSteps";
@@ -187,7 +187,7 @@ export function startStepSequenceScanWorker() {
   worker = new Worker<StepScanJobData, StepScanJobResult>(
     STEP_SCAN_QUEUE_NAME,
     withTenantContext(async (job) => {
-      const prisma = getPrismaClientForJob(job.data);
+      const prisma = getDbClientForJob(job.data);
       const redis = await worker!.client;
       return processStepScan(job, prisma, redis);
     }),

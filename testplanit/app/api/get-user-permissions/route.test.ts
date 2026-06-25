@@ -20,7 +20,7 @@ vi.mock("~/server/auth", () => ({
   getServerAuthSession: vi.fn(),
 }));
 
-vi.mock("~/lib/prisma", () => {
+vi.mock("~/lib/db", () => {
   const prismaStub = {
     user: {
       findUnique: vi.fn(),
@@ -35,7 +35,7 @@ vi.mock("~/lib/prisma", () => {
       findMany: vi.fn(),
     },
   };
-  return { prisma: prismaStub };
+  return { baseDb: prismaStub };
 });
 
 function makeRequest(body: unknown): Request {
@@ -49,23 +49,23 @@ function makeRequest(body: unknown): Request {
 describe("POST /api/get-user-permissions — caller authentication (CR-02)", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
     // Default Prisma responses so the route reaches the "compute permissions"
     // branch when the caller is authorized. Tests that should short-circuit
     // before any Prisma read use the unauthorized / forbidden branches.
-    (prisma as any).user.findUnique.mockResolvedValue({
+    (baseDb as any).user.findUnique.mockResolvedValue({
       id: "target-user",
       access: "NONE",
       role: { id: 1, rolePermissions: [] },
       groups: [],
     });
-    (prisma as any).projects.findUnique.mockResolvedValue({
+    (baseDb as any).projects.findUnique.mockResolvedValue({
       id: 42,
       defaultAccessType: "NO_ACCESS",
       defaultRole: null,
     });
-    (prisma as any).userProjectPermission.findUnique.mockResolvedValue(null);
-    (prisma as any).groupProjectPermission.findMany.mockResolvedValue([]);
+    (baseDb as any).userProjectPermission.findUnique.mockResolvedValue(null);
+    (baseDb as any).groupProjectPermission.findMany.mockResolvedValue([]);
   });
 
   it("returns 401 when no session is present (anonymous caller)", async () => {
@@ -81,8 +81,8 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
     expect(response.status).toBe(401);
     expect(body.error).toBe("Unauthorized");
 
-    const { prisma } = await import("~/lib/prisma");
-    expect((prisma as any).user.findUnique).not.toHaveBeenCalled();
+    const { baseDb } = await import("~/lib/db");
+    expect((baseDb as any).user.findUnique).not.toHaveBeenCalled();
   });
 
   it("returns 401 when the session has no user id", async () => {
@@ -116,8 +116,8 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
 
     // No Prisma reads should fire — the IDOR check short-circuits before
     // any role-resolution query touches the database.
-    const { prisma } = await import("~/lib/prisma");
-    expect((prisma as any).user.findUnique).not.toHaveBeenCalled();
+    const { baseDb } = await import("~/lib/db");
+    expect((baseDb as any).user.findUnique).not.toHaveBeenCalled();
   });
 
   it("returns 403 when a non-admin caller asks about their PROJECTADMIN peer", async () => {
@@ -153,8 +153,8 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
     );
 
     expect(response.status).toBe(200);
-    const { prisma } = await import("~/lib/prisma");
-    expect((prisma as any).user.findUnique).toHaveBeenCalled();
+    const { baseDb } = await import("~/lib/db");
+    expect((baseDb as any).user.findUnique).toHaveBeenCalled();
   });
 
   it("allows an ADMIN caller to query another user's permissions", async () => {
@@ -171,8 +171,8 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
     );
 
     expect(response.status).toBe(200);
-    const { prisma } = await import("~/lib/prisma");
-    expect((prisma as any).user.findUnique).toHaveBeenCalledWith(
+    const { baseDb } = await import("~/lib/db");
+    expect((baseDb as any).user.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "target-user" } })
     );
   });

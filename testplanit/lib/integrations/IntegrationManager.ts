@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prismaBase";
+import { rawDb } from "@/lib/rawDb";
 import { EncryptionService, getMasterKey } from "@/utils/encryption";
 import type { Integration, IntegrationProvider } from "~/zenstack/models";
 import { AuthenticationService } from "./AuthenticationService";
@@ -71,7 +71,7 @@ export class IntegrationManager {
    */
   async getAdapter(
     integrationId: string,
-    prismaClient?: typeof prisma,
+    prismaClient?: typeof rawDb,
     userId?: string,
     options?: { allowInactive?: boolean }
   ): Promise<IssueAdapter | null> {
@@ -91,7 +91,7 @@ export class IntegrationManager {
     }
 
     // Fetch integration from database (use provided client for multi-tenant support)
-    const db = prismaClient || prisma;
+    const db = prismaClient || rawDb;
     const integration = await db.integration.findUnique({
       where: { id: parseInt(integrationId) },
       include: {

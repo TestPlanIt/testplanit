@@ -9,7 +9,7 @@ vi.mock("../lib/services/notificationService", () => ({
   },
 }));
 
-// Mock prisma with milestone methods
+// Mock baseDb with milestone methods
 const mockPrisma = {
   milestones: {
     findMany: vi.fn(),
@@ -20,13 +20,13 @@ const mockPrisma = {
   },
 };
 
-vi.mock("../lib/prisma", () => ({
-  prisma: mockPrisma,
+vi.mock("../lib/db", () => ({
+  baseDb: mockPrisma,
 }));
 
-// Mock multiTenantPrisma
-vi.mock("../lib/multiTenantPrisma", () => ({
-  getPrismaClientForJob: vi.fn(() => mockPrisma),
+// Mock multiTenantDb
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: vi.fn(() => mockPrisma),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),

@@ -1,5 +1,5 @@
 import type { Projects } from "~/zenstack/models";
-import { prisma as defaultPrisma } from "~/lib/prismaBase";
+import { rawDb as defaultPrisma } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
@@ -143,14 +143,14 @@ export async function syncAllProjectsToElasticsearch(
     return;
   }
 
-  const prisma = prismaClient || defaultPrisma;
+  const rawDb = prismaClient || defaultPrisma;
   const indexName = getEntityIndexName(SearchableEntityType.PROJECT, tenantId);
 
   console.log(
     `Starting project sync${tenantId ? ` (tenant: ${tenantId})` : ""}`
   );
 
-  const projects = await prisma.projects.findMany({
+  const projects = await rawDb.projects.findMany({
     where: {
       // Include deleted items (filtering happens at search time based on admin permissions)
     },

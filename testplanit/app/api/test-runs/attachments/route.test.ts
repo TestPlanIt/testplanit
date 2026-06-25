@@ -12,8 +12,8 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateApiToken: vi.fn(),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     testRuns: {
       findUnique: vi.fn(),
     },
@@ -33,7 +33,7 @@ vi.mock("@aws-sdk/client-s3", () => ({
 
 import { extractBearerToken, authenticateApiToken } from "~/lib/api-token-auth";
 import { getServerAuthSession } from "~/server/auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 describe("Test Run Attachments API Route", () => {
   const mockSession = {
@@ -76,8 +76,8 @@ describe("Test Run Attachments API Route", () => {
     vi.clearAllMocks();
     (getServerAuthSession as any).mockResolvedValue(mockSession);
     (extractBearerToken as any).mockReturnValue(null);
-    (prisma.testRuns.findUnique as any).mockResolvedValue(mockTestRun);
-    (prisma.attachments.create as any).mockResolvedValue(mockAttachment);
+    (baseDb.testRuns.findUnique as any).mockResolvedValue(mockTestRun);
+    (baseDb.attachments.create as any).mockResolvedValue(mockAttachment);
     process.env.AWS_BUCKET_NAME = "test-bucket";
     process.env.AWS_REGION = "us-east-1";
     process.env.AWS_ACCESS_KEY_ID = "test-key";
@@ -191,7 +191,7 @@ describe("Test Run Attachments API Route", () => {
 
   describe("Not Found", () => {
     it("returns 404 when test run does not exist", async () => {
-      (prisma.testRuns.findUnique as any).mockResolvedValue(null);
+      (baseDb.testRuns.findUnique as any).mockResolvedValue(null);
 
       const formData = new FormData();
       formData.append("files", createMockFile("test.txt"));
@@ -234,7 +234,7 @@ describe("Test Run Attachments API Route", () => {
       const _data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(prisma.attachments.create).toHaveBeenCalledWith(
+      expect(baseDb.attachments.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             testRuns: { connect: { id: 1 } },

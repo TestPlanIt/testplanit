@@ -30,16 +30,16 @@ const describeIntegration =
 
 describeIntegration("iteration values override (live DB)", () => {
   const importDeps = async () => {
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
     const { materializeIterations } =
       await import("~/lib/services/iterationFanOut");
-    return { prisma, materializeIterations };
+    return { baseDb, materializeIterations };
   };
 
   const ROLLBACK_SENTINEL = "__OVERRIDE_VALUES_TEST_ROLLBACK__";
 
   async function withRollback<T>(
-    prisma: any,
+    baseDb: any,
 
     body: (tx: any) => Promise<T>,
     timeoutMs = 60_000
@@ -47,7 +47,7 @@ describeIntegration("iteration values override (live DB)", () => {
     let captured: T | undefined;
     let captureErr: unknown;
     try {
-      await prisma.$transaction(
+      await baseDb.$transaction(
         async (tx: any) => {
           try {
             captured = await body(tx);
@@ -183,8 +183,8 @@ describeIntegration("iteration values override (live DB)", () => {
   }
 
   it("PATCH succeeds for valid values and snapshot rowsJson is not modified", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fixture = await seedParameterizedRunCase(tx);
       await materializeIterations(fixture.testRunId, tx);
       const iteration = await tx.testRunCaseIteration.findFirst({
@@ -253,8 +253,8 @@ describeIntegration("iteration values override (live DB)", () => {
 
   afterAll(async () => {
     if (RUN_INTEGRATION && HAS_DB_URL) {
-      const { prisma } = await importDeps();
-      await prisma.$disconnect();
+      const { baseDb } = await importDeps();
+      await baseDb.$disconnect();
     }
   });
 });

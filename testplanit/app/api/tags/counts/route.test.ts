@@ -9,8 +9,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     repositoryCases: {
       count: vi.fn(),
     },
@@ -24,7 +24,7 @@ vi.mock("~/lib/prisma", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 import { POST } from "./route";
 
@@ -53,9 +53,9 @@ const mockUserSession = {
 describe("Tags Counts Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (prisma.repositoryCases.count as any).mockResolvedValue(0);
-    (prisma.sessions.count as any).mockResolvedValue(0);
-    (prisma.testRuns.count as any).mockResolvedValue(0);
+    (baseDb.repositoryCases.count as any).mockResolvedValue(0);
+    (baseDb.sessions.count as any).mockResolvedValue(0);
+    (baseDb.testRuns.count as any).mockResolvedValue(0);
   });
 
   describe("Authentication", () => {
@@ -120,9 +120,9 @@ describe("Tags Counts Route", () => {
   describe("POST - tag count aggregation", () => {
     it("returns counts for each tagId with repositoryCases, sessions, testRuns", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.repositoryCases.count as any).mockResolvedValue(5);
-      (prisma.sessions.count as any).mockResolvedValue(3);
-      (prisma.testRuns.count as any).mockResolvedValue(7);
+      (baseDb.repositoryCases.count as any).mockResolvedValue(5);
+      (baseDb.sessions.count as any).mockResolvedValue(3);
+      (baseDb.testRuns.count as any).mockResolvedValue(7);
 
       const request = createMockRequest({ tagIds: [1] });
       const response = await POST(request);
@@ -138,13 +138,13 @@ describe("Tags Counts Route", () => {
 
     it("returns counts for multiple tagIds", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.repositoryCases.count as any)
+      (baseDb.repositoryCases.count as any)
         .mockResolvedValueOnce(5)
         .mockResolvedValueOnce(10);
-      (prisma.sessions.count as any)
+      (baseDb.sessions.count as any)
         .mockResolvedValueOnce(2)
         .mockResolvedValueOnce(4);
-      (prisma.testRuns.count as any)
+      (baseDb.testRuns.count as any)
         .mockResolvedValueOnce(1)
         .mockResolvedValueOnce(3);
 
@@ -167,14 +167,14 @@ describe("Tags Counts Route", () => {
 
     it("filters by tagId when counting entities", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.repositoryCases.count as any).mockResolvedValue(3);
-      (prisma.sessions.count as any).mockResolvedValue(0);
-      (prisma.testRuns.count as any).mockResolvedValue(0);
+      (baseDb.repositoryCases.count as any).mockResolvedValue(3);
+      (baseDb.sessions.count as any).mockResolvedValue(0);
+      (baseDb.testRuns.count as any).mockResolvedValue(0);
 
       const request = createMockRequest({ tagIds: [42] });
       await POST(request);
 
-      expect(prisma.repositoryCases.count).toHaveBeenCalledWith(
+      expect(baseDb.repositoryCases.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             caseTags: { some: { tag: { id: 42 } } },
@@ -189,17 +189,17 @@ describe("Tags Counts Route", () => {
       const request = createMockRequest({ tagIds: [1] });
       await POST(request);
 
-      expect(prisma.repositoryCases.count).toHaveBeenCalledWith(
+      expect(baseDb.repositoryCases.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ isDeleted: false }),
         })
       );
-      expect(prisma.sessions.count).toHaveBeenCalledWith(
+      expect(baseDb.sessions.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ isDeleted: false }),
         })
       );
-      expect(prisma.testRuns.count).toHaveBeenCalledWith(
+      expect(baseDb.testRuns.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ isDeleted: false }),
         })
@@ -215,7 +215,7 @@ describe("Tags Counts Route", () => {
       await POST(request);
 
       // Admin: projectAccessWhere is empty {}. No project filter in call.
-      const callArg = (prisma.repositoryCases.count as any).mock.calls[0][0];
+      const callArg = (baseDb.repositoryCases.count as any).mock.calls[0][0];
       expect(callArg.where).not.toHaveProperty("project");
     });
 
@@ -225,7 +225,7 @@ describe("Tags Counts Route", () => {
       const request = createMockRequest({ tagIds: [1] });
       await POST(request);
 
-      const callArg = (prisma.repositoryCases.count as any).mock.calls[0][0];
+      const callArg = (baseDb.repositoryCases.count as any).mock.calls[0][0];
       expect(callArg.where).toHaveProperty("project");
     });
   });
@@ -233,7 +233,7 @@ describe("Tags Counts Route", () => {
   describe("Error handling", () => {
     it("returns 500 when database query fails", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.repositoryCases.count as any).mockRejectedValue(
+      (baseDb.repositoryCases.count as any).mockRejectedValue(
         new Error("DB error")
       );
 

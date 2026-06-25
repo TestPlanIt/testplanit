@@ -4,7 +4,7 @@ import { ApplicationArea } from "~/zenstack/models";
 import { z } from "zod/v4";
 import { runWithAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import {
   AlreadyPendingError,
@@ -76,7 +76,7 @@ export async function completeMilestoneCascade(
       } = parseResult.data;
 
       // Fetch the milestone to check its current status and get projectId
-      const currentMilestone = await prisma.milestones.findUnique({
+      const currentMilestone = await baseDb.milestones.findUnique({
         where: { id: milestoneId },
         select: { startedAt: true, projectId: true },
       });
@@ -112,7 +112,7 @@ export async function completeMilestoneCascade(
           completedTestRunStateId = testRunStateId;
         } else {
           // Fallback to lowest order DONE workflow (existing behavior)
-          const doneRunWorkflow = await prisma.workflows.findFirst({
+          const doneRunWorkflow = await baseDb.workflows.findFirst({
             where: {
               scope: "RUNS",
               workflowType: "DONE",
@@ -141,7 +141,7 @@ export async function completeMilestoneCascade(
           completedSessionStateId = sessionStateId;
         } else {
           // Fallback to lowest order DONE workflow (existing behavior)
-          const doneSessionWorkflow = await prisma.workflows.findFirst({
+          const doneSessionWorkflow = await baseDb.workflows.findFirst({
             where: {
               scope: "SESSIONS",
               workflowType: "DONE",
@@ -167,7 +167,7 @@ export async function completeMilestoneCascade(
       // when the project has opted out of review. Doing this outside the tx
       // keeps a contended write transaction short under deadlock-prone
       // conditions (project memory `Deadlock Issues (40P01)`).
-      const projectReviewFlag = await prisma.projects.findUnique({
+      const projectReviewFlag = await baseDb.projects.findUnique({
         where: { id: projectId },
         select: { reviewWorkflowEnabled: true },
       });
@@ -184,7 +184,7 @@ export async function completeMilestoneCascade(
       // targetOrder] per entity without a per-row roundtrip inside the tx.
       // `name` is loaded so a gate-rejected error message can refer to the
       // entity by name (e.g. "run 'Sprint 2 - Regression'") instead of numeric id.
-      const activeTestRuns = await prisma.testRuns.findMany({
+      const activeTestRuns = await baseDb.testRuns.findMany({
         where: {
           milestoneId: { in: allRelevantMilestoneIds },
           isCompleted: false,
@@ -197,7 +197,7 @@ export async function completeMilestoneCascade(
         },
       });
 
-      const activeSessions = await prisma.sessions.findMany({
+      const activeSessions = await baseDb.sessions.findMany({
         where: {
           milestoneId: { in: allRelevantMilestoneIds },
           isCompleted: false,
@@ -211,7 +211,7 @@ export async function completeMilestoneCascade(
       });
 
       // Descendant milestones that are not yet complete (excluding the main one being completed)
-      const descendantMilestonesToComplete = await prisma.milestones.findMany({
+      const descendantMilestonesToComplete = await baseDb.milestones.findMany({
         where: {
           id: { in: descendantMilestoneIds }, // Only look within descendants
           isCompleted: false,
@@ -433,7 +433,7 @@ export async function completeMilestoneCascade(
             activeSessions
           );
           const blockingStateId = error.blockingStateId ?? error.toStateId;
-          const blockingState = await prisma.workflows.findUnique({
+          const blockingState = await baseDb.workflows.findUnique({
             where: { id: blockingStateId },
             select: { name: true },
           });

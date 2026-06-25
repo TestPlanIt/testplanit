@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export async function POST(request: Request) {
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     // Use a single optimized query with UNION to find all issues related to projects
     // This is much faster than N separate queries with complex OR conditions
-    const results = await prisma.$queryRaw<
+    const results = await baseDb.$queryRaw<
       { projectId: number; issueCount: bigint }[]
     >`
       SELECT

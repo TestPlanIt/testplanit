@@ -7,11 +7,11 @@ import { LLM_FEATURES } from "../lib/llm/constants";
 import type { LlmRequest } from "../lib/llm/types";
 import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   MultiTenantJobData,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { DERIVE_CASE_STEPS_QUEUE_NAME } from "../lib/queueNames";
 import { NotificationService } from "../lib/services/notificationService";
 import { withTenantContext } from "../lib/tenantContext";
@@ -120,10 +120,10 @@ const processor = async (job: Job<DeriveCaseStepsJobData>): Promise<void> => {
 
   // 1. Validate multi-tenant context + get tenant-scoped client (T-04-03)
   validateMultiTenantJobData(job.data);
-  const prisma = getPrismaClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   // 2. Per-tenant LLM manager (never the singleton in a worker)
-  const llmManager = LlmManager.createForWorker(prisma, tenantId);
+  const llmManager = LlmManager.createForWorker(db, tenantId);
 
   // 3. Resolve the provider ONCE per import — provider-configured IS the opt-in.
   //    feature FIRST, projectId SECOND. Null → inert: no work, no notification.
@@ -140,7 +140,7 @@ const processor = async (job: Job<DeriveCaseStepsJobData>): Promise<void> => {
 
   // Resolve the configurable prompt ONCE per import (project override → default
   // config → hard-coded fallback). Admins can customize it in Prompt Configurations.
-  const promptResolver = new PromptResolver(prisma);
+  const promptResolver = new PromptResolver(db);
   const prompt = await promptResolver.resolve(
     LLM_FEATURES.DERIVE_CASE_STEPS,
     projectId
@@ -172,7 +172,7 @@ const processor = async (job: Job<DeriveCaseStepsJobData>): Promise<void> => {
       // A derivation that yields nothing never clears existing steps (safeguard).
       if (rows.length === 0) continue;
 
-      const existingStepCount = await prisma.steps.count({
+      const existingStepCount = await db.steps.count({
         where: { testCaseId: c.testCaseId, isDeleted: false },
       });
       if (existingStepCount > 0) {
@@ -182,13 +182,13 @@ const processor = async (job: Job<DeriveCaseStepsJobData>): Promise<void> => {
           continue;
         }
         // Destructive opt-in: replace the existing steps with the re-derived set.
-        await prisma.steps.updateMany({
+        await db.steps.updateMany({
           where: { testCaseId: c.testCaseId, isDeleted: false },
           data: { isDeleted: true },
         });
       }
 
-      await prisma.steps.createMany({
+      await db.steps.createMany({
         data: rows.map((row, index) => ({
           testCaseId: c.testCaseId,
           order: index,
@@ -210,7 +210,7 @@ const processor = async (job: Job<DeriveCaseStepsJobData>): Promise<void> => {
 
   // 4. One summary notification per import, only when something was written.
   if (derivedCount > 0) {
-    const run = await prisma.testRuns.findUnique({
+    const run = await db.testRuns.findUnique({
       where: { id: testRunId },
       select: { name: true },
     });

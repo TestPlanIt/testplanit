@@ -1,4 +1,4 @@
-import { prisma as db } from "@/lib/prisma";
+import { baseDb as db } from "@/lib/db";
 import { IntegrationProvider } from "~/zenstack/models";
 import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";

@@ -8,7 +8,7 @@ import { authenticateRequest } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import {
   assertResultEditWindowOpen,
   isEditWindowExpiredError,
@@ -88,7 +88,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     }
     const input = parsed.data;
 
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: authenticatedUserId },
       select: {
         id: true,
@@ -110,7 +110,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // Load the result with its run-case + project (permission fields filtered
     // to this user, mirroring submit-result), plus the prior status, template,
     // and existing field-value rows for the upsert.
-    const existing = await prisma.testRunResults.findFirst({
+    const existing = await baseDb.testRunResults.findFirst({
       where: { id: input.resultId, isDeleted: false },
       select: {
         id: true,
@@ -243,7 +243,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     // Edit window — same guard as the model route, system admins bypass.
     try {
-      await assertResultEditWindowOpen(prisma, input.resultId, user.access);
+      await assertResultEditWindowOpen(baseDb, input.resultId, user.access);
     } catch (error) {
       if (isEditWindowExpiredError(error)) {
         return NextResponse.json(
@@ -256,7 +256,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     // Required result fields.
     const missingRequiredField = await hasMissingRequiredResultField(
-      prisma,
+      baseDb,
       existing.testRunCase.repositoryCase.templateId,
       input.fieldValues
     );
@@ -275,7 +275,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // is omitted the edit leaves those links untouched, so fall back to the
     // result's current counts.
     if (project.requireIssueOnFailure) {
-      const submittedStatus = await prisma.status.findUnique({
+      const submittedStatus = await baseDb.status.findUnique({
         where: { id: input.statusId },
         select: { isFailure: true },
       });
@@ -315,7 +315,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       input.statusId !== existing.statusId &&
       isTiptapEmpty(input.notes)
     ) {
-      const statuses = await prisma.status.findMany({
+      const statuses = await baseDb.status.findMany({
         where: { id: { in: [existing.statusId, input.statusId] } },
         select: {
           id: true,
@@ -408,7 +408,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     });
 
     // The result UPDATE is audited by the shared TestRunResults $extends hook
-    // (lib/prisma.ts), which scopes and names the row from its parents. The
+    // (lib/baseDb.ts), which scopes and names the row from its parents. The
     // hook fires on the tx.testRunResults.update above, so no explicit capture
     // is made here — that previously double-logged every edit.
 

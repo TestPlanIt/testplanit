@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock prisma
+// Mock rawDb
 const mockCount = vi.fn();
 const mockFindMany = vi.fn();
 
-vi.mock("@/lib/prismaBase", () => ({
-  prisma: {
+vi.mock("@/lib/rawDb", () => ({
+  rawDb: {
     issue: {
       count: (...args: any[]) => mockCount(...args),
       findMany: (...args: any[]) => mockFindMany(...args),

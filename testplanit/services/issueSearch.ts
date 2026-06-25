@@ -1,6 +1,6 @@
 import type { Issue } from "~/zenstack/models";
 import type { DbClient } from "~/lib/zenstack";
-import { prisma as defaultPrisma } from "~/lib/prismaBase";
+import { rawDb as defaultPrisma } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
@@ -200,7 +200,7 @@ export async function syncIssueToElasticsearch(
   prismaClient?: DbClient,
   tenantId?: string
 ): Promise<boolean> {
-  const prisma = prismaClient || defaultPrisma;
+  const rawDb = prismaClient || defaultPrisma;
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
@@ -208,7 +208,7 @@ export async function syncIssueToElasticsearch(
   }
 
   try {
-    const issue = await prisma.issue.findUnique({
+    const issue = await rawDb.issue.findUnique({
       where: { id: issueId },
       include: {
         createdBy: true,

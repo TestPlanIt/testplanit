@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import {
   decryptSecret,
@@ -32,7 +32,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       );
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       select: {
         twoFactorEnabled: true,
@@ -66,7 +66,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     const { plainCodes, hashedCodes } = generateBackupCodes(10);
 
     // Update stored backup codes
-    await prisma.user.update({
+    await baseDb.user.update({
       where: { id: session.user.id },
       data: {
         twoFactorBackupCodes: JSON.stringify(hashedCodes),

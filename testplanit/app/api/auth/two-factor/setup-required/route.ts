@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import {
   encryptSecret,
@@ -49,7 +49,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       );
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: tokenData.userId },
       select: { email: true, twoFactorEnabled: true },
     });
@@ -71,7 +71,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
     // Store the secret temporarily (encrypted) - not enabled yet
     const encryptedSecret = encryptSecret(secret);
-    await prisma.user.update({
+    await baseDb.user.update({
       where: { id: tokenData.userId },
       data: { twoFactorSecret: encryptedSecret },
     });

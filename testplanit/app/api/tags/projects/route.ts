@@ -1,7 +1,7 @@
 import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export async function POST(request: Request) {
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         // No need to limit since we're using direct Prisma queries (no bind variable issues)
         const [caseProjectIds, sessionProjectIds, runProjectIds] =
           await Promise.all([
-            prisma.repositoryCases.findMany({
+            baseDb.repositoryCases.findMany({
               where: {
                 isDeleted: false,
                 caseTags: { some: { tag: { id: tagId } } },
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
               select: { projectId: true },
               distinct: ["projectId"],
             }),
-            prisma.sessions.findMany({
+            baseDb.sessions.findMany({
               where: {
                 isDeleted: false,
                 tags: { some: { id: tagId } },
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
               select: { projectId: true },
               distinct: ["projectId"],
             }),
-            prisma.testRuns.findMany({
+            baseDb.testRuns.findMany({
               where: {
                 isDeleted: false,
                 tags: { some: { id: tagId } },
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
           return { tagId, projects: [] };
         }
 
-        const projects = await prisma.projects.findMany({
+        const projects = await baseDb.projects.findMany({
           where: {
             id: { in: uniqueProjectIds },
             isDeleted: false,

@@ -10,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     testRuns: {
       findMany: vi.fn(),
     },
@@ -24,7 +24,7 @@ vi.mock("~/utils/testResultTypes", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 
 describe("Test Run Summaries (Batch) API Route", () => {
@@ -89,9 +89,9 @@ describe("Test Run Summaries (Batch) API Route", () => {
     vi.clearAllMocks();
     (getServerSession as any).mockResolvedValue(mockSession);
     (isAutomatedTestRunType as any).mockReturnValue(false);
-    (prisma.testRuns.findMany as any).mockResolvedValue(mockTestRuns);
+    (baseDb.testRuns.findMany as any).mockResolvedValue(mockTestRuns);
     // $queryRaw called multiple times: comments, status counts, elapsed, estimates, forecasts, case details
-    (prisma.$queryRaw as any).mockResolvedValue([]);
+    (baseDb.$queryRaw as any).mockResolvedValue([]);
   });
 
   describe("Authentication", () => {
@@ -150,7 +150,7 @@ describe("Test Run Summaries (Batch) API Route", () => {
 
   describe("Successful GET", () => {
     it("returns empty summaries object when no test runs found", async () => {
-      (prisma.testRuns.findMany as any).mockResolvedValue([]);
+      (baseDb.testRuns.findMany as any).mockResolvedValue([]);
 
       const request = createRequest({ testRunIds: "999" });
       const response = await GET(request);
@@ -163,7 +163,7 @@ describe("Test Run Summaries (Batch) API Route", () => {
 
     it("returns summaries keyed by test run ID", async () => {
       // Set up more realistic mock data so summaries are built
-      (prisma.$queryRaw as any)
+      (baseDb.$queryRaw as any)
         .mockResolvedValueOnce([]) // comments counts
         .mockResolvedValueOnce(mockStatusCounts) // status counts
         .mockResolvedValueOnce([
@@ -187,7 +187,7 @@ describe("Test Run Summaries (Batch) API Route", () => {
       const request = createRequest({ testRunIds: "1, 2, 3" });
       await GET(request);
 
-      const findManyCall = (prisma.testRuns.findMany as any).mock.calls[0][0];
+      const findManyCall = (baseDb.testRuns.findMany as any).mock.calls[0][0];
       expect(findManyCall.where.id.in).toEqual([1, 2, 3]);
     });
 
@@ -195,14 +195,14 @@ describe("Test Run Summaries (Batch) API Route", () => {
       const request = createRequest({ testRunIds: "1,abc,2" });
       await GET(request);
 
-      const findManyCall = (prisma.testRuns.findMany as any).mock.calls[0][0];
+      const findManyCall = (baseDb.testRuns.findMany as any).mock.calls[0][0];
       expect(findManyCall.where.id.in).toEqual([1, 2]);
     });
   });
 
   describe("Error Handling", () => {
     it("returns 500 when database query fails", async () => {
-      (prisma.testRuns.findMany as any).mockRejectedValue(
+      (baseDb.testRuns.findMany as any).mockRejectedValue(
         new Error("DB Error")
       );
 

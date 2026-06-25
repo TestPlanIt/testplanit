@@ -41,15 +41,15 @@ describeDb(
 
     // The not-yet-existing CDC consumer. Runtime-built specifier + /* @vite-ignore */ so the skipped
     // unit lane never tries to resolve the missing module. 14-05 ships:
-    //   pollDataChangeLogsOnce(prisma) — one poll pass: SELECT ... WHERE processed=false
+    //   pollDataChangeLogsOnce(rawDb) — one poll pass: SELECT ... WHERE processed=false
     //     FOR UPDATE SKIP LOCKED, group by operationId, rollup, humanize, INSERT AuditLog
     //     ON CONFLICT DO NOTHING, then UPDATE DataChangeLog SET processed=true.
     //     markProcessed=false skips the final flag UPDATE (used by the crash-resume case).
     let pollDataChangeLogsOnce: (
-      prisma: unknown,
+      rawDb: unknown,
       opts?: { batchSize?: number; markProcessed?: boolean }
     ) => Promise<{ processed: number; auditLogsWritten: number }>;
-    let prismaBase: any;
+    let rawDb: any;
 
     // Unique marker scopes every assertion to rows this run created.
     const MARKER = `corrworker-${Date.now()}`;
@@ -134,9 +134,9 @@ describeDb(
       direct = new Client({ connectionString: DIRECT_URL });
       await direct.connect();
 
-      const prismaMod = "~/lib/prismaBase";
+      const prismaMod = "~/lib/rawDb";
       const correlationMod = "~/lib/audit/correlation";
-      ({ prisma: prismaBase } = await import(/* @vite-ignore */ prismaMod));
+      ({ rawDb: rawDb } = await import(/* @vite-ignore */ prismaMod));
       ({ pollDataChangeLogsOnce } = await import(
         /* @vite-ignore */ correlationMod
       ));
@@ -194,7 +194,7 @@ describeDb(
       await seedDcl("U", "9001", OP_ID, `${MARKER}-2`);
       await seedDcl("U", "9001", OP_ID, `${MARKER}-3`);
 
-      const result = await pollDataChangeLogsOnce(prismaBase, {
+      const result = await pollDataChangeLogsOnce(rawDb, {
         batchSize: 500,
       });
       expect(result.processed).toBeGreaterThanOrEqual(3);
@@ -236,7 +236,7 @@ describeDb(
         description: { old: "before", new: "after" },
       });
 
-      await pollDataChangeLogsOnce(prismaBase, { batchSize: 500 });
+      await pollDataChangeLogsOnce(rawDb, { batchSize: 500 });
 
       const rows = await auditRowsForOp(ROLLUP_OP);
       // Criterion 1 — GROUPED: all materialized rows for this save carry the one shared operationId.
@@ -269,7 +269,7 @@ describeDb(
     it("idempotency: a second poll over the already-processed range inserts ZERO new AuditLog rows", async () => {
       const before = await countAuditLogsForOp(OP_ID);
       // Nothing unprocessed remains for OP_ID, so a re-poll is a no-op for this operation.
-      await pollDataChangeLogsOnce(prismaBase, { batchSize: 500 });
+      await pollDataChangeLogsOnce(rawDb, { batchSize: 500 });
       expect(await countAuditLogsForOp(OP_ID)).toBe(before);
     });
 
@@ -285,9 +285,9 @@ describeDb(
 
       // A $transaction wrapper that runs the worker's real batch (SELECT → INSERT AuditLog → mark
       // processed) and then throws BEFORE the transaction commits, forcing Prisma to roll back the
-      // entire batch — exactly a worker that died mid-flush. Everything else delegates to prismaBase.
+      // entire batch — exactly a worker that died mid-flush. Everything else delegates to rawDb.
       class SimulatedCrash extends Error {}
-      const crashOnce = new Proxy(prismaBase, {
+      const crashOnce = new Proxy(rawDb, {
         get(target, prop, receiver) {
           if (prop === "$transaction") {
             return (fn: (tx: unknown) => Promise<unknown>) =>
@@ -323,14 +323,14 @@ describeDb(
       expect(await nullOpCount()).toBe(0); // null-op row rolled back too
 
       // Rows are still processed=false (cursor rolled back), so a clean re-poll reprocesses them.
-      await pollDataChangeLogsOnce(prismaBase, { batchSize: 500 });
+      await pollDataChangeLogsOnce(rawDb, { batchSize: 500 });
       const afterResume = await countAuditLogsForOp(RESUME_OP);
       expect(afterResume).toBeGreaterThanOrEqual(1);
       expect(await nullOpCount()).toBe(1); // exactly one null-op AuditLog row — no duplicate
 
       // A SECOND clean re-poll must add nothing more — the ON CONFLICT idempotency index (non-null
       // operationId) plus the now-advanced cursor guarantee no duplicate rows on either path.
-      await pollDataChangeLogsOnce(prismaBase, { batchSize: 500 });
+      await pollDataChangeLogsOnce(rawDb, { batchSize: 500 });
       expect(await countAuditLogsForOp(RESUME_OP)).toBe(afterResume);
       expect(await nullOpCount()).toBe(1);
 
@@ -356,7 +356,7 @@ describeDb(
         await seedDcl("U", "9004", IDEM_OP, `${MARKER}-idem-1`);
         await seedDcl("U", "9004", IDEM_OP, `${MARKER}-idem-2`);
 
-        await pollDataChangeLogsOnce(prismaBase, {
+        await pollDataChangeLogsOnce(rawDb, {
           batchSize: 500,
           markProcessed: false,
         });
@@ -364,7 +364,7 @@ describeDb(
         expect(afterFirst).toBeGreaterThanOrEqual(1);
 
         // Rows are still processed=false → re-selected; the idempotency index blocks every duplicate.
-        await pollDataChangeLogsOnce(prismaBase, { batchSize: 500 });
+        await pollDataChangeLogsOnce(rawDb, { batchSize: 500 });
         expect(await countAuditLogsForOp(IDEM_OP)).toBe(afterFirst);
       } finally {
         await direct.query(`DELETE FROM "AuditLog" WHERE "operationId" = $1`, [
@@ -392,7 +392,7 @@ describeDb(
         [JSON.stringify({ name: { old: null, new: "system-made" } }), ACTOR_OP]
       );
       try {
-        await pollDataChangeLogsOnce(prismaBase, { batchSize: 500 });
+        await pollDataChangeLogsOnce(rawDb, { batchSize: 500 });
         const r = await direct.query(
           `SELECT "entityId", "userId" FROM "AuditLog" WHERE "operationId" = $1 ORDER BY "entityId"`,
           [ACTOR_OP]

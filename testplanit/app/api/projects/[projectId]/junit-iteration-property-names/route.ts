@@ -32,7 +32,7 @@ import { z } from "zod/v4";
 
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 const RESERVED_PROTOTYPE_KEYS = new Set([
@@ -95,7 +95,7 @@ export const PUT = withAuditContext(
       // Confirm the project exists and the caller has access to it. We
       // reuse the same access-where shape used by the integrations route
       // so the authorization model is uniform.
-      const project = await prisma.projects.findFirst({
+      const project = await baseDb.projects.findFirst({
         where: {
           id: projectId,
           isDeleted: false,
@@ -137,7 +137,7 @@ export const PUT = withAuditContext(
         );
       }
 
-      const updated = await prisma.projects.update({
+      const updated = await baseDb.projects.update({
         where: { id: projectId },
         data: { junitIterationPropertyNames: parsed.data.propertyNames },
         select: { id: true, junitIterationPropertyNames: true },

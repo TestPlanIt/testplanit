@@ -3,7 +3,7 @@
 import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
 import type { Roles } from "~/zenstack/models";
 import { Session } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { isAdmin, isProjectAdmin } from "~/utils/permissions";
 
 // Type for permissions of a single area
@@ -84,20 +84,20 @@ export async function getUserProjectPermissions(
 
   // Fetch all necessary data in parallel
   const [user, project, userProjectPermission] = await Promise.all([
-    prisma.user.findUnique({
+    baseDb.user.findUnique({
       where: { id: userId },
       include: {
         role: { include: { rolePermissions: true } },
         groups: { select: { groupId: true } },
       },
     }),
-    prisma.projects.findUnique({
+    baseDb.projects.findUnique({
       where: { id: projectId },
       include: {
         defaultRole: { include: { rolePermissions: true } },
       },
     }),
-    prisma.userProjectPermission.findUnique({
+    baseDb.userProjectPermission.findUnique({
       where: { userId_projectId: { userId, projectId } },
       include: {
         role: { include: { rolePermissions: true } },
@@ -140,7 +140,7 @@ export async function getUserProjectPermissions(
   // Group Permissions (if not decided by user-specific)
   if (!accessDenied && !effectiveRole && user.groups.length > 0) {
     const groupIds = user.groups.map((g) => g.groupId);
-    const groupPermissions = await prisma.groupProjectPermission.findMany({
+    const groupPermissions = await baseDb.groupProjectPermission.findMany({
       where: {
         projectId: projectId,
         groupId: { in: groupIds },

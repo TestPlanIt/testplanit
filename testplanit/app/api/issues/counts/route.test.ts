@@ -9,8 +9,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     repositoryCases: {
       count: vi.fn(),
     },
@@ -34,7 +34,7 @@ vi.mock("~/lib/prisma", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 import { POST } from "./route";
 
@@ -63,13 +63,13 @@ const mockUserSession = {
 describe("Issues Counts Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (prisma.repositoryCases.count as any).mockResolvedValue(0);
-    (prisma.sessions.count as any).mockResolvedValue(0);
-    (prisma.sessionResults.groupBy as any).mockResolvedValue([]);
-    (prisma.testRuns.count as any).mockResolvedValue(0);
-    (prisma.testRunResults.groupBy as any).mockResolvedValue([]);
-    (prisma.testRunStepResults.findMany as any).mockResolvedValue([]);
-    (prisma.testRunResults.findMany as any).mockResolvedValue([]);
+    (baseDb.repositoryCases.count as any).mockResolvedValue(0);
+    (baseDb.sessions.count as any).mockResolvedValue(0);
+    (baseDb.sessionResults.groupBy as any).mockResolvedValue([]);
+    (baseDb.testRuns.count as any).mockResolvedValue(0);
+    (baseDb.testRunResults.groupBy as any).mockResolvedValue([]);
+    (baseDb.testRunStepResults.findMany as any).mockResolvedValue([]);
+    (baseDb.testRunResults.findMany as any).mockResolvedValue([]);
   });
 
   describe("Authentication", () => {
@@ -134,14 +134,14 @@ describe("Issues Counts Route", () => {
   describe("POST - issue count aggregation", () => {
     it("returns counts with repositoryCases, sessions, testRuns for each issue", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.repositoryCases.count as any).mockResolvedValue(3);
-      (prisma.sessions.count as any).mockResolvedValue(2);
-      (prisma.sessionResults.groupBy as any).mockResolvedValue([
+      (baseDb.repositoryCases.count as any).mockResolvedValue(3);
+      (baseDb.sessions.count as any).mockResolvedValue(2);
+      (baseDb.sessionResults.groupBy as any).mockResolvedValue([
         { sessionId: 1 },
       ]);
-      (prisma.testRuns.count as any).mockResolvedValue(1);
-      (prisma.testRunResults.groupBy as any).mockResolvedValue([]);
-      (prisma.testRunStepResults.findMany as any).mockResolvedValue([]);
+      (baseDb.testRuns.count as any).mockResolvedValue(1);
+      (baseDb.testRunResults.groupBy as any).mockResolvedValue([]);
+      (baseDb.testRunStepResults.findMany as any).mockResolvedValue([]);
 
       const request = createMockRequest({ issueIds: [10] });
       const response = await POST(request);
@@ -158,22 +158,22 @@ describe("Issues Counts Route", () => {
     it("returns counts for multiple issueIds", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
       // Issue 1
-      (prisma.repositoryCases.count as any)
+      (baseDb.repositoryCases.count as any)
         .mockResolvedValueOnce(5)
         .mockResolvedValueOnce(2);
-      (prisma.sessions.count as any)
+      (baseDb.sessions.count as any)
         .mockResolvedValueOnce(1)
         .mockResolvedValueOnce(0);
-      (prisma.sessionResults.groupBy as any)
+      (baseDb.sessionResults.groupBy as any)
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
-      (prisma.testRuns.count as any)
+      (baseDb.testRuns.count as any)
         .mockResolvedValueOnce(3)
         .mockResolvedValueOnce(1);
-      (prisma.testRunResults.groupBy as any)
+      (baseDb.testRunResults.groupBy as any)
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
-      (prisma.testRunStepResults.findMany as any)
+      (baseDb.testRunStepResults.findMany as any)
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
@@ -200,7 +200,7 @@ describe("Issues Counts Route", () => {
       const request = createMockRequest({ issueIds: [42] });
       await POST(request);
 
-      expect(prisma.repositoryCases.count).toHaveBeenCalledWith(
+      expect(baseDb.repositoryCases.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             caseIssues: { some: { issue: { id: 42 } } },
@@ -215,12 +215,12 @@ describe("Issues Counts Route", () => {
       const request = createMockRequest({ issueIds: [1] });
       await POST(request);
 
-      expect(prisma.repositoryCases.count).toHaveBeenCalledWith(
+      expect(baseDb.repositoryCases.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ isDeleted: false }),
         })
       );
-      expect(prisma.testRuns.count).toHaveBeenCalledWith(
+      expect(baseDb.testRuns.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ isDeleted: false }),
         })
@@ -233,7 +233,7 @@ describe("Issues Counts Route", () => {
       const request = createMockRequest({ issueIds: [1], projectId: 99 });
       await POST(request);
 
-      expect(prisma.repositoryCases.count).toHaveBeenCalledWith(
+      expect(baseDb.repositoryCases.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ projectId: 99 }),
         })
@@ -246,18 +246,18 @@ describe("Issues Counts Route", () => {
       const request = createMockRequest({ issueIds: [1] });
       await POST(request);
 
-      const callArg = (prisma.repositoryCases.count as any).mock.calls[0][0];
+      const callArg = (baseDb.repositoryCases.count as any).mock.calls[0][0];
       expect(callArg.where).not.toHaveProperty("projectId");
     });
 
     it("combines test run counts from testRunResults groupBy", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.testRuns.count as any).mockResolvedValue(1);
-      (prisma.testRunResults.groupBy as any).mockResolvedValue([
+      (baseDb.testRuns.count as any).mockResolvedValue(1);
+      (baseDb.testRunResults.groupBy as any).mockResolvedValue([
         { testRunId: 10 },
         { testRunId: 11 },
       ]);
-      (prisma.testRunStepResults.findMany as any).mockResolvedValue([]);
+      (baseDb.testRunStepResults.findMany as any).mockResolvedValue([]);
 
       const request = createMockRequest({ issueIds: [5] });
       const response = await POST(request);
@@ -269,11 +269,11 @@ describe("Issues Counts Route", () => {
 
     it("fetches test runs from step results when step results have testRunResultIds", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.testRunStepResults.findMany as any).mockResolvedValue([
+      (baseDb.testRunStepResults.findMany as any).mockResolvedValue([
         { testRunResultId: 100 },
         { testRunResultId: 101 },
       ]);
-      (prisma.testRunResults.findMany as any).mockResolvedValue([
+      (baseDb.testRunResults.findMany as any).mockResolvedValue([
         { testRunId: 200 },
       ]);
 
@@ -281,7 +281,7 @@ describe("Issues Counts Route", () => {
       const response = await POST(request);
       const data = await response.json();
 
-      expect(prisma.testRunResults.findMany).toHaveBeenCalledWith(
+      expect(baseDb.testRunResults.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: { in: [100, 101] } },
         })
@@ -298,7 +298,7 @@ describe("Issues Counts Route", () => {
       const request = createMockRequest({ issueIds: [1] });
       await POST(request);
 
-      const callArg = (prisma.repositoryCases.count as any).mock.calls[0][0];
+      const callArg = (baseDb.repositoryCases.count as any).mock.calls[0][0];
       expect(callArg.where).not.toHaveProperty("project");
     });
 
@@ -308,7 +308,7 @@ describe("Issues Counts Route", () => {
       const request = createMockRequest({ issueIds: [1] });
       await POST(request);
 
-      const callArg = (prisma.repositoryCases.count as any).mock.calls[0][0];
+      const callArg = (baseDb.repositoryCases.count as any).mock.calls[0][0];
       expect(callArg.where).toHaveProperty("project");
     });
   });
@@ -316,7 +316,7 @@ describe("Issues Counts Route", () => {
   describe("Error handling", () => {
     it("returns 500 when database query fails", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.repositoryCases.count as any).mockRejectedValue(
+      (baseDb.repositoryCases.count as any).mockRejectedValue(
         new Error("DB error")
       );
 

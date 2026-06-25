@@ -12,9 +12,9 @@ vi.mock("../lib/tenantSecrets", () => ({
     mockGetTenantEncryptionKey(...args),
 }));
 
-vi.mock("../lib/multiTenantPrisma", () => ({
+vi.mock("../lib/multiTenantDb", () => ({
   validateMultiTenantJobData: vi.fn(),
-  getPrismaClientForJob: vi.fn().mockReturnValue({ __mock: "prisma" }),
+  getDbClientForJob: vi.fn().mockReturnValue({ __mock: "prisma" }),
   isMultiTenantMode: vi.fn().mockReturnValue(false),
   disconnectAllTenantClients: vi.fn().mockResolvedValue(undefined),
 }));

@@ -7,8 +7,8 @@ vi.mock("~/server/auth", () => ({
   getServerAuthSession: vi.fn(),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -22,13 +22,13 @@ vi.mock("~/lib/prisma", () => ({
 }));
 
 // The route runs its writes through auditedTransaction(), which (in production)
-// opens prisma.$transaction, sets the app.audit_context GUC via tx.$executeRaw,
-// and runs the callback. The tests drive behavior through the prisma.$transaction
+// opens baseDb.$transaction, sets the app.audit_context GUC via tx.$executeRaw,
+// and runs the callback. The tests drive behavior through the baseDb.$transaction
 // mock above, so delegate auditedTransaction straight to it (preserving both the
 // mockResolvedValue and mockImplementation(callback) styles the tests use).
 vi.mock("~/lib/audit/auditedTransaction", () => ({
   auditedTransaction: vi.fn(async (fn: any) => {
-    const { prisma: mockedPrisma } = await import("~/lib/prisma");
+    const { baseDb: mockedPrisma } = await import("~/lib/db");
     return (mockedPrisma.$transaction as any)(fn);
   }),
 }));
@@ -38,7 +38,7 @@ vi.mock("~/lib/session-cache", () => ({
   invalidateSessionUserCache: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 
 describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
@@ -132,8 +132,8 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
   describe("Authorization", () => {
     it("allows user to update their own profile", async () => {
       (getServerAuthSession as any).mockResolvedValue(mockUserSession);
-      (prisma.user.findUnique as any).mockResolvedValue(mockExistingUser);
-      (prisma.$transaction as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue(mockExistingUser);
+      (baseDb.$transaction as any).mockResolvedValue({
         ...mockExistingUser,
         name: "Updated Name",
       });
@@ -159,8 +159,8 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
     it("allows admin to update any user", async () => {
       (getServerAuthSession as any).mockResolvedValue(mockAdminSession);
-      (prisma.user.findUnique as any).mockResolvedValue(mockExistingUser);
-      (prisma.$transaction as any).mockResolvedValue({
+      (baseDb.user.findUnique as any).mockResolvedValue(mockExistingUser);
+      (baseDb.$transaction as any).mockResolvedValue({
         ...mockExistingUser,
         name: "Updated Name",
       });
@@ -175,7 +175,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
   describe("User Existence Validation", () => {
     it("returns 404 when user does not exist", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue(null);
+      (baseDb.user.findUnique as any).mockResolvedValue(null);
 
       const request = createRequest({ name: "Updated Name" });
       const context = createContext("non-existent-user");
@@ -189,12 +189,12 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
   describe("Basic Field Updates", () => {
     beforeEach(() => {
-      (prisma.user.findUnique as any).mockResolvedValue(mockExistingUser);
+      (baseDb.user.findUnique as any).mockResolvedValue(mockExistingUser);
     });
 
     it("updates user name", async () => {
       const updatedUser = { ...mockExistingUser, name: "New Name" };
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           user: {
             update: vi.fn().mockResolvedValue(updatedUser),
@@ -222,7 +222,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
         ...mockExistingUser,
         email: "newemail@example.com",
       };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({ email: "newemail@example.com" });
       const context = createContext("user-123");
@@ -235,7 +235,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
     it("updates user isActive status", async () => {
       const updatedUser = { ...mockExistingUser, isActive: false };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({ isActive: false });
       const context = createContext("user-123");
@@ -248,7 +248,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
     it("updates user isApi flag", async () => {
       const updatedUser = { ...mockExistingUser, isApi: true };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({ isApi: true });
       const context = createContext("user-123");
@@ -261,7 +261,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
     it("soft deletes user by setting isDeleted", async () => {
       const updatedUser = { ...mockExistingUser, isDeleted: true };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({ isDeleted: true });
       const context = createContext("user-123");
@@ -277,7 +277,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
         ...mockExistingUser,
         image: "https://example.com/avatar.jpg",
       };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({
         image: "https://example.com/avatar.jpg",
@@ -292,7 +292,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
     it("removes user avatar by setting image to null", async () => {
       const updatedUser = { ...mockExistingUser, image: null };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({ image: null });
       const context = createContext("user-123");
@@ -305,7 +305,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
     it("updates user access level", async () => {
       const updatedUser = { ...mockExistingUser, access: "PROJECTADMIN" };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({ access: "PROJECTADMIN" });
       const context = createContext("user-123");
@@ -318,7 +318,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
     it("updates user roleId", async () => {
       const updatedUser = { ...mockExistingUser, roleId: 2 };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({ roleId: 2 });
       const context = createContext("user-123");
@@ -336,7 +336,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
         email: "newemail@example.com",
         isActive: false,
       };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({
         name: "New Name",
@@ -356,7 +356,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
   describe("User Preferences Updates", () => {
     beforeEach(() => {
-      (prisma.user.findUnique as any).mockResolvedValue(mockExistingUser);
+      (baseDb.user.findUnique as any).mockResolvedValue(mockExistingUser);
     });
 
     it("updates theme preference", async () => {
@@ -364,7 +364,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
         ...mockExistingUser,
         userPreferences: { ...mockExistingUser.userPreferences, theme: "Dark" },
       };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({ userPreferences: { theme: "Dark" } });
       const context = createContext("user-123");
@@ -383,7 +383,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
           locale: "es_ES",
         },
       };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({ userPreferences: { locale: "es_ES" } });
       const context = createContext("user-123");
@@ -402,7 +402,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
           itemsPerPage: "P25",
         },
       };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({
         userPreferences: { itemsPerPage: "P25" },
@@ -425,7 +425,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
           itemsPerPage: "P50",
         },
       };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({
         userPreferences: {
@@ -446,7 +446,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
     it("creates preferences if they don't exist", async () => {
       const userWithoutPrefs = { ...mockExistingUser, userPreferences: null };
-      (prisma.user.findUnique as any).mockResolvedValue(userWithoutPrefs);
+      (baseDb.user.findUnique as any).mockResolvedValue(userWithoutPrefs);
 
       const updatedUser = {
         ...mockExistingUser,
@@ -463,7 +463,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
           inAppNotifications: true,
         },
       };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({ userPreferences: { theme: "Dark" } });
       const context = createContext("user-123");
@@ -485,7 +485,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
           inAppNotifications: true,
         },
       };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({
         userPreferences: {
@@ -514,7 +514,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
           timezone: "America/New_York",
         },
       };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({
         userPreferences: {
@@ -536,7 +536,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
   describe("Combined Updates", () => {
     beforeEach(() => {
-      (prisma.user.findUnique as any).mockResolvedValue(mockExistingUser);
+      (baseDb.user.findUnique as any).mockResolvedValue(mockExistingUser);
     });
 
     it("updates both basic fields and preferences in one request", async () => {
@@ -550,7 +550,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
           itemsPerPage: "P25",
         },
       };
-      (prisma.$transaction as any).mockResolvedValue(updatedUser);
+      (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
       const request = createRequest({
         name: "Updated Name",
@@ -574,7 +574,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
   describe("Validation", () => {
     beforeEach(() => {
-      (prisma.user.findUnique as any).mockResolvedValue(mockExistingUser);
+      (baseDb.user.findUnique as any).mockResolvedValue(mockExistingUser);
     });
 
     it("returns 400 for invalid email format", async () => {
@@ -662,7 +662,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
           ...mockExistingUser,
           userPreferences: { ...mockExistingUser.userPreferences, locale },
         };
-        (prisma.$transaction as any).mockResolvedValue(updatedUser);
+        (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
         const request = createRequest({ userPreferences: { locale } });
         const context = createContext("user-123");
@@ -680,7 +680,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
           ...mockExistingUser,
           userPreferences: { ...mockExistingUser.userPreferences, theme },
         };
-        (prisma.$transaction as any).mockResolvedValue(updatedUser);
+        (baseDb.$transaction as any).mockResolvedValue(updatedUser);
 
         const request = createRequest({ userPreferences: { theme } });
         const context = createContext("user-123");
@@ -691,7 +691,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     });
 
     it("accepts empty body (no-op update)", async () => {
-      (prisma.$transaction as any).mockResolvedValue(mockExistingUser);
+      (baseDb.$transaction as any).mockResolvedValue(mockExistingUser);
 
       const request = createRequest({});
       const context = createContext("user-123");
@@ -703,7 +703,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
   describe("Error Handling", () => {
     beforeEach(() => {
-      (prisma.user.findUnique as any).mockResolvedValue(mockExistingUser);
+      (baseDb.user.findUnique as any).mockResolvedValue(mockExistingUser);
     });
 
     it("returns 400 when email already exists (P2002 Prisma error)", async () => {
@@ -711,7 +711,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
         code: "P2002",
         message: "Unique constraint failed",
       };
-      (prisma.$transaction as any).mockRejectedValue(prismaError);
+      (baseDb.$transaction as any).mockRejectedValue(prismaError);
 
       const request = createRequest({ email: "existing@example.com" });
       const context = createContext("user-123");
@@ -723,7 +723,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     });
 
     it("returns 500 for database transaction failure", async () => {
-      (prisma.$transaction as any).mockRejectedValue(
+      (baseDb.$transaction as any).mockRejectedValue(
         new Error("Database error")
       );
 
@@ -737,7 +737,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     });
 
     it("returns 500 for unexpected errors", async () => {
-      (prisma.$transaction as any).mockRejectedValue(
+      (baseDb.$transaction as any).mockRejectedValue(
         new Error("Unexpected error")
       );
 
@@ -753,13 +753,13 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
 
   describe("Transaction Behavior", () => {
     beforeEach(() => {
-      (prisma.user.findUnique as any).mockResolvedValue(mockExistingUser);
+      (baseDb.user.findUnique as any).mockResolvedValue(mockExistingUser);
     });
 
     it("executes updates in a transaction to ensure atomicity", async () => {
       let transactionCallbackCalled = false;
 
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         transactionCallbackCalled = true;
 
         // Mock transaction context
@@ -787,7 +787,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
       await PATCH(request, context);
 
       expect(transactionCallbackCalled).toBe(true);
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(baseDb.$transaction).toHaveBeenCalledTimes(1);
     });
 
     it("returns final user state after transaction completes", async () => {
@@ -797,7 +797,7 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
         userPreferences: { ...mockExistingUser.userPreferences, theme: "Dark" },
       };
 
-      (prisma.$transaction as any).mockResolvedValue(finalUserState);
+      (baseDb.$transaction as any).mockResolvedValue(finalUserState);
 
       const request = createRequest({
         name: "Final Name",

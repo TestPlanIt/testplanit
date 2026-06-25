@@ -1,6 +1,6 @@
 import { JiraAdapter } from "@/lib/integrations/adapters/JiraAdapter";
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const validatedData = createIssueSchema.parse(body);
 
     // Get user's Jira integration auth
-    const userIntegrationAuth = await prisma.userIntegrationAuth.findFirst({
+    const userIntegrationAuth = await baseDb.userIntegrationAuth.findFirst({
       where: {
         userId: session.user.id,
         integration: {
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       validatedData.sessionId
     ) {
       // Use upsert to handle cases where the issue already exists
-      await prisma.issue.upsert({
+      await baseDb.issue.upsert({
         where: {
           externalId_integrationId: {
             externalId: createdIssue.key || createdIssue.id,

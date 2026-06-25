@@ -2,7 +2,7 @@
 
 import { sql } from "kysely";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 
 export interface AuditLogUserOption {
@@ -57,7 +57,7 @@ export async function searchAuditLogUsers(
       ) s
       ORDER BY "userName" ASC NULLS LAST, "userEmail" ASC NULLS LAST
       LIMIT ${take} OFFSET ${skip}
-    `.execute(prisma.$qb)
+    `.execute(baseDb.$qb)
     ).rows;
 
     const countRows = (
@@ -65,7 +65,7 @@ export async function searchAuditLogUsers(
       SELECT COUNT(DISTINCT "userId")::int AS count
       FROM "AuditLog"
       WHERE "userId" IS NOT NULL ${searchClause}
-    `.execute(prisma.$qb)
+    `.execute(baseDb.$qb)
     ).rows;
 
     return { results, total: countRows[0]?.count ?? 0 };

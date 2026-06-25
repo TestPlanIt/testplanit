@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock prisma using vi.hoisted
+// Mock baseDb using vi.hoisted
 const { mockPrisma } = vi.hoisted(() => ({
   mockPrisma: {
     integration: { findFirst: vi.fn() },
@@ -33,8 +33,8 @@ const { mockPrisma } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: mockPrisma,
+vi.mock("@/lib/db", () => ({
+  baseDb: mockPrisma,
 }));
 
 import { JiraLinkService } from "./jira-link-service";

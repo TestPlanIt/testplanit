@@ -20,7 +20,7 @@ vi.mock("~/lib/queues", () => ({
   getDeriveCaseStepsQueue: () => mockGetQueue(),
 }));
 
-vi.mock("~/lib/multiTenantPrisma", () => ({
+vi.mock("~/lib/multiTenantDb", () => ({
   getCurrentTenantId: () => "tenant-x",
 }));
 
@@ -59,7 +59,7 @@ describe("enqueueDeriveCaseSteps", () => {
     mockResolveIntegration.mockResolvedValue({ integrationId: 7 });
 
     const enqueued = await enqueueDeriveCaseSteps({
-      prisma: fakePrisma,
+      baseDb: fakePrisma,
       projectId: 10,
       testRunId: 99,
       userId: "user-1",
@@ -87,7 +87,7 @@ describe("enqueueDeriveCaseSteps", () => {
     mockResolveIntegration.mockResolvedValue(null);
 
     const enqueued = await enqueueDeriveCaseSteps({
-      prisma: fakePrisma,
+      baseDb: fakePrisma,
       projectId: 10,
       testRunId: 99,
       userId: "user-1",
@@ -100,7 +100,7 @@ describe("enqueueDeriveCaseSteps", () => {
 
   it("does not resolve or enqueue when there are no eligible cases", async () => {
     const enqueued = await enqueueDeriveCaseSteps({
-      prisma: fakePrisma,
+      baseDb: fakePrisma,
       projectId: 10,
       testRunId: 99,
       userId: "user-1",
