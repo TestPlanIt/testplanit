@@ -180,12 +180,15 @@ test.describe("Markdown Paste & Import", () => {
       await page.keyboard.press("End");
       await page.keyboard.type(" ");
       await page.keyboard.press("Backspace");
-      await page.waitForTimeout(1000);
 
-      // Save the changes
-      await testCasePage.saveChanges();
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(1000);
+      // Save and block until the Description field-value write has actually
+      // committed. The case is freshly created with no Description value, so the
+      // save fires a `caseFieldValues/create`. Waiting on that response (instead
+      // of a fixed timeout) closes the read-after-write race: the toolbar swaps
+      // the Save button back for the Edit button the instant submission starts,
+      // so plain `saveChanges()` can return before the create POST is even
+      // issued and the API read-back below would then see an empty result.
+      await testCasePage.saveChangesAndWaitForFieldValue("create");
     });
 
     await test.step("Verify the stored Description is TipTap JSON with heading and bold", async () => {
@@ -284,12 +287,11 @@ test.describe("Markdown Paste & Import", () => {
     });
 
     await test.step("Save the changes", async () => {
-      // Save
-      await testCasePage.saveChanges();
-
-      // Wait for save to complete and reload
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(1000);
+      // Save and block until the Description field-value write has committed.
+      // Same read-after-write race as the markdown variant: the case is fresh,
+      // so the save fires a `caseFieldValues/create`; waiting on that response
+      // guarantees the API read-back below observes the persisted value.
+      await testCasePage.saveChangesAndWaitForFieldValue("create");
     });
 
     await test.step("Verify the stored Description is a simple paragraph doc", async () => {

@@ -55,10 +55,75 @@ export class TestCasePage extends BasePage {
   }
 
   /**
-   * Save changes in edit mode
+   * Save changes in edit mode.
+   *
+   * Clicking Save fires a chain of writes (case update, tag/issue link sync,
+   * version snapshot, field-value + step writes) behind a blocking submit
+   * spinner; the page only returns to view mode — re-rendering the Edit button —
+   * once every write settles. Waiting on `networkidle` alone is not sufficient:
+   * a persistent connection can let it resolve before the save finishes, so a
+   * caller that reads the persisted value immediately after saving can observe a
+   * stale/empty value. Wait for the Edit button to reappear, which is the
+   * definitive "save complete, back in view mode" signal (same approach the
+   * passing tags spec uses).
    */
   async saveChanges(): Promise<void> {
     await this.saveButton.click();
+    // Edit button only re-renders once the submit settles and the page leaves
+    // edit mode, so its return is the reliable save-complete signal.
+    await expect(this.editButton).toBeVisible({ timeout: 30000 });
+    await this.page.waitForLoadState("networkidle");
+  }
+
+  /**
+   * Save changes and block until the case-field-value writes have actually
+   * landed in the DB, then return.
+   *
+   * Why this exists (read-after-write race):
+   * The Edit button that {@link saveChanges} waits on re-renders the instant
+   * Save is clicked, because the toolbar's edit-vs-save branch is gated on
+   * `isEditMode && !isSubmitting` — the moment submission starts
+   * (`isSubmitting === true`) the Save/Cancel pair is swapped back out for the
+   * Edit button while the field-value mutations are still in flight. A caller
+   * that reads the persisted value immediately after `saveChanges()` can
+   * therefore fire its read-back BEFORE the `caseFieldValues/create|update`
+   * request is even issued, and observe an empty result. Field-value writes
+   * are the last awaited step of the case-detail save, so waiting for that
+   * response is the definitive "the value is persisted" signal.
+   *
+   * @param fieldValueOp which mutation to expect for the field being saved:
+   *   "create" for a field that had no stored value yet (fresh case),
+   *   "update" for a field that already had one, or "any" to accept either.
+   */
+  async saveChangesAndWaitForFieldValue(
+    fieldValueOp: "create" | "update" | "any" = "any"
+  ): Promise<void> {
+    const matchesFieldValueWrite = (url: string): boolean => {
+      if (!url.includes("/api/model/caseFieldValues/")) return false;
+      if (fieldValueOp === "any") {
+        return url.includes("/create") || url.includes("/update");
+      }
+      return url.includes(`/${fieldValueOp}`);
+    };
+
+    // Register the response wait BEFORE clicking so we can't miss a fast write.
+    // The submit fires the field-value mutation as its final awaited step, so a
+    // successful response here means the value is committed and a subsequent
+    // API read-back will see it.
+    const fieldValueWrite = this.page.waitForResponse(
+      (response) =>
+        matchesFieldValueWrite(response.url()) &&
+        response.request().method() === "POST" &&
+        response.ok(),
+      { timeout: 30000 }
+    );
+
+    await this.saveButton.click();
+    await fieldValueWrite;
+
+    // Still confirm we are back in view mode so the page is settled for any
+    // subsequent UI assertions.
+    await expect(this.editButton).toBeVisible({ timeout: 30000 });
     await this.page.waitForLoadState("networkidle");
   }
 

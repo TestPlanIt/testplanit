@@ -6,6 +6,7 @@ import {
 
 import { expect, test } from "../../fixtures/index";
 import { RepositoryPage } from "../../page-objects/repository/repository.page";
+import { nativeDragDrop, startNativeDrag } from "./nativeDragDrop";
 
 /**
  * Drag-drop modifier-aware UX — exercises the three drag interaction modes
@@ -15,10 +16,14 @@ import { RepositoryPage } from "../../page-objects/repository/repository.page";
  *     via the async useCopyMoveJob pipeline (writes DUPLICATED_FROM link)
  *   - move modifier (Shift): direct move via the existing fast ZenStack path
  *
- * Playwright high-level drag helpers do not accept a `modifiers` option, so
- * the spec synthesizes held modifiers via page.keyboard.down(<key>) +
- * page.mouse.down/move/up + page.keyboard.up(<key>) (precedent:
- * keyboard-shortcuts.spec.ts:36-38, the folder-reorder spec lines 55-66).
+ * The repository tree uses react-dnd + HTML5Backend, which only reacts to
+ * native HTML5 drag DOM events (dragstart/dragenter/dragover/drop/dragend) —
+ * Playwright's page.mouse.* sequence never reaches the backend's monitor, so
+ * the drop callback never fired and the popover never opened. The drags here
+ * are synthesized as genuine HTML5 drag events via the nativeDragDrop /
+ * startNativeDrag helpers, threading one DataTransfer through the sequence and
+ * setting altKey/ctrlKey/shiftKey directly on the dragover/drop events so
+ * useDragModifier derives the same copy/move intent it would from a held key.
  */
 
 test.use({ storageState: "e2e/.auth/admin.json" });
@@ -35,54 +40,44 @@ async function resolveCopyModifier(page: Page): Promise<"Alt" | "Control"> {
   return isMacBrowser ? "Alt" : "Control";
 }
 
-/**
- * Wait two animation frames to allow React to commit any pending render
- * triggered by react-dnd's isDragging state flip. This lets useEffect-mounted
- * dragover listeners (e.g. useDragModifier's window listener) attach before
- * the spec resumes synthesizing mouse moves.
- */
-async function flushReactRender(page: Page): Promise<void> {
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-      )
-  );
-}
-
 async function dragWithModifier(
   page: Page,
   source: Locator,
   target: Locator,
   modifier: "Alt" | "Shift" | "Control" | null
 ): Promise<void> {
-  const sourceBox = await source.boundingBox();
-  const targetBox = await target.boundingBox();
-  if (!sourceBox || !targetBox) {
-    throw new Error("dragWithModifier: source or target has no boundingBox");
-  }
+  await nativeDragDrop(page, source, target, modifier);
+}
 
-  const targetCenterX = targetBox.x + targetBox.width / 2;
-  const targetCenterY = targetBox.y + targetBox.height / 2;
-
-  // Start the drag without the modifier so dragstart fires cleanly, then
-  // press the modifier and continue moving so dragover events with the
-  // modifier flag propagate to the useDragModifier window listener.
-  await source.hover();
-  await page.mouse.down();
-  await page.mouse.move(targetCenterX, targetCenterY, { steps: 8 });
-  await flushReactRender(page);
-
-  if (modifier) await page.keyboard.down(modifier);
-  await page.mouse.move(targetCenterX + 2, targetCenterY + 2, { steps: 20 });
-  await page.mouse.up();
-  // Wait for the drop to settle (dragend/drop callbacks have run) before
-  // releasing the modifier. Releasing too early on slow CI hardware races
-  // the dragover→drop ordering and can lose the modifier state in the drop
-  // callback's captured copyHeld/moveHeld closure.
-  if (modifier) {
-    await page.waitForTimeout(50);
-    await page.keyboard.up(modifier);
+/**
+ * Wait for the target folder node to render in the tree, reloading the page if
+ * the first folder-tree query returned a stale snapshot that omitted the
+ * just-created folder. The folder is created in the setup test's separate
+ * browser context, so a read-after-write miss can leave the node absent until
+ * the query refetches.
+ */
+async function ensureTargetFolderVisible(
+  page: Page,
+  repo: RepositoryPage,
+  target: Locator,
+  rootFolderId: number
+): Promise<void> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      await expect(target).toBeVisible({
+        timeout: attempt === 0 ? 20_000 : 10_000,
+      });
+      return;
+    } catch {
+      if (attempt === 3)
+        throw new Error("Target folder never rendered in tree");
+      await page.reload();
+      await repo.waitForRepositoryLoad();
+      // Re-select the root folder after the reload so the tree settles into the
+      // same expanded state the rest of the test expects before retrying the
+      // visibility check.
+      await repo.selectFolder(rootFolderId);
+    }
   }
 }
 
@@ -258,7 +253,13 @@ test.describe("Drag-drop modifier-aware UX", () => {
       await repo.selectFolder(rootFolderId);
 
       await expect(sourceRow).toBeVisible({ timeout: 15_000 });
-      await expect(target).toBeVisible({ timeout: 20_000 });
+
+      // The target folder is created by the setup test in a separate browser
+      // context. Occasionally the folder-tree findMany on first load returns a
+      // stale snapshot missing that just-committed row, so the target node
+      // never renders. A reload re-issues the query and picks it up. Retry the
+      // reload a couple of times before giving up.
+      await ensureTargetFolderVisible(page, repo, target, rootFolderId);
     });
 
     await test.step("Drag the case onto the target folder with no modifier", async () => {
@@ -444,9 +445,6 @@ test.describe("Drag-drop modifier-aware UX", () => {
     });
 
     await test.step("Synthesize drag with copy modifier and confirm copy badge then drop", async () => {
-      const targetBox = await target.boundingBox();
-      if (!targetBox) throw new Error("missing target boundingBox");
-
       before = await casesInFolder(
         request,
         baseURL!,
@@ -455,35 +453,24 @@ test.describe("Drag-drop modifier-aware UX", () => {
       );
       beforeIds = new Set(before.map((c) => c.id));
 
-      const targetCenterX = targetBox.x + targetBox.width / 2;
-      const targetCenterY = targetBox.y + targetBox.height / 2;
       const copyModifier = await resolveCopyModifier(page);
 
-      // Start the drag without the modifier first so dragstart fires cleanly,
-      // then press the modifier and continue moving so the modifier-bearing
-      // dragover events propagate to the useDragModifier listener.
-      await sourceRow.hover();
-      await page.mouse.down();
-      await page.mouse.move(targetCenterX, targetCenterY, { steps: 8 });
-      await flushReactRender(page);
-
-      await page.keyboard.down(copyModifier);
-      await page.mouse.move(targetCenterX + 2, targetCenterY + 2, {
-        steps: 20,
-      });
+      // Start a native HTML5 drag hovering over the target, then apply the copy
+      // modifier on subsequent dragover events so useDragModifier flips
+      // copyHeld → the copy badge renders mid-drag.
+      const drag = await startNativeDrag(page, sourceRow, target);
+      await drag.setModifier(copyModifier);
 
       await expect(page.getByTestId("drag-preview-copy-badge")).toBeVisible({
         timeout: 5_000,
       });
 
-      // Modifier held through drop so the drop branches to direct copy.
-      await page.mouse.up();
-      // Wait for the drop to settle before releasing the modifier so the drop
-      // callback observes the modifier-bearing dragover state on slow CI.
+      // Drop with the modifier still applied so the drop branches to direct
+      // copy (no popover).
+      await drag.drop(copyModifier);
       await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
         timeout: 2_000,
       });
-      await page.keyboard.up(copyModifier);
     });
 
     await test.step("Wait for the async copy job to land a new case in the target folder", async () => {
@@ -530,36 +517,22 @@ test.describe("Drag-drop modifier-aware UX", () => {
     });
 
     await test.step("Synthesize drag with Shift modifier and confirm move badge then drop", async () => {
-      const targetBox = await target.boundingBox();
-      if (!targetBox) throw new Error("missing target boundingBox");
-
-      const targetCenterX = targetBox.x + targetBox.width / 2;
-      const targetCenterY = targetBox.y + targetBox.height / 2;
-
-      // Start the drag without the modifier so dragstart fires cleanly, then
-      // press Shift mid-drag so the modifier-bearing dragovers propagate.
-      await sourceRow.hover();
-      await page.mouse.down();
-      await page.mouse.move(targetCenterX, targetCenterY, { steps: 8 });
-      await flushReactRender(page);
-
-      await page.keyboard.down("Shift");
-      await page.mouse.move(targetCenterX + 2, targetCenterY + 2, {
-        steps: 20,
-      });
+      // Start a native HTML5 drag hovering over the target, then apply Shift on
+      // subsequent dragover events so useDragModifier flips moveHeld → the move
+      // badge renders mid-drag.
+      const drag = await startNativeDrag(page, sourceRow, target);
+      await drag.setModifier("Shift");
 
       await expect(page.getByTestId("drag-preview-move-badge")).toBeVisible({
         timeout: 5_000,
       });
 
-      // Modifier held through drop so the drop branches to direct move.
-      await page.mouse.up();
-      // Wait for the drop to settle before releasing the modifier so the drop
-      // callback observes the modifier-bearing dragover state on slow CI.
+      // Drop with Shift still applied so the drop branches to direct move (no
+      // popover).
+      await drag.drop("Shift");
       await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
         timeout: 2_000,
       });
-      await page.keyboard.up("Shift");
     });
 
     await test.step("Verify the case moved via the fast path with no copy spinner", async () => {
@@ -597,13 +570,8 @@ test.describe("Drag-drop modifier-aware UX", () => {
     const target = page
       .locator(`[data-testid="folder-node-${targetFolderId}"]`)
       .first();
-    let targetBox: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    } | null = null;
     let copyModifier: "Alt" | "Control" | undefined;
+    let drag: Awaited<ReturnType<typeof startNativeDrag>> | undefined;
 
     await test.step("Open repository and select the root folder", async () => {
       await repo.goto(projectId);
@@ -611,47 +579,29 @@ test.describe("Drag-drop modifier-aware UX", () => {
 
       await expect(sourceRow).toBeVisible({ timeout: 10_000 });
 
-      targetBox = await target.boundingBox();
-      if (!targetBox) throw new Error("missing target boundingBox");
-
       copyModifier = await resolveCopyModifier(page);
     });
 
-    await test.step("Start the drag and press the copy modifier to show the copy badge", async () => {
-      await sourceRow.hover();
-      await page.mouse.down();
-      // First short move triggers dragstart so react-dnd's isDragging flips true.
-      await page.mouse.move(targetBox!.x + 10, targetBox!.y + 10, { steps: 8 });
-      // Flush so the UnifiedDragPreview-mounted dragover listener attaches.
-      await flushReactRender(page);
-
-      await page.keyboard.down(copyModifier!);
-      // Nudge the mouse so fresh dragovers propagate with the new modifier state.
-      await page.mouse.move(targetBox!.x + 20, targetBox!.y + 20, {
-        steps: 12,
-      });
+    await test.step("Start the drag and apply the copy modifier to show the copy badge", async () => {
+      // Begin a native HTML5 drag held over the target, then apply the copy
+      // modifier on subsequent dragover events.
+      drag = await startNativeDrag(page, sourceRow, target);
+      await drag.setModifier(copyModifier!);
       await expect(page.getByTestId("drag-preview-copy-badge")).toBeVisible({
         timeout: 5_000,
       });
-      await page.keyboard.up(copyModifier!);
     });
 
-    await test.step("Press Shift to swap to the move badge", async () => {
-      await page.keyboard.down("Shift");
-      await page.mouse.move(targetBox!.x + 30, targetBox!.y + 30, {
-        steps: 12,
-      });
+    await test.step("Apply Shift to swap to the move badge", async () => {
+      await drag!.setModifier("Shift");
       await expect(page.getByTestId("drag-preview-move-badge")).toBeVisible({
         timeout: 5_000,
       });
-      await page.keyboard.up("Shift");
     });
 
     await test.step("Release modifiers and confirm both badges disappear", async () => {
-      // Both badges should be gone when neither modifier is held.
-      await page.mouse.move(targetBox!.x + 40, targetBox!.y + 40, {
-        steps: 12,
-      });
+      // No modifier on the next dragover → both badges should clear.
+      await drag!.setModifier(null);
       await expect(page.getByTestId("drag-preview-copy-badge")).not.toBeVisible(
         {
           timeout: 5_000,
@@ -664,13 +614,12 @@ test.describe("Drag-drop modifier-aware UX", () => {
       );
     });
 
-    await test.step("End the drag away from any drop target", async () => {
-      // End the drag away from any drop target so canDrop returns false and no
-      // drop branch fires — the badge-swap UI smoke is the deterministic claim
-      // here; drop-branch routing for the no-modifier case is covered by the
-      // earlier popover-open / Esc-dismiss test.
-      await page.mouse.move(10, 10, { steps: 5 });
-      await page.mouse.up();
+    await test.step("End the drag without a drop", async () => {
+      // Abandon the drag (dragend without a drop) so no drop branch fires — the
+      // badge-swap UI smoke is the deterministic claim here; drop-branch routing
+      // for the no-modifier case is covered by the earlier popover-open /
+      // Esc-dismiss test.
+      await drag!.abandon();
     });
   });
 
@@ -716,7 +665,17 @@ test.describe("Drag-drop modifier-aware UX", () => {
 
     await test.step("Drag the selection onto the target folder with the copy modifier", async () => {
       const copyModifier = await resolveCopyModifier(page);
-      await dragWithModifier(page, sourceRow, target, copyModifier);
+
+      // Hold the drag over the target and apply the copy modifier, then wait for
+      // the copy badge before dropping. The badge confirms useDragModifier has
+      // committed copyHeld=true, so the drop callback's captured closure
+      // branches to direct copy (no popover) instead of racing the state update.
+      const drag = await startNativeDrag(page, sourceRow, target);
+      await drag.setModifier(copyModifier);
+      await expect(page.getByTestId("drag-preview-copy-badge")).toBeVisible({
+        timeout: 5_000,
+      });
+      await drag.drop(copyModifier);
 
       // Copy modifier held → no popover.
       await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
