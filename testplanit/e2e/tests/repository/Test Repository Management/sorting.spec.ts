@@ -417,6 +417,14 @@ test.describe("Sorting", () => {
     });
 
     await test.step("Verify the Name column is in descending order", async () => {
+      // Wait for the table to settle to exactly the 3 real data rows before
+      // reading the column (skeleton rows during the post-sort refetch have no
+      // data-row-id and would otherwise be read as 10 placeholders). Mirrors
+      // the Ascending test + the toHaveCount pattern the other sorting tests use.
+      await expect(
+        repositoryPage.casesTable.locator("tbody tr[data-row-id]")
+      ).toHaveCount(3, { timeout: 10000 });
+
       // Get the values from the Name column
       const nameValues = await getColumnValues(page, "Name");
 
