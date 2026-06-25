@@ -87,7 +87,7 @@ import React, {
   useState,
 } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import { ImperativePanelHandle } from "react-resizable-panels";
+import { PanelImperativeHandle } from "react-resizable-panels";
 import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
@@ -353,8 +353,8 @@ export default function TestCaseDetails() {
   const canEditRestricted = restrictedFieldsPermissions?.canAddEdit ?? false;
   const canEditRestrictedPerm = canEditRestricted || isSuperAdmin; // NEW
 
-  const panelRightRef = useRef<ImperativePanelHandle>(null);
-  const panelLeftRef = useRef<ImperativePanelHandle>(null);
+  const panelRightRef = useRef<PanelImperativeHandle>(null);
+  const panelLeftRef = useRef<PanelImperativeHandle>(null);
   const [isCollapsedRight, setIsCollapsedRight] = useState<boolean>(false);
   const [isCollapsedLeft, setIsCollapsedLeft] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);

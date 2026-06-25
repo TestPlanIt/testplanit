@@ -266,6 +266,20 @@ command at a connection that bypasses the pooler — `zenstack db push` and the 
 setup require a real (non-pooled) session. See [Configure connection pooling](#best-practices)
 below for the matching `DIRECT_DATABASE_URL` setup the running container uses.
 
+You do **not** need a separate step to install the audit-capture database triggers.
+`prisma db push` silently drops them, but the application re-installs them
+automatically on every boot (idempotent, advisory-locked across replicas), so a plain
+`db push` followed by starting the app leaves audit capture intact. Two optional
+environment variables tune this self-install:
+
+- `AUDIT_TRIGGER_BOOTSTRAP=off` — skip the install entirely. Use this only when the
+  app's database role cannot run DDL (e.g. a read-only role); you must then apply the
+  triggers out-of-band.
+- `AUDIT_TRIGGER_BOOTSTRAP_FATAL=1` — abort startup if the install fails instead of
+  logging and continuing. The default is fail-open so an unrelated database hiccup
+  can't take the web tier down; set this to `1` on the **worker tier**, where audit
+  integrity is load-bearing.
+
 Or use your existing database if it's already initialized.
 
 ### Step 4: Monitor Deployment

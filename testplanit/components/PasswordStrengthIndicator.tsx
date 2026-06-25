@@ -42,14 +42,16 @@ export function PasswordStrengthIndicator({
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { zxcvbn, zxcvbnOptions } = await import("@zxcvbn-ts/core");
+      // @zxcvbn-ts/core v4 replaced the top-level zxcvbn()/zxcvbnOptions with a
+      // ZxcvbnFactory instance whose .check() does the scoring.
+      const { ZxcvbnFactory } = await import("@zxcvbn-ts/core");
       const { dictionary } = await import("@zxcvbn-ts/language-en");
-      zxcvbnOptions.setOptions({ dictionary });
+      const zxcvbn = new ZxcvbnFactory({ dictionary });
       if (!cancelled) {
-        zxcvbnRef.current = zxcvbn;
+        zxcvbnRef.current = (pw: string) => zxcvbn.check(pw);
         // Re-evaluate current password if already typed
         if (password) {
-          const result = zxcvbn(password);
+          const result = zxcvbn.check(password);
           setScore(result.score);
           setFeedback(result.feedback?.warning ?? "");
         }

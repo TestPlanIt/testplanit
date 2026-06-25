@@ -11,7 +11,13 @@ const moduleRules = {
       use: {
         loader: 'babel-loader',
         options: {
-          presets: ['@babel/preset-env', '@babel/preset-react'],
+          presets: [
+            '@babel/preset-env',
+            // Babel 8 flips preset-react's default runtime to "automatic"; pin
+            // "classic" to preserve the existing JSX transform (the frontend
+            // files import React explicitly).
+            ['@babel/preset-react', { runtime: 'classic' }],
+          ],
         },
       },
     },

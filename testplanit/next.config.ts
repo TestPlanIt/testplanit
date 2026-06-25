@@ -134,8 +134,16 @@ const nextConfig: NextConfig = {
     "test-results-parser",
     "jspdf",
     "fflate",
+    // The instrumentation boot hook imports apply-triggers, which uses `pg` for raw DDL.
+    // Keep it external so the native driver isn't bundled into the server runtime.
+    "pg",
   ],
   outputFileTracingRoot: path.join(__dirname, "../"),
+  // The instrumentation boot hook reads prisma/audit_row_change.sql at runtime to (re)install the
+  // audit triggers. Trace it into the standalone output so it exists wherever the server runs.
+  outputFileTracingIncludes: {
+    "/**": ["./prisma/audit_row_change.sql"],
+  },
   experimental: {
     // Limit number of workers to reduce memory usage during build
     workerThreads: false,

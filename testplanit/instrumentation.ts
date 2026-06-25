@@ -1,6 +1,9 @@
 /**
  * Next.js server instrumentation hook. Runs once when the server starts
- * (nodejs runtime only, not edge), before any request is served.
+ * (nodejs runtime only, not edge), before any request is served — and on
+ * EVERY launcher: docker entrypoint, `next start`, standalone `node server.js`,
+ * pm2, or a k8s `command:` override. That makes it the one launch-agnostic
+ * place to guarantee runtime invariants.
  *
  * Use this to fail fast on missing security-critical configuration. A
  * production deployment without ENCRYPTION_KEY would silently fall back
@@ -22,4 +25,13 @@ export async function register() {
     console.error("[startup] encryption misconfiguration:", error);
     throw error;
   }
+
+  // Re-attach the audit-trigger substrate on every boot. `prisma db push` silently drops these
+  // triggers and not every launch path runs apply-triggers, so doing it here is what keeps audit
+  // capture alive no matter how the app is installed/updated/launched. Idempotent, advisory-locked,
+  // and fail-open by default (see ensureAuditTriggers); never blocks startup unless explicitly made
+  // fatal via AUDIT_TRIGGER_BOOTSTRAP_FATAL=1.
+  const { ensureAuditTriggers } =
+    await import("~/lib/audit/ensureAuditTriggers");
+  await ensureAuditTriggers();
 }

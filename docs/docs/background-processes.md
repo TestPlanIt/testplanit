@@ -142,7 +142,7 @@ The application uses the following background processes:
 ### DataChangeLog Retention Worker
 
 - Wakes once per day and batch-deletes processed `DataChangeLog` rows (the audit change-capture substrate) older than 30 days
-- Never deletes unprocessed rows — the audit log worker must correlate them into `AuditLog` first; the append-only `datachangelog_append_only` trigger enforces this at the database level too
+- Never deletes unprocessed rows — the audit log worker must correlate them into `AuditLog` first; the append-only enforcement triggers (`tpl_dcl_no_delete` / `tpl_dcl_no_update`) enforce this at the database level too
 - Batched `LIMIT 1000` deletes to avoid lock contention with the capture path; emits one `DCL_RETENTION_PURGED` audit event per run
 - Multi-tenant aware: runs the purge against every configured tenant database per cycle and emits one audit row per (tenant, run)
 - Standalone daily loop (no BullMQ queue) — self-schedules internally rather than via the scheduler

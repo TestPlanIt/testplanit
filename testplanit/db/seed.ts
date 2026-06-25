@@ -64,22 +64,36 @@ async function seedCoreData() {
   console.log("Seeding core data...");
 
   // --- Roles ---
+  // Respect the admin's explicit default-role choice. The seed runs on every
+  // upgrade, and previously the `update` blocks force-reset "user" to default
+  // and "admin" to non-default, silently overwriting whatever role the admin
+  // had picked as the default for new users. (Mirrors seedDefaultTemplate.)
+  // Only install "user" as the default when no default role exists yet.
+  const existingDefaultRole = await db.roles.findFirst({
+    where: { isDefault: true },
+    select: { id: true, name: true },
+  });
   const userRole = await db.roles.upsert({
     where: { name: "user" },
-    update: { isDefault: true },
+    update: {}, // do NOT touch isDefault — preserve the admin's choice
     create: {
       name: "user",
-      isDefault: true,
+      isDefault: existingDefaultRole === null,
     },
   });
   const adminRole = await db.roles.upsert({
     where: { name: "admin" },
-    update: { isDefault: false },
+    update: {}, // do NOT touch isDefault — preserve the admin's choice
     create: {
       name: "admin",
       isDefault: false,
     },
   });
+  if (existingDefaultRole && existingDefaultRole.name !== "user") {
+    console.log(
+      `Skipped re-promoting "user" role to default — admin's choice "${existingDefaultRole.name}" preserved.`
+    );
+  }
 
   console.log(
     `Upserted roles: admin (ID: ${adminRole.id}), user (ID: ${userRole.id}) - Default: ${userRole.isDefault ? "user" : "admin"}`
@@ -1440,6 +1454,21 @@ async function seedWorkflows() {
     },
   ];
 
+  // Respect the admin's per-scope default-status choice. The seed runs on
+  // every upgrade, and previously the `update` block force-reset `isDefault`
+  // from the seed data, silently overwriting whichever workflow status the
+  // admin had picked as the default for each scope. (Mirrors the fix in
+  // seedDefaultTemplate.) Only install a seed default for a scope that has no
+  // default yet (fresh install or a newly-introduced scope).
+  const existingDefaultScopes = new Set<string>(
+    (
+      await db.workflows.findMany({
+        where: { isDefault: true },
+        select: { scope: true },
+      })
+    ).map((w) => w.scope)
+  );
+
   for (const workflow of workflowsData) {
     const icon = await db.fieldIcon.findUnique({
       where: { name: workflow.icon },
@@ -1470,7 +1499,7 @@ async function seedWorkflows() {
             iconId: icon.id,
             colorId: color.id,
             isEnabled: workflow.isEnabled,
-            isDefault: workflow.isDefault,
+            // Do NOT touch isDefault — preserve the admin's choice.
           },
         });
       } else {
@@ -1481,7 +1510,8 @@ async function seedWorkflows() {
             iconId: icon.id,
             colorId: color.id,
             isEnabled: workflow.isEnabled,
-            isDefault: workflow.isDefault,
+            isDefault:
+              workflow.isDefault && !existingDefaultScopes.has(workflow.scope),
             requiresReview: false,
             scope: workflow.scope as WorkflowScope,
             workflowType: workflow.workflowType as
@@ -1561,19 +1591,30 @@ async function seedMilestoneTypes() {
 
   const milestoneTypesWithIconIds = await Promise.all(iconPromises);
 
+  // Respect the admin's explicit default milestone-type choice. The seed runs
+  // on every upgrade, and previously the `update` block force-reset
+  // `isDefault` from the seed data, silently overwriting the admin's choice.
+  // (Mirrors the fix in seedDefaultTemplate.) Only install the seed default
+  // when no default milestone type exists yet (fresh install).
+  const existingDefaultMilestoneType = await db.milestoneTypes.findFirst({
+    where: { isDefault: true },
+    select: { id: true },
+  });
+
   const milestoneTypePromises = milestoneTypesWithIconIds.map((type) =>
     db.milestoneTypes.upsert({
       where: { id: type.id },
       update: {
         name: type.name,
         iconId: type.iconId,
-        isDefault: type.isDefault || false,
+        // Do NOT touch isDefault — preserve the admin's choice.
       },
       create: {
         id: type.id,
         name: type.name,
         iconId: type.iconId,
-        isDefault: type.isDefault || false,
+        isDefault:
+          (type.isDefault || false) && existingDefaultMilestoneType === null,
       },
     })
   );

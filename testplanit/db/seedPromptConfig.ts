@@ -9,25 +9,42 @@ import { LLM_FEATURES, PROMPT_FEATURE_VARIABLES } from "../lib/llm/constants";
 export async function seedDefaultPromptConfig(db: DbClient) {
   console.log("Seeding default prompt configuration...");
 
-  // Ensure no other config is marked as default (safety measure)
-  await db.promptConfig.updateMany({
-    where: { isDefault: true },
-    data: { isDefault: false },
+  // Respect the admin's explicit default choice. The seed runs on every
+  // application upgrade, and previously this function force-demoted every
+  // `isDefault: true` row and then re-promoted "Default", silently
+  // overwriting whatever config the admin had picked as the default — with
+  // no audit trail, because seed uses the raw db client and bypasses the
+  // audit plugin. (Mirrors the fix in seedDefaultTemplate.)
+  //
+  // New rule: ONLY mark "Default" as the default when the tenant has no
+  // active default config at all (fresh install). Otherwise create / update
+  // the row without touching its `isDefault` flag.
+  const existingDefault = await db.promptConfig.findFirst({
+    where: { isDefault: true, isActive: true, isDeleted: false },
+    select: { id: true, name: true },
   });
 
-  // Create or update the default prompt config
+  // Create or update the default prompt config. On first install (no existing
+  // default) mark it as the default; on upgrades the `update` block runs and
+  // `isDefault` is NOT touched, preserving whatever the admin chose.
   const defaultConfig = await db.promptConfig.upsert({
     where: { name: "Default" },
-    update: { isDefault: true, isActive: true, isDeleted: false },
+    update: { isActive: true, isDeleted: false },
     create: {
       name: "Default",
       description:
         "Default prompt configuration with standard prompts for all AI features.",
-      isDefault: true,
+      isDefault: existingDefault === null,
       isActive: true,
       isDeleted: false,
     },
   });
+
+  if (existingDefault && existingDefault.name !== "Default") {
+    console.log(
+      `Skipped re-promoting "Default" prompt config — admin's choice "${existingDefault.name}" preserved.`
+    );
+  }
 
   // Define prompts for each feature
   const featurePrompts = [
