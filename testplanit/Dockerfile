@@ -49,7 +49,6 @@ RUN if [ -f ".docker-version.json" ]; then \
 
 ENV NODE_OPTIONS="--max-old-space-size=16384"
 RUN pnpm zenstack generate
-RUN node scripts/fix-zenstack-symlink.js
 RUN apk del .gyp
 
 COPY testplanit/wait-for-postgres.sh /usr/local/bin/wait-for-postgres.sh
@@ -135,7 +134,6 @@ ENV BASE_DOMAIN=${BASE_DOMAIN}
 WORKDIR /app/testplanit
 # The ZenStack v3 client is generated in the base stage (`pnpm zenstack
 # generate`), which this stage inherits — there is no `prisma generate` anymore.
-RUN node scripts/fix-zenstack-symlink.js
 RUN npm run build
 
 # ---- Production ----
@@ -185,7 +183,6 @@ COPY --from=build --chown=nextjs:nodejs /app/testplanit/docker-entrypoint.sh ./t
 RUN chmod +x ./testplanit/docker-entrypoint.sh
 
 WORKDIR /app/testplanit
-RUN node scripts/fix-zenstack-symlink.js
 RUN npm install -g tsx
 # ZenStack CLI for the db-init `zenstack db push` (the prod deploy tree is
 # --prod, so the devDep CLI isn't present; install it globally). It pulls
@@ -233,7 +230,6 @@ COPY --from=build /app/testplanit/tsconfig.json ./tsconfig.json
 COPY --from=build /app/testplanit/messages ./messages
 COPY --from=build /app/testplanit/messages ./dist/messages
 COPY --from=build /app/testplanit/scripts ./scripts
-RUN node scripts/fix-zenstack-symlink.js
 COPY --from=base /usr/local/bin/wait-for-postgres.sh /usr/local/bin/wait-for-postgres.sh
 
 RUN echo '#!/bin/sh' > /app/start-workers.sh && \
