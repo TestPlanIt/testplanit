@@ -52,9 +52,17 @@ const ResizablePanelGroup = ({
   className,
   direction = "horizontal",
   autoSaveId,
+  id,
   ...props
 }: ResizablePanelGroupProps) => {
   const storageKey = autoSaveId ? `${STORAGE_PREFIX}${autoSaveId}` : undefined;
+  // react-resizable-panels v4 renders the group element's `data-testid` from its
+  // `id` prop and ignores a passed `data-testid`. Map an explicit data-testid onto
+  // `id` so callers' test ids (e.g. "repository-layout") stay queryable.
+  const dataTestId = (props as Record<string, unknown>)["data-testid"] as
+    | string
+    | undefined;
+  const resolvedId = id ?? dataTestId;
 
   const [defaultLayout] = useState<Layout | undefined>(() => {
     if (!storageKey || typeof window === "undefined") return undefined;
@@ -81,6 +89,7 @@ const ResizablePanelGroup = ({
   return (
     <OrientationContext.Provider value={direction}>
       <ResizablePrimitive.Group
+        id={resolvedId}
         orientation={direction}
         defaultLayout={defaultLayout}
         onLayoutChanged={storageKey ? onLayoutChanged : undefined}
