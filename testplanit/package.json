@@ -346,7 +346,7 @@
     "@typescript-eslint/eslint-plugin": "^8.62.0",
     "@typescript-eslint/parser": "^8.62.0",
     "@udecode/cn": "^52.3.4",
-    "@vitejs/plugin-react": "^5.2.0",
+    "@vitejs/plugin-react": "^6.0.3",
     "@vitest/coverage-v8": "^4.1.9",
     "@zenstackhq/openapi": "~2.22.3",
     "@zenstackhq/tanstack-query": "~2.22.3",
