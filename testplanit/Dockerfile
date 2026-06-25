@@ -174,6 +174,8 @@ COPY --from=deps --chown=nextjs:nodejs /app/deploy/node_modules ./testplanit/nod
 # .zenstack cache and no @prisma/client to copy.)
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/zenstack ./testplanit/zenstack
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/schema.zmodel ./testplanit/schema.zmodel
+# Migration history — `zenstack migrate deploy` (docker-entrypoint.sh) applies it at startup.
+COPY --from=build --chown=nextjs:nodejs /app/testplanit/migrations ./testplanit/migrations
 
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/services ./testplanit/services
 COPY --from=build --chown=nextjs:nodejs /app/testplanit/utils ./testplanit/utils

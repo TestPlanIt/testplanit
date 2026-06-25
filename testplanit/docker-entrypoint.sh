@@ -6,7 +6,10 @@ set -e
 INIT_DATABASE_URL="${DIRECT_DATABASE_URL:-$DATABASE_URL}"
 
 echo "Running database migrations..."
-DATABASE_URL="$INIT_DATABASE_URL" npx zenstack db push --schema schema.zmodel --accept-data-loss --no-version-check
+# migrate deploy applies pending migrations only; it never drops data (unlike
+# `db push --accept-data-loss`). Existing databases first built with db push must
+# have the baseline marked applied once — see testplanit/migrations/README.md.
+DATABASE_URL="$INIT_DATABASE_URL" npx zenstack migrate deploy --schema schema.zmodel --no-version-check
 
 echo "Applying audit triggers..."
 DATABASE_URL="$INIT_DATABASE_URL" npx tsx scripts/apply-triggers.ts

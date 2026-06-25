@@ -41,14 +41,15 @@ services:
     env_file:
       - .env.production
     working_dir: /app/testplanit
-    # Push schema and seed database (no migrations).
+    # Apply migrations and seed database.
     # If Postgres is fronted by a transaction-mode pooler (pgbouncer), point this
-    # service at the direct DB — `zenstack db push` needs a real (non-pooled) session.
+    # service at the direct DB — `zenstack migrate deploy` needs a real (non-pooled) session.
+    # Existing pre-migration databases must be baselined once (testplanit/migrations/README.md).
     command:
       [
         "sh",
         "-c",
-        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh ${POSTGRES_HOST:-postgres} ${POSTGRES_PORT:-5432} -- echo 'DB ready, pushing schema...' && npx zenstack db push --schema schema.zmodel --accept-data-loss --no-version-check && echo 'Applying audit triggers...' && pnpm tsx scripts/apply-triggers.ts && echo 'Schema pushed, seeding...' && pnpm tsx db/seed.ts && echo 'DB initialized and seeded.'",
+        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh ${POSTGRES_HOST:-postgres} ${POSTGRES_PORT:-5432} -- echo 'DB ready, applying migrations...' && npx zenstack migrate deploy --schema schema.zmodel --no-version-check && echo 'Applying audit triggers...' && pnpm tsx scripts/apply-triggers.ts && echo 'Migrations applied, seeding...' && pnpm tsx db/seed.ts && echo 'DB initialized and seeded.'",
       ]
     networks:
       - testplanit-net

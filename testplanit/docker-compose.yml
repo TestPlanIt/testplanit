@@ -140,7 +140,7 @@ services:
       [
         "sh",
         "-c",
-        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh postgres 5432 -- echo 'DB ready, pushing schema...' && npx zenstack db push --schema schema.zmodel --accept-data-loss --no-version-check && echo 'Schema pushed, seeding...' && pnpm tsx db/seed.ts && echo 'DB initialized and seeded.'",
+        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh postgres 5432 -- echo 'DB ready, applying migrations...' && npx zenstack migrate deploy --schema schema.zmodel --no-version-check && echo 'Migrations applied, seeding...' && pnpm tsx db/seed.ts && echo 'DB initialized and seeded.'",
       ]
     networks:
       - testplanit-net
@@ -159,12 +159,13 @@ services:
     env_file:
       - .env.production # Use PRODUCTION env vars
     working_dir: /app/testplanit # Set working directory for commands within the container
-    # Push schema and seed database (no migrations)
+    # Apply migrations and seed database (existing DBs need a one-time baseline —
+    # see testplanit/migrations/README.md)
     command:
       [
         "sh",
         "-c",
-        "echo 'Waiting for PROD DB...' && /usr/local/bin/wait-for-postgres.sh postgres 5432 -- echo 'PROD DB ready, pushing schema...' && npx zenstack db push --schema schema.zmodel --accept-data-loss --no-version-check && echo 'Schema pushed, seeding...' && pnpm tsx db/seed.ts && echo 'PROD DB initialized and seeded.'",
+        "echo 'Waiting for PROD DB...' && /usr/local/bin/wait-for-postgres.sh postgres 5432 -- echo 'PROD DB ready, applying migrations...' && npx zenstack migrate deploy --schema schema.zmodel --no-version-check && echo 'Migrations applied, seeding...' && pnpm tsx db/seed.ts && echo 'PROD DB initialized and seeded.'",
       ]
     networks:
       - testplanit-net
