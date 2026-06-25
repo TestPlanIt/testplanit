@@ -59,7 +59,7 @@
     "@testplanit/api": "workspace:^"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
+    "@types/node": "^26.0.1",
     "@vitest/coverage-v8": "^4.1.9",
     "@wdio/reporter": "^9.29.0",
     "@wdio/types": "^9.29.0",
