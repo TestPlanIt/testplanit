@@ -58,11 +58,13 @@ const ResizablePanelGroup = ({
   const storageKey = autoSaveId ? `${STORAGE_PREFIX}${autoSaveId}` : undefined;
   // react-resizable-panels v4 renders the group element's `data-testid` from its
   // `id` prop and ignores a passed `data-testid`. Map an explicit data-testid onto
-  // `id` so callers' test ids (e.g. "repository-layout") stay queryable.
+  // `id` so callers' test ids (e.g. "repository-layout") stay queryable. The
+  // data-testid wins over a separate `id` because the rendered testid is the hook
+  // callers (and tests) query; the v4 id is only used internally for layout state.
   const dataTestId = (props as Record<string, unknown>)["data-testid"] as
     | string
     | undefined;
-  const resolvedId = id ?? dataTestId;
+  const resolvedId = dataTestId ?? id;
 
   const [defaultLayout] = useState<Layout | undefined>(() => {
     if (!storageKey || typeof window === "undefined") return undefined;
@@ -147,10 +149,18 @@ const ResizablePanel = forwardRef<PanelImperativeHandle, ResizablePanelProps>(
       defaultSize,
       minSize,
       maxSize,
+      id,
       ...props
     },
     ref
   ) => {
+    // v4 renders the panel element's `data-testid` from its `id` and ignores a
+    // passed `data-testid`. Map an explicit data-testid onto `id` (preferred over
+    // a separate id) so panel test ids like "repository-left-panel" stay queryable.
+    const dataTestId = (props as Record<string, unknown>)["data-testid"] as
+      | string
+      | undefined;
+    const resolvedId = dataTestId ?? id;
     // Track collapse transitions to re-create v3 onCollapse/onExpand. null = not
     // yet initialised, so the first (mount) onResize doesn't fire a spurious event.
     const collapsedRef = useRef<boolean | null>(null);
@@ -180,6 +190,7 @@ const ResizablePanel = forwardRef<PanelImperativeHandle, ResizablePanelProps>(
     return (
       <ResizablePrimitive.Panel
         panelRef={ref}
+        id={resolvedId}
         collapsedSize={asPercentSize(collapsedSize)}
         defaultSize={asPercentSize(defaultSize)}
         minSize={asPercentSize(minSize)}
