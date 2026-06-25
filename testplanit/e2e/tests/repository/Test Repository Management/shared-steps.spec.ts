@@ -508,7 +508,7 @@ test.describe("Shared Steps Management", () => {
       await page.waitForTimeout(500);
       try {
         const resizeHandle = page
-          .locator("[data-panel-resize-handle-id]")
+          .locator('[role="separator"]')
           .first();
         await resizeHandle.waitFor({ state: "visible", timeout: 3000 });
         const handleBox = await resizeHandle.boundingBox();

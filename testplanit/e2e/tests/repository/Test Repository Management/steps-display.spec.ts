@@ -73,7 +73,7 @@ test.describe("Steps Display", () => {
     try {
       // Find the resizable handle between the panels
       const resizeHandle = page
-        .locator("[data-panel-resize-handle-id]")
+        .locator('[role="separator"]')
         .first();
 
       // Wait for the handle to be visible

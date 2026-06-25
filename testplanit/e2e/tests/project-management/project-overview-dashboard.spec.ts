@@ -104,7 +104,9 @@ test.describe("Project Overview Dashboard", () => {
 
   test("can collapse and expand the left panel", async ({ page }) => {
     const milestonesHeading = page.getByText(/current milestones/i);
-    const leftPanel = page.locator('[data-panel="overview-left"]');
+    // v4 renders data-panel="true" and derives the element's data-testid from
+    // the panel's id ("overview-left"), so locate it by testid.
+    const leftPanel = page.getByTestId("overview-left");
     const collapseLeftBtn = page.getByTestId("collapse-left-panel");
 
     await test.step("Open the overview page and confirm the left panel loaded", async () => {
@@ -236,14 +238,14 @@ test.describe("Project Overview Dashboard", () => {
     });
 
     await test.step("Verify the resizable panel group and resize handles are present", async () => {
-      // The ResizablePanelGroup renders with the data-panel-group attribute.
-      // Note: autoSaveId is not the same as id — data-panel-group-id uses the id prop,
-      // which is auto-generated. Use the data-panel-group attribute instead.
-      const panelGroup = page.locator("[data-panel-group]");
+      // react-resizable-panels v4 renders the group with data-group and the
+      // resize handle as role="separator" (v3's data-panel-group /
+      // data-panel-resize-handle-id attributes were removed).
+      const panelGroup = page.locator("[data-group]");
       await expect(panelGroup).toBeVisible({ timeout: 15000 });
 
       // Verify there are resize handles present (indicating a resizable layout)
-      const resizeHandles = page.locator("[data-panel-resize-handle-id]");
+      const resizeHandles = page.locator('[role="separator"]');
       await expect(resizeHandles.first()).toBeVisible({ timeout: 5000 });
     });
   });
