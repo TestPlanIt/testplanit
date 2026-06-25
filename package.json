@@ -13,7 +13,7 @@
         "packages:test": "pnpm --filter \"@testplanit/*\" test"
     },
     "devDependencies": {
-        "@changesets/changelog-github": "^0.5.2",
+        "@changesets/changelog-github": "^0.7.0",
         "@changesets/cli": "^2.31.0",
         "vite": "^7.3.5"
     }
