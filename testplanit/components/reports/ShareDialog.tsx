@@ -415,7 +415,7 @@ export function ShareDialog({
                     selected={expiresAt}
                     onSelect={setExpiresAt}
                     disabled={(date) => date < new Date()}
-                    initialFocus
+                    autoFocus
                   />
                   {expiresAt && (
                     <div className="p-3 border-t">
