@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { use, useRef, useState } from "react";
-import { ImperativePanelHandle } from "react-resizable-panels";
+import { PanelImperativeHandle } from "react-resizable-panels";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useFindFirstProjects } from "~/lib/hooks";
 import MilestonesSection from "./MilestonesSection";
@@ -51,8 +51,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
   const [isLeftCollapsed, setIsLeftCollapsed] = useState<boolean>(false);
   const [isRightCollapsed, setIsRightCollapsed] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
-  const leftPanelRef = useRef<ImperativePanelHandle>(null);
-  const rightPanelRef = useRef<ImperativePanelHandle>(null);
+  const leftPanelRef = useRef<PanelImperativeHandle>(null);
+  const rightPanelRef = useRef<PanelImperativeHandle>(null);
 
   const toggleLeftCollapse = () => {
     setIsTransitioning(true);

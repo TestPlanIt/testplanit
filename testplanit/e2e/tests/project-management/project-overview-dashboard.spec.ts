@@ -104,7 +104,7 @@ test.describe("Project Overview Dashboard", () => {
 
   test("can collapse and expand the left panel", async ({ page }) => {
     const milestonesHeading = page.getByText(/current milestones/i);
-    const leftPanel = page.locator('[data-panel-id="overview-left"]');
+    const leftPanel = page.locator('[data-panel="overview-left"]');
     const collapseLeftBtn = page.getByTestId("collapse-left-panel");
 
     await test.step("Open the overview page and confirm the left panel loaded", async () => {
@@ -119,17 +119,14 @@ test.describe("Project Overview Dashboard", () => {
       await expect(leftPanel).toBeVisible({ timeout: 5000 });
     });
 
-    await test.step("Collapse the left panel and verify its size is zero", async () => {
+    await test.step("Collapse the left panel and verify its content is hidden", async () => {
       // The left panel has a collapse button identified by data-testid.
       await expect(collapseLeftBtn).toBeVisible({ timeout: 5000 });
       await collapseLeftBtn.click();
 
-      // After collapsing, react-resizable-panels sets the panel size to 0.
-      // Verify via the data-panel-size attribute that the panel collapsed.
-      // The value may be "0", "0.0", or "0.00" depending on the library version.
-      await expect(leftPanel).toHaveAttribute("data-panel-size", /^0(\.0+)?$/, {
-        timeout: 10000,
-      });
+      // react-resizable-panels v4 removed the data-panel-size attribute, so
+      // verify the collapse by the panel content no longer being visible.
+      await expect(milestonesHeading).toBeHidden({ timeout: 10000 });
     });
 
     await test.step("Re-expand the left panel and verify milestones are visible again", async () => {

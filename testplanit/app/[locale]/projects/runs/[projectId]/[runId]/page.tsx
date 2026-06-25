@@ -97,7 +97,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { FormProvider, useForm } from "react-hook-form";
-import { ImperativePanelHandle } from "react-resizable-panels";
+import { PanelImperativeHandle } from "react-resizable-panels";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
@@ -298,13 +298,13 @@ export default function TestRunPage() {
   const [isCollapsedRight, setIsCollapsedRight] = useState(false);
   const [isTransitioningLeft, setIsTransitioningLeft] = useState(false);
   const [isTransitioningRight, setIsTransitioningRight] = useState(false);
-  const panelRightRef = useRef<ImperativePanelHandle>(null);
+  const panelRightRef = useRef<PanelImperativeHandle>(null);
   const [contentLoaded, setContentLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormLoading] = useState(false);
   const [, setInitialValues] = useState<FormValues | null>(null);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
-  const panelLeftRef = useRef<ImperativePanelHandle>(null);
+  const panelLeftRef = useRef<PanelImperativeHandle>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
   const [selectedAttachments, setSelectedAttachments] = useState<Attachments[]>(

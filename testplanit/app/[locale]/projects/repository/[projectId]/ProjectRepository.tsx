@@ -67,7 +67,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ImperativePanelHandle } from "react-resizable-panels";
+import { PanelImperativeHandle } from "react-resizable-panels";
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { ProjectIcon } from "~/components/ProjectIcon";
@@ -419,7 +419,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const [folderHierarchy, setFolderHierarchy] = useState<FolderNode[]>([]);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
-  const panelRef = useRef<ImperativePanelHandle>(null);
+  const panelRef = useRef<PanelImperativeHandle>(null);
   const refetchFoldersRef = useRef<(() => Promise<unknown>) | null>(null);
   // Ref for scoping DnD events when used in portaled contexts (modals)
   const dndContainerRef = useRef<HTMLDivElement>(null);

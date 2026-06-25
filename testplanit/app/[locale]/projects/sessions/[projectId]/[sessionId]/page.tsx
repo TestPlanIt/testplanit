@@ -110,7 +110,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
 import type { Control, FieldErrors, Resolver } from "react-hook-form";
-import { ImperativePanelHandle } from "react-resizable-panels";
+import { PanelImperativeHandle } from "react-resizable-panels";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useExportSessionPdf } from "~/hooks/pdf/useExportSessionPdf";
@@ -817,13 +817,13 @@ export default function SessionPage() {
   const [isCollapsedRight, setIsCollapsedRight] = useState(false);
   const [isTransitioningLeft, setIsTransitioningLeft] = useState(false);
   const [isTransitioningRight, setIsTransitioningRight] = useState(false);
-  const panelRightRef = useRef<ImperativePanelHandle>(null);
+  const panelRightRef = useRef<PanelImperativeHandle>(null);
   const [contentLoaded, setContentLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormLoading, _setIsFormLoading] = useState(false);
   const [initialValues, setInitialValues] = useState<FormValues | null>(null);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
-  const panelLeftRef = useRef<ImperativePanelHandle>(null);
+  const panelLeftRef = useRef<PanelImperativeHandle>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
   const [selectedAttachments, setSelectedAttachments] = useState<Attachments[]>(
