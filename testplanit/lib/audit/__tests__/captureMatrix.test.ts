@@ -139,10 +139,10 @@ describeDb(
       // happens at the DB trigger level). Importing here (not at module top) keeps the file pure for
       // skip. Runtime-built specifiers + /* @vite-ignore */ so Vite's import-analysis can't statically
       // resolve the gucContext module and break clean-skip in the unit lane.
-      const prismaMod = "~/lib/db";
+      const dbMod = "~/lib/db";
       const gucMod = "~/lib/audit/gucContext";
       const auditCtxMod = "~/lib/auditContext";
-      ({ baseDb } = await import(/* @vite-ignore */ prismaMod));
+      ({ baseDb } = await import(/* @vite-ignore */ dbMod));
       rawDb = baseDb;
       ({ withAuditGuc, injectAuditGuc } = await import(
         /* @vite-ignore */ gucMod

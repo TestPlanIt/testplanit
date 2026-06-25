@@ -36,8 +36,8 @@ const processor = async (job: Job<MultiTenantSyncJobData>) =>
     validateMultiTenantJobData(job.data);
 
     // Get the appropriate Prisma client (tenant-specific or default)
-    const prisma = getDbClientForJob(job.data);
-    const serviceOptions = { prismaClient: prisma };
+    const db = getDbClientForJob(job.data);
+    const serviceOptions = { dbClient: db };
 
     const jobData = job.data as MultiTenantSyncJobData;
 

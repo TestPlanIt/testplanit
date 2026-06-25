@@ -34,7 +34,7 @@ import { rawDb } from "@/lib/rawDb";
 import { EncryptionService } from "@/utils/encryption";
 import { AuthenticationService } from "./AuthenticationService";
 
-const mockPrisma = rawDb as unknown as {
+const mockDb = rawDb as unknown as {
   integration: {
     findUnique: ReturnType<typeof vi.fn>;
   };
@@ -178,7 +178,7 @@ describe("IntegrationManager", () => {
           },
         ],
       };
-      mockPrisma.integration.findUnique.mockResolvedValue(integration);
+      mockDb.integration.findUnique.mockResolvedValue(integration);
 
       const mockFetch = vi
         .fn()
@@ -249,7 +249,7 @@ describe("IntegrationManager", () => {
           },
         ],
       };
-      mockPrisma.integration.findUnique.mockResolvedValue(integration);
+      mockDb.integration.findUnique.mockResolvedValue(integration);
 
       // Only the validation request should fire — no refresh exchange.
       global.fetch = vi.fn().mockResolvedValue({
@@ -298,7 +298,7 @@ describe("IntegrationManager", () => {
           },
         ],
       };
-      mockPrisma.integration.findUnique.mockResolvedValue(integration);
+      mockDb.integration.findUnique.mockResolvedValue(integration);
 
       const mockFetch = vi
         .fn()
@@ -369,7 +369,7 @@ describe("IntegrationManager", () => {
           },
         ],
       };
-      mockPrisma.integration.findUnique.mockResolvedValue(integration);
+      mockDb.integration.findUnique.mockResolvedValue(integration);
 
       // Token endpoint returns fresh tokens; everything else is the validation
       // call. Keyed off the URL so both the first build and the post-expiry
@@ -394,14 +394,14 @@ describe("IntegrationManager", () => {
       const first = await manager.getAdapter("61");
       const stillCached = await manager.getAdapter("61");
       expect(stillCached).toBe(first); // cache hit while token valid
-      expect(mockPrisma.integration.findUnique).toHaveBeenCalledTimes(1);
+      expect(mockDb.integration.findUnique).toHaveBeenCalledTimes(1);
 
       // An hour passes — the cached adapter's token is now expired.
       vi.advanceTimersByTime(3600_000 + 1000);
 
       const afterExpiry = await manager.getAdapter("61");
       expect(afterExpiry).not.toBe(first); // evicted + rebuilt
-      expect(mockPrisma.integration.findUnique).toHaveBeenCalledTimes(2);
+      expect(mockDb.integration.findUnique).toHaveBeenCalledTimes(2);
 
       vi.unstubAllEnvs();
       vi.useRealTimers();
@@ -410,7 +410,7 @@ describe("IntegrationManager", () => {
 
   describe("getAdapter", () => {
     it("should throw error when integration not found", async () => {
-      mockPrisma.integration.findUnique.mockResolvedValue(null);
+      mockDb.integration.findUnique.mockResolvedValue(null);
 
       await expect(manager.getAdapter("999")).rejects.toThrow(
         "Integration not found: 999"
@@ -418,7 +418,7 @@ describe("IntegrationManager", () => {
     });
 
     it("should throw error when integration is not active", async () => {
-      mockPrisma.integration.findUnique.mockResolvedValue({
+      mockDb.integration.findUnique.mockResolvedValue({
         id: 1,
         provider: "JIRA",
         status: "INACTIVE",
@@ -434,7 +434,7 @@ describe("IntegrationManager", () => {
       // OAuth integrations are inactive until authorized; the authorize and
       // callback routes must still be able to build the adapter to run the
       // handshake. Without allowInactive this would throw and deadlock setup.
-      mockPrisma.integration.findUnique.mockResolvedValue({
+      mockDb.integration.findUnique.mockResolvedValue({
         id: 2,
         name: "Jira OAuth",
         provider: "JIRA",
@@ -453,7 +453,7 @@ describe("IntegrationManager", () => {
     });
 
     it("does NOT cache adapters built with allowInactive (avoids poisoning a pod with an unauthenticated, cloud-id-less adapter)", async () => {
-      mockPrisma.integration.findUnique.mockResolvedValue({
+      mockDb.integration.findUnique.mockResolvedValue({
         id: 2,
         name: "Jira OAuth",
         provider: "JIRA",
@@ -474,11 +474,11 @@ describe("IntegrationManager", () => {
         allowInactive: true,
       });
 
-      expect(mockPrisma.integration.findUnique).toHaveBeenCalledTimes(2);
+      expect(mockDb.integration.findUnique).toHaveBeenCalledTimes(2);
     });
 
     it("should throw error when no adapter registered for provider", async () => {
-      mockPrisma.integration.findUnique.mockResolvedValue({
+      mockDb.integration.findUnique.mockResolvedValue({
         id: 1,
         provider: "UNKNOWN_PROVIDER",
         status: "ACTIVE",
@@ -507,7 +507,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       // Mock fetch for Jira authentication
       const mockFetch = vi.fn().mockResolvedValue({
@@ -545,7 +545,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -575,7 +575,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -613,7 +613,7 @@ describe("IntegrationManager", () => {
         ],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       // Mock EncryptionService to return decrypted tokens
       vi.mocked(EncryptionService.decrypt).mockReturnValue(
@@ -662,7 +662,7 @@ describe("IntegrationManager", () => {
         ],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
       vi.mocked(EncryptionService.decrypt).mockReturnValue(
         "decrypted-access-token"
       );
@@ -676,7 +676,7 @@ describe("IntegrationManager", () => {
 
       await manager.getAdapter("7", undefined, "user-abc");
 
-      const findUniqueArgs = mockPrisma.integration.findUnique.mock.calls[0][0];
+      const findUniqueArgs = mockDb.integration.findUnique.mock.calls[0][0];
       expect(findUniqueArgs.include.userIntegrationAuths.where).toMatchObject({
         isActive: true,
         userId: "user-abc",
@@ -709,7 +709,7 @@ describe("IntegrationManager", () => {
         ],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
       vi.mocked(EncryptionService.decrypt).mockReturnValue(
         "decrypted-access-token"
       );
@@ -751,7 +751,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       vi.mocked(EncryptionService.decrypt).mockReturnValue(
         JSON.stringify({
@@ -793,7 +793,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -833,7 +833,7 @@ describe("IntegrationManager", () => {
         ],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
       vi.mocked(EncryptionService.decrypt).mockReturnValue(
         "decrypted-access-token"
       );
@@ -873,7 +873,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -908,7 +908,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -933,7 +933,7 @@ describe("IntegrationManager", () => {
     });
 
     it("should return null when adapter not found", async () => {
-      mockPrisma.integration.findUnique.mockResolvedValue(null);
+      mockDb.integration.findUnique.mockResolvedValue(null);
 
       await expect(manager.getCapabilities("999")).rejects.toThrow(
         "Integration not found: 999"
@@ -959,7 +959,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -974,7 +974,7 @@ describe("IntegrationManager", () => {
     });
 
     it("should return invalid when integration not found", async () => {
-      mockPrisma.integration.findUnique.mockResolvedValue(null);
+      mockDb.integration.findUnique.mockResolvedValue(null);
 
       const result = await manager.validateIntegration("999");
 
@@ -999,7 +999,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: false,

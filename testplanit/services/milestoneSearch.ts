@@ -1,5 +1,5 @@
 import type { Milestones } from "~/zenstack/models";
-import { rawDb as defaultPrisma } from "~/lib/rawDb";
+import { rawDb as defaultDb } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
@@ -122,7 +122,7 @@ export async function syncMilestoneToElasticsearch(
   }
 
   try {
-    const milestone = await defaultPrisma.milestones.findUnique({
+    const milestone = await defaultDb.milestones.findUnique({
       where: { id: milestoneId },
       include: {
         project: true,
@@ -288,7 +288,7 @@ export async function syncChildMilestonesToElasticsearch(
   }
 
   try {
-    const childMilestones = await defaultPrisma.milestones.findMany({
+    const childMilestones = await defaultDb.milestones.findMany({
       where: {
         parentId: parentId,
         // Include deleted items (filtering happens at search time based on admin permissions)

@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import type { CaseFields as PrismaCaseField, Tags as PrismaTag, Workflows as PrismaWorkflow } from "~/zenstack/models";
+import type { CaseFields as DbCaseField, Tags as DbTag, Workflows as DbWorkflow } from "~/zenstack/models";
 import { format } from "date-fns";
 import { CalendarDays } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -58,12 +58,12 @@ interface FieldValueInputProps {
   value: any;
   onChange: (value: any) => void;
   projectId: number;
-  workflowsData?: (Pick<PrismaWorkflow, "id" | "name"> & {
+  workflowsData?: (Pick<DbWorkflow, "id" | "name"> & {
     icon?: { name: string } | null;
     color?: { value: string } | null;
     requiresReview?: boolean | null;
   })[]; // Correct shape based on schema
-  availableTagsData?: Pick<PrismaTag, "id" | "name">[];
+  availableTagsData?: Pick<DbTag, "id" | "name">[];
   canCreateTags?: boolean; // Add permission prop
   canEditRestricted?: boolean; // Add prop
   fieldIsRestricted?: boolean; // Add prop
@@ -75,7 +75,7 @@ interface FieldDefinition {
   key: string;
   label: string;
   isCustom: boolean;
-  field?: PrismaCaseField & { type: { type: string }; fieldOptions?: any[] };
+  field?: DbCaseField & { type: { type: string }; fieldOptions?: any[] };
 }
 
 // Define a simple schema for the steps form within FieldValueInput

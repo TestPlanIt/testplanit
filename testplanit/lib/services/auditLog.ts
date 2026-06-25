@@ -155,7 +155,7 @@ export const PROJECT_SCOPED_ENTITY_TYPES: ReadonlySet<string> = new Set([
 
 /**
  * Describes an admin-managed configuration/catalog model whose CRUD should be
- * audited via the generic hook factory in `lib/prisma.ts`. This array is the
+ * audited via the generic hook factory in `lib/db.ts`. This array is the
  * single source of truth for the admin-config audit sweep and is cross-checked
  * against the live Prisma datamodel in tests so a mistyped `accessor` (the
  * historical `issue`/`issues` dead-hook bug) fails loudly instead of silently
@@ -193,7 +193,7 @@ export const AUDITED_CONFIG_MODELS: AuditedConfigModel[] = [];
  * User / UserProjectPermission / GroupProjectPermission captures each change and
  * the correlation layer humanizes the FK ids to names. The app-layer semantic
  * events (ROLE_CHANGED / PERMISSION_GRANT / PERMISSION_REVOKE) emitted by the
- * lib/prisma.ts `$extends` hooks would double-audit the same change, so they are
+ * lib/db.ts `$extends` hooks would double-audit the same change, so they are
  * decommissioned here exactly like AUDITED_CONFIG_MODELS above: this set gates
  * the hook emissions and is intentionally empty. Re-add an entityType (the model
  * name) to restore its semantic event.
@@ -205,11 +205,11 @@ export const SEMANTIC_ACCESS_AUDIT_MODELS: ReadonlySet<string> = new Set();
  * canonically on the dominant admin/app mutation path. Each accessor MUST be a
  * real Prisma client field (camelCase model name) — a singular/plural typo here
  * is silent dead code (the historical `issues`/`sharedStepGroups`/`attachment`
- * bug), so the route's audit shim never fires and the lib/prisma.ts `$extends`
+ * bug), so the route's audit shim never fires and the lib/db.ts `$extends`
  * hook becomes the sole path. Cross-checked against the live datamodel in
  * `auditLog.rpc-wiring.test.ts`. Config/catalog accessors are appended at the
  * route from AUDITED_CONFIG_MODELS; attachments are audited solely by the
- * dedicated lib/prisma.ts `attachments` hook (immutable, bespoke), so they are
+ * dedicated lib/db.ts `attachments` hook (immutable, bespoke), so they are
  * intentionally absent here.
  */
 export const AUDITED_RPC_ENTITY_ACCESSORS: readonly string[] = [
@@ -477,7 +477,7 @@ export function extractEntityName(
  * Minimal Prisma client surface needed to resolve a result's audit scope.
  * Declared structurally so both the raw base client and the access-enhanced
  * RPC client can be passed without importing either (which would create an
- * import cycle with lib/prisma).
+ * import cycle with lib/db).
  */
 type ResultScopeClient = {
   testRuns: {
@@ -796,7 +796,7 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
  * The generic CREATE/UPDATE/DELETE + BULK_* helpers honor this. The specialized
  * semantic helpers (role change, SSO/system config, permission grant/revoke)
  * stay ungated so admin routes that call them directly always emit; the
- * lib/prisma.ts `$extends` hooks that ALSO wrap those helpers for apiToken /
+ * lib/db.ts `$extends` hooks that ALSO wrap those helpers for apiToken /
  * appConfig / ssoProvider consult this at their call site, because on the RPC
  * path the route's shim already emits the canonical semantic row for them.
  */

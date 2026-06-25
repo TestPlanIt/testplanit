@@ -236,7 +236,7 @@ export function ReviewStatusBanner({
                     <>{assigneeLabel}</>
                   ),
                 // `WorkflowStateDisplay`'s state requires non-null icon +
-                // color, but the prisma include returns them as nullable
+                // color, but the db include returns them as nullable
                 // joins. Cast at the seam — matches the decision dialogs.
                 fromState: () => (
                   <span className="inline-flex align-middle [&_.truncate]:max-w-[10rem]">

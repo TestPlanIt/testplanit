@@ -213,7 +213,7 @@ function resolveFieldValue(
  * Field options are fetched separately per field to avoid deep nesting alias limits.
  */
 async function fetchTemplateFields(
-  prisma: any,
+  db: any,
   templateId: number
 ): Promise<
   Array<{
@@ -224,7 +224,7 @@ async function fetchTemplateFields(
   }>
 > {
   // Fetch template-field assignments with field metadata
-  const assignments = await prisma.templateCaseAssignment.findMany({
+  const assignments = await db.templateCaseAssignment.findMany({
     where: { templateId },
     include: {
       caseField: {
@@ -250,7 +250,7 @@ async function fetchTemplateFields(
 
     // Fetch field options separately for Dropdown/MultiSelect fields to avoid deep alias limit
     if (fieldType === "Dropdown" || fieldType === "MultiSelect") {
-      const optionAssignments = await prisma.caseFieldAssignment.findMany({
+      const optionAssignments = await db.caseFieldAssignment.findMany({
         where: { caseFieldId: field.id },
         include: {
           fieldOption: {
@@ -297,7 +297,7 @@ const processor = async (
     validateMultiTenantJobData(job.data);
 
     // 2. Get tenant-specific Prisma client (raw Prisma, no ZenStack policy enforcement)
-    const prisma = getDbClientForJob(job.data);
+    const db = getDbClientForJob(job.data);
 
     // 3. Check for pre-start cancellation
     const redis = await worker!.client;
@@ -310,7 +310,7 @@ const processor = async (
     // 4. Pre-fetch folderMaxOrder (only used for non-folder-tree jobs)
     let nextOrder = 0;
     if (!job.data.folderTree) {
-      const maxOrderRow = await prisma.repositoryCases.findFirst({
+      const maxOrderRow = await db.repositoryCases.findFirst({
         where: { folderId: job.data.targetFolderId },
         orderBy: { order: "desc" },
         select: { order: true },
@@ -341,7 +341,7 @@ const processor = async (
         }
 
         // Check for an existing folder with the same name under the same parent (merge behavior)
-        const existingFolder = await prisma.repositoryFolders.findFirst({
+        const existingFolder = await db.repositoryFolders.findFirst({
           where: {
             projectId: job.data.targetProjectId,
             repositoryId: job.data.targetRepositoryId,
@@ -357,7 +357,7 @@ const processor = async (
           targetFolderId = existingFolder.id;
         } else {
           // Create new folder under parentTargetId
-          const maxFolderOrderRow = await prisma.repositoryFolders.findFirst({
+          const maxFolderOrderRow = await db.repositoryFolders.findFirst({
             where: {
               projectId: job.data.targetProjectId,
               repositoryId: job.data.targetRepositoryId,
@@ -366,7 +366,7 @@ const processor = async (
             orderBy: { order: "desc" },
             select: { order: true },
           });
-          const newFolder = await prisma.repositoryFolders.create({
+          const newFolder = await db.repositoryFolders.create({
             data: {
               projectId: job.data.targetProjectId,
               repositoryId: job.data.targetRepositoryId,
@@ -387,7 +387,7 @@ const processor = async (
         ...new Set(sourceFolderToTargetFolderMap.values()),
       ];
       for (const fId of uniqueTargetFolderIds) {
-        const maxRow = await prisma.repositoryCases.findFirst({
+        const maxRow = await db.repositoryCases.findFirst({
           where: { folderId: fId },
           orderBy: { order: "desc" },
           select: { order: true },
@@ -397,7 +397,7 @@ const processor = async (
     }
 
     // 5. Pre-fetch source cases with their related data
-    const sourceCases = await prisma.repositoryCases.findMany({
+    const sourceCases = await db.repositoryCases.findMany({
       where: { id: { in: job.data.caseIds }, isDeleted: false },
       include: {
         steps: {
@@ -436,7 +436,7 @@ const processor = async (
     const sourceVersionsMap = new Map<number, any[]>();
     if (job.data.operation === "move") {
       for (const sc of sourceCases) {
-        const versions = await prisma.repositoryCaseVersions.findMany({
+        const versions = await db.repositoryCaseVersions.findMany({
           where: { repositoryCaseId: sc.id },
           orderBy: { version: "asc" },
         });
@@ -451,7 +451,7 @@ const processor = async (
     // be the target's first assigned template). Field definitions are
     // cached lazily per template since the source set may now span several.
     const targetTemplateAssignments =
-      await prisma.templateProjectAssignment.findMany({
+      await db.templateProjectAssignment.findMany({
         where: { projectId: job.data.targetProjectId },
         select: { templateId: true },
       });
@@ -467,7 +467,7 @@ const processor = async (
       if (!templateFieldsCache.has(templateId)) {
         templateFieldsCache.set(
           templateId,
-          await fetchTemplateFields(prisma, templateId)
+          await fetchTemplateFields(db, templateId)
         );
       }
       return templateFieldsCache.get(templateId)!;
@@ -515,7 +515,7 @@ const processor = async (
             ? { id: { notIn: job.data.caseIds } }
             : {};
 
-        const existingCase = await prisma.repositoryCases.findFirst({
+        const existingCase = await db.repositoryCases.findFirst({
           where: {
             projectId: job.data.targetProjectId,
             name: sourceCase.name,
@@ -537,7 +537,7 @@ const processor = async (
             let suffix = 1;
             let candidateName = `${sourceCase.name} (copy)`;
             while (true) {
-              const nameExists = await prisma.repositoryCases.findFirst({
+              const nameExists = await db.repositoryCases.findFirst({
                 where: {
                   projectId: job.data.targetProjectId,
                   name: candidateName,
@@ -591,7 +591,7 @@ const processor = async (
           effectiveTargetTemplateId
         );
 
-        const newCaseId = await prisma.$transaction(async (tx: any) => {
+        const newCaseId = await db.$transaction(async (tx: any) => {
           // Phase 13 CTX-02 — stamp the actor GUC as the FIRST statement inside
           // this existing per-case transaction so trigger-captured rows for the
           // copied RepositoryCases/Steps/CaseFieldValues carry the originating
@@ -869,7 +869,7 @@ const processor = async (
         console.error(
           `Copy-move job ${job.id} failed — rolling back ${createdTargetIds.length} created cases.`
         );
-        await prisma.repositoryCases.deleteMany({
+        await db.repositoryCases.deleteMany({
           where: { id: { in: createdTargetIds.map((c) => c.newId) } },
         });
       }
@@ -881,7 +881,7 @@ const processor = async (
     // every case is skipped (copiedCount=0) but the old code deleted originals.
     if (job.data.operation === "move" && createdTargetIds.length > 0) {
       const movedSourceIds = createdTargetIds.map((c) => c.sourceId);
-      await prisma.repositoryCases.updateMany({
+      await db.repositoryCases.updateMany({
         where: { id: { in: movedSourceIds } },
         data: { isDeleted: true },
       });
@@ -889,7 +889,7 @@ const processor = async (
       // Move: soft-delete source FOLDERS after all cases soft-deleted
       if (job.data.folderTree && job.data.folderTree.length > 0) {
         const folderIds = job.data.folderTree.map((n) => n.sourceFolderId);
-        await prisma.repositoryFolders.updateMany({
+        await db.repositoryFolders.updateMany({
           where: { id: { in: folderIds } },
           data: { isDeleted: true },
         });
@@ -907,7 +907,7 @@ const processor = async (
     });
 
     for (const { newId } of createdTargetIds) {
-      syncRepositoryCaseToElasticsearch(newId, job.data.tenantId, prisma).catch(
+      syncRepositoryCaseToElasticsearch(newId, job.data.tenantId, db).catch(
         (err) => console.error(`ES sync failed for new case ${newId}:`, err)
       );
     }
@@ -918,7 +918,7 @@ const processor = async (
         syncRepositoryCaseToElasticsearch(
           sourceId,
           job.data.tenantId,
-          prisma
+          db
         ).catch((err) =>
           console.error(
             `ES sync failed for moved source case ${sourceId}:`,

@@ -47,7 +47,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Webhook delivery bulk replay — outbound-only count", () => {
   let projectId: number;
   let stub: StubServerHandle;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
   let outboundConfigId: string;
   let inboundConfigId: string;
   const seededOutboundDeliveryIds: string[] = [];
@@ -59,12 +59,12 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
     // active issue integration; spec configures GitHub.
     await api.setupProjectIssueIntegration(projectId, "GITHUB");
     stub = await startStubServer(); // always 200 — replays succeed
-    prisma = createRawDbClient();
+    db = createRawDbClient();
   });
 
   test.afterAll(async () => {
     if (stub) await stub.close();
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("admin sees 'Bulk replay 5 outbound failures' label and bulk replay enqueues only the 5 outbound rows; 2 inbound originals have zero replays", async ({
@@ -105,7 +105,7 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
         }
       );
 
-      const outboundConfig = await prisma.webhookConfig.findFirst({
+      const outboundConfig = await db.webhookConfig.findFirst({
         where: { projectId, direction: "OUTBOUND" },
         select: { id: true },
       });
@@ -133,7 +133,7 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
         .getByTestId("webhook-secret")
         .innerText();
 
-      const inboundConfig = await prisma.webhookConfig.findFirst({
+      const inboundConfig = await db.webhookConfig.findFirst({
         where: { projectId, direction: "INBOUND" },
         select: { id: true },
       });
@@ -155,7 +155,7 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
         const payloadDigest = createHash("sha256")
           .update(payloadStr)
           .digest("hex");
-        await prisma.webhookOutboxEvent.create({
+        await db.webhookOutboxEvent.create({
           data: {
             projectId,
             eventName: "test_run.completed",
@@ -164,7 +164,7 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
             dispatchedAt: new Date(),
           },
         });
-        const delivery = await prisma.webhookDelivery.create({
+        const delivery = await db.webhookDelivery.create({
           data: {
             webhookConfigId: outboundConfigId,
             direction: "OUTBOUND",
@@ -208,7 +208,7 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
         expect(response.status()).toBe(200);
       }
 
-      const inboundFailedRows = await prisma.webhookDelivery.findMany({
+      const inboundFailedRows = await db.webhookDelivery.findMany({
         where: {
           webhookConfigId: inboundConfigId,
           direction: "INBOUND",
@@ -270,7 +270,7 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
     await test.step("Verify 5 outbound replays landed and the 2 inbound originals have zero replays", async () => {
       // Each replay enqueues a dispatch job that POSTs to the (200) stub →
       // success row written.
-      const replayRows = await waitForCount(prisma, {
+      const replayRows = await waitForCount(db, {
         where: {
           replayedFromDeliveryId: { in: seededOutboundDeliveryIds },
         },
@@ -292,7 +292,7 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
       // bulk replay filters by direction=OUTBOUND in its SELECT and is scoped
       // to outboundConfigId by webhookConfigId — inbound rows in the same
       // project/timeframe must never be enqueued.
-      const inboundReplays = await prisma.webhookDelivery.findMany({
+      const inboundReplays = await db.webhookDelivery.findMany({
         where: {
           replayedFromDeliveryId: { in: seededInboundDeliveryIds },
         },
@@ -304,7 +304,7 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
 });
 
 async function waitForCount(
-  prisma: ReturnType<typeof createRawDbClient>,
+  db: ReturnType<typeof createRawDbClient>,
   args: {
     where: Record<string, unknown>;
     target: number;
@@ -321,7 +321,7 @@ async function waitForCount(
 > {
   const startedAt = Date.now();
   while (Date.now() - startedAt < args.timeoutMs) {
-    const rows = await prisma.webhookDelivery.findMany({
+    const rows = await db.webhookDelivery.findMany({
       where: args.where,
       select: {
         id: true,

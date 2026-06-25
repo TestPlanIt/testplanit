@@ -50,11 +50,11 @@ export const processor = async (
   validateMultiTenantJobData(job.data);
 
   // 2. Get tenant-specific Prisma client
-  const prisma = getDbClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   // 3. Create DuplicateScanService instance
   const esClient = getElasticsearchClient();
-  const service = new DuplicateScanService(prisma as any, esClient);
+  const service = new DuplicateScanService(db as any, esClient);
 
   // 4. Check for pre-start cancellation
   const redis = await worker!.client;
@@ -65,7 +65,7 @@ export const processor = async (
   }
 
   // 5. Fetch all non-deleted cases for the project with steps and tags for richer matching
-  const cases = await prisma.repositoryCases.findMany({
+  const cases = await db.repositoryCases.findMany({
     where: { projectId: job.data.projectId, isDeleted: false },
     select: {
       id: true,
@@ -79,7 +79,7 @@ export const processor = async (
   });
 
   // 5b. Load previously resolved pairs (dismissed, linked, merged) so they are excluded from results
-  const resolvedRows = await prisma.duplicateScanResult.findMany({
+  const resolvedRows = await db.duplicateScanResult.findMany({
     where: {
       projectId: job.data.projectId,
       status: { in: ["DISMISSED", "LINKED", "MERGED"] },
@@ -96,7 +96,7 @@ export const processor = async (
   );
 
   // 5c. Load active provenance/source links — exclude pairs already marked DUPLICATED_FROM or SAME_TEST_DIFFERENT_SOURCE
-  const provenanceLinks = await prisma.repositoryCaseLink.findMany({
+  const provenanceLinks = await db.repositoryCaseLink.findMany({
     where: {
       type: { in: ["DUPLICATED_FROM", "SAME_TEST_DIFFERENT_SOURCE"] },
       isDeleted: false,
@@ -184,10 +184,10 @@ export const processor = async (
   let finalPairs: Array<(typeof allPairs)[0] & { detectionMethod: string }>;
   try {
     const llmManager = LlmManager.createForWorker(
-      prisma as any,
+      db as any,
       job.data.tenantId
     );
-    const promptResolver = new PromptResolver(prisma as any);
+    const promptResolver = new PromptResolver(db as any);
     const semanticService = new DuplicateAnalysisService(
       llmManager,
       promptResolver
@@ -202,7 +202,7 @@ export const processor = async (
     let retryOptions: { maxRetries?: number; baseDelayMs?: number } | undefined;
     if (resolved) {
       const llmProviderConfig = await (
-        prisma as any
+        db as any
       ).llmProviderConfig.findFirst({
         where: { llmIntegrationId: resolved.integrationId },
       });
@@ -263,7 +263,7 @@ export const processor = async (
 
   // 8. Soft-delete old pending results, then insert new ones atomically
   //    Use a longer timeout for large result sets
-  await prisma.$transaction(async (tx: any) => {
+  await db.$transaction(async (tx: any) => {
     await tx.duplicateScanResult.updateMany({
       where: {
         projectId: job.data.projectId,

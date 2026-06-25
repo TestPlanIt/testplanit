@@ -80,14 +80,14 @@ const DIAGNOSTIC_EVENT_NAME = "webhook.test" as const;
 
 export async function dispatchWebhook(
   jobData: DispatchJobData,
-  prisma: DbClient | TxClient
+  db: DbClient | TxClient
 ): Promise<DispatchOutcome> {
   // 1. Load outbox event + webhook config + active/retiring secrets concurrently.
   const [outboxEvent, config] = await Promise.all([
-    prisma.webhookOutboxEvent.findUnique({
+    db.webhookOutboxEvent.findUnique({
       where: { id: jobData.outboxEventId },
     }),
-    prisma.webhookConfig.findUnique({
+    db.webhookConfig.findUnique({
       where: { id: jobData.webhookConfigId },
       include: {
         secrets: {
@@ -139,7 +139,7 @@ export async function dispatchWebhook(
     const stubDigest = createHash("sha256")
       .update(JSON.stringify(outboxEvent.payload))
       .digest("hex");
-    const delivery = await prisma.webhookDelivery.create({
+    const delivery = await db.webhookDelivery.create({
       data: {
         webhookConfigId: config.id,
         direction: "OUTBOUND",
@@ -213,7 +213,7 @@ export async function dispatchWebhook(
         s.autoRetireAt !== null && s.retiredAt === null
     );
     if (!activeRow) {
-      const delivery = await prisma.webhookDelivery.create({
+      const delivery = await db.webhookDelivery.create({
         data: {
           webhookConfigId: config.id,
           direction: "OUTBOUND",
@@ -288,7 +288,7 @@ export async function dispatchWebhook(
   // replay path can find the source outbox row by `delivery.eventId`.
   // replayedFromDeliveryId threads from BullMQ job data when this dispatch
   // is itself a replay (lib/webhooks/replay.ts enqueues the field).
-  const delivery = await prisma.webhookDelivery.create({
+  const delivery = await db.webhookDelivery.create({
     data: {
       webhookConfigId: config.id,
       direction: "OUTBOUND",
@@ -321,7 +321,7 @@ export async function dispatchWebhook(
   } else {
     timestampUpdate.lastFailureAt = now;
   }
-  await prisma.webhookConfig.update({
+  await db.webhookConfig.update({
     where: { id: config.id },
     data: timestampUpdate,
   });

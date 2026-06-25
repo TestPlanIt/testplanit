@@ -5,7 +5,7 @@ const originalEnv = { ...process.env };
 
 // Mock multiTenantDb module
 const mockValidateMultiTenantJobData = vi.fn();
-const mockGetPrismaClientForJob = vi.fn();
+const mockGetDbClientForJob = vi.fn();
 const mockIsMultiTenantMode = vi.fn();
 const mockDisconnectAllTenantClients = vi.fn();
 
@@ -13,7 +13,7 @@ vi.mock("../lib/multiTenantDb", () => ({
   isMultiTenantMode: () => mockIsMultiTenantMode(),
   disconnectAllTenantClients: () => mockDisconnectAllTenantClients(),
   getDbClientForJob: (jobData: { tenantId?: string }) =>
-    mockGetPrismaClientForJob(jobData),
+    mockGetDbClientForJob(jobData),
   validateMultiTenantJobData: (jobData: { tenantId?: string }) =>
     mockValidateMultiTenantJobData(jobData),
 }));
@@ -30,7 +30,7 @@ vi.mock("../lib/queueNames", () => ({
 }));
 
 // Mock rawDb
-const mockPrisma = {
+const mockDb = {
   testmoImportJob: {
     findUnique: vi.fn(),
     update: vi.fn(),
@@ -39,7 +39,7 @@ const mockPrisma = {
 };
 
 vi.mock("../lib/rawDb", () => ({
-  rawDb: mockPrisma,
+  rawDb: mockDb,
 }));
 
 // Mock clearAutomationImportCaches
@@ -116,25 +116,25 @@ describe("testmoImportWorker multi-tenant support", () => {
   describe("getDbClientForJob integration", () => {
     it("should return base rawDb client in single-tenant mode", () => {
       mockIsMultiTenantMode.mockReturnValue(false);
-      mockGetPrismaClientForJob.mockReturnValue(mockPrisma);
+      mockGetDbClientForJob.mockReturnValue(mockDb);
 
       const jobData = { jobId: "test-job-123" };
-      const client = mockGetPrismaClientForJob(jobData);
+      const client = mockGetDbClientForJob(jobData);
 
-      expect(client).toBe(mockPrisma);
-      expect(mockGetPrismaClientForJob).toHaveBeenCalledWith(jobData);
+      expect(client).toBe(mockDb);
+      expect(mockGetDbClientForJob).toHaveBeenCalledWith(jobData);
     });
 
     it("should return tenant-specific client in multi-tenant mode", () => {
       mockIsMultiTenantMode.mockReturnValue(true);
-      const tenantPrisma = { ...mockPrisma, tenantId: "tenant-a" };
-      mockGetPrismaClientForJob.mockReturnValue(tenantPrisma);
+      const tenantDb = { ...mockDb, tenantId: "tenant-a" };
+      mockGetDbClientForJob.mockReturnValue(tenantDb);
 
       const jobData = { jobId: "test-job-123", tenantId: "tenant-a" };
-      const client = mockGetPrismaClientForJob(jobData);
+      const client = mockGetDbClientForJob(jobData);
 
       expect(client.tenantId).toBe("tenant-a");
-      expect(mockGetPrismaClientForJob).toHaveBeenCalledWith(jobData);
+      expect(mockGetDbClientForJob).toHaveBeenCalledWith(jobData);
     });
   });
 

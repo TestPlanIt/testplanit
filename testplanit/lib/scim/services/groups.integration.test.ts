@@ -46,7 +46,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 const PREFIX = `scimit-groups-${Date.now()}`;
 let counter = 0;
@@ -73,11 +73,11 @@ function makeBody(overrides: Partial<ScimGroupBody> = {}): ScimGroupBody {
 }
 
 async function makeTestUser(emailLabel: string): Promise<string> {
-  const role = await prisma.roles.findFirst({
+  const role = await db.roles.findFirst({
     where: { isDefault: true, isDeleted: false },
   });
   if (!role) throw new Error("Test prerequisite: no default role row");
-  const user = await prisma.user.create({
+  const user = await db.user.create({
     data: {
       email: `${PREFIX}-${emailLabel}-${counter}@example.com`,
       name: `Member ${emailLabel}`,
@@ -103,7 +103,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
       systemUserId: SCIM_SYSTEM_USER_ID,
     };
 
-    const systemProject = await prisma.projects.findUnique({
+    const systemProject = await db.projects.findUnique({
       where: { id: SYSTEM_PROJECT_ID },
     });
     if (!systemProject) {
@@ -116,40 +116,40 @@ describeIntegration("SCIM Groups service (live DB)", () => {
 
   afterAll(async () => {
     // Sweep test groups (and their assignments via cascade).
-    const groups = await prisma.groups.findMany({
+    const groups = await db.groups.findMany({
       where: { name: { startsWith: PREFIX } },
       select: { id: true },
     });
     const groupIds = groups.map((g) => g.id);
 
     if (groupIds.length > 0) {
-      await prisma.webhookOutboxEvent.deleteMany({
+      await db.webhookOutboxEvent.deleteMany({
         where: {
           OR: groupIds.map((id) => ({
             payload: { path: ["id"], equals: id },
           })),
         },
       });
-      await prisma.groupAssignment.deleteMany({
+      await db.groupAssignment.deleteMany({
         where: { groupId: { in: groupIds } },
       });
-      await prisma.groups.deleteMany({ where: { id: { in: groupIds } } });
+      await db.groups.deleteMany({ where: { id: { in: groupIds } } });
     }
 
     // Sweep test users.
-    const users = await prisma.user.findMany({
+    const users = await db.user.findMany({
       where: { email: { startsWith: PREFIX } },
       select: { id: true },
     });
     if (users.length > 0) {
       const ids = users.map((u) => u.id);
-      await prisma.groupAssignment.deleteMany({
+      await db.groupAssignment.deleteMany({
         where: { userId: { in: ids } },
       });
-      await prisma.user.deleteMany({ where: { id: { in: ids } } });
+      await db.user.deleteMany({ where: { id: { in: ids } } });
     }
 
-    await prisma.$disconnect();
+    await db.$disconnect();
   });
 
   it("IT1: POST persists scimDisplayName (lowercased), externalId, scimExtensions JSON and stamps updatedAt", async () => {
@@ -167,7 +167,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
     const result = await createScimGroup(body, ctx);
     expect(result.linked).toBe(false);
 
-    const row = await prisma.groups.findUnique({
+    const row = await db.groups.findUnique({
       where: { id: parseInt(result.resource.id, 10) },
     });
     expect(row).not.toBeNull();
@@ -192,7 +192,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
     );
 
     const groupId = parseInt(result.resource.id, 10);
-    const assignments = await prisma.groupAssignment.findMany({
+    const assignments = await db.groupAssignment.findMany({
       where: { groupId },
     });
     expect(assignments.length).toBe(1);
@@ -213,7 +213,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
     );
     await deleteScimGroup(created.resource.id, ctx);
 
-    const tomb = await prisma.groups.findUnique({
+    const tomb = await db.groups.findUnique({
       where: { id: parseInt(created.resource.id, 10) },
     });
     expect(tomb!.isDeleted).toBe(true);
@@ -229,7 +229,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
     );
     expect(resurrect.linked).toBe(false);
 
-    const after = await prisma.groups.findUnique({
+    const after = await db.groups.findUnique({
       where: { id: parseInt(created.resource.id, 10) },
     });
     expect(after!.isDeleted).toBe(false);
@@ -263,7 +263,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
     } as unknown as ScimGroupBody;
     await putScimGroup(created.resource.id, putBody, ctx);
 
-    const after = await prisma.groups.findUnique({
+    const after = await db.groups.findUnique({
       where: { id: parseInt(created.resource.id, 10) },
       select: { scimExtensions: true },
     });
@@ -295,7 +295,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
       ctx
     );
 
-    let assignments = await prisma.groupAssignment.findMany({
+    let assignments = await db.groupAssignment.findMany({
       where: { groupId },
     });
     expect(assignments.length).toBe(2);
@@ -319,7 +319,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
       ctx
     );
 
-    assignments = await prisma.groupAssignment.findMany({
+    assignments = await db.groupAssignment.findMany({
       where: { groupId },
     });
     expect(assignments.length).toBe(1);
@@ -332,7 +332,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
       ctx
     );
 
-    const events = await prisma.webhookOutboxEvent.findMany({
+    const events = await db.webhookOutboxEvent.findMany({
       where: {
         eventName: "scim.group.created",
         projectId: SYSTEM_PROJECT_ID,
@@ -359,14 +359,14 @@ describeIntegration("SCIM Groups service (live DB)", () => {
       ctx
     );
 
-    const baseline = await prisma.webhookOutboxEvent.count({
+    const baseline = await db.webhookOutboxEvent.count({
       where: {
         projectId: SYSTEM_PROJECT_ID,
         eventName: "scim.group.updated",
       },
     });
 
-    const row = await prisma.groups.findUnique({
+    const row = await db.groups.findUnique({
       where: { id: parseInt(created.resource.id, 10) },
     });
 
@@ -379,7 +379,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
 
     await putScimGroup(created.resource.id, noopBody, ctx);
 
-    const after = await prisma.webhookOutboxEvent.count({
+    const after = await db.webhookOutboxEvent.count({
       where: {
         projectId: SYSTEM_PROJECT_ID,
         eventName: "scim.group.updated",
@@ -406,7 +406,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
       /not found/i
     );
 
-    const row = await prisma.groups.findUnique({
+    const row = await db.groups.findUnique({
       where: { id: parseInt(created.resource.id, 10) },
     });
     expect(row!.isDeleted).toBe(true);

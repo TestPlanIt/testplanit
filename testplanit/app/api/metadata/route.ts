@@ -30,12 +30,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
-  const prisma = getAnonymousDb();
+  const db = getAnonymousDb();
 
   try {
     switch (type) {
       case "test-run": {
-        const testRun = await prisma.testRuns.findUnique({
+        const testRun = await db.testRuns.findUnique({
           where: { id: numericId },
           select: {
             name: true,
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
       }
 
       case "test-case": {
-        const testCase = await prisma.repositoryCases.findUnique({
+        const testCase = await db.repositoryCases.findUnique({
           where: { id: numericId },
           select: {
             name: true,
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
       }
 
       case "session": {
-        const session = await prisma.sessions.findUnique({
+        const session = await db.sessions.findUnique({
           where: { id: numericId },
           select: {
             name: true,
@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
       }
 
       case "project": {
-        const project = await prisma.projects.findUnique({
+        const project = await db.projects.findUnique({
           where: { id: numericId },
           select: {
             name: true,
@@ -117,7 +117,7 @@ export async function GET(req: NextRequest) {
       }
 
       case "milestone": {
-        const milestone = await prisma.milestones.findUnique({
+        const milestone = await db.milestones.findUnique({
           where: { id: numericId },
           select: {
             name: true,

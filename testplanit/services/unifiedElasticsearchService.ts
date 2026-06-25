@@ -1,8 +1,8 @@
-import { rawDb as defaultPrisma } from "~/lib/rawDb";
+import { rawDb as defaultDb } from "~/lib/rawDb";
 import { CustomFieldDocument, SearchableEntityType } from "~/types/search";
 import { getElasticsearchClient } from "./elasticsearchService";
 
-type PrismaClientType = typeof defaultPrisma;
+type DbClientType = typeof defaultDb;
 
 // Re-export for convenience
 export { getElasticsearchClient };
@@ -370,8 +370,8 @@ export const ENTITY_MAPPINGS = {
 /**
  * Get Elasticsearch replica settings from database
  */
-async function getElasticsearchSettings(prismaClient?: PrismaClientType) {
-  const rawDb = prismaClient || defaultPrisma;
+async function getElasticsearchSettings(dbClient?: DbClientType) {
+  const rawDb = dbClient || defaultDb;
   try {
     const config = await rawDb.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" },
@@ -393,12 +393,12 @@ async function getElasticsearchSettings(prismaClient?: PrismaClientType) {
 /**
  * Create index for a specific entity type
  * @param entityType - The type of entity to create an index for
- * @param prismaClient - Optional Prisma client for getting settings
+ * @param dbClient - Optional Prisma client for getting settings
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function createEntityIndex(
   entityType: SearchableEntityType,
-  prismaClient?: PrismaClientType,
+  dbClient?: DbClientType,
   tenantId?: string
 ): Promise<boolean> {
   const client = getElasticsearchClient();
@@ -409,7 +409,7 @@ export async function createEntityIndex(
 
   try {
     // Get settings from database
-    const settings = await getElasticsearchSettings(prismaClient);
+    const settings = await getElasticsearchSettings(dbClient);
 
     const indexExists = await client.indices.exists({ index: indexName });
 
@@ -447,17 +447,17 @@ export async function createEntityIndex(
 
 /**
  * Create all entity indices
- * @param prismaClient - Optional Prisma client for getting settings
+ * @param dbClient - Optional Prisma client for getting settings
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function createAllEntityIndices(
-  prismaClient?: PrismaClientType,
+  dbClient?: DbClientType,
   tenantId?: string
 ): Promise<void> {
   const entityTypes = Object.values(SearchableEntityType);
 
   for (const entityType of entityTypes) {
-    await createEntityIndex(entityType, prismaClient, tenantId);
+    await createEntityIndex(entityType, dbClient, tenantId);
   }
 }
 

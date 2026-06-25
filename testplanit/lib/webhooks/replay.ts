@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { DbClient, TxClient } from "~/lib/zenstack";
 
-import { baseDb as defaultPrisma } from "~/lib/db";
+import { baseDb as defaultDb } from "~/lib/db";
 import { getWebhookDispatchQueue } from "~/lib/queues";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 
@@ -46,7 +46,7 @@ export type ReplayResult =
 export async function replayDelivery(
   originalDeliveryId: string,
   opts: ReplayOptions,
-  baseDb: DbClient | TxClient = defaultPrisma
+  baseDb: DbClient | TxClient = defaultDb
 ): Promise<ReplayResult> {
   // 1. Load the original delivery row + projectId from the related WebhookConfig.
   const delivery = await baseDb.webhookDelivery.findUnique({
@@ -156,7 +156,7 @@ export interface BulkReplayResult {
 export async function bulkReplayDeliveries(
   deliveryIds: string[],
   opts: Omit<ReplayOptions, "source" | "batchId">,
-  baseDb: DbClient | TxClient = defaultPrisma
+  baseDb: DbClient | TxClient = defaultDb
 ): Promise<BulkReplayResult> {
   if (deliveryIds.length > BULK_REPLAY_HARD_CAP) {
     return { outcome: "rejected", reason: "exceeds_cap" };

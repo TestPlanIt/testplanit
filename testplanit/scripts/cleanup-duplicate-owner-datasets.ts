@@ -21,10 +21,10 @@ import { createRawDbClient } from "~/lib/rawDbClient";
 
 
 
-// Bare PrismaClient (not the lib/prisma.ts singleton) — that singleton
+// Bare DbClient (not the lib/db.ts singleton) — that singleton
 // pulls in Elasticsearch sync, audit, and webhook emitter side-effects
 // at import time, which hangs a one-off CLI script.
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 const APPLY = process.argv.includes("--apply");
 
@@ -44,7 +44,7 @@ async function main() {
       : "Mode: DRY RUN — no writes. Re-run with --apply to mutate."
   );
 
-  const datasets = await prisma.dataSet.findMany({
+  const datasets = await db.dataSet.findMany({
     where: {
       isDeleted: false,
       isShared: false,
@@ -120,7 +120,7 @@ async function main() {
   }
 
   const ids = toDelete.map((d) => d.id);
-  const result = await prisma.dataSet.updateMany({
+  const result = await db.dataSet.updateMany({
     where: { id: { in: ids } },
     data: { isDeleted: true },
   });
@@ -133,5 +133,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await db.$disconnect();
   });

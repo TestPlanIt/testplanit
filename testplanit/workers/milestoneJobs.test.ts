@@ -10,7 +10,7 @@ vi.mock("../lib/services/notificationService", () => ({
 }));
 
 // Mock baseDb with milestone methods
-const mockPrisma = {
+const mockDb = {
   milestones: {
     findMany: vi.fn(),
     update: vi.fn(),
@@ -21,12 +21,12 @@ const mockPrisma = {
 };
 
 vi.mock("../lib/db", () => ({
-  baseDb: mockPrisma,
+  baseDb: mockDb,
 }));
 
 // Mock multiTenantDb
 vi.mock("../lib/multiTenantDb", () => ({
-  getDbClientForJob: vi.fn(() => mockPrisma),
+  getDbClientForJob: vi.fn(() => mockDb),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -85,15 +85,15 @@ describe("Milestone Auto-Completion Job", () => {
         },
       ];
 
-      mockPrisma.milestones.findMany.mockResolvedValue(mockMilestones);
-      mockPrisma.milestones.update.mockResolvedValue({});
+      mockDb.milestones.findMany.mockResolvedValue(mockMilestones);
+      mockDb.milestones.update.mockResolvedValue({});
 
       // The query should filter for:
       // - isCompleted: false
       // - isDeleted: false
       // - automaticCompletion: true
       // - completedAt <= now (due date has passed)
-      expect(mockPrisma.milestones.findMany).not.toHaveBeenCalled();
+      expect(mockDb.milestones.findMany).not.toHaveBeenCalled();
     });
 
     it("should not auto-complete milestones without automaticCompletion flag", async () => {
@@ -103,10 +103,10 @@ describe("Milestone Auto-Completion Job", () => {
       // Milestone without automaticCompletion should not be returned
       const mockMilestones: any[] = [];
 
-      mockPrisma.milestones.findMany.mockResolvedValue(mockMilestones);
+      mockDb.milestones.findMany.mockResolvedValue(mockMilestones);
 
       // No milestones should be updated
-      expect(mockPrisma.milestones.update).not.toHaveBeenCalled();
+      expect(mockDb.milestones.update).not.toHaveBeenCalled();
     });
 
     it("should not auto-complete milestones with future due date", async () => {
@@ -116,9 +116,9 @@ describe("Milestone Auto-Completion Job", () => {
       // Milestone with future due date should not be returned by the query
       const mockMilestones: any[] = [];
 
-      mockPrisma.milestones.findMany.mockResolvedValue(mockMilestones);
+      mockDb.milestones.findMany.mockResolvedValue(mockMilestones);
 
-      expect(mockPrisma.milestones.update).not.toHaveBeenCalled();
+      expect(mockDb.milestones.update).not.toHaveBeenCalled();
     });
   });
 });
@@ -152,21 +152,21 @@ describe("Milestone Due Notifications Job", () => {
         },
       ];
 
-      mockPrisma.milestones.findMany.mockResolvedValue(mockMilestones);
+      mockDb.milestones.findMany.mockResolvedValue(mockMilestones);
 
       // The query should filter for:
       // - isCompleted: false
       // - isDeleted: false
       // - notifyDaysBefore > 0
       // - completedAt is set (has a due date)
-      expect(mockPrisma.milestones.findMany).not.toHaveBeenCalled();
+      expect(mockDb.milestones.findMany).not.toHaveBeenCalled();
     });
 
     it("should not send notifications for milestones with notifyDaysBefore = 0", async () => {
       // Milestones with notifyDaysBefore = 0 should not be in the query results
       const mockMilestones: any[] = [];
 
-      mockPrisma.milestones.findMany.mockResolvedValue(mockMilestones);
+      mockDb.milestones.findMany.mockResolvedValue(mockMilestones);
 
       expect(mockCreateMilestoneDueNotification).not.toHaveBeenCalled();
     });
@@ -175,7 +175,7 @@ describe("Milestone Due Notifications Job", () => {
       // Milestones without completedAt should not be in the query results
       const mockMilestones: any[] = [];
 
-      mockPrisma.milestones.findMany.mockResolvedValue(mockMilestones);
+      mockDb.milestones.findMany.mockResolvedValue(mockMilestones);
 
       expect(mockCreateMilestoneDueNotification).not.toHaveBeenCalled();
     });

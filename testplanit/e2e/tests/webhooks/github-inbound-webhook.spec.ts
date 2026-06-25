@@ -123,21 +123,21 @@ test.describe("GitHub inbound webhook — admin form + raw-POST coverage", () =>
 
     // Rejected requests must not persist a "signature-mismatch"-shaped
     // delivery row — the route returns 401 before the service is invoked.
-    const prisma = createRawDbClient();
+    const db = createRawDbClient();
     try {
       await test.step("Verify no signature-mismatch WebhookDelivery row was written", async () => {
-        const config = await prisma.webhookConfig.findFirst({
+        const config = await db.webhookConfig.findFirst({
           where: { token: configToken, direction: "INBOUND" },
           select: { id: true },
         });
         expect(config).not.toBeNull();
-        const mismatchRows = await prisma.webhookDelivery.findMany({
+        const mismatchRows = await db.webhookDelivery.findMany({
           where: { webhookConfigId: config!.id, error: "signature-mismatch" },
         });
         expect(mismatchRows).toHaveLength(0);
       });
     } finally {
-      await prisma.$disconnect();
+      await db.$disconnect();
     }
   });
 
@@ -166,21 +166,21 @@ test.describe("GitHub inbound webhook — admin form + raw-POST coverage", () =>
       expect(response.status()).toBe(200);
     });
 
-    const prisma = createRawDbClient();
+    const db = createRawDbClient();
     try {
       await test.step("Verify a WebhookDelivery row was written with error='no_handler'", async () => {
-        const config = await prisma.webhookConfig.findFirst({
+        const config = await db.webhookConfig.findFirst({
           where: { token: configToken, direction: "INBOUND" },
           select: { id: true },
         });
         expect(config).not.toBeNull();
-        const deliveries = await prisma.webhookDelivery.findMany({
+        const deliveries = await db.webhookDelivery.findMany({
           where: { webhookConfigId: config!.id, error: "no_handler" },
         });
         expect(deliveries.length).toBeGreaterThanOrEqual(1);
       });
     } finally {
-      await prisma.$disconnect();
+      await db.$disconnect();
     }
   });
 

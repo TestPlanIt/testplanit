@@ -48,24 +48,24 @@ function sanitizeAccountData(
 }
 
 /**
- * Minimal NextAuth adapter backed directly by the ZenStack client — the
- * in-repo replacement for `@auth/prisma-adapter`. Only the methods this app
+ * Minimal NextAuth adapter backed directly by the ZenStack client — a
+ * self-contained, in-repo adapter (no third-party adapter dependency). Only the methods this app
  * actually exercises are implemented: there is no `Session` model (auth uses
  * the JWT strategy), so the database-session methods are intentionally
- * omitted. `createCustomPrismaAdapter` layers its app-specific overrides
+ * omitted. `createCustomDbAdapter` layers its app-specific overrides
  * (createUser / linkAccount / getUserByEmail) on top of this base.
  *
  * The adapter is given the raw (non-policy) client so account/user lookups
  * during an unauthenticated sign-in are not filtered by access policies.
  */
-function createBaseAdapter(prisma: DbClient): Adapter {
+function createBaseAdapter(db: DbClient): Adapter {
   return {
     getUser: (id: string) =>
-      prisma.user.findUnique({ where: { id } }) as unknown as Promise<
+      db.user.findUnique({ where: { id } }) as unknown as Promise<
         AdapterUser | null
       >,
     // getUserByEmail, linkAccount and createUser are provided by
-    // createCustomPrismaAdapter's overrides below — intentionally not in the base.
+    // createCustomDbAdapter's overrides below — intentionally not in the base.
     async getUserByAccount({
       provider,
       providerAccountId,
@@ -73,7 +73,7 @@ function createBaseAdapter(prisma: DbClient): Adapter {
       provider: string;
       providerAccountId: string;
     }) {
-      const account = await prisma.account.findUnique({
+      const account = await db.account.findUnique({
         where: { provider_providerAccountId: { provider, providerAccountId } },
         include: { user: true },
       });
@@ -83,12 +83,12 @@ function createBaseAdapter(prisma: DbClient): Adapter {
       id,
       ...data
     }: Partial<AdapterUser> & { id: string }) =>
-      prisma.user.update({
+      db.user.update({
         where: { id },
         data: data as UserUncheckedUpdateInput,
       }) as unknown as Promise<AdapterUser>,
     deleteUser: (id: string) =>
-      prisma.user.delete({ where: { id } }) as unknown as Promise<AdapterUser>,
+      db.user.delete({ where: { id } }) as unknown as Promise<AdapterUser>,
     unlinkAccount: ({
       provider,
       providerAccountId,
@@ -96,11 +96,11 @@ function createBaseAdapter(prisma: DbClient): Adapter {
       provider: string;
       providerAccountId: string;
     }) =>
-      prisma.account.delete({
+      db.account.delete({
         where: { provider_providerAccountId: { provider, providerAccountId } },
       }) as unknown as Promise<AdapterAccount>,
     createVerificationToken: (data: VerificationToken) =>
-      prisma.verificationToken.create({
+      db.verificationToken.create({
         data: data as VerificationTokenUncheckedCreateInput,
       }) as unknown as Promise<VerificationToken>,
     async useVerificationToken({
@@ -111,7 +111,7 @@ function createBaseAdapter(prisma: DbClient): Adapter {
       token: string;
     }) {
       try {
-        return (await prisma.verificationToken.delete({
+        return (await db.verificationToken.delete({
           where: { identifier_token: { identifier, token } },
         })) as VerificationToken;
       } catch (error) {
@@ -127,13 +127,13 @@ function createBaseAdapter(prisma: DbClient): Adapter {
  * Custom adapter that ensures UserPreferences are created
  * when a new user is created via OAuth or Magic Link
  */
-export function createCustomPrismaAdapter(prisma: DbClient): Adapter {
-  const baseAdapter = createBaseAdapter(prisma);
+export function createCustomDbAdapter(db: DbClient): Adapter {
+  const baseAdapter = createBaseAdapter(db);
 
   return {
     ...baseAdapter,
     async linkAccount(account: AdapterAccount) {
-      return prisma.account.create({
+      return db.account.create({
         data: sanitizeAccountData(account),
       }) as unknown as AdapterAccount;
     },
@@ -152,7 +152,7 @@ export function createCustomPrismaAdapter(prisma: DbClient): Adapter {
     async getUserByEmail(email: string) {
       if (!email) return null;
 
-      const user = await prisma.user.findUnique({
+      const user = await db.user.findUnique({
         where: { email },
         select: {
           id: true,
@@ -175,7 +175,7 @@ export function createCustomPrismaAdapter(prisma: DbClient): Adapter {
       const incomingExternalId =
         (user as unknown as { externalId?: string | null }).externalId ?? null;
 
-      const existing = await prisma.user.findFirst({
+      const existing = await db.user.findFirst({
         where: { email: { equals: user.email!, mode: "insensitive" } },
       });
 
@@ -200,7 +200,7 @@ export function createCustomPrismaAdapter(prisma: DbClient): Adapter {
         const shouldFlipAuthMethod =
           !existing.authMethod || existing.authMethod === "SCIM";
 
-        const linked = await prisma.user.update({
+        const linked = await db.user.update({
           where: { id: existing.id },
           data: {
             externalId: incomingExternalId ?? undefined,
@@ -227,15 +227,15 @@ export function createCustomPrismaAdapter(prisma: DbClient): Adapter {
 
       // Get the system default access level from registration settings
       const registrationSettings =
-        await prisma.registrationSettings.findFirst();
+        await db.registrationSettings.findFirst();
       const defaultAccess = registrationSettings?.defaultAccess || "USER";
 
       // Get the default role from database
       const defaultRole =
-        (await prisma.roles.findFirst({
+        (await db.roles.findFirst({
           where: { isDefault: true, isDeleted: false },
         })) ??
-        (await prisma.roles.findFirst({
+        (await db.roles.findFirst({
           where: { name: "user", isDeleted: false },
         }));
 
@@ -246,7 +246,7 @@ export function createCustomPrismaAdapter(prisma: DbClient): Adapter {
       }
 
       // Create user with default preferences
-      const newUser = await prisma.user.create({
+      const newUser = await db.user.create({
         data: {
           email: user.email!,
           name: user.name || user.email!.split("@")[0], // Use email prefix if no name

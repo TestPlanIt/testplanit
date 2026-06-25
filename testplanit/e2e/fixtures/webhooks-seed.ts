@@ -90,7 +90,7 @@ function generateSecret(): string {
  * behavior when the admin checks individual event boxes).
  */
 export async function seedOutboundConfig(
-  prisma: DbClient,
+  db: DbClient,
   args: {
     projectId: number;
     url: string;
@@ -120,7 +120,7 @@ export async function seedOutboundConfig(
   const name = args.name ?? "E2E Seed Outbound";
 
   if (adapterType === "SLACK") {
-    const config = await prisma.webhookConfig.create({
+    const config = await db.webhookConfig.create({
       data: {
         projectId: args.projectId,
         adapterType: "SLACK",
@@ -146,7 +146,7 @@ export async function seedOutboundConfig(
   const plaintext = args.secret ?? generateSecret();
   const encrypted = await encrypt(plaintext);
 
-  const created = await prisma.$transaction(async (tx) => {
+  const created = await db.$transaction(async (tx) => {
     const config = await tx.webhookConfig.create({
       data: {
         projectId: args.projectId,
@@ -193,7 +193,7 @@ export async function seedOutboundConfig(
  * Basic-Auth credentials or HMAC secrets pass through unmodified.
  */
 export async function seedInboundConfig(
-  prisma: DbClient,
+  db: DbClient,
   args: {
     projectId: number;
     adapterType: InboundAdapter;
@@ -230,7 +230,7 @@ export async function seedInboundConfig(
   }
   const encrypted = await encrypt(plaintext);
 
-  const config = await prisma.webhookConfig.create({
+  const config = await db.webhookConfig.create({
     data: {
       projectId: args.projectId,
       adapterType: args.adapterType as AdapterType,
@@ -259,7 +259,7 @@ export async function seedInboundConfig(
  * callers that want to correlate the seed with the adapter under test.
  */
 export async function seedLinkedIssue(
-  prisma: DbClient,
+  db: DbClient,
   args: {
     projectId: number;
     /** Adapter-shaped key — e.g. `TP-42` for Jira, `octocat/Hello-World#42` for GitHub, `297` for ADO. */
@@ -274,7 +274,7 @@ export async function seedLinkedIssue(
     title?: string;
   }
 ): Promise<{ issueId: number }> {
-  const issue = await prisma.issue.create({
+  const issue = await db.issue.create({
     data: {
       name: args.name ?? "E2E Seed Issue",
       title: args.title ?? args.name ?? "E2E Seed Issue",
@@ -301,7 +301,7 @@ export async function seedLinkedIssue(
  * skip the outbox row (Phase 1 inbound has no outbox concept).
  */
 export async function seedDeliveries(
-  prisma: DbClient,
+  db: DbClient,
   args: {
     webhookConfigId: string;
     direction: WebhookDirection;
@@ -343,7 +343,7 @@ export async function seedDeliveries(
           "seedDeliveries: OUTBOUND seeds require projectId for the paired WebhookOutboxEvent"
         );
       }
-      await prisma.webhookOutboxEvent.create({
+      await db.webhookOutboxEvent.create({
         data: {
           projectId: args.projectId,
           eventName: eventType,
@@ -354,7 +354,7 @@ export async function seedDeliveries(
       });
     }
 
-    const delivery = await prisma.webhookDelivery.create({
+    const delivery = await db.webhookDelivery.create({
       data: {
         webhookConfigId: args.webhookConfigId,
         direction: args.direction,
@@ -399,7 +399,7 @@ export async function seedDeliveries(
  * "trigger fails, replay fails, repeat 5 times" → depth=6 (1 original + 5 replays).
  */
 export async function seedReplayChain(
-  prisma: DbClient,
+  db: DbClient,
   args: {
     webhookConfigId: string;
     projectId: number;
@@ -427,7 +427,7 @@ export async function seedReplayChain(
   const rootDigest = createHash("sha256")
     .update(JSON.stringify(rootPayload))
     .digest("hex");
-  await prisma.webhookOutboxEvent.create({
+  await db.webhookOutboxEvent.create({
     data: {
       projectId: args.projectId,
       eventName: eventType,
@@ -436,7 +436,7 @@ export async function seedReplayChain(
       dispatchedAt: new Date(),
     },
   });
-  const root = await prisma.webhookDelivery.create({
+  const root = await db.webhookDelivery.create({
     data: {
       webhookConfigId: args.webhookConfigId,
       direction: "OUTBOUND",
@@ -475,7 +475,7 @@ export async function seedReplayChain(
     const childDigest = createHash("sha256")
       .update(JSON.stringify(childPayload))
       .digest("hex");
-    const child = await prisma.webhookDelivery.create({
+    const child = await db.webhookDelivery.create({
       data: {
         webhookConfigId: args.webhookConfigId,
         direction: "OUTBOUND",
@@ -516,10 +516,10 @@ export async function seedReplayChain(
  * still in scope.
  */
 export async function softDeleteProject(
-  prisma: DbClient,
+  db: DbClient,
   args: { projectId: number }
 ): Promise<void> {
-  await prisma.projects.update({
+  await db.projects.update({
     where: { id: args.projectId },
     data: { isDeleted: true },
   });
@@ -531,7 +531,7 @@ export async function softDeleteProject(
  * `setTimeout` waits per `feedback_no_flaky_tests.md`.
  */
 export async function waitForDeliveries(
-  prisma: DbClient,
+  db: DbClient,
   args: {
     where: Record<string, unknown>;
     predicate: (rows: WebhookDelivery[]) => boolean;
@@ -541,7 +541,7 @@ export async function waitForDeliveries(
   const timeoutMs = args.timeoutMs ?? 30_000;
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs) {
-    const rows = await prisma.webhookDelivery.findMany({
+    const rows = await db.webhookDelivery.findMany({
       where: args.where,
       orderBy: { receivedAt: "desc" },
     });

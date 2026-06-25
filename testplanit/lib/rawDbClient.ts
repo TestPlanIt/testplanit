@@ -1,6 +1,6 @@
 // lib/rawDbClient.ts
 // Standalone raw ZenStack client factory for seed scripts, one-off scripts, and
-// e2e tests that previously created their own raw PrismaClient. Each call
+// e2e tests that previously created their own raw DbClient. Each call
 // returns an INDEPENDENT client with its own connection pool, so callers keep
 // managing their own lifecycle (e.g. `await db.$disconnect()` in afterAll).
 //

@@ -11,7 +11,7 @@ vi.mock("~/lib/zenstack", () => ({
 import { baseClient, getAuthDb } from "~/lib/zenstack";
 import { getEnhancedDb, getUserWithRole } from "./utils";
 
-const mockPrisma = baseClient as unknown as {
+const mockDb = baseClient as unknown as {
   user: {
     findUnique: ReturnType<typeof vi.fn>;
   };
@@ -42,12 +42,12 @@ describe("Auth Utils", () => {
         },
       };
 
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
 
       const result = await getUserWithRole("user-123");
 
       expect(result).toEqual(mockUser);
-      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+      expect(mockDb.user.findUnique).toHaveBeenCalledWith({
         where: { id: "user-123" },
         include: {
           role: {
@@ -60,7 +60,7 @@ describe("Auth Utils", () => {
     });
 
     it("should return null when user not found", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(null);
 
       const result = await getUserWithRole("non-existent-user");
 
@@ -75,7 +75,7 @@ describe("Auth Utils", () => {
         role: null,
       };
 
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
 
       const result = await getUserWithRole("user-123");
 
@@ -95,7 +95,7 @@ describe("Auth Utils", () => {
         },
       };
 
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
 
       const result = await getUserWithRole("user-123");
 
@@ -116,7 +116,7 @@ describe("Auth Utils", () => {
         },
       };
 
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
 
       const session: Session = {
         user: {
@@ -156,7 +156,7 @@ describe("Auth Utils", () => {
     });
 
     it("should throw error when user not found in database", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(null);
 
       const session: Session = {
         user: {
@@ -185,7 +185,7 @@ describe("Auth Utils", () => {
         },
       };
 
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
 
       const session: Session = {
         user: {
@@ -208,7 +208,7 @@ describe("Auth Utils", () => {
     });
 
     it("should handle database errors gracefully", async () => {
-      mockPrisma.user.findUnique.mockRejectedValue(
+      mockDb.user.findUnique.mockRejectedValue(
         new Error("Database connection failed")
       );
 

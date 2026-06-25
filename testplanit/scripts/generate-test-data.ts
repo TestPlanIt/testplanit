@@ -3,7 +3,7 @@
 import { performance } from "perf_hooks";
 import { createRawDbClient } from "~/lib/rawDbClient";
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 interface TestDataConfig {
   name: string;
@@ -52,7 +52,7 @@ class TestDataGenerator {
     console.log("Setting up test environment...");
 
     // Get default user role
-    const userRole = await prisma.roles.findFirst({
+    const userRole = await db.roles.findFirst({
       where: { name: "user" },
     });
 
@@ -63,7 +63,7 @@ class TestDataGenerator {
     }
 
     // Create test user
-    await prisma.user.upsert({
+    await db.user.upsert({
       where: { id: TEST_USER_ID },
       create: {
         id: TEST_USER_ID,
@@ -76,7 +76,7 @@ class TestDataGenerator {
     });
 
     // Create test project
-    await prisma.projects.upsert({
+    await db.projects.upsert({
       where: { id: PERFORMANCE_TEST_PROJECT_ID },
       create: {
         id: PERFORMANCE_TEST_PROJECT_ID,
@@ -87,7 +87,7 @@ class TestDataGenerator {
     });
 
     // Create test repository
-    await prisma.repositories.upsert({
+    await db.repositories.upsert({
       where: { id: 1 },
       create: {
         id: 1,
@@ -102,11 +102,11 @@ class TestDataGenerator {
   async cleanup(): Promise<void> {
     console.log("Cleaning up test data...");
 
-    await prisma.repositoryCases.deleteMany({
+    await db.repositoryCases.deleteMany({
       where: { projectId: PERFORMANCE_TEST_PROJECT_ID },
     });
 
-    await prisma.repositoryFolders.deleteMany({
+    await db.repositoryFolders.deleteMany({
       where: { projectId: PERFORMANCE_TEST_PROJECT_ID },
     });
 
@@ -182,7 +182,7 @@ class TestDataGenerator {
     const folderBatchSize = 1000;
     for (let i = 0; i < folders.length; i += folderBatchSize) {
       const batch = folders.slice(i, i + folderBatchSize);
-      await prisma.repositoryFolders.createMany({
+      await db.repositoryFolders.createMany({
         data: batch,
         skipDuplicates: true,
       });
@@ -221,7 +221,7 @@ class TestDataGenerator {
       const caseBatchSize = 2000;
       for (let i = 0; i < cases.length; i += caseBatchSize) {
         const batch = cases.slice(i, i + caseBatchSize);
-        await prisma.repositoryCases.createMany({
+        await db.repositoryCases.createMany({
           data: batch,
           skipDuplicates: true,
         });
@@ -258,7 +258,7 @@ class TestDataGenerator {
 
     // Benchmark folder fetching (simulates what TreeView does)
     const fetchStart = performance.now();
-    const folders = await prisma.repositoryFolders.findMany({
+    const folders = await db.repositoryFolders.findMany({
       where: {
         projectId: PERFORMANCE_TEST_PROJECT_ID,
         isDeleted: false,
@@ -269,7 +269,7 @@ class TestDataGenerator {
 
     // Benchmark case counting (simulates case count calculation)
     const renderStart = performance.now();
-    const cases = await prisma.repositoryCases.findMany({
+    const cases = await db.repositoryCases.findMany({
       where: {
         projectId: PERFORMANCE_TEST_PROJECT_ID,
         isDeleted: false,
@@ -397,7 +397,7 @@ class TestDataGenerator {
     });
 
     await this.cleanup();
-    await prisma.$disconnect();
+    await db.$disconnect();
 
     console.log("\n✨ Benchmark complete!");
   }

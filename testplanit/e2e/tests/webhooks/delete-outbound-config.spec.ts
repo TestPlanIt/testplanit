@@ -44,16 +44,16 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook outbound config delete — card disappears + no future fan-out (M-04)", () => {
   let projectId: number;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
   let configId: string;
   const preDeleteDeliveryIds: string[] = [];
 
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Delete Outbound ${uniqueId}`);
-    prisma = createRawDbClient();
+    db = createRawDbClient();
 
-    const seeded = await seedOutboundConfig(prisma, {
+    const seeded = await seedOutboundConfig(db, {
       projectId,
       url: "https://example.com/M-04/delete-target",
       name: "E2E M-04 Delete Target",
@@ -63,7 +63,7 @@ test.describe("Webhook outbound config delete — card disappears + no future fa
     // Seed a few historical delivery rows so the cascade behaviour has
     // something to act on. Using "all-success" so these don't accidentally
     // trip any failure-driven UI surfaces during the navigation portion.
-    const deliveries = await seedDeliveries(prisma, {
+    const deliveries = await seedDeliveries(db, {
       webhookConfigId: configId,
       direction: "OUTBOUND",
       projectId,
@@ -75,7 +75,7 @@ test.describe("Webhook outbound config delete — card disappears + no future fa
   });
 
   test.afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("admin clicks Delete, confirms AlertDialog, card disappears, no future events fan out to the deleted destination", async ({
@@ -134,7 +134,7 @@ test.describe("Webhook outbound config delete — card disappears + no future fa
 
     // 4. Data-layer truth — the WebhookConfig row is gone.
     await test.step("Confirm the WebhookConfig row is gone from the database", async () => {
-      const after = await prisma.webhookConfig.findUnique({
+      const after = await db.webhookConfig.findUnique({
         where: { id: configId },
         select: { id: true },
       });
@@ -147,7 +147,7 @@ test.describe("Webhook outbound config delete — card disappears + no future fa
     //    delivery rows. Each orphan keeps its `id`, its `payloadDigest`,
     //    its `receivedAt`, etc., but `webhookConfigId` flips to NULL.
     await test.step("Verify pre-delete delivery rows survive as orphans with NULL config id", async () => {
-      const orphanedRows = await prisma.webhookDelivery.findMany({
+      const orphanedRows = await db.webhookDelivery.findMany({
         where: { id: { in: preDeleteDeliveryIds } },
         select: { id: true, webhookConfigId: true },
       });
@@ -164,7 +164,7 @@ test.describe("Webhook outbound config delete — card disappears + no future fa
     //    zero rows for the deleted config — even though the rows are
     //    still in the DB for audit purposes.
     await test.step("Confirm project-scoped delivery queries exclude the orphaned rows", async () => {
-      const projectScopedRows = await prisma.webhookDelivery.findMany({
+      const projectScopedRows = await db.webhookDelivery.findMany({
         where: { webhookConfig: { projectId } },
         select: { id: true },
       });
@@ -175,7 +175,7 @@ test.describe("Webhook outbound config delete — card disappears + no future fa
       // Querying by the gone-config's id returns no project-scoped matches
       // for the same reason — `webhookConfigId = configId` matches zero rows
       // (orphans have NULL, no live row has the old id).
-      const byDeletedConfigId = await prisma.webhookDelivery.findMany({
+      const byDeletedConfigId = await db.webhookDelivery.findMany({
         where: { webhookConfigId: configId },
         select: { id: true },
       });
@@ -206,7 +206,7 @@ test.describe("Webhook outbound config delete — card disappears + no future fa
       const pollDeadline = Date.now() + 5_000;
       let postDeleteRows: Array<{ id: string }> = [];
       while (Date.now() < pollDeadline) {
-        postDeleteRows = await prisma.webhookDelivery.findMany({
+        postDeleteRows = await db.webhookDelivery.findMany({
           where: { webhookConfigId: configId },
           select: { id: true },
         });

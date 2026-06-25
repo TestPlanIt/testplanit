@@ -33,7 +33,7 @@ vi.mock("~/lib/auditContextWrappers", () => ({
 }));
 
 vi.mock("~/lib/db", () => {
-  const prismaStub: any = {
+  const dbStub: any = {
     user: {
       findUnique: vi.fn(),
     },
@@ -60,11 +60,11 @@ vi.mock("~/lib/db", () => {
       cb({
         $executeRaw: vi.fn(async () => []),
         $queryRaw: vi.fn(async () => []),
-        reviewRequest: prismaStub.reviewRequest,
+        reviewRequest: dbStub.reviewRequest,
       })
     ),
   };
-  return { baseDb: prismaStub };
+  return { baseDb: dbStub };
 });
 
 vi.mock("~/lib/multiTenantDb", () => ({

@@ -42,7 +42,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscription round-trip)", () => {
   let projectId: number;
   let stub: StubServerHandle;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
   let testRunId: number;
   let testRunCaseId: number;
   let iterationIds: number[];
@@ -51,14 +51,14 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E INT-04 ${uniqueId}`);
     stub = await startStubServer();
-    prisma = createRawDbClient();
+    db = createRawDbClient();
 
     // Seed a parameterized case + 2-iteration run inside a single
-    // ZenStack-bypassing transaction. We use raw prisma here because the
+    // ZenStack-bypassing transaction. We use raw db here because the
     // ZenStack policy layer rejects iteration writes from the admin
     // session for in-flight projects; the test setup mirrors the
     // production fan-out via materializeIterations.
-    const status = await prisma.status.findFirst({
+    const status = await db.status.findFirst({
       where: { systemName: "passed", isDeleted: false },
       select: { id: true },
     });
@@ -67,7 +67,7 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
     }
     passedStatusId = status.id;
 
-    const project = await prisma.projects.findUniqueOrThrow({
+    const project = await db.projects.findUniqueOrThrow({
       where: { id: projectId },
       select: {
         id: true,
@@ -79,7 +79,7 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
     if (!repo) {
       throw new Error("seed: project missing repository");
     }
-    const folder = await prisma.repositoryFolders.create({
+    const folder = await db.repositoryFolders.create({
       data: {
         name: `int04-${uniqueId}`,
         repositoryId: repo.id,
@@ -88,13 +88,13 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
       },
       select: { id: true },
     });
-    const template = await prisma.templates.findFirstOrThrow({
+    const template = await db.templates.findFirstOrThrow({
       select: { id: true },
     });
-    const state = await prisma.workflows.findFirstOrThrow({
+    const state = await db.workflows.findFirstOrThrow({
       select: { id: true },
     });
-    const testCase = await prisma.repositoryCases.create({
+    const testCase = await db.repositoryCases.create({
       data: {
         projectId,
         repositoryId: repo.id,
@@ -107,7 +107,7 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
       },
       select: { id: true },
     });
-    await prisma.testCaseParameter.createMany({
+    await db.testCaseParameter.createMany({
       data: [
         {
           testCaseId: testCase.id,
@@ -119,7 +119,7 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
         },
       ],
     });
-    const dataset = await prisma.dataSet.create({
+    const dataset = await db.dataSet.create({
       data: {
         name: `int04-ds-${uniqueId}`,
         ownerCaseId: testCase.id,
@@ -128,7 +128,7 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
       },
       select: { id: true },
     });
-    await prisma.dataSetRow.createMany({
+    await db.dataSetRow.createMany({
       data: [
         {
           dataSetId: dataset.id,
@@ -144,7 +144,7 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
         },
       ],
     });
-    const testRun = await prisma.testRuns.create({
+    const testRun = await db.testRuns.create({
       data: {
         name: `int04-run-${uniqueId}`,
         projectId,
@@ -155,7 +155,7 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
       select: { id: true },
     });
     testRunId = testRun.id;
-    const testRunCase = await prisma.testRunCases.create({
+    const testRunCase = await db.testRunCases.create({
       data: {
         testRunId: testRun.id,
         repositoryCaseId: testCase.id,
@@ -169,9 +169,9 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
     // (Statically imported up top — a dynamic `await import("~/..")` of a
     // TS file is loaded by Node as CommonJS and dies on the ESM `import`
     // statements inside iterationFanOut.ts.)
-    await materializeIterations(testRunId, prisma);
+    await materializeIterations(testRunId, db);
 
-    const iters = await prisma.testRunCaseIteration.findMany({
+    const iters = await db.testRunCaseIteration.findMany({
       where: { testRunCaseId },
       orderBy: { rowIndex: "asc" },
       select: { id: true },
@@ -182,7 +182,7 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
 
   test.afterAll(async () => {
     if (stub) await stub.close();
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("admin opts in to iteration.result.recorded → submit triggers delivery per iteration; test_run.completed NOT delivered", async ({
@@ -332,7 +332,7 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
       expect(completedDelivery).toBeUndefined();
 
       // 6. DB-side assertion: WebhookDelivery rows for both iterations.
-      const deliveries = await prisma.webhookDelivery.findMany({
+      const deliveries = await db.webhookDelivery.findMany({
         where: {
           webhookConfig: { projectId },
           direction: "OUTBOUND",

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   pollDataChangeLogsAcrossTenants,
-  type RawPrismaClient,
+  type RawDbClient,
   type TenantPollClient,
 } from "../correlation";
 
@@ -13,7 +13,7 @@ import {
  * (an empty poll). `calls()` counts how many poll passes a client received.
  */
 
-function makeEmptyClient(): { client: RawPrismaClient; calls: () => number } {
+function makeEmptyClient(): { client: RawDbClient; calls: () => number } {
   const counter = { n: 0 };
   const tx = {
     $queryRaw: async () => [],
@@ -28,12 +28,12 @@ function makeEmptyClient(): { client: RawPrismaClient; calls: () => number } {
     $queryRaw: tx.$queryRaw,
     $executeRaw: tx.$executeRaw,
     $queryRawUnsafe: tx.$queryRawUnsafe,
-  } as unknown as RawPrismaClient;
+  } as unknown as RawDbClient;
   return { client, calls: () => counter.n };
 }
 
 function makeThrowingClient(): {
-  client: RawPrismaClient;
+  client: RawDbClient;
   calls: () => number;
 } {
   const counter = { n: 0 };
@@ -45,7 +45,7 @@ function makeThrowingClient(): {
     $queryRaw: async () => [],
     $executeRaw: async () => 0,
     $queryRawUnsafe: async () => [],
-  } as unknown as RawPrismaClient;
+  } as unknown as RawDbClient;
   return { client, calls: () => counter.n };
 }
 

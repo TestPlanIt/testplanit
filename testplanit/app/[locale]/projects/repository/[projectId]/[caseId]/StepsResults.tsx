@@ -1,7 +1,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import type { Steps as PrismaSteps } from "~/zenstack/models";
+import type { Steps as DbSteps } from "~/zenstack/models";
 import { Layers, SearchCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
@@ -9,7 +9,7 @@ import { emptyEditorContent } from "~/app/constants";
 import { Separator } from "~/components/ui/separator";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 
-interface DisplayStep extends PrismaSteps {
+interface DisplayStep extends DbSteps {
   isShared?: boolean;
   sharedStepGroupName?: string | null;
   sharedStepGroup?: { name: string | null } | null;

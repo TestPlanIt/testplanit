@@ -8,20 +8,20 @@ const {
   mockResolveIntegration,
   mockChat,
   mockPromptResolverResolve,
-  mockPrismaProjectsFindFirst,
-  mockPrismaLlmProviderConfigFindFirst,
-  mockPrismaRepositoryFoldersFindMany,
-  mockPrismaRepositoryCasesFindMany,
+  mockDbProjectsFindFirst,
+  mockDbLlmProviderConfigFindFirst,
+  mockDbRepositoryFoldersFindMany,
+  mockDbRepositoryCasesFindMany,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockLlmManagerGetInstance: vi.fn(),
   mockResolveIntegration: vi.fn(),
   mockChat: vi.fn(),
   mockPromptResolverResolve: vi.fn(),
-  mockPrismaProjectsFindFirst: vi.fn(),
-  mockPrismaLlmProviderConfigFindFirst: vi.fn(),
-  mockPrismaRepositoryFoldersFindMany: vi.fn(),
-  mockPrismaRepositoryCasesFindMany: vi.fn(),
+  mockDbProjectsFindFirst: vi.fn(),
+  mockDbLlmProviderConfigFindFirst: vi.fn(),
+  mockDbRepositoryFoldersFindMany: vi.fn(),
+  mockDbRepositoryCasesFindMany: vi.fn(),
 }));
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
@@ -49,18 +49,18 @@ vi.mock("@/lib/llm/services/prompt-resolver.service", () => ({
 vi.mock("@/lib/db", () => ({
   baseDb: {
     projects: {
-      findFirst: (...args: any[]) => mockPrismaProjectsFindFirst(...args),
+      findFirst: (...args: any[]) => mockDbProjectsFindFirst(...args),
     },
     llmProviderConfig: {
       findFirst: (...args: any[]) =>
-        mockPrismaLlmProviderConfigFindFirst(...args),
+        mockDbLlmProviderConfigFindFirst(...args),
     },
     repositoryFolders: {
       findMany: (...args: any[]) =>
-        mockPrismaRepositoryFoldersFindMany(...args),
+        mockDbRepositoryFoldersFindMany(...args),
     },
     repositoryCases: {
-      findMany: (...args: any[]) => mockPrismaRepositoryCasesFindMany(...args),
+      findMany: (...args: any[]) => mockDbRepositoryCasesFindMany(...args),
     },
   },
 }));
@@ -123,7 +123,7 @@ describe("POST /api/llm/generate-test-cases", () => {
 
     mockLlmManagerGetInstance.mockReturnValue(mockManager);
 
-    mockPrismaProjectsFindFirst.mockResolvedValue({
+    mockDbProjectsFindFirst.mockResolvedValue({
       id: 1,
       projectLlmIntegrations: [],
     });
@@ -138,7 +138,7 @@ describe("POST /api/llm/generate-test-cases", () => {
       source: "default",
     });
 
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 8192,
@@ -147,8 +147,8 @@ describe("POST /api/llm/generate-test-cases", () => {
       timeout: 30000,
     });
 
-    mockPrismaRepositoryFoldersFindMany.mockResolvedValue([]);
-    mockPrismaRepositoryCasesFindMany.mockResolvedValue([]);
+    mockDbRepositoryFoldersFindMany.mockResolvedValue([]);
+    mockDbRepositoryCasesFindMany.mockResolvedValue([]);
 
     mockChat.mockResolvedValue({
       content: VALID_TEST_CASES_RESPONSE,
@@ -173,7 +173,7 @@ describe("POST /api/llm/generate-test-cases", () => {
   // ── Test 2 (TOKEN-02): Uses defaultMaxTokens from provider config ──────────
 
   it("TOKEN-02: sends maxTokens from llmProviderConfig.defaultMaxTokens (no Math.max floor)", async () => {
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 8192,
@@ -193,7 +193,7 @@ describe("POST /api/llm/generate-test-cases", () => {
   // ── Test 3 (TOKEN-02): Falls back to resolvedPrompt.maxOutputTokens when no config ──
 
   it("TOKEN-02: falls back to resolvedPrompt.maxOutputTokens when llmProviderConfig is null", async () => {
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue(null);
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue(null);
 
     mockPromptResolverResolve.mockResolvedValue({
       systemPrompt: "System prompt",
@@ -316,7 +316,7 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
 
     mockLlmManagerGetInstance.mockReturnValue(mockManager);
 
-    mockPrismaProjectsFindFirst.mockResolvedValue({
+    mockDbProjectsFindFirst.mockResolvedValue({
       id: 1,
       projectLlmIntegrations: [],
     });
@@ -331,8 +331,8 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
       source: "default",
     });
 
-    mockPrismaRepositoryFoldersFindMany.mockResolvedValue([]);
-    mockPrismaRepositoryCasesFindMany.mockResolvedValue([]);
+    mockDbRepositoryFoldersFindMany.mockResolvedValue([]);
+    mockDbRepositoryCasesFindMany.mockResolvedValue([]);
 
     mockChat.mockResolvedValue({
       content: VALID_TEST_CASES_RESPONSE,
@@ -349,7 +349,7 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
   it("TOKEN-05-a: removes existing test cases when prompt exceeds contentBudget", async () => {
     // maxTokensPerRequest=500, contentBudget = floor(500*0.65) - systemPromptTokens (~3 tokens)
     // contentBudget ≈ 322; 10 large cases each ~2000 chars = ~500 tokens >> budget
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 500,
@@ -382,7 +382,7 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
 
   it("TOKEN-05-b: removes comments when over budget after no existing cases remain", async () => {
     // Very tiny budget so even 3 large comments push over
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 300,
@@ -418,7 +418,7 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
 
   it("TOKEN-05-c: issue key, title, description, and userNotes always appear in prompt", async () => {
     // Very small budget — only essential issue content should survive
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 200,
@@ -463,7 +463,7 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
     // content budget is roughly floor(200*0.65) - ceil(13/4) ≈ 126 tokens.
     // The base user prompt is ~63 tokens; 3 large comments add ~170 tokens total,
     // exceeding the budget and triggering truncation.
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 200,
@@ -494,7 +494,7 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
   // ── INT-06: includeParameters threads through to buildSystemPrompt ────────
 
   it("INT-06: includeParameters=true threads through to systemPrompt and emits parameter+dataset instructions", async () => {
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 128000,
@@ -516,7 +516,7 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
   });
 
   it("INT-06: includeParameters omitted defaults to false — no parameter instructions in prompt (legacy unchanged)", async () => {
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 128000,
@@ -560,7 +560,7 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
       finishReason: "stop",
     });
 
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 128000,
@@ -589,7 +589,7 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
 
   it("TOKEN-05-e: no truncation when prompt fits within budget", async () => {
     // Very large budget — no truncation needed
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 128000,
@@ -640,18 +640,18 @@ describe("CR-03: includeParameters admin gate (T-06-04-01)", () => {
       maxOutputTokens: 2048,
       source: "default",
     });
-    mockPrismaProjectsFindFirst.mockResolvedValue({
+    mockDbProjectsFindFirst.mockResolvedValue({
       id: 1,
       projectLlmIntegrations: [],
     });
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 8192,
       defaultMaxTokens: 4096,
     });
-    mockPrismaRepositoryFoldersFindMany.mockResolvedValue([]);
-    mockPrismaRepositoryCasesFindMany.mockResolvedValue([]);
+    mockDbRepositoryFoldersFindMany.mockResolvedValue([]);
+    mockDbRepositoryCasesFindMany.mockResolvedValue([]);
     mockChat.mockResolvedValue({
       content: VALID_TEST_CASES_RESPONSE,
       model: "gpt-4",

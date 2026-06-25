@@ -29,7 +29,7 @@ import {
   isLlmStepDerivationEligible,
 } from "./llmStepDerivation";
 
-const fakePrisma = {} as any;
+const fakeDb = {} as any;
 const cases = [
   {
     testCaseId: 1,
@@ -59,7 +59,7 @@ describe("enqueueDeriveCaseSteps", () => {
     mockResolveIntegration.mockResolvedValue({ integrationId: 7 });
 
     const enqueued = await enqueueDeriveCaseSteps({
-      baseDb: fakePrisma,
+      baseDb: fakeDb,
       projectId: 10,
       testRunId: 99,
       userId: "user-1",
@@ -87,7 +87,7 @@ describe("enqueueDeriveCaseSteps", () => {
     mockResolveIntegration.mockResolvedValue(null);
 
     const enqueued = await enqueueDeriveCaseSteps({
-      baseDb: fakePrisma,
+      baseDb: fakeDb,
       projectId: 10,
       testRunId: 99,
       userId: "user-1",
@@ -100,7 +100,7 @@ describe("enqueueDeriveCaseSteps", () => {
 
   it("does not resolve or enqueue when there are no eligible cases", async () => {
     const enqueued = await enqueueDeriveCaseSteps({
-      baseDb: fakePrisma,
+      baseDb: fakeDb,
       projectId: 10,
       testRunId: 99,
       userId: "user-1",

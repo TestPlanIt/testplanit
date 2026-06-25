@@ -167,13 +167,13 @@ describeDb("humanize (COR-03) — live rawDb catalog lookup", () => {
       const fieldId = ins.rows[0].id as number;
 
       const humanizeModSpecifier = "~/lib/audit/humanize";
-      const prismaModSpecifier = "~/lib/rawDb";
+      const dbModSpecifier = "~/lib/rawDb";
       const { createHumanizeCache } = (await import(
         /* @vite-ignore */ humanizeModSpecifier
       )) as HumanizeModule;
       // lib/rawDb exports the base (extension-free) client as `rawDb`.
       const { rawDb: rawDb } = (await import(
-        /* @vite-ignore */ prismaModSpecifier
+        /* @vite-ignore */ dbModSpecifier
       )) as { rawDb: any };
 
       // The real lookup hits rawDb; assert it round-trips the seeded displayName.

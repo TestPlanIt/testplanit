@@ -12,7 +12,7 @@ import {
  * claimOutboxBatch issues a Postgres CTE with FOR UPDATE SKIP LOCKED that
  * marks dispatchedAt = NOW() in the same statement. fanoutToConfigs uses
  * Prisma's text[] `has` + `isEmpty` operators. Both are unit-testable with
- * a plain prisma-shaped mock.
+ * a plain db-shaped mock.
  */
 
 const sampleClaim: ClaimedOutboxEvent = {
@@ -30,9 +30,9 @@ const sampleClaim: ClaimedOutboxEvent = {
 describe("claimOutboxBatch", () => {
   it("1. calls $queryRaw with default batch size 100", async () => {
     const queryRawSpy = vi.fn().mockResolvedValue([]);
-    const prismaMock = { $queryRaw: queryRawSpy } as any;
+    const dbMock = { $queryRaw: queryRawSpy } as any;
 
-    await claimOutboxBatch(prismaMock);
+    await claimOutboxBatch(dbMock);
 
     expect(queryRawSpy).toHaveBeenCalledTimes(1);
     // The first call argument is the template-literal array; subsequent args
@@ -46,9 +46,9 @@ describe("claimOutboxBatch", () => {
 
   it("2. accepts an explicit batch size", async () => {
     const queryRawSpy = vi.fn().mockResolvedValue([]);
-    const prismaMock = { $queryRaw: queryRawSpy } as any;
+    const dbMock = { $queryRaw: queryRawSpy } as any;
 
-    await claimOutboxBatch(prismaMock, 25);
+    await claimOutboxBatch(dbMock, 25);
 
     expect(queryRawSpy).toHaveBeenCalledTimes(1);
     const calledArgs = queryRawSpy.mock.calls[0];
@@ -60,21 +60,21 @@ describe("claimOutboxBatch", () => {
       sampleClaim,
       { ...sampleClaim, id: "outbox-2", eventName: "issue.created" },
     ];
-    const prismaMock = {
+    const dbMock = {
       $queryRaw: vi.fn().mockResolvedValue(expected),
     } as any;
 
-    const result = await claimOutboxBatch(prismaMock);
+    const result = await claimOutboxBatch(dbMock);
 
     expect(result).toEqual(expected);
   });
 
   it("4. returns empty array when mock yields zero rows", async () => {
-    const prismaMock = {
+    const dbMock = {
       $queryRaw: vi.fn().mockResolvedValue([]),
     } as any;
 
-    const result = await claimOutboxBatch(prismaMock);
+    const result = await claimOutboxBatch(dbMock);
 
     expect(result).toEqual([]);
   });
@@ -83,13 +83,13 @@ describe("claimOutboxBatch", () => {
 describe("fanoutToConfigs", () => {
   it("5. calls webhookConfig.findMany with OR clause containing both isEmpty:true AND has:eventName", async () => {
     const findManySpy = vi.fn().mockResolvedValue([]);
-    const prismaMock = {
+    const dbMock = {
       webhookConfig: { findMany: findManySpy },
     } as any;
 
     await fanoutToConfigs(
       { projectId: 7, eventName: "test_run.completed", payload: {} },
-      prismaMock
+      dbMock
     );
 
     expect(findManySpy).toHaveBeenCalledTimes(1);
@@ -104,13 +104,13 @@ describe("fanoutToConfigs", () => {
 
   it("6. filters by direction='OUTBOUND' AND isActive=true", async () => {
     const findManySpy = vi.fn().mockResolvedValue([]);
-    const prismaMock = {
+    const dbMock = {
       webhookConfig: { findMany: findManySpy },
     } as any;
 
     await fanoutToConfigs(
       { projectId: 7, eventName: "test_run.completed", payload: {} },
-      prismaMock
+      dbMock
     );
 
     const callArgs = findManySpy.mock.calls[0][0];
@@ -120,7 +120,7 @@ describe("fanoutToConfigs", () => {
   });
 
   it("7. returns the IDs of the matched configs", async () => {
-    const prismaMock = {
+    const dbMock = {
       webhookConfig: {
         findMany: vi.fn().mockResolvedValue([{ id: "c1" }, { id: "c2" }]),
       },
@@ -128,7 +128,7 @@ describe("fanoutToConfigs", () => {
 
     const result = await fanoutToConfigs(
       { projectId: 7, eventName: "test_run.completed", payload: {} },
-      prismaMock
+      dbMock
     );
 
     expect(result).toEqual(["c1", "c2"]);
@@ -136,14 +136,14 @@ describe("fanoutToConfigs", () => {
 
   it("8. SQL injection defense: an event name with embedded quotes is parameterized via { has } (not interpolated)", async () => {
     const findManySpy = vi.fn().mockResolvedValue([]);
-    const prismaMock = {
+    const dbMock = {
       webhookConfig: { findMany: findManySpy },
     } as any;
     const sneaky = `evil'); DROP TABLE "WebhookConfig"; --`;
 
     await fanoutToConfigs(
       { projectId: 7, eventName: sneaky, payload: {} },
-      prismaMock
+      dbMock
     );
 
     const callArgs = findManySpy.mock.calls[0][0];
@@ -166,7 +166,7 @@ describe("fanoutToConfigs", () => {
       isActive: true,
     });
     const findManySpy = vi.fn();
-    const prismaMock = {
+    const dbMock = {
       webhookConfig: { findUnique: findUniqueSpy, findMany: findManySpy },
     } as any;
 
@@ -176,7 +176,7 @@ describe("fanoutToConfigs", () => {
         eventName: "webhook.test",
         payload: { configId: "c-target", source: "TestPlanIt" },
       },
-      prismaMock
+      dbMock
     );
 
     expect(result).toEqual(["c-target"]);
@@ -195,7 +195,7 @@ describe("fanoutToConfigs", () => {
       null, // missing
     ];
     for (const config of cases) {
-      const prismaMock = {
+      const dbMock = {
         webhookConfig: {
           findUnique: vi.fn().mockResolvedValue(config),
           findMany: vi.fn(),
@@ -207,14 +207,14 @@ describe("fanoutToConfigs", () => {
           eventName: "webhook.test",
           payload: { configId: "c-x" },
         },
-        prismaMock
+        dbMock
       );
       expect(result).toEqual([]);
     }
   });
 
   it("11. webhook.test with malformed/missing payload.configId returns empty", async () => {
-    const prismaMock = {
+    const dbMock = {
       webhookConfig: {
         findUnique: vi.fn(),
         findMany: vi.fn(),
@@ -234,10 +234,10 @@ describe("fanoutToConfigs", () => {
           eventName: "webhook.test",
           payload: payload as any,
         },
-        prismaMock
+        dbMock
       );
       expect(result).toEqual([]);
     }
-    expect(prismaMock.webhookConfig.findUnique).not.toHaveBeenCalled();
+    expect(dbMock.webhookConfig.findUnique).not.toHaveBeenCalled();
   });
 });

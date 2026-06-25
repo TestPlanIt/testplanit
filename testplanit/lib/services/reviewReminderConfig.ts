@@ -25,8 +25,8 @@ export const REVIEW_REMINDER_THRESHOLD_DAYS_DEFAULT = 1;
  * Server-side helper used by the review-reminder worker case in
  * `workers/forecastWorker.ts`. Mirrors the `Pick<TransactionClient,
  * "appConfig">` shape from `reviewFeatureFlag.ts` so callers can hand
- * either the singleton `prisma` (non-transactional context) or a `tx`
- * handle (inside a `prisma.$transaction` block); the latter participates
+ * either the singleton `db` (non-transactional context) or a `tx`
+ * handle (inside a `db.$transaction` block); the latter participates
  * in the surrounding snapshot isolation.
  *
  * Storage shape:

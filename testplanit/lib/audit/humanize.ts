@@ -11,7 +11,7 @@
  * dep. A repeat lookup of the same (catalog, id) inside the TTL window is served from cache (no
  * second DB call); after expiry the next lookup re-queries.
  *
- * The prisma client is INJECTED (not a top-level import) so the worker passes rawDb and the
+ * The db client is INJECTED (not a top-level import) so the worker passes rawDb and the
  * unit suite passes a spy. A missing catalog row falls back to the raw id and NEVER throws — a
  * humanization miss must not block an audit write.
  */
@@ -372,7 +372,7 @@ export async function humanize(
  * Maps a catalog table name to its Prisma delegate + display column, selecting only that column.
  * Returns null on an unknown table or a missing row (humanize() then falls back to the raw id).
  */
-export function createPrismaLookup(prisma: any): LookupFn {
+export function createDbLookup(db: any): LookupFn {
   const delegates: Record<
     string,
     { delegate: string; field: string; stringId?: boolean }
@@ -410,7 +410,7 @@ export function createPrismaLookup(prisma: any): LookupFn {
     if (table === "CaseFieldType" || table === "ResultFieldType") {
       const delegate =
         table === "ResultFieldType" ? "resultFields" : "caseFields";
-      const row = await prisma[delegate].findUnique({
+      const row = await db[delegate].findUnique({
         where: { id: Number(id) },
         select: { type: { select: { type: true } } },
       });
@@ -420,7 +420,7 @@ export function createPrismaLookup(prisma: any): LookupFn {
     if (!meta) {
       return null;
     }
-    const row = await prisma[meta.delegate].findUnique({
+    const row = await db[meta.delegate].findUnique({
       where: { id: meta.stringId ? String(id) : Number(id) },
       select: { [meta.field]: true },
     });

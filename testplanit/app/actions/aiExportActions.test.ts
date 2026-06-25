@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // vi.hoisted runs before vi.mock hoisting — safe to reference in factories
-const { mockPrisma, mockGetServerAuthSession, mockCheckProjectHasCodeContext } =
+const { mockDb, mockGetServerAuthSession, mockCheckProjectHasCodeContext } =
   vi.hoisted(() => ({
-    mockPrisma: {
+    mockDb: {
       projectLlmIntegration: { findFirst: vi.fn() },
       projectCodeRepositoryConfig: { findUnique: vi.fn() },
     },
@@ -12,7 +12,7 @@ const { mockPrisma, mockGetServerAuthSession, mockCheckProjectHasCodeContext } =
   }));
 
 // Mock all server-side dependencies to prevent env var access errors
-vi.mock("~/lib/db", () => ({ baseDb: mockPrisma }));
+vi.mock("~/lib/db", () => ({ baseDb: mockDb }));
 vi.mock("~/server/auth", () => ({
   getServerAuthSession: mockGetServerAuthSession,
 }));
@@ -140,7 +140,7 @@ describe("checkAiExportAvailable", () => {
 
   it("returns unavailable when no LLM integration exists", async () => {
     mockGetServerAuthSession.mockResolvedValue({ user: { id: "u1" } });
-    mockPrisma.projectLlmIntegration.findFirst.mockResolvedValue(null);
+    mockDb.projectLlmIntegration.findFirst.mockResolvedValue(null);
 
     const result = await checkAiExportAvailable({ projectId: 1 });
     expect(result).toEqual({ available: false, reason: "no_llm" });
@@ -148,7 +148,7 @@ describe("checkAiExportAvailable", () => {
 
   it("returns available with hasCodeContext=true when LLM and repo exist", async () => {
     mockGetServerAuthSession.mockResolvedValue({ user: { id: "u1" } });
-    mockPrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+    mockDb.projectLlmIntegration.findFirst.mockResolvedValue({
       llmIntegrationId: 10,
     });
     mockCheckProjectHasCodeContext.mockResolvedValue(true);
@@ -159,7 +159,7 @@ describe("checkAiExportAvailable", () => {
 
   it("returns available with hasCodeContext=false when LLM exists but no repo", async () => {
     mockGetServerAuthSession.mockResolvedValue({ user: { id: "u1" } });
-    mockPrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+    mockDb.projectLlmIntegration.findFirst.mockResolvedValue({
       llmIntegrationId: 10,
     });
     mockCheckProjectHasCodeContext.mockResolvedValue(false);

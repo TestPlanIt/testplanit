@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ApplicationArea } from "~/zenstack/models";
 import type {
-  CaseFields as PrismaCaseField,
+  CaseFields as DbCaseField,
   Tags,
   Issue,
 } from "~/zenstack/models";
@@ -144,7 +144,7 @@ interface FieldDefinition {
   key: string; // e.g., 'state', 'automated', 'dynamic_123'
   label: string;
   isCustom: boolean;
-  field?: PrismaCaseField & { type: { type: string }; fieldOptions?: any[] }; // Include relevant field data for custom fields
+  field?: DbCaseField & { type: { type: string }; fieldOptions?: any[] }; // Include relevant field data for custom fields
 }
 
 interface BulkEditModalProps {

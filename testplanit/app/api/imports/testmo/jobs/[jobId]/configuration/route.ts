@@ -27,7 +27,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   //   - POST /api/imports/testmo/jobs/[jobId]/import (IMPORT_STARTED)
   //   - testmoImportWorker.ts:7079 (IMPORT_COMPLETED / BULK_CREATE)
   // Preparation state changes are not audit-relevant; matches the
-  // lastActiveAt session-keep-alive precedent at lib/prisma.ts:693-701.
+  // lastActiveAt session-keep-alive precedent at lib/db.ts:693-701.
   try {
     const session = await getServerSession(authOptions);
 

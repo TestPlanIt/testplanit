@@ -35,7 +35,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import type { SharedStepGroup, Steps as PrismaSteps } from "~/zenstack/models";
+import type { SharedStepGroup, Steps as DbSteps } from "~/zenstack/models";
 import type { JsonValue } from "@zenstackhq/orm";
 import type { Editor } from "@tiptap/core";
 import {
@@ -70,7 +70,7 @@ interface SharedStepGroupWithCount extends SharedStepGroup {
 }
 
 // Define an enriched step type that includes the sharedStepGroup relation
-interface EnrichedStep extends PrismaSteps {
+interface EnrichedStep extends DbSteps {
   sharedStepGroup?: (SharedStepGroup & { name: string | null }) | null;
 }
 
@@ -579,7 +579,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
   const processedStepsRef = useRef<string | null>(null);
 
   // Helper function to map JsonValue to TipTap content, similar to parseJsonToTipTap
-  const mapPrismaJsonToTipTapContent = (
+  const mapDbJsonToTipTapContent = (
     data: JsonValue | undefined | null
   ): object => {
     if (data === null || data === undefined) return emptyEditorContent;
@@ -641,10 +641,10 @@ function StepsForm<T extends FieldValues = FieldValues>({
             originalId: typeof stepP.id === "number" ? stepP.id : undefined,
             step: isSharedPlaceholder
               ? emptyEditorContent
-              : mapPrismaJsonToTipTapContent(stepP.step),
+              : mapDbJsonToTipTapContent(stepP.step),
             expectedResult: isSharedPlaceholder
               ? emptyEditorContent
-              : mapPrismaJsonToTipTapContent(stepP.expectedResult),
+              : mapDbJsonToTipTapContent(stepP.expectedResult),
             isShared: isSharedPlaceholder,
             sharedStepGroupId:
               typeof stepP.sharedStepGroupId === "number"

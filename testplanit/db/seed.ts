@@ -14,7 +14,7 @@ import { seedFieldIcons } from "./seedFieldIcons";
 import { seedDefaultPromptConfig } from "./seedPromptConfig";
 import { seedTestData } from "./seedTestData";
 
-export const prisma = createRawDbClient();
+export const db = createRawDbClient();
 
 // Define default permissions for roles
 const adminPermissions = {
@@ -64,7 +64,7 @@ async function seedCoreData() {
   console.log("Seeding core data...");
 
   // --- Roles ---
-  const userRole = await prisma.roles.upsert({
+  const userRole = await db.roles.upsert({
     where: { name: "user" },
     update: { isDefault: true },
     create: {
@@ -72,7 +72,7 @@ async function seedCoreData() {
       isDefault: true,
     },
   });
-  const adminRole = await prisma.roles.upsert({
+  const adminRole = await db.roles.upsert({
     where: { name: "admin" },
     update: { isDefault: false },
     create: {
@@ -90,7 +90,7 @@ async function seedCoreData() {
   const areas = Object.values(ApplicationArea);
   for (const area of areas) {
     // Admin permissions
-    await prisma.rolePermission.upsert({
+    await db.rolePermission.upsert({
       where: { roleId_area: { roleId: adminRole.id, area: area } },
       update: adminPermissions,
       create: {
@@ -102,7 +102,7 @@ async function seedCoreData() {
 
     // User permissions
     const specificUserPerms = getUserPermissionForArea(area);
-    await prisma.rolePermission.upsert({
+    await db.rolePermission.upsert({
       where: { roleId_area: { roleId: userRole.id, area: area } },
       update: specificUserPerms,
       create: {
@@ -235,14 +235,14 @@ async function seedCoreData() {
   type ColorMap = { [key: string]: Color[] };
   const colorMap: ColorMap = {};
   for (const { name, order, shades } of colorFamilies) {
-    const colorFamily = await prisma.colorFamily.upsert({
+    const colorFamily = await db.colorFamily.upsert({
       where: { name },
       update: {},
       create: { name, order },
     });
     const colors: Color[] = [];
     for (let index = 0; index < shades.length; index++) {
-      const color = await prisma.color.upsert({
+      const color = await db.color.upsert({
         where: {
           colorFamilyId_order: { colorFamilyId: colorFamily.id, order: index },
         },
@@ -265,7 +265,7 @@ async function seedCoreData() {
     { name: "Automation", icon: "bot" },
   ];
   const scopePromises = scopes.map((scope) =>
-    prisma.statusScope.upsert({
+    db.statusScope.upsert({
       where: { name: scope.name },
       update: { icon: scope.icon },
       create: { name: scope.name, icon: scope.icon },
@@ -350,7 +350,7 @@ async function seedCoreData() {
     },
   ];
   for (const status of statuses) {
-    const createdStatus = await prisma.status.upsert({
+    const createdStatus = await db.status.upsert({
       where: { systemName: status.systemName },
       update: {},
       create: {
@@ -365,12 +365,12 @@ async function seedCoreData() {
       },
     });
     for (const scope of status.scopes) {
-      const scopeRecord = await prisma.statusScope.findUnique({
+      const scopeRecord = await db.statusScope.findUnique({
         where: { name: scope },
       });
       if (scopeRecord) {
         const existingAssignment =
-          await prisma.statusScopeAssignment.findUnique({
+          await db.statusScopeAssignment.findUnique({
             where: {
               statusId_scopeId: {
                 statusId: createdStatus.id,
@@ -379,7 +379,7 @@ async function seedCoreData() {
             },
           });
         if (!existingAssignment) {
-          await prisma.statusScopeAssignment.create({
+          await db.statusScopeAssignment.create({
             data: {
               statusId: createdStatus.id,
               scopeId: scopeRecord.id,
@@ -414,7 +414,7 @@ async function seedCoreData() {
       },
     ],
   };
-  await prisma.appConfig.upsert({
+  await db.appConfig.upsert({
     where: { key: "project_docs_default" },
     update: {},
     create: {
@@ -425,7 +425,7 @@ async function seedCoreData() {
   console.log("Seeded default project documentation.");
 
   // --- Edit Results Duration ---
-  await prisma.appConfig.upsert({
+  await db.appConfig.upsert({
     where: { key: "edit_results_duration" },
     update: {},
     create: {
@@ -436,7 +436,7 @@ async function seedCoreData() {
   console.log("Seeded edit results duration config.");
 
   // --- Notification Settings ---
-  await prisma.appConfig.upsert({
+  await db.appConfig.upsert({
     where: { key: "notificationSettings" },
     update: {},
     create: {
@@ -468,7 +468,7 @@ async function seedCoreData() {
   const adminPassword = process.env.ADMIN_PASSWORD || "admin";
   const hashedPassword = bcrypt.hashSync(adminPassword, 10);
 
-  const _admin = await prisma.user.upsert({
+  const _admin = await db.user.upsert({
     where: { email: adminEmail }, // Use configured email
     update: {
       roleId: adminRole.id,
@@ -512,12 +512,12 @@ async function seedCoreData() {
   // change. Create the row through the ORM (so column defaults apply) with a
   // valid placeholder, then set the sentinel via raw SQL, which bypasses input
   // validation. Idempotent via the id existence check.
-  const existingScimUser = await prisma.user.findUnique({
+  const existingScimUser = await db.user.findUnique({
     where: { id: SCIM_SYSTEM_USER_ID },
     select: { id: true },
   });
   if (!existingScimUser) {
-    await prisma.user.create({
+    await db.user.create({
       data: {
         id: SCIM_SYSTEM_USER_ID,
         email: `${SCIM_SYSTEM_USER_ID}@example.com`,
@@ -531,7 +531,7 @@ async function seedCoreData() {
       },
     });
     await sql`UPDATE "User" SET email = ${SCIM_SYSTEM_USER_EMAIL} WHERE id = ${SCIM_SYSTEM_USER_ID}`.execute(
-      prisma.$qb
+      db.$qb
     );
   }
   console.log("Ensured synthetic SCIM Provisioner user exists.");
@@ -541,7 +541,7 @@ async function seedCoreData() {
   // via WebhookOutboxEvent.projectId. The row is flagged deleted so it never
   // surfaces in any admin list; createdBy points at the SCIM Provisioner above
   // so the FK is valid the moment this upsert runs.
-  await prisma.projects.upsert({
+  await db.projects.upsert({
     where: { id: SYSTEM_PROJECT_ID },
     update: {},
     create: {
@@ -563,7 +563,7 @@ async function seedCoreData() {
   // key-existence and equality lookups the conflict log uses. The DDL is a
   // literal string (no interpolation) and IF NOT EXISTS makes it safe to
   // re-run on every seed.
-  await prisma.$executeRawUnsafe(
+  await db.$executeRawUnsafe(
     `CREATE INDEX IF NOT EXISTS "AuditLog_scim_metadata_gin" ON "AuditLog" USING GIN ("metadata" jsonb_path_ops) WHERE "metadata"->>'source' = 'scim';`
   );
   console.log("Ensured partial GIN index on AuditLog.metadata for SCIM rows.");
@@ -573,7 +573,7 @@ async function seedCoreData() {
 
   // --- Registration Settings ---
   // Create default registration settings (singleton record)
-  await prisma.registrationSettings.upsert({
+  await db.registrationSettings.upsert({
     where: { id: "default-registration-settings" },
     update: {},
     create: {
@@ -612,7 +612,7 @@ async function _seedProjectDocsDefault() {
       },
     ],
   };
-  await prisma.appConfig.upsert({
+  await db.appConfig.upsert({
     where: { key: "project_docs_default" },
     update: {},
     create: {
@@ -624,7 +624,7 @@ async function _seedProjectDocsDefault() {
 }
 
 async function _seedEditResultsDuration() {
-  await prisma.appConfig.upsert({
+  await db.appConfig.upsert({
     where: { key: "edit_results_duration" },
     update: {},
     create: {
@@ -756,7 +756,7 @@ async function _seedColors() {
   const colorMap: ColorMap = {};
 
   for (const { name, order, shades } of colorFamilies) {
-    const colorFamily = await prisma.colorFamily.upsert({
+    const colorFamily = await db.colorFamily.upsert({
       where: { name },
       update: {},
       create: { name, order },
@@ -764,7 +764,7 @@ async function _seedColors() {
 
     const colors: Color[] = [];
     for (let index = 0; index < shades.length; index++) {
-      const color = await prisma.color.upsert({
+      const color = await db.color.upsert({
         where: {
           colorFamilyId_order: { colorFamilyId: colorFamily.id, order: index },
         },
@@ -794,7 +794,7 @@ async function _seedStatusScopes() {
   ];
 
   const scopePromises = scopes.map((scope) =>
-    prisma.statusScope.upsert({
+    db.statusScope.upsert({
       where: { name: scope.name },
       update: { icon: scope.icon },
       create: { name: scope.name, icon: scope.icon },
@@ -884,7 +884,7 @@ async function _seedStatusesAndAssignments(colorMap: {
   ];
 
   for (const status of statuses) {
-    const createdStatus = await prisma.status.upsert({
+    const createdStatus = await db.status.upsert({
       where: { systemName: status.systemName },
       update: {},
       create: {
@@ -900,12 +900,12 @@ async function _seedStatusesAndAssignments(colorMap: {
     });
 
     for (const scope of status.scopes) {
-      const scopeRecord = await prisma.statusScope.findUnique({
+      const scopeRecord = await db.statusScope.findUnique({
         where: { name: scope },
       });
       if (scopeRecord) {
         const existingAssignment =
-          await prisma.statusScopeAssignment.findUnique({
+          await db.statusScopeAssignment.findUnique({
             where: {
               statusId_scopeId: {
                 statusId: createdStatus.id,
@@ -915,7 +915,7 @@ async function _seedStatusesAndAssignments(colorMap: {
           });
 
         if (!existingAssignment) {
-          await prisma.statusScopeAssignment.create({
+          await db.statusScopeAssignment.create({
             data: {
               statusId: createdStatus.id,
               scopeId: scopeRecord.id,
@@ -1062,7 +1062,7 @@ async function seedCaseFieldTypes() {
 
   await Promise.all(
     fieldTypes.map(({ type, options }) =>
-      prisma.caseFieldTypes.upsert({
+      db.caseFieldTypes.upsert({
         where: { type },
         update: { options: JSON.stringify(options) },
         create: { type, options: JSON.stringify(options) },
@@ -1072,7 +1072,7 @@ async function seedCaseFieldTypes() {
 }
 
 async function getFieldTypeIds(): Promise<{ [key: string]: number }> {
-  const fieldTypes = await prisma.caseFieldTypes.findMany();
+  const fieldTypes = await db.caseFieldTypes.findMany();
   const fieldTypeMap: { [key: string]: number } = {};
   fieldTypes.forEach((ft) => {
     fieldTypeMap[ft.type] = ft.id;
@@ -1094,7 +1094,7 @@ async function seedCaseFields(fieldTypeMap: any) {
 
   await Promise.all(
     caseFieldsData.map(({ displayName, systemName, typeName }) =>
-      prisma.caseFields.upsert({
+      db.caseFields.upsert({
         where: { systemName },
         update: { typeId: fieldTypeMap[typeName] },
         create: { displayName, systemName, typeId: fieldTypeMap[typeName] },
@@ -1109,7 +1109,7 @@ async function seedCaseFields(fieldTypeMap: any) {
 
 async function seedPriorityFieldOptions() {
   // Get the priority field
-  const priorityField = await prisma.caseFields.findUnique({
+  const priorityField = await db.caseFields.findUnique({
     where: { systemName: "priority" },
   });
 
@@ -1120,39 +1120,39 @@ async function seedPriorityFieldOptions() {
 
   // Get icons for different priority levels
   const icons = {
-    critical: await prisma.fieldIcon.findFirst({
+    critical: await db.fieldIcon.findFirst({
       where: { name: "chevrons-up" },
     }),
-    high: await prisma.fieldIcon.findFirst({
+    high: await db.fieldIcon.findFirst({
       where: { name: "chevron-up" },
     }),
-    medium: await prisma.fieldIcon.findFirst({
+    medium: await db.fieldIcon.findFirst({
       where: { name: "minus" },
     }),
-    low: await prisma.fieldIcon.findFirst({
+    low: await db.fieldIcon.findFirst({
       where: { name: "chevron-down" },
     }),
   };
 
   // Get colors for priority options
   const colorFamilies = {
-    red: await prisma.colorFamily.findUnique({ where: { name: "Red" } }),
-    orange: await prisma.colorFamily.findUnique({ where: { name: "Orange" } }),
-    yellow: await prisma.colorFamily.findUnique({ where: { name: "Yellow" } }),
-    blue: await prisma.colorFamily.findUnique({ where: { name: "Blue" } }),
+    red: await db.colorFamily.findUnique({ where: { name: "Red" } }),
+    orange: await db.colorFamily.findUnique({ where: { name: "Orange" } }),
+    yellow: await db.colorFamily.findUnique({ where: { name: "Yellow" } }),
+    blue: await db.colorFamily.findUnique({ where: { name: "Blue" } }),
   };
 
   const colors = {
-    critical: await prisma.color.findFirst({
+    critical: await db.color.findFirst({
       where: { colorFamilyId: colorFamilies.red?.id, order: 3 },
     }),
-    high: await prisma.color.findFirst({
+    high: await db.color.findFirst({
       where: { colorFamilyId: colorFamilies.orange?.id, order: 3 },
     }),
-    medium: await prisma.color.findFirst({
+    medium: await db.color.findFirst({
       where: { colorFamilyId: colorFamilies.yellow?.id, order: 3 },
     }),
-    low: await prisma.color.findFirst({
+    low: await db.color.findFirst({
       where: { colorFamilyId: colorFamilies.blue?.id, order: 3 },
     }),
   };
@@ -1190,7 +1190,7 @@ async function seedPriorityFieldOptions() {
   ];
 
   // Check existing options for this field to avoid duplicates
-  const existingAssignments = await prisma.caseFieldAssignment.findMany({
+  const existingAssignments = await db.caseFieldAssignment.findMany({
     where: { caseFieldId: priorityField.id },
     include: { fieldOption: true },
   });
@@ -1208,13 +1208,13 @@ async function seedPriorityFieldOptions() {
     }
 
     // First check if a field option with this name exists
-    let fieldOption = await prisma.fieldOptions.findFirst({
+    let fieldOption = await db.fieldOptions.findFirst({
       where: { name: option.name },
     });
 
     if (fieldOption) {
       // Update existing option
-      fieldOption = await prisma.fieldOptions.update({
+      fieldOption = await db.fieldOptions.update({
         where: { id: fieldOption.id },
         data: {
           order: option.order,
@@ -1227,7 +1227,7 @@ async function seedPriorityFieldOptions() {
       });
     } else {
       // Create new option
-      fieldOption = await prisma.fieldOptions.create({
+      fieldOption = await db.fieldOptions.create({
         data: {
           name: option.name,
           order: option.order,
@@ -1241,7 +1241,7 @@ async function seedPriorityFieldOptions() {
     }
 
     // Create the assignment linking the field option to the priority case field
-    await prisma.caseFieldAssignment.upsert({
+    await db.caseFieldAssignment.upsert({
       where: {
         fieldOptionId_caseFieldId: {
           fieldOptionId: fieldOption.id,
@@ -1266,7 +1266,7 @@ async function seedResultFields(fieldTypeMap: any) {
 
   await Promise.all(
     resultFieldsData.map(({ displayName, systemName, typeName }) =>
-      prisma.resultFields.upsert({
+      db.resultFields.upsert({
         where: { systemName },
         update: { typeId: fieldTypeMap[typeName] },
         create: { displayName, systemName, typeId: fieldTypeMap[typeName] },
@@ -1441,13 +1441,13 @@ async function seedWorkflows() {
   ];
 
   for (const workflow of workflowsData) {
-    const icon = await prisma.fieldIcon.findUnique({
+    const icon = await db.fieldIcon.findUnique({
       where: { name: workflow.icon },
     });
-    const colorFamily = await prisma.colorFamily.findUnique({
+    const colorFamily = await db.colorFamily.findUnique({
       where: { name: workflow.color },
     });
-    const color = await prisma.color.findFirst({
+    const color = await db.color.findFirst({
       where: {
         colorFamilyId: colorFamily?.id,
         order: 3, // 4th color in the family (index 3)
@@ -1455,7 +1455,7 @@ async function seedWorkflows() {
     });
 
     if (icon && color) {
-      const existingWorkflow = await prisma.workflows.findFirst({
+      const existingWorkflow = await db.workflows.findFirst({
         where: {
           name: workflow.name,
           scope: workflow.scope as WorkflowScope,
@@ -1463,7 +1463,7 @@ async function seedWorkflows() {
       });
 
       if (existingWorkflow) {
-        await prisma.workflows.update({
+        await db.workflows.update({
           where: { id: existingWorkflow.id },
           data: {
             order: workflow.order,
@@ -1474,7 +1474,7 @@ async function seedWorkflows() {
           },
         });
       } else {
-        await prisma.workflows.create({
+        await db.workflows.create({
           data: {
             order: workflow.order,
             name: workflow.name,
@@ -1497,12 +1497,12 @@ async function seedWorkflows() {
 
 async function assignWorkflowsToAllProjects() {
   // Get all projects
-  const allProjects = await prisma.projects.findMany({
+  const allProjects = await db.projects.findMany({
     where: { isDeleted: false },
   });
 
   // Get all workflows
-  const allWorkflows = await prisma.workflows.findMany({
+  const allWorkflows = await db.workflows.findMany({
     where: { isDeleted: false, isEnabled: true },
   });
 
@@ -1514,7 +1514,7 @@ async function assignWorkflowsToAllProjects() {
   for (const project of allProjects) {
     for (const workflow of allWorkflows) {
       const existingAssignment =
-        await prisma.projectWorkflowAssignment.findUnique({
+        await db.projectWorkflowAssignment.findUnique({
           where: {
             workflowId_projectId: {
               workflowId: workflow.id,
@@ -1524,7 +1524,7 @@ async function assignWorkflowsToAllProjects() {
         });
 
       if (!existingAssignment) {
-        await prisma.projectWorkflowAssignment.create({
+        await db.projectWorkflowAssignment.create({
           data: {
             workflowId: workflow.id,
             projectId: project.id,
@@ -1548,7 +1548,7 @@ async function seedMilestoneTypes() {
   ];
 
   const iconPromises = milestoneTypes.map(async (type) => {
-    const icon = await prisma.fieldIcon.findUnique({
+    const icon = await db.fieldIcon.findUnique({
       where: { name: type.iconName },
       select: { id: true },
     });
@@ -1562,7 +1562,7 @@ async function seedMilestoneTypes() {
   const milestoneTypesWithIconIds = await Promise.all(iconPromises);
 
   const milestoneTypePromises = milestoneTypesWithIconIds.map((type) =>
-    prisma.milestoneTypes.upsert({
+    db.milestoneTypes.upsert({
       where: { id: type.id },
       update: {
         name: type.name,
@@ -1590,31 +1590,31 @@ async function seedDefaultTemplate() {
   // function force-demoted every `isDefault: true` row and then
   // re-promoted "Default Template", silently overwriting whatever the
   // admin had picked — with no audit trail, because seed uses the raw
-  // prisma client and bypasses the `$extends` audit middleware.
+  // db client and bypasses the `$extends` audit middleware.
   //
   // New rule: ONLY install "Default Template" as the default when the
   // tenant has no active default template at all (fresh install or
   // recovery after the active default was soft-deleted). Otherwise
   // create / update the row without touching its `isDefault` flag.
-  const existingActiveDefault = await prisma.templates.findFirst({
+  const existingActiveDefault = await db.templates.findFirst({
     where: { isDefault: true, isDeleted: false },
     select: { id: true, templateName: true },
   });
 
   // Fetch standard case and result fields
-  const priorityField = await prisma.caseFields.findUnique({
+  const priorityField = await db.caseFields.findUnique({
     where: { systemName: "priority" },
   });
-  const descriptionField = await prisma.caseFields.findUnique({
+  const descriptionField = await db.caseFields.findUnique({
     where: { systemName: "description" },
   });
-  const stepsField = await prisma.caseFields.findUnique({
+  const stepsField = await db.caseFields.findUnique({
     where: { systemName: "steps" },
   });
-  const expectedField = await prisma.caseFields.findUnique({
+  const expectedField = await db.caseFields.findUnique({
     where: { systemName: "expected" },
   });
-  const notesField = await prisma.resultFields.findUnique({
+  const notesField = await db.resultFields.findUnique({
     where: { systemName: "notes" },
   });
 
@@ -1635,7 +1635,7 @@ async function seedDefaultTemplate() {
   // mark it as the default. On subsequent upgrades the row already
   // exists, the `update` block runs, and `isDefault`/`isEnabled` are NOT
   // touched — preserving whatever the admin chose.
-  const defaultTemplate = await prisma.templates.upsert({
+  const defaultTemplate = await db.templates.upsert({
     where: { templateName: "Default Template" },
     update: {},
     create: {
@@ -1666,10 +1666,10 @@ async function seedDefaultTemplate() {
   ];
 
   // Use deleteMany + createMany for idempotency in case fields change
-  await prisma.templateCaseAssignment.deleteMany({
+  await db.templateCaseAssignment.deleteMany({
     where: { templateId: defaultTemplate.id },
   });
-  await prisma.templateCaseAssignment.createMany({
+  await db.templateCaseAssignment.createMany({
     data: caseAssignments,
   });
 
@@ -1679,10 +1679,10 @@ async function seedDefaultTemplate() {
   ];
 
   // Use deleteMany + createMany for idempotency
-  await prisma.templateResultAssignment.deleteMany({
+  await db.templateResultAssignment.deleteMany({
     where: { templateId: defaultTemplate.id },
   });
-  await prisma.templateResultAssignment.createMany({
+  await db.templateResultAssignment.createMany({
     data: resultAssignments,
   });
 
@@ -3763,7 +3763,7 @@ class Test{{{id}}}: XCTestCase {
   ];
 
   for (const tmpl of templates) {
-    await prisma.caseExportTemplate.upsert({
+    await db.caseExportTemplate.upsert({
       where: { name: tmpl.name },
       update: {
         description: tmpl.description,
@@ -3797,7 +3797,7 @@ async function main() {
         // The update block intentionally does NOT touch `enabled` or `forceSso`
         // because the provisioning script sets those after seeding and we must
         // not overwrite them on subsequent pod restarts.
-        await prisma.ssoProvider.upsert({
+        await db.ssoProvider.upsert({
           where: {
             name: "Magic Link",
           },
@@ -3824,7 +3824,7 @@ async function main() {
 
     // Seed default prompt configuration (must run before demo project)
     try {
-      await seedDefaultPromptConfig(prisma);
+      await seedDefaultPromptConfig(db);
     } catch (error) {
       console.error("Error seeding prompt config (continuing):", error);
     }
@@ -3851,16 +3851,16 @@ async function main() {
   } catch (error) {
     console.error("Error in main execution:", error);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 
 main()
   .then(async () => {
-    await prisma.$disconnect();
+    await db.$disconnect();
   })
   .catch(async (e) => {
     console.error(e);
-    await prisma.$disconnect();
+    await db.$disconnect();
     process.exit(1);
   });

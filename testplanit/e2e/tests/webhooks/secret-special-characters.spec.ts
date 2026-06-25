@@ -39,16 +39,16 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook secret with special characters round-trips end-to-end (L-01)", () => {
   let projectId: number;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
 
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Secret Special ${uniqueId}`);
-    prisma = createRawDbClient();
+    db = createRawDbClient();
   });
 
   test.afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("JIRA inbound HMAC secret with newline + quote + emoji verifies a signed request", async ({
@@ -59,7 +59,7 @@ test.describe("Webhook secret with special characters round-trips end-to-end (L-
     let body: string | undefined;
 
     await test.step("Seed JIRA inbound config with special-character HMAC secret", async () => {
-      seeded = await seedInboundConfig(prisma, {
+      seeded = await seedInboundConfig(db, {
         projectId,
         adapterType: "JIRA",
         credentialInput: { kind: "HMAC_SECRET", secret: SPECIAL },
@@ -119,7 +119,7 @@ test.describe("Webhook secret with special characters round-trips end-to-end (L-
     let seeded: Awaited<ReturnType<typeof seedInboundConfig>> | undefined;
 
     await test.step("Seed GitHub inbound config with special-character HMAC secret", async () => {
-      seeded = await seedInboundConfig(prisma, {
+      seeded = await seedInboundConfig(db, {
         projectId,
         adapterType: "GITHUB",
         credentialInput: { kind: "HMAC_SECRET", secret: SPECIAL },
@@ -164,7 +164,7 @@ test.describe("Webhook secret with special characters round-trips end-to-end (L-
     let body: string | undefined;
 
     await test.step("Seed Azure DevOps inbound config with special-character Basic Auth password", async () => {
-      seeded = await seedInboundConfig(prisma, {
+      seeded = await seedInboundConfig(db, {
         projectId,
         adapterType: "AZURE_DEVOPS",
         credentialInput: {
@@ -220,7 +220,7 @@ test.describe("Webhook secret with special characters round-trips end-to-end (L-
     let seeded: Awaited<ReturnType<typeof seedOutboundConfig>> | undefined;
 
     await test.step("Seed outbound GENERIC_HMAC config with special-character signing secret", async () => {
-      seeded = await seedOutboundConfig(prisma, {
+      seeded = await seedOutboundConfig(db, {
         projectId,
         url: "https://example.com/L01/special-chars",
         secret: SPECIAL,
@@ -235,7 +235,7 @@ test.describe("Webhook secret with special characters round-trips end-to-end (L-
     // outbound dispatch (the dispatch path is covered by replay-single-outbound
     // / outbound-slack-test-run / replay-bulk-deliveries already).
     await test.step("Decrypt the stored WebhookConfigSecret and confirm it matches the original secret", async () => {
-      const stored = await prisma.webhookConfigSecret.findFirst({
+      const stored = await db.webhookConfigSecret.findFirst({
         where: { webhookConfigId: seeded!.configId, retiredAt: null },
         select: { secret: true },
       });
@@ -247,7 +247,7 @@ test.describe("Webhook secret with special characters round-trips end-to-end (L-
     // The legacy WebhookConfig.secret column is kept lockstep per the
     // production action's invariant (Phase 1 reads still hit it directly).
     await test.step("Decrypt the legacy WebhookConfig.secret column and confirm it matches the original secret", async () => {
-      const config = await prisma.webhookConfig.findUnique({
+      const config = await db.webhookConfig.findUnique({
         where: { id: seeded!.configId },
         select: { secret: true, adapterType: true },
       });

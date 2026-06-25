@@ -8,7 +8,7 @@
 
 import { createRawDbClient } from "../lib/rawDbClient";
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 // Import the sync functions from services
 async function reindexAllEntities() {
@@ -19,7 +19,7 @@ async function reindexAllEntities() {
     // we'll make HTTP calls to trigger reindexing through the API
 
     console.log("Fetching all projects...");
-    const projects = await prisma.projects.findMany({
+    const projects = await db.projects.findMany({
       where: {
         isDeleted: false,
       },
@@ -36,7 +36,7 @@ async function reindexAllEntities() {
       console.log(`\nProject: ${project.name} (ID: ${project.id})`);
 
       // Count repository cases
-      const casesCount = await prisma.repositoryCases.count({
+      const casesCount = await db.repositoryCases.count({
         where: {
           projectId: project.id,
           isDeleted: false,
@@ -46,7 +46,7 @@ async function reindexAllEntities() {
       console.log(`  - Repository Cases: ${casesCount}`);
 
       // Count test runs
-      const testRunsCount = await prisma.testRuns.count({
+      const testRunsCount = await db.testRuns.count({
         where: {
           projectId: project.id,
           isDeleted: false,
@@ -55,7 +55,7 @@ async function reindexAllEntities() {
       console.log(`  - Test Runs: ${testRunsCount}`);
 
       // Count sessions
-      const sessionsCount = await prisma.sessions.count({
+      const sessionsCount = await db.sessions.count({
         where: {
           projectId: project.id,
           isDeleted: false,
@@ -64,7 +64,7 @@ async function reindexAllEntities() {
       console.log(`  - Sessions: ${sessionsCount}`);
 
       // Count milestones
-      const milestonesCount = await prisma.milestones.count({
+      const milestonesCount = await db.milestones.count({
         where: {
           projectId: project.id,
           isDeleted: false,
@@ -73,7 +73,7 @@ async function reindexAllEntities() {
       console.log(`  - Milestones: ${milestonesCount}`);
 
       // Count shared steps
-      const sharedStepsCount = await prisma.sharedStepGroup.count({
+      const sharedStepsCount = await db.sharedStepGroup.count({
         where: {
           projectId: project.id,
           isDeleted: false,
@@ -109,7 +109,7 @@ async function reindexAllEntities() {
     console.error("Error during reindexing:", error);
     process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

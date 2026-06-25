@@ -6,7 +6,7 @@
  * entity that owns it. The viewer reads one materialized AuditLog row per owning entity, not
  * dozens of raw child-table mutations.
  *
- * This module is intentionally framework-free: no React, no direct prisma import. The two-hop
+ * This module is intentionally framework-free: no React, no direct db import. The two-hop
  * resolver takes an injected query fn so the unit suite can exercise it without a DB.
  *
  * FK columns are the LIVE-VERIFIED values from 14-OPEN-QUESTIONS-RESOLVED.md (§2 + ancillary),

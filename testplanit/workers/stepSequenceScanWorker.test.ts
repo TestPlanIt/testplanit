@@ -50,9 +50,9 @@ vi.mock("../lib/valkey", () => ({
   default: { status: "ready" },
 }));
 
-// ─── Mock prisma ─────────────────────────────────────────────────────────────
+// ─── Mock db ─────────────────────────────────────────────────────────────
 
-const mockPrisma: any = {
+const mockDb: any = {
   repositoryCases: {
     findMany: (...args: any[]) => mockFindMany(...args),
   },
@@ -67,7 +67,7 @@ const mockPrisma: any = {
 };
 
 vi.mock("../lib/multiTenantDb", () => ({
-  getDbClientForJob: vi.fn(() => mockPrisma),
+  getDbClientForJob: vi.fn(() => mockDb),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -201,7 +201,7 @@ describe("StepSequenceScanWorker", () => {
       });
 
       const { processStepScan } = await loadWorker();
-      await processStepScan(makeMockJob() as Job, mockPrisma, mockRedisClient);
+      await processStepScan(makeMockJob() as Job, mockDb, mockRedisClient);
 
       expect(callOrder.indexOf("resolveSharedSteps")).toBeLessThan(
         callOrder.indexOf("findSharedSequences")
@@ -213,7 +213,7 @@ describe("StepSequenceScanWorker", () => {
       mockMatchCreate.mockResolvedValue({ id: 42 });
 
       const { processStepScan } = await loadWorker();
-      await processStepScan(makeMockJob() as Job, mockPrisma, mockRedisClient);
+      await processStepScan(makeMockJob() as Job, mockDb, mockRedisClient);
 
       // Should create one StepSequenceMatch row for the group
       expect(mockMatchCreate).toHaveBeenCalledTimes(1);
@@ -265,7 +265,7 @@ describe("StepSequenceScanWorker", () => {
       const { processStepScan } = await loadWorker();
       await processStepScan(
         makeMockJob({ id: "job-2" }) as Job,
-        mockPrisma,
+        mockDb,
         mockRedisClient
       );
 
@@ -295,7 +295,7 @@ describe("StepSequenceScanWorker", () => {
       await expect(
         processStepScan(
           makeMockJob({ id: "job-cancel" }) as Job,
-          mockPrisma,
+          mockDb,
           mockRedisClient
         )
       ).rejects.toThrow("Job cancelled by user");
@@ -308,7 +308,7 @@ describe("StepSequenceScanWorker", () => {
       mockFindSharedSequences.mockReturnValue([mockGroup]);
 
       const { processStepScan } = await loadWorker();
-      await processStepScan(makeMockJob() as Job, mockPrisma, mockRedisClient);
+      await processStepScan(makeMockJob() as Job, mockDb, mockRedisClient);
 
       // Should report progress at least once with the expected shape
       expect(mockUpdateProgress).toHaveBeenCalledWith(
@@ -324,7 +324,7 @@ describe("StepSequenceScanWorker", () => {
       const { processStepScan } = await loadWorker();
       await processStepScan(
         makeMockJob({ data: { ...baseJobData, folderId: 55 } }) as Job,
-        mockPrisma,
+        mockDb,
         mockRedisClient
       );
 

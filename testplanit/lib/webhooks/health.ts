@@ -3,7 +3,7 @@ import type { WebhookConfigUncheckedUpdateInput } from "~/zenstack/input";
 import type { DbClient, TxClient } from "~/lib/zenstack";
 
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
-import { baseDb as defaultPrisma } from "~/lib/db";
+import { baseDb as defaultDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 
 /**
@@ -47,7 +47,7 @@ export interface HealthTransitionResult {
 export async function transition(
   webhookConfigId: string,
   outcome: HealthTransitionOutcome,
-  baseDb: DbClient | TxClient = defaultPrisma
+  baseDb: DbClient | TxClient = defaultDb
 ): Promise<HealthTransitionResult> {
   const now = new Date();
 

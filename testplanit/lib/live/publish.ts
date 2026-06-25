@@ -9,7 +9,7 @@
  * untrusted plumbing — Architectural Directive 2, mirrored from
  * notifications).
  *
- * Timing matters: emitters run INSIDE the caller's prisma.$transaction
+ * Timing matters: emitters run INSIDE the caller's db.$transaction
  * (webhookEvents.emit requires a tx). If we published synchronously, a
  * consumer's refetch would race the not-yet-committed write. We defer
  * via setImmediate so the publish fires after the tx settles. On

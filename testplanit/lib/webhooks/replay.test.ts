@@ -36,7 +36,7 @@ const mockedCaptureAudit = captureAuditEvent as unknown as ReturnType<
  * so individual tests configure return values per-call (e.g., bulk tests pass
  * an array of deliveries, each loaded once).
  */
-function buildPrismaMock(opts: {
+function buildDbMock(opts: {
   deliveriesById?: Record<string, unknown>;
   outboxByEventId?: Record<string, unknown>;
 }) {
@@ -98,7 +98,7 @@ describe("lib/webhooks/replay", () => {
   });
 
   it("1. outbound-replay-loads-outbox-and-enqueues-job: queue.add called once + WEBHOOK_REPLAYED audit emitted", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       deliveriesById: { orig_id: baseOutboundDelivery() },
       outboxByEventId: { evt_orig: baseOutboxRow() },
     });
@@ -106,7 +106,7 @@ describe("lib/webhooks/replay", () => {
     const result = await replayDelivery(
       "orig_id",
       { actorUserId: "u1", source: "single" },
-      prisma
+      db
     );
 
     expect(result).toMatchObject({ outcome: "queued" });
@@ -146,14 +146,14 @@ describe("lib/webhooks/replay", () => {
   });
 
   it("2. inbound-replay-returns-rejected: NO queue, NO audit, NO row write", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       deliveriesById: { orig_inbound: baseInboundDelivery() },
     });
 
     const result = await replayDelivery(
       "orig_inbound",
       { actorUserId: "u1", source: "single" },
-      prisma
+      db
     );
 
     expect(result).toEqual({
@@ -162,11 +162,11 @@ describe("lib/webhooks/replay", () => {
     });
     expect(mockQueueAdd).not.toHaveBeenCalled();
     expect(mockedCaptureAudit).not.toHaveBeenCalled();
-    expect(prisma.webhookDelivery.create).not.toHaveBeenCalled();
+    expect(db.webhookDelivery.create).not.toHaveBeenCalled();
   });
 
   it("3. bulk-source-attaches-batchId-to-audit-on-outbound: source=bulk + batchId in metadata", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       deliveriesById: { orig_id: baseOutboundDelivery() },
       outboxByEventId: { evt_orig: baseOutboxRow() },
     });
@@ -174,7 +174,7 @@ describe("lib/webhooks/replay", () => {
     const result = await replayDelivery(
       "orig_id",
       { actorUserId: "u1", source: "bulk", batchId: "bat_xyz" },
-      prisma
+      db
     );
 
     expect(result.outcome).toBe("queued");
@@ -185,7 +185,7 @@ describe("lib/webhooks/replay", () => {
   });
 
   it("4. outbound-replay-of-replay-allowed: replays of replays succeed; jobData.replayedFromDeliveryId points to THIS row", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       deliveriesById: {
         replay_of_orig: baseOutboundDelivery({
           id: "replay_of_orig",
@@ -199,7 +199,7 @@ describe("lib/webhooks/replay", () => {
     const result = await replayDelivery(
       "replay_of_orig",
       { actorUserId: "u1", source: "single" },
-      prisma
+      db
     );
 
     expect(result.outcome).toBe("queued");
@@ -209,12 +209,12 @@ describe("lib/webhooks/replay", () => {
   });
 
   it("5. delivery-not-found-returns-error: NO audit, NO queue.add", async () => {
-    const prisma = buildPrismaMock({ deliveriesById: {} });
+    const db = buildDbMock({ deliveriesById: {} });
 
     const result = await replayDelivery(
       "nonexistent_id",
       { actorUserId: "u1", source: "single" },
-      prisma
+      db
     );
 
     expect(result).toEqual({
@@ -226,7 +226,7 @@ describe("lib/webhooks/replay", () => {
   });
 
   it("6. outbound-with-missing-outbox-row-returns-error (outbox_purged): NO audit, NO queue.add", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       deliveriesById: { orig_id: baseOutboundDelivery() },
       outboxByEventId: {}, // outbox row purged
     });
@@ -234,7 +234,7 @@ describe("lib/webhooks/replay", () => {
     const result = await replayDelivery(
       "orig_id",
       { actorUserId: "u1", source: "single" },
-      prisma
+      db
     );
 
     expect(result).toEqual({
@@ -246,7 +246,7 @@ describe("lib/webhooks/replay", () => {
   });
 
   it("7. outbound-with-null-eventId-returns-error: rejects with outbox_purged when eventId is null", async () => {
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       deliveriesById: {
         orig_legacy: baseOutboundDelivery({
           id: "orig_legacy",
@@ -258,7 +258,7 @@ describe("lib/webhooks/replay", () => {
     const result = await replayDelivery(
       "orig_legacy",
       { actorUserId: "u1", source: "single" },
-      prisma
+      db
     );
 
     expect(result).toEqual({
@@ -295,12 +295,12 @@ describe("lib/webhooks/replay", () => {
       evt_o2: baseOutboxRow({ id: "outbox_o2" }),
       evt_o3: baseOutboxRow({ id: "outbox_o3" }),
     };
-    const prisma = buildPrismaMock({ deliveriesById, outboxByEventId });
+    const db = buildDbMock({ deliveriesById, outboxByEventId });
 
     const result = await bulkReplayDeliveries(
       ["o1", "i1", "o2", "i2", "o3"],
       { actorUserId: "u1" },
-      prisma
+      db
     );
 
     expect(result.outcome).toBe("queued");
@@ -335,7 +335,7 @@ describe("lib/webhooks/replay", () => {
     const inboundResult = await replayDelivery(
       "i1",
       { actorUserId: "u1", source: "bulk", batchId: "bat_check" },
-      prisma
+      db
     );
     expect(inboundResult).toEqual({
       outcome: "rejected",
@@ -357,12 +357,12 @@ describe("lib/webhooks/replay", () => {
       deliveriesById[id] = baseOutboundDelivery({ id, eventId: evtId });
       outboxByEventId[evtId] = baseOutboxRow({ id: `outbox_${i}` });
     }
-    const prisma = buildPrismaMock({ deliveriesById, outboxByEventId });
+    const db = buildDbMock({ deliveriesById, outboxByEventId });
 
     const result = await bulkReplayDeliveries(
       ids,
       { actorUserId: "u1" },
-      prisma
+      db
     );
 
     expect(result.outcome).toBe("queued");
@@ -399,7 +399,7 @@ describe("lib/webhooks/replay", () => {
     // typed reason BEFORE any direction or outbox lookup so admins see a
     // consistent rejection in the UI rather than a misleading
     // outbox_purged or inbound_replay_not_supported.
-    const prisma = buildPrismaMock({
+    const db = buildDbMock({
       deliveriesById: {
         orphan_outbound: baseOutboundDelivery({
           id: "orphan_outbound",
@@ -412,7 +412,7 @@ describe("lib/webhooks/replay", () => {
     const result = await replayDelivery(
       "orphan_outbound",
       { actorUserId: "u1", source: "single" },
-      prisma
+      db
     );
 
     expect(result).toEqual({
@@ -421,6 +421,6 @@ describe("lib/webhooks/replay", () => {
     });
     expect(mockQueueAdd).not.toHaveBeenCalled();
     expect(mockedCaptureAudit).not.toHaveBeenCalled();
-    expect(prisma.webhookDelivery.create).not.toHaveBeenCalled();
+    expect(db.webhookDelivery.create).not.toHaveBeenCalled();
   });
 });

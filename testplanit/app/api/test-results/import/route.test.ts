@@ -17,7 +17,7 @@ vi.mock("@/lib/db", () => {
   // callback synchronously with the same `baseDb` mock as the tx
   // client, which is enough for the smoke tests since
   // `routeToIteration` itself is mocked out below.
-  const prismaMock: any = {
+  const dbMock: any = {
     // auditedTransaction (wrapping routeToIteration) issues a
     // `SET LOCAL app.audit_context` via tx.$executeRaw as the first statement
     // inside the $transaction callback. Since the tx client is this same mock,
@@ -93,10 +93,10 @@ vi.mock("@/lib/db", () => {
       findUnique: vi.fn().mockResolvedValue(null),
     },
   };
-  prismaMock.$transaction = vi.fn(async (cb: (tx: any) => Promise<any>) =>
-    cb(prismaMock)
+  dbMock.$transaction = vi.fn(async (cb: (tx: any) => Promise<any>) =>
+    cb(dbMock)
   );
-  return { baseDb: prismaMock };
+  return { baseDb: dbMock };
 });
 
 vi.mock("~/lib/services/auditLog", () => ({

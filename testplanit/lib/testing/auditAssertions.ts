@@ -10,7 +10,7 @@ import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
  *
  * Keeping this a structural interface rather than the narrow
  * `~/zenstack/models` AuditLog type lets a single helper cover both
- * capture modes — direct spy on `prisma.auditLog.create(data)` AND the
+ * capture modes — direct spy on `db.auditLog.create(data)` AND the
  * synthesized `{ ...event, ...context }` shape used by the Plan 05 mock
  * for `captureAuditEvent`. the parameter
  * shape stays permissive so every test helper call-site compiles.

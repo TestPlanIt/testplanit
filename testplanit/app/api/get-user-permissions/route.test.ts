@@ -21,7 +21,7 @@ vi.mock("~/server/auth", () => ({
 }));
 
 vi.mock("~/lib/db", () => {
-  const prismaStub = {
+  const dbStub = {
     user: {
       findUnique: vi.fn(),
     },
@@ -35,7 +35,7 @@ vi.mock("~/lib/db", () => {
       findMany: vi.fn(),
     },
   };
-  return { baseDb: prismaStub };
+  return { baseDb: dbStub };
 });
 
 function makeRequest(body: unknown): Request {

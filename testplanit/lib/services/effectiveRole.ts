@@ -3,10 +3,10 @@ import type { DbClient } from "~/lib/zenstack";
 
 /**
  * Narrowest acceptable interface for the helpers below. Both the singleton
- * prisma client and a transaction handle satisfy it. Read-only operations
+ * db client and a transaction handle satisfy it. Read-only operations
  * only — callers are responsible for upstream authorization.
  */
-type EffectiveRolePrismaClient = Pick<
+type EffectiveRoleDbClient = Pick<
   DbClient,
   "userProjectPermission" | "user" | "groupProjectPermission" | "projects"
 >;
@@ -29,18 +29,18 @@ type EffectiveRolePrismaClient = Pick<
 export async function resolveEffectiveProjectRoleId(
   userId: string,
   projectId: number,
-  prismaClient: EffectiveRolePrismaClient
+  dbClient: EffectiveRoleDbClient
 ): Promise<number | null> {
   const [user, userPerm, project] = await Promise.all([
-    prismaClient.user.findUnique({
+    dbClient.user.findUnique({
       where: { id: userId },
       select: { id: true, roleId: true, groups: { select: { groupId: true } } },
     }),
-    prismaClient.userProjectPermission.findUnique({
+    dbClient.userProjectPermission.findUnique({
       where: { userId_projectId: { userId, projectId } },
       select: { accessType: true, roleId: true },
     }),
-    prismaClient.projects.findUnique({
+    dbClient.projects.findUnique({
       where: { id: projectId },
       select: { defaultAccessType: true, defaultRoleId: true },
     }),
@@ -65,7 +65,7 @@ export async function resolveEffectiveProjectRoleId(
   // 2. Group permission rows.
   if (user.groups.length > 0) {
     const groupIds = user.groups.map((g) => g.groupId);
-    const groupPerms = await prismaClient.groupProjectPermission.findMany({
+    const groupPerms = await dbClient.groupProjectPermission.findMany({
       where: {
         projectId,
         groupId: { in: groupIds },
@@ -104,21 +104,21 @@ export async function resolveEffectiveProjectRoleId(
 export async function resolveEffectiveProjectRolesForUsers(
   userIds: string[],
   projectId: number,
-  prismaClient: EffectiveRolePrismaClient
+  dbClient: EffectiveRoleDbClient
 ): Promise<Map<string, number | null>> {
   const result = new Map<string, number | null>();
   if (userIds.length === 0) return result;
 
   const [users, userPerms, project] = await Promise.all([
-    prismaClient.user.findMany({
+    dbClient.user.findMany({
       where: { id: { in: userIds } },
       select: { id: true, roleId: true, groups: { select: { groupId: true } } },
     }),
-    prismaClient.userProjectPermission.findMany({
+    dbClient.userProjectPermission.findMany({
       where: { userId: { in: userIds }, projectId },
       select: { userId: true, accessType: true, roleId: true },
     }),
-    prismaClient.projects.findUnique({
+    dbClient.projects.findUnique({
       where: { id: projectId },
       select: { defaultAccessType: true, defaultRoleId: true },
     }),
@@ -132,7 +132,7 @@ export async function resolveEffectiveProjectRolesForUsers(
   const groupPerms =
     allGroupIds.length === 0
       ? []
-      : await prismaClient.groupProjectPermission.findMany({
+      : await dbClient.groupProjectPermission.findMany({
           where: {
             projectId,
             groupId: { in: allGroupIds },

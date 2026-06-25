@@ -11,7 +11,7 @@
  * Implementation notes:
  *   - `step.step` and `step.expectedResult` may be Json (object) OR a
  *     stringified JSON blob. We mirror the defensive parsing pattern from
- *     StepsForm.tsx:561 (mapPrismaJsonToTipTapContent).
+ *     StepsForm.tsx:561 (mapDbJsonToTipTapContent).
  *   - DataSet rows store values keyed by parameter name. A "reference" is
  *     a key whose name matches the parameter being scanned/renamed.
  *   - Both helpers accept a transaction client (`tx`) so callers can scope

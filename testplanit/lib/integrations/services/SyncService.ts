@@ -22,7 +22,7 @@ export interface SyncJobData {
 }
 
 export interface SyncServiceOptions {
-  prismaClient?: DbClient; // Optional: use provided client for multi-tenant support
+  dbClient?: DbClient; // Optional: use provided client for multi-tenant support
   /**
    * Skip the upstream API call if `Issue.lastSyncedAt` is fresher than this
    * many seconds. Caller's choice based on the trigger context:
@@ -361,7 +361,7 @@ export class SyncService {
     job?: Job, // BullMQ Job for progress reporting
     serviceOptions: SyncServiceOptions = {}
   ): Promise<{ synced: number; errors: string[] }> {
-    const db = serviceOptions.prismaClient || defaultDb;
+    const db = serviceOptions.dbClient || defaultDb;
     const errors: string[] = [];
     let syncedCount = 0;
 
@@ -778,7 +778,7 @@ export class SyncService {
     serviceOptions: SyncServiceOptions,
     inner: () => Promise<{ success: boolean; error?: string }>
   ): Promise<IssueRefreshResult> {
-    const db = serviceOptions.prismaClient || defaultDb;
+    const db = serviceOptions.dbClient || defaultDb;
     const minFreshnessSeconds = serviceOptions.minFreshnessSeconds ?? 0;
     try {
       // Freshness gate — read the local `Issue.lastSyncedAt`; if it's
@@ -831,7 +831,7 @@ export class SyncService {
     externalIssueId: string,
     serviceOptions: SyncServiceOptions = {}
   ): Promise<{ success: boolean; error?: string }> {
-    const db = serviceOptions.prismaClient || defaultDb;
+    const db = serviceOptions.dbClient || defaultDb;
     try {
       // Get user for auth validation
       const user = await db.user.findUnique({
@@ -929,7 +929,7 @@ export class SyncService {
     externalIssueId: string,
     serviceOptions: SyncServiceOptions = {}
   ): Promise<{ success: boolean; error?: string }> {
-    const db = serviceOptions.prismaClient || defaultDb;
+    const db = serviceOptions.dbClient || defaultDb;
     try {
       const integration = await db.integration.findUnique({
         where: { id: integrationId },

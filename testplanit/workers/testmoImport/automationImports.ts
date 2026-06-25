@@ -218,7 +218,7 @@ const normalizeAutomationClassName = (folder: string | null): string | null => {
  * Processes data in smaller transactions to provide better progress feedback.
  */
 export const importAutomationCases = async (
-  prisma: DbClient,
+  db: DbClient,
   configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -251,7 +251,7 @@ export const importAutomationCases = async (
   const globalFallbackTemplateId =
     Array.from(templateIdMap.values())[0] ?? null;
 
-  const workflowResolver = createWorkflowResolver(prisma, workflowIdMap);
+  const workflowResolver = createWorkflowResolver(db, workflowIdMap);
 
   summary.total = automationCaseRows.length;
 
@@ -345,7 +345,7 @@ export const importAutomationCases = async (
     return { summary, automationCaseIdMap, automationCaseProjectMap };
   }
 
-  await prisma.$executeRawUnsafe(`
+  await db.$executeRawUnsafe(`
     SELECT setval(
       pg_get_serial_sequence('"RepositoryCases"', 'id'),
       COALESCE((SELECT MAX(id) FROM "RepositoryCases"), 1),
@@ -356,7 +356,7 @@ export const importAutomationCases = async (
   for (let index = 0; index < repositoryCaseGroups.length; index += chunkSize) {
     const chunk = repositoryCaseGroups.slice(index, index + chunkSize);
 
-    await prisma.$transaction(
+    await db.$transaction(
       async (tx: TxClient) => {
         for (const group of chunk) {
           const {
@@ -663,7 +663,7 @@ export const importAutomationCases = async (
  * - Maps configuration and milestone
  */
 export const importAutomationRuns = async (
-  prisma: DbClient,
+  db: DbClient,
   _configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -755,13 +755,13 @@ export const importAutomationRuns = async (
     };
   }
 
-  const workflowResolver = createWorkflowResolver(prisma, workflowIdMap);
+  const workflowResolver = createWorkflowResolver(db, workflowIdMap);
 
   for (let index = 0; index < automationRunRows.length; index += chunkSize) {
     const chunk = automationRunRows.slice(index, index + chunkSize);
     let processedInChunk = 0;
 
-    await prisma.$transaction(
+    await db.$transaction(
       async (tx: TxClient) => {
         for (const row of chunk) {
           const testmoRunId = toNumberValue(row.id);
@@ -893,7 +893,7 @@ export const importAutomationRuns = async (
  * - Handles status mapping via Automation scope statuses
  */
 export const importAutomationRunTests = async (
-  prisma: DbClient,
+  db: DbClient,
   _configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -1140,7 +1140,7 @@ export const importAutomationRunTests = async (
     const chunk = automationRunTestRows.slice(index, index + chunkSize);
     let processedInChunk = 0;
 
-    await prisma.$transaction(
+    await db.$transaction(
       async (tx: TxClient) => {
         for (const row of chunk) {
           const testmoRunTestId = toNumberValue(row.id);
@@ -1381,7 +1381,7 @@ export const importAutomationRunTests = async (
 
   const suiteIdsToUpdate = Array.from(testSuiteIdMap.values());
   if (suiteIdsToUpdate.length > 0) {
-    await prisma.$transaction(
+    await db.$transaction(
       async (tx) => {
         await reconcileLegacyJUnitSuiteLinks(tx, suiteIdsToUpdate);
         await recomputeJUnitSuiteStats(tx, suiteIdsToUpdate);
@@ -1401,7 +1401,7 @@ export const importAutomationRunTests = async (
  * Stores key-value metadata like Version, Build info, etc.
  */
 export const importAutomationRunFields = async (
-  prisma: DbClient,
+  db: DbClient,
   _configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -1512,7 +1512,7 @@ export const importAutomationRunFields = async (
   for (const chunk of updateChunks) {
     const results = await Promise.allSettled(
       chunk.map(([testRunId, fields]) =>
-        prisma.testRuns.update({
+        db.testRuns.update({
           where: { id: testRunId },
           data: { note: fields },
         })
@@ -1671,7 +1671,7 @@ const recomputeJUnitSuiteStats = async (
  * Stores CI/CD job URLs, build links, etc.
  */
 export const importAutomationRunLinks = async (
-  prisma: DbClient,
+  db: DbClient,
   _configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -1748,7 +1748,7 @@ export const importAutomationRunLinks = async (
   ) {
     const chunk = automationRunLinkRows.slice(index, index + chunkSize);
 
-    await prisma.$transaction(
+    await db.$transaction(
       async (tx: TxClient) => {
         for (const row of chunk) {
           const testmoRunId = toNumberValue(row.run_id);
@@ -1807,7 +1807,7 @@ export const importAutomationRunLinks = async (
  * Stores test execution logs, error traces, output, etc.
  */
 export const importAutomationRunTestFields = async (
-  prisma: DbClient,
+  db: DbClient,
   _configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -1847,7 +1847,7 @@ export const importAutomationRunTestFields = async (
     });
   progressEntry.total = summary.total;
   if (summary.total === 0 && context.jobId) {
-    summary.total = await prisma.testmoImportStaging.count({
+    summary.total = await db.testmoImportStaging.count({
       where: {
         jobId: context.jobId,
         datasetName: "automation_run_test_fields",
@@ -1956,7 +1956,7 @@ export const importAutomationRunTestFields = async (
 
     let nextRowIndex = 0;
     while (true) {
-      const stagedRows = await prisma.testmoImportStaging.findMany({
+      const stagedRows = await db.testmoImportStaging.findMany({
         where: {
           jobId: context.jobId,
           datasetName: "automation_run_test_fields",
@@ -2041,7 +2041,7 @@ export const importAutomationRunTestFields = async (
 
     const existingResults =
       resultIds.length > 0
-        ? await prisma.jUnitTestResult.findMany({
+        ? await db.jUnitTestResult.findMany({
             where: { id: { in: resultIds } },
             select: { id: true, systemOut: true, systemErr: true },
           })
@@ -2053,7 +2053,7 @@ export const importAutomationRunTestFields = async (
     let updatesApplied = 0;
 
     if (entries.length > 0) {
-      await prisma.$transaction(
+      await db.$transaction(
         async (tx: TxClient) => {
           for (const [, update] of entries) {
             const junitResultId = update.junitResultId;
@@ -2191,7 +2191,7 @@ export const importAutomationRunTestFields = async (
   return summary;
 };
 export const importAutomationRunTags = async (
-  prisma: DbClient,
+  db: DbClient,
   configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
@@ -2261,7 +2261,7 @@ export const importAutomationRunTags = async (
   for (let index = 0; index < automationRunTagRows.length; index += chunkSize) {
     const chunk = automationRunTagRows.slice(index, index + chunkSize);
 
-    await prisma.$transaction(
+    await db.$transaction(
       async (tx: TxClient) => {
         for (const row of chunk) {
           processedRows += 1;

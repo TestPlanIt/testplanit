@@ -51,18 +51,18 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
   let projectId: number;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
   let adminUserId: string;
 
   test.beforeAll(async ({ api, adminUserId: ai }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Deep Nested ${uniqueId}`);
-    prisma = createRawDbClient();
+    db = createRawDbClient();
     adminUserId = ai;
   });
 
   test.afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("JIRA: 12-level nested payload updates linked Issue.externalStatus and writes a delivery row", async ({
@@ -74,14 +74,14 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
     let seededConfig: Awaited<ReturnType<typeof seedInboundConfig>> | undefined;
 
     await test.step("Seed linked Jira issue and inbound webhook config", async () => {
-      seededIssue = await seedLinkedIssue(prisma, {
+      seededIssue = await seedLinkedIssue(db, {
         projectId,
         externalKey,
         externalSystem: "JIRA",
         createdById: adminUserId,
         name: "L-02 Jira deep",
       });
-      seededConfig = await seedInboundConfig(prisma, {
+      seededConfig = await seedInboundConfig(db, {
         projectId,
         adapterType: "JIRA",
       });
@@ -127,7 +127,7 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
       // post-tx via SyncService against the integration's upstream, so we
       // do not assert that field here (the upstream call uses fake fixture
       // credentials and is exercised by the dedicated sync specs).
-      await waitForDeliveries(prisma, {
+      await waitForDeliveries(db, {
         where: {
           webhookConfigId: seededConfig!.configId,
           direction: "INBOUND",
@@ -148,14 +148,14 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
     let seededConfig: Awaited<ReturnType<typeof seedInboundConfig>> | undefined;
 
     await test.step("Seed linked GitHub issue and inbound webhook config", async () => {
-      seededIssue = await seedLinkedIssue(prisma, {
+      seededIssue = await seedLinkedIssue(db, {
         projectId,
         externalKey,
         externalSystem: "GITHUB",
         createdById: adminUserId,
         name: "L-02 GitHub deep",
       });
-      seededConfig = await seedInboundConfig(prisma, {
+      seededConfig = await seedInboundConfig(db, {
         projectId,
         adapterType: "GITHUB",
       });
@@ -196,7 +196,7 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
     });
 
     await test.step("Verify an applied delivery row was written", async () => {
-      await waitForDeliveries(prisma, {
+      await waitForDeliveries(db, {
         where: {
           webhookConfigId: seededConfig!.configId,
           direction: "INBOUND",
@@ -217,14 +217,14 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
     let seededConfig: Awaited<ReturnType<typeof seedInboundConfig>> | undefined;
 
     await test.step("Seed linked ADO issue and inbound webhook config", async () => {
-      seededIssue = await seedLinkedIssue(prisma, {
+      seededIssue = await seedLinkedIssue(db, {
         projectId,
         externalKey,
         externalSystem: "AZURE_DEVOPS",
         createdById: adminUserId,
         name: "L-02 ADO deep",
       });
-      seededConfig = await seedInboundConfig(prisma, {
+      seededConfig = await seedInboundConfig(db, {
         projectId,
         adapterType: "AZURE_DEVOPS",
         credentialInput: {
@@ -267,7 +267,7 @@ test.describe("Inbound webhook with deeply nested payload (L-02)", () => {
     });
 
     await test.step("Verify an applied delivery row was written", async () => {
-      await waitForDeliveries(prisma, {
+      await waitForDeliveries(db, {
         where: {
           webhookConfigId: seededConfig!.configId,
           direction: "INBOUND",

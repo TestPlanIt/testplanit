@@ -1,7 +1,7 @@
 import type { DbClient } from "~/lib/zenstack";
 
 export async function seedMilestoneEdgeCases(
-  prisma: DbClient,
+  db: DbClient,
   projectId: number,
   adminUserId: string,
   milestoneTypeId: number
@@ -9,7 +9,7 @@ export async function seedMilestoneEdgeCases(
   console.log("Seeding milestone edge cases for comprehensive testing...");
 
   // Edge Case 1: Milestone that is completed but not started (data inconsistency)
-  const _edgeCase1 = await prisma.milestones.create({
+  const _edgeCase1 = await db.milestones.create({
     data: {
       name: "Edge Case 1: Completed but not Started",
       projectId: projectId,
@@ -23,7 +23,7 @@ export async function seedMilestoneEdgeCases(
   });
 
   // Edge Case 2: Milestone that is started but not completed (normal in-progress)
-  const _edgeCase2 = await prisma.milestones.create({
+  const _edgeCase2 = await db.milestones.create({
     data: {
       name: "Edge Case 2: Started but not Completed",
       projectId: projectId,
@@ -37,7 +37,7 @@ export async function seedMilestoneEdgeCases(
   });
 
   // Edge Case 3: Milestone that is both started and completed (normal completed)
-  const _edgeCase3 = await prisma.milestones.create({
+  const _edgeCase3 = await db.milestones.create({
     data: {
       name: "Edge Case 3: Started and Completed",
       projectId: projectId,
@@ -52,7 +52,7 @@ export async function seedMilestoneEdgeCases(
   });
 
   // Edge Case 4: Milestone that is neither started nor completed (not started)
-  const _edgeCase4 = await prisma.milestones.create({
+  const _edgeCase4 = await db.milestones.create({
     data: {
       name: "Edge Case 4: Not Started",
       projectId: projectId,
@@ -65,7 +65,7 @@ export async function seedMilestoneEdgeCases(
   });
 
   // Edge Case 5: Deleted milestone (should not be counted)
-  const _edgeCase5 = await prisma.milestones.create({
+  const _edgeCase5 = await db.milestones.create({
     data: {
       name: "Edge Case 5: Deleted Milestone",
       projectId: projectId,
@@ -83,7 +83,7 @@ export async function seedMilestoneEdgeCases(
   // Create a set of milestones to test the 200% bug scenario
   // 5 milestones all started and completed = should be 100% progress, not 200%
   for (let i = 1; i <= 5; i++) {
-    await prisma.milestones.create({
+    await db.milestones.create({
       data: {
         name: `Test 200% Bug - Milestone ${i}`,
         projectId: projectId,

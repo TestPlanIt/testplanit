@@ -122,7 +122,7 @@ describe("reportGrouping", () => {
   });
 
   describe("buildFolderAncestorMap", () => {
-    function fakePrisma(
+    function fakeDb(
       folders: Array<{ id: number; parentId: number | null }>
     ) {
       return {
@@ -133,23 +133,23 @@ describe("reportGrouping", () => {
     }
 
     it("returns self plus the ancestor chain for each folder", async () => {
-      const prisma = fakePrisma([
+      const db = fakeDb([
         { id: 1, parentId: null },
         { id: 2, parentId: 1 },
         { id: 3, parentId: 2 },
       ]);
-      const map = await buildFolderAncestorMap(prisma, 1, true);
+      const map = await buildFolderAncestorMap(db, 1, true);
       expect(map.get(1)).toEqual([1]);
       expect(map.get(2)).toEqual([2, 1]);
       expect(map.get(3)).toEqual([3, 2, 1]);
     });
 
     it("guards against cycles", async () => {
-      const prisma = fakePrisma([
+      const db = fakeDb([
         { id: 1, parentId: 2 },
         { id: 2, parentId: 1 },
       ]);
-      const map = await buildFolderAncestorMap(prisma, 1, true);
+      const map = await buildFolderAncestorMap(db, 1, true);
       expect(map.get(1)).toEqual([1, 2]);
       expect(map.get(2)).toEqual([2, 1]);
     });

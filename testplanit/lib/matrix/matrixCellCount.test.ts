@@ -55,15 +55,15 @@ describe("computeCellCount", () => {
 });
 
 describe("runCellCountPreflight", () => {
-  let mockPrisma: any;
+  let mockDb: any;
   // runCellCountPreflight runs its two COUNT queries via Kysely
-  // sql`...`.execute(prisma.$qb). qbRows yields each query's rows array (set per
+  // sql`...`.execute(db.$qb). qbRows yields each query's rows array (set per
   // test); the $qb executor wraps it in the { rows } shape the action reads.
   let qbRows: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     qbRows = vi.fn();
-    mockPrisma = {
+    mockDb = {
       $qb: {
         getExecutor: () => ({
           transformQuery: (n: unknown) => n,
@@ -83,7 +83,7 @@ describe("runCellCountPreflight", () => {
         { case_id: 3, max_iters: 0 },
       ]);
 
-    const result = await runCellCountPreflight(mockPrisma, 99, {});
+    const result = await runCellCountPreflight(mockDb, 99, {});
     expect(result.cellCount).toBe(18); // (3 + 5 + 1) x 2
     expect(result.willRefuse).toBe(false);
     expect(result.threshold).toBe(50000);
@@ -105,7 +105,7 @@ describe("runCellCountPreflight", () => {
           max_iters: 100,
         }))
       );
-    const result = await runCellCountPreflight(mockPrisma, 1, {});
+    const result = await runCellCountPreflight(mockDb, 1, {});
     expect(result.cellCount).toBe(50000);
     expect(result.willRefuse).toBe(false);
   });
@@ -114,7 +114,7 @@ describe("runCellCountPreflight", () => {
     qbRows
       .mockResolvedValueOnce([{ case_count: 1n, config_count: 1n }])
       .mockResolvedValueOnce([{ case_id: 1, max_iters: 50001 }]);
-    const result = await runCellCountPreflight(mockPrisma, 1, {});
+    const result = await runCellCountPreflight(mockDb, 1, {});
     expect(result.cellCount).toBe(50001);
     expect(result.willRefuse).toBe(true);
   });
@@ -123,7 +123,7 @@ describe("runCellCountPreflight", () => {
     qbRows
       .mockResolvedValueOnce([{ case_count: 0n, config_count: 0n }])
       .mockResolvedValueOnce([]);
-    const result = await runCellCountPreflight(mockPrisma, 1, {});
+    const result = await runCellCountPreflight(mockDb, 1, {});
     expect(result.cellCount).toBe(0);
     expect(result.willRefuse).toBe(false);
     expect(result.axisCounts.caseCount).toBe(0);
@@ -135,7 +135,7 @@ describe("runCellCountPreflight", () => {
     qbRows
       .mockResolvedValueOnce([{ case_count: 0n, config_count: 0n }])
       .mockResolvedValueOnce([]);
-    const result = await runCellCountPreflight(mockPrisma, 1, {});
+    const result = await runCellCountPreflight(mockDb, 1, {});
     expect(result.threshold).toBe(50000);
   });
 });

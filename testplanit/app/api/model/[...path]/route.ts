@@ -289,7 +289,7 @@ function extractEntityName(
   return value;
 }
 
-async function getPrisma() {
+async function getDb() {
   const session = await getServerAuthSession();
   let userId = session?.user?.id;
   let userEmail = session?.user?.email ?? undefined;
@@ -344,7 +344,7 @@ async function getPrisma() {
           await new Promise((r) => setTimeout(r, 50 * (attempt + 1)));
         } else {
           console.error(
-            "[getPrisma] user lookup failed after 3 attempts:",
+            "[getDb] user lookup failed after 3 attempts:",
             err
           );
         }
@@ -358,7 +358,7 @@ async function getPrisma() {
 }
 
 const baseHandler = NextRequestHandler({
-  getClient: getPrisma,
+  getClient: getDb,
   useAppDir: true,
   apiHandler: new RPCApiHandler({ schema }),
 });
@@ -501,7 +501,7 @@ async function innerHandler(
     // ...and their display name + email, so the audit frame carries the actor's
     // identity (snapshotted at write time) for paths that build the GUC from the
     // frame rather than an explicit user object — notably tryFastPathCreate,
-    // which runs BEFORE getPrisma's enrichFromApiAuth and so otherwise sees no name.
+    // which runs BEFORE getDb's enrichFromApiAuth and so otherwise sees no name.
     const authenticatedUserName =
       session?.user?.name ?? apiAuthContext?.name ?? undefined;
     const authenticatedUserEmail =

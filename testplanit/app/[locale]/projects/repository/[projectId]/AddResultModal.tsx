@@ -11,7 +11,7 @@ import UploadAttachments, {
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ApplicationArea } from "~/zenstack/models";
-import type { Attachments, Color as PrismaColor, SharedStepGroup as PrismaSharedStepGroup, SharedStepItem as PrismaSharedStepItem, Status as PrismaStatus, Steps } from "~/zenstack/models";
+import type { Attachments, Color as DbColor, SharedStepGroup as DbSharedStepGroup, SharedStepItem as DbSharedStepItem, Status as DbStatus, Steps } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Bug,
@@ -210,7 +210,7 @@ type FormValues = z.infer<ReturnType<typeof formSchema>>;
 
 // Define EnrichedStep type
 interface EnrichedStep extends Steps {
-  sharedStepGroup?: (PrismaSharedStepGroup & { name: string | null }) | null;
+  sharedStepGroup?: (DbSharedStepGroup & { name: string | null }) | null;
 }
 
 interface AddResultModalProps {
@@ -925,12 +925,12 @@ export function AddResultModal({
                 const placeholderStepId = step.id; // ID of the placeholder Step
 
                 const sharedItems = queryClient.getQueryData<
-                  PrismaSharedStepItem[]
+                  DbSharedStepItem[]
                 >(["sharedStepItems", step.sharedStepGroupId]);
 
                 if (sharedItems && sharedItems.length > 0) {
                   const sharedItemPromises = sharedItems.map(
-                    async (item: PrismaSharedStepItem) => {
+                    async (item: DbSharedStepItem) => {
                       // 'item' is a SharedStepItem
                       const itemIdStr = item.id.toString();
                       const statusKey = `shared_item_${itemIdStr}_statusId`;
@@ -1160,12 +1160,12 @@ export function AddResultModal({
               const placeholderStepId = step.id; // ID of the placeholder Step
 
               const sharedItems = queryClient.getQueryData<
-                PrismaSharedStepItem[]
+                DbSharedStepItem[]
               >(["sharedStepItems", step.sharedStepGroupId]);
 
               if (sharedItems && sharedItems.length > 0) {
                 const sharedItemPromises = sharedItems.map(
-                  async (item: PrismaSharedStepItem) => {
+                  async (item: DbSharedStepItem) => {
                     // 'item' is a SharedStepItem
                     const itemIdStr = item.id.toString();
                     const statusKey = `shared_item_${itemIdStr}_statusId`;
@@ -2278,8 +2278,8 @@ export function AddResultModal({
 }
 
 // Define a type for statuses to be passed to SharedStepGroupInputs
-type StatusForSelect = Pick<PrismaStatus, "id" | "name" | "isFailure"> & {
-  color?: Pick<PrismaColor, "value"> | null;
+type StatusForSelect = Pick<DbStatus, "id" | "name" | "isFailure"> & {
+  color?: Pick<DbColor, "value"> | null;
 };
 
 // More specific types for react-hook-form functions

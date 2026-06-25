@@ -23,10 +23,10 @@ import { createRawDbClient } from "~/lib/rawDbClient";
 
 
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 async function main(): Promise<void> {
-  const rows = await prisma.$queryRaw<
+  const rows = await db.$queryRaw<
     Array<{ externalId: string; count: bigint }>
   >`SELECT "externalId", COUNT(*) as count FROM "Groups" WHERE "externalId" IS NOT NULL GROUP BY "externalId" HAVING COUNT(*) > 1`;
 
@@ -43,4 +43,4 @@ async function main(): Promise<void> {
   process.exit(1);
 }
 
-void main().finally(() => prisma.$disconnect());
+void main().finally(() => db.$disconnect());

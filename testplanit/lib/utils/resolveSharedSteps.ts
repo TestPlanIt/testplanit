@@ -24,13 +24,13 @@ export interface StepWithSharedRef {
  * Uses a single batch query for all shared step groups across all cases.
  *
  * @param cases - Array of cases with steps to resolve
- * @param prismaClient - Optional Prisma client (defaults to the lightweight base client;
+ * @param dbClient - Optional Prisma client (defaults to the lightweight base client;
  *   pass tenant client in multi-tenant workers)
  */
 export async function resolveSharedSteps<
   T extends { steps?: StepWithSharedRef[] },
->(cases: T[], prismaClient?: any): Promise<T[]> {
-  const rawDb = prismaClient ?? defaultDb;
+>(cases: T[], dbClient?: any): Promise<T[]> {
+  const rawDb = dbClient ?? defaultDb;
   // Collect all unique sharedStepGroupIds across all cases
   const sharedGroupIds = new Set<number>();
   for (const c of cases) {

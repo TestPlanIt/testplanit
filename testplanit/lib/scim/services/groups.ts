@@ -61,7 +61,7 @@ import {
 import { readScimFallbackDefault, recomputeUserAccess } from "./recompute";
 
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
-import { scimFilterToPrismaGroupWhere } from "../filter";
+import { scimFilterToDbGroupWhere } from "../filter";
 import {
   computeGroupUpdatesFromScim,
   extractMemberIds,
@@ -81,7 +81,7 @@ import type { ScimPatch } from "scim-patch";
 
 import type { ScimAuthContext } from "../auth";
 import type {
-  PrismaGroupForScim,
+  DbGroupForScim,
   ScimGroupBody,
   ScimGroupMember,
   ScimGroupResource,
@@ -103,7 +103,7 @@ const DEFAULT_EMIT_OPTS = {
   actorUserId: SCIM_SYSTEM_USER_ID,
 } as const;
 
-type PrismaGroupWithMembers = PrismaGroupForScim & {
+type DbGroupWithMembers = DbGroupForScim & {
   id: number;
   assignedUsers: Array<{ user: { id: string; name: string } }>;
 };
@@ -225,7 +225,7 @@ async function emitMemberSkippedAudit(
  * accepts the assignment because the wider type is structurally assignable.
  * Explicit projection here closes the gap.
  */
-function snapshot(row: PrismaGroupWithMembers) {
+function snapshot(row: DbGroupWithMembers) {
   return {
     id: row.id,
     name: row.name,
@@ -245,12 +245,12 @@ function snapshot(row: PrismaGroupWithMembers) {
  */
 async function buildResource(
   tx: TxClient,
-  row: PrismaGroupWithMembers,
+  row: DbGroupWithMembers,
   finalMemberIds: string[]
 ): Promise<ScimGroupResource> {
   if (finalMemberIds.length === 0) {
     return groupToScim({
-      ...(row as PrismaGroupForScim),
+      ...(row as DbGroupForScim),
       assignedUsers: [],
     });
   }
@@ -264,7 +264,7 @@ async function buildResource(
     .filter((u): u is { id: string; name: string } => Boolean(u))
     .map((user) => ({ user }));
   return groupToScim({
-    ...(row as PrismaGroupForScim),
+    ...(row as DbGroupForScim),
     assignedUsers,
   });
 }
@@ -292,7 +292,7 @@ export async function createScimGroup(
         if (existingByExternal.isDeleted) {
           return resurrectTombstonedGroup(
             tx,
-            existingByExternal as PrismaGroupWithMembers,
+            existingByExternal as DbGroupWithMembers,
             body,
             payload,
             requestedMemberIds,
@@ -317,7 +317,7 @@ export async function createScimGroup(
     if (existingByName) {
       return jitBindExistingGroup(
         tx,
-        existingByName as PrismaGroupWithMembers,
+        existingByName as DbGroupWithMembers,
         payload,
         requestedMemberIds,
         ctx
@@ -352,7 +352,7 @@ async function insertNewScimGroup(
       isDeleted: false,
     },
     include: SCIM_GROUP_INCLUDE,
-  })) as unknown as PrismaGroupWithMembers;
+  })) as unknown as DbGroupWithMembers;
 
   if (applied.length > 0) {
     await tx.groupAssignment.createMany({
@@ -389,7 +389,7 @@ async function insertNewScimGroup(
 
 async function resurrectTombstonedGroup(
   tx: TxClient,
-  existing: PrismaGroupWithMembers,
+  existing: DbGroupWithMembers,
   body: ScimGroupBody,
   payload: ReturnType<typeof scimToGroupCreate>,
   requestedMemberIds: string[],
@@ -412,7 +412,7 @@ async function resurrectTombstonedGroup(
       scimExtensions: toJsonInput(mergedExtensions),
     },
     include: SCIM_GROUP_INCLUDE,
-  })) as unknown as PrismaGroupWithMembers;
+  })) as unknown as DbGroupWithMembers;
 
   // Resurrection clears prior member assignments and re-establishes the
   // requested set: the IdP-provided body is the new source of truth.
@@ -463,7 +463,7 @@ async function resurrectTombstonedGroup(
 
 async function jitBindExistingGroup(
   tx: TxClient,
-  existing: PrismaGroupWithMembers,
+  existing: DbGroupWithMembers,
   payload: ReturnType<typeof scimToGroupCreate>,
   requestedMemberIds: string[],
   ctx: ScimAuthContext
@@ -486,7 +486,7 @@ async function jitBindExistingGroup(
       scimExtensions: toJsonInput(mergedExtensions),
     },
     include: SCIM_GROUP_INCLUDE,
-  })) as unknown as PrismaGroupWithMembers;
+  })) as unknown as DbGroupWithMembers;
 
   // JIT bind reconciles the assignment set to the requested set.
   const currentMemberIds = (existing.assignedUsers ?? []).map((a) => a.user.id);
@@ -551,7 +551,7 @@ export async function getScimGroupById(
   if (!row || row.isDeleted) {
     throw new ScimNotFoundError(`Group ${id} not found`);
   }
-  return groupToScim(row as PrismaGroupForScim);
+  return groupToScim(row as DbGroupForScim);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -569,7 +569,7 @@ export async function listScimGroups(
   const resolvedSkip = Math.max(0, (startIndex ?? 1) - 1);
 
   const filterWhere: GroupsWhereInput = filter
-    ? scimFilterToPrismaGroupWhere(filter)
+    ? scimFilterToDbGroupWhere(filter)
     : {};
 
   const finalWhere: GroupsWhereInput = {
@@ -588,7 +588,7 @@ export async function listScimGroups(
   ]);
 
   return {
-    resources: rows.map((r) => groupToScim(r as PrismaGroupForScim)),
+    resources: rows.map((r) => groupToScim(r as DbGroupForScim)),
     totalResults,
   };
 }
@@ -611,13 +611,13 @@ export async function putScimGroup(
     const current = (await tx.groups.findUnique({
       where: { id: parsedId },
       include: SCIM_GROUP_INCLUDE,
-    })) as PrismaGroupWithMembers | null;
+    })) as DbGroupWithMembers | null;
     if (!current || current.isDeleted) {
       throw new ScimNotFoundError(`Group ${id} not found`);
     }
 
     const { updates } = computeGroupUpdatesFromScim(
-      current as PrismaGroupForScim,
+      current as DbGroupForScim,
       body
     );
 
@@ -658,7 +658,7 @@ export async function putScimGroup(
         metadata: { scimNoOp: true, scimTokenId: ctx.tokenId },
       });
       return {
-        resource: groupToScim(current as PrismaGroupForScim),
+        resource: groupToScim(current as DbGroupForScim),
         status: 200,
       };
     }
@@ -666,7 +666,7 @@ export async function putScimGroup(
     const before = snapshot(current);
     const fallbackDefault = await readScimFallbackDefault(tx);
 
-    let updatedRow: PrismaGroupWithMembers = current;
+    let updatedRow: DbGroupWithMembers = current;
     if (hasColumnUpdates) {
       updatedRow = (await tx.groups.update({
         where: { id: current.id },
@@ -683,7 +683,7 @@ export async function putScimGroup(
             : {}),
         },
         include: SCIM_GROUP_INCLUDE,
-      })) as unknown as PrismaGroupWithMembers;
+      })) as unknown as DbGroupWithMembers;
     }
 
     updateAuditContext({ scimGroupId: String(current.id) });
@@ -774,12 +774,12 @@ export async function patchScimGroup(
     const current = (await tx.groups.findUnique({
       where: { id: parsedId },
       include: SCIM_GROUP_INCLUDE,
-    })) as PrismaGroupWithMembers | null;
+    })) as DbGroupWithMembers | null;
     if (!current || current.isDeleted) {
       throw new ScimNotFoundError(`Group ${id} not found`);
     }
 
-    const currentScim = groupToScim(current as PrismaGroupForScim);
+    const currentScim = groupToScim(current as DbGroupForScim);
     const draftScim = applyScimPatch(currentScim, body);
 
     // Recover the column-level diff from the in-memory draft vs the current
@@ -800,7 +800,7 @@ export async function patchScimGroup(
     }
 
     const { updates } = computeGroupUpdatesFromScim(
-      current as PrismaGroupForScim,
+      current as DbGroupForScim,
       draftBody
     );
 
@@ -843,14 +843,14 @@ export async function patchScimGroup(
         metadata: { scimNoOp: true, scimTokenId: ctx.tokenId },
       });
       return {
-        resource: groupToScim(current as PrismaGroupForScim),
+        resource: groupToScim(current as DbGroupForScim),
       };
     }
 
     const before = snapshot(current);
     const fallbackDefault = await readScimFallbackDefault(tx);
 
-    let updatedRow: PrismaGroupWithMembers = current;
+    let updatedRow: DbGroupWithMembers = current;
     if (hasColumnUpdates) {
       updatedRow = (await tx.groups.update({
         where: { id: current.id },
@@ -867,7 +867,7 @@ export async function patchScimGroup(
             : {}),
         },
         include: SCIM_GROUP_INCLUDE,
-      })) as unknown as PrismaGroupWithMembers;
+      })) as unknown as DbGroupWithMembers;
     }
 
     updateAuditContext({ scimGroupId: String(current.id) });
@@ -958,7 +958,7 @@ export async function deleteScimGroup(
       const current = (await tx.groups.findUnique({
         where: { id: parsedId },
         include: SCIM_GROUP_INCLUDE,
-      })) as PrismaGroupWithMembers | null;
+      })) as DbGroupWithMembers | null;
       if (!current || current.isDeleted) {
         throw new ScimNotFoundError(`Group ${id} not found`);
       }
@@ -972,7 +972,7 @@ export async function deleteScimGroup(
         where: { id: current.id },
         data: { isDeleted: true },
         include: SCIM_GROUP_INCLUDE,
-      })) as unknown as PrismaGroupWithMembers;
+      })) as unknown as DbGroupWithMembers;
 
       if (priorMemberIds.length > 0) {
         await tx.groupAssignment.deleteMany({

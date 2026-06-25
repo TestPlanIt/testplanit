@@ -160,7 +160,7 @@ export type WorkflowResolver = {
  * the mapping is wrong-scope, missing, or unknown.
  */
 export const createWorkflowResolver = (
-  prisma: DbClient | TxClient,
+  db: DbClient | TxClient,
   workflowIdMap: Map<number, number>
 ): WorkflowResolver => {
   const workflowScopeMap = new Map<number, WorkflowScope>();
@@ -170,7 +170,7 @@ export const createWorkflowResolver = (
     if (scopesLoaded) return;
     const ids = Array.from(new Set(workflowIdMap.values()));
     if (ids.length > 0) {
-      const rows = await prisma.workflows.findMany({
+      const rows = await db.workflows.findMany({
         where: { id: { in: ids } },
         select: { id: true, scope: true },
       });
@@ -191,7 +191,7 @@ export const createWorkflowResolver = (
     if (projectDefaultCache.has(key)) {
       return projectDefaultCache.get(key)!;
     }
-    const workflow = await prisma.workflows.findFirst({
+    const workflow = await db.workflows.findFirst({
       where: {
         scope,
         isDeleted: false,

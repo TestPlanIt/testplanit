@@ -44,7 +44,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook DISABLED diagnosis surface — badge + tooltip + activity + Re-enable button (M-03)", () => {
   let projectId: number;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
   let configId: string;
   const failureDeliveryIds: string[] = [];
   let endpointDisabledDeliveryId: string;
@@ -52,9 +52,9 @@ test.describe("Webhook DISABLED diagnosis surface — badge + tooltip + activity
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Disabled Diagnosis ${uniqueId}`);
-    prisma = createRawDbClient();
+    db = createRawDbClient();
 
-    const seeded = await seedOutboundConfig(prisma, {
+    const seeded = await seedOutboundConfig(db, {
       projectId,
       url: "https://example.com/M-03/disabled",
       name: "E2E M-03 Disabled Outbound",
@@ -67,7 +67,7 @@ test.describe("Webhook DISABLED diagnosis surface — badge + tooltip + activity
     // timestamp, so any past Date is fine here.
     const lastFailureAt = new Date();
     lastFailureAt.setMinutes(lastFailureAt.getMinutes() - 5);
-    await prisma.webhookConfig.update({
+    await db.webhookConfig.update({
       where: { id: configId },
       data: {
         endpointHealth: "DISABLED",
@@ -81,7 +81,7 @@ test.describe("Webhook DISABLED diagnosis surface — badge + tooltip + activity
     // tripping the threshold. The seed helper alternates only with
     // statusPattern="mixed"; here we want all-failure so we drive two
     // batches with different sentinels rather than tweak the helper.
-    const timeoutRows = await seedDeliveries(prisma, {
+    const timeoutRows = await seedDeliveries(db, {
       webhookConfigId: configId,
       direction: "OUTBOUND",
       projectId,
@@ -93,7 +93,7 @@ test.describe("Webhook DISABLED diagnosis surface — badge + tooltip + activity
     });
     failureDeliveryIds.push(...timeoutRows.map((r) => r.id));
 
-    const badGatewayRows = await seedDeliveries(prisma, {
+    const badGatewayRows = await seedDeliveries(db, {
       webhookConfigId: configId,
       direction: "OUTBOUND",
       projectId,
@@ -109,7 +109,7 @@ test.describe("Webhook DISABLED diagnosis surface — badge + tooltip + activity
     // Seed the post-disable row: DISABLED gate short-circuited dispatch and
     // wrote a row with error="endpoint_disabled" + statusCode=null. This is
     // the most-recent row admins land on when they open the Deliveries tab.
-    const endpointDisabledRows = await seedDeliveries(prisma, {
+    const endpointDisabledRows = await seedDeliveries(db, {
       webhookConfigId: configId,
       direction: "OUTBOUND",
       projectId,
@@ -123,7 +123,7 @@ test.describe("Webhook DISABLED diagnosis surface — badge + tooltip + activity
   });
 
   test.afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("admin sees red DISABLED badge with diagnostic tooltip, finds Re-enable button on the card, and the Deliveries tab shows the 11-row failure pattern", async ({
@@ -216,7 +216,7 @@ test.describe("Webhook DISABLED diagnosis surface — badge + tooltip + activity
     await test.step("Assert the database holds the expected 11-row error breakdown", async () => {
       // 9. Data-layer truth — DB has 11 rows on this config (10 upstream +
       //    1 endpoint_disabled). Locks the seed shape against silent drift.
-      const allRows = await prisma.webhookDelivery.findMany({
+      const allRows = await db.webhookDelivery.findMany({
         where: { webhookConfigId: configId, direction: "OUTBOUND" },
         select: { id: true, error: true },
       });

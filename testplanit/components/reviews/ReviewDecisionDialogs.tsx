@@ -214,7 +214,7 @@ export function ApproveDialog({
                   // when the flex chain above it refuses to shrink.
                   <span className="inline-flex align-middle [&_.truncate]:max-w-[14rem]">
                     {/* WorkflowStateDisplay's state requires non-null
-                       icon + color but the prisma include returns them
+                       icon + color but the db include returns them
                        as nullable joins. Cast at the seam so we don't
                        lose the rest of the dialog's type safety. */}
                     <WorkflowStateDisplay

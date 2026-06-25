@@ -576,9 +576,9 @@ export const processor = async (
   }
 
   // 3. Get tenant-specific Prisma client
-  const prisma = getDbClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
-  const projectFlag = await (prisma as any).projects.findUnique({
+  const projectFlag = await (db as any).projects.findUnique({
     where: { id: projectId },
     select: { excludeNotStartedFromRuns: true },
   });
@@ -589,10 +589,10 @@ export const processor = async (
 
   // 4. Create worker-safe LlmManager (fresh instance per job, not singleton)
   const llmManager = LlmManager.createForWorker(
-    prisma as any,
+    db as any,
     job.data.tenantId
   );
-  const promptResolver = new PromptResolver(prisma as any);
+  const promptResolver = new PromptResolver(db as any);
 
   // 4. TOKEN-04 — Fetch provider config for token limits and retry settings
   const resolved = await llmManager.resolveIntegration(
@@ -605,7 +605,7 @@ export const processor = async (
   let retryOptions: { maxRetries?: number; baseDelayMs?: number } | undefined;
 
   if (resolved) {
-    const llmProviderConfig = await (prisma as any).llmProviderConfig.findFirst(
+    const llmProviderConfig = await (db as any).llmProviderConfig.findFirst(
       {
         where: { llmIntegrationId: resolved.integrationId },
       }
@@ -634,7 +634,7 @@ export const processor = async (
   // 7. Fetch linked issue details
   let issues: IssueData[] = [];
   if (testRunMetadata.linkedIssueIds.length > 0) {
-    const issueRecords = await (prisma as any).issue.findMany({
+    const issueRecords = await (db as any).issue.findMany({
       where: {
         id: { in: testRunMetadata.linkedIssueIds },
         isDeleted: false,
@@ -662,7 +662,7 @@ export const processor = async (
   );
   let searchPreFiltered = false;
 
-  const repositoryTotalCount = await (prisma as any).repositoryCases.count({
+  const repositoryTotalCount = await (db as any).repositoryCases.count({
     where: {
       projectId,
       isArchived: false,
@@ -808,7 +808,7 @@ export const processor = async (
     testCaseWhere.id = { in: searchResultIds };
   }
 
-  const repositoryCases = await (prisma as any).repositoryCases.findMany({
+  const repositoryCases = await (db as any).repositoryCases.findMany({
     where: testCaseWhere,
     include: {
       folder: {

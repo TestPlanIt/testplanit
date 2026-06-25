@@ -64,7 +64,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocked", () => {
   let projectAId: number;
   let projectBId: number;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
   let projectAOutboundConfigId: string;
   let projectBOutboundConfigId: string;
   let seededAOriginalDeliveryIds: string[] = [];
@@ -74,21 +74,21 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
   let bOnlyCtx: BrowserContext;
 
   test.beforeAll(async ({ api, browser, baseURL }) => {
-    prisma = createRawDbClient();
+    db = createRawDbClient();
     projectAId = await api.createProject(`E2E K-02 Project A ${uniqueId}`);
     projectBId = await api.createProject(`E2E K-02 Project B ${uniqueId}`);
 
     // Seed an OUTBOUND GENERIC_HMAC config in each project. Per Plan 04-08
     // schema (SetNull on webhookConfigId), deliveries survive config delete;
     // here we keep the configs so the replay UI (if reachable) would be live.
-    const aOutbound = await seedOutboundConfig(prisma, {
+    const aOutbound = await seedOutboundConfig(db, {
       projectId: projectAId,
       url: "https://example.test/k02-a",
       events: ["test_run.completed"],
     });
     projectAOutboundConfigId = aOutbound.configId;
 
-    const bOutbound = await seedOutboundConfig(prisma, {
+    const bOutbound = await seedOutboundConfig(db, {
       projectId: projectBId,
       url: "https://example.test/k02-b",
       events: ["test_run.completed"],
@@ -97,7 +97,7 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
 
     // Seed 3 failed OUTBOUND delivery rows in Project A. These are the rows
     // a B-only PROJECTADMIN would target if they could enumerate them.
-    const seeded = await seedDeliveries(prisma, {
+    const seeded = await seedDeliveries(db, {
       webhookConfigId: projectAOutboundConfigId,
       projectId: projectAId,
       direction: "OUTBOUND",
@@ -140,7 +140,7 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
   test.afterAll(async ({ api }) => {
     await api.deleteUser(bOnlyUserId);
     await bOnlyCtx.close();
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("B-only PROJECTADMIN cannot enumerate Project A's failed deliveries via ZenStack", async ({
@@ -262,7 +262,7 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     // assertion catches a regression in either layer (e.g., if a future
     // refactor accidentally bypassed one of the gates).
     await test.step("Assert no replay rows point at Project A's seeded originals", async () => {
-      const replayRows = await prisma.webhookDelivery.findMany({
+      const replayRows = await db.webhookDelivery.findMany({
         where: {
           replayedFromDeliveryId: { in: seededAOriginalDeliveryIds },
         },
@@ -272,7 +272,7 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     });
 
     await test.step("Assert no WEBHOOK_REPLAYED audit rows exist for Project A", async () => {
-      const auditRows = await prisma.auditLog.findMany({
+      const auditRows = await db.auditLog.findMany({
         where: {
           action: "WEBHOOK_REPLAYED",
           projectId: projectAId,

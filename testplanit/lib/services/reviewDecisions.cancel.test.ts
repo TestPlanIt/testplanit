@@ -29,7 +29,7 @@ import { describe, expect, it, vi } from "vitest";
  *      the call shape and documents the policy boundary.
  *
  * Pattern note: the cancel path is a ZenStack hook call, so this file
- * tests against a mocked prisma-shaped client rather than importing a
+ * tests against a mocked db-shaped client rather than importing a
  * service. The cancel UI button performs `useUpdateReviewRequest.mutate({
  * where: { id }, data: { status: 'CANCELLED' } })`; the contract under
  * test is the *shape* of that call.
@@ -39,7 +39,7 @@ type UpdateArgs = { where: { id: string }; data: { status: string } };
 type UpdateResult = { id: string; status: string };
 type UpdateFn = (args: UpdateArgs) => Promise<UpdateResult>;
 
-function createMockPrisma(updateImpl?: ReturnType<typeof vi.fn<UpdateFn>>) {
+function createMockDb(updateImpl?: ReturnType<typeof vi.fn<UpdateFn>>) {
   const update =
     updateImpl ??
     vi.fn<UpdateFn>(async (args) => ({
@@ -57,7 +57,7 @@ function createMockPrisma(updateImpl?: ReturnType<typeof vi.fn<UpdateFn>>) {
 }
 
 async function performCancel(
-  client: ReturnType<typeof createMockPrisma>,
+  client: ReturnType<typeof createMockDb>,
   reviewRequestId: string
 ): Promise<UpdateResult> {
   return client.reviewRequest.update({
@@ -71,7 +71,7 @@ describe("ReviewRequest cancel-by-status-mutation (D-07)", () => {
     const update = vi
       .fn<UpdateFn>()
       .mockResolvedValue({ id: "r1", status: "CANCELLED" });
-    const client = createMockPrisma(update);
+    const client = createMockDb(update);
 
     const result = await performCancel(client, "r1");
 
@@ -88,7 +88,7 @@ describe("ReviewRequest cancel-by-status-mutation (D-07)", () => {
     // call to delete / deleteMany would surface as a TypeError. We also
     // explicitly assert no delete-shaped method appears on the namespace
     // so a future regression that adds one stays visible.
-    const client = createMockPrisma();
+    const client = createMockDb();
     await performCancel(client, "r2");
 
     // No `delete*` keys on the reviewRequest namespace surface here.
@@ -110,7 +110,7 @@ describe("ReviewRequest cancel-by-status-mutation (D-07)", () => {
       "denied by policy: reviewRequest entity failed update check"
     );
     const update = vi.fn<UpdateFn>().mockRejectedValue(denied);
-    const client = createMockPrisma(update);
+    const client = createMockDb(update);
 
     await expect(performCancel(client, "r3")).rejects.toBe(denied);
     expect(update).toHaveBeenCalledTimes(1);
@@ -126,7 +126,7 @@ describe("ReviewRequest cancel-by-status-mutation (D-07)", () => {
     const update = vi
       .fn<UpdateFn>()
       .mockResolvedValue({ id: "r4", status: "CANCELLED" });
-    const client = createMockPrisma(update);
+    const client = createMockDb(update);
 
     await performCancel(client, "r4");
 

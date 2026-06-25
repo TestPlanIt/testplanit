@@ -6,17 +6,17 @@ import { LLM_FEATURES, PROMPT_FEATURE_VARIABLES } from "../lib/llm/constants";
  * Seeds the default prompt configuration with prompts for all AI features.
  * These are the original hard-coded prompts from the API routes.
  */
-export async function seedDefaultPromptConfig(prisma: DbClient) {
+export async function seedDefaultPromptConfig(db: DbClient) {
   console.log("Seeding default prompt configuration...");
 
   // Ensure no other config is marked as default (safety measure)
-  await prisma.promptConfig.updateMany({
+  await db.promptConfig.updateMany({
     where: { isDefault: true },
     data: { isDefault: false },
   });
 
   // Create or update the default prompt config
-  const defaultConfig = await prisma.promptConfig.upsert({
+  const defaultConfig = await db.promptConfig.upsert({
     where: { name: "Default" },
     update: { isDefault: true, isActive: true, isDeleted: false },
     create: {
@@ -374,7 +374,7 @@ Return the JSON array of {step, expectedResult} for this test now.`,
 
   // Upsert each feature prompt into the default config
   for (const prompt of featurePrompts) {
-    await prisma.promptConfigPrompt.upsert({
+    await db.promptConfigPrompt.upsert({
       where: {
         promptConfigId_feature: {
           promptConfigId: defaultConfig.id,
@@ -402,7 +402,7 @@ Return the JSON array of {step, expectedResult} for this test now.`,
 
   // For all other existing prompt configs, insert any missing feature prompts using
   // the default values — but do NOT overwrite prompts that users have already customized.
-  const otherConfigs = await prisma.promptConfig.findMany({
+  const otherConfigs = await db.promptConfig.findMany({
     where: { id: { not: defaultConfig.id }, isDeleted: false },
     include: { prompts: { select: { feature: true } } },
   });
@@ -417,7 +417,7 @@ Return the JSON array of {step, expectedResult} for this test now.`,
 
     if (missingPrompts.length === 0) continue;
 
-    await prisma.promptConfigPrompt.createMany({
+    await db.promptConfigPrompt.createMany({
       data: missingPrompts.map((p) => ({
         promptConfigId: config.id,
         feature: p.feature,

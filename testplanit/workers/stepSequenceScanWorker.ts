@@ -44,7 +44,7 @@ function cancelKey(jobId: string | undefined): string {
  */
 export async function processStepScan(
   job: Job<StepScanJobData>,
-  prisma: any,
+  db: any,
   redis: {
     get: (key: string) => Promise<string | null>;
     del: (key: string) => Promise<number>;
@@ -73,7 +73,7 @@ export async function processStepScan(
     ...(job.data.folderId !== undefined ? { folderId: job.data.folderId } : {}),
   };
 
-  const cases = await prisma.repositoryCases.findMany({
+  const cases = await db.repositoryCases.findMany({
     where: whereClause,
     include: {
       steps: {
@@ -91,7 +91,7 @@ export async function processStepScan(
   });
 
   // 4. Resolve shared step placeholders BEFORE scanning (prevents false-positive matches)
-  const resolvedCases = await resolveSharedSteps(cases as any[], prisma);
+  const resolvedCases = await resolveSharedSteps(cases as any[], db);
 
   // 5. Report initial progress so the UI shows a progress bar immediately
   const totalPairs = (resolvedCases.length * (resolvedCases.length - 1)) / 2;
@@ -116,7 +116,7 @@ export async function processStepScan(
   );
 
   // 6. Soft-delete old PENDING matches for this project (all prior scans)
-  await prisma.stepSequenceMatch.updateMany({
+  await db.stepSequenceMatch.updateMany({
     where: {
       projectId: job.data.projectId,
       status: "PENDING",
@@ -127,7 +127,7 @@ export async function processStepScan(
 
   // 7. Persist new StepSequenceMatch and StepSequenceMatchCase rows
   for (const group of groups) {
-    const match = await prisma.stepSequenceMatch.create({
+    const match = await db.stepSequenceMatch.create({
       data: {
         projectId: job.data.projectId,
         fingerprint: group.fingerprint,
@@ -137,7 +137,7 @@ export async function processStepScan(
       },
     });
 
-    await prisma.stepSequenceMatchCase.createMany({
+    await db.stepSequenceMatchCase.createMany({
       data: group.members.map((member) => ({
         matchId: match.id,
         caseId: member.caseId,
@@ -187,9 +187,9 @@ export function startStepSequenceScanWorker() {
   worker = new Worker<StepScanJobData, StepScanJobResult>(
     STEP_SCAN_QUEUE_NAME,
     withTenantContext(async (job) => {
-      const prisma = getDbClientForJob(job.data);
+      const db = getDbClientForJob(job.data);
       const redis = await worker!.client;
-      return processStepScan(job, prisma, redis);
+      return processStepScan(job, db, redis);
     }),
     {
       connection: valkeyConnection as any,

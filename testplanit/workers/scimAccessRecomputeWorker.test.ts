@@ -77,7 +77,7 @@ interface TxLike {
 const tx = (baseDb as unknown as { __tx: TxLike }).__tx;
 // Top-level baseDb.groupAssignment.findMany is called outside the transaction
 // for the groupId batch path.
-const prismaGroupAssignment = (
+const dbGroupAssignment = (
   baseDb as unknown as {
     groupAssignment: { findMany: ReturnType<typeof vi.fn> };
   }
@@ -105,7 +105,7 @@ function makeJob(
 
 describe("scimAccessRecomputeWorker processor", () => {
   it("W1: calls validateMultiTenantJobData on entry", async () => {
-    prismaGroupAssignment.findMany.mockResolvedValue([]);
+    dbGroupAssignment.findMany.mockResolvedValue([]);
 
     await processor(makeJob({ groupId: 42 }));
 
@@ -117,11 +117,11 @@ describe("scimAccessRecomputeWorker processor", () => {
 
   it("W2: job with groupId — recomputes each member of that group", async () => {
     const members = [{ userId: "user-a" }, { userId: "user-b" }];
-    prismaGroupAssignment.findMany.mockResolvedValue(members);
+    dbGroupAssignment.findMany.mockResolvedValue(members);
 
     await processor(makeJob({ groupId: 10 }));
 
-    expect(prismaGroupAssignment.findMany).toHaveBeenCalledWith(
+    expect(dbGroupAssignment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ groupId: 10 }),
       })
@@ -172,7 +172,7 @@ describe("scimAccessRecomputeWorker processor", () => {
   });
 
   it("W4: audit frame carries adminUserId, scimGroupId, and scimTokenId when groupId is present", async () => {
-    prismaGroupAssignment.findMany.mockResolvedValue([{ userId: "user-a" }]);
+    dbGroupAssignment.findMany.mockResolvedValue([{ userId: "user-a" }]);
 
     await processor(makeJob({ groupId: 99, adminUserId: "admin-42" }));
 
@@ -185,7 +185,7 @@ describe("scimAccessRecomputeWorker processor", () => {
   });
 
   it("W5: uses the hooked lib/baseDb client, NOT getDbClientForJob", async () => {
-    prismaGroupAssignment.findMany.mockResolvedValue([{ userId: "user-b" }]);
+    dbGroupAssignment.findMany.mockResolvedValue([{ userId: "user-b" }]);
 
     await processor(makeJob({ groupId: 5 }));
 

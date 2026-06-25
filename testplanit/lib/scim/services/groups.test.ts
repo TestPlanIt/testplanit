@@ -66,7 +66,7 @@ vi.mock("~/lib/scim/filter", async () => {
     );
   return {
     ...actual,
-    scimFilterToPrismaGroupWhere: vi.fn(actual.scimFilterToPrismaGroupWhere),
+    scimFilterToDbGroupWhere: vi.fn(actual.scimFilterToDbGroupWhere),
   };
 });
 
@@ -86,7 +86,7 @@ import {
   SCIM_SYSTEM_USER_ID,
   SYSTEM_PROJECT_ID,
 } from "../constants";
-import { scimFilterToPrismaGroupWhere } from "../filter";
+import { scimFilterToDbGroupWhere } from "../filter";
 import { ScimPatchApplyError } from "../patch";
 import {
   ScimNotFoundError,
@@ -128,7 +128,7 @@ const tx = (baseDb as unknown as { __tx: TxLike }).__tx;
 
 const CTX = { tokenId: "tok_test", systemUserId: SCIM_SYSTEM_USER_ID } as const;
 
-interface PrismaGroupRow {
+interface DbGroupRow {
   id: number;
   name: string;
   externalId: string | null;
@@ -139,7 +139,7 @@ interface PrismaGroupRow {
   assignedUsers: Array<{ user: { id: string; name: string } }>;
 }
 
-function makeGroup(overrides: Partial<PrismaGroupRow> = {}): PrismaGroupRow {
+function makeGroup(overrides: Partial<DbGroupRow> = {}): DbGroupRow {
   const now = new Date("2026-06-01T00:00:00Z");
   return {
     id: 7,
@@ -466,13 +466,13 @@ describe("listScimGroups", () => {
     expect(tombGate).toBeDefined();
   });
 
-  it("C2: filter passes through scimFilterToPrismaGroupWhere and ANDs with tombstone gate", async () => {
+  it("C2: filter passes through scimFilterToDbGroupWhere and ANDs with tombstone gate", async () => {
     tx.groups.findMany.mockResolvedValue([]);
     tx.groups.count.mockResolvedValue(0);
 
     await listScimGroups({ filter: 'displayName eq "Eng"' }, CTX);
 
-    expect(scimFilterToPrismaGroupWhere).toHaveBeenCalledWith(
+    expect(scimFilterToDbGroupWhere).toHaveBeenCalledWith(
       'displayName eq "Eng"'
     );
     const args = tx.groups.findMany.mock.calls[0][0] as {
@@ -1138,7 +1138,7 @@ describe("J — inline recompute wiring assertions", () => {
     const current = makeGroup({
       id: 200,
       assignedUsers: [],
-      // mappedAccess is on the group, not on PrismaGroupRow — recompute reads it via groupAssignment
+      // mappedAccess is on the group, not on DbGroupRow — recompute reads it via groupAssignment
     });
     tx.groups.findUnique.mockResolvedValue(current);
     tx.user.findMany.mockResolvedValue([{ id: "u1" }]);

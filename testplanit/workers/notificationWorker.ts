@@ -48,7 +48,7 @@ const processor = async (job: Job) => {
   validateMultiTenantJobData(job.data);
 
   // Get the appropriate Prisma client (tenant-specific or default)
-  const prisma = getDbClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   switch (job.name) {
     case JOB_CREATE_NOTIFICATION:
@@ -56,12 +56,12 @@ const processor = async (job: Job) => {
 
       try {
         // Check user preferences first
-        const userPreferences = await prisma.userPreferences.findUnique({
+        const userPreferences = await db.userPreferences.findUnique({
           where: { userId: createData.userId },
         });
 
         // Get global notification settings from AppConfig
-        const globalSettings = await prisma.appConfig.findUnique({
+        const globalSettings = await db.appConfig.findUnique({
           where: { key: "notificationSettings" },
         });
 
@@ -84,7 +84,7 @@ const processor = async (job: Job) => {
         }
 
         // Create the in-app notification (for all modes except NONE)
-        const notification = await prisma.notification.create({
+        const notification = await db.notification.create({
           data: {
             userId: createData.userId,
             type: createData.type as any,
@@ -158,7 +158,7 @@ const processor = async (job: Job) => {
 
       try {
         // Get unread notifications for the user
-        const notifications = await prisma.notification.findMany({
+        const notifications = await db.notification.findMany({
           where: {
             userId: processData.userId,
             isRead: false,
@@ -181,7 +181,7 @@ const processor = async (job: Job) => {
 
       try {
         // Get global settings from AppConfig
-        const globalSettings = await prisma.appConfig.findUnique({
+        const globalSettings = await db.appConfig.findUnique({
           where: { key: "notificationSettings" },
         });
         const settingsValue = globalSettings?.value as {
@@ -190,7 +190,7 @@ const processor = async (job: Job) => {
         const globalDefaultMode = settingsValue?.defaultMode || "IN_APP";
 
         // Get all users with IN_APP_EMAIL_DAILY preference or USE_GLOBAL where global is daily
-        const users = await prisma.userPreferences.findMany({
+        const users = await db.userPreferences.findMany({
           where: {
             OR: [
               { notificationMode: "IN_APP_EMAIL_DAILY" },
@@ -212,7 +212,7 @@ const processor = async (job: Job) => {
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
 
-          const notifications = await prisma.notification.findMany({
+          const notifications = await db.notification.findMany({
             where: {
               userId: userPref.userId,
               isRead: false,

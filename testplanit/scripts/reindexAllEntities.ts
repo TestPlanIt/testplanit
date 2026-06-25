@@ -18,7 +18,7 @@ import {
   getElasticsearchClient,
 } from "../services/unifiedElasticsearchService";
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 async function deleteAllIndices(): Promise<void> {
   const client = getElasticsearchClient();
@@ -76,19 +76,19 @@ async function reindexAllEntities() {
     // Index projects using new sync function
     console.log("\n=== Indexing Projects ===");
     await syncAllProjectsToElasticsearch();
-    results.projects = await prisma.projects.count({
+    results.projects = await db.projects.count({
       where: { isDeleted: false },
     });
 
     // Index repository cases (using existing function)
     console.log("\n=== Indexing Repository Cases ===");
     await initializeElasticsearchIndexes();
-    const projects = await prisma.projects.findMany({
+    const projects = await db.projects.findMany({
       where: { isDeleted: false },
     });
 
     for (const project of projects) {
-      const count = await prisma.repositoryCases.count({
+      const count = await db.repositoryCases.count({
         where: {
           projectId: project.id,
           isDeleted: false,
@@ -105,7 +105,7 @@ async function reindexAllEntities() {
     // Index shared steps
     console.log("\n=== Indexing Shared Steps ===");
     for (const project of projects) {
-      const count = await prisma.sharedStepGroup.count({
+      const count = await db.sharedStepGroup.count({
         where: {
           projectId: project.id,
           isDeleted: false,
@@ -123,7 +123,7 @@ async function reindexAllEntities() {
     // Index test runs using new sync functions
     console.log("\n=== Indexing Test Runs ===");
     for (const project of projects) {
-      const count = await prisma.testRuns.count({
+      const count = await db.testRuns.count({
         where: {
           projectId: project.id,
           isDeleted: false,
@@ -131,7 +131,7 @@ async function reindexAllEntities() {
       });
       if (count > 0) {
         console.log(`Indexing ${count} test runs for project ${project.name}`);
-        await syncProjectTestRunsToElasticsearch(project.id, prisma);
+        await syncProjectTestRunsToElasticsearch(project.id, db);
         results.testRuns += count;
       }
     }
@@ -139,7 +139,7 @@ async function reindexAllEntities() {
     // Index sessions using new sync functions
     console.log("\n=== Indexing Sessions ===");
     for (const project of projects) {
-      const count = await prisma.sessions.count({
+      const count = await db.sessions.count({
         where: {
           projectId: project.id,
           isDeleted: false,
@@ -147,7 +147,7 @@ async function reindexAllEntities() {
       });
       if (count > 0) {
         console.log(`Indexing ${count} sessions for project ${project.name}`);
-        await syncProjectSessionsToElasticsearch(project.id, prisma);
+        await syncProjectSessionsToElasticsearch(project.id, db);
         results.sessions += count;
       }
     }
@@ -156,7 +156,7 @@ async function reindexAllEntities() {
     console.log("\n=== Indexing Issues ===");
     for (const project of projects) {
       // Issues don't have direct projectId, count through test runs
-      const count = await prisma.issue.count({
+      const count = await db.issue.count({
         where: {
           isDeleted: false,
           testRuns: {
@@ -168,7 +168,7 @@ async function reindexAllEntities() {
       });
       if (count > 0) {
         console.log(`Indexing ${count} issues for project ${project.name}`);
-        await syncProjectIssuesToElasticsearch(project.id, prisma);
+        await syncProjectIssuesToElasticsearch(project.id, db);
         results.issues += count;
       }
     }
@@ -176,7 +176,7 @@ async function reindexAllEntities() {
     // Index milestones using new sync functions
     console.log("\n=== Indexing Milestones ===");
     for (const project of projects) {
-      const count = await prisma.milestones.count({
+      const count = await db.milestones.count({
         where: {
           projectId: project.id,
           isDeleted: false,
@@ -184,7 +184,7 @@ async function reindexAllEntities() {
       });
       if (count > 0) {
         console.log(`Indexing ${count} milestones for project ${project.name}`);
-        await syncProjectMilestonesToElasticsearch(project.id, prisma);
+        await syncProjectMilestonesToElasticsearch(project.id, db);
         results.milestones += count;
       }
     }
@@ -237,7 +237,7 @@ async function reindexAllEntities() {
     console.error("Reindexing failed:", error);
     process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

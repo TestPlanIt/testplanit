@@ -72,7 +72,7 @@ type InternalDatasetSummary = TestmoDatasetSummary & {
 
 export interface TestmoExportAnalyzerOptionsWithStaging extends TestmoExportAnalyzerOptions {
   jobId: string;
-  prisma: DbClient | TxClient;
+  db: DbClient | TxClient;
   onProgress?: (
     bytesRead: number,
     totalBytes: number,
@@ -371,7 +371,7 @@ export class TestmoExportAnalyzer {
     source: TestmoReadableSource,
     options: TestmoExportAnalyzerOptionsWithStaging
   ): Promise<TestmoExportSummary> {
-    this.stagingService = new TestmoStagingService(options.prisma);
+    this.stagingService = new TestmoStagingService(options.db);
     this.jobId = options.jobId;
     this.masterRepositoryIds.clear();
     this.snapshotCaseKeyIndex = 0;
@@ -843,13 +843,13 @@ export class TestmoExportAnalyzer {
 export const analyzeTestmoExport = async (
   source: TestmoReadableSource,
   jobId: string,
-  prisma: DbClient | TxClient,
-  options?: Omit<TestmoExportAnalyzerOptionsWithStaging, "jobId" | "prisma">
+  db: DbClient | TxClient,
+  options?: Omit<TestmoExportAnalyzerOptionsWithStaging, "jobId" | "db">
 ): Promise<TestmoExportSummary> => {
   const analyzer = new TestmoExportAnalyzer();
   return analyzer.analyze(source, {
     ...options,
     jobId,
-    prisma,
+    db,
   });
 };

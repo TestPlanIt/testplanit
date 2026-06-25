@@ -19,7 +19,7 @@ const mockExecuteRaw = vi.fn();
 const mockCaptureAuditEvent = vi.fn();
 const mockIsMultiTenantMode = vi.fn();
 const mockGetAllTenantIds = vi.fn();
-const mockGetTenantPrismaClient = vi.fn();
+const mockGetTenantDbClient = vi.fn();
 const mockDisconnectAllTenantClients = vi.fn();
 
 vi.mock("../lib/rawDb", () => ({
@@ -36,7 +36,7 @@ vi.mock("../lib/multiTenantDb", () => ({
   isMultiTenantMode: () => mockIsMultiTenantMode(),
   getAllTenantIds: () => mockGetAllTenantIds(),
   getTenantDbClient: (tenantId: string) =>
-    mockGetTenantPrismaClient(tenantId),
+    mockGetTenantDbClient(tenantId),
   disconnectAllTenantClients: () => mockDisconnectAllTenantClients(),
 }));
 
@@ -96,7 +96,7 @@ describe("workers/dataChangeLogRetentionWorker.purgeAllTenantsOnce", () => {
     mockCaptureAuditEvent.mockResolvedValue(undefined);
     mockIsMultiTenantMode.mockReset();
     mockGetAllTenantIds.mockReset();
-    mockGetTenantPrismaClient.mockReset();
+    mockGetTenantDbClient.mockReset();
     mockDisconnectAllTenantClients.mockReset();
     mockDisconnectAllTenantClients.mockResolvedValue(undefined);
   });
@@ -114,7 +114,7 @@ describe("workers/dataChangeLogRetentionWorker.purgeAllTenantsOnce", () => {
 
     expect(results).toHaveLength(1);
     expect(mockExecuteRaw).toHaveBeenCalled();
-    expect(mockGetTenantPrismaClient).not.toHaveBeenCalled();
+    expect(mockGetTenantDbClient).not.toHaveBeenCalled();
     expect(mockCaptureAuditEvent).toHaveBeenCalledTimes(1);
     expect(mockCaptureAuditEvent.mock.calls[0][0].tenantId).toBeUndefined();
   });
@@ -124,7 +124,7 @@ describe("workers/dataChangeLogRetentionWorker.purgeAllTenantsOnce", () => {
     mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
     const tenantAExecute = vi.fn().mockResolvedValue(0);
     const tenantBExecute = vi.fn().mockResolvedValue(0);
-    mockGetTenantPrismaClient.mockImplementation((id: string) =>
+    mockGetTenantDbClient.mockImplementation((id: string) =>
       id === "tenant-a"
         ? { $executeRaw: tenantAExecute }
         : { $executeRaw: tenantBExecute }
@@ -145,7 +145,7 @@ describe("workers/dataChangeLogRetentionWorker.purgeAllTenantsOnce", () => {
     mockIsMultiTenantMode.mockReturnValue(true);
     mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
     const tenantBExecute = vi.fn().mockResolvedValue(0);
-    mockGetTenantPrismaClient.mockImplementation((id: string) => {
+    mockGetTenantDbClient.mockImplementation((id: string) => {
       if (id === "tenant-a") throw new Error("tenant-a config missing");
       return { $executeRaw: tenantBExecute };
     });
@@ -174,7 +174,7 @@ describe("workers/dataChangeLogRetentionWorker.purgeAllTenantsOnce", () => {
   it("multi-tenant mode: disconnects all tenant clients after the pass", async () => {
     mockIsMultiTenantMode.mockReturnValue(true);
     mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
-    mockGetTenantPrismaClient.mockImplementation(() => ({
+    mockGetTenantDbClient.mockImplementation(() => ({
       $executeRaw: vi.fn().mockResolvedValue(0),
     }));
 
@@ -186,7 +186,7 @@ describe("workers/dataChangeLogRetentionWorker.purgeAllTenantsOnce", () => {
   it("multi-tenant mode: disconnect still runs even when a tenant errors mid-pass", async () => {
     mockIsMultiTenantMode.mockReturnValue(true);
     mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
-    mockGetTenantPrismaClient.mockImplementation((id: string) => {
+    mockGetTenantDbClient.mockImplementation((id: string) => {
       if (id === "tenant-a") throw new Error("boom");
       return { $executeRaw: vi.fn().mockResolvedValue(0) };
     });

@@ -89,9 +89,9 @@ test.describe("Azure DevOps inbound webhook — admin form + raw-POST coverage",
 
     // ADO does not reveal a plaintext secret; resolve the token via Prisma so
     // the raw-POST specs below can target the receiver directly.
-    const prisma = createRawDbClient();
+    const db = createRawDbClient();
     try {
-      const config = await prisma.webhookConfig.findFirst({
+      const config = await db.webhookConfig.findFirst({
         where: {
           projectId,
           adapterType: "AZURE_DEVOPS",
@@ -103,7 +103,7 @@ test.describe("Azure DevOps inbound webhook — admin form + raw-POST coverage",
       configId = config!.id;
       configToken = config!.token;
     } finally {
-      await prisma.$disconnect();
+      await db.$disconnect();
     }
 
     await test.step("Run self-test twice and confirm synthetic then duplicate outcomes", async () => {
@@ -141,14 +141,14 @@ test.describe("Azure DevOps inbound webhook — admin form + raw-POST coverage",
       expect(response.status()).toBe(401);
     });
 
-    const prisma = createRawDbClient();
+    const db = createRawDbClient();
     try {
-      const mismatchRows = await prisma.webhookDelivery.findMany({
+      const mismatchRows = await db.webhookDelivery.findMany({
         where: { webhookConfigId: configId, error: "auth-mismatch" },
       });
       expect(mismatchRows).toHaveLength(0);
     } finally {
-      await prisma.$disconnect();
+      await db.$disconnect();
     }
   });
 
@@ -174,14 +174,14 @@ test.describe("Azure DevOps inbound webhook — admin form + raw-POST coverage",
       expect(response.status()).toBe(200);
     });
 
-    const prisma = createRawDbClient();
+    const db = createRawDbClient();
     try {
-      const deliveries = await prisma.webhookDelivery.findMany({
+      const deliveries = await db.webhookDelivery.findMany({
         where: { webhookConfigId: configId, error: "no_handler" },
       });
       expect(deliveries.length).toBeGreaterThanOrEqual(1);
     } finally {
-      await prisma.$disconnect();
+      await db.$disconnect();
     }
   });
 

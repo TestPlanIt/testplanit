@@ -1,12 +1,12 @@
 import { createRawDbClient } from "~/lib/rawDbClient";
 
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 async function migrateIntegrationProjects() {
   console.log("Starting IntegrationProject migration...");
 
-  const integrations = await prisma.projectIntegration.findMany({
+  const integrations = await db.projectIntegration.findMany({
     where: { isActive: true },
   });
 
@@ -31,7 +31,7 @@ async function migrateIntegrationProjects() {
     }
 
     // Check if already migrated (idempotent)
-    const existing = await prisma.integrationProject.findFirst({
+    const existing = await db.integrationProject.findFirst({
       where: {
         projectIntegrationId: pi.id,
         externalProjectId: String(externalProjectId),
@@ -47,7 +47,7 @@ async function migrateIntegrationProjects() {
     }
 
     try {
-      await prisma.integrationProject.create({
+      await db.integrationProject.create({
         data: {
           projectIntegrationId: pi.id,
           externalProjectId: String(externalProjectId),
@@ -84,5 +84,5 @@ migrateIntegrationProjects()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await db.$disconnect();
   });

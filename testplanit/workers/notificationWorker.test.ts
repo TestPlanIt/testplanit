@@ -1,8 +1,8 @@
 import { Job } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Create mock prisma instance
-const mockPrisma = {
+// Create mock db instance
+const mockDb = {
   notification: {
     create: vi.fn(),
     findMany: vi.fn(),
@@ -33,9 +33,9 @@ vi.mock("../lib/valkey", () => ({
   default: null,
 }));
 
-// Mock the multiTenantDb module to return our mock prisma client
+// Mock the multiTenantDb module to return our mock db client
 vi.mock("../lib/multiTenantDb", () => ({
-  getDbClientForJob: vi.fn(() => mockPrisma),
+  getDbClientForJob: vi.fn(() => mockDb),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -64,14 +64,14 @@ describe("NotificationWorker", () => {
         ...jobData,
       };
 
-      mockPrisma.userPreferences.findUnique.mockResolvedValue({
+      mockDb.userPreferences.findUnique.mockResolvedValue({
         notificationMode: "IN_APP_EMAIL_IMMEDIATE",
         emailNotifications: true,
       });
-      mockPrisma.appConfig.findUnique.mockResolvedValue({
+      mockDb.appConfig.findUnique.mockResolvedValue({
         value: { defaultMode: "IN_APP" },
       });
-      mockPrisma.notification.create.mockResolvedValue(mockNotification);
+      mockDb.notification.create.mockResolvedValue(mockNotification);
 
       // Import after mocks are set up
       const { processor } = await import("./notificationWorker");
@@ -85,11 +85,11 @@ describe("NotificationWorker", () => {
       await processor(mockJob);
 
       // Check that user preferences were checked first
-      expect(mockPrisma.userPreferences.findUnique).toHaveBeenCalledWith({
+      expect(mockDb.userPreferences.findUnique).toHaveBeenCalledWith({
         where: { userId: jobData.userId },
       });
 
-      expect(mockPrisma.notification.create).toHaveBeenCalledWith({
+      expect(mockDb.notification.create).toHaveBeenCalledWith({
         data: {
           userId: jobData.userId,
           type: jobData.type,
@@ -119,11 +119,11 @@ describe("NotificationWorker", () => {
         message: "Test message",
       };
 
-      mockPrisma.notification.create.mockResolvedValue({ id: "notif-123" });
-      mockPrisma.userPreferences.findUnique.mockResolvedValue({
+      mockDb.notification.create.mockResolvedValue({ id: "notif-123" });
+      mockDb.userPreferences.findUnique.mockResolvedValue({
         notificationMode: "USE_GLOBAL",
       });
-      mockPrisma.appConfig.findUnique.mockResolvedValue({
+      mockDb.appConfig.findUnique.mockResolvedValue({
         value: { defaultMode: "IN_APP" },
       });
 
@@ -148,10 +148,10 @@ describe("NotificationWorker", () => {
         message: "Test message",
       };
 
-      mockPrisma.userPreferences.findUnique.mockResolvedValue({
+      mockDb.userPreferences.findUnique.mockResolvedValue({
         notificationMode: "NONE",
       });
-      mockPrisma.appConfig.findUnique.mockResolvedValue({
+      mockDb.appConfig.findUnique.mockResolvedValue({
         value: { defaultMode: "IN_APP" },
       });
 
@@ -169,7 +169,7 @@ describe("NotificationWorker", () => {
 
       await processor(mockJob);
 
-      expect(mockPrisma.notification.create).not.toHaveBeenCalled();
+      expect(mockDb.notification.create).not.toHaveBeenCalled();
       expect(consoleLogSpy).toHaveBeenCalledWith(
         "Skipping notification for user user-123 - notifications disabled"
       );
@@ -187,13 +187,13 @@ describe("NotificationWorker", () => {
 
       const error = new Error("Database error");
 
-      mockPrisma.userPreferences.findUnique.mockResolvedValue({
+      mockDb.userPreferences.findUnique.mockResolvedValue({
         notificationMode: "IN_APP",
       });
-      mockPrisma.appConfig.findUnique.mockResolvedValue({
+      mockDb.appConfig.findUnique.mockResolvedValue({
         value: { defaultMode: "IN_APP" },
       });
-      mockPrisma.notification.create.mockRejectedValue(error);
+      mockDb.notification.create.mockRejectedValue(error);
 
       const consoleErrorSpy = vi
         .spyOn(console, "error")
@@ -246,11 +246,11 @@ describe("NotificationWorker", () => {
         },
       ];
 
-      mockPrisma.appConfig.findUnique.mockResolvedValue({
+      mockDb.appConfig.findUnique.mockResolvedValue({
         value: { defaultMode: "IN_APP" },
       });
-      mockPrisma.userPreferences.findMany.mockResolvedValue(mockUsers);
-      mockPrisma.notification.findMany.mockResolvedValue(mockNotifications);
+      mockDb.userPreferences.findMany.mockResolvedValue(mockUsers);
+      mockDb.notification.findMany.mockResolvedValue(mockNotifications);
 
       const { processor } = await import("./notificationWorker");
 
@@ -262,7 +262,7 @@ describe("NotificationWorker", () => {
 
       await processor(mockJob);
 
-      expect(mockPrisma.userPreferences.findMany).toHaveBeenCalledWith({
+      expect(mockDb.userPreferences.findMany).toHaveBeenCalledWith({
         where: {
           OR: [
             { notificationMode: "IN_APP_EMAIL_DAILY" },
@@ -275,7 +275,7 @@ describe("NotificationWorker", () => {
         include: { user: true },
       });
 
-      expect(mockPrisma.notification.findMany).toHaveBeenCalledWith({
+      expect(mockDb.notification.findMany).toHaveBeenCalledWith({
         where: {
           userId: "user-123",
           isRead: false,
@@ -308,11 +308,11 @@ describe("NotificationWorker", () => {
         },
       ];
 
-      mockPrisma.appConfig.findUnique.mockResolvedValue({
+      mockDb.appConfig.findUnique.mockResolvedValue({
         value: { defaultMode: "IN_APP" },
       });
-      mockPrisma.userPreferences.findMany.mockResolvedValue(mockUsers);
-      mockPrisma.notification.findMany.mockResolvedValue([]);
+      mockDb.userPreferences.findMany.mockResolvedValue(mockUsers);
+      mockDb.notification.findMany.mockResolvedValue([]);
 
       const { processor } = await import("./notificationWorker");
 

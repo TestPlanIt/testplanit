@@ -65,7 +65,7 @@ type EsHit = {
 
 export class DuplicateScanService {
   constructor(
-    private prisma: DbClient,
+    private db: DbClient,
     private esClient: Client | null
   ) {}
 

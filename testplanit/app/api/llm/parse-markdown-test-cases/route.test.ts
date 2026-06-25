@@ -8,16 +8,16 @@ const {
   mockResolveIntegration,
   mockChat,
   mockPromptResolverResolve,
-  mockPrismaProjectsFindFirst,
-  mockPrismaLlmProviderConfigFindFirst,
+  mockDbProjectsFindFirst,
+  mockDbLlmProviderConfigFindFirst,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockLlmManagerGetInstance: vi.fn(),
   mockResolveIntegration: vi.fn(),
   mockChat: vi.fn(),
   mockPromptResolverResolve: vi.fn(),
-  mockPrismaProjectsFindFirst: vi.fn(),
-  mockPrismaLlmProviderConfigFindFirst: vi.fn(),
+  mockDbProjectsFindFirst: vi.fn(),
+  mockDbLlmProviderConfigFindFirst: vi.fn(),
 }));
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
@@ -45,11 +45,11 @@ vi.mock("@/lib/llm/services/prompt-resolver.service", () => ({
 vi.mock("@/lib/db", () => ({
   baseDb: {
     projects: {
-      findFirst: (...args: any[]) => mockPrismaProjectsFindFirst(...args),
+      findFirst: (...args: any[]) => mockDbProjectsFindFirst(...args),
     },
     llmProviderConfig: {
       findFirst: (...args: any[]) =>
-        mockPrismaLlmProviderConfigFindFirst(...args),
+        mockDbLlmProviderConfigFindFirst(...args),
     },
   },
 }));
@@ -95,7 +95,7 @@ describe("POST /api/llm/parse-markdown-test-cases", () => {
 
     mockLlmManagerGetInstance.mockReturnValue(mockManager);
 
-    mockPrismaProjectsFindFirst.mockResolvedValue({
+    mockDbProjectsFindFirst.mockResolvedValue({
       id: 1,
       projectLlmIntegrations: [],
     });
@@ -108,7 +108,7 @@ describe("POST /api/llm/parse-markdown-test-cases", () => {
       maxOutputTokens: 2048,
     });
 
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 8192,
@@ -128,7 +128,7 @@ describe("POST /api/llm/parse-markdown-test-cases", () => {
   // ── Test TOKEN-03-a: sends maxTokens from llmProviderConfig.defaultMaxTokens ─
 
   it("TOKEN-03-a: sends maxTokens from llmProviderConfig.defaultMaxTokens (no Math.max floor)", async () => {
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 8192,
@@ -146,7 +146,7 @@ describe("POST /api/llm/parse-markdown-test-cases", () => {
   // ── Test TOKEN-03-b: falls back to resolvedPrompt.maxOutputTokens ──────────
 
   it("TOKEN-03-b: falls back to resolvedPrompt.maxOutputTokens when llmProviderConfig is null", async () => {
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue(null);
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue(null);
 
     mockPromptResolverResolve.mockResolvedValue({
       systemPrompt: "System prompt",
@@ -167,7 +167,7 @@ describe("POST /api/llm/parse-markdown-test-cases", () => {
   it("TOKEN-06-a: returns 422 with error message when document exceeds context window budget (before LLM call)", async () => {
     // Tiny budget: maxTokensPerRequest=100, contentBudget ≈ floor(100*0.65) - systemPromptTokens
     // markdown: "A".repeat(10000) = ~2500 tokens >> budget
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 100,
@@ -192,7 +192,7 @@ describe("POST /api/llm/parse-markdown-test-cases", () => {
 
   it("TOKEN-06-b: calls manager.chat() normally when document is within budget", async () => {
     // Large budget — small document fits easily
-    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+    mockDbLlmProviderConfigFindFirst.mockResolvedValue({
       id: 1,
       llmIntegrationId: 42,
       maxTokensPerRequest: 128000,

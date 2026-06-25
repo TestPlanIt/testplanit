@@ -5,7 +5,7 @@ const mockFanout = vi.fn();
 const mockGetQueue = vi.fn();
 const mockIsMultiTenantMode = vi.fn();
 const mockGetAllTenantIds = vi.fn();
-const mockGetTenantPrismaClient = vi.fn();
+const mockGetTenantDbClient = vi.fn();
 
 vi.mock("../lib/db", () => ({
   baseDb: { __mock: "baseDb" },
@@ -25,7 +25,7 @@ vi.mock("../lib/multiTenantDb", () => ({
   isMultiTenantMode: () => mockIsMultiTenantMode(),
   getAllTenantIds: () => mockGetAllTenantIds(),
   getTenantDbClient: (tenantId: string) =>
-    mockGetTenantPrismaClient(tenantId),
+    mockGetTenantDbClient(tenantId),
   disconnectAllTenantClients: vi.fn(),
 }));
 
@@ -50,7 +50,7 @@ describe("webhookOutboxWorker.pollOnce", () => {
     mockGetQueue.mockReset();
     mockIsMultiTenantMode.mockReset();
     mockGetAllTenantIds.mockReset();
-    mockGetTenantPrismaClient.mockReset();
+    mockGetTenantDbClient.mockReset();
     mockIsMultiTenantMode.mockReturnValue(false);
   });
 
@@ -215,7 +215,7 @@ describe("webhookOutboxWorker.pollAllTenantsOnce", () => {
     mockGetQueue.mockReset();
     mockIsMultiTenantMode.mockReset();
     mockGetAllTenantIds.mockReset();
-    mockGetTenantPrismaClient.mockReset();
+    mockGetTenantDbClient.mockReset();
   });
 
   afterEach(() => {
@@ -232,16 +232,16 @@ describe("webhookOutboxWorker.pollAllTenantsOnce", () => {
     expect(n).toBe(0);
     expect(mockClaim).toHaveBeenCalledTimes(1);
     expect(mockClaim).toHaveBeenCalledWith({ __mock: "baseDb" }, 100);
-    expect(mockGetTenantPrismaClient).not.toHaveBeenCalled();
+    expect(mockGetTenantDbClient).not.toHaveBeenCalled();
   });
 
   it("multi-tenant mode: polls every tenant with its own baseDb client and stamps tenantId on each enqueued job", async () => {
     mockIsMultiTenantMode.mockReturnValue(true);
     mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
-    const tenantAPrisma = { __mock: "tenantA" };
-    const tenantBPrisma = { __mock: "tenantB" };
-    mockGetTenantPrismaClient.mockImplementation((id: string) =>
-      id === "tenant-a" ? tenantAPrisma : tenantBPrisma
+    const tenantADb = { __mock: "tenantA" };
+    const tenantBDb = { __mock: "tenantB" };
+    mockGetTenantDbClient.mockImplementation((id: string) =>
+      id === "tenant-a" ? tenantADb : tenantBDb
     );
     // Each tenant claims one row
     mockClaim
@@ -254,11 +254,11 @@ describe("webhookOutboxWorker.pollAllTenantsOnce", () => {
     const n = await pollAllTenantsOnce();
 
     expect(n).toBe(2);
-    expect(mockGetTenantPrismaClient).toHaveBeenCalledWith("tenant-a");
-    expect(mockGetTenantPrismaClient).toHaveBeenCalledWith("tenant-b");
+    expect(mockGetTenantDbClient).toHaveBeenCalledWith("tenant-a");
+    expect(mockGetTenantDbClient).toHaveBeenCalledWith("tenant-b");
     // claim was called with each tenant's client
-    expect(mockClaim).toHaveBeenNthCalledWith(1, tenantAPrisma, 100);
-    expect(mockClaim).toHaveBeenNthCalledWith(2, tenantBPrisma, 100);
+    expect(mockClaim).toHaveBeenNthCalledWith(1, tenantADb, 100);
+    expect(mockClaim).toHaveBeenNthCalledWith(2, tenantBDb, 100);
     // dispatch jobs are stamped with the right tenantId
     expect(addSpy).toHaveBeenCalledTimes(2);
     expect(addSpy.mock.calls[0][1]).toMatchObject({
@@ -274,7 +274,7 @@ describe("webhookOutboxWorker.pollAllTenantsOnce", () => {
   it("multi-tenant mode: a tenant-level error does NOT abort other tenants", async () => {
     mockIsMultiTenantMode.mockReturnValue(true);
     mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
-    mockGetTenantPrismaClient.mockImplementation((id: string) => {
+    mockGetTenantDbClient.mockImplementation((id: string) => {
       if (id === "tenant-a") {
         throw new Error("tenant-a config missing");
       }

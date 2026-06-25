@@ -32,9 +32,9 @@ vi.mock("bullmq", async (importOriginal) => {
 
 vi.mock("../lib/valkey", () => ({ default: { status: "ready" } }));
 
-// ─── Mock prisma (tenant-scoped client returned by getDbClientForJob) ─────
+// ─── Mock db (tenant-scoped client returned by getDbClientForJob) ─────
 
-const mockPrisma = {
+const mockDb = {
   steps: {
     count: vi.fn(),
     createMany: vi.fn(),
@@ -46,7 +46,7 @@ const mockPrisma = {
 };
 
 vi.mock("../lib/multiTenantDb", () => ({
-  getDbClientForJob: vi.fn(() => mockPrisma),
+  getDbClientForJob: vi.fn(() => mockDb),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -126,10 +126,10 @@ describe("deriveCaseStepsWorker", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    mockPrisma.steps.count.mockResolvedValue(0);
-    mockPrisma.steps.createMany.mockResolvedValue({ count: 2 });
-    mockPrisma.steps.updateMany.mockResolvedValue({ count: 3 });
-    mockPrisma.testRuns.findUnique.mockResolvedValue({ name: "CI Run 42" });
+    mockDb.steps.count.mockResolvedValue(0);
+    mockDb.steps.createMany.mockResolvedValue({ count: 2 });
+    mockDb.steps.updateMany.mockResolvedValue({ count: 3 });
+    mockDb.testRuns.findUnique.mockResolvedValue({ name: "CI Run 42" });
     mockTipTapDoc.mockImplementation((t: string) => `tiptap:${t}`);
   });
 
@@ -145,7 +145,7 @@ describe("deriveCaseStepsWorker", () => {
       10
     );
     expect(mockChat).not.toHaveBeenCalled();
-    expect(mockPrisma.steps.createMany).not.toHaveBeenCalled();
+    expect(mockDb.steps.createMany).not.toHaveBeenCalled();
     expect(mockCreateNotification).not.toHaveBeenCalled();
   });
 
@@ -157,8 +157,8 @@ describe("deriveCaseStepsWorker", () => {
     await processor(makeJob());
 
     expect(mockChat).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.steps.createMany).toHaveBeenCalledTimes(1);
-    const createArg = mockPrisma.steps.createMany.mock.calls[0][0];
+    expect(mockDb.steps.createMany).toHaveBeenCalledTimes(1);
+    const createArg = mockDb.steps.createMany.mock.calls[0][0];
     expect(createArg.data).toHaveLength(2);
     expect(createArg.data[0]).toMatchObject({
       testCaseId: 1,
@@ -222,43 +222,43 @@ describe("deriveCaseStepsWorker", () => {
   it("re-checks CORE-01 and skips a case that gained steps after import (D-09)", async () => {
     mockResolveIntegration.mockResolvedValue({ integrationId: 5 });
     mockChat.mockResolvedValue({ content: STEPS_JSON });
-    mockPrisma.steps.count.mockResolvedValue(3); // no longer stepless
+    mockDb.steps.count.mockResolvedValue(3); // no longer stepless
 
     const { processor } = await loadWorker();
     await processor(makeJob());
 
-    expect(mockPrisma.steps.createMany).not.toHaveBeenCalled();
+    expect(mockDb.steps.createMany).not.toHaveBeenCalled();
     expect(mockCreateNotification).not.toHaveBeenCalled();
   });
 
   it("overwrite:true re-derives a case that already has steps (soft-delete + rewrite)", async () => {
     mockResolveIntegration.mockResolvedValue({ integrationId: 5 });
     mockChat.mockResolvedValue({ content: STEPS_JSON });
-    mockPrisma.steps.count.mockResolvedValue(4); // already has steps
+    mockDb.steps.count.mockResolvedValue(4); // already has steps
 
     const { processor } = await loadWorker();
     await processor(makeJob({ overwrite: true } as never));
 
     // existing steps soft-deleted, then the re-derived set written
-    expect(mockPrisma.steps.updateMany).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.steps.updateMany.mock.calls[0][0]).toMatchObject({
+    expect(mockDb.steps.updateMany).toHaveBeenCalledTimes(1);
+    expect(mockDb.steps.updateMany.mock.calls[0][0]).toMatchObject({
       where: { testCaseId: 1, isDeleted: false },
       data: { isDeleted: true },
     });
-    expect(mockPrisma.steps.createMany).toHaveBeenCalledTimes(1);
+    expect(mockDb.steps.createMany).toHaveBeenCalledTimes(1);
     expect(mockCreateNotification).toHaveBeenCalledTimes(1);
   });
 
   it("overwrite:true never clears existing steps when the LLM yields zero rows", async () => {
     mockResolveIntegration.mockResolvedValue({ integrationId: 5 });
     mockChat.mockResolvedValue({ content: "no array here" }); // 0 parsed rows
-    mockPrisma.steps.count.mockResolvedValue(4);
+    mockDb.steps.count.mockResolvedValue(4);
 
     const { processor } = await loadWorker();
     await processor(makeJob({ overwrite: true } as never));
 
-    expect(mockPrisma.steps.updateMany).not.toHaveBeenCalled();
-    expect(mockPrisma.steps.createMany).not.toHaveBeenCalled();
+    expect(mockDb.steps.updateMany).not.toHaveBeenCalled();
+    expect(mockDb.steps.createMany).not.toHaveBeenCalled();
     expect(mockCreateNotification).not.toHaveBeenCalled();
   });
 
@@ -269,7 +269,7 @@ describe("deriveCaseStepsWorker", () => {
     const { processor } = await loadWorker();
     await processor(makeJob());
 
-    expect(mockPrisma.steps.createMany).not.toHaveBeenCalled();
+    expect(mockDb.steps.createMany).not.toHaveBeenCalled();
     expect(mockCreateNotification).not.toHaveBeenCalled();
   });
 
@@ -290,8 +290,8 @@ describe("deriveCaseStepsWorker", () => {
     );
 
     expect(mockChat).toHaveBeenCalledTimes(2);
-    expect(mockPrisma.steps.createMany).toHaveBeenCalledTimes(1);
-    const createArg = mockPrisma.steps.createMany.mock.calls[0][0];
+    expect(mockDb.steps.createMany).toHaveBeenCalledTimes(1);
+    const createArg = mockDb.steps.createMany.mock.calls[0][0];
     expect(createArg.data[0].testCaseId).toBe(2);
     expect(mockCreateNotification).toHaveBeenCalledTimes(1);
     expect(mockCreateNotification.mock.calls[0][0].data.derivedCount).toBe(1);
@@ -303,7 +303,7 @@ describe("deriveCaseStepsWorker", () => {
 
     const { processor } = await loadWorker();
     await expect(processor(makeJob())).resolves.toBeUndefined();
-    expect(mockPrisma.steps.createMany).not.toHaveBeenCalled();
+    expect(mockDb.steps.createMany).not.toHaveBeenCalled();
   });
 });
 

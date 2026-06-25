@@ -60,9 +60,9 @@ vi.mock("../lib/queueNames", () => ({
   MAGIC_SELECT_QUEUE_NAME: "test-magic-select-queue",
 }));
 
-// ─── Mock prisma ─────────────────────────────────────────────────────────────
+// ─── Mock db ─────────────────────────────────────────────────────────────
 
-const mockPrisma: any = {
+const mockDb: any = {
   repositoryCases: {
     findMany: (...args: any[]) => mockFindManyRepositoryCases(...args),
     count: (...args: any[]) => mockCountRepositoryCases(...args),
@@ -88,7 +88,7 @@ const mockPrisma: any = {
 };
 
 vi.mock("../lib/multiTenantDb", () => ({
-  getDbClientForJob: vi.fn(() => mockPrisma),
+  getDbClientForJob: vi.fn(() => mockDb),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),

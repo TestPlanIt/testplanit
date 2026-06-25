@@ -40,7 +40,7 @@ vi.mock("~/lib/matrix/matrixAggregation", async () => {
 });
 
 vi.mock("~/lib/db", () => ({
-  baseDb: { __marker: "rawPrisma" },
+  baseDb: { __marker: "rawDb" },
 }));
 
 import { getServerSession } from "next-auth";
@@ -281,7 +281,7 @@ describe("POST /api/projects/[projectId]/matrix/aggregate", () => {
     const [req, ctx] = buildPost("42", { filters: {} });
     await POST(req, ctx);
     const args = runMatrixAggregationMock.mock.calls[0];
-    expect(args[0]).toEqual({ __marker: "rawPrisma" });
+    expect(args[0]).toEqual({ __marker: "rawDb" });
     expect(args[1]).toBe(42);
   });
 

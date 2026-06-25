@@ -1,5 +1,5 @@
 import type { Sessions } from "~/zenstack/models";
-import { rawDb as defaultPrisma } from "~/lib/rawDb";
+import { rawDb as defaultDb } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
@@ -138,7 +138,7 @@ export async function syncSessionToElasticsearch(
   }
 
   try {
-    const session = await defaultPrisma.sessions.findUnique({
+    const session = await defaultDb.sessions.findUnique({
       where: { id: sessionId },
       include: {
         project: true,

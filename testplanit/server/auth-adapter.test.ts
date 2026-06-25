@@ -1,5 +1,5 @@
 /**
- * Unit tests for createCustomPrismaAdapter.createUser.
+ * Unit tests for createCustomDbAdapter.createUser.
  *
  * Coverage surface (NextAuth SSO/OAuth sign-in flow):
  *
@@ -9,10 +9,10 @@
  *   D. Existing row with conflicting externalId -> throws English error
  *   E. Source-shape grep sanity (one create / one update / no scim* column writes)
  *
- * Mock strategy: the adapter takes a PrismaClient as a parameter, so we pass a
+ * Mock strategy: the adapter takes a DbClient as a parameter, so we pass a
  * plain object literal whose user/registrationSettings/roles members are vi.fn()
- * mocks. No vi.mock() is needed for the prisma module; this matches the adapter
- * factory's actual call site (auth.ts: createCustomPrismaAdapter(db)).
+ * mocks. No vi.mock() is needed for the db module; this matches the adapter
+ * factory's actual call site (auth.ts: createCustomDbAdapter(db)).
  *
  * NotificationService is module-mocked because the adapter imports it directly.
  */
@@ -41,7 +41,7 @@ vi.mock("bcrypt", () => ({
 }));
 
 import { NotificationService } from "~/lib/services/notificationService";
-import { createCustomPrismaAdapter } from "./auth-adapter";
+import { createCustomDbAdapter } from "./auth-adapter";
 
 type Mocks = {
   user: {
@@ -55,7 +55,7 @@ type Mocks = {
   account: { create: Mock };
 };
 
-function makePrismaMocks(): Mocks {
+function makeDbMocks(): Mocks {
   return {
     user: {
       findFirst: vi.fn(),
@@ -70,9 +70,9 @@ function makePrismaMocks(): Mocks {
 }
 
 function makeAdapter(mocks: Mocks) {
-  // Cast through unknown because the adapter typing expects a full PrismaClient
+  // Cast through unknown because the adapter typing expects a full DbClient
   // surface; tests only stub the members the createUser path touches.
-  return createCustomPrismaAdapter(mocks as unknown as never);
+  return createCustomDbAdapter(mocks as unknown as never);
 }
 
 const notify =
@@ -88,7 +88,7 @@ afterEach(() => {
 
 describe("createUser - no existing row (fresh create path)", () => {
   it("A1: inserts a new user with SSO authMethod, default access, random password, userPreferences", async () => {
-    const mocks = makePrismaMocks();
+    const mocks = makeDbMocks();
     mocks.user.findFirst.mockResolvedValue(null);
     mocks.registrationSettings.findFirst.mockResolvedValue({
       defaultAccess: "USER",
@@ -132,7 +132,7 @@ describe("createUser - no existing row (fresh create path)", () => {
   });
 
   it("A2: fires NotificationService.createUserRegistrationNotification with 'sso'", async () => {
-    const mocks = makePrismaMocks();
+    const mocks = makeDbMocks();
     mocks.user.findFirst.mockResolvedValue(null);
     mocks.registrationSettings.findFirst.mockResolvedValue({
       defaultAccess: "USER",
@@ -167,7 +167,7 @@ describe("createUser - no existing row (fresh create path)", () => {
 
 describe("createUser - JIT-link branch (existing row, linkable)", () => {
   it("B1: links existing row when externalId is null and authMethod is null (admin-imported / pre-SCIM row)", async () => {
-    const mocks = makePrismaMocks();
+    const mocks = makeDbMocks();
     mocks.user.findFirst.mockResolvedValue({
       id: "existing-id",
       email: "existing@example.com",
@@ -209,7 +209,7 @@ describe("createUser - JIT-link branch (existing row, linkable)", () => {
   });
 
   it("B2: does NOT call NotificationService on the bind path", async () => {
-    const mocks = makePrismaMocks();
+    const mocks = makeDbMocks();
     mocks.user.findFirst.mockResolvedValue({
       id: "existing-id",
       email: "existing@example.com",
@@ -241,7 +241,7 @@ describe("createUser - JIT-link branch (existing row, linkable)", () => {
   });
 
   it("B3: link payload does NOT include scim* / access / roleId / isActive", async () => {
-    const mocks = makePrismaMocks();
+    const mocks = makeDbMocks();
     mocks.user.findFirst.mockResolvedValue({
       id: "existing-id",
       email: "existing@example.com",
@@ -282,7 +282,7 @@ describe("createUser - JIT-link branch (existing row, linkable)", () => {
   });
 
   it("B4: case-insensitive email match — user.email='Existing@Example.com' matches existing row", async () => {
-    const mocks = makePrismaMocks();
+    const mocks = makeDbMocks();
     mocks.user.findFirst.mockResolvedValue({
       id: "existing-id",
       email: "existing@example.com",
@@ -321,7 +321,7 @@ describe("createUser - JIT-link branch (existing row, linkable)", () => {
 
 describe("createUser - conservative authMethod (defense for credential rows)", () => {
   it("C1: existing row with authMethod=INTERNAL keeps authMethod (sets externalId + name only)", async () => {
-    const mocks = makePrismaMocks();
+    const mocks = makeDbMocks();
     mocks.user.findFirst.mockResolvedValue({
       id: "internal-id",
       email: "internal@example.com",
@@ -358,7 +358,7 @@ describe("createUser - conservative authMethod (defense for credential rows)", (
   });
 
   it("C2: existing row with authMethod=BOTH keeps authMethod", async () => {
-    const mocks = makePrismaMocks();
+    const mocks = makeDbMocks();
     mocks.user.findFirst.mockResolvedValue({
       id: "both-id",
       email: "both@example.com",
@@ -391,7 +391,7 @@ describe("createUser - conservative authMethod (defense for credential rows)", (
   });
 
   it("C3: existing row with authMethod=SCIM gets authMethod=SSO (SCIM -> SSO transition)", async () => {
-    const mocks = makePrismaMocks();
+    const mocks = makeDbMocks();
     mocks.user.findFirst.mockResolvedValue({
       id: "scim-id",
       email: "scim@example.com",
@@ -424,7 +424,7 @@ describe("createUser - conservative authMethod (defense for credential rows)", (
   });
 
   it("C4: existing row with authMethod=null gets authMethod=SSO", async () => {
-    const mocks = makePrismaMocks();
+    const mocks = makeDbMocks();
     mocks.user.findFirst.mockResolvedValue({
       id: "null-id",
       email: "null@example.com",
@@ -459,7 +459,7 @@ describe("createUser - conservative authMethod (defense for credential rows)", (
 
 describe("createUser - conflicting externalId", () => {
   it("D1: existing row with different externalId throws English error mentioning 'external identity conflict'", async () => {
-    const mocks = makePrismaMocks();
+    const mocks = makeDbMocks();
     mocks.user.findFirst.mockResolvedValue({
       id: "conflict-id",
       email: "conflict@example.com",
@@ -493,12 +493,12 @@ describe("createUser - source-shape sanity", () => {
     "utf-8"
   );
 
-  it("E1: exactly one prisma.user.create call in the file", () => {
+  it("E1: exactly one db.user.create call in the file", () => {
     const matches = adapterSource.match(/\.user\.create\(/g) || [];
     expect(matches).toHaveLength(1);
   });
 
-  it("E2: exactly two prisma.user.update calls in the file", () => {
+  it("E2: exactly two db.user.update calls in the file", () => {
     // One in the base adapter's generic updateUser, and one in the createUser
     // override's existing-user link branch. Anything beyond these two would
     // signal an accidental extra user mutation in the sign-in path.

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Mock dependencies using vi.hoisted
 const {
   mockGetServerSession,
-  mockPrisma,
+  mockDb,
   mockVerifyTOTP,
   mockDecryptSecret,
   mockVerifyBackupCode,
@@ -15,7 +15,7 @@ const {
   mockGenerateBackupCodes,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
-  mockPrisma: {
+  mockDb: {
     registrationSettings: {
       findFirst: vi.fn(),
     },
@@ -43,7 +43,7 @@ vi.mock("~/server/auth", () => ({
 }));
 
 vi.mock("~/lib/db", () => ({
-  baseDb: mockPrisma,
+  baseDb: mockDb,
 }));
 
 vi.mock("~/lib/two-factor", () => ({
@@ -108,7 +108,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return default settings when no registration settings exist", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue(null);
+      mockDb.registrationSettings.findFirst.mockResolvedValue(null);
 
       const response = await getSettings();
       const data = await response.json();
@@ -122,7 +122,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return actual settings when registration settings exist", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
         force2FAAllLogins: true,
         force2FANonSSO: false,
       });
@@ -139,7 +139,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 500 on database error", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.registrationSettings.findFirst.mockRejectedValue(
+      mockDb.registrationSettings.findFirst.mockRejectedValue(
         new Error("Database error")
       );
 
@@ -174,7 +174,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 403 when force2FAAllLogins is enabled", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
         force2FAAllLogins: true,
         force2FANonSSO: false,
       });
@@ -192,7 +192,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 403 when force2FANonSSO is enabled", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
         force2FAAllLogins: false,
         force2FANonSSO: true,
       });
@@ -210,7 +210,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 400 when no token or backup code provided", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue(null);
+      mockDb.registrationSettings.findFirst.mockResolvedValue(null);
 
       const response = await disableTwoFactor(createRequest({}));
       const data = await response.json();
@@ -221,8 +221,8 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 404 when user not found", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue(null);
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockDb.registrationSettings.findFirst.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(null);
 
       const response = await disableTwoFactor(
         createRequest({ token: "123456" })
@@ -235,8 +235,8 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 400 when 2FA is not enabled", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue(null);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue({
         twoFactorEnabled: false,
         twoFactorSecret: null,
         twoFactorBackupCodes: null,
@@ -253,8 +253,8 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 400 when verification fails", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue(null);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue({
         twoFactorEnabled: true,
         twoFactorSecret: "encrypted-secret",
         twoFactorBackupCodes: null,
@@ -273,15 +273,15 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should disable 2FA successfully with valid TOTP token", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue(null);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue({
         twoFactorEnabled: true,
         twoFactorSecret: "encrypted-secret",
         twoFactorBackupCodes: null,
       });
       mockDecryptSecret.mockReturnValue("decrypted-secret");
       mockVerifyTOTP.mockReturnValue(true);
-      mockPrisma.user.update.mockResolvedValue({});
+      mockDb.user.update.mockResolvedValue({});
 
       const response = await disableTwoFactor(
         createRequest({ token: "123456" })
@@ -290,7 +290,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockDb.user.update).toHaveBeenCalledWith({
         where: { id: "user-123" },
         data: {
           twoFactorEnabled: false,
@@ -302,8 +302,8 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should disable 2FA successfully with valid backup code", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue(null);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue({
         twoFactorEnabled: true,
         twoFactorSecret: "encrypted-secret",
         twoFactorBackupCodes: JSON.stringify([
@@ -370,7 +370,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 404 when user not found", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(null);
 
       const response = await verifySso(createRequest({ token: "123456" }));
       const data = await response.json();
@@ -381,7 +381,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 400 when 2FA is not enabled", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         id: "user-123",
         twoFactorEnabled: false,
         twoFactorSecret: null,
@@ -397,7 +397,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 400 when verification fails", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         id: "user-123",
         twoFactorEnabled: true,
         twoFactorSecret: "encrypted-secret",
@@ -415,7 +415,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should verify successfully with valid TOTP token", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         id: "user-123",
         twoFactorEnabled: true,
         twoFactorSecret: "encrypted-secret",
@@ -434,7 +434,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should verify with backup code and remove the used code", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         id: "user-123",
         twoFactorEnabled: true,
         twoFactorSecret: "encrypted-secret",
@@ -446,7 +446,7 @@ describe("Two-Factor Authentication API Routes", () => {
       mockDecryptSecret.mockReturnValue("decrypted-secret");
       mockVerifyTOTP.mockReturnValue(false);
       mockVerifyBackupCode.mockReturnValue(0); // Found at index 0
-      mockPrisma.user.update.mockResolvedValue({});
+      mockDb.user.update.mockResolvedValue({});
 
       const response = await verifySso(createRequest({ token: "ABCD1234" }));
       const data = await response.json();
@@ -454,7 +454,7 @@ describe("Two-Factor Authentication API Routes", () => {
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.usedBackupCode).toBe(true);
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockDb.user.update).toHaveBeenCalledWith({
         where: { id: "user-123" },
         data: { twoFactorBackupCodes: JSON.stringify(["hashed-code-2"]) },
       });
@@ -462,7 +462,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 500 on unexpected error", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockRejectedValue(new Error("Database error"));
+      mockDb.user.findUnique.mockRejectedValue(new Error("Database error"));
 
       const response = await verifySso(createRequest({ token: "123456" }));
       const data = await response.json();
@@ -487,7 +487,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 404 when user not found", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(null);
 
       const response = await setup(
         new NextRequest("http://localhost/api/auth/two-factor/setup")
@@ -500,7 +500,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 400 when 2FA is already enabled", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         email: "test@example.com",
         twoFactorEnabled: true,
       });
@@ -516,7 +516,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should generate and return QR code and secret", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         email: "test@example.com",
         twoFactorEnabled: false,
       });
@@ -525,7 +525,7 @@ describe("Two-Factor Authentication API Routes", () => {
         "data:image/png;base64,qrcode"
       );
       mockEncryptSecret.mockReturnValue("encrypted-secret");
-      mockPrisma.user.update.mockResolvedValue({});
+      mockDb.user.update.mockResolvedValue({});
 
       const response = await setup(
         new NextRequest("http://localhost/api/auth/two-factor/setup")
@@ -535,7 +535,7 @@ describe("Two-Factor Authentication API Routes", () => {
       expect(response.status).toBe(200);
       expect(data.secret).toBe("ABCDEFGHIJ123456");
       expect(data.qrCode).toBe("data:image/png;base64,qrcode");
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockDb.user.update).toHaveBeenCalledWith({
         where: { id: "user-123" },
         data: { twoFactorSecret: "encrypted-secret" },
       });
@@ -543,7 +543,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 500 on unexpected error", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockRejectedValue(new Error("Database error"));
+      mockDb.user.findUnique.mockRejectedValue(new Error("Database error"));
 
       const response = await setup(
         new NextRequest("http://localhost/api/auth/two-factor/setup")
@@ -586,7 +586,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 404 when user not found", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(null);
 
       const response = await enable(createRequest({ token: "123456" }));
       const data = await response.json();
@@ -597,7 +597,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 400 when 2FA is already enabled", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         twoFactorEnabled: true,
         twoFactorSecret: "encrypted-secret",
       });
@@ -611,7 +611,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 400 when setup has not been started", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         twoFactorEnabled: false,
         twoFactorSecret: null,
       });
@@ -625,7 +625,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 400 when verification code is invalid", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         twoFactorEnabled: false,
         twoFactorSecret: "encrypted-secret",
       });
@@ -641,7 +641,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should enable 2FA and return backup codes on success", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         twoFactorEnabled: false,
         twoFactorSecret: "encrypted-secret",
       });
@@ -651,7 +651,7 @@ describe("Two-Factor Authentication API Routes", () => {
         plainCodes: ["CODE1", "CODE2", "CODE3"],
         hashedCodes: ["hashed1", "hashed2", "hashed3"],
       });
-      mockPrisma.user.update.mockResolvedValue({});
+      mockDb.user.update.mockResolvedValue({});
 
       const response = await enable(createRequest({ token: "123456" }));
       const data = await response.json();
@@ -659,7 +659,7 @@ describe("Two-Factor Authentication API Routes", () => {
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.backupCodes).toEqual(["CODE1", "CODE2", "CODE3"]);
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockDb.user.update).toHaveBeenCalledWith({
         where: { id: "user-123" },
         data: {
           twoFactorEnabled: true,
@@ -674,7 +674,7 @@ describe("Two-Factor Authentication API Routes", () => {
 
     it("should return 500 on unexpected error", async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.user.findUnique.mockRejectedValue(new Error("Database error"));
+      mockDb.user.findUnique.mockRejectedValue(new Error("Database error"));
 
       const response = await enable(createRequest({ token: "123456" }));
       const data = await response.json();

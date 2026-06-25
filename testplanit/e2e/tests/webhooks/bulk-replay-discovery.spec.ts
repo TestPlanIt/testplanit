@@ -46,7 +46,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook bulk-replay discovery — outbound-only count via filter UI (M-02)", () => {
   let projectId: number;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
   let outboundConfigId: string;
   let inboundConfigId: string;
   const outboundDeliveryIds: string[] = [];
@@ -55,17 +55,17 @@ test.describe("Webhook bulk-replay discovery — outbound-only count via filter 
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Bulk Discovery ${uniqueId}`);
-    prisma = createRawDbClient();
+    db = createRawDbClient();
 
     // Seed outbound config + 5 failed delivery rows. Each OUTBOUND seed
     // produces a paired WebhookOutboxEvent so the replay service can locate
     // the original payload (mirrors the production dispatch.ts:267-281 shape).
-    const outbound = await seedOutboundConfig(prisma, {
+    const outbound = await seedOutboundConfig(db, {
       projectId,
       url: "https://example.com/M-02/outbound",
     });
     outboundConfigId = outbound.configId;
-    const outboundRows = await seedDeliveries(prisma, {
+    const outboundRows = await seedDeliveries(db, {
       webhookConfigId: outboundConfigId,
       direction: "OUTBOUND",
       projectId,
@@ -80,12 +80,12 @@ test.describe("Webhook bulk-replay discovery — outbound-only count via filter 
     // project. These are the foil — the admin can see them on the
     // Deliveries tab's unfiltered view, but the bulk-replay button must
     // never advertise them in its outbound-only count.
-    const inbound = await seedInboundConfig(prisma, {
+    const inbound = await seedInboundConfig(db, {
       projectId,
       adapterType: "GITHUB",
     });
     inboundConfigId = inbound.configId;
-    const inboundRows = await seedDeliveries(prisma, {
+    const inboundRows = await seedDeliveries(db, {
       webhookConfigId: inboundConfigId,
       direction: "INBOUND",
       adapterType: "GITHUB",
@@ -97,7 +97,7 @@ test.describe("Webhook bulk-replay discovery — outbound-only count via filter 
   });
 
   test.afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("admin filters Deliveries to status=failed + single outbound config + date range, button label reads OUTBOUND-only count, dialog confirms with same count", async ({
@@ -183,7 +183,7 @@ test.describe("Webhook bulk-replay discovery — outbound-only count via filter 
       //    have replays. (Cancel above means no rows at all; this asserts
       //    that even if a future bug confirmed-without-clicking, the inbound
       //    foil rows would still be untouched by the outbound-scoped action.)
-      const inboundReplays = await prisma.webhookDelivery.findMany({
+      const inboundReplays = await db.webhookDelivery.findMany({
         where: { replayedFromDeliveryId: { in: inboundDeliveryIds } },
         select: { id: true },
       });

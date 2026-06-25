@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock baseDb using vi.hoisted
-const { mockPrisma } = vi.hoisted(() => ({
-  mockPrisma: {
+const { mockDb } = vi.hoisted(() => ({
+  mockDb: {
     integration: { findFirst: vi.fn() },
     repositoryCases: { findUnique: vi.fn(), update: vi.fn() },
     repositoryCaseTag: {
@@ -34,7 +34,7 @@ const { mockPrisma } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/db", () => ({
-  baseDb: mockPrisma,
+  baseDb: mockDb,
 }));
 
 import { JiraLinkService } from "./jira-link-service";
@@ -59,7 +59,7 @@ describe("JiraLinkService", () => {
     };
 
     it("should throw error when integration is invalid", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(null);
+      mockDb.integration.findFirst.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.linkTestCaseToJiraIssue(1, "TEST-123", "jira-id-123", 1)
@@ -67,8 +67,8 @@ describe("JiraLinkService", () => {
     });
 
     it("should throw error when test case not found", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.repositoryCases.findUnique.mockResolvedValue(null);
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.repositoryCases.findUnique.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.linkTestCaseToJiraIssue(
@@ -81,10 +81,10 @@ describe("JiraLinkService", () => {
     });
 
     it("should upsert issue and link to test case", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.repositoryCases.findUnique.mockResolvedValue(mockTestCase);
-      mockPrisma.issue.upsert.mockResolvedValue({ id: 100 });
-      mockPrisma.repositoryCaseIssue.createMany.mockResolvedValue({ count: 1 });
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.repositoryCases.findUnique.mockResolvedValue(mockTestCase);
+      mockDb.issue.upsert.mockResolvedValue({ id: 100 });
+      mockDb.repositoryCaseIssue.createMany.mockResolvedValue({ count: 1 });
 
       await JiraLinkService.linkTestCaseToJiraIssue(
         1,
@@ -95,7 +95,7 @@ describe("JiraLinkService", () => {
         "https://jira.example.com/TEST-123"
       );
 
-      expect(mockPrisma.issue.upsert).toHaveBeenCalledWith(
+      expect(mockDb.issue.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             externalId_integrationId: {
@@ -116,17 +116,17 @@ describe("JiraLinkService", () => {
         })
       );
 
-      expect(mockPrisma.repositoryCaseIssue.createMany).toHaveBeenCalledWith({
+      expect(mockDb.repositoryCaseIssue.createMany).toHaveBeenCalledWith({
         data: [{ caseId: 1, issueId: 100 }],
         skipDuplicates: true,
       });
     });
 
     it("should use jiraIssueKey as title when issueTitle not provided", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.repositoryCases.findUnique.mockResolvedValue(mockTestCase);
-      mockPrisma.issue.upsert.mockResolvedValue({ id: 100 });
-      mockPrisma.repositoryCaseIssue.createMany.mockResolvedValue({ count: 1 });
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.repositoryCases.findUnique.mockResolvedValue(mockTestCase);
+      mockDb.issue.upsert.mockResolvedValue({ id: 100 });
+      mockDb.repositoryCaseIssue.createMany.mockResolvedValue({ count: 1 });
 
       await JiraLinkService.linkTestCaseToJiraIssue(
         1,
@@ -135,7 +135,7 @@ describe("JiraLinkService", () => {
         1
       );
 
-      expect(mockPrisma.issue.upsert).toHaveBeenCalledWith(
+      expect(mockDb.issue.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           create: expect.objectContaining({
             title: "TEST-123",
@@ -154,7 +154,7 @@ describe("JiraLinkService", () => {
     };
 
     it("should throw error when integration is invalid", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(null);
+      mockDb.integration.findFirst.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.linkTestRunToJiraIssue(1, "TEST-123", "jira-id-123", 1)
@@ -162,8 +162,8 @@ describe("JiraLinkService", () => {
     });
 
     it("should throw error when test run not found", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.testRuns.findUnique.mockResolvedValue(null);
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.testRuns.findUnique.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.linkTestRunToJiraIssue(
@@ -176,10 +176,10 @@ describe("JiraLinkService", () => {
     });
 
     it("should upsert issue and link to test run", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.testRuns.findUnique.mockResolvedValue(mockTestRun);
-      mockPrisma.issue.upsert.mockResolvedValue({ id: 100 });
-      mockPrisma.testRuns.update.mockResolvedValue({});
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.testRuns.findUnique.mockResolvedValue(mockTestRun);
+      mockDb.issue.upsert.mockResolvedValue({ id: 100 });
+      mockDb.testRuns.update.mockResolvedValue({});
 
       await JiraLinkService.linkTestRunToJiraIssue(
         1,
@@ -188,7 +188,7 @@ describe("JiraLinkService", () => {
         1
       );
 
-      expect(mockPrisma.testRuns.update).toHaveBeenCalledWith({
+      expect(mockDb.testRuns.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { issues: { connect: { id: 100 } } },
       });
@@ -204,7 +204,7 @@ describe("JiraLinkService", () => {
     };
 
     it("should throw error when integration is invalid", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(null);
+      mockDb.integration.findFirst.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.linkSessionToJiraIssue(1, "TEST-123", "jira-id-123", 1)
@@ -212,8 +212,8 @@ describe("JiraLinkService", () => {
     });
 
     it("should throw error when session not found", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.sessions.findUnique.mockResolvedValue(null);
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.sessions.findUnique.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.linkSessionToJiraIssue(
@@ -226,10 +226,10 @@ describe("JiraLinkService", () => {
     });
 
     it("should upsert issue and link to session", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.sessions.findUnique.mockResolvedValue(mockSession);
-      mockPrisma.issue.upsert.mockResolvedValue({ id: 100 });
-      mockPrisma.sessions.update.mockResolvedValue({});
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.sessions.findUnique.mockResolvedValue(mockSession);
+      mockDb.issue.upsert.mockResolvedValue({ id: 100 });
+      mockDb.sessions.update.mockResolvedValue({});
 
       await JiraLinkService.linkSessionToJiraIssue(
         1,
@@ -238,7 +238,7 @@ describe("JiraLinkService", () => {
         1
       );
 
-      expect(mockPrisma.sessions.update).toHaveBeenCalledWith({
+      expect(mockDb.sessions.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { issues: { connect: { id: 100 } } },
       });
@@ -247,7 +247,7 @@ describe("JiraLinkService", () => {
 
   describe("getLinkedJiraIssuesForTestRun", () => {
     it("should return empty array when test run not found", async () => {
-      mockPrisma.testRuns.findUnique.mockResolvedValue(null);
+      mockDb.testRuns.findUnique.mockResolvedValue(null);
 
       const result = await JiraLinkService.getLinkedJiraIssuesForTestRun(999);
 
@@ -255,7 +255,7 @@ describe("JiraLinkService", () => {
     });
 
     it("should return mapped issues", async () => {
-      mockPrisma.testRuns.findUnique.mockResolvedValue({
+      mockDb.testRuns.findUnique.mockResolvedValue({
         id: 1,
         issues: [
           {
@@ -291,7 +291,7 @@ describe("JiraLinkService", () => {
 
   describe("getLinkedJiraIssuesForSession", () => {
     it("should return empty array when session not found", async () => {
-      mockPrisma.sessions.findUnique.mockResolvedValue(null);
+      mockDb.sessions.findUnique.mockResolvedValue(null);
 
       const result = await JiraLinkService.getLinkedJiraIssuesForSession(999);
 
@@ -299,7 +299,7 @@ describe("JiraLinkService", () => {
     });
 
     it("should return empty array on error", async () => {
-      mockPrisma.sessions.findUnique.mockRejectedValue(new Error("DB error"));
+      mockDb.sessions.findUnique.mockRejectedValue(new Error("DB error"));
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -313,7 +313,7 @@ describe("JiraLinkService", () => {
 
   describe("getLinkedJiraIssues (for test case)", () => {
     it("should return mapped issues for test case", async () => {
-      mockPrisma.issue.findMany.mockResolvedValue([
+      mockDb.issue.findMany.mockResolvedValue([
         {
           id: 100,
           name: "TEST-123",
@@ -335,7 +335,7 @@ describe("JiraLinkService", () => {
 
   describe("unlinkTestCaseFromJiraIssue", () => {
     it("should throw error when issue not found", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue(null);
+      mockDb.issue.findFirst.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.unlinkTestCaseFromJiraIssue(1, "jira-id-123")
@@ -343,9 +343,9 @@ describe("JiraLinkService", () => {
     });
 
     it("should disconnect issue from test case", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockPrisma.repositoryCaseIssue.deleteMany.mockResolvedValue({ count: 1 });
-      mockPrisma.issue.findUnique.mockResolvedValue({
+      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
+      mockDb.repositoryCaseIssue.deleteMany.mockResolvedValue({ count: 1 });
+      mockDb.issue.findUnique.mockResolvedValue({
         id: 100,
         caseIssues: [{ caseId: 2, issueId: 100 }], // Still has other links
         testRuns: [],
@@ -357,16 +357,16 @@ describe("JiraLinkService", () => {
 
       await JiraLinkService.unlinkTestCaseFromJiraIssue(1, "jira-id-123");
 
-      expect(mockPrisma.repositoryCaseIssue.deleteMany).toHaveBeenCalledWith({
+      expect(mockDb.repositoryCaseIssue.deleteMany).toHaveBeenCalledWith({
         where: { caseId: 1, issueId: 100 },
       });
-      expect(mockPrisma.issue.delete).not.toHaveBeenCalled();
+      expect(mockDb.issue.delete).not.toHaveBeenCalled();
     });
 
     it("should delete issue when no remaining links", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockPrisma.repositoryCaseIssue.deleteMany.mockResolvedValue({ count: 1 });
-      mockPrisma.issue.findUnique.mockResolvedValue({
+      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
+      mockDb.repositoryCaseIssue.deleteMany.mockResolvedValue({ count: 1 });
+      mockDb.issue.findUnique.mockResolvedValue({
         id: 100,
         caseIssues: [],
         testRuns: [],
@@ -375,11 +375,11 @@ describe("JiraLinkService", () => {
         sessionResults: [],
         testRunStepResults: [],
       });
-      mockPrisma.issue.delete.mockResolvedValue({});
+      mockDb.issue.delete.mockResolvedValue({});
 
       await JiraLinkService.unlinkTestCaseFromJiraIssue(1, "jira-id-123");
 
-      expect(mockPrisma.issue.delete).toHaveBeenCalledWith({
+      expect(mockDb.issue.delete).toHaveBeenCalledWith({
         where: { id: 100 },
       });
     });
@@ -387,7 +387,7 @@ describe("JiraLinkService", () => {
 
   describe("unlinkTestRunFromJiraIssue", () => {
     it("should throw error when issue not found", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue(null);
+      mockDb.issue.findFirst.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.unlinkTestRunFromJiraIssue(1, "jira-id-123")
@@ -395,9 +395,9 @@ describe("JiraLinkService", () => {
     });
 
     it("should disconnect issue from test run", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockPrisma.testRuns.update.mockResolvedValue({});
-      mockPrisma.issue.findUnique.mockResolvedValue({
+      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
+      mockDb.testRuns.update.mockResolvedValue({});
+      mockDb.issue.findUnique.mockResolvedValue({
         id: 100,
         caseIssues: [],
         testRuns: [{ id: 2 }], // Still has other links
@@ -409,7 +409,7 @@ describe("JiraLinkService", () => {
 
       await JiraLinkService.unlinkTestRunFromJiraIssue(1, "jira-id-123");
 
-      expect(mockPrisma.testRuns.update).toHaveBeenCalledWith({
+      expect(mockDb.testRuns.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { issues: { disconnect: { id: 100 } } },
       });
@@ -418,7 +418,7 @@ describe("JiraLinkService", () => {
 
   describe("unlinkSessionFromJiraIssue", () => {
     it("should throw error when issue not found", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue(null);
+      mockDb.issue.findFirst.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.unlinkSessionFromJiraIssue(1, "jira-id-123")
@@ -426,9 +426,9 @@ describe("JiraLinkService", () => {
     });
 
     it("should disconnect issue from session", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockPrisma.sessions.update.mockResolvedValue({});
-      mockPrisma.issue.findUnique.mockResolvedValue({
+      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
+      mockDb.sessions.update.mockResolvedValue({});
+      mockDb.issue.findUnique.mockResolvedValue({
         id: 100,
         caseIssues: [],
         testRuns: [],
@@ -440,7 +440,7 @@ describe("JiraLinkService", () => {
 
       await JiraLinkService.unlinkSessionFromJiraIssue(1, "jira-id-123");
 
-      expect(mockPrisma.sessions.update).toHaveBeenCalledWith({
+      expect(mockDb.sessions.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { issues: { disconnect: { id: 100 } } },
       });
@@ -460,7 +460,7 @@ describe("JiraLinkService", () => {
     };
 
     it("should throw error when integration is invalid", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(null);
+      mockDb.integration.findFirst.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.linkTestRunResultToJiraIssue(
@@ -473,8 +473,8 @@ describe("JiraLinkService", () => {
     });
 
     it("should throw error when test run result not found", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.testRunResults.findUnique.mockResolvedValue(null);
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.testRunResults.findUnique.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.linkTestRunResultToJiraIssue(
@@ -487,10 +487,10 @@ describe("JiraLinkService", () => {
     });
 
     it("should link issue to test run result", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.testRunResults.findUnique.mockResolvedValue(mockTestRunResult);
-      mockPrisma.issue.upsert.mockResolvedValue({ id: 100 });
-      mockPrisma.testRunResults.update.mockResolvedValue({});
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.testRunResults.findUnique.mockResolvedValue(mockTestRunResult);
+      mockDb.issue.upsert.mockResolvedValue({ id: 100 });
+      mockDb.testRunResults.update.mockResolvedValue({});
 
       await JiraLinkService.linkTestRunResultToJiraIssue(
         1,
@@ -499,7 +499,7 @@ describe("JiraLinkService", () => {
         1
       );
 
-      expect(mockPrisma.testRunResults.update).toHaveBeenCalledWith({
+      expect(mockDb.testRunResults.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { issues: { connect: { id: 100 } } },
       });
@@ -517,8 +517,8 @@ describe("JiraLinkService", () => {
     };
 
     it("should throw error when session result not found", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.sessionResults.findUnique.mockResolvedValue(null);
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.sessionResults.findUnique.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.linkSessionResultToJiraIssue(
@@ -531,10 +531,10 @@ describe("JiraLinkService", () => {
     });
 
     it("should link issue to session result", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.sessionResults.findUnique.mockResolvedValue(mockSessionResult);
-      mockPrisma.issue.upsert.mockResolvedValue({ id: 100 });
-      mockPrisma.sessionResults.update.mockResolvedValue({});
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.sessionResults.findUnique.mockResolvedValue(mockSessionResult);
+      mockDb.issue.upsert.mockResolvedValue({ id: 100 });
+      mockDb.sessionResults.update.mockResolvedValue({});
 
       await JiraLinkService.linkSessionResultToJiraIssue(
         1,
@@ -543,7 +543,7 @@ describe("JiraLinkService", () => {
         1
       );
 
-      expect(mockPrisma.sessionResults.update).toHaveBeenCalledWith({
+      expect(mockDb.sessionResults.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { issues: { connect: { id: 100 } } },
       });
@@ -552,7 +552,7 @@ describe("JiraLinkService", () => {
 
   describe("unlinkTestRunResultFromJiraIssue", () => {
     it("should throw error when issue not found", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue(null);
+      mockDb.issue.findFirst.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.unlinkTestRunResultFromJiraIssue(1, "jira-id-123")
@@ -560,9 +560,9 @@ describe("JiraLinkService", () => {
     });
 
     it("should disconnect issue from test run result", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockPrisma.testRunResults.update.mockResolvedValue({});
-      mockPrisma.issue.findUnique.mockResolvedValue({
+      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
+      mockDb.testRunResults.update.mockResolvedValue({});
+      mockDb.issue.findUnique.mockResolvedValue({
         id: 100,
         caseIssues: [],
         testRuns: [],
@@ -573,7 +573,7 @@ describe("JiraLinkService", () => {
 
       await JiraLinkService.unlinkTestRunResultFromJiraIssue(1, "jira-id-123");
 
-      expect(mockPrisma.testRunResults.update).toHaveBeenCalledWith({
+      expect(mockDb.testRunResults.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { issues: { disconnect: { id: 100 } } },
       });
@@ -582,7 +582,7 @@ describe("JiraLinkService", () => {
 
   describe("unlinkSessionResultFromJiraIssue", () => {
     it("should throw error when issue not found", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue(null);
+      mockDb.issue.findFirst.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.unlinkSessionResultFromJiraIssue(1, "jira-id-123")
@@ -590,9 +590,9 @@ describe("JiraLinkService", () => {
     });
 
     it("should disconnect issue from session result", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockPrisma.sessionResults.update.mockResolvedValue({});
-      mockPrisma.issue.findUnique.mockResolvedValue({
+      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
+      mockDb.sessionResults.update.mockResolvedValue({});
+      mockDb.issue.findUnique.mockResolvedValue({
         id: 100,
         caseIssues: [],
         testRuns: [],
@@ -603,7 +603,7 @@ describe("JiraLinkService", () => {
 
       await JiraLinkService.unlinkSessionResultFromJiraIssue(1, "jira-id-123");
 
-      expect(mockPrisma.sessionResults.update).toHaveBeenCalledWith({
+      expect(mockDb.sessionResults.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { issues: { disconnect: { id: 100 } } },
       });
@@ -625,8 +625,8 @@ describe("JiraLinkService", () => {
     };
 
     it("should throw error when test run step result not found", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.testRunStepResults.findUnique.mockResolvedValue(null);
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.testRunStepResults.findUnique.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.linkTestRunStepResultToJiraIssue(
@@ -639,12 +639,12 @@ describe("JiraLinkService", () => {
     });
 
     it("should link issue to test run step result", async () => {
-      mockPrisma.integration.findFirst.mockResolvedValue(mockIntegration);
-      mockPrisma.testRunStepResults.findUnique.mockResolvedValue(
+      mockDb.integration.findFirst.mockResolvedValue(mockIntegration);
+      mockDb.testRunStepResults.findUnique.mockResolvedValue(
         mockTestRunStepResult
       );
-      mockPrisma.issue.upsert.mockResolvedValue({ id: 100 });
-      mockPrisma.testRunStepResults.update.mockResolvedValue({});
+      mockDb.issue.upsert.mockResolvedValue({ id: 100 });
+      mockDb.testRunStepResults.update.mockResolvedValue({});
 
       await JiraLinkService.linkTestRunStepResultToJiraIssue(
         1,
@@ -653,7 +653,7 @@ describe("JiraLinkService", () => {
         1
       );
 
-      expect(mockPrisma.testRunStepResults.update).toHaveBeenCalledWith({
+      expect(mockDb.testRunStepResults.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { issues: { connect: { id: 100 } } },
       });
@@ -662,7 +662,7 @@ describe("JiraLinkService", () => {
 
   describe("unlinkTestRunStepResultFromJiraIssue", () => {
     it("should throw error when issue not found", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue(null);
+      mockDb.issue.findFirst.mockResolvedValue(null);
 
       await expect(
         JiraLinkService.unlinkTestRunStepResultFromJiraIssue(1, "jira-id-123")
@@ -670,9 +670,9 @@ describe("JiraLinkService", () => {
     });
 
     it("should delete orphaned issue", async () => {
-      mockPrisma.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockPrisma.testRunStepResults.update.mockResolvedValue({});
-      mockPrisma.issue.findUnique.mockResolvedValue({
+      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
+      mockDb.testRunStepResults.update.mockResolvedValue({});
+      mockDb.issue.findUnique.mockResolvedValue({
         id: 100,
         caseIssues: [],
         testRuns: [],
@@ -681,14 +681,14 @@ describe("JiraLinkService", () => {
         sessionResults: [],
         testRunStepResults: [],
       });
-      mockPrisma.issue.delete.mockResolvedValue({});
+      mockDb.issue.delete.mockResolvedValue({});
 
       await JiraLinkService.unlinkTestRunStepResultFromJiraIssue(
         1,
         "jira-id-123"
       );
 
-      expect(mockPrisma.issue.delete).toHaveBeenCalledWith({
+      expect(mockDb.issue.delete).toHaveBeenCalledWith({
         where: { id: 100 },
       });
     });
@@ -696,7 +696,7 @@ describe("JiraLinkService", () => {
 
   describe("getLinkedJiraIssuesForTestRunResult", () => {
     it("should return empty array when result not found", async () => {
-      mockPrisma.testRunResults.findUnique.mockResolvedValue(null);
+      mockDb.testRunResults.findUnique.mockResolvedValue(null);
 
       const result =
         await JiraLinkService.getLinkedJiraIssuesForTestRunResult(999);
@@ -705,7 +705,7 @@ describe("JiraLinkService", () => {
     });
 
     it("should return empty array on error", async () => {
-      mockPrisma.testRunResults.findUnique.mockRejectedValue(
+      mockDb.testRunResults.findUnique.mockRejectedValue(
         new Error("DB error")
       );
       const consoleSpy = vi
@@ -722,7 +722,7 @@ describe("JiraLinkService", () => {
 
   describe("getLinkedJiraIssuesForSessionResult", () => {
     it("should return empty array when result not found", async () => {
-      mockPrisma.sessionResults.findUnique.mockResolvedValue(null);
+      mockDb.sessionResults.findUnique.mockResolvedValue(null);
 
       const result =
         await JiraLinkService.getLinkedJiraIssuesForSessionResult(999);
@@ -733,7 +733,7 @@ describe("JiraLinkService", () => {
 
   describe("getLinkedJiraIssuesForTestRunStepResult", () => {
     it("should return empty array when result not found", async () => {
-      mockPrisma.testRunStepResults.findUnique.mockResolvedValue(null);
+      mockDb.testRunStepResults.findUnique.mockResolvedValue(null);
 
       const result =
         await JiraLinkService.getLinkedJiraIssuesForTestRunStepResult(999);
@@ -742,7 +742,7 @@ describe("JiraLinkService", () => {
     });
 
     it("should return empty array on error", async () => {
-      mockPrisma.testRunStepResults.findUnique.mockRejectedValue(
+      mockDb.testRunStepResults.findUnique.mockRejectedValue(
         new Error("DB error")
       );
       const consoleSpy = vi
@@ -759,14 +759,14 @@ describe("JiraLinkService", () => {
 
   describe("syncJiraIssueData", () => {
     it("should update issue data with lastSynced timestamp", async () => {
-      mockPrisma.issue.updateMany.mockResolvedValue({ count: 1 });
+      mockDb.issue.updateMany.mockResolvedValue({ count: 1 });
 
       await JiraLinkService.syncJiraIssueData("jira-id-123", {
         status: "Done",
         priority: "High",
       });
 
-      expect(mockPrisma.issue.updateMany).toHaveBeenCalledWith({
+      expect(mockDb.issue.updateMany).toHaveBeenCalledWith({
         where: {
           externalId: "jira-id-123",
           integration: {
@@ -794,7 +794,7 @@ describe("JiraLinkService", () => {
     });
 
     it("should throw error on database failure", async () => {
-      mockPrisma.issue.updateMany.mockRejectedValue(new Error("DB error"));
+      mockDb.issue.updateMany.mockRejectedValue(new Error("DB error"));
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});

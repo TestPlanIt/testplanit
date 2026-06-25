@@ -26,7 +26,7 @@ import { getCurrentTenantId } from "~/lib/multiTenantDb";
 /**
  * Shape of the JSON written into the `app.audit_context` GUC and read back by
  * the audit_row_change() trigger (`ctx->>'userId'` etc.). Consumed by 13-04
- * (lib/prisma.ts hook wrapping + worker entry points).
+ * (lib/db.ts hook wrapping + worker entry points).
  *
  * Phase 14 CTX-03: `operationId` correlates all DataChangeLog rows written
  * within one logical save (e.g. the three writes of a single case save). The

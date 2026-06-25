@@ -30,8 +30,8 @@ const processor = async (job: Job<BudgetCheckJobData>) => {
   );
 
   validateMultiTenantJobData(job.data);
-  const prisma = getDbClientForJob(job.data);
-  const service = new BudgetAlertService(prisma);
+  const db = getDbClientForJob(job.data);
+  const service = new BudgetAlertService(db);
 
   await service.checkAndAlert(job.data.llmIntegrationId, job.data.tenantId);
 };

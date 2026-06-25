@@ -5,7 +5,7 @@
 // each adapter (Jira, GitHub, Azure DevOps) renders it to the tracker's
 // native format at send time (D-15).
 
-import { baseDb as defaultPrisma } from "~/lib/db";
+import { baseDb as defaultDb } from "~/lib/db";
 import { getServerTranslation } from "~/lib/server-translations";
 import {
   redactValues,
@@ -15,11 +15,11 @@ import { buildIterationDeepLink } from "~/lib/services/iterationDeepLink";
 
 // ── Type shapes ───────────────────────────────────────────────────────
 //
-// The `client` shape is intentionally a tiny subset of `PrismaClient` —
+// The `client` shape is intentionally a tiny subset of `DbClient` —
 // just enough to load the iteration and count siblings. Tests pass mocks
 // without dragging the full Prisma type system in.
 
-export interface PrismaLike {
+export interface DbLike {
   testRunCaseIteration: {
     findFirst: (args: any) => Promise<any>;
     count: (args: any) => Promise<number>;
@@ -40,7 +40,7 @@ export interface IterationIssueBodyInput {
   locale?: string;
   /** Optional Prisma-like client override (tests). Production callers omit
    *  this and the helper uses the real `~/lib/db` client. */
-  client?: PrismaLike;
+  client?: DbLike;
 }
 
 export interface IterationIssueBody {
@@ -131,8 +131,8 @@ function renderValue(v: unknown): string {
 export async function buildIterationIssueBody(
   input: IterationIssueBodyInput
 ): Promise<IterationIssueBody> {
-  const client: PrismaLike = (input.client ??
-    defaultPrisma) as unknown as PrismaLike;
+  const client: DbLike = (input.client ??
+    defaultDb) as unknown as DbLike;
 
   // 1. Load the iteration with the data we need for title + body.
   //    WR-03: `isDeleted: false` matches the sibling count query at

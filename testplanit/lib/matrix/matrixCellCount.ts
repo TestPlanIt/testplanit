@@ -31,7 +31,7 @@ import type { MatrixCellCountResult, MatrixFilters } from "./types";
  * callers (and live-DB integration tests) can pass `tx` to read inside
  * a rolled-back transaction.
  */
-type PrismaLike = DbClient | TxClient;
+type DbLike = DbClient | TxClient;
 
 const CELL_CAP_THRESHOLD = 50_000 as const;
 
@@ -130,7 +130,7 @@ interface PerCaseRow {
  * every run in scope has `configId IS NULL`.
  */
 export async function runCellCountPreflight(
-  prisma: PrismaLike,
+  db: DbLike,
   projectId: number,
   filters: MatrixFilters
 ): Promise<MatrixCellCountResult> {
@@ -155,7 +155,7 @@ export async function runCellCountPreflight(
       AND rc."isDeleted" = false
       AND rc."hasParameters" = true
       ${filterSql}
-  `.execute(prisma.$qb)
+  `.execute(db.$qb)
   ).rows;
 
   const caseCount = Number(axisCountsRows[0]?.case_count ?? 0n);
@@ -175,7 +175,7 @@ export async function runCellCountPreflight(
       AND rc."hasParameters" = true
       ${filterSql}
     GROUP BY trc."repositoryCaseId"
-  `.execute(prisma.$qb)
+  `.execute(db.$qb)
   ).rows;
 
   const perCaseMaxIterations = perCaseRows.map((r) => ({

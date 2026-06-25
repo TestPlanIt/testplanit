@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const {
   mockTx,
-  mockPrisma,
+  mockDb,
   mockCreateTestCaseVersionInTransaction,
   mockSyncRepositoryCaseToElasticsearch,
   mockSyncSharedStepToElasticsearch,
@@ -42,7 +42,7 @@ const {
     },
   };
 
-  const mockPrisma = {
+  const mockDb = {
     $transaction: vi.fn((fn: any, _opts?: any) => {
       if (typeof fn === "function") return fn(mockTx);
       return Promise.all(fn);
@@ -51,7 +51,7 @@ const {
 
   return {
     mockTx,
-    mockPrisma,
+    mockDb,
     mockCreateTestCaseVersionInTransaction,
     mockSyncRepositoryCaseToElasticsearch,
     mockSyncSharedStepToElasticsearch,
@@ -59,7 +59,7 @@ const {
 });
 
 vi.mock("~/lib/rawDb", () => ({
-  rawDb: mockPrisma,
+  rawDb: mockDb,
 }));
 
 vi.mock("~/lib/services/testCaseVersionService", () => ({

@@ -14,7 +14,7 @@ vi.mock("../lib/tenantSecrets", () => ({
 
 vi.mock("../lib/multiTenantDb", () => ({
   validateMultiTenantJobData: vi.fn(),
-  getDbClientForJob: vi.fn().mockReturnValue({ __mock: "prisma" }),
+  getDbClientForJob: vi.fn().mockReturnValue({ __mock: "db" }),
   isMultiTenantMode: vi.fn().mockReturnValue(false),
   disconnectAllTenantClients: vi.fn().mockResolvedValue(undefined),
 }));

@@ -32,7 +32,7 @@ import {
  * callers (and live-DB integration tests) can pass `tx` to read inside
  * a rolled-back transaction.
  */
-type PrismaLike = DbClient | TxClient;
+type DbLike = DbClient | TxClient;
 import {
   redactValues,
   type ParameterSchemaEntry,
@@ -168,7 +168,7 @@ function buildFilterFragments(filters: MatrixFilters): FilterFragments {
 // ---------------------------------------------------------------------------
 
 async function fetchCaseAxis(
-  prisma: PrismaLike,
+  db: DbLike,
   projectId: number,
   scopeFragment: RawBuilder<unknown>
 ): Promise<CaseRow[]> {
@@ -212,12 +212,12 @@ async function fetchCaseAxis(
       -- handles those.
       AND rc."hasParameters" = true
     ORDER BY rc.name ASC, rc.id ASC
-  `.execute(prisma.$qb);
+  `.execute(db.$qb);
   return result.rows;
 }
 
 async function fetchConfigAxis(
-  prisma: PrismaLike,
+  db: DbLike,
   projectId: number,
   scopeFragment: RawBuilder<unknown>
 ): Promise<ConfigRow[]> {
@@ -249,7 +249,7 @@ async function fetchConfigAxis(
         ${scopeFragment}
     ) configs
     ORDER BY (config_id = 0) DESC, LOWER(config_name) ASC
-  `.execute(prisma.$qb);
+  `.execute(db.$qb);
   return result.rows;
 }
 
@@ -259,7 +259,7 @@ async function fetchConfigAxis(
  * matrix presents the latest known parameter-row schema.
  */
 async function fetchParamRowsByCaseId(
-  prisma: PrismaLike,
+  db: DbLike,
   projectId: number,
   scopeFragment: RawBuilder<unknown>,
   viewerCanReadSensitive: boolean
@@ -278,7 +278,7 @@ async function fetchParamRowsByCaseId(
       AND trcs."isDeleted" = false
       ${scopeFragment}
     ORDER BY trc."repositoryCaseId" ASC, tr."createdAt" DESC, trc.id DESC
-  `.execute(prisma.$qb);
+  `.execute(db.$qb);
   const rows = result.rows;
 
   const out = new Map<number, ParamRowAxisItem[]>();
@@ -306,11 +306,11 @@ async function fetchParamRowsByCaseId(
   return out;
 }
 
-async function fetchStatusMap(prisma: PrismaLike): Promise<{
+async function fetchStatusMap(db: DbLike): Promise<{
   record: Record<number, StatusMapEntry>;
   rollupMap: Map<number, RollupStatus>;
 }> {
-  const statuses = await prisma.status.findMany({
+  const statuses = await db.status.findMany({
     where: { isDeleted: false },
     select: {
       id: true,
@@ -348,7 +348,7 @@ async function fetchStatusMap(prisma: PrismaLike): Promise<{
 }
 
 async function fetchAggregateCells(
-  prisma: PrismaLike,
+  db: DbLike,
   projectId: number,
   scopeFragment: RawBuilder<unknown>,
   iterationFragment: RawBuilder<unknown>
@@ -391,7 +391,7 @@ async function fetchAggregateCells(
       ${scopeFragment}
       ${iterationFragment}
     GROUP BY trc."repositoryCaseId", COALESCE(tr."configId", 0), iter."rowIndex"
-  `.execute(prisma.$qb);
+  `.execute(db.$qb);
   return result.rows;
 }
 
@@ -400,7 +400,7 @@ async function fetchAggregateCells(
 // ---------------------------------------------------------------------------
 
 export async function runMatrixAggregation(
-  prisma: PrismaLike,
+  db: DbLike,
   projectId: number,
   filters: MatrixFilters,
   viewerCanReadSensitive: boolean
@@ -409,7 +409,7 @@ export async function runMatrixAggregation(
   // SQL runs if the requested cells exceed the cap. The route layer
   // (Plan 05-02) will normally preflight first; this guard protects
   // direct callers (e.g. the report-builder preset).
-  const preflight = await runCellCountPreflight(prisma, projectId, filters);
+  const preflight = await runCellCountPreflight(db, projectId, filters);
   if (preflight.willRefuse) {
     throw new MatrixCellCapExceededError(preflight);
   }
@@ -418,16 +418,16 @@ export async function runMatrixAggregation(
 
   const [caseRows, configRows, paramRowsByCaseId, statusMaps, aggregateRows] =
     await Promise.all([
-      fetchCaseAxis(prisma, projectId, scopeFragment),
-      fetchConfigAxis(prisma, projectId, scopeFragment),
+      fetchCaseAxis(db, projectId, scopeFragment),
+      fetchConfigAxis(db, projectId, scopeFragment),
       fetchParamRowsByCaseId(
-        prisma,
+        db,
         projectId,
         scopeFragment,
         viewerCanReadSensitive
       ),
-      fetchStatusMap(prisma),
-      fetchAggregateCells(prisma, projectId, scopeFragment, iterationFragment),
+      fetchStatusMap(db),
+      fetchAggregateCells(db, projectId, scopeFragment, iterationFragment),
     ]);
 
   const cases: CaseAxisItem[] = caseRows.map((r) => {

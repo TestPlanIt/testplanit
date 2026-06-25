@@ -28,7 +28,7 @@ export interface BudgetCheckResult {
  * with mocked Prisma clients without queue infrastructure.
  */
 export class BudgetAlertService {
-  constructor(private prisma: any) {}
+  constructor(private db: any) {}
 
   async checkAndAlert(
     llmIntegrationId: number,
@@ -42,7 +42,7 @@ export class BudgetAlertService {
     };
 
     // 1. Fetch provider config with integration details
-    const config = await this.prisma.llmProviderConfig.findUnique({
+    const config = await this.db.llmProviderConfig.findUnique({
       where: { llmIntegrationId },
       include: {
         llmIntegration: { select: { name: true, isDeleted: true } },
@@ -70,7 +70,7 @@ export class BudgetAlertService {
     const periodStartDay = config.billingPeriodStartDay ?? 1;
     const periodStart = getBillingPeriodStart(periodStartDay);
 
-    const result = await this.prisma.llmUsage.aggregate({
+    const result = await this.db.llmUsage.aggregate({
       where: {
         llmIntegrationId,
         createdAt: { gte: periodStart },
@@ -104,13 +104,13 @@ export class BudgetAlertService {
       [periodKey]: [...firedForPeriod, ...newlyCrossed],
     };
 
-    await this.prisma.llmProviderConfig.update({
+    await this.db.llmProviderConfig.update({
       where: { id: config.id },
       data: { alertThresholdsFired: updatedFired },
     });
 
     // 5. Send notifications to all ADMIN users
-    const admins = await this.prisma.user.findMany({
+    const admins = await this.db.user.findMany({
       where: { access: "ADMIN", isActive: true, isDeleted: false },
       select: { id: true },
     });

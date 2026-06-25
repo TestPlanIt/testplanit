@@ -37,7 +37,7 @@ interface AnalyzeTagsParams {
  */
 export class TagAnalysisService {
   constructor(
-    private prisma: DbClient,
+    private db: DbClient,
     private llmManager: LlmManager,
     private promptResolver: PromptResolver
   ) {}
@@ -71,7 +71,7 @@ export class TagAnalysisService {
     const integrationId = resolved.integrationId;
 
     // 3. Fetch LlmProviderConfig for token limits
-    const providerConfig = await this.prisma.llmProviderConfig.findFirst({
+    const providerConfig = await this.db.llmProviderConfig.findFirst({
       where: { llmIntegrationId: integrationId },
     });
     const maxTokensPerRequest = providerConfig?.maxTokensPerRequest ?? 4096;
@@ -81,7 +81,7 @@ export class TagAnalysisService {
     );
 
     // 4. Fetch all existing (non-deleted) tags
-    const existingTags = await (this.prisma as any).tags.findMany({
+    const existingTags = await (this.db as any).tags.findMany({
       where: { isDeleted: false },
     });
     const existingTagNames: string[] = existingTags.map(
@@ -342,7 +342,7 @@ export class TagAnalysisService {
 
     switch (entityType) {
       case "repositoryCase":
-        return (this.prisma as any).repositoryCases.findMany({
+        return (this.db as any).repositoryCases.findMany({
           where: { id: { in: entityIds }, isDeleted: false },
           include: {
             steps: {
@@ -357,7 +357,7 @@ export class TagAnalysisService {
         });
 
       case "testRun":
-        return (this.prisma as any).testRuns.findMany({
+        return (this.db as any).testRuns.findMany({
           where: { id: { in: entityIds }, isDeleted: false },
           include: {
             tags: true,
@@ -366,7 +366,7 @@ export class TagAnalysisService {
         });
 
       case "session":
-        return (this.prisma as any).sessions.findMany({
+        return (this.db as any).sessions.findMany({
           where: { id: { in: entityIds }, isDeleted: false },
           include: {
             sessionFieldValues: { include: { field: true } },
@@ -390,7 +390,7 @@ export class TagAnalysisService {
     // Walk up the folder tree (max 20 levels to prevent infinite loops)
     let depth = 0;
     while (currentParentId && depth < 20) {
-      const parent = await (this.prisma as any).repositoryFolders.findUnique({
+      const parent = await (this.db as any).repositoryFolders.findUnique({
         where: { id: currentParentId },
       });
       if (!parent) break;

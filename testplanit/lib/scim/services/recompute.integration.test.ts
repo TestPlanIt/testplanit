@@ -14,7 +14,7 @@
  *      set Group.mappedAccess, attach user, run recompute, read back
  *      User.access.
  *
- * Note: a raw PrismaClient (no app-level $extends hooks) is used here to
+ * Note: a raw DbClient (no app-level $extends hooks) is used here to
  * test column/enum plumbing in isolation. Audit-row correctness (the
  * "exactly one audit row per flip" guarantee) is covered by the mocked
  * unit tests in recompute.test.ts, which stub captureAuditEvent directly.
@@ -39,7 +39,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 const PREFIX = `scimit-recompute-${Date.now()}`;
 let counter = 0;
@@ -50,11 +50,11 @@ function nextLabel(base = "u"): string {
 }
 
 async function makeTestUser(label: string) {
-  const role = await prisma.roles.findFirst({
+  const role = await db.roles.findFirst({
     where: { isDefault: true, isDeleted: false },
   });
   if (!role) throw new Error("Test prerequisite: no default role row");
-  return prisma.user.create({
+  return db.user.create({
     data: {
       email: `${nextLabel(label)}@example.com`,
       name: `Recompute Test ${label}`,
@@ -68,7 +68,7 @@ async function makeTestUser(label: string) {
 }
 
 async function makeTestGroup(mappedAccess: string | null = null) {
-  return prisma.groups.create({
+  return db.groups.create({
     data: {
       name: nextLabel("g"),
       mappedAccess: mappedAccess as never,
@@ -86,7 +86,7 @@ describeIntegration("recomputeUserAccess (live DB)", () => {
 
   afterAll(async () => {
     // Clean up group assignments first, then soft-delete users and groups.
-    const users = await prisma.user.findMany({
+    const users = await db.user.findMany({
       where: { email: { startsWith: PREFIX } },
       select: { id: true },
     });
@@ -94,49 +94,49 @@ describeIntegration("recomputeUserAccess (live DB)", () => {
 
     if (userIds.length > 0) {
       // Join rows may be hard-deleted; entity rows must be soft-deleted.
-      await prisma.groupAssignment.deleteMany({
+      await db.groupAssignment.deleteMany({
         where: { userId: { in: userIds } },
       });
-      await prisma.user.updateMany({
+      await db.user.updateMany({
         where: { id: { in: userIds } },
         data: { isDeleted: true },
       });
     }
 
-    const groups = await prisma.groups.findMany({
+    const groups = await db.groups.findMany({
       where: { name: { startsWith: PREFIX } },
       select: { id: true },
     });
     if (groups.length > 0) {
-      await prisma.groups.updateMany({
+      await db.groups.updateMany({
         where: { id: { in: groups.map((g) => g.id) } },
         data: { isDeleted: true },
       });
     }
 
     // Remove the AppConfig row if we created one.
-    await prisma.appConfig
+    await db.appConfig
       .deleteMany({
         where: { key: `${SCIM_DEFAULT_MAPPED_ACCESS_KEY}-integration-test` },
       })
       .catch(() => {});
 
-    await prisma.$disconnect();
+    await db.$disconnect();
   });
 
   it("IT-R1: writes correct access AND accessSource columns — proves migration columns exist and enum round-trips", async () => {
     const user = await makeTestUser("write");
     const group = await makeTestGroup("USER");
 
-    await prisma.groupAssignment.create({
+    await db.groupAssignment.create({
       data: { userId: user.id, groupId: group.id },
     });
 
-    await prisma.$transaction(async (tx) => {
+    await db.$transaction(async (tx) => {
       await recomputeUserAccess(tx, user.id, "NONE");
     });
 
-    const updated = await prisma.user.findUnique({
+    const updated = await db.user.findUnique({
       where: { id: user.id },
       select: { access: true, accessSource: true },
     });
@@ -150,16 +150,16 @@ describeIntegration("recomputeUserAccess (live DB)", () => {
     const user = await makeTestUser("noop");
     const group = await makeTestGroup("ADMIN");
 
-    await prisma.groupAssignment.create({
+    await db.groupAssignment.create({
       data: { userId: user.id, groupId: group.id },
     });
 
     // First recompute to bring user to ADMIN / GROUP_MAPPING.
-    await prisma.$transaction(async (tx) => {
+    await db.$transaction(async (tx) => {
       await recomputeUserAccess(tx, user.id, "NONE");
     });
 
-    const beforeNoop = await prisma.user.findUnique({
+    const beforeNoop = await db.user.findUnique({
       where: { id: user.id },
       select: { updatedAt: true, access: true, accessSource: true },
     });
@@ -167,11 +167,11 @@ describeIntegration("recomputeUserAccess (live DB)", () => {
     expect(beforeNoop!.accessSource).toBe("GROUP_MAPPING");
 
     // Second recompute — same computed result → no write.
-    await prisma.$transaction(async (tx) => {
+    await db.$transaction(async (tx) => {
       await recomputeUserAccess(tx, user.id, "NONE");
     });
 
-    const afterNoop = await prisma.user.findUnique({
+    const afterNoop = await db.user.findUnique({
       where: { id: user.id },
       select: { updatedAt: true },
     });
@@ -182,7 +182,7 @@ describeIntegration("recomputeUserAccess (live DB)", () => {
   });
 
   it("IT-R3: readScimFallbackDefault returns NONE when AppConfig row is absent", async () => {
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await db.$transaction(async (tx) => {
       return readScimFallbackDefault(tx);
     });
 
@@ -194,18 +194,18 @@ describeIntegration("recomputeUserAccess (live DB)", () => {
     const groupUser = await makeTestGroup("USER");
     const groupAdmin = await makeTestGroup("ADMIN");
 
-    await prisma.groupAssignment.createMany({
+    await db.groupAssignment.createMany({
       data: [
         { userId: user.id, groupId: groupUser.id },
         { userId: user.id, groupId: groupAdmin.id },
       ],
     });
 
-    await prisma.$transaction(async (tx) => {
+    await db.$transaction(async (tx) => {
       await recomputeUserAccess(tx, user.id, "NONE");
     });
 
-    const updated = await prisma.user.findUnique({
+    const updated = await db.user.findUnique({
       where: { id: user.id },
       select: { access: true, accessSource: true },
     });

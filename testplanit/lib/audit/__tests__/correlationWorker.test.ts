@@ -134,9 +134,9 @@ describeDb(
       direct = new Client({ connectionString: DIRECT_URL });
       await direct.connect();
 
-      const prismaMod = "~/lib/rawDb";
+      const dbMod = "~/lib/rawDb";
       const correlationMod = "~/lib/audit/correlation";
-      ({ rawDb: rawDb } = await import(/* @vite-ignore */ prismaMod));
+      ({ rawDb: rawDb } = await import(/* @vite-ignore */ dbMod));
       ({ pollDataChangeLogsOnce } = await import(
         /* @vite-ignore */ correlationMod
       ));

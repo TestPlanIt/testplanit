@@ -48,7 +48,7 @@ import {
 
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
 import { scimError } from "../errors";
-import { scimFilterToPrismaWhere } from "../filter";
+import { scimFilterToDbWhere } from "../filter";
 import { readScimFallbackDefault } from "./recompute";
 import {
   computeUserUpdatesFromScim,
@@ -66,7 +66,7 @@ import type { ScimPatch } from "scim-patch";
 
 import type { ScimAuthContext } from "~/lib/scim/auth";
 import type {
-  PrismaUserForScim,
+  DbUserForScim,
   ScimUserBody,
   ScimUserResource,
   ScimUserUpdatePayload,
@@ -237,7 +237,7 @@ function toJsonInput(
   return value as JsonValue;
 }
 
-function asScimSnapshot(row: PrismaUserForScim & { isActive: boolean }) {
+function asScimSnapshot(row: DbUserForScim & { isActive: boolean }) {
   return {
     id: row.id,
     email: row.email,
@@ -497,7 +497,7 @@ export async function listScimUsers(
   const resolvedSkip = Math.max(0, (startIndex ?? 1) - 1);
 
   const filterWhere: UserWhereInput = filter
-    ? scimFilterToPrismaWhere(filter)
+    ? scimFilterToDbWhere(filter)
     : {};
 
   const finalWhere: UserWhereInput = {

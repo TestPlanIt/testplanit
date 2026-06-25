@@ -2879,7 +2879,7 @@ const importRepositories = async (
 };
 
 const importRepositoryFolders = async (
-  prisma: DbClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   repositoryIdMap: Map<number, number>,
@@ -2957,7 +2957,7 @@ const importRepositoryFolders = async (
   ): Promise<number> => {
     let repositoryId = repositoryIdMap.get(repoSourceId);
     if (!repositoryId) {
-      const repository = await prisma.repositories.create({
+      const repository = await db.repositories.create({
         data: { projectId },
       });
       repositoryId = repository.id;
@@ -3088,7 +3088,7 @@ const importRepositoryFolders = async (
       );
       const createdAt = toDateValue(record.created_at) ?? new Date();
 
-      const transactionResult = await prisma.$transaction<{
+      const transactionResult = await db.$transaction<{
         folderId: number;
         created: boolean;
       }>(
@@ -3170,7 +3170,7 @@ const importRepositoryFolders = async (
   return { summary, folderIdMap, repositoryRootFolderMap };
 };
 const importRepositoryCases = async (
-  prisma: DbClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   repositoryIdMap: Map<number, number>,
@@ -3338,12 +3338,12 @@ const importRepositoryCases = async (
   initializeEntityProgress(context, "repositoryCases", canonicalCaseCount);
   let processedSinceLastPersist = 0;
 
-  const defaultTemplate = await prisma.templates.findFirst({
+  const defaultTemplate = await db.templates.findFirst({
     where: { isDefault: true },
     select: { id: true },
   });
 
-  const workflowResolver = createWorkflowResolver(prisma, workflowIdMap);
+  const workflowResolver = createWorkflowResolver(db, workflowIdMap);
 
   const fallbackCreator = importJob.createdById;
 
@@ -3353,7 +3353,7 @@ const importRepositoryCases = async (
       new Set(Array.from(caseFieldMap.values()))
     );
 
-    const caseFieldRecords = await prisma.caseFields.findMany({
+    const caseFieldRecords = await db.caseFields.findMany({
       where: {
         id: {
           in: uniqueCaseFieldIds,
@@ -3417,7 +3417,7 @@ const importRepositoryCases = async (
     if (records.length === 0) {
       return;
     }
-    await prisma.$transaction(
+    await db.$transaction(
       async (tx: TxClient) => {
         // Phase 13 SAF-01 — opt this bulk import chunk out of row-level CDC
         // capture. The audit_row_change() trigger early-returns when
@@ -4153,7 +4153,7 @@ const importRepositoryCases = async (
     }
 
     if (assignmentRows.length > 0) {
-      await prisma.templateProjectAssignment.createMany({
+      await db.templateProjectAssignment.createMany({
         data: assignmentRows,
         skipDuplicates: true,
       });
@@ -4405,7 +4405,7 @@ const importTestRuns = async (
 };
 
 const importTestRunCases = async (
-  prisma: DbClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
   caseIdMap: Map<number, number>,
@@ -4477,7 +4477,7 @@ const importTestRunCases = async (
     await persistProgress(entityName, statusMessage);
   };
 
-  const completedStatusRecords = await prisma.status.findMany({
+  const completedStatusRecords = await db.status.findMany({
     select: { id: true, isCompleted: true },
   });
   const completedStatusIds = new Set<number>();
@@ -4565,7 +4565,7 @@ const importTestRunCases = async (
       if (!repositoryCaseId) {
         const meta = caseMetaMap.get(caseSourceId);
         if (meta) {
-          const fallbackCase = await prisma.repositoryCases.findFirst({
+          const fallbackCase = await db.repositoryCases.findFirst({
             where: {
               projectId: meta.projectId,
               name: meta.name,
@@ -4641,7 +4641,7 @@ const importTestRunCases = async (
 
     if (mappedRecords.length > 0) {
       // Execute database operations in a transaction per batch
-      const { createResult, persistedPairs } = await prisma.$transaction(
+      const { createResult, persistedPairs } = await db.$transaction(
         async (tx) => {
           // Phase 13 SAF-01 — bulk-import skip_audit hatch (see the repository
           // case chunk above). Opts these testRunCases.createMany rows out of
@@ -4730,7 +4730,7 @@ const importTestRunCases = async (
 };
 
 const importTestRunResults = async (
-  prisma: DbClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
   testRunCaseIdMap: Map<number, number>,
@@ -4771,7 +4771,7 @@ const importTestRunResults = async (
   }
 
   // Get the default "untested" status to use when source status is null
-  const untestedStatus = await prisma.status.findFirst({
+  const untestedStatus = await db.status.findFirst({
     where: { systemName: "untested" },
     select: { id: true },
   });
@@ -4793,7 +4793,7 @@ const importTestRunResults = async (
     if (records.length === 0) {
       return;
     }
-    await prisma.$transaction(
+    await db.$transaction(
       async (tx: TxClient) => {
         // Phase 13 SAF-01 — bulk-import skip_audit hatch (see the repository
         // case chunk above). Opts these testRunResults rows out of row-level
@@ -4991,7 +4991,7 @@ const importTestRunResults = async (
 };
 
 const importTestRunStepResults = async (
-  prisma: DbClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   testRunResultIdMap: Map<number, number>,
   testRunCaseIdMap: Map<number, number>,
@@ -5086,7 +5086,7 @@ const importTestRunStepResults = async (
     return (async function* () {
       let nextRowIndex = 0;
       while (true) {
-        const stagedRows = await prisma.testmoImportStaging.findMany({
+        const stagedRows = await db.testmoImportStaging.findMany({
           where: {
             jobId: context.jobId!,
             datasetName: "run_result_steps",
@@ -5141,7 +5141,7 @@ const importTestRunStepResults = async (
       return;
     }
 
-    const cases = await prisma.testRunCases.findMany({
+    const cases = await db.testRunCases.findMany({
       where: { id: { in: uniqueIds } },
       select: { id: true, repositoryCaseId: true },
     });
@@ -5162,7 +5162,7 @@ const importTestRunStepResults = async (
     }
   };
 
-  const untestedStatus = await prisma.status.findFirst({
+  const untestedStatus = await db.status.findFirst({
     where: { systemName: "untested" },
     select: { id: true },
   });
@@ -5266,7 +5266,7 @@ const importTestRunStepResults = async (
         ? convertToTipTapJsonValue(expectedResultContent)
         : null;
 
-      const createdStep = await prisma.steps.create({
+      const createdStep = await db.steps.create({
         data: {
           testCaseId: repositoryCaseId,
           order: displayOrder,
@@ -5287,7 +5287,7 @@ const importTestRunStepResults = async (
       const elapsed = toNumberValue(record.elapsed);
 
       try {
-        await prisma.testRunStepResults.create({
+        await db.testRunStepResults.create({
           data: {
             testRunResultId: resultId,
             stepId: createdStep.id,
@@ -5526,7 +5526,7 @@ async function importStatuses(
 async function processImportMode(
   importJob: TestmoImportJob,
   jobId: string,
-  prisma: DbClient,
+  db: DbClient,
   tenantId?: string
 ) {
   if (FINAL_STATUSES.has(importJob.status)) {
@@ -5543,7 +5543,7 @@ async function processImportMode(
     importJob.configuration
   );
 
-  const datasetRecords = await prisma.testmoImportDataset.findMany({
+  const datasetRecords = await db.testmoImportDataset.findMany({
     where: { jobId },
     select: {
       name: true,
@@ -5607,7 +5607,7 @@ async function processImportMode(
     };
 
     try {
-      const stagedRows = await prisma.testmoImportStaging.findMany({
+      const stagedRows = await db.testmoImportStaging.findMany({
         where: {
           jobId,
           datasetName,
@@ -5635,7 +5635,7 @@ async function processImportMode(
       );
 
       // Get total count
-      const totalCount = await prisma.testmoImportStaging.count({
+      const totalCount = await db.testmoImportStaging.count({
         where: {
           jobId,
           datasetName,
@@ -5649,7 +5649,7 @@ async function processImportMode(
 
       for (let offset = 0; offset < totalCount; offset += batchSize) {
         try {
-          const stagedRows = await prisma.testmoImportStaging.findMany({
+          const stagedRows = await db.testmoImportStaging.findMany({
             where: {
               jobId,
               datasetName,
@@ -5776,7 +5776,7 @@ async function processImportMode(
       if (statusMessage) {
         data.statusMessage = statusMessage;
       }
-      await prisma.testmoImportJob.update({
+      await db.testmoImportJob.update({
         where: { id: jobId },
         data,
       } as TestmoImportJobUpdateArgs);
@@ -5820,7 +5820,7 @@ async function processImportMode(
 
   const importStart = new Date();
 
-  await prisma.testmoImportJob.update({
+  await db.testmoImportJob.update({
     where: { id: jobId },
     data: {
       status: "RUNNING",
@@ -5845,7 +5845,7 @@ async function processImportMode(
       options?: { timeoutMs?: number }
     ): Promise<T> => {
       void options;
-      return prisma.$transaction(operation);
+      return db.$transaction(operation);
     };
 
     logMessage(context, "Processing workflow mappings");
@@ -6362,7 +6362,7 @@ async function processImportMode(
         }
 
         return importRepositoryFolders(
-          prisma,
+          db,
           datasetRowsByName,
           projectImport.projectIdMap,
           repositoryImport.repositoryIdMap,
@@ -6449,7 +6449,7 @@ async function processImportMode(
         }
 
         return importRepositoryCases(
-          prisma,
+          db,
           datasetRowsByName,
           projectImport.projectIdMap,
           repositoryImport.repositoryIdMap,
@@ -6581,7 +6581,7 @@ async function processImportMode(
         }
 
         return importAutomationCases(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           projectImport.projectIdMap,
@@ -6628,7 +6628,7 @@ async function processImportMode(
         }
 
         return importAutomationRuns(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           projectImport.projectIdMap,
@@ -6672,7 +6672,7 @@ async function processImportMode(
         }
 
         return importAutomationRunTests(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           projectImport.projectIdMap,
@@ -6724,7 +6724,7 @@ async function processImportMode(
         }
 
         return importAutomationRunFields(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           projectImport.projectIdMap,
@@ -6764,7 +6764,7 @@ async function processImportMode(
         }
 
         return importAutomationRunLinks(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           projectImport.projectIdMap,
@@ -6799,7 +6799,7 @@ async function processImportMode(
       "automationRunTestFields",
       () =>
         importAutomationRunTestFields(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           projectImport.projectIdMap,
@@ -6840,7 +6840,7 @@ async function processImportMode(
         }
 
         return importAutomationRunTags(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           automationRunImport.testRunIdMap,
@@ -6993,7 +6993,7 @@ async function processImportMode(
         }
 
         return importTestRunCases(
-          prisma,
+          db,
           datasetRowsByName,
           testRunImport.testRunIdMap,
           caseImport.caseIdMap,
@@ -7066,7 +7066,7 @@ async function processImportMode(
         }
 
         return importTestRunResults(
-          prisma,
+          db,
           datasetRowsByName,
           testRunImport.testRunIdMap,
           mergedTestRunCaseIdMap,
@@ -7097,7 +7097,7 @@ async function processImportMode(
       "testRunStepResults",
       () =>
         importTestRunStepResults(
-          prisma,
+          db,
           datasetRowsByName,
           testRunResultImport.testRunResultIdMap,
           mergedTestRunCaseIdMap,
@@ -7259,7 +7259,7 @@ async function processImportMode(
         }
 
         return importRepositoryCaseIssues(
-          prisma,
+          db,
           datasetRowsByName,
           caseImport.caseIdMap,
           issuesImport.issueIdMap,
@@ -7298,7 +7298,7 @@ async function processImportMode(
         }
 
         return importRunIssues(
-          prisma,
+          db,
           datasetRowsByName,
           testRunImport.testRunIdMap,
           issuesImport.issueIdMap,
@@ -7334,7 +7334,7 @@ async function processImportMode(
         }
 
         return importRunResultIssues(
-          prisma,
+          db,
           datasetRowsByName,
           testRunResultImport.testRunResultIdMap,
           issuesImport.issueIdMap,
@@ -7373,7 +7373,7 @@ async function processImportMode(
         }
 
         return importSessionIssues(
-          prisma,
+          db,
           datasetRowsByName,
           sessionImport.sessionIdMap,
           issuesImport.issueIdMap,
@@ -7412,7 +7412,7 @@ async function processImportMode(
         }
 
         return importSessionResultIssues(
-          prisma,
+          db,
           datasetRowsByName,
           sessionResultsImport.sessionResultIdMap,
           issuesImport.issueIdMap,
@@ -7471,7 +7471,7 @@ async function processImportMode(
     });
     await persistProgress(null, "Import completed successfully.");
 
-    const updatedJob = await prisma.testmoImportJob.update({
+    const updatedJob = await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "COMPLETED",
@@ -7572,7 +7572,7 @@ async function processImportMode(
       normalizedConfiguration
     );
 
-    await prisma.testmoImportJob.update({
+    await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "FAILED",
@@ -7618,7 +7618,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
   }
 
   validateMultiTenantJobData(job.data);
-  const prisma = getDbClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   // Clear caches to prevent cross-tenant cache pollution
   projectNameCache.clear();
@@ -7630,7 +7630,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
   folderNameCache.clear();
   clearAutomationImportCaches();
 
-  const importJob = await prisma.testmoImportJob.findUnique({
+  const importJob = await db.testmoImportJob.findUnique({
     where: { id: jobId },
   });
 
@@ -7643,7 +7643,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
   }
 
   if (mode === "import") {
-    return processImportMode(importJob, jobId, prisma, job.data.tenantId);
+    return processImportMode(importJob, jobId, db, job.data.tenantId);
   }
 
   if (mode !== "analyze") {
@@ -7661,7 +7661,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
   }
 
   if (importJob.cancelRequested) {
-    await prisma.testmoImportJob.update({
+    await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "CANCELED",
@@ -7673,9 +7673,9 @@ async function processorInner(job: Job<TestmoImportJobData>) {
     return { status: "CANCELED" };
   }
 
-  await prisma.testmoImportDataset.deleteMany({ where: { jobId } });
+  await db.testmoImportDataset.deleteMany({ where: { jobId } });
 
-  await prisma.testmoImportJob.update({
+  await db.testmoImportJob.update({
     where: { id: jobId },
     data: {
       status: "RUNNING",
@@ -7701,7 +7701,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
     `[Worker] Downloading file to temporary location: ${tempFilePath}`
   );
 
-  await prisma.testmoImportJob.update({
+  await db.testmoImportJob.update({
     where: { id: jobId },
     data: {
       statusMessage: "Preparing data...",
@@ -7739,7 +7739,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
 
     console.log(`[Worker] Download complete. File saved to ${tempFilePath}`);
 
-    await prisma.testmoImportJob.update({
+    await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         statusMessage: "Download complete. Starting analysis...",
@@ -7810,7 +7810,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
       `[Worker] Progress update: ${percentage}% (${bytesRead}/${totalBytes} bytes)${etaDisplay}`
     );
 
-    await prisma.testmoImportJob.update({
+    await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         statusMessage: `Scanning file... ${percentage}% complete`,
@@ -7844,7 +7844,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
         ? (JSON.parse(JSON.stringify(dataset.allRows)) as JsonValue)
         : JsonNull;
 
-    await prisma.testmoImportDataset.create({
+    await db.testmoImportDataset.create({
       data: {
         jobId,
         name: dataset.name,
@@ -7857,7 +7857,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
       },
     });
 
-    const updatedJob = await prisma.testmoImportJob.update({
+    const updatedJob = await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         processedDatasets,
@@ -7873,14 +7873,14 @@ async function processorInner(job: Job<TestmoImportJobData>) {
   };
 
   try {
-    const summary = await analyzeTestmoExport(bodyStream, jobId, prisma, {
+    const summary = await analyzeTestmoExport(bodyStream, jobId, db, {
       onDatasetComplete: handleDatasetComplete,
       onProgress: handleProgress,
       shouldAbort: () => cancelRequested,
     });
 
     if (cancelRequested) {
-      await prisma.testmoImportJob.update({
+      await db.testmoImportJob.update({
         where: { id: jobId },
         data: {
           status: "CANCELED",
@@ -7907,7 +7907,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
       },
     } satisfies Record<string, unknown>;
 
-    await prisma.testmoImportJob.update({
+    await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "READY",
@@ -7935,7 +7935,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
     });
 
     if (processedDatasets === 0 && summary.meta.totalDatasets === 0) {
-      await prisma.testmoImportJob.update({
+      await db.testmoImportJob.update({
         where: { id: jobId },
         data: {
           statusMessage: "Analysis complete (no datasets found)",
@@ -7949,7 +7949,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
       cancelRequested ||
       (error instanceof Error && error.name === "AbortError")
     ) {
-      await prisma.testmoImportJob.update({
+      await db.testmoImportJob.update({
         where: { id: jobId },
         data: {
           status: "CANCELED",
@@ -7964,7 +7964,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
 
     console.error(`Testmo import job ${jobId} failed`, error);
 
-    await prisma.testmoImportJob.update({
+    await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "FAILED",

@@ -116,10 +116,10 @@ export interface RefreshResult {
  */
 export async function refreshRepoCache(
   configId: number,
-  prismaClient: DbClient
+  dbClient: DbClient
 ): Promise<RefreshResult> {
   const config = await (
-    prismaClient as any
+    dbClient as any
   ).projectCodeRepositoryConfig.findUnique({
     where: { id: configId },
     include: {
@@ -157,7 +157,7 @@ export async function refreshRepoCache(
   await repoFileCache.invalidate(config.id);
 
   // Update DB status to "pending"
-  await (prismaClient as any).projectCodeRepositoryConfig.update({
+  await (dbClient as any).projectCodeRepositoryConfig.update({
     where: { id: config.id },
     data: { cacheStatus: "pending", cacheError: null },
   });
@@ -191,7 +191,7 @@ export async function refreshRepoCache(
     const totalSize = files.reduce((sum, f) => sum + (f.size ?? 0), 0);
 
     // Update DB with success status
-    await (prismaClient as any).projectCodeRepositoryConfig.update({
+    await (dbClient as any).projectCodeRepositoryConfig.update({
       where: { id: config.id },
       data: {
         cacheStatus: "success",
@@ -234,7 +234,7 @@ export async function refreshRepoCache(
 
     // Store error in both Valkey and DB
     await repoFileCache.setError(config.id, errorMessage, config.cacheTtlDays);
-    await (prismaClient as any).projectCodeRepositoryConfig.update({
+    await (dbClient as any).projectCodeRepositoryConfig.update({
       where: { id: config.id },
       data: {
         cacheStatus: "error",

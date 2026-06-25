@@ -24,7 +24,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 describeIntegration("AuthenticationService.storeUserAuth (live DB)", () => {
   let userId: string;
@@ -32,12 +32,12 @@ describeIntegration("AuthenticationService.storeUserAuth (live DB)", () => {
 
   beforeAll(async () => {
     // Reuse an existing seeded user as the FK target (never created here).
-    const user = await prisma.user.findFirstOrThrow();
+    const user = await db.user.findFirstOrThrow();
     userId = user.id;
 
     // Throwaway OAuth integration so the (userId, integrationId) pair is unique
     // to this test and can be cascade-deleted afterward.
-    const integration = await prisma.integration.create({
+    const integration = await db.integration.create({
       data: {
         name: `oauth-upsert-test-${Date.now()}`,
         provider: "GITEA",
@@ -52,9 +52,9 @@ describeIntegration("AuthenticationService.storeUserAuth (live DB)", () => {
 
   afterAll(async () => {
     if (integrationId) {
-      await prisma.integration.delete({ where: { id: integrationId } });
+      await db.integration.delete({ where: { id: integrationId } });
     }
-    await prisma.$disconnect();
+    await db.$disconnect();
   });
 
   it("creates a single active row on first authorization", async () => {
@@ -64,7 +64,7 @@ describeIntegration("AuthenticationService.storeUserAuth (live DB)", () => {
       expiresAt: new Date(Date.now() + 3600_000),
     });
 
-    const rows = await prisma.userIntegrationAuth.findMany({
+    const rows = await db.userIntegrationAuth.findMany({
       where: { userId, integrationId },
     });
     expect(rows).toHaveLength(1);
@@ -82,7 +82,7 @@ describeIntegration("AuthenticationService.storeUserAuth (live DB)", () => {
       })
     ).resolves.not.toThrow();
 
-    const rows = await prisma.userIntegrationAuth.findMany({
+    const rows = await db.userIntegrationAuth.findMany({
       where: { userId, integrationId },
     });
     expect(rows).toHaveLength(1);
@@ -94,7 +94,7 @@ describeIntegration("AuthenticationService.storeUserAuth (live DB)", () => {
   });
 
   it("reactivates and updates an inactive row (re-auth after revoke)", async () => {
-    await prisma.userIntegrationAuth.updateMany({
+    await db.userIntegrationAuth.updateMany({
       where: { userId, integrationId },
       data: { isActive: false },
     });
@@ -105,7 +105,7 @@ describeIntegration("AuthenticationService.storeUserAuth (live DB)", () => {
       })
     ).resolves.not.toThrow();
 
-    const rows = await prisma.userIntegrationAuth.findMany({
+    const rows = await db.userIntegrationAuth.findMany({
       where: { userId, integrationId },
     });
     expect(rows).toHaveLength(1);

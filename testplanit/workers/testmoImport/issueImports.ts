@@ -392,7 +392,7 @@ export const importMilestoneIssues = async (
  * Connects issues to repository cases
  */
 export const importRepositoryCaseIssues = async (
-  prisma: DbClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   caseIdMap: Map<number, number>,
   issueIdMap: Map<number, number>,
@@ -428,7 +428,7 @@ export const importRepositoryCaseIssues = async (
   ) {
     const chunk = repositoryCaseIssueRows.slice(index, index + chunkSize);
 
-    await prisma.$transaction(async (tx: TxClient) => {
+    await db.$transaction(async (tx: TxClient) => {
       for (const row of chunk) {
         const record = row as Record<string, unknown>;
         const caseSourceId = toNumberValue(record.case_id);
@@ -472,7 +472,7 @@ export const importRepositoryCaseIssues = async (
  * Connects issues to test runs
  */
 export const importRunIssues = async (
-  prisma: DbClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
   issueIdMap: Map<number, number>,
@@ -503,7 +503,7 @@ export const importRunIssues = async (
   for (let index = 0; index < runIssueRows.length; index += chunkSize) {
     const chunk = runIssueRows.slice(index, index + chunkSize);
 
-    await prisma.$transaction(async (tx: TxClient) => {
+    await db.$transaction(async (tx: TxClient) => {
       for (const row of chunk) {
         const record = row as Record<string, unknown>;
         const runSourceId = toNumberValue(record.run_id);
@@ -549,7 +549,7 @@ export const importRunIssues = async (
  * Connects issues to test run results
  */
 export const importRunResultIssues = async (
-  prisma: DbClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   testRunResultIdMap: Map<number, number>,
   issueIdMap: Map<number, number>,
@@ -580,7 +580,7 @@ export const importRunResultIssues = async (
   for (let index = 0; index < runResultIssueRows.length; index += chunkSize) {
     const chunk = runResultIssueRows.slice(index, index + chunkSize);
 
-    await prisma.$transaction(async (tx: TxClient) => {
+    await db.$transaction(async (tx: TxClient) => {
       for (const row of chunk) {
         const record = row as Record<string, unknown>;
         const resultSourceId = toNumberValue(record.result_id);
@@ -626,7 +626,7 @@ export const importRunResultIssues = async (
  * Connects issues to sessions
  */
 export const importSessionIssues = async (
-  prisma: DbClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   sessionIdMap: Map<number, number>,
   issueIdMap: Map<number, number>,
@@ -657,7 +657,7 @@ export const importSessionIssues = async (
   for (let index = 0; index < sessionIssueRows.length; index += chunkSize) {
     const chunk = sessionIssueRows.slice(index, index + chunkSize);
 
-    await prisma.$transaction(async (tx: TxClient) => {
+    await db.$transaction(async (tx: TxClient) => {
       for (const row of chunk) {
         const record = row as Record<string, unknown>;
         const sessionSourceId = toNumberValue(record.session_id);
@@ -703,7 +703,7 @@ export const importSessionIssues = async (
  * Connects issues to session results
  */
 export const importSessionResultIssues = async (
-  prisma: DbClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   sessionResultIdMap: Map<number, number>,
   issueIdMap: Map<number, number>,
@@ -738,7 +738,7 @@ export const importSessionResultIssues = async (
   ) {
     const chunk = sessionResultIssueRows.slice(index, index + chunkSize);
 
-    await prisma.$transaction(async (tx: TxClient) => {
+    await db.$transaction(async (tx: TxClient) => {
       for (const row of chunk) {
         const record = row as Record<string, unknown>;
         const resultSourceId = toNumberValue(record.result_id);

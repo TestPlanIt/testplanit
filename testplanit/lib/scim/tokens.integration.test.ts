@@ -59,7 +59,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 describeIntegration("SCIM tokens service (live DB)", () => {
   let adminUserId: string;
@@ -76,7 +76,7 @@ describeIntegration("SCIM tokens service (live DB)", () => {
     // Reuse any existing seeded non-SCIM User as the `createdById` FK target.
     // We pick the first non-system user so the test does not depend on a
     // specific seed identity.
-    const admin = await prisma.user.findFirst({
+    const admin = await db.user.findFirst({
       where: { id: { not: SCIM_SYSTEM_USER_ID } },
     });
     if (!admin) {
@@ -90,13 +90,13 @@ describeIntegration("SCIM tokens service (live DB)", () => {
 
   afterEach(async () => {
     if (createdTokenIds.length === 0) return;
-    await prisma.scimToken.deleteMany({
+    await db.scimToken.deleteMany({
       where: { id: { in: createdTokenIds.splice(0) } },
     });
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await db.$disconnect();
   });
 
   it("mints a token whose hash matches the DB row, whose secret decrypts to the plaintext, and whose systemUserId targets the seeded synthetic User", async () => {
@@ -113,7 +113,7 @@ describeIntegration("SCIM tokens service (live DB)", () => {
     expect(plaintext.length).toBeGreaterThan(40);
 
     // findUnique by hash returns the same row we just minted
-    const byHash = await prisma.scimToken.findUnique({
+    const byHash = await db.scimToken.findUnique({
       where: { token: hashToken(plaintext) },
     });
     expect(byHash).not.toBeNull();
@@ -147,7 +147,7 @@ describeIntegration("SCIM tokens service (live DB)", () => {
 
     await revokeScimToken(token.id, adminUserId);
 
-    const after = await prisma.scimToken.findUnique({
+    const after = await db.scimToken.findUnique({
       where: { id: token.id },
     });
     expect(after).not.toBeNull();
@@ -211,7 +211,7 @@ describeIntegration("SCIM tokens service (live DB)", () => {
   });
 
   it("the synthetic __scim__ User row is seeded with the expected shape", async () => {
-    const scimUser = await prisma.user.findUnique({
+    const scimUser = await db.user.findUnique({
       where: { email: SCIM_SYSTEM_USER_EMAIL },
     });
     expect(scimUser).not.toBeNull();

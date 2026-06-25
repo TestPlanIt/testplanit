@@ -12,7 +12,7 @@ interface TestRunDuplicatedData {
 /**
  * Informational event (no outcome) — no color bar. Compact: "<new>
  * duplicated from <source>". Wired-but-uncalled today (no UI duplication
- * site identified); formatter ships for symmetry so any direct-prisma
+ * site identified); formatter ships for symmetry so any direct-db
  * caller that does emit duplicated gets a usable message.
  */
 export function formatTestRunDuplicatedBlocks(

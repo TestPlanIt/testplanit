@@ -48,7 +48,7 @@ const processor = async (job: Job) => {
   validateMultiTenantJobData(job.data);
 
   // Get the appropriate Prisma client (tenant-specific or default)
-  const prisma = getDbClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   switch (job.name) {
     case "send-notification-email":
@@ -56,7 +56,7 @@ const processor = async (job: Job) => {
 
       try {
         // Get notification details with user preferences
-        const notification = await prisma.notification.findUnique({
+        const notification = await db.notification.findUnique({
           where: { id: notificationData.notificationId },
           include: {
             user: {
@@ -457,7 +457,7 @@ const processor = async (job: Job) => {
 
       try {
         // Get user details with preferences
-        const user = await prisma.user.findUnique({
+        const user = await db.user.findUnique({
           where: { id: digestData.userId },
           include: {
             userPreferences: true,
@@ -470,7 +470,7 @@ const processor = async (job: Job) => {
         }
 
         // Fetch full notification data to build URLs
-        const fullNotifications = await prisma.notification.findMany({
+        const fullNotifications = await db.notification.findMany({
           where: {
             id: { in: digestData.notifications.map((n) => n.id) },
           },
@@ -729,7 +729,7 @@ const processor = async (job: Job) => {
         });
 
         // Mark notifications as read after sending digest
-        await prisma.notification.updateMany({
+        await db.notification.updateMany({
           where: {
             id: { in: digestData.notifications.map((n) => n.id) },
           },

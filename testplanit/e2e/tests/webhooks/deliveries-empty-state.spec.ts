@@ -34,17 +34,17 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook deliveries tab empty state — copy + Reset filters CTA (E-06)", () => {
   let projectId: number;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
 
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Empty Deliveries ${uniqueId}`);
-    prisma = createRawDbClient();
+    db = createRawDbClient();
     // Seed an outbound config so the deliveries tab renders the
     // "no matches" empty-state (with Reset filters CTA), NOT the
     // "no webhooks configured" empty-state. The two branches are
     // distinguished by `configList.length` in renderEmpty().
-    await seedOutboundConfig(prisma, {
+    await seedOutboundConfig(db, {
       projectId,
       url: "https://example.com/E-06/empty-state",
       name: "E2E E-06 Outbound",
@@ -52,7 +52,7 @@ test.describe("Webhook deliveries tab empty state — copy + Reset filters CTA (
   });
 
   test.afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("admin lands on Deliveries tab, sees empty-state copy + Reset filters button, click clears filter query params", async ({

@@ -1,6 +1,6 @@
 import type { Issue } from "~/zenstack/models";
 import type { DbClient } from "~/lib/zenstack";
-import { rawDb as defaultPrisma } from "~/lib/rawDb";
+import { rawDb as defaultDb } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
@@ -192,15 +192,15 @@ export async function deleteIssueFromIndex(
 /**
  * Sync a single issue to Elasticsearch
  * @param issueId - The ID of the issue to sync
- * @param prismaClient - Optional Prisma client for tenant-specific queries
+ * @param dbClient - Optional Prisma client for tenant-specific queries
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncIssueToElasticsearch(
   issueId: number,
-  prismaClient?: DbClient,
+  dbClient?: DbClient,
   tenantId?: string
 ): Promise<boolean> {
-  const rawDb = prismaClient || defaultPrisma;
+  const rawDb = dbClient || defaultDb;
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");

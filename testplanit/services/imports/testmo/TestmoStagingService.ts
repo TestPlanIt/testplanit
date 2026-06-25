@@ -21,7 +21,7 @@ type StagingRowData = {
 };
 
 export class TestmoStagingService {
-  constructor(private prisma: DbClient | TxClient) {}
+  constructor(private db: DbClient | TxClient) {}
 
   private prepareStagingRow(
     jobId: string,
@@ -125,7 +125,7 @@ export class TestmoStagingService {
     rowIndex: number,
     rowData: any
   ) {
-    return this.prisma.testmoImportStaging.create({
+    return this.db.testmoImportStaging.create({
       data: this.prepareStagingRow(jobId, datasetName, rowIndex, rowData),
     });
   }
@@ -144,7 +144,7 @@ export class TestmoStagingService {
       this.prepareStagingRow(jobId, datasetName, index, data)
     );
 
-    return this.prisma.testmoImportStaging.createMany({ data });
+    return this.db.testmoImportStaging.createMany({ data });
   }
 
   /**
@@ -158,7 +158,7 @@ export class TestmoStagingService {
     targetType: "map" | "create",
     metadata?: any
   ) {
-    return this.prisma.testmoImportMapping.upsert({
+    return this.db.testmoImportMapping.upsert({
       where: {
         jobId_entityType_sourceId: {
           jobId,
@@ -198,7 +198,7 @@ export class TestmoStagingService {
     if (mappings.length === 0) return { count: 0 };
 
     const operations = mappings.map((mapping) =>
-      this.prisma.testmoImportMapping.upsert({
+      this.db.testmoImportMapping.upsert({
         where: {
           jobId_entityType_sourceId: {
             jobId,
@@ -230,7 +230,7 @@ export class TestmoStagingService {
    * Get a specific mapping
    */
   async getMapping(jobId: string, entityType: string, sourceId: number) {
-    return this.prisma.testmoImportMapping.findUnique({
+    return this.db.testmoImportMapping.findUnique({
       where: {
         jobId_entityType_sourceId: {
           jobId,
@@ -245,7 +245,7 @@ export class TestmoStagingService {
    * Get all mappings for a specific entity type
    */
   async getMappingsByType(jobId: string, entityType: string) {
-    return this.prisma.testmoImportMapping.findMany({
+    return this.db.testmoImportMapping.findMany({
       where: {
         jobId,
         entityType,
@@ -281,7 +281,7 @@ export class TestmoStagingService {
 
     while (true) {
       // Fetch the next batch of unprocessed rows
-      const batch = await this.prisma.testmoImportStaging.findMany({
+      const batch = await this.db.testmoImportStaging.findMany({
         where: {
           jobId,
           datasetName,
@@ -312,7 +312,7 @@ export class TestmoStagingService {
 
         // Mark successfully processed rows
         if (processedIds.length > 0) {
-          await this.prisma.testmoImportStaging.updateMany({
+          await this.db.testmoImportStaging.updateMany({
             where: { id: { in: processedIds } },
             data: { processed: true },
           });
@@ -325,7 +325,7 @@ export class TestmoStagingService {
           .map((b) => b.id);
 
         if (failedIds.length > 0) {
-          await this.prisma.testmoImportStaging.updateMany({
+          await this.db.testmoImportStaging.updateMany({
             where: { id: { in: failedIds } },
             data: {
               processed: true,
@@ -337,7 +337,7 @@ export class TestmoStagingService {
       } catch (error) {
         // If the entire batch fails, mark all as failed
         const ids = batch.map((b) => b.id);
-        await this.prisma.testmoImportStaging.updateMany({
+        await this.db.testmoImportStaging.updateMany({
           where: { id: { in: ids } },
           data: {
             processed: true,
@@ -361,7 +361,7 @@ export class TestmoStagingService {
    * Get count of unprocessed rows for progress tracking
    */
   async getUnprocessedCount(jobId: string, datasetName?: string) {
-    return this.prisma.testmoImportStaging.count({
+    return this.db.testmoImportStaging.count({
       where: {
         jobId,
         ...(datasetName && { datasetName }),
@@ -374,7 +374,7 @@ export class TestmoStagingService {
    * Get total count of rows for a dataset
    */
   async getTotalCount(jobId: string, datasetName?: string) {
-    return this.prisma.testmoImportStaging.count({
+    return this.db.testmoImportStaging.count({
       where: {
         jobId,
         ...(datasetName && { datasetName }),
@@ -392,11 +392,11 @@ export class TestmoStagingService {
     };
 
     const [total, processed, errors] = await Promise.all([
-      this.prisma.testmoImportStaging.count({ where }),
-      this.prisma.testmoImportStaging.count({
+      this.db.testmoImportStaging.count({ where }),
+      this.db.testmoImportStaging.count({
         where: { ...where, processed: true, error: null },
       }),
-      this.prisma.testmoImportStaging.count({
+      this.db.testmoImportStaging.count({
         where: { ...where, processed: true, error: { not: null } },
       }),
     ]);
@@ -415,7 +415,7 @@ export class TestmoStagingService {
    * Get failed rows with error details
    */
   async getFailedRows(jobId: string, datasetName?: string, limit = 100) {
-    return this.prisma.testmoImportStaging.findMany({
+    return this.db.testmoImportStaging.findMany({
       where: {
         jobId,
         ...(datasetName && { datasetName }),
@@ -438,7 +438,7 @@ export class TestmoStagingService {
    * Reset processing status for failed rows (for retry)
    */
   async resetFailedRows(jobId: string, datasetName?: string) {
-    return this.prisma.testmoImportStaging.updateMany({
+    return this.db.testmoImportStaging.updateMany({
       where: {
         jobId,
         ...(datasetName && { datasetName }),
@@ -456,7 +456,7 @@ export class TestmoStagingService {
    * Mark specific rows as failed with an error message
    */
   async markFailed(ids: string[], error: string) {
-    return this.prisma.testmoImportStaging.updateMany({
+    return this.db.testmoImportStaging.updateMany({
       where: { id: { in: ids } },
       data: {
         processed: true,
@@ -470,8 +470,8 @@ export class TestmoStagingService {
    */
   async cleanup(jobId: string) {
     await Promise.all([
-      this.prisma.testmoImportStaging.deleteMany({ where: { jobId } }),
-      this.prisma.testmoImportMapping.deleteMany({ where: { jobId } }),
+      this.db.testmoImportStaging.deleteMany({ where: { jobId } }),
+      this.db.testmoImportMapping.deleteMany({ where: { jobId } }),
     ]);
   }
 
@@ -479,7 +479,7 @@ export class TestmoStagingService {
    * Clean up only processed staging data (keep mappings)
    */
   async cleanupProcessedStaging(jobId: string) {
-    return this.prisma.testmoImportStaging.deleteMany({
+    return this.db.testmoImportStaging.deleteMany({
       where: {
         jobId,
         processed: true,
@@ -491,7 +491,7 @@ export class TestmoStagingService {
    * Check if a job has staging data
    */
   async hasStagingData(jobId: string): Promise<boolean> {
-    const count = await this.prisma.testmoImportStaging.count({
+    const count = await this.db.testmoImportStaging.count({
       where: { jobId },
       take: 1,
     });
@@ -502,7 +502,7 @@ export class TestmoStagingService {
    * Get distinct dataset names for a job
    */
   async getDatasetNames(jobId: string): Promise<string[]> {
-    const results = await this.prisma.testmoImportStaging.findMany({
+    const results = await this.db.testmoImportStaging.findMany({
       where: { jobId },
       distinct: ["datasetName"],
       select: { datasetName: true },

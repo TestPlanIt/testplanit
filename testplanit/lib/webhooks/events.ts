@@ -7,14 +7,14 @@ import { getAuditContext, SYSTEM_ACTOR_ID } from "~/lib/auditContext";
  * Outbox emit seam.
  *
  * Called from:
- *  - lib/prisma.ts $extends middleware hooks for testRuns, sessions,
+ *  - lib/db.ts $extends middleware hooks for testRuns, sessions,
  *    issue, repositoryCases, testRunResult, sessionResults — every emission
  *    site is alongside an existing auditCreate/Update/Delete call. The
- *    middleware constructs an explicit `prisma.$transaction(async (tx) => ...)`
+ *    middleware constructs an explicit `db.$transaction(async (tx) => ...)`
  *    that wraps the entity mutation AND this emit() call so both writes
  *    commit-or-rollback atomically (crash safety).
  *  - app/actions/webhook-config.ts sendTestOutboundWebhook for the
- *    synthetic `webhook.test` event — also wrapped in prisma.$transaction.
+ *    synthetic `webhook.test` event — also wrapped in db.$transaction.
  *
  * Crash safety: writes are MANDATORILY inside the caller's tx. The
  * outbox row commits with the entity change in the same DB transaction;
@@ -23,7 +23,7 @@ import { getAuditContext, SYSTEM_ACTOR_ID } from "~/lib/auditContext";
  * **Why tx is required (not optional with singleton fallback):** Prisma
  * does NOT auto-route singleton-client calls into an active $transaction
  * via AsyncLocalStorage in v5/v6. The existing audit/ES sync hooks in
- * lib/prisma.ts work despite calling the singleton because they enqueue
+ * lib/db.ts work despite calling the singleton because they enqueue
  * to BullMQ (audit) or fire-and-forget promises (ES sync) — neither is
  * transactionally bound to the producing entity write. The outbox row MUST
  * commit in the same tx as the entity; therefore the caller MUST construct
@@ -43,7 +43,7 @@ export interface WebhookEventEmitOptions {
   projectId: number;
   /**
    * REQUIRED: the `TxClient` returned by
-   * `prisma.$transaction(async (tx) => ...)`. There is NO fallback to
+   * `db.$transaction(async (tx) => ...)`. There is NO fallback to
    * the singleton client (Prisma does not route singleton calls into
    * an active tx via ALS — see file-level docs). Typed narrowly so the
    * type system rejects calls outside a transaction; runtime guard below

@@ -92,7 +92,7 @@ const FILTERABLE_GROUP_ATTRS: ReadonlySet<string> = new Set([
  * unsupported operator, non-whitelisted attribute, type mismatch, or
  * upstream parse error.
  */
-export function scimFilterToPrismaWhere(raw: string): UserWhereInput {
+export function scimFilterToDbWhere(raw: string): UserWhereInput {
   let ast: Filter;
   try {
     ast = parse(raw);
@@ -210,7 +210,7 @@ function requireBoolean(attr: string, value: unknown): boolean {
  * mapper-side case-folding convention; `externalId` is preserved verbatim
  * because it is an IdP-opaque identifier.
  */
-export function scimFilterToPrismaGroupWhere(
+export function scimFilterToDbGroupWhere(
   raw: string
 ): GroupsWhereInput {
   let ast: Filter;

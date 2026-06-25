@@ -2,12 +2,12 @@
 
 import type { DbClient } from "~/lib/zenstack";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
-import { rawDb as defaultPrisma } from "../lib/rawDb";
+import { rawDb as defaultDb } from "../lib/rawDb";
 
 type UpdateRepositoryCaseForecastOptions = {
   skipTestRunUpdate?: boolean;
   collectAffectedTestRuns?: boolean;
-  prismaClient?: DbClient; // Optional: use provided client for multi-tenant support
+  dbClient?: DbClient; // Optional: use provided client for multi-tenant support
 };
 
 type UpdateRepositoryCaseForecastResult = {
@@ -17,11 +17,11 @@ type UpdateRepositoryCaseForecastResult = {
 
 type UpdateTestRunForecastOptions = {
   alreadyRefreshedCaseIds?: Set<number>;
-  prismaClient?: DbClient; // Optional: use provided client for multi-tenant support
+  dbClient?: DbClient; // Optional: use provided client for multi-tenant support
 };
 
 type GetUniqueCaseGroupIdsOptions = {
-  prismaClient?: DbClient; // Optional: use provided client for multi-tenant support
+  dbClient?: DbClient; // Optional: use provided client for multi-tenant support
 };
 
 /**
@@ -34,7 +34,7 @@ export async function updateRepositoryCaseForecast(
   repositoryCaseId: number,
   options: UpdateRepositoryCaseForecastOptions = {}
 ): Promise<UpdateRepositoryCaseForecastResult> {
-  const rawDb = options.prismaClient || defaultPrisma;
+  const rawDb = options.dbClient || defaultDb;
 
   if (process.env.DEBUG_FORECAST) {
     console.log(
@@ -198,7 +198,7 @@ export async function updateRepositoryCaseForecast(
       for (const testRunId of uniqueAffectedTestRunIds) {
         await updateTestRunForecast(testRunId, {
           alreadyRefreshedCaseIds: new Set(uniqueCaseIds),
-          prismaClient: rawDb,
+          dbClient: rawDb,
         });
       }
     }
@@ -227,7 +227,7 @@ export async function updateTestRunForecast(
   testRunId: number,
   options: UpdateTestRunForecastOptions = {}
 ): Promise<void> {
-  const rawDb = options.prismaClient || defaultPrisma;
+  const rawDb = options.dbClient || defaultDb;
 
   if (process.env.DEBUG_FORECAST)
     console.log(`Updating forecast for TestRun ID: ${testRunId}`);
@@ -266,7 +266,7 @@ export async function updateTestRunForecast(
 
         const result = await updateRepositoryCaseForecast(repositoryCaseId, {
           skipTestRunUpdate: true,
-          prismaClient: rawDb,
+          dbClient: rawDb,
         });
 
         if (result.updatedCaseIds.length > 0) {
@@ -391,13 +391,13 @@ export async function updateTestRunForecast(
 
 /**
  * Fetches all RepositoryCase IDs that are not deleted or archived.
- * @param options Optional options including prismaClient for multi-tenant support
+ * @param options Optional options including dbClient for multi-tenant support
  * @returns An array of active RepositoryCase IDs.
  */
 export async function getActiveRepositoryCaseIds(
   options: GetUniqueCaseGroupIdsOptions = {}
 ): Promise<number[]> {
-  const rawDb = options.prismaClient || defaultPrisma;
+  const rawDb = options.dbClient || defaultDb;
 
   if (process.env.DEBUG_FORECAST)
     console.log("Fetching active repository case IDs...");
@@ -425,13 +425,13 @@ export async function getActiveRepositoryCaseIds(
  * Fetches unique case group representatives to avoid recalculating the same linked groups.
  * For each group of cases linked by SAME_TEST_DIFFERENT_SOURCE, returns only one representative case ID.
  * Processes cases in batches to avoid hitting database bind variable limits.
- * @param options Optional options including prismaClient for multi-tenant support
+ * @param options Optional options including dbClient for multi-tenant support
  * @returns An array of representative RepositoryCase IDs, one per unique group.
  */
 export async function getUniqueCaseGroupIds(
   options: GetUniqueCaseGroupIdsOptions = {}
 ): Promise<number[]> {
-  const rawDb = options.prismaClient || defaultPrisma;
+  const rawDb = options.dbClient || defaultDb;
 
   if (process.env.DEBUG_FORECAST)
     console.log("Fetching unique case group representatives...");

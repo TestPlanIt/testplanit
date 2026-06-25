@@ -1,5 +1,5 @@
 import type { TestRuns } from "~/zenstack/models";
-import { rawDb as defaultPrisma } from "~/lib/rawDb";
+import { rawDb as defaultDb } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
@@ -127,7 +127,7 @@ export async function syncTestRunToElasticsearch(
   }
 
   try {
-    const testRun = await defaultPrisma.testRuns.findUnique({
+    const testRun = await defaultDb.testRuns.findUnique({
       where: { id: testRunId },
       include: {
         project: true,

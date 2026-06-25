@@ -260,7 +260,7 @@ describe("CSV Import API Route", () => {
   // directly (and assertions can read the mock call records).
   mockEnhancedDb.$extends = vi.fn(() => mockEnhancedDb);
 
-  const mockPrisma = {
+  const mockDb = {
     user: {
       findUnique: vi.fn(),
     },
@@ -270,7 +270,7 @@ describe("CSV Import API Route", () => {
     vi.clearAllMocks();
     (getServerSession as any).mockResolvedValue(mockSession);
     (enhanceWithAudit as any).mockReturnValue(mockEnhancedDb);
-    mockPrisma.user.findUnique.mockResolvedValue(mockSession.user);
+    mockDb.user.findUnique.mockResolvedValue(mockSession.user);
     mockEnhancedDb.projects.findFirst.mockResolvedValue(mockProject);
     mockEnhancedDb.repositories.findFirst.mockResolvedValue(mockRepository);
     mockEnhancedDb.templates.findUnique.mockResolvedValue(mockTemplate);

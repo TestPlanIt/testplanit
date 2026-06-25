@@ -1,7 +1,7 @@
 "use client";
 
 import { ProjectAccessType } from "~/zenstack/models";
-import type { Groups as PrismaGroups, Roles } from "~/zenstack/models";
+import type { Groups as DbGroups, Roles } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import {
   Control,
@@ -34,7 +34,7 @@ import {
 import { Star } from "lucide-react";
 
 // Define the type for Group with included users
-type GroupWithUsers = PrismaGroups & {
+type GroupWithUsers = DbGroups & {
   users: { userId: string }[];
 };
 

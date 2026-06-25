@@ -10,7 +10,7 @@ import {
   extractMemberIds,
   groupToScim,
   scimToGroupCreate,
-  type PrismaGroupForScim,
+  type DbGroupForScim,
   type ScimGroupBody,
   type ScimGroupMember,
 } from "./group";
@@ -49,8 +49,8 @@ afterAll(() => {
 const fixedUpdatedAt = new Date("2026-02-02T12:00:00.000Z");
 
 function makeGroup(
-  overrides: Partial<PrismaGroupForScim> = {}
-): PrismaGroupForScim {
+  overrides: Partial<DbGroupForScim> = {}
+): DbGroupForScim {
   return {
     id: 7,
     name: "Engineering",
@@ -409,7 +409,7 @@ describe("round-trip via fixtures", () => {
 describe("purity discipline", () => {
   it("F1: source has no DB, no logger, no console references", () => {
     const source = readFileSync(join(__dirname, "group.ts"), "utf8");
-    expect(source).not.toMatch(/~\/lib\/prisma/);
+    expect(source).not.toMatch(/~\/lib\/db/);
     expect(source).not.toMatch(/~\/lib\/services\/auditLog/);
     expect(source).not.toMatch(/~\/lib\/webhooks\//);
     expect(source).not.toMatch(/\bconsole\./);

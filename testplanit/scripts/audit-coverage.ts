@@ -4,7 +4,7 @@
  * Static-analysis inventory of every mutation surface in the codebase that
  * can emit an audit event:
  *
- *   1. Prisma extension hooks in `testplanit/lib/prisma.ts`
+ *   1. Prisma extension hooks in `testplanit/lib/db.ts`
  *   2. API routes under `testplanit/app/api/**` (mutation HTTP verbs + the
  *      auth/logout GET exception)
  *   3. Server actions under `testplanit/app/actions/*.ts`
@@ -44,7 +44,7 @@ type CoverageStatus =
   | "missing"
   | "intentionally-skipped";
 
-type Surface = "prisma-hook" | "api-route" | "server-action" | "worker";
+type Surface = "db-hook" | "api-route" | "server-action" | "worker";
 
 type InventoryItem = {
   surface: Surface;
@@ -108,7 +108,7 @@ const AUDIT_HELPER_REGEX =
   /\baudit(?:Create|Update|Delete|BulkCreate|BulkUpdate|BulkDelete|RoleChange|PermissionGrant|PermissionRevoke|AuthEvent|PasswordChange|SystemConfigChange|SsoConfigChange|DataExport)\s*\(|\bcaptureAuditEvent\s*\(/;
 
 const RAW_WRITE_REGEX =
-  /\.\$(?:executeRaw|executeRawUnsafe)\b|(?:prisma|db|tx)\.auditLog\.create\b/;
+  /\.\$(?:executeRaw|executeRawUnsafe)\b|(?:db|db|tx)\.auditLog\.create\b/;
 
 const INTENTIONAL_SKIP_REGEX =
   /Skip audit for|isLastActiveOnly|lastActiveAt[\s\S]{0,200}return query\(args\)/;
@@ -140,7 +140,7 @@ async function discoverFiles(): Promise<{
   routes: string[];
   actions: string[];
   workers: string[];
-  prismaFile: string;
+  dbFile: string;
 }> {
   const cwd = TESTPLANIT_DIR;
 
@@ -163,7 +163,7 @@ async function discoverFiles(): Promise<{
     routes: routes.map((p) => `testplanit/${p}`).sort(),
     actions: actions.map((p) => `testplanit/${p}`).sort(),
     workers: workers.map((p) => `testplanit/${p}`).sort(),
-    prismaFile: "testplanit/lib/prisma.ts",
+    dbFile: "testplanit/lib/db.ts",
   };
 }
 
@@ -172,7 +172,7 @@ async function discoverFiles(): Promise<{
 // ---------------------------------------------------------------------------
 
 /**
- * Parse `testplanit/lib/prisma.ts` and emit one row per
+ * Parse `testplanit/lib/db.ts` and emit one row per
  * `{model, operation}` pair declared inside the `$extends({ query: ... })`
  * block.
  *
@@ -181,10 +181,10 @@ async function discoverFiles(): Promise<{
  * exactly 8 leading spaces. The matching closing brace at 8 spaces
  * terminates the method body.
  */
-async function enumeratePrismaHooks(
-  prismaFile: string
+async function enumerateDbHooks(
+  dbFile: string
 ): Promise<InventoryItem[]> {
-  const absPath = path.join(REPO_ROOT, prismaFile);
+  const absPath = path.join(REPO_ROOT, dbFile);
   const content = await fs.readFile(absPath, "utf8");
   const lines = content.split("\n");
 
@@ -247,8 +247,8 @@ async function enumeratePrismaHooks(
       }
 
       items.push({
-        surface: "prisma-hook",
-        file: prismaFile,
+        surface: "db-hook",
+        file: dbFile,
         symbol: `${modelName}.${operation}`,
         evidence: {
           hasExtensionHook,
@@ -283,9 +283,9 @@ async function enumeratePrismaHooks(
  */
 async function checkHookParity(
   hookItems: InventoryItem[],
-  prismaFile: string
+  dbFile: string
 ): Promise<HookParityReport> {
-  const absPath = path.join(REPO_ROOT, prismaFile);
+  const absPath = path.join(REPO_ROOT, dbFile);
   const content = await fs.readFile(absPath, "utf8");
   const lines = content.split("\n");
 
@@ -298,7 +298,7 @@ async function checkHookParity(
     byModel.get(model)!.add(op);
   }
 
-  // Use the same 6-space-indent model-header regex as enumeratePrismaHooks
+  // Use the same 6-space-indent model-header regex as enumerateDbHooks
   // so the two functions agree on what a "model block" is.
   const modelHeaderRegex = /^ {6}(\w+):\s*\{\s*$/;
   const modelEndRegex = /^ {6}\},?\s*$/;
@@ -377,7 +377,7 @@ async function checkHookParity(
  * helper applies the mechanical default.
  *
  * `hasRawWrite` is an INDEPENDENT audit-emission signal: a file that directly
- * calls `prisma.auditLog.create(...)` or `$executeRaw` is itself emitting
+ * calls `db.auditLog.create(...)` or `$executeRaw` is itself emitting
  * audits, just not via the sanctioned helper. The `raw-write` status exists
  * precisely to flag "emits audits, but not via the sanctioned helper" cases,
  * so it fires whenever `hasRawWrite` is true — regardless of whether the file
@@ -564,7 +564,7 @@ async function enumerateWorkers(workers: string[]): Promise<InventoryItem[]> {
  */
 function warnIfBaselineDirty(): void {
   try {
-    const out = execSync("git status --porcelain testplanit/lib/prisma.ts", {
+    const out = execSync("git status --porcelain testplanit/lib/db.ts", {
       cwd: REPO_ROOT,
       encoding: "utf8",
     });
@@ -629,13 +629,13 @@ function computeTotals(items: InventoryItem[]): InventoryOutput["totals"] {
  * pass (Plan 02 Task 3). This override runs BEFORE totals are computed so
  * the counts block reflects the status change.
  *
- * The rationale copies the comment-block text from `testplanit/lib/prisma.ts`
+ * The rationale copies the comment-block text from `testplanit/lib/db.ts`
  * lines 688–701 verbatim — matching the precedent wording so future audits
  * see the same phrasing on both sides of the trust boundary.
  */
 function applyLastActiveAtSkipOverride(items: InventoryItem[]): void {
   const row = items.find(
-    (i) => i.surface === "prisma-hook" && i.symbol === "user.update"
+    (i) => i.surface === "db-hook" && i.symbol === "user.update"
   );
   if (!row) return;
   if (!row.evidence.hasIntentionalSkipMarker) return;
@@ -665,10 +665,10 @@ async function writeCountsBlock(
 async function main(): Promise<void> {
   warnIfBaselineDirty();
   const generatedAt = await getHeadTimestamp();
-  const { routes, actions, workers, prismaFile } = await discoverFiles();
+  const { routes, actions, workers, dbFile } = await discoverFiles();
 
   const [hookItems, routeItems, actionItems, workerItems] = await Promise.all([
-    enumeratePrismaHooks(prismaFile),
+    enumerateDbHooks(dbFile),
     enumerateApiRoutes(routes),
     enumerateServerActions(actions),
     enumerateWorkers(workers),
@@ -684,7 +684,7 @@ async function main(): Promise<void> {
   // Compute the hook-parity report from the raw hookItems (before the
   // lastActiveAt override downgrades user.update to intentionally-skipped;
   // parity counts the hook's existence, not its verdict).
-  const hookParity = await checkHookParity(hookItems, prismaFile);
+  const hookParity = await checkHookParity(hookItems, dbFile);
 
   // Move the lastActiveAt row from `audited (hook)` to `intentionally-skipped`
   // and populate its rationale BEFORE computing totals so the counts block

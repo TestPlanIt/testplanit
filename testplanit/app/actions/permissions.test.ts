@@ -30,7 +30,7 @@ vi.mock("~/utils/permissions", () => ({
 import { baseDb } from "~/lib/db";
 import { isAdmin, isProjectAdmin } from "~/utils/permissions";
 
-const mockPrisma = baseDb as unknown as {
+const mockDb = baseDb as unknown as {
   user: { findUnique: ReturnType<typeof vi.fn> };
   projects: { findUnique: ReturnType<typeof vi.fn> };
   userProjectPermission: { findUnique: ReturnType<typeof vi.fn> };
@@ -86,9 +86,9 @@ describe("Permissions", () => {
 
   describe("getUserProjectPermissions", () => {
     it("should return default permissions when user not found", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
 
       const result = await getUserProjectPermissions(
         "non-existent",
@@ -101,9 +101,9 @@ describe("Permissions", () => {
     });
 
     it("should return default permissions when project not found", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(null);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(null);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
 
       const result = await getUserProjectPermissions(
         "user-123",
@@ -116,9 +116,9 @@ describe("Permissions", () => {
     });
 
     it("should return full permissions for system admin", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
       vi.mocked(isAdmin).mockReturnValue(true);
 
       const result = await getUserProjectPermissions(
@@ -141,9 +141,9 @@ describe("Permissions", () => {
     });
 
     it("should return full permissions for project admin", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
       vi.mocked(isProjectAdmin).mockReturnValue(true);
 
       const result = await getUserProjectPermissions(
@@ -157,9 +157,9 @@ describe("Permissions", () => {
     });
 
     it("should deny access for NO_ACCESS user permission", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue({
         accessType: ProjectAccessType.NO_ACCESS,
         role: null,
       });
@@ -174,9 +174,9 @@ describe("Permissions", () => {
     });
 
     it("should use global role when GLOBAL_ROLE access type", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue({
         accessType: ProjectAccessType.GLOBAL_ROLE,
         role: null,
       });
@@ -205,9 +205,9 @@ describe("Permissions", () => {
         ],
       };
 
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue({
         accessType: ProjectAccessType.SPECIFIC_ROLE,
         role: specificRole,
       });
@@ -241,10 +241,10 @@ describe("Permissions", () => {
         ],
       };
 
-      mockPrisma.user.findUnique.mockResolvedValue(userWithGroups);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
-      mockPrisma.groupProjectPermission.findMany.mockResolvedValue([
+      mockDb.user.findUnique.mockResolvedValue(userWithGroups);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.groupProjectPermission.findMany.mockResolvedValue([
         {
           accessType: ProjectAccessType.SPECIFIC_ROLE,
           role: groupRole,
@@ -262,9 +262,9 @@ describe("Permissions", () => {
     });
 
     it("should use project default when no other permissions apply", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
 
       const result = await getUserProjectPermissions(
         "user-123",
@@ -277,12 +277,12 @@ describe("Permissions", () => {
     });
 
     it("should deny access when project default is NO_ACCESS", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue({
         ...mockProject,
         defaultAccessType: ProjectAccessType.NO_ACCESS,
       });
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
 
       const result = await getUserProjectPermissions(
         "user-123",
@@ -294,9 +294,9 @@ describe("Permissions", () => {
     });
 
     it("should return permissions for specific area when provided", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
 
       const result = await getUserProjectPermissions(
         "user-123",
@@ -314,9 +314,9 @@ describe("Permissions", () => {
     });
 
     it("should return all area permissions when no specific area", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
 
       const result = await getUserProjectPermissions(
         "user-123",
@@ -332,9 +332,9 @@ describe("Permissions", () => {
     });
 
     it("should return default permissions for areas without explicit permissions", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
 
       const result = await getUserProjectPermissions(
         "user-123",
@@ -356,9 +356,9 @@ describe("Permissions", () => {
         role: null,
       };
 
-      mockPrisma.user.findUnique.mockResolvedValue(userWithoutRole);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(userWithoutRole);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
 
       const result = await getUserProjectPermissions(
         "user-123",
@@ -384,13 +384,13 @@ describe("Permissions", () => {
         ],
       };
 
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, role: null });
-      mockPrisma.projects.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({ ...mockUser, role: null });
+      mockDb.projects.findUnique.mockResolvedValue({
         ...mockProject,
         defaultAccessType: ProjectAccessType.SPECIFIC_ROLE,
         defaultRole: projectDefaultRole,
       });
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
 
       const result = await getUserProjectPermissions(
         "user-123",
@@ -405,9 +405,9 @@ describe("Permissions", () => {
 
   describe("checkUserPermission", () => {
     it("should return true when user has specific permission", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
 
       const result = await checkUserPermission(
         "user-123",
@@ -421,9 +421,9 @@ describe("Permissions", () => {
     });
 
     it("should return false when user lacks specific permission", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
 
       const result = await checkUserPermission(
         "user-123",
@@ -437,9 +437,9 @@ describe("Permissions", () => {
     });
 
     it("should return false when user has no access", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue({
         accessType: ProjectAccessType.NO_ACCESS,
         role: null,
       });
@@ -456,9 +456,9 @@ describe("Permissions", () => {
     });
 
     it("should return true for admin regardless of role permissions", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
       vi.mocked(isAdmin).mockReturnValue(true);
 
       const result = await checkUserPermission(
@@ -473,9 +473,9 @@ describe("Permissions", () => {
     });
 
     it("should check canClose permission", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.projects.findUnique.mockResolvedValue(mockProject);
-      mockPrisma.userProjectPermission.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(mockUser);
+      mockDb.projects.findUnique.mockResolvedValue(mockProject);
+      mockDb.userProjectPermission.findUnique.mockResolvedValue(null);
 
       const result = await checkUserPermission(
         "user-123",

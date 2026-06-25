@@ -15,7 +15,7 @@ import {
  *   pointing at a local node:http stub server → completes a test run via the
  *   E2E API fixture helpers (api.createTestRun + api.completeTestRunViaStateChange,
  *   both flowing through the same ZenStack RPC pathway as the in-app UI →
- *   triggers the lib/prisma.ts $extends middleware → emits test_run.state_changed
+ *   triggers the lib/db.ts $extends middleware → emits test_run.state_changed
  *   + test_run.completed via the outbox → outbox poller enqueues dispatch jobs →
  *   dispatch worker POSTs to the stub) → asserts the stub captured a
  *   test_run.completed envelope, the WebhookDelivery row exists with
@@ -34,17 +34,17 @@ test.describe.configure({ mode: "serial" });
 test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo target)", () => {
   let projectId: number;
   let stub: StubServerHandle;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
 
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E Outbound Webhook ${uniqueId}`);
     stub = await startStubServer();
-    prisma = createRawDbClient();
+    db = createRawDbClient();
   });
 
   test.afterAll(async () => {
     if (stub) await stub.close();
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("project admin configures outbound, completes a test run, sees delivery in stub + DB", async ({
@@ -53,7 +53,7 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
     api,
   }) => {
     let deliveries:
-      | Awaited<ReturnType<typeof prisma.webhookDelivery.findMany>>
+      | Awaited<ReturnType<typeof db.webhookDelivery.findMany>>
       | undefined;
 
     // 1. Configure the outbound webhook via the admin form. The Phase 2
@@ -113,7 +113,7 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
       );
       //    Step 2b: transition stateId to a DONE-typed workflow. This is the
       //    line that fires test_run.state_changed + test_run.completed via the
-      //    lib/prisma.ts $extends middleware (testRunEvents.emitTestRunUpdateEvents).
+      //    lib/db.ts $extends middleware (testRunEvents.emitTestRunUpdateEvents).
       await api.completeTestRunViaStateChange(testRunId, projectId);
     });
 
@@ -153,7 +153,7 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
 
     await test.step("Verify the OUTBOUND WebhookDelivery row was written", async () => {
       // 4. Assert the WebhookDelivery row was written.
-      deliveries = await prisma.webhookDelivery.findMany({
+      deliveries = await db.webhookDelivery.findMany({
         where: {
           webhookConfig: { projectId },
           direction: "OUTBOUND",
@@ -174,7 +174,7 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
       //    row, the audit job is just enqueued — the row may not exist yet.
       //    Poll for it (mirrors waitForDelivery / waitForAudit patterns used
       //    in other webhook specs; deterministic per feedback_no_flaky_tests).
-      const audit = await waitForAuditRow(prisma, {
+      const audit = await waitForAuditRow(db, {
         where: {
           action: "WEBHOOK_DISPATCHED",
           entityType: "WebhookDelivery",
@@ -195,7 +195,7 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
  * identifies the dispatched-event audit row for this delivery.
  */
 async function waitForAuditRow(
-  prisma: ReturnType<typeof createRawDbClient>,
+  db: ReturnType<typeof createRawDbClient>,
   args: {
     where: Record<string, unknown>;
     timeoutMs: number;
@@ -203,7 +203,7 @@ async function waitForAuditRow(
 ): Promise<{ metadata: unknown }> {
   const startedAt = Date.now();
   while (Date.now() - startedAt < args.timeoutMs) {
-    const row = await prisma.auditLog.findFirst({
+    const row = await db.auditLog.findFirst({
       where: args.where,
       select: { metadata: true },
     });

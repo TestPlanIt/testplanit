@@ -291,11 +291,11 @@ export type HierarchyContextMode = "full" | "names";
  * (descriptions and steps would add latency without improving dedup).
  *
  * Returns at most `tokenBudget` estimated tokens worth of cases.
- * `prisma` must be the *raw* (non-enhanced) client so access control
+ * `db` must be the *raw* (non-enhanced) client so access control
  * does not interfere — the caller has already verified project access.
  */
 export async function fetchHierarchyContext(
-  prisma: any,
+  db: any,
   projectId: number,
   folderId: number,
   tokenBudget: number,
@@ -331,7 +331,7 @@ export async function fetchHierarchyContext(
 
   // 1. Load all folder ids + parentIds for the project (lightweight)
   const allFolders: { id: number; parentId: number | null }[] =
-    await prisma.repositoryFolders.findMany({
+    await db.repositoryFolders.findMany({
       where: { projectId, isDeleted: false },
       select: { id: true, parentId: true },
     });
@@ -379,7 +379,7 @@ export async function fetchHierarchyContext(
   for (const folderIds of groups) {
     if (folderIds.length === 0 || tokensUsed >= tokenBudget) continue;
 
-    const rows = await prisma.repositoryCases.findMany({
+    const rows = await db.repositoryCases.findMany({
       where: { ...caseWhere, folderId: { in: folderIds } },
       select: { ...caseSelect, folderId: true },
       take: 100, // generous upper bound; token budget will trim

@@ -52,9 +52,9 @@ vi.mock("../lib/valkey", () => ({
   default: { status: "ready" },
 }));
 
-// ─── Mock prisma ─────────────────────────────────────────────────────────────
+// ─── Mock db ─────────────────────────────────────────────────────────────
 
-const mockPrisma: any = {
+const mockDb: any = {
   repositoryCases: {
     findMany: (...args: any[]) => mockFindMany(...args),
   },
@@ -69,12 +69,12 @@ const mockPrisma: any = {
   llmProviderConfig: {
     findFirst: vi.fn().mockResolvedValue(null),
   },
-  $transaction: vi.fn(async (fn: (tx: any) => Promise<any>) => fn(mockPrisma)),
+  $transaction: vi.fn(async (fn: (tx: any) => Promise<any>) => fn(mockDb)),
   $disconnect: vi.fn(),
 };
 
 vi.mock("../lib/multiTenantDb", () => ({
-  getDbClientForJob: vi.fn(() => mockPrisma),
+  getDbClientForJob: vi.fn(() => mockDb),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),

@@ -68,8 +68,8 @@ import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
  * needs raw-Prisma semantics to bypass the append-only
  * `@@deny('update', status != 'PENDING')` rule on ReviewRequest.
  *
- * @param tx          a Prisma TransactionClient — either `prisma` itself
- *                    or a `tx` handle from inside `prisma.$transaction(...)`.
+ * @param tx          a Prisma TransactionClient — either `db` itself
+ *                    or a `tx` handle from inside `db.$transaction(...)`.
  * @param entityType  CASE / RUN / SESSION — selects which entity table the
  *                    update targets; ReviewRequest keys on this pair
  *                    polymorphically (no FK back-relation).

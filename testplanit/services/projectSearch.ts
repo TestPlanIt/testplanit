@@ -1,5 +1,5 @@
 import type { Projects } from "~/zenstack/models";
-import { rawDb as defaultPrisma } from "~/lib/rawDb";
+import { rawDb as defaultDb } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
@@ -7,7 +7,7 @@ import {
   getEntityIndexName,
 } from "./unifiedElasticsearchService";
 
-type PrismaClientType = typeof defaultPrisma;
+type DbClientType = typeof defaultDb;
 
 /**
  * Type for project with all required relations for indexing
@@ -105,7 +105,7 @@ export async function syncProjectToElasticsearch(
   }
 
   try {
-    const project = await defaultPrisma.projects.findUnique({
+    const project = await defaultDb.projects.findUnique({
       where: { id: projectId },
       include: {
         creator: true,
@@ -130,11 +130,11 @@ export async function syncProjectToElasticsearch(
 
 /**
  * Sync all projects to Elasticsearch
- * @param prismaClient - Optional Prisma client for tenant-specific queries
+ * @param dbClient - Optional Prisma client for tenant-specific queries
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncAllProjectsToElasticsearch(
-  prismaClient?: PrismaClientType,
+  dbClient?: DbClientType,
   tenantId?: string
 ): Promise<void> {
   const client = getElasticsearchClient();
@@ -143,7 +143,7 @@ export async function syncAllProjectsToElasticsearch(
     return;
   }
 
-  const rawDb = prismaClient || defaultPrisma;
+  const rawDb = dbClient || defaultDb;
   const indexName = getEntityIndexName(SearchableEntityType.PROJECT, tenantId);
 
   console.log(

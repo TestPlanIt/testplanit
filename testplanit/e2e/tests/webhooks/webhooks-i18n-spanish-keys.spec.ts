@@ -126,7 +126,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook admin surface — Spanish (es-ES) i18n key coverage (F-01)", () => {
   let projectId: number;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
   let outboundConfigId: string;
   const es = loadMessages("es-ES");
   const en = loadMessages("en-US");
@@ -134,19 +134,19 @@ test.describe("Webhook admin surface — Spanish (es-ES) i18n key coverage (F-01
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E i18n ES ${uniqueId}`);
-    prisma = createRawDbClient();
+    db = createRawDbClient();
 
     // Seed one outbound config in DISABLED health so the re-enable button +
     // its AlertDialog become reachable without driving the auto-disable
     // transition. The card also exposes the delete button + AlertDialog,
     // covering the AlertDialog locale surface from F-01's expected list.
-    const seeded = await seedOutboundConfig(prisma, {
+    const seeded = await seedOutboundConfig(db, {
       projectId,
       url: "https://example.com/i18n-es/outbound",
       name: "E2E Spanish Outbound",
     });
     outboundConfigId = seeded.configId;
-    await prisma.webhookConfig.update({
+    await db.webhookConfig.update({
       where: { id: outboundConfigId },
       data: {
         endpointHealth: "DISABLED",
@@ -158,14 +158,14 @@ test.describe("Webhook admin surface — Spanish (es-ES) i18n key coverage (F-01
     // Seed an inbound GITHUB config so the inbound tab has both a chooser
     // (when Add is clicked) and an existing config card to render the
     // health badge / send-test / rotate / delete affordances.
-    await seedInboundConfig(prisma, {
+    await seedInboundConfig(db, {
       projectId,
       adapterType: "GITHUB",
     });
   });
 
   test.afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("admin viewing /es-ES/projects/settings/{id}/webhooks sees Spanish copy across Inbound, Outbound, and Deliveries tabs and no missing-key markers leak into the DOM", async ({

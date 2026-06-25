@@ -36,7 +36,7 @@ const processor = async (job: Job) => {
 
   try {
     // Get the appropriate Prisma client (tenant-specific or default)
-    const prisma = getDbClientForJob(job.data);
+    const db = getDbClientForJob(job.data);
 
     let successCount = 0;
     let failCount = 0;
@@ -50,7 +50,7 @@ const processor = async (job: Job) => {
 
         // Find all configs where caching is enabled
         const configs = await (
-          prisma as any
+          db as any
         ).projectCodeRepositoryConfig.findMany({
           where: { cacheEnabled: true },
           select: { id: true, projectId: true, cacheTtlDays: true },
@@ -74,7 +74,7 @@ const processor = async (job: Job) => {
               `Job ${job.id}: Refreshing expired cache for config ${config.id} (project ${config.projectId})`
             );
 
-            const result = await refreshRepoCache(config.id, prisma);
+            const result = await refreshRepoCache(config.id, db);
 
             if (result.success) {
               successCount++;
@@ -118,7 +118,7 @@ const processor = async (job: Job) => {
 
         // refreshRepoCache persists cacheStatus (pending → success/error),
         // cacheFileCount, cacheError, etc., which the UI polls for completion.
-        const result = await refreshRepoCache(configId, prisma);
+        const result = await refreshRepoCache(configId, db);
 
         if (result.success) {
           successCount++;

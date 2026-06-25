@@ -15,14 +15,14 @@ import { getProjectWorkflowIds } from "../reviews/helpers";
  * eligibility/gate logic (covered by the reviews specs).
  */
 test.describe("Milestone Export API", () => {
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
 
   test.beforeAll(() => {
-    prisma = createRawDbClient();
+    db = createRawDbClient();
   });
 
   test.afterAll(async () => {
-    await prisma.$disconnect();
+    await db.$disconnect();
   });
 
   test("aggregates the full milestone tree across every section", async ({
@@ -146,9 +146,9 @@ test.describe("Milestone Export API", () => {
       // bypassed: exactly one of assigneeUserId/assigneeRoleId must be set, AND
       // the requester cannot be the direct assignee. Assign to a role (the admin
       // is the requester) to satisfy both.
-      const assigneeRole = await prisma.roles.findFirst({ select: { id: true } });
+      const assigneeRole = await db.roles.findFirst({ select: { id: true } });
 
-      await prisma.reviewRequest.create({
+      await db.reviewRequest.create({
         data: {
           projectId: projectId!,
           entityType: "RUN",
@@ -163,7 +163,7 @@ test.describe("Milestone Export API", () => {
           decisionComment: "Ship it",
         },
       });
-      await prisma.reviewRequest.create({
+      await db.reviewRequest.create({
         data: {
           projectId: projectId!,
           entityType: "SESSION",

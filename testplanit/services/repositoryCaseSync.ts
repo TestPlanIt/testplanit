@@ -1,4 +1,4 @@
-import { rawDb as defaultPrisma } from "../lib/rawDb";
+import { rawDb as defaultDb } from "../lib/rawDb";
 import { extractTextFromNode } from "../utils/extractTextFromJson";
 import {
   bulkIndexRepositoryCases,
@@ -11,7 +11,7 @@ import {
 } from "./elasticsearchService";
 import { buildCustomFieldDocuments } from "./unifiedElasticsearchService";
 
-type PrismaClientType = typeof defaultPrisma;
+type DbClientType = typeof defaultDb;
 
 /**
  * Safely extract text from a step field that might be JSON string or object
@@ -38,9 +38,9 @@ function extractStepText(stepData: any): string {
  */
 export async function buildRepositoryCaseDocument(
   caseId: number,
-  prismaClient?: PrismaClientType
+  dbClient?: DbClientType
 ): Promise<RepositoryCaseDocument | null> {
-  const rawDb = prismaClient || defaultPrisma;
+  const rawDb = dbClient || defaultDb;
   const repoCase = await rawDb.repositoryCases.findUnique({
     where: { id: caseId },
     include: {
@@ -187,7 +187,7 @@ export async function buildRepositoryCaseDocument(
  */
 async function buildFolderPath(
   folderId: number,
-  rawDb: PrismaClientType = defaultPrisma
+  rawDb: DbClientType = defaultDb
 ): Promise<string> {
   const folder = await rawDb.repositoryFolders.findUnique({
     where: { id: folderId },
@@ -218,9 +218,9 @@ async function buildFolderPath(
 export async function syncRepositoryCaseToElasticsearch(
   caseId: number,
   tenantId?: string,
-  prismaClient?: PrismaClientType
+  dbClient?: DbClientType
 ): Promise<boolean> {
-  const doc = await buildRepositoryCaseDocument(caseId, prismaClient);
+  const doc = await buildRepositoryCaseDocument(caseId, dbClient);
   if (!doc) {
     // Case no longer exists (hard deleted) - remove from Elasticsearch
     await deleteRepositoryCase(caseId, tenantId);
@@ -242,7 +242,7 @@ export async function syncRepositoryCaseToElasticsearch(
  * @param projectId - The project ID to sync cases for
  * @param batchSize - Number of cases to process per batch
  * @param progressCallback - Optional callback for progress updates
- * @param prismaClient - Optional Prisma client for tenant-specific queries
+ * @param dbClient - Optional Prisma client for tenant-specific queries
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncProjectCasesToElasticsearch(
@@ -253,10 +253,10 @@ export async function syncProjectCasesToElasticsearch(
     total: number,
     message: string
   ) => void | Promise<void>,
-  prismaClient?: PrismaClientType,
+  dbClient?: DbClientType,
   tenantId?: string
 ): Promise<boolean> {
-  const rawDb = prismaClient || defaultPrisma;
+  const rawDb = dbClient || defaultDb;
   try {
     // Ensure index exists
     await createRepositoryCaseIndex(rawDb, tenantId);
@@ -332,15 +332,15 @@ export async function syncProjectCasesToElasticsearch(
 
 /**
  * Initialize Elasticsearch indexes on application startup
- * @param prismaClient - Optional Prisma client for tenant-specific queries
+ * @param dbClient - Optional Prisma client for tenant-specific queries
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function initializeElasticsearchIndexes(
-  prismaClient?: PrismaClientType,
+  dbClient?: DbClientType,
   tenantId?: string
 ): Promise<void> {
   try {
-    const created = await createRepositoryCaseIndex(prismaClient, tenantId);
+    const created = await createRepositoryCaseIndex(dbClient, tenantId);
     if (created) {
       console.log(
         `Elasticsearch indexes initialized successfully${tenantId ? ` (tenant: ${tenantId})` : ""}`

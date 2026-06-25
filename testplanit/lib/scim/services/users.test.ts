@@ -56,7 +56,7 @@ vi.mock("~/lib/scim/filter", async () => {
     );
   return {
     ...actual,
-    scimFilterToPrismaWhere: vi.fn(actual.scimFilterToPrismaWhere),
+    scimFilterToDbWhere: vi.fn(actual.scimFilterToDbWhere),
   };
 });
 
@@ -84,7 +84,7 @@ import {
   putScimUser,
 } from "./users";
 import { ScimPatchApplyError } from "../patch";
-import { scimFilterToPrismaWhere } from "../filter";
+import { scimFilterToDbWhere } from "../filter";
 
 import type { ScimUserBody } from "../mapping/user";
 
@@ -546,13 +546,13 @@ describe("listScimUsers", () => {
     expect(tombGate).toBeDefined();
   });
 
-  it("F2: filter calls scimFilterToPrismaWhere and ANDs with tombstone gate", async () => {
+  it("F2: filter calls scimFilterToDbWhere and ANDs with tombstone gate", async () => {
     tx.user.findMany.mockResolvedValue([]);
     tx.user.count.mockResolvedValue(0);
 
     await listScimUsers({ filter: 'userName eq "alice"' }, CTX);
 
-    expect(scimFilterToPrismaWhere).toHaveBeenCalledWith('userName eq "alice"');
+    expect(scimFilterToDbWhere).toHaveBeenCalledWith('userName eq "alice"');
     const args = tx.user.findMany.mock.calls[0][0] as {
       where: { AND: Array<Record<string, unknown>> };
     };

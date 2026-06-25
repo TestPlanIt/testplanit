@@ -253,17 +253,17 @@ describe("multiTenantDb", () => {
 
   describe("getDbClientForJob", () => {
     it("should use lazy require pattern in single-tenant mode", async () => {
-      // In single-tenant mode, getDbClientForJob uses require("./prisma")
+      // In single-tenant mode, getDbClientForJob uses require("./db")
       // We can't easily mock this in vitest, so we test the behavior differently:
       // - Verify it doesn't throw for missing tenantId in single-tenant mode
-      // - The actual prisma import is tested via integration tests
+      // - The actual db import is tested via integration tests
 
       const { isMultiTenantMode } = await resetModule();
 
       // In single-tenant mode, the function should NOT require tenantId
       expect(isMultiTenantMode()).toBe(false);
 
-      // Note: We can't test the actual prisma client return here without
+      // Note: We can't test the actual db client return here without
       // integration test setup, but the pattern is tested via other tests
     });
 

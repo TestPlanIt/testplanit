@@ -20,7 +20,7 @@ import { BudgetAlertService, THRESHOLDS } from "./budgetAlertService";
 import { NotificationService } from "./notificationService";
 
 // Helper to create a mock Prisma client
-function createMockPrisma() {
+function createMockDb() {
   return {
     llmProviderConfig: {
       findUnique: vi.fn(),
@@ -64,7 +64,7 @@ function createAggregateResult(totalCost: number | null) {
 }
 
 describe("BudgetAlertService", () => {
-  let mockPrisma: ReturnType<typeof createMockPrisma>;
+  let mockDb: ReturnType<typeof createMockDb>;
   let service: BudgetAlertService;
 
   beforeEach(() => {
@@ -72,16 +72,16 @@ describe("BudgetAlertService", () => {
     // Reset date to a fixed point for deterministic month key
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-03-15T12:00:00Z"));
-    mockPrisma = createMockPrisma();
-    service = new BudgetAlertService(mockPrisma as any);
+    mockDb = createMockDb();
+    service = new BudgetAlertService(mockDb as any);
 
     // Default: return 2 admins
-    mockPrisma.user.findMany.mockResolvedValue([
+    mockDb.user.findMany.mockResolvedValue([
       { id: "admin-1" },
       { id: "admin-2" },
     ]);
     // Default: update succeeds
-    mockPrisma.llmProviderConfig.update.mockResolvedValue({});
+    mockDb.llmProviderConfig.update.mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -96,8 +96,8 @@ describe("BudgetAlertService", () => {
 
   describe("threshold detection", () => {
     it("returns [80] when spend is 82% of budget", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(82)
       );
 
@@ -110,8 +110,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("returns [80, 90] when spend is 95% of budget", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(95)
       );
 
@@ -122,8 +122,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("returns [80, 90, 100] when spend is 105% of budget", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(105)
       );
 
@@ -134,8 +134,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("returns [] when spend is 50% of budget", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(50)
       );
 
@@ -148,8 +148,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("returns [] when spend is zero", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(createAggregateResult(0));
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(0));
 
       const result = await service.checkAndAlert(1);
 
@@ -158,8 +158,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("crosses threshold at exactly 80% (>= comparison)", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(80)
       );
 
@@ -169,8 +169,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("crosses threshold at exactly 90%", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(90)
       );
 
@@ -180,8 +180,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("crosses threshold at exactly 100%", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(100)
       );
 
@@ -193,12 +193,12 @@ describe("BudgetAlertService", () => {
 
   describe("deduplication", () => {
     it("skips already-fired threshold 80 when spend is 92%", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           alertThresholdsFired: { "2026-03-01": [80] },
         })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(92)
       );
 
@@ -208,12 +208,12 @@ describe("BudgetAlertService", () => {
     });
 
     it("returns [] when all thresholds already fired for current month", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           alertThresholdsFired: { "2026-03-01": [80, 90, 100] },
         })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(150)
       );
 
@@ -225,12 +225,12 @@ describe("BudgetAlertService", () => {
 
     it("fires threshold 80 in new month even if fired in previous month", async () => {
       // Previous month (February) had 80 and 90 fired
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           alertThresholdsFired: { "2026-02-01": [80, 90] },
         })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
       );
 
@@ -241,12 +241,12 @@ describe("BudgetAlertService", () => {
     });
 
     it("treats null alertThresholdsFired as empty object", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           alertThresholdsFired: null,
         })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(82)
       );
 
@@ -258,15 +258,15 @@ describe("BudgetAlertService", () => {
 
   describe("period boundary", () => {
     it("uses period-start ISO date as key (YYYY-MM-DD)", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
       );
 
       await service.checkAndAlert(1);
 
       // Default billingPeriodStartDay=1 with system time 2026-03-15 -> "2026-03-01"
-      expect(mockPrisma.llmProviderConfig.update).toHaveBeenCalledWith(
+      expect(mockDb.llmProviderConfig.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             alertThresholdsFired: expect.objectContaining({
@@ -278,19 +278,19 @@ describe("BudgetAlertService", () => {
     });
 
     it("preserves previous period entries in alertThresholdsFired", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           alertThresholdsFired: { "2026-02-01": [80, 90] },
         })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
       );
 
       await service.checkAndAlert(1);
 
       // Should preserve "2026-02-01" and add "2026-03-01"
-      expect(mockPrisma.llmProviderConfig.update).toHaveBeenCalledWith(
+      expect(mockDb.llmProviderConfig.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             alertThresholdsFired: {
@@ -306,19 +306,19 @@ describe("BudgetAlertService", () => {
   describe("custom billing period (billingPeriodStartDay !== 1)", () => {
     it("aggregates spend with gte=Apr 15 when billingPeriodStartDay=15 and now is Apr 20", async () => {
       vi.setSystemTime(new Date(2026, 3, 20, 12, 0, 0)); // Apr 20 2026 local
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           billingPeriodStartDay: 15,
         })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(50)
       );
 
       await service.checkAndAlert(1);
 
       const expectedPeriodStart = new Date(2026, 3, 15, 0, 0, 0, 0);
-      expect(mockPrisma.llmUsage.aggregate).toHaveBeenCalledWith({
+      expect(mockDb.llmUsage.aggregate).toHaveBeenCalledWith({
         where: {
           llmIntegrationId: 1,
           createdAt: { gte: expectedPeriodStart },
@@ -329,13 +329,13 @@ describe("BudgetAlertService", () => {
 
     it("uses period-start ISO date 2026-04-15 as key when billingPeriodStartDay=15 and now is Apr 20", async () => {
       vi.setSystemTime(new Date(2026, 3, 20, 12, 0, 0));
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           billingPeriodStartDay: 15,
           alertThresholdsFired: { "2026-04-15": [80] },
         })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(92)
       );
 
@@ -343,7 +343,7 @@ describe("BudgetAlertService", () => {
 
       // 92% should newly cross 90 (80 already fired in 2026-04-15 period)
       expect(result.thresholdsCrossed).toEqual([90]);
-      expect(mockPrisma.llmProviderConfig.update).toHaveBeenCalledWith(
+      expect(mockDb.llmProviderConfig.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             alertThresholdsFired: {
@@ -356,13 +356,13 @@ describe("BudgetAlertService", () => {
 
     it("regression guard: thresholds fired in 2026-03-15 period do NOT block 2026-04-15 period", async () => {
       vi.setSystemTime(new Date(2026, 3, 20, 12, 0, 0));
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           billingPeriodStartDay: 15,
           alertThresholdsFired: { "2026-03-15": [80, 90, 100] },
         })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
       );
 
@@ -370,7 +370,7 @@ describe("BudgetAlertService", () => {
 
       // New period (2026-04-15) should fire 80 again even though prev period had it
       expect(result.thresholdsCrossed).toEqual([80]);
-      expect(mockPrisma.llmProviderConfig.update).toHaveBeenCalledWith(
+      expect(mockDb.llmProviderConfig.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             alertThresholdsFired: {
@@ -385,15 +385,15 @@ describe("BudgetAlertService", () => {
 
   describe("notification delivery", () => {
     it("creates notifications for all active ADMIN users", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
       );
 
       await service.checkAndAlert(1, "tenant-123");
 
       // Should query for admin users
-      expect(mockPrisma.user.findMany).toHaveBeenCalledWith({
+      expect(mockDb.user.findMany).toHaveBeenCalledWith({
         where: { access: "ADMIN", isActive: true, isDeleted: false },
         select: { id: true },
       });
@@ -403,8 +403,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("passes tenantId to createNotification", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
       );
 
@@ -418,11 +418,11 @@ describe("BudgetAlertService", () => {
     });
 
     it("sends no notifications when no ADMIN users exist", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
       );
-      mockPrisma.user.findMany.mockResolvedValue([]);
+      mockDb.user.findMany.mockResolvedValue([]);
 
       const result = await service.checkAndAlert(1);
 
@@ -431,8 +431,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("creates a notification per threshold per admin", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(95)
       );
 
@@ -443,8 +443,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("uses NotificationType.LLM_BUDGET_ALERT for all notifications", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
       );
 
@@ -457,8 +457,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("includes link /admin/llm in notification data", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
       );
 
@@ -476,8 +476,8 @@ describe("BudgetAlertService", () => {
 
   describe("notification content", () => {
     it("title at 80%: 'LLM Budget 80% Used'", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(82)
       );
 
@@ -491,12 +491,12 @@ describe("BudgetAlertService", () => {
     });
 
     it("title at 90%: 'LLM Budget 90% Used'", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           alertThresholdsFired: { "2026-03-01": [80] },
         })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(92)
       );
 
@@ -510,12 +510,12 @@ describe("BudgetAlertService", () => {
     });
 
     it("title at 100%: 'LLM Budget Exceeded'", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           alertThresholdsFired: { "2026-03-01": [80, 90] },
         })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(105)
       );
 
@@ -529,12 +529,12 @@ describe("BudgetAlertService", () => {
     });
 
     it("message includes provider name", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           llmIntegration: { name: "Claude Sonnet", isDeleted: false },
         })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
       );
 
@@ -548,8 +548,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("message includes dollar-formatted spend and budget amounts", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(82.5)
       );
 
@@ -563,8 +563,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("message does not include disclaimer (disclaimer is rendered in UI)", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
       );
 
@@ -580,7 +580,7 @@ describe("BudgetAlertService", () => {
 
   describe("early exits", () => {
     it("returns checked=false when provider config is null", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(null);
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(null);
 
       const result = await service.checkAndAlert(1);
 
@@ -589,7 +589,7 @@ describe("BudgetAlertService", () => {
     });
 
     it("returns checked=false when provider is deleted", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           llmIntegration: { name: "Deleted Provider", isDeleted: true },
         })
@@ -602,7 +602,7 @@ describe("BudgetAlertService", () => {
     });
 
     it("returns checked=false when monthlyBudget is null", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           monthlyBudget: null,
         })
@@ -614,7 +614,7 @@ describe("BudgetAlertService", () => {
     });
 
     it("returns checked=false when monthlyBudget is zero", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           monthlyBudget: {
             toString: () => "0.00",
@@ -629,18 +629,18 @@ describe("BudgetAlertService", () => {
     });
 
     it("does not query usage when budget is null", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({ monthlyBudget: null })
       );
 
       await service.checkAndAlert(1);
 
-      expect(mockPrisma.llmUsage.aggregate).not.toHaveBeenCalled();
+      expect(mockDb.llmUsage.aggregate).not.toHaveBeenCalled();
     });
 
     it("does not send notifications when no new thresholds crossed", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(50)
       );
 
@@ -661,10 +661,10 @@ describe("BudgetAlertService", () => {
         // Simulate that direct comparison would fail
         valueOf: () => "150.00",
       };
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({ monthlyBudget: decimalBudget })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(125)
       );
 
@@ -681,8 +681,8 @@ describe("BudgetAlertService", () => {
         toNumber: () => 82.5,
         valueOf: () => "82.500000",
       };
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue({
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue({
         _sum: { totalCost: decimalCost },
       });
 
@@ -693,8 +693,8 @@ describe("BudgetAlertService", () => {
     });
 
     it("treats null totalCost (no usage records) as zero spend", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(null)
       );
 
@@ -707,14 +707,14 @@ describe("BudgetAlertService", () => {
 
   describe("alertThresholdsFired update", () => {
     it("writes newly crossed thresholds to alertThresholdsFired", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(95)
       );
 
       await service.checkAndAlert(1);
 
-      expect(mockPrisma.llmProviderConfig.update).toHaveBeenCalledWith({
+      expect(mockDb.llmProviderConfig.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: {
           alertThresholdsFired: {
@@ -725,18 +725,18 @@ describe("BudgetAlertService", () => {
     });
 
     it("merges newly crossed thresholds with already-fired thresholds", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           alertThresholdsFired: { "2026-03-01": [80] },
         })
       );
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(105)
       );
 
       await service.checkAndAlert(1);
 
-      expect(mockPrisma.llmProviderConfig.update).toHaveBeenCalledWith({
+      expect(mockDb.llmProviderConfig.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: {
           alertThresholdsFired: {
@@ -747,23 +747,23 @@ describe("BudgetAlertService", () => {
     });
 
     it("does not call update when no new thresholds crossed", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(50)
       );
 
       await service.checkAndAlert(1);
 
-      expect(mockPrisma.llmProviderConfig.update).not.toHaveBeenCalled();
+      expect(mockDb.llmProviderConfig.update).not.toHaveBeenCalled();
     });
 
     it("updates before sending notifications (atomicity)", async () => {
       const callOrder: string[] = [];
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
       );
-      mockPrisma.llmProviderConfig.update.mockImplementation(async () => {
+      mockDb.llmProviderConfig.update.mockImplementation(async () => {
         callOrder.push("update");
         return {};
       });
@@ -784,8 +784,8 @@ describe("BudgetAlertService", () => {
 
   describe("spend aggregation", () => {
     it("queries llmUsage with gte=billing period start when billingPeriodStartDay=1 (default)", async () => {
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockPrisma.llmUsage.aggregate.mockResolvedValue(
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
+      mockDb.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(50)
       );
 
@@ -794,7 +794,7 @@ describe("BudgetAlertService", () => {
       // Default billingPeriodStartDay=1 with system time 2026-03-15 -> Mar 1 00:00 local
       const expectedPeriodStart = new Date(2026, 2, 1, 0, 0, 0, 0);
 
-      expect(mockPrisma.llmUsage.aggregate).toHaveBeenCalledWith({
+      expect(mockDb.llmUsage.aggregate).toHaveBeenCalledWith({
         where: {
           llmIntegrationId: 1,
           createdAt: { gte: expectedPeriodStart },

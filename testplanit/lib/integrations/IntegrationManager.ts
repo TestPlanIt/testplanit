@@ -71,7 +71,7 @@ export class IntegrationManager {
    */
   async getAdapter(
     integrationId: string,
-    prismaClient?: typeof rawDb,
+    dbClient?: typeof rawDb,
     userId?: string,
     options?: { allowInactive?: boolean }
   ): Promise<IssueAdapter | null> {
@@ -91,7 +91,7 @@ export class IntegrationManager {
     }
 
     // Fetch integration from database (use provided client for multi-tenant support)
-    const db = prismaClient || rawDb;
+    const db = dbClient || rawDb;
     const integration = await db.integration.findUnique({
       where: { id: parseInt(integrationId) },
       include: {

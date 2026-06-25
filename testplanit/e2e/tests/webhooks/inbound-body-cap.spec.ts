@@ -55,16 +55,16 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
     });
 
     await test.step("Resolve the webhook config id from the database", async () => {
-      const prisma = createRawDbClient();
+      const db = createRawDbClient();
       try {
-        const config = await prisma.webhookConfig.findFirst({
+        const config = await db.webhookConfig.findFirst({
           where: { token: configToken!, direction: "INBOUND" },
           select: { id: true },
         });
         expect(config).not.toBeNull();
         configId = config!.id;
       } finally {
-        await prisma.$disconnect();
+        await db.$disconnect();
       }
     });
 
@@ -96,14 +96,14 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
       expect(response.status()).toBe(413);
     });
 
-    const prisma = createRawDbClient();
+    const db = createRawDbClient();
     try {
-      const deliveries = await prisma.webhookDelivery.findMany({
+      const deliveries = await db.webhookDelivery.findMany({
         where: { webhookConfigId: configId! },
       });
       expect(deliveries).toHaveLength(0);
     } finally {
-      await prisma.$disconnect();
+      await db.$disconnect();
     }
   });
 

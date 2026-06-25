@@ -5,7 +5,7 @@ import type { AuditLogJobData } from "../lib/services/auditLog";
 
 /**
  * D-18 standing enforcement helper. Reconstructs an AuditRowLike from
- * the latest prisma.auditLog.create call and asserts the six actor
+ * the latest db.auditLog.create call and asserts the six actor
  * fields via expectAuditRowComplete. The worker flattens
  * ipAddress/userAgent/requestId into metadata; this helper lifts them
  * back to the row's top level for the completeness assertion.
@@ -39,8 +39,8 @@ function expectLastCreatedAuditRowComplete(
   );
 }
 
-// Create mock prisma instance
-const mockPrisma = {
+// Create mock db instance
+const mockDb = {
   auditLog: {
     create: vi.fn(),
   },
@@ -65,9 +65,9 @@ vi.mock("../lib/valkey", () => ({
   default: null,
 }));
 
-// Mock the multiTenantDb module to return our mock prisma client
+// Mock the multiTenantDb module to return our mock db client
 vi.mock("../lib/multiTenantDb", () => ({
-  getDbClientForJob: vi.fn(() => mockPrisma),
+  getDbClientForJob: vi.fn(() => mockDb),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -78,13 +78,13 @@ describe("AuditLogWorker", () => {
     vi.clearAllMocks();
     vi.resetModules();
     // By default, mock projects.findUnique to return a valid project
-    mockPrisma.projects.findUnique.mockResolvedValue({ id: 1 });
+    mockDb.projects.findUnique.mockResolvedValue({ id: 1 });
     // By default no backfill match; tests that exercise the actor backfill
     // override this.
-    mockPrisma.user.findUnique.mockResolvedValue(null);
+    mockDb.user.findUnique.mockResolvedValue(null);
     // Scope-backfill delegates resolve nothing unless a test overrides them.
-    mockPrisma.sessions.findUnique.mockResolvedValue(null);
-    mockPrisma.testRunCases.findUnique.mockResolvedValue(null);
+    mockDb.sessions.findUnique.mockResolvedValue(null);
+    mockDb.testRunCases.findUnique.mockResolvedValue(null);
   });
 
   describe("processor", () => {
@@ -108,7 +108,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({
+      mockDb.auditLog.create.mockResolvedValue({
         id: "audit-1",
         ...jobData.event,
       });
@@ -123,7 +123,7 @@ describe("AuditLogWorker", () => {
 
       await processor(mockJob);
 
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: {
           userId: "user-123",
           userEmail: "test@example.com",
@@ -145,7 +145,7 @@ describe("AuditLogWorker", () => {
         },
       });
       // D-18 standing enforcement (SC#4): six actor fields on persisted row.
-      expectLastCreatedAuditRowComplete(mockPrisma.auditLog.create);
+      expectLastCreatedAuditRowComplete(mockDb.auditLog.create);
     });
 
     it("stamps operationId from the context so aggregate events group with their CDC detail rows", async () => {
@@ -165,7 +165,7 @@ describe("AuditLogWorker", () => {
         },
         queuedAt: new Date().toISOString(),
       };
-      mockPrisma.auditLog.create.mockResolvedValue({ id: "audit-2" });
+      mockDb.auditLog.create.mockResolvedValue({ id: "audit-2" });
       const { processor } = await import("./auditLogWorker");
       await processor({
         id: "job-bulk",
@@ -173,7 +173,7 @@ describe("AuditLogWorker", () => {
         data: jobData,
       } as Job<AuditLogJobData>);
 
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           action: "BULK_UPDATE",
           operationId: "ff031e6b-0000-4000-8000-000000000000",
@@ -202,7 +202,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({
+      mockDb.auditLog.create.mockResolvedValue({
         id: "audit-2",
         ...jobData.event,
       });
@@ -217,7 +217,7 @@ describe("AuditLogWorker", () => {
 
       await processor(mockJob);
 
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           action: "UPDATE",
           entityType: "RepositoryCases",
@@ -247,7 +247,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({
+      mockDb.auditLog.create.mockResolvedValue({
         id: "audit-3",
         ...jobData.event,
       });
@@ -262,7 +262,7 @@ describe("AuditLogWorker", () => {
 
       await processor(mockJob);
 
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           action: "DELETE",
           entityType: "RepositoryCases",
@@ -290,7 +290,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({
+      mockDb.auditLog.create.mockResolvedValue({
         id: "audit-4",
         ...jobData.event,
       });
@@ -305,7 +305,7 @@ describe("AuditLogWorker", () => {
 
       await processor(mockJob);
 
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           action: "LOGIN",
           entityType: "User",
@@ -341,7 +341,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({
+      mockDb.auditLog.create.mockResolvedValue({
         id: "audit-5",
         ...jobData.event,
       });
@@ -356,7 +356,7 @@ describe("AuditLogWorker", () => {
 
       await processor(mockJob);
 
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           action: "BULK_CREATE",
           entityType: "RepositoryCases",
@@ -384,7 +384,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({
+      mockDb.auditLog.create.mockResolvedValue({
         id: "audit-6",
         ...jobData.event,
       });
@@ -399,7 +399,7 @@ describe("AuditLogWorker", () => {
 
       await processor(mockJob);
 
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           userId: "event-user-id",
           userEmail: "event@example.com",
@@ -409,7 +409,7 @@ describe("AuditLogWorker", () => {
     });
 
     it("should backfill userEmail/userName from the user record when only userId is on the event", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         email: "backfilled@example.com",
         name: "Backfilled User",
       });
@@ -428,7 +428,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({ id: "audit-bf-1" });
+      mockDb.auditLog.create.mockResolvedValue({ id: "audit-bf-1" });
 
       const { processor } = await import("./auditLogWorker");
 
@@ -438,11 +438,11 @@ describe("AuditLogWorker", () => {
         data: jobData,
       } as Job<AuditLogJobData>);
 
-      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+      expect(mockDb.user.findUnique).toHaveBeenCalledWith({
         where: { id: "user-only-id" },
         select: { email: true, name: true },
       });
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           userId: "user-only-id",
           userEmail: "backfilled@example.com",
@@ -468,7 +468,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({ id: "audit-bf-2" });
+      mockDb.auditLog.create.mockResolvedValue({ id: "audit-bf-2" });
 
       const { processor } = await import("./auditLogWorker");
 
@@ -478,7 +478,7 @@ describe("AuditLogWorker", () => {
         data: jobData,
       } as Job<AuditLogJobData>);
 
-      expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+      expect(mockDb.user.findUnique).not.toHaveBeenCalled();
     });
 
     it("should not look up the system sentinel actor", async () => {
@@ -496,7 +496,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({ id: "audit-bf-3" });
+      mockDb.auditLog.create.mockResolvedValue({ id: "audit-bf-3" });
 
       const { processor } = await import("./auditLogWorker");
 
@@ -506,11 +506,11 @@ describe("AuditLogWorker", () => {
         data: jobData,
       } as Job<AuditLogJobData>);
 
-      expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+      expect(mockDb.user.findUnique).not.toHaveBeenCalled();
     });
 
     it("should still write the audit row when the actor backfill lookup fails", async () => {
-      mockPrisma.user.findUnique.mockRejectedValue(new Error("db down"));
+      mockDb.user.findUnique.mockRejectedValue(new Error("db down"));
       const consoleWarnSpy = vi
         .spyOn(console, "warn")
         .mockImplementation(() => {});
@@ -527,7 +527,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({ id: "audit-bf-4" });
+      mockDb.auditLog.create.mockResolvedValue({ id: "audit-bf-4" });
 
       const { processor } = await import("./auditLogWorker");
 
@@ -537,7 +537,7 @@ describe("AuditLogWorker", () => {
         data: jobData,
       } as Job<AuditLogJobData>);
 
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           userId: "user-only-id",
           userEmail: null,
@@ -560,7 +560,7 @@ describe("AuditLogWorker", () => {
       };
 
       const dbError = new Error("Database connection failed");
-      mockPrisma.auditLog.create.mockRejectedValue(dbError);
+      mockDb.auditLog.create.mockRejectedValue(dbError);
 
       const consoleErrorSpy = vi
         .spyOn(console, "error")
@@ -606,7 +606,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({
+      mockDb.auditLog.create.mockResolvedValue({
         id: "audit-7",
         ...jobData.event,
       });
@@ -621,7 +621,7 @@ describe("AuditLogWorker", () => {
 
       await processor(mockJob);
 
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           action: "PERMISSION_GRANT",
           entityType: "UserProjectPermission",
@@ -647,7 +647,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({
+      mockDb.auditLog.create.mockResolvedValue({
         id: "audit-8",
         ...jobData.event,
       });
@@ -662,7 +662,7 @@ describe("AuditLogWorker", () => {
 
       await processor(mockJob);
 
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           action: "SSO_CONFIG_CHANGED",
           entityType: "SsoProvider",
@@ -677,7 +677,7 @@ describe("AuditLogWorker", () => {
 
     it("should handle non-existent project gracefully", async () => {
       // Mock project not found
-      mockPrisma.projects.findUnique.mockResolvedValue(null);
+      mockDb.projects.findUnique.mockResolvedValue(null);
 
       const jobData: AuditLogJobData = {
         event: {
@@ -697,7 +697,7 @@ describe("AuditLogWorker", () => {
         queuedAt: new Date().toISOString(),
       };
 
-      mockPrisma.auditLog.create.mockResolvedValue({
+      mockDb.auditLog.create.mockResolvedValue({
         id: "audit-9",
         ...jobData.event,
         projectId: null,
@@ -714,13 +714,13 @@ describe("AuditLogWorker", () => {
       await processor(mockJob);
 
       // Should have checked if project exists
-      expect(mockPrisma.projects.findUnique).toHaveBeenCalledWith({
+      expect(mockDb.projects.findUnique).toHaveBeenCalledWith({
         where: { id: 999 },
         select: { id: true },
       });
 
       // Should create audit log without projectId but with originalProjectId in metadata
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           action: "BULK_CREATE",
           entityType: "RepositoryCases",
@@ -737,7 +737,7 @@ describe("AuditLogWorker", () => {
     it("should backfill a missing entityName and projectId from a committed re-read", async () => {
       // A ZenStack RPC create whose result was a partial `{ id }`: the event
       // reaches the worker with no name and no project scope.
-      mockPrisma.sessions.findUnique.mockResolvedValue({
+      mockDb.sessions.findUnique.mockResolvedValue({
         id: 77,
         name: "Exploratory session",
         projectId: 4,
@@ -760,10 +760,10 @@ describe("AuditLogWorker", () => {
         data: jobData,
       } as Job<AuditLogJobData>);
 
-      expect(mockPrisma.sessions.findUnique).toHaveBeenCalledWith({
+      expect(mockDb.sessions.findUnique).toHaveBeenCalledWith({
         where: { id: 77 },
       });
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           entityType: "Sessions",
           entityId: "77",
@@ -775,7 +775,7 @@ describe("AuditLogWorker", () => {
 
     it("should backfill projectId through a parent relation", async () => {
       // TestRunCases has no scalar projectId — it is scoped through its run.
-      mockPrisma.testRunCases.findUnique.mockResolvedValue({
+      mockDb.testRunCases.findUnique.mockResolvedValue({
         id: 88,
         repositoryCase: { name: "Checkout flow" },
         testRun: { projectId: 6 },
@@ -798,14 +798,14 @@ describe("AuditLogWorker", () => {
         data: jobData,
       } as Job<AuditLogJobData>);
 
-      expect(mockPrisma.testRunCases.findUnique).toHaveBeenCalledWith({
+      expect(mockDb.testRunCases.findUnique).toHaveBeenCalledWith({
         where: { id: 88 },
         include: {
           repositoryCase: { select: { name: true } },
           testRun: { select: { projectId: true } },
         },
       });
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           entityType: "TestRunCases",
           entityId: "88",
@@ -835,8 +835,8 @@ describe("AuditLogWorker", () => {
         data: jobData,
       } as Job<AuditLogJobData>);
 
-      expect(mockPrisma.sessions.findUnique).not.toHaveBeenCalled();
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.sessions.findUnique).not.toHaveBeenCalled();
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           entityName: "Already named",
           projectId: 4,
@@ -845,7 +845,7 @@ describe("AuditLogWorker", () => {
     });
 
     it("should still write the audit row when the scope backfill lookup fails", async () => {
-      mockPrisma.sessions.findUnique.mockRejectedValue(new Error("db down"));
+      mockDb.sessions.findUnique.mockRejectedValue(new Error("db down"));
 
       const jobData: AuditLogJobData = {
         event: {
@@ -865,7 +865,7 @@ describe("AuditLogWorker", () => {
       } as Job<AuditLogJobData>);
 
       // The re-read threw, but the row is still persisted with the gap intact.
-      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           entityType: "Sessions",
           entityId: "77",

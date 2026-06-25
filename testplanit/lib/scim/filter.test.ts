@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 
 import {
   InvalidFilterError,
-  scimFilterToPrismaGroupWhere,
-  scimFilterToPrismaWhere,
+  scimFilterToDbGroupWhere,
+  scimFilterToDbWhere,
 } from "./filter";
 
 /**
@@ -30,59 +30,59 @@ import {
  * thrown `InvalidFilterError.message`. No snapshots.
  */
 
-describe("scimFilterToPrismaWhere", () => {
+describe("scimFilterToDbWhere", () => {
   // ---------------------------------------------------------------------------
   // Group A — Happy-path `eq` per whitelisted attribute
   // ---------------------------------------------------------------------------
 
   it("A1: translates 'userName eq \"Alice\"' to case-folded scimUserName equals", () => {
-    expect(scimFilterToPrismaWhere('userName eq "Alice"')).toEqual({
+    expect(scimFilterToDbWhere('userName eq "Alice"')).toEqual({
       scimUserName: { equals: "alice" },
     });
   });
 
   it("A2: translates 'userName eq \"alice@example.com\"' verbatim (already lowercase)", () => {
-    expect(scimFilterToPrismaWhere('userName eq "alice@example.com"')).toEqual({
+    expect(scimFilterToDbWhere('userName eq "alice@example.com"')).toEqual({
       scimUserName: { equals: "alice@example.com" },
     });
   });
 
   it("A3: translates 'externalId eq <opaque>' verbatim (never case-folded)", () => {
     expect(
-      scimFilterToPrismaWhere('externalId eq "00ujl29u0le5T6Aj10h7"')
+      scimFilterToDbWhere('externalId eq "00ujl29u0le5T6Aj10h7"')
     ).toEqual({
       scimExternalId: { equals: "00ujl29u0le5T6Aj10h7" },
     });
   });
 
   it("A4: translates 'active eq true' to isActive: true", () => {
-    expect(scimFilterToPrismaWhere("active eq true")).toEqual({
+    expect(scimFilterToDbWhere("active eq true")).toEqual({
       isActive: true,
     });
   });
 
   it("A5: translates 'active eq false' to isActive: false", () => {
-    expect(scimFilterToPrismaWhere("active eq false")).toEqual({
+    expect(scimFilterToDbWhere("active eq false")).toEqual({
       isActive: false,
     });
   });
 
   it("A6: translates 'emails.value eq <X>' to case-insensitive email equals", () => {
     expect(
-      scimFilterToPrismaWhere('emails.value eq "Alice@Example.COM"')
+      scimFilterToDbWhere('emails.value eq "Alice@Example.COM"')
     ).toEqual({
       email: { equals: "Alice@Example.COM", mode: "insensitive" },
     });
   });
 
   it("A7: translates 'name.givenName eq \"Alice\"' to scimGivenName equals", () => {
-    expect(scimFilterToPrismaWhere('name.givenName eq "Alice"')).toEqual({
+    expect(scimFilterToDbWhere('name.givenName eq "Alice"')).toEqual({
       scimGivenName: { equals: "Alice" },
     });
   });
 
   it("A8: translates 'name.familyName eq \"Smith\"' to scimFamilyName equals", () => {
-    expect(scimFilterToPrismaWhere('name.familyName eq "Smith"')).toEqual({
+    expect(scimFilterToDbWhere('name.familyName eq "Smith"')).toEqual({
       scimFamilyName: { equals: "Smith" },
     });
   });
@@ -92,33 +92,33 @@ describe("scimFilterToPrismaWhere", () => {
   // ---------------------------------------------------------------------------
 
   it("B1: 'userName pr' translates to scimUserName not null", () => {
-    expect(scimFilterToPrismaWhere("userName pr")).toEqual({
+    expect(scimFilterToDbWhere("userName pr")).toEqual({
       scimUserName: { not: null },
     });
   });
 
   it("B2: 'externalId pr' translates to scimExternalId not null", () => {
-    expect(scimFilterToPrismaWhere("externalId pr")).toEqual({
+    expect(scimFilterToDbWhere("externalId pr")).toEqual({
       scimExternalId: { not: null },
     });
   });
 
   it("B3: 'active pr' is vacuous on NOT NULL column — returns {}", () => {
-    expect(scimFilterToPrismaWhere("active pr")).toEqual({});
+    expect(scimFilterToDbWhere("active pr")).toEqual({});
   });
 
   it("B4: 'emails.value pr' is vacuous on NOT NULL User.email — returns {}", () => {
-    expect(scimFilterToPrismaWhere("emails.value pr")).toEqual({});
+    expect(scimFilterToDbWhere("emails.value pr")).toEqual({});
   });
 
   it("B5: 'name.givenName pr' translates to scimGivenName not null", () => {
-    expect(scimFilterToPrismaWhere("name.givenName pr")).toEqual({
+    expect(scimFilterToDbWhere("name.givenName pr")).toEqual({
       scimGivenName: { not: null },
     });
   });
 
   it("B6: 'name.familyName pr' translates to scimFamilyName not null", () => {
-    expect(scimFilterToPrismaWhere("name.familyName pr")).toEqual({
+    expect(scimFilterToDbWhere("name.familyName pr")).toEqual({
       scimFamilyName: { not: null },
     });
   });
@@ -129,7 +129,7 @@ describe("scimFilterToPrismaWhere", () => {
 
   it("C1: two-way AND of eq + eq", () => {
     expect(
-      scimFilterToPrismaWhere('userName eq "alice" and active eq true')
+      scimFilterToDbWhere('userName eq "alice" and active eq true')
     ).toEqual({
       AND: [{ scimUserName: { equals: "alice" } }, { isActive: true }],
     });
@@ -137,7 +137,7 @@ describe("scimFilterToPrismaWhere", () => {
 
   it("C2: two-way AND across externalId + name.familyName", () => {
     expect(
-      scimFilterToPrismaWhere(
+      scimFilterToDbWhere(
         'externalId eq "x" and name.familyName eq "Smith"'
       )
     ).toEqual({
@@ -149,7 +149,7 @@ describe("scimFilterToPrismaWhere", () => {
   });
 
   it("C3: three-way AND", () => {
-    const out = scimFilterToPrismaWhere(
+    const out = scimFilterToDbWhere(
       'userName eq "a" and externalId eq "b" and active eq true'
     );
     // scim2-parse-filter folds chained AND into a left-leaning tree, so we
@@ -168,7 +168,7 @@ describe("scimFilterToPrismaWhere", () => {
 
   it("C4: AND with a pr child", () => {
     expect(
-      scimFilterToPrismaWhere('userName eq "alice" and externalId pr')
+      scimFilterToDbWhere('userName eq "alice" and externalId pr')
     ).toEqual({
       AND: [
         { scimUserName: { equals: "alice" } },
@@ -182,67 +182,67 @@ describe("scimFilterToPrismaWhere", () => {
   // ---------------------------------------------------------------------------
 
   it("D1: 'ne' is not supported", () => {
-    expect(() => scimFilterToPrismaWhere('userName ne "alice"')).toThrow(
+    expect(() => scimFilterToDbWhere('userName ne "alice"')).toThrow(
       new InvalidFilterError('Operator "ne" not supported')
     );
   });
 
   it("D2: 'co' is not supported", () => {
-    expect(() => scimFilterToPrismaWhere('userName co "ali"')).toThrow(
+    expect(() => scimFilterToDbWhere('userName co "ali"')).toThrow(
       new InvalidFilterError('Operator "co" not supported')
     );
   });
 
   it("D3: 'sw' is not supported", () => {
-    expect(() => scimFilterToPrismaWhere('userName sw "ali"')).toThrow(
+    expect(() => scimFilterToDbWhere('userName sw "ali"')).toThrow(
       new InvalidFilterError('Operator "sw" not supported')
     );
   });
 
   it("D4: 'ew' is not supported", () => {
-    expect(() => scimFilterToPrismaWhere('userName ew "ice"')).toThrow(
+    expect(() => scimFilterToDbWhere('userName ew "ice"')).toThrow(
       new InvalidFilterError('Operator "ew" not supported')
     );
   });
 
   it("D5: 'gt' is not supported", () => {
-    expect(() => scimFilterToPrismaWhere('userName gt "alice"')).toThrow(
+    expect(() => scimFilterToDbWhere('userName gt "alice"')).toThrow(
       new InvalidFilterError('Operator "gt" not supported')
     );
   });
 
   it("D6: 'lt' is not supported", () => {
-    expect(() => scimFilterToPrismaWhere('userName lt "alice"')).toThrow(
+    expect(() => scimFilterToDbWhere('userName lt "alice"')).toThrow(
       new InvalidFilterError('Operator "lt" not supported')
     );
   });
 
   it("D7: 'ge' is not supported", () => {
-    expect(() => scimFilterToPrismaWhere('userName ge "alice"')).toThrow(
+    expect(() => scimFilterToDbWhere('userName ge "alice"')).toThrow(
       new InvalidFilterError('Operator "ge" not supported')
     );
   });
 
   it("D8: 'le' is not supported", () => {
-    expect(() => scimFilterToPrismaWhere('userName le "alice"')).toThrow(
+    expect(() => scimFilterToDbWhere('userName le "alice"')).toThrow(
       new InvalidFilterError('Operator "le" not supported')
     );
   });
 
   it("D9: 'or' is not supported", () => {
     expect(() =>
-      scimFilterToPrismaWhere('userName eq "alice" or userName eq "bob"')
+      scimFilterToDbWhere('userName eq "alice" or userName eq "bob"')
     ).toThrow(new InvalidFilterError('Operator "or" not supported'));
   });
 
   it("D10: 'not' is not supported", () => {
-    expect(() => scimFilterToPrismaWhere('not (userName eq "alice")')).toThrow(
+    expect(() => scimFilterToDbWhere('not (userName eq "alice")')).toThrow(
       new InvalidFilterError('Operator "not" not supported')
     );
   });
 
   it("D11: valuePath '[]' is not supported", () => {
-    expect(() => scimFilterToPrismaWhere('emails[type eq "work"]')).toThrow(
+    expect(() => scimFilterToDbWhere('emails[type eq "work"]')).toThrow(
       new InvalidFilterError('Operator "[]" not supported')
     );
   });
@@ -252,27 +252,27 @@ describe("scimFilterToPrismaWhere", () => {
   // ---------------------------------------------------------------------------
 
   it("E1: 'title' is not filterable", () => {
-    expect(() => scimFilterToPrismaWhere('title eq "Engineer"')).toThrow(
+    expect(() => scimFilterToDbWhere('title eq "Engineer"')).toThrow(
       new InvalidFilterError('Attribute "title" not filterable')
     );
   });
 
   it("E2: 'displayName' is not filterable", () => {
-    expect(() => scimFilterToPrismaWhere('displayName eq "x"')).toThrow(
+    expect(() => scimFilterToDbWhere('displayName eq "x"')).toThrow(
       new InvalidFilterError('Attribute "displayName" not filterable')
     );
   });
 
   it("E3: 'phoneNumbers.value' is not filterable", () => {
     expect(() =>
-      scimFilterToPrismaWhere('phoneNumbers.value eq "1234"')
+      scimFilterToDbWhere('phoneNumbers.value eq "1234"')
     ).toThrow(
       new InvalidFilterError('Attribute "phoneNumbers.value" not filterable')
     );
   });
 
   it("E4: 'addresses.value' is not filterable", () => {
-    expect(() => scimFilterToPrismaWhere('addresses.value eq "x"')).toThrow(
+    expect(() => scimFilterToDbWhere('addresses.value eq "x"')).toThrow(
       new InvalidFilterError('Attribute "addresses.value" not filterable')
     );
   });
@@ -280,9 +280,9 @@ describe("scimFilterToPrismaWhere", () => {
   it("E5: URN-prefixed enterprise extension attrPath is not filterable", () => {
     const filter =
       "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:employeeNumber pr";
-    expect(() => scimFilterToPrismaWhere(filter)).toThrow(InvalidFilterError);
+    expect(() => scimFilterToDbWhere(filter)).toThrow(InvalidFilterError);
     try {
-      scimFilterToPrismaWhere(filter);
+      scimFilterToDbWhere(filter);
     } catch (e) {
       expect((e as InvalidFilterError).message).toContain("not filterable");
     }
@@ -293,19 +293,19 @@ describe("scimFilterToPrismaWhere", () => {
   // ---------------------------------------------------------------------------
 
   it("F1: 'active eq \"yes\"' rejects non-boolean compValue", () => {
-    expect(() => scimFilterToPrismaWhere('active eq "yes"')).toThrow(
+    expect(() => scimFilterToDbWhere('active eq "yes"')).toThrow(
       new InvalidFilterError('Value for "active" must be boolean')
     );
   });
 
   it("F2: 'userName eq 1' rejects non-string compValue", () => {
-    expect(() => scimFilterToPrismaWhere("userName eq 1")).toThrow(
+    expect(() => scimFilterToDbWhere("userName eq 1")).toThrow(
       new InvalidFilterError('Value for "userName" must be string')
     );
   });
 
   it("F3: 'externalId eq null' rejects null compValue", () => {
-    expect(() => scimFilterToPrismaWhere("externalId eq null")).toThrow(
+    expect(() => scimFilterToDbWhere("externalId eq null")).toThrow(
       new InvalidFilterError('Value for "externalId" must be string')
     );
   });
@@ -315,9 +315,9 @@ describe("scimFilterToPrismaWhere", () => {
   // ---------------------------------------------------------------------------
 
   it("G1: empty string maps to parser-error envelope", () => {
-    expect(() => scimFilterToPrismaWhere("")).toThrow(InvalidFilterError);
+    expect(() => scimFilterToDbWhere("")).toThrow(InvalidFilterError);
     try {
-      scimFilterToPrismaWhere("");
+      scimFilterToDbWhere("");
     } catch (e) {
       expect((e as InvalidFilterError).message).toMatch(
         /^Filter could not be parsed:/
@@ -326,11 +326,11 @@ describe("scimFilterToPrismaWhere", () => {
   });
 
   it("G2: 'userName eq' (missing compValue) maps to parser-error envelope", () => {
-    expect(() => scimFilterToPrismaWhere("userName eq")).toThrow(
+    expect(() => scimFilterToDbWhere("userName eq")).toThrow(
       InvalidFilterError
     );
     try {
-      scimFilterToPrismaWhere("userName eq");
+      scimFilterToDbWhere("userName eq");
     } catch (e) {
       expect((e as InvalidFilterError).message).toMatch(
         /^Filter could not be parsed:/
@@ -339,11 +339,11 @@ describe("scimFilterToPrismaWhere", () => {
   });
 
   it("G3: unbalanced quote maps to parser-error envelope", () => {
-    expect(() => scimFilterToPrismaWhere('userName eq "alice')).toThrow(
+    expect(() => scimFilterToDbWhere('userName eq "alice')).toThrow(
       InvalidFilterError
     );
     try {
-      scimFilterToPrismaWhere('userName eq "alice');
+      scimFilterToDbWhere('userName eq "alice');
     } catch (e) {
       expect((e as InvalidFilterError).message).toMatch(
         /^Filter could not be parsed:/
@@ -357,7 +357,7 @@ describe("scimFilterToPrismaWhere", () => {
 
   it("H1: SQL-injection-shaped compValue is captured as a literal string", () => {
     const adversarial = 'userName eq "alice\\"; DROP TABLE Users; --"';
-    const out = scimFilterToPrismaWhere(adversarial);
+    const out = scimFilterToDbWhere(adversarial);
     // The compValue lands as a literal string inside Prisma's parameterized
     // WHERE — we never template-string the user input into raw SQL anywhere.
     expect(out).toEqual({
@@ -370,7 +370,7 @@ describe("scimFilterToPrismaWhere", () => {
   it("H2: deeply nested AND does not blow the stack", () => {
     const filter =
       'userName eq "abc" and userName eq "def" and userName eq "ghi" and userName eq "jkl"';
-    const out = scimFilterToPrismaWhere(filter);
+    const out = scimFilterToDbWhere(filter);
     const flat = flattenAnd(out);
     expect(flat).toHaveLength(4);
     expect(flat).toEqual(
@@ -384,28 +384,28 @@ describe("scimFilterToPrismaWhere", () => {
   });
 });
 
-describe("scimFilterToPrismaGroupWhere", () => {
+describe("scimFilterToDbGroupWhere", () => {
   // ---------------------------------------------------------------------------
   // Group A — happy-path translation
   // ---------------------------------------------------------------------------
 
   it("A1: 'displayName eq <X>' translates to scimDisplayName lowercased equals", () => {
     expect(
-      scimFilterToPrismaGroupWhere('displayName eq "Engineering"')
+      scimFilterToDbGroupWhere('displayName eq "Engineering"')
     ).toEqual({
       scimDisplayName: { equals: "engineering" },
     });
   });
 
   it("A2: 'externalId eq <X>' translates verbatim (opaque IdP identifier)", () => {
-    expect(scimFilterToPrismaGroupWhere('externalId eq "abc-123"')).toEqual({
+    expect(scimFilterToDbGroupWhere('externalId eq "abc-123"')).toEqual({
       externalId: { equals: "abc-123" },
     });
   });
 
   it("A3: 'displayName eq <X> and externalId pr' translates to AND of equals + not-null", () => {
     expect(
-      scimFilterToPrismaGroupWhere(
+      scimFilterToDbGroupWhere(
         'displayName eq "Engineering" and externalId pr'
       )
     ).toEqual({
@@ -417,7 +417,7 @@ describe("scimFilterToPrismaGroupWhere", () => {
   });
 
   it("A4: 'displayName pr' translates to scimDisplayName not null", () => {
-    expect(scimFilterToPrismaGroupWhere("displayName pr")).toEqual({
+    expect(scimFilterToDbGroupWhere("displayName pr")).toEqual({
       scimDisplayName: { not: null },
     });
   });
@@ -427,22 +427,22 @@ describe("scimFilterToPrismaGroupWhere", () => {
   // ---------------------------------------------------------------------------
 
   it("B1: 'userName eq <X>' (User attr) is rejected with InvalidFilterError", () => {
-    expect(() => scimFilterToPrismaGroupWhere('userName eq "x"')).toThrow(
+    expect(() => scimFilterToDbGroupWhere('userName eq "x"')).toThrow(
       InvalidFilterError
     );
     try {
-      scimFilterToPrismaGroupWhere('userName eq "x"');
+      scimFilterToDbGroupWhere('userName eq "x"');
     } catch (e) {
       expect((e as InvalidFilterError).message).toContain("not filterable");
     }
   });
 
   it("B2: 'displayName co \"Eng\"' (unsupported operator) is rejected", () => {
-    expect(() => scimFilterToPrismaGroupWhere('displayName co "Eng"')).toThrow(
+    expect(() => scimFilterToDbGroupWhere('displayName co "Eng"')).toThrow(
       InvalidFilterError
     );
     try {
-      scimFilterToPrismaGroupWhere('displayName co "Eng"');
+      scimFilterToDbGroupWhere('displayName co "Eng"');
     } catch (e) {
       expect((e as InvalidFilterError).message).toContain("not supported");
     }
@@ -451,7 +451,7 @@ describe("scimFilterToPrismaGroupWhere", () => {
   it("B3: URN-prefixed attrPath is rejected", () => {
     const filter =
       'urn:ietf:params:scim:schemas:enterprise:2.0:User:department eq "Eng"';
-    expect(() => scimFilterToPrismaGroupWhere(filter)).toThrow(
+    expect(() => scimFilterToDbGroupWhere(filter)).toThrow(
       InvalidFilterError
     );
   });
@@ -461,11 +461,11 @@ describe("scimFilterToPrismaGroupWhere", () => {
   // ---------------------------------------------------------------------------
 
   it("C1: 'displayName eq' (missing compValue) maps to parser-error envelope", () => {
-    expect(() => scimFilterToPrismaGroupWhere("displayName eq")).toThrow(
+    expect(() => scimFilterToDbGroupWhere("displayName eq")).toThrow(
       InvalidFilterError
     );
     try {
-      scimFilterToPrismaGroupWhere("displayName eq");
+      scimFilterToDbGroupWhere("displayName eq");
     } catch (e) {
       expect((e as InvalidFilterError).message).toMatch(
         /^Filter could not be parsed:/
@@ -474,7 +474,7 @@ describe("scimFilterToPrismaGroupWhere", () => {
   });
 
   it("C2: '!!! invalid !!!' maps to parser-error envelope", () => {
-    expect(() => scimFilterToPrismaGroupWhere("!!! invalid !!!")).toThrow(
+    expect(() => scimFilterToDbGroupWhere("!!! invalid !!!")).toThrow(
       InvalidFilterError
     );
   });

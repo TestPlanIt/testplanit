@@ -1,7 +1,7 @@
 /**
  * Password history utilities for preventing password reuse (POLICY-03).
  *
- * IMPORTANT: All operations use the direct PrismaClient (`db`), NOT the
+ * IMPORTANT: All operations use the direct DbClient (`db`), NOT the
  * ZenStack-enhanced client. PasswordHistory access rules block create/update/delete
  * via ZenStack REST API — system writes must go through the raw client.
  *

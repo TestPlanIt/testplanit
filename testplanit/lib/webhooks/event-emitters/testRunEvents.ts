@@ -88,7 +88,7 @@ function parseParameterSchema(
 /**
  * Emit per-mutation outbound webhook events for TestRuns lifecycle.
  * Detection logic for state transitions and the "transitioned-into-
- * completed" sub-case lives here so the lib/prisma.ts `$extends`
+ * completed" sub-case lives here so the lib/db.ts `$extends`
  * middleware can stay generic.
  *
  * Every emit is bound to the caller's tx (webhookEvents.emit requires tx)

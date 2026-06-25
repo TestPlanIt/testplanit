@@ -102,7 +102,7 @@ export async function tryFastPathCreate(params: {
   if (!data) return null;
 
   try {
-    if (!getPrismaModel(parsedPath.model)) return null;
+    if (!getDbModel(parsedPath.model)) return null;
 
     // The fast path skips enhance() AND the $extends injectAuditGuc hook, so
     // set the GUC explicitly inside the create's transaction — otherwise the
@@ -218,7 +218,7 @@ function extractCreateData(body: unknown): Record<string, unknown> | null {
  * Returns `null` if the model isn't recognised so the caller can fall back
  * to ZenStack.
  */
-function getPrismaModel(modelName: string): {
+function getDbModel(modelName: string): {
   create: (args: { data: Record<string, unknown> }) => Promise<unknown>;
 } | null {
   const p = baseDb as unknown as Record<string, any>;

@@ -1,4 +1,4 @@
-import { prisma } from "./seed";
+import { db } from "./seed";
 
 export async function seedFieldIcons() {
   const iconNames = [
@@ -1457,7 +1457,7 @@ export async function seedFieldIcons() {
     const chunk = iconNames.slice(i, i + chunkSize);
     await Promise.all(
       chunk.map((iconName) =>
-        prisma.fieldIcon.upsert({
+        db.fieldIcon.upsert({
           where: { name: iconName },
           update: {},
           create: {

@@ -1,7 +1,7 @@
 import { createRawDbClient } from "~/lib/rawDbClient";
 
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 /**
  * Seeds comprehensive test execution data covering all dimension combinations
@@ -11,7 +11,7 @@ export async function seedComprehensiveTestExecutionData() {
   console.log("Seeding comprehensive test execution data...");
 
   // Get the test project
-  const project = await prisma.projects.findFirst({
+  const project = await db.projects.findFirst({
     where: { id: 331 },
   });
 
@@ -20,10 +20,10 @@ export async function seedComprehensiveTestExecutionData() {
   }
 
   // Get users
-  const adminUser = await prisma.user.findFirst({
+  const adminUser = await db.user.findFirst({
     where: { email: "admin@testplanit.com" },
   });
-  const regularUser = await prisma.user.findFirst({
+  const regularUser = await db.user.findFirst({
     where: { email: "testuser@example.com" },
   });
 
@@ -32,7 +32,7 @@ export async function seedComprehensiveTestExecutionData() {
   }
 
   // Get workflow states
-  const workflowStates = await prisma.workflows.findMany({
+  const workflowStates = await db.workflows.findMany({
     where: { isDeleted: false },
     orderBy: { order: "asc" },
   });
@@ -42,7 +42,7 @@ export async function seedComprehensiveTestExecutionData() {
   const doneState = workflowStates[2] || defaultState;
 
   // Get all test result statuses
-  const statuses = await prisma.status.findMany({
+  const statuses = await db.status.findMany({
     where: { isDeleted: false },
   });
 
@@ -52,7 +52,7 @@ export async function seedComprehensiveTestExecutionData() {
 
   // Create or get milestones
   const milestones = await Promise.all([
-    prisma.milestones.create({
+    db.milestones.create({
       data: {
         projectId: project.id,
         name: "Release 1.0",
@@ -64,7 +64,7 @@ export async function seedComprehensiveTestExecutionData() {
         completedAt: new Date("2025-03-31"),
       },
     }),
-    prisma.milestones.create({
+    db.milestones.create({
       data: {
         projectId: project.id,
         name: "Sprint 23",
@@ -74,7 +74,7 @@ export async function seedComprehensiveTestExecutionData() {
         startedAt: new Date("2025-06-01"),
       },
     }),
-    prisma.milestones.create({
+    db.milestones.create({
       data: {
         projectId: project.id,
         name: "Q2 Goals",
@@ -86,22 +86,22 @@ export async function seedComprehensiveTestExecutionData() {
 
   // Create test configurations
   const configs = await Promise.all([
-    prisma.configurations.create({
+    db.configurations.create({
       data: {
         name: "Windows Chrome",
       },
     }),
-    prisma.configurations.create({
+    db.configurations.create({
       data: {
         name: "MacOS Safari",
       },
     }),
-    prisma.configurations.create({
+    db.configurations.create({
       data: {
         name: "Linux Firefox",
       },
     }),
-    prisma.configurations.create({
+    db.configurations.create({
       data: {
         name: "Mobile Android",
       },
@@ -109,7 +109,7 @@ export async function seedComprehensiveTestExecutionData() {
   ]);
 
   // Get repository for the project
-  const repository = await prisma.repositories.findFirst({
+  const repository = await db.repositories.findFirst({
     where: { projectId: project.id },
   });
 
@@ -119,7 +119,7 @@ export async function seedComprehensiveTestExecutionData() {
 
   // Get or create test folders
   const folders = await Promise.all([
-    prisma.repositoryFolders.create({
+    db.repositoryFolders.create({
       data: {
         projectId: project.id,
         repositoryId: repository.id,
@@ -128,7 +128,7 @@ export async function seedComprehensiveTestExecutionData() {
         order: 1,
       },
     }),
-    prisma.repositoryFolders.create({
+    db.repositoryFolders.create({
       data: {
         projectId: project.id,
         repositoryId: repository.id,
@@ -137,7 +137,7 @@ export async function seedComprehensiveTestExecutionData() {
         order: 2,
       },
     }),
-    prisma.repositoryFolders.create({
+    db.repositoryFolders.create({
       data: {
         projectId: project.id,
         repositoryId: repository.id,
@@ -152,7 +152,7 @@ export async function seedComprehensiveTestExecutionData() {
   const testCases = await Promise.all([
     // Smoke test cases
     ...Array.from({ length: 5 }, async (_, i) =>
-      prisma.repositoryCases.create({
+      db.repositoryCases.create({
         data: {
           projectId: project.id,
           name: `Smoke Test ${i + 1}`,
@@ -173,7 +173,7 @@ export async function seedComprehensiveTestExecutionData() {
     ),
     // Regression test cases
     ...Array.from({ length: 5 }, async (_, i) =>
-      prisma.repositoryCases.create({
+      db.repositoryCases.create({
         data: {
           projectId: project.id,
           name: `Regression Test ${i + 1}`,
@@ -189,7 +189,7 @@ export async function seedComprehensiveTestExecutionData() {
     ),
     // Integration test cases
     ...Array.from({ length: 5 }, async (_, i) =>
-      prisma.repositoryCases.create({
+      db.repositoryCases.create({
         data: {
           projectId: project.id,
           name: `Integration Test ${i + 1}`,
@@ -215,7 +215,7 @@ export async function seedComprehensiveTestExecutionData() {
   for (const milestone of milestones) {
     for (const config of configs) {
       for (const workflowState of [defaultState, inProgressState, doneState]) {
-        const testRun = await prisma.testRuns.create({
+        const testRun = await db.testRuns.create({
           data: {
             projectId: project.id,
             name: `Test Run ${++runIndex} - ${milestone.name} - ${config.name}`,
@@ -238,7 +238,7 @@ export async function seedComprehensiveTestExecutionData() {
           const testCase = casesToAdd[i];
           const assignedUser = i % 2 === 0 ? adminUser : regularUser;
 
-          const testRunCase = await prisma.testRunCases.create({
+          const testRunCase = await db.testRunCases.create({
             data: {
               testRunId: testRun.id,
               repositoryCaseId: testCase.id,
@@ -272,7 +272,7 @@ export async function seedComprehensiveTestExecutionData() {
               status.name
             );
 
-            const result = await prisma.testRunResults.create({
+            const result = await db.testRunResults.create({
               data: {
                 testRunId: testRun.id,
                 testRunCaseId: testRunCase.id,
@@ -292,7 +292,7 @@ export async function seedComprehensiveTestExecutionData() {
   }
 
   // Create some test runs without milestones or configs to test null handling
-  const nullDimensionRun = await prisma.testRuns.create({
+  const nullDimensionRun = await db.testRuns.create({
     data: {
       projectId: project.id,
       name: "Test Run - No Milestone/Config",
@@ -307,7 +307,7 @@ export async function seedComprehensiveTestExecutionData() {
   // Add cases and results to the null dimension run
   for (let i = 0; i < 3; i++) {
     const testCase = testCases[i];
-    const testRunCase = await prisma.testRunCases.create({
+    const testRunCase = await db.testRunCases.create({
       data: {
         testRunId: nullDimensionRun.id,
         repositoryCaseId: testCase.id,
@@ -317,7 +317,7 @@ export async function seedComprehensiveTestExecutionData() {
     });
 
     // Add results
-    await prisma.testRunResults.create({
+    await db.testRunResults.create({
       data: {
         testRunId: nullDimensionRun.id,
         testRunCaseId: testRunCase.id,

@@ -123,7 +123,7 @@ export function buildEligibleCasesWhere(args: {
  * the existing edit-window machinery locks them. Only open runs (`testRun.isCompleted = false`)
  * are touched.
  *
- * Centralized here so the auto-API route (which bypasses `lib/prisma.ts`'s
+ * Centralized here so the auto-API route (which bypasses `lib/db.ts`'s
  * `$extends` hooks) and any future direct-Prisma callers share the exact same
  * soft-delete WHERE shape.
  *

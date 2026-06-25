@@ -1,4 +1,4 @@
-import { rawDb as defaultPrisma } from "~/lib/rawDb";
+import { rawDb as defaultDb } from "~/lib/rawDb";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
@@ -7,7 +7,7 @@ import {
   getEntityIndexName,
 } from "./unifiedElasticsearchService";
 
-type PrismaClientType = typeof defaultPrisma;
+type DbClientType = typeof defaultDb;
 
 /**
  * Document structure for shared steps in Elasticsearch
@@ -37,9 +37,9 @@ export interface SharedStepDocument {
  */
 export async function buildSharedStepDocument(
   stepGroupId: number,
-  prismaClient?: PrismaClientType
+  dbClient?: DbClientType
 ): Promise<SharedStepDocument | null> {
-  const rawDb = prismaClient || defaultPrisma;
+  const rawDb = dbClient || defaultDb;
   const stepGroup = await rawDb.sharedStepGroup.findUnique({
     where: { id: stepGroupId },
     include: {
@@ -209,16 +209,16 @@ export async function syncSharedStepToElasticsearch(
  * Sync all shared steps for a project to Elasticsearch
  * @param projectId - The project ID to sync shared steps for
  * @param batchSize - Number of shared steps to process per batch
- * @param prismaClient - Optional Prisma client for multi-tenant mode
+ * @param dbClient - Optional Prisma client for multi-tenant mode
  * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncProjectSharedStepsToElasticsearch(
   projectId: number,
   batchSize: number = 100,
-  prismaClient?: PrismaClientType,
+  dbClient?: DbClientType,
   tenantId?: string
 ): Promise<boolean> {
-  const rawDb = prismaClient || defaultPrisma;
+  const rawDb = dbClient || defaultDb;
   try {
     // Ensure index exists
     await createEntityIndex(SearchableEntityType.SHARED_STEP, rawDb, tenantId);

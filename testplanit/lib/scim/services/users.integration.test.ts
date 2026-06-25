@@ -30,7 +30,7 @@
  * permanent seed rows and are NEVER deleted by this file.
  *
  * Why not the ROLLBACK_SENTINEL withRollback pattern (submitResult.integration
- * uses it): the service-under-test calls `prisma.$transaction(...)`
+ * uses it): the service-under-test calls `db.$transaction(...)`
  * internally, which Prisma resolves against the outer tx in a nested call.
  * Throwing the sentinel from the outer body to force rollback would unwind
  * BOTH the test scaffold and the production-path tx as one unit; the inner
@@ -63,7 +63,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 const EMAIL_PREFIX = `scimit-${Date.now()}`;
 let emailCounter = 0;
@@ -106,7 +106,7 @@ describeIntegration("SCIM Users service (live DB)", () => {
 
     // Sanity check: the sentinel Projects row must exist before any test
     // can fire a webhook outbox event with projectId = -1.
-    const systemProject = await prisma.projects.findUnique({
+    const systemProject = await db.projects.findUnique({
       where: { id: SYSTEM_PROJECT_ID },
     });
     if (!systemProject) {
@@ -116,7 +116,7 @@ describeIntegration("SCIM Users service (live DB)", () => {
       );
     }
 
-    const scimUser = await prisma.user.findUnique({
+    const scimUser = await db.user.findUnique({
       where: { id: SCIM_SYSTEM_USER_ID },
     });
     if (!scimUser) {
@@ -129,7 +129,7 @@ describeIntegration("SCIM Users service (live DB)", () => {
 
   afterAll(async () => {
     // Sweep every test row by the deterministic email prefix.
-    const sweepable = await prisma.user.findMany({
+    const sweepable = await db.user.findMany({
       where: { email: { startsWith: EMAIL_PREFIX } },
       select: { id: true },
     });
@@ -140,26 +140,26 @@ describeIntegration("SCIM Users service (live DB)", () => {
     // actorUserId = SCIM_SYSTEM_USER_ID, so a `userId` filter would miss
     // them; payload.id is the discriminator the service writes.
     if (sweepIds.length > 0) {
-      await prisma.webhookOutboxEvent.deleteMany({
+      await db.webhookOutboxEvent.deleteMany({
         where: {
           OR: sweepIds.map((id) => ({
             payload: { path: ["id"], equals: id },
           })),
         },
       });
-      await prisma.account.deleteMany({
+      await db.account.deleteMany({
         where: { userId: { in: sweepIds } },
       });
-      await prisma.user.deleteMany({ where: { id: { in: sweepIds } } });
+      await db.user.deleteMany({ where: { id: { in: sweepIds } } });
     }
-    await prisma.$disconnect();
+    await db.$disconnect();
   });
 
   it("IT1: creates a new SCIM user with authMethod=SCIM and all five scim* columns persisted", async () => {
     const result = await createScimUser(makeBody(), ctx);
     expect(result.linked).toBe(false);
 
-    const row = await prisma.user.findUnique({
+    const row = await db.user.findUnique({
       where: { id: result.resource.id },
     });
     expect(row).not.toBeNull();
@@ -203,7 +203,7 @@ describeIntegration("SCIM Users service (live DB)", () => {
     } as unknown as ScimUserBody;
     await putScimUser(created.resource.id, putBody, ctx);
 
-    const after = await prisma.user.findUnique({
+    const after = await db.user.findUnique({
       where: { id: created.resource.id },
       select: { scimExtensions: true },
     });
@@ -218,7 +218,7 @@ describeIntegration("SCIM Users service (live DB)", () => {
   it("IT3: PATCH active:false deletes Account rows in the same tx", async () => {
     const created = await createScimUser(makeBody(), ctx);
 
-    await prisma.account.create({
+    await db.account.create({
       data: {
         userId: created.resource.id,
         type: "oauth",
@@ -227,7 +227,7 @@ describeIntegration("SCIM Users service (live DB)", () => {
       },
     });
 
-    const before = await prisma.account.count({
+    const before = await db.account.count({
       where: { userId: created.resource.id },
     });
     expect(before).toBe(1);
@@ -238,12 +238,12 @@ describeIntegration("SCIM Users service (live DB)", () => {
     };
     await patchScimUser(created.resource.id, patchBody as never, ctx);
 
-    const after = await prisma.account.count({
+    const after = await db.account.count({
       where: { userId: created.resource.id },
     });
     expect(after).toBe(0);
 
-    const row = await prisma.user.findUnique({
+    const row = await db.user.findUnique({
       where: { id: created.resource.id },
     });
     expect(row!.isActive).toBe(false);
@@ -253,7 +253,7 @@ describeIntegration("SCIM Users service (live DB)", () => {
   it("IT4: writes a WebhookOutboxEvent row with projectId=-1 FK-targeting the __system__ row", async () => {
     const created = await createScimUser(makeBody(), ctx);
 
-    const events = await prisma.webhookOutboxEvent.findMany({
+    const events = await db.webhookOutboxEvent.findMany({
       where: {
         eventName: "scim.user.created",
         projectId: SYSTEM_PROJECT_ID,
@@ -277,12 +277,12 @@ describeIntegration("SCIM Users service (live DB)", () => {
     // Pre-seed a row WITHOUT scimExternalId (a SAML/OAuth user the IdP is
     // now binding via SCIM for the first time). roleId target the seeded
     // default role; access stays at NONE.
-    const role = await prisma.roles.findFirst({
+    const role = await db.roles.findFirst({
       where: { isDefault: true, isDeleted: false },
     });
     if (!role) throw new Error("Test prerequisite: no default role row");
 
-    const existing = await prisma.user.create({
+    const existing = await db.user.create({
       data: {
         email,
         name: "Pre Existing",
@@ -309,7 +309,7 @@ describeIntegration("SCIM Users service (live DB)", () => {
     expect(result.linked).toBe(true);
     expect(result.resource.id).toBe(existing.id);
 
-    const after = await prisma.user.findUnique({
+    const after = await db.user.findUnique({
       where: { id: existing.id },
     });
     expect(after!.scimExternalId).toBe(externalId);
@@ -317,21 +317,21 @@ describeIntegration("SCIM Users service (live DB)", () => {
     expect(after!.externalId).toBeNull();
 
     // No second row was inserted under the same email.
-    const dupes = await prisma.user.count({ where: { email } });
+    const dupes = await db.user.count({ where: { email } });
     expect(dupes).toBe(1);
   });
 
   it("IT6: PUT no-op emits a scimNoOp audit but writes no new webhook outbox row", async () => {
     const created = await createScimUser(makeBody(), ctx);
 
-    const baseline = await prisma.webhookOutboxEvent.count({
+    const baseline = await db.webhookOutboxEvent.count({
       where: {
         actorUserId: SCIM_SYSTEM_USER_ID,
         projectId: SYSTEM_PROJECT_ID,
       },
     });
 
-    const row = await prisma.user.findUnique({
+    const row = await db.user.findUnique({
       where: { id: created.resource.id },
     });
     const noopBody: ScimUserBody = {
@@ -348,7 +348,7 @@ describeIntegration("SCIM Users service (live DB)", () => {
 
     await putScimUser(created.resource.id, noopBody, ctx);
 
-    const after = await prisma.webhookOutboxEvent.count({
+    const after = await db.webhookOutboxEvent.count({
       where: {
         actorUserId: SCIM_SYSTEM_USER_ID,
         projectId: SYSTEM_PROJECT_ID,
@@ -368,7 +368,7 @@ describeIntegration("SCIM Users service (live DB)", () => {
       /not found/i
     );
 
-    const row = await prisma.user.findUnique({
+    const row = await db.user.findUnique({
       where: { id: created.resource.id },
     });
     expect(row!.isDeleted).toBe(true);

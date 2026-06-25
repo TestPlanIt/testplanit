@@ -28,8 +28,8 @@ vi.mock("~/lib/db", () => ({
 // mockResolvedValue and mockImplementation(callback) styles the tests use).
 vi.mock("~/lib/audit/auditedTransaction", () => ({
   auditedTransaction: vi.fn(async (fn: any) => {
-    const { baseDb: mockedPrisma } = await import("~/lib/db");
-    return (mockedPrisma.$transaction as any)(fn);
+    const { baseDb: mockedDb } = await import("~/lib/db");
+    return (mockedDb.$transaction as any)(fn);
   }),
 }));
 
@@ -707,11 +707,11 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     });
 
     it("returns 400 when email already exists (P2002 Prisma error)", async () => {
-      const prismaError = {
+      const dbError = {
         code: "P2002",
         message: "Unique constraint failed",
       };
-      (baseDb.$transaction as any).mockRejectedValue(prismaError);
+      (baseDb.$transaction as any).mockRejectedValue(dbError);
 
       const request = createRequest({ email: "existing@example.com" });
       const context = createContext("user-123");

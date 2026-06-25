@@ -91,7 +91,7 @@ export interface EmitOptions {
 
 /**
  * Emit the `iteration.result.recorded` outbound webhook event. Must be
- * called inside the same `prisma.$transaction` that writes the iteration
+ * called inside the same `db.$transaction` that writes the iteration
  * result so the outbox row commits atomically with the result write
  * (mirrors `emitTestRunCreated` contract).
  *

@@ -23,9 +23,9 @@ const mockedDecrypt = decrypt as unknown as ReturnType<typeof vi.fn>;
 
 /**
  * Build a Prisma-shaped mock for the dispatch service.
- * Returns a plain object that the dispatch service can call as if it were a PrismaClient.
+ * Returns a plain object that the dispatch service can call as if it were a DbClient.
  */
-function buildPrismaMock(opts: {
+function buildDbMock(opts: {
   outboxEvent: any;
   config: any;
   delivery?: any;
@@ -109,31 +109,31 @@ describe("dispatchWebhook", () => {
   it("1. returns skipped_inactive when webhookConfig is not found (no fetch, no delivery)", async () => {
     const fetchSpy = vi.fn();
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: null,
     });
 
-    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+    const outcome = await dispatchWebhook(baseJobData, dbMock);
 
     expect(outcome).toEqual({ outcome: "skipped_inactive" });
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(prismaMock.webhookDelivery.create).not.toHaveBeenCalled();
+    expect(dbMock.webhookDelivery.create).not.toHaveBeenCalled();
   });
 
   it("2. returns skipped_inactive when config.isActive === false", async () => {
     const fetchSpy = vi.fn();
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig({ isActive: false }),
     });
 
-    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+    const outcome = await dispatchWebhook(baseJobData, dbMock);
 
     expect(outcome).toEqual({ outcome: "skipped_inactive" });
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(prismaMock.webhookDelivery.create).not.toHaveBeenCalled();
+    expect(dbMock.webhookDelivery.create).not.toHaveBeenCalled();
   });
 
   it("2a. returns skipped_inactive when project.isDeleted === true (L-05 tenancy gate, no fetch, no delivery)", async () => {
@@ -144,18 +144,18 @@ describe("dispatchWebhook", () => {
     // inactive: same outcome shape as the isActive===false path.
     const fetchSpy = vi.fn();
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig({
         project: { id: 7, name: "Acme", isDeleted: true },
       }),
     });
 
-    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+    const outcome = await dispatchWebhook(baseJobData, dbMock);
 
     expect(outcome).toEqual({ outcome: "skipped_inactive" });
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(prismaMock.webhookDelivery.create).not.toHaveBeenCalled();
+    expect(dbMock.webhookDelivery.create).not.toHaveBeenCalled();
   });
 
   it("2b. system-project (SYSTEM_PROJECT_ID = -1) bypasses the isDeleted tenancy gate (system webhooks must dispatch)", async () => {
@@ -167,7 +167,7 @@ describe("dispatchWebhook", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: { ...baseOutboxEvent, projectId: -1 },
       config: baseConfig({
         projectId: -1,
@@ -176,26 +176,26 @@ describe("dispatchWebhook", () => {
       }),
     });
 
-    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+    const outcome = await dispatchWebhook(baseJobData, dbMock);
 
     expect(outcome.outcome).toBe("success");
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(prismaMock.webhookDelivery.create).toHaveBeenCalledTimes(1);
+    expect(dbMock.webhookDelivery.create).toHaveBeenCalledTimes(1);
   });
 
   it("3. returns skipped_unsubscribed when subscribedEvents excludes eventName (, no delivery row)", async () => {
     const fetchSpy = vi.fn();
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig({ subscribedEvents: ["issue.created"] }),
     });
 
-    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+    const outcome = await dispatchWebhook(baseJobData, dbMock);
 
     expect(outcome).toEqual({ outcome: "skipped_unsubscribed" });
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(prismaMock.webhookDelivery.create).not.toHaveBeenCalled();
+    expect(dbMock.webhookDelivery.create).not.toHaveBeenCalled();
   });
 
   it("4. webhook.test bypass: empty subscribedEvents → dispatch proceeds (delivery row written)", async () => {
@@ -203,16 +203,16 @@ describe("dispatchWebhook", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: { ...baseOutboxEvent, eventName: "webhook.test" },
       config: baseConfig({ subscribedEvents: [] }),
     });
 
-    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+    const outcome = await dispatchWebhook(baseJobData, dbMock);
 
     expect(outcome.outcome).toBe("success");
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(prismaMock.webhookDelivery.create).toHaveBeenCalledTimes(1);
+    expect(dbMock.webhookDelivery.create).toHaveBeenCalledTimes(1);
   });
 
   it("5. webhook.test bypass: non-empty subscribedEvents that excludes 'webhook.test' → dispatch STILL proceeds ()", async () => {
@@ -220,16 +220,16 @@ describe("dispatchWebhook", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: { ...baseOutboxEvent, eventName: "webhook.test" },
       config: baseConfig({ subscribedEvents: ["test_run.completed"] }),
     });
 
-    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+    const outcome = await dispatchWebhook(baseJobData, dbMock);
 
     expect(outcome.outcome).toBe("success");
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(prismaMock.webhookDelivery.create).toHaveBeenCalledTimes(1);
+    expect(dbMock.webhookDelivery.create).toHaveBeenCalledTimes(1);
   });
 
   it("6. success path: 200 → delivery row direction=OUTBOUND, error=null, statusCode=200, attempt=jobData.attempt; audit success", async () => {
@@ -237,18 +237,18 @@ describe("dispatchWebhook", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig(),
     });
 
-    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+    const outcome = await dispatchWebhook(baseJobData, dbMock);
 
     expect(outcome).toMatchObject({
       outcome: "success",
       statusCode: 200,
     });
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     expect(createCall.data.direction).toBe("OUTBOUND");
     expect(createCall.data.error).toBeNull();
     expect(createCall.data.statusCode).toBe(200);
@@ -266,12 +266,12 @@ describe("dispatchWebhook", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig({ adapterType: "SLACK" }),
     });
 
-    await dispatchWebhook(baseJobData, prismaMock);
+    await dispatchWebhook(baseJobData, dbMock);
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
@@ -287,7 +287,7 @@ describe("dispatchWebhook", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig({
         adapterType: "GENERIC_HMAC",
@@ -303,7 +303,7 @@ describe("dispatchWebhook", () => {
       }),
     });
 
-    await dispatchWebhook(baseJobData, prismaMock);
+    await dispatchWebhook(baseJobData, dbMock);
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
@@ -321,7 +321,7 @@ describe("dispatchWebhook", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig({
         adapterType: "GENERIC_HMAC",
@@ -344,7 +344,7 @@ describe("dispatchWebhook", () => {
       }),
     });
 
-    await dispatchWebhook(baseJobData, prismaMock);
+    await dispatchWebhook(baseJobData, dbMock);
 
     const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
@@ -358,7 +358,7 @@ describe("dispatchWebhook", () => {
   it("10. NO_ACTIVE_SECRET: GENERIC_HMAC config with zero unretired secrets → delivery row error='NO_ACTIVE_SECRET', returns failure outcome", async () => {
     const fetchSpy = vi.fn();
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig({
         adapterType: "GENERIC_HMAC",
@@ -366,11 +366,11 @@ describe("dispatchWebhook", () => {
       }),
     });
 
-    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+    const outcome = await dispatchWebhook(baseJobData, dbMock);
 
     expect(outcome.outcome).toBe("failure");
     expect((outcome as any).error).toBe("NO_ACTIVE_SECRET");
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     expect(createCall.data.error).toBe("NO_ACTIVE_SECRET");
     expect(fetchSpy).not.toHaveBeenCalled();
   });
@@ -380,13 +380,13 @@ describe("dispatchWebhook", () => {
       .fn()
       .mockResolvedValue(new Response("server fire", { status: 500 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig(),
     });
 
-    await expect(dispatchWebhook(baseJobData, prismaMock)).rejects.toThrow();
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    await expect(dispatchWebhook(baseJobData, dbMock)).rejects.toThrow();
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     expect(createCall.data.error).toMatch(/^500_/);
     expect(createCall.data.statusCode).toBe(500);
   });
@@ -395,13 +395,13 @@ describe("dispatchWebhook", () => {
     const timeoutErr = new DOMException("aborted", "TimeoutError");
     const fetchSpy = vi.fn().mockRejectedValue(timeoutErr);
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig(),
     });
 
-    await expect(dispatchWebhook(baseJobData, prismaMock)).rejects.toThrow();
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    await expect(dispatchWebhook(baseJobData, dbMock)).rejects.toThrow();
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     expect(createCall.data.error).toBe("TIMEOUT");
     expect(createCall.data.statusCode).toBeNull();
   });
@@ -412,13 +412,13 @@ describe("dispatchWebhook", () => {
     });
     const fetchSpy = vi.fn().mockRejectedValue(refused);
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig(),
     });
 
-    await expect(dispatchWebhook(baseJobData, prismaMock)).rejects.toThrow();
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    await expect(dispatchWebhook(baseJobData, dbMock)).rejects.toThrow();
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     expect(createCall.data.error).toBe("CONNECTION_REFUSED");
   });
 
@@ -428,11 +428,11 @@ describe("dispatchWebhook", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSuccess as any;
-    const prismaSuccess = buildPrismaMock({
+    const dbSuccess = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig(),
     });
-    await dispatchWebhook(baseJobData, prismaSuccess);
+    await dispatchWebhook(baseJobData, dbSuccess);
     expect(mockedCaptureAudit).toHaveBeenCalledWith(
       expect.objectContaining({
         metadata: expect.objectContaining({ outcome: "success" }),
@@ -445,11 +445,11 @@ describe("dispatchWebhook", () => {
       .fn()
       .mockResolvedValue(new Response("oops", { status: 503 }));
     globalThis.fetch = fetchFail as any;
-    const prismaFail = buildPrismaMock({
+    const dbFail = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig(),
     });
-    await expect(dispatchWebhook(baseJobData, prismaFail)).rejects.toThrow();
+    await expect(dispatchWebhook(baseJobData, dbFail)).rejects.toThrow();
     expect(mockedCaptureAudit).toHaveBeenCalledWith(
       expect.objectContaining({
         metadata: expect.objectContaining({ outcome: "failure" }),
@@ -463,14 +463,14 @@ describe("dispatchWebhook", () => {
         .fn()
         .mockResolvedValue(new Response("", { status: 200 }));
       globalThis.fetch = fetchSpy as any;
-      const prismaMock = buildPrismaMock({
+      const dbMock = buildDbMock({
         outboxEvent: baseOutboxEvent,
         config: baseConfig(),
       });
 
-      await dispatchWebhook({ ...baseJobData, attempt: attempt }, prismaMock);
+      await dispatchWebhook({ ...baseJobData, attempt: attempt }, dbMock);
 
-      const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+      const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
       expect(createCall.data.attempt).toBe(attempt);
     }
   });
@@ -480,7 +480,7 @@ describe("dispatchWebhook", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig({
         adapterType: "GENERIC_HMAC",
@@ -496,14 +496,14 @@ describe("dispatchWebhook", () => {
       }),
     });
 
-    await dispatchWebhook(baseJobData, prismaMock);
+    await dispatchWebhook(baseJobData, dbMock);
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
     const sentBody = init.body as string;
     const expectedDigest = createHash("sha256").update(sentBody).digest("hex");
 
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     expect(createCall.data.payloadDigest).toBe(expectedDigest);
   });
 });
@@ -538,19 +538,19 @@ describe("dispatchWebhook — endpoint_disabled gate ( / )", () => {
   it("D1. DISABLED config skips HTTP and writes a stub delivery row with error='endpoint_disabled'", async () => {
     const fetchSpy = vi.fn();
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: { ...baseOutboxEvent, eventId: "evt_abc" },
       config: baseConfig({ endpointHealth: "DISABLED" }),
     });
 
     const outcome = await dispatchWebhook(
       { ...baseJobData, attempt: 2 },
-      prismaMock
+      dbMock
     );
 
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(prismaMock.webhookDelivery.create).toHaveBeenCalledTimes(1);
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    expect(dbMock.webhookDelivery.create).toHaveBeenCalledTimes(1);
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     expect(createCall.data.error).toBe("endpoint_disabled");
     expect(createCall.data.direction).toBe("OUTBOUND");
     expect(createCall.data.statusCode).toBeNull();
@@ -581,12 +581,12 @@ describe("dispatchWebhook — endpoint_disabled gate ( / )", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig({ endpointHealth: "HEALTHY" }),
     });
 
-    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+    const outcome = await dispatchWebhook(baseJobData, dbMock);
 
     expect(outcome.outcome).toBe("success");
     expect(fetchSpy).toHaveBeenCalledTimes(1);
@@ -597,12 +597,12 @@ describe("dispatchWebhook — endpoint_disabled gate ( / )", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig({ endpointHealth: "DEGRADED" }),
     });
 
-    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+    const outcome = await dispatchWebhook(baseJobData, dbMock);
 
     expect(outcome.outcome).toBe("success");
     expect(fetchSpy).toHaveBeenCalledTimes(1);
@@ -611,18 +611,18 @@ describe("dispatchWebhook — endpoint_disabled gate ( / )", () => {
   it("D4. DISABLED gate runs AFTER isActive check — isActive=false short-circuits first with no delivery row", async () => {
     const fetchSpy = vi.fn();
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig({ isActive: false, endpointHealth: "DISABLED" }),
     });
 
-    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+    const outcome = await dispatchWebhook(baseJobData, dbMock);
 
     // isActive=false short-circuits BEFORE the DISABLED gate, so NO delivery
     // row written and NO endpoint_disabled audit emitted.
     expect(outcome).toEqual({ outcome: "skipped_inactive" });
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(prismaMock.webhookDelivery.create).not.toHaveBeenCalled();
+    expect(dbMock.webhookDelivery.create).not.toHaveBeenCalled();
   });
 });
 
@@ -644,17 +644,17 @@ describe("dispatchWebhook — per-attempt timestamps ( / )", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig(),
     });
 
-    await dispatchWebhook(baseJobData, prismaMock);
+    await dispatchWebhook(baseJobData, dbMock);
 
-    expect(prismaMock.webhookConfig.update).toHaveBeenCalled();
+    expect(dbMock.webhookConfig.update).toHaveBeenCalled();
     // Aggregate the data fields across all update calls.
     const allData: Record<string, unknown> = {};
-    for (const call of prismaMock.webhookConfig.update.mock.calls) {
+    for (const call of dbMock.webhookConfig.update.mock.calls) {
       Object.assign(allData, call[0].data);
     }
     expect(allData.lastDispatchedAt).toBeInstanceOf(Date);
@@ -667,16 +667,16 @@ describe("dispatchWebhook — per-attempt timestamps ( / )", () => {
       .fn()
       .mockResolvedValue(new Response("oops", { status: 500 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig(),
     });
 
-    await expect(dispatchWebhook(baseJobData, prismaMock)).rejects.toThrow();
+    await expect(dispatchWebhook(baseJobData, dbMock)).rejects.toThrow();
 
-    expect(prismaMock.webhookConfig.update).toHaveBeenCalled();
+    expect(dbMock.webhookConfig.update).toHaveBeenCalled();
     const allData: Record<string, unknown> = {};
-    for (const call of prismaMock.webhookConfig.update.mock.calls) {
+    for (const call of dbMock.webhookConfig.update.mock.calls) {
       Object.assign(allData, call[0].data);
     }
     expect(allData.lastDispatchedAt).toBeInstanceOf(Date);
@@ -690,12 +690,12 @@ describe("dispatchWebhook — per-attempt timestamps ( / )", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSuccess as any;
-    const prismaSuccess = buildPrismaMock({
+    const dbSuccess = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig(),
     });
-    await dispatchWebhook(baseJobData, prismaSuccess);
-    for (const call of prismaSuccess.webhookConfig.update.mock.calls) {
+    await dispatchWebhook(baseJobData, dbSuccess);
+    for (const call of dbSuccess.webhookConfig.update.mock.calls) {
       expect(call[0].data).not.toHaveProperty("consecutiveFailureCount");
     }
 
@@ -703,12 +703,12 @@ describe("dispatchWebhook — per-attempt timestamps ( / )", () => {
       .fn()
       .mockResolvedValue(new Response("oops", { status: 503 }));
     globalThis.fetch = fetchFail as any;
-    const prismaFail = buildPrismaMock({
+    const dbFail = buildDbMock({
       outboxEvent: baseOutboxEvent,
       config: baseConfig(),
     });
-    await expect(dispatchWebhook(baseJobData, prismaFail)).rejects.toThrow();
-    for (const call of prismaFail.webhookConfig.update.mock.calls) {
+    await expect(dispatchWebhook(baseJobData, dbFail)).rejects.toThrow();
+    for (const call of dbFail.webhookConfig.update.mock.calls) {
       expect(call[0].data).not.toHaveProperty("consecutiveFailureCount");
     }
   });
@@ -732,17 +732,17 @@ describe("dispatchWebhook — replay + eventId threading ( / + )", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: { ...baseOutboxEvent, eventId: "evt_xyz" },
       config: baseConfig(),
     });
 
     await dispatchWebhook(
       { ...baseJobData, replayedFromDeliveryId: "orig_id_123" } as any,
-      prismaMock
+      dbMock
     );
 
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     expect(createCall.data.replayedFromDeliveryId).toBe("orig_id_123");
     expect(createCall.data.eventId).toBe("evt_xyz");
   });
@@ -752,14 +752,14 @@ describe("dispatchWebhook — replay + eventId threading ( / + )", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: { ...baseOutboxEvent, eventId: "evt_normal" },
       config: baseConfig(),
     });
 
-    await dispatchWebhook(baseJobData, prismaMock);
+    await dispatchWebhook(baseJobData, dbMock);
 
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     // Either undefined (field absent) or null are acceptable for the
     // not-a-replay path — both translate to NULL in Postgres.
     expect(
@@ -772,18 +772,18 @@ describe("dispatchWebhook — replay + eventId threading ( / + )", () => {
   it("R3. replay against a DISABLED config writes the stub row with replayedFromDeliveryId AND eventId", async () => {
     const fetchSpy = vi.fn();
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: { ...baseOutboxEvent, eventId: "evt_disabled" },
       config: baseConfig({ endpointHealth: "DISABLED" }),
     });
 
     await dispatchWebhook(
       { ...baseJobData, replayedFromDeliveryId: "orig_id" } as any,
-      prismaMock
+      dbMock
     );
 
     expect(fetchSpy).not.toHaveBeenCalled();
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     expect(createCall.data.error).toBe("endpoint_disabled");
     expect(createCall.data.replayedFromDeliveryId).toBe("orig_id");
     expect(createCall.data.eventId).toBe("evt_disabled");
@@ -794,14 +794,14 @@ describe("dispatchWebhook — replay + eventId threading ( / + )", () => {
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: { ...baseOutboxEvent, eventId: "evt_success" },
       config: baseConfig(),
     });
 
-    await dispatchWebhook(baseJobData, prismaMock);
+    await dispatchWebhook(baseJobData, dbMock);
 
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     expect(createCall.data.eventId).toBe("evt_success");
   });
 
@@ -810,14 +810,14 @@ describe("dispatchWebhook — replay + eventId threading ( / + )", () => {
       .fn()
       .mockResolvedValue(new Response("server fire", { status: 500 }));
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: { ...baseOutboxEvent, eventId: "evt_500" },
       config: baseConfig(),
     });
 
-    await expect(dispatchWebhook(baseJobData, prismaMock)).rejects.toThrow();
+    await expect(dispatchWebhook(baseJobData, dbMock)).rejects.toThrow();
 
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     expect(createCall.data.error).toMatch(/^500_/);
     expect(createCall.data.eventId).toBe("evt_500");
   });
@@ -841,14 +841,14 @@ describe("dispatchWebhook — replay + eventId threading ( / + )", () => {
     const hugeResponse = new Response(stream, { status: 502 });
     const fetchSpy = vi.fn().mockResolvedValue(hugeResponse);
     globalThis.fetch = fetchSpy as any;
-    const prismaMock = buildPrismaMock({
+    const dbMock = buildDbMock({
       outboxEvent: { ...baseOutboxEvent, eventId: "evt_huge" },
       config: baseConfig(),
     });
 
-    await expect(dispatchWebhook(baseJobData, prismaMock)).rejects.toThrow();
+    await expect(dispatchWebhook(baseJobData, dbMock)).rejects.toThrow();
 
-    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    const createCall = dbMock.webhookDelivery.create.mock.calls[0][0];
     // Sentinel still capped by MAX_ERROR_LEN (1024).
     expect(createCall.data.error.length).toBeLessThanOrEqual(1024);
     expect(createCall.data.error).toMatch(/^502_/);

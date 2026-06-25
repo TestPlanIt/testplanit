@@ -96,7 +96,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook admin surface — French (fr-FR) i18n key coverage (F-02)", () => {
   let projectId: number;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
   let outboundConfigId: string;
   const fr = loadMessages("fr-FR");
   const en = loadMessages("en-US");
@@ -104,15 +104,15 @@ test.describe("Webhook admin surface — French (fr-FR) i18n key coverage (F-02)
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E i18n FR ${uniqueId}`);
-    prisma = createRawDbClient();
+    db = createRawDbClient();
 
-    const seeded = await seedOutboundConfig(prisma, {
+    const seeded = await seedOutboundConfig(db, {
       projectId,
       url: "https://example.com/i18n-fr/outbound",
       name: "E2E French Outbound",
     });
     outboundConfigId = seeded.configId;
-    await prisma.webhookConfig.update({
+    await db.webhookConfig.update({
       where: { id: outboundConfigId },
       data: {
         endpointHealth: "DISABLED",
@@ -121,14 +121,14 @@ test.describe("Webhook admin surface — French (fr-FR) i18n key coverage (F-02)
       },
     });
 
-    await seedInboundConfig(prisma, {
+    await seedInboundConfig(db, {
       projectId,
       adapterType: "GITHUB",
     });
   });
 
   test.afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("admin viewing /fr-FR/projects/settings/{id}/webhooks sees French copy across Inbound, Outbound, and Deliveries tabs and no missing-key markers leak into the DOM", async ({

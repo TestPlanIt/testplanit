@@ -23,7 +23,7 @@ import type {
  * webhook emitter can pass `tx` (Plan 02-05 Task 5.2) and read post-write
  * state inside the same transaction that produced the emission.
  */
-type PrismaLike = typeof baseDb | TxClient;
+type DbLike = typeof baseDb | TxClient;
 
 /**
  * Compute the test run summary data shape used by the in-app summary UI
@@ -39,9 +39,9 @@ type PrismaLike = typeof baseDb | TxClient;
  */
 export async function getTestRunSummary(
   testRunId: number,
-  options: { includeCaseDetails?: boolean; client?: PrismaLike } = {}
+  options: { includeCaseDetails?: boolean; client?: DbLike } = {}
 ): Promise<TestRunSummaryData> {
-  const client: PrismaLike = options.client ?? baseDb;
+  const client: DbLike = options.client ?? baseDb;
   const includeCaseDetails = options.includeCaseDetails ?? false;
 
   // Get test run type and workflow + linked issues
@@ -132,7 +132,7 @@ export async function getRegularRunSummary(
   testRunId: number,
   forecastManual: number | null,
   includeCaseDetails: boolean,
-  client: PrismaLike = baseDb
+  client: DbLike = baseDb
 ): Promise<
   Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
 > {
@@ -308,7 +308,7 @@ export async function getRegularRunSummary(
 
 export async function getJUnitRunSummary(
   testRunId: number,
-  client: PrismaLike = baseDb
+  client: DbLike = baseDb
 ): Promise<
   Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
 > {
@@ -481,7 +481,7 @@ export async function getJUnitRunSummary(
  */
 export async function getPerCaseIterationCounts(
   testRunId: number,
-  client: PrismaLike = baseDb
+  client: DbLike = baseDb
 ): Promise<PerCaseIterationCounts[]> {
   const rows = await client.testRunCases.findMany({
     where: { testRunId, isDeleted: false },

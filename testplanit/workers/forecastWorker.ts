@@ -51,7 +51,7 @@ export const JOB_REVIEW_REMINDERS = "review-reminders";
 /**
  * Load the context required to compose a REVIEW_REMINDER notification for a
  * single PENDING review row. Mirrors the structure of `loadReviewContext`
- * in `app/actions/reviews.ts` but accepts a `prisma` argument so the
+ * in `app/actions/reviews.ts` but accepts a `db` argument so the
  * per-tenant client handed to the worker is used. Adds a `requesterName`
  * lookup that the action-side helper doesn't need.
  *
@@ -60,7 +60,7 @@ export const JOB_REVIEW_REMINDERS = "review-reminders";
  * without throwing.
  */
 async function loadReviewContextForReminder(
-  prisma: any,
+  db: any,
   req: {
     projectId: number;
     entityType: "CASE" | "RUN" | "SESSION";
@@ -84,30 +84,30 @@ async function loadReviewContextForReminder(
 } | null> {
   const [project, fromState, toState, requester, assigneeUser, assigneeRole] =
     await Promise.all([
-      prisma.projects.findUnique({
+      db.projects.findUnique({
         where: { id: req.projectId },
         select: { id: true, name: true },
       }),
-      prisma.workflows.findUnique({
+      db.workflows.findUnique({
         where: { id: req.fromStateId },
         select: { name: true },
       }),
-      prisma.workflows.findUnique({
+      db.workflows.findUnique({
         where: { id: req.toStateId },
         select: { name: true, color: { select: { value: true } } },
       }),
-      prisma.user.findUnique({
+      db.user.findUnique({
         where: { id: req.requestedByUserId },
         select: { name: true },
       }),
       req.assigneeUserId !== null
-        ? prisma.user.findUnique({
+        ? db.user.findUnique({
             where: { id: req.assigneeUserId },
             select: { name: true },
           })
         : Promise.resolve(null),
       req.assigneeRoleId !== null
-        ? prisma.roles.findUnique({
+        ? db.roles.findUnique({
             where: { id: req.assigneeRoleId },
             select: { name: true },
           })
@@ -117,19 +117,19 @@ async function loadReviewContextForReminder(
 
   let entityName: string | null = null;
   if (req.entityType === "CASE") {
-    const row = await prisma.repositoryCases.findUnique({
+    const row = await db.repositoryCases.findUnique({
       where: { id: req.entityId },
       select: { name: true },
     });
     entityName = row?.name ?? null;
   } else if (req.entityType === "RUN") {
-    const row = await prisma.testRuns.findUnique({
+    const row = await db.testRuns.findUnique({
       where: { id: req.entityId },
       select: { name: true },
     });
     entityName = row?.name ?? null;
   } else {
-    const row = await prisma.sessions.findUnique({
+    const row = await db.sessions.findUnique({
       where: { id: req.entityId },
       select: { name: true },
     });
@@ -166,7 +166,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
     validateMultiTenantJobData(job.data);
 
     // Get the appropriate Prisma client (tenant-specific or default)
-    const prisma = getDbClientForJob(job.data);
+    const db = getDbClientForJob(job.data);
 
     switch (job.name) {
       case JOB_UPDATE_SINGLE_CASE:
@@ -178,7 +178,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
         }
         try {
           await updateRepositoryCaseForecast(singleData.repositoryCaseId, {
-            prismaClient: prisma,
+            dbClient: db,
           });
           successCount = 1;
           console.log(
@@ -199,7 +199,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
         successCount = 0;
         failCount = 0;
         // Use unique case group IDs to avoid recalculating the same linked groups multiple times
-        const caseIds = await getUniqueCaseGroupIds({ prismaClient: prisma });
+        const caseIds = await getUniqueCaseGroupIds({ dbClient: db });
 
         // Track affected TestRuns to update them once at the end
         const affectedTestRunIds = new Set<number>();
@@ -210,7 +210,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
             const result = await updateRepositoryCaseForecast(caseId, {
               skipTestRunUpdate: true,
               collectAffectedTestRuns: true,
-              prismaClient: prisma,
+              dbClient: db,
             });
 
             // Collect affected TestRun IDs
@@ -238,7 +238,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           `Job ${job.id}: Filtering ${affectedTestRunIds.size} affected test runs...`
         );
 
-        const activeTestRuns = await prisma.testRuns.findMany({
+        const activeTestRuns = await db.testRuns.findMany({
           where: {
             id: { in: Array.from(affectedTestRunIds) },
             isCompleted: false,
@@ -260,7 +260,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
 
         for (const testRunId of activeTestRunIds) {
           try {
-            await updateTestRunForecast(testRunId, { prismaClient: prisma });
+            await updateTestRunForecast(testRunId, { dbClient: db });
             testRunSuccessCount++;
           } catch (error) {
             console.error(
@@ -291,7 +291,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
         try {
           // Find all milestones that should be auto-completed
           const now = new Date();
-          const milestonesToComplete = await prisma.milestones.findMany({
+          const milestonesToComplete = await db.milestones.findMany({
             where: {
               isCompleted: false,
               isDeleted: false,
@@ -313,7 +313,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
 
           for (const milestone of milestonesToComplete) {
             try {
-              await prisma.milestones.update({
+              await db.milestones.update({
                 where: { id: milestone.id },
                 data: { isCompleted: true },
               });
@@ -370,7 +370,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           // - Milestone creator
           // - Test run creators and users with assigned/executed work
           // - Session creators and assigned users
-          const milestonesToNotify = await prisma.milestones.findMany({
+          const milestonesToNotify = await db.milestones.findMany({
             where: {
               isCompleted: false,
               isDeleted: false,
@@ -544,7 +544,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
       case JOB_REVIEW_REMINDERS:
         console.log(`Job ${job.id}: Starting review-reminder scan.`);
         try {
-          const thresholdDays = await getReviewReminderThresholdDays(prisma);
+          const thresholdDays = await getReviewReminderThresholdDays(db);
           if (thresholdDays === 0) {
             console.log(
               `Job ${job.id}: review_reminder_threshold_days is 0; reminders disabled.`
@@ -556,7 +556,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
             now.getTime() - thresholdDays * 24 * 60 * 60 * 1000
           );
 
-          const pendingReviews = await prisma.reviewRequest.findMany({
+          const pendingReviews = await db.reviewRequest.findMany({
             where: {
               status: "PENDING",
               isDeleted: false,
@@ -614,14 +614,14 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
                 // Stamp anyway so we don't re-scan this row every interval
                 // (e.g., requester self-assignment edge case, or a role
                 // that currently has no holders).
-                await prisma.reviewRequest.update({
+                await db.reviewRequest.update({
                   where: { id: req.id },
                   data: { lastRemindedAt: now },
                 });
                 continue;
               }
 
-              const context = await loadReviewContextForReminder(prisma, req);
+              const context = await loadReviewContextForReminder(db, req);
               if (!context) {
                 // Entity or project deleted in flight; skip without
                 // stamping so a future repair could re-target.
@@ -664,11 +664,11 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
               // lastRemindedAt — if the outbox write fails, the stamp
               // doesn't land and the next scan retries; if both succeed,
               // the row won't be reminded again until the threshold
-              // elapses. Raw prisma here (not enhanced) so the
+              // elapses. Raw db here (not enhanced) so the
               // system-actor stamp bypasses the user-scope
               // @@deny('update', status != 'PENDING') policy on
               // ReviewRequest in race-condition windows.
-              await prisma.$transaction(async (tx: any) => {
+              await db.$transaction(async (tx: any) => {
                 await emitReviewReminderEvent(
                   {
                     reviewRequestId: req.id,

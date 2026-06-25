@@ -42,14 +42,14 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Replay-of-replay chain integrity (L-03)", () => {
   let projectId: number;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
   let configId: string;
 
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Replay Chain ${uniqueId}`);
-    prisma = createRawDbClient();
-    const seededConfig = await seedOutboundConfig(prisma, {
+    db = createRawDbClient();
+    const seededConfig = await seedOutboundConfig(db, {
       projectId,
       url: "https://example.com/L03/replay-chain",
     });
@@ -57,14 +57,14 @@ test.describe("Replay-of-replay chain integrity (L-03)", () => {
   });
 
   test.afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("each replay's replayedFromDeliveryId points at the IMMEDIATE PARENT (not transitively at the root)", async () => {
     let chain: Awaited<ReturnType<typeof seedReplayChain>> | undefined;
 
     await test.step("Seed a 6-link replay chain", async () => {
-      chain = await seedReplayChain(prisma, {
+      chain = await seedReplayChain(db, {
         webhookConfigId: configId,
         projectId,
         adapterType: "GENERIC_HMAC",
@@ -93,7 +93,7 @@ test.describe("Replay-of-replay chain integrity (L-03)", () => {
     await test.step("Confirm all 6 rows are returned by the tenant-scoped query", async () => {
       // All 6 rows visible via a single tenant-scoped query — admin's
       // Deliveries tab uses this exact filter.
-      const allRows = await prisma.webhookDelivery.findMany({
+      const allRows = await db.webhookDelivery.findMany({
         where: { webhookConfigId: configId },
         orderBy: { receivedAt: "asc" },
         select: { id: true, replayedFromDeliveryId: true },
@@ -119,7 +119,7 @@ test.describe("Replay-of-replay chain integrity (L-03)", () => {
     let walked: string[] | undefined;
 
     await test.step("Load the seeded chain and locate the leaf", async () => {
-      const seeded = await prisma.webhookDelivery.findMany({
+      const seeded = await db.webhookDelivery.findMany({
         where: { webhookConfigId: configId },
         orderBy: { receivedAt: "asc" },
         select: { id: true, replayedFromDeliveryId: true },
@@ -151,7 +151,7 @@ test.describe("Replay-of-replay chain integrity (L-03)", () => {
 
     await test.step("Confirm the chain is intact before the purge", async () => {
       // Pre-purge — confirm chain still reads the way the previous test left it.
-      const before = await prisma.webhookDelivery.findMany({
+      const before = await db.webhookDelivery.findMany({
         where: { webhookConfigId: configId },
         orderBy: { receivedAt: "asc" },
         select: { id: true, replayedFromDeliveryId: true },
@@ -165,11 +165,11 @@ test.describe("Replay-of-replay chain integrity (L-03)", () => {
       // schema's `onDelete: SetNull` on `replayedFromDeliveryId` should leave
       // the (former) immediate child with a null parent rather than cascading
       // the delete to all descendants.
-      await prisma.webhookDelivery.delete({ where: { id: rootId! } });
+      await db.webhookDelivery.delete({ where: { id: rootId! } });
     });
 
     await test.step("Verify the remaining chain stays linked with a null root FK", async () => {
-      const after = await prisma.webhookDelivery.findMany({
+      const after = await db.webhookDelivery.findMany({
         where: { webhookConfigId: configId },
         orderBy: { receivedAt: "asc" },
         select: { id: true, replayedFromDeliveryId: true },

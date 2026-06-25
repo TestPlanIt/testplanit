@@ -16,7 +16,7 @@
 import bcrypt from "bcrypt";
 import { createRawDbClient } from "~/lib/rawDbClient";
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 // E2E Test user credentials
 const E2E_ADMIN_EMAIL = "admin@example.com";
@@ -90,7 +90,7 @@ async function resetDatabase() {
 
   // Get all table names except _prisma_migrations, ordered by foreign key dependencies
   // We'll use TRUNCATE with CASCADE which handles FK constraints
-  const tables = await prisma.$queryRaw<{ tablename: string }[]>`
+  const tables = await db.$queryRaw<{ tablename: string }[]>`
     SELECT tablename FROM pg_tables
     WHERE schemaname = 'public'
     AND tablename != '_prisma_migrations'
@@ -103,14 +103,14 @@ async function resetDatabase() {
 
   if (tableNames) {
     try {
-      await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tableNames} CASCADE;`);
+      await db.$executeRawUnsafe(`TRUNCATE TABLE ${tableNames} CASCADE;`);
       console.log(`   Truncated ${tables.length} tables`);
     } catch {
       // If truncate fails, try deleting from each table individually
       console.log("   TRUNCATE failed, trying DELETE approach...");
       for (const { tablename } of tables.reverse()) {
         try {
-          await prisma.$executeRawUnsafe(
+          await db.$executeRawUnsafe(
             `DELETE FROM "public"."${tablename}";`
           );
         } catch {
@@ -154,7 +154,7 @@ async function seedCoreData() {
  */
 async function enableSystemReviewFeatureForE2E() {
   console.log("🚦 Enabling system Review feature flag for E2E...");
-  await prisma.appConfig.upsert({
+  await db.appConfig.upsert({
     where: { key: "review_feature_enabled" },
     update: { value: true },
     create: { key: "review_feature_enabled", value: true },
@@ -177,7 +177,7 @@ async function openUserRolePermissionsForE2E() {
     "🔓 Opening user-role permissions for E2E (canApprove + canReadSensitive)..."
   );
 
-  const userRole = await prisma.roles.findFirst({ where: { name: "user" } });
+  const userRole = await db.roles.findFirst({ where: { name: "user" } });
   if (!userRole) {
     console.warn("   No `user` role found — skipping E2E permission widening");
     return;
@@ -189,7 +189,7 @@ async function openUserRolePermissionsForE2E() {
     "Sessions" as const,
   ];
   for (const area of reviewAreas) {
-    await prisma.rolePermission.upsert({
+    await db.rolePermission.upsert({
       where: { roleId_area: { roleId: userRole.id, area } },
       update: { canApprove: true },
       create: { roleId: userRole.id, area, canApprove: true },
@@ -201,7 +201,7 @@ async function openUserRolePermissionsForE2E() {
     "TestRunResultRestrictedFields" as const,
   ];
   for (const area of restrictedAreas) {
-    await prisma.rolePermission.upsert({
+    await db.rolePermission.upsert({
       where: { roleId_area: { roleId: userRole.id, area } },
       update: { canReadSensitive: true },
       create: { roleId: userRole.id, area, canReadSensitive: true },
@@ -216,7 +216,7 @@ async function openUserRolePermissionsForE2E() {
 async function ensureAdminUser() {
   console.log("👤 Ensuring admin user exists with correct settings...");
 
-  const adminRole = await prisma.roles.findFirst({
+  const adminRole = await db.roles.findFirst({
     where: { name: "admin" },
   });
 
@@ -227,7 +227,7 @@ async function ensureAdminUser() {
   const hashedPassword = bcrypt.hashSync(E2E_ADMIN_PASSWORD, 10);
 
   // Upsert admin user
-  const admin = await prisma.user.upsert({
+  const admin = await db.user.upsert({
     where: { email: E2E_ADMIN_EMAIL },
     update: {
       password: hashedPassword,
@@ -247,7 +247,7 @@ async function ensureAdminUser() {
   });
 
   // Ensure user preferences exist with hasCompletedWelcomeTour = true
-  await prisma.userPreferences.upsert({
+  await db.userPreferences.upsert({
     where: { userId: admin.id },
     update: {
       hasCompletedWelcomeTour: true,
@@ -378,7 +378,7 @@ async function main() {
     console.error("\n❌ Setup failed:", error);
     process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

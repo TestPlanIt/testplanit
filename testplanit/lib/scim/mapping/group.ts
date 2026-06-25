@@ -68,7 +68,7 @@ export interface ScimGroupResource {
   [urn: string]: unknown;
 }
 
-export interface PrismaGroupForScim {
+export interface DbGroupForScim {
   id: number;
   name: string;
   externalId: string | null;
@@ -204,7 +204,7 @@ export function extractMemberIds(members: ScimGroupMember[]): string[] {
  * so the caller can short-circuit the column write.
  */
 export function deriveDisplayName(
-  _current: PrismaGroupForScim,
+  _current: DbGroupForScim,
   body: Partial<ScimGroupBody>
 ): string | undefined {
   if (typeof body.displayName !== "string") return undefined;
@@ -223,7 +223,7 @@ export function deriveDisplayName(
  *     equality compares against a single canonical form.
  *   - `externalId` is stored verbatim; null when the IdP did not supply one.
  *   - `members` is forwarded as-is for the service layer to fan out into
- *     `GroupAssignment` rows inside its `prisma.$transaction`.
+ *     `GroupAssignment` rows inside its `db.$transaction`.
  *   - `scimExtensions` captures every top-level URN-keyed bucket partitioned
  *     by URN so reads round-trip the IdP's original extension payload.
  */
@@ -253,7 +253,7 @@ export function scimToGroupCreate(body: ScimGroupBody): ScimGroupCreatePayload {
  * IdP's directory listing while still backing filter equality with a folded
  * form on the write boundary.
  */
-export function groupToScim(group: PrismaGroupForScim): ScimGroupResource {
+export function groupToScim(group: DbGroupForScim): ScimGroupResource {
   const extensions = isPlainObject(group.scimExtensions)
     ? group.scimExtensions
     : undefined;
@@ -323,7 +323,7 @@ export function groupToScim(group: PrismaGroupForScim): ScimGroupResource {
  *     service layer can use it for audit-metadata or webhook payloads.
  */
 export function computeGroupUpdatesFromScim(
-  current: PrismaGroupForScim,
+  current: DbGroupForScim,
   body: Partial<ScimGroupBody>
 ): ComputeGroupUpdatesResult {
   const updates: ScimGroupUpdatePayload = {};

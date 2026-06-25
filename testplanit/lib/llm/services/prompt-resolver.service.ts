@@ -23,7 +23,7 @@ export interface ResolvedPrompt {
  * 3. Hard-coded fallback: Use the original hard-coded prompt (safety net)
  */
 export class PromptResolver {
-  constructor(private prisma: DbClient) {}
+  constructor(private db: DbClient) {}
 
   async resolve(
     feature: LlmFeature,
@@ -31,13 +31,13 @@ export class PromptResolver {
   ): Promise<ResolvedPrompt> {
     // 1. Project-specific config
     if (projectId) {
-      const project = await this.prisma.projects.findUnique({
+      const project = await this.db.projects.findUnique({
         where: { id: projectId },
         select: { promptConfigId: true },
       });
 
       if (project?.promptConfigId) {
-        const prompt = await this.prisma.promptConfigPrompt.findUnique({
+        const prompt = await this.db.promptConfigPrompt.findUnique({
           where: {
             promptConfigId_feature: {
               promptConfigId: project.promptConfigId,
@@ -68,12 +68,12 @@ export class PromptResolver {
     }
 
     // 2. System default
-    const defaultConfig = await this.prisma.promptConfig.findFirst({
+    const defaultConfig = await this.db.promptConfig.findFirst({
       where: { isDefault: true, isActive: true, isDeleted: false },
     });
 
     if (defaultConfig) {
-      const prompt = await this.prisma.promptConfigPrompt.findUnique({
+      const prompt = await this.db.promptConfigPrompt.findUnique({
         where: {
           promptConfigId_feature: {
             promptConfigId: defaultConfig.id,

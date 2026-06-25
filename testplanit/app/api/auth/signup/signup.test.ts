@@ -2,9 +2,9 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies using vi.hoisted
-const { mockPrisma, mockHash, mockIsEmailServerConfigured } = vi.hoisted(
+const { mockDb, mockHash, mockIsEmailServerConfigured } = vi.hoisted(
   () => ({
-    mockPrisma: {
+    mockDb: {
       user: {
         findUnique: vi.fn(),
         create: vi.fn(),
@@ -20,7 +20,7 @@ const { mockPrisma, mockHash, mockIsEmailServerConfigured } = vi.hoisted(
 );
 
 vi.mock("~/server/db", () => ({
-  db: mockPrisma,
+  db: mockDb,
 }));
 
 vi.mock("bcrypt", () => ({
@@ -70,7 +70,7 @@ describe("POST /api/auth/signup", () => {
   describe("Email Verification Required (default)", () => {
     beforeEach(() => {
       // Default: requireEmailVerification = true
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
         id: "default-settings",
         requireEmailVerification: true,
         restrictEmailDomains: false,
@@ -82,16 +82,16 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should create user with emailVerified as null when verification is required", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
+      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
-            create: mockPrisma.user.create,
+            create: mockDb.user.create,
           },
         };
         return callback(tx);
       });
-      mockPrisma.user.create.mockResolvedValue(mockNewUser);
+      mockDb.user.create.mockResolvedValue(mockNewUser);
 
       const response = await signup(createRequest(validSignupData));
       const data = await response.json();
@@ -101,7 +101,7 @@ describe("POST /api/auth/signup", () => {
         ...mockNewUser,
         createdAt: mockNewUser.createdAt.toISOString(),
       });
-      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+      expect(mockDb.user.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           name: "Test User",
           email: "test@example.com",
@@ -119,20 +119,20 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should store emailVerifToken when verification is required", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
+      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
-            create: mockPrisma.user.create,
+            create: mockDb.user.create,
           },
         };
         return callback(tx);
       });
-      mockPrisma.user.create.mockResolvedValue(mockNewUser);
+      mockDb.user.create.mockResolvedValue(mockNewUser);
 
       await signup(createRequest(validSignupData));
 
-      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+      expect(mockDb.user.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           emailVerifToken: "verification-token-123",
         }),
@@ -144,7 +144,7 @@ describe("POST /api/auth/signup", () => {
   describe("Email Verification Not Required", () => {
     beforeEach(() => {
       // requireEmailVerification = false
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
         id: "default-settings",
         requireEmailVerification: false,
         restrictEmailDomains: false,
@@ -156,16 +156,16 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should create user with emailVerified set to current timestamp when verification is not required", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
+      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
-            create: mockPrisma.user.create,
+            create: mockDb.user.create,
           },
         };
         return callback(tx);
       });
-      mockPrisma.user.create.mockResolvedValue(mockNewUser);
+      mockDb.user.create.mockResolvedValue(mockNewUser);
 
       const beforeRequest = new Date();
       const response = await signup(createRequest(validSignupData));
@@ -174,7 +174,7 @@ describe("POST /api/auth/signup", () => {
       expect(response.status).toBe(201);
 
       // Verify emailVerified is set to a timestamp
-      const createCall = mockPrisma.user.create.mock.calls[0][0];
+      const createCall = mockDb.user.create.mock.calls[0][0];
       const emailVerified = createCall.data.emailVerified;
 
       expect(emailVerified).toBeInstanceOf(Date);
@@ -187,20 +187,20 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should not store emailVerifToken when verification is not required", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
+      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
-            create: mockPrisma.user.create,
+            create: mockDb.user.create,
           },
         };
         return callback(tx);
       });
-      mockPrisma.user.create.mockResolvedValue(mockNewUser);
+      mockDb.user.create.mockResolvedValue(mockNewUser);
 
       await signup(createRequest(validSignupData));
 
-      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+      expect(mockDb.user.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           emailVerifToken: null,
         }),
@@ -211,24 +211,24 @@ describe("POST /api/auth/signup", () => {
 
   describe("No Registration Settings (defaults to requiring verification)", () => {
     beforeEach(() => {
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue(null);
+      mockDb.registrationSettings.findFirst.mockResolvedValue(null);
     });
 
     it("should require email verification by default when no settings exist", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
+      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
-            create: mockPrisma.user.create,
+            create: mockDb.user.create,
           },
         };
         return callback(tx);
       });
-      mockPrisma.user.create.mockResolvedValue(mockNewUser);
+      mockDb.user.create.mockResolvedValue(mockNewUser);
 
       await signup(createRequest(validSignupData));
 
-      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+      expect(mockDb.user.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           emailVerified: null,
           emailVerifToken: "verification-token-123",
@@ -240,14 +240,14 @@ describe("POST /api/auth/signup", () => {
 
   describe("Validation and Error Handling", () => {
     beforeEach(() => {
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
         requireEmailVerification: true,
       });
     });
 
     it("should return 403 when open registration is disabled", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
         allowOpenRegistration: false,
         requireEmailVerification: true,
       });
@@ -257,11 +257,11 @@ describe("POST /api/auth/signup", () => {
 
       expect(response.status).toBe(403);
       expect(data.errorCode).toBe("auth.signup.registrationDisabled");
-      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+      expect(mockDb.$transaction).not.toHaveBeenCalled();
     });
 
     it("should return 400 when user already exists", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockDb.user.findUnique.mockResolvedValue({
         id: "existing-user",
         email: "test@example.com",
       });
@@ -313,10 +313,10 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should handle a unique constraint violation on email", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(null);
       // v3 surfaces the Postgres unique violation as the driver error text;
       // isUniqueConstraintError matches on "unique constraint" / "duplicate key".
-      mockPrisma.$transaction.mockRejectedValue(
+      mockDb.$transaction.mockRejectedValue(
         new Error(
           'duplicate key value violates unique constraint "User_email_key"'
         )
@@ -330,8 +330,8 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should return 500 on unexpected database error", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.$transaction.mockRejectedValue(
+      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.$transaction.mockRejectedValue(
         new Error("Database connection failed")
       );
 
@@ -345,16 +345,16 @@ describe("POST /api/auth/signup", () => {
 
   describe("User Preferences Creation", () => {
     beforeEach(() => {
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
         requireEmailVerification: true,
       });
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(null);
     });
 
     it("should create default user preferences during signup", async () => {
       let preferencesCreated = false;
 
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
+      mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
             create: vi.fn().mockImplementation((args) => {
@@ -384,22 +384,22 @@ describe("POST /api/auth/signup", () => {
 
   describe("Password Hashing", () => {
     beforeEach(() => {
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
         requireEmailVerification: true,
       });
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockDb.user.findUnique.mockResolvedValue(null);
     });
 
     it("should hash password with bcrypt (10 rounds)", async () => {
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
+      mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
-            create: mockPrisma.user.create,
+            create: mockDb.user.create,
           },
         };
         return callback(tx);
       });
-      mockPrisma.user.create.mockResolvedValue(mockNewUser);
+      mockDb.user.create.mockResolvedValue(mockNewUser);
 
       await signup(createRequest(validSignupData));
 
@@ -407,19 +407,19 @@ describe("POST /api/auth/signup", () => {
     });
 
     it("should store hashed password, not plain text", async () => {
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
+      mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
-            create: mockPrisma.user.create,
+            create: mockDb.user.create,
           },
         };
         return callback(tx);
       });
-      mockPrisma.user.create.mockResolvedValue(mockNewUser);
+      mockDb.user.create.mockResolvedValue(mockNewUser);
 
       await signup(createRequest(validSignupData));
 
-      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+      expect(mockDb.user.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           password: "hashed-password",
         }),
@@ -430,19 +430,19 @@ describe("POST /api/auth/signup", () => {
 
   describe("Response Data", () => {
     beforeEach(() => {
-      mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
         requireEmailVerification: true,
       });
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
+      mockDb.user.findUnique.mockResolvedValue(null);
+      mockDb.$transaction.mockImplementation(async (callback) => {
         const tx = {
           user: {
-            create: mockPrisma.user.create,
+            create: mockDb.user.create,
           },
         };
         return callback(tx);
       });
-      mockPrisma.user.create.mockResolvedValue(mockNewUser);
+      mockDb.user.create.mockResolvedValue(mockNewUser);
     });
 
     it("should return 201 status on successful signup", async () => {
@@ -473,21 +473,21 @@ describe("POST /api/auth/signup", () => {
     describe("When email server is NOT configured", () => {
       beforeEach(() => {
         mockIsEmailServerConfigured.mockReturnValue(false);
-        mockPrisma.user.findUnique.mockResolvedValue(null);
-        mockPrisma.$transaction.mockImplementation(async (callback) => {
+        mockDb.user.findUnique.mockResolvedValue(null);
+        mockDb.$transaction.mockImplementation(async (callback) => {
           const tx = {
             user: {
-              create: mockPrisma.user.create,
+              create: mockDb.user.create,
             },
           };
           return callback(tx);
         });
-        mockPrisma.user.create.mockResolvedValue(mockNewUser);
+        mockDb.user.create.mockResolvedValue(mockNewUser);
       });
 
       it("should disable email verification even when registration settings require it", async () => {
         // Settings say requireEmailVerification: true
-        mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+        mockDb.registrationSettings.findFirst.mockResolvedValue({
           id: "default-settings",
           requireEmailVerification: true,
           restrictEmailDomains: false,
@@ -502,7 +502,7 @@ describe("POST /api/auth/signup", () => {
         const afterRequest = new Date();
 
         // Should create user with emailVerified set (not null)
-        const createCall = mockPrisma.user.create.mock.calls[0][0];
+        const createCall = mockDb.user.create.mock.calls[0][0];
         const emailVerified = createCall.data.emailVerified;
 
         expect(emailVerified).toBeInstanceOf(Date);
@@ -515,13 +515,13 @@ describe("POST /api/auth/signup", () => {
       });
 
       it("should not store emailVerifToken even when provided", async () => {
-        mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+        mockDb.registrationSettings.findFirst.mockResolvedValue({
           requireEmailVerification: true,
         });
 
         await signup(createRequest(validSignupData));
 
-        expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        expect(mockDb.user.create).toHaveBeenCalledWith({
           data: expect.objectContaining({
             emailVerifToken: null,
           }),
@@ -530,14 +530,14 @@ describe("POST /api/auth/signup", () => {
       });
 
       it("should work correctly when settings require verification but email server is missing", async () => {
-        mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+        mockDb.registrationSettings.findFirst.mockResolvedValue({
           requireEmailVerification: true,
         });
 
         const response = await signup(createRequest(validSignupData));
 
         expect(response.status).toBe(201);
-        expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        expect(mockDb.user.create).toHaveBeenCalledWith({
           data: expect.objectContaining({
             emailVerified: expect.any(Date),
             emailVerifToken: null,
@@ -547,14 +547,14 @@ describe("POST /api/auth/signup", () => {
       });
 
       it("should still work when settings do not require verification", async () => {
-        mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+        mockDb.registrationSettings.findFirst.mockResolvedValue({
           requireEmailVerification: false,
         });
 
         const response = await signup(createRequest(validSignupData));
 
         expect(response.status).toBe(201);
-        expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        expect(mockDb.user.create).toHaveBeenCalledWith({
           data: expect.objectContaining({
             emailVerified: expect.any(Date),
             emailVerifToken: null,
@@ -567,26 +567,26 @@ describe("POST /api/auth/signup", () => {
     describe("When email server IS configured", () => {
       beforeEach(() => {
         mockIsEmailServerConfigured.mockReturnValue(true);
-        mockPrisma.user.findUnique.mockResolvedValue(null);
-        mockPrisma.$transaction.mockImplementation(async (callback) => {
+        mockDb.user.findUnique.mockResolvedValue(null);
+        mockDb.$transaction.mockImplementation(async (callback) => {
           const tx = {
             user: {
-              create: mockPrisma.user.create,
+              create: mockDb.user.create,
             },
           };
           return callback(tx);
         });
-        mockPrisma.user.create.mockResolvedValue(mockNewUser);
+        mockDb.user.create.mockResolvedValue(mockNewUser);
       });
 
       it("should respect requireEmailVerification setting when true", async () => {
-        mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+        mockDb.registrationSettings.findFirst.mockResolvedValue({
           requireEmailVerification: true,
         });
 
         await signup(createRequest(validSignupData));
 
-        expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        expect(mockDb.user.create).toHaveBeenCalledWith({
           data: expect.objectContaining({
             emailVerified: null,
             emailVerifToken: "verification-token-123",
@@ -596,13 +596,13 @@ describe("POST /api/auth/signup", () => {
       });
 
       it("should respect requireEmailVerification setting when false", async () => {
-        mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+        mockDb.registrationSettings.findFirst.mockResolvedValue({
           requireEmailVerification: false,
         });
 
         await signup(createRequest(validSignupData));
 
-        expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        expect(mockDb.user.create).toHaveBeenCalledWith({
           data: expect.objectContaining({
             emailVerified: expect.any(Date),
             emailVerifToken: null,

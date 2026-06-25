@@ -1,7 +1,7 @@
 import { TestRunType } from "~/zenstack/models";
 import { createRawDbClient } from "~/lib/rawDbClient";
 
-const prisma = createRawDbClient();
+const db = createRawDbClient();
 
 const DAY_MS = 86400000;
 const daysAgo = (n: number) => new Date(Date.now() - n * DAY_MS);
@@ -33,7 +33,7 @@ export async function seedDemoProject() {
 
   // --- Look up prerequisite entities ---
 
-  const adminUser = await prisma.user.findFirst({
+  const adminUser = await db.user.findFirst({
     where: { access: "ADMIN", isDeleted: false },
   });
   if (!adminUser) {
@@ -41,7 +41,7 @@ export async function seedDemoProject() {
     return;
   }
 
-  const defaultTemplate = await prisma.templates.findFirst({
+  const defaultTemplate = await db.templates.findFirst({
     where: { isDefault: true },
   });
   if (!defaultTemplate) {
@@ -58,12 +58,12 @@ export async function seedDemoProject() {
     skippedStatus,
     retestStatus,
   ] = await Promise.all([
-    prisma.status.findFirst({ where: { systemName: "passed" } }),
-    prisma.status.findFirst({ where: { systemName: "failed" } }),
-    prisma.status.findFirst({ where: { systemName: "untested" } }),
-    prisma.status.findFirst({ where: { systemName: "blocked" } }),
-    prisma.status.findFirst({ where: { systemName: "skipped" } }),
-    prisma.status.findFirst({ where: { systemName: "retest" } }),
+    db.status.findFirst({ where: { systemName: "passed" } }),
+    db.status.findFirst({ where: { systemName: "failed" } }),
+    db.status.findFirst({ where: { systemName: "untested" } }),
+    db.status.findFirst({ where: { systemName: "blocked" } }),
+    db.status.findFirst({ where: { systemName: "skipped" } }),
+    db.status.findFirst({ where: { systemName: "retest" } }),
   ]);
   if (
     !passedStatus ||
@@ -84,10 +84,10 @@ export async function seedDemoProject() {
     runDefaultWorkflow,
     sessionDefaultWorkflow,
   ] = await Promise.all([
-    prisma.workflows.findFirst({ where: { scope: "CASES", isDefault: true } }),
-    prisma.workflows.findFirst({ where: { scope: "CASES", name: "Active" } }),
-    prisma.workflows.findFirst({ where: { scope: "RUNS", isDefault: true } }),
-    prisma.workflows.findFirst({
+    db.workflows.findFirst({ where: { scope: "CASES", isDefault: true } }),
+    db.workflows.findFirst({ where: { scope: "CASES", name: "Active" } }),
+    db.workflows.findFirst({ where: { scope: "RUNS", isDefault: true } }),
+    db.workflows.findFirst({
       where: { scope: "SESSIONS", isDefault: true },
     }),
   ]);
@@ -102,24 +102,24 @@ export async function seedDemoProject() {
   }
 
   // Run workflow states for completed runs
-  const runDoneWorkflow = await prisma.workflows.findFirst({
+  const runDoneWorkflow = await db.workflows.findFirst({
     where: { scope: "RUNS", name: "Done" },
   });
-  const sessionDoneWorkflow = await prisma.workflows.findFirst({
+  const sessionDoneWorkflow = await db.workflows.findFirst({
     where: { scope: "SESSIONS", name: "Done" },
   });
-  const runInProgressWorkflow = await prisma.workflows.findFirst({
+  const runInProgressWorkflow = await db.workflows.findFirst({
     where: { scope: "RUNS", name: "In Progress" },
   });
-  const sessionInProgressWorkflow = await prisma.workflows.findFirst({
+  const sessionInProgressWorkflow = await db.workflows.findFirst({
     where: { scope: "SESSIONS", name: "In Progress" },
   });
 
   // Milestone types
-  const sprintType = await prisma.milestoneTypes.findFirst({
+  const sprintType = await db.milestoneTypes.findFirst({
     where: { name: "Sprint" },
   });
-  const releaseType = await prisma.milestoneTypes.findFirst({
+  const releaseType = await db.milestoneTypes.findFirst({
     where: { name: "Release" },
   });
   if (!sprintType || !releaseType) {
@@ -128,10 +128,10 @@ export async function seedDemoProject() {
   }
 
   // Case fields for field values
-  const priorityField = await prisma.caseFields.findUnique({
+  const priorityField = await db.caseFields.findUnique({
     where: { systemName: "priority" },
   });
-  const descriptionField = await prisma.caseFields.findUnique({
+  const descriptionField = await db.caseFields.findUnique({
     where: { systemName: "description" },
   });
   if (!priorityField || !descriptionField) {
@@ -141,25 +141,25 @@ export async function seedDemoProject() {
 
   // Priority field options
   const [priorityHigh, priorityMedium, priorityLow] = await Promise.all([
-    prisma.fieldOptions.findFirst({ where: { name: "High" } }),
-    prisma.fieldOptions.findFirst({ where: { name: "Medium" } }),
-    prisma.fieldOptions.findFirst({ where: { name: "Low" } }),
+    db.fieldOptions.findFirst({ where: { name: "High" } }),
+    db.fieldOptions.findFirst({ where: { name: "Medium" } }),
+    db.fieldOptions.findFirst({ where: { name: "Low" } }),
   ]);
 
   // --- 1. Tags (global, upsert) ---
 
   const [tagSmoke, tagRegression, tagUI] = await Promise.all([
-    prisma.tags.upsert({
+    db.tags.upsert({
       where: { name: "Smoke" },
       update: {},
       create: { name: "Smoke" },
     }),
-    prisma.tags.upsert({
+    db.tags.upsert({
       where: { name: "Regression" },
       update: {},
       create: { name: "Regression" },
     }),
-    prisma.tags.upsert({
+    db.tags.upsert({
       where: { name: "UI" },
       update: {},
       create: { name: "UI" },
@@ -307,7 +307,7 @@ export async function seedDemoProject() {
     ],
   });
 
-  const demoProject = await prisma.projects.upsert({
+  const demoProject = await db.projects.upsert({
     where: { name: "Demo Project" },
     update: { docs: docsContent },
     create: {
@@ -320,11 +320,11 @@ export async function seedDemoProject() {
   console.log(`Created/updated Demo Project (ID: ${demoProject.id})`);
 
   // Assign all enabled statuses to the project (required for status dropdowns)
-  const allStatuses = await prisma.status.findMany({
+  const allStatuses = await db.status.findMany({
     where: { isEnabled: true },
   });
   for (const status of allStatuses) {
-    await prisma.projectStatusAssignment.upsert({
+    await db.projectStatusAssignment.upsert({
       where: {
         statusId_projectId: { statusId: status.id, projectId: demoProject.id },
       },
@@ -335,7 +335,7 @@ export async function seedDemoProject() {
   console.log(`Assigned ${allStatuses.length} statuses to Demo Project`);
 
   // Assign the default template to the project
-  await prisma.templateProjectAssignment.upsert({
+  await db.templateProjectAssignment.upsert({
     where: {
       templateId_projectId: {
         templateId: defaultTemplate.id,
@@ -348,7 +348,7 @@ export async function seedDemoProject() {
   console.log("Assigned Default Template to Demo Project");
 
   // Check if demo project already has data (idempotency)
-  const existingCases = await prisma.repositoryCases.count({
+  const existingCases = await db.repositoryCases.count({
     where: { projectId: demoProject.id, isDeleted: false },
   });
   if (existingCases > 0) {
@@ -358,7 +358,7 @@ export async function seedDemoProject() {
 
   // --- 3. Milestones ---
 
-  const sprint1 = await prisma.milestones.create({
+  const sprint1 = await db.milestones.create({
     data: {
       name: "Sprint 1",
       projectId: demoProject.id,
@@ -372,7 +372,7 @@ export async function seedDemoProject() {
     },
   });
 
-  const sprint2 = await prisma.milestones.create({
+  const sprint2 = await db.milestones.create({
     data: {
       name: "Sprint 2",
       projectId: demoProject.id,
@@ -385,7 +385,7 @@ export async function seedDemoProject() {
     },
   });
 
-  const _releaseV1 = await prisma.milestones.create({
+  const _releaseV1 = await db.milestones.create({
     data: {
       name: "v1.0 Release",
       projectId: demoProject.id,
@@ -402,11 +402,11 @@ export async function seedDemoProject() {
 
   // --- 4. Repository & Folders ---
 
-  const repository = await prisma.repositories.create({
+  const repository = await db.repositories.create({
     data: { projectId: demoProject.id },
   });
 
-  const authFolder = await prisma.repositoryFolders.create({
+  const authFolder = await db.repositoryFolders.create({
     data: {
       name: "Authentication",
       projectId: demoProject.id,
@@ -417,7 +417,7 @@ export async function seedDemoProject() {
     },
   });
 
-  const dashFolder = await prisma.repositoryFolders.create({
+  const dashFolder = await db.repositoryFolders.create({
     data: {
       name: "Dashboard",
       projectId: demoProject.id,
@@ -432,7 +432,7 @@ export async function seedDemoProject() {
 
   // --- 4b. Shared Steps ---
 
-  const sharedStepGroup = await prisma.sharedStepGroup.create({
+  const sharedStepGroup = await db.sharedStepGroup.create({
     data: {
       name: "Login Prerequisites",
       projectId: demoProject.id,
@@ -440,7 +440,7 @@ export async function seedDemoProject() {
     },
   });
 
-  await prisma.sharedStepItem.createMany({
+  await db.sharedStepItem.createMany({
     data: [
       {
         sharedStepGroupId: sharedStepGroup.id,
@@ -468,7 +468,7 @@ export async function seedDemoProject() {
   // --- 5. Repository Cases ---
 
   // Case 1: User login with valid credentials
-  const case1 = await prisma.repositoryCases.create({
+  const case1 = await db.repositoryCases.create({
     data: {
       name: "User login with valid credentials",
       projectId: demoProject.id,
@@ -481,7 +481,7 @@ export async function seedDemoProject() {
       currentVersion: 1,
     },
   });
-  await prisma.repositoryCaseTag.createMany({
+  await db.repositoryCaseTag.createMany({
     data: [
       { caseId: case1.id, tagId: tagSmoke.id },
       { caseId: case1.id, tagId: tagRegression.id },
@@ -511,7 +511,7 @@ export async function seedDemoProject() {
   );
 
   // Case 2: User registration
-  const case2 = await prisma.repositoryCases.create({
+  const case2 = await db.repositoryCases.create({
     data: {
       name: "User registration",
       projectId: demoProject.id,
@@ -524,7 +524,7 @@ export async function seedDemoProject() {
       currentVersion: 1,
     },
   });
-  await prisma.repositoryCaseTag.create({
+  await db.repositoryCaseTag.create({
     data: { caseId: case2.id, tagId: tagRegression.id },
   });
   await createCaseFieldValues(
@@ -555,7 +555,7 @@ export async function seedDemoProject() {
   );
 
   // Case 3: Password reset flow
-  const case3 = await prisma.repositoryCases.create({
+  const case3 = await db.repositoryCases.create({
     data: {
       name: "Password reset flow",
       projectId: demoProject.id,
@@ -568,7 +568,7 @@ export async function seedDemoProject() {
       currentVersion: 1,
     },
   });
-  await prisma.repositoryCaseTag.create({
+  await db.repositoryCaseTag.create({
     data: { caseId: case3.id, tagId: tagRegression.id },
   });
   await createCaseFieldValues(
@@ -603,7 +603,7 @@ export async function seedDemoProject() {
   );
 
   // Case 4: Dashboard widgets load correctly
-  const case4 = await prisma.repositoryCases.create({
+  const case4 = await db.repositoryCases.create({
     data: {
       name: "Dashboard widgets load correctly",
       projectId: demoProject.id,
@@ -616,7 +616,7 @@ export async function seedDemoProject() {
       currentVersion: 1,
     },
   });
-  await prisma.repositoryCaseTag.createMany({
+  await db.repositoryCaseTag.createMany({
     data: [
       { caseId: case4.id, tagId: tagSmoke.id },
       { caseId: case4.id, tagId: tagUI.id },
@@ -641,7 +641,7 @@ export async function seedDemoProject() {
   ]);
 
   // Case 5: Export dashboard data
-  const case5 = await prisma.repositoryCases.create({
+  const case5 = await db.repositoryCases.create({
     data: {
       name: "Export dashboard data",
       projectId: demoProject.id,
@@ -654,7 +654,7 @@ export async function seedDemoProject() {
       currentVersion: 1,
     },
   });
-  await prisma.repositoryCaseTag.create({
+  await db.repositoryCaseTag.create({
     data: { caseId: case5.id, tagId: tagUI.id },
   });
   await createCaseFieldValues(
@@ -684,7 +684,7 @@ export async function seedDemoProject() {
   // --- 6. Test Runs ---
 
   // Test Run 1: Sprint 1 - Smoke Test (completed)
-  const testRun1 = await prisma.testRuns.create({
+  const testRun1 = await db.testRuns.create({
     data: {
       name: "Sprint 1 - Smoke Test",
       projectId: demoProject.id,
@@ -700,7 +700,7 @@ export async function seedDemoProject() {
     },
   });
 
-  await prisma.testRunCases.createMany({
+  await db.testRunCases.createMany({
     data: [
       { testRunId: testRun1.id, repositoryCaseId: case1.id, order: 1 },
       { testRunId: testRun1.id, repositoryCaseId: case2.id, order: 2 },
@@ -710,7 +710,7 @@ export async function seedDemoProject() {
     ],
   });
 
-  const run1Cases = await prisma.testRunCases.findMany({
+  const run1Cases = await db.testRunCases.findMany({
     where: { testRunId: testRun1.id },
     orderBy: { order: "asc" },
   });
@@ -725,7 +725,7 @@ export async function seedDemoProject() {
   ];
   const run1Elapsed = [120, 180, 240, 150, 30];
   for (let i = 0; i < run1Cases.length; i++) {
-    await prisma.testRunResults.create({
+    await db.testRunResults.create({
       data: {
         testRunId: testRun1.id,
         testRunCaseId: run1Cases[i].id,
@@ -735,7 +735,7 @@ export async function seedDemoProject() {
         executedAt: daysAgo(15),
       },
     });
-    await prisma.testRunCases.update({
+    await db.testRunCases.update({
       where: { id: run1Cases[i].id },
       data: {
         statusId: run1Statuses[i].id,
@@ -749,7 +749,7 @@ export async function seedDemoProject() {
   );
 
   // Test Run 2: Sprint 2 - Regression (in progress)
-  const testRun2 = await prisma.testRuns.create({
+  const testRun2 = await db.testRuns.create({
     data: {
       name: "Sprint 2 - Regression",
       projectId: demoProject.id,
@@ -763,7 +763,7 @@ export async function seedDemoProject() {
     },
   });
 
-  await prisma.testRunCases.createMany({
+  await db.testRunCases.createMany({
     data: [
       { testRunId: testRun2.id, repositoryCaseId: case1.id, order: 1 },
       { testRunId: testRun2.id, repositoryCaseId: case2.id, order: 2 },
@@ -772,7 +772,7 @@ export async function seedDemoProject() {
     ],
   });
 
-  const run2Cases = await prisma.testRunCases.findMany({
+  const run2Cases = await db.testRunCases.findMany({
     where: { testRunId: testRun2.id },
     orderBy: { order: "asc" },
   });
@@ -786,7 +786,7 @@ export async function seedDemoProject() {
   ];
   for (let i = 0; i < run2Cases.length; i++) {
     if (run2Results[i]) {
-      await prisma.testRunResults.create({
+      await db.testRunResults.create({
         data: {
           testRunId: testRun2.id,
           testRunCaseId: run2Cases[i].id,
@@ -796,7 +796,7 @@ export async function seedDemoProject() {
           executedAt: daysAgo(3),
         },
       });
-      await prisma.testRunCases.update({
+      await db.testRunCases.update({
         where: { id: run2Cases[i].id },
         data: {
           statusId: run2Results[i]!.statusId,
@@ -813,7 +813,7 @@ export async function seedDemoProject() {
   // --- 7. Sessions ---
 
   // Session 1: Exploratory - Login Flows (completed)
-  const session1 = await prisma.sessions.create({
+  const session1 = await db.sessions.create({
     data: {
       name: "Exploratory - Login Flows",
       projectId: demoProject.id,
@@ -843,7 +843,7 @@ export async function seedDemoProject() {
     },
   });
 
-  await prisma.sessionResults.createMany({
+  await db.sessionResults.createMany({
     data: [
       {
         sessionId: session1.id,
@@ -890,7 +890,7 @@ export async function seedDemoProject() {
   );
 
   // Session 2: Exploratory - Dashboard UX (in progress)
-  const session2 = await prisma.sessions.create({
+  const session2 = await db.sessions.create({
     data: {
       name: "Exploratory - Dashboard UX",
       projectId: demoProject.id,
@@ -917,7 +917,7 @@ export async function seedDemoProject() {
     },
   });
 
-  await prisma.sessionResults.createMany({
+  await db.sessionResults.createMany({
     data: [
       {
         sessionId: session2.id,
@@ -953,17 +953,17 @@ export async function seedDemoProject() {
   // --- 8. Issues ---
 
   // Find the failed test run result (case3 - password reset in run1)
-  const failedRunResult = await prisma.testRunResults.findFirst({
+  const failedRunResult = await db.testRunResults.findFirst({
     where: { testRunId: testRun1.id, statusId: failedStatus.id },
   });
 
   // Find the failed session result (session1 - error message quality)
-  const failedSessionResult = await prisma.sessionResults.findFirst({
+  const failedSessionResult = await db.sessionResults.findFirst({
     where: { sessionId: session1.id, statusId: failedStatus.id },
   });
 
   // Issue 1: Password reset email not sent (linked to failed test run result)
-  const _issue1 = await prisma.issue.create({
+  const _issue1 = await db.issue.create({
     data: {
       name: "BUG-1",
       title: "Password reset email not sent for some domains",
@@ -983,7 +983,7 @@ export async function seedDemoProject() {
   });
 
   // Issue 2: Login error message lacks detail (linked to failed session result)
-  const _issue2 = await prisma.issue.create({
+  const _issue2 = await db.issue.create({
     data: {
       name: "BUG-2",
       title: "Login error message is too vague",
@@ -1004,7 +1004,7 @@ export async function seedDemoProject() {
   });
 
   // Issue 3: A resolved issue linked to a test case
-  const issue3 = await prisma.issue.create({
+  const issue3 = await db.issue.create({
     data: {
       name: "BUG-3",
       title: "Remember me checkbox has no effect",
@@ -1018,7 +1018,7 @@ export async function seedDemoProject() {
       createdAt: daysAgo(20),
     },
   });
-  await prisma.repositoryCaseIssue.create({
+  await db.repositoryCaseIssue.create({
     data: { issueId: issue3.id, caseId: case1.id },
   });
 
@@ -1069,7 +1069,7 @@ async function createCaseFieldValues(
     value: JSON.stringify(tiptapText(description)),
   });
 
-  await prisma.caseFieldValues.createMany({ data: values });
+  await db.caseFieldValues.createMany({ data: values });
 }
 
 async function createSteps(
@@ -1077,7 +1077,7 @@ async function createSteps(
   steps: { step: string; expected: string }[],
   startOrder: number = 1
 ) {
-  await prisma.steps.createMany({
+  await db.steps.createMany({
     data: steps.map((s, i) => ({
       testCaseId: caseId,
       order: startOrder + i,
@@ -1092,7 +1092,7 @@ async function createSharedStepPlaceholder(
   sharedStepGroupId: number,
   order: number
 ) {
-  await prisma.steps.create({
+  await db.steps.create({
     data: {
       testCaseId: caseId,
       sharedStepGroupId,
@@ -1110,12 +1110,12 @@ async function createSharedStepPlaceholder(
 if (require.main === module) {
   seedDemoProject()
     .then(async () => {
-      await prisma.$disconnect();
+      await db.$disconnect();
       process.exit(0);
     })
     .catch(async (e) => {
       console.error(e);
-      await prisma.$disconnect();
+      await db.$disconnect();
       process.exit(1);
     });
 }

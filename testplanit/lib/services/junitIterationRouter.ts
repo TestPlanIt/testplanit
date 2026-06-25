@@ -40,7 +40,7 @@ import {
  * same iteration index produce exactly one row.
  *
  * The function expects to be called inside an existing transaction (or
- * with a raw `prisma` client passed as `tx` — both satisfy the
+ * with a raw `db` client passed as `tx` — both satisfy the
  * `TxClient` shape in this codebase). It does NOT open
  * its own transaction; the caller owns the boundary so the iteration write
  * commits atomically with the surrounding JUnitTestResult write.

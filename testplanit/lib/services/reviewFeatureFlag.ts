@@ -20,11 +20,11 @@ export const REVIEW_FEATURE_FLAG_KEY = "review_feature_enabled";
  *   - `decideReviewRequest` / `cancelReviewRequest` in `lib/services/reviewDecisions.ts`
  *   - the milestone-completion preflight in `app/actions/milestoneActions.ts`
  *
- * Accepts either a Prisma transaction client or the singleton `prisma` (any
+ * Accepts either a Prisma transaction client or the singleton `db` (any
  * client exposing the `appConfig` delegate). Callers in transactional contexts
  * should pass the `tx` handle so the read participates in the surrounding
  * transaction's snapshot isolation; non-transactional callers can pass
- * `prisma` directly.
+ * `db` directly.
  *
  * Default-off semantics: when the AppConfig row is absent the feature is
  * treated as disabled. Review & Approval gates every workflow transition

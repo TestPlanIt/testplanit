@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { JOB_REFRESH_SINGLE_REPO_CACHE } from "../lib/queueNames";
 import { JOB_REFRESH_EXPIRED_CACHES } from "./repoCacheWorker";
 
-// Create mock prisma instance
-const mockPrisma = {
+// Create mock db instance
+const mockDb = {
   projectCodeRepositoryConfig: {
     findMany: vi.fn(),
   },
@@ -16,9 +16,9 @@ vi.mock("../lib/valkey", () => ({
   default: null,
 }));
 
-// Mock the multiTenantDb module to return our mock prisma client
+// Mock the multiTenantDb module to return our mock db client
 vi.mock("../lib/multiTenantDb", () => ({
-  getDbClientForJob: vi.fn(() => mockPrisma),
+  getDbClientForJob: vi.fn(() => mockDb),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -58,7 +58,7 @@ describe("RepoCacheWorker", () => {
 
   describe(`${JOB_REFRESH_EXPIRED_CACHES} job`, () => {
     it("should skip configs where cache is still valid (files exist)", async () => {
-      mockPrisma.projectCodeRepositoryConfig.findMany.mockResolvedValue(
+      mockDb.projectCodeRepositoryConfig.findMany.mockResolvedValue(
         mockConfigs
       );
       // Return valid files for both configs
@@ -86,7 +86,7 @@ describe("RepoCacheWorker", () => {
     });
 
     it("should refresh cache when files are empty (cache expired)", async () => {
-      mockPrisma.projectCodeRepositoryConfig.findMany.mockResolvedValue([
+      mockDb.projectCodeRepositoryConfig.findMany.mockResolvedValue([
         mockConfigs[0],
       ]);
       // Return empty array - cache expired
@@ -107,7 +107,7 @@ describe("RepoCacheWorker", () => {
 
       const result = await processor(mockJob);
 
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockPrisma);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb);
       expect(result).toMatchObject({
         status: "completed",
         successCount: 1,
@@ -117,7 +117,7 @@ describe("RepoCacheWorker", () => {
     });
 
     it("should count as failed when refresh returns success: false", async () => {
-      mockPrisma.projectCodeRepositoryConfig.findMany.mockResolvedValue([
+      mockDb.projectCodeRepositoryConfig.findMany.mockResolvedValue([
         mockConfigs[0],
       ]);
       mockGetFiles.mockResolvedValue([]);
@@ -136,7 +136,7 @@ describe("RepoCacheWorker", () => {
 
       const result = await processor(mockJob);
 
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockPrisma);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb);
       expect(result).toMatchObject({
         status: "completed",
         failCount: 1,
@@ -145,7 +145,7 @@ describe("RepoCacheWorker", () => {
     });
 
     it("should continue processing other configs when one throws an exception", async () => {
-      mockPrisma.projectCodeRepositoryConfig.findMany.mockResolvedValue(
+      mockDb.projectCodeRepositoryConfig.findMany.mockResolvedValue(
         mockConfigs
       );
       // First config throws, second is expired and succeeds
@@ -169,7 +169,7 @@ describe("RepoCacheWorker", () => {
       const result = await processor(mockJob);
 
       // Second config should still be processed
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(102, mockPrisma);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(102, mockDb);
       expect(result).toMatchObject({
         status: "completed",
         failCount: 1,
@@ -178,7 +178,7 @@ describe("RepoCacheWorker", () => {
     });
 
     it("should handle a mix of valid, expired, and failed configs", async () => {
-      mockPrisma.projectCodeRepositoryConfig.findMany.mockResolvedValue([
+      mockDb.projectCodeRepositoryConfig.findMany.mockResolvedValue([
         { id: 101, projectId: 1, cacheTtlDays: 7 },
         { id: 102, projectId: 2, cacheTtlDays: 3 },
         { id: 103, projectId: 3, cacheTtlDays: 1 },
@@ -215,7 +215,7 @@ describe("RepoCacheWorker", () => {
     });
 
     it("should handle no cache-enabled configs", async () => {
-      mockPrisma.projectCodeRepositoryConfig.findMany.mockResolvedValue([]);
+      mockDb.projectCodeRepositoryConfig.findMany.mockResolvedValue([]);
 
       const { processor } = await import("./repoCacheWorker");
 
@@ -242,7 +242,7 @@ describe("RepoCacheWorker", () => {
     it("should restore INSTANCE_TENANT_ID to previous value after job completes", async () => {
       process.env.INSTANCE_TENANT_ID = "original-tenant";
 
-      mockPrisma.projectCodeRepositoryConfig.findMany.mockResolvedValue([
+      mockDb.projectCodeRepositoryConfig.findMany.mockResolvedValue([
         mockConfigs[0],
       ]);
       mockGetFiles.mockResolvedValue([]);
@@ -269,7 +269,7 @@ describe("RepoCacheWorker", () => {
       // Ensure it's not set
       delete process.env.INSTANCE_TENANT_ID;
 
-      mockPrisma.projectCodeRepositoryConfig.findMany.mockResolvedValue([]);
+      mockDb.projectCodeRepositoryConfig.findMany.mockResolvedValue([]);
 
       const { processor } = await import("./repoCacheWorker");
 
@@ -287,7 +287,7 @@ describe("RepoCacheWorker", () => {
     it("should restore INSTANCE_TENANT_ID even when an exception is thrown", async () => {
       process.env.INSTANCE_TENANT_ID = "original-tenant";
 
-      mockPrisma.projectCodeRepositoryConfig.findMany.mockRejectedValue(
+      mockDb.projectCodeRepositoryConfig.findMany.mockRejectedValue(
         new Error("DB connection failed")
       );
 
@@ -325,11 +325,11 @@ describe("RepoCacheWorker", () => {
 
       const result = await processor(mockJob);
 
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockPrisma);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockDb);
       expect(result).toMatchObject({ successCount: 1, failCount: 0 });
       // It must NOT scan all configs like the expired-cache job does.
       expect(
-        mockPrisma.projectCodeRepositoryConfig.findMany
+        mockDb.projectCodeRepositoryConfig.findMany
       ).not.toHaveBeenCalled();
     });
 
@@ -349,7 +349,7 @@ describe("RepoCacheWorker", () => {
 
       const result = await processor(mockJob);
 
-      expect(mockRefreshRepoCache).toHaveBeenCalledWith(102, mockPrisma);
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(102, mockDb);
       expect(result).toMatchObject({ successCount: 0, failCount: 1 });
     });
 

@@ -7,13 +7,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import type { Steps as PrismaSteps } from "~/zenstack/models";
+import type { Steps as DbSteps } from "~/zenstack/models";
 import { Layers, ListOrdered, SearchCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { emptyEditorContent } from "~/app/constants";
 
-interface ListDisplayStep extends PrismaSteps {
+interface ListDisplayStep extends DbSteps {
   sharedStepGroupId: number | null;
   sharedStepGroup?: { name: string | null } | null;
 }

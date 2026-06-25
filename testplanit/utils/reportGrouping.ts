@@ -176,12 +176,12 @@ export function groupResults<A>(
  * round trip; the chain is walked in memory with a depth guard against cycles.
  */
 export async function buildFolderAncestorMap(
-  prisma: any,
+  db: any,
   projectId: number | undefined,
   isProjectSpecific: boolean
 ): Promise<Map<number, number[]>> {
   const folders: Array<{ id: number; parentId: number | null }> =
-    await prisma.repositoryFolders.findMany({
+    await db.repositoryFolders.findMany({
       where: {
         ...(isProjectSpecific && projectId
           ? { projectId: Number(projectId) }
@@ -218,10 +218,10 @@ export async function buildFolderAncestorMap(
  * results from its whole subtree, matching the displayed count.
  */
 export async function getFolderSubtreeIds(
-  prisma: any,
+  db: any,
   folderId: number
 ): Promise<number[]> {
-  const rows: Array<{ id: number }> = await prisma.$queryRaw`
+  const rows: Array<{ id: number }> = await db.$queryRaw`
     WITH RECURSIVE subtree AS (
       SELECT id FROM "RepositoryFolders"
       WHERE id = ${folderId} AND "isDeleted" = false

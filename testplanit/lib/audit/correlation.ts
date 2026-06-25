@@ -7,7 +7,7 @@
  * root entity via ROLLUP_MAP (COR-02), humanizes the FK ids in the diff to display names (COR-03),
  * maps an isDeleted false→true soft-delete to a DELETE action (Phase 12 Decision 4), and inserts
  * AuditLog rows idempotently. `pollDataChangeLogsAcrossTenants(listClients, …)` runs the loop forever
- * as the worker's Loop B (one poll pass per tenant per cycle); `pollDataChangeLogsOnce(prisma, …)`
+ * as the worker's Loop B (one poll pass per tenant per cycle); `pollDataChangeLogsOnce(db, …)`
  * does a single pass (the supervisor's per-tenant unit + the test + manual-drain entry).
  *
  * ── LOAD-BEARING INVARIANTS ────────────────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ import {
 } from "~/lib/audit/rollupMap";
 import {
   createHumanizeCache,
-  createPrismaLookup,
+  createDbLookup,
   humanize,
   type ChangedCols,
   type ChangedColEntry,
@@ -543,14 +543,14 @@ export interface RawTxClient {
     ...values: unknown[]
   ) => Promise<T>;
 }
-export interface RawPrismaClient extends RawTxClient {
+export interface RawDbClient extends RawTxClient {
   $transaction: <T>(fn: (tx: RawTxClient) => Promise<T>) => Promise<T>;
 }
 
 /** A correlation target: one tenant's raw client (tenantId undefined in single-tenant mode). */
 export interface TenantPollClient {
   tenantId: string | undefined;
-  client: RawPrismaClient;
+  client: RawDbClient;
 }
 
 /**
@@ -559,18 +559,18 @@ export interface TenantPollClient {
  * a single transaction so a crash rolls back both the cursor advance and the inserts.
  */
 export async function pollDataChangeLogsOnce(
-  prisma: RawPrismaClient,
+  db: RawDbClient,
   opts: PollOnceOptions = {}
 ): Promise<PollOnceResult> {
   const batchSize = opts.batchSize ?? DEFAULT_BATCH_SIZE;
   const markProcessed = opts.markProcessed ?? true;
 
-  const cache = createHumanizeCache(createPrismaLookup(prisma), {
+  const cache = createHumanizeCache(createDbLookup(db), {
     ttlMs: HUMANIZE_TTL_MS,
   });
 
   // The batched two-hop lookup, bound to this transaction's client (set inside the tx below).
-  return prisma.$transaction(async (tx) => {
+  return db.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<RawDclRow[]>`
       SELECT * FROM "DataChangeLog"
       WHERE processed = false

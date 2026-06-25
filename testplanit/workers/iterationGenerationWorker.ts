@@ -51,13 +51,13 @@ export const processor = async (
   // Validate multi-tenant context. Throws if missing in multi-tenant mode.
   validateMultiTenantJobData(job.data);
 
-  const prisma = getDbClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   // Initial progress so the polling endpoint sees something other than
   // an empty progress object on the very first read.
   await job.updateProgress({ processed: 0, total: 0, phase: "starting" });
 
-  const result = await prisma.$transaction(
+  const result = await db.$transaction(
     async (tx: any) => {
       return materializeIterations(job.data.testRunId, tx, {
         progressIntervalCases: 50,

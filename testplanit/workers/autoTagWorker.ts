@@ -75,12 +75,12 @@ const processor = async (
   validateMultiTenantJobData(job.data);
 
   // 2. Get tenant-specific Prisma client
-  const prisma = getDbClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   // 3. Create per-tenant service instances (bypass singleton for worker isolation)
-  const llmManager = LlmManager.createForWorker(prisma, job.data.tenantId);
-  const promptResolver = new PromptResolver(prisma);
-  const service = new TagAnalysisService(prisma, llmManager, promptResolver);
+  const llmManager = LlmManager.createForWorker(db, job.data.tenantId);
+  const promptResolver = new PromptResolver(db);
+  const service = new TagAnalysisService(db, llmManager, promptResolver);
 
   // 4. Check for pre-start cancellation
   const redis = await worker!.client;
@@ -158,7 +158,7 @@ const processor = async (
   if (allRelevantIds.length > 0) {
     switch (job.data.entityType) {
       case "repositoryCase": {
-        const entities = await prisma.repositoryCases.findMany({
+        const entities = await db.repositoryCases.findMany({
           where: { id: { in: allRelevantIds } },
           select: {
             id: true,
@@ -179,7 +179,7 @@ const processor = async (
         break;
       }
       case "testRun": {
-        const entities = await prisma.testRuns.findMany({
+        const entities = await db.testRuns.findMany({
           where: { id: { in: allRelevantIds } },
           select: {
             id: true,
@@ -198,7 +198,7 @@ const processor = async (
         break;
       }
       case "session": {
-        const entities = await prisma.sessions.findMany({
+        const entities = await db.sessions.findMany({
           where: { id: { in: allRelevantIds } },
           select: { id: true, name: true, tags: { select: { name: true } } },
         });

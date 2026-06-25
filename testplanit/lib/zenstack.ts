@@ -1,5 +1,5 @@
 // lib/zenstack.ts
-// ZenStack v3 ORM client layer. Replaces the v2 lib/prisma.ts PrismaClient +
+// ZenStack v3 ORM client layer. Replaces the v2 lib/db.ts DbClient +
 // enhance() setup. Three layered views over a single Kysely/pg pool:
 //
 //   rawClient    – no plugins. @omit fields are readable here (with an explicit
@@ -7,10 +7,10 @@
 //                  for system/raw reads, ES-sync feeders, and workers.
 //   baseClient   – rawClient + side-effects (audit logging, Elasticsearch sync,
 //                  outbound webhooks, write-time business logic). The
-//                  general-purpose server client; was lib/prisma#prisma.
+//                  general-purpose server client; was lib/db#db.
 //   policyClient – baseClient + @@allow/@@deny access-policy enforcement. Bind a
 //                  user per request with getAuthDb(user) / $setAuth(user). Was
-//                  enhance(prisma, { user }).
+//                  enhance(db, { user }).
 //
 // $use() returns a NEW client that shares the same underlying connection, so all
 // three views run over one pool.
@@ -69,7 +69,7 @@ export function getAuthDb(user: AppAuthUser | undefined) {
   return policyClient.$setAuth(user);
 }
 
-/** Raw ORM client type — the v3 equivalent of Prisma's `PrismaClient` type. */
+/** Raw ORM client type — the v3 equivalent of Prisma's `DbClient` type. */
 export type DbClient = typeof rawClient;
 
 /**

@@ -99,7 +99,7 @@ describe("createBatches", () => {
 
 describe("TagAnalysisService", () => {
   // Mock factories
-  const mockPrisma = {
+  const mockDb = {
     llmProviderConfig: {
       findFirst: vi.fn(),
     },
@@ -136,7 +136,7 @@ describe("TagAnalysisService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     service = new TagAnalysisService(
-      mockPrisma,
+      mockDb,
       mockLlmManager,
       mockPromptResolver
     );
@@ -146,10 +146,10 @@ describe("TagAnalysisService", () => {
     mockLlmManager.getDefaultIntegration.mockResolvedValue(1);
     mockLlmManager.getProjectIntegration.mockResolvedValue(1);
     mockLlmManager.resolveIntegration.mockResolvedValue({ integrationId: 1 });
-    mockPrisma.llmProviderConfig.findFirst.mockResolvedValue({
+    mockDb.llmProviderConfig.findFirst.mockResolvedValue({
       maxTokensPerRequest: 4096,
     });
-    mockPrisma.tags.findMany.mockResolvedValue([
+    mockDb.tags.findMany.mockResolvedValue([
       { id: 1, name: "login" },
       { id: 2, name: "regression" },
     ]);
@@ -165,7 +165,7 @@ describe("TagAnalysisService", () => {
   it("returns tag suggestions from valid LLM response", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Login test case",
@@ -209,7 +209,7 @@ describe("TagAnalysisService", () => {
   it("resolves prompt via PromptResolver with correct feature and projectId", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Test",
@@ -241,7 +241,7 @@ describe("TagAnalysisService", () => {
   it("handles invalid LLM JSON gracefully with empty suggestions", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Test",
@@ -288,7 +288,7 @@ describe("TagAnalysisService", () => {
   it("handles LLM call failure gracefully per batch", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Test",
@@ -320,7 +320,7 @@ describe("TagAnalysisService", () => {
     // forcing 2 separate batches. Budget = floor(4096 * 0.65 - systemPromptTokens) ~2400.
     // Each entity with ~6000 char name → ~1500 tokens → 2 batches.
     const longName = "x".repeat(6000);
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: longName + " entity1",
@@ -377,7 +377,7 @@ describe("TagAnalysisService", () => {
   it("calls onBatchComplete even when a batch fails", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Test",
@@ -409,7 +409,7 @@ describe("TagAnalysisService", () => {
   it("properly fuzzy-matches LLM suggestions against existing tags", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Login test",
@@ -460,7 +460,7 @@ describe("TagAnalysisService", () => {
   it("filters out new tags when allowNewTags is false", async () => {
     setupDefaults();
 
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+    mockDb.repositoryCases.findMany.mockResolvedValue([
       {
         id: 1,
         name: "Login test",

@@ -40,9 +40,9 @@ vi.mock("../lib/valkey", () => ({
   default: { status: "ready" },
 }));
 
-// ─── Mock prisma ─────────────────────────────────────────────────────────────
+// ─── Mock db ─────────────────────────────────────────────────────────────
 
-const mockPrisma = {
+const mockDb = {
   repositoryCases: {
     findMany: vi.fn(),
   },
@@ -56,7 +56,7 @@ const mockPrisma = {
 };
 
 vi.mock("../lib/multiTenantDb", () => ({
-  getDbClientForJob: vi.fn(() => mockPrisma),
+  getDbClientForJob: vi.fn(() => mockDb),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -184,7 +184,7 @@ describe("AutoTagWorker", () => {
   describe("successful tag analysis", () => {
     it("should process repositoryCase entities and return grouped suggestions", async () => {
       mockAnalyzeTags.mockResolvedValue(baseAnalysisResult);
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+      mockDb.repositoryCases.findMany.mockResolvedValue(
         mockRepositoryCases
       );
 
@@ -205,7 +205,7 @@ describe("AutoTagWorker", () => {
 
     it("should include entity with no suggestions (analyzed but LLM returned no tags)", async () => {
       mockAnalyzeTags.mockResolvedValue(baseAnalysisResult);
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+      mockDb.repositoryCases.findMany.mockResolvedValue(
         mockRepositoryCases
       );
 
@@ -221,7 +221,7 @@ describe("AutoTagWorker", () => {
 
     it("should calculate stats correctly", async () => {
       mockAnalyzeTags.mockResolvedValue(baseAnalysisResult);
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+      mockDb.repositoryCases.findMany.mockResolvedValue(
         mockRepositoryCases
       );
 
@@ -246,7 +246,7 @@ describe("AutoTagWorker", () => {
         await params.onBatchComplete(3, 3);
         return baseAnalysisResult;
       });
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+      mockDb.repositoryCases.findMany.mockResolvedValue(
         mockRepositoryCases
       );
 
@@ -310,7 +310,7 @@ describe("AutoTagWorker", () => {
         return baseAnalysisResult;
       });
 
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+      mockDb.repositoryCases.findMany.mockResolvedValue(
         mockRepositoryCases
       );
 
@@ -338,7 +338,7 @@ describe("AutoTagWorker", () => {
         errors: ["LLM API timeout"],
       };
       mockAnalyzeTags.mockResolvedValue(analysisWithFailures);
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+      mockDb.repositoryCases.findMany.mockResolvedValue(
         mockRepositoryCases
       );
 
@@ -374,7 +374,7 @@ describe("AutoTagWorker", () => {
         truncatedEntityIds: [2],
       };
       mockAnalyzeTags.mockResolvedValue(analysisWithTruncation);
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+      mockDb.repositoryCases.findMany.mockResolvedValue(
         mockRepositoryCases
       );
 
@@ -415,7 +415,7 @@ describe("AutoTagWorker", () => {
           },
         ],
       });
-      mockPrisma.testRuns.findMany.mockResolvedValue([
+      mockDb.testRuns.findMany.mockResolvedValue([
         {
           id: 101,
           name: "Smoke Test Run",
@@ -429,7 +429,7 @@ describe("AutoTagWorker", () => {
         makeMockJob({ id: "job-9", data: testRunJobData }) as Job
       );
 
-      expect(mockPrisma.testRuns.findMany).toHaveBeenCalledWith(
+      expect(mockDb.testRuns.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: { in: [101] } },
           select: expect.objectContaining({ testRunType: true }),
@@ -457,7 +457,7 @@ describe("AutoTagWorker", () => {
           },
         ],
       });
-      mockPrisma.sessions.findMany.mockResolvedValue([
+      mockDb.sessions.findMany.mockResolvedValue([
         { id: 201, name: "Regression Session", tags: [] },
       ]);
 
@@ -466,7 +466,7 @@ describe("AutoTagWorker", () => {
         makeMockJob({ id: "job-10", data: sessionJobData }) as Job
       );
 
-      expect(mockPrisma.sessions.findMany).toHaveBeenCalledWith(
+      expect(mockDb.sessions.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: { in: [201] } },
         })
@@ -487,7 +487,7 @@ describe("AutoTagWorker", () => {
           },
         ],
       });
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         {
           id: 1,
           name: "Unit Test",
@@ -505,7 +505,7 @@ describe("AutoTagWorker", () => {
         }) as Job
       );
 
-      expect(mockPrisma.repositoryCases.findMany).toHaveBeenCalledWith(
+      expect(mockDb.repositoryCases.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           select: expect.objectContaining({
             automated: true,
@@ -526,7 +526,7 @@ describe("AutoTagWorker", () => {
         errors: ["Batch 1 failed: timeout", "Batch 2 failed: rate limit"],
       };
       mockAnalyzeTags.mockResolvedValue(analysisWithErrors);
-      mockPrisma.repositoryCases.findMany.mockResolvedValue(
+      mockDb.repositoryCases.findMany.mockResolvedValue(
         mockRepositoryCases
       );
 

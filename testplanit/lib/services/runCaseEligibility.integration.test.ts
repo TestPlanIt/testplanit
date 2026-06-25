@@ -36,7 +36,7 @@ describeIntegration(
   "RepositoryCases post-update hook — excludeNotStartedFromRuns",
   () => {
     // Lazy-import so this module is pure when skipped.
-    const importPrisma = async () => {
+    const importDb = async () => {
       const { baseDb } = await import("~/lib/db");
       return baseDb;
     };
@@ -64,7 +64,7 @@ describeIntegration(
     };
 
     afterEach(async () => {
-      const baseDb = await importPrisma();
+      const baseDb = await importDb();
       // Order matters — clear leaf rows first.
       if (cleanup.testRunResultIds.length) {
         await baseDb.testRunResults
@@ -280,7 +280,7 @@ describeIntegration(
       "leaves the run-case in place when the project flag is OFF",
       { timeout: 60_000 },
       async () => {
-        const baseDb = await importPrisma();
+        const baseDb = await importDb();
         const { testCase, testRunCase, notStartedState } = await seedFixture(
           baseDb,
           { excludeNotStartedFromRuns: false }
@@ -303,7 +303,7 @@ describeIntegration(
       "soft-deletes the UNEXECUTED run-case when flag is ON and state transitions to NOT_STARTED",
       { timeout: 60_000 },
       async () => {
-        const baseDb = await importPrisma();
+        const baseDb = await importDb();
         const { testCase, testRunCase, notStartedState } = await seedFixture(
           baseDb,
           { excludeNotStartedFromRuns: true }
@@ -326,7 +326,7 @@ describeIntegration(
       "LEAVES an EXECUTED run-case in place even when the flag is ON (lock, don't delete)",
       { timeout: 60_000 },
       async () => {
-        const baseDb = await importPrisma();
+        const baseDb = await importDb();
         const { testCase, testRunCase, notStartedState } = await seedFixture(
           baseDb,
           { excludeNotStartedFromRuns: true, withResult: true }
@@ -357,7 +357,7 @@ describeIntegration(
       "softDeleteUnexecutedRunCasesForDraftRevert returns the soft-delete count and respects the executed-lock predicate against real Postgres",
       { timeout: 60_000 },
       async () => {
-        const baseDb = await importPrisma();
+        const baseDb = await importDb();
         const { softDeleteUnexecutedRunCasesForDraftRevert } =
           await import("~/lib/services/runCaseEligibility");
 
@@ -394,7 +394,7 @@ describeIntegration(
       "softDeleteUnexecutedRunCasesForDraftRevert leaves an EXECUTED run-case in place against real Postgres",
       { timeout: 60_000 },
       async () => {
-        const baseDb = await importPrisma();
+        const baseDb = await importDb();
         const { softDeleteUnexecutedRunCasesForDraftRevert } =
           await import("~/lib/services/runCaseEligibility");
 

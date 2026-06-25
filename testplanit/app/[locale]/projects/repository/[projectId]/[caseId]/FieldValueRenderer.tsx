@@ -25,14 +25,14 @@ import StepsForm from "../StepsForm";
 import { StepsDisplay } from "./StepsDisplay";
 import { StepsResults } from "./StepsResults";
 
-import type { Steps as PrismaSteps } from "~/zenstack/models";
+import type { Steps as DbSteps } from "~/zenstack/models";
 import { Minus, Plus } from "lucide-react";
 import { Link } from "~/lib/navigation";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 
 // Re-defining DisplayStep here for clarity, assuming it's similar to StepsDisplay's internal type
-interface DisplayStep extends PrismaSteps {
+interface DisplayStep extends DbSteps {
   isShared?: boolean;
   sharedStepGroupId: number | null;
   sharedStepGroupName?: string | null;

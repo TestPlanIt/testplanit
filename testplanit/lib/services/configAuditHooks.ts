@@ -25,7 +25,7 @@ type QueryHook = (ctx: QueryContext) => Promise<any>;
 /**
  * Build the standard audit hook set for one admin-config model. Kept free of
  * any Prisma client coupling (the delegate is injected) so the behavior is
- * unit-testable without a database. Wired into the `lib/prisma.ts` `$extends`
+ * unit-testable without a database. Wired into the `lib/db.ts` `$extends`
  * block, one entry per AUDITED_CONFIG_MODELS row.
  *
  * - catalog: create + update + upsert + delete (update captures the

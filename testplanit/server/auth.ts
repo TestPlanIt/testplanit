@@ -26,7 +26,7 @@ import { getCachedSessionUser, touchLastActive } from "~/lib/session-cache";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { db } from "~/server/db";
-import { createCustomPrismaAdapter } from "./auth-adapter";
+import { createCustomDbAdapter } from "./auth-adapter";
 
 /**
  * Helper function to generate Apple client secret from database config
@@ -587,7 +587,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
         return token;
       },
     },
-    adapter: createCustomPrismaAdapter(db),
+    adapter: createCustomDbAdapter(db),
     providers: [
       CredentialsProvider({
         credentials: {
@@ -938,7 +938,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
   },
-  adapter: createCustomPrismaAdapter(db),
+  adapter: createCustomDbAdapter(db),
   providers: [
     CredentialsProvider({
       credentials: {
@@ -988,7 +988,7 @@ export const authOptions: NextAuthOptions = {
   ] as any[],
 };
 
-function authorize(prisma: DbClient) {
+function authorize(db: DbClient) {
   return async (
     credentials:
       | Record<
@@ -1011,7 +1011,7 @@ function authorize(prisma: DbClient) {
           throw new Error("Invalid pending auth token");
         }
 
-        const user = await prisma.user.findUnique({
+        const user = await db.user.findUnique({
           where: { id: pendingAuth.userId },
           select: {
             id: true,
@@ -1042,7 +1042,7 @@ function authorize(prisma: DbClient) {
         if (isLegacyEncryption(user.twoFactorSecret)) {
           try {
             const upgraded = encryptSecret(secret);
-            await prisma.user.update({
+            await db.user.update({
               where: { id: user.id },
               data: { twoFactorSecret: upgraded },
             });
@@ -1068,7 +1068,7 @@ function authorize(prisma: DbClient) {
             verified = true;
             // Remove used backup code
             hashedCodes.splice(codeIndex, 1);
-            await prisma.user.update({
+            await db.user.update({
               where: { id: user.id },
               data: { twoFactorBackupCodes: JSON.stringify(hashedCodes) },
             });
@@ -1109,7 +1109,7 @@ function authorize(prisma: DbClient) {
       throw new Error('"email" is required in credentials');
     if (!credentials.password)
       throw new Error('"password" is required in credentials');
-    const maybeUser = await prisma.user.findFirst({
+    const maybeUser = await db.user.findFirst({
       where: { email: credentials.email },
       select: {
         id: true,
@@ -1165,7 +1165,7 @@ function authorize(prisma: DbClient) {
     if (!isValid) {
       if (isCredentialUser) {
         // SECURITY-01: Atomically increment failed login counter
-        const settings = await prisma.registrationSettings.findFirst({
+        const settings = await db.registrationSettings.findFirst({
           select: { lockoutThreshold: true, lockoutDurationMinutes: true },
         });
         const threshold = settings?.lockoutThreshold ?? 5;
@@ -1176,7 +1176,7 @@ function authorize(prisma: DbClient) {
           ? new Date(Date.now() + durationMinutes * 60 * 1000)
           : null;
 
-        await prisma.user.update({
+        await db.user.update({
           where: { id: maybeUser.id },
           data: {
             failedLoginAttempts: { increment: 1 },
@@ -1205,7 +1205,7 @@ function authorize(prisma: DbClient) {
     ) {
       const wasLocked =
         maybeUser.lockedUntil && maybeUser.lockedUntil > new Date();
-      await prisma.user.update({
+      await db.user.update({
         where: { id: maybeUser.id },
         data: { failedLoginAttempts: 0, lockedUntil: null },
       });
@@ -1219,7 +1219,7 @@ function authorize(prisma: DbClient) {
     // POLICY-04: Check password expiration
     if (isCredentialUser && maybeUser.passwordChangedAt) {
       const registrationSettingsForExpiry =
-        await prisma.registrationSettings.findFirst({
+        await db.registrationSettings.findFirst({
           select: { passwordExpirationDays: true },
         });
       const expirationDays =
@@ -1231,7 +1231,7 @@ function authorize(prisma: DbClient) {
         );
         if (new Date() > expiresAt) {
           // Password has expired — set mustChangePassword flag
-          await prisma.user.update({
+          await db.user.update({
             where: { id: maybeUser.id },
             data: { mustChangePassword: true },
           });
@@ -1240,7 +1240,7 @@ function authorize(prisma: DbClient) {
     }
 
     // Check system 2FA settings
-    const registrationSettings = await prisma.registrationSettings.findFirst();
+    const registrationSettings = await db.registrationSettings.findFirst();
     const force2FANonSSO =
       registrationSettings?.force2FANonSSO ||
       registrationSettings?.force2FAAllLogins ||

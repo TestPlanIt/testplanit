@@ -48,13 +48,13 @@ const describeIntegration =
 describeIntegration(
   "importGeneratedTestCases — inline parameters + dataset",
   () => {
-    const importPrisma = async () => {
+    const importDb = async () => {
       const { baseDb } = await import("~/lib/db");
       return baseDb;
     };
 
     beforeAll(async () => {
-      const baseDb = await importPrisma();
+      const baseDb = await importDb();
       const user = await baseDb.user.findFirst({ select: { id: true } });
       if (!user) throw new Error("Seed DB before running this test");
       fixtureUserId.current = user.id;
@@ -85,7 +85,7 @@ describeIntegration(
     };
 
     afterEach(async () => {
-      const baseDb = await importPrisma();
+      const baseDb = await importDb();
       for (const [model, ids] of [
         ["dataSetRow", cleanup.dataSetRowIds],
         ["dataSetVersion", cleanup.dataSetVersionIds],
@@ -176,7 +176,7 @@ describeIntegration(
       "persists TestCaseParameter + DataSet + DataSetVersion + DataSetRow when both are provided",
       { timeout: 60_000 },
       async () => {
-        const baseDb = await importPrisma();
+        const baseDb = await importDb();
         const { importGeneratedTestCases } =
           await import("./importGeneratedTestCases");
         const { tag, project, template, workflow, repo, folder } =
@@ -279,7 +279,7 @@ describeIntegration(
       "rejects datasetRows without parameters and rolls back the whole case",
       { timeout: 60_000 },
       async () => {
-        const baseDb = await importPrisma();
+        const baseDb = await importDb();
         const { importGeneratedTestCases } =
           await import("./importGeneratedTestCases");
         const { tag, project, template, workflow, repo, folder } =
@@ -323,7 +323,7 @@ describeIntegration(
       "rejects duplicate parameter names and rolls back the case",
       { timeout: 60_000 },
       async () => {
-        const baseDb = await importPrisma();
+        const baseDb = await importDb();
         const { importGeneratedTestCases } =
           await import("./importGeneratedTestCases");
         const { tag, project, template, workflow, repo, folder } =

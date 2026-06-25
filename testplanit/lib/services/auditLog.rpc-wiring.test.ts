@@ -17,7 +17,7 @@ import { ENTITY_AUDIT_MODELS } from "./entityAuditHooks";
 //   - The RPC route shim only audits an accessor in AUDITED_RPC_ENTITY_ACCESSORS
 //     when it equals the real Prisma client field. `issues` (vs `issue`) /
 //     `sharedStepGroups` (vs `sharedStepGroup`) never matched → no audit.
-//   - The lib/prisma.ts `$extends` query block is cast `as any`, so a hook keyed
+//   - The lib/db.ts `$extends` query block is cast `as any`, so a hook keyed
 //     to a non-existent model (`sharedStepGroups:`, `attachment:`) is silent
 //     dead code — the audit + ES-sync + webhook side effects never run.
 // Both surfaces are validated here against the schema (source of truth) so a
@@ -158,7 +158,7 @@ describe("RPC audit wiring guard", () => {
 
 describe("sideEffectsPlugin model dispatch keys are real models", () => {
   // The v3 side-effects (ES sync / webhook emit / business logic) moved from the
-  // lib/prisma.ts `$extends` block into the sideEffectsPlugin afterEntityMutation
+  // lib/db.ts `$extends` block into the sideEffectsPlugin afterEntityMutation
   // switch, which dispatches by PascalCase model name at 8-space indentation,
   // e.g. `        case "RepositoryCases": {`. TypeScript already enforces these
   // against GetModels<Schema>, but this stays as a cheap dead-branch guard.

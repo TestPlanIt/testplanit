@@ -35,7 +35,7 @@ vi.mock("~/services/elasticsearchService", () => ({
 }));
 
 // Mock baseDb
-const mockPrisma = {
+const mockDb = {
   projects: {
     findMany: vi.fn(),
     count: vi.fn(),
@@ -61,7 +61,7 @@ const mockPrisma = {
 };
 
 vi.mock("@/lib/db", () => ({
-  baseDb: mockPrisma,
+  baseDb: mockDb,
 }));
 
 // Mock Valkey connection to null to prevent worker creation
@@ -192,25 +192,25 @@ describe("Prisma queries for reindex", () => {
   });
 
   it("should query projects for reindexing", async () => {
-    mockPrisma.projects.findMany.mockResolvedValue([
+    mockDb.projects.findMany.mockResolvedValue([
       { id: 1, name: "Project 1" },
       { id: 2, name: "Project 2" },
     ]);
 
-    const result = await mockPrisma.projects.findMany({
+    const result = await mockDb.projects.findMany({
       where: { isDeleted: false },
     });
 
     expect(result).toHaveLength(2);
-    expect(mockPrisma.projects.findMany).toHaveBeenCalledWith({
+    expect(mockDb.projects.findMany).toHaveBeenCalledWith({
       where: { isDeleted: false },
     });
   });
 
   it("should count repository cases for a project", async () => {
-    mockPrisma.repositoryCases.count.mockResolvedValue(50);
+    mockDb.repositoryCases.count.mockResolvedValue(50);
 
-    const count = await mockPrisma.repositoryCases.count({
+    const count = await mockDb.repositoryCases.count({
       where: { projectId: 1, isDeleted: false, isArchived: false },
     });
 
@@ -218,25 +218,25 @@ describe("Prisma queries for reindex", () => {
   });
 
   it("should count all entity types", async () => {
-    mockPrisma.sharedStepGroup.count.mockResolvedValue(10);
-    mockPrisma.testRuns.count.mockResolvedValue(20);
-    mockPrisma.sessions.count.mockResolvedValue(15);
-    mockPrisma.issue.count.mockResolvedValue(25);
-    mockPrisma.milestones.count.mockResolvedValue(5);
+    mockDb.sharedStepGroup.count.mockResolvedValue(10);
+    mockDb.testRuns.count.mockResolvedValue(20);
+    mockDb.sessions.count.mockResolvedValue(15);
+    mockDb.issue.count.mockResolvedValue(25);
+    mockDb.milestones.count.mockResolvedValue(5);
 
     expect(
-      await mockPrisma.sharedStepGroup.count({ where: { projectId: 1 } })
+      await mockDb.sharedStepGroup.count({ where: { projectId: 1 } })
     ).toBe(10);
-    expect(await mockPrisma.testRuns.count({ where: { projectId: 1 } })).toBe(
+    expect(await mockDb.testRuns.count({ where: { projectId: 1 } })).toBe(
       20
     );
-    expect(await mockPrisma.sessions.count({ where: { projectId: 1 } })).toBe(
+    expect(await mockDb.sessions.count({ where: { projectId: 1 } })).toBe(
       15
     );
-    expect(await mockPrisma.issue.count({ where: { isDeleted: false } })).toBe(
+    expect(await mockDb.issue.count({ where: { isDeleted: false } })).toBe(
       25
     );
-    expect(await mockPrisma.milestones.count({ where: { projectId: 1 } })).toBe(
+    expect(await mockDb.milestones.count({ where: { projectId: 1 } })).toBe(
       5
     );
   });

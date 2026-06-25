@@ -1,7 +1,7 @@
 // lib/zenstack-plugins/sideEffectsPlugin.ts
 //
 // v3 ORM plugin carrying the write-side effects that lived in the v2
-// lib/prisma.ts `$extends({ query: { ... } })` block, ported to match the CDC
+// lib/db.ts `$extends({ query: { ... } })` block, ported to match the CDC
 // branch's behaviour. After the CDC audit refactor the generic config/access
 // audit hooks are gone (AUDITED_CONFIG_MODELS and SEMANTIC_ACCESS_AUDIT_MODELS
 // are both empty — CDC triggers are the sole source for row-level audit), so

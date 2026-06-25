@@ -50,15 +50,15 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook deliveries tab — large dataset performance (N-03)", () => {
   let projectId: number;
-  let prisma: ReturnType<typeof createRawDbClient>;
+  let db: ReturnType<typeof createRawDbClient>;
   let outboundConfigId: string;
 
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Perf Deliveries ${uniqueId}`);
-    prisma = createRawDbClient();
+    db = createRawDbClient();
 
-    const seeded = await seedOutboundConfig(prisma, {
+    const seeded = await seedOutboundConfig(db, {
       projectId,
       url: "https://example.com/perf/outbound",
       name: "E2E Perf Outbound",
@@ -116,11 +116,11 @@ test.describe("Webhook deliveries tab — large dataset performance (N-03)", () 
         receivedAt: new Date(baseTs + i),
       });
     }
-    await prisma.webhookDelivery.createMany({ data: rows });
+    await db.webhookDelivery.createMany({ data: rows });
   });
 
   test.afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test(`tab renders first page of ${PAGE_SIZE} rows within ${PAGE_LOAD_BUDGET_MS}ms against ${SEEDED_ROW_COUNT} seeded rows; Load more is visible; config-filter change does not stall the UI`, async ({
