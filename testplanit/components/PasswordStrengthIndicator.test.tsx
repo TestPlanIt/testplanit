@@ -7,8 +7,13 @@ import {
 
 // Mock zxcvbn-ts to avoid loading the large dictionary in tests
 vi.mock("@zxcvbn-ts/core", () => ({
-  zxcvbn: vi.fn(() => ({ score: 0, feedback: { warning: "" } })),
-  zxcvbnOptions: { setOptions: vi.fn() },
+  // ZxcvbnFactory is instantiated with `new`, so the mock must be constructable
+  // (a vi.fn mockImplementation arrow is not a constructor).
+  ZxcvbnFactory: class {
+    check() {
+      return { score: 0, feedback: { warning: "" } };
+    }
+  },
 }));
 
 vi.mock("@zxcvbn-ts/language-en", () => ({
