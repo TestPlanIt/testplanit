@@ -313,7 +313,7 @@ importers:
         specifier: ^4.3.1
         version: 4.3.1
       webpack:
-        specifier: ^5.108.0
+        specifier: '>=5.104.1'
         version: 5.108.0(lightningcss@1.32.0)(postcss@8.5.15)(webpack-cli@7.0.3)
       webpack-cli:
         specifier: ^7.0.3
@@ -751,11 +751,11 @@ importers:
         specifier: ~2.22.3
         version: 2.22.3(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
       '@zxcvbn-ts/core':
-        specifier: ^3.0.4
-        version: 3.0.4
+        specifier: ^4.1.2
+        version: 4.1.2
       '@zxcvbn-ts/language-en':
-        specifier: ^3.0.2
-        version: 3.0.2
+        specifier: ^4.1.1
+        version: 4.1.1
       ai:
         specifier: ^7.0.0
         version: 7.0.0(zod@4.4.3)
@@ -787,8 +787,8 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       csv-parse:
-        specifier: ^6.2.1
-        version: 6.2.1
+        specifier: ^7.0.0
+        version: 7.0.0
       d3:
         specifier: ^7.9.0
         version: 7.9.0
@@ -859,8 +859,8 @@ importers:
         specifier: ^3.3.0
         version: 3.3.0
       marked:
-        specifier: ^17.0.6
-        version: 17.0.6
+        specifier: ^18.0.5
+        version: 18.0.5
       micromatch:
         specifier: ^4.0.8
         version: 4.0.8
@@ -997,11 +997,11 @@ importers:
         specifier: ^0.1.11
         version: 0.1.11
       stream-chain:
-        specifier: ^3.6.3
-        version: 3.6.3
+        specifier: ^4.2.5
+        version: 4.2.5
       stream-json:
-        specifier: ^1.9.1
-        version: 1.9.1
+        specifier: ^3.4.0
+        version: 3.4.0
       streamifier:
         specifier: ^0.1.1
         version: 0.1.1
@@ -8301,11 +8301,14 @@ packages:
   '@zenstackhq/tanstack-query@2.22.3':
     resolution: {integrity: sha512-AXVlf3ClKSORXWGkqwYerCn4xTk1uQG0nOkwO4tbZU28jK0YVspFSogoAlizCGNLEGo2D3PCX5zCTSTbJIZtkQ==}
 
-  '@zxcvbn-ts/core@3.0.4':
-    resolution: {integrity: sha512-aQeiT0F09FuJaAqNrxynlAwZ2mW/1MdXakKWNmGM1Qp/VaY6CnB/GfnMS2T8gB2231Esp1/maCWd8vTG4OuShw==}
+  '@zxcvbn-ts/core@4.1.2':
+    resolution: {integrity: sha512-RQmxWB3AMI+HGQErQdUv6Aq32aQhp6xOxrfgCP0+T9MsLZoP3xtLHuT8O8VojsUxdmQVZfJlYkYb1A0wOwIS+Q==}
 
-  '@zxcvbn-ts/language-en@3.0.2':
-    resolution: {integrity: sha512-Zp+zL+I6Un2Bj0tRXNs6VUBq3Djt+hwTwUz4dkt2qgsQz47U0/XthZ4ULrT/RxjwJRl5LwiaKOOZeOtmixHnjg==}
+  '@zxcvbn-ts/dictionary-compression@3.0.1':
+    resolution: {integrity: sha512-p3KyPzxGc3vWSap5hHA6SllbUCmh7s+NtpGyC3qEWrxYJT9t9TUAzjPm48Okipo+UUyPQfDlIvTcs9JRShBFiQ==}
+
+  '@zxcvbn-ts/language-en@4.1.1':
+    resolution: {integrity: sha512-6UdzuBd3Uex8TKubohcn+uXRVAH34Zjs2eCfT4hQVo9zeTy7AkQRQfdV4OnHR5hQfW/XBrK/AGTZk7VBWh7wwQ==}
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -9685,8 +9688,8 @@ packages:
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
 
-  csv-parse@6.2.1:
-    resolution: {integrity: sha512-LRLMV+UCyfMokp8Wb411duBf1gaBKJfOfBWU9eHMJ+b+cJYZsNu3AFmjJf3+yPGd59Exz1TsMjaSFyxnYB9+IQ==}
+  csv-parse@7.0.0:
+    resolution: {integrity: sha512-CSssqPAK5us09FhMI9juM0jnqXUJP+rtWeIfivTYBLNH/8rnxkQlZvoRemF6MAyfNov9XU8mN2wwF/pP68sxTA==}
 
   culvert@0.1.2:
     resolution: {integrity: sha512-yi1x3EAWKjQTreYWeSd98431AV+IEE0qoDyOoaHJ7KJ21gv6HtBXHVLX74opVSGqcR8/AbjJBHAHpcOy2bj5Gg==}
@@ -12489,6 +12492,11 @@ packages:
 
   marked@17.0.6:
     resolution: {integrity: sha512-gB0gkNafnonOw0obSTEGZTT86IuhILt2Wfx0mWH/1Au83kybTayroZ/V6nS25mN7u8ASy+5fMhgB3XPNrOZdmA==}
+    engines: {node: '>= 20'}
+    hasBin: true
+
+  marked@18.0.5:
+    resolution: {integrity: sha512-S6GcvALHg6K4ohtu4E7x0a1AqhAjp6cV8KhLSyN9qVapnzJkusVBxZRcIU9AeYsbe6P1hKDusSbEOzGyyuce6w==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -15743,17 +15751,16 @@ packages:
   stream-browserify@3.0.0:
     resolution: {integrity: sha512-H73RAHsVBapbim0tU2JwwOiXUj+fikfiaoYAKHF3VJfA0pe2BCzkhAHBlLG6REzE+2WNZcxOXjK7lkso+9euLA==}
 
-  stream-chain@2.2.5:
-    resolution: {integrity: sha512-1TJmBx6aSWqZ4tx7aTpBDXK0/e2hhcNSTV8+CbFJtDjbb+I1mZ8lHit0Grw9GRT+6JbIrrDd8esncgBi8aBXGA==}
-
-  stream-chain@3.6.3:
-    resolution: {integrity: sha512-JZuELdHUuiZL4Olcr4EllGUvj9VKEaDkGHA6QAP5SruD0bgrr8TwtNXwRfH+fCncysEII7HhWll1+aOwvHYyRw==}
+  stream-chain@4.2.5:
+    resolution: {integrity: sha512-Wtyq3bNE3ggLR0v2vftqvuhltym3WbZAkZpfIrkr5F/6vpeUmWmwTgXa16zD87gpahwJ/Qulq3zVfUlgIc0J2A==}
+    engines: {node: '>=22'}
 
   stream-combiner2@1.1.1:
     resolution: {integrity: sha512-3PnJbYgS56AeWgtKF5jtJRT6uFJe56Z0Hc5Ngg/6sI6rIt8iiMBTa9cvdyFfpMQjaVHr8dusbNeFGIIonxOvKw==}
 
-  stream-json@1.9.1:
-    resolution: {integrity: sha512-uWkjJ+2Nt/LO9Z/JyKZbMusL8Dkh97uUBTv3AJQ74y07lVahLY4eEFsPsE97pxYBwr8nnjMAIch5eqI0gPShyw==}
+  stream-json@3.4.0:
+    resolution: {integrity: sha512-7NEiOhtS0W7ZrwnqJc/fugsGQMdpNJng+v1s2xLTrmfBN2vcYDyBglCK2+eITif0VkHLXnTdALgQI9TnZMBhYA==}
+    engines: {node: '>=22'}
 
   streamifier@0.1.1:
     resolution: {integrity: sha512-zDgl+muIlWzXNsXeyUfOk9dChMjlpkq0DRsxujtYPgyJ676yQ8jEm6zzaaWHFDg5BNcLuif0eD2MTyJdZqXpdg==}
@@ -27726,11 +27733,15 @@ snapshots:
       - typescript
       - zod
 
-  '@zxcvbn-ts/core@3.0.4':
+  '@zxcvbn-ts/core@4.1.2':
     dependencies:
       fastest-levenshtein: 1.0.16
 
-  '@zxcvbn-ts/language-en@3.0.2': {}
+  '@zxcvbn-ts/dictionary-compression@3.0.1': {}
+
+  '@zxcvbn-ts/language-en@4.1.1':
+    dependencies:
+      '@zxcvbn-ts/dictionary-compression': 3.0.1
 
   abort-controller@3.0.0:
     dependencies:
@@ -29280,7 +29291,7 @@ snapshots:
 
   csstype@3.2.3: {}
 
-  csv-parse@6.2.1: {}
+  csv-parse@7.0.0: {}
 
   culvert@0.1.2: {}
 
@@ -32514,6 +32525,8 @@ snapshots:
   marked@15.0.12: {}
 
   marked@17.0.6: {}
+
+  marked@18.0.5: {}
 
   math-intrinsics@1.1.0: {}
 
@@ -36387,18 +36400,16 @@ snapshots:
       inherits: 2.0.4
       readable-stream: 3.6.2
 
-  stream-chain@2.2.5: {}
-
-  stream-chain@3.6.3: {}
+  stream-chain@4.2.5: {}
 
   stream-combiner2@1.1.1:
     dependencies:
       duplexer2: 0.1.4
       readable-stream: 2.3.8
 
-  stream-json@1.9.1:
+  stream-json@3.4.0:
     dependencies:
-      stream-chain: 2.2.5
+      stream-chain: 4.2.5
 
   streamifier@0.1.1: {}
 

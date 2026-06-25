@@ -7,8 +7,9 @@ import {
 
 // Mock zxcvbn-ts to avoid loading the large dictionary in tests
 vi.mock("@zxcvbn-ts/core", () => ({
-  zxcvbn: vi.fn(() => ({ score: 0, feedback: { warning: "" } })),
-  zxcvbnOptions: { setOptions: vi.fn() },
+  ZxcvbnFactory: vi.fn().mockImplementation(() => ({
+    check: vi.fn(() => ({ score: 0, feedback: { warning: "" } })),
+  })),
 }));
 
 vi.mock("@zxcvbn-ts/language-en", () => ({
