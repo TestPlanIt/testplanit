@@ -406,13 +406,34 @@ test.describe("Test Case Execution", () => {
     });
 
     await test.step("Open the run detail page with the case selected", async () => {
+      // The "Pass & Next" handler escalates to the Add Result modal only once
+      // TestRunCaseDetails knows the template has a required result field. That
+      // knowledge comes from a `templateResultAssignment` findMany query that is
+      // gated on the case (and its template id) loading first, so it resolves
+      // strictly after page load. If Pass & Next is clicked before it resolves,
+      // `hasRequiredResultField` is still false: the click submits a plain quick
+      // pass, the server rejects it with REQUIRED_FIELDS_MISSING, and the modal
+      // never opens. Register the wait BEFORE navigating so the listener is armed
+      // when the query fires, then block on it before clicking Pass — making the
+      // escalation deterministic instead of racing a fixed 2s timeout.
+      const requiredFieldQuery = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/model/templateResultAssignment") &&
+          response.url().includes("findMany") &&
+          response.status() === 200,
+        { timeout: 15000 }
+      );
+
       await page.goto(
         `/en-US/projects/runs/${projectId}/${runId}?selectedCase=${caseId}`
       );
       await page.waitForLoadState("load");
-      await page.waitForTimeout(2000);
 
       await expect(sheet).toBeVisible({ timeout: 15000 });
+
+      // Ensure the required-result-field query has resolved into the React Query
+      // cache before any interaction, so the next render reads it synchronously.
+      await requiredFieldQuery;
     });
 
     await test.step("Click Pass and Next on the case", async () => {
