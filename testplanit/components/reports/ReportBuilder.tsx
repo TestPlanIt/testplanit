@@ -93,6 +93,9 @@ import {
 import {
   buildCleanReportUrlParams,
   isUrlInSyncWithReportType,
+  resolveSyncedActiveTab,
+  resolveSyncedReportType,
+  resolveTabChange,
 } from "./reportUrlUtils";
 
 interface ReportBuilderProps {
@@ -383,6 +386,13 @@ function ReportBuilderContent({
   const lastTabChangeRef = useRef<{ tab: string; timestamp: number } | null>(
     null
   );
+  // Tab a just-initiated navigation is heading toward. Set when we optimistically
+  // switch tabs and fire router.replace; the tab-sync effect leaves activeTab
+  // alone until the URL catches up, so it can't revert the click off a stale URL.
+  const pendingTabRef = useRef<string | null>(null);
+  // reportType counterpart to pendingTabRef — guards the reportType-sync effect
+  // against the same stale-URL window so an optimistic report switch isn't reverted.
+  const pendingReportTypeRef = useRef<string | null>(null);
 
   // Track if we're on the client side (for SSR compatibility)
   const [isClient, setIsClient] = useState(false);
@@ -580,23 +590,22 @@ function ReportBuilderContent({
   }, [searchParams, preBuiltReports]);
   const [activeTab, setActiveTab] = useState<string>(initialTab);
 
-  // Sync activeTab with URL tab parameter (for browser back/forward navigation)
+  // Sync activeTab with the URL tab parameter (for browser back/forward), while
+  // ignoring the brief window after our own tab click when router.replace is
+  // still in flight and the URL is stale — see resolveSyncedActiveTab.
   useEffect(() => {
-    const urlTab = searchParams.get("tab");
-    if (urlTab) {
-      if (urlTab !== activeTab) {
-        setActiveTab(urlTab);
-      }
-    } else {
-      // If no tab in URL, determine it from reportType
-      const urlReportType = searchParams.get("reportType");
-      if (urlReportType) {
-        const isPreBuilt = preBuiltReports.some((r) => r.id === urlReportType);
-        const correctTab = isPreBuilt ? "reports" : "builder";
-        if (correctTab !== activeTab) {
-          setActiveTab(correctTab);
-        }
-      }
+    const { nextTab, clearPending } = resolveSyncedActiveTab({
+      urlTab: searchParams.get("tab"),
+      urlReportType: searchParams.get("reportType"),
+      pendingTab: pendingTabRef.current,
+      activeTab,
+      preBuiltReportIds: preBuiltReports.map((r) => r.id),
+    });
+    if (clearPending) {
+      pendingTabRef.current = null;
+    }
+    if (nextTab !== null) {
+      setActiveTab(nextTab);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, preBuiltReports]);
@@ -792,15 +801,23 @@ function ReportBuilderContent({
     setIsClient(true);
   }, []);
 
-  // Sync reportType from URL when it changes
+  // Sync reportType from the URL (back/forward), guarding the in-flight window
+  // after our own navigation the same way the tab sync does — see
+  // resolveSyncedReportType.
   useEffect(() => {
-    const urlReportType = searchParams.get("reportType");
-    if (urlReportType) {
-      // Only update if the URL reportType is valid
-      if (reportTypes.some((r) => r.id === urlReportType)) {
-        setReportType(urlReportType);
-      }
+    const { nextReportType, clearPending } = resolveSyncedReportType({
+      urlReportType: searchParams.get("reportType"),
+      pendingReportType: pendingReportTypeRef.current,
+      currentReportType: reportType,
+      validReportTypeIds: reportTypes.map((r) => r.id),
+    });
+    if (clearPending) {
+      pendingReportTypeRef.current = null;
     }
+    if (nextReportType !== null) {
+      setReportType(nextReportType);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, reportTypes]);
 
   // Fetch filter options when report type changes to automation-trends or when filters change
@@ -902,11 +919,15 @@ function ReportBuilderContent({
 
   // Handle report type change
   const handleReportTypeChange = (newReportType: string) => {
-    // Safety check: ensure reportType is never empty
-    const safeReportType =
-      newReportType && newReportType.trim() !== ""
-        ? newReportType
-        : "test-execution";
+    // Ignore spurious empty/unknown onValueChange events. While the tab is
+    // switching, the report-type Select can momentarily emit an empty value
+    // (its current value is briefly not among the freshly-rendered options).
+    // Coercing that to a fallback report type would revert the tab the user
+    // just switched to (the "bounce back to Report Builder" bug).
+    if (!newReportType || !reportTypes.some((r) => r.id === newReportType)) {
+      return;
+    }
+    const safeReportType = newReportType;
 
     // Update state immediately for responsive UI
     setReportType(safeReportType);
@@ -917,6 +938,9 @@ function ReportBuilderContent({
     // Determine which tab this report belongs to
     const isPreBuilt = preBuiltReports.some((r) => r.id === safeReportType);
     const newTab = isPreBuilt ? "reports" : "builder";
+    // In-flight guards so the sync effects don't revert this off the stale URL.
+    pendingTabRef.current = newTab;
+    pendingReportTypeRef.current = safeReportType;
     setActiveTab(newTab);
 
     // Clear URL parameters when changing report type (report-specific params don't apply)
@@ -939,8 +963,24 @@ function ReportBuilderContent({
     }
     lastTabChangeRef.current = { tab: newTab, timestamp: now };
 
-    // Update activeTab state immediately to prevent race conditions
-    setActiveTab(newTab);
+    // Resolve the target tab AND a valid default report for it. Switching tabs
+    // must also switch reportType — otherwise the dropdown and rendered panel
+    // keep showing the previous tab's report (e.g. a custom "test-execution"
+    // report still selected on the pre-built Reports tab).
+    const { tab, reportType: defaultReport } = resolveTabChange({
+      newTab,
+      preBuiltReportIds: preBuiltReports.map((r) => r.id),
+      customReportIds: customReports.map((r) => r.id),
+    });
+
+    // Mark the navigation as in flight so the sync effects won't revert these
+    // optimistic updates off the still-stale URL before router.replace lands.
+    pendingTabRef.current = tab;
+    pendingReportTypeRef.current = defaultReport;
+
+    // Update state immediately to prevent race conditions / stale UI
+    setActiveTab(tab);
+    setReportType(defaultReport);
 
     // Clear all report data and pagination to prevent displaying stale values
     setTotalCount(0);
@@ -949,31 +989,13 @@ function ReportBuilderContent({
     setError(null);
     setCompatWarning(null);
 
-    // When switching tabs, select a default report from that tab
-    const targetReports =
-      newTab === "reports" ? preBuiltReports : customReports;
-
-    // Determine the default report - use first from target list with valid ID
-    // Fallback: "automation-trends" for reports tab, "test-execution" for builder tab
-    const fallbackReport =
-      newTab === "reports" ? "automation-trends" : "test-execution";
-    let defaultReport =
-      targetReports.length > 0 && targetReports[0]?.id
-        ? targetReports[0].id
-        : fallbackReport;
-
-    // Safety check: ensure defaultReport is never empty
-    if (!defaultReport || defaultReport.trim() === "") {
-      defaultReport = fallbackReport;
-    }
-
     // Mark the new report as already run to prevent auto-run from interfering
     lastRunReportType.current = defaultReport;
 
     // Update URL with a CLEAN param set — see reportUrlUtils for rationale.
     const newParams = buildCleanReportUrlParams({
       reportType: defaultReport,
-      tab: newTab,
+      tab,
     });
 
     router.replace(`${pathname}?${newParams.toString()}`);
@@ -1540,8 +1562,13 @@ function ReportBuilderContent({
           } = body;
           setLastRequestBody(shareableBody);
 
-          // Only update URL for custom reports (pre-built reports don't use dimensions/metrics)
-          if (!currentReport?.isPreBuilt) {
+          // Only persist selections to the URL on an explicit run (the Run
+          // Report button). Auto-runs / sort / filter re-runs must NOT write the
+          // URL: during a tab switch the auto-run re-runs the previous report and
+          // its URL write would clobber the new tab/reportType (the bounce). The
+          // selections are already in the URL from the explicit run, so auto-runs
+          // don't need to rewrite them.
+          if (updateUrl && !currentReport?.isPreBuilt) {
             // Update URL with selections - start with existing params to preserve tab parameter
             const newParams = new URLSearchParams(searchParams.toString());
             // Safety check: ensure reportType is never empty
@@ -1608,12 +1635,16 @@ function ReportBuilderContent({
   );
 
   const runReport = useCallback(
-    async (selectedDimensions: any[], selectedMetrics: any[]) => {
+    async (
+      selectedDimensions: any[],
+      selectedMetrics: any[],
+      { persistUrl = false }: { persistUrl?: boolean } = {}
+    ) => {
       setLoading(true);
       setError(null);
 
       try {
-        await fetchReportData(selectedDimensions, selectedMetrics, true);
+        await fetchReportData(selectedDimensions, selectedMetrics, persistUrl);
       } finally {
         setLoading(false);
       }
@@ -1871,7 +1902,8 @@ function ReportBuilderContent({
       );
       return;
     }
-    void runReport(dimensions, metrics);
+    // Explicit user run — persist the selections to the URL (for refresh/share).
+    void runReport(dimensions, metrics, { persistUrl: true });
   };
 
   const handleDimensionsChange = (newDimensions: any[]) => {
