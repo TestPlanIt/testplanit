@@ -114,6 +114,9 @@ describeIntegration("SCIM tokens service (live DB)", () => {
     // findUnique by hash returns the same row we just minted
     const byHash = await db.scimToken.findUnique({
       where: { token: hashToken(plaintext) },
+      // `secret` is @omit; opt it back in (still encrypted at rest) so the
+      // round-trip assertions below can read the stored ciphertext.
+      omit: { secret: false },
     });
     expect(byHash).not.toBeNull();
     expect(byHash!.id).toBe(token.id);

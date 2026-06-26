@@ -457,7 +457,9 @@ describeIntegration(
       }
 
       expect(caught).toBeInstanceOf(ORMError);
-      expect((caught as ORMError).code).toBe("P2002");
+      // v3 surfaces the Postgres SQLSTATE (23505 = unique_violation) on
+      // `dbErrorCode`, not a Prisma-style `.code` ("P2002").
+      expect((caught as ORMError).dbErrorCode).toBe("23505");
       expect(isAlreadyPendingError(caught)).toBe(true);
     });
 

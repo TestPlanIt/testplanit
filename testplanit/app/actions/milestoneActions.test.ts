@@ -302,19 +302,21 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.milestones.findMany).mockResolvedValue([]);
         vi.mocked(baseDb.testRuns.findMany).mockResolvedValue([]);
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,
@@ -348,19 +350,21 @@ describe("milestoneActions", () => {
 
         const mockUpdate = vi.fn();
         const mockUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: mockUpdate, updateMany: mockUpdateMany },
-            testRuns: { updateMany: mockUpdateMany },
-            sessions: { updateMany: mockUpdateMany },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: mockUpdate, updateMany: mockUpdateMany },
+              testRuns: { updateMany: mockUpdateMany },
+              sessions: { updateMany: mockUpdateMany },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,
@@ -387,19 +391,21 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
 
         const mockUpdate = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: mockUpdate, updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: mockUpdate, updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         await completeMilestoneCascade({
           milestoneId: 1,
@@ -430,19 +436,21 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
 
         const mockUpdate = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: mockUpdate, updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: mockUpdate, updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         await completeMilestoneCascade({
           milestoneId: 1,
@@ -475,19 +483,21 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.milestones.findMany).mockResolvedValue([]);
         vi.mocked(baseDb.testRuns.findMany).mockResolvedValue([]);
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,
@@ -517,19 +527,21 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.milestones.findMany).mockResolvedValue([]);
         vi.mocked(baseDb.testRuns.findMany).mockResolvedValue([]);
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,
@@ -590,19 +602,21 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.milestones.findMany).mockResolvedValue([]);
         vi.mocked(baseDb.testRuns.findMany).mockResolvedValue([]);
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,
@@ -693,19 +707,21 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
 
         const mockTestRunsUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: mockTestRunsUpdateMany },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: mockTestRunsUpdateMany },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         await completeMilestoneCascade({
           milestoneId: 1,
@@ -740,19 +756,21 @@ describe("milestoneActions", () => {
         ] as any);
 
         const mockSessionsUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: mockSessionsUpdateMany },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: mockSessionsUpdateMany },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         await completeMilestoneCascade({
           milestoneId: 1,
@@ -791,22 +809,24 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
 
         const mockMilestonesUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: {
-              update: vi.fn(),
-              updateMany: mockMilestonesUpdateMany,
-            },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: {
+                update: vi.fn(),
+                updateMany: mockMilestonesUpdateMany,
+              },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         const completionDate = new Date("2024-06-15");
         await completeMilestoneCascade({
@@ -846,19 +866,21 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
 
         const mockTestRunsUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: mockTestRunsUpdateMany },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: mockTestRunsUpdateMany },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         await completeMilestoneCascade({
           milestoneId: 1,
@@ -887,19 +909,21 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
 
         const mockTestRunsUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: mockTestRunsUpdateMany },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: mockTestRunsUpdateMany },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         await completeMilestoneCascade({
           milestoneId: 1,
@@ -927,19 +951,21 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
 
         const mockTestRunsUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: mockTestRunsUpdateMany },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: mockTestRunsUpdateMany },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         await completeMilestoneCascade({
           milestoneId: 1,
@@ -970,19 +996,21 @@ describe("milestoneActions", () => {
         ] as any);
 
         const mockSessionsUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: mockSessionsUpdateMany },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: mockSessionsUpdateMany },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         await completeMilestoneCascade({
           milestoneId: 1,
@@ -1011,19 +1039,21 @@ describe("milestoneActions", () => {
         ] as any);
 
         const mockSessionsUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: mockSessionsUpdateMany },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: mockSessionsUpdateMany },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         await completeMilestoneCascade({
           milestoneId: 1,
@@ -1051,19 +1081,21 @@ describe("milestoneActions", () => {
         ] as any);
 
         const mockSessionsUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: mockSessionsUpdateMany },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: mockSessionsUpdateMany },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         await completeMilestoneCascade({
           milestoneId: 1,
@@ -1093,19 +1125,21 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
 
         const mockTestRunsUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: mockTestRunsUpdateMany },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: mockTestRunsUpdateMany },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         const customStateId = 99;
         await completeMilestoneCascade({
@@ -1140,19 +1174,21 @@ describe("milestoneActions", () => {
         ] as any);
 
         const mockSessionsUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: mockSessionsUpdateMany },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: mockSessionsUpdateMany },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         const customStateId = 88;
         await completeMilestoneCascade({
@@ -1187,19 +1223,21 @@ describe("milestoneActions", () => {
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([]);
 
         const mockTestRunsUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: mockTestRunsUpdateMany },
-            sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: mockTestRunsUpdateMany },
+              sessions: { updateMany: vi.fn() },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         await completeMilestoneCascade({
           milestoneId: 1,
@@ -1234,19 +1272,21 @@ describe("milestoneActions", () => {
         const mockMilestoneUpdate = vi.fn();
         const mockTestRunsUpdateMany = vi.fn();
         const mockSessionsUpdateMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: mockMilestoneUpdate, updateMany: vi.fn() },
-            testRuns: { updateMany: mockTestRunsUpdateMany },
-            sessions: { updateMany: mockSessionsUpdateMany },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: mockMilestoneUpdate, updateMany: vi.fn() },
+              testRuns: { updateMany: mockTestRunsUpdateMany },
+              sessions: { updateMany: mockSessionsUpdateMany },
+              workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+            } as any);
+          }
+        );
 
         await completeMilestoneCascade({
           milestoneId: 1,
@@ -1319,23 +1359,25 @@ describe("milestoneActions", () => {
         const txWorkflowsFindMany = vi.fn().mockResolvedValue([]);
         const txReviewRequestFindMany = vi.fn();
 
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
-            workflows: {
-              findUnique: txWorkflowsFindUnique,
-              findMany: txWorkflowsFindMany,
-            },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-            reviewRequest: { findMany: txReviewRequestFindMany },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: vi.fn() },
+              workflows: {
+                findUnique: txWorkflowsFindUnique,
+                findMany: txWorkflowsFindMany,
+              },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+              reviewRequest: { findMany: txReviewRequestFindMany },
+            } as any);
+          }
+        );
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,
@@ -1372,26 +1414,28 @@ describe("milestoneActions", () => {
         const txReviewRequestUpdateMany = vi
           .fn()
           .mockResolvedValue({ count: 2 });
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
-            workflows: {
-              findUnique: vi.fn().mockResolvedValue({ order: 5 }),
-              findMany: vi.fn().mockResolvedValue([{ id: 40, order: 4 }]),
-            },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-            reviewRequest: {
-              findMany: txReviewRequestFindMany,
-              updateMany: txReviewRequestUpdateMany,
-            },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: vi.fn() },
+              workflows: {
+                findUnique: vi.fn().mockResolvedValue({ order: 5 }),
+                findMany: vi.fn().mockResolvedValue([{ id: 40, order: 4 }]),
+              },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+              reviewRequest: {
+                findMany: txReviewRequestFindMany,
+                updateMany: txReviewRequestUpdateMany,
+              },
+            } as any);
+          }
+        );
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,
@@ -1443,24 +1487,26 @@ describe("milestoneActions", () => {
         ] as any);
         vi.mocked(baseDb.sessions.findMany).mockResolvedValue([] as any);
 
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
-            workflows: {
-              findUnique: vi.fn().mockResolvedValue({ order: 5 }),
-              findMany: vi.fn().mockResolvedValue([{ id: 40, order: 4 }]),
-            },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-            // Empty result → entityId 42 is missing approval for gate 40.
-            reviewRequest: { findMany: vi.fn().mockResolvedValue([]) },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: vi.fn() },
+              workflows: {
+                findUnique: vi.fn().mockResolvedValue({ order: 5 }),
+                findMany: vi.fn().mockResolvedValue([{ id: 40, order: 4 }]),
+              },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+              // Empty result → entityId 42 is missing approval for gate 40.
+              reviewRequest: { findMany: vi.fn().mockResolvedValue([]) },
+            } as any);
+          }
+        );
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,
@@ -1498,23 +1544,25 @@ describe("milestoneActions", () => {
         const txReviewRequestFindMany = vi.fn();
         const txWorkflowsFindUnique = vi.fn();
         const txWorkflowsFindMany = vi.fn();
-        vi.mocked(baseDb.$transaction).mockImplementation(async (callback) => {
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
-            workflows: {
-              findUnique: txWorkflowsFindUnique,
-              findMany: txWorkflowsFindMany,
-            },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-            reviewRequest: { findMany: txReviewRequestFindMany },
-          } as any);
-        });
+        (vi.mocked(baseDb.$transaction).mockImplementation as any)(
+          async (callback: (tx: any) => any) => {
+            return callback({
+              $executeRaw: vi.fn().mockResolvedValue([]),
+              $queryRaw: vi.fn().mockResolvedValue([]),
+              milestones: { update: vi.fn(), updateMany: vi.fn() },
+              testRuns: { updateMany: vi.fn() },
+              sessions: { updateMany: vi.fn() },
+              workflows: {
+                findUnique: txWorkflowsFindUnique,
+                findMany: txWorkflowsFindMany,
+              },
+              appConfig: {
+                findUnique: vi.fn().mockResolvedValue({ value: true }),
+              },
+              reviewRequest: { findMany: txReviewRequestFindMany },
+            } as any);
+          }
+        );
 
         const result = await completeMilestoneCascade({
           milestoneId: 1,

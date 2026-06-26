@@ -80,7 +80,7 @@ function createBaseAdapter(db: DbClient): Adapter {
       return (account?.user ?? null) as AdapterUser | null;
     },
     updateUser: ({ id, ...data }: Partial<AdapterUser> & { id: string }) =>
-      db.user.update({
+      (db.user.update as (args: unknown) => Promise<unknown>)({
         where: { id },
         data: data as UserUncheckedUpdateInput,
       }) as unknown as Promise<AdapterUser>,

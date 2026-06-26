@@ -593,9 +593,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
 
   it("(adaptive) outsider user (access=NONE) read across the 5 new models — record per-model denial outcomes", async () => {
     if (!outsiderUser) throw new Error("outsider user not seeded");
-    const denyDb = enhance(db, {
-      user: outsiderUser,
-    }) as unknown as EnhancedReader;
+    const denyDb = getAuthDb(outsiderUser) as unknown as EnhancedReader;
 
     const probes = [
       {

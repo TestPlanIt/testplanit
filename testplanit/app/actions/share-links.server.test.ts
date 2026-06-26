@@ -494,7 +494,7 @@ describe("share-links server actions", () => {
       projectId: 1,
       expiresAt: null,
       notifyOnView: false,
-      passwordHash: null,
+      hasPassword: false,
     };
 
     beforeEach(async () => {

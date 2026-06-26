@@ -141,9 +141,10 @@ describeIntegration("SCIM Users service (live DB)", () => {
     if (sweepIds.length > 0) {
       await db.webhookOutboxEvent.deleteMany({
         where: {
+          // Raw Prisma-style JSON-path filter v3's typed WhereInput doesn't model.
           OR: sweepIds.map((id) => ({
             payload: { path: ["id"], equals: id },
-          })),
+          })) as any,
         },
       });
       await db.account.deleteMany({

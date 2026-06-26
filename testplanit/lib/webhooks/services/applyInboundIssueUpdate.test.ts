@@ -61,7 +61,7 @@ const mocks = vi.hoisted(() => {
     },
     captureAuditEvent: vi.fn(async () => undefined),
     isUniqueConstraintError: vi.fn((err: unknown) => {
-      return err instanceof ORMError && err.code === "P2002";
+      return err instanceof ORMError && err.dbErrorCode === "23505";
     }),
     adapter,
     getAdapter,
@@ -147,7 +147,7 @@ const resetTxMocks = () => {
   mocks.performIssueRefreshSystem.mockReset();
   mocks.performIssueRefreshSystem.mockResolvedValue({ success: true });
   mocks.isUniqueConstraintError.mockImplementation((err: unknown) => {
-    return err instanceof ORMError && err.code === "P2002";
+    return err instanceof ORMError && err.dbErrorCode === "23505";
   });
   // Adapter mock defaults: extract linkedRef from baseInput's Jira-shaped
   // payload (DEMO-42, JIRA) and externalStatus "In Progress". Each test

@@ -124,9 +124,10 @@ describeIntegration("SCIM Groups service (live DB)", () => {
     if (groupIds.length > 0) {
       await db.webhookOutboxEvent.deleteMany({
         where: {
+          // Raw Prisma-style JSON-path filter v3's typed WhereInput doesn't model.
           OR: groupIds.map((id) => ({
             payload: { path: ["id"], equals: id },
-          })),
+          })) as any,
         },
       });
       await db.groupAssignment.deleteMany({

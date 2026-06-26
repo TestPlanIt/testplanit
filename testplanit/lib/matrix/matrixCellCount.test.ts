@@ -68,7 +68,9 @@ describe("runCellCountPreflight", () => {
         getExecutor: () => ({
           transformQuery: (n: unknown) => n,
           compileQuery: (n: unknown) => n,
-          executeQuery: async () => ({ rows: await qbRows() }),
+          executeQuery: async () => ({
+            rows: await (qbRows as () => unknown)(),
+          }),
         }),
       },
     };
