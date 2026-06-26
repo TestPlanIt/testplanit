@@ -281,7 +281,13 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         Underline,
         Link.configure({ openOnClick: false }),
         ImageWithResize.configure({
-          inline: true,
+          // Images are block-level (the custom Image extension sets group:"block",
+          // and all stored content uses block-placed images). inline:true here
+          // contradicted that — a node flagged inline but placed at block level —
+          // which @tiptap 3.26 tolerated but 3.27's stricter content validation
+          // rejects ("contentMatchAt … invalid content"), crashing the DragHandle
+          // on any doc with an image. Keep it block so v2 image content renders.
+          inline: false,
           allowBase64: true,
           HTMLAttributes: {
             class: "tiptap-image",
