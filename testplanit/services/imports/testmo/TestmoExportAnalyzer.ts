@@ -5,7 +5,7 @@ import { Transform } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { chain } from "stream-chain";
 import { parser } from "stream-json";
-import Assembler from "stream-json/Assembler";
+import Assembler from "stream-json/assembler.js";
 import { TestmoStagingService } from "./TestmoStagingService";
 import {
   TestmoDatasetSummary,
