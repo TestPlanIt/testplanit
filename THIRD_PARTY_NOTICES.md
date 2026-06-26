@@ -293,7 +293,7 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### React Resizable Panels
 
-- **Version**: 3.x
+- **Version**: 4.x
 - **License**: MIT
 - **Repository**: <https://github.com/bvaughn/react-resizable-panels>
 - **Copyright**: Copyright (c) 2022 Brian Vaughn
@@ -307,7 +307,7 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### React Day Picker
 
-- **Version**: 9.x
+- **Version**: 10.x
 - **License**: MIT
 - **Repository**: <https://github.com/gpbl/react-day-picker>
 - **Copyright**: Copyright (c) 2014-present Giampaolo Bellavite
@@ -471,19 +471,27 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 - **Repository**: <https://github.com/nodejs/node>
 - **Copyright**: Copyright Node.js contributors. All rights reserved.
 
-### Prisma
-
-- **Version**: 6.x
-- **License**: Apache-2.0
-- **Repository**: <https://github.com/prisma/prisma>
-- **Copyright**: Copyright (c) 2020 Prisma
-
 ### ZenStack
 
-- **Version**: 2.x
-- **License**: Apache-2.0
+- **Version**: 3.x
+- **License**: MIT
 - **Repository**: <https://github.com/zenstackhq/zenstack>
 - **Copyright**: Copyright (c) 2022 ZenStack Team
+- **Note**: As of v3, the ZenStack ORM is built on Kysely (query builder) and node-postgres (`pg`) rather than Prisma. Prisma is no longer a direct or transitive dependency.
+
+### Kysely
+
+- **Version**: 0.29.x
+- **License**: MIT
+- **Repository**: <https://github.com/kysely-org/kysely>
+- **Copyright**: Copyright (c) 2022 Sami Koskimäki
+
+### node-postgres (pg)
+
+- **Version**: 8.x
+- **License**: MIT
+- **Repository**: <https://github.com/brianc/node-postgres>
+- **Copyright**: Copyright (c) 2010-2020 Brian Carlson
 
 ### NextAuth.js
 
@@ -529,8 +537,8 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### Nodemailer
 
-- **Version**: 8.x
-- **License**: MIT
+- **Version**: 9.x
+- **License**: MIT-0
 - **Repository**: <https://github.com/nodemailer/nodemailer>
 - **Copyright**: Copyright (c) 2011-2023 Andris Reinman
 
@@ -571,7 +579,7 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### xml-encryption
 
-- **Version**: 3.x
+- **Version**: 4.x
 - **License**: MIT
 - **Repository**: <https://github.com/node-saml/xml-encryption>
 - **Copyright**: Copyright (c) xml-encryption contributors
@@ -580,7 +588,7 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### Vercel AI SDK
 
-- **Version**: 5.x
+- **Version**: 7.x
 - **License**: Apache-2.0
 - **Repository**: <https://github.com/vercel/ai>
 - **Copyright**: Copyright (c) 2023 Vercel, Inc.
@@ -617,19 +625,12 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### Sharp
 
-- **Version**: 0.34.x
+- **Version**: 0.35.x
 - **License**: Apache-2.0
 - **Repository**: <https://github.com/lovell/sharp>
 - **Copyright**: Copyright (c) 2013-2023 Lovell Fuller
 
 ## External Integrations
-
-### Atlaskit Editor Jira Transformer
-
-- **Version**: 15.x
-- **License**: Apache-2.0
-- **Repository**: <https://bitbucket.org/atlassian/atlassian-frontend-mirror>
-- **Copyright**: Copyright (c) Atlassian Pty Ltd
 
 ### html-to-adf-converter
 
@@ -642,7 +643,7 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### Marked
 
-- **Version**: 17.x
+- **Version**: 18.x
 - **License**: MIT
 - **Repository**: <https://github.com/markedjs/marked>
 - **Copyright**: Copyright (c) 2018 MarkedJS contributors, Copyright (c) 2011-2018 Christopher Jeffrey
@@ -671,6 +672,13 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 - **License**: MIT
 - **Repository**: <https://github.com/lodash/lodash>
 - **Copyright**: Copyright OpenJS Foundation and other contributors
+
+### decimal.js
+
+- **Version**: 10.x
+- **License**: MIT
+- **Repository**: <https://github.com/MikeMcl/decimal.js>
+- **Copyright**: Copyright (c) 2022 Michael Mclaughlin
 
 ### Axios
 
@@ -716,14 +724,14 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### stream-json
 
-- **Version**: 1.x
+- **Version**: 3.x
 - **License**: BSD-3-Clause
 - **Repository**: <https://github.com/uhop/stream-json>
 - **Copyright**: Copyright (c) 2017 Eugene Lazutkin
 
 ### stream-chain
 
-- **Version**: 3.x
+- **Version**: 4.x
 - **License**: BSD-3-Clause
 - **Repository**: <https://github.com/uhop/stream-chain>
 - **Copyright**: Copyright (c) 2017 Eugene Lazutkin
@@ -744,7 +752,7 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### UUID
 
-- **Version**: 13.x
+- **Version**: 14.x
 - **License**: MIT
 - **Repository**: <https://github.com/uuidjs/uuid>
 - **Copyright**: Copyright (c) 2010-2023 Robert Kieffer and other contributors
@@ -765,7 +773,7 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### csv-parse
 
-- **Version**: 6.x
+- **Version**: 7.x
 - **License**: MIT
 - **Repository**: <https://github.com/adaltas/node-csv>
 - **Copyright**: Copyright (c) 2010-2024 Adaltas
@@ -912,7 +920,7 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### @zxcvbn-ts/core + @zxcvbn-ts/language-en
 
-- **Version**: 3.x
+- **Version**: 4.x
 - **License**: MIT
 - **Repository**: <https://github.com/zxcvbn-ts/zxcvbn>
 - **Copyright**: Copyright (c) zxcvbn-ts contributors
@@ -979,7 +987,7 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### PM2
 
-- **Version**: 6.x
+- **Version**: 7.x
 - **License**: AGPL-3.0
 - **Repository**: <https://github.com/Unitech/pm2>
 - **Copyright**: Copyright (c) 2013-2023 Strzelewicz Alexandre
@@ -987,7 +995,7 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### Concurrently
 
-- **Version**: 9.x
+- **Version**: 10.x
 - **License**: MIT
 - **Repository**: <https://github.com/open-cli-tools/concurrently>
 - **Copyright**: Copyright (c) 2015 Kimmo Brunfeldt
@@ -1057,7 +1065,7 @@ Workspace-internal packages under `@testplanit/*` and `packages/*` are first-par
 
 ### shadcn/ui
 
-- **Version**: 3.x
+- **Version**: 4.x
 - **License**: MIT
 - **Repository**: <https://github.com/shadcn-ui/ui>
 - **Copyright**: Copyright (c) 2023 shadcn
@@ -1077,7 +1085,7 @@ The TestPlanIt CLI (`cli/` workspace package, published separately to npm) bundl
 
 ### commander
 
-- **Version**: 14.x
+- **Version**: 15.x
 - **License**: MIT
 - **Repository**: <https://github.com/tj/commander.js>
 - **Copyright**: Copyright (c) 2011 TJ Holowaychuk
@@ -1153,21 +1161,21 @@ The TestPlanIt Forge plugin (`forge-app/` workspace package) runs inside Atlassi
 
 ### @forge/api
 
-- **Version**: 7.x
+- **Version**: 8.x
 - **License**: UNLICENSED (Atlassian Developer Terms)
 - **Repository**: <https://www.npmjs.com/package/@forge/api>
 - **Copyright**: Copyright (c) Atlassian Pty Ltd
 
 ### @forge/bridge
 
-- **Version**: 5.x
+- **Version**: 6.x
 - **License**: UNLICENSED (Atlassian Developer Terms)
 - **Repository**: <https://www.npmjs.com/package/@forge/bridge>
 - **Copyright**: Copyright (c) Atlassian Pty Ltd
 
 ### @forge/kvs
 
-- **Version**: 1.x
+- **Version**: 2.x
 - **License**: UNLICENSED (Atlassian Developer Terms)
 - **Repository**: <https://www.npmjs.com/package/@forge/kvs>
 - **Copyright**: Copyright (c) Atlassian Pty Ltd
@@ -1181,14 +1189,14 @@ The TestPlanIt Forge plugin (`forge-app/` workspace package) runs inside Atlassi
 
 ### @forge/resolver
 
-- **Version**: 1.x
+- **Version**: 2.x
 - **License**: UNLICENSED (Atlassian Developer Terms)
 - **Repository**: <https://www.npmjs.com/package/@forge/resolver>
 - **Copyright**: Copyright (c) Atlassian Pty Ltd
 
 ### @forge/cli (dev only)
 
-- **Version**: 12.x
+- **Version**: 13.x
 - **License**: UNLICENSED (Atlassian Developer Terms)
 - **Repository**: <https://www.npmjs.com/package/@forge/cli>
 - **Copyright**: Copyright (c) Atlassian Pty Ltd
@@ -1211,6 +1219,27 @@ furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### MIT No Attribution License (MIT-0)
+
+```text
+MIT No Attribution
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -1390,5 +1419,5 @@ For our commercial license, we ensure all dependencies allow commercial use and 
 
 ---
 
-*Last updated: May 2026*
+*Last updated: June 2026*
 *This document is automatically generated and manually reviewed quarterly.*
