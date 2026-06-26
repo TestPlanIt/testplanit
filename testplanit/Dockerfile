@@ -48,7 +48,12 @@ RUN if [ -f ".docker-version.json" ]; then \
     fi
 
 ENV NODE_OPTIONS="--max-old-space-size=16384"
-RUN pnpm zenstack generate
+# `-o zenstack` writes the v3 client to testplanit/zenstack (the `~/zenstack/*`
+# import path), matching package.json's `generate` script. The flag is required:
+# without it generate uses the default output dir and the build stage's
+# `next build` cannot resolve `~/zenstack/models`. (Install runs with
+# --ignore-scripts, so the postinstall generate never fires here.)
+RUN pnpm zenstack generate --schema schema.zmodel -o zenstack
 RUN apk del .gyp
 
 COPY testplanit/wait-for-postgres.sh /usr/local/bin/wait-for-postgres.sh
