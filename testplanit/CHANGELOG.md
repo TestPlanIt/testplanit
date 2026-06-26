@@ -1,3 +1,9 @@
+## [0.40.10](https://github.com/TestPlanIt/testplanit/compare/v0.40.9...v0.40.10) (2026-06-26)
+
+### Bug Fixes
+
+* **imports:** use stream-json v3 lowercase assembler.js path ([#473](https://github.com/TestPlanIt/testplanit/issues/473)) ([0cfe557](https://github.com/TestPlanIt/testplanit/commit/0cfe557f35761f9cef45ea82be23e30348a0f733))
+
 ## [0.40.9](https://github.com/TestPlanIt/testplanit/compare/v0.40.8...v0.40.9) (2026-06-24)
 
 ### Bug Fixes
