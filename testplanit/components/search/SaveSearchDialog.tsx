@@ -50,7 +50,8 @@ export function SaveSearchDialog({
 }: SaveSearchDialogProps) {
   const t = useTranslations();
   const { data: session } = useSession();
-  const { mutateAsync: createShareLink, isPending } = useClientQueries(schema).shareLink.useCreate();
+  const { mutateAsync: createShareLink, isPending } =
+    useClientQueries(schema).shareLink.useCreate();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");

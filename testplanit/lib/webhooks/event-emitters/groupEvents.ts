@@ -61,10 +61,7 @@ interface ResolvedEmitOpts {
   actorUserId: string | null;
 }
 
-function defaultEmitOpts(
-  tx: TxClient,
-  opts: EmitOptions
-): ResolvedEmitOpts {
+function defaultEmitOpts(tx: TxClient, opts: EmitOptions): ResolvedEmitOpts {
   return {
     tx,
     projectId: opts.projectId ?? SYSTEM_PROJECT_ID,

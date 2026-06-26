@@ -68,7 +68,9 @@ function Users() {
   const skip = (currentPage - 1) * effectivePageSize;
   const debouncedSearchString = useDebounce(searchString, 500);
 
-  const { data: totalFilteredUsers } = useClientQueries(schema).user.useFindMany(
+  const { data: totalFilteredUsers } = useClientQueries(
+    schema
+  ).user.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }

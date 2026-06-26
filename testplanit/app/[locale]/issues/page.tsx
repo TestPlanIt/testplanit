@@ -329,7 +329,9 @@ function Issues() {
   };
 
   // Fetch basic issue data - only include integration to avoid bind variable issues
-  const { data: issues, isLoading: isLoadingIssues } = useClientQueries(schema).issue.useFindMany(
+  const { data: issues, isLoading: isLoadingIssues } = useClientQueries(
+    schema
+  ).issue.useFindMany(
     issuesWhere
       ? {
           where: issuesWhere,

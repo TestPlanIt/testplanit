@@ -21,7 +21,6 @@
  * without disturbing existing rows.
  */
 
-
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createRawDbClient } from "~/lib/rawDbClient";
 

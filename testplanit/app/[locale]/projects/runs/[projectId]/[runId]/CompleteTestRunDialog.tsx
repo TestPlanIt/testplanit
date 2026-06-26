@@ -61,7 +61,8 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const { mutateAsync: updateTestRun } = useClientQueries(schema).testRuns.useUpdate();
+  const { mutateAsync: updateTestRun } =
+    useClientQueries(schema).testRuns.useUpdate();
 
   const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {

@@ -98,7 +98,9 @@ export default function MilestoneFormControls({
   }, [colors]);
 
   // Fetch milestone types
-  const { data: milestoneTypes } = useClientQueries(schema).milestoneTypes.useFindMany({
+  const { data: milestoneTypes } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindMany({
     where: {
       AND: [
         {

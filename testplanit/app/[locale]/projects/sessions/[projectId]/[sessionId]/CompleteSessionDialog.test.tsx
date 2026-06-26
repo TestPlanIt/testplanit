@@ -20,11 +20,12 @@ vi.mock("next-auth/react", () => ({
 }));
 
 // Mock hooks
-const { useFindManyWorkflows, useUpdateSessions, useCreateSessionVersions } = vi.hoisted(() => ({
-  useFindManyWorkflows: vi.fn(),
-  useUpdateSessions: vi.fn(),
-  useCreateSessionVersions: vi.fn(),
-}));
+const { useFindManyWorkflows, useUpdateSessions, useCreateSessionVersions } =
+  vi.hoisted(() => ({
+    useFindManyWorkflows: vi.fn(),
+    useUpdateSessions: vi.fn(),
+    useCreateSessionVersions: vi.fn(),
+  }));
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     workflows: { useFindMany: useFindManyWorkflows },

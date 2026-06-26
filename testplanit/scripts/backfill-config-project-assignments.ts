@@ -14,8 +14,6 @@ import { createRawDbClient } from "~/lib/rawDbClient";
  *   pnpm tsx scripts/backfill-config-project-assignments.ts --apply  # mutate
  */
 
-
-
 // Bare DbClient (not the lib/db.ts singleton) — that singleton pulls
 // in Elasticsearch sync, audit, and webhook side-effects at import time, which
 // hangs a one-off CLI script.

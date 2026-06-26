@@ -160,7 +160,9 @@ export function SearchIssuesDialog({
   const pollingForKeyRef = useRef<string | null>(null);
 
   // Fetch project integrations
-  const { data: projectIntegrations } = useClientQueries(schema).projectIntegration.useFindMany({
+  const { data: projectIntegrations } = useClientQueries(
+    schema
+  ).projectIntegration.useFindMany({
     where: {
       projectId,
       isActive: true,
@@ -173,7 +175,9 @@ export function SearchIssuesDialog({
   const activeIntegration = projectIntegrations?.[0];
 
   // Fetch active IntegrationProject records for multi-project fan-out
-  const { data: activeIntegrationProjects } = useClientQueries(schema).integrationProject.useFindMany(
+  const { data: activeIntegrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
     {
       where: {
         projectIntegrationId: activeIntegration?.id || "",
@@ -194,7 +198,9 @@ export function SearchIssuesDialog({
   }, [activeIntegration]);
 
   // Search internal issues (only when no integration or explicitly internal)
-  const { data: internalIssues, isLoading: loadingInternal } = useClientQueries(schema).issue.useFindMany(
+  const { data: internalIssues, isLoading: loadingInternal } = useClientQueries(
+    schema
+  ).issue.useFindMany(
     {
       where: {
         projectId,

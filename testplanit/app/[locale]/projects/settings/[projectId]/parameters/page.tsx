@@ -37,7 +37,9 @@ export default function ProjectParametersSettingsPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
 
-  const { data: project, isLoading: projectLoading } = useClientQueries(schema).projects.useFindFirst(
+  const { data: project, isLoading: projectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: { id: projectId },
       select: {

@@ -122,9 +122,7 @@ describe("reportGrouping", () => {
   });
 
   describe("buildFolderAncestorMap", () => {
-    function fakeDb(
-      folders: Array<{ id: number; parentId: number | null }>
-    ) {
+    function fakeDb(folders: Array<{ id: number; parentId: number | null }>) {
       return {
         repositoryFolders: {
           findMany: async () => folders,

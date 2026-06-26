@@ -42,7 +42,9 @@ export default function ProjectAiModelsPage() {
   const tGlobal = useTranslations();
 
   // Fetch project data (allow global admin access or project assignment)
-  const { data: project, isLoading: projectLoading } = useClientQueries(schema).projects.useFindFirst(
+  const { data: project, isLoading: projectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: {
         id: projectId,
@@ -111,12 +113,15 @@ export default function ProjectAiModelsPage() {
   const currentIntegration = projectLlmIntegrations?.[0];
 
   // Fetch available prompt configurations
-  const { data: promptConfigs } = useClientQueries(schema).promptConfig.useFindMany({
+  const { data: promptConfigs } = useClientQueries(
+    schema
+  ).promptConfig.useFindMany({
     where: { isDeleted: false, isActive: true },
     orderBy: { name: "asc" },
   });
 
-  const { mutateAsync: updateProject } = useClientQueries(schema).projects.useUpdate();
+  const { mutateAsync: updateProject } =
+    useClientQueries(schema).projects.useUpdate();
   const [updatingPromptConfig, setUpdatingPromptConfig] = useState(false);
 
   const handlePromptConfigChange = async (value: string) => {

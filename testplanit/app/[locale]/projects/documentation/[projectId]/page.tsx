@@ -76,7 +76,8 @@ export default function ProjectDocumentation({
       key: "project_docs_default",
     },
   });
-  const { mutateAsync: updateProject } = useClientQueries(schema).projects.useUpdate();
+  const { mutateAsync: updateProject } =
+    useClientQueries(schema).projects.useUpdate();
 
   // Use a ref to track the original docs from the database
   const originalDocsRef = useRef<object | null>(null);

@@ -227,7 +227,9 @@ function useFieldOptionsMap(fieldIds: number[]) {
 function CaseDetail({ entityId }: { entityId: number }) {
   const t = useTranslations("common");
   const tDetail = useTranslations("autoTag.entityDetail");
-  const { data, isLoading } = useClientQueries(schema).repositoryCases.useFindUnique(
+  const { data, isLoading } = useClientQueries(
+    schema
+  ).repositoryCases.useFindUnique(
     {
       where: { id: entityId },
       include: {

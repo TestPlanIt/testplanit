@@ -41,7 +41,10 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    testRunResults: { useCreate: mockUseCreateTestRunResults, useFindMany: mockUseFindManyTestRunResults },
+    testRunResults: {
+      useCreate: mockUseCreateTestRunResults,
+      useFindMany: mockUseFindManyTestRunResults,
+    },
     workflows: { useFindFirst: mockUseFindFirstWorkflows },
     status: { useFindMany: mockUseFindManyStatus },
     templateResultAssignment: { useFindMany: () => ({ data: [] }) },
@@ -50,8 +53,6 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     templates: { useFindMany: mockUseFindManyTemplates },
   }),
 }));
-
-
 
 vi.mock("next-auth/react", () => ({
   useSession: mockUseSession,
@@ -439,9 +440,7 @@ describe("TestRunCaseDetails", () => {
   it("renders issues when test case has issues", () => {
     const testCaseWithIssues = {
       ...mockTestCase,
-      caseIssues: [
-        { issue: { id: 1, name: "BUG-001", externalId: "ext-1" } },
-      ],
+      caseIssues: [{ issue: { id: 1, name: "BUG-001", externalId: "ext-1" } }],
     };
     mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
       data: testCaseWithIssues,

@@ -10,13 +10,18 @@ vi.mock("next-auth/react", () => ({
   useSession: vi.fn(),
 }));
 
-const { useFindFirstUserPreferences, useUpdateUserPreferences } = vi.hoisted(() => ({
-  useFindFirstUserPreferences: vi.fn(),
-  useUpdateUserPreferences: vi.fn(),
-}));
+const { useFindFirstUserPreferences, useUpdateUserPreferences } = vi.hoisted(
+  () => ({
+    useFindFirstUserPreferences: vi.fn(),
+    useUpdateUserPreferences: vi.fn(),
+  })
+);
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    userPreferences: { useFindFirst: useFindFirstUserPreferences, useUpdate: useUpdateUserPreferences },
+    userPreferences: {
+      useFindFirst: useFindFirstUserPreferences,
+      useUpdate: useUpdateUserPreferences,
+    },
   }),
 }));
 

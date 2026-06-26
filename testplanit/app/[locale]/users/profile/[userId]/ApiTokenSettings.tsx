@@ -85,7 +85,9 @@ export function ApiTokenSettings({
   const [newToken, setNewToken] = useState<NewTokenData | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const { data: tokens, refetch: refetchTokens } = useClientQueries(schema).apiToken.useFindMany({
+  const { data: tokens, refetch: refetchTokens } = useClientQueries(
+    schema
+  ).apiToken.useFindMany({
     where: { userId, isActive: true },
     orderBy: { createdAt: "desc" },
   });

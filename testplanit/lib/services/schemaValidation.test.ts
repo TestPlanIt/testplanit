@@ -457,9 +457,7 @@ describeIntegration(
       }
 
       expect(caught).toBeInstanceOf(ORMError);
-      expect((caught as ORMError).code).toBe(
-        "P2002"
-      );
+      expect((caught as ORMError).code).toBe("P2002");
       expect(isAlreadyPendingError(caught)).toBe(true);
     });
 

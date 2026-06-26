@@ -64,7 +64,9 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   // Hydrate URL-loaded status ids → {name, color}. The combobox's `value` is
   // user-controlled; without a hydrate step, a fresh page load with
   // `?status=2` would show "#2" until the user re-opened the dropdown.
-  const { data: hydratedStatusesRaw } = useClientQueries(schema).status.useFindMany(
+  const { data: hydratedStatusesRaw } = useClientQueries(
+    schema
+  ).status.useFindMany(
     {
       where: { id: { in: statusIds } },
       select: {
@@ -103,7 +105,9 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   // (id === 0) doesn't exist in the DB, so filter it out of the lookup.
   const configIds = filters.configIds ?? [];
   const realConfigIds = configIds.filter((id) => id !== 0);
-  const { data: hydratedConfigsRaw } = useClientQueries(schema).configurations.useFindMany(
+  const { data: hydratedConfigsRaw } = useClientQueries(
+    schema
+  ).configurations.useFindMany(
     {
       where: { id: { in: realConfigIds } },
       select: { id: true, name: true },
@@ -125,7 +129,9 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   }, [configIds, hydratedConfigsRaw, t]);
 
   const datasetIds = filters.datasetIds ?? [];
-  const { data: hydratedDatasetsRaw } = useClientQueries(schema).dataSet.useFindMany(
+  const { data: hydratedDatasetsRaw } = useClientQueries(
+    schema
+  ).dataSet.useFindMany(
     {
       where: { id: { in: datasetIds } },
       select: {

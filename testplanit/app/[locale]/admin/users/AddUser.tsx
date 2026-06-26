@@ -84,7 +84,8 @@ export function AddUser({ open, onClose }: AddUserProps) {
   // Fetch roles, projects, groups, and registration settings...
   const { data: roles } = useClientQueries(schema).roles.useFindMany();
   const defaultRoleId = roles?.find((role) => role.isDefault)?.id;
-  const { data: registrationSettings } = useClientQueries(schema).registrationSettings.useFindFirst();
+  const { data: registrationSettings } =
+    useClientQueries(schema).registrationSettings.useFindFirst();
 
   // Email server configuration status
   const [isEmailServerConfigured, setIsEmailServerConfigured] = useState(true);
@@ -92,7 +93,9 @@ export function AddUser({ open, onClose }: AddUserProps) {
   // Mirrors the revoke-password pre-flight: a passwordless login path exists
   // when either an enabled MAGIC_LINK SSO provider is present or the email
   // server env vars are configured.
-  const { data: magicLinkProvider } = useClientQueries(schema).ssoProvider.useFindFirst({
+  const { data: magicLinkProvider } = useClientQueries(
+    schema
+  ).ssoProvider.useFindFirst({
     where: { type: "MAGIC_LINK", enabled: true },
     select: { id: true },
   });

@@ -30,7 +30,9 @@ const RenderSharedGroupInList: React.FC<RenderSharedGroupInListProps> = ({
   sharedStepGroupId,
 }) => {
   const t = useTranslations("repository.steps");
-  const { data: items, isLoading } = useClientQueries(schema).sharedStepItem.useFindMany(
+  const { data: items, isLoading } = useClientQueries(
+    schema
+  ).sharedStepItem.useFindMany(
     {
       where: {
         sharedStepGroupId,

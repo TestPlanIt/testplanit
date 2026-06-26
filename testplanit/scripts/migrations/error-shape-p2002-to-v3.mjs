@@ -32,9 +32,13 @@ for (const file of files) {
     const lines = src.split("\n");
     let lastImport = -1;
     for (let i = 0; i < lines.length; i++) {
-      if (/^\s*import\s.+from\s+["'].+["'];?\s*$/.test(lines[i])) lastImport = i;
+      if (/^\s*import\s.+from\s+["'].+["'];?\s*$/.test(lines[i]))
+        lastImport = i;
       // stop scanning once real code starts (after some imports seen)
-      if (lastImport >= 0 && /^(export|const|function|async|class)\s/.test(lines[i]))
+      if (
+        lastImport >= 0 &&
+        /^(export|const|function|async|class)\s/.test(lines[i])
+      )
         break;
     }
     if (lastImport >= 0) {

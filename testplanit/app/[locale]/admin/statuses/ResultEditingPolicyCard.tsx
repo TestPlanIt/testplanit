@@ -35,7 +35,9 @@ type PolicyMode = "none" | "disabled" | "max";
  */
 export function ResultEditingPolicyCard() {
   const t = useTranslations("admin.statuses.editPolicy");
-  const { data: config } = useClientQueries(schema).appConfig.useFindUnique({ where: { key: KEY } });
+  const { data: config } = useClientQueries(schema).appConfig.useFindUnique({
+    where: { key: KEY },
+  });
   const upsert = useClientQueries(schema).appConfig.useUpsert();
   const remove = useClientQueries(schema).appConfig.useDelete();
 

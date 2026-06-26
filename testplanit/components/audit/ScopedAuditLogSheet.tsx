@@ -221,7 +221,9 @@ function ScopedAuditLogContent({
     [rows]
   );
 
-  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({ where: whereClause });
+  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({
+    where: whereClause,
+  });
 
   // Action options come from the distinct actions recorded for this entity, so
   // the dropdown lists only relevant actions.

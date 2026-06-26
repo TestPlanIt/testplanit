@@ -32,7 +32,8 @@ export function DeleteConfigCategory({
   onClose,
 }: DeleteConfigCategoryProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfigCategories } = useClientQueries(schema).configCategories.useUpdate();
+  const { mutateAsync: updateConfigCategories } =
+    useClientQueries(schema).configCategories.useUpdate();
   const { mutateAsync: updateManyConfigurations } =
     useClientQueries(schema).configurations.useUpdateMany();
   const { mutateAsync: updateManyConfigVariants } =
@@ -48,7 +49,9 @@ export function DeleteConfigCategory({
     handleSubmit,
   } = form;
 
-  const { data: variants } = useClientQueries(schema).configVariants.useFindMany({
+  const { data: variants } = useClientQueries(
+    schema
+  ).configVariants.useFindMany({
     where: {
       AND: [
         {
@@ -59,7 +62,9 @@ export function DeleteConfigCategory({
     },
   });
 
-  const { data: configurations } = useClientQueries(schema).configurations.useFindMany({
+  const { data: configurations } = useClientQueries(
+    schema
+  ).configurations.useFindMany({
     include: { variants: true },
     where: {
       AND: [

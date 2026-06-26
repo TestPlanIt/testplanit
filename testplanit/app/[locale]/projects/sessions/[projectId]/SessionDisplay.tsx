@@ -6,7 +6,15 @@ import { Loading } from "@/components/Loading";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Color, Configurations, FieldIcon, Sessions, Templates, User, Workflows } from "~/zenstack/models";
+import type {
+  Color,
+  Configurations,
+  FieldIcon,
+  Sessions,
+  Templates,
+  User,
+  Workflows,
+} from "~/zenstack/models";
 import { CirclePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -203,7 +211,9 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
 }) => {
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
-  const { data: colors, isLoading: isColorsLoading } = useClientQueries(schema).color.useFindMany({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(
+    schema
+  ).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
@@ -226,7 +236,9 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   );
   const { enabled: reviewFeatureEnabled } =
     useReviewFeatureEnabled(sessionProjectId);
-  const { data: pendingReviewsForVisibleSessions } = useClientQueries(schema).reviewRequest.useFindMany(
+  const { data: pendingReviewsForVisibleSessions } = useClientQueries(
+    schema
+  ).reviewRequest.useFindMany(
     {
       where: {
         entityType: "SESSION",
@@ -294,7 +306,9 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
       { enabled: !!duplicateSource }
     );
 
-  const { data: duplicateFieldValues } = useClientQueries(schema).sessionFieldValues.useFindMany(
+  const { data: duplicateFieldValues } = useClientQueries(
+    schema
+  ).sessionFieldValues.useFindMany(
     {
       where: { sessionId: duplicateSource?.id ?? 0 },
       select: { fieldId: true, value: true },

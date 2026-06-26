@@ -12,7 +12,6 @@
  * Run with: pnpm test:e2e:setup-db
  */
 
-
 import bcrypt from "bcrypt";
 import { createRawDbClient } from "~/lib/rawDbClient";
 
@@ -110,9 +109,7 @@ async function resetDatabase() {
       console.log("   TRUNCATE failed, trying DELETE approach...");
       for (const { tablename } of tables.reverse()) {
         try {
-          await db.$executeRawUnsafe(
-            `DELETE FROM "public"."${tablename}";`
-          );
+          await db.$executeRawUnsafe(`DELETE FROM "public"."${tablename}";`);
         } catch {
           // Ignore errors for individual tables (FK constraints)
         }

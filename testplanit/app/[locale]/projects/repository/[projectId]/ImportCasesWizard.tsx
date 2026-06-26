@@ -238,7 +238,9 @@ export function ImportCasesWizard({
 
   const defaultTemplate = templates?.find((template) => template.isDefault);
 
-  const { data: folders } = useClientQueries(schema).repositoryFolders.useFindMany({
+  const { data: folders } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany({
     where: { projectId, isDeleted: false },
     orderBy: { order: "asc" },
   });
@@ -371,7 +373,9 @@ export function ImportCasesWizard({
   }, [currentPage, effectiveImportRows, fieldMappings, projectId]);
 
   // Check if project has an active LLM integration (for markdown parsing)
-  const { data: projectLlmIntegrations } = useClientQueries(schema).projectLlmIntegration.useFindMany({
+  const { data: projectLlmIntegrations } = useClientQueries(
+    schema
+  ).projectLlmIntegration.useFindMany({
     where: { projectId, isActive: true },
   });
   const hasLlmIntegration =

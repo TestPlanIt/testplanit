@@ -60,13 +60,17 @@ export function IntegrationsList({
   // Conditional bullet in the Remove + Switch dialogs: shown only when an
   // inbound webhook actually exists for the project. Cheap query — same
   // shape the webhooks page uses, dedupes via React Query when both mount.
-  const { data: inboundConfigs } = useClientQueries(schema).webhookConfig.useFindMany({
+  const { data: inboundConfigs } = useClientQueries(
+    schema
+  ).webhookConfig.useFindMany({
     where: { projectId, direction: "INBOUND" },
     select: { id: true },
   });
   const hasInboundWebhook = (inboundConfigs?.length ?? 0) > 0;
 
-  const { data: linkedProjects } = useClientQueries(schema).integrationProject.useFindMany(
+  const { data: linkedProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
     {
       where: {
         projectIntegrationId: currentIntegration?.id ?? "",

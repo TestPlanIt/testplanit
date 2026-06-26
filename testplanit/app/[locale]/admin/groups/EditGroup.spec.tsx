@@ -168,18 +168,26 @@ let useEmptyAssignments = false;
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     groups: { useUpdate: () => ({ mutateAsync: mockUpdateGroup }) },
-    user: { useFindMany: () => ({
-    data: stableAllUsers,
-    isLoading: false,
-  }) },
-    groupAssignment: { useFindMany: () => ({
-    data: useEmptyAssignments ? stableEmptyAssignments : stableGroupAssignments,
-    isLoading: false,
-  }), useCreateMany: () => ({
-    mutateAsync: mockCreateManyGroupAssignment,
-  }), useDeleteMany: () => ({
-    mutateAsync: mockDeleteManyGroupAssignment,
-  }) },
+    user: {
+      useFindMany: () => ({
+        data: stableAllUsers,
+        isLoading: false,
+      }),
+    },
+    groupAssignment: {
+      useFindMany: () => ({
+        data: useEmptyAssignments
+          ? stableEmptyAssignments
+          : stableGroupAssignments,
+        isLoading: false,
+      }),
+      useCreateMany: () => ({
+        mutateAsync: mockCreateManyGroupAssignment,
+      }),
+      useDeleteMany: () => ({
+        mutateAsync: mockDeleteManyGroupAssignment,
+      }),
+    },
   }),
 }));
 

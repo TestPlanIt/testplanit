@@ -1,4 +1,11 @@
-import { DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat } from "~/zenstack/models";
+import {
+  DateFormat,
+  ItemsPerPage,
+  Locale,
+  NotificationMode,
+  Theme,
+  TimeFormat,
+} from "~/zenstack/models";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { Session } from "next-auth";

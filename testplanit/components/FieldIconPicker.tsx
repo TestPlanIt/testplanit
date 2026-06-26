@@ -28,10 +28,14 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
   initialColorId,
 }) => {
   const tCommon = useTranslations("common");
-  const { data: allIcons, isLoading: isIconsLoading } = useClientQueries(schema).fieldIcon.useFindMany({
+  const { data: allIcons, isLoading: isIconsLoading } = useClientQueries(
+    schema
+  ).fieldIcon.useFindMany({
     orderBy: { name: "asc" },
   });
-  const { data: colors, isLoading: isColorsLoading } = useClientQueries(schema).color.useFindMany({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(
+    schema
+  ).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });

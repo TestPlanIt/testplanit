@@ -822,8 +822,10 @@ export default function SessionPage() {
   >(null);
   const [pendingAttachmentChanges, setPendingAttachmentChanges] =
     useState<AttachmentChanges>({ edits: [], deletes: [] });
-  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
-  const { mutateAsync: updateAttachments } = useClientQueries(schema).attachments.useUpdate();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateAttachments } =
+    useClientQueries(schema).attachments.useUpdate();
   const _version = searchParams.get("version");
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -833,7 +835,9 @@ export default function SessionPage() {
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const [refreshResults, setRefreshResults] = useState(0);
-  const { isLoading: isLoadingProjectData } = useClientQueries(schema).projects.useFindFirst({
+  const { isLoading: isLoadingProjectData } = useClientQueries(
+    schema
+  ).projects.useFindFirst({
     where: { id: numericProjectId ?? undefined },
     select: {
       projectIntegrations: {
@@ -1024,7 +1028,9 @@ export default function SessionPage() {
     configuration: { id: number; name: string } | null;
   };
 
-  const { data: siblingSessions } = useClientQueries(schema).sessions.useFindMany(
+  const { data: siblingSessions } = useClientQueries(
+    schema
+  ).sessions.useFindMany(
     {
       where: {
         configurationGroupId: sessionData?.configurationGroupId ?? undefined,
@@ -1073,13 +1079,17 @@ export default function SessionPage() {
   );
 
   // Fetch versions
-  const { data: versions } = useClientQueries(schema).sessionVersions.useFindMany({
+  const { data: versions } = useClientQueries(
+    schema
+  ).sessionVersions.useFindMany({
     where: { sessionId: Number(sessionId) },
     orderBy: { version: "desc" },
   });
 
   // Fetch session results for PDF export
-  const { data: sessionResultsForExport } = useClientQueries(schema).sessionResults.useFindMany({
+  const { data: sessionResultsForExport } = useClientQueries(
+    schema
+  ).sessionResults.useFindMany({
     where: { sessionId: Number(sessionId), isDeleted: false },
     include: {
       status: { include: { color: true } },
@@ -1138,42 +1148,44 @@ export default function SessionPage() {
   });
 
   // Add data fetching queries
-  const { data: templates, isLoading: isLoadingTemplates } =
-    useClientQueries(schema).templates.useFindMany({
-      where: {
-        projects: {
-          some: {
-            projectId: numericProjectId ?? undefined,
-          },
+  const { data: templates, isLoading: isLoadingTemplates } = useClientQueries(
+    schema
+  ).templates.useFindMany({
+    where: {
+      projects: {
+        some: {
+          projectId: numericProjectId ?? undefined,
         },
-        isDeleted: false,
-        isEnabled: true,
       },
-      orderBy: {
-        templateName: "asc",
-      },
-    });
+      isDeleted: false,
+      isEnabled: true,
+    },
+    orderBy: {
+      templateName: "asc",
+    },
+  });
 
-  const { data: workflows, isLoading: isLoadingWorkflows } =
-    useClientQueries(schema).workflows.useFindMany({
-      where: {
-        isDeleted: false,
-        isEnabled: true,
-        scope: "SESSIONS",
-        projects: {
-          some: {
-            projectId: numericProjectId ?? undefined,
-          },
+  const { data: workflows, isLoading: isLoadingWorkflows } = useClientQueries(
+    schema
+  ).workflows.useFindMany({
+    where: {
+      isDeleted: false,
+      isEnabled: true,
+      scope: "SESSIONS",
+      projects: {
+        some: {
+          projectId: numericProjectId ?? undefined,
         },
       },
-      include: {
-        icon: true,
-        color: true,
-      },
-      orderBy: {
-        order: "asc",
-      },
-    });
+    },
+    include: {
+      icon: true,
+      color: true,
+    },
+    orderBy: {
+      order: "asc",
+    },
+  });
 
   const reachableGatedStates = useMemo(() => {
     if (!workflows || !sessionData) return [];
@@ -1197,22 +1209,23 @@ export default function SessionPage() {
       }));
   }, [workflows, sessionData]);
 
-  const { data: milestones, isLoading: isLoadingMilestones } =
-    useClientQueries(schema).milestones.useFindMany({
-      where: {
-        projectId: numericProjectId ?? undefined,
-        isDeleted: false,
-        isCompleted: false,
-      },
-      include: {
-        milestoneType: {
-          include: {
-            icon: true,
-          },
+  const { data: milestones, isLoading: isLoadingMilestones } = useClientQueries(
+    schema
+  ).milestones.useFindMany({
+    where: {
+      projectId: numericProjectId ?? undefined,
+      isDeleted: false,
+      isCompleted: false,
+    },
+    include: {
+      milestoneType: {
+        include: {
+          icon: true,
         },
       },
-      orderBy: [{ startedAt: "asc" }, { isStarted: "asc" }],
-    }) as { data: Milestone[]; isLoading: boolean };
+    },
+    orderBy: [{ startedAt: "asc" }, { isStarted: "asc" }],
+  }) as { data: Milestone[]; isLoading: boolean };
 
   // Update form initialization
   useEffect(() => {
@@ -1305,8 +1318,10 @@ export default function SessionPage() {
   }, [isLoading]);
 
   // Add mutation hooks
-  const { mutateAsync: updateSessions } = useClientQueries(schema).sessions.useUpdate();
-  const { mutateAsync: createSessionVersions } = useClientQueries(schema).sessionVersions.useCreate();
+  const { mutateAsync: updateSessions } =
+    useClientQueries(schema).sessions.useUpdate();
+  const { mutateAsync: createSessionVersions } =
+    useClientQueries(schema).sessionVersions.useCreate();
 
   // Add form controls
   const {

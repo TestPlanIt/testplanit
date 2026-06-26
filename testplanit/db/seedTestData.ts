@@ -1,7 +1,6 @@
 import { TestRunType } from "~/zenstack/models";
 import { createRawDbClient } from "~/lib/rawDbClient";
 
-
 const db = createRawDbClient();
 
 /**

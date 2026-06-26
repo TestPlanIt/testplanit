@@ -227,17 +227,9 @@ describe("Prisma queries for reindex", () => {
     expect(
       await mockDb.sharedStepGroup.count({ where: { projectId: 1 } })
     ).toBe(10);
-    expect(await mockDb.testRuns.count({ where: { projectId: 1 } })).toBe(
-      20
-    );
-    expect(await mockDb.sessions.count({ where: { projectId: 1 } })).toBe(
-      15
-    );
-    expect(await mockDb.issue.count({ where: { isDeleted: false } })).toBe(
-      25
-    );
-    expect(await mockDb.milestones.count({ where: { projectId: 1 } })).toBe(
-      5
-    );
+    expect(await mockDb.testRuns.count({ where: { projectId: 1 } })).toBe(20);
+    expect(await mockDb.sessions.count({ where: { projectId: 1 } })).toBe(15);
+    expect(await mockDb.issue.count({ where: { isDeleted: false } })).toBe(25);
+    expect(await mockDb.milestones.count({ where: { projectId: 1 } })).toBe(5);
   });
 });

@@ -51,7 +51,10 @@ const hooks = vi.hoisted(() => ({
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     dataSet: { useFindMany: hooks.useFindManyDataSet },
-    dataSetVersion: { useFindFirst: hooks.useFindFirstDataSetVersion, useFindMany: hooks.useFindManyDataSetVersion },
+    dataSetVersion: {
+      useFindFirst: hooks.useFindFirstDataSetVersion,
+      useFindMany: hooks.useFindManyDataSetVersion,
+    },
     testCaseParameter: { useFindMany: hooks.useFindManyTestCaseParameter },
   }),
 }));

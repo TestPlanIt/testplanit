@@ -181,7 +181,9 @@ describe("searchProjectAuditLogUsers", () => {
 
       // [projectId, take, skip] — a blank/whitespace query adds no values.
       expect(boundValues(qbCompileQuery.mock.calls[0][0])).toEqual([
-        PROJECT_ID, 25, 0,
+        PROJECT_ID,
+        25,
+        0,
       ]);
     });
 
@@ -192,7 +194,9 @@ describe("searchProjectAuditLogUsers", () => {
 
       // take clamped 500 -> 100; skip = page(2) * take(100) = 200.
       expect(boundValues(qbCompileQuery.mock.calls[0][0])).toEqual([
-        PROJECT_ID, 100, 200,
+        PROJECT_ID,
+        100,
+        200,
       ]);
     });
 

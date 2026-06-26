@@ -69,7 +69,9 @@ export function RequestReviewButton({
   // pages worked hard to avoid.
   const shouldAutoFetchPending =
     enabled === true && pendingRequest === undefined;
-  const { data: autoFetchedPending } = useClientQueries(schema).reviewRequest.useFindFirst(
+  const { data: autoFetchedPending } = useClientQueries(
+    schema
+  ).reviewRequest.useFindFirst(
     {
       where: {
         entityType,

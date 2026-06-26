@@ -73,14 +73,15 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     projects: { useFindMany: () => mockProjectsData },
     repositories: { useFindFirst: () => ({ data: { id: 100 } }) },
-    repositoryFolders: { useCreate: () => ({
-    mutateAsync: vi.fn().mockResolvedValue({ id: 99 }),
-  }), useFindMany: () => mockFoldersData },
+    repositoryFolders: {
+      useCreate: () => ({
+        mutateAsync: vi.fn().mockResolvedValue({ id: 99 }),
+      }),
+      useFindMany: () => mockFoldersData,
+    },
     repositoryCases: { useFindMany: () => ({ data: [] }) },
   }),
 }));
-
-
 
 vi.mock("~/lib/navigation", () => ({
   Link: ({ href, children, className }: any) => (

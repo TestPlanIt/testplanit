@@ -62,7 +62,9 @@ export function SharedDatasetVersionPicker({
 }: SharedDatasetVersionPickerProps) {
   const t = useTranslations("projects.settings.datasets.versionPicker");
 
-  const { data: versions, isLoading } = useClientQueries(schema).dataSetVersion.useFindMany({
+  const { data: versions, isLoading } = useClientQueries(
+    schema
+  ).dataSetVersion.useFindMany({
     where: { dataSetId },
     orderBy: { version: "desc" },
     take: 50,

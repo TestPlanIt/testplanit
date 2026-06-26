@@ -19,7 +19,9 @@ export const ResultFieldListDisplay: React.FC<ResultFieldListProps> = ({
   resultFields,
   usePopover = true,
 }) => {
-  const { data: allResultFields } = useClientQueries(schema).resultFields.useFindMany({
+  const { data: allResultFields } = useClientQueries(
+    schema
+  ).resultFields.useFindMany({
     orderBy: { displayName: "asc" },
     where: {
       AND: [

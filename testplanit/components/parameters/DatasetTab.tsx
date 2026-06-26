@@ -246,13 +246,17 @@ export function DatasetTab({
   // semantics), so the "last result" cross-link is meaningless and the
   // queries are skipped entirely to avoid hitting the API with the
   // caller-supplied placeholder caseId.
-  const { data: runHistoryCount } = useClientQueries(schema).testRunCases.useCount(
+  const { data: runHistoryCount } = useClientQueries(
+    schema
+  ).testRunCases.useCount(
     { where: { repositoryCaseId: caseId } },
     { enabled: !isShared }
   );
   const caseHasRunHistory = !isShared && (runHistoryCount ?? 0) > 0;
 
-  const { data: lastResultsRaw } = useClientQueries(schema).testRunCaseIteration.useFindMany(
+  const { data: lastResultsRaw } = useClientQueries(
+    schema
+  ).testRunCaseIteration.useFindMany(
     {
       where: {
         testRunCase: { repositoryCaseId: caseId },
@@ -350,7 +354,9 @@ export function DatasetTab({
   // shared-readonly modes the parent controls the entire surface and
   // there is no Local/Shared notion to switch between.
   const sourceToggleEnabled = !isShared;
-  const { data: assignmentRaw } = useClientQueries(schema).caseSharedDataSetAssignment.useFindUnique(
+  const { data: assignmentRaw } = useClientQueries(
+    schema
+  ).caseSharedDataSetAssignment.useFindUnique(
     {
       where: { caseId },
       include: {
@@ -415,7 +421,9 @@ export function DatasetTab({
   // latest version of the assignment's dataset.
   const pinnedVersionId = assignment?.pinnedVersionId ?? null;
   const sharedDataSetId = assignment?.sharedDataSetId ?? null;
-  const { data: pinnedVersionData } = useClientQueries(schema).dataSetVersion.useFindFirst(
+  const { data: pinnedVersionData } = useClientQueries(
+    schema
+  ).dataSetVersion.useFindFirst(
     {
       where: { id: pinnedVersionId ?? -1 },
       select: { id: true, version: true, rowsJson: true },
@@ -424,7 +432,9 @@ export function DatasetTab({
       enabled: sharedAssignmentActive && pinnedVersionId !== null,
     }
   );
-  const { data: latestVersionData } = useClientQueries(schema).dataSetVersion.useFindFirst(
+  const { data: latestVersionData } = useClientQueries(
+    schema
+  ).dataSetVersion.useFindFirst(
     {
       where: { dataSetId: sharedDataSetId ?? -1 },
       orderBy: { version: "desc" },

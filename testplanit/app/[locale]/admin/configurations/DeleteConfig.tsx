@@ -33,7 +33,8 @@ export function DeleteConfiguration({
   onClose,
 }: DeleteConfigurationProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfiguration } = useClientQueries(schema).configurations.useUpdate();
+  const { mutateAsync: updateConfiguration } =
+    useClientQueries(schema).configurations.useUpdate();
   const t = useTranslations("admin.configurations");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");

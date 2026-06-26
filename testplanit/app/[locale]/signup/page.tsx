@@ -96,12 +96,11 @@ const Signup: NextPage = () => {
     );
 
   // Fetch registration settings to get the default access level for new users
-  const { data: registrationSettings } = useClientQueries(schema).registrationSettings.useFindFirst(
-    undefined,
-    {
-      enabled: sessionCleared,
-    }
-  );
+  const { data: registrationSettings } = useClientQueries(
+    schema
+  ).registrationSettings.useFindFirst(undefined, {
+    enabled: sessionCleared,
+  });
 
   const forceSsoEnabled =
     ssoProviders?.some((provider) => provider.forceSso) || false;

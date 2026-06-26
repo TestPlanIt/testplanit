@@ -60,7 +60,8 @@ export function ManageTags({
     }
   }, [tags]);
 
-  const { mutateAsync: createTags, isPending: isCreating } = useClientQueries(schema).tags.useCreate();
+  const { mutateAsync: createTags, isPending: isCreating } =
+    useClientQueries(schema).tags.useCreate();
   const { mutateAsync: updateTags } = useClientQueries(schema).tags.useUpdate();
 
   const { theme } = useTheme();

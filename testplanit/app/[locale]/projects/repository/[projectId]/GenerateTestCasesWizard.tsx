@@ -1596,7 +1596,9 @@ export function GenerateTestCasesWizard({
 
   // Fetch existing test cases in current folder for context
   // Fetch the maximum order value separately for accurate ordering
-  const { data: maxOrderData } = useClientQueries(schema).repositoryCases.useFindMany({
+  const { data: maxOrderData } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany({
     where: {
       projectId: projectId,
       folderId: folderId,
@@ -1613,7 +1615,9 @@ export function GenerateTestCasesWizard({
   });
 
   // Fetch default workflow state for new test cases
-  const { data: defaultWorkflow } = useClientQueries(schema).workflows.useFindFirst({
+  const { data: defaultWorkflow } = useClientQueries(
+    schema
+  ).workflows.useFindFirst({
     where: {
       projects: {
         some: {

@@ -55,7 +55,9 @@ export function PromptFeatureSection({ feature }: PromptFeatureSectionProps) {
   const systemPromptRef = useRef<HTMLTextAreaElement | null>(null);
   const userPromptRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const { data: integrations } = useClientQueries(schema).llmIntegration.useFindMany({
+  const { data: integrations } = useClientQueries(
+    schema
+  ).llmIntegration.useFindMany({
     where: { isDeleted: false, status: "ACTIVE" },
     include: { llmProviderConfig: true },
     orderBy: { name: "asc" },

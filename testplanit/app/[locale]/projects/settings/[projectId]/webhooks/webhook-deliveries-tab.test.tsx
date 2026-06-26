@@ -29,12 +29,14 @@ const {
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    webhookDelivery: { useFindMany: (...args: any[]) =>
-    mockFindManyWebhookDelivery(...args), useCount: (...args: any[]) =>
-    mockCountWebhookDelivery(...args), useFindUnique: (...args: any[]) =>
-    mockFindUniqueWebhookDelivery(...args) },
-    webhookConfig: { useFindMany: (...args: any[]) =>
-    mockFindManyWebhookConfig(...args) },
+    webhookDelivery: {
+      useFindMany: (...args: any[]) => mockFindManyWebhookDelivery(...args),
+      useCount: (...args: any[]) => mockCountWebhookDelivery(...args),
+      useFindUnique: (...args: any[]) => mockFindUniqueWebhookDelivery(...args),
+    },
+    webhookConfig: {
+      useFindMany: (...args: any[]) => mockFindManyWebhookConfig(...args),
+    },
   }),
 }));
 

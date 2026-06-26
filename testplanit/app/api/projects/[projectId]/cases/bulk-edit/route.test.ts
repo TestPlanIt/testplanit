@@ -1622,47 +1622,45 @@ describe("Bulk Edit API Route", () => {
     });
 
     it("handles timeout gracefully", async () => {
-      (baseDb.$transaction as any).mockImplementation(
-        async (callback: any) => {
-          // v3 $transaction options accept only { isolationLevel } (no
-          // maxWait/timeout), so there's no timeout option to assert here.
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            repositoryCaseVersions: {
-              create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
-              createMany: vi.fn().mockResolvedValue({ count: 2 }),
-            },
-            repositoryCases: {
-              findUnique: vi.fn().mockResolvedValue(mockCases[0]),
-              update: vi.fn().mockResolvedValue({}),
-            },
-            caseFieldValues: {
-              create: vi.fn(),
-              update: vi.fn(),
-              delete: vi.fn(),
-            },
-            steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-            repositoryCaseTag: {
-              create: vi.fn(),
-              createMany: vi.fn().mockResolvedValue({ count: 0 }),
-              deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
-              findMany: vi.fn().mockResolvedValue([]),
-            },
-            repositoryCaseIssue: {
-              create: vi.fn(),
-              createMany: vi.fn().mockResolvedValue({ count: 0 }),
-              deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
-              findMany: vi.fn().mockResolvedValue([]),
-            },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          });
-        }
-      );
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
+        // v3 $transaction options accept only { isolationLevel } (no
+        // maxWait/timeout), so there's no timeout option to assert here.
+        return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
+          repositoryCaseVersions: {
+            create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
+            createMany: vi.fn().mockResolvedValue({ count: 2 }),
+          },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
+          steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
+          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          appConfig: {
+            findUnique: vi.fn().mockResolvedValue({ value: true }),
+          },
+        });
+      });
 
       const [request, context] = createRequest({
         caseIds: [1, 2],

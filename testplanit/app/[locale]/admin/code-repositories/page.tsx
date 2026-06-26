@@ -113,7 +113,9 @@ function CodeRepositoryList() {
   );
 
   // Query for total filtered repositories (for pagination)
-  const { data: totalFilteredRepos } = useClientQueries(schema).codeRepository.useFindMany(
+  const { data: totalFilteredRepos } = useClientQueries(
+    schema
+  ).codeRepository.useFindMany(
     {
       orderBy: queryOrderBy,
       where: queryWhere,
@@ -168,7 +170,8 @@ function CodeRepositoryList() {
   }, [status, session, router]);
 
   // Soft-delete and status update via ZenStack hook
-  const { mutate: updateCodeRepository } = useClientQueries(schema).codeRepository.useUpdate();
+  const { mutate: updateCodeRepository } =
+    useClientQueries(schema).codeRepository.useUpdate();
 
   // Stabilize mutation ref -- ZenStack's mutate changes identity every render
   const updateRef = useRef(updateCodeRepository);

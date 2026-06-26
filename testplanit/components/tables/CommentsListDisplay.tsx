@@ -91,7 +91,9 @@ export const CommentsListDisplay: React.FC<CommentsListDisplayProps> = ({
   const [open, setOpen] = useState(false);
 
   // Fetch first 3 comments when popover is opened
-  const { data: comments, isLoading: isLoadingComments } = useClientQueries(schema).comment.useFindMany(
+  const { data: comments, isLoading: isLoadingComments } = useClientQueries(
+    schema
+  ).comment.useFindMany(
     {
       where: {
         repositoryCaseId: repositoryCaseId,

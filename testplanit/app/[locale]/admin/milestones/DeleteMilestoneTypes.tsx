@@ -38,12 +38,16 @@ export function DeleteMilestoneType({
   const tCommon = useTranslations("common");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateMilestoneType } = useClientQueries(schema).milestoneTypes.useUpdate();
+  const { mutateAsync: updateMilestoneType } =
+    useClientQueries(schema).milestoneTypes.useUpdate();
   const { mutateAsync: deleteManyMilestoneTypesAssignment } =
     useClientQueries(schema).milestoneTypesAssignment.useDeleteMany();
-  const { mutateAsync: updateManyMilestones } = useClientQueries(schema).milestones.useUpdateMany();
+  const { mutateAsync: updateManyMilestones } =
+    useClientQueries(schema).milestones.useUpdateMany();
 
-  const { data: defaultMilestoneType } = useClientQueries(schema).milestoneTypes.useFindFirst({
+  const { data: defaultMilestoneType } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindFirst({
     where: {
       AND: [{ isDefault: true }, { isDeleted: false }],
     },

@@ -63,7 +63,9 @@ export function ConfigureParametersSheet({
   const [editingCell, setEditingCell] = useState(false);
   const [showImportWizard, setShowImportWizard] = useState(false);
 
-  const { data: parameters = [] } = useClientQueries(schema).testCaseParameter.useFindMany(
+  const { data: parameters = [] } = useClientQueries(
+    schema
+  ).testCaseParameter.useFindMany(
     {
       where: { testCaseId: caseId, isDeleted: false },
       orderBy: { order: "asc" },
@@ -75,7 +77,9 @@ export function ConfigureParametersSheet({
   // Confirm step. Cross-project filter is enforced server-side via the
   // dataset read endpoint (Plan 02-02); the count hook here is purely
   // for display copy.
-  const { data: existingRowCount = 0 } = useClientQueries(schema).dataSetRow.useCount(
+  const { data: existingRowCount = 0 } = useClientQueries(
+    schema
+  ).dataSetRow.useCount(
     {
       where: {
         dataSet: {

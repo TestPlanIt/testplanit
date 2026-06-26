@@ -97,7 +97,9 @@ export function StepDuplicateConversionDialog({
   const firstMember = match?.members?.[0];
 
   // Fetch steps for preview from the first member's range
-  const { data: stepsData, isLoading: stepsLoading } = useClientQueries(schema).steps.useFindMany(
+  const { data: stepsData, isLoading: stepsLoading } = useClientQueries(
+    schema
+  ).steps.useFindMany(
     firstMember
       ? {
           where: {

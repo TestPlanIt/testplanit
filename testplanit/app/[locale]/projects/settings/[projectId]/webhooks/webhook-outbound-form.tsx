@@ -313,7 +313,9 @@ export function WebhookOutboundForm({
   const { catalog: scopedCatalog, sections: scopedSections } =
     getCatalogForScope(scope);
 
-  const { data, isLoading, refetch } = useClientQueries(schema).webhookConfig.useFindMany({
+  const { data, isLoading, refetch } = useClientQueries(
+    schema
+  ).webhookConfig.useFindMany({
     where: { projectId, direction: "OUTBOUND" },
     orderBy: { createdAt: "desc" },
     select: {

@@ -230,7 +230,13 @@ describe("PUT /api/scim/v2/Groups/[id]", () => {
   });
 
   it("returns 409 uniqueness on Prisma P2002", async () => {
-    const p2002 = Object.assign(new ORMError(ORMErrorReason.DB_QUERY_ERROR, 'duplicate key value violates unique constraint "uq"'), { dbErrorCode: "23505" });
+    const p2002 = Object.assign(
+      new ORMError(
+        ORMErrorReason.DB_QUERY_ERROR,
+        'duplicate key value violates unique constraint "uq"'
+      ),
+      { dbErrorCode: "23505" }
+    );
     vi.mocked(putScimGroup).mockRejectedValueOnce(p2002);
     const [req, ctx] = makeReq({ method: "PUT", body: validBody });
     const res = await PUT(req, ctx);

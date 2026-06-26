@@ -13,13 +13,27 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const modelsSrc = fs.readFileSync(path.join(ROOT, "zenstack/models.ts"), "utf8");
-const enums = new Set([...modelsSrc.matchAll(/^export const (\w+)/gm)].map((m) => m[1]));
-const allTypes = new Set([...modelsSrc.matchAll(/^export type (\w+)/gm)].map((m) => m[1]));
+const modelsSrc = fs.readFileSync(
+  path.join(ROOT, "zenstack/models.ts"),
+  "utf8"
+);
+const enums = new Set(
+  [...modelsSrc.matchAll(/^export const (\w+)/gm)].map((m) => m[1])
+);
+const allTypes = new Set(
+  [...modelsSrc.matchAll(/^export type (\w+)/gm)].map((m) => m[1])
+);
 const modelTypes = new Set([...allTypes].filter((t) => !enums.has(t)));
 const isModelName = (n) => enums.has(n) || modelTypes.has(n);
 
-const SKIP_DIRS = new Set(["node_modules", ".next", "zenstack", "dist", ".git", "coverage"]);
+const SKIP_DIRS = new Set([
+  "node_modules",
+  ".next",
+  "zenstack",
+  "dist",
+  ".git",
+  "coverage",
+]);
 const files = [];
 (function walk(dir) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -40,7 +54,8 @@ const residual = []; // files still importing @prisma/client after 2a (the 2b se
 
 for (const file of files) {
   let src = fs.readFileSync(file, "utf8");
-  if (!src.includes('"@prisma/client"') && !src.includes("'@prisma/client'")) continue;
+  if (!src.includes('"@prisma/client"') && !src.includes("'@prisma/client'"))
+    continue;
 
   const out = src.replace(IMPORT_RE, (full, indent, wholeType, body) => {
     const specs = body
@@ -67,13 +82,17 @@ for (const file of files) {
 
     const lines = [];
     if (valueNames.length)
-      lines.push(`${indent}import { ${valueNames.join(", ")} } from "~/zenstack/models";`);
+      lines.push(
+        `${indent}import { ${valueNames.join(", ")} } from "~/zenstack/models";`
+      );
     if (typeNames.length)
-      lines.push(`${indent}import type { ${typeNames.join(", ")} } from "~/zenstack/models";`);
+      lines.push(
+        `${indent}import type { ${typeNames.join(", ")} } from "~/zenstack/models";`
+      );
     if (specialSpecs.length) {
       const tprefix = wholeType ? "type " : "";
       lines.push(
-        `${indent}import ${tprefix}{ ${specialSpecs.map((s) => s.text).join(", ")} } from "@prisma/client";`,
+        `${indent}import ${tprefix}{ ${specialSpecs.map((s) => s.text).join(", ")} } from "@prisma/client";`
       );
     }
     return lines.join("\n");
@@ -83,9 +102,14 @@ for (const file of files) {
     fs.writeFileSync(file, out);
     filesChanged++;
   }
-  if (out.includes('from "@prisma/client"')) residual.push(path.relative(ROOT, file));
+  if (out.includes('from "@prisma/client"'))
+    residual.push(path.relative(ROOT, file));
 }
 
-console.log(`Phase 2a: rewrote @prisma/client model/enum imports in ${filesChanged} file(s).`);
-console.log(`\nResidual @prisma/client importers (Prisma / PrismaClient -> handle in 2b): ${residual.length}`);
+console.log(
+  `Phase 2a: rewrote @prisma/client model/enum imports in ${filesChanged} file(s).`
+);
+console.log(
+  `\nResidual @prisma/client importers (Prisma / PrismaClient -> handle in 2b): ${residual.length}`
+);
 for (const f of residual.sort()) console.log("  -", f);

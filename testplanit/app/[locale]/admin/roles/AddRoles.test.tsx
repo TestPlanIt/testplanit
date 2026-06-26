@@ -27,8 +27,13 @@ const { mockCreateRole, mockUpdateManyRoles, mockUpsertRolePermission } =
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    roles: { useCreate: () => ({ mutateAsync: mockCreateRole }), useUpdateMany: () => ({ mutateAsync: mockUpdateManyRoles }) },
-    rolePermission: { useUpsert: () => ({ mutateAsync: mockUpsertRolePermission }) },
+    roles: {
+      useCreate: () => ({ mutateAsync: mockCreateRole }),
+      useUpdateMany: () => ({ mutateAsync: mockUpdateManyRoles }),
+    },
+    rolePermission: {
+      useUpsert: () => ({ mutateAsync: mockUpsertRolePermission }),
+    },
   }),
 }));
 

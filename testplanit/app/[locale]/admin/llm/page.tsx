@@ -70,8 +70,10 @@ function LlmIntegrationList() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { mutateAsync: updateLlmIntegration } = useClientQueries(schema).llmIntegration.useUpdate();
-  const { mutateAsync: updateLlmProviderConfig } = useClientQueries(schema).llmProviderConfig.useUpdate();
+  const { mutateAsync: updateLlmIntegration } =
+    useClientQueries(schema).llmIntegration.useUpdate();
+  const { mutateAsync: updateLlmProviderConfig } =
+    useClientQueries(schema).llmProviderConfig.useUpdate();
   const { mutateAsync: updateManyLlmProviderConfig } =
     useClientQueries(schema).llmProviderConfig.useUpdateMany();
 
@@ -124,7 +126,9 @@ function LlmIntegrationList() {
   );
 
   // Query for total filtered integrations (for pagination)
-  const { data: totalFilteredIntegrations } = useClientQueries(schema).llmIntegration.useFindMany(
+  const { data: totalFilteredIntegrations } = useClientQueries(
+    schema
+  ).llmIntegration.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -263,7 +267,9 @@ function LlmIntegrationList() {
       .reduce((a: Date, b: Date) => (a < b ? a : b));
   }, [totalFilteredIntegrations]);
 
-  const { data: monthlyUsageGroups } = useClientQueries(schema).llmUsage.useGroupBy(
+  const { data: monthlyUsageGroups } = useClientQueries(
+    schema
+  ).llmUsage.useGroupBy(
     {
       by: ["llmIntegrationId"],
       _sum: { totalCost: true },

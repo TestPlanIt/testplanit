@@ -219,13 +219,20 @@ export function AddLlmIntegration({
   // instead of failing on the unique-name constraint. The active-name
   // collision check is the `existingNames`-based Zod refinement already
   // wired into `formSchema`.
-  const { mutateAsync: createLlmIntegration } = useClientQueries(schema).llmIntegration.useUpsert();
-  const { mutateAsync: createLlmProviderConfig } = useClientQueries(schema).llmProviderConfig.useCreate();
-  const { mutateAsync: updateLlmProviderConfig } = useClientQueries(schema).llmProviderConfig.useUpdate();
-  const { data: existingDefaultConfigs } = useClientQueries(schema).llmProviderConfig.useFindMany({
+  const { mutateAsync: createLlmIntegration } =
+    useClientQueries(schema).llmIntegration.useUpsert();
+  const { mutateAsync: createLlmProviderConfig } =
+    useClientQueries(schema).llmProviderConfig.useCreate();
+  const { mutateAsync: updateLlmProviderConfig } =
+    useClientQueries(schema).llmProviderConfig.useUpdate();
+  const { data: existingDefaultConfigs } = useClientQueries(
+    schema
+  ).llmProviderConfig.useFindMany({
     where: { isDefault: true },
   });
-  const { data: existingIntegrations } = useClientQueries(schema).llmIntegration.useFindMany({
+  const { data: existingIntegrations } = useClientQueries(
+    schema
+  ).llmIntegration.useFindMany({
     select: { name: true },
   });
 

@@ -705,9 +705,7 @@ describe("JiraLinkService", () => {
     });
 
     it("should return empty array on error", async () => {
-      mockDb.testRunResults.findUnique.mockRejectedValue(
-        new Error("DB error")
-      );
+      mockDb.testRunResults.findUnique.mockRejectedValue(new Error("DB error"));
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});

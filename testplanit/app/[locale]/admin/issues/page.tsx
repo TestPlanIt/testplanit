@@ -168,7 +168,9 @@ function IssueList() {
 
   // Fetch ONLY basic issue data - no includes at all
   // Projects and counts are fetched separately via direct Prisma queries
-  const { data: issues, isLoading: isLoadingIssues } = useClientQueries(schema).issue.useFindMany(
+  const { data: issues, isLoading: isLoadingIssues } = useClientQueries(
+    schema
+  ).issue.useFindMany(
     issuesWhere
       ? {
           where: issuesWhere,

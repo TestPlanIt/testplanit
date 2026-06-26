@@ -179,7 +179,9 @@ function AuditLogsContent({ session }: { session: Session }) {
 
   // Total count for the filtered set — drives the "loaded of total" footer and
   // gates the export button.
-  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({ where: whereClause });
+  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({
+    where: whereClause,
+  });
 
   // Fetch audit logs as an infinite, virtualized stream — the list only needs
   // the columns the table renders. Excludes the `changes` and `metadata` Json
@@ -287,7 +289,9 @@ function AuditLogsContent({ session }: { session: Session }) {
   }, []);
 
   // Fetch all logs for export (no pagination)
-  const { refetch: refetchAllLogs } = useClientQueries(schema).auditLog.useFindMany(
+  const { refetch: refetchAllLogs } = useClientQueries(
+    schema
+  ).auditLog.useFindMany(
     {
       orderBy: buildAuditLogOrderBy(sortConfig),
       include: {

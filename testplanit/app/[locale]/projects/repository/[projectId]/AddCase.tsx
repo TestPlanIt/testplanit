@@ -336,10 +336,8 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
 
-  const {
-    data: sharedStepGroupsData,
-    isLoading: isLoadingSharedStepGroups,
-  } = useClientQueries(schema).sharedStepGroup.useFindMany(
+  const { data: sharedStepGroupsData, isLoading: isLoadingSharedStepGroups } =
+    useClientQueries(schema).sharedStepGroup.useFindMany(
       {
         where: {
           project: { id: Number(projectId) },
@@ -355,7 +353,9 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       { enabled: !!projectId && open }
     );
 
-  const { data: folder } = useClientQueries(schema).repositoryFolders.useFindFirst(
+  const { data: folder } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindFirst(
     {
       where: {
         id: folderId,
@@ -371,7 +371,9 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     }
   );
 
-  const { data: maxOrder } = useClientQueries(schema).repositoryCases.useFindFirst(
+  const { data: maxOrder } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst(
     {
       where: {
         folderId: folderId,

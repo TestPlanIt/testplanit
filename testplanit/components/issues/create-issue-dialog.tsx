@@ -161,7 +161,9 @@ export function CreateIssueDialog({
   const createIssue = useClientQueries(schema).issue.useCreate();
 
   // Fetch project integrations
-  const { data: projectIntegrations } = useClientQueries(schema).projectIntegration.useFindMany({
+  const { data: projectIntegrations } = useClientQueries(
+    schema
+  ).projectIntegration.useFindMany({
     where: {
       projectId,
       isActive: true,
@@ -175,7 +177,9 @@ export function CreateIssueDialog({
   const integrationId = activeIntegration?.integrationId;
 
   // Fetch active IntegrationProject records for multi-project support (D-09, D-10)
-  const { data: integrationProjects } = useClientQueries(schema).integrationProject.useFindMany(
+  const { data: integrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
     {
       where: {
         projectIntegrationId: activeIntegration?.id || "",

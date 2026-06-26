@@ -79,25 +79,37 @@ const mockDeleteManyGroupAssignment = vi.fn().mockResolvedValue({});
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    roles: { useFindMany: () => ({
-    data: [{ id: 1, name: "Tester", isDeleted: false }],
-  }) },
-    projects: { useFindMany: () => ({
-    data: [{ id: 1, name: "Project A", isDeleted: false }],
-  }) },
-    groups: { useFindMany: () => ({
-    data: [{ id: 1, name: "Group A", isDeleted: false }],
-  }) },
-    projectAssignment: { useCreateMany: () => ({
-    mutateAsync: mockCreateManyProjectAssignment,
-  }), useDeleteMany: () => ({
-    mutateAsync: mockDeleteManyProjectAssignment,
-  }) },
-    groupAssignment: { useCreateMany: () => ({
-    mutateAsync: mockCreateManyGroupAssignment,
-  }), useDeleteMany: () => ({
-    mutateAsync: mockDeleteManyGroupAssignment,
-  }) },
+    roles: {
+      useFindMany: () => ({
+        data: [{ id: 1, name: "Tester", isDeleted: false }],
+      }),
+    },
+    projects: {
+      useFindMany: () => ({
+        data: [{ id: 1, name: "Project A", isDeleted: false }],
+      }),
+    },
+    groups: {
+      useFindMany: () => ({
+        data: [{ id: 1, name: "Group A", isDeleted: false }],
+      }),
+    },
+    projectAssignment: {
+      useCreateMany: () => ({
+        mutateAsync: mockCreateManyProjectAssignment,
+      }),
+      useDeleteMany: () => ({
+        mutateAsync: mockDeleteManyProjectAssignment,
+      }),
+    },
+    groupAssignment: {
+      useCreateMany: () => ({
+        mutateAsync: mockCreateManyGroupAssignment,
+      }),
+      useDeleteMany: () => ({
+        mutateAsync: mockDeleteManyGroupAssignment,
+      }),
+    },
   }),
 }));
 

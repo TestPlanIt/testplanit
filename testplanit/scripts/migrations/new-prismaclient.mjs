@@ -11,7 +11,14 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const SKIP_DIRS = new Set(["node_modules", ".next", "zenstack", "dist", ".git", "coverage"]);
+const SKIP_DIRS = new Set([
+  "node_modules",
+  ".next",
+  "zenstack",
+  "dist",
+  ".git",
+  "coverage",
+]);
 const files = [];
 (function walk(dir) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -33,15 +40,23 @@ for (const file of files) {
   out = out.replace(
     /^([ \t]*)import\s+\{([^}]*)\}\s+from\s+["']@prisma\/client["'];?[ \t]*$/m,
     (full, indent, body) => {
-      const names = body.split(",").map((s) => s.trim()).filter((s) => s && !/^(type\s+)?PrismaClient$/.test(s));
-      return names.length ? `${indent}import { ${names.join(", ")} } from "@prisma/client";` : "";
-    },
+      const names = body
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s && !/^(type\s+)?PrismaClient$/.test(s));
+      return names.length
+        ? `${indent}import { ${names.join(", ")} } from "@prisma/client";`
+        : "";
+    }
   );
 
   // Add the factory import by PREPENDING before the first import (safe even when
   // the first import is multi-line; inserting after the first line would split it).
   if (!out.includes('from "~/lib/rawDbClient"')) {
-    out = out.replace(/^(import\b)/m, `import { createRawDbClient } from "~/lib/rawDbClient";\n$1`);
+    out = out.replace(
+      /^(import\b)/m,
+      `import { createRawDbClient } from "~/lib/rawDbClient";\n$1`
+    );
   }
 
   if (out !== src) {
@@ -49,7 +64,14 @@ for (const file of files) {
     changed++;
   }
 }
-console.log(`Replaced new PrismaClient() with createRawDbClient() in ${changed} file(s).`);
-const left = files.filter((f) => fs.existsSync(f) && /new PrismaClient\(/.test(fs.readFileSync(f, "utf8")));
-console.log(`Remaining 'new PrismaClient(' (with-args, manual): ${left.length}`);
+console.log(
+  `Replaced new PrismaClient() with createRawDbClient() in ${changed} file(s).`
+);
+const left = files.filter(
+  (f) =>
+    fs.existsSync(f) && /new PrismaClient\(/.test(fs.readFileSync(f, "utf8"))
+);
+console.log(
+  `Remaining 'new PrismaClient(' (with-args, manual): ${left.length}`
+);
 for (const f of left) console.log("  -", path.relative(ROOT, f));

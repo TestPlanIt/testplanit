@@ -143,7 +143,9 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     return isNaN(id) ? null : id;
   }, [projectId]);
 
-  const { data: project, isLoading: isProjectLoading } = useClientQueries(schema).projects.useFindFirst(
+  const { data: project, isLoading: isProjectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: {
         AND: [
@@ -321,29 +323,30 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     [setActiveTab, refetchCompletedSessions, refetchIncompleteSessions]
   );
 
-  const { data: milestones, isLoading: isLoadingMilestones } =
-    useClientQueries(schema).milestones.useFindMany({
-      where: {
-        projectId: numericProjectId ?? undefined,
-        isDeleted: false,
-      },
-      include: {
-        milestoneType: {
-          include: {
-            icon: true,
-          },
+  const { data: milestones, isLoading: isLoadingMilestones } = useClientQueries(
+    schema
+  ).milestones.useFindMany({
+    where: {
+      projectId: numericProjectId ?? undefined,
+      isDeleted: false,
+    },
+    include: {
+      milestoneType: {
+        include: {
+          icon: true,
         },
-        children: {
-          include: {
-            milestoneType: {
-              include: {
-                icon: true,
-              },
+      },
+      children: {
+        include: {
+          milestoneType: {
+            include: {
+              icon: true,
             },
           },
         },
       },
-    });
+    },
+  });
 
   // Reset to first page when search changes
   useEffect(() => {
@@ -509,7 +512,9 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   // Chart data, success rate, and date range are derived via useMemo below.
 
   // Query 1: Get the most recent session result to determine the date range
-  const { data: latestSessionResult } = useClientQueries(schema).sessionResults.useFindFirst(
+  const { data: latestSessionResult } = useClientQueries(
+    schema
+  ).sessionResults.useFindFirst(
     {
       where: {
         session: { projectId: numericProjectId ?? undefined },

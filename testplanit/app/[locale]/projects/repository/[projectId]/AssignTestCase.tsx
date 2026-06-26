@@ -59,7 +59,8 @@ export function AssignTestCaseModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update mutation
-  const { mutateAsync: updateTestRunCase } = useClientQueries(schema).testRunCases.useUpdate();
+  const { mutateAsync: updateTestRunCase } =
+    useClientQueries(schema).testRunCases.useUpdate();
 
   const handleAssign = async () => {
     setIsSubmitting(true);

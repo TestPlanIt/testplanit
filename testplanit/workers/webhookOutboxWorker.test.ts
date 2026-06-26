@@ -24,8 +24,7 @@ vi.mock("../lib/queues", () => ({
 vi.mock("../lib/multiTenantDb", () => ({
   isMultiTenantMode: () => mockIsMultiTenantMode(),
   getAllTenantIds: () => mockGetAllTenantIds(),
-  getTenantDbClient: (tenantId: string) =>
-    mockGetTenantDbClient(tenantId),
+  getTenantDbClient: (tenantId: string) => mockGetTenantDbClient(tenantId),
   disconnectAllTenantClients: vi.fn(),
 }));
 

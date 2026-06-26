@@ -47,14 +47,21 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
   })),
 }));
 
-const { useFindFirstUserPreferences, useFindManyProjects, useUpdateUserPreferences } = vi.hoisted(() => ({
+const {
+  useFindFirstUserPreferences,
+  useFindManyProjects,
+  useUpdateUserPreferences,
+} = vi.hoisted(() => ({
   useFindFirstUserPreferences: vi.fn(),
   useFindManyProjects: vi.fn(),
   useUpdateUserPreferences: vi.fn(),
 }));
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    userPreferences: { useFindFirst: useFindFirstUserPreferences, useUpdate: useUpdateUserPreferences },
+    userPreferences: {
+      useFindFirst: useFindFirstUserPreferences,
+      useUpdate: useUpdateUserPreferences,
+    },
     projects: { useFindMany: useFindManyProjects },
   }),
 }));

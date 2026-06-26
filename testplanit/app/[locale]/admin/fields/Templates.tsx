@@ -53,8 +53,10 @@ export default function TemplateComponent() {
   const [deletingTemplate, setDeletingTemplate] =
     useState<ExtendedTemplates | null>(null);
 
-  const { mutateAsync: updateTemplate } = useClientQueries(schema).templates.useUpdate();
-  const { mutateAsync: updateManyTemplate } = useClientQueries(schema).templates.useUpdateMany();
+  const { mutateAsync: updateTemplate } =
+    useClientQueries(schema).templates.useUpdate();
+  const { mutateAsync: updateManyTemplate } =
+    useClientQueries(schema).templates.useUpdateMany();
   const { mutateAsync: createManyTemplateProjectAssignment } =
     useClientQueries(schema).templateProjectAssignment.useCreateMany();
   const { mutateAsync: deleteManyTemplateProjectAssignment } =

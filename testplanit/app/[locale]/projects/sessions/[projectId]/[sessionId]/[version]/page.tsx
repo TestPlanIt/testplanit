@@ -65,14 +65,18 @@ export default function SessionVersionPage() {
   const t = useTranslations();
   const tCommon = useTranslations("common");
 
-  const { data: currentVersion, isLoading } = useClientQueries(schema).sessionVersions.useFindFirst({
+  const { data: currentVersion, isLoading } = useClientQueries(
+    schema
+  ).sessionVersions.useFindFirst({
     where: {
       sessionId: Number(sessionId),
       version: Number(version),
     },
   });
 
-  const { data: versions } = useClientQueries(schema).sessionVersions.useFindMany({
+  const { data: versions } = useClientQueries(
+    schema
+  ).sessionVersions.useFindMany({
     where: { sessionId: Number(sessionId) },
     orderBy: { version: "desc" },
   });
@@ -87,7 +91,9 @@ export default function SessionVersionPage() {
       ? (versions?.[currentVersionIndex + 1]?.version ?? null)
       : null;
 
-  const { data: previousVersion } = useClientQueries(schema).sessionVersions.useFindFirst({
+  const { data: previousVersion } = useClientQueries(
+    schema
+  ).sessionVersions.useFindFirst({
     where: {
       sessionId: Number(sessionId),
       version: previousVersionNumber || -1,

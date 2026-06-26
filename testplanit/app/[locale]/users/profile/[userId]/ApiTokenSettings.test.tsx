@@ -19,7 +19,10 @@ vi.mock("next-intl", () => ({
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    apiToken: { useFindMany: mockUseFindManyApiToken, useDelete: mockUseDeleteApiToken },
+    apiToken: {
+      useFindMany: mockUseFindManyApiToken,
+      useDelete: mockUseDeleteApiToken,
+    },
   }),
 }));
 

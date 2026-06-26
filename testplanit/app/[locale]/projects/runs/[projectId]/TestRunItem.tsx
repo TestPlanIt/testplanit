@@ -142,7 +142,9 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
     Date.now() - new Date(testRun.createdAt).getTime() < 5 * 60 * 1000;
 
   // Fetch test run cases with their results and assigned users
-  const { data: testRunCases } = useClientQueries(schema).testRunCases.useFindMany({
+  const { data: testRunCases } = useClientQueries(
+    schema
+  ).testRunCases.useFindMany({
     where: {
       testRunId: testRun.id,
       isDeleted: false,

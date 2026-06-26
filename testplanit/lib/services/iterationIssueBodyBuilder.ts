@@ -131,8 +131,7 @@ function renderValue(v: unknown): string {
 export async function buildIterationIssueBody(
   input: IterationIssueBodyInput
 ): Promise<IterationIssueBody> {
-  const client: DbLike = (input.client ??
-    defaultDb) as unknown as DbLike;
+  const client: DbLike = (input.client ?? defaultDb) as unknown as DbLike;
 
   // 1. Load the iteration with the data we need for title + body.
   //    WR-03: `isDeleted: false` matches the sibling count query at

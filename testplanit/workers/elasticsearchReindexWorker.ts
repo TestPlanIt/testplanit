@@ -272,11 +272,7 @@ const processor = async (job: Job<ReindexJobData>) => {
           await job.log(
             `Syncing ${count} test runs for project ${project.name}`
           );
-          await syncProjectTestRunsToElasticsearch(
-            project.id,
-            db,
-            tenantId
-          );
+          await syncProjectTestRunsToElasticsearch(project.id, db, tenantId);
           results.testRuns += count;
         }
       }
@@ -292,11 +288,7 @@ const processor = async (job: Job<ReindexJobData>) => {
           await job.log(
             `Syncing ${count} sessions for project ${project.name}`
           );
-          await syncProjectSessionsToElasticsearch(
-            project.id,
-            db,
-            tenantId
-          );
+          await syncProjectSessionsToElasticsearch(project.id, db, tenantId);
           results.sessions += count;
         }
       }
@@ -330,11 +322,7 @@ const processor = async (job: Job<ReindexJobData>) => {
           await job.log(
             `Syncing ${count} milestones for project ${project.name}`
           );
-          await syncProjectMilestonesToElasticsearch(
-            project.id,
-            db,
-            tenantId
-          );
+          await syncProjectMilestonesToElasticsearch(project.id, db, tenantId);
           results.milestones += count;
         }
       }

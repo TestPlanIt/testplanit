@@ -528,11 +528,7 @@ export class SyncService {
 
                   const issueData = await adapter.syncIssue(issueIdentifier);
                   await issueCache.set(integrationId, issueData.id, issueData);
-                  await this.updateExistingIssue(
-                    db,
-                    integrationId,
-                    issueData
-                  );
+                  await this.updateExistingIssue(db, integrationId, issueData);
                   projectSynced++;
                 } catch (error: any) {
                   errors.push(

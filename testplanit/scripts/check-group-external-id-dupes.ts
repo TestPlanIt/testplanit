@@ -21,8 +21,6 @@ import { createRawDbClient } from "~/lib/rawDbClient";
  *   pnpm scim:check-group-dupes
  */
 
-
-
 const db = createRawDbClient();
 
 async function main(): Promise<void> {

@@ -89,7 +89,9 @@ function IntegrationList() {
   const skip = (currentPage - 1) * effectivePageSize;
 
   // Query for total filtered integrations (for pagination)
-  const { data: totalFilteredIntegrations } = useClientQueries(schema).integration.useFindMany(
+  const { data: totalFilteredIntegrations } = useClientQueries(
+    schema
+  ).integration.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -183,7 +185,8 @@ function IntegrationList() {
     }
   }, [status, session, router]);
 
-  const { mutate: deleteIntegration } = useClientQueries(schema).integration.useDelete();
+  const { mutate: deleteIntegration } =
+    useClientQueries(schema).integration.useDelete();
 
   // Stabilize mutation ref — ZenStack's mutate changes identity every render
   const deleteIntegrationRef = useRef(deleteIntegration);

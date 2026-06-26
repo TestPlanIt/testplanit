@@ -137,15 +137,16 @@ export default function QuickScriptPage() {
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
 
   // Load existing config
-  const { data: existingConfig, refetch: refetchConfig } =
-    useClientQueries(schema).projectCodeRepositoryConfig.useFindFirst({
-      where: { projectId },
-      include: {
-        repository: {
-          select: { id: true, name: true, provider: true },
-        },
+  const { data: existingConfig, refetch: refetchConfig } = useClientQueries(
+    schema
+  ).projectCodeRepositoryConfig.useFindFirst({
+    where: { projectId },
+    include: {
+      repository: {
+        select: { id: true, name: true, provider: true },
       },
-    });
+    },
+  });
 
   // Load available repositories for selector
   const { data: repositories, isLoading: repositoriesLoading } =
@@ -154,12 +155,17 @@ export default function QuickScriptPage() {
       select: { id: true, name: true, provider: true },
     });
 
-  const createConfig = useClientQueries(schema).projectCodeRepositoryConfig.useCreate();
-  const updateConfig = useClientQueries(schema).projectCodeRepositoryConfig.useUpdate();
-  const deleteConfig = useClientQueries(schema).projectCodeRepositoryConfig.useDelete();
+  const createConfig =
+    useClientQueries(schema).projectCodeRepositoryConfig.useCreate();
+  const updateConfig =
+    useClientQueries(schema).projectCodeRepositoryConfig.useUpdate();
+  const deleteConfig =
+    useClientQueries(schema).projectCodeRepositoryConfig.useDelete();
 
   // Fetch project data (allow global admin access or project assignment)
-  const { data: project, isLoading: projectLoading } = useClientQueries(schema).projects.useFindFirst(
+  const { data: project, isLoading: projectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: { id: projectId },
       select: {

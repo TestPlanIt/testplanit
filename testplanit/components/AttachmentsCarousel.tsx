@@ -55,7 +55,8 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
   const t = useTranslations();
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(initialIndex);
-  const { mutateAsync: updateAttachments } = useClientQueries(schema).attachments.useUpdate();
+  const { mutateAsync: updateAttachments } =
+    useClientQueries(schema).attachments.useUpdate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState("");

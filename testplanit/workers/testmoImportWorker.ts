@@ -1,5 +1,10 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { Access, ApplicationArea, WorkflowScope, WorkflowType } from "~/zenstack/models";
+import {
+  Access,
+  ApplicationArea,
+  WorkflowScope,
+  WorkflowType,
+} from "~/zenstack/models";
 import type { TestmoImportJob } from "~/zenstack/models";
 import { JsonNull } from "@zenstackhq/orm";
 import type { JsonObject, JsonValue } from "@zenstackhq/orm";
@@ -1143,9 +1148,7 @@ const isTipTapDocumentEmpty = (doc: Record<string, unknown>): boolean => {
   return false;
 };
 
-const convertToTipTapJsonValue = (
-  value: unknown
-): JsonValue | null => {
+const convertToTipTapJsonValue = (value: unknown): JsonValue | null => {
   const doc = convertToTipTapDocument(value);
   if (!doc || isTipTapDocumentEmpty(doc)) {
     return null;
@@ -3091,38 +3094,36 @@ const importRepositoryFolders = async (
       const transactionResult = await db.$transaction<{
         folderId: number;
         created: boolean;
-      }>(
-        async (tx) => {
-          const existing = await tx.repositoryFolders.findFirst({
-            where: {
-              projectId,
-              repositoryId,
-              parentId,
-              name,
-              isDeleted: false,
-            },
-          });
+      }>(async (tx) => {
+        const existing = await tx.repositoryFolders.findFirst({
+          where: {
+            projectId,
+            repositoryId,
+            parentId,
+            name,
+            isDeleted: false,
+          },
+        });
 
-          if (existing) {
-            return { folderId: existing.id, created: false };
-          }
-
-          const folder = await tx.repositoryFolders.create({
-            data: {
-              projectId,
-              repositoryId,
-              parentId,
-              name,
-              order,
-              creatorId,
-              createdAt,
-              ...(docsValue !== null ? { docs: docsValue } : {}),
-            },
-          });
-
-          return { folderId: folder.id, created: true };
+        if (existing) {
+          return { folderId: existing.id, created: false };
         }
-      );
+
+        const folder = await tx.repositoryFolders.create({
+          data: {
+            projectId,
+            repositoryId,
+            parentId,
+            name,
+            order,
+            creatorId,
+            createdAt,
+            ...(docsValue !== null ? { docs: docsValue } : {}),
+          },
+        });
+
+        return { folderId: folder.id, created: true };
+      });
 
       const folderId = transactionResult.folderId;
 
@@ -3417,422 +3418,498 @@ const importRepositoryCases = async (
     if (records.length === 0) {
       return;
     }
-    await db.$transaction(
-      async (tx: TxClient) => {
-        // Phase 13 SAF-01 — opt this bulk import chunk out of row-level CDC
-        // capture. The audit_row_change() trigger early-returns when
-        // app.skip_audit is true, collapsing the ~9x per-row trigger overhead
-        // back to ~1x (SPIKE-02) so the import transaction does not blow its
-        // timeout. The job-level captureAuditEvent retains the semantic
-        // coverage for the import as a whole. SET LOCAL only inside a
-        // $transaction (Pitfall A).
-        await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
-        for (const record of records) {
-          const caseSourceId = toNumberValue(record.id);
-          const projectSourceId = toNumberValue(record.project_id);
-          const repoSourceId = toNumberValue(record.repo_id);
-          const folderSourceId = toNumberValue(record.folder_id);
-          const caseName =
-            toStringValue(record.name) ?? `Imported Case ${caseSourceId ?? 0}`;
+    await db.$transaction(async (tx: TxClient) => {
+      // Phase 13 SAF-01 — opt this bulk import chunk out of row-level CDC
+      // capture. The audit_row_change() trigger early-returns when
+      // app.skip_audit is true, collapsing the ~9x per-row trigger overhead
+      // back to ~1x (SPIKE-02) so the import transaction does not blow its
+      // timeout. The job-level captureAuditEvent retains the semantic
+      // coverage for the import as a whole. SET LOCAL only inside a
+      // $transaction (Pitfall A).
+      await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
+      for (const record of records) {
+        const caseSourceId = toNumberValue(record.id);
+        const projectSourceId = toNumberValue(record.project_id);
+        const repoSourceId = toNumberValue(record.repo_id);
+        const folderSourceId = toNumberValue(record.folder_id);
+        const caseName =
+          toStringValue(record.name) ?? `Imported Case ${caseSourceId ?? 0}`;
 
-          if (
-            caseSourceId === null ||
-            projectSourceId === null ||
-            repoSourceId === null
-          ) {
-            decrementEntityTotal(context, "repositoryCases");
-            continue;
-          }
+        if (
+          caseSourceId === null ||
+          projectSourceId === null ||
+          repoSourceId === null
+        ) {
+          decrementEntityTotal(context, "repositoryCases");
+          continue;
+        }
 
-          const projectId = projectIdMap.get(projectSourceId);
-          if (!projectId) {
-            logMessage(
-              context,
-              "Skipping case due to missing project mapping",
-              {
-                caseSourceId,
-                projectSourceId,
-              }
-            );
-            decrementEntityTotal(context, "repositoryCases");
-            canonicalCaseIds.delete(caseSourceId);
-            stepsByCaseId.delete(caseSourceId);
-            continue;
-          }
-
-          const targetRepoId = getPreferredRepositoryId(
+        const projectId = projectIdMap.get(projectSourceId);
+        if (!projectId) {
+          logMessage(context, "Skipping case due to missing project mapping", {
+            caseSourceId,
             projectSourceId,
-            repoSourceId,
-            canonicalRepoIdByProject
-          );
-          caseMetaMap.set(caseSourceId, { projectId, name: caseName });
+          });
+          decrementEntityTotal(context, "repositoryCases");
+          canonicalCaseIds.delete(caseSourceId);
+          stepsByCaseId.delete(caseSourceId);
+          continue;
+        }
 
-          if (targetRepoId === null) {
-            const existingFallback = await tx.repositoryCases.findFirst({
-              where: {
-                projectId,
-                name: caseName,
-                isDeleted: false,
-              },
-              select: { id: true },
-            });
+        const targetRepoId = getPreferredRepositoryId(
+          projectSourceId,
+          repoSourceId,
+          canonicalRepoIdByProject
+        );
+        caseMetaMap.set(caseSourceId, { projectId, name: caseName });
 
-            if (existingFallback) {
-              caseIdMap.set(caseSourceId, existingFallback.id);
-              summary.total += 1;
-              summary.mapped += 1;
-            }
-
-            logMessage(
-              context,
-              "Skipping case due to missing canonical repository",
-              {
-                caseSourceId,
-                projectSourceId,
-                repoSourceId,
-              }
-            );
-            decrementEntityTotal(context, "repositoryCases");
-            canonicalCaseIds.delete(caseSourceId);
-            stepsByCaseId.delete(caseSourceId);
-            continue;
-          }
-
-          let repositoryId = repositoryIdMap.get(targetRepoId);
-          if (repositoryId === undefined) {
-            const repository = await tx.repositories.create({
-              data: { projectId },
-            });
-            repositoryId = repository.id;
-            repositoryIdMap.set(targetRepoId, repositoryId);
-          }
-
-          const resolvedRepositoryId = repositoryId;
-
-          repositoryIdMap.set(repoSourceId, resolvedRepositoryId);
-
-          let folderId =
-            folderSourceId !== null
-              ? (folderIdMap.get(folderSourceId) ?? null)
-              : null;
-          if (folderId == null) {
-            const rootFolderId =
-              repositoryRootFolderMap.get(resolvedRepositoryId);
-            if (rootFolderId) {
-              folderId = rootFolderId;
-            } else {
-              const fallbackFolder = await tx.repositoryFolders.create({
-                data: {
-                  projectId,
-                  repositoryId: resolvedRepositoryId,
-                  name: "Imported",
-                  creatorId: fallbackCreator,
-                },
-              });
-              folderId = fallbackFolder.id;
-              repositoryRootFolderMap.set(
-                resolvedRepositoryId,
-                fallbackFolder.id
-              );
-            }
-          }
-
-          if (folderId == null) {
-            logMessage(context, "Skipping case due to missing folder mapping", {
-              caseSourceId,
-              folderSourceId,
-            });
-            decrementEntityTotal(context, "repositoryCases");
-            canonicalCaseIds.delete(caseSourceId);
-            stepsByCaseId.delete(caseSourceId);
-            continue;
-          }
-
-          const resolvedFolderId = folderId;
-          const className = toStringValue(record.key);
-
-          // Check for existing case matching the unique constraint
-          // (projectId, name, className, source) — including soft-deleted
-          // records since the constraint does not include isDeleted
-          const existing = await tx.repositoryCases.findFirst({
+        if (targetRepoId === null) {
+          const existingFallback = await tx.repositoryCases.findFirst({
             where: {
               projectId,
               name: caseName,
-              className: className ?? null,
-              source: "MANUAL",
+              isDeleted: false,
             },
+            select: { id: true },
           });
 
-          if (existing) {
-            // Restore soft-deleted cases so they can be reused
-            if (existing.isDeleted) {
-              await tx.repositoryCases.update({
-                where: { id: existing.id },
-                data: { isDeleted: false },
-              });
-            }
-            caseIdMap.set(caseSourceId, existing.id);
-            const existingKey = toStringValue(record.key);
-            if (existingKey) {
-              caseKeyMap.set(`${projectSourceId}:${existingKey}`, existing.id);
-            }
+          if (existingFallback) {
+            caseIdMap.set(caseSourceId, existingFallback.id);
             summary.total += 1;
             summary.mapped += 1;
-            incrementEntityProgress(context, "repositoryCases", 0, 1);
-            processedSinceLastPersist += 1;
-            if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
-              const message = formatInProgressStatus(
-                context,
-                "repositoryCases"
-              );
-              await persistProgress("repositoryCases", message);
-              processedSinceLastPersist = 0;
+          }
+
+          logMessage(
+            context,
+            "Skipping case due to missing canonical repository",
+            {
+              caseSourceId,
+              projectSourceId,
+              repoSourceId,
             }
-            canonicalCaseIds.delete(caseSourceId);
-            stepsByCaseId.delete(caseSourceId);
-            continue;
-          }
-
-          const templateSourceId = toNumberValue(record.template_id);
-          const stateSourceId = toNumberValue(record.state_id);
-
-          let templateId: number | null = null;
-          if (templateSourceId !== null) {
-            const mappedTemplateId = templateIdMap.get(templateSourceId);
-            if (mappedTemplateId !== undefined) {
-              templateId = mappedTemplateId;
-            } else {
-              const templateName = templateNameBySourceId.get(templateSourceId);
-              if (templateName) {
-                templateId =
-                  resolvedTemplateIdsByName.get(templateName) ?? null;
-                if (!templateId) {
-                  const existingTemplate = await tx.templates.findFirst({
-                    where: { templateName },
-                  });
-
-                  if (existingTemplate) {
-                    templateId = existingTemplate.id;
-                  } else {
-                    const createdTemplate = await tx.templates.create({
-                      data: {
-                        templateName,
-                        isEnabled: true,
-                        isDefault: false,
-                      },
-                    });
-                    templateId = createdTemplate.id;
-                  }
-
-                  resolvedTemplateIdsByName.set(templateName, templateId);
-                  templateNameMap.set(templateName, templateId);
-                }
-
-                if (templateId !== null) {
-                  templateIdMap.set(templateSourceId, templateId);
-                }
-              }
-            }
-          }
-
-          templateId = templateId ?? defaultTemplate?.id ?? null;
-          const candidateWorkflowId =
-            stateSourceId !== null
-              ? (workflowIdMap.get(stateSourceId) ?? null)
-              : null;
-          const workflowIdRaw = await workflowResolver.resolve(
-            projectId,
-            WorkflowScope.CASES,
-            candidateWorkflowId
           );
-          const workflowId =
-            workflowIdRaw != null
-              ? ((await resolveCreateStateRemap(
-                  tx,
-                  projectId,
-                  WorkflowScope.CASES,
-                  workflowIdRaw
-                )) ?? workflowIdRaw)
-              : workflowIdRaw;
+          decrementEntityTotal(context, "repositoryCases");
+          canonicalCaseIds.delete(caseSourceId);
+          stepsByCaseId.delete(caseSourceId);
+          continue;
+        }
 
-          if (templateId == null || workflowId == null) {
-            logMessage(
-              context,
-              "Skipping case due to missing template or workflow mapping",
-              {
-                caseSourceId,
-                templateSourceId,
-                stateSourceId,
-              }
-            );
-            decrementEntityTotal(context, "repositoryCases");
-            canonicalCaseIds.delete(caseSourceId);
-            stepsByCaseId.delete(caseSourceId);
-            continue;
-          }
-
-          const resolvedTemplateId = templateId;
-          const resolvedWorkflowId = workflowId;
-
-          const creatorId = resolveUserId(
-            userIdMap,
-            fallbackCreator,
-            record.created_by
-          );
-          const createdAt = toDateValue(record.created_at) ?? new Date();
-          const order = toNumberValue(record.display_order) ?? 0;
-          const estimateValue = toNumberValue(record.estimate);
-          const { value: normalizedEstimate, adjustment: estimateAdjustment } =
-            normalizeEstimate(estimateValue);
-          if (
-            estimateAdjustment === "nanoseconds" ||
-            estimateAdjustment === "microseconds" ||
-            estimateAdjustment === "milliseconds"
-          ) {
-            summaryDetails.estimateAdjusted += 1;
-          } else if (estimateAdjustment === "clamped") {
-            summaryDetails.estimateClamped += 1;
-          }
-
-          const repositoryCase = await tx.repositoryCases.create({
-            data: {
-              projectId,
-              repositoryId: resolvedRepositoryId,
-              folderId: resolvedFolderId,
-              templateId: resolvedTemplateId,
-              name: caseName,
-              className: className ?? undefined,
-              stateId: resolvedWorkflowId,
-              estimate: normalizedEstimate ?? undefined,
-              order,
-              createdAt,
-              creatorId,
-              automated: toBooleanValue(record.automated ?? false),
-              currentVersion: 1,
-            },
+        let repositoryId = repositoryIdMap.get(targetRepoId);
+        if (repositoryId === undefined) {
+          const repository = await tx.repositories.create({
+            data: { projectId },
           });
+          repositoryId = repository.id;
+          repositoryIdMap.set(targetRepoId, repositoryId);
+        }
 
-          caseIdMap.set(caseSourceId, repositoryCase.id);
-          if (className) {
-            caseKeyMap.set(
-              `${projectSourceId}:${className}`,
-              repositoryCase.id
+        const resolvedRepositoryId = repositoryId;
+
+        repositoryIdMap.set(repoSourceId, resolvedRepositoryId);
+
+        let folderId =
+          folderSourceId !== null
+            ? (folderIdMap.get(folderSourceId) ?? null)
+            : null;
+        if (folderId == null) {
+          const rootFolderId =
+            repositoryRootFolderMap.get(resolvedRepositoryId);
+          if (rootFolderId) {
+            folderId = rootFolderId;
+          } else {
+            const fallbackFolder = await tx.repositoryFolders.create({
+              data: {
+                projectId,
+                repositoryId: resolvedRepositoryId,
+                name: "Imported",
+                creatorId: fallbackCreator,
+              },
+            });
+            folderId = fallbackFolder.id;
+            repositoryRootFolderMap.set(
+              resolvedRepositoryId,
+              fallbackFolder.id
             );
           }
-          const projectTemplateAssignments =
-            templateAssignmentsByProject.get(projectId) ?? new Set<number>();
-          projectTemplateAssignments.add(resolvedTemplateId);
-          templateAssignmentsByProject.set(
-            projectId,
-            projectTemplateAssignments
-          );
-          summary.total += 1;
-          summary.created += 1;
+        }
 
-          incrementEntityProgress(context, "repositoryCases", 1, 0);
+        if (folderId == null) {
+          logMessage(context, "Skipping case due to missing folder mapping", {
+            caseSourceId,
+            folderSourceId,
+          });
+          decrementEntityTotal(context, "repositoryCases");
+          canonicalCaseIds.delete(caseSourceId);
+          stepsByCaseId.delete(caseSourceId);
+          continue;
+        }
+
+        const resolvedFolderId = folderId;
+        const className = toStringValue(record.key);
+
+        // Check for existing case matching the unique constraint
+        // (projectId, name, className, source) — including soft-deleted
+        // records since the constraint does not include isDeleted
+        const existing = await tx.repositoryCases.findFirst({
+          where: {
+            projectId,
+            name: caseName,
+            className: className ?? null,
+            source: "MANUAL",
+          },
+        });
+
+        if (existing) {
+          // Restore soft-deleted cases so they can be reused
+          if (existing.isDeleted) {
+            await tx.repositoryCases.update({
+              where: { id: existing.id },
+              data: { isDeleted: false },
+            });
+          }
+          caseIdMap.set(caseSourceId, existing.id);
+          const existingKey = toStringValue(record.key);
+          if (existingKey) {
+            caseKeyMap.set(`${projectSourceId}:${existingKey}`, existing.id);
+          }
+          summary.total += 1;
+          summary.mapped += 1;
+          incrementEntityProgress(context, "repositoryCases", 0, 1);
           processedSinceLastPersist += 1;
           if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
             const message = formatInProgressStatus(context, "repositoryCases");
             await persistProgress("repositoryCases", message);
             processedSinceLastPersist = 0;
           }
+          canonicalCaseIds.delete(caseSourceId);
+          stepsByCaseId.delete(caseSourceId);
+          continue;
+        }
 
-          for (const [key, rawValue] of Object.entries(record)) {
-            if (!key.startsWith("custom_")) {
-              continue;
-            }
+        const templateSourceId = toNumberValue(record.template_id);
+        const stateSourceId = toNumberValue(record.state_id);
 
-            const fieldName = key.replace(/^custom_/, "");
-            const fieldId = caseFieldMap.get(fieldName);
-            if (!fieldId) {
-              continue;
-            }
+        let templateId: number | null = null;
+        if (templateSourceId !== null) {
+          const mappedTemplateId = templateIdMap.get(templateSourceId);
+          if (mappedTemplateId !== undefined) {
+            templateId = mappedTemplateId;
+          } else {
+            const templateName = templateNameBySourceId.get(templateSourceId);
+            if (templateName) {
+              templateId = resolvedTemplateIdsByName.get(templateName) ?? null;
+              if (!templateId) {
+                const existingTemplate = await tx.templates.findFirst({
+                  where: { templateName },
+                });
 
-            const fieldMetadata = caseFieldMetadataById.get(fieldId);
-            if (!fieldMetadata) {
-              recordFieldWarning("Missing case field metadata", {
-                field: fieldName,
-                fieldId,
-                caseSourceId,
-              });
-              continue;
-            }
-
-            if (
-              rawValue === null ||
-              rawValue === undefined ||
-              (typeof rawValue === "string" && rawValue.trim().length === 0)
-            ) {
-              continue;
-            }
-
-            const processedValue = normalizeCaseFieldValue(
-              rawValue,
-              fieldMetadata,
-              (message, details) =>
-                recordFieldWarning(message, {
-                  caseSourceId,
-                  field: fieldMetadata.systemName,
-                  displayName: fieldMetadata.displayName,
-                  ...details,
-                }),
-              testmoFieldValueMap
-            );
-
-            // Collect stats for multi-select fields only
-            if (fieldMetadata.type.toLowerCase().includes("multi-select")) {
-              console.log(`  Processed value:`, processedValue);
-              console.log(`  Processed value type: ${typeof processedValue}`);
-              console.log(`  Is Array: ${Array.isArray(processedValue)}`);
-              console.log(
-                `  Will save to DB:`,
-                processedValue !== null && processedValue !== undefined
-              );
-
-              const stats = dropdownStats.get(fieldMetadata.systemName) || {
-                totalAttempts: 0,
-                nullResults: 0,
-                successResults: 0,
-                sampleValues: new Set(),
-                sampleNulls: [],
-              };
-
-              stats.totalAttempts++;
-
-              if (processedValue === null || processedValue === undefined) {
-                stats.nullResults++;
-                if (stats.sampleNulls.length < 3) {
-                  stats.sampleNulls.push(rawValue);
+                if (existingTemplate) {
+                  templateId = existingTemplate.id;
+                } else {
+                  const createdTemplate = await tx.templates.create({
+                    data: {
+                      templateName,
+                      isEnabled: true,
+                      isDefault: false,
+                    },
+                  });
+                  templateId = createdTemplate.id;
                 }
-              } else {
-                stats.successResults++;
-                if (stats.sampleValues.size < 3) {
-                  stats.sampleValues.add(JSON.stringify(processedValue));
-                }
+
+                resolvedTemplateIdsByName.set(templateName, templateId);
+                templateNameMap.set(templateName, templateId);
               }
 
-              dropdownStats.set(fieldMetadata.systemName, stats);
+              if (templateId !== null) {
+                templateIdMap.set(templateSourceId, templateId);
+              }
+            }
+          }
+        }
+
+        templateId = templateId ?? defaultTemplate?.id ?? null;
+        const candidateWorkflowId =
+          stateSourceId !== null
+            ? (workflowIdMap.get(stateSourceId) ?? null)
+            : null;
+        const workflowIdRaw = await workflowResolver.resolve(
+          projectId,
+          WorkflowScope.CASES,
+          candidateWorkflowId
+        );
+        const workflowId =
+          workflowIdRaw != null
+            ? ((await resolveCreateStateRemap(
+                tx,
+                projectId,
+                WorkflowScope.CASES,
+                workflowIdRaw
+              )) ?? workflowIdRaw)
+            : workflowIdRaw;
+
+        if (templateId == null || workflowId == null) {
+          logMessage(
+            context,
+            "Skipping case due to missing template or workflow mapping",
+            {
+              caseSourceId,
+              templateSourceId,
+              stateSourceId,
+            }
+          );
+          decrementEntityTotal(context, "repositoryCases");
+          canonicalCaseIds.delete(caseSourceId);
+          stepsByCaseId.delete(caseSourceId);
+          continue;
+        }
+
+        const resolvedTemplateId = templateId;
+        const resolvedWorkflowId = workflowId;
+
+        const creatorId = resolveUserId(
+          userIdMap,
+          fallbackCreator,
+          record.created_by
+        );
+        const createdAt = toDateValue(record.created_at) ?? new Date();
+        const order = toNumberValue(record.display_order) ?? 0;
+        const estimateValue = toNumberValue(record.estimate);
+        const { value: normalizedEstimate, adjustment: estimateAdjustment } =
+          normalizeEstimate(estimateValue);
+        if (
+          estimateAdjustment === "nanoseconds" ||
+          estimateAdjustment === "microseconds" ||
+          estimateAdjustment === "milliseconds"
+        ) {
+          summaryDetails.estimateAdjusted += 1;
+        } else if (estimateAdjustment === "clamped") {
+          summaryDetails.estimateClamped += 1;
+        }
+
+        const repositoryCase = await tx.repositoryCases.create({
+          data: {
+            projectId,
+            repositoryId: resolvedRepositoryId,
+            folderId: resolvedFolderId,
+            templateId: resolvedTemplateId,
+            name: caseName,
+            className: className ?? undefined,
+            stateId: resolvedWorkflowId,
+            estimate: normalizedEstimate ?? undefined,
+            order,
+            createdAt,
+            creatorId,
+            automated: toBooleanValue(record.automated ?? false),
+            currentVersion: 1,
+          },
+        });
+
+        caseIdMap.set(caseSourceId, repositoryCase.id);
+        if (className) {
+          caseKeyMap.set(`${projectSourceId}:${className}`, repositoryCase.id);
+        }
+        const projectTemplateAssignments =
+          templateAssignmentsByProject.get(projectId) ?? new Set<number>();
+        projectTemplateAssignments.add(resolvedTemplateId);
+        templateAssignmentsByProject.set(projectId, projectTemplateAssignments);
+        summary.total += 1;
+        summary.created += 1;
+
+        incrementEntityProgress(context, "repositoryCases", 1, 0);
+        processedSinceLastPersist += 1;
+        if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
+          const message = formatInProgressStatus(context, "repositoryCases");
+          await persistProgress("repositoryCases", message);
+          processedSinceLastPersist = 0;
+        }
+
+        for (const [key, rawValue] of Object.entries(record)) {
+          if (!key.startsWith("custom_")) {
+            continue;
+          }
+
+          const fieldName = key.replace(/^custom_/, "");
+          const fieldId = caseFieldMap.get(fieldName);
+          if (!fieldId) {
+            continue;
+          }
+
+          const fieldMetadata = caseFieldMetadataById.get(fieldId);
+          if (!fieldMetadata) {
+            recordFieldWarning("Missing case field metadata", {
+              field: fieldName,
+              fieldId,
+              caseSourceId,
+            });
+            continue;
+          }
+
+          if (
+            rawValue === null ||
+            rawValue === undefined ||
+            (typeof rawValue === "string" && rawValue.trim().length === 0)
+          ) {
+            continue;
+          }
+
+          const processedValue = normalizeCaseFieldValue(
+            rawValue,
+            fieldMetadata,
+            (message, details) =>
+              recordFieldWarning(message, {
+                caseSourceId,
+                field: fieldMetadata.systemName,
+                displayName: fieldMetadata.displayName,
+                ...details,
+              }),
+            testmoFieldValueMap
+          );
+
+          // Collect stats for multi-select fields only
+          if (fieldMetadata.type.toLowerCase().includes("multi-select")) {
+            console.log(`  Processed value:`, processedValue);
+            console.log(`  Processed value type: ${typeof processedValue}`);
+            console.log(`  Is Array: ${Array.isArray(processedValue)}`);
+            console.log(
+              `  Will save to DB:`,
+              processedValue !== null && processedValue !== undefined
+            );
+
+            const stats = dropdownStats.get(fieldMetadata.systemName) || {
+              totalAttempts: 0,
+              nullResults: 0,
+              successResults: 0,
+              sampleValues: new Set(),
+              sampleNulls: [],
+            };
+
+            stats.totalAttempts++;
+
+            if (processedValue === null || processedValue === undefined) {
+              stats.nullResults++;
+              if (stats.sampleNulls.length < 3) {
+                stats.sampleNulls.push(rawValue);
+              }
+            } else {
+              stats.successResults++;
+              if (stats.sampleValues.size < 3) {
+                stats.sampleValues.add(JSON.stringify(processedValue));
+              }
             }
 
-            if (processedValue === undefined || processedValue === null) {
-              continue;
-            }
+            dropdownStats.set(fieldMetadata.systemName, stats);
+          }
 
-            if (
-              isTipTapDocument(processedValue) &&
-              isTipTapDocumentEmpty(processedValue as Record<string, unknown>)
-            ) {
-              continue;
-            }
+          if (processedValue === undefined || processedValue === null) {
+            continue;
+          }
 
-            if (typeof processedValue === "string" && !processedValue.trim()) {
-              continue;
-            }
+          if (
+            isTipTapDocument(processedValue) &&
+            isTipTapDocumentEmpty(processedValue as Record<string, unknown>)
+          ) {
+            continue;
+          }
 
-            if (Array.isArray(processedValue) && processedValue.length === 0) {
-              continue;
-            }
+          if (typeof processedValue === "string" && !processedValue.trim()) {
+            continue;
+          }
 
+          if (Array.isArray(processedValue) && processedValue.length === 0) {
+            continue;
+          }
+
+          await tx.caseFieldValues.create({
+            data: {
+              testCaseId: repositoryCase.id,
+              fieldId,
+              value: toInputJsonValue(processedValue),
+            },
+          });
+        }
+
+        // Process multi-select values from repository_case_values dataset
+        // These are stored separately from the custom_ fields in repository_cases
+
+        // Build mapping from system names to Testmo field IDs from configuration
+        const testmoFieldIdBySystemName = new Map<string, number>();
+        for (const [key, fieldConfig] of Object.entries(
+          configuration.templateFields ?? {}
+        )) {
+          const testmoFieldId = Number(key);
+          if (fieldConfig && fieldConfig.systemName) {
+            testmoFieldIdBySystemName.set(
+              fieldConfig.systemName,
+              testmoFieldId
+            );
+          }
+        }
+
+        for (const [systemName, fieldId] of caseFieldMap.entries()) {
+          const fieldMetadata = caseFieldMetadataById.get(fieldId);
+          if (
+            !fieldMetadata ||
+            !fieldMetadata.type.toLowerCase().includes("multi-select")
+          ) {
+            continue;
+          }
+
+          // Get the Testmo field ID for this system name
+          const testmoFieldId = testmoFieldIdBySystemName.get(systemName);
+          if (!testmoFieldId) {
+            // No Testmo field mapping for this multi-select field
+            continue;
+          }
+
+          // Look up values for this case and field using Testmo IDs
+          const lookupKey = `${caseSourceId}:${testmoFieldId}`;
+          const valueIds = multiSelectValuesByCaseAndField.get(lookupKey);
+
+          if (!valueIds || valueIds.length === 0) {
+            continue;
+          }
+
+          // Process the multi-select values
+          const processedValue = normalizeCaseFieldValue(
+            valueIds,
+            fieldMetadata,
+            (message, details) =>
+              recordFieldWarning(message, {
+                caseSourceId,
+                field: fieldMetadata.systemName,
+                displayName: fieldMetadata.displayName,
+                source: "repository_case_values",
+                ...details,
+              }),
+            testmoFieldValueMap
+          );
+
+          if (processedValue === undefined || processedValue === null) {
+            continue;
+          }
+
+          if (Array.isArray(processedValue) && processedValue.length === 0) {
+            continue;
+          }
+
+          // Check if we already created a value for this field from custom_ fields
+          const existingValue = await tx.caseFieldValues.findFirst({
+            where: {
+              testCaseId: repositoryCase.id,
+              fieldId,
+            },
+          });
+
+          if (existingValue) {
+            await tx.caseFieldValues.update({
+              where: {
+                id: existingValue.id,
+              },
+              data: {
+                value: toInputJsonValue(processedValue),
+              },
+            });
+          } else {
             await tx.caseFieldValues.create({
               data: {
                 testCaseId: repositoryCase.id,
@@ -3841,265 +3918,173 @@ const importRepositoryCases = async (
               },
             });
           }
+        }
 
-          // Process multi-select values from repository_case_values dataset
-          // These are stored separately from the custom_ fields in repository_cases
+        const caseSteps = stepsByCaseId.get(caseSourceId) ?? [];
+        const stepsForVersion: Array<{
+          step: unknown;
+          expectedResult: unknown;
+        }> = [];
+        if (caseSteps.length > 0) {
+          let generatedOrder = 0;
+          const stepEntries: Array<StepsUncheckedCreateInput> = [];
 
-          // Build mapping from system names to Testmo field IDs from configuration
-          const testmoFieldIdBySystemName = new Map<string, number>();
-          for (const [key, fieldConfig] of Object.entries(
-            configuration.templateFields ?? {}
-          )) {
-            const testmoFieldId = Number(key);
-            if (fieldConfig && fieldConfig.systemName) {
-              testmoFieldIdBySystemName.set(
-                fieldConfig.systemName,
-                testmoFieldId
-              );
-            }
-          }
+          for (const stepRecord of caseSteps) {
+            const stepAction = toStringValue(stepRecord.text1);
+            const stepData = toStringValue(stepRecord.text2);
+            const expectedResult = toStringValue(stepRecord.text3);
+            const expectedResultData = toStringValue(stepRecord.text4);
 
-          for (const [systemName, fieldId] of caseFieldMap.entries()) {
-            const fieldMetadata = caseFieldMetadataById.get(fieldId);
             if (
-              !fieldMetadata ||
-              !fieldMetadata.type.toLowerCase().includes("multi-select")
+              !stepAction &&
+              !stepData &&
+              !expectedResult &&
+              !expectedResultData
             ) {
               continue;
             }
 
-            // Get the Testmo field ID for this system name
-            const testmoFieldId = testmoFieldIdBySystemName.get(systemName);
-            if (!testmoFieldId) {
-              // No Testmo field mapping for this multi-select field
-              continue;
+            let orderValue = toNumberValue(stepRecord.display_order);
+            if (orderValue === null) {
+              generatedOrder += 1;
+              orderValue = generatedOrder;
+            } else {
+              generatedOrder = orderValue;
             }
 
-            // Look up values for this case and field using Testmo IDs
-            const lookupKey = `${caseSourceId}:${testmoFieldId}`;
-            const valueIds = multiSelectValuesByCaseAndField.get(lookupKey);
+            const stepEntry: StepsUncheckedCreateInput = {
+              testCaseId: repositoryCase.id,
+              order: orderValue,
+            };
 
-            if (!valueIds || valueIds.length === 0) {
-              continue;
+            // Combine step action (text1) with step data (text2)
+            if (stepAction || stepData) {
+              let combinedStepText = stepAction || "";
+              if (stepData) {
+                // Append data wrapped in <data> tag
+                combinedStepText +=
+                  (combinedStepText ? "\n" : "") + `<data>${stepData}</data>`;
+              }
+
+              const stepPayload = convertToTipTapJsonValue(combinedStepText);
+              if (stepPayload !== null) {
+                stepEntry.step = JSON.stringify(stepPayload);
+              }
             }
 
-            // Process the multi-select values
-            const processedValue = normalizeCaseFieldValue(
-              valueIds,
-              fieldMetadata,
-              (message, details) =>
-                recordFieldWarning(message, {
+            // Combine expected result (text3) with expected result data (text4)
+            if (expectedResult || expectedResultData) {
+              let combinedExpectedText = expectedResult || "";
+              if (expectedResultData) {
+                // Append data wrapped in <data> tag
+                combinedExpectedText +=
+                  (combinedExpectedText ? "\n" : "") +
+                  `<data>${expectedResultData}</data>`;
+              }
+
+              const expectedPayload =
+                convertToTipTapJsonValue(combinedExpectedText);
+              if (expectedPayload !== null) {
+                stepEntry.expectedResult = JSON.stringify(expectedPayload);
+              }
+            }
+
+            const parseJson = (value?: string) => {
+              if (!value) {
+                return emptyEditorContent;
+              }
+              try {
+                return JSON.parse(value);
+              } catch (error) {
+                console.warn("Failed to parse repository case step", {
                   caseSourceId,
-                  field: fieldMetadata.systemName,
-                  displayName: fieldMetadata.displayName,
-                  source: "repository_case_values",
-                  ...details,
-                }),
-              testmoFieldValueMap
-            );
+                  error,
+                });
+                return emptyEditorContent;
+              }
+            };
 
-            if (processedValue === undefined || processedValue === null) {
-              continue;
-            }
-
-            if (Array.isArray(processedValue) && processedValue.length === 0) {
-              continue;
-            }
-
-            // Check if we already created a value for this field from custom_ fields
-            const existingValue = await tx.caseFieldValues.findFirst({
-              where: {
-                testCaseId: repositoryCase.id,
-                fieldId,
-              },
+            stepsForVersion.push({
+              step: parseJson(stepEntry.step as string | undefined),
+              expectedResult: parseJson(
+                stepEntry.expectedResult as string | undefined
+              ),
             });
 
-            if (existingValue) {
-              await tx.caseFieldValues.update({
-                where: {
-                  id: existingValue.id,
-                },
-                data: {
-                  value: toInputJsonValue(processedValue),
-                },
-              });
-            } else {
-              await tx.caseFieldValues.create({
-                data: {
-                  testCaseId: repositoryCase.id,
-                  fieldId,
-                  value: toInputJsonValue(processedValue),
-                },
-              });
-            }
+            stepEntries.push(stepEntry);
           }
 
-          const caseSteps = stepsByCaseId.get(caseSourceId) ?? [];
-          const stepsForVersion: Array<{
-            step: unknown;
-            expectedResult: unknown;
-          }> = [];
-          if (caseSteps.length > 0) {
-            let generatedOrder = 0;
-            const stepEntries: Array<StepsUncheckedCreateInput> = [];
-
-            for (const stepRecord of caseSteps) {
-              const stepAction = toStringValue(stepRecord.text1);
-              const stepData = toStringValue(stepRecord.text2);
-              const expectedResult = toStringValue(stepRecord.text3);
-              const expectedResultData = toStringValue(stepRecord.text4);
-
-              if (
-                !stepAction &&
-                !stepData &&
-                !expectedResult &&
-                !expectedResultData
-              ) {
-                continue;
-              }
-
-              let orderValue = toNumberValue(stepRecord.display_order);
-              if (orderValue === null) {
-                generatedOrder += 1;
-                orderValue = generatedOrder;
-              } else {
-                generatedOrder = orderValue;
-              }
-
-              const stepEntry: StepsUncheckedCreateInput = {
-                testCaseId: repositoryCase.id,
-                order: orderValue,
-              };
-
-              // Combine step action (text1) with step data (text2)
-              if (stepAction || stepData) {
-                let combinedStepText = stepAction || "";
-                if (stepData) {
-                  // Append data wrapped in <data> tag
-                  combinedStepText +=
-                    (combinedStepText ? "\n" : "") + `<data>${stepData}</data>`;
-                }
-
-                const stepPayload = convertToTipTapJsonValue(combinedStepText);
-                if (stepPayload !== null) {
-                  stepEntry.step = JSON.stringify(stepPayload);
-                }
-              }
-
-              // Combine expected result (text3) with expected result data (text4)
-              if (expectedResult || expectedResultData) {
-                let combinedExpectedText = expectedResult || "";
-                if (expectedResultData) {
-                  // Append data wrapped in <data> tag
-                  combinedExpectedText +=
-                    (combinedExpectedText ? "\n" : "") +
-                    `<data>${expectedResultData}</data>`;
-                }
-
-                const expectedPayload =
-                  convertToTipTapJsonValue(combinedExpectedText);
-                if (expectedPayload !== null) {
-                  stepEntry.expectedResult = JSON.stringify(expectedPayload);
-                }
-              }
-
-              const parseJson = (value?: string) => {
-                if (!value) {
-                  return emptyEditorContent;
-                }
-                try {
-                  return JSON.parse(value);
-                } catch (error) {
-                  console.warn("Failed to parse repository case step", {
-                    caseSourceId,
-                    error,
-                  });
-                  return emptyEditorContent;
-                }
-              };
-
-              stepsForVersion.push({
-                step: parseJson(stepEntry.step as string | undefined),
-                expectedResult: parseJson(
-                  stepEntry.expectedResult as string | undefined
-                ),
-              });
-
-              stepEntries.push(stepEntry);
-            }
-
-            if (stepEntries.length > 0) {
-              await tx.steps.createMany({ data: stepEntries });
-            }
+          if (stepEntries.length > 0) {
+            await tx.steps.createMany({ data: stepEntries });
           }
+        }
 
-          const _projectName = await getProjectName(tx, projectId);
-          const _templateName = await getTemplateName(tx, resolvedTemplateId);
-          const workflowName = await getWorkflowName(tx, resolvedWorkflowId);
-          const _folderName = await getFolderName(tx, resolvedFolderId);
-          const creatorName = await getUserName(tx, creatorId);
-          const versionCaseName =
-            toStringValue(record.name) ?? repositoryCase.name;
+        const _projectName = await getProjectName(tx, projectId);
+        const _templateName = await getTemplateName(tx, resolvedTemplateId);
+        const workflowName = await getWorkflowName(tx, resolvedWorkflowId);
+        const _folderName = await getFolderName(tx, resolvedFolderId);
+        const creatorName = await getUserName(tx, creatorId);
+        const versionCaseName =
+          toStringValue(record.name) ?? repositoryCase.name;
 
-          // Create version snapshot using centralized helper
-          const caseVersion = await createTestCaseVersionInTransaction(
-            tx,
-            repositoryCase.id,
-            {
-              // Use repositoryCase.currentVersion (already set on the case)
-              creatorId,
-              creatorName,
-              createdAt: repositoryCase.createdAt ?? new Date(),
-              overrides: {
-                name: versionCaseName,
-                stateId: resolvedWorkflowId,
-                stateName: workflowName,
-                estimate: repositoryCase.estimate ?? null,
-                forecastManual: repositoryCase.forecastManual ?? null,
-                forecastAutomated: repositoryCase.forecastAutomated ?? null,
-                automated: repositoryCase.automated,
-                isArchived: repositoryCase.isArchived,
-                order,
-                steps:
-                  stepsForVersion.length > 0
-                    ? (stepsForVersion as JsonValue)
-                    : null,
-                tags: [],
-                issues: [],
-                links: [],
-                attachments: [],
-              },
-            }
-          );
+        // Create version snapshot using centralized helper
+        const caseVersion = await createTestCaseVersionInTransaction(
+          tx,
+          repositoryCase.id,
+          {
+            // Use repositoryCase.currentVersion (already set on the case)
+            creatorId,
+            creatorName,
+            createdAt: repositoryCase.createdAt ?? new Date(),
+            overrides: {
+              name: versionCaseName,
+              stateId: resolvedWorkflowId,
+              stateName: workflowName,
+              estimate: repositoryCase.estimate ?? null,
+              forecastManual: repositoryCase.forecastManual ?? null,
+              forecastAutomated: repositoryCase.forecastAutomated ?? null,
+              automated: repositoryCase.automated,
+              isArchived: repositoryCase.isArchived,
+              order,
+              steps:
+                stepsForVersion.length > 0
+                  ? (stepsForVersion as JsonValue)
+                  : null,
+              tags: [],
+              issues: [],
+              links: [],
+              attachments: [],
+            },
+          }
+        );
 
-          const caseFieldValuesForVersion = await tx.caseFieldValues.findMany({
-            where: { testCaseId: repositoryCase.id },
-            include: {
-              field: {
-                select: {
-                  displayName: true,
-                  systemName: true,
-                },
+        const caseFieldValuesForVersion = await tx.caseFieldValues.findMany({
+          where: { testCaseId: repositoryCase.id },
+          include: {
+            field: {
+              select: {
+                displayName: true,
+                systemName: true,
               },
             },
+          },
+        });
+
+        if (caseFieldValuesForVersion.length > 0) {
+          await tx.caseFieldVersionValues.createMany({
+            data: caseFieldValuesForVersion.map((fieldValue) => ({
+              versionId: caseVersion.id,
+              field:
+                fieldValue.field.displayName || fieldValue.field.systemName,
+              value: fieldValue.value ?? JsonNull,
+            })),
           });
-
-          if (caseFieldValuesForVersion.length > 0) {
-            await tx.caseFieldVersionValues.createMany({
-              data: caseFieldValuesForVersion.map((fieldValue) => ({
-                versionId: caseVersion.id,
-                field:
-                  fieldValue.field.displayName || fieldValue.field.systemName,
-                value: fieldValue.value ?? JsonNull,
-              })),
-            });
-          }
-
-          canonicalCaseIds.delete(caseSourceId);
-          stepsByCaseId.delete(caseSourceId);
         }
+
+        canonicalCaseIds.delete(caseSourceId);
+        stepsByCaseId.delete(caseSourceId);
       }
-    );
+    });
 
     clearTipTapCache();
   };
@@ -4793,160 +4778,158 @@ const importTestRunResults = async (
     if (records.length === 0) {
       return;
     }
-    await db.$transaction(
-      async (tx: TxClient) => {
-        // Phase 13 SAF-01 — bulk-import skip_audit hatch (see the repository
-        // case chunk above). Opts these testRunResults rows out of row-level
-        // CDC capture; the job-level captureAuditEvent retains the semantic
-        // event. SET LOCAL only inside a $transaction (Pitfall A).
-        await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
-        for (const record of records) {
-          const resultSourceId = toNumberValue(record.id);
-          const runSourceId = toNumberValue(record.run_id);
-          const runTestSourceId = toNumberValue(record.test_id);
+    await db.$transaction(async (tx: TxClient) => {
+      // Phase 13 SAF-01 — bulk-import skip_audit hatch (see the repository
+      // case chunk above). Opts these testRunResults rows out of row-level
+      // CDC capture; the job-level captureAuditEvent retains the semantic
+      // event. SET LOCAL only inside a $transaction (Pitfall A).
+      await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
+      for (const record of records) {
+        const resultSourceId = toNumberValue(record.id);
+        const runSourceId = toNumberValue(record.run_id);
+        const runTestSourceId = toNumberValue(record.test_id);
 
-          if (
-            resultSourceId === null ||
-            runSourceId === null ||
-            runTestSourceId === null
-          ) {
-            decrementEntityTotal(context, "testRunResults");
-            continue;
-          }
+        if (
+          resultSourceId === null ||
+          runSourceId === null ||
+          runTestSourceId === null
+        ) {
+          decrementEntityTotal(context, "testRunResults");
+          continue;
+        }
 
-          if (toBooleanValue(record.is_deleted)) {
-            decrementEntityTotal(context, "testRunResults");
-            continue;
-          }
+        if (toBooleanValue(record.is_deleted)) {
+          decrementEntityTotal(context, "testRunResults");
+          continue;
+        }
 
-          const testRunId = testRunIdMap.get(runSourceId);
-          if (!testRunId) {
-            logMessage(
-              context,
-              "Skipping test run result due to missing run mapping",
-              {
-                resultSourceId,
-                runSourceId,
-              }
-            );
-            decrementEntityTotal(context, "testRunResults");
-            continue;
-          }
-
-          const testRunCaseId = testRunCaseIdMap.get(runTestSourceId);
-          if (!testRunCaseId) {
-            logMessage(
-              context,
-              "Skipping test run result due to missing run case mapping",
-              {
-                resultSourceId,
-                runTestSourceId,
-              }
-            );
-            decrementEntityTotal(context, "testRunResults");
-            continue;
-          }
-
-          const statusSourceId = toNumberValue(record.status_id);
-          const statusId =
-            statusSourceId !== null
-              ? (statusIdMap.get(statusSourceId) ?? defaultStatusId)
-              : defaultStatusId;
-
-          const executedById = resolveUserId(
-            userIdMap,
-            importJob.createdById,
-            record.created_by
+        const testRunId = testRunIdMap.get(runSourceId);
+        if (!testRunId) {
+          logMessage(
+            context,
+            "Skipping test run result due to missing run mapping",
+            {
+              resultSourceId,
+              runSourceId,
+            }
           );
-          const executedAt = toDateValue(record.created_at) ?? new Date();
+          decrementEntityTotal(context, "testRunResults");
+          continue;
+        }
 
-          const elapsedValue = toNumberValue(record.elapsed);
-          const { value: normalizedElapsed, adjustment: elapsedAdjustment } =
-            normalizeEstimate(elapsedValue);
+        const testRunCaseId = testRunCaseIdMap.get(runTestSourceId);
+        if (!testRunCaseId) {
+          logMessage(
+            context,
+            "Skipping test run result due to missing run case mapping",
+            {
+              resultSourceId,
+              runTestSourceId,
+            }
+          );
+          decrementEntityTotal(context, "testRunResults");
+          continue;
+        }
 
-          if (
-            elapsedAdjustment === "microseconds" ||
-            elapsedAdjustment === "nanoseconds"
-          ) {
-            summaryDetails.elapsedAdjusted += 1;
-          } else if (elapsedAdjustment === "milliseconds") {
-            summaryDetails.elapsedAdjusted += 1;
-          } else if (elapsedAdjustment === "clamped") {
-            summaryDetails.elapsedClamped += 1;
-          }
+        const statusSourceId = toNumberValue(record.status_id);
+        const statusId =
+          statusSourceId !== null
+            ? (statusIdMap.get(statusSourceId) ?? defaultStatusId)
+            : defaultStatusId;
 
-          const comment = toStringValue(record.comment);
+        const executedById = resolveUserId(
+          userIdMap,
+          importJob.createdById,
+          record.created_by
+        );
+        const executedAt = toDateValue(record.created_at) ?? new Date();
 
-          let testRunCaseVersion = testRunCaseVersionCache.get(testRunCaseId);
-          if (testRunCaseVersion === undefined) {
-            const runCase = await tx.testRunCases.findUnique({
-              where: { id: testRunCaseId },
-              select: {
-                repositoryCase: {
-                  select: { currentVersion: true },
-                },
+        const elapsedValue = toNumberValue(record.elapsed);
+        const { value: normalizedElapsed, adjustment: elapsedAdjustment } =
+          normalizeEstimate(elapsedValue);
+
+        if (
+          elapsedAdjustment === "microseconds" ||
+          elapsedAdjustment === "nanoseconds"
+        ) {
+          summaryDetails.elapsedAdjusted += 1;
+        } else if (elapsedAdjustment === "milliseconds") {
+          summaryDetails.elapsedAdjusted += 1;
+        } else if (elapsedAdjustment === "clamped") {
+          summaryDetails.elapsedClamped += 1;
+        }
+
+        const comment = toStringValue(record.comment);
+
+        let testRunCaseVersion = testRunCaseVersionCache.get(testRunCaseId);
+        if (testRunCaseVersion === undefined) {
+          const runCase = await tx.testRunCases.findUnique({
+            where: { id: testRunCaseId },
+            select: {
+              repositoryCase: {
+                select: { currentVersion: true },
               },
-            });
-            testRunCaseVersion = runCase?.repositoryCase?.currentVersion ?? 1;
-            testRunCaseVersionCache.set(testRunCaseId, testRunCaseVersion);
-          }
-
-          const createdResult = await tx.testRunResults.create({
-            data: {
-              testRunId,
-              testRunCaseId,
-              testRunCaseVersion,
-              statusId,
-              executedById,
-              executedAt,
-              elapsed: normalizedElapsed ?? undefined,
-              notes: comment ? toInputJsonValue(comment) : undefined,
             },
           });
+          testRunCaseVersion = runCase?.repositoryCase?.currentVersion ?? 1;
+          testRunCaseVersionCache.set(testRunCaseId, testRunCaseVersion);
+        }
 
-          // Store the mapping from Testmo result ID to our result ID
-          testRunResultIdMap.set(resultSourceId, createdResult.id);
+        const createdResult = await tx.testRunResults.create({
+          data: {
+            testRunId,
+            testRunCaseId,
+            testRunCaseVersion,
+            statusId,
+            executedById,
+            executedAt,
+            elapsed: normalizedElapsed ?? undefined,
+            notes: comment ? toInputJsonValue(comment) : undefined,
+          },
+        });
 
-          for (const [key, rawValue] of Object.entries(record)) {
-            if (!key.startsWith("custom_")) {
-              continue;
-            }
-            const fieldName = key.replace(/^custom_/, "");
-            const fieldId = resultFieldMap.get(fieldName);
-            if (!fieldId) {
-              continue;
-            }
-            if (
-              rawValue === null ||
-              rawValue === undefined ||
-              (typeof rawValue === "string" && rawValue.trim().length === 0)
-            ) {
-              continue;
-            }
+        // Store the mapping from Testmo result ID to our result ID
+        testRunResultIdMap.set(resultSourceId, createdResult.id);
 
-            await tx.resultFieldValues.create({
-              data: {
-                testRunResultsId: createdResult.id,
-                fieldId,
-                value: toInputJsonValue(rawValue),
-              },
-            });
+        for (const [key, rawValue] of Object.entries(record)) {
+          if (!key.startsWith("custom_")) {
+            continue;
+          }
+          const fieldName = key.replace(/^custom_/, "");
+          const fieldId = resultFieldMap.get(fieldName);
+          if (!fieldId) {
+            continue;
+          }
+          if (
+            rawValue === null ||
+            rawValue === undefined ||
+            (typeof rawValue === "string" && rawValue.trim().length === 0)
+          ) {
+            continue;
           }
 
-          summary.total += 1;
-          summary.created += 1;
+          await tx.resultFieldValues.create({
+            data: {
+              testRunResultsId: createdResult.id,
+              fieldId,
+              value: toInputJsonValue(rawValue),
+            },
+          });
+        }
 
-          incrementEntityProgress(context, "testRunResults", 1, 0);
-          processedSinceLastPersist += 1;
+        summary.total += 1;
+        summary.created += 1;
 
-          if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
-            const message = formatInProgressStatus(context, "testRunResults");
-            await persistProgress("testRunResults", message);
-            processedSinceLastPersist = 0;
-          }
+        incrementEntityProgress(context, "testRunResults", 1, 0);
+        processedSinceLastPersist += 1;
+
+        if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
+          const message = formatInProgressStatus(context, "testRunResults");
+          await persistProgress("testRunResults", message);
+          processedSinceLastPersist = 0;
         }
       }
-    );
+    });
 
     clearTipTapCache();
   };
@@ -7834,9 +7817,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
 
     const sampleRowsValue =
       dataset.sampleRows.length > 0
-        ? (JSON.parse(
-            JSON.stringify(dataset.sampleRows)
-          ) as JsonValue)
+        ? (JSON.parse(JSON.stringify(dataset.sampleRows)) as JsonValue)
         : JsonNull;
 
     const allRowsValue =

@@ -96,8 +96,10 @@ export function IntegrationModal({
   // instead of failing on the unique-name constraint. The new-name
   // collision against an ACTIVE row is still rejected by the API route's
   // explicit duplicate-name check before the mutation runs.
-  const createIntegrationMutation = useClientQueries(schema).integration.useUpsert();
-  const updateIntegrationMutation = useClientQueries(schema).integration.useUpdate();
+  const createIntegrationMutation =
+    useClientQueries(schema).integration.useUpsert();
+  const updateIntegrationMutation =
+    useClientQueries(schema).integration.useUpdate();
 
   const isCreating = createIntegrationMutation.status === "pending";
   const isUpdating = updateIntegrationMutation.status === "pending";

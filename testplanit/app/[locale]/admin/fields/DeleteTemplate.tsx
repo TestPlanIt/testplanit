@@ -38,11 +38,16 @@ export function DeleteTemplate({
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateTemplate } = useClientQueries(schema).templates.useUpdate();
-  const { mutateAsync: updateManyTestCases } = useClientQueries(schema).repositoryCases.useUpdateMany();
-  const { mutateAsync: updateManySessions } = useClientQueries(schema).sessions.useUpdateMany();
+  const { mutateAsync: updateTemplate } =
+    useClientQueries(schema).templates.useUpdate();
+  const { mutateAsync: updateManyTestCases } =
+    useClientQueries(schema).repositoryCases.useUpdateMany();
+  const { mutateAsync: updateManySessions } =
+    useClientQueries(schema).sessions.useUpdateMany();
 
-  const { data: defaultTemplate } = useClientQueries(schema).templates.useFindFirst({
+  const { data: defaultTemplate } = useClientQueries(
+    schema
+  ).templates.useFindFirst({
     where: {
       AND: [{ isDefault: true }, { isEnabled: true }, { isDeleted: false }],
     },

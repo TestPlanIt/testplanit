@@ -14,10 +14,12 @@ const { mockColorsData } = vi.hoisted(() => ({
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    color: { useFindMany: vi.fn(() => ({
-    data: mockColorsData.data,
-    isLoading: mockColorsData.isLoading,
-  })) },
+    color: {
+      useFindMany: vi.fn(() => ({
+        data: mockColorsData.data,
+        isLoading: mockColorsData.isLoading,
+      })),
+    },
   }),
 }));
 

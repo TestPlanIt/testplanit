@@ -150,7 +150,9 @@ export function TestCasesSection({
   const canAddEditResults = testRunResultPermissions?.canAddEdit ?? false;
 
   // Fetch sibling test runs for multi-config test runs
-  const { data: siblingTestRunsData } = useClientQueries(schema).testRuns.useFindMany(
+  const { data: siblingTestRunsData } = useClientQueries(
+    schema
+  ).testRuns.useFindMany(
     {
       where: {
         configurationGroupId: testRunData?.configurationGroupId ?? undefined,

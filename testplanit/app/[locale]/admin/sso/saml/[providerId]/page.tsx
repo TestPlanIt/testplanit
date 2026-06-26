@@ -60,16 +60,22 @@ export default function SAMLConfigurationPage() {
   const t = useTranslations();
   const [isSaving, setIsSaving] = useState(false);
 
-  const { data: provider } = useClientQueries(schema).ssoProvider.useFindUnique({
-    where: { id: providerId },
-  });
+  const { data: provider } = useClientQueries(schema).ssoProvider.useFindUnique(
+    {
+      where: { id: providerId },
+    }
+  );
 
-  const { data: samlConfig } = useClientQueries(schema).samlConfiguration.useFindUnique({
+  const { data: samlConfig } = useClientQueries(
+    schema
+  ).samlConfiguration.useFindUnique({
     where: { providerId: providerId },
   });
 
-  const { mutateAsync: createSamlConfig } = useClientQueries(schema).samlConfiguration.useCreate();
-  const { mutateAsync: updateSamlConfig } = useClientQueries(schema).samlConfiguration.useUpdate();
+  const { mutateAsync: createSamlConfig } =
+    useClientQueries(schema).samlConfiguration.useCreate();
+  const { mutateAsync: updateSamlConfig } =
+    useClientQueries(schema).samlConfiguration.useUpdate();
 
   const [formData, setFormData] = useState<SamlFormData>({
     entryPoint: "",

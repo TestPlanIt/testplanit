@@ -24,7 +24,9 @@ let mockAutoFetchedPendingData: { id: string; status: "PENDING" } | undefined =
   undefined;
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    reviewRequest: { useFindFirst: () => ({ data: mockAutoFetchedPendingData }) },
+    reviewRequest: {
+      useFindFirst: () => ({ data: mockAutoFetchedPendingData }),
+    },
   }),
 }));
 

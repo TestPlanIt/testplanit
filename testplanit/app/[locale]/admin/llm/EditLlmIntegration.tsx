@@ -159,15 +159,22 @@ export function EditLlmIntegration({
     { unsupportedParams: string[]; probedAt: string }
   > | null>(null);
 
-  const { mutateAsync: updateLlmIntegration } = useClientQueries(schema).llmIntegration.useUpdate();
-  const { mutateAsync: updateLlmProviderConfig } = useClientQueries(schema).llmProviderConfig.useUpdate();
-  const { mutateAsync: deleteManyLlmUsage } = useClientQueries(schema).llmUsage.useDeleteMany();
+  const { mutateAsync: updateLlmIntegration } =
+    useClientQueries(schema).llmIntegration.useUpdate();
+  const { mutateAsync: updateLlmProviderConfig } =
+    useClientQueries(schema).llmProviderConfig.useUpdate();
+  const { mutateAsync: deleteManyLlmUsage } =
+    useClientQueries(schema).llmUsage.useDeleteMany();
   const [testingConnection, setTestingConnection] = useState(false);
   const [resettingSpend, setResettingSpend] = useState(false);
-  const { data: existingDefaultConfigs } = useClientQueries(schema).llmProviderConfig.useFindMany({
+  const { data: existingDefaultConfigs } = useClientQueries(
+    schema
+  ).llmProviderConfig.useFindMany({
     where: { isDefault: true },
   });
-  const { data: existingIntegrations } = useClientQueries(schema).llmIntegration.useFindMany({
+  const { data: existingIntegrations } = useClientQueries(
+    schema
+  ).llmIntegration.useFindMany({
     select: { name: true },
   });
 

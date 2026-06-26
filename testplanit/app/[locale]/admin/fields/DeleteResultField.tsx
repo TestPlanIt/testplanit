@@ -37,10 +37,14 @@ export function DeleteResultField({
   const t = useTranslations("admin.templates.resultFields.delete");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateResultField } = useClientQueries(schema).resultFields.useUpdate();
-  const { mutateAsync: updateManyFieldOptions } = useClientQueries(schema).fieldOptions.useUpdateMany();
+  const { mutateAsync: updateResultField } =
+    useClientQueries(schema).resultFields.useUpdate();
+  const { mutateAsync: updateManyFieldOptions } =
+    useClientQueries(schema).fieldOptions.useUpdateMany();
 
-  const { data: defaultResultField } = useClientQueries(schema).resultFields.useFindFirst({
+  const { data: defaultResultField } = useClientQueries(
+    schema
+  ).resultFields.useFindFirst({
     where: {
       AND: [{ isEnabled: true }, { isDeleted: false }],
     },

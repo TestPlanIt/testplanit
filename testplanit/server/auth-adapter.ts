@@ -61,9 +61,9 @@ function sanitizeAccountData(
 function createBaseAdapter(db: DbClient): Adapter {
   return {
     getUser: (id: string) =>
-      db.user.findUnique({ where: { id } }) as unknown as Promise<
-        AdapterUser | null
-      >,
+      db.user.findUnique({
+        where: { id },
+      }) as unknown as Promise<AdapterUser | null>,
     // getUserByEmail, linkAccount and createUser are provided by
     // createCustomDbAdapter's overrides below — intentionally not in the base.
     async getUserByAccount({
@@ -79,10 +79,7 @@ function createBaseAdapter(db: DbClient): Adapter {
       });
       return (account?.user ?? null) as AdapterUser | null;
     },
-    updateUser: ({
-      id,
-      ...data
-    }: Partial<AdapterUser> & { id: string }) =>
+    updateUser: ({ id, ...data }: Partial<AdapterUser> & { id: string }) =>
       db.user.update({
         where: { id },
         data: data as UserUncheckedUpdateInput,
@@ -226,8 +223,7 @@ export function createCustomDbAdapter(db: DbClient): Adapter {
       );
 
       // Get the system default access level from registration settings
-      const registrationSettings =
-        await db.registrationSettings.findFirst();
+      const registrationSettings = await db.registrationSettings.findFirst();
       const defaultAccess = registrationSettings?.defaultAccess || "USER";
 
       // Get the default role from database

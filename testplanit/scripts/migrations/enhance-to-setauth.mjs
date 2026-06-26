@@ -9,12 +9,21 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const SKIP_DIRS = new Set(["node_modules", ".next", "zenstack", "dist", ".git", "coverage"]);
+const SKIP_DIRS = new Set([
+  "node_modules",
+  ".next",
+  "zenstack",
+  "dist",
+  ".git",
+  "coverage",
+]);
 const files = [];
 (function walk(dir) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (e.isDirectory()) { if (!SKIP_DIRS.has(e.name)) walk(path.join(dir, e.name)); }
-    else if (/\.tsx?$/.test(e.name) && !/\.(test|spec)\.tsx?$/.test(e.name)) files.push(path.join(dir, e.name));
+    if (e.isDirectory()) {
+      if (!SKIP_DIRS.has(e.name)) walk(path.join(dir, e.name));
+    } else if (/\.tsx?$/.test(e.name) && !/\.(test|spec)\.tsx?$/.test(e.name))
+      files.push(path.join(dir, e.name));
   }
 })(ROOT);
 
@@ -28,19 +37,28 @@ for (const file of files) {
   const before = src;
   src = src.replace(
     /\benhance\(\s*[A-Za-z_$][\w$]*\s*,\s*\{\s*user:\s*([^}]+?)\s*\}\s*\)/g,
-    (_m, expr) => `getAuthDb(${expr.trim()})`,
+    (_m, expr) => `getAuthDb(${expr.trim()})`
   );
 
   // swap the import
   src = src.replace(
     /^[ \t]*import\s+\{\s*enhance\s*\}\s+from\s+"@zenstackhq\/runtime";[ \t]*\n/m,
-    src.includes('from "~/lib/zenstack"') && /getAuthDb/.test(src) && !/import[^\n]*getAuthDb[^\n]*~\/lib\/zenstack/.test(before)
+    src.includes('from "~/lib/zenstack"') &&
+      /getAuthDb/.test(src) &&
+      !/import[^\n]*getAuthDb[^\n]*~\/lib\/zenstack/.test(before)
       ? `import { getAuthDb } from "~/lib/zenstack";\n`
-      : `import { getAuthDb } from "~/lib/zenstack";\n`,
+      : `import { getAuthDb } from "~/lib/zenstack";\n`
   );
 
-  if (src !== before) { fs.writeFileSync(file, src); changed++; }
-  if (/from "@zenstackhq\/runtime"/.test(src)) leftover.push(path.relative(ROOT, file));
+  if (src !== before) {
+    fs.writeFileSync(file, src);
+    changed++;
+  }
+  if (/from "@zenstackhq\/runtime"/.test(src))
+    leftover.push(path.relative(ROOT, file));
 }
 console.log(`enhance() -> getAuthDb() in ${changed} file(s).`);
-if (leftover.length) { console.log("still importing @zenstackhq/runtime (review):"); leftover.forEach((f) => console.log("  " + f)); }
+if (leftover.length) {
+  console.log("still importing @zenstackhq/runtime (review):");
+  leftover.forEach((f) => console.log("  " + f));
+}

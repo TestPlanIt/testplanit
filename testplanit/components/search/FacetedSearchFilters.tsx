@@ -133,7 +133,9 @@ export function FacetedSearchFilters({
   const workflowScopes = getWorkflowScopes();
 
   // Get current user's project assignments for access control (non-admin users only)
-  const { data: currentUserProjects } = useClientQueries(schema).projectAssignment.useFindMany(
+  const { data: currentUserProjects } = useClientQueries(
+    schema
+  ).projectAssignment.useFindMany(
     {
       where: {
         userId: session?.user?.id || "",
@@ -152,7 +154,9 @@ export function FacetedSearchFilters({
     currentUserProjects?.map((p) => p.projectId) || [];
 
   // Fetch workflow states - filtered by scope and project access
-  const { data: workflowStates } = useClientQueries(schema).workflows.useFindMany({
+  const { data: workflowStates } = useClientQueries(
+    schema
+  ).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -259,7 +263,9 @@ export function FacetedSearchFilters({
     orderBy: { name: "asc" },
   });
 
-  const { data: configurations } = useClientQueries(schema).configurations.useFindMany({
+  const { data: configurations } = useClientQueries(
+    schema
+  ).configurations.useFindMany({
     where: {
       isDeleted: false,
       // When searching within a project, only surface configurations assigned
@@ -305,7 +311,9 @@ export function FacetedSearchFilters({
     orderBy: { name: "asc" },
   });
 
-  const { data: folders } = useClientQueries(schema).repositoryFolders.useFindMany({
+  const { data: folders } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany({
     where: {
       isDeleted: false,
       // If searching within a specific project, only show folders from that project

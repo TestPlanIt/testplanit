@@ -93,7 +93,21 @@ vi.mock("~/lib/navigation", () => ({
 }));
 
 // Mock dependencies
-const { useFindManyRepositoryCases, useUpdateRepositoryCases, useFindManyWorkflows, useFindManyTags, useFindManyIssue, useUpdateCaseFieldValues, useCreateCaseFieldValues, useCreateSteps, useDeleteManySteps, useUpdateManyRepositoryCases, useUpdateSteps, useCreateRepositoryCaseVersions, useCreateCaseFieldVersionValues } = vi.hoisted(() => ({
+const {
+  useFindManyRepositoryCases,
+  useUpdateRepositoryCases,
+  useFindManyWorkflows,
+  useFindManyTags,
+  useFindManyIssue,
+  useUpdateCaseFieldValues,
+  useCreateCaseFieldValues,
+  useCreateSteps,
+  useDeleteManySteps,
+  useUpdateManyRepositoryCases,
+  useUpdateSteps,
+  useCreateRepositoryCaseVersions,
+  useCreateCaseFieldVersionValues,
+} = vi.hoisted(() => ({
   useFindManyRepositoryCases: vi.fn(),
   useUpdateRepositoryCases: vi.fn(),
   useFindManyWorkflows: vi.fn(),
@@ -110,25 +124,42 @@ const { useFindManyRepositoryCases, useUpdateRepositoryCases, useFindManyWorkflo
 }));
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    repositoryCases: { useFindMany: useFindManyRepositoryCases, useUpdate: useUpdateRepositoryCases, useUpdateMany: useUpdateManyRepositoryCases },
+    repositoryCases: {
+      useFindMany: useFindManyRepositoryCases,
+      useUpdate: useUpdateRepositoryCases,
+      useUpdateMany: useUpdateManyRepositoryCases,
+    },
     workflows: { useFindMany: useFindManyWorkflows },
-    tags: { useFindMany: useFindManyTags, useCreate: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })), useUpdate: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })) },
+    tags: {
+      useFindMany: useFindManyTags,
+      useCreate: vi.fn(() => ({
+        mutateAsync: vi.fn(),
+        isPending: false,
+      })),
+      useUpdate: vi.fn(() => ({
+        mutateAsync: vi.fn(),
+        isPending: false,
+      })),
+    },
     issue: { useFindMany: useFindManyIssue },
-    caseFieldValues: { useUpdate: useUpdateCaseFieldValues, useCreate: useCreateCaseFieldValues },
-    steps: { useCreate: useCreateSteps, useDeleteMany: useDeleteManySteps, useUpdate: useUpdateSteps },
+    caseFieldValues: {
+      useUpdate: useUpdateCaseFieldValues,
+      useCreate: useCreateCaseFieldValues,
+    },
+    steps: {
+      useCreate: useCreateSteps,
+      useDeleteMany: useDeleteManySteps,
+      useUpdate: useUpdateSteps,
+    },
     repositoryCaseVersions: { useCreate: useCreateRepositoryCaseVersions },
     caseFieldVersionValues: { useCreate: useCreateCaseFieldVersionValues },
-    projectLlmIntegration: { useFindMany: () => ({
-    data: [], // No LLM integrations by default
-    isLoading: false,
-    error: null,
-  }) },
+    projectLlmIntegration: {
+      useFindMany: () => ({
+        data: [], // No LLM integrations by default
+        isLoading: false,
+        error: null,
+      }),
+    },
   }),
 }));
 
@@ -175,7 +206,6 @@ vi.mock("next-intl", () => ({
 
 // Mock ZenStack hooks for TipTapEditor
 
-
 // Stub the issue picker so tests can deterministically drive issue selection
 // without rendering the real UnifiedIssueManager (network + provider heavy).
 vi.mock("@/components/issues/UnifiedIssueManager", () => ({
@@ -196,7 +226,15 @@ vi.mock("@/components/issues/UnifiedIssueManager", () => ({
 }));
 
 // Now import everything else after the mocks
-import { DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat, WorkflowScope } from "~/zenstack/models";
+import {
+  DateFormat,
+  ItemsPerPage,
+  Locale,
+  NotificationMode,
+  Theme,
+  TimeFormat,
+  WorkflowScope,
+} from "~/zenstack/models";
 import {
   act,
   fireEvent,

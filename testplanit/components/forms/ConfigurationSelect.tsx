@@ -28,7 +28,9 @@ export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
   const tCommon = useTranslations("common");
 
   // Resolve the current value's name for display
-  const { data: currentConfig } = useClientQueries(schema).configurations.useFindFirst({
+  const { data: currentConfig } = useClientQueries(
+    schema
+  ).configurations.useFindFirst({
     where: { id: value ?? undefined },
     select: { id: true, name: true },
   });

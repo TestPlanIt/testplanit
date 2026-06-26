@@ -38,7 +38,8 @@ export function DeleteQuickScriptTemplate({
   const t = useTranslations("admin.exportTemplates.delete");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateTemplate } = useClientQueries(schema).caseExportTemplate.useUpdate();
+  const { mutateAsync: updateTemplate } =
+    useClientQueries(schema).caseExportTemplate.useUpdate();
 
   const form = useForm();
   const {

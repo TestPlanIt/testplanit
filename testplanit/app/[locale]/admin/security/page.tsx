@@ -33,11 +33,14 @@ export default function SecurityAdminPage() {
   const t = useTranslations("admin.security");
   const tCommon = useTranslations("common");
 
-  const { data: settings, refetch } = useClientQueries(schema).registrationSettings.useFindFirst();
+  const { data: settings, refetch } =
+    useClientQueries(schema).registrationSettings.useFindFirst();
   const { data: ssoProviders, refetch: refetchSsoProviders } =
     useClientQueries(schema).ssoProvider.useFindMany();
-  const { mutateAsync: updateSsoProvider } = useClientQueries(schema).ssoProvider.useUpdate();
-  const { mutateAsync: upsertSettings } = useClientQueries(schema).registrationSettings.useUpsert();
+  const { mutateAsync: updateSsoProvider } =
+    useClientQueries(schema).ssoProvider.useUpdate();
+  const { mutateAsync: upsertSettings } =
+    useClientQueries(schema).registrationSettings.useUpsert();
 
   const { data: affectedCount } = useClientQueries(schema).user.useCount({
     where: {

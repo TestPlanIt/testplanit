@@ -48,8 +48,7 @@ vi.mock("@/lib/db", () => ({
       findFirst: (...args: any[]) => mockDbProjectsFindFirst(...args),
     },
     llmProviderConfig: {
-      findFirst: (...args: any[]) =>
-        mockDbLlmProviderConfigFindFirst(...args),
+      findFirst: (...args: any[]) => mockDbLlmProviderConfigFindFirst(...args),
     },
   },
 }));

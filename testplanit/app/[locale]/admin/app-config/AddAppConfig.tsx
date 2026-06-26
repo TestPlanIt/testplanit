@@ -49,7 +49,8 @@ export function AddAppConfig({ open, onClose }: AddAppConfigProps) {
     },
   });
 
-  const { mutateAsync: createAppConfig } = useClientQueries(schema).appConfig.useCreate();
+  const { mutateAsync: createAppConfig } =
+    useClientQueries(schema).appConfig.useCreate();
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);

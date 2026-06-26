@@ -427,9 +427,7 @@ describe("fetchCasesForQuickScript", () => {
 
   describe("error handling", () => {
     it("should return error when baseDb throws", async () => {
-      mockDb.repositoryCases.findMany.mockRejectedValue(
-        new Error("DB error")
-      );
+      mockDb.repositoryCases.findMany.mockRejectedValue(new Error("DB error"));
 
       const result = await fetchCasesForQuickScript({
         caseIds: [1],

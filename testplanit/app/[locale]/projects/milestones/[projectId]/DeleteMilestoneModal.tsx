@@ -33,7 +33,8 @@ export function DeleteMilestoneModal({
 }: DeleteMilestoneModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { mutateAsync: updateMilestone } = useClientQueries(schema).milestones.useUpdate();
+  const { mutateAsync: updateMilestone } =
+    useClientQueries(schema).milestones.useUpdate();
   const t = useTranslations("milestones.delete");
   const tCommon = useTranslations("common");
 

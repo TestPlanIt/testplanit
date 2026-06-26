@@ -108,9 +108,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (e instanceof ScimValidationError) {
       return e.response;
     }
-    if (
-      isUniqueConstraintError(e)
-    ) {
+    if (isUniqueConstraintError(e)) {
       return scimError(
         409,
         "uniqueness",

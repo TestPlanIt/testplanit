@@ -51,7 +51,9 @@ export function UnifiedIssueManager({
   const t = useTranslations();
 
   // Fetch project with both old and new issue tracking config
-  const { data: project, isLoading } = useClientQueries(schema).projects.useFindFirst({
+  const { data: project, isLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst({
     where: { id: projectId },
     include: {
       projectIntegrations: {

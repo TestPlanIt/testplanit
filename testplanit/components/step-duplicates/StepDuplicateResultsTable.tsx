@@ -75,7 +75,9 @@ export function StepDuplicateResultsTable({
 
   const updateMatch = useClientQueries(schema).stepSequenceMatch.useUpdate();
 
-  const { data: allMatches, isLoading } = useClientQueries(schema).stepSequenceMatch.useFindMany({
+  const { data: allMatches, isLoading } = useClientQueries(
+    schema
+  ).stepSequenceMatch.useFindMany({
     where: {
       projectId: Number(projectId),
       status: "PENDING",

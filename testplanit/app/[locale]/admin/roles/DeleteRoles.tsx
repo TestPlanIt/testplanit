@@ -32,8 +32,10 @@ export function DeleteRole({ role, open, onClose }: DeleteRoleProps) {
   const t = useTranslations("admin.roles.delete");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateRole } = useClientQueries(schema).roles.useUpdate();
-  const { mutateAsync: updateManyUser } = useClientQueries(schema).user.useUpdateMany();
+  const { mutateAsync: updateRole } =
+    useClientQueries(schema).roles.useUpdate();
+  const { mutateAsync: updateManyUser } =
+    useClientQueries(schema).user.useUpdateMany();
 
   const { data: defaultRole } = useClientQueries(schema).roles.useFindFirst({
     where: { isDefault: true, isDeleted: false },

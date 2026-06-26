@@ -26,10 +26,15 @@ const mockUseFindUniqueUser = vi.fn();
 const mockUseCountProjects = vi.fn();
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    reviewRequest: { useCount: (...args: unknown[]) =>
-    mockUseCountReviewRequest(...args) },
-    user: { useFindUnique: (...args: unknown[]) => mockUseFindUniqueUser(...args) },
-    projects: { useCount: (...args: unknown[]) => mockUseCountProjects(...args) },
+    reviewRequest: {
+      useCount: (...args: unknown[]) => mockUseCountReviewRequest(...args),
+    },
+    user: {
+      useFindUnique: (...args: unknown[]) => mockUseFindUniqueUser(...args),
+    },
+    projects: {
+      useCount: (...args: unknown[]) => mockUseCountProjects(...args),
+    },
   }),
 }));
 

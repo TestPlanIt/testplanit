@@ -75,7 +75,9 @@ export function TemplateVariableInserter({
     };
   }, [textareaRef]);
 
-  const { data: caseFieldsData } = useClientQueries(schema).caseFields.useFindMany({
+  const { data: caseFieldsData } = useClientQueries(
+    schema
+  ).caseFields.useFindMany({
     where: { isEnabled: true, isDeleted: false },
     select: {
       displayName: true,

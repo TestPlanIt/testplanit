@@ -49,8 +49,14 @@ vi.doMock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     appConfig: {
       useFindMany: mockUseFindManyAppConfig,
-      useCreate: () => ({ mutateAsync: mockCreateMutateAsync, isPending: false }),
-      useUpdate: () => ({ mutateAsync: mockUpdateMutateAsync, isPending: false }),
+      useCreate: () => ({
+        mutateAsync: mockCreateMutateAsync,
+        isPending: false,
+      }),
+      useUpdate: () => ({
+        mutateAsync: mockUpdateMutateAsync,
+        isPending: false,
+      }),
     },
   }),
 }));

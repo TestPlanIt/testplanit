@@ -31,7 +31,8 @@ interface DeleteStatusProps {
 
 export function DeleteStatus({ status, open, onClose }: DeleteStatusProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateStatus } = useClientQueries(schema).status.useUpdate();
+  const { mutateAsync: updateStatus } =
+    useClientQueries(schema).status.useUpdate();
 
   const form = useForm();
   const {

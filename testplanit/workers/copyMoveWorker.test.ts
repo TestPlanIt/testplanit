@@ -337,35 +337,33 @@ describe("CopyMoveWorker", () => {
   function setupTemplateFieldMocks() {
     // templateCaseAssignment.findMany returns assignments for source template (id 30)
     // and for target template (id 50)
-    mockDb.templateCaseAssignment.findMany.mockImplementation(
-      (args: any) => {
-        const templateId = args?.where?.templateId;
-        if (templateId === 30) {
-          // source template
-          return Promise.resolve([
-            {
-              caseField: {
-                id: 5,
-                systemName: "priority",
-                type: { type: "Dropdown" },
-              },
+    mockDb.templateCaseAssignment.findMany.mockImplementation((args: any) => {
+      const templateId = args?.where?.templateId;
+      if (templateId === 30) {
+        // source template
+        return Promise.resolve([
+          {
+            caseField: {
+              id: 5,
+              systemName: "priority",
+              type: { type: "Dropdown" },
             },
-          ]);
-        } else if (templateId === 50) {
-          // target template
-          return Promise.resolve([
-            {
-              caseField: {
-                id: 7,
-                systemName: "priority",
-                type: { type: "Dropdown" },
-              },
+          },
+        ]);
+      } else if (templateId === 50) {
+        // target template
+        return Promise.resolve([
+          {
+            caseField: {
+              id: 7,
+              systemName: "priority",
+              type: { type: "Dropdown" },
             },
-          ]);
-        }
-        return Promise.resolve([]);
+          },
+        ]);
       }
-    );
+      return Promise.resolve([]);
+    });
 
     // caseFieldAssignment.findMany returns option assignments
     mockDb.caseFieldAssignment.findMany.mockImplementation((args: any) => {
@@ -428,50 +426,46 @@ describe("CopyMoveWorker", () => {
 
     it("DATA-02: should drop field value when option cannot be resolved in target", async () => {
       // Target template has no matching option name
-      mockDb.templateCaseAssignment.findMany.mockImplementation(
-        (args: any) => {
-          const templateId = args?.where?.templateId;
-          if (templateId === 30) {
-            return Promise.resolve([
-              {
-                caseField: {
-                  id: 5,
-                  systemName: "priority",
-                  type: { type: "Dropdown" },
-                },
+      mockDb.templateCaseAssignment.findMany.mockImplementation((args: any) => {
+        const templateId = args?.where?.templateId;
+        if (templateId === 30) {
+          return Promise.resolve([
+            {
+              caseField: {
+                id: 5,
+                systemName: "priority",
+                type: { type: "Dropdown" },
               },
-            ]);
-          } else if (templateId === 50) {
-            return Promise.resolve([
-              {
-                caseField: {
-                  id: 7,
-                  systemName: "priority",
-                  type: { type: "Dropdown" },
-                },
+            },
+          ]);
+        } else if (templateId === 50) {
+          return Promise.resolve([
+            {
+              caseField: {
+                id: 7,
+                systemName: "priority",
+                type: { type: "Dropdown" },
               },
-            ]);
-          }
-          return Promise.resolve([]);
+            },
+          ]);
         }
-      );
+        return Promise.resolve([]);
+      });
 
-      mockDb.caseFieldAssignment.findMany.mockImplementation(
-        (args: any) => {
-          const caseFieldId = args?.where?.caseFieldId;
-          if (caseFieldId === 5) {
-            return Promise.resolve([
-              { fieldOption: { id: 500, name: "High", isDeleted: false } },
-            ]);
-          } else if (caseFieldId === 7) {
-            // Target has different option name — no match for "High"
-            return Promise.resolve([
-              { fieldOption: { id: 700, name: "Critical", isDeleted: false } },
-            ]);
-          }
-          return Promise.resolve([]);
+      mockDb.caseFieldAssignment.findMany.mockImplementation((args: any) => {
+        const caseFieldId = args?.where?.caseFieldId;
+        if (caseFieldId === 5) {
+          return Promise.resolve([
+            { fieldOption: { id: 500, name: "High", isDeleted: false } },
+          ]);
+        } else if (caseFieldId === 7) {
+          // Target has different option name — no match for "High"
+          return Promise.resolve([
+            { fieldOption: { id: 700, name: "Critical", isDeleted: false } },
+          ]);
         }
-      );
+        return Promise.resolve([]);
+      });
 
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
@@ -573,33 +567,31 @@ describe("CopyMoveWorker", () => {
       mockDb.repositoryCases.findMany.mockResolvedValue([textFieldCase]);
 
       // Source template has a text field
-      mockDb.templateCaseAssignment.findMany.mockImplementation(
-        (args: any) => {
-          const templateId = args?.where?.templateId;
-          if (templateId === 30) {
-            return Promise.resolve([
-              {
-                caseField: {
-                  id: 8,
-                  systemName: "notes",
-                  type: { type: "Text" },
-                },
+      mockDb.templateCaseAssignment.findMany.mockImplementation((args: any) => {
+        const templateId = args?.where?.templateId;
+        if (templateId === 30) {
+          return Promise.resolve([
+            {
+              caseField: {
+                id: 8,
+                systemName: "notes",
+                type: { type: "Text" },
               },
-            ]);
-          } else if (templateId === 50) {
-            return Promise.resolve([
-              {
-                caseField: {
-                  id: 9,
-                  systemName: "notes",
-                  type: { type: "Text" },
-                },
+            },
+          ]);
+        } else if (templateId === 50) {
+          return Promise.resolve([
+            {
+              caseField: {
+                id: 9,
+                systemName: "notes",
+                type: { type: "Text" },
               },
-            ]);
-          }
-          return Promise.resolve([]);
+            },
+          ]);
         }
-      );
+        return Promise.resolve([]);
+      });
 
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
@@ -891,8 +883,7 @@ describe("CopyMoveWorker", () => {
       );
 
       // The collision query must scope out the source case
-      const collisionCall =
-        mockDb.repositoryCases.findFirst.mock.calls[1]?.[0];
+      const collisionCall = mockDb.repositoryCases.findFirst.mock.calls[1]?.[0];
       expect(collisionCall?.where?.id).toEqual({ notIn: [1] });
 
       // Case is actually moved, not skipped
@@ -1254,25 +1245,23 @@ describe("CopyMoveWorker", () => {
     it("should drop field value when target template has no matching field", async () => {
       // Source has a field with systemName "custom_field"
       // Target template has no field with matching systemName
-      mockDb.templateCaseAssignment.findMany.mockImplementation(
-        (args: any) => {
-          const templateId = args?.where?.templateId;
-          if (templateId === 30) {
-            // source template has "custom_field"
-            return Promise.resolve([
-              {
-                caseField: {
-                  id: 5,
-                  systemName: "custom_field",
-                  type: { type: "Dropdown" },
-                },
+      mockDb.templateCaseAssignment.findMany.mockImplementation((args: any) => {
+        const templateId = args?.where?.templateId;
+        if (templateId === 30) {
+          // source template has "custom_field"
+          return Promise.resolve([
+            {
+              caseField: {
+                id: 5,
+                systemName: "custom_field",
+                type: { type: "Dropdown" },
               },
-            ]);
-          }
-          // target template has NO "custom_field"
-          return Promise.resolve([]);
+            },
+          ]);
         }
-      );
+        // target template has NO "custom_field"
+        return Promise.resolve([]);
+      });
 
       const { processor } = await loadWorker();
       await processor(makeMockJob() as Job);
@@ -1526,13 +1515,11 @@ describe("CopyMoveWorker", () => {
         attachments: [],
       };
 
-      mockDb.repositoryCaseVersions.findMany.mockImplementation(
-        (args: any) => {
-          if (args?.where?.repositoryCaseId === 1)
-            return Promise.resolve([mockVersionForCase1]);
-          return Promise.resolve([]);
-        }
-      );
+      mockDb.repositoryCaseVersions.findMany.mockImplementation((args: any) => {
+        if (args?.where?.repositoryCaseId === 1)
+          return Promise.resolve([mockVersionForCase1]);
+        return Promise.resolve([]);
+      });
 
       const { processor } = await loadWorker();
       await processor(

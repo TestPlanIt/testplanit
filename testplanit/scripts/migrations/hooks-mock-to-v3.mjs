@@ -92,7 +92,11 @@ function findAllFactories(src) {
     }
     const after = src.slice(i).match(/^\s*\)\s*\)\s*;?/);
     if (!after) return null; // bail the whole file if any factory is malformed
-    out.push({ start: m.index, end: i + after[0].length, body: src.slice(open, i - 1) });
+    out.push({
+      start: m.index,
+      end: i + after[0].length,
+      body: src.slice(open, i - 1),
+    });
   }
   return out;
 }
@@ -126,8 +130,12 @@ function transform(src, file) {
         .join("\n");
       for (const entry of splitEntries(cleanBody)) {
         const colon = entry.indexOf(":");
-        if (colon === -1) return { skip: `entry has no colon: ${entry.slice(0, 40)}` };
-        const key = entry.slice(0, colon).trim().replace(/^["']|["']$/g, "");
+        if (colon === -1)
+          return { skip: `entry has no colon: ${entry.slice(0, 40)}` };
+        const key = entry
+          .slice(0, colon)
+          .trim()
+          .replace(/^["']|["']$/g, "");
         const value = entry.slice(colon + 1).trim();
         const parsed = parseHookName(key);
         if (!parsed) return { skip: `unparsed hook key: ${key}` };
@@ -191,4 +199,6 @@ for (const file of files) {
     changed++;
   }
 }
-console.log(`${dry ? "would change" : "changed"}: ${changed}, skipped: ${skipped}`);
+console.log(
+  `${dry ? "would change" : "changed"}: ${changed}, skipped: ${skipped}`
+);

@@ -34,7 +34,8 @@ export function EditAppConfig({ config, open, onClose }: EditAppConfigProps) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { mutateAsync: updateAppConfig } = useClientQueries(schema).appConfig.useUpdate();
+  const { mutateAsync: updateAppConfig } =
+    useClientQueries(schema).appConfig.useUpdate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

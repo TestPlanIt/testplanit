@@ -45,28 +45,34 @@ export function ExportTemplateAssignmentSection({
     language: string;
   };
 
-  const { data: templates, isLoading: templatesLoading } =
-    useClientQueries(schema).caseExportTemplate.useFindMany({
-      where: { isDeleted: false, isEnabled: true },
-      select: {
-        id: true,
-        name: true,
-        category: true,
-        framework: true,
-        language: true,
-      },
-    });
+  const { data: templates, isLoading: templatesLoading } = useClientQueries(
+    schema
+  ).caseExportTemplate.useFindMany({
+    where: { isDeleted: false, isEnabled: true },
+    select: {
+      id: true,
+      name: true,
+      category: true,
+      framework: true,
+      language: true,
+    },
+  });
 
-  const { data: assignments, isLoading: assignmentsLoading } =
-    useClientQueries(schema).caseExportTemplateProjectAssignment.useFindMany({
-      where: { projectId },
-      select: { templateId: true },
-    });
+  const { data: assignments, isLoading: assignmentsLoading } = useClientQueries(
+    schema
+  ).caseExportTemplateProjectAssignment.useFindMany({
+    where: { projectId },
+    select: { templateId: true },
+  });
 
   const { mutateAsync: deleteManyAssignment } =
-    useClientQueries(schema).caseExportTemplateProjectAssignment.useDeleteMany();
+    useClientQueries(
+      schema
+    ).caseExportTemplateProjectAssignment.useDeleteMany();
   const { mutateAsync: createManyAssignment } =
-    useClientQueries(schema).caseExportTemplateProjectAssignment.useCreateMany();
+    useClientQueries(
+      schema
+    ).caseExportTemplateProjectAssignment.useCreateMany();
   const updateProject = useClientQueries(schema).projects.useUpdate();
 
   const [selectedTemplates, setSelectedTemplates] = useState<TemplateOption[]>(

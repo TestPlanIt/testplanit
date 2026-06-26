@@ -6,7 +6,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import type { Color, ColorFamily, FieldIcon, Milestones, MilestoneTypes } from "~/zenstack/models";
+import type {
+  Color,
+  ColorFamily,
+  FieldIcon,
+  Milestones,
+  MilestoneTypes,
+} from "~/zenstack/models";
 import { Milestone } from "lucide-react";
 import { useTheme } from "next-themes";
 import React, { useEffect, useState } from "react";
@@ -42,7 +48,9 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
   milestones,
 }) => {
   const { resolvedTheme } = useTheme();
-  const { data: colors, isLoading: isColorsLoading } = useClientQueries(schema).color.useFindMany({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(
+    schema
+  ).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });

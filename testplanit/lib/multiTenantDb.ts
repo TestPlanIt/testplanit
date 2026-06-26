@@ -260,9 +260,7 @@ export function getTenantDbClient(tenantId: string): DbClient {
  * In single-tenant mode, returns the default client
  * In multi-tenant mode, returns tenant-specific client
  */
-export function getDbClientForJob(jobData: {
-  tenantId?: string;
-}): DbClient {
+export function getDbClientForJob(jobData: { tenantId?: string }): DbClient {
   if (!isMultiTenantMode()) {
     // Single-tenant mode: use lightweight ZenStack client (no ES sync extensions)
     // Import lazily to avoid circular dependencies

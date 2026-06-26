@@ -105,8 +105,10 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
   const caseFieldsInitializedRef = useRef(false);
   const resultFieldsInitializedRef = useRef(false);
 
-  const { mutateAsync: updateTemplate } = useClientQueries(schema).templates.useUpdate();
-  const { mutateAsync: updateManyTemplates } = useClientQueries(schema).templates.useUpdateMany();
+  const { mutateAsync: updateTemplate } =
+    useClientQueries(schema).templates.useUpdate();
+  const { mutateAsync: updateManyTemplates } =
+    useClientQueries(schema).templates.useUpdateMany();
   const { mutateAsync: createManyTemplateProjectAssignment } =
     useClientQueries(schema).templateProjectAssignment.useCreateMany();
   const { mutateAsync: deleteManyTemplateProjectAssignment } =
@@ -146,7 +148,9 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
     orderBy: { displayName: "asc" },
   });
 
-  const { data: resultFields } = useClientQueries(schema).resultFields.useFindMany({
+  const { data: resultFields } = useClientQueries(
+    schema
+  ).resultFields.useFindMany({
     where: { isDeleted: false },
     orderBy: { displayName: "asc" },
   });

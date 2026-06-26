@@ -91,7 +91,9 @@ export function IterationResultPanel({
   // dedupes with the same query already running inside TestRunCaseDetails.
   // Steps are passed through to the AddResultModal so per-step result
   // capture works inside an iteration (results.id → step results).
-  const { data: testcase } = useClientQueries(schema).repositoryCases.useFindFirst(
+  const { data: testcase } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst(
     {
       where: { id: caseId, isDeleted: false },
       select: {
@@ -107,17 +109,18 @@ export function IterationResultPanel({
 
   // Quick-status can't capture a required result field; when the case's
   // template requires one, escalate to the full Add Result modal instead.
-  const { data: requiredResultFieldAssignments } =
-    useClientQueries(schema).templateResultAssignment.useFindMany(
-      {
-        where: {
-          templateId: testcase?.template?.id,
-          resultField: { isRequired: true, isEnabled: true, isDeleted: false },
-        },
-        take: 1,
+  const { data: requiredResultFieldAssignments } = useClientQueries(
+    schema
+  ).templateResultAssignment.useFindMany(
+    {
+      where: {
+        templateId: testcase?.template?.id,
+        resultField: { isRequired: true, isEnabled: true, isDeleted: false },
       },
-      { enabled: !!testcase?.template?.id }
-    );
+      take: 1,
+    },
+    { enabled: !!testcase?.template?.id }
+  );
   const hasRequiredResultField =
     (requiredResultFieldAssignments?.length ?? 0) > 0;
 
@@ -146,7 +149,9 @@ export function IterationResultPanel({
     orderBy: { order: "asc" },
   });
 
-  const { data: inProgressWorkflow } = useClientQueries(schema).workflows.useFindFirst({
+  const { data: inProgressWorkflow } = useClientQueries(
+    schema
+  ).workflows.useFindFirst({
     where: {
       projects: { some: { projectId: Number(projectId) } },
       scope: "RUNS",

@@ -33,7 +33,8 @@ export function DeleteGroup({ group, open, onClose }: DeleteGroupProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateGroup } = useClientQueries(schema).groups.useUpdate();
+  const { mutateAsync: updateGroup } =
+    useClientQueries(schema).groups.useUpdate();
 
   const form = useForm();
   const {

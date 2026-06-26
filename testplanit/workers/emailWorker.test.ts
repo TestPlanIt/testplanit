@@ -707,9 +707,7 @@ describe("EmailWorker", () => {
     };
 
     it("immediate path: calls getServerTranslation with reviewReminderTitle + reviewReminderEmailMessage and routes actorName from requesterName", async () => {
-      mockDb.notification.findUnique.mockResolvedValue(
-        reminderNotification
-      );
+      mockDb.notification.findUnique.mockResolvedValue(reminderNotification);
 
       const { processor } = await import("./emailWorker");
       const { getServerTranslation } =
@@ -747,9 +745,7 @@ describe("EmailWorker", () => {
     });
 
     it("immediate path: composes the URL using projects/repository/{projectId}/{entityId} for CASE", async () => {
-      mockDb.notification.findUnique.mockResolvedValue(
-        reminderNotification
-      );
+      mockDb.notification.findUnique.mockResolvedValue(reminderNotification);
 
       const { processor } = await import("./emailWorker");
 
@@ -778,9 +774,7 @@ describe("EmailWorker", () => {
         name: "Test User",
         userPreferences: { locale: "en_US" },
       });
-      mockDb.notification.findMany.mockResolvedValue([
-        reminderNotification,
-      ]);
+      mockDb.notification.findMany.mockResolvedValue([reminderNotification]);
 
       const { processor } = await import("./emailWorker");
       const { getServerTranslation } =

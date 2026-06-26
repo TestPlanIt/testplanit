@@ -82,14 +82,15 @@ export function useReviewFeatureEnabled(
   // surfaces as a 404-shaped null rather than a "happens to match row id
   // 0" surprise.
   const PROJECT_ID_SENTINEL = -1;
-  const { data: projectData, isLoading: projectLoading } =
-    useClientQueries(schema).projects.useFindUnique(
-      {
-        where: { id: hasProjectId ? projectId : PROJECT_ID_SENTINEL },
-        select: { reviewWorkflowEnabled: true },
-      },
-      { enabled: hasProjectId }
-    );
+  const { data: projectData, isLoading: projectLoading } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
+    {
+      where: { id: hasProjectId ? projectId : PROJECT_ID_SENTINEL },
+      select: { reviewWorkflowEnabled: true },
+    },
+    { enabled: hasProjectId }
+  );
 
   const systemEnabled = systemData?.enabled;
   const projectEnabled = hasProjectId

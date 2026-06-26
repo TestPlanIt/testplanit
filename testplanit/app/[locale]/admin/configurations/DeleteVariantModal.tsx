@@ -36,7 +36,8 @@ export function DeleteVariantModal({
   onDelete,
 }: DeleteVariantModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfigVariants } = useClientQueries(schema).configVariants.useUpdate();
+  const { mutateAsync: updateConfigVariants } =
+    useClientQueries(schema).configVariants.useUpdate();
   const { mutateAsync: updateManyConfigurations } =
     useClientQueries(schema).configurations.useUpdateMany();
   const t = useTranslations("admin.configurations.variants.delete");

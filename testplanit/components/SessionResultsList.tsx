@@ -279,7 +279,9 @@ export function SessionResultsList({
     restrictedFieldPermissions?.canAddEdit ?? false;
 
   // Load statuses for the session result edit form
-  const { data: statuses, isLoading: isLoadingStatuses } = useClientQueries(schema).status.useFindMany({
+  const { data: statuses, isLoading: isLoadingStatuses } = useClientQueries(
+    schema
+  ).status.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -309,25 +311,28 @@ export function SessionResultsList({
   });
 
   // Fetch project data for issueConfigId
-  const { data: projectData, isLoading: isLoadingProject } =
-    useClientQueries(schema).projects.useFindFirst(
-      {
-        where: { id: Number(projectId) },
-        select: {
-          projectIntegrations: {
-            where: { isActive: true },
-            include: { integration: true },
-          },
+  const { data: projectData, isLoading: isLoadingProject } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
+    {
+      where: { id: Number(projectId) },
+      select: {
+        projectIntegrations: {
+          where: { isActive: true },
+          include: { integration: true },
         },
       },
-      {
-        enabled: !isNaN(Number(projectId)),
-      }
-    );
+    },
+    {
+      enabled: !isNaN(Number(projectId)),
+    }
+  );
 
   // Add this line to get the createAttachments hook
-  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
-  const { mutateAsync: updateAttachments } = useClientQueries(schema).attachments.useUpdate();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateAttachments } =
+    useClientQueries(schema).attachments.useUpdate();
 
   // Initialize the form with dynamic schema
   const form = useForm<FieldFormValues>({
@@ -420,11 +425,14 @@ export function SessionResultsList({
     },
   });
 
-  const { mutateAsync: updateSessionResult } = useClientQueries(schema).sessionResults.useUpdate();
+  const { mutateAsync: updateSessionResult } =
+    useClientQueries(schema).sessionResults.useUpdate();
 
   // Add hooks for field values operations
-  const { mutateAsync: createResultFieldValue } = useClientQueries(schema).resultFieldValues.useCreate();
-  const { mutateAsync: updateResultFieldValue } = useClientQueries(schema).resultFieldValues.useUpdate();
+  const { mutateAsync: createResultFieldValue } =
+    useClientQueries(schema).resultFieldValues.useCreate();
+  const { mutateAsync: updateResultFieldValue } =
+    useClientQueries(schema).resultFieldValues.useUpdate();
 
   // Fetch template fields when the session result is being edited
   const [editTemplateFields, setEditTemplateFields] = useState<any[]>([]);

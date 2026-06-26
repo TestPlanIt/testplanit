@@ -44,7 +44,9 @@ export const UserProjectsDisplay: React.FC<UserProjectsDisplayProps> = ({
     void fetchProjects();
   }, [userId]);
 
-  const { data: allProjects, isLoading: projectsLoading } = useClientQueries(schema).projects.useFindMany(
+  const { data: allProjects, isLoading: projectsLoading } = useClientQueries(
+    schema
+  ).projects.useFindMany(
     {
       where: {
         AND: [

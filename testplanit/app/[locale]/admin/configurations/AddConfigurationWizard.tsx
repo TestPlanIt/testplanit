@@ -97,9 +97,12 @@ const AddConfigurationWizard = (): React.ReactElement => {
 
   const form = useForm();
 
-  const { mutateAsync: createConfigurations } = useClientQueries(schema).configurations.useCreate();
+  const { mutateAsync: createConfigurations } =
+    useClientQueries(schema).configurations.useCreate();
 
-  const { data: categories } = useClientQueries(schema).configCategories.useFindMany({
+  const { data: categories } = useClientQueries(
+    schema
+  ).configCategories.useFindMany({
     where: { isDeleted: false },
     include: {
       variants: {
@@ -109,7 +112,9 @@ const AddConfigurationWizard = (): React.ReactElement => {
     },
   });
 
-  const { data: existingConfigurations } = useClientQueries(schema).configurations.useFindMany({
+  const { data: existingConfigurations } = useClientQueries(
+    schema
+  ).configurations.useFindMany({
     where: { isDeleted: false },
     include: { variants: true },
   });

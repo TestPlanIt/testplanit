@@ -224,48 +224,49 @@ export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
   const [currentPage, setCurrentPage] = useState(1); // 1-indexed for PaginationComponent
   const [pageSize, setPageSize] = useState<number | "All">(10);
 
-  const { data: totalCount, isLoading: isCountLoading } =
-    useClientQueries(schema).commentMention.useCount({
-      where: {
-        userId: userId,
-        comment: {
-          isDeleted: false,
-        },
+  const { data: totalCount, isLoading: isCountLoading } = useClientQueries(
+    schema
+  ).commentMention.useCount({
+    where: {
+      userId: userId,
+      comment: {
+        isDeleted: false,
       },
-    });
+    },
+  });
 
   // Calculate numeric page size for queries
   const numericPageSize = pageSize === "All" ? (totalCount ?? 1000) : pageSize;
 
   const pageSizeOptions = usePageSizeOptions(totalCount ?? 0);
 
-  const { data: mentions, isLoading: isMentionsLoading } =
-    useClientQueries(schema).commentMention.useFindMany({
-      where: {
-        userId: userId,
-        comment: {
-          isDeleted: false,
+  const { data: mentions, isLoading: isMentionsLoading } = useClientQueries(
+    schema
+  ).commentMention.useFindMany({
+    where: {
+      userId: userId,
+      comment: {
+        isDeleted: false,
+      },
+    },
+    include: {
+      comment: {
+        include: {
+          creator: true,
+          project: true,
+          repositoryCase: true,
+          testRun: true,
+          session: true,
+          milestone: true,
         },
       },
-      include: {
-        comment: {
-          include: {
-            creator: true,
-            project: true,
-            repositoryCase: true,
-            testRun: true,
-            session: true,
-            milestone: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      skip:
-        pageSize === "All" ? undefined : (currentPage - 1) * numericPageSize,
-      take: pageSize === "All" ? undefined : numericPageSize,
-    });
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    skip: pageSize === "All" ? undefined : (currentPage - 1) * numericPageSize,
+    take: pageSize === "All" ? undefined : numericPageSize,
+  });
 
   const isLoading = isCountLoading || isMentionsLoading;
   const totalPages = useMemo(

@@ -20,7 +20,9 @@ interface TestRunsSectionProps {
 const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
   const t = useTranslations();
 
-  const { data: testRuns, isLoading: isLoadingTestRuns } = useClientQueries(schema).testRuns.useFindMany({
+  const { data: testRuns, isLoading: isLoadingTestRuns } = useClientQueries(
+    schema
+  ).testRuns.useFindMany({
     where: {
       AND: [
         { projectId: Number(projectId) },
@@ -40,19 +42,20 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
     take: 5,
   });
 
-  const { data: testRunsCount, isLoading: isLoadingCount } =
-    useClientQueries(schema).testRuns.useFindMany({
-      where: {
-        AND: [
-          { projectId: Number(projectId) },
-          { isDeleted: false },
-          { isCompleted: false },
-        ],
-      },
-      select: {
-        id: true,
-      },
-    });
+  const { data: testRunsCount, isLoading: isLoadingCount } = useClientQueries(
+    schema
+  ).testRuns.useFindMany({
+    where: {
+      AND: [
+        { projectId: Number(projectId) },
+        { isDeleted: false },
+        { isCompleted: false },
+      ],
+    },
+    select: {
+      id: true,
+    },
+  });
 
   if (isLoadingTestRuns || isLoadingCount) {
     return (

@@ -32,11 +32,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ApplicationArea } from "~/zenstack/models";
-import type {
-  CaseFields as DbCaseField,
-  Tags,
-  Issue,
-} from "~/zenstack/models";
+import type { CaseFields as DbCaseField, Tags, Issue } from "~/zenstack/models";
 import type { RepositoryCasesGetPayload } from "~/zenstack/input";
 import { isEqual } from "lodash";
 import {
@@ -780,9 +776,7 @@ export function BulkEditModal({
       if (fieldKey === "tags")
         return (caseItem.tags ?? []).map((t) => t.id).sort((a, b) => a - b);
       if (fieldKey === "issues")
-        return (caseItem.issues ?? [])
-          .map((i) => i.id)
-          .sort((a, b) => a - b);
+        return (caseItem.issues ?? []).map((i) => i.id).sort((a, b) => a - b);
       if (fieldKey.startsWith("dynamic_")) {
         const fieldId = parseInt(fieldKey.split("_")[1], 10);
         const caseValue = caseItem.caseFieldValues.find(
@@ -893,8 +887,7 @@ export function BulkEditModal({
       } else if (fieldKey === "issues") {
         if (!Array.isArray(firstValue) || firstValue.length === 0) return "-";
         // Look up issue names from the already-loaded case data
-        const allCaseIssues =
-          casesData?.flatMap((c) => c.issues ?? []) || [];
+        const allCaseIssues = casesData?.flatMap((c) => c.issues ?? []) || [];
         return (
           firstValue
             .map((issueId) => allCaseIssues.find((i) => i.id === issueId)?.name)

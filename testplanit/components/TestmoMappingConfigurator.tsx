@@ -3511,7 +3511,9 @@ function StatusMappingSection({
     [colorData]
   );
 
-  const { data: statusScopeData } = useClientQueries(schema).statusScope.useFindMany({
+  const { data: statusScopeData } = useClientQueries(
+    schema
+  ).statusScope.useFindMany({
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });

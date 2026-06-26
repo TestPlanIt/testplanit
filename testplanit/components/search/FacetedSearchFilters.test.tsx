@@ -44,10 +44,12 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     projectAssignment: { useFindMany: () => mockProjectAssignmentData },
     repositoryFolders: { useFindMany: () => mockFoldersData },
     user: { useFindMany: () => mockUsersData },
-    configurations: { useFindMany: (args: unknown) => {
-    configurationsHookSpy(args);
-    return mockConfigurationsData;
-  } },
+    configurations: {
+      useFindMany: (args: unknown) => {
+        configurationsHookSpy(args);
+        return mockConfigurationsData;
+      },
+    },
   }),
 }));
 

@@ -15,7 +15,11 @@ vi.mock("next-intl", () => ({
   useTranslations: vi.fn(),
 }));
 
-const { useFindManyTemplates, useFindManyRepositoryFolders, useFindManyProjectLlmIntegration } = vi.hoisted(() => ({
+const {
+  useFindManyTemplates,
+  useFindManyRepositoryFolders,
+  useFindManyProjectLlmIntegration,
+} = vi.hoisted(() => ({
   useFindManyTemplates: vi.fn(),
   useFindManyRepositoryFolders: vi.fn(),
   useFindManyProjectLlmIntegration: vi.fn(),

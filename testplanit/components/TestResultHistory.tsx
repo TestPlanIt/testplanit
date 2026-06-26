@@ -212,7 +212,8 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
     orderBy: { name: "asc" },
   });
 
-  const { mutateAsync: createTestRunCase } = useClientQueries(schema).testRunCases.useCreate();
+  const { mutateAsync: createTestRunCase } =
+    useClientQueries(schema).testRunCases.useCreate();
 
   const handleAddToTestRun = async (testRunId: number) => {
     try {
@@ -295,7 +296,9 @@ const ResultFieldValuesDisplay = ({
 }) => {
   const tCommon = useTranslations("common");
 
-  const { data: fieldValues, isLoading } = useClientQueries(schema).resultFieldValues.useFindMany(
+  const { data: fieldValues, isLoading } = useClientQueries(
+    schema
+  ).resultFieldValues.useFindMany(
     {
       where: {
         testRunResultsId: resultId,
@@ -577,7 +580,9 @@ const RenderSharedGroupInHistoryList: React.FC<{
   const tCommon = useTranslations("common");
   const locale = useLocale();
 
-  const { data: items, isLoading } = useClientQueries(schema).sharedStepItem.useFindMany(
+  const { data: items, isLoading } = useClientQueries(
+    schema
+  ).sharedStepItem.useFindMany(
     {
       where: {
         sharedStepGroupId,
@@ -725,7 +730,9 @@ export default function TestResultHistory({
   } | null>(null);
 
   // Fetch app config for edit duration
-  const { data: appConfigData } = useClientQueries(schema).appConfig.useFindMany({
+  const { data: appConfigData } = useClientQueries(
+    schema
+  ).appConfig.useFindMany({
     where: { key: "edit_results_duration" },
   });
 
@@ -735,7 +742,9 @@ export default function TestResultHistory({
 
   // Per-project edit-window override, resolved against the system ceiling so
   // the Edit button matches the server guard in submit-result's sibling path.
-  const { data: editWindowProject } = useClientQueries(schema).projects.useFindUnique(
+  const { data: editWindowProject } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
     {
       where: { id: Number(projectId) },
       select: { editResultsDurationSeconds: true },

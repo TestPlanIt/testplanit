@@ -18,7 +18,9 @@ export const CaseFieldListDisplay: React.FC<CaseFieldListProps> = ({
   caseFields,
   usePopover = true,
 }) => {
-  const { data: allCaseFields } = useClientQueries(schema).caseFields.useFindMany({
+  const { data: allCaseFields } = useClientQueries(
+    schema
+  ).caseFields.useFindMany({
     orderBy: { displayName: "asc" },
     where: {
       AND: [

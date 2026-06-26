@@ -31,7 +31,9 @@ export default function ProjectIntegrationsPage() {
   const tCommon = useTranslations("common");
 
   // Fetch project data (allow global admin access or project assignment)
-  const { data: project, isLoading: projectLoading } = useClientQueries(schema).projects.useFindFirst(
+  const { data: project, isLoading: projectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: {
         id: projectId,

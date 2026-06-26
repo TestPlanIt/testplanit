@@ -44,7 +44,9 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     useProjectPermissions(projectId, ApplicationArea.Milestones);
   const canAddEdit = permissions?.canAddEdit ?? false;
 
-  const { data: project, isLoading: isLoadingProject } = useClientQueries(schema).projects.useFindFirst(
+  const { data: project, isLoading: isLoadingProject } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: {
         AND: [
@@ -62,7 +64,9 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     }
   );
 
-  const { data: incompleteMilestones } = useClientQueries(schema).milestones.useFindMany({
+  const { data: incompleteMilestones } = useClientQueries(
+    schema
+  ).milestones.useFindMany({
     where: {
       AND: [
         { projectId: Number(projectId) },
@@ -85,7 +89,9 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     },
   });
 
-  const { data: completedMilestones } = useClientQueries(schema).milestones.useFindMany({
+  const { data: completedMilestones } = useClientQueries(
+    schema
+  ).milestones.useFindMany({
     where: {
       AND: [
         { projectId: Number(projectId) },

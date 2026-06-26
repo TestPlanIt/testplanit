@@ -368,8 +368,10 @@ const TreeView: React.FC<{
     return combined;
   }, [loadedFolderIds, autoLoadedFolderIds]);
 
-  const { mutateAsync: updateFolder } = useClientQueries(schema).repositoryFolders.useUpdate();
-  const { mutateAsync: updateCase } = useClientQueries(schema).repositoryCases.useUpdate();
+  const { mutateAsync: updateFolder } =
+    useClientQueries(schema).repositoryFolders.useUpdate();
+  const { mutateAsync: updateCase } =
+    useClientQueries(schema).repositoryCases.useUpdate();
 
   const copyMoveJob = useCopyMoveJob();
   const [pendingCopyTargets, setPendingCopyTargets] = useState<

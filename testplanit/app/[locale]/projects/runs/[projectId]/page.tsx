@@ -426,7 +426,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     }),
   });
 
-  const { data: project, isLoading: isProjectLoading } = useClientQueries(schema).projects.useFindFirst(
+  const { data: project, isLoading: isProjectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: {
         AND: [
@@ -573,7 +575,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // --- Fetch Recent Manual Test Run Results (two-query approach) ---
   // Query 1: Get the most recent result to determine the date range
-  const { data: latestManualResult } = useClientQueries(schema).testRunResults.useFindFirst(
+  const { data: latestManualResult } = useClientQueries(
+    schema
+  ).testRunResults.useFindFirst(
     {
       where: {
         testRun: { projectId: numericProjectId ?? undefined },
@@ -711,7 +715,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // --- Fetch Recent Automated (JUnit) Test Results (two-query approach) ---
   // Query 1: Get the most recent automated result to determine the date range
-  const { data: latestAutomatedResult } = useClientQueries(schema).jUnitTestResult.useFindFirst(
+  const { data: latestAutomatedResult } = useClientQueries(
+    schema
+  ).jUnitTestResult.useFindFirst(
     {
       where: {
         testSuite: {

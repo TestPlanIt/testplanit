@@ -24,7 +24,9 @@ export function ShareLayoutContent({
   const tBranding = useTranslations("common.branding");
 
   // Fetch user preferences if authenticated
-  const { data: userPreferences } = useClientQueries(schema).userPreferences.useFindUnique(
+  const { data: userPreferences } = useClientQueries(
+    schema
+  ).userPreferences.useFindUnique(
     {
       where: { userId: session?.user?.id || "" },
     },

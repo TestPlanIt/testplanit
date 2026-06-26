@@ -13,13 +13,16 @@ let mockThresholdConfig: { value: unknown } | undefined | null = null;
 let mockThresholdLoading = false;
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    appConfig: { useUpsert: () => ({
-    mutateAsync: mockMutateAsync,
-    isPending: mockMutationPending,
-  }), useFindUnique: () => ({
-    data: mockThresholdConfig,
-    isLoading: mockThresholdLoading,
-  }) },
+    appConfig: {
+      useUpsert: () => ({
+        mutateAsync: mockMutateAsync,
+        isPending: mockMutationPending,
+      }),
+      useFindUnique: () => ({
+        data: mockThresholdConfig,
+        isLoading: mockThresholdLoading,
+      }),
+    },
   }),
 }));
 

@@ -35,11 +35,14 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
 }) => {
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
-  const { data: colors, isLoading: isColorsLoading } = useClientQueries(schema).color.useFindMany({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(
+    schema
+  ).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
-  const { mutateAsync: updateMilestones } = useClientQueries(schema).milestones.useUpdate();
+  const { mutateAsync: updateMilestones } =
+    useClientQueries(schema).milestones.useUpdate();
   const router = useRouter();
   const queryClient = useQueryClient();
 

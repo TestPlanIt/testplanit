@@ -119,15 +119,16 @@ export function SharedDatasetEditor({
   // editable surface; for historical views we resolve rowsJson from the
   // pinned DataSetVersion below.
   const isCurrentView = selectedVersion === "current";
-  const { data: liveRowsRaw, isLoading: liveRowsLoading } =
-    useClientQueries(schema).dataSetRow.useFindMany(
-      {
-        where: { dataSetId, isDeleted: false },
-        orderBy: { rowIndex: "asc" },
-        select: { id: true, label: true, rowIndex: true, valuesJson: true },
-      },
-      { enabled: isCurrentView }
-    );
+  const { data: liveRowsRaw, isLoading: liveRowsLoading } = useClientQueries(
+    schema
+  ).dataSetRow.useFindMany(
+    {
+      where: { dataSetId, isDeleted: false },
+      orderBy: { rowIndex: "asc" },
+      select: { id: true, label: true, rowIndex: true, valuesJson: true },
+    },
+    { enabled: isCurrentView }
+  );
 
   // ----- Historical version when not in "current" view -----
   const historicalVersionId =
@@ -148,7 +149,9 @@ export function SharedDatasetEditor({
 
   // ----- Latest version (used to derive parameters when current view
   //       has no live row schema yet — e.g., first save not done). -----
-  const { data: latestVersion } = useClientQueries(schema).dataSetVersion.useFindFirst({
+  const { data: latestVersion } = useClientQueries(
+    schema
+  ).dataSetVersion.useFindFirst({
     where: { dataSetId },
     orderBy: { version: "desc" },
     select: {

@@ -45,7 +45,9 @@ export default function LinkSSOPage() {
   const [linking, setLinking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: allProviders } = useClientQueries(schema).ssoProvider.useFindMany({
+  const { data: allProviders } = useClientQueries(
+    schema
+  ).ssoProvider.useFindMany({
     where: { enabled: true },
     include: { samlConfig: true },
   });

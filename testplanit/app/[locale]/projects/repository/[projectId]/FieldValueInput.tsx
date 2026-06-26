@@ -35,7 +35,11 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import type { CaseFields as DbCaseField, Tags as DbTag, Workflows as DbWorkflow } from "~/zenstack/models";
+import type {
+  CaseFields as DbCaseField,
+  Tags as DbTag,
+  Workflows as DbWorkflow,
+} from "~/zenstack/models";
 import { format } from "date-fns";
 import { CalendarDays } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";

@@ -75,7 +75,9 @@ function RoleList() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { data: totalFilteredRoles } = useClientQueries(schema).roles.useFindMany(
+  const { data: totalFilteredRoles } = useClientQueries(
+    schema
+  ).roles.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -169,8 +171,10 @@ function RoleList() {
     }
   }, [status, session, router]);
 
-  const { mutateAsync: updateRole } = useClientQueries(schema).roles.useUpdate();
-  const { mutateAsync: updateManyRoles } = useClientQueries(schema).roles.useUpdateMany();
+  const { mutateAsync: updateRole } =
+    useClientQueries(schema).roles.useUpdate();
+  const { mutateAsync: updateManyRoles } =
+    useClientQueries(schema).roles.useUpdateMany();
 
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render
   const updateRoleRef = useRef(updateRole);

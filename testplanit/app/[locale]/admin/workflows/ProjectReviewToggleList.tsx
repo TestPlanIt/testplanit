@@ -85,7 +85,9 @@ export function ProjectReviewToggleList() {
     if (typeof count === "number") setTotalItems(count);
   }, [count, setTotalItems]);
 
-  const { data: projects, isLoading } = useClientQueries(schema).projects.useFindMany(
+  const { data: projects, isLoading } = useClientQueries(
+    schema
+  ).projects.useFindMany(
     {
       where,
       select: {
@@ -101,7 +103,8 @@ export function ProjectReviewToggleList() {
     { enabled: systemEnabled === true }
   );
 
-  const { mutateAsync: updateProjects } = useClientQueries(schema).projects.useUpdate();
+  const { mutateAsync: updateProjects } =
+    useClientQueries(schema).projects.useUpdate();
   const updateRef = useRef(updateProjects);
   useEffect(() => {
     updateRef.current = updateProjects;

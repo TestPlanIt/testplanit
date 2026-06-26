@@ -1,6 +1,5 @@
 #!/usr/bin/env tsx
 
-
 import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   getElasticsearchClient,

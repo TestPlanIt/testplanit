@@ -120,10 +120,7 @@ async function getWorkflowName(
   return name;
 }
 
-async function getFolderName(
-  tx: TxClient,
-  folderId: number
-): Promise<string> {
+async function getFolderName(tx: TxClient, folderId: number): Promise<string> {
   if (folderNameCache.has(folderId)) {
     return folderNameCache.get(folderId)!;
   }
@@ -356,294 +353,284 @@ export const importAutomationCases = async (
   for (let index = 0; index < repositoryCaseGroups.length; index += chunkSize) {
     const chunk = repositoryCaseGroups.slice(index, index + chunkSize);
 
-    await db.$transaction(
-      async (tx: TxClient) => {
-        for (const group of chunk) {
-          const {
-            name,
-            className,
-            projectId,
-            testmoCaseIds,
-            folder,
-            createdAt,
-          } = group;
-          const processedForGroup = testmoCaseIds.length;
+    await db.$transaction(async (tx: TxClient) => {
+      for (const group of chunk) {
+        const { name, className, projectId, testmoCaseIds, folder, createdAt } =
+          group;
+        const processedForGroup = testmoCaseIds.length;
 
-          let repositoryId: number | undefined;
-          for (const [, mappedRepoId] of repositoryIdMap.entries()) {
-            const repoCheck = await tx.repositories.findFirst({
-              where: { id: mappedRepoId, projectId },
-            });
-            if (repoCheck) {
-              repositoryId = mappedRepoId;
-              break;
-            }
+        let repositoryId: number | undefined;
+        for (const [, mappedRepoId] of repositoryIdMap.entries()) {
+          const repoCheck = await tx.repositories.findFirst({
+            where: { id: mappedRepoId, projectId },
+          });
+          if (repoCheck) {
+            repositoryId = mappedRepoId;
+            break;
           }
+        }
 
-          if (!repositoryId) {
-            let repository = await tx.repositories.findFirst({
-              where: {
+        if (!repositoryId) {
+          let repository = await tx.repositories.findFirst({
+            where: {
+              projectId,
+              isActive: true,
+              isDeleted: false,
+              isArchived: false,
+            },
+            orderBy: { id: "asc" },
+          });
+
+          if (!repository) {
+            repository = await tx.repositories.create({
+              data: {
                 projectId,
                 isActive: true,
                 isDeleted: false,
                 isArchived: false,
               },
-              orderBy: { id: "asc" },
             });
-
-            if (!repository) {
-              repository = await tx.repositories.create({
-                data: {
-                  projectId,
-                  isActive: true,
-                  isDeleted: false,
-                  isArchived: false,
-                },
-              });
-            }
-            repositoryId = repository.id;
           }
+          repositoryId = repository.id;
+        }
 
-          let folderId: number | undefined;
-          let folderNameForVersion: string | null = null;
+        let folderId: number | undefined;
+        let folderNameForVersion: string | null = null;
 
-          // First, ensure the top-level "Automation" folder exists
-          let automationRootFolder = await tx.repositoryFolders.findFirst({
-            where: {
+        // First, ensure the top-level "Automation" folder exists
+        let automationRootFolder = await tx.repositoryFolders.findFirst({
+          where: {
+            projectId,
+            repositoryId,
+            parentId: null,
+            name: "Automation",
+            isDeleted: false,
+          },
+        });
+
+        if (!automationRootFolder) {
+          automationRootFolder = await tx.repositoryFolders.create({
+            data: {
               projectId,
               repositoryId,
               parentId: null,
               name: "Automation",
-              isDeleted: false,
+              creatorId: configuration.users?.[1]?.mappedTo || "unknown",
             },
           });
+        }
 
-          if (!automationRootFolder) {
-            automationRootFolder = await tx.repositoryFolders.create({
-              data: {
+        // Start folder hierarchy under the "Automation" root folder
+        let currentParentId: number | null = automationRootFolder.id;
+
+        if (folder) {
+          const folderParts = folder.split(".");
+
+          for (const folderName of folderParts) {
+            if (!folderName) continue;
+
+            const existing: any = await tx.repositoryFolders.findFirst({
+              where: {
                 projectId,
                 repositoryId,
-                parentId: null,
-                name: "Automation",
-                creatorId: configuration.users?.[1]?.mappedTo || "unknown",
+                parentId: currentParentId,
+                name: folderName,
+                isDeleted: false,
               },
             });
-          }
 
-          // Start folder hierarchy under the "Automation" root folder
-          let currentParentId: number | null = automationRootFolder.id;
-
-          if (folder) {
-            const folderParts = folder.split(".");
-
-            for (const folderName of folderParts) {
-              if (!folderName) continue;
-
-              const existing: any = await tx.repositoryFolders.findFirst({
-                where: {
+            const current: any =
+              existing ||
+              (await tx.repositoryFolders.create({
+                data: {
                   projectId,
                   repositoryId,
                   parentId: currentParentId,
                   name: folderName,
-                  isDeleted: false,
+                  creatorId: configuration.users?.[1]?.mappedTo || "unknown",
                 },
-              });
+              }));
 
-              const current: any =
-                existing ||
-                (await tx.repositoryFolders.create({
-                  data: {
-                    projectId,
-                    repositoryId,
-                    parentId: currentParentId,
-                    name: folderName,
-                    creatorId: configuration.users?.[1]?.mappedTo || "unknown",
-                  },
-                }));
-
-              currentParentId = current.id;
-              folderId = current.id;
-            }
-
-            if (folderParts.length > 0) {
-              folderNameForVersion =
-                folderParts[folderParts.length - 1] || null;
-            }
+            currentParentId = current.id;
+            folderId = current.id;
           }
 
-          // If no folder was specified or the hierarchy is empty, use the root "Automation" folder
-          if (!folderId) {
-            folderId = automationRootFolder.id;
-            folderNameForVersion = "Automation";
+          if (folderParts.length > 0) {
+            folderNameForVersion = folderParts[folderParts.length - 1] || null;
           }
+        }
 
-          let defaultTemplateId =
-            projectDefaultTemplateMap.get(projectId) ?? null;
-          if (!defaultTemplateId) {
-            const fallbackAssignment =
-              await tx.templateProjectAssignment.findFirst({
-                where: { projectId },
-                select: { templateId: true },
-                orderBy: { templateId: "asc" },
-              });
-            defaultTemplateId = fallbackAssignment?.templateId ?? null;
-          }
-          if (!defaultTemplateId) {
-            defaultTemplateId = globalFallbackTemplateId;
-          }
-          if (!defaultTemplateId) {
-            // Unable to resolve a template for this project; skip importing these cases
-            processedAutomationCases += processedForGroup;
-            context.processedCount += processedForGroup;
-            continue;
-          }
+        // If no folder was specified or the hierarchy is empty, use the root "Automation" folder
+        if (!folderId) {
+          folderId = automationRootFolder.id;
+          folderNameForVersion = "Automation";
+        }
 
-          const resolvedTemplateId = defaultTemplateId;
+        let defaultTemplateId =
+          projectDefaultTemplateMap.get(projectId) ?? null;
+        if (!defaultTemplateId) {
+          const fallbackAssignment =
+            await tx.templateProjectAssignment.findFirst({
+              where: { projectId },
+              select: { templateId: true },
+              orderBy: { templateId: "asc" },
+            });
+          defaultTemplateId = fallbackAssignment?.templateId ?? null;
+        }
+        if (!defaultTemplateId) {
+          defaultTemplateId = globalFallbackTemplateId;
+        }
+        if (!defaultTemplateId) {
+          // Unable to resolve a template for this project; skip importing these cases
+          processedAutomationCases += processedForGroup;
+          context.processedCount += processedForGroup;
+          continue;
+        }
 
-          const defaultWorkflowId = await workflowResolver.resolve(
+        const resolvedTemplateId = defaultTemplateId;
+
+        const defaultWorkflowId = await workflowResolver.resolve(
+          projectId,
+          WorkflowScope.CASES
+        );
+        if (!defaultWorkflowId) {
+          // No CASES-scope workflow assigned to this project; skip
+          processedAutomationCases += processedForGroup;
+          context.processedCount += processedForGroup;
+          continue;
+        }
+        const normalizedClassName = className || null;
+
+        // Match on full unique constraint (projectId, name, className, source)
+        // without isDeleted filter since the constraint doesn't include it
+        let repositoryCase = await tx.repositoryCases.findFirst({
+          where: {
             projectId,
-            WorkflowScope.CASES
-          );
-          if (!defaultWorkflowId) {
-            // No CASES-scope workflow assigned to this project; skip
-            processedAutomationCases += processedForGroup;
-            context.processedCount += processedForGroup;
-            continue;
-          }
-          const normalizedClassName = className || null;
+            name,
+            className: normalizedClassName,
+            source: "JUNIT",
+          },
+        });
 
-          // Match on full unique constraint (projectId, name, className, source)
-          // without isDeleted filter since the constraint doesn't include it
-          let repositoryCase = await tx.repositoryCases.findFirst({
-            where: {
+        if (repositoryCase) {
+          repositoryCase = await tx.repositoryCases.update({
+            where: { id: repositoryCase.id },
+            data: {
+              automated: true,
+              isDeleted: false,
+              isArchived: false,
+              stateId: defaultWorkflowId,
+              templateId: resolvedTemplateId,
+              folderId,
+              repositoryId,
+            },
+          });
+          for (const testmoCaseId of testmoCaseIds) {
+            automationCaseIdMap.set(testmoCaseId, repositoryCase.id);
+            let projectMap = automationCaseProjectMap.get(projectId);
+            if (!projectMap) {
+              projectMap = new Map<number, number>();
+              automationCaseProjectMap.set(projectId, projectMap);
+            }
+            projectMap.set(testmoCaseId, repositoryCase.id);
+          }
+          summary.mapped += testmoCaseIds.length;
+        } else {
+          repositoryCase = await tx.repositoryCases.create({
+            data: {
               projectId,
+              repositoryId,
+              folderId,
               name,
               className: normalizedClassName,
               source: "JUNIT",
+              automated: true,
+              stateId: defaultWorkflowId,
+              templateId: resolvedTemplateId,
+              creatorId: configuration.users?.[1]?.mappedTo || "unknown",
+              createdAt: createdAt || new Date(),
+            },
+          });
+          for (const testmoCaseId of testmoCaseIds) {
+            automationCaseIdMap.set(testmoCaseId, repositoryCase.id);
+            let projectMap = automationCaseProjectMap.get(projectId);
+            if (!projectMap) {
+              projectMap = new Map<number, number>();
+              automationCaseProjectMap.set(projectId, projectMap);
+            }
+            projectMap.set(testmoCaseId, repositoryCase.id);
+          }
+          summary.created += 1;
+
+          const _projectName = await getProjectName(tx, projectId);
+          const _templateName = await getTemplateName(tx, resolvedTemplateId);
+          const workflowName = await getWorkflowName(tx, defaultWorkflowId);
+          const _resolvedFolderName =
+            folderNameForVersion ?? (await getFolderName(tx, folderId));
+          const creatorName = await getUserName(tx, repositoryCase.creatorId);
+
+          // Create version snapshot using centralized helper
+          const caseVersion = await createTestCaseVersionInTransaction(
+            tx,
+            repositoryCase.id,
+            {
+              // Use repositoryCase.currentVersion (already set on the case)
+              creatorId: repositoryCase.creatorId,
+              creatorName,
+              createdAt: repositoryCase.createdAt ?? new Date(),
+              overrides: {
+                name,
+                stateId: defaultWorkflowId,
+                stateName: workflowName,
+                estimate: repositoryCase.estimate ?? null,
+                forecastManual: null,
+                forecastAutomated: null,
+                automated: true,
+                isArchived: repositoryCase.isArchived,
+                order: repositoryCase.order ?? 0,
+                steps: null,
+                tags: [],
+                issues: [],
+                links: [],
+                attachments: [],
+              },
+            }
+          );
+
+          const caseFieldValues = await tx.caseFieldValues.findMany({
+            where: { testCaseId: repositoryCase.id },
+            include: {
+              field: {
+                select: {
+                  displayName: true,
+                  systemName: true,
+                },
+              },
             },
           });
 
-          if (repositoryCase) {
-            repositoryCase = await tx.repositoryCases.update({
-              where: { id: repositoryCase.id },
-              data: {
-                automated: true,
-                isDeleted: false,
-                isArchived: false,
-                stateId: defaultWorkflowId,
-                templateId: resolvedTemplateId,
-                folderId,
-                repositoryId,
-              },
+          if (caseFieldValues.length > 0) {
+            await tx.caseFieldVersionValues.createMany({
+              data: caseFieldValues.map((fieldValue) => ({
+                versionId: caseVersion.id,
+                field:
+                  fieldValue.field.displayName || fieldValue.field.systemName,
+                value: fieldValue.value ?? JsonNull,
+              })),
             });
-            for (const testmoCaseId of testmoCaseIds) {
-              automationCaseIdMap.set(testmoCaseId, repositoryCase.id);
-              let projectMap = automationCaseProjectMap.get(projectId);
-              if (!projectMap) {
-                projectMap = new Map<number, number>();
-                automationCaseProjectMap.set(projectId, projectMap);
-              }
-              projectMap.set(testmoCaseId, repositoryCase.id);
-            }
-            summary.mapped += testmoCaseIds.length;
-          } else {
-            repositoryCase = await tx.repositoryCases.create({
-              data: {
-                projectId,
-                repositoryId,
-                folderId,
-                name,
-                className: normalizedClassName,
-                source: "JUNIT",
-                automated: true,
-                stateId: defaultWorkflowId,
-                templateId: resolvedTemplateId,
-                creatorId: configuration.users?.[1]?.mappedTo || "unknown",
-                createdAt: createdAt || new Date(),
-              },
-            });
-            for (const testmoCaseId of testmoCaseIds) {
-              automationCaseIdMap.set(testmoCaseId, repositoryCase.id);
-              let projectMap = automationCaseProjectMap.get(projectId);
-              if (!projectMap) {
-                projectMap = new Map<number, number>();
-                automationCaseProjectMap.set(projectId, projectMap);
-              }
-              projectMap.set(testmoCaseId, repositoryCase.id);
-            }
-            summary.created += 1;
-
-            const _projectName = await getProjectName(tx, projectId);
-            const _templateName = await getTemplateName(tx, resolvedTemplateId);
-            const workflowName = await getWorkflowName(tx, defaultWorkflowId);
-            const _resolvedFolderName =
-              folderNameForVersion ?? (await getFolderName(tx, folderId));
-            const creatorName = await getUserName(tx, repositoryCase.creatorId);
-
-            // Create version snapshot using centralized helper
-            const caseVersion = await createTestCaseVersionInTransaction(
-              tx,
-              repositoryCase.id,
-              {
-                // Use repositoryCase.currentVersion (already set on the case)
-                creatorId: repositoryCase.creatorId,
-                creatorName,
-                createdAt: repositoryCase.createdAt ?? new Date(),
-                overrides: {
-                  name,
-                  stateId: defaultWorkflowId,
-                  stateName: workflowName,
-                  estimate: repositoryCase.estimate ?? null,
-                  forecastManual: null,
-                  forecastAutomated: null,
-                  automated: true,
-                  isArchived: repositoryCase.isArchived,
-                  order: repositoryCase.order ?? 0,
-                  steps: null,
-                  tags: [],
-                  issues: [],
-                  links: [],
-                  attachments: [],
-                },
-              }
-            );
-
-            const caseFieldValues = await tx.caseFieldValues.findMany({
-              where: { testCaseId: repositoryCase.id },
-              include: {
-                field: {
-                  select: {
-                    displayName: true,
-                    systemName: true,
-                  },
-                },
-              },
-            });
-
-            if (caseFieldValues.length > 0) {
-              await tx.caseFieldVersionValues.createMany({
-                data: caseFieldValues.map((fieldValue) => ({
-                  versionId: caseVersion.id,
-                  field:
-                    fieldValue.field.displayName || fieldValue.field.systemName,
-                  value: fieldValue.value ?? JsonNull,
-                })),
-              });
-            }
           }
-
-          processedAutomationCases += processedForGroup;
-          context.processedCount += processedForGroup;
-
-          progressEntry.created = summary.created;
-          progressEntry.mapped = Math.min(
-            processedAutomationCases,
-            progressEntry.total
-          );
         }
-      }
 
-    );
+        processedAutomationCases += processedForGroup;
+        context.processedCount += processedForGroup;
+
+        progressEntry.created = summary.created;
+        progressEntry.mapped = Math.min(
+          processedAutomationCases,
+          progressEntry.total
+        );
+      }
+    });
 
     await reportProgress(true);
   }
@@ -761,103 +748,99 @@ export const importAutomationRuns = async (
     const chunk = automationRunRows.slice(index, index + chunkSize);
     let processedInChunk = 0;
 
-    await db.$transaction(
-      async (tx: TxClient) => {
-        for (const row of chunk) {
-          const testmoRunId = toNumberValue(row.id);
-          const testmoProjectId = toNumberValue(row.project_id);
-          const testmoConfigId = toNumberValue(row.config_id);
-          const testmoMilestoneId = toNumberValue(row.milestone_id);
-          const testmoCreatedBy = toNumberValue(row.created_by);
+    await db.$transaction(async (tx: TxClient) => {
+      for (const row of chunk) {
+        const testmoRunId = toNumberValue(row.id);
+        const testmoProjectId = toNumberValue(row.project_id);
+        const testmoConfigId = toNumberValue(row.config_id);
+        const testmoMilestoneId = toNumberValue(row.milestone_id);
+        const testmoCreatedBy = toNumberValue(row.created_by);
 
-          processedInChunk += 1;
+        processedInChunk += 1;
 
-          if (!testmoRunId || !testmoProjectId) {
-            continue;
-          }
-
-          const projectId = projectIdMap.get(testmoProjectId);
-          if (!projectId) {
-            continue;
-          }
-
-          const stateId = await workflowResolver.resolve(
-            projectId,
-            WorkflowScope.RUNS
-          );
-          if (!stateId) {
-            // No RUNS-scope workflow assigned to this project; skip
-            continue;
-          }
-
-          const name =
-            toStringValue(row.name) || `Automation Run ${testmoRunId}`;
-          const configId = testmoConfigId
-            ? configurationIdMap.get(testmoConfigId)
-            : undefined;
-          const milestoneId = testmoMilestoneId
-            ? milestoneIdMap.get(testmoMilestoneId)
-            : undefined;
-          const createdById = resolveUserId(
-            userIdMap,
-            defaultUserId,
-            testmoCreatedBy
-          );
-          const createdAt = toDateValue(row.created_at);
-          const completedAt = toDateValue(row.completed_at);
-          const elapsedMicroseconds = toNumberValue(row.elapsed);
-          const totalCount = toNumberValue(row.total_count) || 0;
-          const testmoIsCompleted =
-            row.is_completed !== undefined
-              ? toBooleanValue(row.is_completed)
-              : true;
-
-          const elapsed = elapsedMicroseconds
-            ? Math.round(elapsedMicroseconds / 1_000_000)
-            : null;
-          const resolvedCompletedAt =
-            completedAt || (testmoIsCompleted ? createdAt || new Date() : null);
-
-          const testRun = await tx.testRuns.create({
-            data: {
-              name,
-              projectId,
-              stateId,
-              configId: configId || null,
-              milestoneId: milestoneId || null,
-              testRunType: "JUNIT",
-              createdById,
-              createdAt: createdAt || new Date(),
-              completedAt: resolvedCompletedAt || null,
-              isCompleted: testmoIsCompleted,
-              elapsed: elapsed,
-            },
-          });
-
-          const testSuite = await tx.jUnitTestSuite.create({
-            data: {
-              name,
-              time: elapsed || 0,
-              tests: totalCount,
-              testRunId: testRun.id,
-              createdById,
-              timestamp: createdAt || new Date(),
-            },
-          });
-
-          testRunIdMap.set(testmoRunId, testRun.id);
-          testSuiteIdMap.set(testmoRunId, testSuite.id);
-          testRunTimestampMap.set(
-            testmoRunId,
-            resolvedCompletedAt || createdAt || new Date()
-          );
-          testRunProjectIdMap.set(testmoRunId, projectId);
-          testRunTestmoProjectIdMap.set(testmoRunId, testmoProjectId);
-          summary.created += 1;
+        if (!testmoRunId || !testmoProjectId) {
+          continue;
         }
-      }
 
-    );
+        const projectId = projectIdMap.get(testmoProjectId);
+        if (!projectId) {
+          continue;
+        }
+
+        const stateId = await workflowResolver.resolve(
+          projectId,
+          WorkflowScope.RUNS
+        );
+        if (!stateId) {
+          // No RUNS-scope workflow assigned to this project; skip
+          continue;
+        }
+
+        const name = toStringValue(row.name) || `Automation Run ${testmoRunId}`;
+        const configId = testmoConfigId
+          ? configurationIdMap.get(testmoConfigId)
+          : undefined;
+        const milestoneId = testmoMilestoneId
+          ? milestoneIdMap.get(testmoMilestoneId)
+          : undefined;
+        const createdById = resolveUserId(
+          userIdMap,
+          defaultUserId,
+          testmoCreatedBy
+        );
+        const createdAt = toDateValue(row.created_at);
+        const completedAt = toDateValue(row.completed_at);
+        const elapsedMicroseconds = toNumberValue(row.elapsed);
+        const totalCount = toNumberValue(row.total_count) || 0;
+        const testmoIsCompleted =
+          row.is_completed !== undefined
+            ? toBooleanValue(row.is_completed)
+            : true;
+
+        const elapsed = elapsedMicroseconds
+          ? Math.round(elapsedMicroseconds / 1_000_000)
+          : null;
+        const resolvedCompletedAt =
+          completedAt || (testmoIsCompleted ? createdAt || new Date() : null);
+
+        const testRun = await tx.testRuns.create({
+          data: {
+            name,
+            projectId,
+            stateId,
+            configId: configId || null,
+            milestoneId: milestoneId || null,
+            testRunType: "JUNIT",
+            createdById,
+            createdAt: createdAt || new Date(),
+            completedAt: resolvedCompletedAt || null,
+            isCompleted: testmoIsCompleted,
+            elapsed: elapsed,
+          },
+        });
+
+        const testSuite = await tx.jUnitTestSuite.create({
+          data: {
+            name,
+            time: elapsed || 0,
+            tests: totalCount,
+            testRunId: testRun.id,
+            createdById,
+            timestamp: createdAt || new Date(),
+          },
+        });
+
+        testRunIdMap.set(testmoRunId, testRun.id);
+        testSuiteIdMap.set(testmoRunId, testSuite.id);
+        testRunTimestampMap.set(
+          testmoRunId,
+          resolvedCompletedAt || createdAt || new Date()
+        );
+        testRunProjectIdMap.set(testmoRunId, projectId);
+        testRunTestmoProjectIdMap.set(testmoRunId, testmoProjectId);
+        summary.created += 1;
+      }
+    });
 
     processedRuns += processedInChunk;
     context.processedCount += processedInChunk;
@@ -1140,233 +1123,225 @@ export const importAutomationRunTests = async (
     const chunk = automationRunTestRows.slice(index, index + chunkSize);
     let processedInChunk = 0;
 
-    await db.$transaction(
-      async (tx: TxClient) => {
-        for (const row of chunk) {
-          const testmoRunTestId = toNumberValue(row.id);
-          const testmoRunId = toNumberValue(row.run_id);
-          const testmoProjectId = toNumberValue(row.project_id);
-          const testmoCaseId = toNumberValue(row.case_id);
-          const testmoStatusId = toNumberValue(row.status_id);
+    await db.$transaction(async (tx: TxClient) => {
+      for (const row of chunk) {
+        const testmoRunTestId = toNumberValue(row.id);
+        const testmoRunId = toNumberValue(row.run_id);
+        const testmoProjectId = toNumberValue(row.project_id);
+        const testmoCaseId = toNumberValue(row.case_id);
+        const testmoStatusId = toNumberValue(row.status_id);
 
-          processedInChunk += 1;
+        processedInChunk += 1;
 
-          if (!testmoRunTestId || !testmoRunId || !testmoProjectId) {
-            continue;
-          }
+        if (!testmoRunTestId || !testmoRunId || !testmoProjectId) {
+          continue;
+        }
 
-          // Skip duplicate tests (same testmoRunTestId already processed)
-          if (junitResultIdMap.has(testmoRunTestId)) {
-            continue;
-          }
+        // Skip duplicate tests (same testmoRunTestId already processed)
+        if (junitResultIdMap.has(testmoRunTestId)) {
+          continue;
+        }
 
-          const testRunId = testRunIdMap.get(testmoRunId);
-          const testSuiteId = testSuiteIdMap.get(testmoRunId);
-          const testRunProjectId = testRunProjectIdMap.get(testmoRunId);
-          const testRunTestmoProjectId =
-            testRunTestmoProjectIdMap.get(testmoRunId);
+        const testRunId = testRunIdMap.get(testmoRunId);
+        const testSuiteId = testSuiteIdMap.get(testmoRunId);
+        const testRunProjectId = testRunProjectIdMap.get(testmoRunId);
+        const testRunTestmoProjectId =
+          testRunTestmoProjectIdMap.get(testmoRunId);
 
-          // For incremental imports, testRunProjectId might not be in the map (run already existed).
-          // In that case, look it up from the database.
-          let actualTestRunProjectId = testRunProjectId;
-          if (!actualTestRunProjectId && testRunId) {
-            const existingRun = await tx.testRuns.findUnique({
-              where: { id: testRunId },
-              select: { projectId: true },
-            });
-            actualTestRunProjectId = existingRun?.projectId;
-          }
+        // For incremental imports, testRunProjectId might not be in the map (run already existed).
+        // In that case, look it up from the database.
+        let actualTestRunProjectId = testRunProjectId;
+        if (!actualTestRunProjectId && testRunId) {
+          const existingRun = await tx.testRuns.findUnique({
+            where: { id: testRunId },
+            select: { projectId: true },
+          });
+          actualTestRunProjectId = existingRun?.projectId;
+        }
 
-          // Look up the case across ALL projects in the map
-          // We need to find which project this Testmo case was imported into
-          let repositoryCaseId: number | undefined;
-          let actualCaseProjectId: number | undefined;
+        // Look up the case across ALL projects in the map
+        // We need to find which project this Testmo case was imported into
+        let repositoryCaseId: number | undefined;
+        let actualCaseProjectId: number | undefined;
 
-          if (testmoCaseId) {
-            // Search through all projects in the map to find this case
-            for (const [
-              projectId,
-              caseMap,
-            ] of automationCaseProjectMap.entries()) {
-              if (typeof (caseMap as any).get === "function") {
-                const caseId = (caseMap as Map<number, number>).get(
-                  testmoCaseId
-                );
-                if (caseId) {
-                  repositoryCaseId = caseId;
-                  actualCaseProjectId = projectId;
-                  if (summary.created < 5) {
-                    console.log(
-                      `[FOUND_IN_MAP] testmoCaseId=${testmoCaseId} → caseId=${caseId}, project=${projectId}, runProject=${actualTestRunProjectId}`
-                    );
-                  }
-                  break;
-                }
-              }
-            }
-          }
-
-          // For incremental imports, if case not in map, look it up from database
-          // IMPORTANT: Must search within the SAME project as the test run to avoid cross-project linking
-          if (!repositoryCaseId && testmoCaseId && actualTestRunProjectId) {
-            const testName = toStringValue(row.name);
-            if (testName) {
-              // Search for cases with matching name in the SAME project as the test run
-              const existingCase = await tx.repositoryCases.findFirst({
-                where: {
-                  projectId: actualTestRunProjectId, // CRITICAL: Only search in run's project
-                  name: testName,
-                  source: "JUNIT",
-                },
-                select: { id: true, projectId: true },
-              });
-              if (existingCase) {
-                repositoryCaseId = existingCase.id;
-                actualCaseProjectId = existingCase.projectId;
+        if (testmoCaseId) {
+          // Search through all projects in the map to find this case
+          for (const [
+            projectId,
+            caseMap,
+          ] of automationCaseProjectMap.entries()) {
+            if (typeof (caseMap as any).get === "function") {
+              const caseId = (caseMap as Map<number, number>).get(testmoCaseId);
+              if (caseId) {
+                repositoryCaseId = caseId;
+                actualCaseProjectId = projectId;
                 if (summary.created < 5) {
                   console.log(
-                    `[FALLBACK] testmoCaseId=${testmoCaseId}, name=${testName.substring(0, 50)} → caseId=${repositoryCaseId}, project=${actualCaseProjectId}, runProject=${actualTestRunProjectId}`
+                    `[FOUND_IN_MAP] testmoCaseId=${testmoCaseId} → caseId=${caseId}, project=${projectId}, runProject=${actualTestRunProjectId}`
                   );
                 }
+                break;
               }
             }
           }
+        }
 
-          // Comprehensive logging for debugging
-          if (summary.created < 20) {
-            console.log(
-              `[DEBUG #${summary.created}] testmoRunId=${testmoRunId}, testmoCaseId=${testmoCaseId}`
-            );
-            console.log(
-              `  testRunId=${testRunId}, testSuiteId=${testSuiteId}, repositoryCaseId=${repositoryCaseId}`
-            );
-            console.log(
-              `  actualTestRunProjectId=${actualTestRunProjectId}, actualCaseProjectId=${actualCaseProjectId}`
-            );
-            console.log(
-              `  testRunProjectId from map=${testRunProjectIdMap.get(testmoRunId)}`
-            );
-          }
-
-          if (
-            !testRunId ||
-            !testSuiteId ||
-            !repositoryCaseId ||
-            !actualTestRunProjectId ||
-            !actualCaseProjectId
-          ) {
-            // Skip if we don't have all required IDs including the case's project
-            if (summary.created < 10) {
-              console.log(
-                `[SKIP-MISSING] Missing IDs: testRunId=${testRunId}, testSuiteId=${testSuiteId}, repositoryCaseId=${repositoryCaseId}, actualTestRunProjectId=${actualTestRunProjectId}, actualCaseProjectId=${actualCaseProjectId}`
-              );
-            }
-            continue;
-          }
-
-          // CRITICAL: Validate that the case's project matches the test run's project
-          // This prevents cross-project contamination
-          // Use strict equality with explicit type checking
-          const caseProjectNum = Number(actualCaseProjectId);
-          const runProjectNum = Number(actualTestRunProjectId);
-
-          if (caseProjectNum !== runProjectNum) {
-            // Skip this result - case belongs to a different project than the test run
-            console.log(
-              `[SKIP] Cross-project test #${summary.created}: testmoCaseId=${testmoCaseId}, testmoRunId=${testmoRunId}, caseProject=${caseProjectNum} (type: ${typeof actualCaseProjectId}), runProject=${runProjectNum} (type: ${typeof actualTestRunProjectId})`
-            );
-            continue;
-          }
-
-          // At this point, we've validated that actualCaseProjectId === actualTestRunProjectId
-          // so we can safely create the result
-
-          const statusName = toStringValue(row.status);
-          const elapsedMicroseconds = toNumberValue(row.elapsed);
-          const file = toStringValue(row.file);
-          const line = toStringValue(row.line);
-          const assertions = toNumberValue(row.assertions);
-
-          const elapsed = elapsedMicroseconds
-            ? Math.round(elapsedMicroseconds / 1_000_000)
-            : null;
-
-          const resolvedStatus = await findAutomationStatus(
-            tx,
-            testmoStatusId,
-            actualTestRunProjectId,
-            statusName
-          );
-          const statusId = resolvedStatus?.id ?? null;
-
-          const testRunCase = await tx.testRunCases.upsert({
-            where: {
-              testRunId_repositoryCaseId: {
-                testRunId,
-                repositoryCaseId,
+        // For incremental imports, if case not in map, look it up from database
+        // IMPORTANT: Must search within the SAME project as the test run to avoid cross-project linking
+        if (!repositoryCaseId && testmoCaseId && actualTestRunProjectId) {
+          const testName = toStringValue(row.name);
+          if (testName) {
+            // Search for cases with matching name in the SAME project as the test run
+            const existingCase = await tx.repositoryCases.findFirst({
+              where: {
+                projectId: actualTestRunProjectId, // CRITICAL: Only search in run's project
+                name: testName,
+                source: "JUNIT",
               },
-            },
-            update: {
-              statusId: statusId ?? undefined,
-              elapsed: elapsed,
-              isCompleted: !!statusId,
-              completedAt: statusId ? new Date() : null,
-            },
-            create: {
-              testRunId,
-              repositoryCaseId,
-              statusId: statusId ?? undefined,
-              elapsed: elapsed,
-              order: summary.created + 1,
-              isCompleted: !!statusId,
-              completedAt: statusId ? new Date() : null,
-            },
-          });
+              select: { id: true, projectId: true },
+            });
+            if (existingCase) {
+              repositoryCaseId = existingCase.id;
+              actualCaseProjectId = existingCase.projectId;
+              if (summary.created < 5) {
+                console.log(
+                  `[FALLBACK] testmoCaseId=${testmoCaseId}, name=${testName.substring(0, 50)} → caseId=${repositoryCaseId}, project=${actualCaseProjectId}, runProject=${actualTestRunProjectId}`
+                );
+              }
+            }
+          }
+        }
 
-          testRunCaseIdMap.set(testmoRunTestId, testRunCase.id);
-
-          const resultType = determineJUnitResultType(
-            resolvedStatus,
-            statusName
+        // Comprehensive logging for debugging
+        if (summary.created < 20) {
+          console.log(
+            `[DEBUG #${summary.created}] testmoRunId=${testmoRunId}, testmoCaseId=${testmoCaseId}`
           );
+          console.log(
+            `  testRunId=${testRunId}, testSuiteId=${testSuiteId}, repositoryCaseId=${repositoryCaseId}`
+          );
+          console.log(
+            `  actualTestRunProjectId=${actualTestRunProjectId}, actualCaseProjectId=${actualCaseProjectId}`
+          );
+          console.log(
+            `  testRunProjectId from map=${testRunProjectIdMap.get(testmoRunId)}`
+          );
+        }
 
-          const executedAt = testRunTimestampMap.get(testmoRunId) || new Date();
-
-          // Log first few result creations for debugging
+        if (
+          !testRunId ||
+          !testSuiteId ||
+          !repositoryCaseId ||
+          !actualTestRunProjectId ||
+          !actualCaseProjectId
+        ) {
+          // Skip if we don't have all required IDs including the case's project
           if (summary.created < 10) {
             console.log(
-              `[CREATE] Result #${summary.created + 1}: testmoCaseId=${testmoCaseId}, testmoRunId=${testmoRunId}, caseId=${repositoryCaseId}, caseProject=${actualCaseProjectId}, runId=${testRunId}, runProject=${actualTestRunProjectId}, suiteId=${testSuiteId}`
+              `[SKIP-MISSING] Missing IDs: testRunId=${testRunId}, testSuiteId=${testSuiteId}, repositoryCaseId=${repositoryCaseId}, actualTestRunProjectId=${actualTestRunProjectId}, actualCaseProjectId=${actualCaseProjectId}`
             );
           }
-
-          // Special logging for case 69305 to debug cross-project issue
-          if (repositoryCaseId === 69305) {
-            console.log(
-              `[CASE_69305] Creating result: testmoCaseId=${testmoCaseId}, testmoRunId=${testmoRunId}, testmoProjectId=${testmoProjectId}, testRunTestmoProjectId=${testRunTestmoProjectId}, caseId=${repositoryCaseId}, caseProject=${actualCaseProjectId}, runId=${testRunId}, runProject=${actualTestRunProjectId}, suiteId=${testSuiteId}`
-            );
-          }
-
-          const junitResult = await tx.jUnitTestResult.create({
-            data: {
-              repositoryCaseId,
-              testSuiteId,
-              type: resultType,
-              statusId: statusId ?? undefined,
-              time: elapsed || undefined,
-              assertions: assertions || undefined,
-              file: file || undefined,
-              line: line ? parseInt(line) : undefined,
-              createdById: defaultUserId,
-              executedAt,
-            },
-          });
-
-          junitResultIdMap.set(testmoRunTestId, junitResult.id);
-          summary.created += 1;
+          continue;
         }
-      }
 
-    );
+        // CRITICAL: Validate that the case's project matches the test run's project
+        // This prevents cross-project contamination
+        // Use strict equality with explicit type checking
+        const caseProjectNum = Number(actualCaseProjectId);
+        const runProjectNum = Number(actualTestRunProjectId);
+
+        if (caseProjectNum !== runProjectNum) {
+          // Skip this result - case belongs to a different project than the test run
+          console.log(
+            `[SKIP] Cross-project test #${summary.created}: testmoCaseId=${testmoCaseId}, testmoRunId=${testmoRunId}, caseProject=${caseProjectNum} (type: ${typeof actualCaseProjectId}), runProject=${runProjectNum} (type: ${typeof actualTestRunProjectId})`
+          );
+          continue;
+        }
+
+        // At this point, we've validated that actualCaseProjectId === actualTestRunProjectId
+        // so we can safely create the result
+
+        const statusName = toStringValue(row.status);
+        const elapsedMicroseconds = toNumberValue(row.elapsed);
+        const file = toStringValue(row.file);
+        const line = toStringValue(row.line);
+        const assertions = toNumberValue(row.assertions);
+
+        const elapsed = elapsedMicroseconds
+          ? Math.round(elapsedMicroseconds / 1_000_000)
+          : null;
+
+        const resolvedStatus = await findAutomationStatus(
+          tx,
+          testmoStatusId,
+          actualTestRunProjectId,
+          statusName
+        );
+        const statusId = resolvedStatus?.id ?? null;
+
+        const testRunCase = await tx.testRunCases.upsert({
+          where: {
+            testRunId_repositoryCaseId: {
+              testRunId,
+              repositoryCaseId,
+            },
+          },
+          update: {
+            statusId: statusId ?? undefined,
+            elapsed: elapsed,
+            isCompleted: !!statusId,
+            completedAt: statusId ? new Date() : null,
+          },
+          create: {
+            testRunId,
+            repositoryCaseId,
+            statusId: statusId ?? undefined,
+            elapsed: elapsed,
+            order: summary.created + 1,
+            isCompleted: !!statusId,
+            completedAt: statusId ? new Date() : null,
+          },
+        });
+
+        testRunCaseIdMap.set(testmoRunTestId, testRunCase.id);
+
+        const resultType = determineJUnitResultType(resolvedStatus, statusName);
+
+        const executedAt = testRunTimestampMap.get(testmoRunId) || new Date();
+
+        // Log first few result creations for debugging
+        if (summary.created < 10) {
+          console.log(
+            `[CREATE] Result #${summary.created + 1}: testmoCaseId=${testmoCaseId}, testmoRunId=${testmoRunId}, caseId=${repositoryCaseId}, caseProject=${actualCaseProjectId}, runId=${testRunId}, runProject=${actualTestRunProjectId}, suiteId=${testSuiteId}`
+          );
+        }
+
+        // Special logging for case 69305 to debug cross-project issue
+        if (repositoryCaseId === 69305) {
+          console.log(
+            `[CASE_69305] Creating result: testmoCaseId=${testmoCaseId}, testmoRunId=${testmoRunId}, testmoProjectId=${testmoProjectId}, testRunTestmoProjectId=${testRunTestmoProjectId}, caseId=${repositoryCaseId}, caseProject=${actualCaseProjectId}, runId=${testRunId}, runProject=${actualTestRunProjectId}, suiteId=${testSuiteId}`
+          );
+        }
+
+        const junitResult = await tx.jUnitTestResult.create({
+          data: {
+            repositoryCaseId,
+            testSuiteId,
+            type: resultType,
+            statusId: statusId ?? undefined,
+            time: elapsed || undefined,
+            assertions: assertions || undefined,
+            file: file || undefined,
+            line: line ? parseInt(line) : undefined,
+            createdById: defaultUserId,
+            executedAt,
+          },
+        });
+
+        junitResultIdMap.set(testmoRunTestId, junitResult.id);
+        summary.created += 1;
+      }
+    });
 
     processedTests += processedInChunk;
     context.processedCount += processedInChunk;
@@ -1381,13 +1356,10 @@ export const importAutomationRunTests = async (
 
   const suiteIdsToUpdate = Array.from(testSuiteIdMap.values());
   if (suiteIdsToUpdate.length > 0) {
-    await db.$transaction(
-      async (tx) => {
-        await reconcileLegacyJUnitSuiteLinks(tx, suiteIdsToUpdate);
-        await recomputeJUnitSuiteStats(tx, suiteIdsToUpdate);
-      }
-
-    );
+    await db.$transaction(async (tx) => {
+      await reconcileLegacyJUnitSuiteLinks(tx, suiteIdsToUpdate);
+      await recomputeJUnitSuiteStats(tx, suiteIdsToUpdate);
+    });
   }
 
   progressEntry.created = summary.created;
@@ -1567,10 +1539,7 @@ const reconcileLegacyJUnitSuiteLinks = async (
   }
 };
 
-const recomputeJUnitSuiteStats = async (
-  tx: TxClient,
-  suiteIds: number[]
-) => {
+const recomputeJUnitSuiteStats = async (tx: TxClient, suiteIds: number[]) => {
   if (suiteIds.length === 0) {
     return;
   }
@@ -1748,46 +1717,43 @@ export const importAutomationRunLinks = async (
   ) {
     const chunk = automationRunLinkRows.slice(index, index + chunkSize);
 
-    await db.$transaction(
-      async (tx: TxClient) => {
-        for (const row of chunk) {
-          const testmoRunId = toNumberValue(row.run_id);
-          const testmoProjectId = toNumberValue(row.project_id);
-          const name = toStringValue(row.name);
-          const note = toStringValue(row.note);
-          const url = toStringValue(row.url);
+    await db.$transaction(async (tx: TxClient) => {
+      for (const row of chunk) {
+        const testmoRunId = toNumberValue(row.run_id);
+        const testmoProjectId = toNumberValue(row.project_id);
+        const name = toStringValue(row.name);
+        const note = toStringValue(row.note);
+        const url = toStringValue(row.url);
 
-          processedLinks += 1;
-          context.processedCount += 1;
+        processedLinks += 1;
+        context.processedCount += 1;
 
-          if (!testmoRunId || !testmoProjectId || !url || !name) {
-            continue;
-          }
-
-          const projectId = projectIdMap.get(testmoProjectId);
-          const testRunId = testRunIdMap.get(testmoRunId);
-
-          if (!projectId || !testRunId) {
-            continue;
-          }
-
-          await tx.attachments.create({
-            data: {
-              testRunsId: testRunId,
-              url,
-              name,
-              note: note || undefined,
-              mimeType: "text/uri-list",
-              size: BigInt(url.length),
-              createdById: defaultUserId,
-            },
-          });
-
-          summary.created += 1;
+        if (!testmoRunId || !testmoProjectId || !url || !name) {
+          continue;
         }
-      }
 
-    );
+        const projectId = projectIdMap.get(testmoProjectId);
+        const testRunId = testRunIdMap.get(testmoRunId);
+
+        if (!projectId || !testRunId) {
+          continue;
+        }
+
+        await tx.attachments.create({
+          data: {
+            testRunsId: testRunId,
+            url,
+            name,
+            note: note || undefined,
+            mimeType: "text/uri-list",
+            size: BigInt(url.length),
+            createdById: defaultUserId,
+          },
+        });
+
+        summary.created += 1;
+      }
+    });
 
     progressEntry.created = summary.created;
     progressEntry.mapped = Math.min(processedLinks, progressEntry.total);
@@ -2053,45 +2019,42 @@ export const importAutomationRunTestFields = async (
     let updatesApplied = 0;
 
     if (entries.length > 0) {
-      await db.$transaction(
-        async (tx: TxClient) => {
-          for (const [, update] of entries) {
-            const junitResultId = update.junitResultId;
-            if (!junitResultId) {
-              continue;
-            }
-
-            const existing = existingById.get(junitResultId);
-            const nextSystemOut = mergeValues(
-              existing?.systemOut,
-              update.systemOut
-            );
-            const nextSystemErr = mergeValues(
-              existing?.systemErr,
-              update.systemErr
-            );
-
-            if (
-              nextSystemOut === (existing?.systemOut ?? null) &&
-              nextSystemErr === (existing?.systemErr ?? null)
-            ) {
-              continue;
-            }
-
-            await tx.jUnitTestResult.update({
-              where: { id: junitResultId },
-              data: {
-                systemOut: nextSystemOut,
-                systemErr: nextSystemErr,
-              },
-            });
-
-            summary.created += 1;
-            updatesApplied += 1;
+      await db.$transaction(async (tx: TxClient) => {
+        for (const [, update] of entries) {
+          const junitResultId = update.junitResultId;
+          if (!junitResultId) {
+            continue;
           }
-        }
 
-      );
+          const existing = existingById.get(junitResultId);
+          const nextSystemOut = mergeValues(
+            existing?.systemOut,
+            update.systemOut
+          );
+          const nextSystemErr = mergeValues(
+            existing?.systemErr,
+            update.systemErr
+          );
+
+          if (
+            nextSystemOut === (existing?.systemOut ?? null) &&
+            nextSystemErr === (existing?.systemErr ?? null)
+          ) {
+            continue;
+          }
+
+          await tx.jUnitTestResult.update({
+            where: { id: junitResultId },
+            data: {
+              systemOut: nextSystemOut,
+              systemErr: nextSystemErr,
+            },
+          });
+
+          summary.created += 1;
+          updatesApplied += 1;
+        }
+      });
     }
 
     progressEntry.created = summary.created;
@@ -2261,62 +2224,59 @@ export const importAutomationRunTags = async (
   for (let index = 0; index < automationRunTagRows.length; index += chunkSize) {
     const chunk = automationRunTagRows.slice(index, index + chunkSize);
 
-    await db.$transaction(
-      async (tx: TxClient) => {
-        for (const row of chunk) {
-          processedRows += 1;
-          context.processedCount += 1;
+    await db.$transaction(async (tx: TxClient) => {
+      for (const row of chunk) {
+        processedRows += 1;
+        context.processedCount += 1;
 
-          const testmoRunId = toNumberValue(row.run_id);
-          const testmoTagId = toNumberValue(row.tag_id);
+        const testmoRunId = toNumberValue(row.run_id);
+        const testmoTagId = toNumberValue(row.tag_id);
 
-          if (!testmoRunId || !testmoTagId) {
-            continue;
-          }
-
-          const runId = testRunIdMap.get(testmoRunId);
-          if (!runId) {
-            continue;
-          }
-
-          const tagConfig = configuration.tags?.[testmoTagId];
-          if (!tagConfig || tagConfig.action !== "map" || !tagConfig.mappedTo) {
-            continue;
-          }
-
-          const tagId = tagConfig.mappedTo;
-
-          const existing = await tx.testRuns.findFirst({
-            where: {
-              id: runId,
-              tags: {
-                some: {
-                  id: tagId,
-                },
-              },
-            },
-            select: { id: true },
-          });
-
-          if (existing) {
-            summary.mapped += 1;
-            continue;
-          }
-
-          await tx.testRuns.update({
-            where: { id: runId },
-            data: {
-              tags: {
-                connect: { id: tagId },
-              },
-            },
-          });
-
-          summary.created += 1;
+        if (!testmoRunId || !testmoTagId) {
+          continue;
         }
-      }
 
-    );
+        const runId = testRunIdMap.get(testmoRunId);
+        if (!runId) {
+          continue;
+        }
+
+        const tagConfig = configuration.tags?.[testmoTagId];
+        if (!tagConfig || tagConfig.action !== "map" || !tagConfig.mappedTo) {
+          continue;
+        }
+
+        const tagId = tagConfig.mappedTo;
+
+        const existing = await tx.testRuns.findFirst({
+          where: {
+            id: runId,
+            tags: {
+              some: {
+                id: tagId,
+              },
+            },
+          },
+          select: { id: true },
+        });
+
+        if (existing) {
+          summary.mapped += 1;
+          continue;
+        }
+
+        await tx.testRuns.update({
+          where: { id: runId },
+          data: {
+            tags: {
+              connect: { id: tagId },
+            },
+          },
+        });
+
+        summary.created += 1;
+      }
+    });
 
     progressEntry.created = summary.created;
     progressEntry.mapped = Math.min(processedRows, progressEntry.total);

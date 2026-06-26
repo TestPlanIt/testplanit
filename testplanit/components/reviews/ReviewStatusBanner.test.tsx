@@ -14,8 +14,11 @@ const mockUseUpdateReviewRequest = vi.fn(() => ({
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    reviewRequest: { useFindFirst: (...args: unknown[]) =>
-    mockUseFindFirstReviewRequest(...args), useUpdate: () => mockUseUpdateReviewRequest() },
+    reviewRequest: {
+      useFindFirst: (...args: unknown[]) =>
+        mockUseFindFirstReviewRequest(...args),
+      useUpdate: () => mockUseUpdateReviewRequest(),
+    },
   }),
 }));
 

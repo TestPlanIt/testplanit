@@ -37,7 +37,9 @@ export function MagicSelectButton({
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Check if project has an active LLM integration
-  const { data: project, isLoading } = useClientQueries(schema).projects.useFindFirst({
+  const { data: project, isLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst({
     where: { id: projectId },
     include: {
       projectLlmIntegrations: {

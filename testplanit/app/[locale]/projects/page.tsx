@@ -31,7 +31,9 @@ const Projects = () => {
     select: { id: true, access: true },
   });
 
-  const { data: projectsRaw, isFetched } = useClientQueries(schema).projects.useFindMany(
+  const { data: projectsRaw, isFetched } = useClientQueries(
+    schema
+  ).projects.useFindMany(
     {
       where: {
         isDeleted: false,

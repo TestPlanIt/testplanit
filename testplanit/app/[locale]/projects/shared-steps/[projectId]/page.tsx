@@ -55,7 +55,9 @@ import { ManualSharedStepsDialog } from "./ManualSharedStepsDialog";
 
 // Component to show the number of test cases using a shared step group
 function TestCaseCount({ groupId, t }: { groupId: number; t: any }) {
-  const { data: steps, isLoading } = useClientQueries(schema).repositoryCases.useFindMany({
+  const { data: steps, isLoading } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany({
     where: {
       steps: {
         some: {
@@ -126,9 +128,12 @@ export default function SharedStepsPage() {
   const [editMode, setEditMode] = useState(false);
   const [editGroupName, setEditGroupName] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const createStepMutation = useClientQueries(schema).sharedStepItem.useCreate();
-  const updateStepMutation = useClientQueries(schema).sharedStepItem.useUpdate();
-  const deleteStepMutation = useClientQueries(schema).sharedStepItem.useDelete();
+  const createStepMutation =
+    useClientQueries(schema).sharedStepItem.useCreate();
+  const updateStepMutation =
+    useClientQueries(schema).sharedStepItem.useUpdate();
+  const deleteStepMutation =
+    useClientQueries(schema).sharedStepItem.useDelete();
   const [saving, setSaving] = useState(false);
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
   const [importWizardOpen, setImportWizardOpen] = useState(false);
@@ -145,12 +150,13 @@ export default function SharedStepsPage() {
   const canDelete = perms?.canDelete;
 
   // Fetch groups
-  const { data: groups = [], isLoading: groupsLoading } =
-    useClientQueries(schema).sharedStepGroup.useFindMany({
-      where: { projectId: Number(projectId), isDeleted: false },
-      orderBy: { name: "asc" },
-      include: { items: true },
-    });
+  const { data: groups = [], isLoading: groupsLoading } = useClientQueries(
+    schema
+  ).sharedStepGroup.useFindMany({
+    where: { projectId: Number(projectId), isDeleted: false },
+    orderBy: { name: "asc" },
+    include: { items: true },
+  });
 
   // Filtered groups
   const filteredGroups = useMemo(() => {
@@ -165,7 +171,9 @@ export default function SharedStepsPage() {
     groups.find((g: any) => g.id === selectedGroupId) || null;
 
   // Fetch items for selected group
-  const { data: items = [] } = useClientQueries(schema).sharedStepItem.useFindMany(
+  const { data: items = [] } = useClientQueries(
+    schema
+  ).sharedStepItem.useFindMany(
     selectedGroupId
       ? {
           where: { sharedStepGroupId: selectedGroupId },
@@ -176,7 +184,8 @@ export default function SharedStepsPage() {
   );
 
   // Update group name
-  const updateGroupMutation = useClientQueries(schema).sharedStepGroup.useUpdate();
+  const updateGroupMutation =
+    useClientQueries(schema).sharedStepGroup.useUpdate();
   const _handleGroupNameSave = async () => {
     if (!selectedGroup || !editGroupName.trim()) return;
     await updateGroupMutation.mutateAsync({

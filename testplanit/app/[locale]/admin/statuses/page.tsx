@@ -35,7 +35,8 @@ function Status() {
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { mutateAsync: updateStatus } = useClientQueries(schema).status.useUpdate();
+  const { mutateAsync: updateStatus } =
+    useClientQueries(schema).status.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateStatusRef = useRef(updateStatus);

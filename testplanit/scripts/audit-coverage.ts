@@ -181,9 +181,7 @@ async function discoverFiles(): Promise<{
  * exactly 8 leading spaces. The matching closing brace at 8 spaces
  * terminates the method body.
  */
-async function enumerateDbHooks(
-  dbFile: string
-): Promise<InventoryItem[]> {
+async function enumerateDbHooks(dbFile: string): Promise<InventoryItem[]> {
   const absPath = path.join(REPO_ROOT, dbFile);
   const content = await fs.readFile(absPath, "utf8");
   const lines = content.split("\n");

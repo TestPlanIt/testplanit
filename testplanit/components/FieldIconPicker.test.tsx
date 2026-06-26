@@ -7,7 +7,9 @@ const mockUseFindManyColor = vi.fn();
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    fieldIcon: { useFindMany: (...args: any[]) => mockUseFindManyFieldIcon(...args) },
+    fieldIcon: {
+      useFindMany: (...args: any[]) => mockUseFindManyFieldIcon(...args),
+    },
     color: { useFindMany: (...args: any[]) => mockUseFindManyColor(...args) },
   }),
 }));

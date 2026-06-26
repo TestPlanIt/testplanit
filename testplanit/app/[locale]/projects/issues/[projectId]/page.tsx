@@ -366,7 +366,9 @@ function ProjectIssues() {
   );
 
   // Fetch basic issue data
-  const { data: issues, isLoading: isLoadingIssues } = useClientQueries(schema).issue.useFindMany(
+  const { data: issues, isLoading: isLoadingIssues } = useClientQueries(
+    schema
+  ).issue.useFindMany(
     issuesWhere
       ? {
           where: issuesWhere,
@@ -732,7 +734,9 @@ function ProjectIssues() {
 
   // Determine if the project only has SIMPLE_URL integrations so we can hide
   // columns that would always be empty (description, status, priority, lastSyncedAt).
-  const { data: projectIntegrations } = useClientQueries(schema).projectIntegration.useFindMany(
+  const { data: projectIntegrations } = useClientQueries(
+    schema
+  ).projectIntegration.useFindMany(
     {
       where: { projectId: projectId ?? -1, isActive: true },
       include: { integration: { select: { provider: true } } },

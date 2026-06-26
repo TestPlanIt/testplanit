@@ -18,11 +18,13 @@ vi.mock("next-intl", () => ({
 // Mock ZenStack hooks
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    projectLlmIntegration: { useFindMany: () => ({
-    data: [], // No LLM integrations by default
-    isLoading: false,
-    error: null,
-  }) },
+    projectLlmIntegration: {
+      useFindMany: () => ({
+        data: [], // No LLM integrations by default
+        isLoading: false,
+        error: null,
+      }),
+    },
   }),
 }));
 

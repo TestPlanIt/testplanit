@@ -72,7 +72,9 @@ function Configurations(): React.ReactElement | null {
   const skip = (currentPage - 1) * effectivePageSize;
 
   // Fetch ALL configurations (no pagination, no search filter in query)
-  const { data: allConfigurations, isLoading } = useClientQueries(schema).configurations.useFindMany(
+  const { data: allConfigurations, isLoading } = useClientQueries(
+    schema
+  ).configurations.useFindMany(
     {
       orderBy: sortConfig
         ? sortConfig.column === "variants" || sortConfig.column === "projects"
@@ -130,7 +132,8 @@ function Configurations(): React.ReactElement | null {
     return filteredConfigurations.slice(skip, skip + effectivePageSize);
   }, [filteredConfigurations, skip, effectivePageSize]);
 
-  const { mutate: updateConfiguration } = useClientQueries(schema).configurations.useUpdate();
+  const { mutate: updateConfiguration } =
+    useClientQueries(schema).configurations.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutate changes identity every render
   const updateConfigurationRef = useRef(updateConfiguration);

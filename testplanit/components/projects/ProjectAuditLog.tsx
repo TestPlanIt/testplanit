@@ -135,7 +135,9 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
     dateRange,
   ]);
 
-  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({ where: whereClause });
+  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({
+    where: whereClause,
+  });
 
   const baseArgs = {
     where: whereClause,
@@ -216,7 +218,9 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
   }, []);
 
   // Fetch all filtered logs for export (no pagination).
-  const { refetch: refetchAllLogs } = useClientQueries(schema).auditLog.useFindMany(
+  const { refetch: refetchAllLogs } = useClientQueries(
+    schema
+  ).auditLog.useFindMany(
     {
       orderBy: { [sortConfig.column]: sortConfig.direction },
       include: { project: { select: { name: true } } },

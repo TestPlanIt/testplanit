@@ -95,7 +95,9 @@ function MilestoneTypes() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { data: totalFilteredMilestoneTypes } = useClientQueries(schema).milestoneTypes.useFindMany(
+  const { data: totalFilteredMilestoneTypes } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -129,7 +131,9 @@ function MilestoneTypes() {
     }
   }, [totalFilteredMilestoneTypes, setTotalItems]);
 
-  const { data, isLoading } = useClientQueries(schema).milestoneTypes.useFindMany(
+  const { data, isLoading } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -197,7 +201,8 @@ function MilestoneTypes() {
     number | undefined
   >(undefined);
 
-  const { mutateAsync: updateMilestoneType } = useClientQueries(schema).milestoneTypes.useUpdate();
+  const { mutateAsync: updateMilestoneType } =
+    useClientQueries(schema).milestoneTypes.useUpdate();
   const { mutateAsync: updateManyMilestoneTypes } =
     useClientQueries(schema).milestoneTypes.useUpdateMany();
   const { mutateAsync: createManyMilestoneTypeProjectAssignment } =

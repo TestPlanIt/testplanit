@@ -322,7 +322,9 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
   const effectivePageSize = typeof pageSize === "number" ? pageSize : 250;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { data: totalCount } = useClientQueries(schema).webhookDelivery.useCount({ where });
+  const { data: totalCount } = useClientQueries(
+    schema
+  ).webhookDelivery.useCount({ where });
 
   useEffect(() => {
     if (typeof totalCount === "number") {
@@ -330,31 +332,32 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
     }
   }, [totalCount, setTotalItems]);
 
-  const { data: deliveriesData, refetch: refetchDeliveries } =
-    useClientQueries(schema).webhookDelivery.useFindMany({
-      where,
-      orderBy,
-      take: effectivePageSize,
-      skip,
-      select: {
-        id: true,
-        webhookConfigId: true,
-        webhookConfig: {
-          select: { name: true, adapterType: true, direction: true },
-        },
-        direction: true,
-        adapterType: true,
-        eventType: true,
-        eventId: true,
-        payloadDigest: true,
-        statusCode: true,
-        error: true,
-        latencyMs: true,
-        attempt: true,
-        receivedAt: true,
-        replayedFromDeliveryId: true,
+  const { data: deliveriesData, refetch: refetchDeliveries } = useClientQueries(
+    schema
+  ).webhookDelivery.useFindMany({
+    where,
+    orderBy,
+    take: effectivePageSize,
+    skip,
+    select: {
+      id: true,
+      webhookConfigId: true,
+      webhookConfig: {
+        select: { name: true, adapterType: true, direction: true },
       },
-    });
+      direction: true,
+      adapterType: true,
+      eventType: true,
+      eventId: true,
+      payloadDigest: true,
+      statusCode: true,
+      error: true,
+      latencyMs: true,
+      attempt: true,
+      receivedAt: true,
+      replayedFromDeliveryId: true,
+    },
+  });
 
   const deliveries = useMemo(
     () => (deliveriesData ?? []) as DeliveryListItem[],

@@ -496,9 +496,7 @@ export async function listScimUsers(
       : Math.min(Math.max(1, count), MAX_LIST_COUNT);
   const resolvedSkip = Math.max(0, (startIndex ?? 1) - 1);
 
-  const filterWhere: UserWhereInput = filter
-    ? scimFilterToDbWhere(filter)
-    : {};
+  const filterWhere: UserWhereInput = filter ? scimFilterToDbWhere(filter) : {};
 
   const finalWhere: UserWhereInput = {
     AND: [filterWhere, { isDeleted: false }],

@@ -33,8 +33,10 @@ export function DeletePromptConfig({
   const tCommon = useTranslations("common");
   const [loading, setLoading] = useState(false);
 
-  const { mutateAsync: updatePromptConfig } = useClientQueries(schema).promptConfig.useUpdate();
-  const { mutateAsync: updateManyProjects } = useClientQueries(schema).projects.useUpdateMany();
+  const { mutateAsync: updatePromptConfig } =
+    useClientQueries(schema).promptConfig.useUpdate();
+  const { mutateAsync: updateManyProjects } =
+    useClientQueries(schema).projects.useUpdateMany();
 
   const handleDelete = async () => {
     setLoading(true);

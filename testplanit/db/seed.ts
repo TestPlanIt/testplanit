@@ -383,15 +383,14 @@ async function seedCoreData() {
         where: { name: scope },
       });
       if (scopeRecord) {
-        const existingAssignment =
-          await db.statusScopeAssignment.findUnique({
-            where: {
-              statusId_scopeId: {
-                statusId: createdStatus.id,
-                scopeId: scopeRecord.id,
-              },
+        const existingAssignment = await db.statusScopeAssignment.findUnique({
+          where: {
+            statusId_scopeId: {
+              statusId: createdStatus.id,
+              scopeId: scopeRecord.id,
             },
-          });
+          },
+        });
         if (!existingAssignment) {
           await db.statusScopeAssignment.create({
             data: {
@@ -918,15 +917,14 @@ async function _seedStatusesAndAssignments(colorMap: {
         where: { name: scope },
       });
       if (scopeRecord) {
-        const existingAssignment =
-          await db.statusScopeAssignment.findUnique({
-            where: {
-              statusId_scopeId: {
-                statusId: createdStatus.id,
-                scopeId: scopeRecord.id,
-              },
+        const existingAssignment = await db.statusScopeAssignment.findUnique({
+          where: {
+            statusId_scopeId: {
+              statusId: createdStatus.id,
+              scopeId: scopeRecord.id,
             },
-          });
+          },
+        });
 
         if (!existingAssignment) {
           await db.statusScopeAssignment.create({
@@ -1543,15 +1541,14 @@ async function assignWorkflowsToAllProjects() {
   // Create assignments for each project-workflow combination
   for (const project of allProjects) {
     for (const workflow of allWorkflows) {
-      const existingAssignment =
-        await db.projectWorkflowAssignment.findUnique({
-          where: {
-            workflowId_projectId: {
-              workflowId: workflow.id,
-              projectId: project.id,
-            },
+      const existingAssignment = await db.projectWorkflowAssignment.findUnique({
+        where: {
+          workflowId_projectId: {
+            workflowId: workflow.id,
+            projectId: project.id,
           },
-        });
+        },
+      });
 
       if (!existingAssignment) {
         await db.projectWorkflowAssignment.create({

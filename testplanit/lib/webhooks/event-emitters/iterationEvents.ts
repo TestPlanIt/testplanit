@@ -117,9 +117,7 @@ export async function emitIterationResultRecorded(
   // The runtime guard in webhookEvents.emit also enforces this, but a
   // local check produces a more actionable error message for misuse.
   if (!tx) {
-    throw new Error(
-      "emitIterationResultRecorded requires a TxClient"
-    );
+    throw new Error("emitIterationResultRecorded requires a TxClient");
   }
   const safePayload: IterationResultRecordedPayload = {
     ...payload,

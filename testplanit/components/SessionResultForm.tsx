@@ -237,21 +237,22 @@ export function SessionResultForm({
   });
 
   // Fetch session data to get the template
-  const { data: sessionData, isLoading: isLoadingSession } =
-    useClientQueries(schema).sessions.useFindFirst({
-      where: {
-        id: Number(sessionId),
-      },
-      include: {
-        template: true,
-        sessionResults: true,
-        _count: {
-          select: {
-            sessionResults: true,
-          },
+  const { data: sessionData, isLoading: isLoadingSession } = useClientQueries(
+    schema
+  ).sessions.useFindFirst({
+    where: {
+      id: Number(sessionId),
+    },
+    include: {
+      template: true,
+      sessionResults: true,
+      _count: {
+        select: {
+          sessionResults: true,
         },
       },
-    });
+    },
+  });
 
   // Fetch template result fields if we have a session with a template
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =
@@ -288,7 +289,9 @@ export function SessionResultForm({
     });
 
   // Get statuses that can be used for session results
-  const { data: statuses, isLoading: isLoadingStatuses } = useClientQueries(schema).status.useFindMany({
+  const { data: statuses, isLoading: isLoadingStatuses } = useClientQueries(
+    schema
+  ).status.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -317,7 +320,9 @@ export function SessionResultForm({
     },
   });
 
-  const { data: inProgressWorkflows } = useClientQueries(schema).workflows.useFindMany({
+  const { data: inProgressWorkflows } = useClientQueries(
+    schema
+  ).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -334,9 +339,12 @@ export function SessionResultForm({
     },
   });
 
-  const { mutateAsync: createSessionResult } = useClientQueries(schema).sessionResults.useCreate();
-  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
-  const { mutateAsync: updateSession } = useClientQueries(schema).sessions.useUpdate();
+  const { mutateAsync: createSessionResult } =
+    useClientQueries(schema).sessionResults.useCreate();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateSession } =
+    useClientQueries(schema).sessions.useUpdate();
 
   // Update useEffect to remove debug logging
   useEffect(() => {

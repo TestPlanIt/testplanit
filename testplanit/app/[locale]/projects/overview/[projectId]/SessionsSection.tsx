@@ -15,7 +15,9 @@ interface SessionsSectionProps {
 const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
   const t = useTranslations();
 
-  const { data: sessions, isLoading: isLoadingSessions } = useClientQueries(schema).sessions.useFindMany({
+  const { data: sessions, isLoading: isLoadingSessions } = useClientQueries(
+    schema
+  ).sessions.useFindMany({
     where: {
       AND: [
         { projectId: Number(projectId) },
@@ -27,19 +29,20 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
     take: 5,
   });
 
-  const { data: sessionsCount, isLoading: isLoadingCount } =
-    useClientQueries(schema).sessions.useFindMany({
-      where: {
-        AND: [
-          { projectId: Number(projectId) },
-          { isDeleted: false },
-          { isCompleted: false },
-        ],
-      },
-      select: {
-        id: true,
-      },
-    });
+  const { data: sessionsCount, isLoading: isLoadingCount } = useClientQueries(
+    schema
+  ).sessions.useFindMany({
+    where: {
+      AND: [
+        { projectId: Number(projectId) },
+        { isDeleted: false },
+        { isCompleted: false },
+      ],
+    },
+    select: {
+      id: true,
+    },
+  });
 
   if (isLoadingSessions || isLoadingCount) {
     return (

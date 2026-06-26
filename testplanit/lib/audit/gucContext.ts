@@ -97,9 +97,7 @@ export function buildGucPayload(
   };
 }
 
-export async function injectAuditGuc(
-  tx: TxClient
-): Promise<void> {
+export async function injectAuditGuc(tx: TxClient): Promise<void> {
   const payload = buildGucPayload();
   await tx.$executeRaw`SELECT set_config('app.audit_context', ${JSON.stringify(
     payload

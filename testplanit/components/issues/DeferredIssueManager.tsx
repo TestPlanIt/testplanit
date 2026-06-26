@@ -49,7 +49,8 @@ export function DeferredIssueManager({
   const { data: session } = useSession();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  const { mutateAsync: upsertIssue } = useClientQueries(schema).issue.useUpsert();
+  const { mutateAsync: upsertIssue } =
+    useClientQueries(schema).issue.useUpsert();
 
   // Utility function to format provider names for display
   const formatProviderName = (provider: string): string => {
@@ -78,7 +79,9 @@ export function DeferredIssueManager({
   };
 
   // Get the project's active integration to set the correct integrationId
-  const { data: projectIntegrations } = useClientQueries(schema).projectIntegration.useFindMany({
+  const { data: projectIntegrations } = useClientQueries(
+    schema
+  ).projectIntegration.useFindMany({
     where: {
       projectId,
       isActive: true,

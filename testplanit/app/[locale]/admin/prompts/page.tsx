@@ -67,7 +67,8 @@ function PromptConfigList() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { mutateAsync: updatePromptConfig } = useClientQueries(schema).promptConfig.useUpdate();
+  const { mutateAsync: updatePromptConfig } =
+    useClientQueries(schema).promptConfig.useUpdate();
 
   const updatePromptConfigRef = useRef(updatePromptConfig);
   useEffect(() => {
@@ -75,7 +76,9 @@ function PromptConfigList() {
   });
 
   // Query for total filtered configs (for pagination)
-  const { data: totalFilteredConfigs } = useClientQueries(schema).promptConfig.useFindMany(
+  const { data: totalFilteredConfigs } = useClientQueries(
+    schema
+  ).promptConfig.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }

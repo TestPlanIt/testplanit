@@ -34,7 +34,8 @@ export function DeleteWorkflows({
   onClose,
 }: DeleteWorkflowsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateWorkflows } = useClientQueries(schema).workflows.useUpdate();
+  const { mutateAsync: updateWorkflows } =
+    useClientQueries(schema).workflows.useUpdate();
 
   const t = useTranslations("admin.workflows");
   const tCommon = useTranslations("common");

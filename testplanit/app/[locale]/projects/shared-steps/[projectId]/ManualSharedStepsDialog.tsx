@@ -44,8 +44,10 @@ export function ManualSharedStepsDialog({
   const [groupName, setGroupName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  const createSharedStepGroupMutation = useClientQueries(schema).sharedStepGroup.useCreate();
-  const createManySharedStepItemMutation = useClientQueries(schema).sharedStepItem.useCreateMany();
+  const createSharedStepGroupMutation =
+    useClientQueries(schema).sharedStepGroup.useCreate();
+  const createManySharedStepItemMutation =
+    useClientQueries(schema).sharedStepItem.useCreateMany();
 
   // Initialize form with one empty step
   const form = useForm<{ steps: StepFormField[] }>({

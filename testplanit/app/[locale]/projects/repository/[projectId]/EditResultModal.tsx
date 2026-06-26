@@ -334,7 +334,9 @@ export function EditResultModal({
   const canEditRestrictedPerm = canEditRestricted || isSuperAdmin;
 
   // Fetch the existing result data
-  const { data: existingResult } = useClientQueries(schema).testRunResults.useFindMany<{
+  const { data: existingResult } = useClientQueries(
+    schema
+  ).testRunResults.useFindMany<{
     where: {
       testRunId: number;
       testRunCaseId: number;
@@ -379,7 +381,9 @@ export function EditResultModal({
   // values. Non-parameterized results have `iteration` = null and the
   // memoized `parameters` below stays `undefined` — chips fall back to
   // `@name` (unsubstituted) which matches the pre-iterations behavior.
-  const { data: resultRow } = useClientQueries(schema).testRunResults.useFindFirst(
+  const { data: resultRow } = useClientQueries(
+    schema
+  ).testRunResults.useFindFirst(
     {
       where: { id: resultId, isDeleted: false },
       select: {
@@ -477,22 +481,23 @@ export function EditResultModal({
   }, [resultRow, isSuperAdmin]);
 
   // Find the repository case to get its template ID
-  const { data: repositoryCase, isLoading: isLoadingCase } =
-    useClientQueries(schema).repositoryCases.useFindFirst({
-      where: {
-        testRuns: {
-          some: {
-            id: testRunCaseId,
-          },
+  const { data: repositoryCase, isLoading: isLoadingCase } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst({
+    where: {
+      testRuns: {
+        some: {
+          id: testRunCaseId,
         },
       },
-      select: {
-        id: true,
-        name: true,
-        templateId: true,
-        currentVersion: true,
-      },
-    });
+    },
+    select: {
+      id: true,
+      name: true,
+      templateId: true,
+      currentVersion: true,
+    },
+  });
 
   // Fetch template result fields if we have a case with a template
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =
@@ -536,16 +541,17 @@ export function EditResultModal({
   }, [templateResultFields]);
 
   // Fetch project data to get issueConfigId
-  const { data: projectData, isLoading: isLoadingProject } =
-    useClientQueries(schema).projects.useFindFirst({
-      where: { id: projectId },
-      select: {
-        projectIntegrations: {
-          where: { isActive: true },
-          include: { integration: true },
-        },
+  const { data: projectData, isLoading: isLoadingProject } = useClientQueries(
+    schema
+  ).projects.useFindFirst({
+    where: { id: projectId },
+    select: {
+      projectIntegrations: {
+        where: { isActive: true },
+        include: { integration: true },
       },
-    });
+    },
+  });
 
   const form = useForm<FormValues>({
     resolver: standardSchemaResolver(
@@ -724,8 +730,10 @@ export function EditResultModal({
     }
   }, [statuses, form]);
 
-  const { mutateAsync: updateTestRunResults } = useClientQueries(schema).testRunResults.useUpdate();
-  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateTestRunResults } =
+    useClientQueries(schema).testRunResults.useUpdate();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
   const { mutateAsync: updateTestRunStepResults } =
     useClientQueries(schema).testRunStepResults.useUpdate();
   const { mutateAsync: createTestRunStepResults } =

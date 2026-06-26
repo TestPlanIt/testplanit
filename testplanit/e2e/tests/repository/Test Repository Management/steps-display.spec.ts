@@ -72,9 +72,7 @@ test.describe("Steps Display", () => {
 
     try {
       // Find the resizable handle between the panels
-      const resizeHandle = page
-        .locator('[role="separator"]')
-        .first();
+      const resizeHandle = page.locator('[role="separator"]').first();
 
       // Wait for the handle to be visible
       await resizeHandle.waitFor({ state: "visible", timeout: 3000 });

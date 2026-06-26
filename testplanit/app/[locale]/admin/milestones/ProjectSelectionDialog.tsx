@@ -36,7 +36,9 @@ export const ProjectSelectionDialog: React.FC<ProjectSelectionDialogProps> = ({
   const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: projects, isLoading } = useClientQueries(schema).projects.useFindMany({
+  const { data: projects, isLoading } = useClientQueries(
+    schema
+  ).projects.useFindMany({
     where: {
       AND: [
         { isDeleted: false },

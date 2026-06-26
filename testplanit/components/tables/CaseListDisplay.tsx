@@ -42,9 +42,7 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
     count ?? (typeof caseIds !== "undefined" ? caseIds.length : undefined);
 
   const baseConditions = useMemo(() => {
-    const conditions: RepositoryCasesWhereInput[] = [
-      { isDeleted: false },
-    ];
+    const conditions: RepositoryCasesWhereInput[] = [{ isDeleted: false }];
 
     if (filter) {
       conditions.push(filter);

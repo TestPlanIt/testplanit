@@ -184,9 +184,7 @@ describe("AutoTagWorker", () => {
   describe("successful tag analysis", () => {
     it("should process repositoryCase entities and return grouped suggestions", async () => {
       mockAnalyzeTags.mockResolvedValue(baseAnalysisResult);
-      mockDb.repositoryCases.findMany.mockResolvedValue(
-        mockRepositoryCases
-      );
+      mockDb.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
 
       const { processor } = await loadWorker();
       const result = await processor(makeMockJob() as Job);
@@ -205,9 +203,7 @@ describe("AutoTagWorker", () => {
 
     it("should include entity with no suggestions (analyzed but LLM returned no tags)", async () => {
       mockAnalyzeTags.mockResolvedValue(baseAnalysisResult);
-      mockDb.repositoryCases.findMany.mockResolvedValue(
-        mockRepositoryCases
-      );
+      mockDb.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
 
       const { processor } = await loadWorker();
       const result = await processor(makeMockJob({ id: "job-2" }) as Job);
@@ -221,9 +217,7 @@ describe("AutoTagWorker", () => {
 
     it("should calculate stats correctly", async () => {
       mockAnalyzeTags.mockResolvedValue(baseAnalysisResult);
-      mockDb.repositoryCases.findMany.mockResolvedValue(
-        mockRepositoryCases
-      );
+      mockDb.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
 
       const { processor } = await loadWorker();
       const result = await processor(makeMockJob({ id: "job-3" }) as Job);
@@ -246,9 +240,7 @@ describe("AutoTagWorker", () => {
         await params.onBatchComplete(3, 3);
         return baseAnalysisResult;
       });
-      mockDb.repositoryCases.findMany.mockResolvedValue(
-        mockRepositoryCases
-      );
+      mockDb.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
 
       const { processor } = await loadWorker();
       await processor(makeMockJob({ id: "job-4" }) as Job);
@@ -310,9 +302,7 @@ describe("AutoTagWorker", () => {
         return baseAnalysisResult;
       });
 
-      mockDb.repositoryCases.findMany.mockResolvedValue(
-        mockRepositoryCases
-      );
+      mockDb.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
 
       const { processor } = await loadWorker();
 
@@ -338,9 +328,7 @@ describe("AutoTagWorker", () => {
         errors: ["LLM API timeout"],
       };
       mockAnalyzeTags.mockResolvedValue(analysisWithFailures);
-      mockDb.repositoryCases.findMany.mockResolvedValue(
-        mockRepositoryCases
-      );
+      mockDb.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
 
       const { processor } = await loadWorker();
       const result = await processor(
@@ -374,9 +362,7 @@ describe("AutoTagWorker", () => {
         truncatedEntityIds: [2],
       };
       mockAnalyzeTags.mockResolvedValue(analysisWithTruncation);
-      mockDb.repositoryCases.findMany.mockResolvedValue(
-        mockRepositoryCases
-      );
+      mockDb.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
 
       const { processor } = await loadWorker();
       const result = await processor(
@@ -526,9 +512,7 @@ describe("AutoTagWorker", () => {
         errors: ["Batch 1 failed: timeout", "Batch 2 failed: rate limit"],
       };
       mockAnalyzeTags.mockResolvedValue(analysisWithErrors);
-      mockDb.repositoryCases.findMany.mockResolvedValue(
-        mockRepositoryCases
-      );
+      mockDb.repositoryCases.findMany.mockResolvedValue(mockRepositoryCases);
 
       const { processor } = await loadWorker();
       const result = await processor(makeMockJob({ id: "job-12" }) as Job);

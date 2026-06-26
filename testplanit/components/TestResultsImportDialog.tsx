@@ -143,14 +143,15 @@ export default function TestResultsImportDialog({
   });
 
   // Fetch folders for the project
-  const { data: folders, isLoading: isFoldersLoading } =
-    useClientQueries(schema).repositoryFolders.useFindMany({
-      where: {
-        projectId,
-        isDeleted: false,
-      },
-      orderBy: { order: "asc" },
-    });
+  const { data: folders, isLoading: isFoldersLoading } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany({
+    where: {
+      projectId,
+      isDeleted: false,
+    },
+    orderBy: { order: "asc" },
+  });
 
   // Fetch templates for the project
   const { data: templates } = useClientQueries(schema).templates.useFindMany({

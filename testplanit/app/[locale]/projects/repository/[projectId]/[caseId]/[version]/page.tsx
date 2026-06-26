@@ -41,7 +41,11 @@ import {
 } from "@/components/ui/tooltip";
 import { VersionNavigation } from "@/components/VersionNavigation";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import type { Attachments, RepositoryCaseVersions, Steps } from "~/zenstack/models";
+import type {
+  Attachments,
+  RepositoryCaseVersions,
+  Steps,
+} from "~/zenstack/models";
 import type { JsonValue } from "@zenstackhq/orm";
 import { ChevronLeft, LinkIcon, Minus, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -102,7 +106,9 @@ export default function TestCaseVersions() {
     setSelectedAttachments([]);
   };
 
-  const { data, isLoading } = useClientQueries(schema).repositoryCaseVersions.useFindFirst({
+  const { data, isLoading } = useClientQueries(
+    schema
+  ).repositoryCaseVersions.useFindFirst({
     where: {
       repositoryCaseId: Number(caseId),
       version: Number(version),
@@ -119,7 +125,9 @@ export default function TestCaseVersions() {
     },
   });
 
-  const { data: versions } = useClientQueries(schema).repositoryCaseVersions.useFindMany({
+  const { data: versions } = useClientQueries(
+    schema
+  ).repositoryCaseVersions.useFindMany({
     where: { repositoryCaseId: Number(caseId) },
     orderBy: { version: "desc" },
   });
@@ -134,7 +142,9 @@ export default function TestCaseVersions() {
       ? (versions?.[currentVersionIndex + 1]?.version ?? null)
       : null;
 
-  const { data: previousData } = useClientQueries(schema).repositoryCaseVersions.useFindFirst({
+  const { data: previousData } = useClientQueries(
+    schema
+  ).repositoryCaseVersions.useFindFirst({
     where: {
       repositoryCaseId: Number(caseId),
       version: previousVersionNumber || -1,
@@ -161,7 +171,9 @@ export default function TestCaseVersions() {
   // were renamed/deleted after the version, but it matches the case-detail
   // page's rendering and keeps mentions from showing as raw text.
   const numericCaseId = Number(caseId);
-  const { data: liveCaseParameters } = useClientQueries(schema).testCaseParameter.useFindMany(
+  const { data: liveCaseParameters } = useClientQueries(
+    schema
+  ).testCaseParameter.useFindMany(
     {
       where: { testCaseId: numericCaseId, isDeleted: false },
       orderBy: { order: "asc" },
@@ -286,12 +298,16 @@ export default function TestCaseVersions() {
     },
   });
 
-  const { data: workflowState } = useClientQueries(schema).workflows.useFindFirst({
+  const { data: workflowState } = useClientQueries(
+    schema
+  ).workflows.useFindFirst({
     where: { id: testcase?.stateId },
     include: { icon: true, color: true },
   });
 
-  const { data: previousWorkflowState } = useClientQueries(schema).workflows.useFindFirst({
+  const { data: previousWorkflowState } = useClientQueries(
+    schema
+  ).workflows.useFindFirst({
     where: { id: previousTestcase?.stateId ?? 0 },
     include: { icon: true, color: true },
   });
@@ -372,9 +388,7 @@ export default function TestCaseVersions() {
 
   if (!testcase) return <Loading />;
 
-  const transformSteps = (
-    stepsData: JsonValue | null | undefined
-  ): Steps[] => {
+  const transformSteps = (stepsData: JsonValue | null | undefined): Steps[] => {
     if (!stepsData) return [];
     try {
       const parsedSteps =

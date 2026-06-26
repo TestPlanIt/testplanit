@@ -32,7 +32,11 @@ const {
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    integrationProject: { useFindMany: (...args: any[]) => mockFindMany(...args), useUpdate: () => ({ mutateAsync: mockUpdate }), useUpsert: () => ({ mutateAsync: mockUpsert }) },
+    integrationProject: {
+      useFindMany: (...args: any[]) => mockFindMany(...args),
+      useUpdate: () => ({ mutateAsync: mockUpdate }),
+      useUpsert: () => ({ mutateAsync: mockUpsert }),
+    },
     webhookConfig: { useFindMany: () => mockFindManyWebhookConfig() },
     projectIntegration: { useUpdate: () => ({ mutateAsync: mockUpdatePI }) },
   }),

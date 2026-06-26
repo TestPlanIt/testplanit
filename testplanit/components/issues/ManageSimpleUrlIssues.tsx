@@ -88,7 +88,8 @@ export function ManageSimpleUrlIssues({
     },
   });
 
-  const { mutateAsync: upsertIssue } = useClientQueries(schema).issue.useUpsert();
+  const { mutateAsync: upsertIssue } =
+    useClientQueries(schema).issue.useUpsert();
 
   const watchedIssueId =
     useWatch({ control: form.control, name: "issueId" }) || "";

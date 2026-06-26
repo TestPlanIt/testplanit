@@ -101,7 +101,9 @@ export function WebhookDeliveryDrawer({
   const [replayConfirmOpen, setReplayConfirmOpen] = useState(false);
   const [replayInFlight, setReplayInFlight] = useState(false);
 
-  const { data: delivery, isLoading } = useClientQueries(schema).webhookDelivery.useFindUnique(
+  const { data: delivery, isLoading } = useClientQueries(
+    schema
+  ).webhookDelivery.useFindUnique(
     {
       where: { id: deliveryId ?? "" },
       select: {

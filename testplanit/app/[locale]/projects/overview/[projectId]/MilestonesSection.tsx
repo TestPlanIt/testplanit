@@ -15,20 +15,21 @@ interface MilestonesSectionProps {
 const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
   const t = useTranslations();
 
-  const { data: milestones, isLoading: isLoadingMilestones } =
-    useClientQueries(schema).milestones.useFindMany({
-      where: {
-        AND: [{ projectId }, { isCompleted: false }, { isDeleted: false }],
-      },
-      orderBy: [
-        { startedAt: "asc" },
-        { completedAt: "asc" },
-        { isStarted: "asc" },
-      ],
-      include: {
-        milestoneType: { include: { icon: true } },
-      },
-    });
+  const { data: milestones, isLoading: isLoadingMilestones } = useClientQueries(
+    schema
+  ).milestones.useFindMany({
+    where: {
+      AND: [{ projectId }, { isCompleted: false }, { isDeleted: false }],
+    },
+    orderBy: [
+      { startedAt: "asc" },
+      { completedAt: "asc" },
+      { isStarted: "asc" },
+    ],
+    include: {
+      milestoneType: { include: { icon: true } },
+    },
+  });
 
   const { data: milestonesCountResult, isLoading: isLoadingCount } =
     useClientQueries(schema).milestones.useFindMany({

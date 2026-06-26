@@ -178,7 +178,9 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
 
-  const { data: notifications, refetch } = useClientQueries(schema).notification.useFindMany(
+  const { data: notifications, refetch } = useClientQueries(
+    schema
+  ).notification.useFindMany(
     {
       where: {
         userId: session?.user?.id,

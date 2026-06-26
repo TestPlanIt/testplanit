@@ -299,8 +299,10 @@ export default function TestRunPage() {
   >(null);
   const [pendingAttachmentChanges, setPendingAttachmentChanges] =
     useState<AttachmentChanges>({ edits: [], deletes: [] });
-  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
-  const { mutateAsync: updateAttachments } = useClientQueries(schema).attachments.useUpdate();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateAttachments } =
+    useClientQueries(schema).attachments.useUpdate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeletingTestRun, setIsDeletingTestRun] = useState(false);
   const t = useTranslations();
@@ -354,7 +356,9 @@ export default function TestRunPage() {
     ? parseInt(searchParams.get("selectedCase")!)
     : null;
 
-  const { data: statusScope } = useClientQueries(schema).statusScope.useFindFirst({
+  const { data: statusScope } = useClientQueries(
+    schema
+  ).statusScope.useFindFirst({
     where: {
       name: "Automation",
     },
@@ -366,7 +370,9 @@ export default function TestRunPage() {
   });
 
   // Fetch test run data
-  const { data: testRunData, refetch: refetchTestRun } = useClientQueries(schema).testRuns.useFindUnique(
+  const { data: testRunData, refetch: refetchTestRun } = useClientQueries(
+    schema
+  ).testRuns.useFindUnique(
     {
       where: {
         id: Number(runId),
@@ -493,51 +499,52 @@ export default function TestRunPage() {
 
   // Fetch JUnit test suites if this is a JUNIT run
   const isJUnitRun = isAutomatedTestRunType(testRunData?.testRunType);
-  const { data: jUnitSuites, isLoading: isJUnitLoading } =
-    useClientQueries(schema).jUnitTestSuite.useFindMany(
-      isJUnitRun
-        ? {
-            where: { testRunId: Number(runId) },
-            include: {
-              properties: true,
-              results: {
-                include: {
-                  status: {
-                    select: { name: true, color: { select: { value: true } } },
-                  },
-                  attachments: {
-                    where: { isDeleted: false },
-                  },
-                  repositoryCase: {
-                    select: {
-                      name: true,
-                      className: true,
-                      source: true,
-                      isDeleted: true,
-                      linksFrom: {
-                        select: {
-                          caseBId: true,
-                          type: true,
-                          isDeleted: true,
-                        },
+  const { data: jUnitSuites, isLoading: isJUnitLoading } = useClientQueries(
+    schema
+  ).jUnitTestSuite.useFindMany(
+    isJUnitRun
+      ? {
+          where: { testRunId: Number(runId) },
+          include: {
+            properties: true,
+            results: {
+              include: {
+                status: {
+                  select: { name: true, color: { select: { value: true } } },
+                },
+                attachments: {
+                  where: { isDeleted: false },
+                },
+                repositoryCase: {
+                  select: {
+                    name: true,
+                    className: true,
+                    source: true,
+                    isDeleted: true,
+                    linksFrom: {
+                      select: {
+                        caseBId: true,
+                        type: true,
+                        isDeleted: true,
                       },
-                      linksTo: {
-                        select: {
-                          caseAId: true,
-                          type: true,
-                          isDeleted: true,
-                        },
+                    },
+                    linksTo: {
+                      select: {
+                        caseAId: true,
+                        type: true,
+                        isDeleted: true,
                       },
                     },
                   },
                 },
               },
             },
-            orderBy: { createdAt: "asc" },
-          }
-        : undefined,
-      { enabled: isJUnitRun }
-    );
+          },
+          orderBy: { createdAt: "asc" },
+        }
+      : undefined,
+    { enabled: isJUnitRun }
+  );
 
   const _canEdit =
     (session?.user.access === "ADMIN" ||
@@ -701,7 +708,8 @@ export default function TestRunPage() {
   }, [isLoading]);
 
   // Add mutation hooks
-  const { mutateAsync: updateTestRuns } = useClientQueries(schema).testRuns.useUpdate();
+  const { mutateAsync: updateTestRuns } =
+    useClientQueries(schema).testRuns.useUpdate();
 
   // Add form controls
   const {
@@ -1206,81 +1214,82 @@ export default function TestRunPage() {
     setSelectedTestCaseIds(testCaseIds);
   };
 
-  const { data: testcase, isLoading: isTestcaseLoading } =
-    useClientQueries(schema).repositoryCases.useFindFirst({
-      where: { id: selectedTestCaseId ?? undefined, isDeleted: false },
-      include: {
-        state: {
-          select: {
-            id: true,
-            name: true,
-            icon: { select: { name: true } },
-            color: { select: { value: true } },
-          },
+  const { data: testcase, isLoading: isTestcaseLoading } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst({
+    where: { id: selectedTestCaseId ?? undefined, isDeleted: false },
+    include: {
+      state: {
+        select: {
+          id: true,
+          name: true,
+          icon: { select: { name: true } },
+          color: { select: { value: true } },
         },
-        project: true,
-        folder: true,
-        creator: true,
-        template: {
-          select: {
-            id: true,
-            templateName: true,
-            caseFields: {
-              select: {
-                caseFieldId: true,
-                order: true,
-                caseField: {
-                  select: {
-                    id: true,
-                    defaultValue: true,
-                    displayName: true,
-                    type: { select: { type: true } },
-                    fieldOptions: {
-                      select: {
-                        fieldOption: {
-                          select: {
-                            id: true,
-                            icon: true,
-                            iconColor: true,
-                            name: true,
-                            order: true,
-                          },
+      },
+      project: true,
+      folder: true,
+      creator: true,
+      template: {
+        select: {
+          id: true,
+          templateName: true,
+          caseFields: {
+            select: {
+              caseFieldId: true,
+              order: true,
+              caseField: {
+                select: {
+                  id: true,
+                  defaultValue: true,
+                  displayName: true,
+                  type: { select: { type: true } },
+                  fieldOptions: {
+                    select: {
+                      fieldOption: {
+                        select: {
+                          id: true,
+                          icon: true,
+                          iconColor: true,
+                          name: true,
+                          order: true,
                         },
                       },
-                      orderBy: { fieldOption: { order: "asc" } },
                     },
+                    orderBy: { fieldOption: { order: "asc" } },
                   },
                 },
               },
-              orderBy: { order: "asc" },
             },
+            orderBy: { order: "asc" },
           },
-        },
-        caseFieldValues: {
-          select: {
-            id: true,
-            value: true,
-            fieldId: true,
-            field: {
-              select: {
-                id: true,
-                displayName: true,
-                type: { select: { type: true } },
-              },
-            },
-          },
-          where: { field: { isEnabled: true, isDeleted: false } },
-        },
-        attachments: {
-          orderBy: { createdAt: "desc" },
-          where: { isDeleted: false },
-        },
-        steps: {
-          where: { isDeleted: false },
-          orderBy: { order: "asc" },
         },
       },
-    });
+      caseFieldValues: {
+        select: {
+          id: true,
+          value: true,
+          fieldId: true,
+          field: {
+            select: {
+              id: true,
+              displayName: true,
+              type: { select: { type: true } },
+            },
+          },
+        },
+        where: { field: { isEnabled: true, isDeleted: false } },
+      },
+      attachments: {
+        orderBy: { createdAt: "desc" },
+        where: { isDeleted: false },
+      },
+      steps: {
+        where: { isDeleted: false },
+        orderBy: { order: "asc" },
+      },
+    },
+  });
 
   useEffect(() => {
     if (!isTestcaseLoading && testcase) {

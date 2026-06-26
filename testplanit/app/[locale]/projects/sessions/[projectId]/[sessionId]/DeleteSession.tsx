@@ -39,7 +39,8 @@ export function DeleteSessionModal({
 }: DeleteSessionProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { mutateAsync: updateSessions } = useClientQueries(schema).sessions.useUpdate();
+  const { mutateAsync: updateSessions } =
+    useClientQueries(schema).sessions.useUpdate();
   const t = useTranslations();
 
   const form = useForm();

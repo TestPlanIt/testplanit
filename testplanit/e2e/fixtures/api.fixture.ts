@@ -686,7 +686,9 @@ export class ApiHelper {
               template: { select: { id: true, templateName: true } },
               state: { select: { id: true, name: true } },
               creator: { select: { id: true, name: true } },
-              caseTags: { select: { tag: { select: { id: true, name: true } } } },
+              caseTags: {
+                select: { tag: { select: { id: true, name: true } } },
+              },
             },
           }),
         },

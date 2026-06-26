@@ -32,16 +32,18 @@ vi.mock("~/lib/navigation", () => ({
 const mockUseFindManySsoProvider = vi.fn();
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    ssoProvider: { useFindMany: (...args: any[]) =>
-    mockUseFindManySsoProvider(...args) },
-    registrationSettings: { useFindFirst: (...args: any[]) =>
-    mockUseFindFirstRegistrationSettings(...args) },
+    ssoProvider: {
+      useFindMany: (...args: any[]) => mockUseFindManySsoProvider(...args),
+    },
+    registrationSettings: {
+      useFindFirst: (...args: any[]) =>
+        mockUseFindFirstRegistrationSettings(...args),
+    },
   }),
 }));
 
 // Mock ZenStack registration settings hook
 const mockUseFindFirstRegistrationSettings = vi.fn();
-
 
 // Mock next-auth signIn
 const mockSignIn = vi.fn();

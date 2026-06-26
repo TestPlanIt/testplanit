@@ -64,16 +64,21 @@ let mockEditWindowConfig: { value: number } | undefined;
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    projects: { useFindUnique: () => ({
-    data: mockProjectData,
-    isLoading: mockProjectLoading,
-  }), useUpdate: () => ({
-    mutateAsync: mockMutateAsync,
-    isPending: false,
-  }) },
-    appConfig: { useFindUnique: () => ({
-    data: mockEditWindowConfig,
-  }) },
+    projects: {
+      useFindUnique: () => ({
+        data: mockProjectData,
+        isLoading: mockProjectLoading,
+      }),
+      useUpdate: () => ({
+        mutateAsync: mockMutateAsync,
+        isPending: false,
+      }),
+    },
+    appConfig: {
+      useFindUnique: () => ({
+        data: mockEditWindowConfig,
+      }),
+    },
   }),
 }));
 

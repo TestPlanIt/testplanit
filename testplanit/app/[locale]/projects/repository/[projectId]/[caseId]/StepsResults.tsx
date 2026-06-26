@@ -31,7 +31,9 @@ const RenderSharedGroupItemsForResults: React.FC<
   RenderSharedGroupItemsForResultsProps
 > = ({ sharedStepGroupId, projectId, parameters }) => {
   const t = useTranslations("repository.steps");
-  const { data: items, isLoading } = useClientQueries(schema).sharedStepItem.useFindMany(
+  const { data: items, isLoading } = useClientQueries(
+    schema
+  ).sharedStepItem.useFindMany(
     {
       where: {
         sharedStepGroupId,

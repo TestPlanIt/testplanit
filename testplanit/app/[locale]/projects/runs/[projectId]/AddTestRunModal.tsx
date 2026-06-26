@@ -924,8 +924,10 @@ export default function AddTestRunModal({
 
   const [linkedIssueIds, setLinkedIssueIds] = useState<number[]>([]);
 
-  const { mutateAsync: createTestRuns } = useClientQueries(schema).testRuns.useCreate();
-  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: createTestRuns } =
+    useClientQueries(schema).testRuns.useCreate();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
 
   // `excludeNotStartedFromRuns` is the per-project toggle that hides NOT_STARTED
   // workflow-state cases from runs. We read it here so the submit handler can
@@ -940,7 +942,9 @@ export default function AddTestRunModal({
     },
     { enabled: Number.isFinite(Number(projectId)) }
   );
-  const { data: configurations } = useClientQueries(schema).configurations.useFindMany({
+  const { data: configurations } = useClientQueries(
+    schema
+  ).configurations.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,

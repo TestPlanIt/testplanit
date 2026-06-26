@@ -14,7 +14,9 @@ export default function TestCaseDetails() {
   const { caseId } = useParams();
   const t = useTranslations();
 
-  const { data, isLoading } = useClientQueries(schema).repositoryCases.useFindFirst({
+  const { data, isLoading } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst({
     where: { id: Number(caseId), isDeleted: false },
     select: { projectId: true },
   });

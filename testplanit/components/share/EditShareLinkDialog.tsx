@@ -49,7 +49,8 @@ export function EditShareLinkDialog({
 }: EditShareLinkDialogProps) {
   const t = useTranslations("reports.shareDialog");
   const tCommon = useTranslations("common");
-  const { data: registrationSettings } = useClientQueries(schema).registrationSettings.useFindFirst();
+  const { data: registrationSettings } =
+    useClientQueries(schema).registrationSettings.useFindFirst();
   const policy: PasswordPolicy | null = registrationSettings
     ? {
         minPasswordLength: registrationSettings.minPasswordLength ?? 8,

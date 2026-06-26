@@ -460,7 +460,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     setSelectedFolderId(newFolderId);
   }, [nodeParam]);
 
-  const { data: project, isLoading: isProjectLoading } = useClientQueries(schema).projects.useFindFirst(
+  const { data: project, isLoading: isProjectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: {
         AND: [
@@ -474,22 +476,23 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     { enabled: isValidProjectId && sessionStatus !== "loading" } // Only query when project ID is valid and session is loaded
   );
 
-  const { data: repository, isLoading: isRepositoryLoading } =
-    useClientQueries(schema).repositories.useFindFirst(
-      {
-        where: {
-          AND: [
-            {
-              isDeleted: false,
-              isActive: true,
-              isArchived: false,
-            },
-            { projectId: numericProjectId },
-          ],
-        },
+  const { data: repository, isLoading: isRepositoryLoading } = useClientQueries(
+    schema
+  ).repositories.useFindFirst(
+    {
+      where: {
+        AND: [
+          {
+            isDeleted: false,
+            isActive: true,
+            isArchived: false,
+          },
+          { projectId: numericProjectId },
+        ],
       },
-      { enabled: isValidProjectId }
-    );
+    },
+    { enabled: isValidProjectId }
+  );
 
   // Fetch aggregated view options for filters (lightweight query)
   const { data: viewOptionsData } = useQuery({
@@ -612,7 +615,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     return map;
   }, [showDescendants, selectedFolderId, folderHierarchy]);
 
-  const { data: testRunCasesWithLoading } = useClientQueries(schema).testRunCases.useFindMany(
+  const { data: testRunCasesWithLoading } = useClientQueries(
+    schema
+  ).testRunCases.useFindMany(
     {
       where: {
         testRunId: Number(params.runId),
@@ -659,7 +664,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   );
   const _testRunCases = testRunCasesWithLoading as TestRunCase[] | undefined;
 
-  const { data: caseFoldersWithLoading } = useClientQueries(schema).repositoryCases.useFindMany(
+  const { data: caseFoldersWithLoading } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
     {
       where: {
         AND: [
@@ -1316,7 +1323,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const { currentPage, setCurrentPage, pageSize } = usePagination();
 
   // Fetch minimal case position data for auto-paging in run mode
-  const { data: casePositions } = useClientQueries(schema).testRunCases.useFindMany(
+  const { data: casePositions } = useClientQueries(
+    schema
+  ).testRunCases.useFindMany(
     {
       where: { testRunId: Number(params.runId), isDeleted: false },
       orderBy: { order: "asc" },

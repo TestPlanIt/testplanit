@@ -1,4 +1,11 @@
-import { DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat } from "~/zenstack/models";
+import {
+  DateFormat,
+  ItemsPerPage,
+  Locale,
+  NotificationMode,
+  Theme,
+  TimeFormat,
+} from "~/zenstack/models";
 import userEvent from "@testing-library/user-event";
 import { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -79,7 +86,10 @@ const mockRefetchUser = vi.fn();
 // Mock the required hooks from ~/lib/hooks
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    user: { useUpdate: vi.fn(() => ({ mutateAsync: mockUpdateUser })), useFindUnique: vi.fn(() => ({ refetch: mockRefetchUser })) },
+    user: {
+      useUpdate: vi.fn(() => ({ mutateAsync: mockUpdateUser })),
+      useFindUnique: vi.fn(() => ({ refetch: mockRefetchUser })),
+    },
   }),
 }));
 

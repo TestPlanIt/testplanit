@@ -177,7 +177,9 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     [rows]
   );
 
-  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({ where: whereClause });
+  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({
+    where: whereClause,
+  });
 
   // Filter options come from the distinct values this user has actually
   // generated, so each dropdown lists only relevant actions/types.

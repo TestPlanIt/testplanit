@@ -59,10 +59,9 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
     [sharedStepGroupId]
   );
 
-  const { data: items, isLoading } = useClientQueries(schema).sharedStepItem.useFindMany(
-    queryOptions,
-    hookOptions
-  );
+  const { data: items, isLoading } = useClientQueries(
+    schema
+  ).sharedStepItem.useFindMany(queryOptions, hookOptions);
 
   // console.log("RenderSharedGroupItems data:", {
   //   items,

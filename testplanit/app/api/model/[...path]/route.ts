@@ -343,10 +343,7 @@ async function getDb() {
         if (attempt < 2) {
           await new Promise((r) => setTimeout(r, 50 * (attempt + 1)));
         } else {
-          console.error(
-            "[getDb] user lookup failed after 3 attempts:",
-            err
-          );
+          console.error("[getDb] user lookup failed after 3 attempts:", err);
         }
       }
     }

@@ -31,7 +31,8 @@ export function DeleteAppConfig({
   onClose,
 }: DeleteAppConfigProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: deleteAppConfig } = useClientQueries(schema).appConfig.useDelete();
+  const { mutateAsync: deleteAppConfig } =
+    useClientQueries(schema).appConfig.useDelete();
   const tCommon = useTranslations("common");
 
   const form = useForm();

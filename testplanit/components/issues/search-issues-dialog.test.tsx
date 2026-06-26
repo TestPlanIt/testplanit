@@ -23,10 +23,6 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
-
-
-
-
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key.split(".").pop() ?? key,
 }));

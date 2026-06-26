@@ -15,10 +15,12 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    shareLink: { useCreate: () => ({
-    mutateAsync: mocks.createShareLink,
-    isPending: false,
-  }) },
+    shareLink: {
+      useCreate: () => ({
+        mutateAsync: mocks.createShareLink,
+        isPending: false,
+      }),
+    },
   }),
 }));
 

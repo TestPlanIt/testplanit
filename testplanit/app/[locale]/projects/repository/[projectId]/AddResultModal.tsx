@@ -11,7 +11,14 @@ import UploadAttachments, {
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ApplicationArea } from "~/zenstack/models";
-import type { Attachments, Color as DbColor, SharedStepGroup as DbSharedStepGroup, SharedStepItem as DbSharedStepItem, Status as DbStatus, Steps } from "~/zenstack/models";
+import type {
+  Attachments,
+  Color as DbColor,
+  SharedStepGroup as DbSharedStepGroup,
+  SharedStepItem as DbSharedStepItem,
+  Status as DbStatus,
+  Steps,
+} from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Bug,
@@ -376,7 +383,9 @@ export function AddResultModal({
   }, [issueDetails]);
 
   // Query previous test run results to determine the correct attempt number
-  const { data: previousResults } = useClientQueries(schema).testRunResults.useFindMany({
+  const { data: previousResults } = useClientQueries(
+    schema
+  ).testRunResults.useFindMany({
     where: {
       testRunCaseId,
     },
@@ -387,22 +396,23 @@ export function AddResultModal({
   });
 
   // Find the repository case to get its template ID
-  const { data: repositoryCase, isLoading: isLoadingCase } =
-    useClientQueries(schema).repositoryCases.useFindFirst({
-      where: {
-        testRuns: {
-          some: {
-            id: testRunCaseId,
-          },
+  const { data: repositoryCase, isLoading: isLoadingCase } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst({
+    where: {
+      testRuns: {
+        some: {
+          id: testRunCaseId,
         },
       },
-      select: {
-        id: true,
-        name: true,
-        templateId: true,
-        currentVersion: true,
-      },
-    });
+    },
+    select: {
+      id: true,
+      name: true,
+      templateId: true,
+      currentVersion: true,
+    },
+  });
 
   // Fetch template result fields if we have a case with a template
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =
@@ -439,29 +449,30 @@ export function AddResultModal({
     });
 
   // Fetch project data to get integrations
-  const { data: projectData, isLoading: isLoadingProject } =
-    useClientQueries(schema).projects.useFindFirst({
-      where: { id: projectId },
-      select: {
-        projectIntegrations: {
-          where: {
-            isActive: true,
-            integration: {
-              status: "ACTIVE",
-            },
+  const { data: projectData, isLoading: isLoadingProject } = useClientQueries(
+    schema
+  ).projects.useFindFirst({
+    where: { id: projectId },
+    select: {
+      projectIntegrations: {
+        where: {
+          isActive: true,
+          integration: {
+            status: "ACTIVE",
           },
-          include: {
-            integration: {
-              select: {
-                id: true,
-                name: true,
-                provider: true,
-              },
+        },
+        include: {
+          integration: {
+            select: {
+              id: true,
+              name: true,
+              provider: true,
             },
           },
         },
       },
-    });
+    },
+  });
 
   // Calculate the next attempt number based on previous results
   const nextAttempt =
@@ -615,13 +626,17 @@ export function AddResultModal({
     },
   });
 
-  const { mutateAsync: createAttachments } = useClientQueries(schema).attachments.useCreate();
-  const { mutateAsync: updateTestRunCase } = useClientQueries(schema).testRunCases.useUpdate();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateTestRunCase } =
+    useClientQueries(schema).testRunCases.useUpdate();
   const { mutateAsync: createTestRunStepResult } =
     useClientQueries(schema).testRunStepResults.useCreate();
 
   // Find the first IN_PROGRESS workflow state for this project
-  const { data: inProgressWorkflow } = useClientQueries(schema).workflows.useFindFirst({
+  const { data: inProgressWorkflow } = useClientQueries(
+    schema
+  ).workflows.useFindFirst({
     where: {
       projects: {
         some: {
@@ -1159,9 +1174,10 @@ export function AddResultModal({
               // Handle shared step group - 'step' here is the placeholder Step from props
               const placeholderStepId = step.id; // ID of the placeholder Step
 
-              const sharedItems = queryClient.getQueryData<
-                DbSharedStepItem[]
-              >(["sharedStepItems", step.sharedStepGroupId]);
+              const sharedItems = queryClient.getQueryData<DbSharedStepItem[]>([
+                "sharedStepItems",
+                step.sharedStepGroupId,
+              ]);
 
               if (sharedItems && sharedItems.length > 0) {
                 const sharedItemPromises = sharedItems.map(
@@ -2321,7 +2337,9 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
   // Explicitly set return type to React.ReactNode
   const t = useTranslations();
   const tCommon = useTranslations("common");
-  const { data: items, isLoading } = useClientQueries(schema).sharedStepItem.useFindMany({
+  const { data: items, isLoading } = useClientQueries(
+    schema
+  ).sharedStepItem.useFindMany({
     where: {
       sharedStepGroupId,
       sharedStepGroup: { isDeleted: false },

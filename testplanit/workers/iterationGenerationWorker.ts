@@ -57,21 +57,19 @@ export const processor = async (
   // an empty progress object on the very first read.
   await job.updateProgress({ processed: 0, total: 0, phase: "starting" });
 
-  const result = await db.$transaction(
-    async (tx: any) => {
-      return materializeIterations(job.data.testRunId, tx, {
-        progressIntervalCases: 50,
-        onProgress: async ({ processedCases, totalCases, iterationsSoFar }) => {
-          await job.updateProgress({
-            processed: processedCases,
-            total: totalCases,
-            iterationsSoFar,
-            phase: "materializing",
-          });
-        },
-      });
-    }
-  );
+  const result = await db.$transaction(async (tx: any) => {
+    return materializeIterations(job.data.testRunId, tx, {
+      progressIntervalCases: 50,
+      onProgress: async ({ processedCases, totalCases, iterationsSoFar }) => {
+        await job.updateProgress({
+          processed: processedCases,
+          total: totalCases,
+          iterationsSoFar,
+          phase: "materializing",
+        });
+      },
+    });
+  });
 
   // Emit a final completion progress event so polling clients see the
   // final tally before they query state and pick up the return value.

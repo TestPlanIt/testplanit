@@ -41,7 +41,9 @@ export function AuditLogDetailModal({
   // The list query deliberately omits these columns to keep the page light at
   // scale — a single import can produce 100+ rows whose `changes` payload each
   // contains the full entity (kilobytes of Tiptap JSON for test cases).
-  const { data: log, isLoading } = useClientQueries(schema).auditLog.useFindUnique(
+  const { data: log, isLoading } = useClientQueries(
+    schema
+  ).auditLog.useFindUnique(
     {
       where: { id: logId ?? "" },
       include: { project: { select: { name: true } } },

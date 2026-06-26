@@ -135,9 +135,7 @@ describe("jira-panel-generation", () => {
         templateId: 3,
       });
       expect(await templateBelongsToProject(3, 10)).toBe(true);
-      expect(
-        mockDb.templateProjectAssignment.findUnique
-      ).toHaveBeenCalledWith(
+      expect(mockDb.templateProjectAssignment.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { templateId_projectId: { templateId: 3, projectId: 10 } },
         })

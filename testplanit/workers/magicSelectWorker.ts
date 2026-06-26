@@ -588,10 +588,7 @@ export const processor = async (
       : {};
 
   // 4. Create worker-safe LlmManager (fresh instance per job, not singleton)
-  const llmManager = LlmManager.createForWorker(
-    db as any,
-    job.data.tenantId
-  );
+  const llmManager = LlmManager.createForWorker(db as any, job.data.tenantId);
   const promptResolver = new PromptResolver(db as any);
 
   // 4. TOKEN-04 — Fetch provider config for token limits and retry settings
@@ -605,11 +602,9 @@ export const processor = async (
   let retryOptions: { maxRetries?: number; baseDelayMs?: number } | undefined;
 
   if (resolved) {
-    const llmProviderConfig = await (db as any).llmProviderConfig.findFirst(
-      {
-        where: { llmIntegrationId: resolved.integrationId },
-      }
-    );
+    const llmProviderConfig = await (db as any).llmProviderConfig.findFirst({
+      where: { llmIntegrationId: resolved.integrationId },
+    });
     if (llmProviderConfig) {
       maxTokensPerRequest = llmProviderConfig.maxTokensPerRequest ?? 4096;
       maxTokens = llmProviderConfig.defaultMaxTokens ?? 2000;

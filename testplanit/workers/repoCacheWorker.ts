@@ -49,9 +49,7 @@ const processor = async (job: Job) => {
         );
 
         // Find all configs where caching is enabled
-        const configs = await (
-          db as any
-        ).projectCodeRepositoryConfig.findMany({
+        const configs = await (db as any).projectCodeRepositoryConfig.findMany({
           where: { cacheEnabled: true },
           select: { id: true, projectId: true, cacheTtlDays: true },
         });

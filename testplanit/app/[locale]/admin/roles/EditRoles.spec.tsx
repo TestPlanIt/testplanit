@@ -72,11 +72,17 @@ const {
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    rolePermission: { useFindMany: () => ({
-    data: stableExistingPermissions,
-    isLoading: stableLoadingState.isLoading,
-  }), useUpsert: () => ({ mutateAsync: mockUpsertRolePermission }) },
-    roles: { useUpdate: () => ({ mutateAsync: mockUpdateRole }), useUpdateMany: () => ({ mutateAsync: mockUpdateManyRoles }) },
+    rolePermission: {
+      useFindMany: () => ({
+        data: stableExistingPermissions,
+        isLoading: stableLoadingState.isLoading,
+      }),
+      useUpsert: () => ({ mutateAsync: mockUpsertRolePermission }),
+    },
+    roles: {
+      useUpdate: () => ({ mutateAsync: mockUpdateRole }),
+      useUpdateMany: () => ({ mutateAsync: mockUpdateManyRoles }),
+    },
   }),
 }));
 

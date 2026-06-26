@@ -10,9 +10,18 @@ import NotificationSettingsPage from "./page";
 // stub every other model/op through a Proxy so the tree mounts.
 const { useFindUniqueAppConfig, useUpdateAppConfig, useCreateAppConfig } =
   vi.hoisted(() => ({
-    useFindUniqueAppConfig: vi.fn(() => ({ data: undefined, isLoading: false })),
-    useUpdateAppConfig: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
-    useCreateAppConfig: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+    useFindUniqueAppConfig: vi.fn(() => ({
+      data: undefined,
+      isLoading: false,
+    })),
+    useUpdateAppConfig: vi.fn(() => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    })),
+    useCreateAppConfig: vi.fn(() => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    })),
   }));
 
 vi.mock("@zenstackhq/tanstack-query/react", () => {

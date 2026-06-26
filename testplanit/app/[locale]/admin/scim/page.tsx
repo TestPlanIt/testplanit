@@ -257,7 +257,8 @@ function ScimTokensList() {
     ? columnToFieldMap[sortConfig.column] || sortConfig.column
     : "lastUsedAt";
 
-  const { mutateAsync: updateScimToken } = useClientQueries(schema).scimToken.useUpdate();
+  const { mutateAsync: updateScimToken } =
+    useClientQueries(schema).scimToken.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateScimTokenRef = useRef(updateScimToken);
@@ -265,7 +266,9 @@ function ScimTokensList() {
     updateScimTokenRef.current = updateScimToken;
   });
 
-  const { data: totalFilteredTokens } = useClientQueries(schema).scimToken.useFindMany(
+  const { data: totalFilteredTokens } = useClientQueries(
+    schema
+  ).scimToken.useFindMany(
     {
       orderBy: { [sortField]: sortConfig?.direction || "desc" },
       where: {

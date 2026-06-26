@@ -81,7 +81,9 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
     setTimeout(() => setIsTransitioning(false), 300);
   };
 
-  const { data: project, isLoading: isLoadingProject } = useClientQueries(schema).projects.useFindFirst(
+  const { data: project, isLoading: isLoadingProject } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: {
         AND: [{ id: parseInt(projectId) }, { isDeleted: false }],

@@ -192,12 +192,8 @@ describe("LlmManager", () => {
 
   describe("getInstance", () => {
     it("should return singleton instance", () => {
-      const instance1 = LlmManager.getInstance(
-        mockDb as unknown as DbClient
-      );
-      const instance2 = LlmManager.getInstance(
-        mockDb as unknown as DbClient
-      );
+      const instance1 = LlmManager.getInstance(mockDb as unknown as DbClient);
+      const instance2 = LlmManager.getInstance(mockDb as unknown as DbClient);
 
       expect(instance1).toBe(instance2);
     });
@@ -205,9 +201,7 @@ describe("LlmManager", () => {
 
   describe("getAdapter", () => {
     it("should create and cache OpenAI adapter", async () => {
-      mockDb.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
 
       const adapter1 = await manager.getAdapter(1);
       const adapter2 = await manager.getAdapter(1);
@@ -360,9 +354,7 @@ describe("LlmManager", () => {
 
   describe("chat", () => {
     it("should make chat request and track usage", async () => {
-      mockDb.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         mockLlmIntegration.llmProviderConfig
       );
@@ -393,9 +385,7 @@ describe("LlmManager", () => {
 
     it("should track error on failed chat request", async () => {
       const mockError = new Error("API error");
-      mockDb.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
       mockDb.llmUsage.create.mockResolvedValue({});
 
       // Get the adapter first
@@ -423,9 +413,7 @@ describe("LlmManager", () => {
 
   describe("chatStream", () => {
     it("should stream chat response and track usage", async () => {
-      mockDb.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         mockLlmIntegration.llmProviderConfig
       );
@@ -519,9 +507,7 @@ describe("LlmManager", () => {
 
   describe("testConnection", () => {
     it("should return true when connection succeeds", async () => {
-      mockDb.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
 
       const result = await manager.testConnection(1);
 
@@ -529,9 +515,7 @@ describe("LlmManager", () => {
     });
 
     it("should return false when connection fails", async () => {
-      mockDb.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
 
       // Get the adapter and spy on testConnection to make it fail
       const adapter = await manager.getAdapter(1);
@@ -551,9 +535,7 @@ describe("LlmManager", () => {
 
   describe("getAvailableModels", () => {
     it("should return available models from adapter", async () => {
-      mockDb.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
 
       const result = await manager.getAvailableModels(1);
 
@@ -639,9 +621,7 @@ describe("LlmManager", () => {
 
   describe("clearCache", () => {
     it("should clear specific adapter from cache", async () => {
-      mockDb.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
 
       const adapter1 = await manager.getAdapter(1);
       manager.clearCache(1);
@@ -651,9 +631,7 @@ describe("LlmManager", () => {
     });
 
     it("should clear all adapters from cache", async () => {
-      mockDb.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
 
       const adapter1 = await manager.getAdapter(1);
       manager.clearCache();

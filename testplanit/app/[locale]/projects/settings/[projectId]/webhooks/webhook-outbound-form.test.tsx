@@ -39,8 +39,9 @@ const {
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    webhookConfig: { useFindMany: (...args: any[]) =>
-    mockFindManyWebhookConfig(...args) },
+    webhookConfig: {
+      useFindMany: (...args: any[]) => mockFindManyWebhookConfig(...args),
+    },
   }),
 }));
 

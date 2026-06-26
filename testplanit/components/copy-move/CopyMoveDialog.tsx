@@ -87,25 +87,29 @@ export function CopyMoveDialog({
   const job = useCopyMoveJob();
 
   // ── Data hooks ───────────────────────────────────────────────────────────
-  const { data: projects = [], isLoading: projectsLoading } =
-    useClientQueries(schema).projects.useFindMany({
-      where: { isDeleted: false },
-      orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
-      select: { id: true, name: true, iconUrl: true, isCompleted: true },
-    });
+  const { data: projects = [], isLoading: projectsLoading } = useClientQueries(
+    schema
+  ).projects.useFindMany({
+    where: { isDeleted: false },
+    orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
+    select: { id: true, name: true, iconUrl: true, isCompleted: true },
+  });
 
-  const { data: folders = [], isLoading: foldersLoading } =
-    useClientQueries(schema).repositoryFolders.useFindMany(
-      {
-        where: { projectId: targetProjectId ?? 0, isDeleted: false },
-        select: { id: true, name: true, parentId: true, order: true },
-        orderBy: { order: "asc" },
-      },
-      { enabled: !!targetProjectId }
-    );
+  const { data: folders = [], isLoading: foldersLoading } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany(
+    {
+      where: { projectId: targetProjectId ?? 0, isDeleted: false },
+      select: { id: true, name: true, parentId: true, order: true },
+      orderBy: { order: "asc" },
+    },
+    { enabled: !!targetProjectId }
+  );
 
   // Target project's repository (needed for creating folders)
-  const { data: targetRepo } = useClientQueries(schema).repositories.useFindFirst(
+  const { data: targetRepo } = useClientQueries(
+    schema
+  ).repositories.useFindFirst(
     {
       where: {
         projectId: targetProjectId ?? 0,
@@ -117,10 +121,13 @@ export function CopyMoveDialog({
     { enabled: !!targetProjectId }
   );
 
-  const { mutateAsync: createFolder } = useClientQueries(schema).repositoryFolders.useCreate();
+  const { mutateAsync: createFolder } =
+    useClientQueries(schema).repositoryFolders.useCreate();
 
   // ── Folder-mode data hooks ────────────────────────────────────────────────
-  const { data: sourceFolders = [] } = useClientQueries(schema).repositoryFolders.useFindMany(
+  const { data: sourceFolders = [] } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany(
     sourceFolderId
       ? {
           where: { projectId: sourceProjectId, isDeleted: false },
@@ -151,7 +158,9 @@ export function CopyMoveDialog({
     return new Set(folderSubtreeIds);
   }, [sourceFolderId, targetProjectId, sourceProjectId, folderSubtreeIds]);
 
-  const { data: folderCases = [] } = useClientQueries(schema).repositoryCases.useFindMany(
+  const { data: folderCases = [] } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
     folderSubtreeIds.length > 0
       ? {
           where: { folderId: { in: folderSubtreeIds }, isDeleted: false },
@@ -171,7 +180,9 @@ export function CopyMoveDialog({
 
   // Case-mode: look up the source folders of the selected cases so we can
   // detect same-folder moves when sourceFolderId is not provided.
-  const { data: selectedCases = [] } = useClientQueries(schema).repositoryCases.useFindMany(
+  const { data: selectedCases = [] } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
     sourceFolderId === undefined && selectedCaseIds.length > 0
       ? {
           where: { id: { in: selectedCaseIds }, isDeleted: false },

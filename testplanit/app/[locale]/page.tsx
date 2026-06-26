@@ -12,7 +12,6 @@ import {
   processProjectsWithEffectiveMembers,
 } from "~/utils/projectUtils";
 
-
 import { Loading } from "@/components/Loading";
 import { NoProjectsCard } from "@/components/NoProjectsCard";
 import { InitialPreferencesDialog } from "@/components/onboarding/InitialPreferencesDialog";
@@ -38,7 +37,9 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
   const t = useTranslations();
 
   const { data: session } = useSession();
-  const { data: allUsers, isLoading: isUsersLoading } = useClientQueries(schema).user.useFindMany({
+  const { data: allUsers, isLoading: isUsersLoading } = useClientQueries(
+    schema
+  ).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     select: { id: true, access: true },
   });
@@ -53,52 +54,53 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
 
   // ZenStack will automatically filter projects based on access rules
   // This includes explicit assignments AND projects with defaultAccessType: GLOBAL_ROLE
-  const { data: projectsRaw, isLoading: isLoadingProjects } =
-    useClientQueries(schema).projects.useFindMany(
-      {
-        where: {
-          isDeleted: false,
+  const { data: projectsRaw, isLoading: isLoadingProjects } = useClientQueries(
+    schema
+  ).projects.useFindMany(
+    {
+      where: {
+        isDeleted: false,
+      },
+      orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
+      include: {
+        _count: {
+          select: {
+            milestones: { where: { isCompleted: false, isDeleted: false } },
+            testRuns: { where: { isCompleted: false, isDeleted: false } },
+            sessions: { where: { isCompleted: false, isDeleted: false } },
+            repositoryCases: { where: { isDeleted: false } },
+          },
         },
-        orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
-        include: {
-          _count: {
-            select: {
-              milestones: { where: { isCompleted: false, isDeleted: false } },
-              testRuns: { where: { isCompleted: false, isDeleted: false } },
-              sessions: { where: { isCompleted: false, isDeleted: false } },
-              repositoryCases: { where: { isDeleted: false } },
-            },
-          },
-          assignedUsers: {
-            where: { user: { isActive: true, isDeleted: false } },
-            select: { userId: true },
-          },
-          groupPermissions: {
-            select: {
-              accessType: true,
-              group: {
-                select: {
-                  assignedUsers: {
-                    where: { user: { isActive: true, isDeleted: false } },
-                    select: { userId: true },
-                  },
+        assignedUsers: {
+          where: { user: { isActive: true, isDeleted: false } },
+          select: { userId: true },
+        },
+        groupPermissions: {
+          select: {
+            accessType: true,
+            group: {
+              select: {
+                assignedUsers: {
+                  where: { user: { isActive: true, isDeleted: false } },
+                  select: { userId: true },
                 },
               },
             },
           },
-          defaultRole: {
-            select: {
-              id: true,
-              name: true,
-            },
+        },
+        defaultRole: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },
-      {
-        enabled: !!session?.user,
-        refetchOnWindowFocus: true,
-      }
-    );
+    },
+    {
+      enabled: !!session?.user,
+      refetchOnWindowFocus: true,
+    }
+  );
 
   const processedProjectsData: ProcessedProject[] = useMemo(
     () => processProjectsWithEffectiveMembers(projectsRaw as any, allUsers),

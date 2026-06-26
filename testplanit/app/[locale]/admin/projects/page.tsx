@@ -122,7 +122,8 @@ function ProjectAdmin() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { mutateAsync: updateProjects } = useClientQueries(schema).projects.useUpdate();
+  const { mutateAsync: updateProjects } =
+    useClientQueries(schema).projects.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateProjectsRef = useRef(updateProjects);
@@ -193,7 +194,9 @@ function ProjectAdmin() {
   const skip = (currentPage - 1) * effectivePageSize;
   const debouncedSearchString = useDebounce(searchString, 500);
 
-  const { data: totalFilteredProjects } = useClientQueries(schema).projects.useFindMany(
+  const { data: totalFilteredProjects } = useClientQueries(
+    schema
+  ).projects.useFindMany(
     {
       where: {
         AND: [
@@ -223,115 +226,116 @@ function ProjectAdmin() {
   }, [totalFilteredProjects, setTotalItems]);
 
   // 1. Fetch Projects with refined include for direct/group users
-  const { data: projectsRaw, isLoading: isLoadingProjects } =
-    useClientQueries(schema).projects.useFindMany(
-      {
-        orderBy:
-          !needsClientSideSorting && sortConfig
-            ? { [sortConfig.column]: sortConfig.direction }
-            : { name: "asc" },
-        include: {
-          creator: true,
-          milestones: {
-            include: { milestoneType: { include: { icon: true } } },
-            where: { isDeleted: false },
-            orderBy: [
-              { isStarted: "desc" },
-              { startedAt: "asc" },
-              { isCompleted: "asc" },
-              { completedAt: "desc" },
-            ],
+  const { data: projectsRaw, isLoading: isLoadingProjects } = useClientQueries(
+    schema
+  ).projects.useFindMany(
+    {
+      orderBy:
+        !needsClientSideSorting && sortConfig
+          ? { [sortConfig.column]: sortConfig.direction }
+          : { name: "asc" },
+      include: {
+        creator: true,
+        milestones: {
+          include: { milestoneType: { include: { icon: true } } },
+          where: { isDeleted: false },
+          orderBy: [
+            { isStarted: "desc" },
+            { startedAt: "asc" },
+            { isCompleted: "asc" },
+            { completedAt: "desc" },
+          ],
+        },
+        milestoneTypes: true,
+        projectIntegrations: {
+          include: {
+            integration: true,
           },
-          milestoneTypes: true,
-          projectIntegrations: {
-            include: {
-              integration: true,
-            },
-          },
+        },
 
-          // Refined includes for user IDs with filtering
-          assignedUsers: {
-            // Direct assignments
-            where: {
-              // Filter ProjectAssignment records
-              user: {
-                // Based on the related User's status
-                isActive: true,
-                isDeleted: false,
-              },
+        // Refined includes for user IDs with filtering
+        assignedUsers: {
+          // Direct assignments
+          where: {
+            // Filter ProjectAssignment records
+            user: {
+              // Based on the related User's status
+              isActive: true,
+              isDeleted: false,
             },
-            select: { userId: true }, // Select only the ID of active/not-deleted users
           },
-          groupPermissions: {
-            // Group permissions link for the project
-            select: {
-              groupId: true, // Expose groupId for GroupListDisplay column
-              accessType: true, // Include accessType to filter later if needed
-              // Select only the group relation from the permission
-              group: {
-                // The actual group
-                select: {
-                  // Select only the user assignments from the group
-                  assignedUsers: {
-                    // The GroupAssignment records linking users to this group
-                    where: {
-                      // Filter GroupAssignment records
-                      user: {
-                        // Based on the related User's status
-                        isActive: true,
-                        isDeleted: false,
-                      },
+          select: { userId: true }, // Select only the ID of active/not-deleted users
+        },
+        groupPermissions: {
+          // Group permissions link for the project
+          select: {
+            groupId: true, // Expose groupId for GroupListDisplay column
+            accessType: true, // Include accessType to filter later if needed
+            // Select only the group relation from the permission
+            group: {
+              // The actual group
+              select: {
+                // Select only the user assignments from the group
+                assignedUsers: {
+                  // The GroupAssignment records linking users to this group
+                  where: {
+                    // Filter GroupAssignment records
+                    user: {
+                      // Based on the related User's status
+                      isActive: true,
+                      isDeleted: false,
                     },
-                    select: { userId: true }, // Select the userId from the filtered assignments
                   },
+                  select: { userId: true }, // Select the userId from the filtered assignments
                 },
               },
             },
           },
-          codeRepositoryConfig: {
-            select: {
-              id: true,
-              repository: {
-                select: { name: true },
-              },
-            },
-          },
-          projectLlmIntegrations: {
-            select: {
-              isActive: true,
-              llmIntegration: {
-                select: { name: true, provider: true },
-              },
-            },
-          },
-          defaultRole: {
-            select: {
-              id: true,
-              name: true,
+        },
+        codeRepositoryConfig: {
+          select: {
+            id: true,
+            repository: {
+              select: { name: true },
             },
           },
         },
-        where: {
-          AND: [
-            {
-              name: {
-                contains: debouncedSearchString,
-                mode: "insensitive",
-              },
-              isDeleted: false,
+        projectLlmIntegrations: {
+          select: {
+            isActive: true,
+            llmIntegration: {
+              select: { name: true, provider: true },
             },
-          ],
+          },
         },
-        take: needsClientSideSorting ? undefined : effectivePageSize,
-        skip: needsClientSideSorting ? undefined : skip,
+        defaultRole: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
-      {
-        enabled:
-          (!!session?.user && debouncedSearchString.length === 0) ||
-          debouncedSearchString.length > 0,
-        refetchOnWindowFocus: true,
-      }
-    );
+      where: {
+        AND: [
+          {
+            name: {
+              contains: debouncedSearchString,
+              mode: "insensitive",
+            },
+            isDeleted: false,
+          },
+        ],
+      },
+      take: needsClientSideSorting ? undefined : effectivePageSize,
+      skip: needsClientSideSorting ? undefined : skip,
+    },
+    {
+      enabled:
+        (!!session?.user && debouncedSearchString.length === 0) ||
+        debouncedSearchString.length > 0,
+      refetchOnWindowFocus: true,
+    }
+  );
 
   // Use the utility function (potentially within useMemo for optimization)
   const projects: ProcessedProject[] = useMemo(

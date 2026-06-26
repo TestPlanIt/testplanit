@@ -510,9 +510,7 @@ describe("mergeService", () => {
   // ----------------------------------------------------------------
   describe("linkCases", () => {
     it("upserts a RepositoryCaseLink with SAME_TEST_DIFFERENT_SOURCE", async () => {
-      mockDb.$transaction.mockImplementation((ops: any[]) =>
-        Promise.all(ops)
-      );
+      mockDb.$transaction.mockImplementation((ops: any[]) => Promise.all(ops));
       mockDb.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
       mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 
@@ -538,9 +536,7 @@ describe("mergeService", () => {
     });
 
     it("updates DuplicateScanResult status to LINKED", async () => {
-      mockDb.$transaction.mockImplementation((ops: any[]) =>
-        Promise.all(ops)
-      );
+      mockDb.$transaction.mockImplementation((ops: any[]) => Promise.all(ops));
       mockDb.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
       mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 
@@ -560,9 +556,7 @@ describe("mergeService", () => {
     });
 
     it("returns { linked: true }", async () => {
-      mockDb.$transaction.mockImplementation((ops: any[]) =>
-        Promise.all(ops)
-      );
+      mockDb.$transaction.mockImplementation((ops: any[]) => Promise.all(ops));
       mockDb.repositoryCaseLink.upsert.mockResolvedValue({ id: 1 });
       mockDb.duplicateScanResult.updateMany.mockResolvedValue({ count: 1 });
 

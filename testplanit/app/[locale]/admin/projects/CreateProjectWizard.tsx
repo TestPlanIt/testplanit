@@ -5,7 +5,11 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ProjectAccessType, WorkflowScope } from "~/zenstack/models";
-import type { GroupProjectPermissionUpsertArgs, ProjectsCreateArgs, UserProjectPermissionUpsertArgs } from "~/zenstack/input";
+import type {
+  GroupProjectPermissionUpsertArgs,
+  ProjectsCreateArgs,
+  UserProjectPermissionUpsertArgs,
+} from "~/zenstack/input";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -233,8 +237,10 @@ export function CreateProjectWizard({
   >(null);
 
   // Hooks for creating project
-  const { mutateAsync: createProject } = useClientQueries(schema).projects.useCreate();
-  const { mutateAsync: createRepository } = useClientQueries(schema).repositories.useCreate();
+  const { mutateAsync: createProject } =
+    useClientQueries(schema).projects.useCreate();
+  const { mutateAsync: createRepository } =
+    useClientQueries(schema).repositories.useCreate();
   const { mutateAsync: createTemplateProjectAssignment } =
     useClientQueries(schema).templateProjectAssignment.useCreate();
   const { mutateAsync: createMilestoneTypesAssignment } =
@@ -251,11 +257,15 @@ export function CreateProjectWizard({
     useClientQueries(schema).projectIntegration.useCreate();
   const { mutateAsync: createProjectLlmIntegration } =
     useClientQueries(schema).projectLlmIntegration.useCreate();
-  const upsertUserPermission = useClientQueries(schema).userProjectPermission.useUpsert();
-  const upsertGroupPermission = useClientQueries(schema).groupProjectPermission.useUpsert();
+  const upsertUserPermission =
+    useClientQueries(schema).userProjectPermission.useUpsert();
+  const upsertGroupPermission =
+    useClientQueries(schema).groupProjectPermission.useUpsert();
 
   // Fetch data for wizard steps
-  const { data: templates, isLoading: templatesLoading } = useClientQueries(schema).templates.useFindMany(
+  const { data: templates, isLoading: templatesLoading } = useClientQueries(
+    schema
+  ).templates.useFindMany(
     {
       where: { isDeleted: false, isEnabled: true },
       include: {
@@ -287,7 +297,9 @@ export function CreateProjectWizard({
       { enabled: isOpen }
     );
 
-  const { data: workflows, isLoading: workflowsLoading } = useClientQueries(schema).workflows.useFindMany(
+  const { data: workflows, isLoading: workflowsLoading } = useClientQueries(
+    schema
+  ).workflows.useFindMany(
     {
       where: { isDeleted: false, isEnabled: true },
       orderBy: { order: "asc" },
@@ -299,7 +311,9 @@ export function CreateProjectWizard({
     { enabled: isOpen }
   );
 
-  const { data: statuses, isLoading: statusesLoading } = useClientQueries(schema).status.useFindMany(
+  const { data: statuses, isLoading: statusesLoading } = useClientQueries(
+    schema
+  ).status.useFindMany(
     {
       where: { isDeleted: false, isEnabled: true },
       orderBy: { order: "asc" },
@@ -310,7 +324,9 @@ export function CreateProjectWizard({
     { enabled: isOpen }
   );
 
-  const { data: configurations } = useClientQueries(schema).configurations.useFindMany(
+  const { data: configurations } = useClientQueries(
+    schema
+  ).configurations.useFindMany(
     {
       where: { isDeleted: false, isEnabled: true },
       orderBy: { name: "asc" },
@@ -337,12 +353,16 @@ export function CreateProjectWizard({
       { enabled: isOpen }
     );
 
-  const { data: roles, isLoading: rolesLoading } = useClientQueries(schema).roles.useFindMany(
+  const { data: roles, isLoading: rolesLoading } = useClientQueries(
+    schema
+  ).roles.useFindMany(
     { where: { isDeleted: false }, orderBy: { name: "asc" } },
     { enabled: isOpen }
   );
 
-  const { data: allUsers, isLoading: allUsersLoading } = useClientQueries(schema).user.useFindMany(
+  const { data: allUsers, isLoading: allUsersLoading } = useClientQueries(
+    schema
+  ).user.useFindMany(
     {
       where: { isActive: true, isDeleted: false },
       include: { role: true },
@@ -351,7 +371,9 @@ export function CreateProjectWizard({
     { enabled: isOpen }
   );
 
-  const { data: allGroups, isLoading: groupsLoading } = useClientQueries(schema).groups.useFindMany(
+  const { data: allGroups, isLoading: groupsLoading } = useClientQueries(
+    schema
+  ).groups.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { name: "asc" },
@@ -886,8 +908,7 @@ export function CreateProjectWizard({
       }
 
       // Setup user permissions
-      const userPermissionsToUpsert: UserProjectPermissionUpsertArgs[] =
-        [];
+      const userPermissionsToUpsert: UserProjectPermissionUpsertArgs[] = [];
       const submittedUserPermissions = data.userPermissions || {};
 
       for (const userId in submittedUserPermissions) {
@@ -928,8 +949,7 @@ export function CreateProjectWizard({
       }
 
       // Setup group permissions
-      const groupPermissionsToUpsert: GroupProjectPermissionUpsertArgs[] =
-        [];
+      const groupPermissionsToUpsert: GroupProjectPermissionUpsertArgs[] = [];
       const submittedGroupPermissions = data.groupPermissions || {};
 
       for (const groupIdStr in submittedGroupPermissions) {

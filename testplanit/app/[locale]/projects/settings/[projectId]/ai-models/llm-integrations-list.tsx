@@ -20,7 +20,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { LlmIntegration, LlmProviderConfig, ProjectLlmIntegration } from "~/zenstack/models";
+import type {
+  LlmIntegration,
+  LlmProviderConfig,
+  ProjectLlmIntegration,
+} from "~/zenstack/models";
 import { AlertTriangle, Check, Loader2, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";

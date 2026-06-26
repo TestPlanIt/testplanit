@@ -82,8 +82,10 @@ export function CodeRepositoryModal({
     error?: string;
   } | null>(null);
 
-  const { mutateAsync: upsertRepository } = useClientQueries(schema).codeRepository.useUpsert();
-  const { mutateAsync: updateRepository } = useClientQueries(schema).codeRepository.useUpdate();
+  const { mutateAsync: upsertRepository } =
+    useClientQueries(schema).codeRepository.useUpsert();
+  const { mutateAsync: updateRepository } =
+    useClientQueries(schema).codeRepository.useUpdate();
 
   const form = useForm<FormData>({
     resolver: standardSchemaResolver(formSchema),

@@ -51,9 +51,12 @@ function ConfigCategoriesList() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
-  const { mutateAsync: createConfigCategory } = useClientQueries(schema).configCategories.useCreate();
-  const { mutateAsync: createConfigVariant } = useClientQueries(schema).configVariants.useCreate();
-  const { mutateAsync: updateConfigVariant } = useClientQueries(schema).configVariants.useUpdate();
+  const { mutateAsync: createConfigCategory } =
+    useClientQueries(schema).configCategories.useCreate();
+  const { mutateAsync: createConfigVariant } =
+    useClientQueries(schema).configVariants.useCreate();
+  const { mutateAsync: updateConfigVariant } =
+    useClientQueries(schema).configVariants.useUpdate();
   const { mutateAsync: updateManyConfigurations } =
     useClientQueries(schema).configurations.useUpdateMany();
 
@@ -94,7 +97,9 @@ function ConfigCategoriesList() {
     }),
   });
 
-  const { data, refetch, isLoading } = useClientQueries(schema).configCategories.useFindMany(
+  const { data, refetch, isLoading } = useClientQueries(
+    schema
+  ).configCategories.useFindMany(
     {
       where: {
         isDeleted: false,

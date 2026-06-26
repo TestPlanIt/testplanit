@@ -142,10 +142,9 @@ const Signin: NextPage = () => {
 
   // Fetch ALL SSO providers (we need all to check forceSso)
   // Sort by name at the database level to help with SAML providers
-  const { data: registrationSettings } = useClientQueries(schema).registrationSettings.useFindFirst(
-    undefined,
-    { enabled: sessionCleared }
-  );
+  const { data: registrationSettings } = useClientQueries(
+    schema
+  ).registrationSettings.useFindFirst(undefined, { enabled: sessionCleared });
 
   // Wait for session to be cleared before fetching to prevent 410 errors with stale sessions
   const { data: ssoProviders, isLoading: isLoadingSsoProviders } =

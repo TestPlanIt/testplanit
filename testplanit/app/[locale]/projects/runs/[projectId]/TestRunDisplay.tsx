@@ -6,7 +6,10 @@ import { Loading } from "@/components/Loading";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { MilestonesGetPayload, TestRunsGetPayload } from "~/zenstack/input";
+import type {
+  MilestonesGetPayload,
+  TestRunsGetPayload,
+} from "~/zenstack/input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useProjectTestRunStream } from "~/hooks/useTestRunLiveStream";
 import { CirclePlus, GripVertical } from "lucide-react";
@@ -327,7 +330,9 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   const { projectId } = useParams();
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
-  const { data: colors, isLoading: isColorsLoading } = useClientQueries(schema).color.useFindMany({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(
+    schema
+  ).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
@@ -376,7 +381,9 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   // trip per page render — never per-row, per RESEARCH §"Pitfall 6").
   const { enabled: reviewFeatureEnabled } =
     useReviewFeatureEnabled(numericProjectId);
-  const { data: pendingReviewsForVisibleRuns } = useClientQueries(schema).reviewRequest.useFindMany(
+  const { data: pendingReviewsForVisibleRuns } = useClientQueries(
+    schema
+  ).reviewRequest.useFindMany(
     {
       where: {
         entityType: "RUN",
@@ -428,7 +435,9 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     staleTime: 30000, // Cache for 30 seconds
   });
 
-  const { data: testRunCases } = useClientQueries(schema).testRunCases.useFindMany(
+  const { data: testRunCases } = useClientQueries(
+    schema
+  ).testRunCases.useFindMany(
     {
       where: { testRunId: { in: testRunIds }, isDeleted: false },
       select: { id: true, testRunId: true, repositoryCaseId: true },

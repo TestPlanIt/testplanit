@@ -1024,7 +1024,9 @@ function RankedList({
   // may have been renamed since the snapshot was generated) — the
   // snapshot stores the ranking, the cases keep their own state.
   const caseIds = useMemo(() => candidates.map((c) => c.caseId), [candidates]);
-  const { data: caseRecords } = useClientQueries(schema).repositoryCases.useFindMany(
+  const { data: caseRecords } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
     {
       where: { id: { in: caseIds }, projectId },
       select: {

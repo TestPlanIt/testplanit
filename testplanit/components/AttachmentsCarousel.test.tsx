@@ -25,9 +25,11 @@ vi.mock("next-intl", () => ({
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    attachments: { useUpdate: vi.fn(() => ({
-    mutateAsync: mockUpdateAttachments,
-  })) },
+    attachments: {
+      useUpdate: vi.fn(() => ({
+        mutateAsync: mockUpdateAttachments,
+      })),
+    },
   }),
 }));
 

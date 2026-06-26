@@ -48,9 +48,7 @@ afterAll(() => {
 
 const fixedUpdatedAt = new Date("2026-02-02T12:00:00.000Z");
 
-function makeGroup(
-  overrides: Partial<DbGroupForScim> = {}
-): DbGroupForScim {
+function makeGroup(overrides: Partial<DbGroupForScim> = {}): DbGroupForScim {
   return {
     id: 7,
     name: "Engineering",

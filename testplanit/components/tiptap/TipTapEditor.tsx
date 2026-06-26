@@ -155,7 +155,9 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   const projectIdNumber = projectId ? parseInt(projectId) : NaN;
   const isValidProjectId = !isNaN(projectIdNumber) && projectIdNumber > 0;
 
-  const { data: llmIntegrations } = useClientQueries(schema).projectLlmIntegration.useFindMany(
+  const { data: llmIntegrations } = useClientQueries(
+    schema
+  ).projectLlmIntegration.useFindMany(
     {
       where: {
         projectId: projectIdNumber,

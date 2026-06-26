@@ -37,10 +37,13 @@ export function NotificationPreferences({
     useState<NotificationMode>("USE_GLOBAL");
   const [isEmailServerConfigured, setIsEmailServerConfigured] = useState(true);
 
-  const { data: globalSettings } = useClientQueries(schema).appConfig.useFindUnique({
+  const { data: globalSettings } = useClientQueries(
+    schema
+  ).appConfig.useFindUnique({
     where: { key: "notificationSettings" },
   });
-  const { mutate: updatePreferences, isPending } = useClientQueries(schema).userPreferences.useUpdate();
+  const { mutate: updatePreferences, isPending } =
+    useClientQueries(schema).userPreferences.useUpdate();
 
   useEffect(() => {
     if (userPreferences) {

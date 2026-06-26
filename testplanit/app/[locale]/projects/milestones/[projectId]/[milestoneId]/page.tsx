@@ -158,42 +158,44 @@ export default function MilestoneDetailsPage() {
     resolver: standardSchemaResolver(MilestoneFormSchema),
   });
 
-  const { data: milestone, isLoading: isMilestoneLoading } =
-    useClientQueries(schema).milestones.useFindFirst({
-      where: {
-        id: Number(milestoneId),
-        projectId: Number(projectId),
-        isDeleted: false,
+  const { data: milestone, isLoading: isMilestoneLoading } = useClientQueries(
+    schema
+  ).milestones.useFindFirst({
+    where: {
+      id: Number(milestoneId),
+      projectId: Number(projectId),
+      isDeleted: false,
+    },
+    include: {
+      milestoneType: {
+        include: {
+          icon: true,
+        },
       },
-      include: {
-        milestoneType: {
-          include: {
-            icon: true,
-          },
+      creator: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
         },
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          },
-        },
-        children: {
-          include: {
-            milestoneType: {
-              include: {
-                icon: true,
-              },
+      },
+      children: {
+        include: {
+          milestoneType: {
+            include: {
+              icon: true,
             },
           },
         },
       },
-    });
+    },
+  });
 
-  const { data: milestoneTypes, isLoading: isTypesLoading } =
-    useClientQueries(schema).milestoneTypes.useFindMany({
-      include: { icon: true },
-    });
+  const { data: milestoneTypes, isLoading: isTypesLoading } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindMany({
+    include: { icon: true },
+  });
 
   const { data: allProjectMilestones, isLoading: isProjectMilestonesLoading } =
     useClientQueries(schema).milestones.useFindMany({
@@ -233,7 +235,9 @@ export default function MilestoneDetailsPage() {
     [milestoneId, descendantsData]
   );
 
-  const { data: milestoneSessions } = useClientQueries(schema).sessions.useFindMany({
+  const { data: milestoneSessions } = useClientQueries(
+    schema
+  ).sessions.useFindMany({
     where: {
       milestoneId: { in: allMilestoneIds },
       isDeleted: false,
@@ -263,7 +267,9 @@ export default function MilestoneDetailsPage() {
     orderBy: [{ isCompleted: "asc" }, { createdAt: "desc" }],
   });
 
-  const { data: milestoneTestRuns } = useClientQueries(schema).testRuns.useFindMany({
+  const { data: milestoneTestRuns } = useClientQueries(
+    schema
+  ).testRuns.useFindMany({
     where: {
       milestoneId: { in: allMilestoneIds },
       isDeleted: false,
@@ -353,7 +359,8 @@ export default function MilestoneDetailsPage() {
     void fetchMilestoneForecast();
   }, [milestoneId, tCommon]);
 
-  const { mutateAsync: updateMilestone } = useClientQueries(schema).milestones.useUpdate();
+  const { mutateAsync: updateMilestone } =
+    useClientQueries(schema).milestones.useUpdate();
 
   const isLoading =
     isMilestoneLoading ||

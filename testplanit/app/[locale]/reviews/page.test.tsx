@@ -136,7 +136,8 @@ const mockUseFindManyProjects = vi.fn();
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     reviewRequest: {
-      useFindMany: (...args: unknown[]) => mockUseFindManyReviewRequest(...args),
+      useFindMany: (...args: unknown[]) =>
+        mockUseFindManyReviewRequest(...args),
       useCount: (...args: unknown[]) => mockUseCountReviewRequest(...args),
     },
     user: {

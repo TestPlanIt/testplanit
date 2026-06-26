@@ -48,11 +48,11 @@ describe("scimFilterToDbWhere", () => {
   });
 
   it("A3: translates 'externalId eq <opaque>' verbatim (never case-folded)", () => {
-    expect(
-      scimFilterToDbWhere('externalId eq "00ujl29u0le5T6Aj10h7"')
-    ).toEqual({
-      scimExternalId: { equals: "00ujl29u0le5T6Aj10h7" },
-    });
+    expect(scimFilterToDbWhere('externalId eq "00ujl29u0le5T6Aj10h7"')).toEqual(
+      {
+        scimExternalId: { equals: "00ujl29u0le5T6Aj10h7" },
+      }
+    );
   });
 
   it("A4: translates 'active eq true' to isActive: true", () => {
@@ -68,9 +68,7 @@ describe("scimFilterToDbWhere", () => {
   });
 
   it("A6: translates 'emails.value eq <X>' to case-insensitive email equals", () => {
-    expect(
-      scimFilterToDbWhere('emails.value eq "Alice@Example.COM"')
-    ).toEqual({
+    expect(scimFilterToDbWhere('emails.value eq "Alice@Example.COM"')).toEqual({
       email: { equals: "Alice@Example.COM", mode: "insensitive" },
     });
   });
@@ -137,9 +135,7 @@ describe("scimFilterToDbWhere", () => {
 
   it("C2: two-way AND across externalId + name.familyName", () => {
     expect(
-      scimFilterToDbWhere(
-        'externalId eq "x" and name.familyName eq "Smith"'
-      )
+      scimFilterToDbWhere('externalId eq "x" and name.familyName eq "Smith"')
     ).toEqual({
       AND: [
         { scimExternalId: { equals: "x" } },
@@ -264,9 +260,7 @@ describe("scimFilterToDbWhere", () => {
   });
 
   it("E3: 'phoneNumbers.value' is not filterable", () => {
-    expect(() =>
-      scimFilterToDbWhere('phoneNumbers.value eq "1234"')
-    ).toThrow(
+    expect(() => scimFilterToDbWhere('phoneNumbers.value eq "1234"')).toThrow(
       new InvalidFilterError('Attribute "phoneNumbers.value" not filterable')
     );
   });
@@ -390,9 +384,7 @@ describe("scimFilterToDbGroupWhere", () => {
   // ---------------------------------------------------------------------------
 
   it("A1: 'displayName eq <X>' translates to scimDisplayName lowercased equals", () => {
-    expect(
-      scimFilterToDbGroupWhere('displayName eq "Engineering"')
-    ).toEqual({
+    expect(scimFilterToDbGroupWhere('displayName eq "Engineering"')).toEqual({
       scimDisplayName: { equals: "engineering" },
     });
   });
@@ -405,9 +397,7 @@ describe("scimFilterToDbGroupWhere", () => {
 
   it("A3: 'displayName eq <X> and externalId pr' translates to AND of equals + not-null", () => {
     expect(
-      scimFilterToDbGroupWhere(
-        'displayName eq "Engineering" and externalId pr'
-      )
+      scimFilterToDbGroupWhere('displayName eq "Engineering" and externalId pr')
     ).toEqual({
       AND: [
         { scimDisplayName: { equals: "engineering" } },
@@ -451,9 +441,7 @@ describe("scimFilterToDbGroupWhere", () => {
   it("B3: URN-prefixed attrPath is rejected", () => {
     const filter =
       'urn:ietf:params:scim:schemas:enterprise:2.0:User:department eq "Eng"';
-    expect(() => scimFilterToDbGroupWhere(filter)).toThrow(
-      InvalidFilterError
-    );
+    expect(() => scimFilterToDbGroupWhere(filter)).toThrow(InvalidFilterError);
   });
 
   // ---------------------------------------------------------------------------

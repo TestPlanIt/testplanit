@@ -29,7 +29,9 @@ export interface IssueBadgeStyle extends CSSProperties {
  */
 export function useIssueColors() {
   // Fetch all colors with their color families
-  const { data: colors, isLoading } = useClientQueries(schema).color.useFindMany({
+  const { data: colors, isLoading } = useClientQueries(
+    schema
+  ).color.useFindMany({
     include: {
       colorFamily: true,
     },

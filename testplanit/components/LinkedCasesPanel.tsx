@@ -96,7 +96,9 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
   const tGlobal = useTranslations();
 
   // Fetch all links where this case is caseA or caseB
-  const { data: links, refetch } = useClientQueries(schema).repositoryCaseLink.useFindMany({
+  const { data: links, refetch } = useClientQueries(
+    schema
+  ).repositoryCaseLink.useFindMany({
     where: {
       OR: [
         { caseAId: caseId, isDeleted: false },
@@ -184,8 +186,10 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
   // For Add Link Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { mutateAsync: upsertLink } = useClientQueries(schema).repositoryCaseLink.useUpsert();
-  const { mutateAsync: updateLink } = useClientQueries(schema).repositoryCaseLink.useUpdate();
+  const { mutateAsync: upsertLink } =
+    useClientQueries(schema).repositoryCaseLink.useUpsert();
+  const { mutateAsync: updateLink } =
+    useClientQueries(schema).repositoryCaseLink.useUpdate();
 
   // Compute all linked case IDs to prevent circular/self-link
   const linkedCaseIds = useMemo(() => {

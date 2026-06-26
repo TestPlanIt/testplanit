@@ -58,7 +58,9 @@ function AppConfigs() {
   const debouncedSearchString = useDebounce(searchString, 300);
   const debouncedValueSearchString = useDebounce(valueSearchString, 300);
 
-  const { data: appConfigs, isLoading } = useClientQueries(schema).appConfig.useFindMany({
+  const { data: appConfigs, isLoading } = useClientQueries(
+    schema
+  ).appConfig.useFindMany({
     where: {
       key: {
         contains: debouncedSearchString,

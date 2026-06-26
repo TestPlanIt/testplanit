@@ -100,10 +100,13 @@ export function EditIssue({ issue, open, onClose }: EditIssueProps) {
   const t = useTranslations("admin.issues.edit");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateIssue } = useClientQueries(schema).issue.useUpdate();
+  const { mutateAsync: updateIssue } =
+    useClientQueries(schema).issue.useUpdate();
 
   // Fetch integration details if issue has an integration
-  const { data: integration } = useClientQueries(schema).integration.useFindUnique(
+  const { data: integration } = useClientQueries(
+    schema
+  ).integration.useFindUnique(
     {
       where: { id: issue.integrationId || 0 },
     },

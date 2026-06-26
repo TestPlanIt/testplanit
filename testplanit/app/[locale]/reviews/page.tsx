@@ -326,7 +326,9 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     [inboxRows]
   );
 
-  const { data: caseRows } = useClientQueries(schema).repositoryCases.useFindMany(
+  const { data: caseRows } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
     {
       where: { id: { in: caseIds }, isDeleted: false },
       select: {

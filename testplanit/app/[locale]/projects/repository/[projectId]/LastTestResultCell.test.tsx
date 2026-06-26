@@ -1,4 +1,11 @@
-import { DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat } from "~/zenstack/models";
+import {
+  DateFormat,
+  ItemsPerPage,
+  Locale,
+  NotificationMode,
+  Theme,
+  TimeFormat,
+} from "~/zenstack/models";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
@@ -28,25 +35,34 @@ vi.mock("~/app/actions/searchProjectMembers", () => ({
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    testRunCases: { useCreate: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })), useUpdate: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })) },
-    testRuns: { useFindMany: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-  })) },
-    repositoryFolders: { useFindMany: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-  })) },
-    status: { useFindMany: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-  })) },
+    testRunCases: {
+      useCreate: vi.fn(() => ({
+        mutateAsync: vi.fn(),
+        isPending: false,
+      })),
+      useUpdate: vi.fn(() => ({
+        mutateAsync: vi.fn(),
+        isPending: false,
+      })),
+    },
+    testRuns: {
+      useFindMany: vi.fn(() => ({
+        data: [],
+        isLoading: false,
+      })),
+    },
+    repositoryFolders: {
+      useFindMany: vi.fn(() => ({
+        data: [],
+        isLoading: false,
+      })),
+    },
+    status: {
+      useFindMany: vi.fn(() => ({
+        data: [],
+        isLoading: false,
+      })),
+    },
   }),
 }));
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env tsx
 
-
 import { syncProjectIssuesToElasticsearch } from "../services/issueSearch";
 import { createRawDbClient } from "~/lib/rawDbClient";
 

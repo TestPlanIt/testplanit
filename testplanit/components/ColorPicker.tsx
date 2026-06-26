@@ -19,7 +19,9 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   onColorSelect,
   initialColorId,
 }) => {
-  const { data: colors, isLoading: isColorsLoading } = useClientQueries(schema).color.useFindMany({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(
+    schema
+  ).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });

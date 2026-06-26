@@ -25,7 +25,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { LlmFeatureConfig, LlmIntegration, LlmProviderConfig, ProjectLlmIntegration } from "~/zenstack/models";
+import type {
+  LlmFeatureConfig,
+  LlmIntegration,
+  LlmProviderConfig,
+  ProjectLlmIntegration,
+} from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { LLM_FEATURE_LABELS, LLM_FEATURES } from "~/lib/llm/constants";
@@ -67,7 +72,9 @@ export function FeatureOverrides({
   const t = useTranslations("projects.settings.aiModels.featureOverrides");
   const tCommon = useTranslations("common");
 
-  const { data: featureConfigs } = useClientQueries(schema).llmFeatureConfig.useFindMany({
+  const { data: featureConfigs } = useClientQueries(
+    schema
+  ).llmFeatureConfig.useFindMany({
     where: { projectId },
     include: {
       llmIntegration: {
@@ -76,7 +83,9 @@ export function FeatureOverrides({
     },
   });
 
-  const { data: promptConfigPrompts } = useClientQueries(schema).promptConfigPrompt.useFindMany(
+  const { data: promptConfigPrompts } = useClientQueries(
+    schema
+  ).promptConfigPrompt.useFindMany(
     {
       where: { promptConfigId: promptConfigId ?? undefined },
       include: {
@@ -88,9 +97,12 @@ export function FeatureOverrides({
     { enabled: promptConfigId !== null }
   );
 
-  const { mutateAsync: createFeatureConfig } = useClientQueries(schema).llmFeatureConfig.useCreate();
-  const { mutateAsync: updateFeatureConfig } = useClientQueries(schema).llmFeatureConfig.useUpdate();
-  const { mutateAsync: deleteFeatureConfig } = useClientQueries(schema).llmFeatureConfig.useDelete();
+  const { mutateAsync: createFeatureConfig } =
+    useClientQueries(schema).llmFeatureConfig.useCreate();
+  const { mutateAsync: updateFeatureConfig } =
+    useClientQueries(schema).llmFeatureConfig.useUpdate();
+  const { mutateAsync: deleteFeatureConfig } =
+    useClientQueries(schema).llmFeatureConfig.useDelete();
 
   const getEffectiveResolution = (feature: string): EffectiveResolution => {
     const featureConfig = featureConfigs?.find((c) => c.feature === feature) as

@@ -97,9 +97,7 @@ describe("BudgetAlertService", () => {
   describe("threshold detection", () => {
     it("returns [80] when spend is 82% of budget", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(82)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(82));
 
       const result = await service.checkAndAlert(1);
 
@@ -111,9 +109,7 @@ describe("BudgetAlertService", () => {
 
     it("returns [80, 90] when spend is 95% of budget", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(95)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(95));
 
       const result = await service.checkAndAlert(1);
 
@@ -123,9 +119,7 @@ describe("BudgetAlertService", () => {
 
     it("returns [80, 90, 100] when spend is 105% of budget", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(105)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(105));
 
       const result = await service.checkAndAlert(1);
 
@@ -135,9 +129,7 @@ describe("BudgetAlertService", () => {
 
     it("returns [] when spend is 50% of budget", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(50)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(50));
 
       const result = await service.checkAndAlert(1);
 
@@ -159,9 +151,7 @@ describe("BudgetAlertService", () => {
 
     it("crosses threshold at exactly 80% (>= comparison)", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(80)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(80));
 
       const result = await service.checkAndAlert(1);
 
@@ -170,9 +160,7 @@ describe("BudgetAlertService", () => {
 
     it("crosses threshold at exactly 90%", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(90)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(90));
 
       const result = await service.checkAndAlert(1);
 
@@ -181,9 +169,7 @@ describe("BudgetAlertService", () => {
 
     it("crosses threshold at exactly 100%", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(100)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(100));
 
       const result = await service.checkAndAlert(1);
 
@@ -198,9 +184,7 @@ describe("BudgetAlertService", () => {
           alertThresholdsFired: { "2026-03-01": [80] },
         })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(92)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(92));
 
       const result = await service.checkAndAlert(1);
 
@@ -213,9 +197,7 @@ describe("BudgetAlertService", () => {
           alertThresholdsFired: { "2026-03-01": [80, 90, 100] },
         })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(150)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(150));
 
       const result = await service.checkAndAlert(1);
 
@@ -230,9 +212,7 @@ describe("BudgetAlertService", () => {
           alertThresholdsFired: { "2026-02-01": [80, 90] },
         })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(85)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(85));
 
       const result = await service.checkAndAlert(1);
 
@@ -246,9 +226,7 @@ describe("BudgetAlertService", () => {
           alertThresholdsFired: null,
         })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(82)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(82));
 
       const result = await service.checkAndAlert(1);
 
@@ -259,9 +237,7 @@ describe("BudgetAlertService", () => {
   describe("period boundary", () => {
     it("uses period-start ISO date as key (YYYY-MM-DD)", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(85)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(85));
 
       await service.checkAndAlert(1);
 
@@ -283,9 +259,7 @@ describe("BudgetAlertService", () => {
           alertThresholdsFired: { "2026-02-01": [80, 90] },
         })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(85)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(85));
 
       await service.checkAndAlert(1);
 
@@ -311,9 +285,7 @@ describe("BudgetAlertService", () => {
           billingPeriodStartDay: 15,
         })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(50)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(50));
 
       await service.checkAndAlert(1);
 
@@ -335,9 +307,7 @@ describe("BudgetAlertService", () => {
           alertThresholdsFired: { "2026-04-15": [80] },
         })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(92)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(92));
 
       const result = await service.checkAndAlert(1);
 
@@ -362,9 +332,7 @@ describe("BudgetAlertService", () => {
           alertThresholdsFired: { "2026-03-15": [80, 90, 100] },
         })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(85)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(85));
 
       const result = await service.checkAndAlert(1);
 
@@ -386,9 +354,7 @@ describe("BudgetAlertService", () => {
   describe("notification delivery", () => {
     it("creates notifications for all active ADMIN users", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(85)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(85));
 
       await service.checkAndAlert(1, "tenant-123");
 
@@ -404,9 +370,7 @@ describe("BudgetAlertService", () => {
 
     it("passes tenantId to createNotification", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(85)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(85));
 
       await service.checkAndAlert(1, "tenant-xyz");
 
@@ -419,9 +383,7 @@ describe("BudgetAlertService", () => {
 
     it("sends no notifications when no ADMIN users exist", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(85)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(85));
       mockDb.user.findMany.mockResolvedValue([]);
 
       const result = await service.checkAndAlert(1);
@@ -432,9 +394,7 @@ describe("BudgetAlertService", () => {
 
     it("creates a notification per threshold per admin", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(95)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(95));
 
       await service.checkAndAlert(1);
 
@@ -444,9 +404,7 @@ describe("BudgetAlertService", () => {
 
     it("uses NotificationType.LLM_BUDGET_ALERT for all notifications", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(85)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(85));
 
       await service.checkAndAlert(1);
 
@@ -458,9 +416,7 @@ describe("BudgetAlertService", () => {
 
     it("includes link /admin/llm in notification data", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(85)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(85));
 
       await service.checkAndAlert(1);
 
@@ -477,9 +433,7 @@ describe("BudgetAlertService", () => {
   describe("notification content", () => {
     it("title at 80%: 'LLM Budget 80% Used'", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(82)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(82));
 
       await service.checkAndAlert(1);
 
@@ -496,9 +450,7 @@ describe("BudgetAlertService", () => {
           alertThresholdsFired: { "2026-03-01": [80] },
         })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(92)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(92));
 
       await service.checkAndAlert(1);
 
@@ -515,9 +467,7 @@ describe("BudgetAlertService", () => {
           alertThresholdsFired: { "2026-03-01": [80, 90] },
         })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(105)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(105));
 
       await service.checkAndAlert(1);
 
@@ -534,9 +484,7 @@ describe("BudgetAlertService", () => {
           llmIntegration: { name: "Claude Sonnet", isDeleted: false },
         })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(85)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(85));
 
       await service.checkAndAlert(1);
 
@@ -549,9 +497,7 @@ describe("BudgetAlertService", () => {
 
     it("message includes dollar-formatted spend and budget amounts", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(82.5)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(82.5));
 
       await service.checkAndAlert(1);
 
@@ -564,9 +510,7 @@ describe("BudgetAlertService", () => {
 
     it("message does not include disclaimer (disclaimer is rendered in UI)", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(85)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(85));
 
       await service.checkAndAlert(1);
 
@@ -640,9 +584,7 @@ describe("BudgetAlertService", () => {
 
     it("does not send notifications when no new thresholds crossed", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(50)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(50));
 
       const result = await service.checkAndAlert(1);
 
@@ -664,9 +606,7 @@ describe("BudgetAlertService", () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({ monthlyBudget: decimalBudget })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(125)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(125));
 
       const result = await service.checkAndAlert(1);
 
@@ -694,9 +634,7 @@ describe("BudgetAlertService", () => {
 
     it("treats null totalCost (no usage records) as zero spend", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(null)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(null));
 
       const result = await service.checkAndAlert(1);
 
@@ -708,9 +646,7 @@ describe("BudgetAlertService", () => {
   describe("alertThresholdsFired update", () => {
     it("writes newly crossed thresholds to alertThresholdsFired", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(95)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(95));
 
       await service.checkAndAlert(1);
 
@@ -730,9 +666,7 @@ describe("BudgetAlertService", () => {
           alertThresholdsFired: { "2026-03-01": [80] },
         })
       );
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(105)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(105));
 
       await service.checkAndAlert(1);
 
@@ -748,9 +682,7 @@ describe("BudgetAlertService", () => {
 
     it("does not call update when no new thresholds crossed", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(50)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(50));
 
       await service.checkAndAlert(1);
 
@@ -760,9 +692,7 @@ describe("BudgetAlertService", () => {
     it("updates before sending notifications (atomicity)", async () => {
       const callOrder: string[] = [];
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(85)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(85));
       mockDb.llmProviderConfig.update.mockImplementation(async () => {
         callOrder.push("update");
         return {};
@@ -785,9 +715,7 @@ describe("BudgetAlertService", () => {
   describe("spend aggregation", () => {
     it("queries llmUsage with gte=billing period start when billingPeriodStartDay=1 (default)", async () => {
       mockDb.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
-      mockDb.llmUsage.aggregate.mockResolvedValue(
-        createAggregateResult(50)
-      );
+      mockDb.llmUsage.aggregate.mockResolvedValue(createAggregateResult(50));
 
       await service.checkAndAlert(1);
 

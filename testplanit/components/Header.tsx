@@ -67,7 +67,9 @@ export const Header = () => {
   const isOnProjectPage = path.includes("/projects/") && !!projectId;
 
   // Minimal query to check if current project is the Demo Project
-  const { data: currentProject } = useClientQueries(schema).projects.useFindUnique(
+  const { data: currentProject } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
     {
       where: { id: Number(projectId) },
       select: { name: true },
@@ -77,7 +79,9 @@ export const Header = () => {
   const isDemoProject = currentProject?.name === "Demo Project";
 
   // Reuse the same query as ProjectQuickSelector — React Query deduplicates it
-  const { data: allProjects = [] } = useClientQueries(schema).projects.useFindMany({
+  const { data: allProjects = [] } = useClientQueries(
+    schema
+  ).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: [{ isCompleted: "asc" as const }, { name: "asc" as const }],
     select: {

@@ -97,23 +97,27 @@ export function IterationAwareTestRunCaseDetails({
   // Project Test-Run statuses (deduped via React Query with the same call
   // in IterationResultPanel / IterationStatusLegendPopover). Used by
   // handleResetIteration to find a target status without a custom endpoint.
-  const { data: projectStatuses } = useClientQueries(schema).status.useFindMany({
-    where: {
-      AND: [
-        { isEnabled: true },
-        { isDeleted: false },
-        { projects: { some: { projectId: innerProps.projectId } } },
-        { scope: { some: { scope: { name: "Test Run" } } } },
-      ],
-    },
-    orderBy: { order: "asc" },
-  });
+  const { data: projectStatuses } = useClientQueries(schema).status.useFindMany(
+    {
+      where: {
+        AND: [
+          { isEnabled: true },
+          { isDeleted: false },
+          { projects: { some: { projectId: innerProps.projectId } } },
+          { scope: { some: { scope: { name: "Test Run" } } } },
+        ],
+      },
+      orderBy: { order: "asc" },
+    }
+  );
 
   // Iteration list — DO NOT include dataSetSnapshot here. The snapshot is
   // identical for every iteration row; including it duplicates the entire
   // payload N times and overflows Prisma's napi string buffer above ~1500
   // iterations. Snapshot is fetched once below via useClientQueries(schema).testRunCaseDataSetSnapshot.useFindFirst.
-  const { data: iterationsRaw } = useClientQueries(schema).testRunCaseIteration.useFindMany(
+  const { data: iterationsRaw } = useClientQueries(
+    schema
+  ).testRunCaseIteration.useFindMany(
     {
       where: { testRunCaseId, isDeleted: false },
       include: {
@@ -128,7 +132,9 @@ export function IterationAwareTestRunCaseDetails({
     { enabled: !!testRunCaseId }
   );
 
-  const { data: snapshotRaw } = useClientQueries(schema).testRunCaseDataSetSnapshot.useFindFirst(
+  const { data: snapshotRaw } = useClientQueries(
+    schema
+  ).testRunCaseDataSetSnapshot.useFindFirst(
     {
       where: { testRunCaseId },
       select: { parametersJson: true, rowsJson: true },

@@ -183,10 +183,7 @@ export const processor = async (
   await job.updateProgress({ analyzed: total, total, phase: "ai" });
   let finalPairs: Array<(typeof allPairs)[0] & { detectionMethod: string }>;
   try {
-    const llmManager = LlmManager.createForWorker(
-      db as any,
-      job.data.tenantId
-    );
+    const llmManager = LlmManager.createForWorker(db as any, job.data.tenantId);
     const promptResolver = new PromptResolver(db as any);
     const semanticService = new DuplicateAnalysisService(
       llmManager,
@@ -201,9 +198,7 @@ export const processor = async (
     let maxTokensPerRequest = 4096;
     let retryOptions: { maxRetries?: number; baseDelayMs?: number } | undefined;
     if (resolved) {
-      const llmProviderConfig = await (
-        db as any
-      ).llmProviderConfig.findFirst({
+      const llmProviderConfig = await (db as any).llmProviderConfig.findFirst({
         where: { llmIntegrationId: resolved.integrationId },
       });
       if (llmProviderConfig) {

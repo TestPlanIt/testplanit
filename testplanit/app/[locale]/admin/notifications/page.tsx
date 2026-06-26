@@ -108,7 +108,9 @@ function NotificationSettingsContent() {
     [notificationHistory]
   );
 
-  const { data: settings, isLoading } = useClientQueries(schema).appConfig.useFindUnique({
+  const { data: settings, isLoading } = useClientQueries(
+    schema
+  ).appConfig.useFindUnique({
     where: { key: "notificationSettings" },
   });
   const { mutate: createSettings, isPending: isCreating } =

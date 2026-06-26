@@ -177,7 +177,9 @@ function UserList() {
         ? { [sortConfig.column]: sortConfig.direction }
         : { name: "asc" };
 
-  const { data: totalFilteredUsers } = useClientQueries(schema).user.useFindMany(
+  const { data: totalFilteredUsers } = useClientQueries(
+    schema
+  ).user.useFindMany(
     {
       orderBy,
       include: {

@@ -14,7 +14,12 @@
  * 5 minutes per user, matching the pre-existing throttle.
  */
 
-import type { AuthMethod, User, Access, UserPreferences } from "~/zenstack/models";
+import type {
+  AuthMethod,
+  User,
+  Access,
+  UserPreferences,
+} from "~/zenstack/models";
 import { baseDb } from "./db";
 import valkeyConnection from "./valkey";
 

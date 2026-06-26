@@ -1,7 +1,11 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { JsonValue } from "@zenstackhq/orm";
 
-import type { AdapterType, WebhookDelivery, WebhookDirection } from "~/zenstack/models";
+import type {
+  AdapterType,
+  WebhookDelivery,
+  WebhookDirection,
+} from "~/zenstack/models";
 import type { DbClient } from "~/lib/zenstack";
 
 import { isSlackWebhookUrl } from "../../lib/webhooks/slack-url-detection";

@@ -33,7 +33,8 @@ export function DeleteProject({ project, open, onClose }: DeleteProjectProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateProjects } = useClientQueries(schema).projects.useUpdate();
+  const { mutateAsync: updateProjects } =
+    useClientQueries(schema).projects.useUpdate();
 
   const form = useForm();
   const {

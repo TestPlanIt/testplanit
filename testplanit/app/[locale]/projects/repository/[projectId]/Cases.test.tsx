@@ -79,31 +79,47 @@ vi.mock("next-auth/react", async (importOriginal) => {
 // Mock all ZenStack hooks from ~/lib/hooks
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    projects: { useCount: vi.fn(() => ({ data: 2, isLoading: false })), useFindUnique: vi.fn(() => ({ data: null, isLoading: false })) },
-    repositoryFolders: { useFindMany: vi.fn(() => ({ data: [], isLoading: false })) },
-    repositoryCases: { useCount: vi.fn(() => ({
-    data: 0,
-    isLoading: false,
-    refetch: vi.fn(),
-  })), useUpdate: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })) },
+    projects: {
+      useCount: vi.fn(() => ({ data: 2, isLoading: false })),
+      useFindUnique: vi.fn(() => ({ data: null, isLoading: false })),
+    },
+    repositoryFolders: {
+      useFindMany: vi.fn(() => ({ data: [], isLoading: false })),
+    },
+    repositoryCases: {
+      useCount: vi.fn(() => ({
+        data: 0,
+        isLoading: false,
+        refetch: vi.fn(),
+      })),
+      useUpdate: vi.fn(() => ({
+        mutateAsync: vi.fn(),
+        isPending: false,
+      })),
+    },
     templates: { useFindMany: vi.fn(() => ({ data: [], isLoading: false })) },
-    projectLlmIntegration: { useFindMany: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-  })) },
+    projectLlmIntegration: {
+      useFindMany: vi.fn(() => ({
+        data: [],
+        isLoading: false,
+      })),
+    },
     testRuns: { useFindFirst: vi.fn(() => ({ data: null, isLoading: false })) },
-    testRunCases: { useCount: vi.fn(() => ({ data: 0, isLoading: false })), useFindMany: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-    refetch: vi.fn(),
-  })), useUpdate: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })) },
-    reviewRequest: { useFindMany: vi.fn(() => ({ data: [], isLoading: false })) },
+    testRunCases: {
+      useCount: vi.fn(() => ({ data: 0, isLoading: false })),
+      useFindMany: vi.fn(() => ({
+        data: [],
+        isLoading: false,
+        refetch: vi.fn(),
+      })),
+      useUpdate: vi.fn(() => ({
+        mutateAsync: vi.fn(),
+        isPending: false,
+      })),
+    },
+    reviewRequest: {
+      useFindMany: vi.fn(() => ({ data: [], isLoading: false })),
+    },
   }),
 }));
 

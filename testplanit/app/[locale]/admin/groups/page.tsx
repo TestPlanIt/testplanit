@@ -78,7 +78,9 @@ function GroupList() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { data: totalFilteredGroups } = useClientQueries(schema).groups.useFindMany(
+  const { data: totalFilteredGroups } = useClientQueries(
+    schema
+  ).groups.useFindMany(
     {
       where: {
         AND: [

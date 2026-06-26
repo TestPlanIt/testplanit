@@ -32,8 +32,10 @@ export function DeleteLlmIntegration({
   const tGlobal = useTranslations();
   const [loading, setLoading] = useState(false);
 
-  const { mutateAsync: deleteLlmIntegration } = useClientQueries(schema).llmIntegration.useDelete();
-  const { mutateAsync: deleteLlmProviderConfig } = useClientQueries(schema).llmProviderConfig.useDelete();
+  const { mutateAsync: deleteLlmIntegration } =
+    useClientQueries(schema).llmIntegration.useDelete();
+  const { mutateAsync: deleteLlmProviderConfig } =
+    useClientQueries(schema).llmProviderConfig.useDelete();
 
   const handleDelete = async () => {
     setLoading(true);

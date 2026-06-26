@@ -60,7 +60,8 @@ export function ShareDialog({
   const tCommon = useTranslations("common");
   const tAuth = useTranslations("auth.signup.errors");
   const { data: session } = useSession();
-  const { data: registrationSettings } = useClientQueries(schema).registrationSettings.useFindFirst();
+  const { data: registrationSettings } =
+    useClientQueries(schema).registrationSettings.useFindFirst();
   const policy: PasswordPolicy | null = registrationSettings
     ? {
         minPasswordLength: registrationSettings.minPasswordLength ?? 8,

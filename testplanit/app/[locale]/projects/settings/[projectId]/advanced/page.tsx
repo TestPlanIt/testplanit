@@ -37,7 +37,9 @@ export default function AdvancedPage() {
   const { data: session, status } = useSession();
   const t = useTranslations("projects.settings.advanced");
 
-  const { data: project, isLoading: projectLoading } = useClientQueries(schema).projects.useFindUnique(
+  const { data: project, isLoading: projectLoading } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
     {
       where: { id: projectId },
       // `name` + `iconUrl` are needed for the shared project-settings header
@@ -69,7 +71,9 @@ export default function AdvancedPage() {
 
   // System edit-window policy (ceiling). value: 0 = locked everywhere, N =
   // max seconds (projects may tighten), absent = no policy.
-  const { data: editWindowConfig } = useClientQueries(schema).appConfig.useFindUnique(
+  const { data: editWindowConfig } = useClientQueries(
+    schema
+  ).appConfig.useFindUnique(
     { where: { key: "edit_results_duration" } },
     { enabled: status === "authenticated" }
   );

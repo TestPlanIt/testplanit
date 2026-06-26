@@ -49,8 +49,10 @@ export function DeleteFolderModal({
 }: DeleteFolderModalProps) {
   const t = useTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateManyCases } = useClientQueries(schema).repositoryCases.useUpdateMany();
-  const { mutateAsync: updateFolder } = useClientQueries(schema).repositoryFolders.useUpdate();
+  const { mutateAsync: updateManyCases } =
+    useClientQueries(schema).repositoryCases.useUpdateMany();
+  const { mutateAsync: updateFolder } =
+    useClientQueries(schema).repositoryFolders.useUpdate();
   const { projectId } = useParams<{ projectId: string }>();
 
   // Helper to get all descendant folder IDs (including self)
@@ -73,7 +75,9 @@ export function DeleteFolderModal({
   );
 
   // Fetch all cases in these folders when dialog is open
-  const { data: cases, isLoading: isCasesLoading } = useClientQueries(schema).repositoryCases.useFindMany(
+  const { data: cases, isLoading: isCasesLoading } = useClientQueries(
+    schema
+  ).repositoryCases.useFindMany(
     open && projectId
       ? {
           where: {

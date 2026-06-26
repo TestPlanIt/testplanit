@@ -359,11 +359,7 @@ describe("lib/webhooks/replay", () => {
     }
     const db = buildDbMock({ deliveriesById, outboxByEventId });
 
-    const result = await bulkReplayDeliveries(
-      ids,
-      { actorUserId: "u1" },
-      db
-    );
+    const result = await bulkReplayDeliveries(ids, { actorUserId: "u1" }, db);
 
     expect(result.outcome).toBe("queued");
     expect((result as { batchId: string }).batchId).toEqual(

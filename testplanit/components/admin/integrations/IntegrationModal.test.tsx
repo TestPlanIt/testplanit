@@ -23,7 +23,10 @@ const {
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    integration: { useUpsert: mockUseUpsertIntegration, useUpdate: mockUseUpdateIntegration },
+    integration: {
+      useUpsert: mockUseUpsertIntegration,
+      useUpdate: mockUseUpdateIntegration,
+    },
   }),
 }));
 

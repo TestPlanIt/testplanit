@@ -210,9 +210,7 @@ function requireBoolean(attr: string, value: unknown): boolean {
  * mapper-side case-folding convention; `externalId` is preserved verbatim
  * because it is an IdP-opaque identifier.
  */
-export function scimFilterToDbGroupWhere(
-  raw: string
-): GroupsWhereInput {
+export function scimFilterToDbGroupWhere(raw: string): GroupsWhereInput {
   let ast: Filter;
   try {
     ast = parse(raw);

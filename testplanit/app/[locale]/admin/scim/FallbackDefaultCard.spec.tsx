@@ -127,7 +127,10 @@ vi.mock("@zenstackhq/tanstack-query/react", () => {
   const specific: Record<string, Record<string, unknown>> = {
     appConfig: {
       useFindUnique: () => ({ data: stableConfig }),
-      useUpsert: () => ({ mutateAsync: mockUpsertMutateAsync, isPending: false }),
+      useUpsert: () => ({
+        mutateAsync: mockUpsertMutateAsync,
+        isPending: false,
+      }),
     },
   };
   return {

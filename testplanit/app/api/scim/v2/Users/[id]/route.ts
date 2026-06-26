@@ -171,9 +171,7 @@ export async function PUT(
     if (e instanceof ScimUniquenessError) {
       return scimError(409, "uniqueness", e.message);
     }
-    if (
-      isUniqueConstraintError(e)
-    ) {
+    if (isUniqueConstraintError(e)) {
       return scimError(409, "uniqueness", "userName already exists");
     }
     console.error("[scim/Users/:id] PUT failed:", e);
@@ -231,9 +229,7 @@ export async function PATCH(
     if (e instanceof ScimUniquenessError) {
       return scimError(409, "uniqueness", e.message);
     }
-    if (
-      isUniqueConstraintError(e)
-    ) {
+    if (isUniqueConstraintError(e)) {
       return scimError(409, "uniqueness", "userName already exists");
     }
     console.error("[scim/Users/:id] PATCH failed:", e);

@@ -17,8 +17,9 @@ vi.mock("next-intl", () => ({
 const mockUseFindFirstConfigurations = vi.fn();
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    configurations: { useFindFirst: (...args: any[]) =>
-    mockUseFindFirstConfigurations(...args) },
+    configurations: {
+      useFindFirst: (...args: any[]) => mockUseFindFirstConfigurations(...args),
+    },
   }),
 }));
 

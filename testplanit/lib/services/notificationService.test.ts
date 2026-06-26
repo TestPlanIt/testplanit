@@ -971,9 +971,7 @@ describe("NotificationService", () => {
   describe("resolveRoleHolderUserIds canApprove option", () => {
     beforeEach(() => {
       mockDbUserProjectPermissionFindMany.mockReset().mockResolvedValue([]);
-      mockDbGroupProjectPermissionFindMany
-        .mockReset()
-        .mockResolvedValue([]);
+      mockDbGroupProjectPermissionFindMany.mockReset().mockResolvedValue([]);
       mockDbRolePermissionFindUnique.mockReset();
     });
 

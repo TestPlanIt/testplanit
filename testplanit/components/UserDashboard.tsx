@@ -9,7 +9,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Projects, Sessions, TestRunCases, TestRunResults, TestRuns } from "~/zenstack/models";
+import type {
+  Projects,
+  Sessions,
+  TestRunCases,
+  TestRunResults,
+  TestRuns,
+} from "~/zenstack/models";
 import type { UserGetPayload } from "~/zenstack/input";
 import { useQuery } from "@tanstack/react-query";
 import { CirclePlay, Compass, LinkIcon, Star } from "lucide-react";
@@ -512,7 +518,9 @@ export function UserDashboard() {
   }, [scheduledWorkItems]);
 
   // --- 2. Fetch Open Test Runs (include project) ---
-  const { data: allOpenRuns, isLoading: isLoadingRuns } = useClientQueries(schema).testRuns.useFindMany(
+  const { data: allOpenRuns, isLoading: isLoadingRuns } = useClientQueries(
+    schema
+  ).testRuns.useFindMany(
     {
       where: {
         isDeleted: false,

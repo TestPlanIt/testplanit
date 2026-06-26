@@ -85,8 +85,10 @@ export function CompleteSessionDialog({
   const t = useTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const { mutateAsync: updateSessions } = useClientQueries(schema).sessions.useUpdate();
-  const { mutateAsync: createSessionVersions } = useClientQueries(schema).sessionVersions.useCreate();
+  const { mutateAsync: updateSessions } =
+    useClientQueries(schema).sessions.useUpdate();
+  const { mutateAsync: createSessionVersions } =
+    useClientQueries(schema).sessionVersions.useCreate();
   const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,

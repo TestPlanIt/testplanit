@@ -30,7 +30,9 @@ export const ProjectQuickSelector = () => {
   const [open, setOpen] = useState(false);
 
   // Use ZenStack hook to fetch projects
-  const { data: projects = [], isLoading } = useClientQueries(schema).projects.useFindMany({
+  const { data: projects = [], isLoading } = useClientQueries(
+    schema
+  ).projects.useFindMany({
     where: {
       isDeleted: false,
     },

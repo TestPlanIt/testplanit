@@ -507,9 +507,7 @@ test.describe("Shared Steps Management", () => {
       // Expand left panel for visibility (pattern from steps-display.spec.ts)
       await page.waitForTimeout(500);
       try {
-        const resizeHandle = page
-          .locator('[role="separator"]')
-          .first();
+        const resizeHandle = page.locator('[role="separator"]').first();
         await resizeHandle.waitFor({ state: "visible", timeout: 3000 });
         const handleBox = await resizeHandle.boundingBox();
         if (handleBox) {

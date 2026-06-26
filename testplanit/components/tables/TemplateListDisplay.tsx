@@ -19,19 +19,21 @@ export const TemplateListDisplay: React.FC<TemplateListProps> = ({
   templates,
   usePopover = true,
 }) => {
-  const { data: allTemplates } = useClientQueries(schema).templates.useFindMany({
-    orderBy: { templateName: "asc" },
-    where: {
-      AND: [
-        {
-          id: {
-            in: (templates || []).map((template) => template.templateId),
+  const { data: allTemplates } = useClientQueries(schema).templates.useFindMany(
+    {
+      orderBy: { templateName: "asc" },
+      where: {
+        AND: [
+          {
+            id: {
+              in: (templates || []).map((template) => template.templateId),
+            },
           },
-        },
-        { isDeleted: false },
-      ],
-    },
-  });
+          { isDeleted: false },
+        ],
+      },
+    }
+  );
 
   if (!allTemplates || allTemplates.length === 0) {
     return null;

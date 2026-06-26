@@ -14,7 +14,11 @@ const mockUseCountProjects = vi.fn();
 const mockUseUpdateProjects = vi.fn();
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    projects: { useFindMany: (...args: unknown[]) => mockUseFindManyProjects(...args), useCount: (...args: unknown[]) => mockUseCountProjects(...args), useUpdate: (...args: unknown[]) => mockUseUpdateProjects(...args) },
+    projects: {
+      useFindMany: (...args: unknown[]) => mockUseFindManyProjects(...args),
+      useCount: (...args: unknown[]) => mockUseCountProjects(...args),
+      useUpdate: (...args: unknown[]) => mockUseUpdateProjects(...args),
+    },
   }),
 }));
 

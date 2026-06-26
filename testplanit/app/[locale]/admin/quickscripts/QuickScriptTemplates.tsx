@@ -59,7 +59,8 @@ export default function QuickScriptTemplates() {
     number | undefined
   >(undefined);
 
-  const { mutateAsync: updateTemplate } = useClientQueries(schema).caseExportTemplate.useUpdate();
+  const { mutateAsync: updateTemplate } =
+    useClientQueries(schema).caseExportTemplate.useUpdate();
   const { mutateAsync: updateManyTemplates } =
     useClientQueries(schema).caseExportTemplate.useUpdateMany();
 
@@ -68,7 +69,9 @@ export default function QuickScriptTemplates() {
     updateTemplateRef.current = updateTemplate;
   });
 
-  const { data, isLoading } = useClientQueries(schema).caseExportTemplate.useFindMany(
+  const { data, isLoading } = useClientQueries(
+    schema
+  ).caseExportTemplate.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { name: "asc" },

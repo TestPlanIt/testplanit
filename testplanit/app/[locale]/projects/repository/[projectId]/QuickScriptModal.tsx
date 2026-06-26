@@ -212,7 +212,9 @@ export function QuickScriptModal({
   // cancelled run resetting isExporting after a new export has already started.
   const exportRunIdRef = useRef(0);
 
-  const { data: templates } = useClientQueries(schema).caseExportTemplate.useFindMany({
+  const { data: templates } = useClientQueries(
+    schema
+  ).caseExportTemplate.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -221,7 +223,9 @@ export function QuickScriptModal({
   });
 
   // Fetch project template assignments (EXPORT-01, EXPORT-03)
-  const { data: assignments } = useClientQueries(schema).caseExportTemplateProjectAssignment.useFindMany({
+  const { data: assignments } = useClientQueries(
+    schema
+  ).caseExportTemplateProjectAssignment.useFindMany({
     where: { projectId },
   });
 

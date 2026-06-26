@@ -25,11 +25,7 @@ const mockedDecrypt = decrypt as unknown as ReturnType<typeof vi.fn>;
  * Build a Prisma-shaped mock for the dispatch service.
  * Returns a plain object that the dispatch service can call as if it were a DbClient.
  */
-function buildDbMock(opts: {
-  outboxEvent: any;
-  config: any;
-  delivery?: any;
-}) {
+function buildDbMock(opts: { outboxEvent: any; config: any; delivery?: any }) {
   const created: { delivery?: any } = {};
   return {
     webhookOutboxEvent: {

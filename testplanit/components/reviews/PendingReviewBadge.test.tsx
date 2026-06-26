@@ -13,7 +13,10 @@ const mockUseFindManyReviewRequest = vi.fn(() => ({ data: [] }));
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    reviewRequest: { useFindFirst: () => mockUseFindFirstReviewRequest(), useFindMany: () => mockUseFindManyReviewRequest() },
+    reviewRequest: {
+      useFindFirst: () => mockUseFindFirstReviewRequest(),
+      useFindMany: () => mockUseFindManyReviewRequest(),
+    },
   }),
 }));
 

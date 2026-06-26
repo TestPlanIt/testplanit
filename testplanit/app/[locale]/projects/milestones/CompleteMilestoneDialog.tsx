@@ -76,24 +76,28 @@ export function CompleteMilestoneDialog({
   });
 
   // Fetch RUNS workflows
-  const { data: runWorkflows } = useClientQueries(schema).workflows.useFindMany({
-    where: {
-      isDeleted: false,
-      isEnabled: true,
-      scope: "RUNS",
-      workflowType: "DONE",
-      projects: {
-        some: {
-          projectId: milestoneToComplete?.projectId,
+  const { data: runWorkflows } = useClientQueries(schema).workflows.useFindMany(
+    {
+      where: {
+        isDeleted: false,
+        isEnabled: true,
+        scope: "RUNS",
+        workflowType: "DONE",
+        projects: {
+          some: {
+            projectId: milestoneToComplete?.projectId,
+          },
         },
       },
-    },
-    orderBy: { order: "asc" },
-    include: { icon: true, color: true },
-  });
+      orderBy: { order: "asc" },
+      include: { icon: true, color: true },
+    }
+  );
 
   // Fetch SESSIONS workflows
-  const { data: sessionWorkflows } = useClientQueries(schema).workflows.useFindMany({
+  const { data: sessionWorkflows } = useClientQueries(
+    schema
+  ).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,

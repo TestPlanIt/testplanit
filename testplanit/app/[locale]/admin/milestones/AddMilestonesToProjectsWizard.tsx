@@ -27,7 +27,8 @@ const AddMilestonesToProjectsWizard = (): React.ReactElement => {
   const [step, setStep] = useState(0);
   const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createMilestones } = useClientQueries(schema).milestones.useCreate();
+  const { mutateAsync: createMilestones } =
+    useClientQueries(schema).milestones.useCreate();
   const t = useTranslations("admin.milestones");
 
   const handleNextProjects = (projectIds: number[]) => {

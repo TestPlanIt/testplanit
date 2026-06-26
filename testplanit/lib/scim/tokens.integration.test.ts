@@ -39,7 +39,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createRawDbClient } from "~/lib/rawDbClient";
 
-
 import { hashToken } from "~/lib/api-tokens";
 import {
   SCIM_SYSTEM_USER_EMAIL,

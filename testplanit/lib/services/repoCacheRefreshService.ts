@@ -118,16 +118,16 @@ export async function refreshRepoCache(
   configId: number,
   dbClient: DbClient
 ): Promise<RefreshResult> {
-  const config = await (
-    dbClient as any
-  ).projectCodeRepositoryConfig.findUnique({
-    where: { id: configId },
-    include: {
-      repository: {
-        select: { credentials: true, settings: true, provider: true },
+  const config = await (dbClient as any).projectCodeRepositoryConfig.findUnique(
+    {
+      where: { id: configId },
+      include: {
+        repository: {
+          select: { credentials: true, settings: true, provider: true },
+        },
       },
-    },
-  });
+    }
+  );
 
   if (!config) {
     throw new Error(`ProjectCodeRepositoryConfig ${configId} not found`);

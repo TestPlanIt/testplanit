@@ -33,7 +33,8 @@ export default function CaseFields() {
     direction: "asc",
   });
 
-  const { mutateAsync: updateCaseField } = useClientQueries(schema).caseFields.useUpdate();
+  const { mutateAsync: updateCaseField } =
+    useClientQueries(schema).caseFields.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateCaseFieldRef = useRef(updateCaseField);
@@ -65,7 +66,9 @@ export default function CaseFields() {
     []
   );
 
-  const { data: casefields, isLoading } = useClientQueries(schema).caseFields.useFindMany(
+  const { data: casefields, isLoading } = useClientQueries(
+    schema
+  ).caseFields.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: sortConfig

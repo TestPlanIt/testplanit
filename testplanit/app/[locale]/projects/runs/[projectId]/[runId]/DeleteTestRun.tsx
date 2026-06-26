@@ -40,7 +40,8 @@ export function DeleteTestRunModal({
 }: DeleteTestRunProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { mutateAsync: updateTestRuns } = useClientQueries(schema).testRuns.useUpdate();
+  const { mutateAsync: updateTestRuns } =
+    useClientQueries(schema).testRuns.useUpdate();
   const t = useTranslations("runs.delete");
   const tCommon = useTranslations("common");
 

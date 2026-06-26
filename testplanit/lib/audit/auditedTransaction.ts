@@ -37,10 +37,13 @@ export async function auditedTransaction<T>(
 ): Promise<T> {
   const payload = JSON.stringify(buildGucPayload());
   // v3 $transaction options only accept isolationLevel (no maxWait/timeout).
-  return baseDb.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
-    return auditTxStore.run(tx, () => fn(tx));
-  }, { isolationLevel: options?.isolationLevel });
+  return baseDb.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
+      return auditTxStore.run(tx, () => fn(tx));
+    },
+    { isolationLevel: options?.isolationLevel }
+  );
 }
 
 /**

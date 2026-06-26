@@ -533,8 +533,10 @@ function StepsForm<T extends FieldValues = FieldValues>({
     name: name as string,
   });
 
-  const createSharedStepGroupMutation = useClientQueries(schema).sharedStepGroup.useCreate();
-  const createManySharedStepItemMutation = useClientQueries(schema).sharedStepItem.useCreateMany();
+  const createSharedStepGroupMutation =
+    useClientQueries(schema).sharedStepGroup.useCreate();
+  const createManySharedStepItemMutation =
+    useClientQueries(schema).sharedStepItem.useCreateMany();
 
   // Moved hook to top level
   const {

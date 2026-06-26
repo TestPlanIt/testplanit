@@ -168,7 +168,10 @@ export function useFindManyRepositoryCasesFiltered(
   options?: Parameters<ZsRepoHooks["useFindMany"]>[1],
   clientPagination?: { skip: number; take: number | undefined }
 ) {
-  const result = useClientQueries(schema).repositoryCases.useFindMany(queryOptions, options);
+  const result = useClientQueries(schema).repositoryCases.useFindMany(
+    queryOptions,
+    options
+  );
 
   // Extract totalCount from result for dependency tracking
   const resultTotalCount = (result as any).totalCount;

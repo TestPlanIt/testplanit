@@ -41,13 +41,20 @@ const mockRouterPush = vi.fn();
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    testRunCases: { useCount: (...args: any[]) => mockUseCountTestRunCases(...args) },
-    testRunCaseIteration: { useFindMany: (...args: any[]) =>
-    mockUseFindManyTestRunCaseIteration(...args) },
-    caseSharedDataSetAssignment: { useFindUnique: (...args: any[]) =>
-    mockUseFindUniqueCaseSharedDataSetAssignment(...args) },
-    dataSetVersion: { useFindFirst: (...args: any[]) =>
-    mockUseFindFirstDataSetVersion(...args) },
+    testRunCases: {
+      useCount: (...args: any[]) => mockUseCountTestRunCases(...args),
+    },
+    testRunCaseIteration: {
+      useFindMany: (...args: any[]) =>
+        mockUseFindManyTestRunCaseIteration(...args),
+    },
+    caseSharedDataSetAssignment: {
+      useFindUnique: (...args: any[]) =>
+        mockUseFindUniqueCaseSharedDataSetAssignment(...args),
+    },
+    dataSetVersion: {
+      useFindFirst: (...args: any[]) => mockUseFindFirstDataSetVersion(...args),
+    },
     dataSet: { useFindMany: () => ({ data: [] }) },
     testCaseParameter: { useFindMany: () => ({ data: [] }) },
   }),

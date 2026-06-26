@@ -56,9 +56,7 @@ import {
 const mockedValidate = validateMultiTenantJobData as unknown as ReturnType<
   typeof vi.fn
 >;
-const mockedGetDb = getDbClientForJob as unknown as ReturnType<
-  typeof vi.fn
->;
+const mockedGetDb = getDbClientForJob as unknown as ReturnType<typeof vi.fn>;
 const mockedDispatch = dispatchWebhook as unknown as ReturnType<typeof vi.fn>;
 
 /**

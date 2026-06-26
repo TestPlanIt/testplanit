@@ -2,22 +2,20 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies using vi.hoisted
-const { mockDb, mockHash, mockIsEmailServerConfigured } = vi.hoisted(
-  () => ({
-    mockDb: {
-      user: {
-        findUnique: vi.fn(),
-        create: vi.fn(),
-      },
-      registrationSettings: {
-        findFirst: vi.fn(),
-      },
-      $transaction: vi.fn(),
+const { mockDb, mockHash, mockIsEmailServerConfigured } = vi.hoisted(() => ({
+  mockDb: {
+    user: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
     },
-    mockHash: vi.fn(),
-    mockIsEmailServerConfigured: vi.fn(),
-  })
-);
+    registrationSettings: {
+      findFirst: vi.fn(),
+    },
+    $transaction: vi.fn(),
+  },
+  mockHash: vi.fn(),
+  mockIsEmailServerConfigured: vi.fn(),
+}));
 
 vi.mock("~/server/db", () => ({
   db: mockDb,

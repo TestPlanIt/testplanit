@@ -119,7 +119,9 @@ function TagList() {
   // Fetch ONLY basic tag data - no includes at all
   // ZenStack's access control on includes causes bind variable explosion (even with limits)
   // Projects and counts are fetched separately via direct Prisma queries
-  const { data: tags, isLoading: isLoadingTags } = useClientQueries(schema).tags.useFindMany(
+  const { data: tags, isLoading: isLoadingTags } = useClientQueries(
+    schema
+  ).tags.useFindMany(
     tagsWhere
       ? {
           where: tagsWhere,

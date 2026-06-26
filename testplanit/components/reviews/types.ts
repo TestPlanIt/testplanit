@@ -1,4 +1,7 @@
-import type { ReviewRequestGetPayload, ReviewRequestInclude } from "~/zenstack/input";
+import type {
+  ReviewRequestGetPayload,
+  ReviewRequestInclude,
+} from "~/zenstack/input";
 
 /**
  * Shared ReviewRequest payload shapes for the Phase 02 review-feature UI.

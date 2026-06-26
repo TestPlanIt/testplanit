@@ -50,7 +50,8 @@ export function DeleteCaseModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showActiveRunWarning, setShowActiveRunWarning] = useState(false);
   const [activeRunCount, setActiveRunCount] = useState(0);
-  const { mutateAsync: updateRepositoryCases } = useClientQueries(schema).repositoryCases.useUpdate();
+  const { mutateAsync: updateRepositoryCases } =
+    useClientQueries(schema).repositoryCases.useUpdate();
 
   useEffect(() => {
     if (

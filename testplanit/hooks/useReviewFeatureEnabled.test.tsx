@@ -25,8 +25,9 @@ import { useReviewFeatureEnabled } from "./useReviewFeatureEnabled";
 const mockUseFindUniqueProjects = vi.fn();
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    projects: { useFindUnique: (...args: unknown[]) =>
-    mockUseFindUniqueProjects(...args) },
+    projects: {
+      useFindUnique: (...args: unknown[]) => mockUseFindUniqueProjects(...args),
+    },
   }),
 }));
 

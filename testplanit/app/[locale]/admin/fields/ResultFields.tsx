@@ -33,7 +33,8 @@ export default function ResultFields() {
     direction: "asc",
   });
 
-  const { mutateAsync: updateResultField } = useClientQueries(schema).resultFields.useUpdate();
+  const { mutateAsync: updateResultField } =
+    useClientQueries(schema).resultFields.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateResultFieldRef = useRef(updateResultField);
@@ -65,7 +66,9 @@ export default function ResultFields() {
     []
   );
 
-  const { data: resultfields, isLoading } = useClientQueries(schema).resultFields.useFindMany(
+  const { data: resultfields, isLoading } = useClientQueries(
+    schema
+  ).resultFields.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: sortConfig

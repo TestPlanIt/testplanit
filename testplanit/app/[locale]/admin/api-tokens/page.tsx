@@ -107,7 +107,8 @@ function ApiTokensList() {
     ? columnToFieldMap[sortConfig.column] || sortConfig.column
     : "createdAt";
 
-  const { mutateAsync: updateApiToken } = useClientQueries(schema).apiToken.useUpdate();
+  const { mutateAsync: updateApiToken } =
+    useClientQueries(schema).apiToken.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateApiTokenRef = useRef(updateApiToken);
@@ -115,7 +116,9 @@ function ApiTokensList() {
     updateApiTokenRef.current = updateApiToken;
   });
 
-  const { data: totalFilteredTokens } = useClientQueries(schema).apiToken.useFindMany(
+  const { data: totalFilteredTokens } = useClientQueries(
+    schema
+  ).apiToken.useFindMany(
     {
       orderBy: { [sortField]: sortConfig?.direction || "desc" },
       include: {

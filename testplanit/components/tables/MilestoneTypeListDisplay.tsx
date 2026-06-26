@@ -27,7 +27,9 @@ export const MilestoneTypeListDisplay: React.FC<MilestoneTypeListProps> = ({
     milestoneTypes = [];
   }
 
-  const { data: allMilestoneTypes } = useClientQueries(schema).milestoneTypes.useFindMany({
+  const { data: allMilestoneTypes } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindMany({
     orderBy: { name: "asc" },
     where: {
       AND: [
