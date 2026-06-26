@@ -37,8 +37,6 @@ export interface IterationGenerationJobResult {
 // materializeIterations (every 50 cases by default — far less noisy than
 // every iteration row).
 
-const TRANSACTION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-const TRANSACTION_MAX_WAIT_MS = 30 * 1000; // 30 seconds to acquire connection
 
 export const processor = async (
   job: Job<IterationGenerationJobData>

@@ -308,11 +308,6 @@ const AUTOMATION_TRANSACTION_TIMEOUT_MS = parseNumberEnv(
   45 * 60 * 1000
 );
 
-const IMPORT_TRANSACTION_MAX_WAIT_MS = parseNumberEnv(
-  process.env.TESTMO_IMPORT_TRANSACTION_MAX_WAIT_MS,
-  30_000
-);
-
 const bucketName = process.env.AWS_BUCKET_NAME;
 
 const s3Client = new S3Client({
@@ -490,11 +485,6 @@ const TEST_RUN_RESULT_CHUNK_SIZE = parseNumberEnv(
 const ISSUE_RELATIONSHIP_CHUNK_SIZE = parseNumberEnv(
   process.env.TESTMO_ISSUE_RELATIONSHIP_CHUNK_SIZE,
   1000
-);
-
-const REPOSITORY_FOLDER_TRANSACTION_TIMEOUT_MS = parseNumberEnv(
-  process.env.TESTMO_REPOSITORY_FOLDER_TRANSACTION_TIMEOUT_MS,
-  2 * 60 * 1000
 );
 
 const initializeEntityProgress = (

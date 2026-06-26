@@ -6,7 +6,6 @@ import { z } from "zod/v4";
 import { baseDb } from "~/lib/db";
 import { getStepScanQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
-import { db } from "~/server/db";
 import { type StepScanJobData } from "~/workers/stepSequenceScanWorker";
 
 const submitSchema = z.object({

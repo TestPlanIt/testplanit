@@ -60,7 +60,6 @@ import UploadAttachments, {
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ApplicationArea } from "~/zenstack/models";
-import type { JsonValue } from "@zenstackhq/orm";
 import { useQueryClient } from "@tanstack/react-query";
 import { Asterisk, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -78,20 +77,6 @@ import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases
 import { IconName } from "~/types/globals";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import RenderField from "./RenderField";
-
-interface SharedStepItemDetail {
-  step: JsonValue;
-  expectedResult?: JsonValue;
-  order: number;
-}
-
-interface SharedStepGroupWithItems {
-  id: number;
-  name: string;
-  projectId: number;
-  isDeleted: boolean;
-  items: SharedStepItemDetail[];
-}
 
 const mapFieldToZodType = (field: any, t: (key: any) => string) => {
   const isRequired = field.caseField.isRequired;

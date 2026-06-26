@@ -6,7 +6,6 @@ import { z } from "zod/v4";
 import { baseDb } from "~/lib/db";
 import { convertMatch } from "~/lib/services/stepSequenceConversionService";
 import { authOptions } from "~/server/auth";
-import { db } from "~/server/db";
 
 const editedStepSchema = z.object({
   step: z.string().nullable(),

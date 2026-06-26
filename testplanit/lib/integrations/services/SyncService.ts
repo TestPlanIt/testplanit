@@ -1,5 +1,5 @@
 import { rawDb as defaultDb } from "@/lib/rawDb";
-import type { DbClient, TxClient } from "~/lib/zenstack";
+import type { DbClient } from "~/lib/zenstack";
 import { Job, JobsOptions } from "bullmq";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
 import { enqueueWithAuditContext } from "../../auditContextEnqueue";

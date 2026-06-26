@@ -1,6 +1,5 @@
 import { getAuthDb } from "~/lib/zenstack";
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "~/server/db";
 
 /**
  * Public metadata API for Open Graph link previews.

@@ -108,19 +108,6 @@ import { type LinkAttachmentInput } from "@/components/UploadAttachments";
 import TestCaseFormControls from "./TestCaseFormControl";
 
 // Type Definitions (ensure these are present and correct)
-interface SharedStepItemDetail {
-  step: JsonValue;
-  expectedResult?: JsonValue;
-  order: number;
-}
-interface SharedStepGroupWithItems {
-  id: number;
-  name: string;
-  projectId: number;
-  isDeleted: boolean;
-  items: SharedStepItemDetail[];
-}
-
 // Helper function to parse JsonValue to TipTap content (ensure this is present)
 const parseJsonToTipTap = (jsonValue: JsonValue | undefined | null): object => {
   if (jsonValue === null || jsonValue === undefined) {

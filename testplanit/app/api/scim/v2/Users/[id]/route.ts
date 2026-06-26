@@ -16,7 +16,6 @@
  * surface even on an empty body.
  */
 import { isUniqueConstraintError } from "~/lib/utils/errors";
-import { ORMError } from "@zenstackhq/orm";
 import { NextRequest, NextResponse } from "next/server";
 import type { ScimPatch } from "scim-patch";
 import { z } from "zod/v4";

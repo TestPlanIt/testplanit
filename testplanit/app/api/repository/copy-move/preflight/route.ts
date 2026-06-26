@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
-import { db } from "~/server/db";
 import { preflightSchema, type PreflightResponse } from "../schemas";
 
 export async function POST(request: Request) {

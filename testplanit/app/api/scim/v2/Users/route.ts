@@ -16,7 +16,6 @@
  * the §3.12 error envelope.
  */
 import { isUniqueConstraintError } from "~/lib/utils/errors";
-import { ORMError } from "@zenstackhq/orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
