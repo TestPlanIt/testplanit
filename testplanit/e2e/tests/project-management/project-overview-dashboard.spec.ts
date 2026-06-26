@@ -125,18 +125,27 @@ test.describe("Project Overview Dashboard", () => {
       // The left panel has a collapse button identified by data-testid.
       await expect(collapseLeftBtn).toBeVisible({ timeout: 5000 });
       await collapseLeftBtn.click();
-
-      // react-resizable-panels v4 removed the data-panel-size attribute, so
-      // verify the collapse by the panel content no longer being visible.
-      await expect(milestonesHeading).toBeHidden({ timeout: 10000 });
+      // react-resizable-panels v4 collapses the panel to width 0; its content is
+      // then clipped by the panel's overflow:hidden (see globals.css). Verify the
+      // collapse structurally — a clipped element keeps its layout bounding box,
+      // so a visibility check on the content text is unreliable here.
+      await expect
+        .poll(async () => (await leftPanel.boundingBox())?.width ?? 1, {
+          timeout: 10000,
+        })
+        .toBe(0);
     });
 
     await test.step("Re-expand the left panel and verify milestones are visible again", async () => {
       // Click the same button (now acts as expand) to re-expand
       await collapseLeftBtn.click();
 
-      // Panel should re-expand — size should be greater than 0
-      // Wait for the milestones heading to become visible again
+      // Panel re-expands to a non-zero width and its content shows again.
+      await expect
+        .poll(async () => (await leftPanel.boundingBox())?.width ?? 0, {
+          timeout: 10000,
+        })
+        .toBeGreaterThan(0);
       await expect(milestonesHeading).toBeVisible({ timeout: 10000 });
     });
   });

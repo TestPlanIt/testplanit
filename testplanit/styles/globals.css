@@ -479,3 +479,14 @@ mark {
     pointer-events: none !important;
   }
 }
+
+/* react-resizable-panels v4 renders each panel with overflow:visible (v3 clipped).
+   A panel collapsed to size 0 therefore still shows its content, because flex
+   items keep a min-width:auto (min-content) and spill out of the 0-width panel.
+   Restore v3's clipping so collapsing actually hides content. The resize handle
+   sits outside the panel and popovers/menus render in portals, so this only
+   affects in-panel content (in-panel scrolling stays on the inner wrapper).
+   Uses !important to win over the library's inline style. */
+[data-panel] {
+  overflow: hidden !important;
+}
