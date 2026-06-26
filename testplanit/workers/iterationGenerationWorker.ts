@@ -37,7 +37,6 @@ export interface IterationGenerationJobResult {
 // materializeIterations (every 50 cases by default — far less noisy than
 // every iteration row).
 
-
 export const processor = async (
   job: Job<IterationGenerationJobData>
 ): Promise<IterationGenerationJobResult> => {
