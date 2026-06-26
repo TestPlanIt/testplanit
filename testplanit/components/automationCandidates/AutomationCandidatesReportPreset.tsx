@@ -220,18 +220,28 @@ export function AutomationCandidatesReportPreset({
 
   // Default to the newest snapshot whenever the list changes — flips to a
   // freshly generated one without the user having to do anything.
+  //
+  // IMPORTANT: this auto-default updates LOCAL state only and must NOT write the
+  // URL. This effect fires on mount, and when the preset mounts as part of
+  // switching to the Reports tab (automation-candidates is the first pre-built
+  // report), an automatic router.replace built from the still-stale searchParams
+  // overwrites the in-flight tab/reportType navigation — bouncing the user back
+  // to Report Builder and leaving a stray ?snapshotId. Explicit snapshot
+  // selection (the dropdown) still goes through setSelectedSnapshotId and writes
+  // the URL for share fidelity; an un-pinned auto-default resolves to "latest"
+  // anyway, which is exactly the newest snapshot selected here.
   useEffect(() => {
     if (snapshots.length === 0) {
-      if (selectedSnapshotId !== null) setSelectedSnapshotId(null);
+      if (selectedSnapshotId !== null) setSelectedSnapshotIdState(null);
       return;
     }
     if (
       selectedSnapshotId === null ||
       !snapshots.some((s) => s.id === selectedSnapshotId)
     ) {
-      setSelectedSnapshotId(snapshots[0]!.id);
+      setSelectedSnapshotIdState(snapshots[0]!.id);
     }
-  }, [snapshots, selectedSnapshotId, setSelectedSnapshotId]);
+  }, [snapshots, selectedSnapshotId]);
 
   const selectedSnapshot = snapshots.find((s) => s.id === selectedSnapshotId);
 
