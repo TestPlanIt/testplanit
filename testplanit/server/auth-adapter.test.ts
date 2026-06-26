@@ -501,8 +501,11 @@ describe("createUser - source-shape sanity", () => {
   it("E2: exactly two db.user.update calls in the file", () => {
     // One in the base adapter's generic updateUser, and one in the createUser
     // override's existing-user link branch. Anything beyond these two would
-    // signal an accidental extra user mutation in the sign-in path.
-    const matches = adapterSource.match(/\.user\.update\(/g) || [];
+    // signal an accidental extra user mutation in the sign-in path. Match the
+    // identifier (not "update(") so the count is robust to updateUser casting
+    // the method to break a TS2589 deep-instantiation, i.e.
+    // `(db.user.update as ...)(...)`. \b excludes db.user.updateMany etc.
+    const matches = adapterSource.match(/db\.user\.update\b/g) || [];
     expect(matches).toHaveLength(2);
   });
 
