@@ -1,36 +1,26 @@
 # Release Workflow
 #
-# This workflow builds Docker images when a tag is pushed.
-# GitHub Releases are created by semantic-release, which also triggers this workflow.
+# Builds and publishes Docker images when a tag is pushed (or via manual
+# dispatch). GitHub Releases are created by semantic-release, which also
+# triggers this workflow.
 #
-# Triggers:
-# 1. Tag Push (automatic): Pushing a tag like `v1.0.0` triggers Docker builds
-# 2. Manual Dispatch: Manually trigger Docker builds for any existing tag via GitHub Actions UI
+# ARM64 ONLY: production deploys (*.testplanit.com) run exclusively on arm64,
+# so we build only linux/arm64 — building amd64 was wasted CPU. (No multi-arch
+# manifest merge is needed for a single architecture.)
 #
-# Docker Images Built:
-# - Production image: ghcr.io/testplanit/testplanit:latest (for Next.js server)
-# - Workers image: ghcr.io/testplanit/testplanit:latest-workers (for background workers)
+# Images published:
+# - ghcr.io/testplanit/testplanit:<version>          (Next.js server)
+# - ghcr.io/testplanit/testplanit:<version>-workers  (background workers)
+# - ghcr.io/testplanit/testplanit:workers-sha-<sha>  (sha-pinned workers; the k8s
+#   Deployment SHOULD reference this so `kubectl rollout undo` has real history.
+#   See the multitenant-workers Deployment manifest in the private-ops repo.)
+# - :latest / :latest-workers are moved only when the tag is the newest semver.
 #
-# Workers image SHA tags:
-# - Every build also publishes ghcr.io/testplanit/testplanit:workers-sha-<short-sha>
-#   so the k8s Deployment can pin to a specific commit rather than the floating
-#   :latest-workers tag. :latest-workers is retained as a convenience alias but
-#   Deployments SHOULD reference :workers-sha-<short-sha> so `kubectl rollout
-#   undo` has real history to roll back to. See multitenant-workers Deployment
-#   manifest in the private-ops repo.
+# Build arg BASE_DOMAIN=testplanit.com enables the *.testplanit.com wildcard for
+# Next.js image optimization, so a SINGLE image serves all customer subdomains
+# (company1.testplanit.com, company2.testplanit.com, ...) without per-customer rebuilds.
 #
-# IMPORTANT: Docker images are built with BASE_DOMAIN=testplanit.com which enables a wildcard
-# pattern (*.testplanit.com) for Next.js image optimization. This allows a SINGLE Docker image
-# to serve ALL customer subdomains (e.g., company1.testplanit.com, company2.testplanit.com, etc.)
-# without needing to rebuild for each customer.
-#
-# Manual Trigger Instructions:
-# 1. Go to Actions tab in GitHub
-# 2. Select "Release" workflow
-# 3. Click "Run workflow"
-# 4. Enter the tag name (e.g., v1.0.0)
-# 5. Click "Run workflow" button
-#
+# Manual trigger: Actions tab -> Release -> Run workflow -> enter the tag (e.g. v1.0.0).
 name: Release
 
 on:
@@ -45,68 +35,7 @@ on:
         type: string
 
 jobs:
-  # Build AMD64 images natively on x64 runner
-  build-amd64:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    runs-on: [self-hosted, linux, x64]
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v7
-
-    - name: Set lowercase repo name
-      run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v4
-
-    - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v4
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Generate version info for Docker build
-      run: |
-        cd testplanit
-        node scripts/generate-version.js
-        mkdir -p public
-        cp public/version.json .docker-version.json || echo "Version file not generated"
-
-    - name: Build and push AMD64 images
-      working-directory: ./testplanit
-      run: |
-        VERSION="${{ github.ref_name }}"
-        VERSION_NUM="${VERSION#v}"
-        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
-
-        docker buildx bake -f docker-bake.hcl --allow=fs.read=.. --push \
-          --set "*.platform=linux/amd64" \
-          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-amd64" \
-          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION}-amd64" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-amd64" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION}-workers-amd64" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-amd64" \
-          --set "*.args.VERSION=${VERSION}" \
-          --set "*.args.GIT_COMMIT=${{ github.sha }}" \
-          --set "*.args.BASE_DOMAIN=testplanit.com"
-
-    - name: Smoke-test workers image (AMD64)
-      run: |
-        VERSION="${{ github.ref_name }}"
-        VERSION_NUM="${VERSION#v}"
-        IMAGE="ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-amd64"
-        docker pull "$IMAGE"
-        # Fail fast if any worker entrypoint's require graph is broken
-        # (e.g. a missing native dep or a stripped package — the failure
-        # mode from the 2026-04-22 next/headers incident).
-        docker run --rm --entrypoint node "$IMAGE" ./scripts/smoke-test-workers.js
-
-  # Build ARM64 images natively on macOS arm64 runner (using Colima)
+  # Build + publish ARM64 images natively on a macOS arm64 runner (Colima).
   build-arm64:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: [self-hosted, macOS, arm64]
@@ -117,6 +46,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v7
+      with:
+        fetch-depth: 0  # full history/tags for the 'latest' comparison
 
     - name: Set lowercase repo name
       run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -154,152 +85,42 @@ jobs:
 
         docker buildx bake -f docker-bake.hcl --allow=fs.read=.. --push \
           --set "*.platform=linux/arm64" \
-          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-arm64" \
-          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION}-arm64" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-arm64" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION}-workers-arm64" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-arm64" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION}" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-workers" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION}-workers" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}" \
           --set "*.args.VERSION=${VERSION}" \
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
 
-    - name: Smoke-test workers image (ARM64)
+    - name: Smoke-test workers image
       run: |
         VERSION="${{ github.ref_name }}"
         VERSION_NUM="${VERSION#v}"
-        IMAGE="ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-arm64"
+        IMAGE="ghcr.io/${REPO_LC}:${VERSION_NUM}-workers"
         docker pull "$IMAGE"
         # Fail fast if any worker entrypoint's require graph is broken
         # (e.g. a missing native dep or a stripped package — the failure
         # mode from the 2026-04-22 next/headers incident).
         docker run --rm --entrypoint node "$IMAGE" ./scripts/smoke-test-workers.js
 
-  # Merge architecture-specific images into multi-arch manifests
-  merge-manifests:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    needs: [build-amd64, build-arm64]
-    runs-on: [self-hosted]
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v7
-      with:
-        fetch-depth: 0  # Need full history to get all tags
-
-    - name: Set lowercase repo name
-      run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
-    - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v4
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Create multi-arch manifests
+    - name: Update 'latest' if this is the newest release
       run: |
         VERSION="${{ github.ref_name }}"
-        VERSION_NUM="${VERSION#v}"
-        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
-
-        # Create production manifests
-        docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION_NUM} \
-          ghcr.io/${REPO_LC}:${VERSION_NUM}-amd64 \
-          ghcr.io/${REPO_LC}:${VERSION_NUM}-arm64
-
-        docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION} \
-          ghcr.io/${REPO_LC}:${VERSION}-amd64 \
-          ghcr.io/${REPO_LC}:${VERSION}-arm64
-
-        # Create workers manifests
-        docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION_NUM}-workers \
-          ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-amd64 \
-          ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-arm64
-
-        docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION}-workers \
-          ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
-          ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
-
-        # SHA-pinned workers manifest — the k8s Deployment SHOULD reference
-        # this tag (not :latest-workers) so rollbacks work.
-        docker buildx imagetools create -t ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA} \
-          ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-amd64 \
-          ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-arm64
-
-        # Only update 'latest' if this is the newest semantic version
-        # Filter to only 3-part semver tags (vX.Y.Z) to avoid non-semver tags like v1.1 breaking the comparison
+        # Only move 'latest' when this tag is the newest 3-part semver (vX.Y.Z),
+        # ignoring prerelease / non-semver tags (e.g. v1.0.0-beta.0, v1.1).
         LATEST_TAG=$(git tag -l 'v*.*.*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
         echo "Current version: $VERSION, Latest semver tag: $LATEST_TAG"
         if [ "$VERSION" = "$LATEST_TAG" ]; then
           echo "Updating 'latest' tags to $VERSION"
-          docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest \
-            ghcr.io/${REPO_LC}:${VERSION}-amd64 \
-            ghcr.io/${REPO_LC}:${VERSION}-arm64
-
-          docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest-workers \
-            ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
-            ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
+          docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest ghcr.io/${REPO_LC}:${VERSION}
+          docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest-workers ghcr.io/${REPO_LC}:${VERSION}-workers
         else
           echo "Skipping 'latest' update - $VERSION is not the latest release (latest: $LATEST_TAG)"
         fi
 
-  # Manual build: AMD64 images natively on x64 runner
-  docker-manual-amd64:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: [self-hosted, linux, x64]
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v7
-      with:
-        ref: ${{ github.event.inputs.tag }}
-
-    - name: Set lowercase repo name
-      run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v4
-
-    - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v4
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Generate version info for Docker build
-      run: |
-        cd testplanit
-        node scripts/generate-version.js
-        mkdir -p public
-        cp public/version.json .docker-version.json || echo "Version file not generated"
-
-    - name: Build and push AMD64 images
-      working-directory: ./testplanit
-      run: |
-        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
-        docker buildx bake -f docker-bake.hcl --allow=fs.read=.. --push \
-          --set "*.platform=linux/amd64" \
-          --set "production.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-amd64" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers-amd64" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-amd64" \
-          --set "*.args.VERSION=${{ github.event.inputs.tag }}" \
-          --set "*.args.GIT_COMMIT=${{ github.sha }}" \
-          --set "*.args.BASE_DOMAIN=testplanit.com"
-
-    - name: Smoke-test workers image (AMD64)
-      run: |
-        IMAGE="ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers-amd64"
-        docker pull "$IMAGE"
-        docker run --rm --entrypoint node "$IMAGE" ./scripts/smoke-test-workers.js
-
-  # Manual build: ARM64 images natively on macOS arm64 runner (using Colima)
+  # Manual build: ARM64 images for an existing tag (workflow_dispatch).
   docker-manual-arm64:
     if: github.event_name == 'workflow_dispatch'
     runs-on: [self-hosted, macOS, arm64]
@@ -312,6 +133,7 @@ jobs:
       uses: actions/checkout@v7
       with:
         ref: ${{ github.event.inputs.tag }}
+        fetch-depth: 0
 
     - name: Set lowercase repo name
       run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -343,81 +165,37 @@ jobs:
     - name: Build and push ARM64 images
       working-directory: ./testplanit
       run: |
+        VERSION="${{ github.event.inputs.tag }}"
+        VERSION_NUM="${VERSION#v}"
         SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
         docker buildx bake -f docker-bake.hcl --allow=fs.read=.. --push \
           --set "*.platform=linux/arm64" \
-          --set "production.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-arm64" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers-arm64" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-arm64" \
-          --set "*.args.VERSION=${{ github.event.inputs.tag }}" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION}" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-workers" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION}-workers" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}" \
+          --set "*.args.VERSION=${VERSION}" \
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
 
-    - name: Smoke-test workers image (ARM64)
+    - name: Smoke-test workers image
       run: |
-        IMAGE="ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers-arm64"
+        VERSION="${{ github.event.inputs.tag }}"
+        VERSION_NUM="${VERSION#v}"
+        IMAGE="ghcr.io/${REPO_LC}:${VERSION_NUM}-workers"
         docker pull "$IMAGE"
         docker run --rm --entrypoint node "$IMAGE" ./scripts/smoke-test-workers.js
 
-  # Manual build: Merge architecture-specific images into multi-arch manifests
-  docker-manual-merge:
-    if: github.event_name == 'workflow_dispatch'
-    needs: [docker-manual-amd64, docker-manual-arm64]
-    runs-on: [self-hosted]
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-    - name: Set lowercase repo name
-      run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
-    - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v4
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Checkout code
-      uses: actions/checkout@v7
-      with:
-        fetch-depth: 0
-
-    - name: Create multi-arch manifests
+    - name: Update 'latest' if this is the newest release
       run: |
         VERSION="${{ github.event.inputs.tag }}"
-        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
-
-        # Create production manifest
-        docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION} \
-          ghcr.io/${REPO_LC}:${VERSION}-amd64 \
-          ghcr.io/${REPO_LC}:${VERSION}-arm64
-
-        # Create workers manifest
-        docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION}-workers \
-          ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
-          ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
-
-        # SHA-pinned workers manifest — the k8s Deployment SHOULD reference
-        # this tag (not :latest-workers) so rollbacks work.
-        docker buildx imagetools create -t ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA} \
-          ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-amd64 \
-          ghcr.io/${REPO_LC}:workers-sha-${SHORT_SHA}-arm64
-
-        # Update 'latest' if this is the newest semantic version
-        # Filter to only 3-part semver tags (vX.Y.Z) to avoid non-semver tags like v1.1 breaking the comparison
         LATEST_TAG=$(git tag -l 'v*.*.*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
         echo "Current version: $VERSION, Latest semver tag: $LATEST_TAG"
         if [ "$VERSION" = "$LATEST_TAG" ]; then
           echo "Updating 'latest' tags to $VERSION"
-          docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest \
-            ghcr.io/${REPO_LC}:${VERSION}-amd64 \
-            ghcr.io/${REPO_LC}:${VERSION}-arm64
-
-          docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest-workers \
-            ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
-            ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
+          docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest ghcr.io/${REPO_LC}:${VERSION}
+          docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest-workers ghcr.io/${REPO_LC}:${VERSION}-workers
         else
           echo "Skipping 'latest' update - $VERSION is not the latest release (latest: $LATEST_TAG)"
         fi
