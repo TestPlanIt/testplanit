@@ -1983,10 +1983,18 @@ function ReportBuilderContent({
                 className="h-full flex flex-col"
               >
                 <TabsList className="grid w-full grid-cols-2 mb-4 min-w-60">
-                  <TabsTrigger value="reports" className="min-w-0 truncate">
+                  <TabsTrigger
+                    value="reports"
+                    data-testid="reports-tab"
+                    className="min-w-0 truncate"
+                  >
                     {tAdminMenu("reports")}
                   </TabsTrigger>
-                  <TabsTrigger value="builder" className="min-w-0 truncate">
+                  <TabsTrigger
+                    value="builder"
+                    data-testid="report-builder-tab"
+                    className="min-w-0 truncate"
+                  >
                     {tReports("title")}
                   </TabsTrigger>
                 </TabsList>
