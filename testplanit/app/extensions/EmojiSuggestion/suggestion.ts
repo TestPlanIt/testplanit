@@ -31,8 +31,7 @@ export const emojiSuggestion = {
 
         popup = tippy(document.body, {
           getReferenceClientRect: props.clientRect as () =>
-            | DOMRect
-            | ClientRect,
+            DOMRect | ClientRect,
           appendTo: () => document.body,
           content: component.element,
           showOnCreate: true,
@@ -47,8 +46,7 @@ export const emojiSuggestion = {
 
         popup.setProps({
           getReferenceClientRect: props.clientRect as () =>
-            | DOMRect
-            | ClientRect,
+            DOMRect | ClientRect,
         });
       },
 

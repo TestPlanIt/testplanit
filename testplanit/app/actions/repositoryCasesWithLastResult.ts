@@ -28,8 +28,7 @@ export interface FetchCasesWithLastResultArgs {
  * Response type for the server action.
  */
 export type FetchCasesWithLastResultResponse =
-  | { success: true; data: any[] }
-  | { success: false; error: string; data: [] };
+  { success: true; data: any[] } | { success: false; error: string; data: [] };
 
 /**
  * Select clause for fetching repository cases with all fields needed for display,

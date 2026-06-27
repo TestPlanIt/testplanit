@@ -48,11 +48,7 @@ interface CommentItemProps {
     type?: "GENERAL" | "REVIEW_REQUEST" | "REVIEW_DECISION";
     reviewRequest?: {
       status:
-        | "PENDING"
-        | "APPROVED"
-        | "CHANGES_REQUESTED"
-        | "REJECTED"
-        | "CANCELLED";
+        "PENDING" | "APPROVED" | "CHANGES_REQUESTED" | "REJECTED" | "CANCELLED";
     } | null;
     creator: {
       id: string;

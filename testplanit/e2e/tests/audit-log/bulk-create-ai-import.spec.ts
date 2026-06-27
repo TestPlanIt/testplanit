@@ -29,8 +29,7 @@ test.describe("Audit Log CREATE - bulk case creation", () => {
       .toString(36)
       .slice(2, 6)}`;
     let caseRow:
-      | ReturnType<ReturnType<typeof page.locator>["filter"]>
-      | undefined;
+      ReturnType<ReturnType<typeof page.locator>["filter"]> | undefined;
     let rowCount = 0;
 
     await test.step("Create a case via the bulk-create endpoint", async () => {

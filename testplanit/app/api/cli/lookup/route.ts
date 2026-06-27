@@ -14,13 +14,7 @@ import { getServerAuthSession } from "~/server/auth";
 interface LookupRequest {
   projectId?: number; // Not required for project lookup
   type:
-    | "project"
-    | "state"
-    | "config"
-    | "milestone"
-    | "tag"
-    | "folder"
-    | "testRun";
+    "project" | "state" | "config" | "milestone" | "tag" | "folder" | "testRun";
   name: string;
   createIfMissing?: boolean; // Only applicable for tags
 }

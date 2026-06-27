@@ -203,8 +203,7 @@ export async function POST(request: NextRequest) {
     const attributeMapping = (samlConfig.attributeMapping as any) ?? {};
     const nameId = profile.nameID as string | undefined;
     const mappedEmail = profile[attributeMapping.email || "email"] as
-      | string
-      | undefined;
+      string | undefined;
     // Accept the email carried in the NameID (Name ID format EmailAddress) when
     // there is no email attribute statement — a common IdP setup (e.g. Okta's
     // default). Only treat the NameID as an email when it actually looks like
@@ -216,14 +215,11 @@ export async function POST(request: NextRequest) {
 
     // Extract name fields
     const firstName = profile[attributeMapping.firstName || "givenName"] as
-      | string
-      | undefined;
+      string | undefined;
     const lastName = profile[attributeMapping.lastName || "surname"] as
-      | string
-      | undefined;
+      string | undefined;
     const displayName = profile[attributeMapping.name || "name"] as
-      | string
-      | undefined;
+      string | undefined;
 
     // Guard before any use of email (name fallback, user lookup, provisioning).
     if (!email) {

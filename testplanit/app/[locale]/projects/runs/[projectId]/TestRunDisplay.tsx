@@ -408,8 +408,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   const pendingByTestRunId = useMemo(() => {
     const map = new Map<number, PendingReviewSummary>();
     const rows = pendingReviewsForVisibleRuns as
-      | Array<PendingReviewSummary & { entityId: number }>
-      | undefined;
+      Array<PendingReviewSummary & { entityId: number }> | undefined;
     rows?.forEach((row) => {
       map.set(row.entityId, row);
     });

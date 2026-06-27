@@ -14,11 +14,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 type LinkOperator =
-  | "contains"
-  | "startsWith"
-  | "endsWith"
-  | "equals"
-  | "domain";
+  "contains" | "startsWith" | "endsWith" | "equals" | "domain";
 
 interface LinkFilterInputProps {
   fieldId: number;

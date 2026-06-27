@@ -14,11 +14,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 type TextOperator =
-  | "contains"
-  | "startsWith"
-  | "endsWith"
-  | "equals"
-  | "notContains";
+  "contains" | "startsWith" | "endsWith" | "equals" | "notContains";
 
 interface TextFilterInputProps {
   fieldId: number;

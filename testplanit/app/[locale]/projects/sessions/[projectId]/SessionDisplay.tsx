@@ -263,8 +263,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   const pendingBySessionId = useMemo(() => {
     const map = new Map<number, PendingReviewSummary>();
     const rows = pendingReviewsForVisibleSessions as
-      | Array<PendingReviewSummary & { entityId: number }>
-      | undefined;
+      Array<PendingReviewSummary & { entityId: number }> | undefined;
     rows?.forEach((row) => {
       map.set(row.entityId, row);
     });

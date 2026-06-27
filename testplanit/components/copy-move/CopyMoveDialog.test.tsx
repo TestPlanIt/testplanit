@@ -23,12 +23,7 @@ const { mockJobState, mockProjectsData, mockFoldersData } = vi.hoisted(() => ({
   mockJobState: {
     jobId: null as string | null,
     status: "idle" as
-      | "idle"
-      | "prefighting"
-      | "waiting"
-      | "active"
-      | "completed"
-      | "failed",
+      "idle" | "prefighting" | "waiting" | "active" | "completed" | "failed",
     progress: null as { processed: number; total: number } | null,
     result: null as {
       copiedCount: number;

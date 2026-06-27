@@ -945,9 +945,7 @@ export function SearchIssuesDialog({
                 ? {
                     title: iterationPrefill.title,
                     description: iterationPrefill.description as
-                      | string
-                      | Record<string, unknown>
-                      | null,
+                      string | Record<string, unknown> | null,
                   }
                 : undefined
             }

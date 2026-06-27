@@ -895,8 +895,7 @@ async function innerHandler(
             data?.resultFieldValues as
               | {
                   create?:
-                    | Array<Record<string, unknown>>
-                    | Record<string, unknown>;
+                    Array<Record<string, unknown>> | Record<string, unknown>;
                 }
               | undefined
           )?.create;
@@ -911,8 +910,7 @@ async function innerHandler(
                 (fv?.fieldId as number | string | undefined) ??
                 ((
                   fv?.field as
-                    | { connect?: { id?: number | string } }
-                    | undefined
+                    { connect?: { id?: number | string } } | undefined
                 )?.connect?.id as number | string | undefined);
               const fieldId =
                 typeof rawFieldId === "number"

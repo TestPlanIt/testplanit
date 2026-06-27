@@ -2,11 +2,7 @@ import React from "react";
 import { cn } from "~/utils";
 
 export type ButtonVariant =
-  | "primary"
-  | "secondary"
-  | "tertiary"
-  | "quaternary"
-  | "ghost";
+  "primary" | "secondary" | "tertiary" | "quaternary" | "ghost";
 export type ButtonSize = "medium" | "small" | "icon" | "iconSmall";
 
 export type ButtonProps = {

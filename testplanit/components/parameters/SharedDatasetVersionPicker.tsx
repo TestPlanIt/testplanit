@@ -15,8 +15,7 @@ import { useMemo } from "react";
 export type SharedDatasetVersionPickerMode = "editor" | "picker";
 
 export type SharedDatasetVersionPickerValue =
-  | { id: number; version: number }
-  | "current";
+  { id: number; version: number } | "current";
 
 export interface SharedDatasetVersionPickerProps {
   dataSetId: number;

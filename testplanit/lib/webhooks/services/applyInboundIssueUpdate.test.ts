@@ -840,8 +840,7 @@ describe("applyInboundIssueUpdate", () => {
 
     const auditCall = (
       mocks.captureAuditEvent.mock.calls[0] as unknown as
-        | [{ metadata?: { adapterType?: AdapterType } }]
-        | undefined
+        [{ metadata?: { adapterType?: AdapterType } }] | undefined
     )?.[0];
     expect(auditCall?.metadata?.adapterType).toBe("GITHUB");
     // Sanity: ensure JIRA is NOT in the metadata for this GitHub call.

@@ -270,8 +270,7 @@ export function OverrideValuesDialog({
                     : valueToFormString(cur) !== valueToFormString(snap);
                 const isRevealed = revealed[p.name] === true;
                 const errMsg = form.formState.errors[p.name]?.message as
-                  | string
-                  | undefined;
+                  string | undefined;
 
                 return (
                   <div key={p.name} className="flex flex-col gap-1">

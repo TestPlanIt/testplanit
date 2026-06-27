@@ -238,9 +238,10 @@ export function AddSessionModal({
 
   const firstGatedSessionOrder = (workflows ?? [])
     .filter((w) => w.requiresReview === true)
-    .reduce<
-      number | null
-    >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
+    .reduce<number | null>(
+      (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+      null
+    );
   const workflowsOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),

@@ -119,11 +119,7 @@ export function AddRole({ open, onClose }: AddRoleProps) {
   } = form;
 
   type PermissionField =
-    | "canAddEdit"
-    | "canDelete"
-    | "canClose"
-    | "canApprove"
-    | "canReadSensitive";
+    "canAddEdit" | "canDelete" | "canClose" | "canApprove" | "canReadSensitive";
 
   const fieldAppliesToArea = (
     field: PermissionField,

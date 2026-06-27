@@ -62,8 +62,7 @@ const ResizablePanelGroup = ({
   // data-testid wins over a separate `id` because the rendered testid is the hook
   // callers (and tests) query; the v4 id is only used internally for layout state.
   const dataTestId = (props as Record<string, unknown>)["data-testid"] as
-    | string
-    | undefined;
+    string | undefined;
   const resolvedId = dataTestId ?? id;
 
   const [defaultLayout] = useState<Layout | undefined>(() => {
@@ -158,8 +157,7 @@ const ResizablePanel = forwardRef<PanelImperativeHandle, ResizablePanelProps>(
     // passed `data-testid`. Map an explicit data-testid onto `id` (preferred over
     // a separate id) so panel test ids like "repository-left-panel" stay queryable.
     const dataTestId = (props as Record<string, unknown>)["data-testid"] as
-      | string
-      | undefined;
+      string | undefined;
     const resolvedId = dataTestId ?? id;
     // Track collapse transitions to re-create v3 onCollapse/onExpand. null = not
     // yet initialised, so the first (mount) onResize doesn't fire a spurious event.

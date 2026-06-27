@@ -406,8 +406,7 @@ describe("ReviewsInboxPage (/reviews)", () => {
     render(<ReviewsInboxPage />);
     expect(mockUseFindManyReviewRequest).toHaveBeenCalled();
     const options = mockUseFindManyReviewRequest.mock.calls[0]![1] as
-      | { refetchOnWindowFocus?: boolean }
-      | undefined;
+      { refetchOnWindowFocus?: boolean } | undefined;
     expect(options?.refetchOnWindowFocus).toBe(true);
   });
 

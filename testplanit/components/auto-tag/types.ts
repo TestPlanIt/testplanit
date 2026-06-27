@@ -30,11 +30,7 @@ export type AutoTagSelection = Map<number, Set<string>>;
 
 /** Job status from polling endpoint */
 export type AutoTagJobState =
-  | "idle"
-  | "waiting"
-  | "active"
-  | "completed"
-  | "failed";
+  "idle" | "waiting" | "active" | "completed" | "failed";
 
 /** Return type of useAutoTagJob hook */
 export interface UseAutoTagJobReturn {

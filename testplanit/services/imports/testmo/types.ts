@@ -72,19 +72,10 @@ export interface TestmoAnalysisSummaryPayload {
 }
 
 export type TestmoImportStatus =
-  | "QUEUED"
-  | "RUNNING"
-  | "READY"
-  | "COMPLETED"
-  | "FAILED"
-  | "CANCELED";
+  "QUEUED" | "RUNNING" | "READY" | "COMPLETED" | "FAILED" | "CANCELED";
 
 export type TestmoImportPhase =
-  | "UPLOADING"
-  | "ANALYZING"
-  | "CONFIGURING"
-  | "IMPORTING"
-  | "FINALIZING";
+  "UPLOADING" | "ANALYZING" | "CONFIGURING" | "IMPORTING" | "FINALIZING";
 
 export interface TestmoImportJobPayload {
   id: string;

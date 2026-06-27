@@ -407,8 +407,7 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     }
 
     let groups:
-      | Array<{ statusId: number | null; _count: { id: number } }>
-      | undefined;
+      Array<{ statusId: number | null; _count: { id: number } }> | undefined;
 
     // 1. findUnique on the run with the same denormalized shape the tool uses.
     await test.step("Get run detail via findUnique with denormalized includes", async () => {
@@ -627,8 +626,7 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     }
 
     let data:
-      | { id: number; stepResults: Array<Record<string, unknown>> }
-      | undefined;
+      { id: number; stepResults: Array<Record<string, unknown>> } | undefined;
 
     // Get the single testRunResult with stepResults inlined
     await test.step("Get testRunResult with stepResults inlined", async () => {

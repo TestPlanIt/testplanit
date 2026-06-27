@@ -668,8 +668,7 @@ export default function QuickScriptPage() {
                             <SelectContent>
                               {(
                                 (repositories as
-                                  | CodeRepository[]
-                                  | undefined) ?? []
+                                  CodeRepository[] | undefined) ?? []
                               ).map((repo) => (
                                 <SelectItem
                                   key={repo.id}

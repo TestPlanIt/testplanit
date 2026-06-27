@@ -20,10 +20,7 @@ import { useEffect, useRef } from "react";
 import { cn } from "~/utils";
 
 export type DatasetCellParameterType =
-  | "STRING"
-  | "INTEGER"
-  | "BOOLEAN"
-  | "SELECT";
+  "STRING" | "INTEGER" | "BOOLEAN" | "SELECT";
 
 export interface DatasetCellParameter {
   name: string;

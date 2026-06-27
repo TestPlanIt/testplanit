@@ -51,8 +51,7 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
     api,
   }) => {
     let deliveries:
-      | Awaited<ReturnType<typeof db.webhookDelivery.findMany>>
-      | undefined;
+      Awaited<ReturnType<typeof db.webhookDelivery.findMany>> | undefined;
 
     // 1. Configure the outbound webhook via the admin form. The Phase 2
     //    admin page uses a Tabs primitive (D-27) with URL-driven state

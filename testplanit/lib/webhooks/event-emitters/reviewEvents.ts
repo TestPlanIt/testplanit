@@ -6,10 +6,7 @@ import { webhookEvents } from "~/lib/webhooks/events";
 type ReviewableEntityType = "CASE" | "RUN" | "SESSION";
 
 type ReviewDecisionOutcome =
-  | "APPROVED"
-  | "CHANGES_REQUESTED"
-  | "REJECTED"
-  | "CANCELLED";
+  "APPROVED" | "CHANGES_REQUESTED" | "REJECTED" | "CANCELLED";
 
 interface EmitReviewRequestedInput {
   reviewRequestId: string;

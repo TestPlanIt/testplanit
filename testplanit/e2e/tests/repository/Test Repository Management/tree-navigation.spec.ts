@@ -65,8 +65,7 @@ test.describe("Tree Navigation", () => {
     const childName = `Child ${Date.now()}`;
     let parentId: number | undefined;
     let childFolder:
-      | ReturnType<typeof repositoryPage.getFolderByName>
-      | undefined;
+      ReturnType<typeof repositoryPage.getFolderByName> | undefined;
 
     await test.step("Create a parent folder with a child folder", async () => {
       parentId = await api.createFolder(projectId, parentName);
@@ -95,8 +94,7 @@ test.describe("Tree Navigation", () => {
     const childName = `Child Collapse ${Date.now()}`;
     let parentId: number | undefined;
     let childFolder:
-      | ReturnType<typeof repositoryPage.getFolderByName>
-      | undefined;
+      ReturnType<typeof repositoryPage.getFolderByName> | undefined;
 
     await test.step("Create a parent folder with a child folder", async () => {
       parentId = await api.createFolder(projectId, parentName);
@@ -140,8 +138,7 @@ test.describe("Tree Navigation", () => {
     const childName = `Child Reload ${Date.now()}`;
     let parentId: number | undefined;
     let childFolder:
-      | ReturnType<typeof repositoryPage.getFolderByName>
-      | undefined;
+      ReturnType<typeof repositoryPage.getFolderByName> | undefined;
 
     await test.step("Create a parent folder with a child folder", async () => {
       parentId = await api.createFolder(projectId, parentName);
@@ -306,11 +303,9 @@ test.describe("Tree Navigation", () => {
     let level1Id: number | undefined;
     let level2Id: number | undefined;
     let level2Folder:
-      | ReturnType<typeof repositoryPage.getFolderByName>
-      | undefined;
+      ReturnType<typeof repositoryPage.getFolderByName> | undefined;
     let level3Folder:
-      | ReturnType<typeof repositoryPage.getFolderByName>
-      | undefined;
+      ReturnType<typeof repositoryPage.getFolderByName> | undefined;
 
     await test.step("Create a 3-level deep folder structure", async () => {
       level1Id = await api.createFolder(projectId, level1Name);

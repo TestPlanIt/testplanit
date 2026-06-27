@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 
 type MetadataType =
-  | "test-run"
-  | "test-case"
-  | "session"
-  | "project"
-  | "milestone";
+  "test-run" | "test-case" | "session" | "project" | "milestone";
 
 interface MetadataResponse {
   title: string;

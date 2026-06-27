@@ -49,39 +49,27 @@ function expectLastQueuedRowComplete(
       userId:
         (ev.userId as string | null | undefined) ??
         ((ctx as Record<string, unknown>).userId as
-          | string
-          | null
-          | undefined) ??
+          string | null | undefined) ??
         null,
       userEmail:
         (ev.userEmail as string | null | undefined) ??
         ((ctx as Record<string, unknown>).userEmail as
-          | string
-          | null
-          | undefined) ??
+          string | null | undefined) ??
         null,
       userName:
         (ev.userName as string | null | undefined) ??
         ((ctx as Record<string, unknown>).userName as
-          | string
-          | null
-          | undefined) ??
+          string | null | undefined) ??
         null,
       ipAddress:
         ((ctx as Record<string, unknown>).ipAddress as
-          | string
-          | null
-          | undefined) ?? null,
+          string | null | undefined) ?? null,
       userAgent:
         ((ctx as Record<string, unknown>).userAgent as
-          | string
-          | null
-          | undefined) ?? null,
+          string | null | undefined) ?? null,
       requestId:
         ((ctx as Record<string, unknown>).requestId as
-          | string
-          | null
-          | undefined) ?? null,
+          string | null | undefined) ?? null,
       metadata: ev.metadata ?? null,
     },
     opts

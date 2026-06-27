@@ -1095,8 +1095,7 @@ export default function TestCaseVersions() {
                         preventEditing={true}
                         previousAttachments={
                           previousTestcase?.attachments as unknown as
-                            | Attachments[]
-                            | undefined
+                            Attachments[] | undefined
                         }
                         onSelect={handleSelect}
                       />

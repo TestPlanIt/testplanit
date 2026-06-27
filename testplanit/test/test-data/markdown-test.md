@@ -372,7 +372,7 @@ _[W3C]: World Wide Web Consortium
 
 ## Subscript & Superscript
 
-H~2~O is water. (Subscript — extended)
+H~~2~~O is water. (Subscript — extended)
 
 E = mc^2^ (Superscript — extended)
 

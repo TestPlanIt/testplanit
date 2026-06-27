@@ -6,10 +6,7 @@ import { authenticateRequest } from "~/lib/api-token-auth";
 import { authOptions } from "~/server/auth";
 
 export type HealthStatus =
-  | "healthy"
-  | "never_executed"
-  | "always_passing"
-  | "always_failing";
+  "healthy" | "never_executed" | "always_passing" | "always_failing";
 
 export interface TestCaseHealthRow {
   testCaseId: number;
