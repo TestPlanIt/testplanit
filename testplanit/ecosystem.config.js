@@ -68,8 +68,16 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      // Large Testmo exports (multi-GB JSON) are streamed and analyzed here, so
+      // this worker needs far more headroom than the 512M default that
+      // OOM-killed big imports. Defaults to a 4G ceiling, which handles typical
+      // large exports on a modest host; installs that import very large exports
+      // can raise both values via env (host RAM permitting), e.g.
+      // TESTMO_IMPORT_MAX_MEMORY_RESTART=18G TESTMO_IMPORT_MAX_OLD_SPACE_MB=16384.
+      max_memory_restart: process.env.TESTMO_IMPORT_MAX_MEMORY_RESTART || "4G",
+      node_args: `--max-old-space-size=${
+        process.env.TESTMO_IMPORT_MAX_OLD_SPACE_MB || "3072"
+      }`,
       env: {
         NODE_ENV: "production",
       },
