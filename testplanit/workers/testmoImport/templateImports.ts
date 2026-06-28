@@ -435,6 +435,29 @@ export async function importTemplateFields(
     details.assignmentsCreated += 1;
   };
 
+  // Build a lookup from field-type NAME to this instance's CaseFieldTypes id.
+  // The mapping config carries source (Testmo) typeIds that live in a
+  // DIFFERENT id space than the local CaseFieldTypes, so a created field must
+  // be typed by NAME — trusting the source typeId silently mis-types it (e.g.
+  // source typeId 3 "Text (Long)" collides with local id 3 "Dropdown", which
+  // routes rich text through dropdown normalization and drops the value).
+  // Result fields share the CaseFieldTypes table.
+  const normalizeTypeName = (name: unknown): string =>
+    String(name ?? "")
+      .toLowerCase()
+      .replace(/[()]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  const fieldTypeIdByName = new Map<string, number>();
+  {
+    const allFieldTypes = await tx.caseFieldTypes.findMany({
+      select: { id: true, type: true },
+    });
+    for (const ft of allFieldTypes) {
+      fieldTypeIdByName.set(normalizeTypeName(ft.type), ft.id);
+    }
+  }
+
   for (const [key, config] of Object.entries(
     configuration.templateFields ?? {}
   )) {
@@ -513,15 +536,31 @@ export async function importTemplateFields(
       );
     }
 
-    const typeId = config.typeId ?? null;
-    if (typeId === null) {
+    const sourceTypeId = config.typeId ?? null;
+    if (sourceTypeId === null) {
       throw new Error(
         `Template field "${displayName}" requires a field type before it can be created.`
       );
     }
 
+    // Translate the source field type to this instance's CaseFieldTypes id by
+    // NAME. The source typeId is in Testmo's id space and must not be used
+    // directly (see fieldTypeIdByName above). Fall back to the source id only
+    // when the name cannot be resolved, and warn loudly.
+    const normalizedTypeName = normalizeTypeName(config.typeName);
+    const resolvedTypeId =
+      fieldTypeIdByName.get(normalizedTypeName) ?? sourceTypeId;
+    if (!fieldTypeIdByName.has(normalizedTypeName)) {
+      console.warn(
+        `[templateFields] Could not resolve field type by name for "${displayName}" ` +
+          `(typeName="${config.typeName ?? ""}", sourceTypeId=${sourceTypeId}); ` +
+          `falling back to source typeId, which may mis-type the field.`
+      );
+    }
+    const typeId = resolvedTypeId;
+
     console.log(
-      `[DEBUG] Processing field "${displayName}" (${systemName}) with typeId ${typeId}, action: ${config.action}`
+      `[DEBUG] Processing field "${displayName}" (${systemName}) typeName="${config.typeName ?? ""}" -> typeId ${typeId} (source ${sourceTypeId}), action: ${config.action}`
     );
     await ensureFieldTypeExists(typeId);
 
