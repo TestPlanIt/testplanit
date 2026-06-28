@@ -42,16 +42,17 @@ cli/releases
 .playwright-mcp
 demo/
 
-# VCS, env, editor, OS cruft. Exclude the real (secret) env files explicitly;
-# .env.example / .env.e2e.example are left in so the build/docs can reference them.
+# VCS, env, editor, OS cruft. Exclude ALL env files (default-deny) so no secret
+# variant — including odd suffixes like .env.production.backup or ".env.production
+# copy" — can be baked into the image. This MUST stay negation-free: a `!` re-include
+# (e.g. `!**/.env.example`) disables BuildKit's directory pruning, forcing the context
+# walker to descend into the uid-owned, unreadable docker-data/postgres and fail the
+# build. .env.example is a committed dev reference and is not read at build or runtime,
+# so it does not need to ship.
 .git
 **/.git
 **/.env
-**/.env.local
-**/.env.development
-**/.env.production
-**/.env.e2e
-**/.env.test
+**/.env.*
 **/.DS_Store
 **/npm-debug.log*
 
