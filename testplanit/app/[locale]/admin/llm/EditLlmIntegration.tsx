@@ -506,8 +506,7 @@ export function EditLlmIntegration({
               ...existingSettings,
               modelCapabilities: {
                 ...((existingSettings.modelCapabilities as
-                  | Record<string, unknown>
-                  | undefined) ?? {}),
+                  Record<string, unknown> | undefined) ?? {}),
                 ...capabilitiesForSave,
               },
             }

@@ -446,9 +446,10 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
 
   const firstGatedOrder = (workflows ?? [])
     .filter((w) => w.requiresReview === true)
-    .reduce<
-      number | null
-    >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
+    .reduce<number | null>(
+      (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+      null
+    );
   const workflowOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),

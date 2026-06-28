@@ -41,8 +41,7 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
         },
       });
       const wf = (await wfRes.json())?.data as
-        | { id: number; name: string }
-        | undefined;
+        { id: number; name: string } | undefined;
       expect(wf?.id).toBeTruthy();
       workflowId = wf!.id;
       workflowName = wf!.name;

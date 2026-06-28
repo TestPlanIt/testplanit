@@ -43,10 +43,7 @@ export type RolePermissionSnapshot =
   | undefined;
 
 export type ProjectAccessTypeValue =
-  | "DEFAULT"
-  | "NO_ACCESS"
-  | "GLOBAL_ROLE"
-  | "SPECIFIC_ROLE";
+  "DEFAULT" | "NO_ACCESS" | "GLOBAL_ROLE" | "SPECIFIC_ROLE";
 
 export function roleCanAddEditTestRunResults(
   role: RolePermissionSnapshot

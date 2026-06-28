@@ -247,9 +247,7 @@ export const useColumns = ({
         minSize: 320,
         cell: ({ row }) => {
           const entityType = row.original.entityType as
-            | "CASE"
-            | "RUN"
-            | "SESSION";
+            "CASE" | "RUN" | "SESSION";
           const projectId = row.original.projectId;
           const entityId = row.original.entityId;
           if (entityType === "CASE") {

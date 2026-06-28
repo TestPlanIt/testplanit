@@ -950,13 +950,11 @@ describe("putScimGroup", () => {
     );
 
     const cmArgs = tx.groupAssignment.createMany.mock.calls[0]?.[0] as
-      | { data: Array<{ userId: string }> }
-      | undefined;
+      { data: Array<{ userId: string }> } | undefined;
     expect(cmArgs?.data.map((d) => d.userId)).toEqual(["u3"]);
 
     const dmArgs = tx.groupAssignment.deleteMany.mock.calls[0]?.[0] as
-      | { where: { userId: { in: string[] } } }
-      | undefined;
+      { where: { userId: { in: string[] } } } | undefined;
     expect(dmArgs?.where.userId.in).toEqual(["u1"]);
 
     expect(emitScimGroupMemberAdded).toHaveBeenCalledTimes(1);

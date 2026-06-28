@@ -118,8 +118,7 @@ test.describe("Error Handling - ZenStack v3 Error Format", () => {
     baseURL,
   }) => {
     let validationResponse:
-      | Awaited<ReturnType<typeof request.post>>
-      | undefined;
+      Awaited<ReturnType<typeof request.post>> | undefined;
 
     await test.step("Create a case with empty data", async () => {
       // Attempt to create a RepositoryCase with empty data

@@ -325,8 +325,7 @@ function computeProjectAccess(ctx: {
 function resolveRolePermissions(
   accessType: string,
   specificRolePermissions:
-    | Array<{ canAddEdit: boolean; canDelete: boolean }>
-    | undefined,
+    Array<{ canAddEdit: boolean; canDelete: boolean }> | undefined,
   globalRolePermissions: Array<{ canAddEdit: boolean; canDelete: boolean }>
 ): Array<{ canAddEdit: boolean; canDelete: boolean }> | null {
   if (accessType === "SPECIFIC_ROLE") {

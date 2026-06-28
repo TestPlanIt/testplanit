@@ -41,8 +41,7 @@ export const dynamicParams = true;
 export default async function RootLayout(props: any) {
   const headerList = await headers();
   const locale = (headerList.get("x-next-intl-locale") || "en-US") as
-    | "en-US"
-    | "es-ES";
+    "en-US" | "es-ES";
   if (!locales.includes(locale as any)) notFound();
   const messages = (await import(`../../messages/${locale}.json`)).default;
 

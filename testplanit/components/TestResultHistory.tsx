@@ -164,9 +164,7 @@ interface PendingTestResult extends UnifiedTestResultBase {
 }
 
 type UnifiedTestResult =
-  | ManualTestResult
-  | JUnitTestResultInfo
-  | PendingTestResult;
+  ManualTestResult | JUnitTestResultInfo | PendingTestResult;
 
 interface TestResultHistoryProps {
   caseId: number;
@@ -714,9 +712,10 @@ export default function TestResultHistory({
   const tParams = useTranslations("parameters");
   const locale = useLocale();
   const dateFnsLocale = getDateFnsLocale(locale);
-  const [expandedResults, setExpandedResults] = useState<Set<string>>( // Changed to Set<string>
-    new Set()
-  );
+  const [expandedResults, setExpandedResults] = useState<
+    Set<string>
+  > // Changed to Set<string>
+  (new Set());
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
   >(null);

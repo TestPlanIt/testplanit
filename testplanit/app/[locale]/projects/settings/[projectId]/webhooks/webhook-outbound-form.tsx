@@ -854,9 +854,7 @@ export function WebhookOutboundForm({
 
   const renderActivityRow = (
     labelKey:
-      | "activityLastDispatched"
-      | "activityLastSuccess"
-      | "activityLastFailure",
+      "activityLastDispatched" | "activityLastSuccess" | "activityLastFailure",
     value: Date | null
   ) => (
     <div>

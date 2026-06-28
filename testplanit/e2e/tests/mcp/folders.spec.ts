@@ -138,8 +138,7 @@ test.describe("MCP folder CRUD lifecycle (Phase 6)", () => {
   }) => {
     const name = `MCP-Child-${Date.now()}`;
     let created:
-      | { id: number; parentId: number | null; isDeleted: boolean }
-      | undefined;
+      { id: number; parentId: number | null; isDeleted: boolean } | undefined;
 
     await test.step("Create child folder under root via REST", async () => {
       const r = await request.post(

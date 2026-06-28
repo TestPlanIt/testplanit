@@ -869,8 +869,7 @@ export function AddResultModal({
             ) {
               // Use a more direct cast if TypeScript still complains about symbol index
               const itemElapsedValue = (values as any)[stringKey] as
-                | string
-                | null;
+                string | null;
               if (itemElapsedValue) {
                 const itemDurationMs = parseDuration(itemElapsedValue);
                 if (itemDurationMs !== null && itemDurationMs > 0) {
@@ -964,8 +963,7 @@ export function AddResultModal({
                           ? itemEvidenceValue
                           : {};
                       const itemElapsed = (values as any)[elapsedKey] as
-                        | string
-                        | null;
+                        string | null;
                       const itemIssues =
                         selectedSharedItemIssues[item.id] || [];
 
@@ -1055,9 +1053,7 @@ export function AddResultModal({
                     ? stepEvidenceValue
                     : {}; // Default evidence
                 const stepElapsed = values[`step_${stepId}_elapsed`] as
-                  | string
-                  | null
-                  | undefined;
+                  string | null | undefined;
                 const stepIssues = selectedStepIssues[step.id] || [];
 
                 let stepElapsedInSeconds: number | null = null;
@@ -1190,8 +1186,7 @@ export function AddResultModal({
                     const elapsedKey = `shared_item_${itemIdStr}_elapsed`;
 
                     const itemStatusIdFromForm = (values as any)[statusKey] as
-                      | string
-                      | undefined;
+                      string | undefined;
                     const itemNotes = (values as any)[notesKey];
                     const itemEvidenceValue = (values as any)[evidenceKey];
                     const itemEvidence =
@@ -1200,8 +1195,7 @@ export function AddResultModal({
                         ? itemEvidenceValue
                         : {};
                     const itemElapsed = (values as any)[elapsedKey] as
-                      | string
-                      | null;
+                      string | null;
                     const itemIssues = selectedSharedItemIssues[item.id] || [];
 
                     let itemElapsedInSeconds: number | null = null;
@@ -1276,8 +1270,7 @@ export function AddResultModal({
               // Handle regular step
               const stepId = step.id.toString();
               const stepStatusIdFromForm = values[`step_${stepId}_statusId`] as
-                | string
-                | undefined;
+                string | undefined;
               const stepNotes = values[`step_${stepId}_notes`];
               const stepEvidenceValue = values[`step_${stepId}_evidence`];
               const stepEvidence =
@@ -1286,9 +1279,7 @@ export function AddResultModal({
                   ? stepEvidenceValue
                   : {}; // Default evidence
               const stepElapsed = values[`step_${stepId}_elapsed`] as
-                | string
-                | null
-                | undefined;
+                string | null | undefined;
               const stepIssues = selectedStepIssues[step.id] || [];
 
               let stepElapsedInSeconds: number | null = null;

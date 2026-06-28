@@ -994,9 +994,7 @@ export default function TestmoMappingConfigurator({
       suggestion
         ? (() => {
             let matchedField:
-              | TestmoExistingCaseField
-              | TestmoExistingResultField
-              | undefined;
+              TestmoExistingCaseField | TestmoExistingResultField | undefined;
             if (
               suggestion.fieldId !== null &&
               suggestion.fieldId !== undefined
@@ -2890,18 +2888,19 @@ function TemplateMappingSection({
                 .map((fieldId) => {
                   const fieldSuggestion = templateFieldMap.get(fieldId) ?? null;
                   const fallback:
-                    | Partial<TestmoTemplateFieldMappingConfig>
-                    | undefined = fieldSuggestion
-                    ? {
-                        action: fieldSuggestion.fieldId ? "map" : undefined,
-                        targetType: fieldSuggestion.targetType,
-                        displayName: fieldSuggestion.displayName ?? undefined,
-                        systemName: fieldSuggestion.systemName ?? undefined,
-                        templateName: fieldSuggestion.templateName ?? undefined,
-                        typeName: fieldSuggestion.fieldType ?? undefined,
-                        typeId: fieldSuggestion.fieldId ?? null,
-                      }
-                    : undefined;
+                    Partial<TestmoTemplateFieldMappingConfig> | undefined =
+                    fieldSuggestion
+                      ? {
+                          action: fieldSuggestion.fieldId ? "map" : undefined,
+                          targetType: fieldSuggestion.targetType,
+                          displayName: fieldSuggestion.displayName ?? undefined,
+                          systemName: fieldSuggestion.systemName ?? undefined,
+                          templateName:
+                            fieldSuggestion.templateName ?? undefined,
+                          typeName: fieldSuggestion.fieldType ?? undefined,
+                          typeId: fieldSuggestion.fieldId ?? null,
+                        }
+                      : undefined;
                   const fieldConfig = ensureTemplateFieldConfig(
                     configuration,
                     fieldId,

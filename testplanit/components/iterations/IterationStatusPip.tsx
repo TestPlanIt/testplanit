@@ -9,12 +9,7 @@
  */
 
 export type IterationStatusGlyph =
-  | "notStarted"
-  | "active"
-  | "passed"
-  | "failed"
-  | "skipped"
-  | "blocked";
+  "notStarted" | "active" | "passed" | "failed" | "skipped" | "blocked";
 
 export interface IterationStatusLike {
   isSuccess?: boolean;

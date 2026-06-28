@@ -1513,9 +1513,7 @@ async function seedWorkflows() {
             requiresReview: false,
             scope: workflow.scope as WorkflowScope,
             workflowType: workflow.workflowType as
-              | "NOT_STARTED"
-              | "IN_PROGRESS"
-              | "DONE",
+              "NOT_STARTED" | "IN_PROGRESS" | "DONE",
           },
         });
       }

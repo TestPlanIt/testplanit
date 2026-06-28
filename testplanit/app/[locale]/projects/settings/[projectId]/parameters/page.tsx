@@ -121,8 +121,7 @@ export default function ProjectParametersSettingsPage() {
                 projectId={projectId}
                 initialNames={
                   (project.junitIterationPropertyNames as
-                    | readonly string[]
-                    | undefined) ?? []
+                    readonly string[] | undefined) ?? []
                 }
               />
             </CardContent>

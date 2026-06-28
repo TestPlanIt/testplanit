@@ -10,12 +10,7 @@ import type {
 const POLL_INTERVAL_MS = 2000;
 
 export type CopyMoveJobStatus =
-  | "idle"
-  | "prefighting"
-  | "waiting"
-  | "active"
-  | "completed"
-  | "failed";
+  "idle" | "prefighting" | "waiting" | "active" | "completed" | "failed";
 
 export interface UseCopyMoveJobReturn {
   jobId: string | null;

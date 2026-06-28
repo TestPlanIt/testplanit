@@ -26,8 +26,7 @@ vi.mock("@/components/ui/async-combobox", () => ({
   AsyncCombobox: (props: Record<string, unknown>) => {
     comboboxPropsRef.current = props;
     const renderTrigger = props.renderTrigger as
-      | ((args: Record<string, unknown>) => ReactElement)
-      | undefined;
+      ((args: Record<string, unknown>) => ReactElement) | undefined;
     return renderTrigger
       ? renderTrigger({
           value: null,

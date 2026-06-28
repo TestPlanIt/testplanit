@@ -8,6 +8,13 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: "./vitest.setup.tsx",
+    // Unit tests must not require real runtime env vars. Without this, any test
+    // whose import graph reaches env.js fails at collection because
+    // @t3-oss/env validates DATABASE_URL/NEXTAUTH_URL at module load. (Set early,
+    // before setupFiles/test modules evaluate.)
+    env: {
+      SKIP_ENV_VALIDATION: "true",
+    },
     css: true,
     testTimeout: 30000,
     hookTimeout: 30000,

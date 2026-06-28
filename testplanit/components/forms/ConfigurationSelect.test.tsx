@@ -31,8 +31,7 @@ vi.mock("~/app/actions/searchConfigurations", () => ({
 // Mock AsyncCombobox — renders a simplified select that calls onValueChange
 const mockAsyncComboboxOnValueChange = vi.fn();
 let capturedFetchOptions:
-  | ((q: string, p: number, s: number) => unknown)
-  | null = null;
+  ((q: string, p: number, s: number) => unknown) | null = null;
 vi.mock("@/components/ui/async-combobox", () => ({
   AsyncCombobox: ({
     value,

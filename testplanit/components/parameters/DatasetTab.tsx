@@ -630,15 +630,13 @@ export function DatasetTab({
   const rowSchema = useMemo(
     () =>
       buildRowSchemaFromParameters(
-        parameters.map(
-          (p): ParameterShape => ({
-            name: p.name,
-            type: p.type,
-            required: p.required,
-            allowedValuesJson: p.allowedValuesJson,
-            lookupAllowedValues: p.lookupAllowedValues,
-          })
-        )
+        parameters.map((p): ParameterShape => ({
+          name: p.name,
+          type: p.type,
+          required: p.required,
+          allowedValuesJson: p.allowedValuesJson,
+          lookupAllowedValues: p.lookupAllowedValues,
+        }))
       ),
     [parameters]
   );

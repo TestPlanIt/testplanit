@@ -215,11 +215,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
 
   // Handlers for header checkboxes
   type PermissionField =
-    | "canAddEdit"
-    | "canDelete"
-    | "canClose"
-    | "canApprove"
-    | "canReadSensitive";
+    "canAddEdit" | "canDelete" | "canClose" | "canApprove" | "canReadSensitive";
 
   const fieldAppliesToArea = (
     field: PermissionField,

@@ -2692,8 +2692,7 @@ export default function Cases({
   const pendingByCaseId = useMemo(() => {
     const map = new Map<number, PendingReviewSummary>();
     const rows = pendingReviewsForVisibleCases as
-      | Array<PendingReviewSummary & { entityId: number }>
-      | undefined;
+      Array<PendingReviewSummary & { entityId: number }> | undefined;
     rows?.forEach((row) => {
       map.set(row.entityId, row);
     });

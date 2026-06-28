@@ -267,8 +267,7 @@ test.describe("User Management Gaps", () => {
 
       try {
         let tokenResponse:
-          | Awaited<ReturnType<typeof page.request.post>>
-          | undefined;
+          Awaited<ReturnType<typeof page.request.post>> | undefined;
 
         await test.step("Create an API token for the test user", async () => {
           // Create an API token for the test user via API (use page.request which has baseURL)

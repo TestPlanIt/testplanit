@@ -810,11 +810,7 @@ const normalizeEstimate = (
 ): {
   value: number | null;
   adjustment:
-    | "nanoseconds"
-    | "microseconds"
-    | "milliseconds"
-    | "clamped"
-    | null;
+    "nanoseconds" | "microseconds" | "milliseconds" | "clamped" | null;
 } => {
   if (value === null || !Number.isFinite(value)) {
     return { value: null, adjustment: null };

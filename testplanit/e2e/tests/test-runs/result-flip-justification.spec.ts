@@ -59,8 +59,7 @@ test.describe("Result flip justification", () => {
   }) => {
     let runId: Awaited<ReturnType<typeof seedRunCase>>["runId"] | undefined;
     let testRunCaseId:
-      | Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"]
-      | undefined;
+      Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"] | undefined;
     let failedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
     let response: Awaited<ReturnType<typeof request.post>> | undefined;
 
@@ -99,8 +98,7 @@ test.describe("Result flip justification", () => {
   }) => {
     let runId: Awaited<ReturnType<typeof seedRunCase>>["runId"] | undefined;
     let testRunCaseId:
-      | Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"]
-      | undefined;
+      Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"] | undefined;
     let failedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
     let response: Awaited<ReturnType<typeof request.post>> | undefined;
 
@@ -138,8 +136,7 @@ test.describe("Result flip justification", () => {
   }) => {
     let runId: Awaited<ReturnType<typeof seedRunCase>>["runId"] | undefined;
     let testRunCaseId:
-      | Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"]
-      | undefined;
+      Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"] | undefined;
     let passedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
     let response: Awaited<ReturnType<typeof request.post>> | undefined;
 
@@ -173,8 +170,7 @@ test.describe("Result flip justification", () => {
   }) => {
     let runId: Awaited<ReturnType<typeof seedRunCase>>["runId"] | undefined;
     let testRunCaseId:
-      | Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"]
-      | undefined;
+      Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"] | undefined;
     let failedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
     let response: Awaited<ReturnType<typeof request.post>> | undefined;
 
@@ -208,8 +204,7 @@ test.describe("Result flip justification", () => {
   }) => {
     let runId: Awaited<ReturnType<typeof seedRunCase>>["runId"] | undefined;
     let testRunCaseId:
-      | Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"]
-      | undefined;
+      Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"] | undefined;
     let failedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
     let response: Awaited<ReturnType<typeof request.post>> | undefined;
 

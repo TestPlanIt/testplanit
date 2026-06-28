@@ -25,13 +25,7 @@ const { parseV2 } = require("test-results-parser") as {
  * Supported test result formats
  */
 export type TestResultFormat =
-  | "junit"
-  | "testng"
-  | "xunit"
-  | "nunit"
-  | "mstest"
-  | "mocha"
-  | "cucumber";
+  "junit" | "testng" | "xunit" | "nunit" | "mstest" | "mocha" | "cucumber";
 
 /**
  * Format metadata for UI display and file validation

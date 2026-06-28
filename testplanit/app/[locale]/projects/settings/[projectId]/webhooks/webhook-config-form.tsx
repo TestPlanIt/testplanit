@@ -841,9 +841,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
 
   function renderActivityRow(
     labelKey:
-      | "activityLastDispatched"
-      | "activityLastSuccess"
-      | "activityLastFailure",
+      "activityLastDispatched" | "activityLastSuccess" | "activityLastFailure",
     value: Date | null
   ) {
     return (

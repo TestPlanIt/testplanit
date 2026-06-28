@@ -476,12 +476,7 @@ Name: ${testRunMetadata.name}`;
   // Compress test case data to reduce token usage
   const compressedCaseData = testCases.map((tc) => {
     const result: (
-      | number
-      | string
-      | string[]
-      | number[]
-      | Record<string, string>
-      | null
+      number | string | string[] | number[] | Record<string, string> | null
     )[] = [tc.id, tc.name];
     if (tc.folderPath !== "/") result.push(tc.folderPath);
     else result.push(null);
