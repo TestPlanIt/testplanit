@@ -1,11 +1,12 @@
 # Root build context ignore. The testplanit image builds from the repo root so
-# it can use the single root pnpm-lock.yaml + pnpm-workspace.yaml. Excluding the
-# large generated/working directories keeps the context small enough to
-# transfer. Patterns for ambiguous directory names (build, dist, coverage,
-# test-results, e2e, ...) are ANCHORED to their real top-level locations so a
-# floating "**/" glob can never strip a source route such as
-# app/api/test-results — which Next.js only reaches via a dynamic fetch(), so
-# its absence would not fail the build, only 404 at runtime.
+# it can use the single root pnpm-lock.yaml + pnpm-workspace.yaml.
+#
+# IMPORTANT: this file is kept NEGATION-FREE (no `!` re-include patterns). In
+# BuildKit, a single `!` exception disables directory pruning, forcing the
+# context walker to descend into EVERY directory — including docker-data/postgres,
+# which is uid-owned and unreadable by the build user, causing the build to fail
+# with "error from sender: ... permission denied". Enumerate excludes instead of
+# excluding-then-re-including.
 
 # Dependencies & framework caches — safe to match at any depth (never source).
 **/node_modules
@@ -15,6 +16,8 @@
 **/*.tsbuildinfo
 
 # Build output & test artifacts — regenerated in-image; anchored, not floating.
+# NOTE: packages/api/dist is intentionally NOT excluded — it ships committed and
+# the app imports it, so the image build needs it.
 testplanit/dist
 testplanit/build
 testplanit/coverage
@@ -25,24 +28,30 @@ docs/build
 docs/.docusaurus
 forge-app/dist
 cli/dist
-packages/*/dist
-# Exception: @testplanit/api ships its built dist (committed, not regenerated
-# in-image) and the app imports it, so the image build needs it.
-!packages/api/dist
+packages/mcp-server/dist
+packages/playwright-testplanit-reporter/dist
+packages/wdio-testplanit-reporter/dist
 
 # Large local data & prebuilt binaries — never needed in the image.
+# docker-data holds container volumes (e.g. postgres) that are uid-owned and
+# unreadable by the build user; excluded here so the walker prunes them.
 testplanit/backups
-**/docker-data/
+**/docker-data
+**/docker-data/**
 cli/releases
 .playwright-mcp
 demo/
 
-# VCS, env, editor, OS cruft.
+# VCS, env, editor, OS cruft. Exclude the real (secret) env files explicitly;
+# .env.example / .env.e2e.example are left in so the build/docs can reference them.
 .git
 **/.git
 **/.env
-**/.env.*
-!**/.env.example
+**/.env.local
+**/.env.development
+**/.env.production
+**/.env.e2e
+**/.env.test
 **/.DS_Store
 **/npm-debug.log*
 
