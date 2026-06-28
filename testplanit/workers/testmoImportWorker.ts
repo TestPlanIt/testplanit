@@ -3955,8 +3955,7 @@ const importRepositoryCases = async (
           // custom_ pass above via the per-record map. The case was created
           // in this transaction, so no other source of pre-existing values
           // is possible — this replaces a per-(case, field) findFirst.
-          const existingValueId =
-            createdCaseFieldValueIdByFieldId.get(fieldId);
+          const existingValueId = createdCaseFieldValueIdByFieldId.get(fieldId);
 
           if (existingValueId !== undefined) {
             await tx.caseFieldValues.update({
@@ -3975,10 +3974,7 @@ const importRepositoryCases = async (
                 value: toInputJsonValue(processedValue),
               },
             });
-            createdCaseFieldValueIdByFieldId.set(
-              fieldId,
-              createdFieldValue.id
-            );
+            createdCaseFieldValueIdByFieldId.set(fieldId, createdFieldValue.id);
           }
         }
 
