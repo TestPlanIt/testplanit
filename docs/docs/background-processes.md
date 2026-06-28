@@ -241,6 +241,7 @@ Most workers run with a 512 MB `max_memory_restart` ceiling and a 384 MB old-spa
 | Worker | `max_memory_restart` | `--max-old-space-size` | Why |
 | --- | --- | --- | --- |
 | Sync Worker | 1G | 768M | Loads integration adapters + Elasticsearch sync extensions |
+| Testmo Import Worker | 4G (configurable) | 3072M (configurable) | Streams and analyzes multi-GB Testmo JSON exports; the default 512 MB tier OOM-killed large imports. Override both via `TESTMO_IMPORT_MAX_MEMORY_RESTART` and `TESTMO_IMPORT_MAX_OLD_SPACE_MB` for very large exports (e.g. `18G` / `16384`), host RAM permitting |
 | Forecast Worker | 2G | 1536M | Recomputes run/case forecasts over large historical result sets; the default 512 MB tier was OOM-killed under production data volumes |
 | SCIM Access Recompute Worker | 2G | 1536M | Loads the full ZenStack runtime to recompute `User.access` tiers from IdP group mappings; boots to ~1.4 GB RSS at idle, so the default 512 MB tier triggered a tight PM2 SIGINT/restart loop rather than a real OOM |
 | Audit Log Worker | 3G | 2304M | The CDC correlation loop (Loop B) caches one raw Prisma client per tenant in multi-tenant mode — one Rust query engine per tenant, the same per-tenant footprint as the webhook outbox worker. Harmless headroom in single-tenant mode (a single client). |
@@ -336,6 +337,11 @@ You can configure concurrency for each worker using environment variables:
 # Testmo Import Worker (memory-intensive, default: 1)
 # Keep this low (1-2) as imports consume significant memory
 TESTMO_IMPORT_CONCURRENCY=1
+
+# Testmo Import Worker memory ceiling (defaults: 4G restart / 3072 MB heap).
+# Raise both for very large multi-GB exports, host RAM permitting.
+# TESTMO_IMPORT_MAX_MEMORY_RESTART=18G
+# TESTMO_IMPORT_MAX_OLD_SPACE_MB=16384
 
 # Sync Worker (I/O-intensive, API rate-limited, default: 2)
 # Moderate values (2-5) work well for external API calls

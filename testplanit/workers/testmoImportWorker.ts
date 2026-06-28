@@ -3413,6 +3413,68 @@ const importRepositoryCases = async (
       // coverage for the import as a whole. SET LOCAL only inside a
       // $transaction (Pitfall A).
       await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
+
+      // Phase 13 perf — batch-prefetch the existing-case dedup lookup for
+      // this chunk instead of issuing one findFirst per record against the
+      // (potentially multi-million row) repositoryCases table. Memory stays
+      // bounded by the chunk size: we hold at most one chunk's worth of
+      // {id, isDeleted} entries, freed when the chunk completes. The map is
+      // updated as cases are created below so intra-chunk duplicate
+      // (projectId, name, className) keys still dedupe exactly as the
+      // original per-row, self-write-visible findFirst did.
+      // NUL delimiter: Postgres text columns cannot contain \u0000, so this
+      // composite key is collision-free across name/className boundaries.
+      const existingCaseKey = (
+        pid: number,
+        name: string,
+        cls: string | null
+      ): string => `${pid}\u0000${name}\u0000${cls ?? ""}`;
+      const existingCaseByKey = new Map<
+        string,
+        { id: number; isDeleted: boolean }
+      >();
+      {
+        const prefetchProjectIds = new Set<number>();
+        const prefetchNames = new Set<string>();
+        for (const record of records) {
+          const projectSourceId = toNumberValue(record.project_id);
+          if (projectSourceId === null) {
+            continue;
+          }
+          const projectId = projectIdMap.get(projectSourceId);
+          if (!projectId) {
+            continue;
+          }
+          const caseName =
+            toStringValue(record.name) ??
+            `Imported Case ${toNumberValue(record.id) ?? 0}`;
+          prefetchProjectIds.add(projectId);
+          prefetchNames.add(caseName);
+        }
+        if (prefetchProjectIds.size > 0 && prefetchNames.size > 0) {
+          const existingRows = await tx.repositoryCases.findMany({
+            where: {
+              source: "MANUAL",
+              projectId: { in: Array.from(prefetchProjectIds) },
+              name: { in: Array.from(prefetchNames) },
+            },
+            select: {
+              id: true,
+              projectId: true,
+              name: true,
+              className: true,
+              isDeleted: true,
+            },
+          });
+          for (const row of existingRows) {
+            existingCaseByKey.set(
+              existingCaseKey(row.projectId, row.name, row.className),
+              { id: row.id, isDeleted: row.isDeleted }
+            );
+          }
+        }
+      }
+
       for (const record of records) {
         const caseSourceId = toNumberValue(record.id);
         const projectSourceId = toNumberValue(record.project_id);
@@ -3535,15 +3597,13 @@ const importRepositoryCases = async (
 
         // Check for existing case matching the unique constraint
         // (projectId, name, className, source) — including soft-deleted
-        // records since the constraint does not include isDeleted
-        const existing = await tx.repositoryCases.findFirst({
-          where: {
-            projectId,
-            name: caseName,
-            className: className ?? null,
-            source: "MANUAL",
-          },
-        });
+        // records since the constraint does not include isDeleted. Resolved
+        // from the chunk prefetch map (updated as cases are created below)
+        // rather than a per-row findFirst.
+        const existing =
+          existingCaseByKey.get(
+            existingCaseKey(projectId, caseName, className ?? null)
+          ) ?? null;
 
         if (existing) {
           // Restore soft-deleted cases so they can be reused
@@ -3694,6 +3754,18 @@ const importRepositoryCases = async (
         if (className) {
           caseKeyMap.set(`${projectSourceId}:${className}`, repositoryCase.id);
         }
+        // Keep the chunk dedup map current so a later record in this same
+        // chunk with the same (projectId, name, className) maps to this row
+        // instead of attempting a duplicate insert.
+        existingCaseByKey.set(
+          existingCaseKey(projectId, caseName, className ?? null),
+          { id: repositoryCase.id, isDeleted: false }
+        );
+        // Track field values created for this case so the multi-select pass
+        // below can resolve existing values in memory instead of issuing a
+        // findFirst per (case, field). Scoped per record — freed each
+        // iteration, so memory does not grow with the import.
+        const createdCaseFieldValueIdByFieldId = new Map<number, number>();
         const projectTemplateAssignments =
           templateAssignmentsByProject.get(projectId) ?? new Set<number>();
         projectTemplateAssignments.add(resolvedTemplateId);
@@ -3805,13 +3877,14 @@ const importRepositoryCases = async (
             continue;
           }
 
-          await tx.caseFieldValues.create({
+          const createdFieldValue = await tx.caseFieldValues.create({
             data: {
               testCaseId: repositoryCase.id,
               fieldId,
               value: toInputJsonValue(processedValue),
             },
           });
+          createdCaseFieldValueIdByFieldId.set(fieldId, createdFieldValue.id);
         }
 
         // Process multi-select values from repository_case_values dataset
@@ -3878,31 +3951,30 @@ const importRepositoryCases = async (
             continue;
           }
 
-          // Check if we already created a value for this field from custom_ fields
-          const existingValue = await tx.caseFieldValues.findFirst({
-            where: {
-              testCaseId: repositoryCase.id,
-              fieldId,
-            },
-          });
+          // Resolve any value already created for this field from the
+          // custom_ pass above via the per-record map. The case was created
+          // in this transaction, so no other source of pre-existing values
+          // is possible — this replaces a per-(case, field) findFirst.
+          const existingValueId = createdCaseFieldValueIdByFieldId.get(fieldId);
 
-          if (existingValue) {
+          if (existingValueId !== undefined) {
             await tx.caseFieldValues.update({
               where: {
-                id: existingValue.id,
+                id: existingValueId,
               },
               data: {
                 value: toInputJsonValue(processedValue),
               },
             });
           } else {
-            await tx.caseFieldValues.create({
+            const createdFieldValue = await tx.caseFieldValues.create({
               data: {
                 testCaseId: repositoryCase.id,
                 fieldId,
                 value: toInputJsonValue(processedValue),
               },
             });
+            createdCaseFieldValueIdByFieldId.set(fieldId, createdFieldValue.id);
           }
         }
 
@@ -5745,7 +5817,11 @@ async function processImportMode(
       if (statusMessage) {
         data.statusMessage = statusMessage;
       }
-      await db.testmoImportJob.update({
+      // Cast the update method to a non-generic signature: under TS 6 the v3
+      // ORM's generic `update` type instantiates too deeply here (TS2589) once
+      // the surrounding file carries the import's added Map/select types. The
+      // args are already validated via the TestmoImportJobUpdateArgs cast.
+      await (db.testmoImportJob.update as (args: unknown) => Promise<unknown>)({
         where: { id: jobId },
         data,
       } as TestmoImportJobUpdateArgs);

@@ -342,7 +342,8 @@ User and group data:
 **Solutions**:
 - Large imports may take hours - be patient
 - Check system resources (CPU, memory, database)
-- Review background worker logs
+- Review background worker logs (watch for `JavaScript heap out of memory` or PM2 restart loops on the Testmo import worker)
+- For very large (multi-GB) exports, raise the import worker's memory ceiling via `TESTMO_IMPORT_MAX_MEMORY_RESTART` and `TESTMO_IMPORT_MAX_OLD_SPACE_MB` (see [Background Processes → Worker memory tiers](./background-processes.md#worker-memory-tiers))
 - Check for database connection issues
 - Contact administrator to check worker status
 
