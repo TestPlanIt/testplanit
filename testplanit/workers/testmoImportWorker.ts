@@ -5817,7 +5817,11 @@ async function processImportMode(
       if (statusMessage) {
         data.statusMessage = statusMessage;
       }
-      await db.testmoImportJob.update({
+      // Cast the update method to a non-generic signature: under TS 6 the v3
+      // ORM's generic `update` type instantiates too deeply here (TS2589) once
+      // the surrounding file carries the import's added Map/select types. The
+      // args are already validated via the TestmoImportJobUpdateArgs cast.
+      await (db.testmoImportJob.update as (args: unknown) => Promise<unknown>)({
         where: { id: jobId },
         data,
       } as TestmoImportJobUpdateArgs);
