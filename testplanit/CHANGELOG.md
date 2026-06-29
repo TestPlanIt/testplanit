@@ -1,3 +1,9 @@
+## [0.40.11](https://github.com/TestPlanIt/testplanit/compare/v0.40.10...v0.40.11) (2026-06-29)
+
+### Bug Fixes
+
+* **forecast:** ignore soft-deleted test cases in forecast calculations ([#478](https://github.com/TestPlanIt/testplanit/issues/478)) ([4b6a92a](https://github.com/TestPlanIt/testplanit/commit/4b6a92a342afa2f22031d62f1440e1c615dd7da8))
+
 ## [0.40.10](https://github.com/TestPlanIt/testplanit/compare/v0.40.9...v0.40.10) (2026-06-26)
 
 ### Bug Fixes
