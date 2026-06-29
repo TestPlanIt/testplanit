@@ -2120,6 +2120,7 @@ model ResultFieldValues {
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
     @@allow('create', auth() != null)
+    @@index([testCaseId])
 }
 
 model Attachments {
@@ -2152,6 +2153,13 @@ model Attachments {
     @@deny('all', auth().access == 'NONE')
     @@allow('all', auth().access == 'ADMIN')
     @@allow('create, read, update', auth().access != null)
+    @@index([testCaseId])
+    @@index([sessionId])
+    @@index([sessionResultsId])
+    @@index([testRunsId])
+    @@index([testRunResultsId])
+    @@index([testRunStepResultId])
+    @@index([junitTestResultId])
 }
 
 model Steps {
@@ -3081,6 +3089,7 @@ model TestRunResults {
     )
 
     @@allow('all', auth().access == 'ADMIN')
+    @@index([testRunId])
 }
 
 model TestRunStepResults {
@@ -3914,6 +3923,8 @@ model JUnitProperty {
 
     @@allow('create,update', auth().id == createdById)
     @@allow('all', auth().access == 'ADMIN')
+    @@index([testSuiteId])
+    @@index([repositoryCaseId])
 }
 
 model JUnitAttachment {
@@ -3952,6 +3963,7 @@ model JUnitAttachment {
 
     @@allow('create,update', auth().id == createdById)
     @@allow('all', auth().access == 'ADMIN')
+    @@index([repositoryCaseId])
 }
 
 model JUnitTestStep {
@@ -3991,6 +4003,7 @@ model JUnitTestStep {
 
     @@allow('create,update', auth().id == createdById)
     @@allow('all', auth().access == 'ADMIN')
+    @@index([repositoryCaseId])
 }
 
 enum JUnitResultType {
