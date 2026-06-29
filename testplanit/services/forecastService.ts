@@ -69,11 +69,19 @@ export async function updateRepositoryCaseForecast(
     if (process.env.DEBUG_FORECAST)
       console.log("[Forecast] Group case IDs:", uniqueCaseIds);
 
-    // 2. Fetch all cases in the group with their source
+    // 2. Fetch all NON-DELETED cases in the group with their source.
+    // Soft-deleted cases must not pool their historical results into the
+    // group average, nor have their own forecast columns recalculated. We
+    // still keep `uniqueCaseIds` (which may include a just-deleted member)
+    // for affected-test-run discovery below, so a run that contained the
+    // deleted case still gets refreshed to drop its contribution.
     const allCases = await rawDb.repositoryCases.findMany({
-      where: { id: { in: uniqueCaseIds } },
+      where: { id: { in: uniqueCaseIds }, isDeleted: false },
       select: { id: true, source: true },
     });
+    // The live (non-deleted) group members — the only cases whose forecast
+    // columns we write back below.
+    const liveCaseIds = allCases.map((c) => c.id);
     if (process.env.DEBUG_FORECAST)
       console.log("[Forecast] allCases:", allCases);
 
@@ -154,9 +162,9 @@ export async function updateRepositoryCaseForecast(
     if (process.env.DEBUG_FORECAST)
       console.log("[Forecast] avgManual:", avgManual, "avgJunit:", avgJunit);
 
-    // 5. Update only cases whose forecast values have actually changed
+    // 5. Update only live cases whose forecast values have actually changed
     const currentForecasts = await rawDb.repositoryCases.findMany({
-      where: { id: { in: uniqueCaseIds } },
+      where: { id: { in: liveCaseIds } },
       select: { id: true, forecastManual: true, forecastAutomated: true },
     });
     for (const current of currentForecasts) {
@@ -234,7 +242,8 @@ export async function updateTestRunForecast(
   try {
     // 1. Fetch all TestRunCases for this TestRun, including their status system name
     let testRunCasesWithDetails = await rawDb.testRunCases.findMany({
-      where: { testRunId: testRunId },
+      // Exclude soft-deleted run memberships (cases removed from the run).
+      where: { testRunId: testRunId, isDeleted: false },
       select: {
         repositoryCaseId: true,
         status: {
@@ -327,9 +336,11 @@ export async function updateTestRunForecast(
       return;
     }
 
-    // 3. Fetch the RepositoryCases for these filtered IDs
+    // 3. Fetch the live RepositoryCases for these filtered IDs. A case that
+    // is soft-deleted from the repository must not contribute its forecast
+    // to the run total, even if a stale run membership still references it.
     const repositoryCases = await rawDb.repositoryCases.findMany({
-      where: { id: { in: repositoryCaseIdsToForecast } },
+      where: { id: { in: repositoryCaseIdsToForecast }, isDeleted: false },
       select: { forecastManual: true, forecastAutomated: true },
     });
 

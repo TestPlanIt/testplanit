@@ -52,10 +52,11 @@ describe("testRunService", () => {
       await updateTestRunForecast(1);
 
       expect(mockFindMany).toHaveBeenCalledWith({
-        where: { testRunId: 1 },
+        where: { testRunId: 1, isDeleted: false },
         include: {
           repositoryCase: {
             select: {
+              isDeleted: true,
               forecastManual: true,
               forecastAutomated: true,
             },
@@ -133,6 +134,44 @@ describe("testRunService", () => {
         where: { id: 1 },
         data: {
           forecastManual: 100,
+          forecastAutomated: 50,
+        },
+      });
+
+      consoleSpy.mockRestore();
+    });
+
+    it("should exclude soft-deleted repository cases from the forecast", async () => {
+      mockFindMany.mockResolvedValue([
+        {
+          id: 1,
+          testRunId: 1,
+          repositoryCase: {
+            isDeleted: false,
+            forecastManual: 100,
+            forecastAutomated: 50,
+          },
+        },
+        {
+          id: 2,
+          testRunId: 1,
+          // Soft-deleted repository case — must not contribute to the total.
+          repositoryCase: {
+            isDeleted: true,
+            forecastManual: 999,
+            forecastAutomated: 999,
+          },
+        },
+      ]);
+      mockUpdate.mockResolvedValue({});
+      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+      await updateTestRunForecast(1);
+
+      expect(mockUpdate).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          forecastManual: 100, // only the live case counts
           forecastAutomated: 50,
         },
       });
