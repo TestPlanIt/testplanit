@@ -680,9 +680,17 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       }
 
       testProvider = integration.provider;
-      authType = integration.authType;
+      // The admin may be testing values edited in the form (including a
+      // changed auth type). Prefer what the request supplies and fall back to
+      // the stored integration only for fields the form didn't provide (e.g.
+      // an unchanged, still-encrypted secret). Previously the stored values
+      // unconditionally overrode the request, so editing an existing
+      // integration — or switching its auth type — could never be tested and
+      // always failed against the originally-saved config.
+      authType = body.authType ?? integration.authType;
 
-      // Decrypt stored credentials for testing
+      // Decrypt stored credentials as a base; request-provided (form) values win.
+      const storedCredentials: Record<string, string> = {};
       if (
         integration.credentials &&
         typeof integration.credentials === "object"
@@ -694,7 +702,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         ) {
           try {
             const decrypted = await decrypt(integration.credentials.encrypted);
-            Object.assign(testCredentials, JSON.parse(decrypted));
+            Object.assign(storedCredentials, JSON.parse(decrypted));
           } catch (e) {
             console.error("Failed to decrypt credentials:", e);
           }
@@ -708,26 +716,33 @@ export const POST = withAuditContext(async (req: NextRequest) => {
             if (value && typeof value === "string") {
               try {
                 // Check if the value is encrypted using the utility function
-                if (isEncrypted(value)) {
-                  testCredentials[key] = await decrypt(value);
-                } else {
-                  // If not encrypted, use as-is
-                  testCredentials[key] = value;
-                }
+                storedCredentials[key] = isEncrypted(value)
+                  ? await decrypt(value)
+                  : value;
               } catch {
                 // If decryption fails, use the value as-is
                 console.warn(
                   `Failed to decrypt credential ${key}, using as-is`
                 );
-                testCredentials[key] = value;
+                storedCredentials[key] = value;
               }
             }
           }
         }
       }
+      // Fill only the credentials the form did not supply (request wins).
+      for (const [key, value] of Object.entries(storedCredentials)) {
+        if (testCredentials[key] === undefined || testCredentials[key] === "") {
+          testCredentials[key] = value;
+        }
+      }
 
       if (integration.settings && typeof integration.settings === "object") {
-        testSettings = integration.settings as Record<string, string>;
+        // Stored settings as a base; request-provided settings override them.
+        testSettings = {
+          ...(integration.settings as Record<string, string>),
+          ...testSettings,
+        };
       }
     }
 
