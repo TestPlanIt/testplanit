@@ -121,6 +121,9 @@ export function IntegrationModal({
   });
 
   useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
     if (integration) {
       form.reset({
         name: integration.name,
@@ -135,8 +138,23 @@ export function IntegrationModal({
             : {},
       });
       setSelectedType(integration.provider);
+    } else {
+      // Opening for a NEW integration: clear any state left over from a
+      // prior edit session in this (persistent) modal. Without this, stale
+      // credentials/settings/authType leak into the create flow and produce
+      // a misleading "missing required configuration" error on Test
+      // Connection even though the visible fields look filled in.
+      form.reset({
+        name: "",
+        provider: undefined,
+        authType: undefined,
+        credentials: {},
+        settings: {},
+      });
+      setSelectedType(null);
     }
-  }, [integration, form]);
+    setTestPassed(false);
+  }, [isOpen, integration, form]);
 
   const handleTestConnection = async () => {
     setIsTesting(true);
