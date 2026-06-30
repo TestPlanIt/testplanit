@@ -34,7 +34,6 @@ import {
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
-import { useDelayedLoading } from "~/lib/hooks/useDelayedLoading";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 
 export default function ProjectIssueList() {
@@ -764,7 +763,7 @@ function ProjectIssues() {
       testRuns: t("common.fields.testRuns"),
       integration: t("common.fields.integration"),
     },
-    isLoadingCounts: useDelayedLoading(isLoadingCounts),
+    isLoadingCounts,
     hideSyncedFields: onlySimpleUrl,
   });
 
