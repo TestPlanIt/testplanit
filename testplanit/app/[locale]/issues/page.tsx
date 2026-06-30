@@ -31,6 +31,7 @@ import {
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
+import { useDelayedLoading } from "~/lib/hooks/useDelayedLoading";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 
 export default function IssueList() {
@@ -557,7 +558,7 @@ function Issues() {
       projects: t("common.fields.projects"),
       integration: t("common.fields.integration"),
     },
-    isLoadingCounts,
+    isLoadingCounts: useDelayedLoading(isLoadingCounts),
   });
 
   if (status === "loading" || !accessFilterReady) return null;
