@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { baseDb } from "~/lib/db";
+import { paginatedFindManyWithRelations } from "~/lib/paginatedFindMany";
 import { authOptions } from "~/server/auth";
 
 // Accepts the same `where` / `orderBy` / `select` that the ZenStack
@@ -108,10 +109,10 @@ export async function POST(
     const [totalCount, cases] = await Promise.all([
       db.repositoryCases.count({ where: enforcedWhere }),
       select
-        ? db.repositoryCases.findMany({
+        ? paginatedFindManyWithRelations(db.repositoryCases, {
             where: enforcedWhere,
-            orderBy: orderBy as never,
-            select: select as never,
+            orderBy,
+            select,
             skip,
             take,
           })

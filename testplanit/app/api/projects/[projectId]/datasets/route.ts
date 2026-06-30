@@ -6,6 +6,7 @@ import { getEnhancedDb } from "~/lib/auth/utils";
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
+import { paginatedFindManyWithRelations } from "~/lib/paginatedFindMany";
 import { sharedDatasetCreateSchema } from "~/lib/schemas/sharedDatasetCreateSchema";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
@@ -74,7 +75,7 @@ export async function GET(
     };
 
     const [items, total] = await Promise.all([
-      db.dataSet.findMany({
+      paginatedFindManyWithRelations(db.dataSet, {
         where,
         orderBy: { name: "asc" },
         skip: (page - 1) * pageSize,
