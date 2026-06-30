@@ -219,4 +219,29 @@ describe("createTestCaseVersionInTransaction", () => {
     // And the new field is also there.
     expect(data).toHaveProperty("parameters");
   });
+
+  it("propagates a unique-constraint error without re-querying the aborted transaction", async () => {
+    const fixture = buildTestCaseFixture();
+    const { tx, create, findUnique } = buildTx(fixture);
+
+    // Simulate the version insert hitting the (repositoryCaseId, version)
+    // unique constraint. This runs inside the caller's interactive
+    // transaction, so the violation poisons the whole transaction. The helper
+    // must surface this original error directly — it must NOT swallow it and
+    // run a follow-up findUnique/create on the now-aborted transaction (which
+    // would only yield the confusing "current transaction is aborted" 25P02).
+    const uniqueErr = Object.assign(new Error("Unique constraint failed"), {
+      code: "P2002",
+    });
+    create.mockRejectedValueOnce(uniqueErr);
+
+    await expect(
+      createTestCaseVersionInTransaction(tx, 1, { version: 1 })
+    ).rejects.toBe(uniqueErr);
+
+    // Exactly one fetch (the initial snapshot read) and one insert attempt —
+    // no second findUnique refetch, no retried create on the aborted tx.
+    expect(findUnique).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledTimes(1);
+  });
 });

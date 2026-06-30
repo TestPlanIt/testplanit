@@ -526,33 +526,51 @@ const processor = async (
           select: { id: true },
         });
 
+        // `existingCase` only matches LIVE rows, so it answers "is there a
+        // visible duplicate?" — the trigger for the user's skip choice.
+        if (existingCase && job.data.conflictResolution === "skip") {
+          result.skippedCount = (result.skippedCount ?? 0) + 1;
+          continue;
+        }
+
+        // Resolve a target name that is free against BOTH live and
+        // soft-deleted cases, then always create a brand-new, distinct case
+        // below — we never resurrect a tombstone.
+        //
+        // Why tombstones matter: RepositoryCases
+        // @@unique([projectId, name, className, source]) covers soft-deleted
+        // rows. If a previously-deleted case still holds this name, creating
+        // with the same name would 23505. The old design worked around that by
+        // reusing (resurrecting) the dead case's id — which silently inherited
+        // its stale steps, field values, version history (RepositoryCaseVersions
+        // are never deleted) and run links. Instead we disambiguate with a
+        // "(copy N)" suffix until the name is free, guaranteeing a clean,
+        // independent case. `movingSourceFilter` excludes a same-project move's
+        // own sources, which stay live until they are soft-deleted after the
+        // loop.
+        const nameIsTaken = async (candidate: string): Promise<boolean> => {
+          const row = await prisma.repositoryCases.findFirst({
+            where: {
+              projectId: job.data.targetProjectId,
+              name: candidate,
+              ...classNameWhere,
+              source: sourceCase.source,
+              ...movingSourceFilter,
+            },
+            select: { id: true },
+          });
+          return row !== null;
+        };
+
         let caseName = sourceCase.name;
-        if (existingCase) {
-          if (job.data.conflictResolution === "skip") {
-            result.skippedCount = (result.skippedCount ?? 0) + 1;
-            continue;
-          } else if (job.data.conflictResolution === "rename") {
-            // Find a unique name with incrementing suffix
-            let suffix = 1;
-            let candidateName = `${sourceCase.name} (copy)`;
-            while (true) {
-              const nameExists = await prisma.repositoryCases.findFirst({
-                where: {
-                  projectId: job.data.targetProjectId,
-                  name: candidateName,
-                  ...classNameWhere,
-                  source: sourceCase.source,
-                  isDeleted: false,
-                  ...movingSourceFilter,
-                },
-                select: { id: true },
-              });
-              if (!nameExists) break;
-              suffix++;
-              candidateName = `${sourceCase.name} (copy ${suffix})`;
-            }
-            caseName = candidateName;
+        if (await nameIsTaken(caseName)) {
+          let suffix = 1;
+          let candidateName = `${sourceCase.name} (copy)`;
+          while (await nameIsTaken(candidateName)) {
+            suffix++;
+            candidateName = `${sourceCase.name} (copy ${suffix})`;
           }
+          caseName = candidateName;
         }
 
         // Determine target folder for this case (either from folderTree map or flat targetFolderId)
@@ -609,13 +627,13 @@ const processor = async (
               tenantId: job.data?.tenantId ?? getCurrentTenantId() ?? null,
             }
           )}, true)`;
-          // a. Create-or-restore the target RepositoryCases row. A prior
-          //    soft-deleted case at the same (projectId, name, className,
-          //    source) tuple (e.g. the user previously deleted a copy
-          //    with the same name) gets resurrected with the fresh
-          //    payload instead of 23505ing. Prisma's compound-unique
-          //    upsert rejects null for nullable members like `className`,
-          //    so the find-then-branch pattern is the typesafe path.
+          // a. Create the target RepositoryCases row. `caseName` was already
+          //    disambiguated above to be free against both live and
+          //    soft-deleted cases, so this create cannot collide on the
+          //    (projectId, name, className, source) unique tuple. We always
+          //    create a brand-new, distinct case and never resurrect a
+          //    tombstoned one (which would inherit its stale children and
+          //    version history).
           const caseFields = {
             repositoryId: job.data.targetRepositoryId,
             folderId: caseFolderId,
@@ -627,30 +645,15 @@ const processor = async (
             order: caseOrder,
             currentVersion: 1,
           };
-          const softDeletedExisting = await tx.repositoryCases.findFirst({
-            where: {
+          const newCase = await tx.repositoryCases.create({
+            data: {
               projectId: job.data.targetProjectId,
               name: caseName,
               className: sourceCase.className,
               source: sourceCase.source,
-              isDeleted: true,
+              ...caseFields,
             },
-            select: { id: true },
           });
-          const newCase = softDeletedExisting
-            ? await tx.repositoryCases.update({
-                where: { id: softDeletedExisting.id },
-                data: { ...caseFields, isDeleted: false },
-              })
-            : await tx.repositoryCases.create({
-                data: {
-                  projectId: job.data.targetProjectId,
-                  name: caseName,
-                  className: sourceCase.className,
-                  source: sourceCase.source,
-                  ...caseFields,
-                },
-              });
 
           // b. Create Steps
           for (const step of sourceCase.steps) {
@@ -740,7 +743,9 @@ const processor = async (
 
           // g. Version handling
           if (job.data.operation === "copy") {
-            // Copy: version 1, fresh history
+            // Copy: version 1, fresh history. The case was just created (never
+            // resurrected — see step a), so it owns no prior versions and
+            // version 1 is always free on RepositoryCaseVersions.
             await tx.repositoryCases.update({
               where: { id: newCase.id },
               data: { currentVersion: 1 },
