@@ -72,81 +72,78 @@ export async function POST(request: Request) {
           ],
         };
 
-    // For each tag, fetch a small sample of projects from different sources
-    const projectsData = await Promise.all(
-      tagIds.map(async (tagId) => {
-        // Fetch all distinct project IDs from each relation type
-        // No need to limit since we're using direct Prisma queries (no bind variable issues)
-        const [caseProjectIds, sessionProjectIds, runProjectIds] =
-          await Promise.all([
-            baseDb.repositoryCases.findMany({
-              where: {
-                isDeleted: false,
-                caseTags: { some: { tag: { id: tagId } } },
-              },
-              select: { projectId: true },
-              distinct: ["projectId"],
-            }),
-            baseDb.sessions.findMany({
-              where: {
-                isDeleted: false,
-                tags: { some: { id: tagId } },
-              },
-              select: { projectId: true },
-              distinct: ["projectId"],
-            }),
-            baseDb.testRuns.findMany({
-              where: {
-                isDeleted: false,
-                tags: { some: { id: tagId } },
-              },
-              select: { projectId: true },
-              distinct: ["projectId"],
-            }),
-          ]);
-
-        // Combine and deduplicate project IDs
-        const uniqueProjectIds = [
-          ...new Set([
-            ...caseProjectIds.map((c) => c.projectId),
-            ...sessionProjectIds.map((s) => s.projectId),
-            ...runProjectIds.map((r) => r.projectId),
-          ]),
-        ];
-
-        // Fetch actual project data with access control
-        if (uniqueProjectIds.length === 0) {
-          return { tagId, projects: [] };
-        }
-
-        const projects = await baseDb.projects.findMany({
-          where: {
-            id: { in: uniqueProjectIds },
-            isDeleted: false,
-            ...projectAccessWhere,
-          },
-          select: {
-            id: true,
-            name: true,
-            iconUrl: true,
-          },
-        });
-
-        return { tagId, projects };
-      })
-    );
-
-    // Convert to map for easy lookup
-    const projectsMap = projectsData.reduce(
-      (acc, item) => {
-        acc[item.tagId] = item.projects;
-        return acc;
+    // Fetch all requested tags with the project ids they touch, driven from
+    // the tag side so the m2m relation loads are join lookups keyed by the tag
+    // ids rather than ZenStack v3 correlated-EXISTS scans of the large
+    // RepositoryCases / TestRuns tables (which previously ran once per tag).
+    const tags = await baseDb.tags.findMany({
+      where: { id: { in: tagIds } },
+      select: {
+        id: true,
+        caseTags: {
+          where: { case: { isDeleted: false } },
+          select: { case: { select: { projectId: true } } },
+        },
+        sessions: {
+          where: { isDeleted: false },
+          select: { projectId: true },
+        },
+        testRuns: {
+          where: { isDeleted: false },
+          select: { projectId: true },
+        },
       },
-      {} as Record<
-        number,
-        Array<{ id: number; name: string; iconUrl: string | null }>
-      >
-    );
+    });
+
+    // Collect the distinct project ids each tag touches, plus the union.
+    const projectIdsByTag = new Map<number, Set<number>>();
+    const allProjectIds = new Set<number>();
+    for (const tag of tags) {
+      const ids = new Set<number>();
+      for (const ct of tag.caseTags) {
+        const pid = ct.case?.projectId;
+        if (pid != null) ids.add(pid);
+      }
+      for (const s of tag.sessions) {
+        if (s.projectId != null) ids.add(s.projectId);
+      }
+      for (const r of tag.testRuns) {
+        if (r.projectId != null) ids.add(r.projectId);
+      }
+      projectIdsByTag.set(tag.id, ids);
+      ids.forEach((id) => allProjectIds.add(id));
+    }
+
+    // Fetch the accessible projects once (access control applied here).
+    const accessibleProjects =
+      allProjectIds.size > 0
+        ? await baseDb.projects.findMany({
+            where: {
+              id: { in: Array.from(allProjectIds) },
+              isDeleted: false,
+              ...projectAccessWhere,
+            },
+            select: { id: true, name: true, iconUrl: true },
+          })
+        : [];
+    const projectById = new Map(accessibleProjects.map((p) => [p.id, p]));
+
+    // Build per-tag project lists (only accessible projects).
+    const projectsMap: Record<
+      number,
+      Array<{ id: number; name: string; iconUrl: string | null }>
+    > = {};
+    for (const tagId of tagIds) {
+      const ids = projectIdsByTag.get(tagId);
+      projectsMap[tagId] = ids
+        ? Array.from(ids)
+            .map((id) => projectById.get(id))
+            .filter(
+              (p): p is { id: number; name: string; iconUrl: string | null } =>
+                p != null
+            )
+        : [];
+    }
 
     return NextResponse.json({ projects: projectsMap });
   } catch (error) {
