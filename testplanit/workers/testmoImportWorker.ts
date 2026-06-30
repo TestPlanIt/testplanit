@@ -2219,19 +2219,13 @@ const importSessions = async (
     const IMPORT_SOURCE = "testmo";
     const importSourceId = String(sourceId);
 
-    // On re-import: match by importSourceId first (stable across snapshots).
-    // Fallback to name match for sessions that pre-date this field, and tag
-    // them with importSourceId so future re-imports find them by ID.
-    let existingSession = await tx.sessions.findFirst({
+    // Match by importSourceId — stable across re-imports.
+    // Run backfill-import-source-ids.ts once to tag existing records before
+    // re-importing; after that this lookup finds them directly.
+    const existingSession = await tx.sessions.findFirst({
       where: { projectId, importSource: IMPORT_SOURCE, importSourceId },
       select: { id: true },
     });
-    if (!existingSession) {
-      existingSession = await tx.sessions.findFirst({
-        where: { projectId, name, isDeleted: false, importSource: null },
-        select: { id: true },
-      });
-    }
 
     let sessionId: number;
     if (existingSession) {
@@ -3762,10 +3756,10 @@ const importRepositoryCases = async (
         const IMPORT_SOURCE = "testmo";
         const caseImportSourceId = String(caseSourceId);
 
-        // On re-import: match by importSourceId first (stable across snapshots).
-        // Fallback to name/className match for cases that pre-date this field,
-        // tagging them so future re-imports find them by ID.
-        let existingBySourceId = await tx.repositoryCases.findFirst({
+        // Match by importSourceId — stable across re-imports.
+        // Run backfill-import-source-ids.ts once to tag existing records before
+        // re-importing; after that this lookup finds them directly.
+        const existingBySourceId = await tx.repositoryCases.findFirst({
           where: {
             projectId,
             importSource: IMPORT_SOURCE,
@@ -3773,36 +3767,6 @@ const importRepositoryCases = async (
           },
           select: { id: true },
         });
-        if (!existingBySourceId) {
-          const nameMatch = await tx.repositoryCases.findFirst({
-            where: {
-              projectId,
-              name: caseName,
-              className: className ?? null,
-              isDeleted: false,
-              importSource: null,
-            },
-            select: { id: true },
-          });
-          if (nameMatch) {
-            await tx.repositoryCases.update({
-              where: { id: nameMatch.id },
-              data: {
-                importSource: IMPORT_SOURCE,
-                importSourceId: caseImportSourceId,
-                folderId: resolvedFolderId,
-                templateId: resolvedTemplateId,
-                stateId: resolvedWorkflowId,
-                estimate: normalizedEstimate ?? undefined,
-                order,
-                automated: toBooleanValue(record.automated ?? false),
-                isDeleted: false,
-                isArchived: false,
-              },
-            });
-            existingBySourceId = nameMatch;
-          }
-        }
 
         if (existingBySourceId) {
           caseIdMap.set(caseSourceId, existingBySourceId.id);
@@ -4479,35 +4443,13 @@ const importTestRuns = async (
     const IMPORT_SOURCE = "testmo";
     const runImportSourceId = String(sourceId);
 
-    // On re-import: match by importSourceId first, fall back to name match for
-    // runs that pre-date this field, tagging them so future re-imports use ID.
-    let existingRun = await tx.testRuns.findFirst({
+    // Match by importSourceId — stable across re-imports.
+    // Run backfill-import-source-ids.ts once to tag existing records before
+    // re-importing; after that this lookup finds them directly.
+    const existingRun = await tx.testRuns.findFirst({
       where: { projectId, importSource: IMPORT_SOURCE, importSourceId: runImportSourceId },
       select: { id: true },
     });
-    if (!existingRun) {
-      const nameMatch = await tx.testRuns.findFirst({
-        where: { projectId, name, isDeleted: false, importSource: null },
-        select: { id: true },
-      });
-      if (nameMatch) {
-        await tx.testRuns.update({
-          where: { id: nameMatch.id },
-          data: {
-            importSource: IMPORT_SOURCE,
-            importSourceId: runImportSourceId,
-            note: note ?? undefined,
-            stateId,
-            forecastManual: normalizedForecast ?? undefined,
-            elapsed: normalizedElapsed ?? undefined,
-            isCompleted,
-            completedAt: completedAt ?? undefined,
-            isDeleted: false,
-          },
-        });
-        existingRun = nameMatch;
-      }
-    }
 
     let createdRun: { id: number };
     if (existingRun) {
