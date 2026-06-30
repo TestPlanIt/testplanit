@@ -1,4 +1,5 @@
 import { baseDb } from "@/lib/db";
+import { getProjectRelevantIssueIds } from "@/lib/projectIssueIds";
 import { NextRequest } from "next/server";
 
 // Note: Project health uses custom milestone and issue-based logic
@@ -77,30 +78,23 @@ const DIMENSION_REGISTRY: Record<
         distinct: ["createdBy"],
       });
 
-      const issueCreators = await baseDb.issue.findMany({
-        where: {
-          OR: [
-            { repositoryCases: { some: { projectId: Number(projectId) } } },
-            {
-              sessions: {
-                some: { projectId: Number(projectId), isDeleted: false },
+      // Drive from the small issue<->entity join tables (see helper) rather
+      // than filtering the issue table by `{ relation: { some } }`, which
+      // ZenStack v3 compiles to correlated EXISTS scans of the large tables.
+      const relevantIssueIds = await getProjectRelevantIssueIds(
+        Number(projectId)
+      );
+      const issueCreators = relevantIssueIds.length
+        ? await baseDb.issue.findMany({
+            where: { id: { in: relevantIssueIds }, isDeleted: false },
+            select: {
+              createdBy: {
+                select: { id: true, name: true, email: true },
               },
             },
-            {
-              testRuns: {
-                some: { projectId: Number(projectId), isDeleted: false },
-              },
-            },
-          ],
-          isDeleted: false,
-        },
-        select: {
-          createdBy: {
-            select: { id: true, name: true, email: true },
-          },
-        },
-        distinct: ["createdById"],
-      });
+            distinct: ["createdById"],
+          })
+        : [];
 
       const allCreators = [
         ...milestoneCreators.map((m: any) => m.creator),
@@ -140,27 +134,17 @@ const DIMENSION_REGISTRY: Record<
         orderBy: { createdAt: "asc" },
       });
 
-      const issueDates = await baseDb.issue.findMany({
-        where: {
-          OR: [
-            { repositoryCases: { some: { projectId: Number(projectId) } } },
-            {
-              sessions: {
-                some: { projectId: Number(projectId), isDeleted: false },
-              },
-            },
-            {
-              testRuns: {
-                some: { projectId: Number(projectId), isDeleted: false },
-              },
-            },
-          ],
-          isDeleted: false,
-        },
-        select: { createdAt: true },
-        distinct: ["createdAt"],
-        orderBy: { createdAt: "asc" },
-      });
+      const relevantIssueIds = await getProjectRelevantIssueIds(
+        Number(projectId)
+      );
+      const issueDates = relevantIssueIds.length
+        ? await baseDb.issue.findMany({
+            where: { id: { in: relevantIssueIds }, isDeleted: false },
+            select: { createdAt: true },
+            distinct: ["createdAt"],
+            orderBy: { createdAt: "asc" },
+          })
+        : [];
 
       const allDates = [...milestoneDates, ...issueDates];
 
