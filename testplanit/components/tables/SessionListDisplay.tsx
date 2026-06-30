@@ -163,8 +163,7 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
     // Navigation handled by SessionTableDisplay
   }, []);
 
-  // Show skeleton while loading and count is undefined
-  if (isLoading && computedCount === undefined) {
+  if (isLoading) {
     return <Skeleton className="h-6 w-12" />;
   }
 

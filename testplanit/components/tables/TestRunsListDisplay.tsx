@@ -324,8 +324,7 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
     // Navigation handled inside rendered option link
   }, []);
 
-  // Show skeleton while loading and count is undefined
-  if (isLoading && computedCount === undefined) {
+  if (isLoading) {
     return <Skeleton className="h-6 w-12" />;
   }
 
