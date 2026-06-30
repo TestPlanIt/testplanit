@@ -406,6 +406,35 @@ Push to main → semantic-release analyzes commits → Tag + Release + Docker bu
 
 No manual intervention required. Just use conventional commit messages and releases happen automatically.
 
+### Beta / Pre-release Releases
+
+Pre-releases of an upcoming version (e.g. the `1.0` line) are cut from the
+long-lived **`beta`** branch and are distributed as **source only**. See
+[Build from Source](https://docs.testplanit.com/docs/building-from-source).
+
+Unlike stable releases (fully automated by semantic-release on `main`), betas
+use **manual tags**, so the target version is deliberate:
+
+1. Land the changes on the `beta` branch.
+2. Tag and push, incrementing the `-beta.N` counter each time:
+   ```bash
+   git tag v1.0.0-beta.1   # then v1.0.0-beta.2, v1.0.0-beta.3, ...
+   git push origin v1.0.0-beta.1
+   ```
+3. `beta-prerelease.yml` creates a GitHub **pre-release** for the tag, and
+   GitHub attaches the **Source code** (zip / tar.gz) archives automatically —
+   that pre-release is the distribution. **No Docker image is built**:
+   `release.yml` excludes hyphenated (prerelease) tags.
+
+**Version bump:** betas don't change the version automatically — you choose it
+in the tag. To reach `1.0.0`, at least one commit on the line must be a
+breaking change (`feat!:` / `BREAKING CHANGE:`), matching the Version Bump
+Rules above.
+
+**Graduation:** when the beta line is ready, merge `beta` → `main`. That cuts
+the normal stable release (`v1.0.0`) and builds images through the usual
+pipeline.
+
 ## Community
 
 ### Communication Channels
