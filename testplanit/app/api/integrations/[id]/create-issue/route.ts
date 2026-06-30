@@ -360,13 +360,10 @@ export async function POST(
       validatedData.testRunResultId ||
       validatedData.testRunStepResultId
     ) {
-      // Entity links to (re)connect on both create and update.
+      // Entity links to (re)connect on both create and update. The test-case
+      // link is handled separately via the RepositoryCaseIssue join after the
+      // upsert — the Issue model has no `repositoryCases` relation in v3.
       const linkConnects = {
-        ...(validatedData.testCaseId && {
-          repositoryCases: {
-            connect: { id: parseInt(validatedData.testCaseId) },
-          },
-        }),
         ...(validatedData.testRunId && {
           testRuns: {
             connect: { id: parseInt(validatedData.testRunId) },
@@ -442,6 +439,18 @@ export async function POST(
           ...linkConnects,
         },
       });
+
+      // Link the test case via the explicit RepositoryCaseIssue join — the
+      // Issue model has no `repositoryCases` relation in v3. Idempotent so a
+      // re-created/re-synced issue does not duplicate or error on the link.
+      if (validatedData.testCaseId) {
+        const caseId = parseInt(validatedData.testCaseId);
+        await baseDb.repositoryCaseIssue.upsert({
+          where: { caseId_issueId: { caseId, issueId: issue.id } },
+          create: { caseId, issueId: issue.id },
+          update: {},
+        });
+      }
 
       return NextResponse.json({
         ...createdIssue,

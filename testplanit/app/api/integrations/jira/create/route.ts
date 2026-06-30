@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       validatedData.sessionId
     ) {
       // Use upsert to handle cases where the issue already exists
-      await baseDb.issue.upsert({
+      const issue = await baseDb.issue.upsert({
         where: {
           externalId_integrationId: {
             externalId: createdIssue.key || createdIssue.id,
@@ -115,11 +115,6 @@ export async function POST(request: NextRequest) {
           projectId: validatedData.projectId || 0, // Project ID should be provided
           createdById: session.user.id,
           // Link to the appropriate entities
-          ...(validatedData.testCaseId && {
-            repositoryCases: {
-              connect: { id: parseInt(validatedData.testCaseId) },
-            },
-          }),
           ...(validatedData.testRunId && {
             testRuns: {
               connect: { id: parseInt(validatedData.testRunId) },
@@ -143,11 +138,6 @@ export async function POST(request: NextRequest) {
             priority: createdIssue.priority,
           } as JsonValue,
           // Also connect any new relationships
-          ...(validatedData.testCaseId && {
-            repositoryCases: {
-              connect: { id: parseInt(validatedData.testCaseId) },
-            },
-          }),
           ...(validatedData.testRunId && {
             testRuns: {
               connect: { id: parseInt(validatedData.testRunId) },
@@ -160,6 +150,18 @@ export async function POST(request: NextRequest) {
           }),
         },
       });
+
+      // Link the test case via the explicit RepositoryCaseIssue join — the
+      // Issue model has no `repositoryCases` relation in v3. Idempotent so a
+      // re-synced/re-created issue does not duplicate or error on the link.
+      if (validatedData.testCaseId) {
+        const caseId = parseInt(validatedData.testCaseId);
+        await baseDb.repositoryCaseIssue.upsert({
+          where: { caseId_issueId: { caseId, issueId: issue.id } },
+          create: { caseId, issueId: issue.id },
+          update: {},
+        });
+      }
     }
 
     return NextResponse.json({

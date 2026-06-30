@@ -144,8 +144,7 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
     // Navigation is handled by the embedded Link inside CaseDisplay.
   }, []);
 
-  // Show skeleton while loading and count is undefined
-  if (isLoading && computedCount === undefined) {
+  if (isLoading) {
     return <Skeleton className="h-6 w-12" />;
   }
 

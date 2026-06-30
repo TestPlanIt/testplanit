@@ -188,9 +188,15 @@ function Issues() {
     // ZenStack's access policies handle the permission filtering automatically.
     const relations = [
       {
-        repositoryCases: {
+        // `Issue.repositoryCases` does not exist in the v3 schema; the case
+        // link is the explicit `caseIssues` join (RepositoryCaseIssue ->
+        // case). Using the old relation name made ZenStack reject the whole
+        // findMany (422), which is why the issues list came back empty.
+        caseIssues: {
           some: {
-            isDeleted: false,
+            case: {
+              isDeleted: false,
+            },
           },
         },
       },
@@ -452,9 +458,9 @@ function Issues() {
         projects,
         aggregatedTestRunIds,
         projectIds,
-        repositoryCasesCount: counts?.repositoryCases ?? 0,
-        sessionsCount: counts?.sessions ?? 0,
-        testRunsCount: counts?.testRuns ?? 0,
+        repositoryCasesCount: counts?.repositoryCases,
+        sessionsCount: counts?.sessions,
+        testRunsCount: counts?.testRuns,
       };
     });
 

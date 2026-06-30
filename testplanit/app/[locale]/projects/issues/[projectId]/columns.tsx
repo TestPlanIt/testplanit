@@ -474,5 +474,6 @@ export function useIssueColumns({
     tSessions,
     tTestRuns,
     hideSyncedFields,
+    isLoadingCounts,
   ]);
 }

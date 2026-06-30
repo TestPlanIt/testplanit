@@ -471,6 +471,7 @@ export function useIssueColumns({
       tTestRuns,
       tProjects,
       tIntegration,
+      isLoadingCounts,
     ]
   );
 }

@@ -33,6 +33,9 @@ vi.mock("@/lib/db", () => ({
     issue: {
       upsert: vi.fn(),
     },
+    repositoryCaseIssue: {
+      upsert: vi.fn(),
+    },
   },
 }));
 
@@ -294,6 +297,13 @@ describe("POST /api/integrations/[id]/create-issue", () => {
       expect(response.status).toBe(200);
       expect(baseDb.issue.upsert).toHaveBeenCalledOnce();
       expect(data.internalId).toBe(99);
+      // The test case is linked via the explicit RepositoryCaseIssue join
+      // (Issue has no `repositoryCases` relation in v3), idempotently.
+      expect(baseDb.repositoryCaseIssue.upsert).toHaveBeenCalledWith({
+        where: { caseId_issueId: { caseId: 42, issueId: 99 } },
+        create: { caseId: 42, issueId: 99 },
+        update: {},
+      });
     });
 
     it("persists tracker columns (key in name, externalKey/Url/Status, issue type) so it renders like a synced issue", async () => {

@@ -5266,6 +5266,26 @@ const importTestRunStepResults = async (
 
     await ensureRepositoryCasesLoaded(caseIdsForChunk);
 
+    // Collect the repository case IDs for this chunk so we can pre-load their
+    // canonical steps. Steps are created once during importRepositoryCases; here
+    // we must reuse those rows rather than inserting a new Steps record for every
+    // run result — which would duplicate steps once per test run.
+    const repositoryCaseIdsForChunk = new Set<number>();
+    for (const testRunCaseId of caseIdsForChunk) {
+      const rcId = repositoryCaseIdByTestRunCaseId.get(testRunCaseId);
+      if (rcId) repositoryCaseIdsForChunk.add(rcId);
+    }
+
+    const existingStepRows = await db.steps.findMany({
+      where: { testCaseId: { in: [...repositoryCaseIdsForChunk] } },
+      select: { id: true, testCaseId: true, order: true },
+    });
+    // key: "caseId:order" → stepId
+    const stepIdByKey = new Map<string, number>();
+    for (const s of existingStepRows) {
+      stepIdByKey.set(`${s.testCaseId}:${s.order}`, s.id);
+    }
+
     for (const stepEntry of stepEntries) {
       const { resultId, testRunCaseId, displayOrder, record } = stepEntry;
 
@@ -5277,46 +5297,56 @@ const importTestRunStepResults = async (
         continue;
       }
 
-      const stepAction = toStringValue(record.text1);
-      const stepData = toStringValue(record.text2);
-      const expectedResult = toStringValue(record.text3);
-      const expectedResultData = toStringValue(record.text4);
+      const stepKey = `${repositoryCaseId}:${displayOrder}`;
+      let stepId = stepIdByKey.get(stepKey);
 
-      let stepContent: string | null = null;
-      if (stepAction || stepData) {
-        stepContent = stepAction || "";
-        if (stepData) {
-          stepContent += (stepContent ? "\n" : "") + `<data>${stepData}</data>`;
+      if (!stepId) {
+        // Canonical step missing (shouldn't happen normally) — create it so the
+        // result record has a valid stepId to reference.
+        const stepAction = toStringValue(record.text1);
+        const stepData = toStringValue(record.text2);
+        const expectedResult = toStringValue(record.text3);
+        const expectedResultData = toStringValue(record.text4);
+
+        let stepContent: string | null = null;
+        if (stepAction || stepData) {
+          stepContent = stepAction || "";
+          if (stepData) {
+            stepContent +=
+              (stepContent ? "\n" : "") + `<data>${stepData}</data>`;
+          }
         }
-      }
 
-      let expectedResultContent: string | null = null;
-      if (expectedResult || expectedResultData) {
-        expectedResultContent = expectedResult || "";
-        if (expectedResultData) {
-          expectedResultContent +=
-            (expectedResultContent ? "\n" : "") +
-            `<data>${expectedResultData}</data>`;
+        let expectedResultContent: string | null = null;
+        if (expectedResult || expectedResultData) {
+          expectedResultContent = expectedResult || "";
+          if (expectedResultData) {
+            expectedResultContent +=
+              (expectedResultContent ? "\n" : "") +
+              `<data>${expectedResultData}</data>`;
+          }
         }
+
+        const stepPayload = stepContent
+          ? convertToTipTapJsonValue(stepContent)
+          : null;
+        const expectedPayload = expectedResultContent
+          ? convertToTipTapJsonValue(expectedResultContent)
+          : null;
+
+        const createdStep = await db.steps.create({
+          data: {
+            testCaseId: repositoryCaseId,
+            order: displayOrder,
+            step: stepPayload ? JSON.stringify(stepPayload) : undefined,
+            expectedResult: expectedPayload
+              ? JSON.stringify(expectedPayload)
+              : undefined,
+          },
+        });
+        stepId = createdStep.id;
+        stepIdByKey.set(stepKey, stepId);
       }
-
-      const stepPayload = stepContent
-        ? convertToTipTapJsonValue(stepContent)
-        : null;
-      const expectedPayload = expectedResultContent
-        ? convertToTipTapJsonValue(expectedResultContent)
-        : null;
-
-      const createdStep = await db.steps.create({
-        data: {
-          testCaseId: repositoryCaseId,
-          order: displayOrder,
-          step: stepPayload ? JSON.stringify(stepPayload) : undefined,
-          expectedResult: expectedPayload
-            ? JSON.stringify(expectedPayload)
-            : undefined,
-        },
-      });
 
       const statusSourceId = toNumberValue(record.status_id);
       const statusId =
@@ -5331,7 +5361,7 @@ const importTestRunStepResults = async (
         await db.testRunStepResults.create({
           data: {
             testRunResultId: resultId,
-            stepId: createdStep.id,
+            stepId,
             statusId,
             notes: comment ? toInputJsonValue(comment) : undefined,
             elapsed: elapsed ?? undefined,
@@ -5343,7 +5373,7 @@ const importTestRunStepResults = async (
       } catch (error) {
         logMessage(context, "Skipping duplicate step result", {
           resultId,
-          stepId: createdStep.id,
+          stepId,
           error: String(error),
         });
         decrementEntityTotal(context, entityName);
