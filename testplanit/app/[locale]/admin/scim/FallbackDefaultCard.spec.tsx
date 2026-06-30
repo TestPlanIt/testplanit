@@ -117,7 +117,13 @@ const {
 });
 
 vi.mock("~/lib/hooks", () => ({
+  useFindManyScimToken: () => ({
+    data: [],
+    isLoading: false,
+    refetch: vi.fn(),
+  }),
   useFindUniqueAppConfig: () => ({ data: stableConfig }),
+  useUpdateScimToken: () => ({ mutateAsync: vi.fn() }),
   useUpsertAppConfig: () => ({
     mutateAsync: mockUpsertMutateAsync,
     isPending: false,
@@ -221,25 +227,6 @@ vi.mock("./ConflictLogTable", () => ({
 vi.mock("./MintDialog", () => ({
   MintDialog: () => null,
 }));
-
-// Additional hooks used by SCIM token list
-vi.mock("~/lib/hooks", async (importOriginal) => {
-  const original = (await importOriginal()) as Record<string, unknown>;
-  return {
-    ...original,
-    useFindManyScimToken: () => ({
-      data: [],
-      isLoading: false,
-      refetch: vi.fn(),
-    }),
-    useUpdateScimToken: () => ({ mutateAsync: vi.fn() }),
-    useFindUniqueAppConfig: () => ({ data: stableConfig }),
-    useUpsertAppConfig: () => ({
-      mutateAsync: mockUpsertMutateAsync,
-      isPending: false,
-    }),
-  };
-});
 
 import ScimTokensPage from "./page";
 
