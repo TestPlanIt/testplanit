@@ -1775,6 +1775,8 @@ model RepositoryCases {
     automated               Boolean                      @default(false)
     isArchived              Boolean                      @default(false)
     isDeleted               Boolean                      @default(false)
+    importSource            String?
+    importSourceId          String?
     currentVersion          Int                          @default(1)
     hasParameters           Boolean                      @default(false)
     repositoryCaseVersions  RepositoryCaseVersions[]
@@ -1800,6 +1802,7 @@ model RepositoryCases {
     sharedDataSetAssignment CaseSharedDataSetAssignment? @relation("CaseSharedDataSetAssignmentCase")
 
     @@unique([projectId, name, className, source])
+    @@unique([projectId, importSource, importSourceId])
     @@index([projectId, isDeleted, isArchived])
     @@index([folderId, order])
     @@index([repositoryId, isDeleted])
@@ -2350,6 +2353,8 @@ model Sessions {
     elapsed              Int?
     isCompleted          Boolean              @default(false)
     isDeleted            Boolean              @default(false)
+    importSource         String?
+    importSourceId       String?
     completedAt          DateTime?
     createdAt            DateTime             @default(now()) @db.Timestamptz(6)
     createdById          String
@@ -2364,6 +2369,7 @@ model Sessions {
     comments             Comment[]
     configurationGroupId String?
 
+    @@unique([projectId, importSource, importSourceId])
     @@index([projectId, isDeleted])
     @@index([createdById])
     @@index([assignedToId])
@@ -2745,6 +2751,8 @@ model TestRuns {
     elapsed              Int?
     isCompleted          Boolean          @default(false)
     isDeleted            Boolean          @default(false)
+    importSource         String?
+    importSourceId       String?
     completedAt          DateTime?
     createdAt            DateTime         @default(now()) @db.Timestamptz(6)
     createdById          String
@@ -2759,6 +2767,7 @@ model TestRuns {
     comments             Comment[]
     configurationGroupId String?
 
+    @@unique([projectId, importSource, importSourceId])
     @@index([projectId, isDeleted])
     @@index([createdById])
     @@index([stateId])

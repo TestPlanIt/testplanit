@@ -2216,19 +2216,44 @@ const importSessions = async (
       assignedToId = userIdMap.get(assigneeSourceId) ?? null;
     }
 
-    // Check if a similar session already exists
-    const existingSession = await tx.sessions.findFirst({
-      where: {
-        projectId,
-        name,
-        isDeleted: false,
-      },
+    const IMPORT_SOURCE = "testmo";
+    const importSourceId = String(sourceId);
+
+    // On re-import: match by importSourceId first (stable across snapshots).
+    // Fallback to name match for sessions that pre-date this field, and tag
+    // them with importSourceId so future re-imports find them by ID.
+    let existingSession = await tx.sessions.findFirst({
+      where: { projectId, importSource: IMPORT_SOURCE, importSourceId },
       select: { id: true },
     });
+    if (!existingSession) {
+      existingSession = await tx.sessions.findFirst({
+        where: { projectId, name, isDeleted: false, importSource: null },
+        select: { id: true },
+      });
+    }
 
     let sessionId: number;
     if (existingSession) {
       sessionId = existingSession.id;
+      await tx.sessions.update({
+        where: { id: existingSession.id },
+        data: {
+          name,
+          note: note ?? undefined,
+          mission: mission ?? undefined,
+          stateId: resolvedStateId,
+          assignedToId,
+          estimate,
+          forecastManual: forecast,
+          elapsed,
+          isCompleted,
+          completedAt,
+          isDeleted: false,
+          importSource: IMPORT_SOURCE,
+          importSourceId,
+        },
+      });
       summary.mapped += 1;
       incrementEntityProgress(context, "sessions", 0, 1);
     } else {
@@ -2250,6 +2275,8 @@ const importSessions = async (
           completedAt,
           createdAt,
           createdById: createdBy,
+          importSource: IMPORT_SOURCE,
+          importSourceId,
         },
       });
       sessionId = session.id;
@@ -3732,6 +3759,70 @@ const importRepositoryCases = async (
           summaryDetails.estimateClamped += 1;
         }
 
+        const IMPORT_SOURCE = "testmo";
+        const caseImportSourceId = String(caseSourceId);
+
+        // On re-import: match by importSourceId first (stable across snapshots).
+        // Fallback to name/className match for cases that pre-date this field,
+        // tagging them so future re-imports find them by ID.
+        let existingBySourceId = await tx.repositoryCases.findFirst({
+          where: {
+            projectId,
+            importSource: IMPORT_SOURCE,
+            importSourceId: caseImportSourceId,
+          },
+          select: { id: true },
+        });
+        if (!existingBySourceId) {
+          const nameMatch = await tx.repositoryCases.findFirst({
+            where: {
+              projectId,
+              name: caseName,
+              className: className ?? null,
+              isDeleted: false,
+              importSource: null,
+            },
+            select: { id: true },
+          });
+          if (nameMatch) {
+            await tx.repositoryCases.update({
+              where: { id: nameMatch.id },
+              data: {
+                importSource: IMPORT_SOURCE,
+                importSourceId: caseImportSourceId,
+                folderId: resolvedFolderId,
+                templateId: resolvedTemplateId,
+                stateId: resolvedWorkflowId,
+                estimate: normalizedEstimate ?? undefined,
+                order,
+                automated: toBooleanValue(record.automated ?? false),
+                isDeleted: false,
+                isArchived: false,
+              },
+            });
+            existingBySourceId = nameMatch;
+          }
+        }
+
+        if (existingBySourceId) {
+          caseIdMap.set(caseSourceId, existingBySourceId.id);
+          existingCaseByKey.set(
+            existingCaseKey(projectId, caseName, className ?? null),
+            { id: existingBySourceId.id, isDeleted: false }
+          );
+          stepsByCaseId.delete(caseSourceId);
+          summary.total += 1;
+          summary.mapped += 1;
+          incrementEntityProgress(context, "repositoryCases", 0, 1);
+          processedSinceLastPersist += 1;
+          if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
+            const message = formatInProgressStatus(context, "repositoryCases");
+            await persistProgress("repositoryCases", message);
+            processedSinceLastPersist = 0;
+          }
+          continue;
+        }
+
         const repositoryCase = await tx.repositoryCases.create({
           data: {
             projectId,
@@ -3747,6 +3838,8 @@ const importRepositoryCases = async (
             creatorId,
             automated: toBooleanValue(record.automated ?? false),
             currentVersion: 1,
+            importSource: IMPORT_SOURCE,
+            importSourceId: caseImportSourceId,
           },
         });
 
@@ -4383,29 +4476,74 @@ const importTestRuns = async (
       summaryDetails.elapsedClamped += 1;
     }
 
-    const createdRun = await tx.testRuns.create({
-      data: {
-        projectId,
-        name,
-        note: note ?? undefined,
-        docs: docs ?? undefined,
-        configId: configurationId ?? undefined,
-        milestoneId: milestoneId ?? undefined,
-        stateId,
-        forecastManual: normalizedForecast ?? undefined,
-        elapsed: normalizedElapsed ?? undefined,
-        isCompleted,
-        createdAt,
-        createdById,
-        completedAt: completedAt ?? undefined,
-      },
+    const IMPORT_SOURCE = "testmo";
+    const runImportSourceId = String(sourceId);
+
+    // On re-import: match by importSourceId first, fall back to name match for
+    // runs that pre-date this field, tagging them so future re-imports use ID.
+    let existingRun = await tx.testRuns.findFirst({
+      where: { projectId, importSource: IMPORT_SOURCE, importSourceId: runImportSourceId },
+      select: { id: true },
     });
+    if (!existingRun) {
+      const nameMatch = await tx.testRuns.findFirst({
+        where: { projectId, name, isDeleted: false, importSource: null },
+        select: { id: true },
+      });
+      if (nameMatch) {
+        await tx.testRuns.update({
+          where: { id: nameMatch.id },
+          data: {
+            importSource: IMPORT_SOURCE,
+            importSourceId: runImportSourceId,
+            note: note ?? undefined,
+            stateId,
+            forecastManual: normalizedForecast ?? undefined,
+            elapsed: normalizedElapsed ?? undefined,
+            isCompleted,
+            completedAt: completedAt ?? undefined,
+            isDeleted: false,
+          },
+        });
+        existingRun = nameMatch;
+      }
+    }
 
-    testRunIdMap.set(sourceId, createdRun.id);
-    summary.total += 1;
-    summary.created += 1;
+    let createdRun: { id: number };
+    if (existingRun) {
+      createdRun = existingRun;
+      testRunIdMap.set(sourceId, createdRun.id);
+      summary.total += 1;
+      summary.mapped += 1;
+      incrementEntityProgress(context, "testRuns", 0, 1);
+    } else {
+      const newRun = await tx.testRuns.create({
+        data: {
+          projectId,
+          name,
+          note: note ?? undefined,
+          docs: docs ?? undefined,
+          configId: configurationId ?? undefined,
+          milestoneId: milestoneId ?? undefined,
+          stateId,
+          forecastManual: normalizedForecast ?? undefined,
+          elapsed: normalizedElapsed ?? undefined,
+          isCompleted,
+          createdAt,
+          createdById,
+          completedAt: completedAt ?? undefined,
+          importSource: IMPORT_SOURCE,
+          importSourceId: runImportSourceId,
+        },
+      });
+      createdRun = newRun;
+      testRunIdMap.set(sourceId, createdRun.id);
+      summary.total += 1;
+      summary.created += 1;
+      incrementEntityProgress(context, "testRuns", 1, 0);
+    }
 
-    incrementEntityProgress(context, "testRuns", 1, 0);
+    incrementEntityProgress(context, "testRuns", 0, 0);
     processedSinceLastPersist += 1;
 
     if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
