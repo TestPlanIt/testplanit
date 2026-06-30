@@ -116,43 +116,25 @@ function ProjectIssues() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  // The set of issue ids relevant to this project (filed under it, or linked
-  // to any of its cases / sessions / runs / results). Computed server-side
-  // from the small issue<->entity join tables; see /api/projects/[id]/issue-ids
-  // and getProjectRelevantIssueIds. We filter issues by `id: { in: ... }`
-  // instead of `{ relation: { some } }`, which ZenStack v3 compiles into
-  // correlated EXISTS subqueries that scan the large tables. `null` = not yet
-  // loaded (issue queries stay disabled until it resolves).
-  const [relevantIssueIds, setRelevantIssueIds] = useState<number[] | null>(
-    null
-  );
-  useEffect(() => {
-    if (projectId === null) {
-      setRelevantIssueIds(null);
-      return;
-    }
-    let cancelled = false;
-    setRelevantIssueIds(null);
-    fetch(`/api/projects/${projectId}/issue-ids`)
-      .then((r) => (r.ok ? r.json() : { issueIds: [] }))
-      .then((d) => {
-        if (!cancelled) {
-          setRelevantIssueIds(Array.isArray(d.issueIds) ? d.issueIds : []);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setRelevantIssueIds([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [projectId]);
-
   // Build project filter for groupBy queries
   const projectFilterForGroupBy = useMemo(() => {
-    if (projectId === null || relevantIssueIds === null) return {};
-    return { id: { in: relevantIssueIds } };
-  }, [projectId, relevantIssueIds]);
+    if (projectId === null) return {};
+    return {
+      OR: [
+        { projectId },
+        { caseIssues: { some: { case: { projectId } } } },
+        { sessions: { some: { projectId } } },
+        { testRuns: { some: { projectId } } },
+        { sessionResults: { some: { session: { projectId } } } },
+        { testRunResults: { some: { testRun: { projectId } } } },
+        {
+          testRunStepResults: {
+            some: { testRunResult: { testRun: { projectId } } },
+          },
+        },
+      ],
+    };
+  }, [projectId]);
 
   // Fetch distinct status values for the filter dropdown (scoped to this project)
   const { data: statusOptions } = useClientQueries(schema).issue.useGroupBy(
@@ -162,8 +144,7 @@ function ProjectIssues() {
       orderBy: { status: "asc" },
     },
     {
-      enabled:
-        !!session?.user && projectId !== null && relevantIssueIds !== null,
+      enabled: !!session?.user && projectId !== null,
     }
   );
 
@@ -175,8 +156,7 @@ function ProjectIssues() {
       orderBy: { priority: "asc" },
     },
     {
-      enabled:
-        !!session?.user && projectId !== null && relevantIssueIds !== null,
+      enabled: !!session?.user && projectId !== null,
     }
   );
 
@@ -248,14 +228,35 @@ function ProjectIssues() {
 
   // Build the where clause for issues in this project
   const issuesWhere = useMemo(() => {
-    if (projectId === null || relevantIssueIds === null) {
+    if (projectId === null) {
       return null;
     }
 
-    // Filter by the precomputed set of project-relevant issue ids (see
-    // relevantIssueIds above) instead of `{ relation: { some } }`, which
-    // ZenStack v3 compiles into correlated EXISTS scans of the large tables.
-    const projectFilter = { id: { in: relevantIssueIds } };
+    const projectFilter = {
+      OR: [
+        { projectId },
+        { caseIssues: { some: { case: { projectId } } } },
+        { sessions: { some: { projectId } } },
+        { testRuns: { some: { projectId } } },
+        {
+          sessionResults: {
+            some: { session: { projectId } },
+          },
+        },
+        {
+          testRunResults: {
+            some: { testRun: { projectId } },
+          },
+        },
+        {
+          testRunStepResults: {
+            some: {
+              testRunResult: { testRun: { projectId } },
+            },
+          },
+        },
+      ],
+    };
 
     // Combine search filter and project filter using AND
     const conditions: Array<Record<string, unknown>> = [
@@ -285,7 +286,7 @@ function ProjectIssues() {
     return {
       AND: conditions,
     };
-  }, [projectId, relevantIssueIds, searchFilter, statusFilter, priorityFilter]);
+  }, [projectId, searchFilter, statusFilter, priorityFilter]);
 
   const orderBy = useMemo(() => {
     // Only apply server-side sorting for database columns
