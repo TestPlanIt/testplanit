@@ -1,0 +1,52 @@
+# Beta Pre-release
+#
+# Betas of the upcoming 1.0 release are distributed as SOURCE ONLY. We do NOT
+# publish prebuilt images for them: official images bake
+# BASE_DOMAIN=testplanit.com into the build and can't be reused by other
+# installs. Testers build from source with their own domain — see the
+# "Build from Source" page in the docs.
+#
+# Cutting a beta (manual, from the `beta` branch):
+#   git tag v1.0.0-beta.1
+#   git push origin v1.0.0-beta.1
+#
+# This workflow then creates a GitHub *pre-release* for the tag. GitHub
+# automatically attaches the "Source code" (zip / tar.gz) archives, so the
+# pre-release IS the distribution. No Docker image is built — release.yml
+# explicitly excludes hyphenated (prerelease) tags.
+name: Beta Pre-release
+
+on:
+  push:
+    tags:
+      - 'v*-beta.*'
+
+permissions:
+  contents: write
+
+jobs:
+  prerelease:
+    name: Create GitHub pre-release
+    runs-on: [self-hosted]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Create GitHub pre-release (source-only, no image)
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — nothing to do."
+            exit 0
+          fi
+          echo "Creating source-only pre-release for $TAG"
+          gh release create "$TAG" \
+            --prerelease \
+            --verify-tag \
+            --title "TestPlanIt $TAG (beta)" \
+            --notes-file .github/beta-release-notes.md
