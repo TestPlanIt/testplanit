@@ -1,3 +1,9 @@
+## [0.40.12](https://github.com/TestPlanIt/testplanit/compare/v0.40.11...v0.40.12) (2026-06-30)
+
+### Bug Fixes
+
+* **copy-move:** create distinct cases instead of resurrecting tombstones on copy ([#484](https://github.com/TestPlanIt/testplanit/issues/484)) ([4e92f45](https://github.com/TestPlanIt/testplanit/commit/4e92f45968d56de307d6135eaf7a86e064b9dbd4)), closes [LinkifyIt#match](https://github.com/TestPlanIt/LinkifyIt/issues/match)
+
 ## [0.40.11](https://github.com/TestPlanIt/testplanit/compare/v0.40.10...v0.40.11) (2026-06-29)
 
 ### Bug Fixes
