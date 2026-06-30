@@ -2216,38 +2216,19 @@ const importSessions = async (
       assignedToId = userIdMap.get(assigneeSourceId) ?? null;
     }
 
-    const IMPORT_SOURCE = "testmo";
-    const importSourceId = String(sourceId);
-
-    // Match by importSourceId — stable across re-imports.
-    // Run backfill-import-source-ids.ts once to tag existing records before
-    // re-importing; after that this lookup finds them directly.
+    // Check if a similar session already exists
     const existingSession = await tx.sessions.findFirst({
-      where: { projectId, importSource: IMPORT_SOURCE, importSourceId },
+      where: {
+        projectId,
+        name,
+        isDeleted: false,
+      },
       select: { id: true },
     });
 
     let sessionId: number;
     if (existingSession) {
       sessionId = existingSession.id;
-      await tx.sessions.update({
-        where: { id: existingSession.id },
-        data: {
-          name,
-          note: note ?? undefined,
-          mission: mission ?? undefined,
-          stateId: resolvedStateId,
-          assignedToId,
-          estimate,
-          forecastManual: forecast,
-          elapsed,
-          isCompleted,
-          completedAt,
-          isDeleted: false,
-          importSource: IMPORT_SOURCE,
-          importSourceId,
-        },
-      });
       summary.mapped += 1;
       incrementEntityProgress(context, "sessions", 0, 1);
     } else {
@@ -2269,8 +2250,6 @@ const importSessions = async (
           completedAt,
           createdAt,
           createdById: createdBy,
-          importSource: IMPORT_SOURCE,
-          importSourceId,
         },
       });
       sessionId = session.id;
@@ -3753,40 +3732,6 @@ const importRepositoryCases = async (
           summaryDetails.estimateClamped += 1;
         }
 
-        const IMPORT_SOURCE = "testmo";
-        const caseImportSourceId = String(caseSourceId);
-
-        // Match by importSourceId — stable across re-imports.
-        // Run backfill-import-source-ids.ts once to tag existing records before
-        // re-importing; after that this lookup finds them directly.
-        const existingBySourceId = await tx.repositoryCases.findFirst({
-          where: {
-            projectId,
-            importSource: IMPORT_SOURCE,
-            importSourceId: caseImportSourceId,
-          },
-          select: { id: true },
-        });
-
-        if (existingBySourceId) {
-          caseIdMap.set(caseSourceId, existingBySourceId.id);
-          existingCaseByKey.set(
-            existingCaseKey(projectId, caseName, className ?? null),
-            { id: existingBySourceId.id, isDeleted: false }
-          );
-          stepsByCaseId.delete(caseSourceId);
-          summary.total += 1;
-          summary.mapped += 1;
-          incrementEntityProgress(context, "repositoryCases", 0, 1);
-          processedSinceLastPersist += 1;
-          if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
-            const message = formatInProgressStatus(context, "repositoryCases");
-            await persistProgress("repositoryCases", message);
-            processedSinceLastPersist = 0;
-          }
-          continue;
-        }
-
         const repositoryCase = await tx.repositoryCases.create({
           data: {
             projectId,
@@ -3802,8 +3747,6 @@ const importRepositoryCases = async (
             creatorId,
             automated: toBooleanValue(record.automated ?? false),
             currentVersion: 1,
-            importSource: IMPORT_SOURCE,
-            importSourceId: caseImportSourceId,
           },
         });
 
@@ -4440,52 +4383,29 @@ const importTestRuns = async (
       summaryDetails.elapsedClamped += 1;
     }
 
-    const IMPORT_SOURCE = "testmo";
-    const runImportSourceId = String(sourceId);
-
-    // Match by importSourceId — stable across re-imports.
-    // Run backfill-import-source-ids.ts once to tag existing records before
-    // re-importing; after that this lookup finds them directly.
-    const existingRun = await tx.testRuns.findFirst({
-      where: { projectId, importSource: IMPORT_SOURCE, importSourceId: runImportSourceId },
-      select: { id: true },
+    const createdRun = await tx.testRuns.create({
+      data: {
+        projectId,
+        name,
+        note: note ?? undefined,
+        docs: docs ?? undefined,
+        configId: configurationId ?? undefined,
+        milestoneId: milestoneId ?? undefined,
+        stateId,
+        forecastManual: normalizedForecast ?? undefined,
+        elapsed: normalizedElapsed ?? undefined,
+        isCompleted,
+        createdAt,
+        createdById,
+        completedAt: completedAt ?? undefined,
+      },
     });
 
-    let createdRun: { id: number };
-    if (existingRun) {
-      createdRun = existingRun;
-      testRunIdMap.set(sourceId, createdRun.id);
-      summary.total += 1;
-      summary.mapped += 1;
-      incrementEntityProgress(context, "testRuns", 0, 1);
-    } else {
-      const newRun = await tx.testRuns.create({
-        data: {
-          projectId,
-          name,
-          note: note ?? undefined,
-          docs: docs ?? undefined,
-          configId: configurationId ?? undefined,
-          milestoneId: milestoneId ?? undefined,
-          stateId,
-          forecastManual: normalizedForecast ?? undefined,
-          elapsed: normalizedElapsed ?? undefined,
-          isCompleted,
-          createdAt,
-          createdById,
-          completedAt: completedAt ?? undefined,
-          importSource: IMPORT_SOURCE,
-          importSourceId: runImportSourceId,
-        },
-      });
-      createdRun = newRun;
-      testRunIdMap.set(sourceId, createdRun.id);
-      summary.total += 1;
-      summary.created += 1;
-      incrementEntityProgress(context, "testRuns", 1, 0);
-    }
+    testRunIdMap.set(sourceId, createdRun.id);
+    summary.total += 1;
+    summary.created += 1;
 
-    incrementEntityProgress(context, "testRuns", 0, 0);
+    incrementEntityProgress(context, "testRuns", 1, 0);
     processedSinceLastPersist += 1;
 
     if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
