@@ -468,9 +468,9 @@ function ProjectIssues() {
         testRuns: [],
         aggregatedTestRunIds: [],
         projectIds: projectId ? [projectId] : [],
-        repositoryCasesCount: counts?.repositoryCases ?? 0,
-        sessionsCount: counts?.sessions ?? 0,
-        testRunsCount: counts?.testRuns ?? 0,
+        repositoryCasesCount: counts?.repositoryCases,
+        sessionsCount: counts?.sessions,
+        testRunsCount: counts?.testRuns,
       };
     });
 
