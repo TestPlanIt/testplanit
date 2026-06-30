@@ -122,7 +122,9 @@ function ProjectIssues() {
     return {
       OR: [
         { projectId },
-        { caseIssues: { some: { case: { projectId } } } },
+        // Exclude issues linked only to a soft-deleted case — they must not
+        // surface in the project list. Mirrors the global issues list filter.
+        { caseIssues: { some: { case: { projectId, isDeleted: false } } } },
         { sessions: { some: { projectId } } },
         { testRuns: { some: { projectId } } },
         { sessionResults: { some: { session: { projectId } } } },
@@ -235,7 +237,9 @@ function ProjectIssues() {
     const projectFilter = {
       OR: [
         { projectId },
-        { caseIssues: { some: { case: { projectId } } } },
+        // Exclude issues linked only to a soft-deleted case — they must not
+        // surface in the project list. Mirrors the global issues list filter.
+        { caseIssues: { some: { case: { projectId, isDeleted: false } } } },
         { sessions: { some: { projectId } } },
         { testRuns: { some: { projectId } } },
         {
