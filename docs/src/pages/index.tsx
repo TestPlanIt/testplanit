@@ -57,7 +57,20 @@ function HomepageHeader() {
               'animate-gradient-x'
             )}
           >
-            TestPlanIt Documentation
+            <div className="">
+              <Link
+                href="https://testplanit.com"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="/img/logo-with-text.svg"
+                  alt="TestPlanIt"
+                  className={styles.logoLinkImage}
+                />
+              </Link>
+              Documentation
+            </div>
           </Heading>
 
           <p className={styles.heroSubtitle}>
@@ -315,20 +328,6 @@ export default function Home(): ReactNode {
       <div className={styles.heroBackground}>
         <HomepageHeader />
         <main>
-          <div className={styles.logoWrapper}>
-            <Link
-              className={styles.logoLink}
-              href="https://testplanit.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img
-                src="/img/logo-with-text.svg"
-                alt="TestPlanIt"
-                className={styles.logoLinkImage}
-              />
-            </Link>
-          </div>
           <HomepageScreenshot />
         </main>
       </div>

@@ -271,54 +271,23 @@ export async function createTestCaseVersionInTransaction(
     parameters: parametersJson,
   };
 
-  // Create the version with retry logic to handle race conditions
-  // Note: We expect the caller to have already updated currentVersion on the test case
-  // before calling this function. We simply snapshot the current state.
-  let newVersion;
-  let retryCount = 0;
-  const maxRetries = 3;
-  const baseDelay = 100; // milliseconds
-
-  while (retryCount <= maxRetries) {
-    try {
-      newVersion = await tx.repositoryCaseVersions.create({
-        data: versionData,
-      });
-      break; // Success, exit retry loop
-    } catch (error: any) {
-      // Check if it's a unique constraint violation (P2002)
-      if (error.code === "P2002" && retryCount < maxRetries) {
-        retryCount++;
-        const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
-        console.log(
-          `Unique constraint violation on version creation (attempt ${retryCount}/${maxRetries}). Retrying after ${delay}ms...`
-        );
-
-        // Wait before retrying
-        await new Promise((resolve) => setTimeout(resolve, delay));
-
-        // Refetch the test case to get the latest currentVersion
-        const refetchedCase = await tx.repositoryCases.findUnique({
-          where: { id: caseId },
-          select: { currentVersion: true },
-        });
-
-        if (refetchedCase) {
-          // Update the version number with the refetched value
-          versionData.version = options.version ?? refetchedCase.currentVersion;
-        }
-      } else {
-        // Not a retryable error or max retries reached
-        throw error;
-      }
-    }
-  }
-
-  if (!newVersion) {
-    throw new Error(
-      `Failed to create version for case ${caseId} after retries`
-    );
-  }
+  // Create the version snapshot. The caller is responsible for having already
+  // updated currentVersion AND for choosing a free version number before
+  // calling this; we simply snapshot the current state.
+  //
+  // This runs inside the caller's interactive transaction, so we must NOT
+  // catch-and-retry a unique-constraint violation here. Once any statement in
+  // a Postgres transaction fails, the whole transaction is aborted and every
+  // subsequent query — a refetch, a retried insert — fails with the confusing
+  // downstream "current transaction is aborted" (25P02) error instead of the
+  // real cause. (The retry was also ineffective: a refetch inside the same
+  // transaction sees the same snapshot, so it would just re-insert the same
+  // colliding version.) Let the original error propagate — e.g. a 23505 on
+  // RepositoryCaseVersions_repositoryCaseId_version_key — so it surfaces
+  // loudly and rolls the transaction back cleanly.
+  const newVersion = await tx.repositoryCaseVersions.create({
+    data: versionData,
+  });
 
   return newVersion;
 }
