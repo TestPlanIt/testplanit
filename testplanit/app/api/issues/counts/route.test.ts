@@ -9,25 +9,13 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
+// The route drives the counts from a single issue-side `issue.findMany` that
+// hydrates each issue's linked caseIssues / sessions / sessionResults /
+// testRuns / testRunResults / testRunStepResults (filtered by the nested
+// `where`); counts are derived in memory (lengths + distinct sets).
 vi.mock("~/lib/db", () => ({
   baseDb: {
-    repositoryCases: {
-      count: vi.fn(),
-    },
-    sessions: {
-      count: vi.fn(),
-    },
-    sessionResults: {
-      groupBy: vi.fn(),
-    },
-    testRuns: {
-      count: vi.fn(),
-    },
-    testRunResults: {
-      groupBy: vi.fn(),
-      findMany: vi.fn(),
-    },
-    testRunStepResults: {
+    issue: {
       findMany: vi.fn(),
     },
   },
@@ -60,16 +48,43 @@ const mockUserSession = {
   },
 };
 
+// Build an issue row shaped like the route's `select`. `sessions` reach the
+// total additively (direct length + distinct sessionResults.sessionId);
+// `testRuns` add direct length + distinct testRunResults.testRunId + distinct
+// testRunStepResults.testRunResult.testRunId.
+const issueRow = (
+  id: number,
+  {
+    caseIssues = 0,
+    sessions = 0,
+    sessionResults = [],
+    testRuns = 0,
+    testRunResults = [],
+    testRunStepResults = [],
+  }: {
+    caseIssues?: number;
+    sessions?: number;
+    sessionResults?: Array<{ sessionId: number }>;
+    testRuns?: number;
+    testRunResults?: Array<{ testRunId: number }>;
+    testRunStepResults?: Array<{ testRunResult: { testRunId: number } | null }>;
+  } = {}
+) => ({
+  id,
+  caseIssues: Array.from({ length: caseIssues }, (_, i) => ({ caseId: i })),
+  sessions: Array.from({ length: sessions }, (_, i) => ({ id: i })),
+  sessionResults,
+  testRuns: Array.from({ length: testRuns }, (_, i) => ({ id: i })),
+  testRunResults,
+  testRunStepResults,
+});
+
+const findManyArg = () => (baseDb.issue.findMany as any).mock.calls[0][0];
+
 describe("Issues Counts Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (baseDb.repositoryCases.count as any).mockResolvedValue(0);
-    (baseDb.sessions.count as any).mockResolvedValue(0);
-    (baseDb.sessionResults.groupBy as any).mockResolvedValue([]);
-    (baseDb.testRuns.count as any).mockResolvedValue(0);
-    (baseDb.testRunResults.groupBy as any).mockResolvedValue([]);
-    (baseDb.testRunStepResults.findMany as any).mockResolvedValue([]);
-    (baseDb.testRunResults.findMany as any).mockResolvedValue([]);
+    (baseDb.issue.findMany as any).mockResolvedValue([]);
   });
 
   describe("Authentication", () => {
@@ -134,14 +149,14 @@ describe("Issues Counts Route", () => {
   describe("POST - issue count aggregation", () => {
     it("returns counts with repositoryCases, sessions, testRuns for each issue", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (baseDb.repositoryCases.count as any).mockResolvedValue(3);
-      (baseDb.sessions.count as any).mockResolvedValue(2);
-      (baseDb.sessionResults.groupBy as any).mockResolvedValue([
-        { sessionId: 1 },
+      (baseDb.issue.findMany as any).mockResolvedValue([
+        issueRow(10, {
+          caseIssues: 3,
+          sessions: 2,
+          sessionResults: [{ sessionId: 1 }],
+          testRuns: 1,
+        }),
       ]);
-      (baseDb.testRuns.count as any).mockResolvedValue(1);
-      (baseDb.testRunResults.groupBy as any).mockResolvedValue([]);
-      (baseDb.testRunStepResults.findMany as any).mockResolvedValue([]);
 
       const request = createMockRequest({ issueIds: [10] });
       const response = await POST(request);
@@ -157,25 +172,10 @@ describe("Issues Counts Route", () => {
 
     it("returns counts for multiple issueIds", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      // Issue 1
-      (baseDb.repositoryCases.count as any)
-        .mockResolvedValueOnce(5)
-        .mockResolvedValueOnce(2);
-      (baseDb.sessions.count as any)
-        .mockResolvedValueOnce(1)
-        .mockResolvedValueOnce(0);
-      (baseDb.sessionResults.groupBy as any)
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
-      (baseDb.testRuns.count as any)
-        .mockResolvedValueOnce(3)
-        .mockResolvedValueOnce(1);
-      (baseDb.testRunResults.groupBy as any)
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
-      (baseDb.testRunStepResults.findMany as any)
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      (baseDb.issue.findMany as any).mockResolvedValue([
+        issueRow(1, { caseIssues: 5, sessions: 1, testRuns: 3 }),
+        issueRow(2, { caseIssues: 2, sessions: 0, testRuns: 1 }),
+      ]);
 
       const request = createMockRequest({ issueIds: [1, 2] });
       const response = await POST(request);
@@ -194,37 +194,48 @@ describe("Issues Counts Route", () => {
       });
     });
 
-    it("filters by issueId when counting entities", async () => {
+    it("returns zero counts for requested issueIds with no links", async () => {
+      (getServerSession as any).mockResolvedValue(mockAdminSession);
+      // Issue 2 isn't returned by findMany (not found / no links).
+      (baseDb.issue.findMany as any).mockResolvedValue([
+        issueRow(1, { caseIssues: 3 }),
+      ]);
+
+      const request = createMockRequest({ issueIds: [1, 2] });
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(data.counts[2]).toEqual({
+        repositoryCases: 0,
+        sessions: 0,
+        testRuns: 0,
+      });
+    });
+
+    it("queries issues by the requested ids", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
 
       const request = createMockRequest({ issueIds: [42] });
       await POST(request);
 
-      expect(baseDb.repositoryCases.count).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            caseIssues: { some: { issue: { id: 42 } } },
-          }),
-        })
-      );
+      expect(findManyArg().where).toEqual({ id: { in: [42] } });
     });
 
-    it("filters out deleted items", async () => {
+    it("filters out deleted items in every linked relation", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
 
       const request = createMockRequest({ issueIds: [1] });
       await POST(request);
 
-      expect(baseDb.repositoryCases.count).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({ isDeleted: false }),
-        })
-      );
-      expect(baseDb.testRuns.count).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({ isDeleted: false }),
-        })
-      );
+      const { select } = findManyArg();
+      expect(select.caseIssues.where.case.isDeleted).toBe(false);
+      expect(select.sessions.where.isDeleted).toBe(false);
+      expect(select.sessionResults.where.session.isDeleted).toBe(false);
+      expect(select.testRuns.where.isDeleted).toBe(false);
+      expect(select.testRunResults.where.testRun.isDeleted).toBe(false);
+      expect(
+        select.testRunStepResults.where.testRunResult.testRun.isDeleted
+      ).toBe(false);
     });
 
     it("applies projectId scope when provided", async () => {
@@ -233,11 +244,10 @@ describe("Issues Counts Route", () => {
       const request = createMockRequest({ issueIds: [1], projectId: 99 });
       await POST(request);
 
-      expect(baseDb.repositoryCases.count).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({ projectId: 99 }),
-        })
-      );
+      const { select } = findManyArg();
+      expect(select.caseIssues.where.case.projectId).toBe(99);
+      expect(select.sessions.where.projectId).toBe(99);
+      expect(select.testRuns.where.projectId).toBe(99);
     });
 
     it("does not add projectId filter when projectId not provided", async () => {
@@ -246,47 +256,44 @@ describe("Issues Counts Route", () => {
       const request = createMockRequest({ issueIds: [1] });
       await POST(request);
 
-      const callArg = (baseDb.repositoryCases.count as any).mock.calls[0][0];
-      expect(callArg.where).not.toHaveProperty("projectId");
+      const { select } = findManyArg();
+      expect(select.caseIssues.where.case).not.toHaveProperty("projectId");
+      expect(select.testRuns.where).not.toHaveProperty("projectId");
     });
 
-    it("combines test run counts from testRunResults groupBy", async () => {
+    it("adds test runs reached via testRunResults", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (baseDb.testRuns.count as any).mockResolvedValue(1);
-      (baseDb.testRunResults.groupBy as any).mockResolvedValue([
-        { testRunId: 10 },
-        { testRunId: 11 },
+      (baseDb.issue.findMany as any).mockResolvedValue([
+        issueRow(5, {
+          testRuns: 1,
+          testRunResults: [{ testRunId: 10 }, { testRunId: 11 }],
+        }),
       ]);
-      (baseDb.testRunStepResults.findMany as any).mockResolvedValue([]);
 
       const request = createMockRequest({ issueIds: [5] });
       const response = await POST(request);
       const data = await response.json();
 
-      // 1 direct + 2 from testRunResults
+      // 1 direct + 2 distinct from testRunResults
       expect(data.counts[5].testRuns).toBe(3);
     });
 
-    it("fetches test runs from step results when step results have testRunResultIds", async () => {
+    it("adds test runs reached via testRunStepResults (ignoring null links)", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (baseDb.testRunStepResults.findMany as any).mockResolvedValue([
-        { testRunResultId: 100 },
-        { testRunResultId: 101 },
-      ]);
-      (baseDb.testRunResults.findMany as any).mockResolvedValue([
-        { testRunId: 200 },
+      (baseDb.issue.findMany as any).mockResolvedValue([
+        issueRow(7, {
+          testRunStepResults: [
+            { testRunResult: { testRunId: 200 } },
+            { testRunResult: null },
+          ],
+        }),
       ]);
 
       const request = createMockRequest({ issueIds: [7] });
       const response = await POST(request);
       const data = await response.json();
 
-      expect(baseDb.testRunResults.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: { in: [100, 101] } },
-        })
-      );
-      // 0 direct + 0 from groupBy + 1 from step results
+      // 0 direct + 0 from testRunResults + 1 distinct from step results
       expect(data.counts[7].testRuns).toBe(1);
     });
   });
@@ -298,8 +305,9 @@ describe("Issues Counts Route", () => {
       const request = createMockRequest({ issueIds: [1] });
       await POST(request);
 
-      const callArg = (baseDb.repositoryCases.count as any).mock.calls[0][0];
-      expect(callArg.where).not.toHaveProperty("project");
+      const { select } = findManyArg();
+      expect(select.caseIssues.where.case).not.toHaveProperty("project");
+      expect(select.testRuns.where).not.toHaveProperty("project");
     });
 
     it("adds project access filter for non-admin users", async () => {
@@ -308,17 +316,16 @@ describe("Issues Counts Route", () => {
       const request = createMockRequest({ issueIds: [1] });
       await POST(request);
 
-      const callArg = (baseDb.repositoryCases.count as any).mock.calls[0][0];
-      expect(callArg.where).toHaveProperty("project");
+      const { select } = findManyArg();
+      expect(select.caseIssues.where.case).toHaveProperty("project");
+      expect(select.testRuns.where).toHaveProperty("project");
     });
   });
 
   describe("Error handling", () => {
     it("returns 500 when database query fails", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
-      (baseDb.repositoryCases.count as any).mockRejectedValue(
-        new Error("DB error")
-      );
+      (baseDb.issue.findMany as any).mockRejectedValue(new Error("DB error"));
 
       const request = createMockRequest({ issueIds: [1] });
       const response = await POST(request);
@@ -360,6 +367,7 @@ describe("Issues Counts Route", () => {
 
     it("uses issueId as key in the response", async () => {
       (getServerSession as any).mockResolvedValue(mockAdminSession);
+      (baseDb.issue.findMany as any).mockResolvedValue([issueRow(99)]);
 
       const request = createMockRequest({ issueIds: [99] });
       const response = await POST(request);
