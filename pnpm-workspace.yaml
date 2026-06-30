@@ -112,6 +112,7 @@ overrides:
   'yaml@2': '>=2.8.3'
   'defu': '>=6.1.5'
   'joi': '^17.13.4'
+  'linkify-it': '>=5.0.1'
 
 patchedDependencies:
   gray-matter@4.0.3: patches/gray-matter@4.0.3.patch
