@@ -44,17 +44,11 @@ async function backfillEntity(
   });
   console.log(`\n[${table}] staging rows: ${stagingCount}`);
 
-  // Count already-tagged rows (importSourceId already set)
-  const alreadyTagged = await (db[
-    table === "RepositoryCases"
-      ? "repositoryCases"
-      : table === "TestRuns"
-        ? "testRuns"
-        : "sessions"
-  ] as any).count({
-    where: { importSource: IMPORT_SOURCE },
-  });
-  console.log(`[${table}] already tagged: ${alreadyTagged}`);
+  const taggedRows = await db.$queryRawUnsafe<Array<{ n: bigint }>>(
+    `SELECT COUNT(*) AS n FROM "${table}" WHERE "importSource" = $1`,
+    IMPORT_SOURCE
+  );
+  console.log(`[${table}] already tagged: ${Number(taggedRows[0]?.n ?? 0)}`);
 
   if (APPLY) {
     // Direct SQL UPDATE joining staging data on (name, createdAt).
