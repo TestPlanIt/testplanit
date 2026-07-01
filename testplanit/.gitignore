@@ -36,7 +36,6 @@ yarn-error.log*
 
 # customer-specific docker configurations
 docker-compose.*.yml
-!docker-compose.prod.yml
 !docker-compose.dev.yml
 !docker-compose.yml
 nginx.*.conf
