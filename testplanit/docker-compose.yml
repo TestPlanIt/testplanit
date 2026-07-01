@@ -197,18 +197,6 @@ services:
     profiles:
       - prod
 
-  # Init service to fix ownership of the bind-mounted data directory before Postgres starts.
-  postgres-init:
-    image: postgres:15-alpine
-    user: root
-    command: >
-      sh -c "
-        mkdir -p /var/lib/postgresql/data &&
-        chown -R postgres:postgres /var/lib/postgresql/data
-      "
-    volumes:
-      - ./docker-data/postgres:/var/lib/postgresql/data
-
   postgres:
     container_name: testplanit-postgres
     image: postgres:15-alpine # Use a specific Postgres version
@@ -216,8 +204,12 @@ services:
       POSTGRES_USER: user # Must match the user in DATABASE_URL
       POSTGRES_PASSWORD: password # Must match the password in DATABASE_URL
       POSTGRES_DB: testplanit_dev # Creates this DB initially. Prod app uses testplanit_prod
+    # Named volume, not a bind mount: Postgres's data directory must never live
+    # inside the build context (context: .. at the repo root). Once Postgres has
+    # run, it chmods the directory 0700, which makes BuildKit's context walker
+    # fail with "permission denied" on any subsequent `docker compose build`.
     volumes:
-      - ./docker-data/postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     ports:
       - "${DOCKER_POSTGRES_PORT:-5432}:5432" # Expose Postgres on configurable host port
     networks:
@@ -227,9 +219,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    depends_on:
-      postgres-init:
-        condition: service_completed_successfully
 
   valkey:
     container_name: testplanit-valkey
@@ -340,3 +329,7 @@ services:
 networks:
   testplanit-net:
     driver: bridge
+
+volumes:
+  postgres-data:
+    name: testplanit-postgres-data
