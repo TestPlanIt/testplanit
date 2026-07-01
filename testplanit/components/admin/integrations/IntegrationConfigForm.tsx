@@ -1,7 +1,6 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
@@ -19,15 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { IntegrationAuthType, IntegrationProvider } from "~/zenstack/models";
-import {
-  AlertTriangle,
-  Check,
-  Copy,
-  Info,
-  Lock,
-  Edit,
-  RefreshCw,
-} from "lucide-react";
+import { AlertTriangle, Check, Copy, Info, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -323,7 +314,6 @@ export function IntegrationConfigForm({
   const tCommon = useTranslations();
   const [copied, setCopied] = useState(false);
   const [callbackCopied, setCallbackCopied] = useState(false);
-  const [unlockedFields, setUnlockedFields] = useState<Set<string>>(new Set());
 
   // The OAuth callback (redirect) URI the admin must register in their
   // provider's OAuth app. It must match what the server sends during the
@@ -416,11 +406,7 @@ export function IntegrationConfigForm({
       )}
       {fields.map((field) => {
         const value = getFieldValue(field);
-        const isEncrypted =
-          isEdit &&
-          field.isCredential &&
-          !value &&
-          !unlockedFields.has(field.name);
+        const isEncrypted = false;
 
         return (
           <FormItem key={field.name}>
@@ -461,50 +447,18 @@ export function IntegrationConfigForm({
                   <Input
                     type={field.type || "text"}
                     placeholder={
-                      isEncrypted
-                        ? "••••••••••••"
+                      isEdit && field.isCredential && !value
+                        ? t("config.leaveBlankToKeep" as any)
                         : (t as unknown as (key: string) => string)(
                             field.placeholder
                           )
                     }
                     value={value}
                     onChange={(e) => handleFieldChange(field, e.target.value)}
-                    disabled={isEncrypted}
                   />
-                )}
-                {isEncrypted && (
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                    <Badge variant="secondary" className="text-xs">
-                      <Lock className="w-3 h-3 mr-1" />
-                      {t("config.encrypted")}
-                    </Badge>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-xs"
-                      onClick={() => {
-                        setUnlockedFields((prev) => {
-                          const next = new Set(prev);
-                          next.add(field.name);
-                          return next;
-                        });
-                      }}
-                    >
-                      <Edit className="w-3 h-3" />
-                      {t("config.changeCredential")}
-                    </Button>
-                  </div>
                 )}
               </div>
             </FormControl>
-            {isEncrypted && (
-              <FormDescription>
-                <span className="block text-xs mt-1">
-                  {t("config.encryptedHelp")}
-                </span>
-              </FormDescription>
-            )}
           </FormItem>
         );
       })}
