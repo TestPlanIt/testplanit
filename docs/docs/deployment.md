@@ -232,11 +232,17 @@ docker compose -f docker-compose.prod.yml $PROFILES up -d
 # Backup data (if using Docker services)
 docker compose -f docker-compose.prod.yml $PROFILES down
 tar -czf testplanit-backup-$(date +%Y%m%d).tar.gz docker-data/
+docker run --rm -v testplanit-postgres-data:/data -v "$(pwd):/backup" \
+  alpine tar -czf /backup/testplanit-postgres-backup-$(date +%Y%m%d).tar.gz -C /data .
 
 # Restore from backup
 docker compose -f docker-compose.prod.yml $PROFILES down
 sudo rm -rf docker-data/
+docker volume rm testplanit-postgres-data
 tar -xzf testplanit-backup-YYYYMMDD.tar.gz
+docker volume create testplanit-postgres-data
+docker run --rm -v testplanit-postgres-data:/data -v "$(pwd):/backup" \
+  alpine tar -xzf /backup/testplanit-postgres-backup-YYYYMMDD.tar.gz -C /data
 docker compose -f docker-compose.prod.yml $PROFILES up -d
 ```
 
@@ -273,12 +279,14 @@ docker exec testplanit-workers pm2 logs notification-worker
 
 ### Data Persistence
 
-All service data is stored in `./docker-data/`:
+Most service data is stored in `./docker-data/`:
 
-- `postgres/` - Database files
 - `redis/` - Valkey persistence
 - `elasticsearch/` - Search indexes
 - `minio/` - File attachments
+
+Postgres data lives in the named Docker volume `testplanit-postgres-data` instead
+of a bind mount, so it can never end up inside the build context.
 
 ### File Storage Configuration
 
