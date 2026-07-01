@@ -80,6 +80,18 @@ services:
       postgres:
         condition: service_healthy # Wait for postgres healthcheck
 
+  # Init service to fix ownership of the bind-mounted data directory before Postgres starts.
+  postgres-init:
+    image: postgres:15-alpine
+    user: root
+    command: >
+      sh -c "
+        mkdir -p /var/lib/postgresql/data &&
+        chown -R postgres:postgres /var/lib/postgresql/data
+      "
+    volumes:
+      - ./docker-data/postgres:/var/lib/postgresql/data
+
   postgres:
     container_name: testplanit-postgres
     image: postgres:15-alpine # Use a specific Postgres version
@@ -98,6 +110,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    depends_on:
+      postgres-init:
+        condition: service_completed_successfully
 
   valkey:
     container_name: testplanit-valkey
