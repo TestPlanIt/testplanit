@@ -27,7 +27,7 @@ import type { Integration } from "~/zenstack/models";
 import { Activity, Loader2, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { IntegrationConfigForm } from "./IntegrationConfigForm";
@@ -120,23 +120,41 @@ export function IntegrationModal({
     },
   });
 
+  // useWatch creates proper field subscriptions that re-render when
+  // form.reset() fires — form.watch() in the render body does not reliably
+  // do so, causing stale authType/credentials/settings after edit open.
+  const watchedAuthType = useWatch({ control: form.control, name: "authType" });
+  const watchedCredentials = useWatch({
+    control: form.control,
+    name: "credentials",
+  });
+  const watchedSettings = useWatch({ control: form.control, name: "settings" });
+
   useEffect(() => {
     if (!isOpen) {
       return;
     }
     if (integration) {
+      const settings =
+        typeof integration.settings === "object" &&
+        integration.settings !== null &&
+        !Array.isArray(integration.settings)
+          ? (integration.settings as Record<string, string>)
+          : {};
       form.reset({
         name: integration.name,
         provider: integration.provider,
         authType: integration.authType,
         credentials: {},
-        settings:
-          typeof integration.settings === "object" &&
-          integration.settings !== null &&
-          !Array.isArray(integration.settings)
-            ? (integration.settings as Record<string, string>)
-            : {},
+        settings,
       });
+      // Explicit setValue calls are a belt-and-suspenders guard: form.reset()
+      // doesn't always flush synchronously through watch() subscriptions in
+      // React 18 batching, so provider/authType (both hidden in edit mode)
+      // can end up undefined in the schema validator, causing a silent save
+      // failure with no error toast.
+      form.setValue("provider", integration.provider);
+      form.setValue("authType", integration.authType);
       setSelectedType(integration.provider);
     } else {
       // Opening for a NEW integration: clear any state left over from a
@@ -387,9 +405,9 @@ export function IntegrationModal({
 
                 <IntegrationConfigForm
                   provider={selectedType}
-                  authType={form.watch("authType")}
-                  credentials={form.watch("credentials") || {}}
-                  settings={form.watch("settings") || {}}
+                  authType={watchedAuthType}
+                  credentials={watchedCredentials || {}}
+                  settings={watchedSettings || {}}
                   onCredentialsChange={(credentials: Record<string, string>) =>
                     form.setValue("credentials", credentials)
                   }
