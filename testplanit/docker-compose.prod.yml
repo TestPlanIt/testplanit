@@ -78,6 +78,20 @@ services:
     profiles:
       - with-minio
 
+  # Init service to fix ownership of the bind-mounted data directory before Postgres starts.
+  postgres-init:
+    image: postgres:15-alpine
+    user: root
+    command: >
+      sh -c "
+        mkdir -p /var/lib/postgresql/data &&
+        chown -R postgres:postgres /var/lib/postgresql/data
+      "
+    volumes:
+      - ./docker-data/postgres:/var/lib/postgresql/data
+    profiles:
+      - with-postgres
+
   postgres:
     container_name: testplanit-postgres
     image: postgres:15-alpine
@@ -85,9 +99,6 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: testplanit_prod
-      # Keep the cluster in a subdirectory of the bind mount so the mount-point
-      # root's ownership can't block re-initialization on repeated `up` runs.
-      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - ./docker-data/postgres:/var/lib/postgresql/data
     ports:
@@ -100,6 +111,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    depends_on:
+      postgres-init:
+        condition: service_completed_successfully
     profiles:
       - with-postgres
 
