@@ -311,11 +311,32 @@ All service data persists in `./docker-data/`:
 
 ```text
 docker-data/
-├── postgres/      # Database files
-├── valkey/        # Valkey job queue persistence
-├── elasticsearch/ # Search indexes
-└── minio/         # File attachments
+├── postgres/pgdata/ # Database files
+├── valkey/          # Valkey job queue persistence
+├── elasticsearch/   # Search indexes
+└── minio/           # File attachments
 ```
+
+:::warning Upgrading an existing deployment
+
+Postgres now stores its cluster in a `pgdata/` subdirectory of the bind mount
+(`PGDATA=/var/lib/postgresql/data/pgdata`) so the mount-point root's ownership
+can't block re-initialization on repeated `docker compose up` runs. Deployments
+created before this change keep their cluster directly in `docker-data/postgres/`.
+Move it into the subdirectory once, before bringing the stack back up, or Postgres
+will initialize an empty database alongside your existing data:
+
+```bash
+docker compose down
+cd docker-data/postgres
+mkdir pgdata
+# move every existing cluster file (including dotfiles) into pgdata/
+find . -maxdepth 1 -mindepth 1 ! -name pgdata -exec mv {} pgdata/ \;
+cd ../..
+docker compose up prod workers -d
+```
+
+:::
 
 ### Backup & Restore
 

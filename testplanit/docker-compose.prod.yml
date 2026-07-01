@@ -85,6 +85,9 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: testplanit_prod
+      # Keep the cluster in a subdirectory of the bind mount so the mount-point
+      # root's ownership can't block re-initialization on repeated `up` runs.
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - ./docker-data/postgres:/var/lib/postgresql/data
     ports:
