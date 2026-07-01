@@ -11,4 +11,4 @@ README.md
 .DS_Store
 dist
 coverage
-docker-data/
+**/docker-data/

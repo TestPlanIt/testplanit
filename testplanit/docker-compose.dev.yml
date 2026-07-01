@@ -82,13 +82,24 @@ services:
 
   postgres:
     container_name: testplanit-postgres
-    image: postgres:15-alpine # Use a specific Postgres version
+    image: postgres:18-alpine # Use a specific Postgres version
     environment:
       POSTGRES_USER: user # Must match the user in DATABASE_URL
       POSTGRES_PASSWORD: password # Must match the password in DATABASE_URL
       POSTGRES_DB: testplanit_dev # Creates this DB initially. Prod app uses testplanit_prod
+      # Postgres 18 defaults PGDATA to a version-specific subdirectory
+      # (/var/lib/postgresql/18/docker) and expects the volume mounted at
+      # /var/lib/postgresql instead of .../data. Pin the old flat layout so the
+      # mount path below doesn't have to change across major-version bumps, and
+      # to avoid a still-open docker-library/postgres detection bug around the
+      # new layout (github.com/docker-library/postgres/issues/1400).
+      PGDATA: /var/lib/postgresql/data
+    # Named volume, not a bind mount: Postgres's data directory must never live
+    # inside the build context (context: .. at the repo root). Once Postgres has
+    # run, it chmods the directory 0700, which makes BuildKit's context walker
+    # fail with "permission denied" on any subsequent `docker compose build`.
     volumes:
-      - ./docker-data/postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     ports:
       - "${DOCKER_POSTGRES_PORT:-5432}:5432" # Expose Postgres on configurable host port
     networks:
@@ -117,3 +128,7 @@ services:
 networks:
   testplanit-net:
     driver: bridge
+
+volumes:
+  postgres-data:
+    name: testplanit-postgres-data

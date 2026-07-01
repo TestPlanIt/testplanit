@@ -247,6 +247,7 @@ docker compose down --remove-orphans
 # Fresh start (removes all data!)
 docker compose down
 sudo rm -rf docker-data/
+docker volume rm testplanit-postgres-data
 docker compose up prod workers --build
 ```
 
@@ -307,15 +308,62 @@ docker compose -f docker-compose.prod.yml \
 
 ### Data Persistence
 
-All service data persists in `./docker-data/`:
+Most service data persists in `./docker-data/`:
 
 ```text
 docker-data/
-├── postgres/      # Database files
 ├── valkey/        # Valkey job queue persistence
 ├── elasticsearch/ # Search indexes
 └── minio/         # File attachments
 ```
+
+Postgres is the exception: it uses the named Docker volume `testplanit-postgres-data`
+instead of a bind mount. Its data directory can't live inside `./docker-data/`
+(or anywhere else under the build context) — once Postgres has run, it locks the
+directory down to `0700`, which makes `docker compose build` fail with a
+permission error on any later build.
+
+Postgres was also bumped from 15 to 18 in the same change, so this isn't a
+straight file-copy upgrade — Postgres 18 cannot read a Postgres 15 data
+directory. Existing deployments need a `pg_dump` / `pg_restore` migration
+instead.
+
+:::warning Upgrading an existing deployment
+
+Deployments created before this change run Postgres 15 with data directly in
+`docker-data/postgres/`. Dump the database **before** switching to the
+updated compose files — once you do, `postgres` starts on the new image and
+can no longer read the old data directory:
+
+```bash
+# 1. On the OLD stack (still Postgres 15), dump the database.
+docker compose exec -T postgres pg_dump -U user -Fc -d testplanit_prod > testplanit-backup.dump
+docker compose down
+```
+
+Pull the updated compose files, then bring up a fresh Postgres 18 instance and restore into it:
+
+```bash
+# 2. Bring up the new (empty) Postgres 18 named volume and restore.
+docker compose up postgres -d
+# wait for it to report healthy, then:
+docker compose exec -T postgres pg_restore -U user -d testplanit_prod --clean --if-exists < testplanit-backup.dump
+
+# 3. Verify the app reads the migrated data correctly, then bring up the rest.
+docker compose up prod workers -d
+```
+
+Once you've confirmed the migrated data is intact, the old `docker-data/postgres/`
+directory is no longer used and can be removed. It's already locked down to
+`0700` by the old Postgres process, so removing it needs a root context — either
+`sudo rm -rf docker-data/postgres`, or from a throwaway container that doesn't
+need host-level `sudo`:
+
+```bash
+docker run --rm -v "$(pwd)/docker-data:/data" alpine rm -rf /data/postgres
+```
+
+:::
 
 ### Backup & Restore
 
@@ -325,8 +373,14 @@ docker-data/
 # Stop services
 docker compose down
 
-# Create timestamped backup
+# Back up the bind-mounted service data
 tar -czf testplanit-backup-$(date +%Y%m%d).tar.gz docker-data/
+
+# Back up the Postgres named volume separately
+docker run --rm \
+  -v testplanit-postgres-data:/data \
+  -v "$(pwd):/backup" \
+  alpine tar -czf /backup/testplanit-postgres-backup-$(date +%Y%m%d).tar.gz -C /data .
 
 # Restart services
 docker compose up prod workers -d
@@ -338,9 +392,17 @@ docker compose up prod workers -d
 # Stop and remove current data
 docker compose down
 sudo rm -rf docker-data/
+docker volume rm testplanit-postgres-data
 
-# Extract backup
+# Extract the bind-mounted service data
 tar -xzf testplanit-backup-YYYYMMDD.tar.gz
+
+# Restore the Postgres named volume
+docker volume create testplanit-postgres-data
+docker run --rm \
+  -v testplanit-postgres-data:/data \
+  -v "$(pwd):/backup" \
+  alpine tar -xzf /backup/testplanit-postgres-backup-YYYYMMDD.tar.gz -C /data
 
 # Restart services
 docker compose up prod workers -d
@@ -507,5 +569,6 @@ docker exec testplanit-workers pm2 list
 # Nuclear option - fresh start
 docker compose down
 sudo rm -rf docker-data/
+docker volume rm testplanit-postgres-data
 docker compose up prod workers --build
 ```
