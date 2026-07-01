@@ -5220,6 +5220,7 @@
         "encrypted": "Encrypted",
         "encryptedHelp": "This field is encrypted and stored securely",
         "changeCredential": "Change",
+        "leaveBlankToKeep": "Leave blank to keep existing value",
         "apiKeyWarningTitle": "API Key Authentication Notice",
         "apiKeyWarningDescription": "With API key authentication, the reporter on created issues may not match the TestPlanIt user who created them — even when emails match:",
         "apiKeyWarningPoint1": "Setting the Jira reporter requires the API token account to have Jira administrator (\"Modify Reporter\") permission. Without it, Jira ignores the reporter and the API token owner is recorded as the creator.",
