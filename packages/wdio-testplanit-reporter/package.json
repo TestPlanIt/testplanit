@@ -61,10 +61,10 @@
   "devDependencies": {
     "@types/node": "^26.0.1",
     "@vitest/coverage-v8": "^4.1.9",
-    "@wdio/reporter": "^9.29.0",
-    "@wdio/types": "^9.29.0",
+    "@wdio/reporter": "^9.29.1",
+    "@wdio/types": "^9.29.1",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.9"
   }
 }
