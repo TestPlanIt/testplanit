@@ -139,15 +139,31 @@ function Tags() {
       ...nameFilter,
     };
 
-    const relations = (
-      ["repositoryCases", "sessions", "testRuns"] as const
-    ).map((relation) => ({
-      [relation]: {
-        some: {
-          isDeleted: false,
+    const relations = [
+      {
+        caseTags: {
+          some: {
+            case: {
+              isDeleted: false,
+            },
+          },
         },
       },
-    }));
+      {
+        sessions: {
+          some: {
+            isDeleted: false,
+          },
+        },
+      },
+      {
+        testRuns: {
+          some: {
+            isDeleted: false,
+          },
+        },
+      },
+    ];
 
     return {
       ...baseWhere,

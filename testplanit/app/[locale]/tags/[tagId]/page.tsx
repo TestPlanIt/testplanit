@@ -145,15 +145,12 @@ function TagDetail() {
   const tag = tags?.[0];
   const tagName = tag?.name || t("tags.defaultName");
 
-  // Build where clause based on access control
+  // Build where clause based on access control (tag filter is added per-tab
+  // below since RepositoryCases and Sessions/TestRuns link to Tags
+  // differently in the v3 schema).
   const baseWhere = useMemo(() => {
     const conditions: any = {
       isDeleted: false,
-      tags: {
-        some: {
-          id: Number(tagId),
-        },
-      },
     };
 
     // Add project filter for non-admin users
@@ -168,11 +165,22 @@ function TagDetail() {
     }
 
     return conditions;
-  }, [tagId, isAdmin, userId]);
+  }, [isAdmin, userId]);
 
   // Add search + filter for cases
   const casesWhere = useMemo(() => {
-    const where: any = { ...baseWhere };
+    const where: any = {
+      ...baseWhere,
+      // `RepositoryCases.tags` does not exist in the v3 schema; the tag
+      // link is the explicit `caseTags` join (RepositoryCaseTag -> tag).
+      caseTags: {
+        some: {
+          tag: {
+            id: Number(tagId),
+          },
+        },
+      },
+    };
 
     // Case type filter
     if (filters.caseType === "manual") {
@@ -198,11 +206,18 @@ function TagDetail() {
       ];
     }
     return where;
-  }, [baseWhere, debouncedSearchString, filters.caseType]);
+  }, [baseWhere, tagId, debouncedSearchString, filters.caseType]);
 
   // Add search + filter for sessions
   const sessionsWhere = useMemo(() => {
-    const where: any = { ...baseWhere };
+    const where: any = {
+      ...baseWhere,
+      tags: {
+        some: {
+          id: Number(tagId),
+        },
+      },
+    };
 
     if (filters.hideCompletedSessions) {
       where.isCompleted = false;
@@ -215,11 +230,18 @@ function TagDetail() {
       };
     }
     return where;
-  }, [baseWhere, debouncedSearchString, filters.hideCompletedSessions]);
+  }, [baseWhere, tagId, debouncedSearchString, filters.hideCompletedSessions]);
 
   // Add search + filter for test runs
   const testRunsWhere = useMemo(() => {
-    const where: any = { ...baseWhere };
+    const where: any = {
+      ...baseWhere,
+      tags: {
+        some: {
+          id: Number(tagId),
+        },
+      },
+    };
 
     if (filters.hideCompletedTestRuns) {
       where.isCompleted = false;
@@ -232,7 +254,7 @@ function TagDetail() {
       };
     }
     return where;
-  }, [baseWhere, debouncedSearchString, filters.hideCompletedTestRuns]);
+  }, [baseWhere, tagId, debouncedSearchString, filters.hideCompletedTestRuns]);
 
   // Fetch paginated test cases
   const { data: repositoryCases, isLoading: isLoadingCases } = useClientQueries(

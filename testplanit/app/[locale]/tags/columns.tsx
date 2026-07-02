@@ -157,6 +157,6 @@ export const useTagColumns = (
         },
       },
     ],
-    [name, testCases, sessions, testRuns, projects]
+    [name, testCases, sessions, testRuns, projects, isLoadingCounts]
   );
 };

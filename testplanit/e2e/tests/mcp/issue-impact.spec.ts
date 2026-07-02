@@ -120,8 +120,10 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
     // skips with a documented reason.
     const issue = await findFirst(request, baseURL!, token, "issue", {
       isDeleted: false,
-      repositoryCases: {
-        some: { projectId: project!.id, isDeleted: false },
+      // `Issue.repositoryCases` does not exist in the v3 schema; the case
+      // link is the explicit `caseIssues` join (RepositoryCaseIssue -> case).
+      caseIssues: {
+        some: { case: { projectId: project!.id, isDeleted: false } },
       },
     });
 
@@ -152,7 +154,10 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
           where: {
             projectId: ctx.projectId,
             isDeleted: false,
-            issues: { some: { id: ctx.issueId, isDeleted: false } },
+            // `RepositoryCases.issues` does not exist in the v3 schema; the
+            // issue link is the explicit `caseIssues` join
+            // (RepositoryCaseIssue -> issue).
+            caseIssues: { some: { issue: { id: ctx.issueId, isDeleted: false } } },
           },
           include: { project: { select: { id: true, name: true } } },
           orderBy: [{ id: "asc" }],

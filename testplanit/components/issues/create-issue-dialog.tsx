@@ -443,8 +443,11 @@ export function CreateIssueDialog({
         if (entityType && entityId) {
           switch (entityType) {
             case "testCase":
-              createData.repositoryCases = {
-                connect: [{ id: entityId }],
+              // `Issue.repositoryCases` does not exist in the v3 schema; the
+              // case link is the explicit `caseIssues` join
+              // (RepositoryCaseIssue -> case).
+              createData.caseIssues = {
+                create: [{ caseId: entityId }],
               };
               break;
             case "session":
@@ -517,8 +520,11 @@ export function CreateIssueDialog({
         if (entityType && entityId) {
           switch (entityType) {
             case "testCase":
-              createData.repositoryCases = {
-                connect: [{ id: entityId }],
+              // `Issue.repositoryCases` does not exist in the v3 schema; the
+              // case link is the explicit `caseIssues` join
+              // (RepositoryCaseIssue -> case).
+              createData.caseIssues = {
+                create: [{ caseId: entityId }],
               };
               break;
             case "session":
