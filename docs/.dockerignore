@@ -11,3 +11,4 @@ docker-compose.yml
 *.log
 .DS_Store
 .vscode/
+**/docker-data/
