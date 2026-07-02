@@ -71,6 +71,25 @@ describe("classNameNormalizer", () => {
       }
     });
 
+    it("collapses browser-version prefixes to one className (cases 72691/72695/72697)", () => {
+      const variants = [
+        "View_User/Group_Log",
+        "113_0.windows.View_User/Group_Log",
+        "139_0.windows.View_User/Group_Log",
+        "16_0.macos.View_User/Group_Log",
+        "17_3.macos.View_User/Group_Log",
+      ];
+      for (const folder of variants) {
+        expect(normalizeAutomationClassName(folder)).toBe("View_User/Group_Log");
+      }
+    });
+
+    it("treats _-separated version numbers as environment but leaves lone numbers", () => {
+      expect(isEnvironmentSegment("113_0")).toBe(true);
+      expect(isEnvironmentSegment("17_3")).toBe(true);
+      expect(isEnvironmentSegment("1000")).toBe(false); // ambiguous lone number — keep
+    });
+
     it("collapses iOS device-model variants to one className", () => {
       const variants = [
         "ios.Videos.Recording.ABT-10329",

@@ -85,6 +85,15 @@ const VERSIONED_OS_SEGMENT =
   /^(win(dows)?|macos|osx|android|ios|ipados)\d+([._]\d+)*$/;
 
 /**
+ * Bare version-number tokens that CI prepends to the folder — a browser/OS
+ * version with its dot rewritten as `_`, e.g. `113_0` (Chrome 113.0),
+ * `16_0` (Safari 16.0), `17_3` (macOS 17.3), usually followed by the OS
+ * (`113_0.windows.X`, `16_0.macos.X`). Requires a `_`-separated form so a lone
+ * class-like number (e.g. `1000`) is not mistaken for a version.
+ */
+const VERSION_SEGMENT = /^\d+(_\d+)+$/;
+
+/**
  * Device-model tokens, optionally with a parenthesized qualifier that the
  * generated-identifier heuristic misses (its `^[a-z0-9_-]{6,}$` test rejects
  * parentheses): `ipadpro11(2024)`, `iphonese(2020)`, `ipad(9thgeneration)`,
@@ -98,6 +107,7 @@ export const isEnvironmentSegment = (segment: string): boolean => {
   return (
     ENVIRONMENT_SEGMENTS.has(lower) ||
     VERSIONED_OS_SEGMENT.test(lower) ||
+    VERSION_SEGMENT.test(lower) ||
     DEVICE_MODEL_SEGMENT.test(lower)
   );
 };
