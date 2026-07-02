@@ -5,6 +5,7 @@ import type { DbClient, TxClient } from "~/lib/zenstack";
 import { sql } from "kysely";
 import { createTestCaseVersionInTransaction } from "../../lib/services/testCaseVersionService.js";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
+import { normalizeAutomationClassName } from "./classNameNormalizer";
 import {
   createWorkflowResolver,
   resolveUserId,
@@ -157,58 +158,6 @@ async function getUserName(
   return name;
 }
 
-const looksLikeGeneratedIdentifier = (segment: string): boolean => {
-  const lower = segment.toLowerCase();
-  if (/^[0-9a-f-]{8,}$/i.test(segment)) {
-    return true;
-  }
-  if (/^\d{6,}$/.test(segment)) {
-    return true;
-  }
-  if (segment.includes(":")) {
-    return true;
-  }
-  if (segment.startsWith("@")) {
-    return true;
-  }
-  if (
-    segment === lower &&
-    /[0-9]/.test(segment) &&
-    /^[a-z0-9_-]{6,}$/.test(segment)
-  ) {
-    return true;
-  }
-  return false;
-};
-
-const normalizeAutomationClassName = (folder: string | null): string | null => {
-  if (!folder) {
-    return null;
-  }
-
-  const segments = folder
-    .split(".")
-    .map((segment) => segment.trim())
-    .filter((segment) => segment.length > 0);
-
-  if (segments.length === 0) {
-    return null;
-  }
-
-  const filteredSegments = segments.filter((segment, index) => {
-    if (index === 0) {
-      // Keep the platform root segment (e.g., ios/android)
-      return true;
-    }
-    return !looksLikeGeneratedIdentifier(segment);
-  });
-
-  if (filteredSegments.length === 0) {
-    return segments[segments.length - 1] ?? null;
-  }
-
-  return filteredSegments.join(".");
-};
 
 /**
  * Import automation cases as repository cases with automated=true.
