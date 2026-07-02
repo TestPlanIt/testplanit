@@ -1,3 +1,9 @@
+## [0.40.13](https://github.com/TestPlanIt/testplanit/compare/v0.40.12...v0.40.13) (2026-07-02)
+
+### Bug Fixes
+
+* **docker:** move Postgres to a named volume and bump to Postgres 18 ([#486](https://github.com/TestPlanIt/testplanit/issues/486)) ([a8da511](https://github.com/TestPlanIt/testplanit/commit/a8da511f68eac52eaf8beff8eb806a53b1c9056e)), closes [#485](https://github.com/TestPlanIt/testplanit/issues/485) [docker-library/postgres#1259](https://github.com/docker-library/postgres/issues/1259) [docker-library/postgres#1400](https://github.com/docker-library/postgres/issues/1400)
+
 ## [0.40.12](https://github.com/TestPlanIt/testplanit/compare/v0.40.11...v0.40.12) (2026-06-30)
 
 ### Bug Fixes
