@@ -1,3 +1,9 @@
+## [0.40.14](https://github.com/TestPlanIt/testplanit/compare/v0.40.13...v0.40.14) (2026-07-03)
+
+### Bug Fixes
+
+* **ssrf:** block IPv4-mapped IPv6 bypass and pin git-repo connections ([#491](https://github.com/TestPlanIt/testplanit/issues/491)) ([6c77a7d](https://github.com/TestPlanIt/testplanit/commit/6c77a7d362ca0d70c284fa2304c782ce6bb5157c))
+
 ## [0.40.13](https://github.com/TestPlanIt/testplanit/compare/v0.40.12...v0.40.13) (2026-07-02)
 
 ### Bug Fixes
