@@ -521,6 +521,7 @@ export function ProjectAuditLog({ projectId }: ProjectAuditLogProps) {
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           flexColumnId="entityName"
+          columnSizingStorageKey="project-audit-log"
           hasMore={!!hasNextPage}
           isLoading={isLoading || isFetchingNextPage}
           onLoadMore={fetchNextPage}

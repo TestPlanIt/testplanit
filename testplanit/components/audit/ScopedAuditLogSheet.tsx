@@ -318,6 +318,7 @@ function ScopedAuditLogContent({
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           flexColumnId="userEmail"
+          columnSizingStorageKey="scoped-audit-log"
           hasMore={!!hasNextPage}
           isLoading={isLoading || isFetchingNextPage}
           onLoadMore={fetchNextPage}

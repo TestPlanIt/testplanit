@@ -159,4 +159,36 @@ describe("VirtualizedDataTable", () => {
     expect(screen.getByText("Parent")).toBeInTheDocument();
     expect(screen.getAllByLabelText(/expand/).length).toBeGreaterThan(0);
   });
+
+  it("renders a drag-to-resize handle on each resizable column", () => {
+    renderTable();
+    expect(
+      screen.getByTestId("virtualized-table-resize-name")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("virtualized-table-resize-count")
+    ).toBeInTheDocument();
+  });
+
+  it("does not render a resize handle on the non-resizable expander column", () => {
+    renderTable({ grouping: ["name"] });
+    // The expander column opts out via enableResizing:false.
+    expect(
+      screen.queryByTestId("virtualized-table-resize-expander")
+    ).not.toBeInTheDocument();
+  });
+
+  it("seeds column widths from localStorage when a storage key is set", () => {
+    window.localStorage.setItem(
+      "vdt:colsize:my-key",
+      JSON.stringify({ name: 275 })
+    );
+    renderTable({ columnSizingStorageKey: "my-key" });
+    const nameHeader = screen
+      .getAllByRole("columnheader")
+      .find((el) => el.textContent?.includes("Name"));
+    expect(nameHeader).toBeDefined();
+    expect(nameHeader).toHaveStyle({ width: "275px" });
+    window.localStorage.removeItem("vdt:colsize:my-key");
+  });
 });

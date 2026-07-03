@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ColumnDef,
+  ColumnSizingState,
   ExpandedState,
   flexRender,
   getCoreRowModel,
@@ -26,7 +27,14 @@ import {
   UnfoldVertical,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useCallback, useMemo } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { cn } from "~/utils";
 
@@ -35,11 +43,12 @@ import { cn } from "~/utils";
  *
  * A lighter-weight alternative to the shared `DataTable` for surfaces that need
  * to render an arbitrarily large result set as one continuous, page-seam-free
- * list. It deliberately does NOT replicate `DataTable`'s column resize / pinning
- * / drag-reorder; it keeps the table features that scroll well (sorting,
- * grouping, expansion, sub-rows, column visibility) by driving a TanStack
- * `useReactTable` instance and rendering its flattened row model
- * (`getRowModel().rows`) through `useVirtualizedInfiniteList`.
+ * list. It supports draggable column resizing (live, and optionally persisted
+ * per user via `columnSizingStorageKey`) but deliberately does NOT replicate
+ * `DataTable`'s column pinning / drag-reorder; it keeps the table features that
+ * scroll well (sorting, grouping, expansion, sub-rows, column visibility) by
+ * driving a TanStack `useReactTable` instance and rendering its flattened row
+ * model (`getRowModel().rows`) through `useVirtualizedInfiniteList`.
  *
  * Consumed by the reports results panel and the admin audit-log table; both
  * converge on the same scroll model. Per-surface chrome (empty-state copy,
@@ -88,6 +97,13 @@ interface VirtualizedDataTableProps {
    */
   flexColumnId?: string;
 
+  /**
+   * When set, resized column widths are persisted per user to localStorage under
+   * this key (scope it per surface, e.g. per report type). Column resizing is
+   * always enabled regardless; without a key the widths just reset on remount.
+   */
+  columnSizingStorageKey?: string;
+
   // Infinite scroll (defaults keep the table in full-set / client mode).
   hasMore?: boolean;
   isLoading?: boolean;
@@ -125,6 +141,7 @@ export function VirtualizedDataTable({
   getSubRows,
   subRowsLabel,
   flexColumnId,
+  columnSizingStorageKey,
   hasMore = false,
   isLoading = false,
   onLoadMore,
@@ -173,6 +190,22 @@ export function VirtualizedDataTable({
     [columnVisibility, onColumnVisibilityChange]
   );
 
+  // Draggable column widths. TanStack owns the live width during a drag (via
+  // column.getSize(), which both header and body cells already read); we only
+  // seed it from and flush it back to localStorage when a storage key is given.
+  const columnSizingStorage = columnSizingStorageKey
+    ? `vdt:colsize:${columnSizingStorageKey}`
+    : null;
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(() => {
+    if (!columnSizingStorage || typeof window === "undefined") return {};
+    try {
+      const raw = window.localStorage.getItem(columnSizingStorage);
+      return raw ? (JSON.parse(raw) as ColumnSizingState) : {};
+    } catch {
+      return {};
+    }
+  });
+
   // Prepend an expander column when rows can nest (grouping or sub-rows).
   const expanderColumn: ColumnDef<any, any> = useMemo(
     () => ({
@@ -212,6 +245,7 @@ export function VirtualizedDataTable({
       maxSize: EXPANDER_WIDTH,
       enableSorting: false,
       enableHiding: false,
+      enableResizing: false,
     }),
     [tActions, subRowsLabel]
   );
@@ -233,9 +267,12 @@ export function VirtualizedDataTable({
       groupingActive || getSubRows ? getExpandedRowModel() : undefined,
     getSubRows,
     enableSorting: true,
+    enableColumnResizing: true,
+    columnResizeMode: "onChange",
     state: {
       columnVisibility,
       sorting,
+      columnSizing,
       ...(grouping !== undefined && { grouping }),
       ...(expanded !== undefined && { expanded }),
     },
@@ -243,8 +280,28 @@ export function VirtualizedDataTable({
     ...(onExpandedChange !== undefined && { onExpandedChange }),
     onSortingChange: handleSortingChange,
     onColumnVisibilityChange: handleVisibilityChange,
+    onColumnSizingChange: setColumnSizing,
     defaultColumn: { minSize: 50, maxSize: 1500, size: 150 },
   });
+
+  // Flush widths to storage when a resize gesture settles — writing on every
+  // onChange tick would hammer localStorage. `isResizingColumn` is the dragged
+  // column id while active and false once released.
+  const isResizingColumn = table.getState().columnSizingInfo.isResizingColumn;
+  const wasResizingRef = useRef<string | false>(false);
+  useEffect(() => {
+    if (wasResizingRef.current && !isResizingColumn && columnSizingStorage) {
+      try {
+        window.localStorage.setItem(
+          columnSizingStorage,
+          JSON.stringify(columnSizing)
+        );
+      } catch {
+        // storage unavailable / over quota — keep the widths for this session
+      }
+    }
+    wasResizingRef.current = isResizingColumn;
+  }, [isResizingColumn, columnSizing, columnSizingStorage]);
 
   const rows = table.getRowModel().rows;
   const leafColumns = table.getVisibleLeafColumns();
@@ -317,7 +374,7 @@ export function VirtualizedDataTable({
                   key={header.id}
                   role="columnheader"
                   className={cn(
-                    "flex select-none items-center gap-1 border-r px-3 py-2 text-xs font-medium last:border-r-0",
+                    "relative flex select-none items-center gap-1 border-r px-3 py-2 text-xs font-medium last:border-r-0",
                     isFlex ? "min-w-0" : "shrink-0"
                   )}
                   style={
@@ -365,6 +422,25 @@ export function VirtualizedDataTable({
                         <ArrowDownUp className="h-4 w-4 opacity-50" />
                       )}
                     </button>
+                  )}
+                  {/* Drag-to-resize handle on the column's right edge. The flex
+                      column absorbs slack (no fixed width to drag) and the
+                      expander column opts out via enableResizing:false. */}
+                  {column.getCanResize() && !isFlex && (
+                    <div
+                      onMouseDown={header.getResizeHandler()}
+                      onTouchStart={header.getResizeHandler()}
+                      onDoubleClick={() => column.resetSize()}
+                      role="separator"
+                      aria-orientation="vertical"
+                      aria-label={t("resize")}
+                      title={t("resize")}
+                      className={cn(
+                        "absolute right-0 top-0 z-10 h-full w-1.5 cursor-col-resize touch-none select-none transition-colors hover:bg-primary/40",
+                        column.getIsResizing() ? "bg-primary" : "bg-transparent"
+                      )}
+                      data-testid={`${testIdPrefix}-resize-${column.id}`}
+                    />
                   )}
                 </div>
               );

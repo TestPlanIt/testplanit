@@ -524,6 +524,7 @@ export function ReportRenderer({
               data={results}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={onColumnVisibilityChange}
+              columnSizingStorageKey={`report:${getBaseReportType(reportType)}`}
               sortConfig={sortConfig || undefined}
               onSortChange={onSortChange}
               grouping={grouping}

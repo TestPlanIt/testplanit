@@ -342,6 +342,7 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           flexColumnId="entityName"
+          columnSizingStorageKey="user-audit-log"
           hasMore={!!hasNextPage}
           isLoading={isLoading || isFetchingNextPage}
           onLoadMore={fetchNextPage}
