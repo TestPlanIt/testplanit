@@ -721,9 +721,17 @@ function ReportBuilderContent({
             ? executionLogColumns
             : standardColumns;
 
-  // When lastUsedDimensions change (after running a report), update grouping
+  // Single source of truth for row grouping. issue-test-coverage is ALWAYS
+  // grouped by issue (issues with expandable test cases) — its last two columns
+  // (Test Results, Pass Rate) render only via aggregatedCell, so without this
+  // grouping they show blank. This must not be gated on `allResults` (only
+  // populated on an explicit Run via updateUrl); doing so left the report
+  // ungrouped on every auto-run (URL load, tab switch, shared report). Other
+  // report types group by their first dimension when more than one is selected.
   React.useEffect(() => {
-    if (lastUsedDimensions.length > 1) {
+    if (matchesReportType(reportType, "issue-test-coverage")) {
+      setGrouping(["issueId"]);
+    } else if (lastUsedDimensions.length > 1) {
       // Only group by the first dimension when there are multiple dimensions
       const firstDimension = lastUsedDimensions[0];
       const groupingColumn = firstDimension.value;
@@ -733,7 +741,7 @@ function ReportBuilderContent({
       // No grouping when there's only one dimension
       setGrouping([]);
     }
-  }, [lastUsedDimensions]);
+  }, [lastUsedDimensions, reportType]);
 
   // Reset column visibility when report type changes so stale keys from a
   // previous report type do not hide columns on the new one (DataTable defaults
@@ -779,19 +787,14 @@ function ReportBuilderContent({
     }
   }, [reportType]);
 
-  // Set grouping for issue test coverage report when data loads
+  // Start the issue-test-coverage report with all issue groups collapsed on
+  // entry. Grouping itself is owned by the effect above; this only resets the
+  // expansion state when the report becomes active.
   React.useEffect(() => {
-    if (
-      matchesReportType(reportType, "issue-test-coverage") &&
-      allResults &&
-      allResults.length > 0
-    ) {
-      // Group by issueId to show issues with expandable test cases
-      setGrouping(["issueId"]);
-      // Start with all groups collapsed
+    if (matchesReportType(reportType, "issue-test-coverage")) {
       setExpanded({});
     }
-  }, [reportType, allResults]);
+  }, [reportType]);
 
   // Get the current report configuration
   const currentReport = reportTypes.find((r) => r.id === reportType);
