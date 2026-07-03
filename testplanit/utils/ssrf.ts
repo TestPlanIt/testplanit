@@ -1,30 +1,6 @@
 import { lookup } from "node:dns/promises";
-import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
-
-// Private IP ranges that must be blocked to prevent SSRF attacks
-const PRIVATE_RANGES: RegExp[] = [
-  // IPv4 loopback
-  /^127\./,
-  // RFC 1918 private ranges
-  /^10\./,
-  /^172\.(1[6-9]|2[0-9]|3[01])\./,
-  /^192\.168\./,
-  // AWS metadata / link-local
-  /^169\.254\./,
-  // "This" network
-  /^0\./,
-  // IPv6 loopback
-  /^::1$/,
-  // IPv6 unique local
-  /^fc/i,
-  /^fd/i,
-  // IPv6 link-local
-  /^fe80:/i,
-];
-
-function isPrivateIp(ip: string): boolean {
-  return PRIVATE_RANGES.some((r) => r.test(ip));
-}
+import { isIP } from "node:net";
+import { getAllowedPrivateHosts, isPrivateIp } from "~/lib/utils/ssrf";
 
 /**
  * Returns true if the URL is safe to make a server-side request to.
@@ -82,8 +58,16 @@ export async function assertSsrfSafeResolved(
     return;
   }
 
-  // Skip DNS lookup for raw IP addresses — already checked by isSsrfSafe()
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname.includes(":")) {
+  // For a raw IP literal (IPv4, IPv6, or IPv4-mapped IPv6) there is no DNS to
+  // resolve — validate the literal numerically instead of skipping it. Skipping
+  // any host containing ":" is what let IPv4-mapped IPv6 literals bypass this
+  // re-check (GHSA-x7jm-4fpq-5mhm).
+  if (isIP(hostname) !== 0) {
+    if (isPrivateIp(hostname)) {
+      throw new Error(
+        "Request blocked: hostname resolves to a private or internal address"
+      );
+    }
     return;
   }
 
