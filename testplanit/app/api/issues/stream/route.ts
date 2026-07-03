@@ -25,7 +25,7 @@ const METRICS_INTERVAL_MS = 30_000;
 interface ActiveConnection {
   tenantId: string;
   userId: string;
-  projectId: number;
+  projectIds: number[];
   cleanup: () => Promise<void>;
   writeShutdown: () => void;
   openedAt: number;
@@ -85,28 +85,47 @@ export async function GET(req: NextRequest) {
   }
   const userId = session.user.id;
 
-  // 2. Project param. The channel is project-scoped; clients pass
-  //    `?projectId=<int>`.
-  const rawProjectId = req.nextUrl.searchParams.get("projectId");
-  const projectId = rawProjectId ? parseInt(rawProjectId, 10) : NaN;
-  if (!Number.isInteger(projectId) || projectId <= 0) {
+  // 2. Project params. The channel is project-scoped, but a single client
+  //    connection multiplexes ALL the projects it's watching so a cross-project
+  //    list (global /issues, /admin/issues) opens ONE stream instead of one per
+  //    project. Clients pass `?projectIds=<csv of ints>` (legacy single
+  //    `?projectId=<int>` still accepted). Capped so a pathological request
+  //    can't ask the subscriber to fan out over an unbounded channel set.
+  const MAX_PROJECTS = 500;
+  const rawIds =
+    req.nextUrl.searchParams.get("projectIds") ??
+    req.nextUrl.searchParams.get("projectId") ??
+    "";
+  const requestedProjectIds = [
+    ...new Set(
+      rawIds
+        .split(",")
+        .map((s) => parseInt(s.trim(), 10))
+        .filter((n) => Number.isInteger(n) && n > 0)
+    ),
+  ].slice(0, MAX_PROJECTS);
+  if (requestedProjectIds.length === 0) {
     return NextResponse.json(
-      { error: "projectId query param required (positive integer)" },
+      {
+        error:
+          "projectIds query param required (comma-separated positive ints)",
+      },
       { status: 400 }
     );
   }
 
-  // 3. Project access gate. Re-fetch through the ZenStack-enhanced
-  //    client so the project's `@@allow('read', ...)` policy decides
-  //    whether this user can subscribe. If the policy returns null,
-  //    the user has no access — same response as if the project
-  //    didn't exist (do not leak existence).
+  // 3. Project access gate. Filter to the projects this user can actually read
+  //    through the ZenStack-enhanced client so the `@@allow('read', ...)`
+  //    policy decides which channels the subscription may join. Inaccessible
+  //    (or non-existent) ids are silently dropped — same as before, we don't
+  //    leak existence — and if none survive we 404.
   const db = await getEnhancedDb(session);
-  const project = await db.projects.findUnique({
-    where: { id: projectId },
+  const accessibleProjects = await db.projects.findMany({
+    where: { id: { in: requestedProjectIds } },
     select: { id: true },
   });
-  if (!project) {
+  const projectIds = accessibleProjects.map((p) => p.id);
+  if (projectIds.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -185,13 +204,13 @@ export async function GET(req: NextRequest) {
 
       try {
         await subscriber.subscribe(
-          projectIssueUpdateChannel(tenantId, projectId)
+          ...projectIds.map((pid) => projectIssueUpdateChannel(tenantId, pid))
         );
       } catch (subErr) {
         console.warn(`[sse/issues] subscribe failed`, {
           tenantId,
           userId,
-          projectId,
+          projectIds,
           error: subErr instanceof Error ? subErr.message : String(subErr),
         });
         try {
@@ -223,7 +242,7 @@ export async function GET(req: NextRequest) {
       connection = {
         tenantId,
         userId,
-        projectId,
+        projectIds,
         openedAt: Date.now(),
         writeShutdown,
         cleanup: async () => {
