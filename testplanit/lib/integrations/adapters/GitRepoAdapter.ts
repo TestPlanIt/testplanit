@@ -4,8 +4,15 @@
  * Does NOT extend BaseAdapter (which is for issue tracking, not git file fetching).
  */
 
-import { assertSsrfSafeResolved, isSsrfSafe } from "~/utils/ssrf";
+import {
+  assertSsrfSafeResolved,
+  createPinnedDispatcher,
+  isSsrfSafe,
+} from "~/utils/ssrf";
 import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
+
+/** fetch() RequestInit plus undici's `dispatcher` (absent from the DOM types). */
+type FetchInit = RequestInit & { dispatcher?: unknown };
 
 export interface RepoFileEntry {
   path: string;
@@ -110,17 +117,23 @@ export abstract class GitRepoAdapter {
         () => controller.abort(),
         this.requestTimeout
       );
+      let dispatcher: ReturnType<typeof createPinnedDispatcher> | undefined;
 
       try {
         const safeUrl = this.sanitizeUrl(url);
-        // Resolve DNS and verify the IP is not private (closes DNS rebinding)
-        await assertSsrfSafeResolved(safeUrl);
+        // Resolve DNS, verify the IP is not private, and pin the connection to
+        // that exact IP so fetch() cannot re-resolve to a different (private)
+        // address between the check and the connect (DNS-rebinding TOCTOU).
+        const pinnedIp = await assertSsrfSafeResolved(safeUrl);
+        dispatcher = pinnedIp ? createPinnedDispatcher(pinnedIp) : undefined;
 
-        const response = await fetch(safeUrl, {
+        const init: FetchInit = {
           ...options,
           signal: controller.signal,
           redirect: "manual", // prevent redirect-based SSRF bypass
-        });
+        };
+        if (dispatcher) init.dispatcher = dispatcher;
+        const response = await fetch(safeUrl, init);
 
         // If the server redirects, validate the target before following
         if (response.status >= 300 && response.status < 400) {
@@ -202,6 +215,9 @@ export abstract class GitRepoAdapter {
         }
       } finally {
         clearTimeout(timeoutId);
+        // Release the pinned connection pool. Fire-and-forget: undici keeps an
+        // in-flight response alive until its body has been read.
+        dispatcher?.close().catch(() => {});
       }
     });
   }
@@ -222,16 +238,21 @@ export abstract class GitRepoAdapter {
         () => controller.abort(),
         this.requestTimeout
       );
+      let dispatcher: ReturnType<typeof createPinnedDispatcher> | undefined;
 
       try {
         const safeUrl = this.sanitizeUrl(url);
-        await assertSsrfSafeResolved(safeUrl);
+        // Validate + pin the connection to the resolved IP (DNS-rebinding guard).
+        const pinnedIp = await assertSsrfSafeResolved(safeUrl);
+        dispatcher = pinnedIp ? createPinnedDispatcher(pinnedIp) : undefined;
 
-        const response = await fetch(safeUrl, {
+        const init: FetchInit = {
           ...options,
           signal: controller.signal,
           redirect: "manual",
-        });
+        };
+        if (dispatcher) init.dispatcher = dispatcher;
+        const response = await fetch(safeUrl, init);
 
         if (response.status >= 300 && response.status < 400) {
           return this.followSafeRedirect<string>(
@@ -269,6 +290,9 @@ export abstract class GitRepoAdapter {
         return await response.text();
       } finally {
         clearTimeout(timeoutId);
+        // Release the pinned connection pool. Fire-and-forget: undici keeps an
+        // in-flight response alive until its body has been read.
+        dispatcher?.close().catch(() => {});
       }
     });
   }
@@ -318,26 +342,33 @@ export abstract class GitRepoAdapter {
 
     // Resolve relative redirects against the original request URL
     const redirectUrl = this.sanitizeUrl(new URL(location, response.url).href);
-    await assertSsrfSafeResolved(redirectUrl);
+    const pinnedIp = await assertSsrfSafeResolved(redirectUrl);
+    const dispatcher = pinnedIp ? createPinnedDispatcher(pinnedIp) : undefined;
 
-    const redirectResponse = await fetch(redirectUrl, {
-      ...options,
-      signal,
-      redirect: "error", // no further redirects
-    });
+    try {
+      const init: FetchInit = {
+        ...options,
+        signal,
+        redirect: "error", // no further redirects
+      };
+      if (dispatcher) init.dispatcher = dispatcher;
+      const redirectResponse = await fetch(redirectUrl, init);
 
-    this.trackRateLimitHeaders(redirectResponse);
+      this.trackRateLimitHeaders(redirectResponse);
 
-    if (!redirectResponse.ok) {
-      const errorText = await redirectResponse.text().catch(() => "");
-      throw new Error(
-        `HTTP ${redirectResponse.status} ${redirectResponse.statusText}: ${errorText.slice(0, 200)}`
-      );
+      if (!redirectResponse.ok) {
+        const errorText = await redirectResponse.text().catch(() => "");
+        throw new Error(
+          `HTTP ${redirectResponse.status} ${redirectResponse.statusText}: ${errorText.slice(0, 200)}`
+        );
+      }
+
+      return mode === "json"
+        ? ((await redirectResponse.json()) as T)
+        : ((await redirectResponse.text()) as T);
+    } finally {
+      dispatcher?.close().catch(() => {});
     }
-
-    return mode === "json"
-      ? ((await redirectResponse.json()) as T)
-      : ((await redirectResponse.text()) as T);
   }
 
   /**

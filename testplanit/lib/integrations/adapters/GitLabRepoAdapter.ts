@@ -1,3 +1,4 @@
+import { assertSsrfSafeResolved, createPinnedDispatcher } from "~/utils/ssrf";
 import {
   GitRepoAdapter,
   ListFilesResult,
@@ -57,17 +58,26 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
         () => controller.abort(),
         this.requestTimeout
       );
+      let dispatcher: ReturnType<typeof createPinnedDispatcher> | undefined;
 
       let response: Response;
       try {
         const safeUrl = this.sanitizeUrl(url);
+        // Validate the resolved IP and pin the connection to it (DNS-rebinding
+        // guard). This bespoke pagination loop bypasses the base makeRequest, so
+        // the SSRF re-check has to happen here too.
+        const pinnedIp = await assertSsrfSafeResolved(safeUrl);
+        dispatcher = pinnedIp ? createPinnedDispatcher(pinnedIp) : undefined;
         await this.applyRateLimit();
-        response = await fetch(safeUrl, {
+        const init: RequestInit & { dispatcher?: unknown } = {
           headers: this.authHeaders,
           signal: controller.signal,
-        });
+        };
+        if (dispatcher) init.dispatcher = dispatcher;
+        response = await fetch(safeUrl, init);
       } finally {
         clearTimeout(timeoutId);
+        dispatcher?.close().catch(() => {});
       }
 
       if (!response.ok) {

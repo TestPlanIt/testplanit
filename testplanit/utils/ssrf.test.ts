@@ -20,7 +20,12 @@ vi.mock("~/lib/utils/ssrf", async (importActual) => {
   };
 });
 
-import { assertSsrfSafeResolved, isSsrfSafe } from "./ssrf";
+import { Agent } from "undici";
+import {
+  assertSsrfSafeResolved,
+  createPinnedDispatcher,
+  isSsrfSafe,
+} from "./ssrf";
 
 describe("isSsrfSafe", () => {
   describe("blocks localhost", () => {
@@ -260,6 +265,39 @@ describe("assertSsrfSafeResolved", () => {
     });
   });
 
+  describe("returns the IP to pin the connection to", () => {
+    it("returns the resolved address for a hostname (for pinning)", async () => {
+      mockLookup.mockResolvedValueOnce({ address: "140.82.121.4", family: 4 });
+
+      await expect(
+        assertSsrfSafeResolved("https://github.com/api")
+      ).resolves.toBe("140.82.121.4");
+    });
+
+    it("returns null for a raw IPv4 literal (nothing to pin)", async () => {
+      await expect(
+        assertSsrfSafeResolved("https://140.82.121.4/api")
+      ).resolves.toBeNull();
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+
+    it("returns null for a public IPv6 literal", async () => {
+      await expect(
+        assertSsrfSafeResolved("https://[2606:4700::1]/api")
+      ).resolves.toBeNull();
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+
+    it("returns null for an allowlisted host (operator opt-in)", async () => {
+      mockGetAllowedPrivateHosts.mockReturnValueOnce(new Set(["gitea.local"]));
+
+      await expect(
+        assertSsrfSafeResolved("http://gitea.local:3000/api")
+      ).resolves.toBeNull();
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+  });
+
   describe("skips DNS lookup for raw IPs", () => {
     it("skips lookup for IPv4 addresses", async () => {
       await assertSsrfSafeResolved("https://140.82.121.4/api");
@@ -339,5 +377,20 @@ describe("assertSsrfSafeResolved", () => {
 
       expect(mockLookup).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("createPinnedDispatcher", () => {
+  it("returns an undici dispatcher that closes cleanly", async () => {
+    const dispatcher = createPinnedDispatcher("140.82.121.4");
+    expect(dispatcher).toBeInstanceOf(Agent);
+    // Fire-and-forget close must resolve (callers do not await it).
+    await expect(dispatcher.close()).resolves.not.toThrow();
+  });
+
+  it("accepts IPv6 addresses without throwing", async () => {
+    const dispatcher = createPinnedDispatcher("2606:4700::1");
+    expect(dispatcher).toBeInstanceOf(Agent);
+    await dispatcher.close();
   });
 });
