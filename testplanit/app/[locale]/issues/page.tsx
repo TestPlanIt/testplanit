@@ -3,10 +3,8 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
-import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import {
   Card,
   CardContent,
@@ -25,37 +23,25 @@ import type { VisibilityState } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 
+const PAGE_SIZE = 50;
+
+// Count columns are computed via a separate join call and can't be sorted
+// across pages without the full set in hand. Sorting by one fetches everything
+// once and renders it through the same virtualized table in full-set mode;
+// every other column is a real DB column and drives a genuine infinite fetch.
+const COUNT_SORT_COLUMNS = ["cases", "testRuns", "sessions", "projects"];
+
 export default function IssueList() {
-  return (
-    <PaginationProvider>
-      <Issues />
-    </PaginationProvider>
-  );
+  return <Issues />;
 }
 
 function Issues() {
   const t = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -69,40 +55,28 @@ function Issues() {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<string>("");
 
-  const prevSearchStringRef = useRef(searchString);
-  const prevPageSizeRef = useRef(pageSize);
-  const prevStatusFilterRef = useRef(statusFilter);
-  const prevPriorityFilterRef = useRef(priorityFilter);
-
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const accessFilterReady = !!session?.user?.id;
 
-  // Fetch distinct status values for the filter dropdown
+  // Distinct status/priority values for the filter dropdowns.
   const { data: statusOptions } = useClientQueries(schema).issue.useGroupBy(
     {
       by: ["status"],
       where: { isDeleted: false },
       orderBy: { status: "asc" },
     },
-    {
-      enabled: status === "authenticated",
-    }
+    { enabled: status === "authenticated" }
   );
-
-  // Fetch distinct priority values for the filter dropdown
   const { data: priorityOptions } = useClientQueries(schema).issue.useGroupBy(
     {
       by: ["priority"],
       where: { isDeleted: false },
       orderBy: { priority: "asc" },
     },
-    {
-      enabled: status === "authenticated",
-    }
+    { enabled: status === "authenticated" }
   );
 
-  // Extract unique non-null values, combining options with mismatched casing
   const statuses = useMemo(() => {
     if (!statusOptions) return [];
     const seen = new Map<string, string>();
@@ -111,9 +85,7 @@ function Issues() {
       .filter((s): s is string => s !== null && s.trim() !== "")
       .forEach((s) => {
         const lower = s.toLowerCase();
-        if (!seen.has(lower)) {
-          seen.set(lower, s);
-        }
+        if (!seen.has(lower)) seen.set(lower, s);
       });
     return Array.from(seen.values()).sort((a, b) =>
       a.toLowerCase().localeCompare(b.toLowerCase())
@@ -128,302 +100,184 @@ function Issues() {
       .filter((p): p is string => p !== null && p.trim() !== "")
       .forEach((p) => {
         const lower = p.toLowerCase();
-        if (!seen.has(lower)) {
-          seen.set(lower, p);
-        }
+        if (!seen.has(lower)) seen.set(lower, p);
       });
     return Array.from(seen.values()).sort((a, b) =>
       a.toLowerCase().localeCompare(b.toLowerCase())
     );
   }, [priorityOptions]);
 
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
-
-  // Build search filter for name, title, and description
   const searchFilter = useMemo(() => {
     if (!debouncedSearchString.trim()) {
       return {};
     }
-
     const searchTerm = debouncedSearchString.trim();
     return {
       OR: [
-        {
-          name: {
-            contains: searchTerm,
-            mode: "insensitive" as const,
-          },
-        },
-        {
-          title: {
-            contains: searchTerm,
-            mode: "insensitive" as const,
-          },
-        },
-        {
-          description: {
-            contains: searchTerm,
-            mode: "insensitive" as const,
-          },
-        },
+        { name: { contains: searchTerm, mode: "insensitive" as const } },
+        { title: { contains: searchTerm, mode: "insensitive" as const } },
+        { description: { contains: searchTerm, mode: "insensitive" as const } },
       ],
     };
   }, [debouncedSearchString]);
 
-  // Note: We don't need a manual project filter here anymore.
-  // ZenStack's access policies on RepositoryCases, Sessions, TestRuns, etc.
-  // will automatically filter out data the user doesn't have access to.
-  // This handles all access types: assignedUsers, userPermissions,
-  // groupPermissions, and project defaultAccessType (GLOBAL_ROLE/SPECIFIC_ROLE).
-
-  // Build the where clause for issues
+  // Issue is visible if associated with any accessible project relation.
+  // ZenStack's access policies handle the permission filtering automatically.
   const issuesWhere = useMemo(() => {
     if (!accessFilterReady) {
       return null;
     }
 
-    // Issue is visible if associated with any accessible project relation.
-    // ZenStack's access policies handle the permission filtering automatically.
     const relations = [
       {
-        // `Issue.repositoryCases` does not exist in the v3 schema; the case
-        // link is the explicit `caseIssues` join (RepositoryCaseIssue ->
-        // case). Using the old relation name made ZenStack reject the whole
-        // findMany (422), which is why the issues list came back empty.
-        caseIssues: {
-          some: {
-            case: {
-              isDeleted: false,
-            },
-          },
-        },
+        // `Issue.repositoryCases` does not exist in v3; the case link is the
+        // explicit `caseIssues` join (RepositoryCaseIssue -> case).
+        caseIssues: { some: { case: { isDeleted: false } } },
       },
-      {
-        sessions: {
-          some: {
-            isDeleted: false,
-          },
-        },
-      },
-      {
-        sessionResults: {
-          some: {
-            session: {
-              isDeleted: false,
-            },
-          },
-        },
-      },
-      {
-        testRuns: {
-          some: {
-            isDeleted: false,
-          },
-        },
-      },
-      {
-        testRunResults: {
-          some: {
-            testRun: {
-              isDeleted: false,
-            },
-          },
-        },
-      },
+      { sessions: { some: { isDeleted: false } } },
+      { sessionResults: { some: { session: { isDeleted: false } } } },
+      { testRuns: { some: { isDeleted: false } } },
+      { testRunResults: { some: { testRun: { isDeleted: false } } } },
       {
         testRunStepResults: {
-          some: {
-            testRunResult: {
-              testRun: {
-                isDeleted: false,
-              },
-            },
-          },
+          some: { testRunResult: { testRun: { isDeleted: false } } },
         },
       },
     ];
 
-    // Combine search filter and project relations using AND
     const conditions: Array<Record<string, unknown>> = [
       { isDeleted: false },
       { OR: relations },
     ];
-
-    // Add search filter if present
-    if (searchFilter.OR) {
-      conditions.push(searchFilter);
-    }
-
-    // Add status filter if selected (case-insensitive)
+    if (searchFilter.OR) conditions.push(searchFilter);
     if (statusFilter) {
       conditions.push({
         status: { equals: statusFilter, mode: "insensitive" as const },
       });
     }
-
-    // Add priority filter if selected (case-insensitive)
     if (priorityFilter) {
       conditions.push({
         priority: { equals: priorityFilter, mode: "insensitive" as const },
       });
     }
 
-    return {
-      AND: conditions,
-    };
+    return { AND: conditions };
   }, [accessFilterReady, searchFilter, statusFilter, priorityFilter]);
 
+  const isCountSort = COUNT_SORT_COLUMNS.includes(sortConfig.column);
   const orderBy = useMemo(() => {
-    // Only apply server-side sorting for database columns
-    // Count columns (cases, testRuns, sessions, projects) will be sorted client-side
-    if (!sortConfig?.column) {
-      return {
-        name: "asc" as const,
-      };
+    if (
+      ["name", "title", "status", "priority", "lastSyncedAt"].includes(
+        sortConfig.column
+      )
+    ) {
+      return { [sortConfig.column]: sortConfig.direction } as const;
     }
-
-    if (sortConfig.column === "name") {
-      return {
-        name: sortConfig.direction,
-      } as const;
-    }
-
-    if (sortConfig.column === "title") {
-      return {
-        title: sortConfig.direction,
-      } as const;
-    }
-
-    if (sortConfig.column === "status") {
-      return {
-        status: sortConfig.direction,
-      } as const;
-    }
-
-    if (sortConfig.column === "priority") {
-      return {
-        priority: sortConfig.direction,
-      } as const;
-    }
-
-    if (sortConfig.column === "lastSyncedAt") {
-      return {
-        lastSyncedAt: sortConfig.direction,
-      } as const;
-    }
-
-    // For count columns, return default sort (will sort client-side)
-    return {
-      name: "asc" as const,
-    };
+    return { name: "asc" as const };
   }, [sortConfig]);
 
-  // When sorting by count columns, we need to fetch ALL issues to sort properly
-  const needsClientSideSorting = [
-    "cases",
-    "testRuns",
-    "sessions",
-    "projects",
-  ].includes(sortConfig.column);
-  const shouldPaginate =
-    !needsClientSideSorting && typeof effectivePageSize === "number";
-  const paginationArgs = {
-    skip: shouldPaginate ? skip : undefined,
-    take: shouldPaginate ? effectivePageSize : undefined,
-  };
+  const include = useMemo(
+    () => ({
+      integration: { select: { id: true, name: true, provider: true } },
+    }),
+    []
+  );
 
-  // Fetch basic issue data - only include integration to avoid bind variable issues
-  const { data: issues, isLoading: isLoadingIssues } = useClientQueries(
+  const infiniteBaseArgs = useMemo(
+    () => ({
+      where: issuesWhere ?? undefined,
+      orderBy,
+      include,
+      take: PAGE_SIZE,
+    }),
+    [issuesWhere, orderBy, include]
+  );
+
+  const {
+    data: infinitePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingInfinite,
+  } = useClientQueries(schema).issue.useInfiniteFindMany(infiniteBaseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+    },
+    enabled: !!issuesWhere && status === "authenticated" && !isCountSort,
+  });
+
+  const { data: allIssues, isLoading: isLoadingAll } = useClientQueries(
     schema
   ).issue.useFindMany(
-    issuesWhere
-      ? {
-          where: issuesWhere,
-          orderBy,
-          ...paginationArgs,
-          include: {
-            integration: {
-              select: {
-                id: true,
-                name: true,
-                provider: true,
-              },
-            },
-          },
-        }
-      : undefined,
-    {
-      enabled: !!issuesWhere && status === "authenticated",
-    }
+    issuesWhere ? { where: issuesWhere, include } : undefined,
+    { enabled: !!issuesWhere && status === "authenticated" && isCountSort }
   );
 
-  // Get total count of issues
+  const issues = useMemo(() => {
+    if (isCountSort) return allIssues ?? [];
+    return infinitePages?.pages.flat() ?? [];
+  }, [isCountSort, infinitePages, allIssues]);
+
+  const isLoadingIssues = isCountSort ? isLoadingAll : isLoadingInfinite;
+
   const { data: issuesCount } = useClientQueries(schema).issue.useCount(
-    issuesWhere
-      ? {
-          where: issuesWhere,
-        }
-      : undefined,
-    {
-      enabled: !!issuesWhere && status === "authenticated",
-    }
+    issuesWhere ? { where: issuesWhere } : undefined,
+    { enabled: !!issuesWhere && status === "authenticated" }
   );
 
-  // Fetch counts and projects separately to avoid bind variable explosion
+  // Counts + projects fetched separately, cached per issue id for the life of
+  // the page (not scoped to the current search/sort, so once fetched they never
+  // need re-requesting as the infinite list appends new ids).
   const [issueCounts, setIssueCounts] = useState<
     Record<
       number,
-      {
-        repositoryCases: number;
-        sessions: number;
-        testRuns: number;
-      }
+      { repositoryCases: number; sessions: number; testRuns: number }
     >
   >({});
-
   const [issueProjects, setIssueProjects] = useState<
     Record<number, Array<{ id: number; name: string; iconUrl: string | null }>>
   >({});
-
   const [isLoadingCounts, setIsLoadingCounts] = useState(false);
+  const fetchedIssueIdsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (!issues || issues.length === 0) {
       setIssueCounts({});
       setIssueProjects({});
       setIsLoadingCounts(false);
+      fetchedIssueIdsRef.current = new Set();
       return;
     }
 
-    const issueIds = issues.map((i) => i.id);
+    const newIds = issues
+      .map((i) => i.id)
+      .filter((id) => !fetchedIssueIdsRef.current.has(id));
+    if (newIds.length === 0) return;
+    newIds.forEach((id) => fetchedIssueIdsRef.current.add(id));
 
     const fetchCountsAndProjects = async () => {
       setIsLoadingCounts(true);
       try {
-        // Fetch counts and projects in parallel
         const [countsResponse, projectsResponse] = await Promise.all([
           fetch("/api/issues/counts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ issueIds }),
+            body: JSON.stringify({ issueIds: newIds }),
           }),
           fetch("/api/issues/projects", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ issueIds }),
+            body: JSON.stringify({ issueIds: newIds }),
           }),
         ]);
-
         if (countsResponse.ok) {
           const data = await countsResponse.json();
-          setIssueCounts(data.counts || {});
+          setIssueCounts((prev) => ({ ...prev, ...(data.counts || {}) }));
         }
-
         if (projectsResponse.ok) {
           const data = await projectsResponse.json();
-          setIssueProjects(data.projects || {});
+          setIssueProjects((prev) => ({ ...prev, ...(data.projects || {}) }));
         }
       } catch (error) {
         console.error("Failed to fetch issue data:", error);
@@ -435,7 +289,6 @@ function Issues() {
     void fetchCountsAndProjects();
   }, [issues]);
 
-  // Map issues with counts and projects
   const mappedIssues = useMemo(() => {
     if (!issues) {
       return [];
@@ -445,18 +298,13 @@ function Issues() {
       const counts = issueCounts[issue.id];
       const projects = issueProjects[issue.id] || [];
       const projectIds = projects.map((p) => p.id);
-
-      // For aggregatedTestRunIds, we'll use the count
-      // This is a simplification - if exact IDs are needed, we'd need to fetch them
-      const aggregatedTestRunIds: number[] = [];
-
       return {
         ...issue,
         repositoryCases: [],
         sessions: [],
         testRuns: [],
         projects,
-        aggregatedTestRunIds,
+        aggregatedTestRunIds: [],
         projectIds,
         repositoryCasesCount: counts?.repositoryCases,
         sessionsCount: counts?.sessions,
@@ -464,12 +312,10 @@ function Issues() {
       };
     });
 
-    // Apply client-side sorting for count columns (since these aren't in the DB)
-    if (needsClientSideSorting) {
+    if (isCountSort) {
       return mapped.sort((a, b) => {
         let aValue: number;
         let bValue: number;
-
         switch (sortConfig.column) {
           case "cases":
             aValue = a.repositoryCasesCount ?? 0;
@@ -490,7 +336,6 @@ function Issues() {
           default:
             return 0;
         }
-
         return sortConfig.direction === "asc"
           ? aValue - bValue
           : bValue - aValue;
@@ -498,44 +343,7 @@ function Issues() {
     }
 
     return mapped;
-  }, [issues, issueCounts, issueProjects, sortConfig, needsClientSideSorting]);
-
-  useEffect(() => {
-    setTotalItems(issuesCount ?? 0);
-  }, [issuesCount, setTotalItems]);
-
-  // When sorting by count columns, apply pagination client-side
-  const displayedIssues = useMemo(() => {
-    if (needsClientSideSorting) {
-      return mappedIssues.slice(skip, skip + effectivePageSize);
-    }
-    return mappedIssues;
-  }, [mappedIssues, needsClientSideSorting, skip, effectivePageSize]);
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  useEffect(() => {
-    if (searchString === prevSearchStringRef.current) return;
-    prevSearchStringRef.current = searchString;
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  useEffect(() => {
-    if (pageSize === prevPageSizeRef.current) return;
-    prevPageSizeRef.current = pageSize;
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
-
-  useEffect(() => {
-    if (
-      statusFilter === prevStatusFilterRef.current &&
-      priorityFilter === prevPriorityFilterRef.current
-    )
-      return;
-    prevStatusFilterRef.current = statusFilter;
-    prevPriorityFilterRef.current = priorityFilter;
-    setCurrentPage(1);
-  }, [statusFilter, priorityFilter, setCurrentPage]);
+  }, [issues, issueCounts, issueProjects, sortConfig, isCountSort]);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -570,7 +378,6 @@ function Issues() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
   };
 
   return (
@@ -585,7 +392,7 @@ function Issues() {
           <CardDescription>{t("Pages.Issues.description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap">
                 <Filter
@@ -607,9 +414,9 @@ function Issues() {
                     <SelectItem value="all">
                       {t("common.filters.allStatuses")}
                     </SelectItem>
-                    {statuses.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
+                    {statuses.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -627,9 +434,9 @@ function Issues() {
                     <SelectItem value="all">
                       {t("common.filters.allPriorities")}
                     </SelectItem>
-                    {priorities.map((priority) => (
-                      <SelectItem key={priority} value={priority}>
-                        {priority}
+                    {priorities.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -637,42 +444,31 @@ function Issues() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="issue-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {mappedIssues.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {t("admin.auditLogs.showing", {
+                  loaded: mappedIssues.length.toLocaleString(),
+                  total: (issuesCount ?? mappedIssues.length).toLocaleString(),
+                })}
+              </p>
+            )}
           </div>
-          <div className="mt-4 flex justify-between">
-            <DataTable
-              columns={columns}
-              data={displayedIssues}
+          <div className="mt-4 w-full">
+            <VirtualizedDataTable
+              fillViewport
+              columns={columns as any}
+              data={mappedIssues as any}
               onSortChange={handleSortChange}
               sortConfig={sortConfig}
-              isLoading={isLoadingIssues || !issuesWhere}
-              pageSize={effectivePageSize}
+              isLoading={isLoadingIssues || isFetchingNextPage}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
+              hasMore={isCountSort ? false : !!hasNextPage}
+              onLoadMore={fetchNextPage}
+              estimateSize={60}
+              resetKey={`${debouncedSearchString}|${statusFilter}|${priorityFilter}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="issues-table"
+              rowTestIdPrefix="issue-row"
             />
           </div>
         </CardContent>

@@ -5,20 +5,13 @@ import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
-import { DataTable } from "@/components/tables/DataTable";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { ExtendedRoles, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,11 +26,7 @@ import { DeleteRole } from "./DeleteRoles";
 import { EditRole } from "./EditRoles";
 
 export default function RoleListPage() {
-  return (
-    <PaginationProvider>
-      <RoleList />
-    </PaginationProvider>
-  );
+  return <RoleList />;
 }
 
 function RoleList() {
@@ -46,17 +35,6 @@ function RoleList() {
   const t = useTranslations("admin.roles");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -70,14 +48,7 @@ function RoleList() {
   const [deletingRole, setDeletingRole] = useState<ExtendedRoles | null>(null);
   const debouncedSearchString = useDebounce(searchString, 500);
 
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
-
-  const { data: totalFilteredRoles } = useClientQueries(
-    schema
-  ).roles.useFindMany(
+  const { data: roles, isLoading } = useClientQueries(schema).roles.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -107,63 +78,7 @@ function RoleList() {
     }
   );
 
-  // Update total items in pagination context
-  useEffect(() => {
-    if (totalFilteredRoles) {
-      setTotalItems(totalFilteredRoles.length);
-    }
-  }, [totalFilteredRoles, setTotalItems]);
-
-  const { data: roles, isLoading } = useClientQueries(schema).roles.useFindMany(
-    {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" },
-      include: {
-        users: {
-          where: {
-            isDeleted: false,
-            isActive: true,
-          },
-        },
-      },
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
-          },
-          {
-            isDeleted: false,
-          },
-        ],
-      },
-      take: effectivePageSize,
-      skip: skip,
-    },
-    {
-      enabled:
-        (!!session?.user && debouncedSearchString.length === 0) ||
-        debouncedSearchString.length > 0,
-      refetchOnWindowFocus: true,
-    }
-  );
-
-  const rolesData = roles as ExtendedRoles[];
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
+  const rolesData = (roles ?? []) as ExtendedRoles[];
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -225,7 +140,6 @@ function RoleList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1); // Reset to first page when sorting changes
   };
 
   if (!session || session.user.access !== "ADMIN") {
@@ -256,7 +170,7 @@ function RoleList() {
           <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -268,42 +182,28 @@ function RoleList() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="role-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {rolesData.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: rolesData.length.toLocaleString(),
+                  total: rolesData.length.toLocaleString(),
+                })}
+              </p>
+            )}
           </div>
-          <div className="mt-4 flex justify-between">
-            <DataTable<ExtendedRoles, unknown>
-              columns={columns}
-              data={rolesData || []}
+          <div className="mt-4 w-full">
+            <VirtualizedDataTable
+              fillViewport
+              columns={columns as any}
+              data={rolesData}
               onSortChange={handleSortChange}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              pageSize={typeof pageSize === "number" ? pageSize : totalItems}
               isLoading={isLoading}
+              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="admin-roles-table"
+              rowTestIdPrefix="admin-role-row"
             />
           </div>
         </CardContent>

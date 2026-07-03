@@ -14,6 +14,7 @@ import {
   getSortedRowModel,
   OnChangeFn,
   Row,
+  RowSelectionState,
   SortingState,
   Updater,
   useReactTable,
@@ -70,6 +71,38 @@ import { cn } from "~/utils";
 const EXPANDER_WIDTH = 24;
 const ESTIMATED_ROW_HEIGHT = 44;
 
+/**
+ * Header label that surfaces a native tooltip with the column's full text, but
+ * only while that text is actually clipped by the column's width. Works for any
+ * header content (a plain string or a render function with icons) by reading the
+ * rendered `textContent`, and re-measures on column resize via a ResizeObserver
+ * so the tooltip appears/disappears live as the user drags the column narrower
+ * or wider.
+ */
+function TruncatedHeaderLabel({ children }: { children: ReactNode }) {
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const [title, setTitle] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const el = spanRef.current;
+    if (!el) return;
+    const measure = () => {
+      const isClipped = el.scrollWidth > el.clientWidth;
+      setTitle(isClipped ? el.textContent?.trim() || undefined : undefined);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [children]);
+
+  return (
+    <span ref={spanRef} title={title} className="min-w-0 truncate">
+      {children}
+    </span>
+  );
+}
+
 interface VirtualizedDataTableProps {
   columns: ColumnDef<any, any>[];
   data: any[];
@@ -87,6 +120,17 @@ interface VirtualizedDataTableProps {
 
   getSubRows?: (row: any, index: number) => any[] | undefined;
   subRowsLabel?: string;
+
+  /**
+   * Controlled row-selection state (keyed by row index, TanStack's default), for
+   * surfaces with a checkbox column that reads `row.getIsSelected()`. When
+   * provided, row selection is enabled and driven by the caller; omit it and the
+   * table has no selection behavior. Note the keys are row indices into `data`,
+   * so the caller must pass the full (unpaged) set — which a virtualized table
+   * already does.
+   */
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
 
   /**
    * Id of a column that should flex to absorb any horizontal space left over
@@ -123,6 +167,41 @@ interface VirtualizedDataTableProps {
    * filters) so the scroll returns to the top on those changes too.
    */
   resetKey?: unknown;
+  /**
+   * Estimated row height in px. The virtualizer measures real heights once rows
+   * render, but a close estimate keeps the pre-measure layout stable — which
+   * matters for the load-more trigger, since a big under-estimate makes rows
+   * grow after measurement and can otherwise shove the trigger point around.
+   * Set this to roughly a surface's real row height when rows are taller than
+   * the single-line default (e.g. issue rows carrying a title + description).
+   */
+  estimateSize?: number;
+  /**
+   * Size the scroll body to fill from its own top edge down to the viewport
+   * bottom (measured live), instead of inheriting a bounded height from the
+   * parent. Use this when the table is the main content of a page whose header
+   * height varies — it always yields a single inner scroll region regardless of
+   * how tall the header/nav above it is, so the page body never scrolls (which
+   * would otherwise starve the virtualizer's load-more trigger of scroll
+   * events). When false (default) the caller must give the table a bounded-height
+   * container (e.g. `h-[calc(100vh-20rem)]` or a flex `min-h-0` parent).
+   */
+  fillViewport?: boolean;
+  /**
+   * When set, the table scrolls the row whose `original.id` matches this id into
+   * view (centered) once it appears in the row model. Used for deep links (e.g.
+   * `?issueId=`) — the caller loads the full set so the target is present, then
+   * passes its id here; the virtualizer scrolls to it even though its DOM row
+   * isn't rendered until it's near the window. Fires once per id value.
+   */
+  scrollToRowId?: string | number | null;
+  /**
+   * When set, the row whose `original.id` matches is drawn with a persistent
+   * highlight ring. Pair with `scrollToRowId` so a deep-linked row is both
+   * scrolled to and visually marked; the caller clears it (e.g. on user scroll)
+   * when the highlight should fade.
+   */
+  highlightRowId?: string | number | null;
   testIdPrefix?: string;
   rowTestIdPrefix?: string;
 }
@@ -140,6 +219,8 @@ export function VirtualizedDataTable({
   onExpandedChange,
   getSubRows,
   subRowsLabel,
+  rowSelection,
+  onRowSelectionChange,
   flexColumnId,
   columnSizingStorageKey,
   hasMore = false,
@@ -149,6 +230,10 @@ export function VirtualizedDataTable({
   onRetryLoadMore,
   emptyMessage,
   resetKey: externalResetKey,
+  estimateSize = ESTIMATED_ROW_HEIGHT,
+  fillViewport = false,
+  scrollToRowId,
+  highlightRowId,
   testIdPrefix = "virtualized-table",
   rowTestIdPrefix = "virtualized-row",
 }: VirtualizedDataTableProps) {
@@ -268,16 +353,19 @@ export function VirtualizedDataTable({
     getSubRows,
     enableSorting: true,
     enableColumnResizing: true,
+    enableRowSelection: rowSelection !== undefined,
     columnResizeMode: "onChange",
     state: {
       columnVisibility,
       sorting,
       columnSizing,
+      ...(rowSelection !== undefined && { rowSelection }),
       ...(grouping !== undefined && { grouping }),
       ...(expanded !== undefined && { expanded }),
     },
     ...(onGroupingChange !== undefined && { onGroupingChange }),
     ...(onExpandedChange !== undefined && { onExpandedChange }),
+    ...(onRowSelectionChange !== undefined && { onRowSelectionChange }),
     onSortingChange: handleSortingChange,
     onColumnVisibilityChange: handleVisibilityChange,
     onColumnSizingChange: setColumnSizing,
@@ -329,28 +417,55 @@ export function VirtualizedDataTable({
     [sortConfig, grouping, columns, externalResetKey]
   );
 
-  const { scrollRef, sentinelRef, virtualItems, totalSize, measureElement } =
-    useVirtualizedInfiniteList({
-      count: rows.length,
-      estimateSize: ESTIMATED_ROW_HEIGHT,
-      overscan: 8,
-      hasMore,
-      isLoading,
-      onLoadMore: onLoadMore ?? (() => {}),
-      boundToViewport: false,
-      resetKey,
-    });
+  const {
+    scrollRef,
+    sentinelRef,
+    virtualizer,
+    virtualItems,
+    totalSize,
+    measureElement,
+    maxHeight,
+  } = useVirtualizedInfiniteList({
+    count: rows.length,
+    estimateSize,
+    overscan: 8,
+    hasMore,
+    isLoading,
+    onLoadMore: onLoadMore ?? (() => {}),
+    boundToViewport: fillViewport,
+    resetKey,
+  });
+
+  // Deep-link scroll: once the target row is present in the row model, scroll
+  // the virtualizer to it (centered). Guarded so it fires once per id value —
+  // re-running on every `rows` change (each appended page) would keep yanking
+  // the scroll position back. The virtualizer scrolls by estimated offset even
+  // though the row's DOM node isn't rendered until it's near the window.
+  const scrolledToRef = useRef<string | number | null | undefined>(undefined);
+  useEffect(() => {
+    if (scrollToRowId == null) return;
+    if (scrolledToRef.current === scrollToRowId) return;
+    const index = rows.findIndex(
+      (r) => String(r.original?.id) === String(scrollToRowId)
+    );
+    if (index < 0) return;
+    scrolledToRef.current = scrollToRowId;
+    virtualizer.scrollToIndex(index, { align: "center" });
+  }, [scrollToRowId, rows, virtualizer]);
 
   const headers = table.getHeaderGroups().at(-1)?.headers ?? [];
 
   return (
     <div
-      className="h-full overflow-x-auto rounded-lg border-2 border-primary/10"
+      className={cn(
+        "overflow-x-auto rounded-lg border-2 border-primary/10",
+        !fillViewport && "h-full"
+      )}
       role="table"
       data-testid={testIdPrefix}
     >
       <div
-        className="flex h-full min-h-0 flex-col"
+        className={cn("flex min-h-0 flex-col", !fillViewport && "h-full")}
         style={{ width: tableWidth, minWidth: hasFlex ? totalWidth : "100%" }}
       >
         {/* Header — stays put vertically (lives above the scroll body) and
@@ -405,9 +520,9 @@ export function VirtualizedDataTable({
                       )}
                     </button>
                   ) : null}
-                  <span className="min-w-0 truncate">
+                  <TruncatedHeaderLabel>
                     {flexRender(column.columnDef.header, header.getContext())}
-                  </span>
+                  </TruncatedHeaderLabel>
                   {isSortable && column.id !== "expander" && (
                     <button
                       onClick={() => onSortChange?.(column.id)}
@@ -451,7 +566,15 @@ export function VirtualizedDataTable({
             (flex-1) so it works inside a bounded panel or card. */}
         <div
           ref={scrollRef}
-          className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+          className={cn(
+            "relative min-h-0 overflow-y-auto overflow-x-hidden",
+            !fillViewport && "flex-1"
+          )}
+          style={
+            fillViewport
+              ? { height: maxHeight ?? undefined, minHeight: 200 }
+              : undefined
+          }
           data-testid={`${testIdPrefix}-scroll`}
         >
           {rows.length === 0 && !isLoading ? (
@@ -468,6 +591,9 @@ export function VirtualizedDataTable({
                 if (!row) return null;
                 const isGrouped = row.getIsGrouped();
                 const isSubRow = row.depth > 0;
+                const isHighlighted =
+                  highlightRowId != null &&
+                  String(row.original?.id) === String(highlightRowId);
                 return (
                   <div
                     // Key by the virtual item (index), not the data id, so React
@@ -490,7 +616,9 @@ export function VirtualizedDataTable({
                             // below) so the run of sub-rows reads as one group and the
                             // next (unshaded) parent row is clearly the boundary.
                             "bg-muted/40 hover:bg-muted/60"
-                          : "hover:bg-muted/50"
+                          : "hover:bg-muted/50",
+                      isHighlighted &&
+                        "bg-primary/10 outline outline-4 -outline-offset-2 outline-primary"
                     )}
                     style={{
                       width: tableWidth,

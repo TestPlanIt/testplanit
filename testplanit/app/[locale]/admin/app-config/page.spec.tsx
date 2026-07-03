@@ -94,19 +94,20 @@ vi.mock("@/components/Debounce", () => ({
   useDebounce: (value: any) => value, // Return value immediately
 }));
 
-// Mock the DataTable component
-vi.mock("@/components/tables/DataTable", () => ({
-  DataTable: vi.fn(({ data, isLoading, columns: _columns }) => {
+// Mock the VirtualizedDataTable component (the page renders the table through it
+// since the pagination → infinite-scroll conversion).
+vi.mock("@/components/tables/VirtualizedDataTable", () => ({
+  VirtualizedDataTable: vi.fn(({ data, isLoading, columns: _columns }) => {
     if (isLoading) {
-      return <div>{"DataTable Loading..."}</div>;
+      return <div>{"Table Loading..."}</div>;
     }
     if (!data || data.length === 0) {
-      return <div>{"DataTable No Data"}</div>;
+      return <div>{"Table No Data"}</div>;
     }
     // Render confirmation and the mocked Edit Modals based on data
     return (
       <div>
-        <div>{`DataTable Received ${data.length} items`}</div>
+        <div>{`Table Received ${data.length} items`}</div>
         {/* Render mocked Edit Modals to verify data prop */}
         {data.map((item: any) => (
           <EditAppConfig
@@ -182,12 +183,12 @@ test("renders initial layout, title, and add button", async () => {
     screen.getByPlaceholderText("admin.appConfig.filterPlaceholder")
   ).toBeInTheDocument();
 
-  // Wait for the DataTable mock to render the correct state based on the mock implementation
+  // Wait for the table mock to render the correct state based on the mock implementation
   await waitFor(() => {
-    expect(screen.getByText("DataTable No Data")).toBeInTheDocument();
+    expect(screen.getByText("Table No Data")).toBeInTheDocument();
   });
   // Ensure loading state is NOT present finally
-  expect(screen.queryByText("DataTable Loading...")).not.toBeInTheDocument();
+  expect(screen.queryByText("Table Loading...")).not.toBeInTheDocument();
 });
 
 test("renders table indication and edit buttons when data exists", async () => {
@@ -204,13 +205,13 @@ test("renders table indication and edit buttons when data exists", async () => {
 
   renderPage(AppConfigs);
 
-  // Wait for the DataTable mock to render the correct state
+  // Wait for the table mock to render the correct state
   await waitFor(() => {
-    expect(screen.getByText("DataTable Received 2 items")).toBeVisible();
+    expect(screen.getByText("Table Received 2 items")).toBeVisible();
   });
 
   // Ensure loading state is NOT present finally
-  expect(screen.queryByText("DataTable Loading...")).not.toBeInTheDocument();
+  expect(screen.queryByText("Table Loading...")).not.toBeInTheDocument();
 
   // Check that the Edit Modals were rendered by the DataTable mock
   expect(screen.getByText("Mock Edit key1")).toBeVisible(); // Can use getBy now
@@ -265,10 +266,11 @@ test("sorts ascending on first click", async () => {
   }));
   renderPage(AppConfigs);
 
-  const dataTableMock = (await vi.importMock("@/components/tables/DataTable"))
-    .DataTable as any;
-  await waitFor(() => expect(dataTableMock).toHaveBeenCalled());
-  const onSortChange = dataTableMock.mock.lastCall![0].onSortChange;
+  const tableMock = (
+    await vi.importMock("@/components/tables/VirtualizedDataTable")
+  ).VirtualizedDataTable as any;
+  await waitFor(() => expect(tableMock).toHaveBeenCalled());
+  const onSortChange = tableMock.mock.lastCall![0].onSortChange;
 
   // Set implementation for the *next* call (after sort)
   mockUseFindManyAppConfig.mockImplementation(() => ({
@@ -286,9 +288,6 @@ test("sorts ascending on first click", async () => {
       2,
       expect.objectContaining({ orderBy: { value: "asc" } })
     );
-  });
-  await waitFor(() => {
-    expect(mockSetCurrentPage).toHaveBeenCalledWith(1);
   });
 });
 

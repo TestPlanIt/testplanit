@@ -19,7 +19,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { Label } from "~/components/ui/label";
-import { PaginationProvider } from "~/lib/contexts/PaginationContext";
 import { ProjectReviewToggleList } from "./ProjectReviewToggleList";
 
 const REMINDER_THRESHOLD_KEY = "review_reminder_threshold_days";
@@ -204,9 +203,7 @@ export function SystemFeatureCard() {
               </>
             )}
           </div>
-          <PaginationProvider defaultPageSize={10}>
-            <ProjectReviewToggleList />
-          </PaginationProvider>
+          <ProjectReviewToggleList />
         </CardContent>
       )}
     </Card>

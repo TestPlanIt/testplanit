@@ -2,10 +2,8 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { CustomColumnMeta } from "@/components/tables/ColumnSelection";
-import { DataTable } from "@/components/tables/DataTable";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
@@ -16,8 +14,6 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { searchProjects } from "~/app/actions/searchProjects";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { usePagination } from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import AddConfigurationWizard from "./AddConfigurationWizard";
 import { BulkEditConfigurations } from "./BulkEditConfigurations";
 import { ConfigWithVariants, useColumns } from "./configColumns";
@@ -37,17 +33,6 @@ function Configurations(): React.ReactElement | null {
   const t = useTranslations("admin.configurations");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<
     | {
         column: string;
@@ -65,11 +50,6 @@ function Configurations(): React.ReactElement | null {
     name: string;
     iconUrl: string | null;
   } | null>(null);
-
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
 
   // Fetch ALL configurations (no pagination, no search filter in query)
   const { data: allConfigurations, isLoading } = useClientQueries(
@@ -122,15 +102,9 @@ function Configurations(): React.ReactElement | null {
     return result;
   }, [allConfigurations, debouncedSearchString, projectFilter]);
 
-  // Update total items based on filtered configurations count
-  useEffect(() => {
-    setTotalItems(filteredConfigurations.length);
-  }, [filteredConfigurations, setTotalItems]);
-
-  // Apply client-side pagination
-  const configurations = useMemo(() => {
-    return filteredConfigurations.slice(skip, skip + effectivePageSize);
-  }, [filteredConfigurations, skip, effectivePageSize]);
+  // The virtualized table renders the entire filtered set (windowing the DOM),
+  // so there's no page slice; row-selection indices below key into this array.
+  const configurations = filteredConfigurations;
 
   const { mutate: updateConfiguration } =
     useClientQueries(schema).configurations.useUpdate();
@@ -248,24 +222,16 @@ function Configurations(): React.ReactElement | null {
     return initialVisibility;
   });
 
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  // Reset to first page when search or project filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, projectFilter, setCurrentPage]);
-
   // Clear selection when the filtered set changes meaningfully (search or
-  // project filter). Pagination and sort leave the set intact, so we keep
-  // selection across those.
+  // project filter). Sort leaves the set intact, so we keep selection across it.
   useEffect(() => {
     setSelectedConfigurationIds([]);
     setLastSelectedIndex(null);
   }, [searchString, projectFilter]);
 
-  // Derive the DataTable's per-row selection from the ID set for the visible
-  // page slice. tanstack-table keys selection by row index, which we map back
-  // to the configuration ID via `configurations[index]`.
+  // Derive the table's per-row selection from the ID set. tanstack-table keys
+  // selection by row index, which we map back to the configuration ID via
+  // `configurations[index]` (the full filtered set the table renders).
   const rowSelection: RowSelectionState = useMemo(() => {
     const sel: RowSelectionState = {};
     const selSet = new Set(selectedConfigurationIds);
@@ -274,11 +240,6 @@ function Configurations(): React.ReactElement | null {
     });
     return sel;
   }, [configurations, selectedConfigurationIds]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
 
   if (isAuthLoading) {
     return null;
@@ -292,7 +253,6 @@ function Configurations(): React.ReactElement | null {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1); // Reset to first page when sorting changes
   };
 
   if (isAuthenticated && session?.user.access === "ADMIN") {
@@ -362,45 +322,29 @@ function Configurations(): React.ReactElement | null {
                 )}
               </div>
 
-              <div className="flex flex-col items-end shrink-0">
-                {totalItems > 0 && (
-                  <>
-                    <div className="justify-end">
-                      <PaginationInfo
-                        key="configuration-pagination-info"
-                        startIndex={startIndex}
-                        endIndex={endIndex}
-                        totalRows={totalItems}
-                        searchString={searchString}
-                        pageSize={
-                          typeof pageSize === "number" ? pageSize : "All"
-                        }
-                        pageSizeOptions={pageSizeOptions}
-                        handlePageSizeChange={(size) => setPageSize(size)}
-                      />
-                    </div>
-                    <div className="justify-end -mx-4">
-                      <PaginationComponent
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={setCurrentPage}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
+              {filteredConfigurations.length > 0 && (
+                <p className="text-sm text-muted-foreground shrink-0">
+                  {tGlobal("admin.auditLogs.showing", {
+                    loaded: filteredConfigurations.length.toLocaleString(),
+                    total: filteredConfigurations.length.toLocaleString(),
+                  })}
+                </p>
+              )}
             </div>
-            <div className="mt-4 flex justify-between">
-              <DataTable<ConfigWithVariants, unknown>
-                columns={columns}
+            <div className="mt-4 w-full">
+              <VirtualizedDataTable
+                columns={columns as any}
                 data={configurations || []}
                 onSortChange={handleSortChange}
                 sortConfig={sortConfig}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}
-                pageSize={typeof pageSize === "number" ? pageSize : totalItems}
                 isLoading={isLoading}
                 rowSelection={rowSelection}
+                fillViewport
+                resetKey={`${debouncedSearchString}|${projectFilter?.id ?? ""}|${sortConfig?.column}|${sortConfig?.direction}`}
+                testIdPrefix="admin-configurations-table"
+                rowTestIdPrefix="admin-configuration-row"
               />
             </div>
           </CardContent>

@@ -4,10 +4,8 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import {
   Card,
   CardContent,
@@ -28,20 +26,19 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Loading } from "~/components/Loading";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 
+const PAGE_SIZE = 50;
+
+// Count columns are computed via a separate join call and can't be sorted
+// across pages without the full set in hand. Sorting by one fetches everything
+// once and renders it through the same virtualized table in full-set mode;
+// every other column is a real DB column and drives a genuine infinite fetch.
+const COUNT_SORT_COLUMNS = ["cases", "testRuns", "sessions"];
+
 export default function ProjectIssueList() {
-  return (
-    <PaginationProvider>
-      <ProjectIssues />
-    </PaginationProvider>
-  );
+  return <ProjectIssues />;
 }
 
 function ProjectIssues() {
@@ -52,13 +49,10 @@ function ProjectIssues() {
   const searchParams = useSearchParams();
   const projectId = params.projectId ? Number(params.projectId) : null;
   const targetIssueId = searchParams.get("issueId");
-  // Live issue updates are subscribed at the IssuesDisplay component
-  // level — every issue badge on this page registers a refcounted
-  // listener via the singleton SSE manager, so every page that renders
-  // issues gets live refresh "for free."
-  const scrollAttempts = useRef(0);
-  const maxScrollAttempts = 10;
-  const scrollInterval = useRef<NodeJS.Timeout | null>(null);
+  // Live issue updates are subscribed at the IssuesDisplay component level —
+  // every issue badge on this page registers a refcounted listener via the
+  // singleton SSE manager, so every page that renders issues gets live refresh
+  // "for free."
 
   const { data: project } = useClientQueries(schema).projects.useFindFirst(
     {
@@ -77,18 +71,6 @@ function ProjectIssues() {
     }
   );
 
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
-
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -103,18 +85,6 @@ function ProjectIssues() {
   const [priorityFilter, setPriorityFilter] = useState<string>("");
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const hasInitializedRef = useRef(false);
-  const prevSearchStringRef = useRef(searchString);
-  const prevPageSizeRef = useRef(pageSize);
-  const prevStatusFilterRef = useRef(statusFilter);
-  const prevPriorityFilterRef = useRef(priorityFilter);
-  const [shouldPreventPageReset, setShouldPreventPageReset] =
-    useState(!!targetIssueId);
-  const [isTableReady, setIsTableReady] = useState(false);
-
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
 
   // Build project filter for groupBy queries
   const projectFilterForGroupBy = useMemo(() => {
@@ -292,109 +262,80 @@ function ProjectIssues() {
     };
   }, [projectId, searchFilter, statusFilter, priorityFilter]);
 
+  const isCountSort = COUNT_SORT_COLUMNS.includes(sortConfig.column);
+  // A deep link (?issueId=) also fetches the full set so the target row is
+  // present to scroll to and highlight — otherwise it might live beyond the
+  // pages loaded so far.
+  const isFullSet = isCountSort || !!targetIssueId;
+
   const orderBy = useMemo(() => {
-    // Only apply server-side sorting for database columns
-    // Count columns (cases, testRuns, sessions) will be sorted client-side
-    if (!sortConfig?.column) {
-      return {
-        name: "asc" as const,
-      };
+    // Only apply server-side sorting for database columns; count columns
+    // (cases, testRuns, sessions) sort client-side over the full set.
+    if (
+      ["name", "title", "status", "priority", "lastSyncedAt"].includes(
+        sortConfig.column
+      )
+    ) {
+      return { [sortConfig.column]: sortConfig.direction } as const;
     }
-
-    if (sortConfig.column === "name") {
-      return {
-        name: sortConfig.direction,
-      } as const;
-    }
-
-    if (sortConfig.column === "title") {
-      return {
-        title: sortConfig.direction,
-      } as const;
-    }
-
-    if (sortConfig.column === "status") {
-      return {
-        status: sortConfig.direction,
-      } as const;
-    }
-
-    if (sortConfig.column === "priority") {
-      return {
-        priority: sortConfig.direction,
-      } as const;
-    }
-
-    if (sortConfig.column === "lastSyncedAt") {
-      return {
-        lastSyncedAt: sortConfig.direction,
-      } as const;
-    }
-
-    // For count columns, return default sort (will sort client-side)
-    return {
-      name: "asc" as const,
-    };
+    return { name: "asc" as const };
   }, [sortConfig]);
 
-  // When sorting by count columns, we need to fetch ALL issues to sort properly
-  const needsClientSideSorting = ["cases", "testRuns", "sessions"].includes(
-    sortConfig.column
-  );
-  const shouldPaginate =
-    !needsClientSideSorting && typeof effectivePageSize === "number";
-  const paginationArgs = {
-    skip: shouldPaginate ? skip : undefined,
-    take: shouldPaginate ? effectivePageSize : undefined,
-  };
-
-  // When we have a targetIssueId, fetch all issues to find which page it's on
-  const { data: allIssues } = useClientQueries(schema).issue.useFindMany(
-    targetIssueId && issuesWhere && shouldPreventPageReset
-      ? {
-          where: issuesWhere,
-          orderBy,
-          select: {
-            id: true,
-          },
-        }
-      : undefined,
-    {
-      enabled:
-        !!targetIssueId &&
-        !!issuesWhere &&
-        !!session?.user &&
-        projectId !== null &&
-        shouldPreventPageReset,
-    }
+  const include = useMemo(
+    () => ({
+      integration: {
+        select: {
+          id: true,
+          provider: true,
+          name: true,
+          settings: true,
+        },
+      },
+    }),
+    []
   );
 
-  // Fetch basic issue data
-  const { data: issues, isLoading: isLoadingIssues } = useClientQueries(
+  const infiniteBaseArgs = useMemo(
+    () => ({
+      where: issuesWhere ?? undefined,
+      orderBy,
+      include,
+      take: PAGE_SIZE,
+    }),
+    [issuesWhere, orderBy, include]
+  );
+
+  const {
+    data: infinitePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingInfinite,
+  } = useClientQueries(schema).issue.useInfiniteFindMany(infiniteBaseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+    },
+    enabled:
+      !!issuesWhere && !!session?.user && projectId !== null && !isFullSet,
+  });
+
+  const { data: allIssues, isLoading: isLoadingAll } = useClientQueries(
     schema
   ).issue.useFindMany(
-    issuesWhere
-      ? {
-          where: issuesWhere,
-          orderBy,
-          ...paginationArgs,
-          include: {
-            integration: {
-              select: {
-                id: true,
-                provider: true,
-                name: true,
-                settings: true,
-              },
-            },
-          },
-        }
-      : undefined,
+    issuesWhere ? { where: issuesWhere, orderBy, include } : undefined,
     {
-      enabled: !!issuesWhere && !!session?.user && projectId !== null,
-      refetchOnWindowFocus: true,
+      enabled:
+        !!issuesWhere && !!session?.user && projectId !== null && isFullSet,
     }
   );
+
+  const issues = useMemo(() => {
+    if (isFullSet) return allIssues ?? [];
+    return infinitePages?.pages.flat() ?? [];
+  }, [isFullSet, infinitePages, allIssues]);
+
+  const isLoadingIssues = isFullSet ? isLoadingAll : isLoadingInfinite;
 
   // Get total count of issues
   const { data: issuesCount } = useClientQueries(schema).issue.useCount(
@@ -408,7 +349,9 @@ function ProjectIssues() {
     }
   );
 
-  // Fetch counts for project-scoped issues
+  // Counts fetched separately and cached per issue id for the life of the page
+  // (project-scoped, so once fetched they never need re-requesting as the
+  // infinite list appends new ids).
   const [issueCounts, setIssueCounts] = useState<
     Record<
       number,
@@ -419,17 +362,22 @@ function ProjectIssues() {
       }
     >
   >({});
-
   const [isLoadingCounts, setIsLoadingCounts] = useState(false);
+  const fetchedIssueIdsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (!issues || issues.length === 0 || projectId === null) {
       setIssueCounts({});
       setIsLoadingCounts(false);
+      fetchedIssueIdsRef.current = new Set();
       return;
     }
 
-    const issueIds = issues.map((i) => i.id);
+    const newIds = issues
+      .map((i) => i.id)
+      .filter((id) => !fetchedIssueIdsRef.current.has(id));
+    if (newIds.length === 0) return;
+    newIds.forEach((id) => fetchedIssueIdsRef.current.add(id));
 
     const fetchCounts = async () => {
       setIsLoadingCounts(true);
@@ -438,12 +386,12 @@ function ProjectIssues() {
         const response = await fetch("/api/issues/counts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ issueIds, projectId }),
+          body: JSON.stringify({ issueIds: newIds, projectId }),
         });
 
         if (response.ok) {
           const data = await response.json();
-          setIssueCounts(data.counts || {});
+          setIssueCounts((prev) => ({ ...prev, ...(data.counts || {}) }));
         }
       } catch (error) {
         console.error("Failed to fetch issue counts:", error);
@@ -478,7 +426,7 @@ function ProjectIssues() {
     });
 
     // Apply client-side sorting for count columns (since these aren't in the DB)
-    if (needsClientSideSorting) {
+    if (isCountSort) {
       return mapped.sort((a, b) => {
         let aValue: number;
         let bValue: number;
@@ -507,228 +455,7 @@ function ProjectIssues() {
     }
 
     return mapped;
-  }, [issues, issueCounts, projectId, sortConfig, needsClientSideSorting]);
-
-  useEffect(() => {
-    setTotalItems(issuesCount ?? 0);
-  }, [issuesCount, setTotalItems]);
-
-  // When sorting by count columns, apply pagination client-side
-  const displayedIssues = useMemo(() => {
-    if (needsClientSideSorting) {
-      return mappedIssues.slice(skip, skip + effectivePageSize);
-    }
-    return mappedIssues;
-  }, [mappedIssues, needsClientSideSorting, skip, effectivePageSize]);
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  // Calculate and set the correct page IMMEDIATELY when allIssues load and we have a target
-  useEffect(() => {
-    if (
-      targetIssueId &&
-      allIssues &&
-      allIssues.length > 0 &&
-      shouldPreventPageReset
-    ) {
-      const targetIndex = allIssues.findIndex(
-        (issue) => issue.id.toString() === targetIssueId
-      );
-
-      if (targetIndex !== -1) {
-        // Get page size from URL params first, then user preferences, then default
-        let pageSizeValue = 10; // default
-
-        const urlPageSize = searchParams.get("pageSize");
-        if (urlPageSize) {
-          if (urlPageSize === "All") {
-            pageSizeValue = allIssues.length;
-          } else {
-            const size = parseInt(urlPageSize, 10);
-            if (!isNaN(size) && size > 0) {
-              pageSizeValue = size;
-            }
-          }
-        } else if (session?.user?.preferences?.itemsPerPage) {
-          const preferredSize = parseInt(
-            session.user.preferences.itemsPerPage.replace("P", ""),
-            10
-          );
-          if (!isNaN(preferredSize) && preferredSize > 0) {
-            pageSizeValue = preferredSize;
-          }
-        }
-
-        const targetPage = Math.floor(targetIndex / pageSizeValue) + 1;
-
-        // Immediately set the page
-        if (targetPage !== currentPage) {
-          setCurrentPage(targetPage);
-        }
-
-        // Prevent further resets
-        setShouldPreventPageReset(false);
-      }
-    }
-  }, [
-    targetIssueId,
-    allIssues,
-    shouldPreventPageReset,
-    currentPage,
-    setCurrentPage,
-    searchParams,
-    session,
-  ]);
-
-  // Set table ready state after issues load
-  useEffect(() => {
-    if (issues && issues.length > 0) {
-      // Wait for DataTable to render
-      const timer = setTimeout(() => {
-        setIsTableReady(true);
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [issues]);
-
-  // Handle scrolling and highlighting for specific issue
-  useEffect(() => {
-    if (targetIssueId && !hasInitializedRef.current && isTableReady) {
-      hasInitializedRef.current = true;
-      let scrollCancelled = false;
-
-      // Detect user scroll to cancel auto-scroll
-      const handleUserScroll = () => {
-        scrollCancelled = true;
-        if (scrollInterval.current) {
-          clearInterval(scrollInterval.current);
-          scrollInterval.current = null;
-        }
-        window.removeEventListener("wheel", handleUserScroll);
-        window.removeEventListener("touchmove", handleUserScroll);
-      };
-
-      // Add scroll listeners to detect user interaction
-      window.addEventListener("wheel", handleUserScroll, { passive: true });
-      window.addEventListener("touchmove", handleUserScroll, { passive: true });
-
-      // Start scrolling attempts after a short delay
-      const timeoutId = setTimeout(() => {
-        if (scrollCancelled) return;
-
-        scrollInterval.current = setInterval(() => {
-          if (scrollCancelled) {
-            if (scrollInterval.current) {
-              clearInterval(scrollInterval.current);
-              scrollInterval.current = null;
-            }
-            return;
-          }
-
-          const targetRow = document.querySelector(
-            `[data-row-id="${targetIssueId}"]`
-          );
-
-          if (targetRow) {
-            targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
-
-            // Get all cells in the row
-            const cells = targetRow.querySelectorAll("td");
-
-            // Apply highlight to row with outline (doesn't affect layout)
-            (targetRow as HTMLElement).style.setProperty(
-              "outline",
-              "4px solid hsl(var(--primary))",
-              "important"
-            );
-            (targetRow as HTMLElement).style.setProperty(
-              "outline-offset",
-              "-2px",
-              "important"
-            );
-
-            // Apply background to each cell
-            cells.forEach((cell) => {
-              const htmlCell = cell as HTMLElement;
-              // Apply highlight background
-              htmlCell.style.setProperty(
-                "background-color",
-                "hsl(var(--primary) / 0.15)",
-                "important"
-              );
-            });
-
-            // Clear interval and remove listeners after successful scroll
-            if (scrollInterval.current) {
-              clearInterval(scrollInterval.current);
-              scrollInterval.current = null;
-            }
-            window.removeEventListener("wheel", handleUserScroll);
-            window.removeEventListener("touchmove", handleUserScroll);
-          } else {
-            scrollAttempts.current += 1;
-            if (scrollAttempts.current >= maxScrollAttempts) {
-              if (scrollInterval.current) {
-                clearInterval(scrollInterval.current);
-                scrollInterval.current = null;
-              }
-              window.removeEventListener("wheel", handleUserScroll);
-              window.removeEventListener("touchmove", handleUserScroll);
-            }
-          }
-        }, 100);
-      }, 1000);
-
-      return () => {
-        scrollCancelled = true;
-        clearTimeout(timeoutId);
-        if (scrollInterval.current) {
-          clearInterval(scrollInterval.current);
-          scrollInterval.current = null;
-        }
-        window.removeEventListener("wheel", handleUserScroll);
-        window.removeEventListener("touchmove", handleUserScroll);
-      };
-    }
-  }, [targetIssueId, isTableReady]);
-
-  useEffect(() => {
-    if (searchString === prevSearchStringRef.current) return;
-    prevSearchStringRef.current = searchString;
-    setCurrentPage(1);
-    setIsTableReady(false);
-    hasInitializedRef.current = false;
-  }, [searchString, setCurrentPage]);
-
-  useEffect(() => {
-    if (pageSize === prevPageSizeRef.current) return;
-    prevPageSizeRef.current = pageSize;
-    setCurrentPage(1);
-    setIsTableReady(false);
-    hasInitializedRef.current = false;
-  }, [pageSize, setCurrentPage]);
-
-  useEffect(() => {
-    if (
-      statusFilter === prevStatusFilterRef.current &&
-      priorityFilter === prevPriorityFilterRef.current
-    )
-      return;
-    prevStatusFilterRef.current = statusFilter;
-    prevPriorityFilterRef.current = priorityFilter;
-    setCurrentPage(1);
-    setIsTableReady(false);
-    hasInitializedRef.current = false;
-  }, [statusFilter, priorityFilter, setCurrentPage]);
-
-  // Reset table ready state when page changes
-  useEffect(() => {
-    setIsTableReady(false);
-    if (!targetIssueId) {
-      hasInitializedRef.current = false; // Only reset if no target issue
-    }
-  }, [currentPage, targetIssueId]);
+  }, [issues, issueCounts, projectId, sortConfig, isCountSort]);
 
   useEffect(() => {
     if (!isAuthLoading && !session) {
@@ -792,7 +519,6 @@ function ProjectIssues() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
   };
 
   return (
@@ -810,7 +536,7 @@ function ProjectIssues() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap">
                 <Filter
@@ -862,42 +588,33 @@ function ProjectIssues() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="issue-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {mappedIssues.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {t("admin.auditLogs.showing", {
+                  loaded: mappedIssues.length.toLocaleString(),
+                  total: (issuesCount ?? mappedIssues.length).toLocaleString(),
+                })}
+              </p>
+            )}
           </div>
-          <div className="mt-4 flex justify-between">
-            <DataTable
-              columns={columns}
-              data={displayedIssues}
+          <div className="mt-4 w-full">
+            <VirtualizedDataTable
+              columns={columns as any}
+              data={mappedIssues as any}
               onSortChange={handleSortChange}
               sortConfig={sortConfig}
-              isLoading={isLoadingIssues}
-              pageSize={effectivePageSize}
+              isLoading={isLoadingIssues || isFetchingNextPage}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
+              hasMore={isFullSet ? false : !!hasNextPage}
+              onLoadMore={fetchNextPage}
+              estimateSize={60}
+              fillViewport
+              scrollToRowId={targetIssueId}
+              highlightRowId={targetIssueId}
+              resetKey={`${debouncedSearchString}|${statusFilter}|${priorityFilter}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="issues-table"
+              rowTestIdPrefix="issue-row"
             />
           </div>
         </CardContent>

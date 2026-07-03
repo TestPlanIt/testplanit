@@ -5,10 +5,8 @@ import { schema } from "~/zenstack/schema";
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
 import { useDebounce } from "@/components/Debounce";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { DataTable } from "@/components/tables/DataTable";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,22 +18,13 @@ import {
 import { Tags } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 import { useColumns } from "./columns";
 
 export default function ProjectTagListPage() {
-  return (
-    <PaginationProvider>
-      <TagList />
-    </PaginationProvider>
-  );
+  return <TagList />;
 }
 
 function TagList() {
@@ -47,17 +36,6 @@ function TagList() {
   const router = useRouter();
   const { projectId } = useParams<{ projectId: string }>();
   const t = useTranslations();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -86,11 +64,6 @@ function TagList() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
-
-  // Calculate effective page size and skip
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
 
   const { data: project } = useClientQueries(schema).projects.useFindFirst(
     {
@@ -448,36 +421,6 @@ function TagList() {
     activeRunMap,
   ]);
 
-  // Update total items in pagination context
-  useEffect(() => {
-    if (filteredTags) {
-      setTotalItems(filteredTags.length);
-    }
-  }, [filteredTags, setTotalItems]);
-
-  const displayedTags = useMemo(() => {
-    return filteredTags.slice(skip, skip + effectivePageSize);
-  }, [filteredTags, skip, effectivePageSize]);
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  const prevSearchStringRef = useRef(searchString);
-  const prevPageSizeRef = useRef(pageSize);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    if (searchString === prevSearchStringRef.current) return;
-    prevSearchStringRef.current = searchString;
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    if (pageSize === prevPageSizeRef.current) return;
-    prevPageSizeRef.current = pageSize;
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
-
   useEffect(() => {
     if (!isAuthLoading && !session) {
       router.push("/");
@@ -492,7 +435,6 @@ function TagList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1); // Reset to first page when sorting changes
   };
 
   const isLoadingCounts = isLoadingCases || isLoadingSessions || isLoadingRuns;
@@ -564,7 +506,7 @@ function TagList() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -576,41 +518,27 @@ function TagList() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="tag-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {filteredTags.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {t("admin.auditLogs.showing", {
+                  loaded: filteredTags.length.toLocaleString(),
+                  total: filteredTags.length.toLocaleString(),
+                })}
+              </p>
+            )}
           </div>
-          <div className="mt-4 flex justify-between">
-            <DataTable
+          <div className="mt-4 w-full">
+            <VirtualizedDataTable
               columns={columns as any}
-              data={displayedTags as any}
+              data={filteredTags as any}
               onSortChange={handleSortChange}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              pageSize={effectivePageSize}
+              fillViewport
+              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="project-tags-table"
+              rowTestIdPrefix="project-tag-row"
             />
           </div>
         </CardContent>

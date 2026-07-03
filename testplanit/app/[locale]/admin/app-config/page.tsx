@@ -3,20 +3,13 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
-import { DataTable } from "@/components/tables/DataTable";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { AddAppConfig } from "./AddAppConfig";
 import { getColumns } from "./columns";
 import { DeleteAppConfig } from "./DeleteAppConfig";
@@ -24,19 +17,13 @@ import { EditAppConfig } from "./EditAppConfig";
 import { AppConfigRow } from "./types";
 
 export default function AppConfigsPage() {
-  return (
-    <PaginationProvider>
-      <AppConfigs />
-    </PaginationProvider>
-  );
+  return <AppConfigs />;
 }
 
 function AppConfigs() {
   const t = useTranslations("admin.appConfig");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const { currentPage, setCurrentPage, pageSize, setPageSize, totalItems } =
-    usePagination();
   const [searchString, setSearchString] = useState("");
   const [valueSearchString, setValueSearchString] = useState("");
   const [sortConfig, setSortConfig] = useState<{
@@ -58,6 +45,9 @@ function AppConfigs() {
   const debouncedSearchString = useDebounce(searchString, 300);
   const debouncedValueSearchString = useDebounce(valueSearchString, 300);
 
+  // Full-set fetch: the value filter below runs client-side over every config,
+  // and the virtualized table renders only the visible window, so there's no
+  // pagination and value-search covers the whole set (not just one page).
   const { data: appConfigs, isLoading } = useClientQueries(
     schema
   ).appConfig.useFindMany({
@@ -70,8 +60,6 @@ function AppConfigs() {
     orderBy: {
       [sortConfig.column]: sortConfig.direction,
     },
-    skip: (currentPage - 1) * (typeof pageSize === "number" ? pageSize : 0),
-    take: typeof pageSize === "number" ? pageSize : undefined,
   });
 
   // Transform AppConfig to AppConfigRow and filter by value
@@ -98,25 +86,12 @@ function AppConfigs() {
     }));
   }, [appConfigs, debouncedValueSearchString]);
 
-  const totalPages = Math.ceil(
-    totalItems / (typeof pageSize === "number" ? pageSize : totalItems)
-  );
-  const startIndex =
-    (currentPage - 1) * (typeof pageSize === "number" ? pageSize : 0) + 1;
-  const endIndex = Math.min(
-    startIndex + (typeof pageSize === "number" ? pageSize : totalItems) - 1,
-    totalItems
-  );
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
   const handleSortChange = (column: string) => {
     const direction =
       sortConfig.column === column && sortConfig.direction === "asc"
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
   };
 
   const columns = useMemo(
@@ -144,7 +119,7 @@ function AppConfigs() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-row items-start">
+        <div className="flex flex-row items-start justify-between gap-4">
           <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px] space-y-2">
             <div className="text-muted-foreground w-full text-nowrap">
               <Filter
@@ -166,42 +141,28 @@ function AppConfigs() {
             </div>
           </div>
 
-          <div className="flex flex-col w-full sm:w-2/3 items-end">
-            {totalItems > 0 && (
-              <>
-                <div className="justify-end">
-                  <PaginationInfo
-                    key="app-config-pagination-info"
-                    startIndex={startIndex}
-                    endIndex={endIndex}
-                    totalRows={totalItems}
-                    searchString={searchString}
-                    pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                    pageSizeOptions={pageSizeOptions}
-                    handlePageSizeChange={(size) => setPageSize(size)}
-                  />
-                </div>
-                <div className="justify-end -mx-4">
-                  <PaginationComponent
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                </div>
-              </>
-            )}
-          </div>
+          {tableData.length > 0 && (
+            <p className="text-sm text-muted-foreground shrink-0">
+              {tGlobal("admin.auditLogs.showing", {
+                loaded: tableData.length.toLocaleString(),
+                total: tableData.length.toLocaleString(),
+              })}
+            </p>
+          )}
         </div>
-        <div className="mt-4 flex justify-between">
-          <DataTable<AppConfigRow, unknown>
-            columns={columns}
+        <div className="mt-4 w-full">
+          <VirtualizedDataTable
+            fillViewport
+            columns={columns as any}
             data={tableData}
             onSortChange={handleSortChange}
             sortConfig={sortConfig}
             columnVisibility={columnVisibility}
             onColumnVisibilityChange={setColumnVisibility}
-            pageSize={typeof pageSize === "number" ? pageSize : totalItems}
             isLoading={isLoading}
+            resetKey={`${debouncedSearchString}|${debouncedValueSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+            testIdPrefix="admin-app-config-table"
+            rowTestIdPrefix="admin-app-config-row"
           />
         </div>
       </CardContent>

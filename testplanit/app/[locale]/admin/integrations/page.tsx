@@ -5,10 +5,8 @@ import { schema } from "~/zenstack/schema";
 import { IntegrationModal } from "@/components/admin/integrations/IntegrationModal";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { DataTable } from "@/components/tables/DataTable";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,20 +31,11 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
-import { type ExtendedIntegration, useColumns } from "./columns";
+import { useColumns } from "./columns";
 
 export default function IntegrationsPage() {
-  return (
-    <PaginationProvider>
-      <IntegrationList />
-    </PaginationProvider>
-  );
+  return <IntegrationList />;
 }
 
 function IntegrationList() {
@@ -54,19 +43,9 @@ function IntegrationList() {
   const tCommon = useTranslations("common");
   const tApiTokens = useTranslations("admin.apiTokens");
   const tAdminMenu = useTranslations("admin.menu");
+  const tGlobal = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -83,53 +62,9 @@ function IntegrationList() {
   const [integrationToDelete, setIntegrationToDelete] =
     useState<Integration | null>(null);
 
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
-
-  // Query for total filtered integrations (for pagination)
-  const { data: totalFilteredIntegrations } = useClientQueries(
-    schema
-  ).integration.useFindMany(
-    {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" },
-      include: {
-        projectIntegrations: {
-          where: { isActive: true, project: { isDeleted: false } },
-          select: { projectId: true },
-        },
-      },
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
-          },
-          {
-            isDeleted: false,
-          },
-        ],
-      },
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: true,
-    }
-  );
-
-  // Update total items in pagination context
-  useEffect(() => {
-    if (totalFilteredIntegrations) {
-      setTotalItems(totalFilteredIntegrations.length);
-    }
-  }, [totalFilteredIntegrations, setTotalItems]);
-
-  // Query for paginated integrations
+  // Single full-set fetch feeds the virtualized table directly; the table
+  // renders only the visible window, so there's no page seam and no separate
+  // count query (the loaded array length IS the total).
   const {
     data: integrations,
     isLoading,
@@ -158,8 +93,6 @@ function IntegrationList() {
           },
         ],
       },
-      take: effectivePageSize,
-      skip: skip,
     },
     {
       enabled: !!session?.user,
@@ -167,17 +100,7 @@ function IntegrationList() {
     }
   );
 
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
+  const integrationRows = useMemo(() => integrations ?? [], [integrations]);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -305,7 +228,6 @@ function IntegrationList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
   };
 
   return (
@@ -332,7 +254,7 @@ function IntegrationList() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -354,43 +276,29 @@ function IntegrationList() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="integration-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {integrationRows.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: integrationRows.length.toLocaleString(),
+                  total: integrationRows.length.toLocaleString(),
+                })}
+              </p>
+            )}
           </div>
 
-          <div className="mt-4 flex justify-between">
-            <DataTable<ExtendedIntegration, unknown>
-              columns={columns}
-              data={integrations || []}
+          <div className="mt-4 w-full">
+            <VirtualizedDataTable
+              fillViewport
+              columns={columns as any}
+              data={integrationRows}
               onSortChange={handleSortChange}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              pageSize={typeof pageSize === "number" ? pageSize : totalItems}
               isLoading={isLoading}
+              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="admin-integrations-table"
+              rowTestIdPrefix="admin-integration-row"
             />
           </div>
         </CardContent>
