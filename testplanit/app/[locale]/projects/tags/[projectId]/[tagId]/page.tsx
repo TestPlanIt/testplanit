@@ -3,10 +3,8 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
-import { DataTable } from "@/components/tables/DataTable";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,13 +23,14 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 import {
   useCaseColumns,
   useSessionColumns,
   useTestRunColumns,
 } from "./columns";
+
+const PAGE_SIZE = 50;
 
 type TabType = "cases" | "sessions" | "testRuns";
 type CaseTypeFilter = "all" | "manual" | "automated";
@@ -118,22 +117,6 @@ function TagDetail() {
     if (filters.caseType !== "all") count++;
     return count;
   }, [filters]);
-
-  // Pagination state for each tab
-  const [casesPage, setCasesPage] = useState(1);
-  const [casesPageSize, setCasesPageSize] = useState<number | "All">(25);
-  const [sessionsPage, setSessionsPage] = useState(1);
-  const [sessionsPageSize, setSessionsPageSize] = useState<number | "All">(25);
-  const [testRunsPage, setTestRunsPage] = useState(1);
-  const [testRunsPageSize, setTestRunsPageSize] = useState<number | "All">(25);
-
-  // Convert page size to number for calculations
-  const effectiveCasesPageSize =
-    typeof casesPageSize === "number" ? casesPageSize : 999999;
-  const effectiveSessionsPageSize =
-    typeof sessionsPageSize === "number" ? sessionsPageSize : 999999;
-  const effectiveTestRunsPageSize =
-    typeof testRunsPageSize === "number" ? testRunsPageSize : 999999;
 
   // Fetch the tag metadata only
   const { data: tags, isLoading: isLoadingTag } = useClientQueries(
@@ -237,11 +220,9 @@ function TagDetail() {
     return where;
   }, [baseWhere, debouncedSearchString, filters.hideCompletedTestRuns]);
 
-  // Fetch paginated test cases
-  const { data: repositoryCases, isLoading: isLoadingCases } = useClientQueries(
-    schema
-  ).repositoryCases.useFindMany(
-    {
+  // Fetch test cases (infinite scroll)
+  const casesInfiniteArgs = useMemo(
+    () => ({
       where: casesWhere,
       select: {
         id: true,
@@ -251,12 +232,29 @@ function TagDetail() {
         hasParameters: true,
       },
       orderBy: { name: "asc" as const },
-      skip: (casesPage - 1) * effectiveCasesPageSize,
-      take: effectiveCasesPageSize,
-    },
+      take: PAGE_SIZE,
+    }),
+    [casesWhere]
+  );
+  const {
+    data: casesPages,
+    fetchNextPage: fetchMoreCases,
+    hasNextPage: hasMoreCases,
+    isFetchingNextPage: isFetchingMoreCases,
+    isLoading: isLoadingCases,
+  } = useClientQueries(schema).repositoryCases.useInfiniteFindMany(
+    casesInfiniteArgs,
     {
+      getNextPageParam: (lastPage, allPages) =>
+        !lastPage || lastPage.length < PAGE_SIZE
+          ? undefined
+          : { ...casesInfiniteArgs, skip: allPages.flat().length },
       enabled: !!tagId && status === "authenticated" && activeTab === "cases",
     }
+  );
+  const repositoryCases = useMemo(
+    () => casesPages?.pages.flat() ?? [],
+    [casesPages]
   );
 
   const { data: casesCount } = useClientQueries(
@@ -270,11 +268,9 @@ function TagDetail() {
     }
   );
 
-  // Fetch paginated sessions
-  const { data: sessions, isLoading: isLoadingSessions } = useClientQueries(
-    schema
-  ).sessions.useFindMany(
-    {
+  // Fetch sessions (infinite scroll)
+  const sessionsInfiniteArgs = useMemo(
+    () => ({
       where: sessionsWhere,
       select: {
         id: true,
@@ -282,13 +278,30 @@ function TagDetail() {
         isCompleted: true,
       },
       orderBy: { createdAt: "desc" as const },
-      skip: (sessionsPage - 1) * effectiveSessionsPageSize,
-      take: effectiveSessionsPageSize,
-    },
+      take: PAGE_SIZE,
+    }),
+    [sessionsWhere]
+  );
+  const {
+    data: sessionsPages,
+    fetchNextPage: fetchMoreSessions,
+    hasNextPage: hasMoreSessions,
+    isFetchingNextPage: isFetchingMoreSessions,
+    isLoading: isLoadingSessions,
+  } = useClientQueries(schema).sessions.useInfiniteFindMany(
+    sessionsInfiniteArgs,
     {
+      getNextPageParam: (lastPage, allPages) =>
+        !lastPage || lastPage.length < PAGE_SIZE
+          ? undefined
+          : { ...sessionsInfiniteArgs, skip: allPages.flat().length },
       enabled:
         !!tagId && status === "authenticated" && activeTab === "sessions",
     }
+  );
+  const sessions = useMemo(
+    () => sessionsPages?.pages.flat() ?? [],
+    [sessionsPages]
   );
 
   const { data: sessionsCount } = useClientQueries(schema).sessions.useCount(
@@ -300,11 +313,9 @@ function TagDetail() {
     }
   );
 
-  // Fetch paginated test runs
-  const { data: testRuns, isLoading: isLoadingTestRuns } = useClientQueries(
-    schema
-  ).testRuns.useFindMany(
-    {
+  // Fetch test runs (infinite scroll)
+  const testRunsInfiniteArgs = useMemo(
+    () => ({
       where: testRunsWhere,
       select: {
         id: true,
@@ -312,13 +323,30 @@ function TagDetail() {
         isCompleted: true,
       },
       orderBy: { createdAt: "desc" as const },
-      skip: (testRunsPage - 1) * effectiveTestRunsPageSize,
-      take: effectiveTestRunsPageSize,
-    },
+      take: PAGE_SIZE,
+    }),
+    [testRunsWhere]
+  );
+  const {
+    data: testRunsPages,
+    fetchNextPage: fetchMoreTestRuns,
+    hasNextPage: hasMoreTestRuns,
+    isFetchingNextPage: isFetchingMoreTestRuns,
+    isLoading: isLoadingTestRuns,
+  } = useClientQueries(schema).testRuns.useInfiniteFindMany(
+    testRunsInfiniteArgs,
     {
+      getNextPageParam: (lastPage, allPages) =>
+        !lastPage || lastPage.length < PAGE_SIZE
+          ? undefined
+          : { ...testRunsInfiniteArgs, skip: allPages.flat().length },
       enabled:
         !!tagId && status === "authenticated" && activeTab === "testRuns",
     }
+  );
+  const testRuns = useMemo(
+    () => testRunsPages?.pages.flat() ?? [],
+    [testRunsPages]
   );
 
   const { data: testRunsCount } = useClientQueries(schema).testRuns.useCount(
@@ -387,44 +415,6 @@ function TagDetail() {
     completed: t("common.fields.completed"),
     inProgress: t("milestones.statusLabels.IN_PROGRESS"),
   });
-
-  // Pagination calculations
-  const casesTotalPages = Math.ceil((casesCount ?? 0) / effectiveCasesPageSize);
-  const sessionsTotalPages = Math.ceil(
-    (sessionsCount ?? 0) / effectiveSessionsPageSize
-  );
-  const testRunsTotalPages = Math.ceil(
-    (testRunsCount ?? 0) / effectiveTestRunsPageSize
-  );
-
-  const casesStartIndex = (casesPage - 1) * effectiveCasesPageSize + 1;
-  const casesEndIndex = Math.min(
-    casesPage * effectiveCasesPageSize,
-    casesCount ?? 0
-  );
-
-  const sessionsStartIndex = (sessionsPage - 1) * effectiveSessionsPageSize + 1;
-  const sessionsEndIndex = Math.min(
-    sessionsPage * effectiveSessionsPageSize,
-    sessionsCount ?? 0
-  );
-
-  const testRunsStartIndex = (testRunsPage - 1) * effectiveTestRunsPageSize + 1;
-  const testRunsEndIndex = Math.min(
-    testRunsPage * effectiveTestRunsPageSize,
-    testRunsCount ?? 0
-  );
-
-  const casesPageSizeOptions = usePageSizeOptions(casesCount ?? 0);
-  const testRunsPageSizeOptions = usePageSizeOptions(testRunsCount ?? 0);
-  const sessionsPageSizeOptions = usePageSizeOptions(sessionsCount ?? 0);
-
-  // Reset page when search or filters change
-  useEffect(() => {
-    setCasesPage(1);
-    setSessionsPage(1);
-    setTestRunsPage(1);
-  }, [debouncedSearchString, filters]);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -584,116 +574,96 @@ function TagDetail() {
 
             <TabsContent value="cases" className="max-w-full overflow-hidden">
               {(casesCount ?? 0) > 0 && (
-                <div className="mb-4 flex justify-end items-center gap-4">
-                  <PaginationInfo
-                    startIndex={casesStartIndex}
-                    endIndex={casesEndIndex}
-                    totalRows={casesCount ?? 0}
-                    searchString={searchString}
-                    pageSize={casesPageSize}
-                    pageSizeOptions={casesPageSizeOptions}
-                    handlePageSizeChange={setCasesPageSize}
-                  />
-                  <PaginationComponent
-                    currentPage={casesPage}
-                    totalPages={casesTotalPages}
-                    onPageChange={setCasesPage}
-                  />
-                </div>
+                <p className="mb-2 text-right text-sm text-muted-foreground">
+                  {t("admin.auditLogs.showing", {
+                    loaded: mappedCases.length.toLocaleString(),
+                    total: (casesCount ?? mappedCases.length).toLocaleString(),
+                  })}
+                </p>
               )}
-              <DataTable
-                columns={caseColumns}
-                data={mappedCases}
-                onSortChange={() => {}}
-                sortConfig={{ column: "name", direction: "asc" }}
-                columnVisibility={{}}
-                onColumnVisibilityChange={() => {}}
-                isLoading={isLoadingCases}
-                pageSize={effectiveCasesPageSize}
-              />
-              {(casesCount ?? 0) === 0 && !isLoadingCases && (
-                <div className="text-center text-muted-foreground py-8">
-                  {filters.caseType !== "all"
-                    ? t("tags.detail.noFilterResults")
-                    : t("tags.detail.noResults")}
-                </div>
-              )}
+              <div className="h-[calc(100vh-24rem)] min-h-[400px] w-full">
+                <VirtualizedDataTable
+                  columns={caseColumns as any}
+                  data={mappedCases}
+                  columnVisibility={{}}
+                  onColumnVisibilityChange={() => {}}
+                  isLoading={isLoadingCases || isFetchingMoreCases}
+                  hasMore={!!hasMoreCases}
+                  onLoadMore={fetchMoreCases}
+                  resetKey={`cases|${debouncedSearchString}|${filters.caseType}`}
+                  emptyMessage={
+                    filters.caseType !== "all"
+                      ? t("tags.detail.noFilterResults")
+                      : t("tags.detail.noResults")
+                  }
+                  testIdPrefix="tag-detail-cases-table"
+                  rowTestIdPrefix="tag-detail-case-row"
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="testRuns">
               {(testRunsCount ?? 0) > 0 && (
-                <div className="mb-4 flex justify-end items-center gap-4">
-                  <PaginationInfo
-                    startIndex={testRunsStartIndex}
-                    endIndex={testRunsEndIndex}
-                    totalRows={testRunsCount ?? 0}
-                    searchString={searchString}
-                    pageSize={testRunsPageSize}
-                    pageSizeOptions={testRunsPageSizeOptions}
-                    handlePageSizeChange={setTestRunsPageSize}
-                  />
-                  <PaginationComponent
-                    currentPage={testRunsPage}
-                    totalPages={testRunsTotalPages}
-                    onPageChange={setTestRunsPage}
-                  />
-                </div>
+                <p className="mb-2 text-right text-sm text-muted-foreground">
+                  {t("admin.auditLogs.showing", {
+                    loaded: mappedTestRuns.length.toLocaleString(),
+                    total: (
+                      testRunsCount ?? mappedTestRuns.length
+                    ).toLocaleString(),
+                  })}
+                </p>
               )}
-              <DataTable
-                columns={testRunColumns}
-                data={mappedTestRuns}
-                onSortChange={() => {}}
-                sortConfig={{ column: "name", direction: "asc" }}
-                columnVisibility={{}}
-                onColumnVisibilityChange={() => {}}
-                isLoading={isLoadingTestRuns}
-                pageSize={effectiveTestRunsPageSize}
-              />
-              {(testRunsCount ?? 0) === 0 && !isLoadingTestRuns && (
-                <div className="text-center text-muted-foreground py-8">
-                  {filters.hideCompletedTestRuns
-                    ? t("tags.detail.noFilterResults")
-                    : t("tags.detail.noResults")}
-                </div>
-              )}
+              <div className="h-[calc(100vh-24rem)] min-h-[400px] w-full">
+                <VirtualizedDataTable
+                  columns={testRunColumns as any}
+                  data={mappedTestRuns}
+                  columnVisibility={{}}
+                  onColumnVisibilityChange={() => {}}
+                  isLoading={isLoadingTestRuns || isFetchingMoreTestRuns}
+                  hasMore={!!hasMoreTestRuns}
+                  onLoadMore={fetchMoreTestRuns}
+                  resetKey={`testRuns|${debouncedSearchString}|${filters.hideCompletedTestRuns}`}
+                  emptyMessage={
+                    filters.hideCompletedTestRuns
+                      ? t("tags.detail.noFilterResults")
+                      : t("tags.detail.noResults")
+                  }
+                  testIdPrefix="tag-detail-runs-table"
+                  rowTestIdPrefix="tag-detail-run-row"
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="sessions">
               {(sessionsCount ?? 0) > 0 && (
-                <div className="mb-4 flex justify-end items-center gap-4">
-                  <PaginationInfo
-                    startIndex={sessionsStartIndex}
-                    endIndex={sessionsEndIndex}
-                    totalRows={sessionsCount ?? 0}
-                    searchString={searchString}
-                    pageSize={sessionsPageSize}
-                    pageSizeOptions={sessionsPageSizeOptions}
-                    handlePageSizeChange={setSessionsPageSize}
-                  />
-                  <PaginationComponent
-                    currentPage={sessionsPage}
-                    totalPages={sessionsTotalPages}
-                    onPageChange={setSessionsPage}
-                  />
-                </div>
+                <p className="mb-2 text-right text-sm text-muted-foreground">
+                  {t("admin.auditLogs.showing", {
+                    loaded: mappedSessions.length.toLocaleString(),
+                    total: (
+                      sessionsCount ?? mappedSessions.length
+                    ).toLocaleString(),
+                  })}
+                </p>
               )}
-              <DataTable
-                columns={sessionColumns}
-                data={mappedSessions}
-                onSortChange={() => {}}
-                sortConfig={{ column: "name", direction: "asc" }}
-                columnVisibility={{}}
-                onColumnVisibilityChange={() => {}}
-                isLoading={isLoadingSessions}
-                pageSize={effectiveSessionsPageSize}
-              />
-              {(sessionsCount ?? 0) === 0 && !isLoadingSessions && (
-                <div className="text-center text-muted-foreground py-8">
-                  {filters.hideCompletedSessions
-                    ? t("tags.detail.noFilterResults")
-                    : t("tags.detail.noResults")}
-                </div>
-              )}
+              <div className="h-[calc(100vh-24rem)] min-h-[400px] w-full">
+                <VirtualizedDataTable
+                  columns={sessionColumns as any}
+                  data={mappedSessions}
+                  columnVisibility={{}}
+                  onColumnVisibilityChange={() => {}}
+                  isLoading={isLoadingSessions || isFetchingMoreSessions}
+                  hasMore={!!hasMoreSessions}
+                  onLoadMore={fetchMoreSessions}
+                  resetKey={`sessions|${debouncedSearchString}|${filters.hideCompletedSessions}`}
+                  emptyMessage={
+                    filters.hideCompletedSessions
+                      ? t("tags.detail.noFilterResults")
+                      : t("tags.detail.noResults")
+                  }
+                  testIdPrefix="tag-detail-sessions-table"
+                  rowTestIdPrefix="tag-detail-session-row"
+                />
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>

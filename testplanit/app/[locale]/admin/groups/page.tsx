@@ -4,22 +4,15 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
-import { DataTable } from "@/components/tables/DataTable";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { ExtendedGroups, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,11 +27,7 @@ import { DeleteGroup } from "./DeleteGroup";
 import { EditGroup } from "./EditGroup";
 
 export default function GroupListPage() {
-  return (
-    <PaginationProvider>
-      <GroupList />
-    </PaginationProvider>
-  );
+  return <GroupList />;
 }
 
 function GroupList() {
@@ -47,17 +36,6 @@ function GroupList() {
   const t = useTranslations("admin.groups");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -73,44 +51,9 @@ function GroupList() {
     null
   );
 
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
-
-  const { data: totalFilteredGroups } = useClientQueries(
-    schema
-  ).groups.useFindMany(
-    {
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
-          },
-          {
-            isDeleted: false,
-          },
-        ],
-      },
-    },
-    {
-      enabled:
-        (!!session?.user && debouncedSearchString.length === 0) ||
-        debouncedSearchString.length > 0,
-      refetchOnWindowFocus: true,
-    }
-  );
-
-  // Update total items in pagination context
-  useEffect(() => {
-    if (totalFilteredGroups) {
-      setTotalItems(totalFilteredGroups.length);
-    }
-  }, [totalFilteredGroups, setTotalItems]);
-
+  // Single full-set fetch feeds the virtualized table directly; the table
+  // renders only the visible window, so there's no page seam and no separate
+  // count query (the loaded array length IS the total).
   const { data, isLoading } = useClientQueries(schema).groups.useFindMany(
     {
       orderBy: sortConfig
@@ -129,8 +72,6 @@ function GroupList() {
           },
         ],
       },
-      take: effectivePageSize,
-      skip: skip,
       include: {
         assignedUsers: {
           where: {
@@ -160,19 +101,7 @@ function GroupList() {
     }
   );
 
-  const groups = data as ExtendedGroups[];
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
+  const groups = useMemo(() => (data ?? []) as ExtendedGroups[], [data]);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -188,7 +117,6 @@ function GroupList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
   };
 
   const columns: CustomColumnDef<ExtendedGroups>[] = useColumns(
@@ -236,7 +164,7 @@ function GroupList() {
             <CardDescription>{t("description.groupInfo")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-row items-start">
+            <div className="flex flex-row items-start justify-between gap-4">
               <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
                 <div className="text-muted-foreground w-full text-nowrap">
                   <Filter
@@ -248,44 +176,28 @@ function GroupList() {
                 </div>
               </div>
 
-              <div className="flex flex-col w-full sm:w-2/3 items-end">
-                {totalItems > 0 && (
-                  <>
-                    <div className="justify-end">
-                      <PaginationInfo
-                        key="group-pagination-info"
-                        startIndex={startIndex}
-                        endIndex={endIndex}
-                        totalRows={totalItems}
-                        searchString={searchString}
-                        pageSize={
-                          typeof pageSize === "number" ? pageSize : "All"
-                        }
-                        pageSizeOptions={pageSizeOptions}
-                        handlePageSizeChange={(size) => setPageSize(size)}
-                      />
-                    </div>
-                    <div className="justify-end -mx-4">
-                      <PaginationComponent
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={setCurrentPage}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
+              {groups.length > 0 && (
+                <p className="text-sm text-muted-foreground shrink-0">
+                  {tGlobal("admin.auditLogs.showing", {
+                    loaded: groups.length.toLocaleString(),
+                    total: groups.length.toLocaleString(),
+                  })}
+                </p>
+              )}
             </div>
-            <div className="mt-4 flex justify-between">
-              <DataTable<ExtendedGroups, unknown>
-                columns={columns}
-                data={groups || []}
+            <div className="mt-4 w-full">
+              <VirtualizedDataTable
+                fillViewport
+                columns={columns as any}
+                data={groups}
                 onSortChange={handleSortChange}
                 sortConfig={sortConfig}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}
-                pageSize={typeof pageSize === "number" ? pageSize : totalItems}
                 isLoading={isLoading}
+                resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+                testIdPrefix="admin-groups-table"
+                rowTestIdPrefix="admin-group-row"
               />
             </div>
           </CardContent>

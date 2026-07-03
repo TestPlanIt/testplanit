@@ -5,22 +5,15 @@ import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { DataTable } from "@/components/tables/DataTable";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { ExtendedScimToken, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
   AlertDialog,
@@ -65,11 +58,7 @@ import { ConflictLogTable } from "./ConflictLogTable";
 import { MintDialog } from "./MintDialog";
 
 export default function ScimTokensPage() {
-  return (
-    <PaginationProvider>
-      <ScimTokensList />
-    </PaginationProvider>
-  );
+  return <ScimTokensList />;
 }
 
 function FallbackDefaultCard() {
@@ -211,17 +200,6 @@ function ScimTokensList() {
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -250,9 +228,6 @@ function ScimTokensList() {
     status: "isActive",
   };
 
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
   const sortField = sortConfig
     ? columnToFieldMap[sortConfig.column] || sortConfig.column
     : "lastUsedAt";
@@ -265,47 +240,6 @@ function ScimTokensList() {
   useEffect(() => {
     updateScimTokenRef.current = updateScimToken;
   });
-
-  const { data: totalFilteredTokens } = useClientQueries(
-    schema
-  ).scimToken.useFindMany(
-    {
-      orderBy: { [sortField]: sortConfig?.direction || "desc" },
-      where: {
-        AND: [
-          {
-            OR: [
-              {
-                name: {
-                  contains: debouncedSearchString,
-                  mode: "insensitive",
-                },
-              },
-              {
-                idpName: debouncedSearchString
-                  ? {
-                      equals: debouncedSearchString.toUpperCase() as any,
-                    }
-                  : undefined,
-              },
-            ],
-          },
-          showRevokedTokens ? {} : { isActive: true, revokedAt: null },
-        ],
-      },
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: true,
-    }
-  );
-
-  // Update total items in pagination context
-  useEffect(() => {
-    if (totalFilteredTokens) {
-      setTotalItems(totalFilteredTokens.length);
-    }
-  }, [totalFilteredTokens, setTotalItems]);
 
   const {
     data: tokens,
@@ -336,24 +270,12 @@ function ScimTokensList() {
           showRevokedTokens ? {} : { isActive: true, revokedAt: null },
         ],
       },
-      take: effectivePageSize,
-      skip: skip,
     },
     {
       enabled: !!session?.user,
       refetchOnWindowFocus: true,
     }
   );
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -427,7 +349,6 @@ function ScimTokensList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
   };
 
   return (
@@ -456,7 +377,7 @@ function ScimTokensList() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -493,50 +414,30 @@ function ScimTokensList() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="scim-tokens-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {tokens && tokens.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: tokens.length.toLocaleString(),
+                  total: tokens.length.toLocaleString(),
+                })}
+              </p>
+            )}
           </div>
 
-          <div className="mt-4 flex justify-between" data-testid="scim-table">
-            {tokens && tokens.length > 0 ? (
-              <DataTable<ExtendedScimToken, unknown>
-                columns={columns}
-                data={tokens as ExtendedScimToken[]}
-                onSortChange={handleSortChange}
-                sortConfig={sortConfig}
-                columnVisibility={columnVisibility}
-                onColumnVisibilityChange={setColumnVisibility}
-                pageSize={typeof pageSize === "number" ? pageSize : totalItems}
-                isLoading={isLoading}
-              />
-            ) : !isLoading ? (
-              <div className="w-full text-center py-12 text-muted-foreground">
-                {t("noTokens")}
-              </div>
-            ) : null}
+          <div className="mt-4 w-full" data-testid="scim-table">
+            <VirtualizedDataTable
+              fillViewport
+              columns={columns as any}
+              data={(tokens ?? []) as ExtendedScimToken[]}
+              onSortChange={handleSortChange}
+              sortConfig={sortConfig}
+              columnVisibility={columnVisibility}
+              onColumnVisibilityChange={setColumnVisibility}
+              isLoading={isLoading}
+              resetKey={`${debouncedSearchString}|${showRevokedTokens}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="admin-scim-table"
+              rowTestIdPrefix="admin-scim-row"
+            />
           </div>
         </CardContent>
       </Card>

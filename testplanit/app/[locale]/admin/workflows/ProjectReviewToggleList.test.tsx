@@ -9,13 +9,16 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
     mockUseReviewFeatureEnabled(...args),
 }));
 
+// The list moved from paged useFindMany to infinite scroll; `useInfiniteFindMany`
+// records the (where/orderBy) args the assertions below check.
 const mockUseFindManyProjects = vi.fn();
 const mockUseCountProjects = vi.fn();
 const mockUseUpdateProjects = vi.fn();
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     projects: {
-      useFindMany: (...args: unknown[]) => mockUseFindManyProjects(...args),
+      useInfiniteFindMany: (...args: unknown[]) =>
+        mockUseFindManyProjects(...args),
       useCount: (...args: unknown[]) => mockUseCountProjects(...args),
       useUpdate: (...args: unknown[]) => mockUseUpdateProjects(...args),
     },
@@ -58,8 +61,8 @@ vi.mock("~/lib/contexts/PaginationContext", () => ({
 // effects firing. Also exposes a sort-header proxy so tests can trigger the
 // onSortChange callback the real DataTable invokes on header click.
 const dataTableLastProps: { current: any } = { current: null };
-vi.mock("@/components/tables/DataTable", () => ({
-  DataTable: (props: any) => {
+vi.mock("@/components/tables/VirtualizedDataTable", () => ({
+  VirtualizedDataTable: (props: any) => {
     dataTableLastProps.current = props;
     const { columns, data, onSortChange } = props;
     return (
@@ -143,7 +146,10 @@ beforeEach(() => {
   mutateAsync.mockResolvedValue({});
 
   mockUseFindManyProjects.mockReturnValue({
-    data: sampleProjects,
+    data: { pages: [sampleProjects], pageParams: [undefined] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
     isLoading: false,
   });
   mockUseCountProjects.mockReturnValue({ data: sampleProjects.length });

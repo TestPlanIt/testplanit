@@ -5,10 +5,8 @@ import { schema } from "~/zenstack/schema";
 import { CodeRepositoryModal } from "@/components/admin/code-repositories/CodeRepositoryModal";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
-import { DataTable } from "@/components/tables/DataTable";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,20 +31,11 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 import { CodeRepositoryRow, getColumns } from "./columns";
 
 export default function CodeRepositoriesPage() {
-  return (
-    <PaginationProvider>
-      <CodeRepositoryList />
-    </PaginationProvider>
-  );
+  return <CodeRepositoryList />;
 }
 
 function CodeRepositoryList() {
@@ -55,17 +44,7 @@ function CodeRepositoryList() {
   const queryClient = useQueryClient();
   const tCommon = useTranslations("common");
   const t = useTranslations("admin.codeRepositories");
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
+  const tGlobal = useTranslations();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -83,11 +62,6 @@ function CodeRepositoryList() {
   const [repoToDelete, setRepoToDelete] = useState<CodeRepositoryRow | null>(
     null
   );
-
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
 
   const queryWhere = useMemo(
     () => ({
@@ -112,28 +86,9 @@ function CodeRepositoryList() {
     [sortConfig]
   );
 
-  // Query for total filtered repositories (for pagination)
-  const { data: totalFilteredRepos } = useClientQueries(
-    schema
-  ).codeRepository.useFindMany(
-    {
-      orderBy: queryOrderBy,
-      where: queryWhere,
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: true,
-    }
-  );
-
-  // Update total items in pagination context
-  useEffect(() => {
-    if (totalFilteredRepos) {
-      setTotalItems(totalFilteredRepos.length);
-    }
-  }, [totalFilteredRepos, setTotalItems]);
-
-  // Query for paginated repositories
+  // Single full-set fetch feeds the virtualized table directly; the table
+  // renders only the visible window so there's no page seam and no need for a
+  // separate count query (the loaded array length IS the total).
   const {
     data: repositories,
     isLoading,
@@ -142,8 +97,6 @@ function CodeRepositoryList() {
     {
       orderBy: queryOrderBy,
       where: queryWhere,
-      take: effectivePageSize,
-      skip: skip,
     },
     {
       enabled: !!session?.user,
@@ -151,17 +104,10 @@ function CodeRepositoryList() {
     }
   );
 
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
+  const repoRows = useMemo(
+    () => (repositories as unknown as CodeRepositoryRow[]) || [],
+    [repositories]
+  );
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -279,7 +225,6 @@ function CodeRepositoryList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
   };
 
   return (
@@ -306,7 +251,7 @@ function CodeRepositoryList() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -328,34 +273,17 @@ function CodeRepositoryList() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="code-repo-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {repoRows.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: repoRows.length.toLocaleString(),
+                  total: repoRows.length.toLocaleString(),
+                })}
+              </p>
+            )}
           </div>
 
-          {!isLoading && totalItems === 0 && !debouncedSearchString ? (
+          {!isLoading && repoRows.length === 0 && !debouncedSearchString ? (
             <div className="mt-8 flex flex-col items-center justify-center gap-4 py-16 text-center">
               <GitBranch className="h-12 w-12 text-muted-foreground/40" />
               <div>
@@ -370,16 +298,19 @@ function CodeRepositoryList() {
               </Button>
             </div>
           ) : (
-            <div className="mt-4 flex justify-between">
-              <DataTable<CodeRepositoryRow, unknown>
-                columns={columns}
-                data={(repositories as unknown as CodeRepositoryRow[]) || []}
+            <div className="mt-4 w-full">
+              <VirtualizedDataTable
+                fillViewport
+                columns={columns as any}
+                data={repoRows}
                 onSortChange={handleSortChange}
                 sortConfig={sortConfig}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}
-                pageSize={typeof pageSize === "number" ? pageSize : totalItems}
                 isLoading={isLoading}
+                resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+                testIdPrefix="admin-code-repositories-table"
+                rowTestIdPrefix="admin-code-repository-row"
               />
             </div>
           )}

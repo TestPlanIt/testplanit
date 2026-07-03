@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ─── Hoisted mock refs ───────────────────────────────────────────────────
 const {
   mockFindManyWebhookDelivery,
+  mockInfiniteWebhookDelivery,
   mockFindManyWebhookConfig,
   mockCountWebhookDelivery,
   mockFindUniqueWebhookDelivery,
@@ -16,6 +17,7 @@ const {
   mockRouterReplace,
 } = vi.hoisted(() => ({
   mockFindManyWebhookDelivery: vi.fn(),
+  mockInfiniteWebhookDelivery: vi.fn(),
   mockFindManyWebhookConfig: vi.fn(),
   mockCountWebhookDelivery: vi.fn(),
   mockFindUniqueWebhookDelivery: vi.fn(),
@@ -31,6 +33,8 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     webhookDelivery: {
       useFindMany: (...args: any[]) => mockFindManyWebhookDelivery(...args),
+      useInfiniteFindMany: (...args: any[]) =>
+        mockInfiniteWebhookDelivery(...args),
       useCount: (...args: any[]) => mockCountWebhookDelivery(...args),
       useFindUnique: (...args: any[]) => mockFindUniqueWebhookDelivery(...args),
     },
@@ -179,20 +183,14 @@ vi.mock("@/components/ui/dialog", () => ({
   DialogFooter: ({ children }: any) => <div>{children}</div>,
 }));
 
-// DataTable stub: emits row testids + invokes each column's cell renderer
-// so the new "actions" Eye-icon column is exercisable in tests.
-vi.mock("@/components/tables/DataTable", () => ({
-  DataTable: ({ data, columns, onTestCaseClick }: any) => (
+// VirtualizedDataTable stub: emits row testids + invokes each column's cell
+// renderer so the "actions" Eye-icon column is exercisable in tests.
+vi.mock("@/components/tables/VirtualizedDataTable", () => ({
+  VirtualizedDataTable: ({ data, columns }: any) => (
     <table data-testid="webhook-deliveries-datatable">
       <tbody>
         {data.map((row: any) => (
-          <tr
-            key={row.id}
-            data-testid={`webhook-delivery-row-${row.id}`}
-            onClick={
-              onTestCaseClick ? () => onTestCaseClick(row.id) : undefined
-            }
-          >
+          <tr key={row.id} data-testid={`webhook-delivery-row-${row.id}`}>
             {columns.map((col: any, idx: number) => {
               const content = col.cell
                 ? col.cell({ row: { original: row } })
@@ -436,6 +434,15 @@ const inboundDelivery = {
 function setDeliveries(rows: any[]) {
   mockFindManyWebhookDelivery.mockReturnValue({
     data: rows,
+    isLoading: false,
+    refetch: vi.fn().mockResolvedValue({ data: rows }),
+  });
+  // Infinite-scroll shape: one page holding all seeded rows, nothing more to load.
+  mockInfiniteWebhookDelivery.mockReturnValue({
+    data: { pages: [rows], pageParams: [undefined] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
     isLoading: false,
     refetch: vi.fn().mockResolvedValue({ data: rows }),
   });
@@ -699,17 +706,20 @@ describe("WebhookDeliveriesTab", () => {
     });
   });
 
-  it("Test 15: paginator visible when there are rows (replaces old load-more)", () => {
+  it("Test 15: renders rows via the virtualized table with no paginator (infinite scroll)", () => {
     const fifty = Array.from({ length: 50 }, (_, i) => ({
       ...outboundFailedDelivery,
       id: `d_${i}`,
     }));
     setDeliveries(fifty);
     render(<WebhookDeliveriesTab projectId={42} />);
-    // Cursor "load more" was replaced by server-side paginator (D-35 follow-up).
+    // The server-side paginator was replaced by a virtualized infinite-scroll
+    // table: rows render, and there is no paginator control.
+    expect(screen.getByTestId("webhook-deliveries-table")).toBeInTheDocument();
+    expect(screen.getByTestId("webhook-delivery-row-d_0")).toBeInTheDocument();
     expect(
-      screen.getByTestId("webhook-deliveries-paginator")
-    ).toBeInTheDocument();
+      screen.queryByTestId("webhook-deliveries-paginator")
+    ).not.toBeInTheDocument();
   });
 
   it("Test 16: filter URL state survives initial render (status=failed pre-selected)", () => {

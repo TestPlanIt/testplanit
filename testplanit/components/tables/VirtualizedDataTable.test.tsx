@@ -12,6 +12,7 @@ import { VirtualizedDataTable } from "./VirtualizedDataTable";
 const hookMock = vi.hoisted(() => ({
   lastOnLoadMore: null as null | (() => void),
   lastOpts: null as Record<string, unknown> | null,
+  scrollToIndex: vi.fn(),
 }));
 
 vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
@@ -24,7 +25,7 @@ vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
     return {
       scrollRef: () => {},
       sentinelRef: { current: null },
-      virtualizer: {},
+      virtualizer: { scrollToIndex: hookMock.scrollToIndex },
       virtualItems: Array.from({ length: opts.count }, (_, i) => ({
         key: i,
         index: i,
@@ -93,6 +94,7 @@ describe("VirtualizedDataTable", () => {
     vi.clearAllMocks();
     hookMock.lastOnLoadMore = null;
     hookMock.lastOpts = null;
+    hookMock.scrollToIndex.mockClear();
   });
 
   it("renders the header and every row (no pagination slicing)", () => {
@@ -103,6 +105,42 @@ describe("VirtualizedDataTable", () => {
     expect(screen.getByText("Beta")).toBeInTheDocument();
     // The whole result set is handed to the virtualizer.
     expect(hookMock.lastOpts?.count).toBe(2);
+  });
+
+  it("adds a title tooltip to a header only when its label is clipped", () => {
+    // jsdom reports 0 for layout, so fake a header whose content (scrollWidth)
+    // overflows its box (clientWidth); the label should expose its full text as
+    // a native tooltip.
+    const scrollWidth = vi
+      .spyOn(HTMLElement.prototype, "scrollWidth", "get")
+      .mockReturnValue(500);
+    const clientWidth = vi
+      .spyOn(HTMLElement.prototype, "clientWidth", "get")
+      .mockReturnValue(100);
+    try {
+      renderTable();
+      expect(screen.getByText("Name")).toHaveAttribute("title", "Name");
+    } finally {
+      scrollWidth.mockRestore();
+      clientWidth.mockRestore();
+    }
+  });
+
+  it("omits the header tooltip when the label fits within its column", () => {
+    // Content fits its box (scrollWidth === clientWidth) — no tooltip needed.
+    const scrollWidth = vi
+      .spyOn(HTMLElement.prototype, "scrollWidth", "get")
+      .mockReturnValue(100);
+    const clientWidth = vi
+      .spyOn(HTMLElement.prototype, "clientWidth", "get")
+      .mockReturnValue(100);
+    try {
+      renderTable();
+      expect(screen.getByText("Name")).not.toHaveAttribute("title");
+    } finally {
+      scrollWidth.mockRestore();
+      clientWidth.mockRestore();
+    }
   });
 
   it("calls onSortChange with the column id when a sort control is clicked", () => {
@@ -176,6 +214,30 @@ describe("VirtualizedDataTable", () => {
     expect(
       screen.queryByTestId("virtualized-table-resize-expander")
     ).not.toBeInTheDocument();
+  });
+
+  it("scrolls the virtualizer to a deep-linked row once it's in the set", () => {
+    renderTable({ scrollToRowId: 2 });
+    // "Beta" (id 2) is the second row → index 1.
+    expect(hookMock.scrollToIndex).toHaveBeenCalledWith(1, { align: "center" });
+  });
+
+  it("does not scroll when the deep-linked row isn't present", () => {
+    renderTable({ scrollToRowId: 999 });
+    expect(hookMock.scrollToIndex).not.toHaveBeenCalled();
+  });
+
+  it("draws a highlight ring on the deep-linked row", () => {
+    renderTable({ highlightRowId: 1 });
+    const highlighted = screen
+      .getByText("Alpha")
+      .closest('[role="row"]') as HTMLElement;
+    expect(highlighted.className).toContain("outline-primary");
+    // The other row is not highlighted.
+    const other = screen
+      .getByText("Beta")
+      .closest('[role="row"]') as HTMLElement;
+    expect(other.className).not.toContain("outline-primary");
   });
 
   it("seeds column widths from localStorage when a storage key is set", () => {

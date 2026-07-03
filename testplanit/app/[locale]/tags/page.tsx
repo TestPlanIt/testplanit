@@ -3,10 +3,8 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
-import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,38 +30,26 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { useTagColumns } from "./columns";
 
+const PAGE_SIZE = 50;
+
+// Count columns are derived from a separate join call, so they can't be sorted
+// across pages without the full set in hand. Sorting by one fetches everything
+// once and renders it through the same virtualized table in full-set mode
+// (hasMore=false); every other column drives a genuine infinite fetch.
+const COUNT_SORT_COLUMNS = ["cases", "testRuns", "sessions", "projects"];
+
 export default function TagList() {
-  return (
-    <PaginationProvider>
-      <Tags />
-    </PaginationProvider>
-  );
+  return <Tags />;
 }
 
 function Tags() {
   const t = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -86,35 +72,15 @@ function Tags() {
     orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
   });
 
-  // Valid column IDs for sorting
-  const validColumnIds = useMemo(
-    () => ["name", "cases", "testRuns", "sessions", "projects"],
-    []
-  );
-
-  // Validate and fix sortConfig if it references a non-existent column
-  useEffect(() => {
-    if (!validColumnIds.includes(sortConfig.column)) {
-      console.warn(
-        `Invalid sort column "${sortConfig.column}", resetting to "name"`
-      );
-      setSortConfig({ column: "name", direction: "asc" });
-    }
-  }, [sortConfig.column, validColumnIds]);
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
 
   const accessFilterReady = !!session?.user?.id;
 
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
-
   const nameFilter = useMemo(() => {
     if (!debouncedSearchString.trim()) {
       return {};
     }
-
     return {
       name: {
         contains: debouncedSearchString.trim(),
@@ -123,12 +89,8 @@ function Tags() {
     };
   }, [debouncedSearchString]);
 
-  // Note: We don't need a manual project filter here anymore.
-  // ZenStack's access policies on RepositoryCases, Sessions, and TestRuns
-  // will automatically filter out data the user doesn't have access to.
-  // This handles all access types: assignedUsers, userPermissions,
-  // groupPermissions, and project defaultAccessType (GLOBAL_ROLE).
-
+  // Note: ZenStack's access policies on RepositoryCases, Sessions, and TestRuns
+  // filter out data the user doesn't have access to automatically.
   const tagsWhere = useMemo(() => {
     if (!accessFilterReady) {
       return null;
@@ -171,120 +133,110 @@ function Tags() {
     };
   }, [accessFilterReady, nameFilter]);
 
-  const orderBy = useMemo(() => {
-    // Only apply server-side sorting for name column
-    // Other columns will be sorted client-side after counts are fetched
-    if (sortConfig?.column === "name") {
-      return {
-        name: sortConfig.direction,
-      } as const;
-    }
-
-    // For count columns, fetch all tags unsorted (will sort client-side)
-    return {
-      name: "asc" as const,
-    };
-  }, [sortConfig]);
-
-  // When sorting by count columns, we need to fetch ALL tags to sort properly
-  // Otherwise we can paginate server-side
-  const needsClientSideSorting = sortConfig.column !== "name";
-  const shouldPaginate =
-    !needsClientSideSorting && typeof effectivePageSize === "number";
-  const paginationArgs = {
-    skip: shouldPaginate ? skip : undefined,
-    take: shouldPaginate ? effectivePageSize : undefined,
-  };
-
-  // Fetch ONLY basic tag data - no includes at all
-  // ZenStack's access control on includes causes bind variable explosion (even with limits)
-  // Projects and counts are fetched separately via direct Prisma queries
-  const { data: tags, isLoading: isLoadingTags } = useClientQueries(
-    schema
-  ).tags.useFindMany(
-    tagsWhere
-      ? {
-          where: tagsWhere,
-          orderBy,
-          ...paginationArgs,
-        }
-      : undefined,
-    {
-      enabled: !!tagsWhere && status === "authenticated",
-    }
+  const isCountSort = COUNT_SORT_COLUMNS.includes(sortConfig.column);
+  const orderBy = useMemo(
+    () =>
+      sortConfig.column === "name"
+        ? ({ name: sortConfig.direction } as const)
+        : { name: "asc" as const },
+    [sortConfig]
   );
+
+  const infiniteBaseArgs = useMemo(
+    () => ({
+      where: tagsWhere ?? undefined,
+      orderBy,
+      take: PAGE_SIZE,
+    }),
+    [tagsWhere, orderBy]
+  );
+
+  const {
+    data: infinitePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingInfinite,
+  } = useClientQueries(schema).tags.useInfiniteFindMany(infiniteBaseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+    },
+    enabled: !!tagsWhere && status === "authenticated" && !isCountSort,
+  });
+
+  const { data: allTags, isLoading: isLoadingAll } = useClientQueries(
+    schema
+  ).tags.useFindMany(tagsWhere ? { where: tagsWhere } : undefined, {
+    enabled: !!tagsWhere && status === "authenticated" && isCountSort,
+  });
+
+  const tags = useMemo(() => {
+    if (isCountSort) return allTags ?? [];
+    return infinitePages?.pages.flat() ?? [];
+  }, [isCountSort, infinitePages, allTags]);
+
+  const isLoadingTags = isCountSort ? isLoadingAll : isLoadingInfinite;
 
   const { data: tagsCount } = useClientQueries(schema).tags.useCount(
-    tagsWhere
-      ? {
-          where: tagsWhere,
-        }
-      : undefined,
-    {
-      enabled: !!tagsWhere && status === "authenticated",
-    }
+    tagsWhere ? { where: tagsWhere } : undefined,
+    { enabled: !!tagsWhere && status === "authenticated" }
   );
 
-  // Fetch counts and projects separately to avoid bind variable explosion
+  // Counts + projects are fetched separately (join queries too heavy to include)
+  // and cached per tag id for the life of the page — a tag's counts/projects
+  // aren't scoped to the current search/sort, so once fetched they never need
+  // re-requesting as the infinite list appends new ids.
   const [tagCounts, setTagCounts] = useState<
     Record<
       number,
-      {
-        repositoryCases: number;
-        sessions: number;
-        testRuns: number;
-      }
+      { repositoryCases: number; sessions: number; testRuns: number }
     >
   >({});
-
   const [tagProjects, setTagProjects] = useState<
-    Record<
-      number,
-      Array<{
-        id: number;
-        name: string;
-        iconUrl: string | null;
-      }>
-    >
+    Record<number, Array<{ id: number; name: string; iconUrl: string | null }>>
   >({});
-
   const [isLoadingCounts, setIsLoadingCounts] = useState(false);
+  const fetchedTagIdsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (!tags || tags.length === 0) {
       setTagCounts({});
       setTagProjects({});
       setIsLoadingCounts(false);
+      fetchedTagIdsRef.current = new Set();
       return;
     }
 
-    const tagIds = tags.map((t) => t.id);
+    const newIds = tags
+      .map((tag) => tag.id)
+      .filter((id) => !fetchedTagIdsRef.current.has(id));
+    if (newIds.length === 0) return;
+    newIds.forEach((id) => fetchedTagIdsRef.current.add(id));
 
     const fetchCountsAndProjects = async () => {
       setIsLoadingCounts(true);
       try {
-        // Fetch counts and projects in parallel
         const [countsResponse, projectsResponse] = await Promise.all([
           fetch("/api/tags/counts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tagIds }),
+            body: JSON.stringify({ tagIds: newIds }),
           }),
           fetch("/api/tags/projects", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tagIds }),
+            body: JSON.stringify({ tagIds: newIds }),
           }),
         ]);
 
         if (countsResponse.ok) {
           const data = await countsResponse.json();
-          setTagCounts(data.counts || {});
+          setTagCounts((prev) => ({ ...prev, ...(data.counts || {}) }));
         }
-
         if (projectsResponse.ok) {
           const data = await projectsResponse.json();
-          setTagProjects(data.projects || {});
+          setTagProjects((prev) => ({ ...prev, ...(data.projects || {}) }));
         }
       } catch (error) {
         console.error("Failed to fetch tag data:", error);
@@ -301,11 +253,9 @@ function Tags() {
       return [];
     }
 
-    // Map counts and projects from the separate API calls
     const mapped = tags.map((tag) => {
       const counts = tagCounts[tag.id];
       const projects = tagProjects[tag.id] || [];
-
       return {
         ...tag,
         repositoryCases: [],
@@ -318,13 +268,11 @@ function Tags() {
       };
     });
 
-    // Apply client-side sorting for count columns (since these aren't in the DB)
-    // Name sorting is already handled server-side via orderBy
-    if (sortConfig.column !== "name") {
+    // Count columns aren't in the DB — sort them client-side over the full set.
+    if (isCountSort) {
       return mapped.sort((a, b) => {
         let aValue: number;
         let bValue: number;
-
         switch (sortConfig.column) {
           case "cases":
             aValue = a.repositoryCasesCount ?? 0;
@@ -345,7 +293,6 @@ function Tags() {
           default:
             return 0;
         }
-
         return sortConfig.direction === "asc"
           ? aValue - bValue
           : bValue - aValue;
@@ -353,39 +300,7 @@ function Tags() {
     }
 
     return mapped;
-  }, [tags, tagCounts, tagProjects, sortConfig]);
-
-  useEffect(() => {
-    setTotalItems(tagsCount ?? 0);
-  }, [tagsCount, setTotalItems]);
-
-  // When sorting by count columns, apply pagination client-side
-  // Otherwise the data is already paginated from the server
-  const displayedTags = useMemo(() => {
-    if (sortConfig.column !== "name") {
-      // Client-side pagination for count column sorting
-      return mappedTags.slice(skip, skip + effectivePageSize);
-    }
-    // Server-side pagination (already applied)
-    return mappedTags;
-  }, [mappedTags, sortConfig.column, skip, effectivePageSize]);
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  const prevSearchStringRef = useRef(searchString);
-  const prevPageSizeRef = useRef(pageSize);
-
-  useEffect(() => {
-    if (searchString === prevSearchStringRef.current) return;
-    prevSearchStringRef.current = searchString;
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  useEffect(() => {
-    if (pageSize === prevPageSizeRef.current) return;
-    prevPageSizeRef.current = pageSize;
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
+  }, [tags, tagCounts, tagProjects, sortConfig, isCountSort]);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -417,7 +332,6 @@ function Tags() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
   };
 
   return (
@@ -500,7 +414,7 @@ function Tags() {
           <CardDescription>{t("tags.description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -512,42 +426,30 @@ function Tags() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="tag-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {mappedTags.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {t("admin.auditLogs.showing", {
+                  loaded: mappedTags.length.toLocaleString(),
+                  total: (tagsCount ?? mappedTags.length).toLocaleString(),
+                })}
+              </p>
+            )}
           </div>
-          <div className="mt-4 flex justify-between">
-            <DataTable
+          <div className="mt-4 w-full">
+            <VirtualizedDataTable
+              fillViewport
               columns={columns as any}
-              data={displayedTags as any}
+              data={mappedTags as any}
               onSortChange={handleSortChange}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              isLoading={isLoadingTags || !tagsWhere}
-              pageSize={effectivePageSize}
+              isLoading={isLoadingTags || isFetchingNextPage || !tagsWhere}
+              hasMore={isCountSort ? false : !!hasNextPage}
+              onLoadMore={fetchNextPage}
+              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="tags-table"
+              rowTestIdPrefix="tag-row"
             />
           </div>
         </CardContent>
