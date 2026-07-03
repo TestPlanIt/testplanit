@@ -54,7 +54,7 @@ Each project carries its own `Review Workflow` toggle. By default new projects a
 Either path works:
 
 - **Per project** — open the project, navigate to **Settings → Advanced**, toggle **Review Workflow** on. Useful for project administrators managing their own project.
-- **Bulk from the admin surface** — open **Administration → Workflows**. While the system feature is on, the Review Workflow card lists every project with an inline switch; flip any project on or off without leaving the page. The list is searchable, sortable, and paginated. Useful for system administrators rolling the feature out across many projects.
+- **Bulk from the admin surface** — open **Administration → Workflows**. While the system feature is on, the Review Workflow card lists every project with an inline switch; flip any project on or off without leaving the page. The list is searchable and sortable, and loads more projects automatically as you scroll. Useful for system administrators rolling the feature out across many projects.
 
 When the system-level kill switch is off, the per-project toggle has no effect. When it is on, only projects with their own toggle on actually enforce gates.
 

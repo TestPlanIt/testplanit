@@ -14,7 +14,7 @@ To access this page, enter the Administration area and select **Groups** from th
 The Groups page displays a table listing all configured groups (excluding those marked as deleted). Key features include:
 
 - **Filtering**: Use the filter input to search for groups by name.
-- **Pagination**: Navigate through pages of groups if the list is long.
+- **Loading More**: The list loads more groups automatically as you scroll if it is long; there are no page controls.
 - **Columns**: The table includes columns for:
   - **Name**: The name of the Group. Groups provisioned from your identity provider show a **SCIM** badge.
   - **Users**: A count/list of users assigned to this Group.

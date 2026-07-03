@@ -31,7 +31,7 @@ The table displays tags that are used by at least one item (Case, Session, or Ru
   - **Test Cases**: Shows the count of Test Cases _in this project_ that use this tag. Clicking the count might show a popover or list of associated cases.
   - **Sessions**: Shows the count of Sessions _in this project_ that use this tag. Clicking the count might show a popover or list of associated sessions.
   - **Test Runs**: Shows the count of Test Runs _in this project_ that use this tag. Clicking the count might show a popover or list of associated runs.
-- **Pagination**: Standard pagination controls are available if the list of tags exceeds the page size.
+- **Loading More**: The list loads more tags automatically as you scroll toward the bottom; there are no page controls.
 
 ## Auto Tag
 

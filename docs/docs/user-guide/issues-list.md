@@ -17,11 +17,10 @@ This page displays a table listing issues, allowing you to quickly see which iss
 
 - **Search Bar:** Located above the table, you can type into the search bar to filter issues by their **Name**. The search is case-insensitive and updates the table dynamically as you type (with a small debounce delay).
 
-### Pagination
+### Loading More
 
-- **Page Size:** You can control how many issues are displayed per page using the dropdown menu (options typically include 10, 25, 50, 100, 250, or "All").
-- **Navigation:** Use the pagination controls below the table to navigate between pages of issues.
-- **Info Display:** Information about the currently displayed range of issues and the total count is shown above the pagination controls.
+- **Continuous Scroll:** Issues load a page at a time and more are appended automatically as you scroll toward the bottom of the list — there are no page controls.
+- **Info Display:** A count above the table shows how many issues are currently loaded out of the total matching your filters.
 
 ### Sorting
 

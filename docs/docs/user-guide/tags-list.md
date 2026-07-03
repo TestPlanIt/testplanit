@@ -14,7 +14,7 @@ Only tags linked to at least one active Test Case or Session are displayed here.
 ## Features
 
 - **Filtering**: Use the filter input above the table to search for tags by name.
-- **Pagination**: If there are many tags, use the pagination controls at the top-right to navigate through pages and adjust the number of tags shown per page.
+- **Loading More**: The list loads more tags automatically as you scroll toward the bottom; there are no page controls.
 - **Sorting**: Tags are sorted alphabetically by name by default.
 
 ## Tags Table

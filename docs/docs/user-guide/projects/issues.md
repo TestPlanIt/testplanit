@@ -23,9 +23,9 @@ This page is **read-only** — it lists issues that already exist. You do not ad
 
 -   **Search Bar:** Filters the displayed issues by their **Name**. The search is case-insensitive and applies dynamically.
 
-### Pagination
+### Loading More
 
--   Standard pagination controls allow navigating through the list of project-specific issues, including page size selection and page navigation.
+-   The list loads more issues automatically as you scroll toward the bottom — there are no page controls. A count above the table shows how many issues are currently loaded out of the total.
 
 ### Sorting
 

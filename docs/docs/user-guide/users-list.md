@@ -15,7 +15,7 @@ Users with the `NONE` access level cannot view this page and will be redirected.
 
 - **Filtering**: Use the filter input above the table to search for users by name. The search is case-insensitive.
 - **Column Selection**: Use the **Columns** control above the table to show or hide specific columns. Your choice is remembered in this browser for this table, so it persists across visits.
-- **Pagination**: If there are many users, use the pagination controls at the top-right to navigate through pages and adjust the number of users shown per page.
+- **Loading More**: The list loads more users automatically as you scroll toward the bottom — there are no page controls. A count above the table shows how many users are loaded out of the total.
 - **Sorting**: Click on the column headers for "Name" or "Email" to sort the user list accordingly (ascending/descending).
 
 ## Users Table
