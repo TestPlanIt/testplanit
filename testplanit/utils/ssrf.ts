@@ -1,30 +1,7 @@
 import { lookup } from "node:dns/promises";
-import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
-
-// Private IP ranges that must be blocked to prevent SSRF attacks
-const PRIVATE_RANGES: RegExp[] = [
-  // IPv4 loopback
-  /^127\./,
-  // RFC 1918 private ranges
-  /^10\./,
-  /^172\.(1[6-9]|2[0-9]|3[01])\./,
-  /^192\.168\./,
-  // AWS metadata / link-local
-  /^169\.254\./,
-  // "This" network
-  /^0\./,
-  // IPv6 loopback
-  /^::1$/,
-  // IPv6 unique local
-  /^fc/i,
-  /^fd/i,
-  // IPv6 link-local
-  /^fe80:/i,
-];
-
-function isPrivateIp(ip: string): boolean {
-  return PRIVATE_RANGES.some((r) => r.test(ip));
-}
+import { isIP } from "node:net";
+import { Agent } from "undici";
+import { getAllowedPrivateHosts, isPrivateIp } from "~/lib/utils/ssrf";
 
 /**
  * Returns true if the URL is safe to make a server-side request to.
@@ -66,36 +43,85 @@ export function isSsrfSafe(url: string, allowedHosts?: Set<string>): boolean {
  * This closes the DNS rebinding gap where a public hostname resolves to a
  * private/internal IP address.
  *
- * Call this immediately before fetch() to minimize the TOCTOU window.
+ * Call this immediately before fetch(). Returns the validated IP address the
+ * caller should pin the connection to (via {@link createPinnedDispatcher}) so
+ * fetch() cannot independently re-resolve the hostname to a different, private
+ * address — closing the DNS-rebinding TOCTOU. Returns null when there is nothing
+ * to pin: an allowlisted host, or a raw IP literal (no DNS lookup happens, so
+ * there is no rebinding window).
+ *
  * Throws if the resolved address is private or the hostname cannot be resolved.
  */
 export async function assertSsrfSafeResolved(
   url: string,
   allowedHosts?: Set<string>
-): Promise<void> {
+): Promise<string | null> {
   const parsed = new URL(url);
   const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
 
   // If this hostname is in the operator allowlist, skip all private-IP checks
   const allowed = allowedHosts ?? getAllowedPrivateHosts();
   if (allowed.has(hostname.toLowerCase())) {
-    return;
+    return null;
   }
 
-  // Skip DNS lookup for raw IP addresses — already checked by isSsrfSafe()
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname.includes(":")) {
-    return;
-  }
-
-  try {
-    const { address } = await lookup(hostname);
-    if (isPrivateIp(address)) {
+  // For a raw IP literal (IPv4, IPv6, or IPv4-mapped IPv6) there is no DNS to
+  // resolve — validate the literal numerically instead of skipping it. Skipping
+  // any host containing ":" is what let IPv4-mapped IPv6 literals bypass this
+  // re-check (GHSA-x7jm-4fpq-5mhm). No DNS lookup means no rebinding window, so
+  // there is nothing to pin.
+  if (isIP(hostname) !== 0) {
+    if (isPrivateIp(hostname)) {
       throw new Error(
         "Request blocked: hostname resolves to a private or internal address"
       );
     }
+    return null;
+  }
+
+  let address: string;
+  try {
+    ({ address } = await lookup(hostname));
   } catch (err: any) {
-    if (err.message?.includes("Request blocked")) throw err;
     throw new Error(`DNS resolution failed for ${hostname}: ${err.message}`);
   }
+
+  if (isPrivateIp(address)) {
+    throw new Error(
+      "Request blocked: hostname resolves to a private or internal address"
+    );
+  }
+
+  return address;
+}
+
+/**
+ * Build an undici dispatcher that pins every connection to a single
+ * pre-validated IP address, regardless of what DNS would otherwise return. Pass
+ * it to fetch() as the `dispatcher` option so the socket connects to exactly the
+ * address {@link assertSsrfSafeResolved} validated — the TCP connection can no
+ * longer race a DNS rebind to an internal host. The URL's hostname is still used
+ * for the Host header and TLS SNI, so certificate validation is unaffected.
+ *
+ * Create one per request and close it (fire-and-forget is fine — undici keeps an
+ * in-flight response alive until its body is consumed).
+ */
+export function createPinnedDispatcher(ip: string): Agent {
+  const family = isIP(ip) === 6 ? 6 : 4;
+  // undici invokes lookup with the node dns.lookup signature. Handle both the
+  // legacy (err, address, family) callback and the { all: true } array shape.
+  const lookupFn = (
+    _hostname: string,
+    options: Record<string, unknown>,
+    cb: (...args: unknown[]) => void
+  ) => {
+    if (options && options.all) {
+      cb(null, [{ address: ip, family }]);
+    } else {
+      cb(null, ip, family);
+    }
+  };
+  return new Agent({
+    connect: { lookup: lookupFn } as Record<string, unknown>,
+  } as ConstructorParameters<typeof Agent>[0]);
 }

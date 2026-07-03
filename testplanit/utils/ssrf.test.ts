@@ -10,11 +10,22 @@ vi.mock("node:dns/promises", () => ({
   lookup: mockLookup,
 }));
 
-vi.mock("~/lib/utils/ssrf", () => ({
-  getAllowedPrivateHosts: mockGetAllowedPrivateHosts,
-}));
+// Keep the real isPrivateIp (numeric BlockList classifier) so the guard is
+// exercised end-to-end; only getAllowedPrivateHosts is stubbed per-test.
+vi.mock("~/lib/utils/ssrf", async (importActual) => {
+  const actual = await importActual<typeof import("~/lib/utils/ssrf")>();
+  return {
+    ...actual,
+    getAllowedPrivateHosts: mockGetAllowedPrivateHosts,
+  };
+});
 
-import { assertSsrfSafeResolved, isSsrfSafe } from "./ssrf";
+import { Agent } from "undici";
+import {
+  assertSsrfSafeResolved,
+  createPinnedDispatcher,
+  isSsrfSafe,
+} from "./ssrf";
 
 describe("isSsrfSafe", () => {
   describe("blocks localhost", () => {
@@ -85,6 +96,32 @@ describe("isSsrfSafe", () => {
 
     it("blocks fe80:: (link-local)", () => {
       expect(isSsrfSafe("https://[fe80::1]/api")).toBe(false);
+    });
+  });
+
+  describe("blocks IPv4-mapped IPv6 literals (GHSA-x7jm-4fpq-5mhm)", () => {
+    // new URL() canonicalizes "[::ffff:127.0.0.1]" to "[::ffff:7f00:1]"; the old
+    // string-prefix guard matched neither form and wrongly deemed it public.
+    it("blocks mapped loopback (::ffff:127.0.0.1)", () => {
+      expect(isSsrfSafe("http://[::ffff:127.0.0.1]:9099")).toBe(false);
+    });
+
+    it("blocks mapped loopback in compressed hex form (::ffff:7f00:1)", () => {
+      expect(isSsrfSafe("http://[::ffff:7f00:1]:9099")).toBe(false);
+    });
+
+    it("blocks mapped cloud metadata (::ffff:169.254.169.254)", () => {
+      expect(
+        isSsrfSafe("http://[::ffff:169.254.169.254]/latest/meta-data")
+      ).toBe(false);
+    });
+
+    it("blocks mapped RFC1918 (::ffff:10.0.0.1)", () => {
+      expect(isSsrfSafe("http://[::ffff:10.0.0.1]")).toBe(false);
+    });
+
+    it("still allows a genuine public IPv6 literal", () => {
+      expect(isSsrfSafe("https://[2606:4700::1]/")).toBe(true);
     });
   });
 
@@ -228,6 +265,39 @@ describe("assertSsrfSafeResolved", () => {
     });
   });
 
+  describe("returns the IP to pin the connection to", () => {
+    it("returns the resolved address for a hostname (for pinning)", async () => {
+      mockLookup.mockResolvedValueOnce({ address: "140.82.121.4", family: 4 });
+
+      await expect(
+        assertSsrfSafeResolved("https://github.com/api")
+      ).resolves.toBe("140.82.121.4");
+    });
+
+    it("returns null for a raw IPv4 literal (nothing to pin)", async () => {
+      await expect(
+        assertSsrfSafeResolved("https://140.82.121.4/api")
+      ).resolves.toBeNull();
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+
+    it("returns null for a public IPv6 literal", async () => {
+      await expect(
+        assertSsrfSafeResolved("https://[2606:4700::1]/api")
+      ).resolves.toBeNull();
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+
+    it("returns null for an allowlisted host (operator opt-in)", async () => {
+      mockGetAllowedPrivateHosts.mockReturnValueOnce(new Set(["gitea.local"]));
+
+      await expect(
+        assertSsrfSafeResolved("http://gitea.local:3000/api")
+      ).resolves.toBeNull();
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+  });
+
   describe("skips DNS lookup for raw IPs", () => {
     it("skips lookup for IPv4 addresses", async () => {
       await assertSsrfSafeResolved("https://140.82.121.4/api");
@@ -238,6 +308,32 @@ describe("assertSsrfSafeResolved", () => {
     it("skips lookup for IPv6 addresses", async () => {
       await assertSsrfSafeResolved("https://[2606:4700::1]/api");
 
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("blocks IPv4-mapped IPv6 literals without DNS (GHSA-x7jm-4fpq-5mhm)", () => {
+    // Previously any host containing ":" short-circuited to return, so mapped
+    // literals bypassed this re-check entirely. They must now be validated
+    // numerically — no DNS lookup, but a hard block.
+    it("throws for mapped loopback and does not call lookup", async () => {
+      await expect(
+        assertSsrfSafeResolved("http://[::ffff:127.0.0.1]:9099")
+      ).rejects.toThrow("private or internal address");
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+
+    it("throws for mapped cloud metadata", async () => {
+      await expect(
+        assertSsrfSafeResolved("http://[::ffff:169.254.169.254]/")
+      ).rejects.toThrow("private or internal address");
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+
+    it("allows a public IPv6 literal without DNS", async () => {
+      await expect(
+        assertSsrfSafeResolved("https://[2606:4700::1]/api")
+      ).resolves.not.toThrow();
       expect(mockLookup).not.toHaveBeenCalled();
     });
   });
@@ -281,5 +377,20 @@ describe("assertSsrfSafeResolved", () => {
 
       expect(mockLookup).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("createPinnedDispatcher", () => {
+  it("returns an undici dispatcher that closes cleanly", async () => {
+    const dispatcher = createPinnedDispatcher("140.82.121.4");
+    expect(dispatcher).toBeInstanceOf(Agent);
+    // Fire-and-forget close must resolve (callers do not await it).
+    await expect(dispatcher.close()).resolves.not.toThrow();
+  });
+
+  it("accepts IPv6 addresses without throwing", async () => {
+    const dispatcher = createPinnedDispatcher("2606:4700::1");
+    expect(dispatcher).toBeInstanceOf(Agent);
+    await dispatcher.close();
   });
 });

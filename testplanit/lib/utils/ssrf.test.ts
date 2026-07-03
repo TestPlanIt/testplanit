@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { EventEmitter } from "node:events";
 import {
   ssrfSafeFetch,
+  isPrivateIp,
   isPrivateOrInternalIp,
   getAllowedPrivateHosts,
   SsrfError,
@@ -191,6 +192,52 @@ describe("isPrivateOrInternalIp", () => {
 
   it("returns true for fd00::1 (IPv6 ULA)", () => {
     expect(isPrivateOrInternalIp("fd00::1")).toBe(true);
+  });
+
+  // IPv4-mapped IPv6 literals — the class of address that bypassed the old
+  // string-prefix guard (GHSA-x7jm-4fpq-5mhm). BlockList unmaps the embedded IPv4.
+  it("returns true for ::ffff:127.0.0.1 (mapped loopback)", () => {
+    expect(isPrivateOrInternalIp("::ffff:127.0.0.1")).toBe(true);
+  });
+
+  it("returns true for ::ffff:7f00:1 (mapped loopback, hex form)", () => {
+    expect(isPrivateOrInternalIp("::ffff:7f00:1")).toBe(true);
+  });
+
+  it("returns true for ::ffff:169.254.169.254 (mapped cloud metadata)", () => {
+    expect(isPrivateOrInternalIp("::ffff:169.254.169.254")).toBe(true);
+  });
+
+  it("returns true for 100.64.0.1 (CGNAT, RFC 6598)", () => {
+    expect(isPrivateOrInternalIp("100.64.0.1")).toBe(true);
+  });
+
+  it("returns true for metadata.google.internal (internal DNS name)", () => {
+    expect(isPrivateOrInternalIp("metadata.google.internal")).toBe(true);
+  });
+});
+
+describe("isPrivateIp", () => {
+  it("blocks IPv4-mapped IPv6 private literals", () => {
+    expect(isPrivateIp("::ffff:127.0.0.1")).toBe(true);
+    expect(isPrivateIp("::ffff:7f00:1")).toBe(true);
+    expect(isPrivateIp("::ffff:169.254.169.254")).toBe(true);
+    expect(isPrivateIp("::ffff:10.0.0.1")).toBe(true);
+  });
+
+  it("tolerates bracketed IPv6 literals", () => {
+    expect(isPrivateIp("[::1]")).toBe(true);
+  });
+
+  it("allows genuine public addresses", () => {
+    expect(isPrivateIp("8.8.8.8")).toBe(false);
+    expect(isPrivateIp("2606:4700::1")).toBe(false);
+    expect(isPrivateIp("::ffff:8.8.8.8")).toBe(false);
+  });
+
+  it("returns false for non-IP strings (hostnames)", () => {
+    expect(isPrivateIp("example.com")).toBe(false);
+    expect(isPrivateIp("")).toBe(false);
   });
 });
 

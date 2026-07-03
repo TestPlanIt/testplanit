@@ -13,6 +13,7 @@
 import * as dns from "node:dns/promises";
 import * as https from "node:https";
 import * as http from "node:http";
+import { BlockList, isIP } from "node:net";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -66,60 +67,53 @@ export function getAllowedPrivateHosts(): Set<string> {
 // ─── IP Validation ────────────────────────────────────────────────────────────
 
 /**
- * Returns true if the given IP address is in a private, loopback, link-local,
- * or cloud-metadata range that should never be reached from the public internet.
- *
- * Accepts both IPv4 and IPv6 addresses (as strings). Does NOT accept hostnames —
- * always resolve DNS first and pass the resolved IP address.
+ * Numeric block list of every range that must never be reachable from the
+ * public internet. Using node:net BlockList (rather than string/regex matching)
+ * means IPv4-mapped IPv6 literals (e.g. ::ffff:127.0.0.1, which the WHATWG URL
+ * parser canonicalizes to ::ffff:7f00:1) are unmapped to their embedded IPv4 and
+ * classified correctly — the gap that string-prefix guards miss (GHSA-x7jm-4fpq-5mhm).
+ */
+const PRIVATE_BLOCK = new BlockList();
+PRIVATE_BLOCK.addSubnet("0.0.0.0", 8); // "this" network / unspecified
+PRIVATE_BLOCK.addSubnet("10.0.0.0", 8); // RFC 1918
+PRIVATE_BLOCK.addSubnet("127.0.0.0", 8); // loopback
+PRIVATE_BLOCK.addSubnet("169.254.0.0", 16); // link-local + cloud metadata (169.254.169.254)
+PRIVATE_BLOCK.addSubnet("172.16.0.0", 12); // RFC 1918
+PRIVATE_BLOCK.addSubnet("192.168.0.0", 16); // RFC 1918
+PRIVATE_BLOCK.addSubnet("100.64.0.0", 10); // RFC 6598 CGNAT
+PRIVATE_BLOCK.addAddress("::1", "ipv6"); // IPv6 loopback
+PRIVATE_BLOCK.addAddress("::", "ipv6"); // IPv6 unspecified
+PRIVATE_BLOCK.addSubnet("fc00::", 7, "ipv6"); // IPv6 unique local (fc00::/7 covers fc/fd)
+PRIVATE_BLOCK.addSubnet("fe80::", 10, "ipv6"); // IPv6 link-local
+
+/**
+ * Returns true if the given IP *literal* is in a private, loopback, link-local,
+ * CGNAT, or cloud-metadata range. Handles IPv4, IPv6, and IPv4-mapped IPv6
+ * literals (::ffff:a.b.c.d). Returns false for anything that is not a valid IP
+ * literal (e.g. a hostname) — resolve DNS first and pass the resolved address.
+ */
+export function isPrivateIp(ip: string): boolean {
+  // Tolerate bracketed IPv6 literals ("[::1]") that some callers pass through.
+  const stripped = ip.replace(/^\[|\]$/g, "");
+  const family = isIP(stripped);
+  if (family === 0) return false;
+  // IPv4-mapped IPv6: BlockList unmaps the embedded IPv4 when checked as "ipv4".
+  if (family === 6 && PRIVATE_BLOCK.check(stripped, "ipv4")) return true;
+  return PRIVATE_BLOCK.check(stripped, family === 4 ? "ipv4" : "ipv6");
+}
+
+/**
+ * Returns true if the given address is in a private/internal IP range OR is a
+ * known internal DNS name (cloud metadata). Accepts IPv4/IPv6/IPv4-mapped IPv6
+ * literals. The name checks are defensive — callers should resolve DNS first and
+ * pass the resolved IP address.
  */
 export function isPrivateOrInternalIp(ip: string): boolean {
-  const lower = ip.toLowerCase();
-
-  // IPv4 exact matches
-  if (lower === "127.0.0.1" || lower === "0.0.0.0") {
-    return true;
-  }
-
-  // IPv6 loopback and link-local
-  if (lower === "::1" || lower === "[::1]") {
-    return true;
-  }
-
-  // IPv6 link-local (fe80::/10)
-  if (lower.startsWith("fe80:")) {
-    return true;
-  }
-
-  // IPv6 Unique Local Addresses (fc00::/7 covers both fc00:: and fd00::)
-  if (lower.startsWith("fc") || lower.startsWith("fd")) {
-    return true;
-  }
+  if (isPrivateIp(ip)) return true;
 
   // Cloud metadata and internal DNS names
-  if (
-    lower === "169.254.169.254" ||
-    lower === "metadata.google.internal" ||
-    lower.endsWith(".internal")
-  ) {
-    return true;
-  }
-
-  // Private IPv4 ranges (RFC 1918 + loopback + link-local)
-  const privatePatterns = [
-    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,
-    /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/,
-    /^192\.168\.\d{1,3}\.\d{1,3}$/,
-    /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,
-    /^169\.254\.\d{1,3}\.\d{1,3}$/,
-  ];
-
-  for (const pattern of privatePatterns) {
-    if (pattern.test(lower)) {
-      return true;
-    }
-  }
-
-  return false;
+  const lower = ip.toLowerCase();
+  return lower === "metadata.google.internal" || lower.endsWith(".internal");
 }
 
 // ─── SSRF-Safe Fetch ─────────────────────────────────────────────────────────
