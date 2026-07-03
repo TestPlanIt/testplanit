@@ -1,0 +1,17 @@
+-- Index the issue-list page's default ordering.
+--
+-- The issues list orders non-deleted issues by name while filtering to those
+-- linked to at least one non-deleted case/session/run/result (a 6-branch
+-- OR-EXISTS). With no index on `name`, Postgres hashed the entire
+-- RepositoryCases (100k+) and TestRuns (67k+) tables, seq-scanned every Issue,
+-- and full-sorted the result — the same ~510ms cost on EVERY page of infinite
+-- scroll, regardless of offset (verified via EXPLAIN ANALYZE on production
+-- data). This showed up as a "loading forever" skeleton at the bottom of the
+-- list, especially under a slower dev server.
+--
+-- This composite index lets the planner walk issues in (isDeleted, name, id)
+-- order and evaluate the linked-entity OR-EXISTS as index-driven correlated
+-- subqueries per row, short-circuiting once a page's worth of matches is found
+-- (~510ms -> ~70ms). Leading with `isDeleted` keeps it an index-only scan for
+-- the always-present `isDeleted = false` filter; `id` is the sort tiebreaker.
+CREATE INDEX IF NOT EXISTS "Issue_isDeleted_name_id_idx" ON "Issue"("isDeleted", "name", "id");

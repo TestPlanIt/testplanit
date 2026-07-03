@@ -3385,6 +3385,12 @@ model Issue {
     @@index([createdById])
     @@index([projectId])
     @@index([integrationId])
+    // Serves the issue-list page: ordering by name over non-deleted issues.
+    // Lets Postgres walk issues in name order and short-circuit the linked-
+    // entity OR-EXISTS filter per row (O(pageSize)) instead of hashing the
+    // whole RepositoryCases/TestRuns tables and full-sorting every page
+    // (~510ms -> ~70ms; verified via EXPLAIN on production data).
+    @@index([isDeleted, name, id])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
     @@allow('all', auth().access == 'ADMIN')

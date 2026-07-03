@@ -72,184 +72,107 @@ export async function POST(request: Request) {
           ],
         };
 
-    // For each issue, fetch all associated projects from different sources
-    const projectsData = await Promise.all(
-      issueIds.map(async (issueId) => {
-        // Fetch all distinct project IDs from each relation type
-        const [
-          caseProjectIds,
-          sessionProjectIds,
-          sessionResultProjectIds,
-          runProjectIds,
-          runResultProjectIds,
-          stepResultProjectIds,
-        ] = await Promise.all([
-          // From repository cases
-          baseDb.repositoryCases.findMany({
-            where: {
-              isDeleted: false,
-              caseIssues: { some: { issue: { id: issueId } } },
-            },
-            select: { projectId: true },
-            distinct: ["projectId"],
-          }),
-          // From sessions
-          baseDb.sessions.findMany({
-            where: {
-              isDeleted: false,
-              issues: { some: { id: issueId } },
-            },
-            select: { projectId: true },
-            distinct: ["projectId"],
-          }),
-          // From session results
-          baseDb.sessionResults.findMany({
-            where: {
-              issues: {
-                some: {
-                  id: issueId,
-                },
-              },
-              session: { isDeleted: false },
-            },
-            select: {
-              sessionId: true,
-            },
-          }),
-          // From test runs
-          baseDb.testRuns.findMany({
-            where: {
-              isDeleted: false,
-              issues: { some: { id: issueId } },
-            },
-            select: { projectId: true },
-            distinct: ["projectId"],
-          }),
-          // From test run results
-          baseDb.testRunResults.findMany({
-            where: {
-              issues: {
-                some: {
-                  id: issueId,
-                },
-              },
-              testRun: { isDeleted: false },
-            },
-            select: {
-              testRunId: true,
-            },
-          }),
-          // From test run step results
-          baseDb.testRunStepResults.findMany({
-            where: {
-              issues: {
-                some: {
-                  id: issueId,
-                },
-              },
-              testRunResult: {
-                testRun: { isDeleted: false },
-              },
-            },
-            select: {
-              testRunResultId: true,
-            },
-          }),
-        ]);
-
-        // Fetch project IDs from session IDs and test run IDs
-        const sessionIdsFromResults = sessionResultProjectIds.map(
-          (sr) => sr.sessionId
-        );
-        const testRunIdsFromResults = runResultProjectIds.map(
-          (rr) => rr.testRunId
-        );
-        const testRunResultIdsFromStepResults = stepResultProjectIds.map(
-          (srr) => srr.testRunResultId
-        );
-
-        // Fetch sessions to get their project IDs
-        const sessionsFromResults =
-          sessionIdsFromResults.length > 0
-            ? await baseDb.sessions.findMany({
-                where: { id: { in: sessionIdsFromResults } },
-                select: { projectId: true },
-              })
-            : [];
-
-        // Fetch test runs to get their project IDs
-        const testRunsFromResults =
-          testRunIdsFromResults.length > 0
-            ? await baseDb.testRuns.findMany({
-                where: { id: { in: testRunIdsFromResults } },
-                select: { projectId: true },
-              })
-            : [];
-
-        // Fetch test run results to get test run IDs, then get their project IDs
-        const testRunsFromStepResults =
-          testRunResultIdsFromStepResults.length > 0
-            ? await baseDb.testRunResults
-                .findMany({
-                  where: { id: { in: testRunResultIdsFromStepResults } },
-                  select: { testRunId: true },
-                })
-                .then(async (results) => {
-                  const testRunIds = results.map((r) => r.testRunId);
-                  return testRunIds.length > 0
-                    ? await baseDb.testRuns.findMany({
-                        where: { id: { in: testRunIds } },
-                        select: { projectId: true },
-                      })
-                    : [];
-                })
-            : [];
-
-        // Combine and deduplicate project IDs
-        const uniqueProjectIds = [
-          ...new Set([
-            ...caseProjectIds.map((c) => c.projectId),
-            ...sessionProjectIds.map((s) => s.projectId),
-            ...sessionsFromResults.map((s) => s.projectId),
-            ...runProjectIds.map((r) => r.projectId),
-            ...testRunsFromResults.map((r) => r.projectId),
-            ...testRunsFromStepResults.map((r) => r.projectId),
-          ]),
-        ];
-
-        // Fetch actual project data with access control
-        if (uniqueProjectIds.length === 0) {
-          return { issueId, projects: [] };
-        }
-
-        const projects = await baseDb.projects.findMany({
-          where: {
-            id: { in: uniqueProjectIds },
-            isDeleted: false,
-            ...projectAccessWhere,
-          },
+    // Pull every issue's associated project IDs in ONE issue-driven query.
+    // Driving from the issue side (a small set of ids) makes each relation load
+    // compile to a `WHERE "A" IN (issueIds)` join lookup, so the whole page
+    // costs ~7 queries total regardless of page size. The previous shape ran
+    // ~10 correlated queries PER issue (≈500 for a 50-row page) — same result,
+    // orders of magnitude more round-trips. Project IDs are collected in memory
+    // and resolved to project rows (with access control) in a single follow-up.
+    const issues = await baseDb.issue.findMany({
+      where: { id: { in: issueIds } },
+      select: {
+        id: true,
+        caseIssues: {
+          where: { case: { isDeleted: false } },
+          select: { case: { select: { projectId: true } } },
+        },
+        sessions: {
+          where: { isDeleted: false },
+          select: { projectId: true },
+        },
+        sessionResults: {
+          where: { session: { isDeleted: false } },
+          select: { session: { select: { projectId: true } } },
+        },
+        testRuns: {
+          where: { isDeleted: false },
+          select: { projectId: true },
+        },
+        testRunResults: {
+          where: { testRun: { isDeleted: false } },
+          select: { testRun: { select: { projectId: true } } },
+        },
+        testRunStepResults: {
+          where: { testRunResult: { testRun: { isDeleted: false } } },
           select: {
-            id: true,
-            name: true,
-            iconUrl: true,
+            testRunResult: {
+              select: { testRun: { select: { projectId: true } } },
+            },
           },
-        });
-
-        return { issueId, projects };
-      })
-    );
-
-    // Convert to map for easy lookup
-    const projectsMap = projectsData.reduce(
-      (acc, item) => {
-        acc[item.issueId] = item.projects;
-        return acc;
+        },
       },
-      {} as Record<
-        number,
-        Array<{ id: number; name: string; iconUrl: string | null }>
-      >
-    );
+    });
+
+    // Per-issue set of referenced project IDs, plus the union across all issues
+    // (so the access-controlled project fetch below runs exactly once).
+    const projectIdsByIssue = new Map<number, Set<number>>();
+    const allProjectIds = new Set<number>();
+
+    for (const issue of issues) {
+      const ids = new Set<number>();
+      const add = (projectId: number | null | undefined) => {
+        if (typeof projectId === "number") {
+          ids.add(projectId);
+          allProjectIds.add(projectId);
+        }
+      };
+
+      for (const ci of issue.caseIssues) add(ci.case?.projectId);
+      for (const s of issue.sessions) add(s.projectId);
+      for (const sr of issue.sessionResults) add(sr.session?.projectId);
+      for (const tr of issue.testRuns) add(tr.projectId);
+      for (const trr of issue.testRunResults) add(trr.testRun?.projectId);
+      for (const tsr of issue.testRunStepResults) {
+        add(tsr.testRunResult?.testRun?.projectId);
+      }
+
+      projectIdsByIssue.set(issue.id, ids);
+    }
+
+    // One access-controlled fetch for every referenced project. A project that
+    // the caller can't access simply won't appear here, so it's dropped from
+    // each issue's list below — matching the previous per-issue behavior.
+    const projects =
+      allProjectIds.size > 0
+        ? await baseDb.projects.findMany({
+            where: {
+              id: { in: Array.from(allProjectIds) },
+              isDeleted: false,
+              ...projectAccessWhere,
+            },
+            select: { id: true, name: true, iconUrl: true },
+          })
+        : [];
+
+    const projectById = new Map(projects.map((p) => [p.id, p]));
+
+    const projectsMap: Record<
+      number,
+      Array<{ id: number; name: string; iconUrl: string | null }>
+    > = {};
+
+    for (const id of issueIds) {
+      const ids = projectIdsByIssue.get(id);
+      projectsMap[id] = ids
+        ? Array.from(ids)
+            .map((pid) => projectById.get(pid))
+            .filter(
+              (p): p is { id: number; name: string; iconUrl: string | null } =>
+                p != null
+            )
+        : [];
+    }
 
     return NextResponse.json({ projects: projectsMap });
   } catch (error) {

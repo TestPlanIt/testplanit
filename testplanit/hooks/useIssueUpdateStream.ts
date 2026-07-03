@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-import { subscribeToProjectIssueUpdates } from "./issueUpdateStreamManager";
+import { subscribeToIssueUpdates } from "./issueUpdateStreamManager";
 
 /**
  * Subscribe an issue display component to live updates from the inbound
@@ -13,17 +13,17 @@ import { subscribeToProjectIssueUpdates } from "./issueUpdateStreamManager";
  * event lands on the relevant project's SSE channel.
  *
  * Connection management is handled by the singleton
- * `issueUpdateStreamManager`: every component asking for the same
- * projectId shares ONE EventSource (refcounted), and the connection
- * auto-closes when the last subscriber unmounts. So putting this hook
- * in `IssuesDisplay` (the per-issue badge) is correct — a page with
- * 50 issue badges all in project 7 still opens just one stream.
+ * `issueUpdateStreamManager`, which keeps ONE multiplexed EventSource
+ * subscribed to the union of every project any mounted subscriber is
+ * watching. So a page with 50 badges in project 7 opens one stream —
+ * and, crucially, a cross-project list (global `/issues`,
+ * `/admin/issues`) spanning many projects ALSO opens just one stream,
+ * instead of one per project (which stormed past the server's per-user
+ * connection cap).
  *
  * `projectIds` accepts an array because some Issue rows surface in
- * multi-project contexts (`IssuesDisplay.projectIds: number[]`). The
- * hook subscribes to every distinct project id in the array. For the
- * common single-project case, callers can pass `issue.projectId` and
- * the array machinery degenerates to one subscription.
+ * multi-project contexts (`IssuesDisplay.projectIds: number[]`). All of
+ * the caller's ids fold into the shared connection's project union.
  *
  * Auth + read-policy enforcement happens at refetch time via
  * `useFindManyIssue` / `useFindUniqueIssue` going through
@@ -76,13 +76,7 @@ export function useIssueUpdateStream(
       });
     };
 
-    const unsubs = depKey
-      .split(",")
-      .map((s) => Number(s))
-      .map((id) => subscribeToProjectIssueUpdates(id, onUpdate));
-
-    return () => {
-      unsubs.forEach((u) => u());
-    };
+    const ids = depKey.split(",").map((s) => Number(s));
+    return subscribeToIssueUpdates(ids, onUpdate);
   }, [depKey, queryClient]);
 }
