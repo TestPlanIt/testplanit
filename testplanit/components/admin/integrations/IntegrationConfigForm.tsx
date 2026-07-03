@@ -406,7 +406,6 @@ export function IntegrationConfigForm({
       )}
       {fields.map((field) => {
         const value = getFieldValue(field);
-        const isEncrypted = false;
 
         return (
           <FormItem key={field.name}>

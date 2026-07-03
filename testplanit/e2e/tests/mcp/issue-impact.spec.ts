@@ -157,7 +157,9 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
             // `RepositoryCases.issues` does not exist in the v3 schema; the
             // issue link is the explicit `caseIssues` join
             // (RepositoryCaseIssue -> issue).
-            caseIssues: { some: { issue: { id: ctx.issueId, isDeleted: false } } },
+            caseIssues: {
+              some: { issue: { id: ctx.issueId, isDeleted: false } },
+            },
           },
           include: { project: { select: { id: true, name: true } } },
           orderBy: [{ id: "asc" }],

@@ -341,8 +341,8 @@ describe("IntegrationConfigForm", () => {
     });
   });
 
-  describe("isEdit=true - encrypted badge display", () => {
-    it("shows encrypted badge on credential fields when value is empty in edit mode", () => {
+  describe("isEdit=true - credential fields are editable", () => {
+    it("renders empty credential fields as editable inputs with a leave-blank hint in edit mode", () => {
       render(
         <IntegrationConfigForm
           {...defaultProps}
@@ -353,17 +353,20 @@ describe("IntegrationConfigForm", () => {
         />
       );
 
-      // When isEdit=true and credential field is empty, shows encrypted badge
-      const badges = screen.getAllByTestId("badge");
-      expect(badges.length).toBeGreaterThan(0);
-      // Badge should show "encrypted" key
-      const encryptedBadge = badges.find((b) =>
-        b.textContent?.match(/encrypted/i)
+      // The encrypted-badge affordance was removed; credential fields are now
+      // always shown as editable inputs in edit mode.
+      expect(screen.queryAllByTestId("badge")).toHaveLength(0);
+
+      // Empty credential fields (email + apiToken) hint that leaving them blank
+      // keeps the stored (encrypted) value, and remain editable.
+      const keepHints = screen.getAllByPlaceholderText("leaveBlankToKeep");
+      expect(keepHints).toHaveLength(2);
+      keepHints.forEach((input) =>
+        expect((input as HTMLInputElement).disabled).toBe(false)
       );
-      expect(encryptedBadge).toBeTruthy();
     });
 
-    it("does not show encrypted badge when credential has a value", () => {
+    it("shows stored credential values as editable inputs without the leave-blank hint", () => {
       render(
         <IntegrationConfigForm
           {...defaultProps}
@@ -374,13 +377,13 @@ describe("IntegrationConfigForm", () => {
         />
       );
 
-      // When credential has a value, no encrypted badge for that field
-      const badges = screen.queryAllByTestId("badge");
-      // May have fewer badges since some credentials are filled in
-      expect(
-        badges.every((b) => b.textContent !== "encrypted") ||
-          badges.length === 0
-      ).toBe(true);
+      expect(screen.queryAllByTestId("badge")).toHaveLength(0);
+      // Filled credentials display their value and drop the leave-blank hint.
+      expect(screen.queryAllByPlaceholderText("leaveBlankToKeep")).toHaveLength(
+        0
+      );
+      expect(screen.getByDisplayValue("user@example.com")).toBeTruthy();
+      expect(screen.getByDisplayValue("mytoken123")).toBeTruthy();
     });
   });
 

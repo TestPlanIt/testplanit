@@ -158,7 +158,6 @@ async function getUserName(
   return name;
 }
 
-
 /**
  * Import automation cases as repository cases with automated=true.
  * Processes data in smaller transactions to provide better progress feedback.

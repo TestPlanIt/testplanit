@@ -8,13 +8,27 @@ import {
 describe("classNameNormalizer", () => {
   describe("isEnvironmentSegment", () => {
     it("recognizes browsers (case-insensitive)", () => {
-      for (const seg of ["chrome", "Firefox", "msedge", "microsoftedge", "safari"]) {
+      for (const seg of [
+        "chrome",
+        "Firefox",
+        "msedge",
+        "microsoftedge",
+        "safari",
+      ]) {
         expect(isEnvironmentSegment(seg)).toBe(true);
       }
     });
 
     it("recognizes operating systems including versioned forms", () => {
-      for (const seg of ["windows", "macos", "windows10", "win11", "windowsxp", "android13", "ios17"]) {
+      for (const seg of [
+        "windows",
+        "macos",
+        "windows10",
+        "win11",
+        "windowsxp",
+        "android13",
+        "ios17",
+      ]) {
         expect(isEnvironmentSegment(seg)).toBe(true);
       }
     });
@@ -32,7 +46,14 @@ describe("classNameNormalizer", () => {
     });
 
     it("does not treat real class segments as environment", () => {
-      for (const seg of ["com", "Manage_Groups", "SoC_Enabled_Company", "Videos", "AddCommentTest", "Call_Explorer"]) {
+      for (const seg of [
+        "com",
+        "Manage_Groups",
+        "SoC_Enabled_Company",
+        "Videos",
+        "AddCommentTest",
+        "Call_Explorer",
+      ]) {
         expect(isEnvironmentSegment(seg)).toBe(false);
       }
     });
@@ -46,7 +67,9 @@ describe("classNameNormalizer", () => {
     });
 
     it("does not match class segments that merely contain a ref", () => {
-      expect(isIssueReferenceSegment("*_RMAP-374_Descriptive_Messaging_-_Refactored")).toBe(false);
+      expect(
+        isIssueReferenceSegment("*_RMAP-374_Descriptive_Messaging_-_Refactored")
+      ).toBe(false);
       expect(isIssueReferenceSegment("Manage_Groups")).toBe(false);
     });
   });
@@ -80,7 +103,9 @@ describe("classNameNormalizer", () => {
         "17_3.macos.View_User/Group_Log",
       ];
       for (const folder of variants) {
-        expect(normalizeAutomationClassName(folder)).toBe("View_User/Group_Log");
+        expect(normalizeAutomationClassName(folder)).toBe(
+          "View_User/Group_Log"
+        );
       }
     });
 
@@ -103,9 +128,9 @@ describe("classNameNormalizer", () => {
     });
 
     it("strips trailing issue refs that drift over time", () => {
-      expect(normalizeAutomationClassName("chrome.windows.Call_Explorer.ATS-54")).toBe(
-        "Call_Explorer"
-      );
+      expect(
+        normalizeAutomationClassName("chrome.windows.Call_Explorer.ATS-54")
+      ).toBe("Call_Explorer");
       expect(
         normalizeAutomationClassName(
           "chrome.windows.*_RMAP-374_Descriptive_Messaging_-_Refactored.ATS-54"
@@ -123,7 +148,9 @@ describe("classNameNormalizer", () => {
         "ios.00008110-000265383a01401e.Basic_Activities.SSO.ABT-12251.@smoke",
       ];
       for (const folder of variants) {
-        expect(normalizeAutomationClassName(folder)).toBe("Basic_Activities.SSO");
+        expect(normalizeAutomationClassName(folder)).toBe(
+          "Basic_Activities.SSO"
+        );
       }
     });
 
@@ -144,11 +171,13 @@ describe("classNameNormalizer", () => {
 
     it("keeps distinct suite contexts distinct (does not over-merge)", () => {
       // Same test id can live under two suite contexts; these must NOT collapse.
-      expect(normalizeAutomationClassName("chrome.windows.Manage_Groups.ADM-95")).toBe(
-        "Manage_Groups"
-      );
       expect(
-        normalizeAutomationClassName("chrome.windows.SoC_Enabled_Company.ADM-95")
+        normalizeAutomationClassName("chrome.windows.Manage_Groups.ADM-95")
+      ).toBe("Manage_Groups");
+      expect(
+        normalizeAutomationClassName(
+          "chrome.windows.SoC_Enabled_Company.ADM-95"
+        )
       ).toBe("SoC_Enabled_Company");
     });
 
