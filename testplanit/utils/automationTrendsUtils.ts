@@ -86,6 +86,60 @@ function getPeriodDates(
   }
 }
 
+/**
+ * Generate a contiguous list of periods spanning [lo, hi] at the given grouping.
+ * Unlike deriving periods only from dates that have activity, this fills gaps so
+ * the cumulative trend line is continuous.
+ */
+export function generatePeriods(
+  lo: Date,
+  hi: Date,
+  grouping: DateGrouping
+): { start: Date; end: Date }[] {
+  const periods: { start: Date; end: Date }[] = [];
+  if (lo > hi) return periods;
+
+  let cursor = getPeriodDates(lo, grouping).start;
+  const hiTime = hi.getTime();
+  let guard = 0;
+  while (cursor.getTime() <= hiTime && guard < 100000) {
+    const period = getPeriodDates(cursor, grouping);
+    periods.push(period);
+    // Jump into the next period (1ms past the current period's end)
+    cursor = new Date(period.end.getTime() + 1);
+    guard++;
+  }
+  return periods;
+}
+
+/**
+ * Resolve a case's automated state as of a point in time using its version
+ * timeline. `history` must be sorted ascending by timestamp. Returns whether the
+ * case existed yet (created on/before the time) and its automated value then.
+ */
+export function automatedStateAt(
+  history: { at: number; automated: boolean }[] | undefined,
+  atTime: number
+): { existed: boolean; automated: boolean } {
+  if (!history || history.length === 0) {
+    return { existed: false, automated: false };
+  }
+  // Not yet created as of this time
+  if (atTime < history[0].at) {
+    return { existed: false, automated: false };
+  }
+  // Latest version whose snapshot was taken on/before atTime
+  let automated = history[0].automated;
+  for (const point of history) {
+    if (point.at <= atTime) {
+      automated = point.automated;
+    } else {
+      break;
+    }
+  }
+  return { existed: true, automated };
+}
+
 export async function handleAutomationTrendsPOST(
   req: NextRequest,
   isCrossProject: boolean
@@ -135,16 +189,12 @@ export async function handleAutomationTrendsPOST(
       );
     }
 
-    // Build date filter
-    const dateFilter: any = {};
-    if (startDate) {
-      dateFilter.gte = new Date(startDate);
-    }
-    if (endDate) {
-      dateFilter.lte = new Date(endDate);
-    }
-
-    // Build base where clause with standard filters
+    // Build base where clause with standard filters.
+    // NOTE: The date range (startDate/endDate) intentionally does NOT filter the
+    // case population here — it governs the period axis below. Excluding cases by
+    // createdAt would drop cases created before the window that still exist during
+    // it, understating the cumulative counts. All field filters read the CURRENT
+    // RepositoryCases record; only the automation timing comes from versions.
     const baseWhere: any = {
       ...(isCrossProject
         ? projectIds.length > 0
@@ -152,7 +202,6 @@ export async function handleAutomationTrendsPOST(
           : {} // All projects for cross-project
         : { projectId: Number(projectId) }), // Single project
       isDeleted: false,
-      ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
     };
 
     // Add templateIds filter if provided
@@ -278,25 +327,64 @@ export async function handleAutomationTrendsPOST(
       });
     }
 
-    // Get all unique periods based on date grouping
-    const periodKeys = new Set<string>();
-    const periodMap = new Map<string, { start: Date; end: Date }>();
-
-    allCases.forEach((testCase) => {
-      const period = getPeriodDates(
-        new Date(testCase.createdAt),
-        dateGrouping as DateGrouping
-      );
-      const key = `${period.start.toISOString()}_${period.end.toISOString()}`;
-      periodKeys.add(key);
-      if (!periodMap.has(key)) {
-        periodMap.set(key, period);
-      }
+    // Fetch the version history for the matched cases so we can determine each
+    // case's automated state AS OF each period. Manual→automated flips are
+    // captured as version snapshots with a truthful createdAt, which the current
+    // RepositoryCases.automated flag alone cannot tell us.
+    const caseIds = allCases.map((c) => c.id);
+    const versions = await baseDb.repositoryCaseVersions.findMany({
+      where: { repositoryCaseId: { in: caseIds } },
+      select: {
+        repositoryCaseId: true,
+        createdAt: true,
+        automated: true,
+        version: true,
+      },
+      orderBy: [{ repositoryCaseId: "asc" }, { version: "asc" }],
     });
 
-    const sortedPeriods = Array.from(periodKeys)
-      .sort()
-      .map((key) => periodMap.get(key)!);
+    // Build a chronological automated-state timeline per case.
+    const historyByCase = new Map<
+      number,
+      { at: number; automated: boolean }[]
+    >();
+    for (const v of versions) {
+      const timeline = historyByCase.get(v.repositoryCaseId) ?? [];
+      timeline.push({
+        at: new Date(v.createdAt).getTime(),
+        automated: v.automated,
+      });
+      historyByCase.set(v.repositoryCaseId, timeline);
+    }
+    // Sort defensively by timestamp (imports may set explicit createdAt out of
+    // version order), and guarantee every case has at least a creation baseline
+    // in case a version row is somehow missing.
+    for (const timeline of historyByCase.values()) {
+      timeline.sort((a, b) => a.at - b.at);
+    }
+    for (const testCase of allCases) {
+      if (!historyByCase.has(testCase.id)) {
+        historyByCase.set(testCase.id, [
+          {
+            at: new Date(testCase.createdAt).getTime(),
+            automated: testCase.automated,
+          },
+        ]);
+      }
+    }
+
+    // Build the period axis. The date range (if provided) governs the axis;
+    // otherwise span from the earliest case creation to the latest activity.
+    const creationTimes = allCases.map((c) => new Date(c.createdAt).getTime());
+    const versionTimes = versions.map((v) => new Date(v.createdAt).getTime());
+    const lo = startDate
+      ? new Date(startDate)
+      : new Date(Math.min(...creationTimes));
+    const hi = endDate
+      ? new Date(endDate)
+      : new Date(Math.max(...creationTimes, ...versionTimes));
+
+    const sortedPeriods = generatePeriods(lo, hi, dateGrouping as DateGrouping);
 
     // Get unique projects
     const projectsMap = new Map<number, string>();
@@ -323,16 +411,19 @@ export async function handleAutomationTrendsPOST(
         let automatedCount = 0;
         let manualCount = 0;
 
-        // Count cases that existed as of this period end
+        // Count cases by their automated state AS OF this period end, using the
+        // version timeline rather than the current flag. A case created manual
+        // and later flipped counts as manual until the period of its flip.
         allCases.forEach((testCase) => {
           if (testCase.projectId !== project.id) return;
 
-          const createdDate = new Date(testCase.createdAt);
-          const existedInPeriod =
-            createdDate <= period.end && !testCase.isDeleted;
+          const { existed, automated } = automatedStateAt(
+            historyByCase.get(testCase.id),
+            period.end.getTime()
+          );
 
-          if (existedInPeriod) {
-            if (testCase.automated) {
+          if (existed) {
+            if (automated) {
               automatedCount++;
             } else {
               manualCount++;
