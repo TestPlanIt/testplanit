@@ -2,182 +2,206 @@
 
 import { baseDb } from "~/lib/db";
 
-export async function getUserAccessibleProjects(userId: string) {
+export interface AccessibleProject {
+  id: number;
+  name: string;
+  iconUrl: string | null;
+}
+
+/**
+ * Batched effective-project-access resolver.
+ *
+ * Computes the set of projects each of the given users can access, mirroring
+ * the per-user rules in the `Projects` access policy: projects the user
+ * created, explicit user permissions, explicit assignments, group
+ * permissions, and role-based defaults (GLOBAL_ROLE / SPECIFIC_ROLE / DEFAULT),
+ * minus explicit NO_ACCESS denials.
+ *
+ * Runs a constant number of set-based queries regardless of how many users are
+ * requested. This lets a table of users resolve every row's projects in a
+ * single round-trip instead of firing a ~8-query action per rendered row.
+ */
+export async function getUsersAccessibleProjects(
+  userIds: string[]
+): Promise<Record<string, AccessibleProject[]>> {
+  const result: Record<string, AccessibleProject[]> = {};
+  if (userIds.length === 0) {
+    return result;
+  }
+
   try {
-    // Get the user with their role and groups
-    const user = await baseDb.user.findUnique({
-      where: { id: userId },
-      include: {
-        role: true,
-        groups: {
-          include: {
-            group: {
-              include: {
-                projectPermissions: {
-                  where: {
-                    project: {
-                      isDeleted: false,
-                    },
-                  },
-                  include: {
-                    project: true,
+    const [allProjects, users, permissions, assignments] = await Promise.all([
+      // Every live project, with the fields needed to both classify default
+      // access and render the badge. This one fetch replaces the per-user
+      // all-projects / GLOBAL_ROLE / SPECIFIC_ROLE / DEFAULT queries.
+      baseDb.projects.findMany({
+        where: { isDeleted: false },
+        select: {
+          id: true,
+          name: true,
+          iconUrl: true,
+          createdBy: true,
+          defaultAccessType: true,
+          defaultRoleId: true,
+        },
+      }),
+      baseDb.user.findMany({
+        where: { id: { in: userIds } },
+        select: {
+          id: true,
+          access: true,
+          roleId: true,
+          groups: {
+            select: {
+              group: {
+                select: {
+                  projectPermissions: {
+                    select: { projectId: true, accessType: true },
                   },
                 },
               },
             },
           },
         },
-      },
-    });
+      }),
+      baseDb.userProjectPermission.findMany({
+        where: { userId: { in: userIds } },
+        select: { userId: true, projectId: true, accessType: true },
+      }),
+      baseDb.projectAssignment.findMany({
+        where: { userId: { in: userIds } },
+        select: { userId: true, projectId: true },
+      }),
+    ]);
 
-    if (!user) {
-      return [];
+    // Project detail lookup + default-access classification. Deleted projects
+    // are absent from this map, so any stale reference to one (a group
+    // permission or assignment pointing at a since-deleted project) is dropped
+    // when ids are resolved back to details below.
+    const projectById = new Map<number, AccessibleProject>();
+    const createdByUser = new Map<string, number[]>();
+    const globalRoleProjectIds: number[] = [];
+    const specificRoleProjectIds: number[] = [];
+    const defaultProjectIds: number[] = [];
+    for (const p of allProjects) {
+      projectById.set(p.id, { id: p.id, name: p.name, iconUrl: p.iconUrl });
+      if (p.createdBy) {
+        const created = createdByUser.get(p.createdBy) ?? [];
+        created.push(p.id);
+        createdByUser.set(p.createdBy, created);
+      }
+      if (p.defaultAccessType === "GLOBAL_ROLE") {
+        globalRoleProjectIds.push(p.id);
+      } else if (
+        p.defaultAccessType === "SPECIFIC_ROLE" &&
+        p.defaultRoleId !== null
+      ) {
+        specificRoleProjectIds.push(p.id);
+      } else if (p.defaultAccessType === "DEFAULT") {
+        defaultProjectIds.push(p.id);
+      }
     }
+    const allProjectIds = allProjects.map((p) => p.id);
 
-    // If user has NONE system access, they cannot access ANY projects
-    if (user.access === "NONE") {
-      return [];
+    // Bucket the per-user rows so each user is assembled from in-memory lookups.
+    const permsByUser = new Map<string, number[]>();
+    const deniedByUser = new Map<string, Set<number>>();
+    for (const perm of permissions) {
+      if (perm.accessType === "NO_ACCESS") {
+        const denied = deniedByUser.get(perm.userId) ?? new Set<number>();
+        denied.add(perm.projectId);
+        deniedByUser.set(perm.userId, denied);
+      } else {
+        const perms = permsByUser.get(perm.userId) ?? [];
+        perms.push(perm.projectId);
+        permsByUser.set(perm.userId, perms);
+      }
     }
-
-    // If user has ADMIN access, return all projects
-    if (user.access === "ADMIN") {
-      const allProjects = await baseDb.projects.findMany({
-        where: { isDeleted: false },
-        select: { id: true },
-      });
-      return allProjects.map((p) => ({ projectId: p.id }));
+    const assignmentsByUser = new Map<string, number[]>();
+    for (const assignment of assignments) {
+      const assigned = assignmentsByUser.get(assignment.userId) ?? [];
+      assigned.push(assignment.projectId);
+      assignmentsByUser.set(assignment.userId, assigned);
     }
+    const userById = new Map(users.map((u) => [u.id, u]));
 
-    const projectIds = new Set<number>();
-
-    // 1. Projects user created
-    const createdProjects = await baseDb.projects.findMany({
-      where: {
-        createdBy: userId,
-        isDeleted: false,
-      },
-      select: { id: true },
-    });
-    createdProjects.forEach((p) => projectIds.add(p.id));
-
-    // 2. Projects with explicit user permissions (not NO_ACCESS)
-    const userPermissions = await baseDb.userProjectPermission.findMany({
-      where: {
-        userId: userId,
-        accessType: {
-          not: "NO_ACCESS",
-        },
-        project: {
-          isDeleted: false,
-        },
-      },
-      select: { projectId: true },
-    });
-    userPermissions.forEach((p) => projectIds.add(p.projectId));
-
-    // 3. Projects user is explicitly assigned to
-    const assignments = await baseDb.projectAssignment.findMany({
-      where: {
-        userId: userId,
-        project: {
-          isDeleted: false,
-        },
-      },
-      select: { projectId: true },
-    });
-    assignments.forEach((p) => projectIds.add(p.projectId));
-
-    // 4. Projects accessible through groups (if user doesn't have explicit NO_ACCESS)
-    const groupProjectIds = new Set<number>();
-    for (const userGroup of user.groups) {
-      for (const groupPerm of userGroup.group.projectPermissions) {
-        if (
-          groupPerm.accessType !== "NO_ACCESS" &&
-          groupPerm.project &&
-          !groupPerm.project.isDeleted
-        ) {
-          groupProjectIds.add(groupPerm.projectId);
+    const toProjects = (ids: Iterable<number>): AccessibleProject[] => {
+      const out: AccessibleProject[] = [];
+      const seen = new Set<number>();
+      for (const id of ids) {
+        if (seen.has(id)) continue;
+        const detail = projectById.get(id);
+        if (detail) {
+          seen.add(id);
+          out.push(detail);
         }
       }
-    }
+      out.sort((a, b) => a.name.localeCompare(b.name));
+      return out;
+    };
 
-    // Check if user has explicit NO_ACCESS that overrides group permissions
-    const explicitDenials = await baseDb.userProjectPermission.findMany({
-      where: {
-        userId: userId,
-        accessType: "NO_ACCESS",
-      },
-      select: { projectId: true },
-    });
-    const deniedProjectIds = new Set(explicitDenials.map((d) => d.projectId));
+    for (const userId of userIds) {
+      const user = userById.get(userId);
 
-    // Add group projects that aren't explicitly denied
-    groupProjectIds.forEach((id) => {
-      if (!deniedProjectIds.has(id)) {
-        projectIds.add(id);
+      // Unknown user or no system access -> no projects.
+      if (!user || user.access === "NONE") {
+        result[userId] = [];
+        continue;
       }
-    });
 
-    // 5. Projects with GLOBAL_ROLE default (uses user's global role)
-    if (user.roleId) {
-      const globalRoleProjects = await baseDb.projects.findMany({
-        where: {
-          defaultAccessType: "GLOBAL_ROLE",
-          isDeleted: false,
-        },
-        select: { id: true },
-      });
+      // ADMIN sees every project.
+      if (user.access === "ADMIN") {
+        result[userId] = toProjects(allProjectIds);
+        continue;
+      }
 
-      // Only add if not explicitly denied
-      globalRoleProjects.forEach((p) => {
-        if (!deniedProjectIds.has(p.id)) {
-          projectIds.add(p.id);
+      const denied = deniedByUser.get(userId) ?? new Set<number>();
+      const projectIds = new Set<number>();
+
+      // Explicit access sources are added unconditionally.
+      for (const id of createdByUser.get(userId) ?? []) projectIds.add(id);
+      for (const id of permsByUser.get(userId) ?? []) projectIds.add(id);
+      for (const id of assignmentsByUser.get(userId) ?? []) projectIds.add(id);
+
+      // Group permissions, unless the user is explicitly denied.
+      for (const membership of user.groups) {
+        for (const gp of membership.group.projectPermissions) {
+          if (gp.accessType !== "NO_ACCESS" && !denied.has(gp.projectId)) {
+            projectIds.add(gp.projectId);
+          }
         }
-      });
+      }
+
+      // Role-based project defaults, unless the user is explicitly denied.
+      if (user.roleId) {
+        for (const id of globalRoleProjectIds) {
+          if (!denied.has(id)) projectIds.add(id);
+        }
+      }
+      for (const id of specificRoleProjectIds) {
+        if (!denied.has(id)) projectIds.add(id);
+      }
+      for (const id of defaultProjectIds) {
+        if (!denied.has(id)) projectIds.add(id);
+      }
+
+      result[userId] = toProjects(projectIds);
     }
 
-    // 6. Projects with SPECIFIC_ROLE default (uses project's default role)
-    const specificRoleProjects = await baseDb.projects.findMany({
-      where: {
-        defaultAccessType: "SPECIFIC_ROLE",
-        defaultRoleId: {
-          not: null,
-        },
-        isDeleted: false,
-      },
-      select: { id: true },
-    });
-
-    // Only add if not explicitly denied
-    specificRoleProjects.forEach((p) => {
-      if (!deniedProjectIds.has(p.id)) {
-        projectIds.add(p.id);
-      }
-    });
-
-    // 7. Projects with DEFAULT access type (legacy - everyone has access)
-    const defaultProjects = await baseDb.projects.findMany({
-      where: {
-        defaultAccessType: "DEFAULT",
-        isDeleted: false,
-      },
-      select: { id: true },
-    });
-
-    // DEFAULT means everyone has access unless explicitly denied
-    defaultProjects.forEach((p) => {
-      if (!deniedProjectIds.has(p.id)) {
-        projectIds.add(p.id);
-      }
-    });
-
-    // NOTE: Projects with defaultAccessType = 'NO_ACCESS' are NOT added here
-    // They require explicit permissions via user permissions, assignments, or groups
-    // which are already handled above
-
-    return Array.from(projectIds).map((id) => ({ projectId: id }));
+    return result;
   } catch (error) {
-    console.error("Error getting user accessible projects:", error);
-    return [];
+    console.error("Error getting users accessible projects:", error);
+    return result;
   }
+}
+
+/**
+ * Single-user convenience wrapper preserving the historical `{ projectId }[]`
+ * shape relied on by API-route access checks.
+ */
+export async function getUserAccessibleProjects(
+  userId: string
+): Promise<{ projectId: number }[]> {
+  const map = await getUsersAccessibleProjects([userId]);
+  return (map[userId] ?? []).map((p) => ({ projectId: p.id }));
 }

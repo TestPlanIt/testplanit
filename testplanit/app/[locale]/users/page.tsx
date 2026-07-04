@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
+import { useAccessibleProjectsForUsers } from "~/hooks/useAccessibleProjectsForUsers";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
@@ -18,6 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function UserList() {
   return <Users />;
 }
+
+const PAGE_SIZE = 50;
 
 function Users() {
   const { data: session, status } = useSession();
@@ -42,39 +45,82 @@ function Users() {
   const router = useRouter();
   const debouncedSearchString = useDebounce(searchString, 500);
 
-  // Single full-set fetch feeds the virtualized table directly; the table
-  // renders only the visible window, so there's no page seam and no separate
-  // count query (the loaded array length IS the total).
-  const { data, isLoading } = useClientQueries(schema).user.useFindMany(
-    {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" },
-      include: {
-        role: true,
-        groups: true,
-        projects: true,
-      },
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
+  const usersWhere = useMemo(
+    () => ({
+      AND: [
+        {
+          name: {
+            contains: debouncedSearchString,
+            mode: "insensitive" as const,
           },
-          { isActive: true },
-          { isDeleted: false },
-        ],
-      },
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: false,
-    }
+        },
+        { isActive: true },
+        { isDeleted: false },
+      ],
+    }),
+    [debouncedSearchString]
   );
 
-  const users = useMemo(() => (data ?? []) as ExtendedUser[], [data]);
+  // Trailing `id` tiebreaker keeps offset pagination stable when the primary
+  // sort key isn't unique (otherwise pages can duplicate or skip rows).
+  const orderBy = useMemo(
+    () =>
+      sortConfig
+        ? [
+            { [sortConfig.column]: sortConfig.direction },
+            { id: "asc" as const },
+          ]
+        : [{ name: "asc" as const }, { id: "asc" as const }],
+    [sortConfig]
+  );
+
+  const infiniteBaseArgs = useMemo(
+    () => ({ orderBy, where: usersWhere, take: PAGE_SIZE }),
+    [orderBy, usersWhere]
+  );
+
+  const { data: totalCount } = useClientQueries(schema).user.useCount(
+    { where: usersWhere },
+    { enabled: !!session?.user, refetchOnWindowFocus: false }
+  );
+
+  // Fetch-on-scroll: pages of users load as the sentinel scrolls into view, so
+  // an instance with tens of thousands of users never loads the full set.
+  const {
+    data: infinitePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useClientQueries(schema).user.useInfiniteFindMany(infiniteBaseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+    },
+    enabled: !!session?.user,
+    refetchOnWindowFocus: false,
+  });
+
+  const baseRows = useMemo(
+    () => infinitePages?.pages.flat() ?? [],
+    [infinitePages]
+  );
+
+  const resetKey = `${debouncedSearchString}|${sortConfig?.column}|${sortConfig?.direction}`;
+
+  // Resolve each loaded page's effective accessible projects incrementally
+  // (bounded per-page batches), instead of one ~8-query action per rendered row.
+  const userIds = useMemo(() => baseRows.map((u) => u.id), [baseRows]);
+  const projectsByUser = useAccessibleProjectsForUsers(userIds, resetKey);
+
+  const users = useMemo(
+    () =>
+      baseRows.map((u) => ({
+        ...u,
+        accessibleProjects: projectsByUser[u.id],
+      })) as ExtendedUser[],
+    [baseRows, projectsByUser]
+  );
 
   const columns = useUserColumns(tCommon);
 
@@ -125,7 +171,7 @@ function Users() {
                 <p className="text-sm text-muted-foreground shrink-0">
                   {tGlobal("admin.auditLogs.showing", {
                     loaded: users.length.toLocaleString(),
-                    total: users.length.toLocaleString(),
+                    total: (totalCount ?? users.length).toLocaleString(),
                   })}
                 </p>
               )}
@@ -138,9 +184,11 @@ function Users() {
                 sortConfig={sortConfig}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}
-                isLoading={isLoading}
+                isLoading={isLoading || isFetchingNextPage}
+                hasMore={!!hasNextPage}
+                onLoadMore={fetchNextPage}
                 fillViewport
-                resetKey={`${debouncedSearchString}|${sortConfig?.column}|${sortConfig?.direction}`}
+                resetKey={resetKey}
                 testIdPrefix="users-directory-table"
                 rowTestIdPrefix="users-directory-row"
               />

@@ -20,30 +20,22 @@ import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
+import type { AccessibleProject } from "~/app/actions/getUserAccessibleProjects";
 import { LastActiveDisplay } from "~/components/LastActiveDisplay";
 import { SCIM_SYSTEM_USER_EMAIL } from "~/lib/scim/constants";
 export interface ExtendedUser extends User {
   createdBy: {
-    name: string;
     id: string;
-    image: string | null;
-    email: string;
-    emailVerified: Date | null;
-    emailVerifToken: string | null;
-    emailTokenExpires: Date | null;
-    password: string | null;
-    createdAt: Date;
-    updatedAt: Date;
   } | null;
-  role: {
-    name: string;
-  };
   groups: {
     groupId: number;
   }[];
   projects: {
     projectId: number;
   }[];
+  // Effective accessible projects, batched by the page and rendered by the
+  // Projects column. `undefined` while the batch is still loading.
+  accessibleProjects?: AccessibleProject[];
 }
 
 export const useColumns = (
@@ -214,7 +206,7 @@ export const useColumns = (
         size: 100,
         cell: ({ row }) => (
           <div className="text-center">
-            <UserProjectsDisplay userId={row.original.id} />
+            <UserProjectsDisplay projects={row.original.accessibleProjects} />
           </div>
         ),
       },

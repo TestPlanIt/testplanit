@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
+import { useAccessibleProjectsForUsers } from "~/hooks/useAccessibleProjectsForUsers";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
@@ -37,6 +38,8 @@ import { EditUser } from "./EditUser";
 export default function UserListPage() {
   return <UserList />;
 }
+
+const PAGE_SIZE = 50;
 
 function UserList() {
   const t = useTranslations("admin.users");
@@ -138,54 +141,94 @@ function UserList() {
   // Sort by `scimGivenName` always puts nulls last so the SCIM-managed users
   // (the non-null rows) appear at the top regardless of asc/desc direction —
   // matches the "SCIM" column UX of "click to find SCIM users."
-  const orderBy: NonNullable<UserFindManyArgs["orderBy"]> =
-    sortConfig?.column === "scimGivenName"
-      ? {
-          scimGivenName: {
-            sort: sortConfig.direction,
-            nulls: "last",
-          },
-        }
-      : sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" };
-
-  // Single full-set fetch feeds the virtualized table directly; the table
-  // renders only the visible window so there's no page seam and no need for a
-  // separate count query (the loaded array length IS the total).
-  const { data: users, isLoading } = useClientQueries(schema).user.useFindMany(
-    {
-      orderBy,
-      include: {
-        role: true,
-        groups: true,
-        projects: true,
-        createdBy: true,
-      },
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
-          },
-          showInactiveUsers ? {} : { isActive: true },
-          {
-            isDeleted: false,
-          },
-        ],
-      },
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: true,
-    }
+  // A trailing `id` tiebreaker keeps offset pagination stable when the primary
+  // sort key isn't unique (otherwise pages can duplicate or skip rows).
+  const orderBy: NonNullable<UserFindManyArgs["orderBy"]> = useMemo(
+    () =>
+      sortConfig?.column === "scimGivenName"
+        ? [
+            { scimGivenName: { sort: sortConfig.direction, nulls: "last" } },
+            { id: "asc" },
+          ]
+        : sortConfig
+          ? [{ [sortConfig.column]: sortConfig.direction }, { id: "asc" }]
+          : [{ name: "asc" }, { id: "asc" }],
+    [sortConfig]
   );
 
+  const usersWhere = useMemo(
+    () => ({
+      AND: [
+        {
+          name: {
+            contains: debouncedSearchString,
+            mode: "insensitive" as const,
+          },
+        },
+        showInactiveUsers ? {} : { isActive: true },
+        { isDeleted: false },
+      ],
+    }),
+    [debouncedSearchString, showInactiveUsers]
+  );
+
+  // `groups` and `projects` (assignments) prefill the Edit dialog; only
+  // `createdBy.id` is read by the Created By column.
+  const include = useMemo(
+    () => ({
+      groups: true,
+      projects: true,
+      createdBy: { select: { id: true } },
+    }),
+    []
+  );
+
+  const infiniteBaseArgs = useMemo(
+    () => ({ orderBy, include, where: usersWhere, take: PAGE_SIZE }),
+    [orderBy, include, usersWhere]
+  );
+
+  const { data: totalCount } = useClientQueries(schema).user.useCount(
+    { where: usersWhere },
+    { enabled: !!session?.user, refetchOnWindowFocus: true }
+  );
+
+  // Fetch-on-scroll: pages of users load as the sentinel scrolls into view, so
+  // an instance with tens of thousands of users never loads the full set.
+  const {
+    data: infinitePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useClientQueries(schema).user.useInfiniteFindMany(infiniteBaseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+    },
+    enabled: !!session?.user,
+    refetchOnWindowFocus: true,
+  });
+
+  const baseRows = useMemo(
+    () => infinitePages?.pages.flat() ?? [],
+    [infinitePages]
+  );
+
+  const resetKey = `${debouncedSearchString}|${showInactiveUsers}|${sortConfig.column}|${sortConfig.direction}`;
+
+  // Resolve each loaded page's effective accessible projects incrementally
+  // (bounded per-page batches), instead of one ~8-query action per rendered row.
+  const userIds = useMemo(() => baseRows.map((u) => u.id), [baseRows]);
+  const projectsByUser = useAccessibleProjectsForUsers(userIds, resetKey);
+
   const userRows = useMemo(
-    () => (users ?? []) as unknown as ExtendedUser[],
-    [users]
+    () =>
+      baseRows.map((u) => ({
+        ...u,
+        accessibleProjects: projectsByUser[u.id],
+      })) as unknown as ExtendedUser[],
+    [baseRows, projectsByUser]
   );
 
   useEffect(() => {
@@ -300,7 +343,7 @@ function UserList() {
               <p className="text-sm text-muted-foreground shrink-0">
                 {tGlobal("admin.auditLogs.showing", {
                   loaded: userRows.length.toLocaleString(),
-                  total: userRows.length.toLocaleString(),
+                  total: (totalCount ?? userRows.length).toLocaleString(),
                 })}
               </p>
             )}
@@ -315,8 +358,10 @@ function UserList() {
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              isLoading={isLoading}
-              resetKey={`${debouncedSearchString}|${showInactiveUsers}|${sortConfig.column}|${sortConfig.direction}`}
+              isLoading={isLoading || isFetchingNextPage}
+              hasMore={!!hasNextPage}
+              onLoadMore={fetchNextPage}
+              resetKey={resetKey}
               testIdPrefix="admin-users-table"
               rowTestIdPrefix="admin-user-row"
             />

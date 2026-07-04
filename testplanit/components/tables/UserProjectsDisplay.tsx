@@ -1,7 +1,5 @@
 "use client";
 
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
@@ -9,82 +7,69 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Projects } from "~/zenstack/models";
+import { useQuery } from "@tanstack/react-query";
 import { BoxesIcon } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
+import React from "react";
+import {
+  getUsersAccessibleProjects,
+  type AccessibleProject,
+} from "~/app/actions/getUserAccessibleProjects";
 import { Link } from "~/lib/navigation";
 import { ProjectIcon } from "../ProjectIcon";
 
 interface UserProjectsDisplayProps {
-  userId: string;
+  /**
+   * Precomputed accessible projects, batched by the parent. When provided the
+   * component renders directly with no fetching; `undefined` means the parent's
+   * batch is still loading (a skeleton is shown).
+   */
+  projects?: AccessibleProject[];
+  /**
+   * Self-fetch mode for single-row surfaces (e.g. a user profile). Used only
+   * when `projects` is not supplied — resolves this user's accessible projects
+   * in one round-trip.
+   */
+  userId?: string;
   usePopover?: boolean;
 }
 
 export const UserProjectsDisplay: React.FC<UserProjectsDisplayProps> = ({
+  projects: projectsProp,
   userId,
   usePopover = true,
 }) => {
-  const [projectIds, setProjectIds] = useState<number[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const selfFetch = projectsProp === undefined && userId !== undefined;
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const accessible = await getUserAccessibleProjects(userId);
-        setProjectIds(accessible.map((p) => p.projectId));
-      } catch (error) {
-        console.error("Error fetching accessible projects:", error);
-        setProjectIds([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void fetchProjects();
-  }, [userId]);
-
-  const { data: allProjects, isLoading: projectsLoading } = useClientQueries(
-    schema
-  ).projects.useFindMany(
-    {
-      where: {
-        AND: [
-          {
-            id: {
-              in: projectIds.length > 0 ? projectIds : [-1], // Use -1 if no projects to avoid empty array issue
-            },
-          },
-          {
-            isDeleted: false,
-          },
-        ],
-      },
-      orderBy: { name: "asc" },
+  const { data: fetched, isLoading: fetchLoading } = useQuery({
+    queryKey: ["user-accessible-projects", userId],
+    queryFn: async () => {
+      const map = await getUsersAccessibleProjects([userId!]);
+      return map[userId!] ?? [];
     },
-    {
-      enabled: !isLoading && projectIds.length > 0,
-    }
-  );
+    enabled: selfFetch,
+  });
 
-  if (isLoading || projectsLoading) {
+  const projects = selfFetch ? fetched : projectsProp;
+  const isLoading = selfFetch ? fetchLoading : projectsProp === undefined;
+
+  if (isLoading) {
     return <Skeleton className="h-6 w-12" />;
   }
 
-  if (!allProjects || allProjects.length === 0) {
-    return;
+  if (!projects || projects.length === 0) {
+    return null;
   }
 
   const renderContent = () => (
     <div className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)]">
-      {allProjects.map((project: Projects) => (
+      {projects.map((project) => (
         <Link key={project.id} href={`/projects/overview/${project.id}`}>
           <Badge className="border p-1 m-1 text-primary-foreground bg-primary rounded-xl items-center">
             <div className="flex items-center gap-1">
               <div className="max-w-5 max-h-5">
-                <ProjectIcon iconUrl={project?.iconUrl} />
+                <ProjectIcon iconUrl={project.iconUrl} />
               </div>
-              <div>{project?.name}</div>
+              <div>{project.name}</div>
             </div>
           </Badge>
         </Link>
@@ -98,13 +83,12 @@ export const UserProjectsDisplay: React.FC<UserProjectsDisplayProps> = ({
         <PopoverTrigger>
           <Badge>
             <BoxesIcon className="w-4 h-4 mr-1" />
-            {allProjects.length}
+            {projects.length}
           </Badge>
         </PopoverTrigger>
         <PopoverContent>{renderContent()}</PopoverContent>
       </Popover>
     );
-  } else {
-    return <div>{renderContent()}</div>;
   }
+  return <div>{renderContent()}</div>;
 };

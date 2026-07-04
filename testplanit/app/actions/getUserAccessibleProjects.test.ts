@@ -7,7 +7,7 @@ const {
   mockUserProjectPermission,
   mockProjectAssignment,
 } = vi.hoisted(() => ({
-  mockUser: { findUnique: vi.fn() },
+  mockUser: { findMany: vi.fn() },
   mockProjects: { findMany: vi.fn() },
   mockUserProjectPermission: { findMany: vi.fn() },
   mockProjectAssignment: { findMany: vi.fn() },
@@ -24,9 +24,65 @@ vi.mock("~/lib/db", () => ({
 }));
 
 // Import after mocking
-import { getUserAccessibleProjects } from "./getUserAccessibleProjects";
+import {
+  getUserAccessibleProjects,
+  getUsersAccessibleProjects,
+} from "./getUserAccessibleProjects";
 
-describe("getUserAccessibleProjects", () => {
+// A project row as returned by the batched `baseDb.projects.findMany` select.
+type ProjectRow = {
+  id: number;
+  name?: string;
+  iconUrl?: string | null;
+  createdBy?: string | null;
+  defaultAccessType?: string;
+  defaultRoleId?: number | null;
+};
+
+type GroupPerm = { projectId: number; accessType: string };
+type UserRow = {
+  id: string;
+  access: string;
+  roleId: number | null;
+  groups?: { group: { projectPermissions: GroupPerm[] } }[];
+};
+type PermRow = { userId: string; projectId: number; accessType: string };
+type AssignmentRow = { userId: string; projectId: number };
+
+/**
+ * Configure the four `baseDb` mocks in one place. Projects default to
+ * `NO_ACCESS` (no default access) unless the scenario says otherwise.
+ */
+function setup(opts: {
+  projects?: ProjectRow[];
+  users?: UserRow[];
+  permissions?: PermRow[];
+  assignments?: AssignmentRow[];
+}) {
+  const projects = (opts.projects ?? []).map((p) => ({
+    id: p.id,
+    name: p.name ?? `Project ${p.id}`,
+    iconUrl: p.iconUrl ?? null,
+    createdBy: p.createdBy ?? null,
+    defaultAccessType: p.defaultAccessType ?? "NO_ACCESS",
+    defaultRoleId: p.defaultRoleId ?? null,
+  }));
+  mockProjects.findMany.mockResolvedValue(projects);
+  mockUser.findMany.mockResolvedValue(
+    (opts.users ?? []).map((u) => ({ groups: [], ...u }))
+  );
+  mockUserProjectPermission.findMany.mockResolvedValue(opts.permissions ?? []);
+  mockProjectAssignment.findMany.mockResolvedValue(opts.assignments ?? []);
+}
+
+const projectIds = (projects: { id: number }[]) =>
+  projects.map((p) => p.id).sort((a, b) => a - b);
+const wrapperIds = (projects: { projectId: number }[]) =>
+  projects.map((p) => p.projectId).sort((a, b) => a - b);
+
+const USER: UserRow = { id: "user-123", access: "USER", roleId: 5 };
+
+describe("getUserAccessibleProjects (single-user wrapper)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -36,8 +92,8 @@ describe("getUserAccessibleProjects", () => {
   });
 
   describe("user not found", () => {
-    it("should return empty array when user does not exist", async () => {
-      mockUser.findUnique.mockResolvedValue(null);
+    it("returns empty array when the user does not exist", async () => {
+      setup({ projects: [{ id: 1 }], users: [] });
 
       const result = await getUserAccessibleProjects("nonexistent-user");
 
@@ -46,13 +102,10 @@ describe("getUserAccessibleProjects", () => {
   });
 
   describe("NONE access users", () => {
-    it("should return empty array when user has NONE system access", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        id: "user-123",
-        access: "NONE",
-        roleId: 5,
-        role: { id: 5 },
-        groups: [],
+    it("returns empty array when the user has NONE system access", async () => {
+      setup({
+        projects: [{ id: 1, defaultAccessType: "DEFAULT" }],
+        users: [{ id: "user-123", access: "NONE", roleId: 5 }],
       });
 
       const result = await getUserAccessibleProjects("user-123");
@@ -62,38 +115,22 @@ describe("getUserAccessibleProjects", () => {
   });
 
   describe("ADMIN access users", () => {
-    it("should return all projects when user has ADMIN access", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        id: "admin-user",
-        access: "ADMIN",
-        roleId: 1,
-        role: { id: 1 },
-        groups: [],
+    it("returns all projects when the user has ADMIN access", async () => {
+      setup({
+        projects: [{ id: 1 }, { id: 2 }, { id: 3 }],
+        users: [{ id: "admin-user", access: "ADMIN", roleId: 1 }],
       });
-      mockProjects.findMany.mockResolvedValue([
-        { id: 1 },
-        { id: 2 },
-        { id: 3 },
-      ]);
 
       const result = await getUserAccessibleProjects("admin-user");
 
-      expect(result).toEqual([
-        { projectId: 1 },
-        { projectId: 2 },
-        { projectId: 3 },
-      ]);
+      expect(wrapperIds(result)).toEqual([1, 2, 3]);
     });
 
-    it("should return empty array when no projects exist for ADMIN", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        id: "admin-user",
-        access: "ADMIN",
-        roleId: 1,
-        role: { id: 1 },
-        groups: [],
+    it("returns empty array when no projects exist for an ADMIN", async () => {
+      setup({
+        projects: [],
+        users: [{ id: "admin-user", access: "ADMIN", roleId: 1 }],
       });
-      mockProjects.findMany.mockResolvedValue([]);
 
       const result = await getUserAccessibleProjects("admin-user");
 
@@ -102,39 +139,30 @@ describe("getUserAccessibleProjects", () => {
   });
 
   describe("regular user access sources", () => {
-    const mockUserData = {
-      id: "user-123",
-      access: "USER",
-      roleId: 5,
-      role: { id: 5 },
-      groups: [],
-    };
-
-    it("should include projects user created", async () => {
-      mockUser.findUnique.mockResolvedValue(mockUserData);
-      // Projects user created
-      mockProjects.findMany
-        .mockResolvedValueOnce([{ id: 1 }, { id: 2 }]) // Created projects
-        .mockResolvedValueOnce([]) // GLOBAL_ROLE projects
-        .mockResolvedValueOnce([]) // SPECIFIC_ROLE projects
-        .mockResolvedValueOnce([]); // DEFAULT projects
-      mockUserProjectPermission.findMany
-        .mockResolvedValueOnce([]) // User permissions
-        .mockResolvedValueOnce([]); // Explicit denials
-      mockProjectAssignment.findMany.mockResolvedValue([]);
+    it("includes projects the user created", async () => {
+      setup({
+        projects: [
+          { id: 1, createdBy: "user-123" },
+          { id: 2, createdBy: "user-123" },
+          { id: 3, createdBy: "someone-else" },
+        ],
+        users: [USER],
+      });
 
       const result = await getUserAccessibleProjects("user-123");
 
-      expect(result).toEqual([{ projectId: 1 }, { projectId: 2 }]);
+      expect(wrapperIds(result)).toEqual([1, 2]);
     });
 
-    it("should include projects with explicit user permissions (not NO_ACCESS)", async () => {
-      mockUser.findUnique.mockResolvedValue(mockUserData);
-      mockProjects.findMany.mockResolvedValue([]);
-      mockUserProjectPermission.findMany
-        .mockResolvedValueOnce([{ projectId: 10 }, { projectId: 11 }]) // User permissions
-        .mockResolvedValueOnce([]); // Explicit denials
-      mockProjectAssignment.findMany.mockResolvedValue([]);
+    it("includes projects with explicit user permissions (not NO_ACCESS)", async () => {
+      setup({
+        projects: [{ id: 10 }, { id: 11 }],
+        users: [USER],
+        permissions: [
+          { userId: "user-123", projectId: 10, accessType: "SPECIFIC_ROLE" },
+          { userId: "user-123", projectId: 11, accessType: "GLOBAL_ROLE" },
+        ],
+      });
 
       const result = await getUserAccessibleProjects("user-123");
 
@@ -142,14 +170,15 @@ describe("getUserAccessibleProjects", () => {
       expect(result).toContainEqual({ projectId: 11 });
     });
 
-    it("should include projects user is assigned to", async () => {
-      mockUser.findUnique.mockResolvedValue(mockUserData);
-      mockProjects.findMany.mockResolvedValue([]);
-      mockUserProjectPermission.findMany.mockResolvedValue([]);
-      mockProjectAssignment.findMany.mockResolvedValue([
-        { projectId: 20 },
-        { projectId: 21 },
-      ]);
+    it("includes projects the user is assigned to", async () => {
+      setup({
+        projects: [{ id: 20 }, { id: 21 }],
+        users: [USER],
+        assignments: [
+          { userId: "user-123", projectId: 20 },
+          { userId: "user-123", projectId: 21 },
+        ],
+      });
 
       const result = await getUserAccessibleProjects("user-123");
 
@@ -157,31 +186,25 @@ describe("getUserAccessibleProjects", () => {
       expect(result).toContainEqual({ projectId: 21 });
     });
 
-    it("should include projects accessible through groups", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        ...mockUserData,
-        groups: [
+    it("includes projects accessible through groups", async () => {
+      setup({
+        projects: [{ id: 30 }, { id: 31 }],
+        users: [
           {
-            group: {
-              projectPermissions: [
-                {
-                  projectId: 30,
-                  accessType: "SPECIFIC_ROLE",
-                  project: { id: 30, isDeleted: false },
+            ...USER,
+            groups: [
+              {
+                group: {
+                  projectPermissions: [
+                    { projectId: 30, accessType: "SPECIFIC_ROLE" },
+                    { projectId: 31, accessType: "GLOBAL_ROLE" },
+                  ],
                 },
-                {
-                  projectId: 31,
-                  accessType: "GLOBAL_ROLE",
-                  project: { id: 31, isDeleted: false },
-                },
-              ],
-            },
+              },
+            ],
           },
         ],
       });
-      mockProjects.findMany.mockResolvedValue([]);
-      mockUserProjectPermission.findMany.mockResolvedValue([]);
-      mockProjectAssignment.findMany.mockResolvedValue([]);
 
       const result = await getUserAccessibleProjects("user-123");
 
@@ -189,52 +212,50 @@ describe("getUserAccessibleProjects", () => {
       expect(result).toContainEqual({ projectId: 31 });
     });
 
-    it("should exclude group projects with NO_ACCESS permission", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        ...mockUserData,
-        groups: [
+    it("excludes group projects with a NO_ACCESS permission", async () => {
+      setup({
+        projects: [{ id: 30 }],
+        users: [
           {
-            group: {
-              projectPermissions: [
-                {
-                  projectId: 30,
-                  accessType: "NO_ACCESS",
-                  project: { id: 30, isDeleted: false },
+            ...USER,
+            groups: [
+              {
+                group: {
+                  projectPermissions: [
+                    { projectId: 30, accessType: "NO_ACCESS" },
+                  ],
                 },
-              ],
-            },
+              },
+            ],
           },
         ],
       });
-      mockProjects.findMany.mockResolvedValue([]);
-      mockUserProjectPermission.findMany.mockResolvedValue([]);
-      mockProjectAssignment.findMany.mockResolvedValue([]);
 
       const result = await getUserAccessibleProjects("user-123");
 
       expect(result).not.toContainEqual({ projectId: 30 });
     });
 
-    it("should exclude deleted projects from groups", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        ...mockUserData,
-        groups: [
+    it("excludes deleted projects referenced by groups", async () => {
+      // Project 30 is deleted, so it never appears in the projects fetch even
+      // though a group still points at it.
+      setup({
+        projects: [],
+        users: [
           {
-            group: {
-              projectPermissions: [
-                {
-                  projectId: 30,
-                  accessType: "SPECIFIC_ROLE",
-                  project: { id: 30, isDeleted: true },
+            ...USER,
+            groups: [
+              {
+                group: {
+                  projectPermissions: [
+                    { projectId: 30, accessType: "SPECIFIC_ROLE" },
+                  ],
                 },
-              ],
-            },
+              },
+            ],
           },
         ],
       });
-      mockProjects.findMany.mockResolvedValue([]);
-      mockUserProjectPermission.findMany.mockResolvedValue([]);
-      mockProjectAssignment.findMany.mockResolvedValue([]);
 
       const result = await getUserAccessibleProjects("user-123");
 
@@ -243,102 +264,71 @@ describe("getUserAccessibleProjects", () => {
   });
 
   describe("explicit denial override", () => {
-    const mockUserData = {
-      id: "user-123",
-      access: "USER",
-      roleId: 5,
-      role: { id: 5 },
-      groups: [
-        {
-          group: {
-            projectPermissions: [
+    it("excludes group projects when the user has an explicit NO_ACCESS", async () => {
+      setup({
+        projects: [{ id: 100 }],
+        users: [
+          {
+            ...USER,
+            groups: [
               {
-                projectId: 100,
-                accessType: "SPECIFIC_ROLE",
-                project: { id: 100, isDeleted: false },
+                group: {
+                  projectPermissions: [
+                    { projectId: 100, accessType: "SPECIFIC_ROLE" },
+                  ],
+                },
               },
             ],
           },
-        },
-      ],
-    };
-
-    it("should exclude group projects when user has explicit NO_ACCESS", async () => {
-      mockUser.findUnique.mockResolvedValue(mockUserData);
-      mockProjects.findMany.mockResolvedValue([]);
-      mockUserProjectPermission.findMany
-        .mockResolvedValueOnce([]) // User permissions (not NO_ACCESS)
-        .mockResolvedValueOnce([{ projectId: 100 }]); // Explicit denials
-      mockProjectAssignment.findMany.mockResolvedValue([]);
+        ],
+        permissions: [
+          { userId: "user-123", projectId: 100, accessType: "NO_ACCESS" },
+        ],
+      });
 
       const result = await getUserAccessibleProjects("user-123");
 
       expect(result).not.toContainEqual({ projectId: 100 });
     });
 
-    it("should exclude GLOBAL_ROLE default projects when user has explicit NO_ACCESS", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        id: "user-123",
-        access: "USER",
-        roleId: 5,
-        role: { id: 5 },
-        groups: [],
+    it("excludes GLOBAL_ROLE default projects when the user has an explicit NO_ACCESS", async () => {
+      setup({
+        projects: [{ id: 200, defaultAccessType: "GLOBAL_ROLE" }],
+        users: [USER],
+        permissions: [
+          { userId: "user-123", projectId: 200, accessType: "NO_ACCESS" },
+        ],
       });
-      mockProjects.findMany
-        .mockResolvedValueOnce([]) // Created projects
-        .mockResolvedValueOnce([{ id: 200 }]) // GLOBAL_ROLE projects
-        .mockResolvedValueOnce([]) // SPECIFIC_ROLE projects
-        .mockResolvedValueOnce([]); // DEFAULT projects
-      mockUserProjectPermission.findMany
-        .mockResolvedValueOnce([]) // User permissions
-        .mockResolvedValueOnce([{ projectId: 200 }]); // Explicit denials
-      mockProjectAssignment.findMany.mockResolvedValue([]);
 
       const result = await getUserAccessibleProjects("user-123");
 
       expect(result).not.toContainEqual({ projectId: 200 });
     });
 
-    it("should exclude SPECIFIC_ROLE default projects when user has explicit NO_ACCESS", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        id: "user-123",
-        access: "USER",
-        roleId: 5,
-        role: { id: 5 },
-        groups: [],
+    it("excludes SPECIFIC_ROLE default projects when the user has an explicit NO_ACCESS", async () => {
+      setup({
+        projects: [
+          { id: 300, defaultAccessType: "SPECIFIC_ROLE", defaultRoleId: 9 },
+        ],
+        users: [USER],
+        permissions: [
+          { userId: "user-123", projectId: 300, accessType: "NO_ACCESS" },
+        ],
       });
-      mockProjects.findMany
-        .mockResolvedValueOnce([]) // Created projects
-        .mockResolvedValueOnce([]) // GLOBAL_ROLE projects
-        .mockResolvedValueOnce([{ id: 300 }]) // SPECIFIC_ROLE projects
-        .mockResolvedValueOnce([]); // DEFAULT projects
-      mockUserProjectPermission.findMany
-        .mockResolvedValueOnce([]) // User permissions
-        .mockResolvedValueOnce([{ projectId: 300 }]); // Explicit denials
-      mockProjectAssignment.findMany.mockResolvedValue([]);
 
       const result = await getUserAccessibleProjects("user-123");
 
       expect(result).not.toContainEqual({ projectId: 300 });
     });
 
-    it("should exclude DEFAULT access projects when user has explicit NO_ACCESS", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        id: "user-123",
-        access: "USER",
-        roleId: 5,
-        role: { id: 5 },
-        groups: [],
+    it("excludes DEFAULT access projects when the user has an explicit NO_ACCESS", async () => {
+      setup({
+        projects: [{ id: 400, defaultAccessType: "DEFAULT" }],
+        users: [USER],
+        permissions: [
+          { userId: "user-123", projectId: 400, accessType: "NO_ACCESS" },
+        ],
       });
-      mockProjects.findMany
-        .mockResolvedValueOnce([]) // Created projects
-        .mockResolvedValueOnce([]) // GLOBAL_ROLE projects
-        .mockResolvedValueOnce([]) // SPECIFIC_ROLE projects
-        .mockResolvedValueOnce([{ id: 400 }]); // DEFAULT projects
-      mockUserProjectPermission.findMany
-        .mockResolvedValueOnce([]) // User permissions
-        .mockResolvedValueOnce([{ projectId: 400 }]); // Explicit denials
-      mockProjectAssignment.findMany.mockResolvedValue([]);
 
       const result = await getUserAccessibleProjects("user-123");
 
@@ -347,84 +337,59 @@ describe("getUserAccessibleProjects", () => {
   });
 
   describe("project default access types", () => {
-    it("should include GLOBAL_ROLE default projects when user has a role", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        id: "user-123",
-        access: "USER",
-        roleId: 5,
-        role: { id: 5 },
-        groups: [],
+    it("includes GLOBAL_ROLE default projects when the user has a role", async () => {
+      setup({
+        projects: [{ id: 50, defaultAccessType: "GLOBAL_ROLE" }],
+        users: [USER],
       });
-      mockProjects.findMany
-        .mockResolvedValueOnce([]) // Created projects
-        .mockResolvedValueOnce([{ id: 50 }]) // GLOBAL_ROLE projects
-        .mockResolvedValueOnce([]) // SPECIFIC_ROLE projects
-        .mockResolvedValueOnce([]); // DEFAULT projects
-      mockUserProjectPermission.findMany.mockResolvedValue([]);
-      mockProjectAssignment.findMany.mockResolvedValue([]);
 
       const result = await getUserAccessibleProjects("user-123");
 
       expect(result).toContainEqual({ projectId: 50 });
     });
 
-    it("should NOT include GLOBAL_ROLE default projects when user has no role", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        id: "user-123",
-        access: "USER",
-        roleId: null,
-        role: null,
-        groups: [],
+    it("does NOT include GLOBAL_ROLE default projects when the user has no role", async () => {
+      setup({
+        projects: [{ id: 50, defaultAccessType: "GLOBAL_ROLE" }],
+        users: [{ id: "user-123", access: "USER", roleId: null }],
       });
-      mockProjects.findMany
-        .mockResolvedValueOnce([]) // Created projects
-        .mockResolvedValueOnce([]) // SPECIFIC_ROLE projects (GLOBAL_ROLE query skipped)
-        .mockResolvedValueOnce([]); // DEFAULT projects
-      mockUserProjectPermission.findMany.mockResolvedValue([]);
-      mockProjectAssignment.findMany.mockResolvedValue([]);
 
       const result = await getUserAccessibleProjects("user-123");
 
-      // Should not have any projects since roleId is null
       expect(result).toEqual([]);
     });
 
-    it("should include SPECIFIC_ROLE default projects", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        id: "user-123",
-        access: "USER",
-        roleId: 5,
-        role: { id: 5 },
-        groups: [],
+    it("includes SPECIFIC_ROLE default projects when a default role is set", async () => {
+      setup({
+        projects: [
+          { id: 60, defaultAccessType: "SPECIFIC_ROLE", defaultRoleId: 9 },
+        ],
+        users: [USER],
       });
-      mockProjects.findMany
-        .mockResolvedValueOnce([]) // Created projects
-        .mockResolvedValueOnce([]) // GLOBAL_ROLE projects
-        .mockResolvedValueOnce([{ id: 60 }]) // SPECIFIC_ROLE projects
-        .mockResolvedValueOnce([]); // DEFAULT projects
-      mockUserProjectPermission.findMany.mockResolvedValue([]);
-      mockProjectAssignment.findMany.mockResolvedValue([]);
 
       const result = await getUserAccessibleProjects("user-123");
 
       expect(result).toContainEqual({ projectId: 60 });
     });
 
-    it("should include DEFAULT access type projects (legacy)", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        id: "user-123",
-        access: "USER",
-        roleId: 5,
-        role: { id: 5 },
-        groups: [],
+    it("does NOT include SPECIFIC_ROLE projects with no default role", async () => {
+      setup({
+        projects: [
+          { id: 61, defaultAccessType: "SPECIFIC_ROLE", defaultRoleId: null },
+        ],
+        users: [USER],
       });
-      mockProjects.findMany
-        .mockResolvedValueOnce([]) // Created projects
-        .mockResolvedValueOnce([]) // GLOBAL_ROLE projects
-        .mockResolvedValueOnce([]) // SPECIFIC_ROLE projects
-        .mockResolvedValueOnce([{ id: 70 }]); // DEFAULT projects
-      mockUserProjectPermission.findMany.mockResolvedValue([]);
-      mockProjectAssignment.findMany.mockResolvedValue([]);
+
+      const result = await getUserAccessibleProjects("user-123");
+
+      expect(result).toEqual([]);
+    });
+
+    it("includes DEFAULT access type projects (legacy)", async () => {
+      setup({
+        projects: [{ id: 70, defaultAccessType: "DEFAULT" }],
+        users: [USER],
+      });
 
       const result = await getUserAccessibleProjects("user-123");
 
@@ -433,58 +398,140 @@ describe("getUserAccessibleProjects", () => {
   });
 
   describe("deduplication", () => {
-    it("should not return duplicate project IDs", async () => {
-      mockUser.findUnique.mockResolvedValue({
-        id: "user-123",
-        access: "USER",
-        roleId: 5,
-        role: { id: 5 },
-        groups: [
+    it("does not return duplicate project ids", async () => {
+      setup({
+        projects: [
+          { id: 1, createdBy: "user-123", defaultAccessType: "GLOBAL_ROLE" },
+        ],
+        users: [
           {
-            group: {
-              projectPermissions: [
-                {
-                  projectId: 1,
-                  accessType: "SPECIFIC_ROLE",
-                  project: { id: 1, isDeleted: false },
+            ...USER,
+            groups: [
+              {
+                group: {
+                  projectPermissions: [
+                    { projectId: 1, accessType: "SPECIFIC_ROLE" },
+                  ],
                 },
-              ],
-            },
+              },
+            ],
           },
         ],
+        permissions: [
+          { userId: "user-123", projectId: 1, accessType: "SPECIFIC_ROLE" },
+        ],
+        assignments: [{ userId: "user-123", projectId: 1 }],
       });
-      mockProjects.findMany
-        .mockResolvedValueOnce([{ id: 1 }]) // Created projects (same ID)
-        .mockResolvedValueOnce([{ id: 1 }]) // GLOBAL_ROLE projects (same ID)
-        .mockResolvedValueOnce([]) // SPECIFIC_ROLE projects
-        .mockResolvedValueOnce([]); // DEFAULT projects
-      mockUserProjectPermission.findMany
-        .mockResolvedValueOnce([{ projectId: 1 }]) // User permissions (same ID)
-        .mockResolvedValueOnce([]);
-      mockProjectAssignment.findMany.mockResolvedValue([{ projectId: 1 }]); // Assignments (same ID)
 
       const result = await getUserAccessibleProjects("user-123");
 
-      // Should only have project 1 once
       expect(result).toEqual([{ projectId: 1 }]);
     });
   });
 
   describe("error handling", () => {
-    it("should return empty array and log error on exception", async () => {
+    it("returns empty array and logs the error on exception", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
-      mockUser.findUnique.mockRejectedValue(new Error("Database error"));
+      mockProjects.findMany.mockRejectedValue(new Error("Database error"));
+      mockUser.findMany.mockResolvedValue([]);
+      mockUserProjectPermission.findMany.mockResolvedValue([]);
+      mockProjectAssignment.findMany.mockResolvedValue([]);
 
       const result = await getUserAccessibleProjects("user-123");
 
       expect(result).toEqual([]);
       expect(consoleSpy).toHaveBeenCalledWith(
-        "Error getting user accessible projects:",
+        "Error getting users accessible projects:",
         expect.any(Error)
       );
       consoleSpy.mockRestore();
     });
+  });
+});
+
+describe("getUsersAccessibleProjects (batched)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("returns an empty map without querying when given no user ids", async () => {
+    const result = await getUsersAccessibleProjects([]);
+
+    expect(result).toEqual({});
+    expect(mockProjects.findMany).not.toHaveBeenCalled();
+    expect(mockUser.findMany).not.toHaveBeenCalled();
+  });
+
+  it("resolves multiple users in a single batch with per-user results", async () => {
+    setup({
+      projects: [
+        { id: 1, name: "Alpha", createdBy: "creator" },
+        { id: 2, name: "Bravo", defaultAccessType: "DEFAULT" },
+        { id: 3, name: "Charlie" },
+      ],
+      users: [
+        { id: "creator", access: "USER", roleId: 5 },
+        { id: "admin", access: "ADMIN", roleId: 1 },
+        { id: "none-user", access: "NONE", roleId: null },
+      ],
+      assignments: [{ userId: "creator", projectId: 3 }],
+    });
+
+    const result = await getUsersAccessibleProjects([
+      "creator",
+      "admin",
+      "none-user",
+    ]);
+
+    // creator: created (1) + DEFAULT (2) + assignment (3)
+    expect(projectIds(result["creator"])).toEqual([1, 2, 3]);
+    // admin: everything
+    expect(projectIds(result["admin"])).toEqual([1, 2, 3]);
+    // none-user: nothing
+    expect(result["none-user"]).toEqual([]);
+
+    // One round-trip per table, not per user.
+    expect(mockProjects.findMany).toHaveBeenCalledTimes(1);
+    expect(mockUser.findMany).toHaveBeenCalledTimes(1);
+    expect(mockUserProjectPermission.findMany).toHaveBeenCalledTimes(1);
+    expect(mockProjectAssignment.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns project details sorted by name", async () => {
+    setup({
+      projects: [
+        { id: 1, name: "Zebra", defaultAccessType: "DEFAULT" },
+        { id: 2, name: "Apple", defaultAccessType: "DEFAULT" },
+      ],
+      users: [USER],
+    });
+
+    const result = await getUsersAccessibleProjects(["user-123"]);
+
+    expect(result["user-123"].map((p) => p.name)).toEqual(["Apple", "Zebra"]);
+  });
+
+  it("keeps one user's denial from affecting another user", async () => {
+    setup({
+      projects: [{ id: 500, defaultAccessType: "DEFAULT" }],
+      users: [
+        { id: "denied", access: "USER", roleId: 5 },
+        { id: "allowed", access: "USER", roleId: 5 },
+      ],
+      permissions: [
+        { userId: "denied", projectId: 500, accessType: "NO_ACCESS" },
+      ],
+    });
+
+    const result = await getUsersAccessibleProjects(["denied", "allowed"]);
+
+    expect(result["denied"]).toEqual([]);
+    expect(projectIds(result["allowed"])).toEqual([500]);
   });
 });
