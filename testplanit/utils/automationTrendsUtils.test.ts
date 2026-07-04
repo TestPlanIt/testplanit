@@ -13,8 +13,11 @@ vi.mock("~/server/auth", () => ({ authOptions: {} }));
 import type { NextRequest } from "next/server";
 
 import { baseDb } from "@/lib/db";
+import { authenticateRequest } from "~/lib/api-token-auth";
 
 import {
+  arrayMax,
+  arrayMin,
   automatedStateAt,
   generatePeriods,
   handleAutomationTrendsPOST,
@@ -638,5 +641,85 @@ describe("handleAutomationTrendsPOST (project-specific)", () => {
     expect(json.data).toEqual([]);
     expect(json.total).toBe(0);
     expect(baseDb.repositoryCaseVersions.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("arrayMin / arrayMax", () => {
+  it("computes min and max over a small array", () => {
+    expect(arrayMin([5, 2, 9, 2, 7])).toBe(2);
+    expect(arrayMax([5, 2, 9, 2, 7])).toBe(9);
+  });
+
+  it("returns Infinity / -Infinity for an empty array", () => {
+    expect(arrayMin([])).toBe(Infinity);
+    expect(arrayMax([])).toBe(-Infinity);
+  });
+
+  it("does not overflow the call stack on a very large array", () => {
+    // `Math.min(...arr)` / `Math.max(...arr)` throw RangeError at this size; the
+    // loop-based helpers must not. This is the crash the cross-project report hit.
+    const big = Array.from({ length: 300_000 }, (_, i) => i);
+    expect(() => arrayMin(big)).not.toThrow();
+    expect(() => arrayMax(big)).not.toThrow();
+    expect(arrayMin(big)).toBe(0);
+    expect(arrayMax(big)).toBe(299_999);
+  });
+});
+
+describe("handleAutomationTrendsPOST (cross-project scale)", () => {
+  const makeReq = (body: unknown): NextRequest =>
+    ({ json: async () => body }) as unknown as NextRequest;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (authenticateRequest as any).mockResolvedValue({
+      authenticated: true,
+      user: { access: "ADMIN" },
+    });
+  });
+
+  it("handles a very large cross-project case set without blowing the call stack", async () => {
+    // Regression: the period axis derived its span via `Math.min(...creationTimes)`
+    // / `Math.max(...creationTimes, ...versionTimes)`. Spreading arrays that large
+    // (every case + version across ALL projects) throws
+    // `RangeError: Maximum call stack size exceeded`, so the admin cross-project
+    // report broke while the always-small single-project report kept working.
+    const N = 200_000;
+    const created = new Date("2024-01-15T00:00:00Z");
+    const project = { id: 1, name: "Alpha" };
+    const bigCases = Array.from({ length: N }, (_, i) => ({
+      id: i + 1,
+      createdAt: created,
+      isDeleted: false,
+      automated: i % 2 === 0,
+      projectId: 1,
+      project,
+    }));
+    (baseDb.repositoryCases.findMany as any).mockResolvedValue(bigCases);
+    (baseDb.repositoryCaseVersions.findMany as any).mockResolvedValue([]);
+
+    // No projectId and no date range -> the spread path that overflowed.
+    const res = await handleAutomationTrendsPOST(
+      makeReq({ dateGrouping: "monthly" }),
+      true // cross-project
+    );
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(Array.isArray(json.data)).toBe(true);
+    // All cases share a creation day, so a single (January) period holds them all.
+    expect(json.data).toHaveLength(1);
+    expect(json.data[0].Alpha_total).toBe(N);
+    expect(json.data[0].Alpha_automated).toBe(N / 2);
+    expect(json.data[0].Alpha_manual).toBe(N / 2);
+
+    // The version fetch must be id-chunked, not one giant `IN (...100k ids)`
+    // that overflows Postgres's 65,535 bind-parameter limit.
+    const versionCalls = (baseDb.repositoryCaseVersions.findMany as any).mock
+      .calls;
+    expect(versionCalls.length).toBeGreaterThan(1);
+    for (const [args] of versionCalls) {
+      expect(args.where.repositoryCaseId.in.length).toBeLessThanOrEqual(10_000);
+    }
   });
 });

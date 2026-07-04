@@ -113,6 +113,27 @@ export function generatePeriods(
 }
 
 /**
+ * Min / max over a numeric array WITHOUT spreading it into function arguments.
+ * `Math.min(...arr)` / `Math.max(...arr)` throw `RangeError: Maximum call stack
+ * size exceeded` once the array is large enough — which the cross-project
+ * (admin) Automation Trends report hits, since it spans every case and every
+ * case version across all projects (the single-project report is always small
+ * enough to spread safely). Returns Infinity / -Infinity for an empty array,
+ * so `Math.max(arrayMax(a), arrayMax(b))` correctly ignores an empty side.
+ */
+export function arrayMin(values: number[]): number {
+  let min = Infinity;
+  for (const v of values) if (v < min) min = v;
+  return min;
+}
+
+export function arrayMax(values: number[]): number {
+  let max = -Infinity;
+  for (const v of values) if (v > max) max = v;
+  return max;
+}
+
+/**
  * Resolve a case's automated state as of a point in time using its version
  * timeline. `history` must be sorted ascending by timestamp. Returns whether the
  * case existed yet (created on/before the time) and its automated value then.
@@ -332,16 +353,31 @@ export async function handleAutomationTrendsPOST(
     // captured as version snapshots with a truthful createdAt, which the current
     // RepositoryCases.automated flag alone cannot tell us.
     const caseIds = allCases.map((c) => c.id);
-    const versions = await baseDb.repositoryCaseVersions.findMany({
-      where: { repositoryCaseId: { in: caseIds } },
-      select: {
-        repositoryCaseId: true,
-        createdAt: true,
-        automated: true,
-        version: true,
-      },
-      orderBy: [{ repositoryCaseId: "asc" }, { version: "asc" }],
-    });
+    // Fetch versions in id-chunks. At cross-project scale `caseIds` can hold
+    // 100k+ ids, and a single `IN (...)` overflows Postgres's bind-parameter
+    // limit (a 16-bit count), failing the whole query. Batch the ids so each
+    // query stays well under the limit.
+    const VERSION_ID_CHUNK = 10_000;
+    const versions: {
+      repositoryCaseId: number;
+      createdAt: Date;
+      automated: boolean;
+      version: number;
+    }[] = [];
+    for (let i = 0; i < caseIds.length; i += VERSION_ID_CHUNK) {
+      const chunk = caseIds.slice(i, i + VERSION_ID_CHUNK);
+      const rows = await baseDb.repositoryCaseVersions.findMany({
+        where: { repositoryCaseId: { in: chunk } },
+        select: {
+          repositoryCaseId: true,
+          createdAt: true,
+          automated: true,
+          version: true,
+        },
+        orderBy: [{ repositoryCaseId: "asc" }, { version: "asc" }],
+      });
+      for (const r of rows) versions.push(r);
+    }
 
     // Build a chronological automated-state timeline per case.
     const historyByCase = new Map<
@@ -377,12 +413,16 @@ export async function handleAutomationTrendsPOST(
     // otherwise span from the earliest case creation to the latest activity.
     const creationTimes = allCases.map((c) => new Date(c.createdAt).getTime());
     const versionTimes = versions.map((v) => new Date(v.createdAt).getTime());
+    // Use loop-based min/max (not `Math.min(...arr)`) — at cross-project scale
+    // these arrays hold every case + version, and spreading them into function
+    // args overflows the call stack. `arrayMax([])` is -Infinity, so an empty
+    // versionTimes side is ignored by the outer Math.max.
     const lo = startDate
       ? new Date(startDate)
-      : new Date(Math.min(...creationTimes));
+      : new Date(arrayMin(creationTimes));
     const hi = endDate
       ? new Date(endDate)
-      : new Date(Math.max(...creationTimes, ...versionTimes));
+      : new Date(Math.max(arrayMax(creationTimes), arrayMax(versionTimes)));
 
     const sortedPeriods = generatePeriods(lo, hi, dateGrouping as DateGrouping);
 
