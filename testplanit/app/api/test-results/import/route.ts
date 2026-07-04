@@ -38,6 +38,7 @@ import {
   type CaseMatcher,
   type CaseIdFormat,
 } from "~/lib/services/automationCaseId";
+import { stripEphemeralHash } from "~/lib/services/automatedTestName";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import {
   countTotalTestCases,
@@ -853,6 +854,11 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               const className = extractClassName(testCase, suite);
               const normalizedStatus = normalizeStatus(testCase.status);
 
+              // Case identity: strip any ephemeral object-hash (e.g. TestNG's
+              // `(org.testng.TestRunner@41738d)`) that changes every run, so the
+              // same test doesn't fork into a new case per upload.
+              const caseName = stripEphemeralHash(testCase.name);
+
               // Look up extended data (system-out, system-err, assertions) for this test case
               const extendedDataKey = getExtendedDataKey(
                 suite.name || "Test Suite",
@@ -923,7 +929,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 let repositoryCase = await baseDb.repositoryCases.findFirst({
                   where: {
                     projectId: projectId,
-                    name: testCase.name,
+                    name: caseName,
                     className: className,
                     isDeleted: false,
                   },
@@ -953,7 +959,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                       repositoryId: repository.id,
                       folderId: folder.id,
                       templateId: template.id,
-                      name: testCase.name,
+                      name: caseName,
                       className: className,
                       source: caseSource,
                       stateId: defaultCaseStateId,

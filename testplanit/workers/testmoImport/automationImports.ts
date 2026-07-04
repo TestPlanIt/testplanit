@@ -5,6 +5,7 @@ import type { DbClient, TxClient } from "~/lib/zenstack";
 import { sql } from "kysely";
 import { createTestCaseVersionInTransaction } from "../../lib/services/testCaseVersionService.js";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
+import { stripEphemeralHash } from "../../lib/services/automatedTestName";
 import { normalizeAutomationClassName } from "./classNameNormalizer";
 import {
   createWorkflowResolver,
@@ -260,7 +261,9 @@ export const importAutomationCases = async (
       continue;
     }
 
-    const name = toStringValue(row.name) || `Automation Case ${testmoCaseId}`;
+    const name =
+      stripEphemeralHash(toStringValue(row.name)) ||
+      `Automation Case ${testmoCaseId}`;
     const folder = toStringValue(row.folder);
     const createdAt = toDateValue(row.created_at);
 
