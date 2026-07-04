@@ -18,7 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { scoreToConfidence } from "~/lib/utils/similarity";
 
@@ -76,6 +76,75 @@ interface CaseDetailsResponse {
   caseB: CaseDetails;
 }
 
+/** Which fields differ between the two cases. Symmetric, so both panels use it. */
+interface CaseDiff {
+  name: boolean;
+  source: boolean;
+  folder: boolean;
+  creator: boolean;
+  tags: boolean;
+  attachments: boolean;
+  steps: boolean;
+  fieldValues: Set<number>;
+}
+
+const EMPTY_DIFF: CaseDiff = {
+  name: false,
+  source: false,
+  folder: false,
+  creator: false,
+  tags: false,
+  attachments: false,
+  steps: false,
+  fieldValues: new Set(),
+};
+
+function computeDiff(a: CaseDetails, b: CaseDetails): CaseDiff {
+  const tagSig = (c: CaseDetails) =>
+    c.tags
+      .map((t) => t.name)
+      .sort()
+      .join("");
+  const stepSig = (c: CaseDetails) =>
+    [...c.steps]
+      .sort((x, y) => x.order - y.order)
+      .map((s) => `${s.step}${s.expectedResult ?? ""}`)
+      .join("");
+  const valueById = (c: CaseDetails) =>
+    new Map(
+      c.caseFieldValues.map((v) => [
+        v.field.id,
+        JSON.stringify(v.value ?? null),
+      ])
+    );
+
+  const va = valueById(a);
+  const vb = valueById(b);
+  const fieldValues = new Set<number>();
+  for (const id of new Set([...va.keys(), ...vb.keys()])) {
+    if (va.get(id) !== vb.get(id)) fieldValues.add(id);
+  }
+
+  return {
+    name: a.name !== b.name,
+    source: (a.source ?? "") !== (b.source ?? ""),
+    folder: (a.folder?.name ?? "") !== (b.folder?.name ?? ""),
+    creator: (a.creator?.id ?? "") !== (b.creator?.id ?? ""),
+    tags: tagSig(a) !== tagSig(b),
+    attachments: a._count.attachments !== b._count.attachments,
+    steps: stepSig(a) !== stepSig(b),
+    fieldValues,
+  };
+}
+
+/**
+ * Highlights differing content with the same `<mark>` treatment used for
+ * unified-search matches (styled globally in globals.css).
+ */
+function Highlight({ on, children }: { on: boolean; children: ReactNode }) {
+  return on ? <mark>{children}</mark> : <>{children}</>;
+}
+
 export interface DuplicateComparisonDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -94,6 +163,7 @@ export interface DuplicateComparisonDialogProps {
 
 function CasePanel({
   caseDetails,
+  diff,
   isSelected,
   onSelect,
   projectId,
@@ -103,6 +173,7 @@ function CasePanel({
   testId,
 }: {
   caseDetails: CaseDetails;
+  diff: CaseDiff;
   isSelected: boolean;
   onSelect: () => void;
   projectId: number;
@@ -151,14 +222,16 @@ function CasePanel({
           {caseDetails.id}
         </div>
         <div className="mb-3 flex items-center gap-2">
-          <CaseDisplay
-            id={caseDetails.id}
-            name={caseDetails.name}
-            source={caseDetails.source as any}
-            automated={caseDetails.automated}
-            hasParameters={(caseDetails as any).hasParameters}
-            size="large"
-          />
+          <Highlight on={diff.name}>
+            <CaseDisplay
+              id={caseDetails.id}
+              name={caseDetails.name}
+              source={caseDetails.source as any}
+              automated={caseDetails.automated}
+              hasParameters={(caseDetails as any).hasParameters}
+              size="large"
+            />
+          </Highlight>
           <a
             href={`/projects/repository/${projectId}/${caseDetails.id}`}
             target="_blank"
@@ -179,7 +252,9 @@ function CasePanel({
                 {t("sourceLabel")}
                 {": "}
               </span>
-              <span>{caseDetails.source}</span>
+              <Highlight on={diff.source}>
+                <span>{caseDetails.source}</span>
+              </Highlight>
             </div>
           )}
           <div>
@@ -187,7 +262,9 @@ function CasePanel({
               {tCommon("fields.folder")}
               {": "}
             </span>
-            <span>{caseDetails.folder?.name ?? t("noFolder")}</span>
+            <Highlight on={diff.folder}>
+              <span>{caseDetails.folder?.name ?? t("noFolder")}</span>
+            </Highlight>
           </div>
           <div>
             <span className="font-medium text-muted-foreground">
@@ -202,13 +279,15 @@ function CasePanel({
           </div>
           {caseDetails.creator && (
             <div>
-              <UserDisplay
-                userId={caseDetails.creator.id}
-                userName={caseDetails.creator.name ?? undefined}
-                userImage={caseDetails.creator.image}
-                prefix={tCommon("fields.createdBy")}
-                size="small"
-              />
+              <Highlight on={diff.creator}>
+                <UserDisplay
+                  userId={caseDetails.creator.id}
+                  userName={caseDetails.creator.name ?? undefined}
+                  userImage={caseDetails.creator.image}
+                  prefix={tCommon("fields.createdBy")}
+                  size="small"
+                />
+              </Highlight>
             </div>
           )}
         </div>
@@ -216,7 +295,7 @@ function CasePanel({
         {/* Tags */}
         <div className="mb-3">
           <p className="font-medium text-muted-foreground text-sm mb-1">
-            {tCommon("fields.tags")}
+            <Highlight on={diff.tags}>{tCommon("fields.tags")}</Highlight>
           </p>
           {caseDetails.tags.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">
@@ -237,7 +316,9 @@ function CasePanel({
               return (
                 <div key={`steps-${templateField.caseFieldId}`}>
                   <p className="font-medium text-muted-foreground text-sm mb-1">
-                    {tCommon("fields.steps")}
+                    <Highlight on={diff.steps}>
+                      {tCommon("fields.steps")}
+                    </Highlight>
                   </p>
                   {caseDetails.steps.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic">
@@ -289,45 +370,47 @@ function CasePanel({
                   {fv.field.displayName}
                   {": "}
                 </span>
-                {fieldType === "Text Long" ? (
-                  <TextFromJson
-                    jsonString={fv.value}
-                    room={`compare-field-${caseDetails.id}-${fv.id}`}
-                  />
-                ) : fieldType === "Checkbox" ? (
-                  <span>{fv.value ? "✓" : "✗"}</span>
-                ) : fieldType === "Dropdown" ? (
-                  <span>
-                    {options.find((o) => o.id === Number(fv.value))?.name ??
-                      String(fv.value)}
-                  </span>
-                ) : fieldType === "Multi-Select" ? (
-                  <span>
-                    {(Array.isArray(fv.value) ? fv.value : [])
-                      .map(
-                        (id: number) =>
-                          options.find((o) => o.id === id)?.name ?? String(id)
-                      )
-                      .join(", ")}
-                  </span>
-                ) : fieldType === "Link" ? (
-                  <a
-                    href={String(fv.value)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline"
-                  >
-                    {String(fv.value)}
-                  </a>
-                ) : fieldType === "Date" ? (
-                  <DateFormatter
-                    date={String(fv.value)}
-                    formatString={dateTimeFormat}
-                    timezone={prefs?.timezone}
-                  />
-                ) : (
-                  <span>{String(fv.value)}</span>
-                )}
+                <Highlight on={diff.fieldValues.has(fv.field.id)}>
+                  {fieldType === "Text Long" ? (
+                    <TextFromJson
+                      jsonString={fv.value}
+                      room={`compare-field-${caseDetails.id}-${fv.id}`}
+                    />
+                  ) : fieldType === "Checkbox" ? (
+                    <span>{fv.value ? "✓" : "✗"}</span>
+                  ) : fieldType === "Dropdown" ? (
+                    <span>
+                      {options.find((o) => o.id === Number(fv.value))?.name ??
+                        String(fv.value)}
+                    </span>
+                  ) : fieldType === "Multi-Select" ? (
+                    <span>
+                      {(Array.isArray(fv.value) ? fv.value : [])
+                        .map(
+                          (id: number) =>
+                            options.find((o) => o.id === id)?.name ?? String(id)
+                        )
+                        .join(", ")}
+                    </span>
+                  ) : fieldType === "Link" ? (
+                    <a
+                      href={String(fv.value)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline"
+                    >
+                      {String(fv.value)}
+                    </a>
+                  ) : fieldType === "Date" ? (
+                    <DateFormatter
+                      date={String(fv.value)}
+                      formatString={dateTimeFormat}
+                      timezone={prefs?.timezone}
+                    />
+                  ) : (
+                    <span>{String(fv.value)}</span>
+                  )}
+                </Highlight>
               </div>
             );
           })}
@@ -339,7 +422,9 @@ function CasePanel({
             {tCommon("fields.attachments")}
             {": "}
           </span>
-          <span>{caseDetails._count.attachments}</span>
+          <Highlight on={diff.attachments}>
+            <span>{caseDetails._count.attachments}</span>
+          </Highlight>
         </div>
 
         {/* Last Run */}
@@ -397,6 +482,7 @@ export function DuplicateComparisonDialog({
   });
 
   const confidence = pair ? scoreToConfidence(pair.score) : null;
+  const diff = data ? computeDiff(data.caseA, data.caseB) : EMPTY_DIFF;
 
   const handleResolve = async (action: "merge" | "link" | "dismiss") => {
     if (!pair) return;
@@ -532,6 +618,7 @@ export function DuplicateComparisonDialog({
               <div className="grid grid-cols-2 gap-4">
                 <CasePanel
                   caseDetails={data.caseA}
+                  diff={diff}
                   isSelected={primaryId === data.caseA.id}
                   onSelect={() => setPrimaryId(data.caseA.id)}
                   projectId={pair!.projectId}
@@ -542,6 +629,7 @@ export function DuplicateComparisonDialog({
                 />
                 <CasePanel
                   caseDetails={data.caseB}
+                  diff={diff}
                   isSelected={primaryId === data.caseB.id}
                   onSelect={() => setPrimaryId(data.caseB.id)}
                   projectId={pair!.projectId}
