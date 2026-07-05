@@ -138,6 +138,66 @@ const processor = async (job: Job<MultiTenantSyncJobData>) =>
           throw error;
         }
 
+      case "import-project-issues":
+        try {
+          const importData = (jobData.data ?? {}) as {
+            integrationProjectId?: string;
+            updatedWithinDays?: number;
+            cap?: number;
+          };
+          if (!importData.integrationProjectId) {
+            throw new Error(
+              "integrationProjectId is required for project import"
+            );
+          }
+
+          const result = await syncService.performProjectImport(
+            jobData.integrationId,
+            importData.integrationProjectId,
+            {
+              updatedWithinDays: importData.updatedWithinDays,
+              cap: importData.cap,
+            },
+            job, // Pass job for progress reporting
+            serviceOptions
+          );
+
+          // Audit logging — record the bulk import as an Issue mutation batch.
+          captureAuditEvent({
+            action: "BULK_UPDATE",
+            entityType: "Issue",
+            entityId: `import-${jobData.integrationId}-${importData.integrationProjectId}`,
+            entityName: `Issue Import`,
+            userId: jobData.userId,
+            tenantId: jobData.tenantId,
+            metadata: {
+              source: "sync-worker:import",
+              integrationId: jobData.integrationId,
+              integrationProjectId: importData.integrationProjectId,
+              importedCount: result.imported,
+              skippedCount: result.skipped,
+              errorCount: result.errors.length,
+              reachedCap: result.reachedCap,
+              jobId: job.id,
+            },
+          }).catch(() => {});
+
+          if (result.errors.length > 0) {
+            console.warn(
+              `Project import completed with ${result.errors.length} errors:`,
+              result.errors
+            );
+          }
+
+          console.log(
+            `Imported ${result.imported} issues (skipped ${result.skipped}) for mapping ${importData.integrationProjectId}`
+          );
+          return result;
+        } catch (error) {
+          console.error("Failed to import project issues:", error);
+          throw error;
+        }
+
       case "refresh-issue":
         try {
           if (!jobData.issueId) {

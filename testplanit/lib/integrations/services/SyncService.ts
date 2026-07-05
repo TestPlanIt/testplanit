@@ -168,6 +168,62 @@ export interface SyncOptions {
   limit?: number;
 }
 
+/**
+ * Bulk-import caps. The import pulls issues from a linked external project that
+ * were updated within a recency window, up to a cap. IMPORT_MAX_CAP is the
+ * absolute ceiling enforced server-side regardless of the requested cap, so a
+ * filter mistake can't mirror an entire tracker.
+ */
+export const IMPORT_MAX_CAP = 1000;
+export const IMPORT_DEFAULT_CAP = 200;
+const IMPORT_PAGE_SIZE = 50;
+/**
+ * Upper bound on pages fetched for one import. Protects tracker rate limits on
+ * the degraded path where a provider can't push the recency window into its
+ * query and we filter returned pages client-side
+ * (IMPORT_MAX_PAGES * IMPORT_PAGE_SIZE issues scanned at most).
+ */
+const IMPORT_MAX_PAGES = 40;
+
+export interface ProjectImportOptions {
+  updatedWithinDays?: number;
+  cap?: number;
+}
+
+export interface ProjectImportResult {
+  imported: number;
+  matched: number;
+  skipped: number;
+  cappedAt: number;
+  reachedCap: boolean;
+  errors: string[];
+}
+
+/**
+ * Which external-project identifier to hand `searchIssues`, by provider.
+ * Mirrors how performSync reasons about these fields: Jira matches on the
+ * project key (`project = KEY`), Azure DevOps WIQL compares
+ * `[System.TeamProject]` by name, and the remaining providers key off
+ * externalProjectId (GitHub `owner/repo`, Redmine/MantisBT numeric id).
+ */
+function resolveImportProjectRef(
+  provider: string,
+  mapping: {
+    externalProjectId: string;
+    externalProjectKey: string;
+    externalProjectName: string;
+  }
+): string {
+  switch (provider) {
+    case "JIRA":
+      return mapping.externalProjectKey || mapping.externalProjectId;
+    case "AZURE_DEVOPS":
+      return mapping.externalProjectName || mapping.externalProjectId;
+    default:
+      return mapping.externalProjectId || mapping.externalProjectKey;
+  }
+}
+
 export class SyncService {
   /**
    * Queue a sync job for an integration
@@ -238,6 +294,48 @@ export class SyncService {
       syncQueue,
       "sync-project-issues",
       jobData
+    );
+    return job.id || null;
+  }
+
+  /**
+   * Queue a bulk import of issues from a single linked external project into
+   * its TestPlanIt project, scoped by a recency window + cap. Rides the same
+   * `issue-sync` queue as re-sync (distinct job name `import-project-issues`);
+   * the worker calls `performProjectImport`.
+   */
+  async queueProjectImport(
+    userId: string,
+    integrationId: number,
+    integrationProjectId: string,
+    options: ProjectImportOptions = {}
+  ): Promise<string | null> {
+    const syncQueue = getSyncQueue();
+    if (!syncQueue) {
+      console.error("Sync queue not initialized");
+      return null;
+    }
+
+    const jobData: SyncJobData = {
+      userId,
+      integrationId,
+      action: "sync",
+      data: { integrationProjectId, ...options },
+      tenantId: getCurrentTenantId(),
+    };
+
+    const job = await enqueueWithAuditContext(
+      syncQueue,
+      "import-project-issues",
+      jobData,
+      {
+        // Imports create rows as they page through the tracker — a mid-run
+        // auto-retry would re-scan from the top and re-hit rate limits, so
+        // fail loud instead of retrying.
+        attempts: 1,
+        removeOnComplete: true,
+        removeOnFail: false,
+      }
     );
     return job.id || null;
   }
@@ -696,6 +794,267 @@ export class SyncService {
       errors.push(`Sync failed: ${error.message}`);
       return { synced: syncedCount, errors };
     }
+  }
+
+  /**
+   * Approximate how many issues a bulk import would pull, before writing
+   * anything. Asks the tracker for the recency-scoped result set (page of 1)
+   * and returns its reported `total`. For providers that push the recency
+   * window into their query (Jira/GitHub/Azure) this is the filtered count;
+   * for providers that can't, it's the project total (an over-estimate that
+   * the actual import then trims via the client-side cutoff) — surfaced as
+   * "approximate" in the UI.
+   */
+  async previewProjectImport(
+    integrationId: number,
+    integrationProjectId: string,
+    options: ProjectImportOptions = {},
+    serviceOptions: SyncServiceOptions = {}
+  ): Promise<{ matched: number; hasMore: boolean; cap: number }> {
+    const db = serviceOptions.dbClient || defaultDb;
+    const cap = Math.min(options.cap ?? IMPORT_DEFAULT_CAP, IMPORT_MAX_CAP);
+
+    const mapping = await db.integrationProject.findUnique({
+      where: { id: integrationProjectId },
+      include: {
+        projectIntegration: { select: { integrationId: true } },
+      },
+    });
+    if (!mapping?.projectIntegration) {
+      throw new Error(
+        `Integration project mapping ${integrationProjectId} not found`
+      );
+    }
+    if (mapping.projectIntegration.integrationId !== integrationId) {
+      throw new Error(
+        `Mapping ${integrationProjectId} does not belong to integration ${integrationId}`
+      );
+    }
+
+    const integration = await db.integration.findUnique({
+      where: { id: integrationId },
+      select: { provider: true },
+    });
+    if (!integration) {
+      throw new Error("Integration not found");
+    }
+
+    const adapter = await integrationManager.getAdapter(
+      String(integrationId),
+      db
+    );
+    if (!adapter) {
+      throw new Error("Invalid adapter for issue import");
+    }
+
+    const projectRef = resolveImportProjectRef(integration.provider, mapping);
+    // Fetch a real page rather than trusting a reported `total`: Jira Cloud's
+    // /search/jql endpoint no longer returns `total`, so `matched` falls back
+    // to the count of issues actually returned (an honest "at least N"), and
+    // `hasMore` is true when the tracker says so or the page came back full.
+    // Sample a full page (not capped) so the count still reflects matches that
+    // exceed a small cap — which is exactly when the over-cap notice matters.
+    const sampleLimit = IMPORT_PAGE_SIZE;
+    const { issues, total, hasMore } = await adapter.searchIssues({
+      projectId: projectRef,
+      updatedWithinDays: options.updatedWithinDays,
+      fullSync: true,
+      limit: sampleLimit,
+      offset: 0,
+    });
+
+    const hasTotal = typeof total === "number" && Number.isFinite(total);
+    const matched = hasTotal && total >= issues.length ? total : issues.length;
+    const more =
+      hasMore || (hasTotal && total > matched) || issues.length >= sampleLimit;
+
+    return { matched, hasMore: more, cap };
+  }
+
+  /**
+   * Bulk-import issues from a linked external project into its TestPlanIt
+   * project. Pages `adapter.searchIssues` scoped to the recency window, upserts
+   * each result via `_createIssueFromExternal` (dedup on
+   * `(externalId, integrationId)`, resurrect-on-collision, ES index + SSE), and
+   * stops at the requested cap / IMPORT_MAX_CAP / IMPORT_MAX_PAGES. Reuses the
+   * per-project `syncStatus` badge (syncing → completed/error), so the settings
+   * UI reflects progress with no new model. Imported rows are thereafter kept
+   * fresh by the existing re-sync + inbound webhooks.
+   */
+  async performProjectImport(
+    integrationId: number,
+    integrationProjectId: string,
+    options: ProjectImportOptions = {},
+    job?: Job,
+    serviceOptions: SyncServiceOptions = {}
+  ): Promise<ProjectImportResult> {
+    const db = serviceOptions.dbClient || defaultDb;
+    const errors: string[] = [];
+    const cap = Math.min(options.cap ?? IMPORT_DEFAULT_CAP, IMPORT_MAX_CAP);
+    const updatedWithinDays = options.updatedWithinDays;
+    const cutoffMs =
+      updatedWithinDays && updatedWithinDays > 0
+        ? Date.now() - updatedWithinDays * 86_400_000
+        : null;
+
+    let imported = 0;
+    let matched = 0;
+    let skipped = 0;
+    let reachedCap = false;
+
+    // Resolve the mapping + owning project up front. A bad id is a caller
+    // misconfiguration — throw before any status tracking so the worker fails
+    // the job loudly (mirrors the sync path's posture).
+    const mapping = await db.integrationProject.findUnique({
+      where: { id: integrationProjectId },
+      include: {
+        projectIntegration: {
+          select: { projectId: true, integrationId: true },
+        },
+      },
+    });
+    if (!mapping?.projectIntegration) {
+      throw new Error(
+        `Integration project mapping ${integrationProjectId} not found`
+      );
+    }
+    if (mapping.projectIntegration.integrationId !== integrationId) {
+      throw new Error(
+        `Mapping ${integrationProjectId} does not belong to integration ${integrationId}`
+      );
+    }
+    const projectId = mapping.projectIntegration.projectId;
+
+    // Mark syncing — same per-project badge the admin re-sync uses.
+    await db.integrationProject.update({
+      where: { id: integrationProjectId },
+      data: { syncStatus: "syncing", syncError: null },
+    });
+
+    try {
+      const integration = await db.integration.findUnique({
+        where: { id: integrationId },
+        select: { provider: true },
+      });
+      if (!integration) {
+        throw new Error("Integration not found");
+      }
+
+      const adapter = await integrationManager.getAdapter(
+        String(integrationId),
+        db
+      );
+      if (!adapter) {
+        throw new Error("Invalid adapter for issue import");
+      }
+
+      const projectRef = resolveImportProjectRef(integration.provider, mapping);
+
+      // Guard against providers that don't honor the pagination offset and
+      // return overlapping pages — de-dup by external id within this run so the
+      // cap/counters reflect distinct issues, not re-scans.
+      const seen = new Set<string>();
+
+      let offset = 0;
+      let page = 0;
+      let hasMore = true;
+      // Cursor for token-paginated trackers (Jira Cloud). Offset-paginated
+      // adapters leave this undefined and advance via `offset` instead; we pass
+      // both so each adapter uses whichever it understands.
+      let pageToken: string | undefined;
+
+      while (imported < cap && page < IMPORT_MAX_PAGES && hasMore) {
+        const result = await adapter.searchIssues({
+          projectId: projectRef,
+          updatedWithinDays,
+          fullSync: true,
+          limit: IMPORT_PAGE_SIZE,
+          offset,
+          pageToken,
+        });
+        hasMore = result.hasMore;
+        offset += result.issues.length;
+        pageToken = result.nextPageToken;
+        page++;
+        if (result.issues.length === 0) break;
+        // Token-paginated trackers report hasMore but stop yielding a cursor on
+        // the last page — guard against an infinite loop if hasMore stays true.
+        if (hasMore && !pageToken && result.issues.length < IMPORT_PAGE_SIZE) {
+          hasMore = false;
+        }
+
+        for (const issueData of result.issues) {
+          if (seen.has(issueData.id)) continue;
+          seen.add(issueData.id);
+
+          // Client-side recency fallback for adapters that couldn't push the
+          // window into their query. `updatedAt` is always present on IssueData.
+          if (
+            cutoffMs !== null &&
+            issueData.updatedAt instanceof Date &&
+            issueData.updatedAt.getTime() < cutoffMs
+          ) {
+            skipped++;
+            continue;
+          }
+          if (imported >= cap) {
+            reachedCap = true;
+            break;
+          }
+          matched++;
+          try {
+            await this._createIssueFromExternal(
+              db,
+              integrationId,
+              projectId,
+              issueData
+            );
+            imported++;
+            if (job) {
+              await job.updateProgress({
+                current: imported,
+                total: cap,
+                percentage: Math.min(Math.round((imported / cap) * 100), 100),
+                message: `Importing ${mapping.externalProjectKey}: ${imported}/${cap}`,
+              });
+            }
+          } catch (error: any) {
+            errors.push(
+              `Failed to import issue ${issueData.key || issueData.id}: ${error.message}`
+            );
+          }
+        }
+
+        if (imported >= cap) {
+          reachedCap = true;
+          break;
+        }
+
+        // GC breather between pages, mirroring performSync.
+        if (hasMore) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+      }
+
+      await db.integrationProject.update({
+        where: { id: integrationProjectId },
+        data: {
+          syncStatus: "completed",
+          lastSyncAt: new Date(),
+          syncError: null,
+        },
+      });
+    } catch (error: any) {
+      await db.integrationProject
+        .update({
+          where: { id: integrationProjectId },
+          data: { syncStatus: "error", syncError: error.message },
+        })
+        .catch(() => {});
+      errors.push(`Import failed: ${error.message}`);
+    }
+
+    return { imported, matched, skipped, cappedAt: cap, reachedCap, errors };
   }
 
   /**

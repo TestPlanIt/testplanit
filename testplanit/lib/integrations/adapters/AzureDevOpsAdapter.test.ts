@@ -1245,6 +1245,21 @@ describe("AzureDevOpsAdapter", () => {
       expect(body.query).toContain("[System.Tags] CONTAINS 'critical'");
     });
 
+    it("should scope by recency window (updatedWithinDays)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+
+      await adapter.searchIssues({
+        updatedWithinDays: 180,
+      });
+
+      const wiqlCall = mockFetch.mock.calls[1];
+      const body = JSON.parse(wiqlCall[1].body);
+      expect(body.query).toContain("[System.ChangedDate] >= @Today - 180");
+    });
+
     it("should handle pagination", async () => {
       mockFetch
         .mockResolvedValueOnce({
