@@ -1,3 +1,9 @@
+## [0.41.0](https://github.com/TestPlanIt/testplanit/compare/v0.40.14...v0.41.0) (2026-07-05)
+
+### Features
+
+* **integrations:** bulk-import external issues into a project with a scoped filter ([#493](https://github.com/TestPlanIt/testplanit/issues/493)) ([06ecab7](https://github.com/TestPlanIt/testplanit/commit/06ecab7d21af1a727a38dda5f800a70deeb4cc40)), closes [#452](https://github.com/TestPlanIt/testplanit/issues/452)
+
 ## [0.40.14](https://github.com/TestPlanIt/testplanit/compare/v0.40.13...v0.40.14) (2026-07-03)
 
 ### Bug Fixes
