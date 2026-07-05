@@ -21,6 +21,7 @@ import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { scoreToConfidence } from "~/lib/utils/similarity";
+import { wordDiffTokens } from "~/lib/utils/wordDiff";
 
 interface CaseDetails {
   id: number;
@@ -76,11 +77,12 @@ interface CaseDetailsResponse {
   caseB: CaseDetails;
 }
 
-/** Which fields differ between the two cases. Symmetric, so both panels use it. */
+/**
+ * Non-string fields that differ between the two cases. String fields (name,
+ * source, folder) get finer word-level highlighting via `WordDiff` instead.
+ * Symmetric, so both panels use the same set.
+ */
 interface CaseDiff {
-  name: boolean;
-  source: boolean;
-  folder: boolean;
   creator: boolean;
   tags: boolean;
   attachments: boolean;
@@ -89,9 +91,6 @@ interface CaseDiff {
 }
 
 const EMPTY_DIFF: CaseDiff = {
-  name: false,
-  source: false,
-  folder: false,
   creator: false,
   tags: false,
   attachments: false,
@@ -126,9 +125,6 @@ function computeDiff(a: CaseDetails, b: CaseDetails): CaseDiff {
   }
 
   return {
-    name: a.name !== b.name,
-    source: (a.source ?? "") !== (b.source ?? ""),
-    folder: (a.folder?.name ?? "") !== (b.folder?.name ?? ""),
     creator: (a.creator?.id ?? "") !== (b.creator?.id ?? ""),
     tags: tagSig(a) !== tagSig(b),
     attachments: a._count.attachments !== b._count.attachments,
@@ -143,6 +139,25 @@ function computeDiff(a: CaseDetails, b: CaseDetails): CaseDiff {
  */
 function Highlight({ on, children }: { on: boolean; children: ReactNode }) {
   return on ? <mark>{children}</mark> : <>{children}</>;
+}
+
+/**
+ * Renders `mine` with the words that differ from `theirs` wrapped in the shared
+ * search `<mark>`, so differences between two very similar strings (e.g.
+ * near-duplicate names) are obvious at a glance. Whitespace is never marked.
+ */
+function WordDiff({ mine, theirs }: { mine: string; theirs: string }) {
+  return (
+    <>
+      {wordDiffTokens(mine, theirs).map((tok, i) =>
+        tok.changed && tok.text.trim() !== "" ? (
+          <mark key={i}>{tok.text}</mark>
+        ) : (
+          <span key={i}>{tok.text}</span>
+        )
+      )}
+    </>
+  );
 }
 
 export interface DuplicateComparisonDialogProps {
@@ -163,6 +178,7 @@ export interface DuplicateComparisonDialogProps {
 
 function CasePanel({
   caseDetails,
+  other,
   diff,
   isSelected,
   onSelect,
@@ -173,6 +189,8 @@ function CasePanel({
   testId,
 }: {
   caseDetails: CaseDetails;
+  /** The opposite case, used to word-diff this panel's string fields. */
+  other: CaseDetails;
   diff: CaseDiff;
   isSelected: boolean;
   onSelect: () => void;
@@ -222,16 +240,15 @@ function CasePanel({
           {caseDetails.id}
         </div>
         <div className="mb-3 flex items-center gap-2">
-          <Highlight on={diff.name}>
-            <CaseDisplay
-              id={caseDetails.id}
-              name={caseDetails.name}
-              source={caseDetails.source as any}
-              automated={caseDetails.automated}
-              hasParameters={(caseDetails as any).hasParameters}
-              size="large"
-            />
-          </Highlight>
+          <CaseDisplay
+            id={caseDetails.id}
+            name={caseDetails.name}
+            source={caseDetails.source as any}
+            automated={caseDetails.automated}
+            hasParameters={(caseDetails as any).hasParameters}
+            size="large"
+            nameNode={<WordDiff mine={caseDetails.name} theirs={other.name} />}
+          />
           <a
             href={`/projects/repository/${projectId}/${caseDetails.id}`}
             target="_blank"
@@ -252,9 +269,7 @@ function CasePanel({
                 {t("sourceLabel")}
                 {": "}
               </span>
-              <Highlight on={diff.source}>
-                <span>{caseDetails.source}</span>
-              </Highlight>
+              <WordDiff mine={caseDetails.source} theirs={other.source ?? ""} />
             </div>
           )}
           <div>
@@ -262,9 +277,14 @@ function CasePanel({
               {tCommon("fields.folder")}
               {": "}
             </span>
-            <Highlight on={diff.folder}>
-              <span>{caseDetails.folder?.name ?? t("noFolder")}</span>
-            </Highlight>
+            {caseDetails.folder?.name ? (
+              <WordDiff
+                mine={caseDetails.folder.name}
+                theirs={other.folder?.name ?? ""}
+              />
+            ) : (
+              <span>{t("noFolder")}</span>
+            )}
           </div>
           <div>
             <span className="font-medium text-muted-foreground">
@@ -618,6 +638,7 @@ export function DuplicateComparisonDialog({
               <div className="grid grid-cols-2 gap-4">
                 <CasePanel
                   caseDetails={data.caseA}
+                  other={data.caseB}
                   diff={diff}
                   isSelected={primaryId === data.caseA.id}
                   onSelect={() => setPrimaryId(data.caseA.id)}
@@ -629,6 +650,7 @@ export function DuplicateComparisonDialog({
                 />
                 <CasePanel
                   caseDetails={data.caseB}
+                  other={data.caseA}
                   diff={diff}
                   isSelected={primaryId === data.caseB.id}
                   onSelect={() => setPrimaryId(data.caseB.id)}

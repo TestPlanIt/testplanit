@@ -1,5 +1,6 @@
 import { Bot, ListChecks, SquareStack, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
@@ -31,6 +32,9 @@ interface TestCaseNameDisplayProps {
   fallbackPrefix?: string;
   className?: ClassValue;
   size?: TestCaseNameDisplaySize;
+  /** Optional custom rendering for the name text (e.g. a word-level diff),
+   *  used instead of the plain name string when provided. */
+  nameNode?: ReactNode;
 }
 
 const iconSizeClasses: Record<TestCaseNameDisplaySize, string> = {
@@ -54,6 +58,7 @@ export function TestCaseNameDisplay({
   fallbackPrefix = "Case",
   className,
   size = "medium",
+  nameNode,
 }: TestCaseNameDisplayProps) {
   const t = useTranslations("common.labels");
   const tParams = useTranslations("parameters");
@@ -128,7 +133,7 @@ export function TestCaseNameDisplay({
           className
         )}
       >
-        {displayName}
+        {nameNode ?? displayName}
       </span>
     </div>
   );

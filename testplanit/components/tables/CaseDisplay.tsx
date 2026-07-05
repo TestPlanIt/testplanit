@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/tooltip";
 import { RepositoryCaseSource } from "~/zenstack/models";
 import { ExternalLink, LinkIcon } from "lucide-react";
-import React from "react";
+import React, { type ReactNode } from "react";
 import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 
@@ -25,6 +25,8 @@ interface Case {
   size?: CaseDisplaySize;
   className?: ClassValue;
   maxLines?: number;
+  /** Optional custom rendering for the name (e.g. a word-level diff). */
+  nameNode?: ReactNode;
 }
 
 export const CaseDisplay: React.FC<Case> = ({
@@ -39,6 +41,7 @@ export const CaseDisplay: React.FC<Case> = ({
   linkTarget,
   className,
   maxLines,
+  nameNode,
 }) => {
   if (!id) return null;
 
@@ -74,6 +77,7 @@ export const CaseDisplay: React.FC<Case> = ({
       showIcon={true}
       className={cn(className, clampClass)}
       size={size}
+      nameNode={nameNode}
     />
   );
 
