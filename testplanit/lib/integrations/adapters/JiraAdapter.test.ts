@@ -1919,3 +1919,213 @@ describe("JiraAdapter", () => {
     });
   });
 });
+
+describe("JiraAdapter Data Center / Server", () => {
+  // Reuses the module-level `mockFetch` + `global.fetch` declared at the
+  // top of this file (Cloud tests). Each test resets it in its own
+  // beforeEach.
+  let adapter: JiraAdapter;
+
+  const dcIssue = {
+    id: "20001",
+    key: "DC-1",
+    self: "https://jira.mycompany.domain/rest/api/2/issue/20001",
+    fields: {
+      summary: "DC Issue",
+      description: {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "DC body" }],
+          },
+        ],
+      },
+      status: { name: "Open" },
+      priority: { name: "High" },
+      issuetype: { id: "10001", name: "Bug", iconUrl: "https://icon.url" },
+      assignee: {
+        name: "alice",
+        displayName: "Alice",
+        emailAddress: "alice@mycompany.domain",
+      },
+      reporter: {
+        name: "bob",
+        displayName: "Bob",
+        emailAddress: "bob@mycompany.domain",
+      },
+      labels: [],
+      created: "2024-01-15T10:00:00.000Z",
+      updated: "2024-01-15T12:00:00.000Z",
+    },
+  };
+
+  beforeEach(() => {
+    mockFetch.mockReset();
+    adapter = new JiraAdapter({
+      provider: "JIRA",
+      deploymentType: "server",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("authenticates against /rest/api/2 with Basic username:password", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice", displayName: "Alice" }),
+    });
+
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    const [url, init] = mockFetch.mock.calls[0] as [string, any];
+    expect(url).toBe("https://jira.mycompany.domain/rest/api/2/myself");
+    expect(init.headers.Authorization).toMatch(/^Basic /);
+    expect(
+      Buffer.from(init.headers.Authorization.slice(6), "base64").toString("utf8")
+    ).toBe("alice:secret");
+  });
+
+  it("auto-detects Data Center via v3 404 + serverInfo and authenticates a PAT as Bearer", async () => {
+    const auto = new JiraAdapter({
+      provider: "JIRA",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    // v3 /myself -> 404 (Data Center has no v3)
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+    });
+    // serverInfo -> Server
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ deploymentType: "Server", version: "10.3.13" }),
+    });
+    // v2 /myself -> ok
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice", displayName: "Alice" }),
+    });
+
+    await auto.authenticate({
+      type: "api_key",
+      apiToken: "pat-123",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    expect(mockFetch.mock.calls[0][0]).toBe(
+      "https://jira.mycompany.domain/rest/api/3/myself"
+    );
+    const v2Call = mockFetch.mock.calls.find(
+      (c: any[]) => c[0] === "https://jira.mycompany.domain/rest/api/2/myself"
+    );
+    expect(v2Call).toBeTruthy();
+    expect((v2Call![1] as any).headers.Authorization).toBe("Bearer pat-123");
+  });
+
+  it("uses /rest/api/2/search (not search/jql) on Data Center", async () => {
+    // auth (v2 /myself)
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice" }),
+    });
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ issues: [dcIssue], total: 1, startAt: 0 }),
+    });
+
+    const res = await adapter.searchIssues({ query: "DC", limit: 1 });
+
+    const searchCall = mockFetch.mock.calls.find(
+      (c: any[]) =>
+        typeof c[0] === "string" && c[0].includes("/rest/api/2/search?")
+    );
+    expect(searchCall).toBeTruthy();
+    expect(searchCall![0]).not.toContain("search/jql");
+    expect(res.issues).toHaveLength(1);
+  });
+
+  it("maps Data Center users by name (not accountId)", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice" }),
+    });
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(dcIssue),
+    });
+
+    const issue = await adapter.getIssue("DC-1");
+    expect(issue.assignee?.id).toBe("alice");
+    expect(issue.reporter?.id).toBe("bob");
+  });
+
+  it("emits reporter and assignee as { name } when creating issues on Data Center", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice" }),
+    });
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    // create response (only id/key/self) -> triggers a getIssue fetch
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          id: "20001",
+          key: "DC-1",
+          self: "https://jira.mycompany.domain/rest/api/2/issue/20001",
+        }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(dcIssue),
+    });
+
+    await adapter.createIssue({
+      title: "DC Issue",
+      projectId: "DC",
+      issueType: "10001",
+      assigneeId: "alice",
+      customFields: { reporter: { accountId: "bob" } },
+    } as any);
+
+    const createCall = mockFetch.mock.calls.find(
+      (c: any[]) =>
+        typeof c[0] === "string" && c[0].endsWith("/rest/api/2/issue")
+    );
+    expect(createCall).toBeTruthy();
+    const body = JSON.parse((createCall![1] as any).body);
+    expect(body.fields.assignee).toEqual({ name: "alice" });
+    expect(body.fields.reporter).toEqual({ name: "bob" });
+  });
+});

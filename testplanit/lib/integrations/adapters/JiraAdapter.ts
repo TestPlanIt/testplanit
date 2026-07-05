@@ -9,6 +9,16 @@ import {
   LinkedIssueRef,
   UpdateIssueData,
 } from "./IssueAdapter";
+import {
+  buildAuthHeader,
+  detectJiraDeployment,
+  JiraApiVersion,
+  JiraAuthCredentials,
+  JiraAuthScheme,
+  JiraDeploymentType,
+  pickUserId,
+  resolveAuthScheme,
+} from "./jiraDeployment";
 
 /**
  * Jira integration adapter implementing OAuth authentication
@@ -23,6 +33,13 @@ export class JiraAdapter extends BaseAdapter {
   private apiEmail?: string;
   private apiToken?: string;
   private baseUrl?: string;
+  private deployment: JiraDeploymentType = "cloud";
+  private apiVersion: JiraApiVersion = "3";
+  private authScheme: JiraAuthScheme = "basic";
+  private authCreds: JiraAuthCredentials = {};
+  private apiKeyAuthActive = false;
+  private deploymentResolved = false;
+  private authSchemeOverride?: string;
 
   /**
    * Translate the priority value passed by the create-issue dialog to the
@@ -90,6 +107,18 @@ export class JiraAdapter extends BaseAdapter {
     if (config.baseUrl) {
       this.baseUrl = config.baseUrl;
     }
+
+    // Optional explicit deployment / auth-scheme overrides (e.g. from
+    // integration settings). When set, auto-detection is skipped so admins
+    // can force Cloud vs Server/Data Center behavior.
+    if (config.deploymentType === "cloud" || config.deploymentType === "server") {
+      this.deployment = config.deploymentType;
+      this.apiVersion = config.deploymentType === "server" ? "2" : "3";
+      this.deploymentResolved = true;
+    }
+    if (config.authScheme === "basic" || config.authScheme === "bearer") {
+      this.authSchemeOverride = config.authScheme;
+    }
   }
 
   getCapabilities(): IssueAdapterCapabilities {
@@ -111,29 +140,90 @@ export class JiraAdapter extends BaseAdapter {
     authData: AuthenticationData
   ): Promise<void> {
     if (authData.type === "api_key") {
-      // Handle API key authentication
-      if (!authData.email || !authData.apiToken || !authData.baseUrl) {
+      // API-key authentication covers three credential shapes:
+      //   - Cloud:             email + apiToken    (Basic email:apiToken, v3)
+      //   - Data Center PAT:   apiToken only       (Bearer <token>, v2)
+      //   - Data Center Basic: username + password (Basic username:password, v2)
+      const baseUrl = authData.baseUrl || this.baseUrl;
+      const hasSecret = !!authData.apiToken || !!authData.password;
+      if (!baseUrl || !hasSecret) {
         throw new Error(
           "API key authentication requires email, apiToken, and baseUrl"
         );
       }
 
+      this.authCreds = {
+        email: authData.email,
+        username: authData.username,
+        apiToken: authData.apiToken,
+        password: authData.password,
+      };
+      this.authScheme = resolveAuthScheme(this.authCreds, this.authSchemeOverride);
+      this.baseUrl = baseUrl;
+      // Keep legacy fields populated for any code that still reads them.
       this.apiEmail = authData.email;
       this.apiToken = authData.apiToken;
-      this.baseUrl = authData.baseUrl;
 
-      // Test the connection
-      const response = await fetch(`${this.baseUrl}/rest/api/3/myself`, {
-        headers: {
-          Authorization: `Basic ${Buffer.from(`${this.apiEmail}:${this.apiToken}`).toString("base64")}`,
-          Accept: "application/json",
-        },
-      });
+      const authHeader = buildAuthHeader(this.authCreds, this.authScheme);
+      const headers = {
+        Authorization: authHeader,
+        Accept: "application/json",
+      };
 
-      if (!response.ok) {
-        throw new Error(
-          `Jira API authentication failed: ${response.statusText}`
+      // Explicit deployment override short-circuits auto-detection.
+      if (this.deploymentResolved) {
+        const response = await fetch(
+          `${this.baseUrl}/rest/api/${this.apiVersion}/myself`,
+          { headers }
         );
+        if (!response.ok) {
+          throw new Error(
+            `Jira API authentication failed: ${response.statusText}`
+          );
+        }
+        this.apiKeyAuthActive = true;
+      } else {
+        // Cloud attempt (v3). A 404 indicates a Data Center instance that
+        // only ships /rest/api/2; detect via serverInfo and retry on v2.
+        const v3Response = await fetch(
+          `${this.baseUrl}/rest/api/3/myself`,
+          { headers }
+        );
+        if (v3Response.ok) {
+          this.deployment = "cloud";
+          this.apiVersion = "3";
+          this.deploymentResolved = true;
+          this.apiKeyAuthActive = true;
+        } else if (v3Response.status === 404) {
+          const detected = await detectJiraDeployment(this.baseUrl!, {
+            Authorization: authHeader,
+          });
+          this.deployment = detected.type;
+          this.apiVersion = detected.apiVersion;
+          this.deploymentResolved = true;
+          if (detected.type === "server") {
+            const v2Response = await fetch(
+              `${this.baseUrl}/rest/api/2/myself`,
+              { headers }
+            );
+            if (!v2Response.ok) {
+              throw new Error(
+                `Jira API authentication failed: ${v2Response.statusText}`
+              );
+            }
+            this.apiKeyAuthActive = true;
+          } else {
+            // serverInfo reports Cloud but v3 /myself 404'd — surface the
+            // original failure rather than silently switching versions.
+            throw new Error(
+              `Jira API authentication failed: ${v3Response.statusText}`
+            );
+          }
+        } else {
+          throw new Error(
+            `Jira API authentication failed: ${v3Response.statusText}`
+          );
+        }
       }
     } else if (authData.type === "oauth") {
       // OAuth authentication
@@ -166,32 +256,20 @@ export class JiraAdapter extends BaseAdapter {
   async getProjects(): Promise<
     Array<{ id: string; key: string; name: string }>
   > {
-    if (this.apiEmail && this.apiToken && this.baseUrl) {
-      // API key authentication
-      const response = await fetch(
-        `${this.baseUrl}/rest/api/3/project/search`,
-        {
-          headers: {
-            Authorization: `Basic ${Buffer.from(`${this.apiEmail}:${this.apiToken}`).toString("base64")}`,
-            Accept: "application/json",
-          },
-        }
+    if (this.apiKeyAuthActive && this.baseUrl) {
+      // API key authentication (Cloud or Data Center)
+      const data = await this.makeRequest<any>(
+        this.buildUrl(`/rest/api/${this.apiVersion}/project/search`)
       );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch projects: ${response.statusText}`);
-      }
-
-      const data = await response.json();
       return (data.values || []).map((project: any) => ({
         id: project.id,
         key: project.key,
         name: project.name,
       }));
     } else if (this.authData?.accessToken && this.cloudId) {
-      // OAuth authentication
+      // OAuth authentication (Cloud-only gateway)
       const response = await this.makeRequest<any>(
-        `https://api.atlassian.com/ex/jira/${this.cloudId}/rest/api/3/project/search`
+        `https://api.atlassian.com/ex/jira/${this.cloudId}/rest/api/${this.apiVersion}/project/search`
       );
 
       return (response.values || []).map((project: any) => ({
@@ -326,7 +404,7 @@ export class JiraAdapter extends BaseAdapter {
 
   protected buildUrl(path: string): string {
     // For API key auth, use the base URL directly
-    if (this.apiEmail && this.apiToken && this.baseUrl) {
+    if (this.apiKeyAuthActive && this.baseUrl) {
       return `${this.baseUrl}${path}`;
     }
 
@@ -345,18 +423,16 @@ export class JiraAdapter extends BaseAdapter {
     options: RequestInit = {}
   ): Promise<T> {
     // If using API key auth, bypass the base class and handle it directly
-    if (this.apiEmail && this.apiToken) {
+    if (this.apiKeyAuthActive) {
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
         Accept: "application/json",
         ...((options.headers as any) || {}),
       };
 
-      // Jira uses Basic auth with email:apiToken
-      const credentials = Buffer.from(
-        `${this.apiEmail}:${this.apiToken}`
-      ).toString("base64");
-      headers["Authorization"] = `Basic ${credentials}`;
+      // Cloud: Basic email:apiToken. Data Center PAT: Bearer <token>.
+      // Data Center Basic: Basic username:password.
+      headers["Authorization"] = buildAuthHeader(this.authCreds, this.authScheme);
 
       const response = await fetch(url, {
         ...options,
@@ -440,8 +516,16 @@ export class JiraAdapter extends BaseAdapter {
         description: descriptionField,
         issuetype: { id: data.issueType || "10001" }, // Default to Task
         priority: JiraAdapter.mapPriorityField(data.priority),
-        assignee: data.assigneeId ? { id: data.assigneeId } : undefined,
-        reporter: reporter || undefined, // Reporter is a system field, not custom
+        assignee: data.assigneeId
+          ? this.deployment === "server"
+            ? { name: data.assigneeId }
+            : { id: data.assigneeId }
+          : undefined,
+        reporter: reporter
+          ? this.deployment === "server"
+            ? { name: (reporter as any).accountId ?? (reporter as any).name }
+            : reporter // Reporter is a system field, not custom
+          : undefined,
         labels: data.labels || [],
         ...otherCustomFields,
       },
@@ -452,7 +536,7 @@ export class JiraAdapter extends BaseAdapter {
 
     try {
       const response = await this.makeRequest<any>(
-        this.buildUrl("/rest/api/3/issue"),
+        this.buildUrl(`/rest/api/${this.apiVersion}/issue`),
         {
           method: "POST",
           body: JSON.stringify(jiraPayload),
@@ -532,7 +616,10 @@ export class JiraAdapter extends BaseAdapter {
     }
 
     if (data.assigneeId !== undefined) {
-      updatePayload.fields.assignee = { id: data.assigneeId };
+      updatePayload.fields.assignee =
+        this.deployment === "server"
+          ? { name: data.assigneeId }
+          : { id: data.assigneeId };
     }
 
     if (data.labels !== undefined) {
@@ -543,7 +630,7 @@ export class JiraAdapter extends BaseAdapter {
       Object.assign(updatePayload.fields, data.customFields);
     }
 
-    await this.makeRequest<any>(this.buildUrl(`/rest/api/3/issue/${issueId}`), {
+    await this.makeRequest<any>(this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}`), {
       method: "PUT",
       body: JSON.stringify(updatePayload),
     });
@@ -565,7 +652,7 @@ export class JiraAdapter extends BaseAdapter {
     });
 
     const response = await this.makeRequest<any>(
-      this.buildUrl(`/rest/api/3/issue/${issueId}?${params.toString()}`)
+      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}?${params.toString()}`)
     );
 
     return this.mapJiraIssue(response);
@@ -578,7 +665,7 @@ export class JiraAdapter extends BaseAdapter {
       });
       const encodedId = encodeURIComponent(issueId);
       const response = await this.makeRequest<any>(
-        this.buildUrl(`/rest/api/3/issue/${encodedId}?${params.toString()}`)
+        this.buildUrl(`/rest/api/${this.apiVersion}/issue/${encodedId}?${params.toString()}`)
       );
       return this.mapLinkedIssues(response);
     } catch (error) {
@@ -597,7 +684,7 @@ export class JiraAdapter extends BaseAdapter {
     try {
       const encodedId = encodeURIComponent(issueId);
       const response = await this.makeRequest<any>(
-        this.buildUrl(`/rest/api/3/issue/${encodedId}/comment`)
+        this.buildUrl(`/rest/api/${this.apiVersion}/issue/${encodedId}/comment`)
       );
       return this.mapJiraComments(response);
     } catch (error) {
@@ -686,9 +773,13 @@ export class JiraAdapter extends BaseAdapter {
       params.set("nextPageToken", options.pageToken);
     }
 
-    const searchUrl = this.buildUrl(
-      `/rest/api/3/search/jql?${params.toString()}`
-    );
+    // Cloud exposes the enhanced JQL endpoint /search/jql; Server/Data
+    // Center only ships the classic /search endpoint (same response shape).
+    const searchPath =
+      this.deployment === "server"
+        ? `/rest/api/2/search?${params.toString()}`
+        : `/rest/api/3/search/jql?${params.toString()}`;
+    const searchUrl = this.buildUrl(searchPath);
 
     const response = await this.makeRequest<any>(searchUrl);
 
@@ -722,7 +813,7 @@ export class JiraAdapter extends BaseAdapter {
 
   protected async addComment(issueId: string, comment: string): Promise<void> {
     await this.makeRequest(
-      this.buildUrl(`/rest/api/3/issue/${issueId}/comment`),
+      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}/comment`),
       {
         method: "POST",
         body: JSON.stringify({
@@ -752,7 +843,7 @@ export class JiraAdapter extends BaseAdapter {
   ): Promise<void> {
     // Get available transitions
     const transitions = await this.makeRequest<any>(
-      this.buildUrl(`/rest/api/3/issue/${issueId}/transitions`)
+      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}/transitions`)
     );
 
     // Find the transition that leads to the target status
@@ -766,7 +857,7 @@ export class JiraAdapter extends BaseAdapter {
 
     // Execute the transition
     await this.makeRequest(
-      this.buildUrl(`/rest/api/3/issue/${issueId}/transitions`),
+      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}/transitions`),
       {
         method: "POST",
         body: JSON.stringify({
@@ -817,14 +908,14 @@ export class JiraAdapter extends BaseAdapter {
         : undefined,
       assignee: fields.assignee
         ? {
-            id: fields.assignee.accountId,
+            id: pickUserId(fields.assignee, this.deployment) ?? "",
             name: fields.assignee.displayName,
             email: fields.assignee.emailAddress,
           }
         : undefined,
       reporter: fields.reporter
         ? {
-            id: fields.reporter.accountId,
+            id: pickUserId(fields.reporter, this.deployment) ?? "",
             name: fields.reporter.displayName,
             email: fields.reporter.emailAddress,
           }
@@ -1145,7 +1236,7 @@ export class JiraAdapter extends BaseAdapter {
   ): Promise<Array<{ id: string; name: string }>> {
     try {
       // First, get the project details to get available issue types
-      const projectUrl = this.buildUrl(`/rest/api/3/project/${projectKey}`);
+      const projectUrl = this.buildUrl(`/rest/api/${this.apiVersion}/project/${projectKey}`);
       const project = await this.makeRequest<any>(projectUrl);
 
       // Extract issue types from the project
@@ -1159,7 +1250,7 @@ export class JiraAdapter extends BaseAdapter {
       console.error("Failed to fetch issue types:", error);
       // If that fails, try to get all issue types and filter by project
       try {
-        const allTypesUrl = this.buildUrl(`/rest/api/3/issuetype`);
+        const allTypesUrl = this.buildUrl(`/rest/api/${this.apiVersion}/issuetype`);
         const allTypes = await this.makeRequest<any[]>(allTypesUrl);
 
         // For now, return all non-subtask issue types as a fallback
@@ -1183,7 +1274,7 @@ export class JiraAdapter extends BaseAdapter {
     try {
       // Get create issue metadata for the specific issue type
       const url = this.buildUrl(
-        `/rest/api/3/issue/createmeta?projectKeys=${projectKey}&issuetypeIds=${issueTypeId}&expand=projects.issuetypes.fields`
+        `/rest/api/${this.apiVersion}/issue/createmeta?projectKeys=${projectKey}&issuetypeIds=${issueTypeId}&expand=projects.issuetypes.fields`
       );
 
       const metadata = await this.makeRequest<any>(url);
@@ -1716,7 +1807,7 @@ export class JiraAdapter extends BaseAdapter {
         try {
           // Try the user/search endpoint with email
           const emailSearchUrl = this.buildUrl(
-            `/rest/api/3/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`
+            `/rest/api/${this.apiVersion}/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`
           );
           // console.log(`[JiraAdapter.searchUsers] Trying email search: ${emailSearchUrl}`);
           const emailUsers = await this.makeRequest<any[]>(emailSearchUrl);
@@ -1724,7 +1815,7 @@ export class JiraAdapter extends BaseAdapter {
 
           // Also try searching by accountId with the email (sometimes works)
           const accountSearchUrl = this.buildUrl(
-            `/rest/api/3/user/search?accountId=${encodeURIComponent(query)}`
+            `/rest/api/${this.apiVersion}/user/search?accountId=${encodeURIComponent(query)}`
           );
           // console.log(`[JiraAdapter.searchUsers] Trying account search with email: ${accountSearchUrl}`);
           try {
@@ -1744,10 +1835,10 @@ export class JiraAdapter extends BaseAdapter {
       let endpoint: string;
       if (projectKey && !isEmail) {
         // Search assignable users for the project
-        endpoint = `/rest/api/3/user/assignable/search?project=${projectKey}&query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
+        endpoint = `/rest/api/${this.apiVersion}/user/assignable/search?project=${projectKey}&query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
       } else {
         // General user search
-        endpoint = `/rest/api/3/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
+        endpoint = `/rest/api/${this.apiVersion}/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
       }
 
       // console.log(`[JiraAdapter.searchUsers] Using general endpoint: ${endpoint}`);
@@ -1755,11 +1846,13 @@ export class JiraAdapter extends BaseAdapter {
       const generalUsers = await this.makeRequest<any[]>(url);
       allUsers.push(...generalUsers);
 
-      // Deduplicate users by accountId
+      // Deduplicate users by their deployment-specific identifier
+      // (accountId on Cloud, name/key on Server/Data Center).
       const uniqueUsers = new Map<string, any>();
       allUsers.forEach((user) => {
-        if (user.accountId && !uniqueUsers.has(user.accountId)) {
-          uniqueUsers.set(user.accountId, user);
+        const uid = pickUserId(user, this.deployment);
+        if (uid && !uniqueUsers.has(uid)) {
+          uniqueUsers.set(uid, user);
         }
       });
 
@@ -1768,7 +1861,7 @@ export class JiraAdapter extends BaseAdapter {
 
       const mappedUsers = users.map((user: any) => {
         const mapped = {
-          accountId: user.accountId,
+          accountId: pickUserId(user, this.deployment) ?? "",
           displayName: user.displayName,
           emailAddress: user.emailAddress,
           avatarUrls: user.avatarUrls,
@@ -1802,13 +1895,13 @@ export class JiraAdapter extends BaseAdapter {
   } | null> {
     try {
       // console.log(`[JiraAdapter.getCurrentUser] Getting current authenticated user`);
-      const url = this.buildUrl("/rest/api/3/myself");
+      const url = this.buildUrl(`/rest/api/${this.apiVersion}/myself`);
       const user = await this.makeRequest<any>(url);
 
       // console.log(`[JiraAdapter.getCurrentUser] Current user: ${user.displayName} (${user.accountId}) - Email: ${user.emailAddress || 'NOT AVAILABLE'}`);
 
       return {
-        accountId: user.accountId,
+        accountId: pickUserId(user, this.deployment) ?? "",
         displayName: user.displayName,
         emailAddress: user.emailAddress,
       };

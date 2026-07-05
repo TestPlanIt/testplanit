@@ -5,6 +5,11 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { authOptions } from "~/server/auth";
+import {
+  buildAuthHeader,
+  detectJiraDeployment,
+  resolveAuthScheme,
+} from "@/lib/integrations/adapters/jiraDeployment";
 
 interface TestConnectionRequest {
   integrationId?: number;
@@ -131,11 +136,17 @@ async function testJiraConnection(
   settings: Record<string, string>,
   authType?: string
 ): Promise<TestConnectionResult> {
-  const { email, apiToken } = credentials;
-  const { baseUrl } = settings;
+  const { email, apiToken, username, password } = credentials;
+  const { baseUrl, authScheme, deploymentType } = settings;
 
-  if (authType === "API_KEY" || (email && apiToken)) {
-    if (!email || !apiToken || !baseUrl) {
+  // API-key authentication covers Cloud (email + apiToken via Basic, v3),
+  // Data Center PAT (apiToken only via Bearer, v2) and Data Center Basic
+  // (username + password via Basic, v2). OAuth credentials do not set
+  // apiToken/password, so they fall through to the fallback error below
+  // (OAuth is handled by checkOAuthClientConfig before this function).
+  if (authType === "API_KEY" || apiToken || password) {
+    const hasSecret = !!apiToken || !!password;
+    if (!baseUrl || !hasSecret || (!email && !username && !apiToken)) {
       return {
         success: false,
         error:
@@ -143,10 +154,54 @@ async function testJiraConnection(
       };
     }
 
-    const auth = `Basic ${Buffer.from(`${email}:${apiToken}`).toString("base64")}`;
-    const headers = { Authorization: auth, Accept: "application/json" };
+    const creds = { email, username, apiToken, password };
+    const scheme = resolveAuthScheme(creds, authScheme);
+    const authHeaderValue = buildAuthHeader(creds, scheme);
+    const headers = {
+      Authorization: authHeaderValue,
+      Accept: "application/json",
+    };
 
-    const connection = await probe(`${baseUrl}/rest/api/3/myself`, { headers });
+    // Resolve the REST API version. Cloud ships /rest/api/3; Server/Data
+    // Center only ships /rest/api/2. Probe v3 /myself first — a 404 means
+    // we're talking to Data Center, so confirm via /serverInfo and switch
+    // to v2. An explicit settings.deploymentType override skips detection.
+    let apiVersion: "3" | "2" = "3";
+    let deployment: "cloud" | "server" = "cloud";
+    if (deploymentType === "server") {
+      apiVersion = "2";
+      deployment = "server";
+    } else if (deploymentType === "cloud") {
+      apiVersion = "3";
+      deployment = "cloud";
+    }
+
+    let connection: CapabilityProbe;
+    if (deployment === "server") {
+      connection = await probe(`${baseUrl}/rest/api/2/myself`, { headers });
+    } else {
+      const v3Probe = await probe(`${baseUrl}/rest/api/3/myself`, { headers });
+      if (v3Probe.ok) {
+        connection = v3Probe;
+      } else if (v3Probe.status === 404) {
+        // Data Center only exposes /rest/api/2 — confirm via serverInfo.
+        const detected = await detectJiraDeployment(baseUrl, {
+          Authorization: authHeaderValue,
+        });
+        deployment = detected.type;
+        apiVersion = detected.apiVersion;
+        if (detected.type === "server") {
+          connection = await probe(`${baseUrl}/rest/api/2/myself`, {
+            headers,
+          });
+        } else {
+          connection = v3Probe;
+        }
+      } else {
+        connection = v3Probe;
+      }
+    }
+
     if (!connection.ok) {
       return {
         success: false,
@@ -155,33 +210,36 @@ async function testJiraConnection(
       };
     }
 
-    // Search scope probe — issue lookup uses Jira's enhanced JQL search.
-    // Calls `/rest/api/3/search/jql` (the JiraAdapter's production
-    // endpoint, post the Atlassian deprecation of `/rest/api/3/search`
-    // — see Atlassian changelog CHANGE-2046). The new endpoint rejects
-    // unbounded JQL with HTTP 400, so we use a minimal bounded clause
-    // (`created >= -1d`) — same shape JiraAdapter uses for incremental
-    // syncs, just a smaller window. The probe doesn't care whether
-    // any issues match; a 200 with `issues: []` still proves the
-    // credential has search scope. A 403 here surfaces a missing
-    // "browse projects" / search permission before TestPlanIt would
-    // otherwise hit it on first hover/sync.
+    // Search scope probe — issue lookup uses Jira's JQL search. Cloud
+    // uses the enhanced `/search/jql` endpoint (the JiraAdapter's
+    // production endpoint, post the Atlassian deprecation of
+    // `/rest/api/3/search` — see Atlassian changelog CHANGE-2046);
+    // Server/Data Center only ships the classic `/search` endpoint
+    // (same response shape). Both reject unbounded JQL with HTTP 400,
+    // so we use a minimal bounded clause (`created >= -1d`) — same
+    // shape JiraAdapter uses for incremental syncs, just a smaller
+    // window. A 200 with `issues: []` still proves search scope; a 403
+    // surfaces a missing "browse projects" permission before TestPlanIt
+    // would otherwise hit it on first hover/sync.
     const searchJqlParams = new URLSearchParams({
       jql: "created >= -1d ORDER BY created DESC",
       maxResults: "1",
       fields: "summary",
     });
-    const searchIssues = await probe(
-      `${baseUrl}/rest/api/3/search/jql?${searchJqlParams.toString()}`,
-      { headers }
-    );
+    const searchEndpoint =
+      deployment === "server"
+        ? `/rest/api/2/search?${searchJqlParams.toString()}`
+        : `/rest/api/3/search/jql?${searchJqlParams.toString()}`;
+    const searchIssues = await probe(`${baseUrl}${searchEndpoint}`, {
+      headers,
+    });
 
     // Read-issue scope probe — Jira's `/issue/picker` endpoint is the
     // lightest read-permission check that doesn't require knowing a
     // real issue key, while still failing on credentials without
-    // issue-read scope.
+    // issue-read scope. It exists on both v2 and v3.
     const readIssue = await probe(
-      `${baseUrl}/rest/api/3/issue/picker?currentJQL=&showSubTasks=false&showSubTaskParent=false`,
+      `${baseUrl}/rest/api/${apiVersion}/issue/picker?currentJQL=&showSubTasks=false&showSubTaskParent=false`,
       { headers }
     );
 

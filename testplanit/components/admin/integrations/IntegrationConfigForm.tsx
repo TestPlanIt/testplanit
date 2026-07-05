@@ -94,7 +94,11 @@ const authTypeFields: Record<string, FieldConfig[]> = {
       placeholder: "config.emailPlaceholder",
       help: "config.emailHelp",
       isCredential: true,
-      required: true,
+      // Optional: Jira Cloud pairs an email with an API token, but Jira
+      // Server / Data Center authenticates with a Personal Access Token
+      // (sent as Bearer) or a username + password (Basic), neither of
+      // which needs an email here. The adapter auto-detects the scheme.
+      required: false,
     },
     {
       name: "apiToken",
