@@ -39,7 +39,7 @@ Issues are listed in a sortable, filterable table. Use the **Filter issues...** 
 The Name, Title, Status, Priority, Integration, and Last Synced columns are sortable. The default sort is by name, ascending.
 
 :::info
-Issues are **not** created from this page. They appear in TestPlanIt automatically when you link an external issue to a test case, run, or session, or when an inbound webhook imports one. This administration page manages issues that already exist.
+Issues are **not** created from this page. They appear in TestPlanIt automatically when you link an external issue to a test case, run, or session, when an inbound webhook imports one, or when a project administrator [bulk-imports](projects/settings/integrations.md#importing-issues-in-bulk) them from a linked external project. This administration page manages issues that already exist.
 :::
 
 ## Actions
