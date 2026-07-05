@@ -11,8 +11,12 @@ describe("stripEphemeralHash", () => {
   });
 
   it("collapses names that differ only by the hash to one value", () => {
-    const a = stripEphemeralHash("testLoginSuccess[0](org.testng.TestRunner@41738d)");
-    const b = stripEphemeralHash("testLoginSuccess[0](org.testng.TestRunner@59df7228)");
+    const a = stripEphemeralHash(
+      "testLoginSuccess[0](org.testng.TestRunner@41738d)"
+    );
+    const b = stripEphemeralHash(
+      "testLoginSuccess[0](org.testng.TestRunner@59df7228)"
+    );
     expect(a).toBe(b);
     expect(a).toBe("testLoginSuccess[0]");
   });
