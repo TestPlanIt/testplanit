@@ -355,6 +355,14 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       conditions.push(`(${labelConditions.join(" OR ")})`);
     }
 
+    // Bulk-import recency window — WIQL supports the `@Today - N` macro for a
+    // relative day offset on the changed-date field.
+    if (options.updatedWithinDays && options.updatedWithinDays > 0) {
+      conditions.push(
+        `[System.ChangedDate] >= @Today - ${Math.floor(options.updatedWithinDays)}`
+      );
+    }
+
     const whereClause =
       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     const wiql = `SELECT [System.Id] FROM WorkItems ${whereClause} ORDER BY [System.CreatedDate] DESC`;

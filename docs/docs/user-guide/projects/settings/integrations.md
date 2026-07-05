@@ -45,11 +45,37 @@ Once an integration is active, a settings card appears with a **Linked External 
 - **Add Projects** — link one or more external projects (for example Jira projects or GitHub repositories) so their issues can be referenced in TestPlanIt.
 - **Set as Default** — mark one linked project as the default, pre-selected when creating new issues from TestPlanIt.
 - **Remove Project** — stop syncing issues from a linked project. Previously synced issues are not deleted.
+- **Import Issues** — bulk-import a scoped set of a linked project's issues into TestPlanIt (see [Importing issues in bulk](#importing-issues-in-bulk)).
 - **Default Issue Type** *(Jira only)* — choose the issue type used by default for each linked project.
 - **Save Settings** — persist the integration's per-project configuration.
 - **Authorize** — for OAuth providers, complete authorization if the connection needs it.
 
 Simple URL integrations are link-only: they show an informational note and have no linked-projects or save controls.
+
+## Importing issues in bulk
+
+Linking and inbound webhooks bring issues into TestPlanIt one at a time. When you want a **body** of a tracker's issues available in your project — to browse, report on, or link quickly — use **Import Issues** on a linked external project instead of linking each one by hand.
+
+Each linked external project row has an **Import Issues** button (the download icon). It opens a dialog where you scope what to pull:
+
+- **Updated within** — only import issues updated in the last 30, 90, 180, or 365 days (default 90). This keeps the import to recently-active issues rather than a tracker's entire history.
+- **Maximum to import** — a hard cap on how many issues this run creates (default 200, maximum 1000). When more issues match than the cap allows, only the most recently updated ones up to the cap are imported.
+
+Click **Preview** first to see roughly how many issues match your filter (and whether the cap will trim the result), then **Import** to run it in the background. The linked project's status badge shows **Syncing** while the import runs and **Synced** when it finishes — the same badge the [re-sync](../../integrations.md#re-syncing-linked-issues) uses.
+
+Imported issues are created **in this project** and behave like any other linked issue:
+
+- They are **de-duplicated** against issues already in TestPlanIt, so re-running an import never creates duplicates.
+- They are kept up to date by the existing status sync and inbound webhooks.
+- They are removed only by **manual** delete — there is no automatic pruning. Hide ones you don't need with the filters on the [Issues list](../issues.md).
+
+:::note
+Which filtering happens at the tracker depends on the provider. Jira, GitHub, and Azure DevOps apply the recency window in the tracker query; other providers fetch pages and apply the window afterward, so an import there may scan more issues before it reaches the cap. **Simple URL** integrations have no tracker API and do not offer import.
+:::
+
+:::info
+Only system administrators and project administrators can import issues — the same audience that can manage the project's integrations.
+:::
 
 ## Related pages
 
