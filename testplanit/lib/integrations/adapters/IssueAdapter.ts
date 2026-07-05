@@ -23,7 +23,23 @@ export interface IssueSearchOptions {
   labels?: string[];
   limit?: number;
   offset?: number;
+  /**
+   * Opaque pagination cursor for trackers that page by token rather than
+   * offset — notably Jira Cloud's `/search/jql`, which dropped `startAt`.
+   * Pass back the `nextPageToken` returned by the previous page. Offset-based
+   * adapters ignore this; the orchestrator passes both and lets each adapter
+   * use whichever it supports.
+   */
+  pageToken?: string;
   fullSync?: boolean; // When true, sync all issues; when false, limit to recent items
+  /**
+   * Recency window for a bulk import: only return issues updated within the
+   * last N days. Adapters that can express it push it into the tracker query
+   * (Jira JQL, GitHub search qualifier, Azure WIQL); adapters that cannot
+   * ignore it, and the import orchestrator applies the same cutoff to each
+   * returned page as a client-side fallback. See SyncService.performProjectImport.
+   */
+  updatedWithinDays?: number;
 }
 
 export interface IssueData {
@@ -162,6 +178,11 @@ export interface IssueAdapter {
     issues: IssueData[];
     total: number;
     hasMore: boolean;
+    /**
+     * Cursor for the next page, for token-paginated trackers (Jira Cloud).
+     * Absent on offset-paginated adapters — callers fall back to `offset`.
+     */
+    nextPageToken?: string;
   }>;
 
   /**

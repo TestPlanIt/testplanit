@@ -1266,6 +1266,22 @@ describe("GitHubAdapter", () => {
       expect(url).toContain("label"); // Should contain label filter
     });
 
+    it("should scope by recency window (updatedWithinDays)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockSearchResponse),
+      });
+
+      await adapter.searchIssues({
+        updatedWithinDays: 30,
+      });
+
+      const url = mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0];
+      const decoded = decodeURIComponent(url.replace(/\+/g, " "));
+      // GitHub range qualifier: updated:>=YYYY-MM-DD
+      expect(decoded).toMatch(/updated:>=\d{4}-\d{2}-\d{2}/);
+    });
+
     it("should handle pagination", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

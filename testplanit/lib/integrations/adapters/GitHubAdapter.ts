@@ -407,6 +407,17 @@ export class GitHubAdapter extends BaseAdapter {
       searchQuery.push(options.labels.map((l) => `label:"${l}"`).join(" "));
     }
 
+    // Bulk-import recency window — GitHub's search API takes an ISO date
+    // (YYYY-MM-DD) with the `updated:>=` range qualifier.
+    if (options.updatedWithinDays && options.updatedWithinDays > 0) {
+      const cutoff = new Date(
+        Date.now() - Math.floor(options.updatedWithinDays) * 86_400_000
+      )
+        .toISOString()
+        .slice(0, 10);
+      searchQuery.push(`updated:>=${cutoff}`);
+    }
+
     const params = new URLSearchParams({
       q: searchQuery.join(" "),
       per_page: (options.limit || 30).toString(),

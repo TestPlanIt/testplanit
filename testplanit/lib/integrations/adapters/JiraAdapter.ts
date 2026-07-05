@@ -616,6 +616,7 @@ export class JiraAdapter extends BaseAdapter {
     issues: IssueData[];
     total: number;
     hasMore: boolean;
+    nextPageToken?: string;
   }> {
     const jql: string[] = [];
 
@@ -652,6 +653,12 @@ export class JiraAdapter extends BaseAdapter {
       jql.push(`labels IN (${options.labels.map((l) => `"${l}"`).join(", ")})`);
     }
 
+    // Bulk-import recency window — restrict to issues touched within the last
+    // N days. Jira's relative-date syntax (`-Nd`) keeps the query bounded.
+    if (options.updatedWithinDays && options.updatedWithinDays > 0) {
+      jql.push(`updated >= -${Math.floor(options.updatedWithinDays)}d`);
+    }
+
     // Ensure the query is always bounded - Jira rejects unbounded queries
     let jqlString: string;
     if (jql.length > 0) {
@@ -664,14 +671,20 @@ export class JiraAdapter extends BaseAdapter {
       // Automatic/incremental sync - limit to last 30 days
       jqlString = "created >= -30d ORDER BY created DESC";
     }
+    // Jira Cloud's enhanced search (`/rest/api/3/search/jql`) paginates by an
+    // opaque `nextPageToken`, NOT `startAt`, and no longer returns a `total`.
+    // (See Atlassian CHANGE-2046.) Passing `startAt` is silently ignored and
+    // reading `response.total`/`response.startAt` yields `undefined` — which is
+    // exactly why the pre-migration parsing reported 0 results / hasMore=false.
     const params = new URLSearchParams({
       jql: jqlString,
-      startAt: (options.offset || 0).toString(),
       maxResults: (options.limit || 50).toString(),
       fields:
         "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated",
-      expand: "names,schema",
     });
+    if (options.pageToken) {
+      params.set("nextPageToken", options.pageToken);
+    }
 
     const searchUrl = this.buildUrl(
       `/rest/api/3/search/jql?${params.toString()}`
@@ -679,10 +692,31 @@ export class JiraAdapter extends BaseAdapter {
 
     const response = await this.makeRequest<any>(searchUrl);
 
+    const issues = (response.issues || []).map((issue: any) =>
+      this.mapJiraIssue(issue)
+    );
+    const nextPageToken: string | undefined = response.nextPageToken;
+    // Prefer the cursor / isLast flag the new endpoint provides; fall back to
+    // the legacy total+startAt math only if the response still carries them
+    // (older Server/DC instances), then to "a full page implies more".
+    const hasMore =
+      typeof response.isLast === "boolean"
+        ? !response.isLast
+        : nextPageToken
+          ? true
+          : typeof response.total === "number"
+            ? (response.startAt || 0) + issues.length < response.total
+            : issues.length >= (options.limit || 50);
+
     return {
-      issues: response.issues.map((issue: any) => this.mapJiraIssue(issue)),
-      total: response.total,
-      hasMore: response.startAt + response.issues.length < response.total,
+      issues,
+      // The new endpoint omits `total`; report the page count so callers that
+      // read `total` get an honest number instead of NaN/undefined. Callers
+      // needing an exact match count paginate via `nextPageToken`.
+      total:
+        typeof response.total === "number" ? response.total : issues.length,
+      hasMore,
+      nextPageToken,
     };
   }
 

@@ -20,7 +20,14 @@ import {
 } from "@/components/ui/tooltip";
 import { Integration, ProjectIntegration } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Loader2, Save, Star, Trash2 } from "lucide-react";
+import {
+  AlertCircle,
+  Download,
+  Loader2,
+  Save,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -34,6 +41,7 @@ import {
 import { useRouter } from "~/lib/navigation";
 
 import { removeIntegrationProjectMapping } from "~/app/actions/project-integration";
+import { ImportIssuesDialog } from "./import-issues-dialog";
 
 interface ProjectIntegrationSettingsProps {
   projectIntegration: ProjectIntegration;
@@ -76,18 +84,38 @@ export function ProjectIntegrationSettings({
     null
   );
   const [isAddingProjects, setIsAddingProjects] = useState(false);
+  const [importTarget, setImportTarget] = useState<{
+    id: string;
+    name: string;
+    key: string;
+  } | null>(null);
 
   const { mutateAsync: updateProjectIntegration } =
     useUpdateProjectIntegration();
 
-  const { data: integrationProjects, isLoading: isLoadingLinkedProjects } =
-    useFindManyIntegrationProject({
+  const {
+    data: integrationProjects,
+    isLoading: isLoadingLinkedProjects,
+    refetch: refetchIntegrationProjects,
+  } = useFindManyIntegrationProject(
+    {
       where: {
         projectIntegrationId: projectIntegration.id,
         isActive: true,
       },
       orderBy: [{ isDefault: "desc" }, { externalProjectName: "asc" }],
-    });
+    },
+    {
+      // While a row is mid-import (or re-sync) its syncStatus is "syncing";
+      // poll so the badge advances to completed/error without a manual reload.
+      refetchInterval: (query: any) => {
+        const rows = query?.state?.data as
+          | Array<{ syncStatus?: string | null }>
+          | undefined;
+        return rows?.some((r) => r.syncStatus === "syncing") ? 3000 : false;
+      },
+    }
+  );
 
   const { mutateAsync: upsertIntegrationProject } =
     useUpsertIntegrationProject();
@@ -456,6 +484,31 @@ export function ProjectIntegrationSettings({
                           </Tooltip>
                         )}
 
+                        {/* Import issues button */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7 shrink-0"
+                              disabled={ip.syncStatus === "syncing"}
+                              onClick={() =>
+                                setImportTarget({
+                                  id: ip.id,
+                                  name: ip.externalProjectName,
+                                  key: ip.externalProjectKey,
+                                })
+                              }
+                              aria-label={t("integration.importIssues")}
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {t("integration.importIssues")}
+                          </TooltipContent>
+                        </Tooltip>
+
                         {/* Remove button */}
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -709,6 +762,18 @@ export function ProjectIntegrationSettings({
             </Button>
           </div>
         )}
+
+        <ImportIssuesDialog
+          integrationId={integration.id}
+          target={importTarget}
+          open={importTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) setImportTarget(null);
+          }}
+          onStarted={() => {
+            void refetchIntegrationProjects();
+          }}
+        />
       </CardContent>
     </Card>
   );

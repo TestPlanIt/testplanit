@@ -1401,27 +1401,47 @@ describe("JiraAdapter", () => {
       expect(searchCall[0]).toContain("key");
     });
 
-    it("should handle pagination", async () => {
+    it("paginates via nextPageToken (Jira Cloud /search/jql)", async () => {
+      // The new endpoint returns a cursor and no `total`.
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
             issues: [mockJiraIssue],
-            total: 100,
-            startAt: 20,
+            nextPageToken: "TOKEN-2",
           }),
       });
 
       const result = await adapter.searchIssues({
         limit: 50,
-        offset: 20,
+        pageToken: "TOKEN-1",
       });
 
       expect(result.hasMore).toBe(true);
+      expect(result.nextPageToken).toBe("TOKEN-2");
 
       const searchCall = mockFetch.mock.calls[1];
-      expect(searchCall[0]).toContain("startAt=20");
+      expect(searchCall[0]).toContain("nextPageToken=TOKEN-1");
       expect(searchCall[0]).toContain("maxResults=50");
+      // startAt must no longer be sent — the new endpoint ignores it.
+      expect(searchCall[0]).not.toContain("startAt=");
+    });
+
+    it("reports the page count as total when the endpoint omits total", async () => {
+      // /search/jql on the last page: issues, no token, no total.
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [mockJiraIssue, mockJiraIssue],
+          }),
+      });
+
+      const result = await adapter.searchIssues({ projectId: "TEST" });
+
+      expect(result.total).toBe(2);
+      expect(result.hasMore).toBe(false);
+      expect(result.nextPageToken).toBeUndefined();
     });
 
     it("should filter by status", async () => {
@@ -1483,6 +1503,27 @@ describe("JiraAdapter", () => {
       const searchCall = mockFetch.mock.calls[1];
       const decodedUrl = decodeURIComponent(searchCall[0].replace(/\+/g, " "));
       expect(decodedUrl).toContain("labels IN");
+    });
+
+    it("should scope by recency window (updatedWithinDays)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [],
+            total: 0,
+            startAt: 0,
+          }),
+      });
+
+      await adapter.searchIssues({
+        projectId: "TEST",
+        updatedWithinDays: 90,
+      });
+
+      const searchCall = mockFetch.mock.calls[1];
+      const decodedUrl = decodeURIComponent(searchCall[0].replace(/\+/g, " "));
+      expect(decodedUrl).toContain("updated >= -90d");
     });
   });
 
