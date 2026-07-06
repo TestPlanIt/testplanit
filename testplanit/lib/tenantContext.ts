@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "async_hooks";
+import { runWithDbRouting } from "./db/routingContext";
 import { getTenantEncryptionKey } from "./tenantSecrets";
 
 // Duplicated from lib/multiTenantDb.ts (source of truth) so this module
@@ -51,6 +52,11 @@ export function withTenantContext<
           "— encryption will fall back to process.env.ENCRYPTION_KEY or throw"
       );
     }
-    return runWithTenantContext(tenantId, () => processor(job));
+    // Establish a per-job DB routing frame so read-replica routing (when
+    // configured) auto-pins reads to the primary after the job's first write
+    // (read-your-own-writes). No-op when replicas aren't configured.
+    return runWithDbRouting(() =>
+      runWithTenantContext(tenantId, () => processor(job))
+    );
   };
 }

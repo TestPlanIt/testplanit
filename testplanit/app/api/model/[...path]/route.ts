@@ -18,6 +18,12 @@ import {
   withAuditContext,
 } from "~/lib/auditContextWrappers";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
+import {
+  getPrimaryStickyMs,
+  isReplicaRoutingEnabled,
+  PRIMARY_STICKY_COOKIE,
+} from "~/lib/db/replicaConfig";
+import { runWithDbRouting } from "~/lib/db/routingContext";
 import { baseDb } from "~/lib/db";
 import {
   AUDITED_CONFIG_MODELS,
@@ -447,9 +453,34 @@ function normalizeSamlConfigCertBody(operation: string, body: any): any | null {
   return next;
 }
 
+// DB read/write-routing wrapper. Establishes a per-request routing frame so
+// that — when read replicas are configured — reads auto-pin to the primary
+// after this request's first write (read-your-own-writes for the route's own
+// post-write ES/webhook/audit reads), and a browser carrying the short-lived
+// stickiness cookie has ALL its reads pinned to the primary for the cookie's
+// window (cross-request read-your-own-writes after a mutation). No-op when
+// replicas aren't configured.
+async function innerHandler(
+  req: NextRequest,
+  context: { params: Promise<{ path: string[] }> }
+) {
+  // Only pure-read (GET/HEAD) requests offload to replicas. Mutations run
+  // entirely on the primary so their before-snapshots, the write, and the
+  // post-write ES/webhook/audit reads are all consistent.
+  const isReadRequest = req.method === "GET" || req.method === "HEAD";
+  const honorPrimaryCookie =
+    isReplicaRoutingEnabled() &&
+    getPrimaryStickyMs() > 0 &&
+    req.cookies.get(PRIMARY_STICKY_COOKIE) !== undefined;
+  return runWithDbRouting(() => handleRequest(req, context), {
+    autoReplica: isReadRequest,
+    forcePrimary: honorPrimaryCookie,
+  });
+}
+
 // Inner handler. Exports below wrap this with `withAuditContext` per HTTP
 // verb so each export carries its own ALS frame for audit correlation (D-01).
-async function innerHandler(
+async function handleRequest(
   req: NextRequest,
   context: { params: Promise<{ path: string[] }> }
 ) {
@@ -1548,6 +1579,24 @@ async function innerHandler(
     );
     newResponse.headers.set("Pragma", "no-cache");
     newResponse.headers.set("Expires", "0");
+
+    // Read-replica stickiness: after a successful mutation, pin this browser's
+    // reads to the primary for a short window so the immediate refetch (a
+    // separate request) reads its own write instead of a lagging replica.
+    // Presence of the cookie is the signal; innerHandler honors it. No-op when
+    // replicas aren't configured or the window is disabled.
+    if (isMutation && response.ok && isReplicaRoutingEnabled()) {
+      const stickyMs = getPrimaryStickyMs();
+      if (stickyMs > 0) {
+        newResponse.cookies.set(PRIMARY_STICKY_COOKIE, "1", {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          maxAge: Math.ceil(stickyMs / 1000),
+          secure: process.env.NODE_ENV === "production",
+        });
+      }
+    }
 
     // Audit logging for successful mutations
     if (

@@ -382,7 +382,7 @@ To run multiple TestPlanIt instances against different databases:
 2. **Enable SSL/TLS** for database connections in production
 3. **Regular backups** of the external database
 4. **Monitor database performance** and connection pools
-5. **Use read replicas** for high-traffic deployments
+5. **Use read replicas** for high-traffic deployments — see [Horizontal Read Scaling](./horizontal-read-scaling.md) to point TestPlanIt at them
 6. **Keep database and application on the same network/region** for low latency
 7. **Configure connection pooling** in your `DATABASE_URL` if needed:
 

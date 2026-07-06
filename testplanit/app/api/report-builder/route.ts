@@ -1,5 +1,6 @@
 import { baseDb } from "@/lib/db";
 import { NextRequest } from "next/server";
+import { withReplica } from "~/lib/db/routingContext";
 import { cartesianProduct } from "~/lib/matrix/buildAxes";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
 
@@ -1230,7 +1231,7 @@ const METRIC_REGISTRY: Record<
   },
 };
 
-export async function POST(req: NextRequest) {
+async function reportPost(req: NextRequest) {
   try {
     const body = await req.json();
     const {
@@ -1636,7 +1637,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
+async function reportGet(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const projectIdParam = searchParams.get("projectId");
@@ -1670,3 +1671,10 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: e.message }, { status: 500 });
   }
 }
+
+// The report builder is read-only and its heavy aggregation reads tolerate
+// slight replica lag, so route them to a replica when one is configured
+// (withReplica also offloads the raw matrix-aggregation SQL). Any incidental
+// write would still go to the primary.
+export const POST = (req: NextRequest) => withReplica(() => reportPost(req));
+export const GET = (req: NextRequest) => withReplica(() => reportGet(req));

@@ -1,6 +1,8 @@
 // lib/zenstack.ts
 // ZenStack v3 ORM client layer. Replaces the v2 lib/db.ts DbClient +
-// enhance() setup. Three layered views over a single Kysely/pg pool:
+// enhance() setup. Three layered views over one Kysely dialect (a single pg
+// pool by default, or the read/write-splitting dialect when replicas are
+// configured — see lib/db/readWriteDialect.ts):
 //
 //   rawClient    – no plugins. @omit fields are readable here (with an explicit
 //                  select/omit override) and no access policy is applied. Used
@@ -15,18 +17,20 @@
 // $use() returns a NEW client that shares the same underlying connection, so all
 // three views run over one pool.
 import { ZenStackClient, type AuthType } from "@zenstackhq/orm";
-import { PostgresDialect } from "@zenstackhq/orm/dialects/postgres";
 import { PolicyPlugin } from "@zenstackhq/plugin-policy";
-import { Pool } from "pg";
 
 import { schema } from "~/zenstack/schema";
 
+import { createDialect } from "./db/readWriteDialect";
+import { getReplicaUrls } from "./db/replicaConfig";
 import { sideEffectsPlugin } from "./zenstack-plugins/sideEffectsPlugin";
 
 function createClients() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  // Opt-in read/write splitting: when DATABASE_REPLICA_URLS is set, SELECTs are
+  // spread across replicas and writes/transactions stay on the primary; when it
+  // is unset this is a plain single-pool Postgres dialect (unchanged behaviour).
   const rawClient = new ZenStackClient(schema, {
-    dialect: new PostgresDialect({ pool }),
+    dialect: createDialect(process.env.DATABASE_URL ?? "", getReplicaUrls()),
   });
   const baseClient = rawClient.$use(sideEffectsPlugin);
   // dangerouslyAllowRawSql: the sideEffectsPlugin's beforeEntityMutation hook
@@ -40,7 +44,7 @@ function createClients() {
   const policyClient = baseClient.$use(
     new PolicyPlugin({ dangerouslyAllowRawSql: true })
   );
-  return { pool, rawClient, baseClient, policyClient };
+  return { rawClient, baseClient, policyClient };
 }
 
 // Reuse a single set of clients across dev hot-reloads to avoid exhausting the

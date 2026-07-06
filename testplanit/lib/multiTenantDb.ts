@@ -2,10 +2,9 @@
 // Multi-tenant ZenStack client factory for shared worker containers
 
 import { ZenStackClient } from "@zenstackhq/orm";
-import { PostgresDialect } from "@zenstackhq/orm/dialects/postgres";
 import * as fs from "fs";
-import { Pool } from "pg";
 
+import { createDialect } from "~/lib/db/readWriteDialect";
 import { type DbClient } from "~/lib/zenstack";
 import { schema } from "~/zenstack/schema";
 
@@ -15,9 +14,32 @@ import { schema } from "~/zenstack/schema";
 export interface TenantConfig {
   tenantId: string;
   databaseUrl: string;
+  // Per-tenant read replicas. Read/write splitting for a tenant client is
+  // opt-in per tenant: a tenant's reads may only be routed to that tenant's own
+  // replicas, never the process-wide DATABASE_REPLICA_URLS (which belong to the
+  // single-tenant app database). Empty/absent → the tenant client uses a single
+  // primary pool.
+  replicaUrls?: string[];
   elasticsearchNode?: string;
   elasticsearchIndex?: string;
   baseUrl?: string;
+}
+
+// Normalize a replica-URL value that may arrive as a JSON array (config file /
+// TENANT_CONFIGS) or a comma-separated string (individual env var).
+function parseReplicaUrls(value: unknown): string[] | undefined {
+  if (Array.isArray(value)) {
+    const urls = value.map((u) => String(u).trim()).filter((u) => u.length > 0);
+    return urls.length > 0 ? urls : undefined;
+  }
+  if (typeof value === "string") {
+    const urls = value
+      .split(",")
+      .map((u) => u.trim())
+      .filter((u) => u.length > 0);
+    return urls.length > 0 ? urls : undefined;
+  }
+  return undefined;
 }
 
 /**
@@ -51,6 +73,9 @@ export function getCurrentTenantId(): string | undefined {
 interface CachedClient {
   client: DbClient;
   databaseUrl: string;
+  // Serialized replica list, so a change to a tenant's replicas invalidates the
+  // cached client the same way a databaseUrl change does.
+  replicaSignature: string;
 }
 const tenantClients: Map<string, CachedClient> = new Map();
 
@@ -82,6 +107,7 @@ function loadTenantsFromFile(filePath: string): Map<string, TenantConfig> {
         configs.set(tenantId, {
           tenantId,
           databaseUrl: config.databaseUrl,
+          replicaUrls: parseReplicaUrls(config.replicaUrls),
           elasticsearchNode: config.elasticsearchNode,
           elasticsearchIndex: config.elasticsearchIndex,
           baseUrl: config.baseUrl,
@@ -140,6 +166,7 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
         tenantConfigs.set(tenantId, {
           tenantId,
           databaseUrl: config.databaseUrl,
+          replicaUrls: parseReplicaUrls(config.replicaUrls),
           elasticsearchNode: config.elasticsearchNode,
           elasticsearchIndex: config.elasticsearchIndex,
           baseUrl: config.baseUrl,
@@ -163,6 +190,9 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
         tenantConfigs.set(tenantId, {
           tenantId,
           databaseUrl: value,
+          replicaUrls: parseReplicaUrls(
+            process.env[`TENANT_${match[1]}_DATABASE_REPLICA_URLS`]
+          ),
           elasticsearchNode:
             process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
           elasticsearchIndex:
@@ -203,9 +233,8 @@ export function getAllTenantIds(): string[] {
  */
 function createTenantDbClient(config: TenantConfig): DbClient {
   const client = new ZenStackClient(schema, {
-    dialect: new PostgresDialect({
-      pool: new Pool({ connectionString: config.databaseUrl }),
-    }),
+    // Per-tenant replicas only (never the process-wide app replica list).
+    dialect: createDialect(config.databaseUrl, config.replicaUrls ?? []),
   });
 
   return client;
@@ -226,16 +255,20 @@ export function getTenantDbClient(tenantId: string): DbClient {
     throw new Error(`No configuration found for tenant: ${tenantId}`);
   }
 
-  // Check cache - but invalidate if credentials have changed
+  // Check cache - but invalidate if credentials or replicas have changed
+  const replicaSignature = (config.replicaUrls ?? []).join(",");
   const cached = tenantClients.get(tenantId);
   if (cached) {
-    if (cached.databaseUrl === config.databaseUrl) {
-      // Credentials unchanged, reuse cached client
+    if (
+      cached.databaseUrl === config.databaseUrl &&
+      cached.replicaSignature === replicaSignature
+    ) {
+      // Credentials + replicas unchanged, reuse cached client
       return cached.client;
     } else {
-      // Credentials changed - disconnect old client and create new one
+      // Credentials or replicas changed - disconnect old client and create new one
       console.log(
-        `Credentials changed for tenant ${tenantId}, invalidating cached client...`
+        `Config changed for tenant ${tenantId}, invalidating cached client...`
       );
       cached.client.$disconnect().catch((err) => {
         console.error(
@@ -249,7 +282,11 @@ export function getTenantDbClient(tenantId: string): DbClient {
 
   // Create and cache new client
   const client = createTenantDbClient(config);
-  tenantClients.set(tenantId, { client, databaseUrl: config.databaseUrl });
+  tenantClients.set(tenantId, {
+    client,
+    databaseUrl: config.databaseUrl,
+    replicaSignature,
+  });
   console.log(`Created ZenStack client for tenant: ${tenantId}`);
 
   return client;

@@ -32,6 +32,7 @@ const sidebars: SidebarsConfig = {
         'docker-setup', // Corresponds to docker-setup.md
         'deployment', // Add deployment.md after Installation
         'external-database-deployment', // Add external-database-deployment.md
+        'horizontal-read-scaling', // Read-replica horizontal read scaling
         'building-from-source', // Build from source / try a beta pre-release
         'background-processes', // Add background-processes.md
         'multi-tenant-workers', // Add multi-tenant-workers.md
