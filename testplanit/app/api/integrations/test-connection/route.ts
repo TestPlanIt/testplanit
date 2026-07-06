@@ -1,4 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import {
+  buildJiraAuthHeader,
+  detectJiraDeployment,
+  jiraApiVersion,
+  resolveJiraDeployment,
+} from "@/lib/integrations/adapters/jiraDeployment";
 import { decrypt, isEncrypted } from "@/utils/encryption";
 import { IntegrationProvider } from "@prisma/client";
 import { getServerSession } from "next-auth";
@@ -126,62 +132,102 @@ async function probe(url: string, init: RequestInit): Promise<CapabilityProbe> {
   }
 }
 
+/**
+ * When the auth probe failed, ask `/rest/api/2/serverInfo` (present on Cloud
+ * AND Server, usually anonymously readable) what the base URL actually is.
+ * A deployment-type misconfiguration otherwise surfaces as a cryptic 404
+ * (Cloud-configured against a Server host: v3 doesn't exist there) or 401
+ * (Server-configured against Cloud: PAT/username auth means nothing there).
+ * Advisory only — runs on failure, never on the success path.
+ */
+async function jiraDeploymentMismatchHint(
+  baseUrl: string,
+  configured: "cloud" | "server"
+): Promise<string | undefined> {
+  const detected = await detectJiraDeployment(baseUrl);
+  if (!detected || detected.deploymentType === configured) return undefined;
+  return detected.deploymentType === "server"
+    ? `The Jira URL reports a self-hosted Server/Data Center instance (version ${detected.version ?? "unknown"}), but this integration is configured as Jira Cloud. Set the deployment type to Server/Data Center and authenticate with a Personal Access Token or username + password.`
+    : "The Jira URL reports an Atlassian Cloud instance, but this integration is configured as Server/Data Center. Set the deployment type to Cloud and authenticate with your Atlassian account email + API token.";
+}
+
 async function testJiraConnection(
   credentials: Record<string, string>,
   settings: Record<string, string>,
   authType?: string
 ): Promise<TestConnectionResult> {
-  const { email, apiToken } = credentials;
+  const { email, apiToken, username, password } = credentials;
   const { baseUrl } = settings;
+  const deployment = resolveJiraDeployment(settings.deploymentType);
+  const apiVersion = jiraApiVersion(deployment);
 
-  if (authType === "API_KEY" || (email && apiToken)) {
-    if (!email || !apiToken || !baseUrl) {
+  const hasCloudCreds = !!(email && apiToken);
+  const hasServerCreds = !!(apiToken || (username && password));
+  const hasCreds = deployment === "server" ? hasServerCreds : hasCloudCreds;
+
+  if (authType === "API_KEY" || hasCreds) {
+    if (!hasCreds || !baseUrl) {
       return {
         success: false,
         error:
-          "Missing required Jira API key configuration (email, apiToken, baseUrl)",
+          deployment === "server"
+            ? "Missing required Jira configuration (baseUrl plus a Personal Access Token, or username and password)"
+            : "Missing required Jira API key configuration (email, apiToken, baseUrl)",
       };
     }
 
-    const auth = `Basic ${Buffer.from(`${email}:${apiToken}`).toString("base64")}`;
+    // Cloud: Basic email:apiToken. Server: Bearer PAT, or Basic
+    // username:password — decided by which fields are present.
+    const auth = buildJiraAuthHeader(deployment, {
+      email,
+      apiToken,
+      username,
+      password,
+    });
     const headers = { Authorization: auth, Accept: "application/json" };
 
-    const connection = await probe(`${baseUrl}/rest/api/3/myself`, { headers });
+    const connection = await probe(`${baseUrl}/rest/api/${apiVersion}/myself`, {
+      headers,
+    });
     if (!connection.ok) {
+      // A failed auth probe against the wrong deployment type produces
+      // misleading 404/401s — check serverInfo for a better diagnosis.
+      const mismatch = await jiraDeploymentMismatchHint(baseUrl, deployment);
       return {
         success: false,
-        error: summarizeProbeFailures("Jira", { connection }),
+        error: mismatch ?? summarizeProbeFailures("Jira", { connection }),
         capabilities: { connection },
       };
     }
 
-    // Search scope probe — issue lookup uses Jira's enhanced JQL search.
-    // Calls `/rest/api/3/search/jql` (the JiraAdapter's production
-    // endpoint, post the Atlassian deprecation of `/rest/api/3/search`
-    // — see Atlassian changelog CHANGE-2046). The new endpoint rejects
-    // unbounded JQL with HTTP 400, so we use a minimal bounded clause
-    // (`created >= -1d`) — same shape JiraAdapter uses for incremental
-    // syncs, just a smaller window. The probe doesn't care whether
-    // any issues match; a 200 with `issues: []` still proves the
-    // credential has search scope. A 403 here surfaces a missing
-    // "browse projects" / search permission before TestPlanIt would
-    // otherwise hit it on first hover/sync.
+    // Search scope probe — issue lookup uses Jira's JQL search. Cloud calls
+    // `/rest/api/3/search/jql` (the JiraAdapter's production endpoint, post
+    // the Atlassian deprecation of `/rest/api/3/search` — see Atlassian
+    // changelog CHANGE-2046); Server/Data Center only ships the classic
+    // `/rest/api/2/search`. The enhanced endpoint rejects unbounded JQL
+    // with HTTP 400, so we use a minimal bounded clause (`created >= -1d`)
+    // — same shape JiraAdapter uses for incremental syncs, just a smaller
+    // window. The probe doesn't care whether any issues match; a 200 with
+    // `issues: []` still proves the credential has search scope. A 403
+    // here surfaces a missing "browse projects" / search permission before
+    // TestPlanIt would otherwise hit it on first hover/sync.
     const searchJqlParams = new URLSearchParams({
       jql: "created >= -1d ORDER BY created DESC",
       maxResults: "1",
       fields: "summary",
     });
-    const searchIssues = await probe(
-      `${baseUrl}/rest/api/3/search/jql?${searchJqlParams.toString()}`,
-      { headers }
-    );
+    const searchPath =
+      deployment === "server"
+        ? `/rest/api/2/search?${searchJqlParams.toString()}`
+        : `/rest/api/3/search/jql?${searchJqlParams.toString()}`;
+    const searchIssues = await probe(`${baseUrl}${searchPath}`, { headers });
 
     // Read-issue scope probe — Jira's `/issue/picker` endpoint is the
     // lightest read-permission check that doesn't require knowing a
     // real issue key, while still failing on credentials without
-    // issue-read scope.
+    // issue-read scope. It exists on both v3 (Cloud) and v2 (Server).
     const readIssue = await probe(
-      `${baseUrl}/rest/api/3/issue/picker?currentJQL=&showSubTasks=false&showSubTaskParent=false`,
+      `${baseUrl}/rest/api/${apiVersion}/issue/picker?currentJQL=&showSubTasks=false&showSubTaskParent=false`,
       { headers }
     );
 

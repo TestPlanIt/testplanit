@@ -1,3 +1,4 @@
+import { tiptapToJiraWiki } from "~/lib/tiptap/tiptapToJiraWiki";
 import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
@@ -9,6 +10,16 @@ import {
   LinkedIssueRef,
   UpdateIssueData,
 } from "./IssueAdapter";
+import {
+  buildJiraAuthHeader,
+  JiraApiVersion,
+  JiraCredentials,
+  JiraDeploymentType,
+  jiraApiVersion,
+  jiraUserId,
+  jiraUserRef,
+  resolveJiraDeployment,
+} from "./jiraDeployment";
 
 /**
  * Jira integration adapter implementing OAuth authentication
@@ -23,6 +34,19 @@ export class JiraAdapter extends BaseAdapter {
   private apiEmail?: string;
   private apiToken?: string;
   private baseUrl?: string;
+  /** Cloud vs Server/Data Center. Explicit integration setting
+   *  (settings.deploymentType); absent means Cloud — Server support did not
+   *  exist before the setting did, so every legacy integration is Cloud. */
+  private deployment: JiraDeploymentType = "cloud";
+  /** REST API version implied by the deployment: v3 on Cloud, v2 on Server. */
+  private apiVersion: JiraApiVersion = "3";
+  /** API-key credentials (Cloud email+apiToken, Server PAT, or Server
+   *  username+password). The Authorization scheme is derived from which
+   *  fields are present — see buildJiraAuthHeader. */
+  private apiKeyCreds: JiraCredentials = {};
+  /** True once performAuthentication succeeded with API-key credentials.
+   *  Gates the direct-baseUrl request path (vs the OAuth cloud gateway). */
+  private apiKeyAuthActive = false;
 
   /**
    * Translate the priority value passed by the create-issue dialog to the
@@ -90,6 +114,12 @@ export class JiraAdapter extends BaseAdapter {
     if (config.baseUrl) {
       this.baseUrl = config.baseUrl;
     }
+
+    // Deployment type from integration settings (merged into the adapter
+    // config by IntegrationManager.buildAdapterConfig). Anything but an
+    // explicit "server" is Cloud.
+    this.deployment = resolveJiraDeployment(config.deploymentType);
+    this.apiVersion = jiraApiVersion(this.deployment);
   }
 
   getCapabilities(): IssueAdapterCapabilities {
@@ -111,30 +141,49 @@ export class JiraAdapter extends BaseAdapter {
     authData: AuthenticationData
   ): Promise<void> {
     if (authData.type === "api_key") {
-      // Handle API key authentication
-      if (!authData.email || !authData.apiToken || !authData.baseUrl) {
-        throw new Error(
-          "API key authentication requires email, apiToken, and baseUrl"
-        );
+      // API-key authentication covers three credential shapes:
+      //   Cloud:  email + apiToken            (Basic email:apiToken)
+      //   Server: apiToken only               (Personal Access Token, Bearer)
+      //   Server: username + password         (Basic username:password)
+      // The deployment type decides which shapes are valid;
+      // buildJiraAuthHeader throws an actionable error otherwise.
+      const baseUrl = authData.baseUrl || this.baseUrl;
+      if (!baseUrl) {
+        throw new Error("API key authentication requires baseUrl");
       }
 
+      this.apiKeyCreds = {
+        email: authData.email,
+        apiToken: authData.apiToken,
+        username: authData.username,
+        password: authData.password,
+      };
+      this.baseUrl = baseUrl;
+      // Legacy fields, still read by older tests/consumers.
       this.apiEmail = authData.email;
       this.apiToken = authData.apiToken;
-      this.baseUrl = authData.baseUrl;
 
-      // Test the connection
-      const response = await fetch(`${this.baseUrl}/rest/api/3/myself`, {
-        headers: {
-          Authorization: `Basic ${Buffer.from(`${this.apiEmail}:${this.apiToken}`).toString("base64")}`,
-          Accept: "application/json",
-        },
-      });
+      const authHeader = buildJiraAuthHeader(this.deployment, this.apiKeyCreds);
+
+      // Test the connection against the deployment's API version — v3 on
+      // Cloud, v2 on Server (v3 does not exist there).
+      const response = await fetch(
+        `${this.baseUrl}/rest/api/${this.apiVersion}/myself`,
+        {
+          headers: {
+            Authorization: authHeader,
+            Accept: "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(
           `Jira API authentication failed: ${response.statusText}`
         );
       }
+
+      this.apiKeyAuthActive = true;
     } else if (authData.type === "oauth") {
       // OAuth authentication
       if (!this.clientId || !this.clientSecret || !this.redirectUri) {
@@ -166,23 +215,24 @@ export class JiraAdapter extends BaseAdapter {
   async getProjects(): Promise<
     Array<{ id: string; key: string; name: string }>
   > {
-    if (this.apiEmail && this.apiToken && this.baseUrl) {
-      // API key authentication
-      const response = await fetch(
-        `${this.baseUrl}/rest/api/3/project/search`,
-        {
-          headers: {
-            Authorization: `Basic ${Buffer.from(`${this.apiEmail}:${this.apiToken}`).toString("base64")}`,
-            Accept: "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch projects: ${response.statusText}`);
+    if (this.apiKeyAuthActive && this.baseUrl) {
+      // API key authentication. Cloud pages projects via /project/search
+      // ({ values: [...] }); Server/Data Center does not have that endpoint
+      // and returns the full list as a bare array from /project.
+      if (this.deployment === "server") {
+        const data = await this.makeRequest<any[]>(
+          this.buildUrl(`/rest/api/2/project`)
+        );
+        return (Array.isArray(data) ? data : []).map((project: any) => ({
+          id: project.id,
+          key: project.key,
+          name: project.name,
+        }));
       }
 
-      const data = await response.json();
+      const data = await this.makeRequest<any>(
+        this.buildUrl(`/rest/api/3/project/search`)
+      );
       return (data.values || []).map((project: any) => ({
         id: project.id,
         key: project.key,
@@ -326,7 +376,7 @@ export class JiraAdapter extends BaseAdapter {
 
   protected buildUrl(path: string): string {
     // For API key auth, use the base URL directly
-    if (this.apiEmail && this.apiToken && this.baseUrl) {
+    if (this.apiKeyAuthActive && this.baseUrl) {
       return `${this.baseUrl}${path}`;
     }
 
@@ -345,18 +395,19 @@ export class JiraAdapter extends BaseAdapter {
     options: RequestInit = {}
   ): Promise<T> {
     // If using API key auth, bypass the base class and handle it directly
-    if (this.apiEmail && this.apiToken) {
+    if (this.apiKeyAuthActive) {
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
         Accept: "application/json",
         ...((options.headers as any) || {}),
       };
 
-      // Jira uses Basic auth with email:apiToken
-      const credentials = Buffer.from(
-        `${this.apiEmail}:${this.apiToken}`
-      ).toString("base64");
-      headers["Authorization"] = `Basic ${credentials}`;
+      // Cloud: Basic email:apiToken. Server: Bearer PAT or Basic
+      // username:password — derived from which credential fields exist.
+      headers["Authorization"] = buildJiraAuthHeader(
+        this.deployment,
+        this.apiKeyCreds
+      );
 
       const response = await fetch(url, {
         ...options,
@@ -375,59 +426,91 @@ export class JiraAdapter extends BaseAdapter {
     return super.makeRequest<T>(url, options);
   }
 
+  /**
+   * Convert an incoming description (TipTap doc, HTML string, or plain
+   * string) to the wire format the deployment's REST API expects: an ADF
+   * document on Cloud (v3), a wiki-markup STRING on Server/Data Center
+   * (v2 rejects ADF objects with HTTP 400).
+   */
+  private convertDescriptionField(
+    description: CreateIssueData["description"]
+  ): any {
+    if (!description) return null;
+
+    const isTiptapDoc =
+      typeof description === "object" &&
+      description &&
+      "type" in description &&
+      description.type === "doc";
+    const isHtmlString =
+      typeof description === "string" &&
+      description.includes("<") &&
+      description.includes(">");
+
+    if (this.deployment === "server") {
+      if (isTiptapDoc) {
+        return tiptapToJiraWiki(description);
+      }
+      if (isHtmlString) {
+        // Normalize HTML through the existing HTML→ADF parser, then
+        // serialize the resulting doc (same tree shape) to wiki markup.
+        return tiptapToJiraWiki(this.htmlToAdf(description as string));
+      }
+      // Plain text passes through — a plain string is valid wiki markup.
+      return description;
+    }
+
+    if (isTiptapDoc) {
+      // Direct TipTap JSON to ADF conversion
+      return this.tiptapToAdf(description);
+    }
+    if (isHtmlString) {
+      // HTML string - use HTML to ADF converter
+      return this.htmlToAdf(description as string);
+    }
+    // Plain text
+    return {
+      type: "doc",
+      version: 1,
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: description,
+            },
+          ],
+        },
+      ],
+    };
+  }
+
   async createIssue(data: CreateIssueData): Promise<IssueData> {
     // Determine if projectId is a key (e.g., "TPI") or an ID (numeric)
     const projectField = isNaN(Number(data.projectId))
       ? { key: data.projectId } // It's a project key
       : { id: data.projectId }; // It's a project ID
 
-    // Convert description to ADF format
-    let descriptionField;
-    if (data.description) {
-      // console.log('[JiraAdapter] Raw description:', data.description);
-
-      // Check if description is TipTap JSON
-      if (
-        typeof data.description === "object" &&
-        data.description &&
-        "type" in data.description &&
-        data.description.type === "doc"
-      ) {
-        // Direct TipTap JSON to ADF conversion
-        descriptionField = this.tiptapToAdf(data.description);
-        // console.log('[JiraAdapter] Converted ADF from TipTap:', JSON.stringify(descriptionField, null, 2));
-      } else if (
-        typeof data.description === "string" &&
-        data.description.includes("<") &&
-        data.description.includes(">")
-      ) {
-        // HTML string - use HTML to ADF converter
-        descriptionField = this.htmlToAdf(data.description);
-        // console.log('[JiraAdapter] Converted ADF from HTML:', JSON.stringify(descriptionField, null, 2));
-      } else if (typeof data.description === "string") {
-        // Plain text
-        descriptionField = {
-          type: "doc",
-          version: 1,
-          content: [
-            {
-              type: "paragraph",
-              content: [
-                {
-                  type: "text",
-                  text: data.description,
-                },
-              ],
-            },
-          ],
-        };
-      }
-    } else {
-      descriptionField = null;
-    }
+    const descriptionField = this.convertDescriptionField(data.description);
 
     // Extract reporter from customFields if present
     const { reporter, ...otherCustomFields } = data.customFields || {};
+
+    // The create-issue route resolves the reporter as { accountId } — on
+    // Cloud that passes through untouched, but Server addresses users by
+    // name (the adapter's searchUsers puts the Server `name` in the
+    // accountId slot, so the value itself is already correct).
+    const reporterField = reporter
+      ? this.deployment === "server"
+        ? {
+            name:
+              (reporter as any).accountId ??
+              (reporter as any).name ??
+              (reporter as any).id,
+          }
+        : reporter
+      : undefined;
 
     // console.log("[JiraAdapter] Incoming data.customFields:", JSON.stringify(data.customFields, null, 2));
     // console.log("[JiraAdapter] Extracted reporter:", JSON.stringify(reporter, null, 2));
@@ -440,8 +523,10 @@ export class JiraAdapter extends BaseAdapter {
         description: descriptionField,
         issuetype: { id: data.issueType || "10001" }, // Default to Task
         priority: JiraAdapter.mapPriorityField(data.priority),
-        assignee: data.assigneeId ? { id: data.assigneeId } : undefined,
-        reporter: reporter || undefined, // Reporter is a system field, not custom
+        assignee: data.assigneeId
+          ? jiraUserRef(data.assigneeId, this.deployment)
+          : undefined,
+        reporter: reporterField, // Reporter is a system field, not custom
         labels: data.labels || [],
         ...otherCustomFields,
       },
@@ -452,7 +537,7 @@ export class JiraAdapter extends BaseAdapter {
 
     try {
       const response = await this.makeRequest<any>(
-        this.buildUrl("/rest/api/3/issue"),
+        this.buildUrl(`/rest/api/${this.apiVersion}/issue`),
         {
           method: "POST",
           body: JSON.stringify(jiraPayload),
@@ -490,40 +575,9 @@ export class JiraAdapter extends BaseAdapter {
     }
 
     if (data.description !== undefined) {
-      // Check if description is TipTap JSON
-      if (
-        typeof data.description === "object" &&
-        data.description &&
-        "type" in data.description &&
-        data.description.type === "doc"
-      ) {
-        // Direct TipTap JSON to ADF conversion
-        updatePayload.fields.description = this.tiptapToAdf(data.description);
-      } else if (
-        typeof data.description === "string" &&
-        data.description.includes("<") &&
-        data.description.includes(">")
-      ) {
-        // HTML string - use HTML to ADF converter
-        updatePayload.fields.description = this.htmlToAdf(data.description);
-      } else if (typeof data.description === "string") {
-        // Plain text
-        updatePayload.fields.description = {
-          type: "doc",
-          version: 1,
-          content: [
-            {
-              type: "paragraph",
-              content: [
-                {
-                  type: "text",
-                  text: data.description,
-                },
-              ],
-            },
-          ],
-        };
-      }
+      updatePayload.fields.description = this.convertDescriptionField(
+        data.description
+      );
     }
 
     if (data.priority !== undefined) {
@@ -532,7 +586,10 @@ export class JiraAdapter extends BaseAdapter {
     }
 
     if (data.assigneeId !== undefined) {
-      updatePayload.fields.assignee = { id: data.assigneeId };
+      updatePayload.fields.assignee = jiraUserRef(
+        data.assigneeId,
+        this.deployment
+      );
     }
 
     if (data.labels !== undefined) {
@@ -543,10 +600,13 @@ export class JiraAdapter extends BaseAdapter {
       Object.assign(updatePayload.fields, data.customFields);
     }
 
-    await this.makeRequest<any>(this.buildUrl(`/rest/api/3/issue/${issueId}`), {
-      method: "PUT",
-      body: JSON.stringify(updatePayload),
-    });
+    await this.makeRequest<any>(
+      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}`),
+      {
+        method: "PUT",
+        body: JSON.stringify(updatePayload),
+      }
+    );
 
     // Handle status transition separately if provided
     if (data.status !== undefined) {
@@ -561,11 +621,19 @@ export class JiraAdapter extends BaseAdapter {
     const params = new URLSearchParams({
       fields:
         "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated",
-      expand: "names,schema",
+      // Server returns descriptions as raw wiki markup; renderedFields
+      // carries the server-rendered HTML, which maps cleanly to what the
+      // Cloud path produces from ADF.
+      expand:
+        this.deployment === "server"
+          ? "names,schema,renderedFields"
+          : "names,schema",
     });
 
     const response = await this.makeRequest<any>(
-      this.buildUrl(`/rest/api/3/issue/${issueId}?${params.toString()}`)
+      this.buildUrl(
+        `/rest/api/${this.apiVersion}/issue/${issueId}?${params.toString()}`
+      )
     );
 
     return this.mapJiraIssue(response);
@@ -578,7 +646,9 @@ export class JiraAdapter extends BaseAdapter {
       });
       const encodedId = encodeURIComponent(issueId);
       const response = await this.makeRequest<any>(
-        this.buildUrl(`/rest/api/3/issue/${encodedId}?${params.toString()}`)
+        this.buildUrl(
+          `/rest/api/${this.apiVersion}/issue/${encodedId}?${params.toString()}`
+        )
       );
       return this.mapLinkedIssues(response);
     } catch (error) {
@@ -596,8 +666,13 @@ export class JiraAdapter extends BaseAdapter {
   async getIssueComments(issueId: string): Promise<IssueComment[]> {
     try {
       const encodedId = encodeURIComponent(issueId);
+      // Server comment bodies are wiki-markup strings; expand=renderedBody
+      // returns the server-rendered HTML alongside them.
+      const suffix = this.deployment === "server" ? "?expand=renderedBody" : "";
       const response = await this.makeRequest<any>(
-        this.buildUrl(`/rest/api/3/issue/${encodedId}/comment`)
+        this.buildUrl(
+          `/rest/api/${this.apiVersion}/issue/${encodedId}/comment${suffix}`
+        )
       );
       return this.mapJiraComments(response);
     } catch (error) {
@@ -671,6 +746,39 @@ export class JiraAdapter extends BaseAdapter {
       // Automatic/incremental sync - limit to last 30 days
       jqlString = "created >= -30d ORDER BY created DESC";
     }
+    const fields =
+      "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated";
+
+    // Server / Data Center ships only the classic search endpoint
+    // (`/rest/api/2/search`), which paginates by `startAt` + `total`.
+    // Callers (SyncService import loop, search routes) pass `offset`
+    // alongside `pageToken`, so offset-paginated adapters like this branch
+    // work without cursor synthesis.
+    if (this.deployment === "server") {
+      const params = new URLSearchParams({
+        jql: jqlString,
+        startAt: (options.offset || 0).toString(),
+        maxResults: (options.limit || 50).toString(),
+        fields,
+        // Server descriptions are wiki markup; renderedFields carries the
+        // server-rendered HTML (see mapJiraIssue).
+        expand: "renderedFields",
+      });
+      const response = await this.makeRequest<any>(
+        this.buildUrl(`/rest/api/2/search?${params.toString()}`)
+      );
+      const issues = (response.issues || []).map((issue: any) =>
+        this.mapJiraIssue(issue)
+      );
+      const total =
+        typeof response.total === "number" ? response.total : issues.length;
+      return {
+        issues,
+        total,
+        hasMore: (response.startAt || 0) + issues.length < total,
+      };
+    }
+
     // Jira Cloud's enhanced search (`/rest/api/3/search/jql`) paginates by an
     // opaque `nextPageToken`, NOT `startAt`, and no longer returns a `total`.
     // (See Atlassian CHANGE-2046.) Passing `startAt` is silently ignored and
@@ -679,8 +787,7 @@ export class JiraAdapter extends BaseAdapter {
     const params = new URLSearchParams({
       jql: jqlString,
       maxResults: (options.limit || 50).toString(),
-      fields:
-        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated",
+      fields,
     });
     if (options.pageToken) {
       params.set("nextPageToken", options.pageToken);
@@ -721,12 +828,12 @@ export class JiraAdapter extends BaseAdapter {
   }
 
   protected async addComment(issueId: string, comment: string): Promise<void> {
-    await this.makeRequest(
-      this.buildUrl(`/rest/api/3/issue/${issueId}/comment`),
-      {
-        method: "POST",
-        body: JSON.stringify({
-          body: {
+    // Cloud (v3) takes comment bodies as ADF documents; Server (v2) takes a
+    // plain wiki-markup string and rejects ADF objects.
+    const body =
+      this.deployment === "server"
+        ? comment
+        : {
             type: "doc",
             version: 1,
             content: [
@@ -740,8 +847,12 @@ export class JiraAdapter extends BaseAdapter {
                 ],
               },
             ],
-          },
-        }),
+          };
+    await this.makeRequest(
+      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}/comment`),
+      {
+        method: "POST",
+        body: JSON.stringify({ body }),
       }
     );
   }
@@ -752,7 +863,7 @@ export class JiraAdapter extends BaseAdapter {
   ): Promise<void> {
     // Get available transitions
     const transitions = await this.makeRequest<any>(
-      this.buildUrl(`/rest/api/3/issue/${issueId}/transitions`)
+      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}/transitions`)
     );
 
     // Find the transition that leads to the target status
@@ -766,7 +877,9 @@ export class JiraAdapter extends BaseAdapter {
 
     // Execute the transition
     await this.makeRequest(
-      this.buildUrl(`/rest/api/3/issue/${issueId}/transitions`),
+      this.buildUrl(
+        `/rest/api/${this.apiVersion}/issue/${issueId}/transitions`
+      ),
       {
         method: "POST",
         body: JSON.stringify({
@@ -801,11 +914,22 @@ export class JiraAdapter extends BaseAdapter {
       );
     }
 
+    // Server (v2) returns descriptions as raw wiki-markup strings; when the
+    // request expanded renderedFields, prefer the server-rendered HTML so
+    // stored descriptions match what the Cloud path produces from ADF.
+    const renderedDescription =
+      this.deployment === "server" &&
+      typeof jiraIssue.renderedFields?.description === "string" &&
+      jiraIssue.renderedFields.description.length > 0
+        ? jiraIssue.renderedFields.description
+        : undefined;
+
     return {
       id: jiraIssue.id,
       key: jiraIssue.key,
       title: fields.summary,
-      description: this.extractDescription(fields.description),
+      description:
+        renderedDescription ?? this.extractDescription(fields.description),
       status: fields.status.name,
       priority: fields.priority?.name,
       issueType: fields.issuetype
@@ -817,14 +941,14 @@ export class JiraAdapter extends BaseAdapter {
         : undefined,
       assignee: fields.assignee
         ? {
-            id: fields.assignee.accountId,
+            id: jiraUserId(fields.assignee, this.deployment) ?? "",
             name: fields.assignee.displayName,
             email: fields.assignee.emailAddress,
           }
         : undefined,
       reporter: fields.reporter
         ? {
-            id: fields.reporter.accountId,
+            id: jiraUserId(fields.reporter, this.deployment) ?? "",
             name: fields.reporter.displayName,
             email: fields.reporter.emailAddress,
           }
@@ -910,14 +1034,23 @@ export class JiraAdapter extends BaseAdapter {
     const out: IssueComment[] = [];
     for (const c of comments) {
       if (!c) continue;
+      // Server comment bodies are wiki-markup strings; prefer the
+      // server-rendered HTML when the request expanded renderedBody.
+      const renderedBody =
+        this.deployment === "server" &&
+        typeof c.renderedBody === "string" &&
+        c.renderedBody.length > 0
+          ? c.renderedBody
+          : undefined;
       out.push({
         id: c.id != null ? String(c.id) : undefined,
         author:
           c.author?.displayName ??
           c.author?.emailAddress ??
           c.author?.accountId ??
+          c.author?.name ??
           "Unknown",
-        body: this.extractDescription(c.body) ?? "",
+        body: renderedBody ?? this.extractDescription(c.body) ?? "",
         created: c.created ?? "",
       });
     }
@@ -1145,7 +1278,9 @@ export class JiraAdapter extends BaseAdapter {
   ): Promise<Array<{ id: string; name: string }>> {
     try {
       // First, get the project details to get available issue types
-      const projectUrl = this.buildUrl(`/rest/api/3/project/${projectKey}`);
+      const projectUrl = this.buildUrl(
+        `/rest/api/${this.apiVersion}/project/${projectKey}`
+      );
       const project = await this.makeRequest<any>(projectUrl);
 
       // Extract issue types from the project
@@ -1159,7 +1294,9 @@ export class JiraAdapter extends BaseAdapter {
       console.error("Failed to fetch issue types:", error);
       // If that fails, try to get all issue types and filter by project
       try {
-        const allTypesUrl = this.buildUrl(`/rest/api/3/issuetype`);
+        const allTypesUrl = this.buildUrl(
+          `/rest/api/${this.apiVersion}/issuetype`
+        );
         const allTypes = await this.makeRequest<any[]>(allTypesUrl);
 
         // For now, return all non-subtask issue types as a fallback
@@ -1176,11 +1313,38 @@ export class JiraAdapter extends BaseAdapter {
     }
   }
 
+  // Fields the create-issue dialog already handles itself and must not be
+  // duplicated as dynamic fields.
+  private static readonly CREATE_DIALOG_HANDLED_FIELDS = [
+    "summary",
+    "description",
+    "issuetype",
+    "project",
+    "reporter",
+  ];
+
+  private mapIssueTypeField(key: string, field: any) {
+    return {
+      key,
+      name: field.name,
+      required: field.required || false,
+      schema: field.schema,
+      allowedValues: field.allowedValues,
+      hasDefaultValue: field.hasDefaultValue || false,
+      defaultValue: field.defaultValue,
+      autoCompleteUrl: field.autoCompleteUrl,
+    };
+  }
+
   async getIssueTypeFields(
     projectKey: string,
     issueTypeId: string
   ): Promise<any[]> {
     try {
+      if (this.deployment === "server") {
+        return await this.getServerIssueTypeFields(projectKey, issueTypeId);
+      }
+
       // Get create issue metadata for the specific issue type
       const url = this.buildUrl(
         `/rest/api/3/issue/createmeta?projectKeys=${projectKey}&issuetypeIds=${issueTypeId}&expand=projects.issuetypes.fields`
@@ -1198,32 +1362,60 @@ export class JiraAdapter extends BaseAdapter {
 
       // Convert fields object to array and filter out system fields we handle separately
       const fields = Object.entries(issueType.fields)
-        .filter(([key]) => {
-          // Exclude fields we already handle in the UI
-          const excludedFields = [
-            "summary",
-            "description",
-            "issuetype",
-            "project",
-            "reporter",
-          ];
-          return !excludedFields.includes(key);
-        })
-        .map(([key, field]: [string, any]) => ({
-          key,
-          name: field.name,
-          required: field.required || false,
-          schema: field.schema,
-          allowedValues: field.allowedValues,
-          hasDefaultValue: field.hasDefaultValue || false,
-          defaultValue: field.defaultValue,
-          autoCompleteUrl: field.autoCompleteUrl,
-        }));
+        .filter(
+          ([key]) => !JiraAdapter.CREATE_DIALOG_HANDLED_FIELDS.includes(key)
+        )
+        .map(([key, field]: [string, any]) =>
+          this.mapIssueTypeField(key, field)
+        );
 
       return fields;
     } catch (error) {
       console.error("Failed to fetch issue type fields:", error);
       return [];
+    }
+  }
+
+  /**
+   * Server / Data Center create-issue field metadata. Jira 9.0 removed the
+   * classic `createmeta?expand=projects.issuetypes.fields` endpoint
+   * (JRASERVER-67610) in favor of per-issue-type paging, so try the modern
+   * shape first and fall back to the classic one for Jira 8.x.
+   */
+  private async getServerIssueTypeFields(
+    projectKey: string,
+    issueTypeId: string
+  ): Promise<any[]> {
+    try {
+      const metadata = await this.makeRequest<any>(
+        this.buildUrl(
+          `/rest/api/2/issue/createmeta/${encodeURIComponent(projectKey)}/issuetypes/${encodeURIComponent(issueTypeId)}?maxResults=200`
+        )
+      );
+      // Jira 9+ returns { values: [{ fieldId, name, required, ... }] }.
+      const values = Array.isArray(metadata?.values) ? metadata.values : [];
+      return values
+        .filter(
+          (field: any) =>
+            !JiraAdapter.CREATE_DIALOG_HANDLED_FIELDS.includes(field.fieldId)
+        )
+        .map((field: any) => this.mapIssueTypeField(field.fieldId, field));
+    } catch {
+      // Jira 8.x: the classic endpoint still exists on v2.
+      const metadata = await this.makeRequest<any>(
+        this.buildUrl(
+          `/rest/api/2/issue/createmeta?projectKeys=${projectKey}&issuetypeIds=${issueTypeId}&expand=projects.issuetypes.fields`
+        )
+      );
+      const issueType = metadata.projects?.[0]?.issuetypes?.[0];
+      if (!issueType?.fields) return [];
+      return Object.entries(issueType.fields)
+        .filter(
+          ([key]) => !JiraAdapter.CREATE_DIALOG_HANDLED_FIELDS.includes(key)
+        )
+        .map(([key, field]: [string, any]) =>
+          this.mapIssueTypeField(key, field)
+        );
     }
   }
 
@@ -1708,6 +1900,11 @@ export class JiraAdapter extends BaseAdapter {
       const isEmail = query.includes("@");
       // console.log(`[JiraAdapter.searchUsers] Is email search: ${isEmail}`);
 
+      // Cloud's v3 user search takes `query`; Server's v2 takes `username`
+      // (which matches username, display name, AND email fragments — v2
+      // returns 404/400 for a `query` parameter).
+      const searchParam = this.deployment === "server" ? "username" : "query";
+
       // Try multiple search approaches for better user matching
       const allUsers: any[] = [];
 
@@ -1716,24 +1913,27 @@ export class JiraAdapter extends BaseAdapter {
         try {
           // Try the user/search endpoint with email
           const emailSearchUrl = this.buildUrl(
-            `/rest/api/3/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`
+            `/rest/api/${this.apiVersion}/user/search?${searchParam}=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`
           );
           // console.log(`[JiraAdapter.searchUsers] Trying email search: ${emailSearchUrl}`);
           const emailUsers = await this.makeRequest<any[]>(emailSearchUrl);
           allUsers.push(...emailUsers);
 
-          // Also try searching by accountId with the email (sometimes works)
-          const accountSearchUrl = this.buildUrl(
-            `/rest/api/3/user/search?accountId=${encodeURIComponent(query)}`
-          );
-          // console.log(`[JiraAdapter.searchUsers] Trying account search with email: ${accountSearchUrl}`);
-          try {
-            const accountUsers =
-              await this.makeRequest<any[]>(accountSearchUrl);
-            allUsers.push(...accountUsers);
-          } catch {
-            // This might fail, that's ok
-            // console.log(`[JiraAdapter.searchUsers] Account search failed (expected): ${e}`);
+          // Also try searching by accountId with the email (sometimes
+          // works). Cloud-only — Server has no accountId concept.
+          if (this.deployment !== "server") {
+            const accountSearchUrl = this.buildUrl(
+              `/rest/api/3/user/search?accountId=${encodeURIComponent(query)}`
+            );
+            // console.log(`[JiraAdapter.searchUsers] Trying account search with email: ${accountSearchUrl}`);
+            try {
+              const accountUsers =
+                await this.makeRequest<any[]>(accountSearchUrl);
+              allUsers.push(...accountUsers);
+            } catch {
+              // This might fail, that's ok
+              // console.log(`[JiraAdapter.searchUsers] Account search failed (expected): ${e}`);
+            }
           }
         } catch {
           // console.log(`[JiraAdapter.searchUsers] Email search error: ${error}`);
@@ -1744,10 +1944,10 @@ export class JiraAdapter extends BaseAdapter {
       let endpoint: string;
       if (projectKey && !isEmail) {
         // Search assignable users for the project
-        endpoint = `/rest/api/3/user/assignable/search?project=${projectKey}&query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
+        endpoint = `/rest/api/${this.apiVersion}/user/assignable/search?project=${projectKey}&${searchParam}=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
       } else {
         // General user search
-        endpoint = `/rest/api/3/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
+        endpoint = `/rest/api/${this.apiVersion}/user/search?${searchParam}=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
       }
 
       // console.log(`[JiraAdapter.searchUsers] Using general endpoint: ${endpoint}`);
@@ -1755,20 +1955,25 @@ export class JiraAdapter extends BaseAdapter {
       const generalUsers = await this.makeRequest<any[]>(url);
       allUsers.push(...generalUsers);
 
-      // Deduplicate users by accountId
+      // Deduplicate users by their deployment-specific identifier
+      // (accountId on Cloud, name/key on Server).
       const uniqueUsers = new Map<string, any>();
       allUsers.forEach((user) => {
-        if (user.accountId && !uniqueUsers.has(user.accountId)) {
-          uniqueUsers.set(user.accountId, user);
+        const uid = jiraUserId(user, this.deployment);
+        if (uid && !uniqueUsers.has(uid)) {
+          uniqueUsers.set(uid, user);
         }
       });
 
       const users = Array.from(uniqueUsers.values());
       // console.log(`[JiraAdapter.searchUsers] Total unique users found: ${users.length}`);
 
+      // The accountId slot doubles as "the identifier this Jira addresses
+      // users by" — consumers (reporter matching, assignee pickers) pass it
+      // back verbatim, and on Server that identifier is the username.
       const mappedUsers = users.map((user: any) => {
         const mapped = {
-          accountId: user.accountId,
+          accountId: jiraUserId(user, this.deployment) ?? "",
           displayName: user.displayName,
           emailAddress: user.emailAddress,
           avatarUrls: user.avatarUrls,
@@ -1802,13 +2007,13 @@ export class JiraAdapter extends BaseAdapter {
   } | null> {
     try {
       // console.log(`[JiraAdapter.getCurrentUser] Getting current authenticated user`);
-      const url = this.buildUrl("/rest/api/3/myself");
+      const url = this.buildUrl(`/rest/api/${this.apiVersion}/myself`);
       const user = await this.makeRequest<any>(url);
 
       // console.log(`[JiraAdapter.getCurrentUser] Current user: ${user.displayName} (${user.accountId}) - Email: ${user.emailAddress || 'NOT AVAILABLE'}`);
 
       return {
-        accountId: user.accountId,
+        accountId: jiraUserId(user, this.deployment) ?? "",
         displayName: user.displayName,
         emailAddress: user.emailAddress,
       };

@@ -563,3 +563,189 @@ describe("POST /api/integrations/test-connection", () => {
     });
   });
 });
+
+describe("POST /api/integrations/test-connection — Jira Server / Data Center", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+    (getServerSession as any).mockResolvedValue(mockSession);
+    (prisma.integration.update as any).mockResolvedValue({});
+  });
+
+  const okJson = (body: Record<string, any> = {}) => ({
+    ok: true,
+    status: 200,
+    json: async () => body,
+  });
+
+  it("probes v2 endpoints with Bearer for a Personal Access Token", async () => {
+    mockFetch.mockResolvedValueOnce(okJson()); // myself
+    mockFetch.mockResolvedValueOnce(okJson({ issues: [] })); // search
+    mockFetch.mockResolvedValueOnce(okJson()); // issue picker
+
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { apiToken: "pat-1" },
+        settings: {
+          baseUrl: "https://jira.example.com",
+          deploymentType: "server",
+        },
+      })
+    );
+    const data = await response.json();
+
+    expect(data.success).toBe(true);
+    expect(data.capabilities?.connection?.ok).toBe(true);
+    expect(data.capabilities?.searchIssues?.ok).toBe(true);
+    expect(data.capabilities?.readIssue?.ok).toBe(true);
+
+    const urls = mockFetch.mock.calls.map((c: any[]) => String(c[0]));
+    expect(urls[0]).toBe("https://jira.example.com/rest/api/2/myself");
+    expect(urls[1]).toContain("https://jira.example.com/rest/api/2/search?");
+    expect(urls[2]).toContain(
+      "https://jira.example.com/rest/api/2/issue/picker"
+    );
+    for (const call of mockFetch.mock.calls) {
+      expect((call[1] as any).headers.Authorization).toBe("Bearer pat-1");
+    }
+  });
+
+  it("probes v2 endpoints with Basic for username + password", async () => {
+    mockFetch.mockResolvedValueOnce(okJson());
+    mockFetch.mockResolvedValueOnce(okJson({ issues: [] }));
+    mockFetch.mockResolvedValueOnce(okJson());
+
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { username: "alice", password: "s3cret" },
+        settings: {
+          baseUrl: "https://jira.example.com",
+          deploymentType: "server",
+        },
+      })
+    );
+    const data = await response.json();
+
+    expect(data.success).toBe(true);
+    const auth = (mockFetch.mock.calls[0][1] as any).headers.Authorization;
+    expect(
+      Buffer.from(auth.slice("Basic ".length), "base64").toString("utf8")
+    ).toBe("alice:s3cret");
+  });
+
+  it("reports missing server credentials with a server-specific message", async () => {
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { email: "user@example.com" },
+        settings: {
+          baseUrl: "https://jira.example.com",
+          deploymentType: "server",
+        },
+      })
+    );
+    const data = await response.json();
+
+    expect(data.success).toBe(false);
+    expect(data.error).toContain("Personal Access Token");
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("diagnoses a Cloud-configured integration pointed at a Server instance (#494)", async () => {
+    // Cloud-configured (no deploymentType) → v3 probe → 404 on Server.
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      json: async () => ({}),
+    });
+    // serverInfo detection reveals the truth.
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ deploymentType: "Server", version: "10.3.13" }),
+    });
+
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { email: "user@example.com", apiToken: "pat-1" },
+        settings: { baseUrl: "https://jira.example.com" },
+      })
+    );
+    const data = await response.json();
+
+    expect(data.success).toBe(false);
+    expect(data.error).toContain("Server/Data Center");
+    expect(data.error).toContain("10.3.13");
+    expect(mockFetch.mock.calls[0][0]).toBe(
+      "https://jira.example.com/rest/api/3/myself"
+    );
+    expect(mockFetch.mock.calls[1][0]).toBe(
+      "https://jira.example.com/rest/api/2/serverInfo"
+    );
+  });
+
+  it("diagnoses a Server-configured integration pointed at a Cloud instance", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      statusText: "Unauthorized",
+      json: async () => ({}),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ deploymentType: "Cloud" }),
+    });
+
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { apiToken: "pat-1" },
+        settings: {
+          baseUrl: "https://example.atlassian.net",
+          deploymentType: "server",
+        },
+      })
+    );
+    const data = await response.json();
+
+    expect(data.success).toBe(false);
+    expect(data.error).toContain("Atlassian Cloud");
+  });
+
+  it("keeps the plain probe failure when serverInfo agrees with the configured deployment", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      statusText: "Unauthorized",
+      json: async () => ({ message: "Invalid token" }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ deploymentType: "Server" }),
+    });
+
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { apiToken: "expired-pat" },
+        settings: {
+          baseUrl: "https://jira.example.com",
+          deploymentType: "server",
+        },
+      })
+    );
+    const data = await response.json();
+
+    expect(data.success).toBe(false);
+    expect(data.error).toContain("HTTP 401");
+    expect(data.error).toContain("Invalid token");
+  });
+});

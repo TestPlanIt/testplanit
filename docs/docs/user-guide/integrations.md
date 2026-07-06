@@ -198,10 +198,44 @@ Status: ACTIVE
 2. Configure in TestPlanIt:
 
 ```text
+Deployment: Jira Cloud
 Email: your-email@company.com
 API Token: Generated from Atlassian account settings
 Jira URL: https://your-domain.atlassian.net
 ```
+
+#### Jira Server / Data Center
+
+Self-hosted Jira Server and Data Center instances are supported through the same **API Key** integration. Set **Deployment** to **Jira Server / Data Center** — TestPlanIt then talks to your instance over REST API v2 (self-hosted Jira does not ship the Cloud-only v3 API) and converts rich text to Jira wiki markup automatically.
+
+Two authentication methods are available:
+
+- **Personal Access Token (recommended)** — generate a token in Jira under **Profile → Personal Access Tokens** (Jira 8.14+). TestPlanIt sends it as `Authorization: Bearer`.
+
+  ```text
+  Deployment: Jira Server / Data Center (self-hosted)
+  Authentication Method: Personal Access Token
+  Personal Access Token: <your-token>
+  Jira URL: https://jira.your-company.com
+  ```
+
+- **Username & Password** — a Jira account's credentials, sent as HTTP Basic auth. Prefer a dedicated service account, and prefer a Personal Access Token when your instance allows it.
+
+  ```text
+  Deployment: Jira Server / Data Center (self-hosted)
+  Authentication Method: Username & Password
+  Username: svc-testplanit
+  Password: <account password>
+  Jira URL: https://jira.your-company.com
+  ```
+
+:::note
+
+A Personal Access Token is not a password — Jira Server / Data Center rejects a PAT used as the password half of Basic auth with HTTP 401. Pick the matching authentication method for the credential you have.
+
+:::
+
+On Server / Data Center, users are matched by username rather than Atlassian account ID; the reporter attribution rules below apply the same way. OAuth 2.0 is **not** available for self-hosted Jira — the Atlassian 3LO flow only exists on Jira Cloud.
 
 :::warning Reporter attribution requires Jira admin permissions
 
@@ -221,7 +255,13 @@ When using API key authentication, and assuming the account has the required per
 
 #### Jira with OAuth 2.0
 
-OAuth 2.0 is Atlassian's preferred authentication path for Jira Cloud and is recommended for any team where per-user reporter attribution and granular scoping matter. Each user authorizes individually and issues are created as that user.
+OAuth 2.0 is Atlassian's preferred authentication path for **Jira Cloud** and is recommended for any team where per-user reporter attribution and granular scoping matter. Each user authorizes individually and issues are created as that user.
+
+:::note OAuth 2.0 is Cloud-only
+
+The Atlassian 3LO OAuth flow routes through `api.atlassian.com` and does not exist on Jira Server / Data Center. Self-hosted instances use the [API Key integration](#jira-server--data-center) with a Personal Access Token or username + password instead.
+
+:::
 
 1. Create an OAuth 2.0 (3LO) integration in the [Atlassian Developer Console](https://developer.atlassian.com/console).
 2. Under **Permissions**, add the **Jira API** and select these scopes: `read:jira-work`, `write:jira-work`, and `read:jira-user`. (TestPlanIt also requests `offline_access` during authorization so it can refresh tokens — you don't add that one in the console.)
@@ -711,9 +751,13 @@ Respect external API limits:
 ### Connection Issues
 
 ```bash
-# Test Jira connection
+# Test Jira Cloud connection
 curl -u email@company.com:api_token \
   https://company.atlassian.net/rest/api/3/myself
+
+# Test Jira Server / Data Center connection (REST API v2, PAT as Bearer)
+curl -H "Authorization: Bearer YOUR_PAT" \
+  https://jira.your-company.com/rest/api/2/myself
 
 # Test GitHub connection
 curl -H "Authorization: token YOUR_PAT" \

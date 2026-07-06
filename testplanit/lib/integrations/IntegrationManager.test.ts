@@ -529,6 +529,79 @@ describe("IntegrationManager", () => {
       expect(cachedAdapter).toBe(adapter);
     });
 
+    it("plumbs Jira Server username/password credentials and the deployment setting through to the adapter", async () => {
+      const mockIntegration = {
+        id: 11,
+        name: "Test Jira DC",
+        provider: "JIRA",
+        status: "ACTIVE",
+        authType: "API_KEY",
+        credentials: {
+          username: "svc-tpi",
+          password: "s3cret",
+        },
+        settings: {
+          baseUrl: "https://jira.example.com",
+          deploymentType: "server",
+        },
+        userIntegrationAuths: [],
+      };
+
+      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ name: "svc-tpi" }),
+      });
+      global.fetch = mockFetch;
+
+      const adapter = await manager.getAdapter("11");
+
+      expect(adapter).toBeInstanceOf(JiraAdapter);
+      // settings.deploymentType reached the adapter config → v2 endpoint,
+      // and username/password reached authData → Basic auth.
+      const [url, init] = mockFetch.mock.calls[0];
+      expect(url).toBe("https://jira.example.com/rest/api/2/myself");
+      expect(
+        Buffer.from(
+          (init.headers.Authorization as string).slice("Basic ".length),
+          "base64"
+        ).toString("utf8")
+      ).toBe("svc-tpi:s3cret");
+    });
+
+    it("plumbs a Jira Server PAT through as a Bearer token", async () => {
+      const mockIntegration = {
+        id: 12,
+        name: "Test Jira DC PAT",
+        provider: "JIRA",
+        status: "ACTIVE",
+        authType: "API_KEY",
+        credentials: {
+          apiToken: "pat-1",
+        },
+        settings: {
+          baseUrl: "https://jira.example.com",
+          deploymentType: "server",
+        },
+        userIntegrationAuths: [],
+      };
+
+      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ name: "svc-tpi" }),
+      });
+      global.fetch = mockFetch;
+
+      await manager.getAdapter("12");
+
+      const [url, init] = mockFetch.mock.calls[0];
+      expect(url).toBe("https://jira.example.com/rest/api/2/myself");
+      expect(init.headers.Authorization).toBe("Bearer pat-1");
+    });
+
     it("should create GitHub adapter with PAT auth", async () => {
       const mockIntegration = {
         id: 2,

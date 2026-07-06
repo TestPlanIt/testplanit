@@ -105,7 +105,7 @@ describe("JiraAdapter", () => {
           // Missing apiToken and baseUrl
         })
       ).rejects.toThrow(
-        "API key authentication requires email, apiToken, and baseUrl"
+        "Jira Cloud authentication requires an email and an API token"
       );
     });
 
@@ -1916,6 +1916,481 @@ describe("JiraAdapter", () => {
       const result = await adapter.getIssue("TEST-123");
 
       expect(result.description).toBe("Plain text description");
+    });
+  });
+});
+
+describe("JiraAdapter Server / Data Center", () => {
+  const BASE = "https://jira.example.com";
+
+  // A REAL v2 issue shape: descriptions and comment bodies are wiki-markup
+  // STRINGS (never ADF), users carry name/key (never accountId), and
+  // renderedFields holds the server-rendered HTML when requested.
+  const dcIssue = {
+    id: "20001",
+    key: "DC-1",
+    self: `${BASE}/rest/api/2/issue/20001`,
+    renderedFields: {
+      description: "<p>DC <b>body</b></p>",
+    },
+    fields: {
+      summary: "DC Issue",
+      description: "DC *body*",
+      status: { name: "Open" },
+      priority: { name: "High" },
+      issuetype: { id: "10001", name: "Bug", iconUrl: "https://icon.url" },
+      assignee: {
+        name: "alice",
+        key: "JIRAUSER100",
+        displayName: "Alice",
+        emailAddress: "alice@example.com",
+      },
+      reporter: {
+        name: "bob",
+        key: "JIRAUSER200",
+        displayName: "Bob",
+        emailAddress: "bob@example.com",
+      },
+      labels: [],
+      created: "2024-01-15T10:00:00.000Z",
+      updated: "2024-01-15T12:00:00.000Z",
+    },
+  };
+
+  let adapter: JiraAdapter;
+
+  const authenticateServer = async (
+    target: JiraAdapter,
+    creds: Record<string, string> = { username: "alice", password: "s3cret" }
+  ) => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice", displayName: "Alice" }),
+    });
+    await target.authenticate({
+      type: "api_key",
+      baseUrl: BASE,
+      ...creds,
+    } as any);
+    mockFetch.mockClear();
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    adapter = new JiraAdapter({
+      provider: "JIRA",
+      baseUrl: BASE,
+      deploymentType: "server",
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("authentication", () => {
+    it("probes v2 /myself with Bearer for a Personal Access Token", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ name: "svc" }),
+      });
+
+      await adapter.authenticate({
+        type: "api_key",
+        apiToken: "pat-1",
+        baseUrl: BASE,
+      });
+
+      const [url, init] = mockFetch.mock.calls[0] as [string, any];
+      expect(url).toBe(`${BASE}/rest/api/2/myself`);
+      expect(init.headers.Authorization).toBe("Bearer pat-1");
+    });
+
+    it("probes v2 /myself with Basic for username + password", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ name: "alice" }),
+      });
+
+      await adapter.authenticate({
+        type: "api_key",
+        username: "alice",
+        password: "s3cret",
+        baseUrl: BASE,
+      } as any);
+
+      const [url, init] = mockFetch.mock.calls[0] as [string, any];
+      expect(url).toBe(`${BASE}/rest/api/2/myself`);
+      expect(
+        Buffer.from(
+          init.headers.Authorization.slice("Basic ".length),
+          "base64"
+        ).toString("utf8")
+      ).toBe("alice:s3cret");
+    });
+
+    it("sends a PAT as Bearer even when an email is also configured (#494)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ name: "svc" }),
+      });
+
+      await adapter.authenticate({
+        type: "api_key",
+        email: "user@example.com",
+        apiToken: "pat-1",
+        baseUrl: BASE,
+      });
+
+      const [, init] = mockFetch.mock.calls[0] as [string, any];
+      expect(init.headers.Authorization).toBe("Bearer pat-1");
+    });
+
+    it("fails with an actionable error when no server credential shape is present", async () => {
+      await expect(
+        adapter.authenticate({
+          type: "api_key",
+          email: "user@example.com",
+          baseUrl: BASE,
+        })
+      ).rejects.toThrow(/Personal Access Token or a username and password/);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getProjects", () => {
+    it("uses /rest/api/2/project (bare array) — /project/search does not exist on Server", async () => {
+      await authenticateServer(adapter);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { id: "1", key: "DC", name: "Data Center Project" },
+          ]),
+      });
+
+      const projects = await adapter.getProjects();
+
+      expect(mockFetch.mock.calls[0][0]).toBe(`${BASE}/rest/api/2/project`);
+      expect(projects).toEqual([
+        { id: "1", key: "DC", name: "Data Center Project" },
+      ]);
+    });
+  });
+
+  describe("searchIssues", () => {
+    it("uses classic /rest/api/2/search with startAt pagination and renderedFields", async () => {
+      await authenticateServer(adapter);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [dcIssue],
+            total: 3,
+            startAt: 0,
+            maxResults: 1,
+          }),
+      });
+
+      const result = await adapter.searchIssues({
+        query: "DC",
+        limit: 1,
+        offset: 0,
+      });
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("/rest/api/2/search?");
+      expect(url).not.toContain("search/jql");
+      expect(url).toContain("startAt=0");
+      expect(url).toContain("expand=renderedFields");
+      expect(result.total).toBe(3);
+      expect(result.hasMore).toBe(true);
+      expect(result.nextPageToken).toBeUndefined();
+      // v2 wiki-markup description is replaced by the rendered HTML.
+      expect(result.issues[0].description).toBe("<p>DC <b>body</b></p>");
+    });
+
+    it("reports hasMore=false on the final page", async () => {
+      await authenticateServer(adapter);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ issues: [dcIssue], total: 3, startAt: 2 }),
+      });
+
+      const result = await adapter.searchIssues({ limit: 2, offset: 2 });
+      expect(result.hasMore).toBe(false);
+    });
+  });
+
+  describe("createIssue", () => {
+    it("sends a wiki-markup string description and name-based user refs to v2", async () => {
+      await authenticateServer(adapter);
+      // create response, then the follow-up getIssue fetch
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ id: "20001", key: "DC-1", self: dcIssue.self }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(dcIssue),
+      });
+
+      await adapter.createIssue({
+        title: "DC Issue",
+        projectId: "DC",
+        issueType: "10001",
+        assigneeId: "alice",
+        description: {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                { type: "text", text: "broken", marks: [{ type: "bold" }] },
+              ],
+            },
+          ],
+        },
+        customFields: { reporter: { accountId: "bob" } },
+      });
+
+      const createCall = mockFetch.mock.calls.find((c: any[]) =>
+        String(c[0]).endsWith("/rest/api/2/issue")
+      );
+      expect(createCall).toBeTruthy();
+      const body = JSON.parse((createCall![1] as any).body);
+      expect(body.fields.description).toBe("*broken*");
+      expect(body.fields.assignee).toEqual({ name: "alice" });
+      expect(body.fields.reporter).toEqual({ name: "bob" });
+    });
+  });
+
+  describe("updateIssue", () => {
+    it("PUTs to v2 with a string description and { name } assignee", async () => {
+      await authenticateServer(adapter);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(dcIssue),
+      });
+
+      await adapter.updateIssue("DC-1", {
+        description: "plain update",
+        assigneeId: "alice",
+      });
+
+      const [url, init] = mockFetch.mock.calls[0] as [string, any];
+      expect(url).toBe(`${BASE}/rest/api/2/issue/DC-1`);
+      const body = JSON.parse(init.body);
+      expect(body.fields.description).toBe("plain update");
+      expect(body.fields.assignee).toEqual({ name: "alice" });
+    });
+  });
+
+  describe("comments", () => {
+    it("posts comment bodies as plain strings (v2 rejects ADF)", async () => {
+      await authenticateServer(adapter);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      await (adapter as any).addComment("DC-1", "linked from TestPlanIt");
+
+      const [url, init] = mockFetch.mock.calls[0] as [string, any];
+      expect(url).toBe(`${BASE}/rest/api/2/issue/DC-1/comment`);
+      expect(JSON.parse(init.body)).toEqual({
+        body: "linked from TestPlanIt",
+      });
+    });
+
+    it("reads comments with expand=renderedBody and prefers the rendered HTML", async () => {
+      await authenticateServer(adapter);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            comments: [
+              {
+                id: 1,
+                author: { name: "alice", displayName: "Alice" },
+                body: "wiki *comment*",
+                renderedBody: "<p>wiki <b>comment</b></p>",
+                created: "2024-01-15T10:00:00.000Z",
+              },
+            ],
+          }),
+      });
+
+      const comments = await adapter.getIssueComments("DC-1");
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        `${BASE}/rest/api/2/issue/DC-1/comment?expand=renderedBody`
+      );
+      expect(comments[0].body).toBe("<p>wiki <b>comment</b></p>");
+      expect(comments[0].author).toBe("Alice");
+    });
+  });
+
+  describe("getIssue", () => {
+    it("requests renderedFields and maps name-based users", async () => {
+      await authenticateServer(adapter);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(dcIssue),
+      });
+
+      const issue = await adapter.getIssue("DC-1");
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("/rest/api/2/issue/DC-1?");
+      expect(url).toContain("renderedFields");
+      expect(issue.description).toBe("<p>DC <b>body</b></p>");
+      expect(issue.assignee?.id).toBe("alice");
+      expect(issue.reporter?.id).toBe("bob");
+    });
+
+    it("falls back to the raw wiki string when renderedFields is absent", async () => {
+      await authenticateServer(adapter);
+      const { renderedFields: _omitted, ...withoutRendered } = dcIssue;
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(withoutRendered),
+      });
+
+      const issue = await adapter.getIssue("DC-1");
+      expect(issue.description).toBe("DC *body*");
+    });
+  });
+
+  describe("searchUsers", () => {
+    it("searches with the v2 username parameter and never calls accountId search", async () => {
+      await authenticateServer(adapter);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            {
+              name: "alice",
+              key: "JIRAUSER100",
+              displayName: "Alice",
+              emailAddress: "alice@example.com",
+            },
+          ]),
+      });
+
+      const result = await adapter.searchUsers("alice@example.com");
+
+      const urls = mockFetch.mock.calls.map((c: any[]) => String(c[0]));
+      for (const url of urls) {
+        expect(url).toContain("username=");
+        expect(url).not.toContain("query=");
+        expect(url).not.toContain("accountId=");
+      }
+      const users = Array.isArray(result) ? result : result.users;
+      // The Server username fills the accountId slot — it IS the identifier
+      // this deployment addresses users by.
+      expect(users[0].accountId).toBe("alice");
+    });
+  });
+
+  describe("getIssueTypeFields", () => {
+    it("uses the Jira 9+ per-issue-type createmeta endpoint (classic was removed in 9.0)", async () => {
+      await authenticateServer(adapter);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            values: [
+              {
+                fieldId: "summary",
+                name: "Summary",
+                required: true,
+              },
+              {
+                fieldId: "customfield_10100",
+                name: "Severity",
+                required: false,
+                allowedValues: [{ value: "Low" }],
+              },
+            ],
+          }),
+      });
+
+      const fields = await adapter.getIssueTypeFields("DC", "10001");
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        `${BASE}/rest/api/2/issue/createmeta/DC/issuetypes/10001?maxResults=200`
+      );
+      // summary is dialog-handled and filtered out; fieldId maps to key.
+      expect(fields).toEqual([
+        expect.objectContaining({ key: "customfield_10100", name: "Severity" }),
+      ]);
+    });
+
+    it("falls back to classic createmeta for Jira 8.x", async () => {
+      await authenticateServer(adapter);
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve("no such resource"),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            projects: [
+              {
+                issuetypes: [
+                  {
+                    fields: {
+                      labels: { name: "Labels", required: false },
+                    },
+                  },
+                ],
+              },
+            ],
+          }),
+      });
+
+      const fields = await adapter.getIssueTypeFields("DC", "10001");
+
+      expect(mockFetch.mock.calls[1][0]).toContain(
+        "/rest/api/2/issue/createmeta?projectKeys=DC"
+      );
+      expect(fields).toEqual([
+        expect.objectContaining({ key: "labels", name: "Labels" }),
+      ]);
+    });
+  });
+
+  describe("getCurrentUser", () => {
+    it("returns the Server username in the accountId slot", async () => {
+      await authenticateServer(adapter);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            name: "svc-tpi",
+            displayName: "TestPlanIt Service",
+            emailAddress: "svc@example.com",
+          }),
+      });
+
+      const user = await adapter.getCurrentUser();
+
+      expect(mockFetch.mock.calls[0][0]).toBe(`${BASE}/rest/api/2/myself`);
+      expect(user).toEqual({
+        accountId: "svc-tpi",
+        displayName: "TestPlanIt Service",
+        emailAddress: "svc@example.com",
+      });
     });
   });
 });

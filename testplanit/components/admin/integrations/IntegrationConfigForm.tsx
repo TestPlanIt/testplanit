@@ -50,6 +50,9 @@ interface FieldConfig {
   options?: { value: string; label: string }[];
   isCredential?: boolean;
   required?: boolean;
+  /** Rendered as the selected value when the stored value is empty. The
+   *  setting itself stays unset until the admin touches the field. */
+  defaultValue?: string;
 }
 
 // Shared credential field for the PERSONAL_ACCESS_TOKEN auth type.
@@ -85,34 +88,133 @@ const OAUTH_CLIENT_FIELDS: FieldConfig[] = [
   },
 ];
 
+// ── Jira deployment-aware API-key fields ─────────────────────────────
+// Jira Cloud authenticates with email + API token; self-hosted Server /
+// Data Center authenticates with a Personal Access Token (sent as Bearer)
+// or username + password (Basic). The deployment selector below switches
+// the credential fields; getJiraApiKeyFields assembles the visible set.
+
+const JIRA_BASE_URL_FIELD: FieldConfig = {
+  name: "baseUrl",
+  label: "config.jiraUrl",
+  placeholder: "config.jiraUrlPlaceholder",
+  help: "config.jiraUrlHelp",
+  isCredential: false,
+  required: true,
+};
+
+const JIRA_DEPLOYMENT_FIELD: FieldConfig = {
+  name: "deploymentType",
+  label: "config.jiraDeployment",
+  placeholder: "config.jiraDeploymentPlaceholder",
+  help: "config.jiraDeploymentHelp",
+  type: "select",
+  options: [
+    { value: "cloud", label: "config.jiraDeploymentCloud" },
+    { value: "server", label: "config.jiraDeploymentServer" },
+  ],
+  isCredential: false,
+  required: true,
+  defaultValue: "cloud",
+};
+
+const JIRA_CLOUD_CREDENTIAL_FIELDS: FieldConfig[] = [
+  {
+    name: "email",
+    label: "common.fields.email",
+    placeholder: "config.emailPlaceholder",
+    help: "config.emailHelp",
+    isCredential: true,
+    required: true,
+  },
+  {
+    name: "apiToken",
+    label: "config.apiToken",
+    placeholder: "config.apiTokenPlaceholder",
+    help: "config.apiTokenHelp",
+    type: "password",
+    isCredential: true,
+    required: true,
+  },
+];
+
+// Persisted in settings purely so the form re-renders the right credential
+// fields when editing; the backend derives the auth scheme from which
+// credential fields exist, not from this value.
+const JIRA_SERVER_AUTH_METHOD_FIELD: FieldConfig = {
+  name: "serverAuthMethod",
+  label: "config.jiraServerAuthMethod",
+  placeholder: "config.jiraServerAuthMethodPlaceholder",
+  help: "config.jiraServerAuthMethodHelp",
+  type: "select",
+  options: [
+    { value: "pat", label: "config.jiraServerAuthPat" },
+    { value: "basic", label: "config.jiraServerAuthBasic" },
+  ],
+  isCredential: false,
+  required: true,
+  defaultValue: "pat",
+};
+
+// Stored under `apiToken` so IntegrationManager plumbs it into the
+// adapter's API-key auth path; on Server a bare apiToken is a PAT and is
+// sent as `Authorization: Bearer`.
+const JIRA_SERVER_PAT_FIELD: FieldConfig = {
+  name: "apiToken",
+  label: "authType.personal_access_token",
+  placeholder: "config.jiraPatPlaceholder",
+  help: "config.jiraPatHelp",
+  type: "password",
+  isCredential: true,
+  required: true,
+};
+
+const JIRA_SERVER_BASIC_FIELDS: FieldConfig[] = [
+  {
+    name: "username",
+    label: "config.jiraUsername",
+    placeholder: "config.jiraUsernamePlaceholder",
+    help: "config.jiraUsernameHelp",
+    isCredential: true,
+    required: true,
+  },
+  {
+    name: "password",
+    label: "config.jiraPassword",
+    placeholder: "config.jiraPasswordPlaceholder",
+    help: "config.jiraPasswordHelp",
+    type: "password",
+    isCredential: true,
+    required: true,
+  },
+];
+
+function getJiraApiKeyFields(settings: Record<string, string>): FieldConfig[] {
+  if (settings.deploymentType === "server") {
+    const credentialFields =
+      settings.serverAuthMethod === "basic"
+        ? JIRA_SERVER_BASIC_FIELDS
+        : [JIRA_SERVER_PAT_FIELD];
+    return [
+      JIRA_DEPLOYMENT_FIELD,
+      JIRA_SERVER_AUTH_METHOD_FIELD,
+      ...credentialFields,
+      JIRA_BASE_URL_FIELD,
+    ];
+  }
+  return [
+    JIRA_DEPLOYMENT_FIELD,
+    ...JIRA_CLOUD_CREDENTIAL_FIELDS,
+    JIRA_BASE_URL_FIELD,
+  ];
+}
+
 // Provider + AuthType specific fields
 const authTypeFields: Record<string, FieldConfig[]> = {
   [`${IntegrationProvider.JIRA}_${IntegrationAuthType.API_KEY}`]: [
-    {
-      name: "email",
-      label: "common.fields.email",
-      placeholder: "config.emailPlaceholder",
-      help: "config.emailHelp",
-      isCredential: true,
-      required: true,
-    },
-    {
-      name: "apiToken",
-      label: "config.apiToken",
-      placeholder: "config.apiTokenPlaceholder",
-      help: "config.apiTokenHelp",
-      type: "password",
-      isCredential: true,
-      required: true,
-    },
-    {
-      name: "baseUrl",
-      label: "config.jiraUrl",
-      placeholder: "config.jiraUrlPlaceholder",
-      help: "config.jiraUrlHelp",
-      isCredential: false,
-      required: true,
-    },
+    JIRA_DEPLOYMENT_FIELD,
+    ...JIRA_CLOUD_CREDENTIAL_FIELDS,
+    JIRA_BASE_URL_FIELD,
   ],
   [`${IntegrationProvider.JIRA}_${IntegrationAuthType.OAUTH2}`]: [
     {
@@ -342,7 +444,14 @@ export function IntegrationConfigForm({
 
   // Get fields based on provider and authType combination, or fall back to provider-only fields
   const authKey = authType ? `${provider}_${authType}` : "";
-  const authFields = authTypeFields[authKey] || [];
+  const isJiraApiKey =
+    provider === IntegrationProvider.JIRA &&
+    authType === IntegrationAuthType.API_KEY;
+  // Jira's API-key fields depend on the selected deployment (Cloud vs
+  // Server/Data Center) and, on Server, the chosen credential shape.
+  const authFields = isJiraApiKey
+    ? getJiraApiKeyFields(settings)
+    : authTypeFields[authKey] || [];
   const baseFields = providerFields[provider] || [];
 
   // Merge auth-specific fields with base provider fields
@@ -363,16 +472,41 @@ export function IntegrationConfigForm({
   const handleFieldChange = (field: FieldConfig, value: string) => {
     if (field.isCredential) {
       onCredentialsChange({ ...credentials, [field.name]: value });
-    } else {
-      onSettingsChange({ ...settings, [field.name]: value });
+      return;
     }
+
+    // Switching the Jira deployment or credential shape hides fields; drop
+    // their staged values so a leftover email/username/apiToken can't
+    // change which Authorization scheme the backend derives.
+    if (
+      isJiraApiKey &&
+      (field.name === "deploymentType" || field.name === "serverAuthMethod")
+    ) {
+      const next = { ...credentials };
+      if (field.name === "deploymentType") {
+        if (value === "server") {
+          delete next.email;
+        } else {
+          delete next.username;
+          delete next.password;
+        }
+      } else if (value === "pat") {
+        delete next.username;
+        delete next.password;
+      } else {
+        delete next.apiToken;
+      }
+      onCredentialsChange(next);
+    }
+
+    onSettingsChange({ ...settings, [field.name]: value });
   };
 
   const getFieldValue = (field: FieldConfig) => {
     if (field.isCredential) {
       return credentials[field.name] || "";
     }
-    return settings[field.name] || "";
+    return settings[field.name] || field.defaultValue || "";
   };
 
   // Show warning for API key authentication with Jira
