@@ -54,7 +54,10 @@ export const ProjectDropdownMenu = ({
   );
 
   return (
-    <Select onValueChange={handleProjectSelect}>
+    <Select
+      value={currentProject ? currentProject.id.toString() : ""}
+      onValueChange={handleProjectSelect}
+    >
       <SelectTrigger
         data-testid="project-dropdown-trigger"
         aria-label={t("common.aria.selectProject")}
