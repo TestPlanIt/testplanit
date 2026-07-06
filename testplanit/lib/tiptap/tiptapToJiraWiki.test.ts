@@ -94,6 +94,17 @@ describe("tiptapToJiraWiki", () => {
         "\\h1. not a heading"
       );
     });
+
+    it("emits input backslashes as entities — Jira renders \\\\ as a line break, so doubling would corrupt paths", () => {
+      expect(tiptapToJiraWiki(doc(p(text("C:\\temp\\new"))))).toBe(
+        "C:&#92;temp&#92;new"
+      );
+      // A user-typed backslash can never pair with an escape backslash
+      // into an accidental forced line break.
+      expect(tiptapToJiraWiki(doc(p(text("\\*not bold*"))))).toBe(
+        "&#92;\\*not bold\\*"
+      );
+    });
   });
 
   describe("blocks", () => {

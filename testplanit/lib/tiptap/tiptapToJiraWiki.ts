@@ -46,7 +46,13 @@ interface WikiNode {
 const WIKI_ESCAPE_RE = /([*_+^~{\[!|])/g;
 
 function escapeWiki(text: string): string {
-  return text.replace(WIKI_ESCAPE_RE, "\\$1");
+  // Backslash goes first, and NOT as a backslash escape: Jira wiki renders
+  // `\\` as a forced line break, so doubling would corrupt text like
+  // `C:\path`. Emit it as an HTML entity instead (Jira's renderer resolves
+  // entities — same trick as the table-cell pipes). Replacing it before
+  // the general escape also guarantees an input backslash can never pair
+  // with an escape backslash added below into an accidental `\\`.
+  return text.replace(/\\/g, "&#92;").replace(WIKI_ESCAPE_RE, "\\$1");
 }
 
 // A line that STARTS with a list marker / heading / quote token would be
