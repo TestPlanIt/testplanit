@@ -39,7 +39,10 @@ import {
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
 
-const PAGE_SIZE = 50;
+// Rows fetched per scroll page — matches the admin audit-log surface: audit
+// rows are cheap (heavy Json columns excluded) and operationId grouping can
+// collapse a whole page into one visible row, so batch large.
+const PAGE_SIZE = 1000;
 
 interface ScopedAuditLogSheetProps {
   /** The AuditLog.entityType to scope to (e.g. RepositoryCases / TestRuns / Sessions). */

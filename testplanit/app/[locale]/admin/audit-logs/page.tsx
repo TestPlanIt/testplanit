@@ -40,7 +40,11 @@ import { logDataExport } from "~/lib/services/auditClient";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
 import { buildAuditLogOrderBy, ExtendedAuditLog, useColumns } from "./columns";
 
-const PAGE_SIZE = 50;
+// Rows fetched per scroll page. Audit rows are cheap (the heavy `changes` /
+// `metadata` Json columns are excluded from the list select), and operationId
+// grouping can collapse an entire page into one visible row, so a large batch
+// keeps scrolling responsive without a burst of round trips.
+const PAGE_SIZE = 1000;
 
 export default function AuditLogsPage() {
   return <AuditLogsGuard />;
