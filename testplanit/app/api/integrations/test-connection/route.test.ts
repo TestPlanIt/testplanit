@@ -732,4 +732,48 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
     expect(myselfCall).toBeTruthy();
     expect((myselfCall![1] as any).headers.Authorization).toBe("Bearer pat-123");
   });
+
+  it("detects Data Center when v3 /myself redirects to the login page (302→opaque)", async () => {
+    // Reproduces jira.rapidsoft.ru: /rest/api/3/myself returns 302 (redirect
+    // to login.jsp). With redirect: "manual" the probe sees a non-OK opaque
+    // response (status 0) instead of a misleading 200, so detection falls
+    // through to serverInfo → Server, and the v2 probe authenticates.
+    // v3 /myself → opaque redirect (non-OK, status 0)
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 0,
+      statusText: "",
+      json: async () => ({}),
+    });
+    // serverInfo → Server (hostname fallback would also work, but here the
+    // instance returns deploymentType on a 401-fallback path)
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ deploymentType: "Server" }),
+    });
+    // v2 /myself, /search, /issue/picker
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ issues: [] }) });
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
+
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { apiToken: "pat-123" },
+        settings: { baseUrl: "https://jira.rapidsoft.ru" },
+      })
+    );
+    const data = await response.json();
+
+    expect(data.success).toBe(true);
+    // The v3 probe must have used redirect: "manual".
+    const v3Call = mockFetch.mock.calls.find(
+      (c: any[]) => c[0] === "https://jira.rapidsoft.ru/rest/api/3/myself"
+    );
+    expect(v3Call).toBeTruthy();
+    expect((v3Call![1] as any).redirect).toBe("manual");
+    const calledUrls = mockFetch.mock.calls.map((c: any[]) => c[0]);
+    expect(calledUrls).toContain("https://jira.rapidsoft.ru/rest/api/2/myself");
+  });
 });

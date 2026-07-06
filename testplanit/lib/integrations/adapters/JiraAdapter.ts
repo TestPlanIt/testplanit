@@ -202,16 +202,20 @@ export class JiraAdapter extends BaseAdapter {
       } else {
         // Cloud attempt (v3). A 404 indicates a Data Center instance that
         // only ships /rest/api/2; detect via serverInfo and retry on v2.
+        // Detect via v3 /myself with redirect: "manual" so a Data Center
+        // instance that redirects unknown v3 paths to the login page (302→200)
+        // is NOT misread as a successful Cloud probe. Any non-OK v3 result
+        // (404, 401, or the opaque redirect) triggers serverInfo detection.
         const v3Response = await fetch(
           `${this.baseUrl}/rest/api/3/myself`,
-          { headers }
+          { headers, redirect: "manual" }
         );
         if (v3Response.ok) {
           this.deployment = "cloud";
           this.apiVersion = "3";
           this.deploymentResolved = true;
           this.apiKeyAuthActive = true;
-        } else if (v3Response.status === 404) {
+        } else if (!v3Response.ok) {
           const detected = await detectJiraDeployment(this.baseUrl!, {
             Authorization: authHeader,
           });
