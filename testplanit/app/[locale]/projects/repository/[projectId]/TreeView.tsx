@@ -1404,7 +1404,6 @@ const TreeView: React.FC<{
       {deleteModalState.open && deleteModalState.node && (
         <DeleteFolderModal
           folderNode={deleteModalState.node}
-          allFolders={hierarchyData}
           canAddEdit={canAddEdit}
           refetchFolders={refetchFolders}
           refetchCases={refetchCases}
