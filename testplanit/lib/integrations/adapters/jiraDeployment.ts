@@ -91,18 +91,40 @@ export async function detectJiraDeployment(
 /**
  * Resolve the authentication scheme for a Jira credential set.
  *
- * A Personal Access Token on Data Center is sent as `Bearer`. Cloud API
- * tokens and Data Center username/password pairs use `Basic`. An explicit
- * `override` (from `settings.authScheme`) wins over auto-detection so
- * admins can force a scheme when the heuristic is wrong.
+ * - On **Server / Data Center** a Personal Access Token is *always* sent as
+ *   `Bearer`, even when an email happens to be supplied — Jira DC does not
+ *   accept a PAT as the password half of Basic auth. A username + password
+ *   pair uses `Basic`.
+ * - On **Cloud** an API token is paired with an email as `Basic`.
+ * - When the deployment is unknown (before detection), a bare token with no
+ *   email/username is treated as a PAT (`Bearer`); anything paired is
+ *   `Basic`. Once the deployment is known, callers should re-resolve with
+ *   the `deployment` argument so an email + PAT combo is handled correctly
+ *   on Data Center.
+ *
+ * An explicit `override` (from `settings.authScheme`) wins over everything
+ * so admins can force a scheme when the heuristic is wrong.
  */
 export function resolveAuthScheme(
   creds: JiraAuthCredentials,
-  override?: string
+  override?: string,
+  deployment?: JiraDeploymentType
 ): JiraAuthScheme {
   if (override === "bearer") return "bearer";
   if (override === "basic") return "basic";
-  // A PAT is a bare token with no email/username pairing.
+  if (deployment === "server") {
+    // DC: a PAT (apiToken without a password) is Bearer; username+password
+    // is Basic. An email is ignored for scheme selection on DC.
+    if (creds.apiToken && !creds.password) return "bearer";
+    return "basic";
+  }
+  if (deployment === "cloud") {
+    // Cloud: API token + email is Basic. A bare token (no email) is treated
+    // as a PAT-style Bearer, though Cloud normally doesn't use PATs.
+    if (creds.apiToken && !creds.email && !creds.username) return "bearer";
+    return "basic";
+  }
+  // Deployment unknown: a PAT is a bare token with no email/username pairing.
   if (creds.apiToken && !creds.email && !creds.username) return "bearer";
   return "basic";
 }

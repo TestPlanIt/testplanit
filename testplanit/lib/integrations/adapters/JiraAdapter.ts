@@ -158,20 +158,37 @@ export class JiraAdapter extends BaseAdapter {
         apiToken: authData.apiToken,
         password: authData.password,
       };
+      // Initial best-guess scheme (deployment unknown). Re-resolved below
+      // once the deployment is known, so an email + PAT combo on Data
+      // Center switches from Basic to Bearer (a DC PAT is always Bearer,
+      // even when an email was supplied).
       this.authScheme = resolveAuthScheme(this.authCreds, this.authSchemeOverride);
       this.baseUrl = baseUrl;
       // Keep legacy fields populated for any code that still reads them.
       this.apiEmail = authData.email;
       this.apiToken = authData.apiToken;
 
-      const authHeader = buildAuthHeader(this.authCreds, this.authScheme);
-      const headers = {
+      let authHeader = buildAuthHeader(this.authCreds, this.authScheme);
+      let headers = {
         Authorization: authHeader,
         Accept: "application/json",
+      };
+      // Re-resolve the auth scheme now that the deployment is known, then
+      // rebuild the header. On Data Center a PAT is Bearer regardless of an
+      // email; on Cloud an API token + email is Basic.
+      const reapplyScheme = () => {
+        this.authScheme = resolveAuthScheme(
+          this.authCreds,
+          this.authSchemeOverride,
+          this.deployment
+        );
+        authHeader = buildAuthHeader(this.authCreds, this.authScheme);
+        headers = { Authorization: authHeader, Accept: "application/json" };
       };
 
       // Explicit deployment override short-circuits auto-detection.
       if (this.deploymentResolved) {
+        reapplyScheme();
         const response = await fetch(
           `${this.baseUrl}/rest/api/${this.apiVersion}/myself`,
           { headers }
@@ -202,6 +219,9 @@ export class JiraAdapter extends BaseAdapter {
           this.apiVersion = detected.apiVersion;
           this.deploymentResolved = true;
           if (detected.type === "server") {
+            // A PAT on DC is Bearer even when an email was supplied —
+            // re-resolve and rebuild the header before the v2 probe.
+            reapplyScheme();
             const v2Response = await fetch(
               `${this.baseUrl}/rest/api/2/myself`,
               { headers }

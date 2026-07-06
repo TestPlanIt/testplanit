@@ -696,4 +696,40 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
       ])
     );
   });
+
+  it("uses Bearer for an email + PAT combo on Data Center (not Basic)", async () => {
+    // Reproduces the user's report: email supplied alongside a PAT. The v3
+    // probe 404s (DC has no v3); after detection the v2 probe must use
+    // Bearer, not Basic email:PAT (which Jira DC rejects with 401).
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      json: async () => ({}),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ deploymentType: "Server" }),
+    });
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ issues: [] }) });
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
+
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { email: "testplanit@rapidsoft.ru", apiToken: "pat-123" },
+        settings: { baseUrl: "https://jira.rapidsoft.ru" },
+      })
+    );
+    const data = await response.json();
+
+    expect(data.success).toBe(true);
+    const myselfCall = mockFetch.mock.calls.find(
+      (c: any[]) => c[0] === "https://jira.rapidsoft.ru/rest/api/2/myself"
+    );
+    expect(myselfCall).toBeTruthy();
+    expect((myselfCall![1] as any).headers.Authorization).toBe("Bearer pat-123");
+  });
 });

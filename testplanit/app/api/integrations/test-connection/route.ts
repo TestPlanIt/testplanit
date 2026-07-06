@@ -155,9 +155,13 @@ async function testJiraConnection(
     }
 
     const creds = { email, username, apiToken, password };
-    const scheme = resolveAuthScheme(creds, authScheme);
-    const authHeaderValue = buildAuthHeader(creds, scheme);
-    const headers = {
+    // Initial best-guess scheme (deployment unknown). Re-resolved below
+    // once the deployment is known, so an email + PAT combo on Data Center
+    // switches from Basic to Bearer (a DC PAT is always Bearer, even when
+    // an email was supplied — Jira DC rejects a PAT as the Basic password).
+    let scheme = resolveAuthScheme(creds, authScheme);
+    let authHeaderValue = buildAuthHeader(creds, scheme);
+    let headers = {
       Authorization: authHeaderValue,
       Accept: "application/json",
     };
@@ -176,6 +180,18 @@ async function testJiraConnection(
       deployment = "cloud";
     }
 
+    // Re-resolve the auth scheme now that the deployment is known (or once
+    // it's discovered below). On Data Center a PAT is Bearer regardless of
+    // an email; on Cloud an API token + email is Basic.
+    const reapplyScheme = () => {
+      scheme = resolveAuthScheme(creds, authScheme, deployment);
+      authHeaderValue = buildAuthHeader(creds, scheme);
+      headers = { Authorization: authHeaderValue, Accept: "application/json" };
+    };
+    if (deploymentType === "server" || deploymentType === "cloud") {
+      reapplyScheme();
+    }
+
     let connection: CapabilityProbe;
     if (deployment === "server") {
       connection = await probe(`${baseUrl}/rest/api/2/myself`, { headers });
@@ -191,6 +207,9 @@ async function testJiraConnection(
         deployment = detected.type;
         apiVersion = detected.apiVersion;
         if (detected.type === "server") {
+          // A PAT on DC is Bearer even when an email was supplied —
+          // re-resolve and rebuild the header before the v2 probe.
+          reapplyScheme();
           connection = await probe(`${baseUrl}/rest/api/2/myself`, {
             headers,
           });

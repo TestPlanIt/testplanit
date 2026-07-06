@@ -114,6 +114,38 @@ describe("jiraDeployment", () => {
     it("honors an explicit basic override even for a bare PAT", () => {
       expect(resolveAuthScheme({ apiToken: "pat" }, "basic")).toBe("basic");
     });
+
+    it("treats an email + PAT as Bearer on Server/Data Center", () => {
+      // The user's case: email supplied alongside a PAT. On DC the PAT is
+      // always Bearer — Jira DC rejects a PAT as the Basic password half.
+      expect(
+        resolveAuthScheme(
+          { email: "testplanit@rapidsoft.ru", apiToken: "pat-123" },
+          undefined,
+          "server"
+        )
+      ).toBe("bearer");
+    });
+
+    it("treats username + password as Basic on Server/Data Center", () => {
+      expect(
+        resolveAuthScheme(
+          { username: "alice", password: "secret" },
+          undefined,
+          "server"
+        )
+      ).toBe("basic");
+    });
+
+    it("treats email + apiToken as Basic on Cloud", () => {
+      expect(
+        resolveAuthScheme(
+          { email: "user@example.com", apiToken: "token" },
+          undefined,
+          "cloud"
+        )
+      ).toBe("basic");
+    });
   });
 
   describe("buildAuthHeader", () => {
