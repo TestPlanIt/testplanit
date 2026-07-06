@@ -165,6 +165,57 @@ describe("VirtualizedDataTable", () => {
     expect(onLoadMore).toHaveBeenCalledTimes(1);
   });
 
+  it("passes loadedCount equal to the visible count for a plain (non-rollup) table", () => {
+    renderTable({ hasMore: true, onLoadMore: vi.fn() });
+    // Two flat rows, no rollup: the load-more signal matches the visible count.
+    expect(hookMock.lastOpts?.count).toBe(2);
+    expect(hookMock.lastOpts?.loadedCount).toBe(2);
+  });
+
+  it("derives loadedCount from the full row tree so collapsed rollups keep paginating", () => {
+    renderTable({
+      hasMore: true,
+      onLoadMore: vi.fn(),
+      data: [
+        {
+          id: 1,
+          name: "Parent",
+          count: 1,
+          subRows: [
+            { id: 11, name: "c1", count: 0 },
+            { id: 12, name: "c2", count: 0 },
+            { id: 13, name: "c3", count: 0 },
+          ],
+        },
+      ],
+      getSubRows: (row: RowShape) => row.subRows,
+    });
+    // Collapsed by default → one visible row...
+    expect(hookMock.lastOpts?.count).toBe(1);
+    // ...but the load-more signal counts the parent + all rolled-up children,
+    // so a fetched page that collapses entirely into this parent still advances
+    // pagination (the systemic fix for the giant-collapsed-group stall).
+    expect(hookMock.lastOpts?.loadedCount).toBe(4);
+  });
+
+  it("lets an explicit loadedCount prop override the derived tree count", () => {
+    renderTable({
+      hasMore: true,
+      onLoadMore: vi.fn(),
+      loadedCount: 999,
+      data: [
+        {
+          id: 1,
+          name: "Parent",
+          count: 1,
+          subRows: [{ id: 11, name: "c1", count: 0 }],
+        },
+      ],
+      getSubRows: (row: RowShape) => row.subRows,
+    });
+    expect(hookMock.lastOpts?.loadedCount).toBe(999);
+  });
+
   it("shows the load-more indicator while appending a page", () => {
     renderTable({ hasMore: true, isLoading: true });
     expect(

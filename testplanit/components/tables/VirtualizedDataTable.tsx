@@ -154,6 +154,17 @@ interface VirtualizedDataTableProps {
   onLoadMore?: () => void;
   loadMoreError?: boolean;
   onRetryLoadMore?: () => void;
+  /**
+   * Override for the load-more "a page landed" signal. By default this is
+   * derived automatically from the table's full pre-expansion row model (every
+   * rolled-up child counted, whether or not its parent is expanded), so ANY
+   * rollup table — rows collapsed into parents via `getSubRows`, or grouped via
+   * `grouping` — keeps paginating even when a whole fetched page collapses into
+   * an already-present parent and the visible row count doesn't grow. Only pass
+   * this when the true loaded count can't be derived from `data` (e.g. a parent
+   * whose children are lazy-loaded from the server and aren't present in `data`).
+   */
+  loadedCount?: number;
 
   /**
    * Shown when the result set is empty and not loading. Defaults to the generic
@@ -228,6 +239,7 @@ export function VirtualizedDataTable({
   onLoadMore,
   loadMoreError = false,
   onRetryLoadMore,
+  loadedCount,
   emptyMessage,
   resetKey: externalResetKey,
   estimateSize = ESTIMATED_ROW_HEIGHT,
@@ -392,6 +404,14 @@ export function VirtualizedDataTable({
   }, [isResizingColumn, columnSizing, columnSizingStorage]);
 
   const rows = table.getRowModel().rows;
+  // The load-more guard keys on this, not on `rows.length`: the visible row
+  // count collapses rolled-up children away, so a whole fetched page can land
+  // without it changing (a giant collapsed parent group), stalling pagination.
+  // `getCoreRowModel().flatRows` counts EVERY row in the tree — parents and all
+  // their (collapsed or expanded) children — so it grows on every page. For a
+  // plain, non-rollup table it equals the visible count, so behaviour there is
+  // unchanged. An explicit `loadedCount` prop still wins for server-lazy trees.
+  const loadedRowCount = loadedCount ?? table.getCoreRowModel().flatRows.length;
   const leafColumns = table.getVisibleLeafColumns();
   const totalWidth = leafColumns.reduce((sum, c) => sum + c.getSize(), 0);
 
@@ -427,6 +447,7 @@ export function VirtualizedDataTable({
     maxHeight,
   } = useVirtualizedInfiniteList({
     count: rows.length,
+    loadedCount: loadedRowCount,
     estimateSize,
     overscan: 8,
     hasMore,
