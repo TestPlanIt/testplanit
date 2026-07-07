@@ -788,7 +788,7 @@
     "and": "Ve",
     "branding": {
       "name": "TestPlanIt",
-      "logoAlt": "TestPlanIt Logo",
+      "logoAlt": "TestPlanIt Logosu",
       "tagline": "Güneşin altında bulunan her şeyi test edin."
     },
     "table": {
@@ -1072,7 +1072,7 @@
         "apple": "Apple ile devam edin",
         "microsoft": "Microsoft ile devam edin",
         "samlProvider": "{name} ile giriş yapın",
-        "magicLink": "Sign in with single-use Magic Link",
+        "magicLink": "Tek kullanımlık Magic Link ile giriş yapın",
         "emailLogin": "E-posta ile devam edin"
       },
       "magicLink": {
@@ -1086,16 +1086,19 @@
         "backToSignIn": "Giriş sayfasına geri dön"
       },
       "passwordless": {
-        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
-        "codeLabel": "Sign-in code",
-        "verifyCode": "Verify code",
-        "verifying": "Verifying...",
-        "invalidCode": "That code isn't right. Check the email and try again.",
-        "codeExpired": "This sign-in request has expired. Request a new link.",
-        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
-        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
-        "genericError": "We couldn't sign you in. Request a new link and try again.",
-        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+        "waitingInstructions": "Bu tarayıcıdan giriş yapmak için e-postadaki bağlantıya tıklayın veya aşağıya e-postadaki kodu girin.",
+        "codeLabel": "Giriş kodu",
+        "verifyCode": "Kodu doğrula",
+        "verifying": "Doğrulanıyor...",
+        "invalidCode": "Bu kod doğru değil. E-postayı kontrol edin ve tekrar deneyin.",
+        "codeExpired": "Bu giriş isteğinin süresi doldu. Yeni bir bağlantı isteyin.",
+        "tooManyAttempts": "Çok fazla yanlış deneme yapıldı. Tekrar denemek için yeni bir bağlantı isteyin.",
+        "windowLost": "Bu pencere artık girişi tamamlayamıyor. Yeni bir bağlantı isteyin.",
+        "genericError": "Girişinizi tamamlayamadık. Yeni bir bağlantı isteyip tekrar deneyin.",
+        "tooManyRequests": "Çok fazla giriş isteği yapıldı. Lütfen bir süre bekleyip tekrar deneyin.",
+        "haveCode": "Zaten bir giriş kodunuz mu var?",
+        "codeEntryDescription": "Giriş e-postanızdaki kodu girin. Kodlar yalnızca bağlantıyı istediğiniz tarayıcıda çalışır.",
+        "backToRequest": "Bunun yerine yeni bir bağlantı iste"
       },
       "twoFactor": {
         "title": "İki Faktörlü Kimlik Doğrulama",
@@ -1105,19 +1108,19 @@
       "contactAdmin": "Sistem yöneticisiyle iletişime geçin."
     },
     "passwordless": {
-      "completingSignIn": "Signing you in...",
-      "completeErrorTitle": "We couldn't sign you in",
-      "requestNewLink": "Request a new link",
-      "codeTitle": "Your sign-in code",
-      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
-      "codeCloseNotice": "You can close this window once you've entered the code.",
-      "expiredTitle": "This sign-in link is no longer valid",
-      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
+      "completingSignIn": "Giriş yapılıyor...",
+      "completeErrorTitle": "Girişinizi tamamlayamadık",
+      "requestNewLink": "Yeni bir bağlantı iste",
+      "codeTitle": "Giriş kodunuz",
+      "codeInstructions": "Giriş bağlantısını farklı bir cihazda veya tarayıcıda açtınız. Bu kodu, orijinal olarak istekte bulunduğunuz giriş ekranına girin.",
+      "codeCloseNotice": "Kodu girdikten sonra bu pencereyi kapatabilirsiniz.",
+      "expiredTitle": "Bu giriş bağlantısı artık geçerli değil",
+      "expiredBody": "Bağlantının süresi dolmuş veya zaten kullanılmış olabilir. Giriş sayfasından yeni bir tane isteyin — yalnızca bir dakikanızı alır."
     },
     "errors": {
       "accessDenied": "Erişim engellendi. Hesabınız devre dışı olabilir veya oturum açma izniniz olmayabilir.",
       "configuration": "Sunucu yapılandırmasında bir sorun var.",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "Bu giriş bağlantısının süresi doldu veya zaten kullanıldı. Magic Link'ler yalnızca bir kez kullanılabilir — giriş yapmak için lütfen yeni bir tane isteyin.",
       "invalid2FACode": "Geçersiz doğrulama kodu. Lütfen tekrar deneyin.",
       "twoFactorTokenRequired": "Token gereklidir.",
       "verificationCodeRequired": "Doğrulama kodu gereklidir."
@@ -1364,19 +1367,19 @@
           "switchWarning2": "Veritabanındaki sorunları saklayın (bağlantıları kesilir).",
           "switchWarning3": "Mevcut entegrasyon yapılandırmasını yenisiyle değiştirin.",
           "switchWarning4": "Mevcut entegrasyon için yapılandırılmış gelen web kancasını kaldırın.",
-          "importIssues": "Import Issues",
-          "importTitle": "Import issues from {name}",
-          "importDescription": "Pull issues from this linked project into your project. Existing issues aren't duplicated, and imported issues stay up to date through sync.",
-          "importUpdatedWithin": "Updated within",
-          "importLastDays": "Last {days} days",
-          "importMax": "Maximum to import",
-          "importPreview": "Preview",
-          "importPreviewResult": "~{count, plural, one {# issue} other {# issues}} match this filter. Up to {cap} will be imported.",
-          "importOverCap": "That exceeds the cap of {cap}; only the {cap} most recently updated will be imported.",
-          "importStart": "Import",
-          "importStarted": "Import started. Issues will appear shortly.",
-          "importFailed": "Import failed",
-          "importPreviewFailed": "Couldn't estimate matches"
+          "importIssues": "Sorunları İçe Aktar",
+          "importTitle": "{name} kaynağından sorunları içe aktar",
+          "importDescription": "Bu bağlantılı projeden sorunları projenize aktarın. Mevcut sorunlar çoğaltılmaz ve içe aktarılan sorunlar senkronizasyon yoluyla güncel kalır.",
+          "importUpdatedWithin": "Güncelleme aralığı",
+          "importLastDays": "Son {days} gün",
+          "importMax": "İçe aktarılacak maksimum sayı",
+          "importPreview": "Önizleme",
+          "importPreviewResult": "~{count, plural, one {# sorun} other {# sorun}} bu filtreyle eşleşiyor. En fazla {cap} tanesi içe aktarılacak.",
+          "importOverCap": "Bu, {cap} sınırını aşıyor; yalnızca en son güncellenen {cap} tanesi içe aktarılacak.",
+          "importStart": "İçe Aktar",
+          "importStarted": "İçe aktarma başladı. Sorunlar kısa süre içinde görünecek.",
+          "importFailed": "İçe aktarma başarısız oldu",
+          "importPreviewFailed": "Eşleşmeler tahmin edilemedi"
         },
         "integrationAssigned": "Entegrasyon başarıyla atandı.",
         "integrationAssignError": "Sorun entegrasyonu projeye atanamadı.",
@@ -1402,10 +1405,10 @@
             "description": "İş öğesi takibi için Azure DevOps'a bağlanın."
           },
           "redmine": {
-            "description": "Connect to a self-hosted Redmine instance for issue tracking."
+            "description": "Sorun takibi için kendi sunucunuzda barındırdığınız bir Redmine örneğine bağlanın."
           },
           "mantisbt": {
-            "description": "Connect to a self-hosted MantisBT instance for issue tracking."
+            "description": "Sorun takibi için kendi sunucunuzda barındırdığınız bir MantisBT örneğine bağlanın."
           }
         }
       },
@@ -1422,7 +1425,7 @@
         "deliveriesEmptyNoConfigs": "Henüz hiçbir webhook gönderimi yok — gönderimleri almaya başlamak için diğer sekmelerde gelen veya giden bir webhook oluşturun.",
         "noConfig": "Hiçbir webhook yapılandırılmadı.",
         "createButton": "Web kancası oluştur",
-        "url": "Webhook URL",
+        "url": "Webhook URL'si",
         "urlHelp": "Bu URL'yi sorun takip sisteminin webhook yapılandırmasına yapıştırın.",
         "secret": "Webhook sırrı",
         "secretHelp": "Bu gizli kodu sorun takip sisteminin webhook yapılandırmasına yapıştırın.",
@@ -1658,7 +1661,7 @@
         "replayConfirm": "Bu, gerçek bir {direction} {adapterType} isteğini tetikleyecektir.",
         "replayAction": "Tekrar oynat",
         "bulkReplayConfirmTitle": "Giden bağlantı hatalarını tekrar oynat?",
-        "bulkReplayConfirm": "Replay {count, number} outbound failures to {configName}? This will fire {count, number} real HTTP requests.",
+        "bulkReplayConfirm": "{configName} için {count, number} giden hatayı yeniden oynatılsın mı? Bu, {count, number} gerçek HTTP isteği tetikleyecektir.",
         "bulkReplayCapExceeded": "Toplu tekrar oynatma, aynı anda en fazla 100 giden işlemle sınırlıdır. Filtreyi daraltın veya ardışık olarak çalıştırın. Şu anda {count, number} tekrar oynatılacaktır.",
         "bulkReplayAction": "Tekrar Oynat {count, number}",
         "healthBadge": {
@@ -1685,19 +1688,19 @@
         "toastReEnableSuccess": "Webhook yeniden etkinleştirildi",
         "toastReEnableFailed": "Yeniden etkinleştirme başarısız oldu: {error}",
         "inboundChooserRedmine": "Redmine",
-        "inboundRedmineTitle": "Redmine inbound webhook",
-        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
-        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
-        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
-        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here.",
+        "inboundRedmineTitle": "Redmine gelen web kancası",
+        "inboundRedmineScopeHint": "Redmine_webhook eklentisi istekleri imzalamaz, bu nedenle bu web kancası URL'si kimlik bilgisidir — bunu bir gizli bilgi olarak ele alın ve açığa çıkarsa yenileyin.",
+        "setupStepsRedmineStep1": "Redmine sunucunuza redmine_webhook eklentisini yükleyin (Redmine'de yerleşik web kancaları bulunmaz).",
+        "setupStepsRedmineStep2": "Redmine projenizde, Ayarlar → Modüller kısmını açın ve Web Kancalarını etkinleştirin.",
+        "setupStepsRedmineStep3": "Ayarlar → Web Kancaları kısmını açın, yukarıdaki URL'yi yapıştırın ve kaydedin.",
+        "setupStepsRedmineStep4": "Redmine'de bir sorun oluşturun veya güncelleyin; bağlantılı sorunun durumu burada senkronize edilecektir.",
         "inboundChooserMantisbt": "MantisBT",
-        "inboundMantisbtTitle": "MantisBT inbound webhook",
-        "inboundMantisbtScopeHint": "A MantisBT webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsMantisbtStep1": "Install and enable a MantisBT webhook plugin on your MantisBT server (MantisBT has no built-in webhooks).",
-        "setupStepsMantisbtStep2": "In the plugin configuration, choose the issue created and issue updated events.",
-        "setupStepsMantisbtStep3": "Paste the URL above as the webhook target and save.",
-        "setupStepsMantisbtStep4": "Create or update an issue in MantisBT; the linked issue’s status will sync here."
+        "inboundMantisbtTitle": "MantisBT gelen web kancası",
+        "inboundMantisbtScopeHint": "Bir MantisBT web kancası eklentisi istekleri imzalamaz, bu nedenle bu web kancası URL'si kimlik bilgisidir — bunu bir gizli bilgi olarak ele alın ve açığa çıkarsa yenileyin.",
+        "setupStepsMantisbtStep1": "MantisBT sunucunuza bir MantisBT web kancası eklentisi yükleyin ve etkinleştirin (MantisBT'de yerleşik web kancaları bulunmaz).",
+        "setupStepsMantisbtStep2": "Eklenti yapılandırmasında, sorun oluşturuldu ve sorun güncellendi olaylarını seçin.",
+        "setupStepsMantisbtStep3": "Yukarıdaki URL'yi web kancası hedefi olarak yapıştırın ve kaydedin.",
+        "setupStepsMantisbtStep4": "MantisBT'de bir sorun oluşturun veya güncelleyin; bağlantılı sorunun durumu burada senkronize edilecektir."
       },
       "aiModels": {
         "description": "Akıllı test senaryosu oluşturma ve analizi için yapay zeka modellerini yapılandırın.",
@@ -1887,7 +1890,7 @@
           "scanningFiles": "{scope}… içindeki dosyalar taranıyor.",
           "scanningFilesCount": "{scope}… içindeki dosyalar taranıyor ({count, number} bulundu)",
           "filtering": "{count, number} dosyalarına filtreler uygulanıyor…",
-          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
+          "rateLimited": "Sağlayıcı tarafından hız sınırlandı — {seconds, number} saniye içinde yeniden deneniyor…"
         },
         "cache": {
           "title": "Önbellek Ayarları",
@@ -1913,8 +1916,8 @@
         "networkError": "Önbellek yenileme sırasında ağ hatası",
         "refreshSuccess": "Önbellek yenilendi: {fileCount} dosya ({contentCached} içerik önbelleğe alındı)",
         "refreshRateLimited": "Önbellek yenilendi: {fileCount} dosya listelendi, {contentCached}/{fileCount} içerik önbelleğe alındı (oran sınırlı — tamamlamak için tekrar yenileyin)",
-        "refreshComplete": "Cache refreshed: {fileCount} files",
-        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
+        "refreshComplete": "Önbellek yenilendi: {fileCount} dosya",
+        "refreshInProgress": "Önbellek yenileme arka planda hâlâ çalışıyor. Tamamlandığında burada güncellenecek.",
         "validation": {
           "pathRequired": "Yol gereklidir.",
           "patternRequired": "Desen gereklidir.",
@@ -2139,9 +2142,9 @@
   },
   "sessions": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this session."
+      "trigger": "Aktivite",
+      "title": "Aktivite Kaydı",
+      "description": "Bu oturum için kaydedilen tüm değişiklikler."
     },
     "title": "{count, plural, =1 {Oturum} other {Oturumlar}}",
     "labels": {
@@ -2171,7 +2174,7 @@
       "createSuccess": "Oturum başarıyla oluşturuldu.",
       "createSuccessMultiple": "{count, number} Oturumlar başarıyla oluşturuldu",
       "duplicateSuccess": "Oturum başarıyla kopyalandı.",
-      "duplicateSuccessMultiple": "{count} Sessions duplicated successfully"
+      "duplicateSuccessMultiple": "{count} Oturum başarıyla kopyalandı"
     },
     "duplicateDialog": {
       "title": "Yinelenen Oturum",
@@ -2199,7 +2202,7 @@
       "noEstimate": "Tahmin belirlenmedi."
     },
     "delete": {
-      "confirmMessage": "Are you sure you want to delete the Session {name}?",
+      "confirmMessage": "{name} Oturumunu silmek istediğinizden emin misiniz?",
       "warning": "Bu oturum projeden kaldırılacaktır. Bu oturuma ait geçmiş veriler projede kalmaya devam edecektir.",
       "toast": {
         "loading": "Oturum siliniyor...",
@@ -2404,19 +2407,19 @@
         }
       },
       "auditLog": {
-        "title": "Audit Log",
-        "description": "Actions performed by this user",
-        "noEntries": "No activity recorded yet.",
-        "loadMore": "Loading",
+        "title": "Denetim Kaydı",
+        "description": "Bu kullanıcı tarafından gerçekleştirilen eylemler",
+        "noEntries": "Henüz kaydedilmiş aktivite yok.",
+        "loadMore": "Yükleniyor",
         "viewDetails": "Ayrıntıları görüntüle",
         "columnAction": "Aksiyon",
         "columnEntityType": "Tip",
         "columnEntityName": "İsim",
         "columnTimestamp": "Zaman damgası",
         "allActions": "Tüm Eylemler",
-        "allTypes": "All Types",
-        "noMatchingEntries": "No entries match the selected filters.",
-        "showing": "{loaded} of {total} entries"
+        "allTypes": "Tüm Türler",
+        "noMatchingEntries": "Seçilen filtrelerle eşleşen kayıt bulunamadı.",
+        "showing": "{total} kayıttan {loaded} tanesi"
       },
       "mentionedComments": {
         "title": "Yorumlarda bahsedildi",
@@ -2510,9 +2513,9 @@
       "historyView": "Test Durumu Geçmişini Görüntüle"
     },
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test case."
+      "trigger": "Aktivite",
+      "title": "Aktivite Kaydı",
+      "description": "Bu test durumu için kaydedilen tüm değişiklikler."
     },
     "fields": {
       "optionNotFound": "Seçenek bulunamadı.",
@@ -3324,7 +3327,7 @@
       "alreadyPendingError": "Bu kuruluş için halihazırda bir inceleme süreci devam etmektedir.",
       "cannotSelfAssign": "Kendinize değerlendirme atayamazsınız; başka bir kullanıcı veya rol seçin.",
       "defaultComment": "Lütfen {fromState} → {toState} geçişini inceleyin.",
-      "defaultCommentRole": "Requesting approval from the {roleName} group to transition from {fromState} → {toState}.",
+      "defaultCommentRole": "{fromState} → {toState} geçişi için {roleName} grubundan onay isteniyor.",
       "ineligibleAssigneeError": "Bu kullanıcı/rol bu alan için yorumları onaylayamaz. Lütfen başka birini seçin.",
       "ineligibleAssigneeErrorUser": "{name} Bu alan için yorumları onaylayamıyor. Lütfen başka bir kullanıcı veya rol seçin.",
       "ineligibleAssigneeErrorRole": "{roleName} rolü bu alan için yorumları onaylayamaz. Başka bir rol veya kullanıcı seçin."
@@ -3359,9 +3362,9 @@
   },
   "runs": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test run."
+      "trigger": "Aktivite",
+      "title": "Aktivite Kaydı",
+      "description": "Bu test çalıştırması için kaydedilen tüm değişiklikler."
     },
     "notFound": "Test çalıştırması bulunamadı.",
     "add": {
@@ -4443,9 +4446,9 @@
       "scimColumnYes": "Evet",
       "scimUserLockedTitle": "Kullanıcı SCIM tarafından yönetilir.",
       "scimUserLockedDescription": "Bu kullanıcının adı, e-postası ve aktiflik durumu kimlik sağlayıcınız tarafından yönetilmektedir. Bunları burada güncellemek için orada değişiklik yapın.",
-      "groupMappingOverrideTitle": "Managed by Group Mapping",
-      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
-      "groupMappingBadge": "Group Mapped"
+      "groupMappingOverrideTitle": "Grup Eşlemesi ile Yönetiliyor",
+      "groupMappingOverrideDescription": "Bu kullanıcının erişim katmanı bir SCIM grup eşlemesi tarafından yönetilmektedir ve bir sonraki senkronizasyonda geri alınabilir.",
+      "groupMappingBadge": "Grup Eşlendi"
     },
     "security": {
       "title": "Güvenlik",
@@ -4490,7 +4493,7 @@
       "saveChanges": "Değişiklikleri Kaydet",
       "forceAllUsers": "Tüm Kullanıcıları Şifrelerini Değiştirmeye Zorla",
       "forceAllUsersDialogTitle": "Tüm Kullanıcılar İçin Şifre Değişikliğini Zorunlu Kıl",
-      "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
+      "forceAllUsersDialogDescription": "Bu, {count, number} kimlik bilgisi tabanlı kullanıcının bir sonraki girişte şifresini değiştirmesini gerektirecektir.",
       "forceAllUsersDialogWarning": "Bu işlem geri alınamaz.",
       "forceAllUsersDialogConfirm": "Güç Değişikliği",
       "saved": "Güvenlik ayarları kaydedildi.",
@@ -4624,14 +4627,14 @@
       "probe": {
         "button": "SCIM'i test edin",
         "testing": "Test ediliyor…",
-        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
+        "okBanner": "HTTP {status} — belirteç /api/scim/v2/Users üzerinde çalışıyor.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "SCIM uç noktasına ulaşılamadı. Tekrar denenecek."
       },
-      "fallbackDefaultTitle": "Default Mapped Access",
-      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
-      "fallbackDefaultLabel": "Default access tier",
-      "fallbackDefaultSaved": "Fallback default saved"
+      "fallbackDefaultTitle": "Varsayılan Eşlenmiş Erişim",
+      "fallbackDefaultDescription": "Herhangi bir grup eşlemesi tarafından kapsanmayan kullanıcılara atanan erişim katmanı.",
+      "fallbackDefaultLabel": "Varsayılan erişim katmanı",
+      "fallbackDefaultSaved": "Yedek varsayılan kaydedildi"
     },
     "tags": {
       "add": {
@@ -4916,13 +4919,13 @@
       "scimManagedTooltip": "SCIM tarafından yönetilir. SCIM yönetim sayfasından yönetin.",
       "scimNameLockedTitle": "Grup SCIM tarafından yönetilmektedir.",
       "scimNameLockedDescription": "Bu grubun adı ve üyeleri kimlik sağlayıcınız tarafından yönetilmektedir. Değişiklikleri orada yaparak buradaki bilgileri güncelleyebilirsiniz.",
-      "mappedAccessColumnHeader": "Mapped Access",
-      "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "No mapping",
-      "mappedAccessSelect": "Select access tier...",
-      "downgradeConfirmTitle": "Confirm Access Change",
-      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
-      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "mappedAccessColumnHeader": "Eşlenmiş Erişim",
+      "mappedAccessLabel": "Eşlenmiş Erişim Katmanı",
+      "mappedAccessNone": "Eşleme yok",
+      "mappedAccessSelect": "Erişim katmanı seçin...",
+      "downgradeConfirmTitle": "Erişim Değişikliğini Onayla",
+      "downgradeConfirmDescription": "{count, plural, one {# kullanıcının} other {# kullanıcının}} erişimi düşürülecek. Devam edilsin mi?",
+      "downgradeConfirmApplyAnyway": "Yine de uygula",
       "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
@@ -5111,27 +5114,27 @@
       "status": {
         "active": "Aktif",
         "inactive": "Etkin değil",
-        "awaitingAuthorization": "Awaiting authorization"
+        "awaitingAuthorization": "Yetkilendirme bekleniyor"
       },
       "connectedProjects": "Bağlantılı Projeler",
       "noIntegrations": "Herhangi bir entegrasyon yapılandırılmadı.",
       "testConnection": "Test Bağlantısı",
       "testSuccess": "Bağlantı başarılı",
       "testSuccessDescription": "Sorun entegrasyonu düzgün şekilde yapılandırılmış ve bağlanmıştır.",
-      "testCredentialsSaved": "Credentials look good",
-      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
+      "testCredentialsSaved": "Kimlik bilgileri uygun görünüyor",
+      "testCredentialsSavedDescription": "OAuth istemci kimliğiniz ve gizli anahtarınız geçerli. Entegrasyonu kaydedin, ardından hesabınızı bağlamak için Yetkilendir'e tıklayın — OAuth 2.0 kullanıcı başına bağlanır, bu nedenle en az bir kişi yetkilendirene kadar etkin olmaz.",
       "testFailed": "Bağlantı başarısız oldu",
       "testFailedDescription": "Harici hizmete bağlanılamadı.",
       "testError": "Test Hatası",
       "testErrorDescription": "Bağlantı test edilirken bir hata oluştu.",
-      "authorize": "Authorize",
-      "reauthorize": "Re-authorize",
-      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
-      "syncInProgress": "Re-syncing linked issues...",
-      "syncIntegration": "Re-sync linked issues",
-      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
+      "authorize": "Yetkilendir",
+      "reauthorize": "Yeniden yetkilendir",
+      "authorizeHint": "Hesabınızı bağlamak ve kurulumu tamamlamak için sağlayıcı ile yetkilendirin",
+      "syncInProgress": "Bağlantılı sorunlar yeniden senkronize ediliyor...",
+      "syncIntegration": "Bağlantılı sorunları yeniden senkronize et",
+      "syncIntegrationHint": "Yalnızca TestPlanIt'te zaten bağlantılı olan sorunları yeniden senkronize eder. Yeni sorunlar harici izleyiciden içe aktarılmaz.",
       "syncSuccess": "Senkronizasyon Sıraya Alındı",
-      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
+      "syncSuccessDescription": "\"{name}\" kaynağından bağlantılı sorunlar arka planda yeniden senkronize ediliyor. Bu birkaç dakika sürebilir. Tamamlandığında tablo otomatik olarak güncellenecektir.",
       "syncError": "Senkronizasyon Başarısız",
       "syncErrorDescription": "Bu sorun entegrasyonu için senkronizasyon görevi sıraya alınamadı. Lütfen daha sonra tekrar deneyin.",
       "delete": {
@@ -5178,11 +5181,11 @@
         },
         "redmine": {
           "name": "Redmine",
-          "description": "Connect to a self-hosted Redmine instance for issue tracking"
+          "description": "Sorun takibi için kendi sunucunuzda barındırdığınız bir Redmine örneğine bağlanın"
         },
         "mantisbt": {
           "name": "MantisBT",
-          "description": "Connect to a self-hosted MantisBT instance for issue tracking"
+          "description": "Sorun takibi için kendi sunucunuzda barındırdığınız bir MantisBT örneğine bağlanın"
         }
       },
       "filterPlaceholder": "Filtre entegrasyonları...",
@@ -5255,7 +5258,6 @@
         "encrypted": "Şifrelenmiş",
         "encryptedHelp": "Bu alan şifrelenmiş ve güvenli bir şekilde saklanmaktadır.",
         "changeCredential": "Değiştirmek",
-        "leaveBlankToKeep": "Leave blank to keep existing value",
         "apiKeyWarningTitle": "API Anahtarı Kimlik Doğrulama Bildirimi",
         "apiKeyWarningDescription": "API anahtarı kimlik doğrulamasıyla, oluşturulan sorunlardaki raporu hazırlayan kişi, e-posta adresleri eşleşse bile, sorunları oluşturan TestPlanIt kullanıcısıyla aynı olmayabilir:",
         "apiKeyWarningPoint1": "Jira raporlayıcısını ayarlamak için API belirteci hesabının Jira yöneticisi (\"Raporlayıcıyı Değiştir\") iznine sahip olması gerekir. Bu izin olmadan Jira raporlayıcıyı yok sayar ve API belirteci sahibi oluşturucu olarak kaydedilir.",
@@ -5264,10 +5266,10 @@
         "apiKeyWarningPoint4": "Yönetici izinlerine gerek kalmadan kullanıcı bazında doğru raporlama yapan kişiyi belirlemek için bunun yerine OAuth 2.0 kullanın.",
         "tokenCreatorNoticeTitle": "Sorun yaratıcısının atıfı",
         "tokenCreatorNoticeDescription": "Bu entegrasyon aracılığıyla oluşturulan sorunlar, her zaman bu erişim belirtecinin sahibi olan hesap olarak kaydedilir, sorunu oluşturan TestPlanIt kullanıcısı olarak değil. Bu sağlayıcının API'si, oluşturucuyu başka bir kullanıcı adına ayarlamaya izin vermez.",
-        "callbackUrlLabel": "Callback URL (redirect URI)",
-        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
-        "callbackUrlCopy": "Copy",
-        "callbackUrlCopied": "Copied",
+        "callbackUrlLabel": "Geri çağırma URL'si (yönlendirme URI'si)",
+        "callbackUrlDescription": "Bu tam URL'yi sağlayıcınızın OAuth uygulamasında geri çağırma / yönlendirme URI'si olarak kaydedin. Tam olarak eşleşmelidir, aksi takdirde yetkilendirme başarısız olur.",
+        "callbackUrlCopy": "Kopyala",
+        "callbackUrlCopied": "Kopyalandı",
         "forgeApiKeyLabel": "Forge API Anahtarı",
         "forgeApiKeyDescription": "Atlassian Forge uygulaması tarafından Jira sorun panellerinden gelen istekleri doğrulamak için kullanılır. Buradan bir anahtar oluşturun ve Forge uygulamanızın ayarlarına yapıştırın.",
         "forgeApiKeyPlaceholder": "API anahtarı oluşturmak için Oluştur'a tıklayın.",
@@ -5279,18 +5281,18 @@
         "platformGitea": "Gitea",
         "platformForgejo": "Forgejo",
         "platformGogs": "Gogs",
-        "redmineApiKey": "Redmine API Key",
-        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
-        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
-        "redmineUrl": "Redmine URL",
+        "redmineApiKey": "Redmine API Anahtarı",
+        "redmineApiKeyPlaceholder": "Redmine API anahtarınızı girin",
+        "redmineApiKeyHelp": "Hesabım → API erişim anahtarı altında bulunur (REST API'yi Yönetim → Ayarlar → API kısmından etkinleştirin)",
+        "redmineUrl": "Redmine URL'si",
         "redmineUrlPlaceholder": "https://redmine.example.com",
-        "redmineUrlHelp": "The base URL of your Redmine instance",
-        "mantisBTApiKey": "MantisBT API Token",
-        "mantisBTApiKeyPlaceholder": "Enter your MantisBT API token",
-        "mantisBTApiKeyHelp": "Create one under your MantisBT account settings → API Tokens",
-        "mantisBTUrl": "MantisBT URL",
+        "redmineUrlHelp": "Redmine örneğinizin temel URL'si",
+        "mantisBTApiKey": "MantisBT API Belirteci",
+        "mantisBTApiKeyPlaceholder": "MantisBT API belirtecinizi girin",
+        "mantisBTApiKeyHelp": "MantisBT hesap ayarlarınız → API Belirteçleri altında bir tane oluşturun",
+        "mantisBTUrl": "MantisBT URL'si",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "The base URL of your MantisBT instance"
+        "mantisBTUrlHelp": "MantisBT örneğinizin temel URL'si"
       },
       "authType": {
         "api_key": "API Anahtarı",
@@ -5503,7 +5505,7 @@
         "generate_from_url": "URL'den Test Senaryoları Oluştur (Gereksinimler)",
         "generate_from_url_app": "URL'den Test Senaryoları Oluşturma (Uygulama Testi)",
         "automation_candidates": "Otomasyon Adayları Raporu",
-        "derive_case_steps": "AI Step Derivation"
+        "derive_case_steps": "Yapay Zeka Adım Türetme"
       }
     },
     "elasticsearch": {
@@ -5679,15 +5681,15 @@
     },
     "auditLogs": {
       "description": "Güvenlik ve uyumluluk takibi için sistem genelindeki denetim kaydını görüntüleyin.",
-      "projectDescription": "View the audit trail of actions performed in this project.",
+      "projectDescription": "Bu projede gerçekleştirilen eylemlerin denetim izini görüntüleyin.",
       "filterPlaceholder": "Varlık, kullanıcı veya eyleme göre arama yapın...",
       "filterAction": "Aksiyon",
       "filterEntityType": "Varlık Türü",
       "allActions": "Tüm Eylemler",
       "allEntityTypes": "Tüm Varlık Türleri",
-      "allUsers": "All Users",
+      "allUsers": "Tüm Kullanıcılar",
       "allProjects": "Tüm Projeler",
-      "showing": "Showing {loaded} of {total} entries",
+      "showing": "{total} kayıttan {loaded} tanesi gösteriliyor",
       "viewDetails": "Ayrıntıları Görüntüle",
       "detailTitle": "Denetim Günlüğü Ayrıntıları",
       "userInfo": "Kullanıcı Bilgileri",
@@ -5715,8 +5717,8 @@
       "systemActor": "Sistem",
       "systemActorTooltip": "Sistem tarafından gerçekleştirilen işlem, oturum açmış bir kullanıcı tarafından değil.",
       "sourceScim": "SCIM",
-      "relatedChanges": "related changes",
-      "groupedEntry": "Grouped changes from a single action"
+      "relatedChanges": "ilgili değişiklikler",
+      "groupedEntry": "Tek bir eylemden gruplanmış değişiklikler"
     }
   },
   "components": {
@@ -5810,9 +5812,9 @@
         "reviewReminderAction": "Hâlâ sizin değerlendirmenizi bekliyor.",
         "reviewReminderEmailMessage": "Hatırlatma: {actorName}'ın {entityLabel} \"{entityName}\" hakkındaki inceleme isteği, \"{projectName}\" projesinde {hoursPending} saattir beklemede.",
         "reviewReminderHoursPending": "Beklemede {hoursPending, plural, one {saat} other {saat}}",
-        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
-        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
-        "aiStepsDerivedReviewLink": "Review test run"
+        "aiStepsDerivedTitle": "Yapay Zeka ile Türetilen Test Adımları Hazır",
+        "aiStepsDerivedMessage": "{count, plural, one {# test durumuna} other {# test durumuna}} yapay zeka tarafından türetilmiş adımlar verildi — doğruluğunu inceleyin.",
+        "aiStepsDerivedReviewLink": "Test çalıştırmasını incele"
       }
     },
     "issues": {
@@ -6176,7 +6178,7 @@
     "group": {
       "name": "## Grup Adı\nTüm projelerde kullanılan açık, özlü ve açıklayıcı bir ad veya anahtar kelime(ler).\n\n- Ekip üyelerinin ilgili test senaryolarını, test çalıştırmalarını ve oturumlarını hızlı bir şekilde bulmasına yardımcı olur.",
       "users": "## Kullanıcılar\nBu gruba atanmış kullanıcıları gösterir.",
-      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
+      "mappedAccess": "## Eşlenmiş Erişim Katmanı\nBu grubun üyelerine bir sonraki senkronizasyonda en az bu erişim katmanı verilir.\n\n- Bir kullanıcının tüm gruplarındaki en yüksek katman geçerli olur\n- \"Eşleme yok\" bu grubun erişimi etkilemediği anlamına gelir — üyeler SCIM sayfasında belirlenen varsayılana döner\n- Bir kullanıcı üzerinde yapılan manuel erişim değişikliği eşlemenin yerini alır (ve bu, kullanıcının düzenleme ekranında işaretlenir)"
     },
     "template": {
       "name": "## Şablon Adı\nBu şablon için benzersiz ve açıklayıcı bir ad (örneğin, 'Standart Test Durumu', 'API Test Sonuçları').",
@@ -6210,7 +6212,7 @@
       "authType": "## Kimlik Doğrulama Türü\nHarici hizmetle nasıl kimlik doğrulaması yapacağınızı seçin.\n\n- **API Anahtarı:** E-posta ve API belirteci kullanarak basit kimlik doğrulama\n- **OAuth 2.0:** OAuth akışı kullanarak güvenli kimlik doğrulama\n- **Kişisel Erişim Belirteci:** Doğrudan belirteç tabanlı kimlik doğrulama",
       "email": "## E-posta Adresi\nHarici hizmet için hesap e-posta adresiniz.\n\n- API anahtarı kimlik doğrulaması için kullanılır\n- API belirtecini oluşturan hesapla eşleşmelidir\n- Jira ve benzeri hizmetler için gereklidir",
       "apiToken": "## API Token\nHarici hizmetteki hesap ayarlarınızdan bir API token oluşturun.\n\n- Genellikle Hesap Ayarları → Güvenlik → API Token'ları bölümünde bulunur\n- Parolanızı ifşa etmeden güvenli erişim sağlar\n- Gerektiğinde iptal edilebilir ve yeniden oluşturulabilir",
-      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
+      "jiraUrl": "## Jira URL\nJira örneğinizin temel URL'si.\n\n- Biçim: https://your-site.atlassian.net\n- /browse veya diğer yolları içermeyin\n- Bu sunucudan erişilebilir olmalıdır",
       "clientId": "## OAuth İstemci Kimliği\nOAuth uygulama yapılandırmanızdaki İstemci Kimliği.\n\n- Harici hizmetin geliştirici konsolunda oluşturulur\n- OAuth akışı sırasında uygulamanızı tanımlamak için kullanılır\n- Yapılandırma dosyalarında paylaşılması güvenlidir",
       "clientSecret": "## OAuth İstemci Gizli Anahtarı\nOAuth uygulama yapılandırmanızdaki İstemci Gizli Anahtarı.\n\n- İstemci Kimliği ile birlikte oluşturulur\n- Gizli ve güvenli tutulmalıdır\n- Uygulamanızı doğrulamak için kullanılır",
       "personalAccessToken": "## Kişisel Erişim Belirteci\nHarici hizmet için uygun izinlere sahip kişisel bir erişim belirteci.\n\n- Hesap ayarlarınızda oluşturulur\n- Okuma ve yazma izinlerine sahip olmalıdır\n- Parola doğrulamasından daha güvenlidir",
@@ -6223,11 +6225,11 @@
       "instanceUrl": "## Örnek URL'si\nKendi sunucunuzda barındırdığınız örneğin temel URL'si.\n\n- Biçim: https://git.example.com\n- Sondaki eğik çizgileri veya yolları eklemeyin\n- Bu sunucudan erişilebilir olmalıdır",
       "projectPath": "## Proje Yolu\nGitLab projenizin tam yolu.\n\n- Biçim: ad alanı/proje veya grup/alt grup/proje\n- Örnek: my-org/my-project\n- Proje URL'sinde bulunur: gitlab.com/ad alanı/proje",
       "platform": "## Platform\nBağlandığınız kendi sunucunuzda barındırdığınız Git platformu.\n\n- **Gitea**: gitea.io tabanlı örnekler\n- **Forgejo**: forgejo.org tabanlı örnekler (Gitea çatalı)\n- **Gogs**: gogs.io tabanlı örnekler\n\nBu, hangi simgenin gösterileceğini kontrol eder ve API uyumluluğunu etkileyebilir.",
-      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
-      "mantisBTApiKey": "## MantisBT API Token\nYour personal REST API token.\n\n- Create one under your MantisBT account settings → API Tokens\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
-      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
+      "redmineApiKey": "## Redmine API Anahtarı\nKişisel REST API erişim anahtarınız.\n\n- REST API'yi Yönetim → Ayarlar → API altından etkinleştirin\n- Anahtarınızı Hesabım → API erişim anahtarı kısmından kopyalayın\n- Kullanıcınızın izinleriyle sınırlıdır; paylaşılan entegrasyonlar için bir servis hesabı kullanın",
+      "redmineUrl": "## Redmine URL\nRedmine örneğinizin temel URL'si.\n\n- Biçim: https://redmine.example.com\n- /issues veya diğer yolları içermeyin\n- Bu sunucudan erişilebilir olmalıdır",
+      "mantisBTApiKey": "## MantisBT API Belirteci\nKişisel REST API belirteciniz.\n\n- MantisBT hesap ayarlarınız → API Belirteçleri altında bir tane oluşturun\n- Kullanıcınızın izinleriyle sınırlıdır; paylaşılan entegrasyonlar için bir servis hesabı kullanın",
+      "mantisBTUrl": "## MantisBT URL\nMantisBT örneğinizin temel URL'si.\n\n- Biçim: https://mantisbt.example.com\n- /api/rest veya diğer yolları içermeyin\n- Bu sunucudan erişilebilir olmalıdır",
+      "githubBaseUrl": "## API Temel URL'si\nGitHub Enterprise Server için tam GitHub API kök dizini.\n\n- Genellikle /api/v3 ile biter\n- api.github.com kullanmak için boş bırakın\n- Bu sunucudan erişilebilir olmalıdır"
     },
     "config": {
       "name": "## Yapılandırma Adı\nBu yapılandırma için açık ve açıklayıcı bir ad.\n\n- Yapılandırmayı oluşturan varyant kombinasyonlarını açıklamaya yardımcı olur (örneğin \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", vb.).",
@@ -6958,7 +6960,7 @@
         },
         "heuristic": {
           "intro": "Bu proje için herhangi bir LLM entegrasyonu yapılandırılmamıştır, bu nedenle sıralama doğrudan seçim stratejisi metriğine göre oluşturulmuştur. Özel alanları, bağlantılı sorun bağlamını ve vaka içeriğini metrikle birlikte değerlendiren daha zengin bir akıl yürütme sağlamak için bir LLM entegrasyonu yapılandırın (Yönetici → Yapay Zeka Modelleri).",
-          "rankedSummary": "{ranked} of {totalEligible} eligible manual cases ranked.",
+          "rankedSummary": "{totalEligible} uygun manuel vakadan {ranked} tanesi sıralandı.",
           "strategyExplanation": {
             "most_executed": "Vakalar, manuel yürütme sayısına göre (en yüksekten başlayarak) sıralanmıştır; bu, otomasyonun test uzmanının zamanından en fazla tasarruf sağladığı regresyon sıklığı göstergesidir.",
             "flakiest_first": "Vakalar yaklaşık olarak tutarsızlık derecesine (başarılı/başarısız değişimlerine) göre sıralanır; tutarsız manuel testler, deterministik bir otomasyon kehaneti için ideal adaylardır.",
@@ -6975,7 +6977,7 @@
             "longestWithDuration": "Manuel yürütme tahmini {duration} — uzun süren manuel testlerin otomatikleştirilmesi, her çalıştırmada orantılı olarak daha fazla test uzmanı zamanı kazandırır.",
             "longestNone": "Tahmin veya öngörü belirlenmedi — En Uzun Süreli Yürütme sezgisel algoritmasının bu durum için süre verisi yok.",
             "oldest": "{age} tarafından yazılmıştır — uzun süreli manuel vakalar, yeniden çalışma gerektirmeden otomatikleştirilebilecek olgun ve istikrarlı davranışlar sergileme eğilimindedir.",
-            "newest": "Authored {age} — newly-authored cases are the most likely to need execution coverage right now.",
+            "newest": "{age} önce yazıldı — yeni yazılan vakaların şu anda yürütme kapsamına ihtiyaç duyma olasılığı en yüksektir.",
             "random": "Rastgele örneklem — tarafsız bir referans olarak dahil edilmiştir; sezgisel yöntem, örneklemdeki diğer durumlara kıyasla bu duruma yönelik doğal bir tercihe sahip değildir."
           },
           "flakinessFraction": {
@@ -6988,7 +6990,7 @@
             "seconds": "{seconds}s",
             "minutes": "{minutes}m",
             "hours": "{hours}h",
-            "hoursAndMinutes": "{hours}h {minutes}m"
+            "hoursAndMinutes": "{hours}sa {minutes}dk"
           },
           "relativeAge": {
             "today": "Bugün",
@@ -7526,33 +7528,33 @@
   "search": {
     "title": "Aramak",
     "savedSearches": {
-      "title": "Saved searches",
-      "save": "Save search",
-      "saveTitle": "Save search",
-      "saveDescription": "Name this search so you can revisit it later.",
+      "title": "Kayıtlı aramalar",
+      "save": "Aramayı kaydet",
+      "saveTitle": "Aramayı kaydet",
+      "saveDescription": "Daha sonra tekrar erişebilmek için bu aramaya bir ad verin.",
       "saveAction": "Kaydetmek",
       "nameLabel": "İsim",
-      "namePlaceholder": "e.g. Failed runs this sprint",
-      "nameRequired": "Enter a name for this search.",
-      "loginRequired": "You must be signed in to save searches.",
+      "namePlaceholder": "örn. Bu sprintteki başarısız çalıştırmalar",
+      "nameRequired": "Bu arama için bir ad girin.",
+      "loginRequired": "Aramaları kaydetmek için oturum açmış olmanız gerekir.",
       "descriptionLabel": "Açıklama (isteğe bağlı)",
-      "descriptionPlaceholder": "What this search is for",
-      "saved": "Search saved",
-      "savedDescription": "“{name}” is now in your saved searches.",
-      "saveFailed": "Couldn't save the search. Please try again.",
-      "empty": "No saved searches yet",
-      "emptyHint": "Save a search to revisit it later.",
-      "loaded": "Loaded “{name}”",
-      "loadFailed": "This saved search is no longer valid.",
+      "descriptionPlaceholder": "Bu aramanın amacı",
+      "saved": "Arama kaydedildi",
+      "savedDescription": "\"{name}\" artık kayıtlı aramalarınızda.",
+      "saveFailed": "Arama kaydedilemedi. Lütfen tekrar deneyin.",
+      "empty": "Henüz kayıtlı arama yok",
+      "emptyHint": "Daha sonra tekrar erişmek için bir arama kaydedin.",
+      "loaded": "\"{name}\" yüklendi",
+      "loadFailed": "Bu kayıtlı arama artık geçerli değil.",
       "edit": "Düzenlemek",
-      "editTitle": "Edit saved search",
-      "edited": "Saved search updated",
-      "editFailed": "Couldn't update the search. Please try again.",
+      "editTitle": "Kayıtlı aramayı düzenle",
+      "edited": "Kayıtlı arama güncellendi",
+      "editFailed": "Arama güncellenemedi. Lütfen tekrar deneyin.",
       "delete": "Silmek",
-      "deleteTitle": "Delete saved search?",
-      "deleteConfirm": "“{name}” will be removed from your saved searches. This can't be undone.",
-      "deleted": "Saved search deleted",
-      "deleteFailed": "Couldn't delete the search. Please try again."
+      "deleteTitle": "Kayıtlı arama silinsin mi?",
+      "deleteConfirm": "\"{name}\" kayıtlı aramalarınızdan kaldırılacak. Bu işlem geri alınamaz.",
+      "deleted": "Kayıtlı arama silindi",
+      "deleteFailed": "Arama silinemedi. Lütfen tekrar deneyin."
     },
     "bulk": {
       "crossProjectHint": "(birden fazla projeyi kapsayan)",
@@ -7698,14 +7700,14 @@
       "intro": "Giriş yapmak için aşağıdaki butona tıklayın:",
       "signInButton": "Giriş Yap",
       "copyPasteIntro": "Veya bu bağlantıyı tarayıcınıza kopyalayıp yapıştırın:",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "Güvenliğiniz için bu bağlantı yalnızca bir kez kullanılabilir. Tekrar giriş yapmanız gerekirse yeni bir bağlantı isteyin.",
       "disclaimer": "Bu e-postayı siz talep etmediyseniz, güvenle görmezden gelebilirsiniz.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "TestPlanIt'e giriş yapın\n\nGiriş yapmak için aşağıdaki bağlantıya tıklayın:\n{url}\n\nGüvenliğiniz için bu bağlantı yalnızca bir kez kullanılabilir. Tekrar giriş yapmanız gerekirse yeni bir bağlantı isteyin.\n\nBu e-postayı siz talep etmediyseniz, güvenle yok sayabilirsiniz."
     },
     "passwordless": {
-      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
-      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
+      "codeIntro": "Bunu farklı bir cihazda mı açıyorsunuz? Bağlantıyı istediğiniz giriş ekranına bu kodu girin:",
+      "deviceNotice": "Bu bağlantı, istekte bulunduğunuz tarayıcıdan giriş yapmanızı sağlar. Başka bir yerde açarsanız, orijinal pencerenize girmeniz için yukarıdaki kod gösterilecektir.",
+      "textBody": "TestPlanIt'e giriş yapın\n\nGiriş yapmak için aşağıdaki bağlantıya tıklayın:\n{url}\n\nBunu farklı bir cihazda mı açıyorsunuz? Bağlantıyı istediğiniz giriş ekranına bu kodu girin: {code}\n\nBu e-postayı siz talep etmediyseniz, güvenle yok sayabilirsiniz."
     }
   },
   "comments": {
@@ -7949,7 +7951,7 @@
     "importStep2RequiredUnmapped": "Gerekli parametre \"@{name}\" için eşlenmiş CSV sütunu bulunmamaktadır.",
     "importStep2Label": "Harita sütunları",
     "importStep3SummaryOk": "{totalRows, plural, =1 {# satır} other {# satırlar}} ayrıştırıldı, hata yok.",
-    "importStep3SummaryErrors": "{totalRows, plural, =1 {# row} other {# rows}} parsed; {errorCount, plural, =1 {# row has} other {# rows have}} errors.",
+    "importStep3SummaryErrors": "{totalRows, plural, =1 {# satır} other {# satır}} ayrıştırıldı; {errorCount, plural, =1 {# satırda hata var} other {# satırda hata var}}.",
     "importStep3PreviewLimit": "İlk {limit} satır gösteriliyor. Tüm satırlar bir sonraki adımda doğrulanacaktır.",
     "importStep3Label": "Önizleme",
     "importStep4Heading": "İçe aktarmayı onaylayın",
@@ -8079,9 +8081,9 @@
     "overrideUnsavedDiscard": "Değişiklikleri iptal et",
     "iterationBulkConfirmTitle": "Mark {count, plural, =1 {# yineleme} other {# yinelemeler}} olarak {action}?",
     "iterationBulkConfirmDescription": "Seçilen her yineleme, \"{statusName} \" durumuna sahip yeni bir sonuç alacaktır.",
-    "iterationBulkConfirm": "Mark {action}",
+    "iterationBulkConfirm": "{action} olarak işaretle",
     "iterationBulkConfirmReplace": "{action} ile değiştirin",
-    "iterationBulkOverwriteWarning": "{count, plural, =1 {# of the selected iterations already has} other {# of the selected iterations already have}} a result. A new result will be recorded and the latest will replace the current one.",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {Seçilen yinelemelerden # tanesinde} other {Seçilen yinelemelerden # tanesinde}} zaten bir sonuç var. Yeni bir sonuç kaydedilecek ve en güncel sonuç mevcut olanın yerine geçecek.",
     "iterationBulkReasonLabel": "Sebep (isteğe bağlı)",
     "iterationBulkReasonHelp": "Her sonuç kaydedildi.",
     "iterationBulkSuccess": "{count, plural, =1 {# yineleme} other {# yineleme}} işaretli {action}",

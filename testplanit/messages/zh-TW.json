@@ -13,10 +13,10 @@
     "file": "文件",
     "selectMultiple": "選擇多個...",
     "searchUsers": "搜尋用戶...",
-    "searchCases": "{count, plural, =0 {Search cases} one {Search # case} other {Search # cases}}",
-    "searchProjects": "{count, plural, =0 {Search projects} one {Search # project} other {Search # projects}}",
+    "searchCases": "{count, plural, =0 {搜尋案例} other {搜尋 # 個案例}}",
+    "searchProjects": "{count, plural, =0 {搜尋專案} other {搜尋 # 個專案}}",
     "searchTags": "搜尋標籤...",
-    "searchRuns": "{count, plural, =0 {Search test runs} one {Search # test run} other {Search # test runs}}",
+    "searchRuns": "{count, plural, =0 {搜尋測試執行} other {搜尋 # 個測試執行}}",
     "searchSessions": "{count, plural, =0 {搜尋會話數} one {搜尋會話數} other {搜尋會話數}}",
     "search": "搜尋...",
     "defaultOption": "預設選項",
@@ -742,20 +742,20 @@
       "editToModifyCases": "編輯測試運行，然後按一下「選定的測試案例」來修改清單。",
       "noTestCasesSelected": "未選擇任何測試用例",
       "editToSelectTestCases": "編輯測試運行以選擇測試案例。",
-      "casesInRun": "{count, plural, =0 {No Test Cases in the Test Run} =1 {1 Test Case in the Test Run} other {# Test Cases in the Test Run}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Unique Case} other {# Unique Cases}} across {configCount, plural, =1 {1 Configuration} other {# Configurations}} ({totalCount, number} total cases)",
+      "casesInRun": "{count, plural, =0 {測試執行中沒有測試案例} =1 {測試執行中有 1 個測試案例} other {測試執行中有 # 個測試案例}}",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 個唯一案例} other {# 個唯一案例}}，跨 {configCount, plural, =1 {1 個設定} other {# 個設定}}（共 {totalCount, number} 個案例）",
       "viewTestRunDetails": "查看測試運行詳情",
       "sortByStatus": "按狀態分組",
       "sortByDate": "按日期排序",
-      "testRuns": "{count, plural, =0 {No Test Runs} =1 {1 Test Run} other {# Test Runs}}",
-      "sessions": "{count, plural, =0 {No Sessions} =1 {1 Session} other {# Sessions}}",
+      "testRuns": "{count, plural, =0 {沒有測試執行} =1 {1 個測試執行} other {# 個測試執行}}",
+      "sessions": "{count, plural, =0 {沒有工作階段} =1 {1 個工作階段} other {# 個工作階段}}",
       "noOptions": "暫無選項",
       "multiConfiguration": "屬於多配置組",
       "otherConfigurations": "其他配置",
       "selected": "已選擇： {count}",
       "defaultProjectAccess": "預設項目存取權限",
       "defaultAccessType": "預設存取類型",
-      "assignedUsersCount": "{count, plural, =0 {No Users Assigned} =1 {# User Assigned} other {# Users Assigned}}",
+      "assignedUsersCount": "{count, plural, =0 {未指派使用者} =1 {已指派 # 位使用者} other {已指派 # 位使用者}}",
       "successRate": "成功率",
       "unassigned": "未分配",
       "testRunName": "測試運行名稱",
@@ -1072,7 +1072,7 @@
         "apple": "繼續使用 Apple",
         "microsoft": "繼續使用 Microsoft",
         "samlProvider": "使用 {name} 登入",
-        "magicLink": "Sign in with single-use Magic Link",
+        "magicLink": "使用單次 Magic Link 登入",
         "emailLogin": "繼續透過電子郵件"
       },
       "magicLink": {
@@ -1086,16 +1086,19 @@
         "backToSignIn": "返回登入頁面"
       },
       "passwordless": {
-        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
-        "codeLabel": "Sign-in code",
-        "verifyCode": "Verify code",
-        "verifying": "Verifying...",
-        "invalidCode": "That code isn't right. Check the email and try again.",
-        "codeExpired": "This sign-in request has expired. Request a new link.",
-        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
-        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
-        "genericError": "We couldn't sign you in. Request a new link and try again.",
-        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+        "waitingInstructions": "點按電子郵件中的連結以從此瀏覽器登入，或於下方輸入電子郵件中的代碼。",
+        "codeLabel": "登入代碼",
+        "verifyCode": "驗證代碼",
+        "verifying": "正在驗證……",
+        "invalidCode": "該代碼不正確。請檢查電子郵件並再試一次。",
+        "codeExpired": "此登入請求已過期。請申請新的連結。",
+        "tooManyAttempts": "錯誤嘗試次數過多。請申請新的連結以再試一次。",
+        "windowLost": "此視窗已無法完成登入。請申請新的連結。",
+        "genericError": "我們無法讓您登入。請申請新的連結並再試一次。",
+        "tooManyRequests": "登入請求過多。請稍候片刻再試一次。",
+        "haveCode": "已經有登入代碼了嗎？",
+        "codeEntryDescription": "請輸入您登入電子郵件中的代碼。代碼僅在您申請連結時所使用的瀏覽器中有效。",
+        "backToRequest": "改為申請新的連結"
       },
       "twoFactor": {
         "title": "雙重身份驗證",
@@ -1105,19 +1108,19 @@
       "contactAdmin": "請聯絡系統管理員"
     },
     "passwordless": {
-      "completingSignIn": "Signing you in...",
-      "completeErrorTitle": "We couldn't sign you in",
-      "requestNewLink": "Request a new link",
-      "codeTitle": "Your sign-in code",
-      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
-      "codeCloseNotice": "You can close this window once you've entered the code.",
-      "expiredTitle": "This sign-in link is no longer valid",
-      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
+      "completingSignIn": "正在為您登入……",
+      "completeErrorTitle": "我們無法讓您登入",
+      "requestNewLink": "申請新的連結",
+      "codeTitle": "您的登入代碼",
+      "codeInstructions": "您在不同的裝置或瀏覽器上開啟了登入連結。請在您最初申請的登入畫面上輸入此代碼。",
+      "codeCloseNotice": "輸入代碼後，您即可關閉此視窗。",
+      "expiredTitle": "此登入連結已失效",
+      "expiredBody": "此連結可能已過期或已被使用。請從登入頁面申請新的連結 — 這只需片刻。"
     },
     "errors": {
       "accessDenied": "訪問被拒絕。您的帳戶可能已停用或您沒有登入權限。",
       "configuration": "伺服器配置存在問題。",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "此登入連結已過期或已被使用。Magic Link 只能使用一次 — 請重新申請以登入。",
       "invalid2FACode": "驗證碼無效，請重試。",
       "twoFactorTokenRequired": "需要令牌",
       "verificationCodeRequired": "需要驗證碼"
@@ -1364,19 +1367,19 @@
           "switchWarning2": "保留資料庫中的問題（它們將不再關聯）",
           "switchWarning3": "將當前問題整合配置替換為新的配置。",
           "switchWarning4": "移除為目前整合配置的入站 Webhook",
-          "importIssues": "Import Issues",
-          "importTitle": "Import issues from {name}",
-          "importDescription": "Pull issues from this linked project into your project. Existing issues aren't duplicated, and imported issues stay up to date through sync.",
-          "importUpdatedWithin": "Updated within",
-          "importLastDays": "Last {days} days",
-          "importMax": "Maximum to import",
-          "importPreview": "Preview",
-          "importPreviewResult": "~{count, plural, one {# issue} other {# issues}} match this filter. Up to {cap} will be imported.",
-          "importOverCap": "That exceeds the cap of {cap}; only the {cap} most recently updated will be imported.",
-          "importStart": "Import",
-          "importStarted": "Import started. Issues will appear shortly.",
-          "importFailed": "Import failed",
-          "importPreviewFailed": "Couldn't estimate matches"
+          "importIssues": "匯入問題",
+          "importTitle": "從 {name} 匯入問題",
+          "importDescription": "將此已連結專案中的問題拉入您的專案。現有問題不會重複，已匯入的問題將透過同步保持最新。",
+          "importUpdatedWithin": "更新於",
+          "importLastDays": "過去 {days} 天",
+          "importMax": "最多匯入數量",
+          "importPreview": "預覽",
+          "importPreviewResult": "~{count, plural, other {# 個問題}} 符合此篩選條件。最多將匯入 {cap} 個。",
+          "importOverCap": "已超過 {cap} 的上限；僅會匯入最近更新的 {cap} 個。",
+          "importStart": "匯入",
+          "importStarted": "匯入已開始。問題將很快顯示。",
+          "importFailed": "匯入失敗",
+          "importPreviewFailed": "無法估算符合項目"
         },
         "integrationAssigned": "整合任務已成功分配",
         "integrationAssignError": "未能將問題整合分配給項目",
@@ -1402,10 +1405,10 @@
             "description": "連接到 Azure DevOps 以追蹤工作項目。"
           },
           "redmine": {
-            "description": "Connect to a self-hosted Redmine instance for issue tracking."
+            "description": "連接到自架的 Redmine 實例進行問題追蹤。"
           },
           "mantisbt": {
-            "description": "Connect to a self-hosted MantisBT instance for issue tracking."
+            "description": "連接到自架的 MantisBT 實例進行問題追蹤。"
           }
         }
       },
@@ -1418,11 +1421,11 @@
         "inboundAddButtonAllConfigured": "入站適配器已配置完成。",
         "inboundAddButtonNoIntegration": "在新增入站 webhook 之前，請先為該專案指派一個問題整合。",
         "inboundEmptyWithIntegration": "未配置任何入站 Webhook。 <link>新增一個</link> 以接收來自您指派的問題整合的更新。",
-        "inboundEmptyNoIntegration": "An <link>Issue Integration</link> is required to receive inbound issue updates. Assign one to your project to get started.",
+        "inboundEmptyNoIntegration": "需要 <link>問題整合</link> 才能接收傳入的問題更新。請將其指派給您的專案以開始使用。",
         "deliveriesEmptyNoConfigs": "目前還沒有 webhook 發送——請在其他標籤頁上建立入站或出站 webhook 以開始接收它們。",
         "noConfig": "未配置 webhook",
         "createButton": "創建 webhook",
-        "url": "Webhook URL",
+        "url": "網路鉤子網址",
         "urlHelp": "將此 URL 貼到問題追蹤器的 webhook 設定中。",
         "secret": "Webhook 秘密",
         "secretHelp": "將此密鑰貼上到問題追蹤器的 webhook 配置中。",
@@ -1685,19 +1688,19 @@
         "toastReEnableSuccess": "Webhook 已重新啟用",
         "toastReEnableFailed": "重新啟用失敗： {error}",
         "inboundChooserRedmine": "Redmine",
-        "inboundRedmineTitle": "Redmine inbound webhook",
-        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
-        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
-        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
-        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here.",
+        "inboundRedmineTitle": "Redmine 入站 webhook",
+        "inboundRedmineScopeHint": "redmine_webhook 外掛程式不會對請求進行簽署，因此此 webhook URL 即為憑證 — 請將其視為機密，若已外洩則應輪換。",
+        "setupStepsRedmineStep1": "在您的 Redmine 伺服器上安裝 redmine_webhook 外掛程式（Redmine 沒有內建的 webhook）。",
+        "setupStepsRedmineStep2": "在您的 Redmine 專案中，開啟「設定」→「模組」並啟用 Webhooks。",
+        "setupStepsRedmineStep3": "開啟「設定」→「Webhooks」，貼上上方的 URL，然後儲存。",
+        "setupStepsRedmineStep4": "在 Redmine 中建立或更新問題；已連結問題的狀態將同步至此處。",
         "inboundChooserMantisbt": "MantisBT",
-        "inboundMantisbtTitle": "MantisBT inbound webhook",
-        "inboundMantisbtScopeHint": "A MantisBT webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsMantisbtStep1": "Install and enable a MantisBT webhook plugin on your MantisBT server (MantisBT has no built-in webhooks).",
-        "setupStepsMantisbtStep2": "In the plugin configuration, choose the issue created and issue updated events.",
-        "setupStepsMantisbtStep3": "Paste the URL above as the webhook target and save.",
-        "setupStepsMantisbtStep4": "Create or update an issue in MantisBT; the linked issue’s status will sync here."
+        "inboundMantisbtTitle": "MantisBT 入站 webhook",
+        "inboundMantisbtScopeHint": "MantisBT webhook 外掛程式不會對請求進行簽署，因此此 webhook URL 即為憑證 — 請將其視為機密，若已外洩則應輪換。",
+        "setupStepsMantisbtStep1": "在您的 MantisBT 伺服器上安裝並啟用 MantisBT webhook 外掛程式（MantisBT 沒有內建的 webhook）。",
+        "setupStepsMantisbtStep2": "在外掛程式設定中，選擇「問題建立」和「問題更新」事件。",
+        "setupStepsMantisbtStep3": "將上方的 URL 貼上作為 webhook 目標並儲存。",
+        "setupStepsMantisbtStep4": "在 MantisBT 中建立或更新問題；已連結問題的狀態將同步至此處。"
       },
       "aiModels": {
         "description": "配置人工智慧模型以實現智慧測試用例生成和分析",
@@ -1785,9 +1788,9 @@
           "actions": "行動"
         },
         "versionLabel": "v{version, number}",
-        "assignmentsCount": "{count, plural, =0 {0 cases} =1 {# case} other {# cases}}",
+        "assignmentsCount": "{count, plural, =0 {0 個案例} =1 {# 個案例} other {# 個案例}}",
         "rowsCount": "{count, plural, =0 {0 行} =1 {# 行} other {# 行}}",
-        "columnsCount": "{count, plural, =0 {0 columns} =1 {# column} other {# columns}}",
+        "columnsCount": "{count, plural, =0 {0 個欄} =1 {# 個欄} other {# 個欄}}",
         "actionsMenuLabel": "開啟資料集操作",
         "actionOpen": "開啟編輯器",
         "actionDelete": "刪除",
@@ -1817,7 +1820,7 @@
           "error": "無法刪除資料集"
         },
         "deleteSuccess": "已刪除“{name}”",
-        "deleteSuccessWithAssignments": "Deleted \"{name}\" and unassigned {count, plural, =1 {# case} other {# cases}}",
+        "deleteSuccessWithAssignments": "已刪除「{name}」並取消指派 {count, plural, =1 {# 個案例} other {# 個案例}}",
         "editor": {
           "back": "傳回資料集",
           "loadError": "無法載入此資料集",
@@ -1887,7 +1890,7 @@
           "scanningFiles": "正在掃描 {scope}… 中的文件",
           "scanningFilesCount": "正在掃描 {scope}… 中的檔案（已找到{count, number}）",
           "filtering": "對 {count, number} 個檔案套用篩選器…",
-          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
+          "rateLimited": "被提供者限制速率 — 將在 {seconds, number} 秒後重試…"
         },
         "cache": {
           "title": "快取設定",
@@ -1913,8 +1916,8 @@
         "networkError": "快取刷新期間出現網路錯誤",
         "refreshSuccess": "快取已刷新： {fileCount} 個檔案（已快取{contentCached} 個內容）",
         "refreshRateLimited": "快取已刷新：列出了 {fileCount} 個文件，快取了 {contentCached}/{fileCount} 個內容（速率受限——請再次刷新以完成）",
-        "refreshComplete": "Cache refreshed: {fileCount} files",
-        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
+        "refreshComplete": "快取已重新整理：{fileCount} 個檔案",
+        "refreshInProgress": "快取重新整理仍在背景執行中。完成後將在此處更新。",
         "validation": {
           "pathRequired": "路徑是必需的",
           "patternRequired": "需要圖案",
@@ -1977,7 +1980,7 @@
           "enabledToast": "草稿案例將不計入運行次數。",
           "disabledToast": "現在可以將草稿案例新增到運行中。",
           "saveError": "更新草稿案例排除設定失敗",
-          "skippedToast": "{count, plural, =1 {1 draft case was skipped because it is in Not Started state} other {# draft cases were skipped because they are in Not Started state}}"
+          "skippedToast": "{count, plural, =1 {已跳過 1 個草稿案例，因其處於未開始狀態} other {已跳過 # 個草稿案例，因其處於未開始狀態}}"
         },
         "editWindow": {
           "label": "結果編輯視窗",
@@ -2011,7 +2014,7 @@
       "popoverNoTimestamp": "—",
       "filterStatus": "{count, plural, =0 {狀態} one {狀態 (#)} other {狀態 (#)}}",
       "filterConfig": "{count, plural, =0 {配置} one {配置 (#)} other {配置 (#)}}",
-      "filterDataset": "{count, plural, =0 {Dataset} one {Dataset (#)} other {Dataset (#)}}",
+      "filterDataset": "{count, plural, =0 {資料集} other {資料集 (#)}}",
       "filterStatusLabel": "地位",
       "filterConfigLabel": "配置",
       "filterDatasetLabel": "數據集",
@@ -2139,9 +2142,9 @@
   },
   "sessions": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this session."
+      "trigger": "活動",
+      "title": "活動日誌",
+      "description": "此工作階段的所有變更記錄。"
     },
     "title": "{count, plural, =1 {會話} other {會話}}",
     "labels": {
@@ -2278,7 +2281,7 @@
   "home": {
     "dashboard": {
       "title": "您的儀錶板",
-      "users": "There {count, plural, =1 {is # User} other {are # Users}}",
+      "users": "{count, plural, =1 {有 # 位使用者} other {有 # 位使用者}}",
       "yourProjects": "您的專案",
       "projects": "您有權存取 {count, plural, =1 {# 項目} other {# 項目集}}",
       "loading": "正在加載儀錶板...",
@@ -2286,7 +2289,7 @@
       "pendingRuns": "待測試運行",
       "activeSessions": "活躍會話",
       "yourActiveSessions": "{count, plural, =0 {無活動會話} =1 {活動會話數} other {活動會話數}}",
-      "yourPendingRuns": "{count, plural, =0 {No Pending Test Runs} =1 {# Active Test Run} other {# Active Test Runs}}",
+      "yourPendingRuns": "{count, plural, =0 {沒有待處理的測試執行} =1 {# 個活動測試執行} other {# 個活動測試執行}}",
       "yourAssignments": "你的作業",
       "totalTime": "預計總時間： ",
       "totalWorkEffort": "總工作量： ",
@@ -2315,10 +2318,10 @@
       "contact": "請聯絡您的專案管理員申請存取權限。"
     },
     "counts": {
-      "testCases": "{count, plural, =0 {# Test Cases} =1 {# Test Case} other {# Test Cases}}",
-      "activeMilestones": "{count, plural, =0 {# Active Milestones} =1 {# Active Milestone} other {# Active Milestones}}",
-      "activeRuns": "{count, plural, =0 {# Active Runs} =1 {# Active Run} other {# Active Runs}}",
-      "activeSessions": "{count, plural, =0 {# Active Sessions} =1 {# Active Session} other {# Active Sessions}}",
+      "testCases": "{count, plural, =0 {# 個測試案例} =1 {# 個測試案例} other {# 個測試案例}}",
+      "activeMilestones": "{count, plural, =0 {# 個活動里程碑} =1 {# 個活動里程碑} other {# 個活動里程碑}}",
+      "activeRuns": "{count, plural, =0 {# 個活動測試執行} =1 {# 個活動測試執行} other {# 個活動測試執行}}",
+      "activeSessions": "{count, plural, =0 {# 個活動工作階段} =1 {# 個活動工作階段} other {# 個活動工作階段}}",
       "issues": "{count, plural, =0 {# 問題} =1 {# 問題} other {# 問題}}"
     }
   },
@@ -2404,19 +2407,19 @@
         }
       },
       "auditLog": {
-        "title": "Audit Log",
-        "description": "Actions performed by this user",
-        "noEntries": "No activity recorded yet.",
-        "loadMore": "Loading",
-        "viewDetails": "View details",
-        "columnAction": "Action",
-        "columnEntityType": "Type",
-        "columnEntityName": "Name",
-        "columnTimestamp": "Timestamp",
-        "allActions": "All Actions",
-        "allTypes": "All Types",
-        "noMatchingEntries": "No entries match the selected filters.",
-        "showing": "{loaded} of {total} entries"
+        "title": "審計日誌",
+        "description": "此使用者執行的操作",
+        "noEntries": "尚無記錄的活動。",
+        "loadMore": "載入中",
+        "viewDetails": "查看詳情",
+        "columnAction": "操作",
+        "columnEntityType": "類型",
+        "columnEntityName": "名稱",
+        "columnTimestamp": "時間戳",
+        "allActions": "所有操作",
+        "allTypes": "所有類型",
+        "noMatchingEntries": "沒有符合所選篩選條件的項目。",
+        "showing": "{total} 個項目中的 {loaded} 個"
       },
       "mentionedComments": {
         "title": "評論中提到",
@@ -2510,9 +2513,9 @@
       "historyView": "測試用例歷史記錄視圖"
     },
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test case."
+      "trigger": "活動",
+      "title": "活動日誌",
+      "description": "此測試案例的所有變更記錄。"
     },
     "fields": {
       "optionNotFound": "未找到選項",
@@ -2570,16 +2573,16 @@
     },
     "templateNotAssignedWarning": "此測試案例使用了範本“{templateName}”，但該範本目前未指派給專案“{projectName}”。您可能需要將此範本指派給項目，或修改測試案例以使用其他範本。",
     "orphanedStepsWarning": "此測試案例包含步驟，但目前範本「{templateName}」不包含「步驟」欄位。在測試案例擁有包含「步驟」欄位的範本之前，無法編輯步驟。",
-    "orphanedFieldsWarning": "This test case has {count, plural, =1 {# field value} other {# field values}} that {count, plural, =1 {is} other {are}} not included in the current template \"{templateName}\". {count, plural, =1 {This field is} other {These fields are}} shown below but may not be editable until added to the template.",
+    "orphanedFieldsWarning": "此測試案例有 {count, plural, =1 {# 個欄位值} other {# 個欄位值}}，{count, plural, =1 {其} other {其}}未包含在目前範本「{templateName}」中。{count, plural, =1 {此欄位} other {這些欄位}}顯示如下，但可能要新增至範本後才能編輯。",
     "title": "測試用例庫",
     "folders": "資料夾",
     "showDescendants": "顯示所有後代",
     "addFolder": "新增資料夾",
     "emptyFolders": "點擊上方的「新增資料夾」按鈕，新增第一個資料夾。",
-    "selectedAllCases": "{count, plural, =0 {Selected all cases} one {Selected # case across all pages} other {Selected # cases across all pages}}",
+    "selectedAllCases": "{count, plural, =0 {已選取所有案例} other {已選取所有頁面中的 # 個案例}}",
     "deselectedAllCases": "已取消選擇所有頁面上的所有案例",
     "selectAllTooltip": "選取/取消選取此頁面上的所有案例",
-    "selectAllShiftTooltip": "{count, plural, =0 {Select/Deselect all cases across all pages} one {Select/Deselect # case across all pages} other {Select/Deselect # cases across all pages}}",
+    "selectAllShiftTooltip": "{count, plural, =0 {選取/取消選取所有頁面中的所有案例} other {選取/取消選取所有頁面中的 # 個案例}}",
     "deselectAllShiftTooltip": "取消選擇/選擇所有頁面上的所有案例",
     "shiftClickHint": "按住 Shift 鍵可選擇/取消選擇所有頁面",
     "treeView": {
@@ -2592,10 +2595,10 @@
       "copy": "複製",
       "promptTitle": "你想做什麼？",
       "copying": "正在複製…",
-      "copyComplete": "{count, plural, =1 {Copied 1 case to {folder}} other {Copied # cases to {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
-      "moveComplete": "{count, plural, =1 {Moved 1 case to {folder}} other {Moved # cases to {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
-      "copyError": "{count, plural, =1 {Failed to copy 1 case to {folder}} other {Failed to copy # cases to {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
-      "moveError": "{count, plural, =1 {Failed to move 1 case to {folder}} other {Failed to move # cases to {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
+      "copyComplete": "{count, plural, =1 {已複製 1 個案例至 {folder}} other {已複製 # 個案例至 {folder}}}{dest, select, samename {} crossProject { ，位於 {projectName}} other {}}",
+      "moveComplete": "{count, plural, =1 {已移動 1 個案例至 {folder}} other {已移動 # 個案例至 {folder}}}{dest, select, samename {} crossProject { ，位於 {projectName}} other {}}",
+      "copyError": "{count, plural, =1 {複製 1 個案例至 {folder} 失敗} other {複製 # 個案例至 {folder} 失敗}}{dest, select, samename {} crossProject { ，位於 {projectName}} other {}}",
+      "moveError": "{count, plural, =1 {移動 1 個案例至 {folder} 失敗} other {移動 # 個案例至 {folder} 失敗}}{dest, select, samename {} crossProject { ，位於 {projectName}} other {}}",
       "copyAlreadyRunning": "另一份拷貝正在處理中，請稍候。",
       "currentSuffix": "（當前的）",
       "moveDisabledSameFolder": "案例已在此資料夾中",
@@ -2712,7 +2715,7 @@
           "showing": "顯示 {start, number}-{end, number} 共 {total, number} 個案",
           "case": "案例 {number, number}",
           "multiRow": {
-            "aggregated": "Multi-row mode grouped {rows, number} CSV rows into {cases, plural, one {# test case} other {# test cases}}.",
+            "aggregated": "多行模式已將 {rows, number} 個 CSV 行分組為 {cases, plural, other {# 個測試案例}}。",
             "noStepColumn": "已啟用多行模式，但未偵測到步驟列。預期列類型為：步驟內容、步驟、步驟、操作、描述（不區分大小寫）。每個 CSV 行將作為單獨的測試案例匯入。",
             "noKeyColumn": "已啟用多行模式，但未對應 ID 或名稱列。請在上一步對應 ID 或名稱列，以便將行分組到案例中。",
             "noGrouping": "已啟用多行模式，但未對任何行進行分組。每行都有不同的 ID/名稱，因此每一行都將成為單獨的測試案例。對於後續行，請將 ID 和名稱留空，或在屬於相同測試案例的行中重複使用相同的 ID/名稱。"
@@ -2752,7 +2755,7 @@
       "activeRunWarningMessage": "此測試案例屬於 {count, plural, =1 {# 活動測試運行} other {# 活動測試運行}}。刪除它會將這些運行標記為已刪除。"
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {Deleting this folder will also delete all subfolders. Are you sure?} one {Deleting this folder will also delete 1 test case in this folder and all subfolders. Are you sure?} other {Deleting this folder will also delete # test cases in this folder and all subfolders. Are you sure?}}",
+      "confirmMessage": "{count, plural, =0 {刪除此資料夾也將刪除所有子資料夾。您確定嗎？} other {刪除此資料夾也將刪除此資料夾及所有子資料夾中的 # 個測試案例。您確定嗎？}}",
       "warning": "此資料夾及其所有測試案例將從專案中移除。這些測試案例的歷史資料（包括結果）仍將保留在專案中。",
       "confirm": "確認刪除資料夾",
       "success": "資料夾及其所有子資料夾/案例已成功刪除。"
@@ -2917,7 +2920,7 @@
       "retryScan": "重試掃描",
       "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "利用人工智慧提升成果…",
-      "scanComplete": "Duplicate analysis complete — {count, plural, =0 {no duplicates found} one {# potential duplicate found} other {# potential duplicates found}}",
+      "scanComplete": "重複項目分析完成 — {count, plural, =0 {未找到重複項目} other {找到 # 個潛在重複項目}}",
       "scanFailed": "重複分析失敗",
       "scanFailedDescription": "發生意外錯誤",
       "pageTitle": "重複候選人",
@@ -2945,7 +2948,7 @@
       "bulkLinkSuccess": "{count, plural, one {# 配對連結} other {# 配對連結}}",
       "bulkError": "部分操作失敗，請重試。",
       "tableHint": "點選行或“比較”按鈕，查看並解決重複項。",
-      "comparisonTitle": "{caseA} vs {caseB}",
+      "comparisonTitle": "{caseA} 對比 {caseB}",
       "comparisonDescription": "比較這些潛在的重複項，並選擇如何解決它們。",
       "selectPrimary": "點擊案例即可選為主合併案例。",
       "selectedAsPrimary": "選為主要",
@@ -2955,7 +2958,7 @@
       "merging": "合併中…",
       "linking": "正在連接…",
       "dismissing": "解僱…",
-      "mergeSuccess": "Cases merged successfully. {runsTransferred, plural, =0 {No test runs transferred} one {# test run transferred} other {# test runs transferred}}.",
+      "mergeSuccess": "案例合併成功。{runsTransferred, plural, =0 {沒有轉移測試執行} other {已轉移 # 個測試執行}}。",
       "linkSuccess": "關聯案例。",
       "dismissSuccess": "該對嫌疑人已被排除。它不會出現在以後的掃描結果中。",
       "resolveError": "解析重複鍵值對失敗，請重試。",
@@ -2973,7 +2976,7 @@
       "duplicateWarningDescription": "{count, plural, one {# 現有案例} other {# 現有案例}} 可能涵蓋類似功能",
       "duplicateWarningReview": "審查",
       "importWarning": "可能重複",
-      "importWarningTooltip": "This case name is similar to {count, plural, one {# existing case} other {# existing cases}}: {names}",
+      "importWarningTooltip": "此案例名稱與 {count, plural, other {# 個現有案例}} 相似：{names}",
       "importIntraWarning": "導入過程中出現重複項",
       "importIntraWarningTooltip": "此匯入中的行 {rows} 具有相同或非常相似的名稱",
       "checkingDuplicates": "正在檢查重複…"
@@ -3010,7 +3013,7 @@
         "saveDocument": "儲存文件要求",
         "fromUrl": "來自 URL",
         "recentGenerations": "最近的從 URL 產生測試案例的作業",
-        "recentJobInfo": "{pages, plural, one {# page} other {# pages}}{hasTestCases, select, true { · {testCases, plural, one {# test case} other {# test cases}}} other {}}",
+        "recentJobInfo": "{pages, plural, other {# 頁}}{hasTestCases, select, true { · {testCases, plural, other {# 個測試案例}}} other {}}",
         "recentJobHasResults": "準備審核",
         "recentJobClickToGenerate": "點擊產生測試用例",
         "recentJobCrawling": "正在爬取... {pages, plural, one {# 頁數} other {# 頁數}} 目前為止",
@@ -3050,7 +3053,7 @@
         "title": "添加備註和指導",
         "description": "提供更多背景資訊和指導，以幫助人工智慧產生更好的測試案例。",
         "quantity": "要產生的測試用例數量",
-        "placeholder": "Add specific instructions for test case generation...\n\nFor example:\n• Focus on security testing\n• Include edge cases and boundary conditions\n• Test both happy path and error scenarios\n• Consider mobile and desktop scenarios\n• Focus on API testing",
+        "placeholder": "新增測試案例生成的具體指示...\n\n例如：\n• 專注於安全性測試\n• 包含邊緣案例與邊界條件\n• 測試正常路徑與錯誤情境\n• 考慮行動裝置與桌面情境\n• 專注於 API 測試",
         "suggestions": "快速建議：",
         "quantityOptions": {
           "justOne": "只有一個",
@@ -3079,12 +3082,12 @@
         "crawledUrls": "{count, plural, one {# 已抓取頁數} other {# 已抓取頁數}}",
         "spaWarning": "此頁面可能需要 JavaScript 渲染。結果可能不完整。",
         "filterByPage": "按頁面篩選",
-        "allPages": "All pages ({pages, plural, one {# page} other {# pages}}, {cases, plural, one {# case} other {# cases}})"
+        "allPages": "所有頁面（{pages, plural, other {# 頁}}，{cases, plural, other {# 個案例}}）"
       },
       "generatingLegacy": "利用人工智慧產生測試用例…",
       "expandProgress": "{done, number} 的 {total, number} 生成",
-      "import": "{count, plural, =0 {Import Test Cases} =1 {Import 1 Test Case} other {Import # Test Cases}}",
-      "importing": "{count, plural, =0 {Importing Test Cases...} =1 {Importing 1 Test Case...} other {Importing # Test Cases...}}",
+      "import": "{count, plural, =0 {匯入測試案例} =1 {匯入 1 個測試案例} other {匯入 # 個測試案例}}",
+      "importing": "{count, plural, =0 {正在匯入測試案例……} =1 {正在匯入 1 個測試案例……} other {正在匯入 # 個測試案例……}}",
       "openInExternalSystem": "開啟方式 {provider}",
       "externalSystem": "外部系統",
       "autoGenerateTags": "自動為測試用例產生標籤",
@@ -3199,7 +3202,7 @@
         "discardAndImport": "放棄編輯並導入"
       },
       "linkedIssuesDroppedTitle": "部分相關問題未包含在內。",
-      "linkedIssuesDropped": "{count, plural, =1 {# linked issue was dropped} other {# linked issues were dropped}} due to token budget: {keys}.",
+      "linkedIssuesDropped": "{count, plural, =1 {# 個連結問題已被捨棄} other {# 個連結問題已被捨棄}}，原因是權杖預算限制：{keys}。",
       "linkedIssuesPreviewHeading": "將會包含的相關問題"
     }
   },
@@ -3252,7 +3255,7 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Review requested from <assignee></assignee> for transition <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "已向 <assignee></assignee> 請求審核，用於轉換 <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "請求更改",
       "rejectedTitle": "審查被拒絕",
       "requestAgain": "再次請求復審",
@@ -3273,12 +3276,12 @@
       "gatedOptionBadge": "需要審核",
       "gatedStatesNotSelectable": "建立時無法選擇位於或超出限制狀態的狀態。請選擇第一個限制狀態之前的狀態，然後使用「請求審核」功能跨越該限制。",
       "saveBlockedByFormErrors": "儲存前請解決高亮顯示的表單錯誤。",
-      "bulkBlockedSummary": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, and # more}}. Each blocked case needs an approved review for \"{gateName}\" before this transition.",
+      "bulkBlockedSummary": "{count, plural, other {# 個案例}} 被關卡「{gateName}」阻擋：{sampleNames}{more, plural, =0 {} other {，以及另外 # 個}}。每個被阻擋的案例在此轉換前都需要通過「{gateName}」的已核准審核。",
       "toastReviewRequired": "此變更需經批准後方可生效。請申請審核，待審核通過後再試。",
       "toastPendingReviewExists": "此次變更申請已進入審核階段。請等待審核結果，或在重試前取消申請。"
     },
     "inbox": {
-      "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}",
+      "iconAria": "{count, plural, =0 {審核收件箱} other {審核收件箱，# 個待處理}}",
       "pageTitle": "評論",
       "pageDescription": "指派給您的待審核請求（直接指派給您或透過您所擔任的角色指派給您）。",
       "pageDescriptionDecided": "審核您已決定的請求。",
@@ -3338,13 +3341,13 @@
       "requestChanges": "請求更改",
       "reject": "拒絕",
       "approveConfirmTitle": "批准此審核請求？",
-      "approveConfirmDescription": "Approving will permit <requester></requester> to transition <name></name> to <state></state>.",
+      "approveConfirmDescription": "核准將允許 <requester></requester> 將 <name></name> 轉換為 <state></state>。",
       "approvalNoteLabel": "批准說明",
       "approvalNotePlaceholder": "可為請求者新增選用備註（顯示在核准資訊旁）。",
       "requestChangesDescription": "在您批准此變更之前，請告知請求者需要更改哪些內容。",
       "requestChangesCommentPlaceholder": "解釋需要做出哪些改變。",
       "rejectTitle": "拒絕此審核請求？",
-      "rejectDescription": "Rejecting blocks <requester></requester> from transitioning <name></name> to <state></state>. A new review request must be created to retry.",
+      "rejectDescription": "拒絕將阻止 <requester></requester> 將 <name></name> 轉換為 <state></state>。必須建立新的審核請求才能重試。",
       "rejectCommentPlaceholder": "請解釋您拒絕此請求的原因。",
       "commentLabel": "評論",
       "confirmRequestChanges": "傳送",
@@ -3359,9 +3362,9 @@
   },
   "runs": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test run."
+      "trigger": "活動",
+      "title": "活動日誌",
+      "description": "此測試執行的所有變更記錄。"
     },
     "notFound": "未找到測試運行。",
     "add": {
@@ -3370,7 +3373,7 @@
       "success": {
         "title": "測試運行已成功添加",
         "description": "{name} 已加入專案中",
-        "descriptionMultiple": "{count, plural, one {# test run has} other {# test runs have}} been created for {name}"
+        "descriptionMultiple": "已為 {name} 建立 {count, plural, other {# 個測試執行}}"
       },
       "estimates": {
         "manual": "預計人工時間",
@@ -3391,7 +3394,7 @@
       "configure": {
         "title": "測試用例範圍",
         "description": "在倉庫中找到 {count, plural, =1 {# 測試案例} other {# 測試案例}}",
-        "descriptionFiltered": "Found {count, plural, =1 {# possibly relevant test case} other {# possibly relevant test cases}} from {total, plural, =1 {# total} other {# total}} in the repository",
+        "descriptionFiltered": "在儲存庫中找到 {count, plural, =1 {# 個可能相關的測試案例} other {# 個可能相關的測試案例}}，共 {total, plural, =1 {# 個} other {# 個}}",
         "noMatchesTitle": "未找到符合的測試案例",
         "noMatchesDescription": "測試運行名稱和描述與任何測試案例都不符。請返回上一步，添加更具體的詳細信息，例如功能名稱、組件名稱或測試案例中出現的關鍵字。",
         "maxResultsTitle": "最大測試案例匹配數",
@@ -3583,7 +3586,7 @@
           "discoveringDatasets": "發現數據集…",
           "scanningFile": "正在掃描 testmo 匯出檔案...",
           "datasetsProcessed": "{processed, number} 資料集{processed, plural, one {} other {s}} 已處理",
-          "datasetsProcessedWithTotal": "{processed, number} of {total, number} dataset{total, plural, one {} other {s}} processed",
+          "datasetsProcessedWithTotal": "已處理 {processed, number}/{total, number} 個資料集{total, plural, other {}}",
           "rowsProcessed": "{value, number} 行已處理",
           "itemsProcessed": "已處理 {processed, number} 項中的 {total, number} 項",
           "analysisInProgress": "分析導出…",
@@ -3701,9 +3704,9 @@
         "mappingDatasetEmptyDescription": "分析過程中未保留任何用於配置的資料集。如果您需要其他數據，請上傳其他匯出檔案。",
         "importProgressTitle": "導入進度",
         "importProgressDescription": "{count, plural, =0 {所有已匯入的記錄（涵蓋所有追蹤實體）。} =1 {已匯入的記錄（涵蓋所有追蹤實體）共 1 個。} other {已匯入的記錄（涵蓋所有追蹤實體）共 7 個。}}",
-        "importProgressTotalRemaining": "{count, plural, =0 {No remaining records} =1 {1 record remaining} other {# records remaining}}",
+        "importProgressTotalRemaining": "{count, plural, =0 {沒有剩餘記錄} =1 {剩餘 1 筆記錄} other {剩餘 # 筆記錄}}",
         "importProgressProcessed": "{processed, number}/{total, number} 記錄已匯入",
-        "importProgressAria": "{percent, number}% of import complete",
+        "importProgressAria": "匯入已完成 {percent, number}%",
         "importProgressPercentLabel": "{percent, number}%",
         "importDurationLabel": "總耗時：",
         "activityLogTitle": "進口活動",
@@ -4022,7 +4025,7 @@
         "defaultAccessUpdateFailed": "更新預設存取等級失敗",
         "emailVerificationEnabled": "新用戶現在需要進行電子郵件驗證。",
         "emailVerificationDisabled": "新用戶不再需要進行電子郵件驗證。",
-        "emailVerificationDisabledAndVerified": "Email verification disabled and {count, plural, one {# user account} other {# user accounts}} verified",
+        "emailVerificationDisabledAndVerified": "已停用電子郵件驗證，並驗證了 {count, plural, other {# 個使用者帳戶}}",
         "emailVerificationUpdateFailed": "電子郵件驗證設定更新失敗",
         "emailServerNotConfigured": "無法啟用電子郵件驗證：電子郵件伺服器未配置",
         "openRegistrationEnabled": "自助註冊功能現已啟用。",
@@ -4363,7 +4366,7 @@
           "fileExtension": "例如，.spec.ts",
           "language": "例如，TypeScript",
           "headerBody": "可選。內容會在頂部渲染一次（例如，導入語句）。",
-          "templateBody": "Enter Mustache template...\n\nAvailable variables:\n'{{name}}', '{{id}}', '{{folder}}', '{{state}}', '{{estimate}}', '{{automated}}', '{{tags}}', '{{createdBy}}', '{{createdAt}}'\n\nSteps section:\n'{{#steps}}{{order}}', '{{step}}', '{{expectedResult}}{{/steps}}'\n\nCustom fields:\n'{{fields.fieldSystemName}}'",
+          "templateBody": "輸入 Mustache 範本...\n\n可用變數：\n'{{name}}'、'{{id}}'、'{{folder}}'、'{{state}}'、'{{estimate}}'、'{{automated}}'、'{{tags}}'、'{{createdBy}}'、'{{createdAt}}'\n\n步驟區段：\n'{{#steps}}{{order}}'、'{{step}}'、'{{expectedResult}}{{/steps}}'\n\n自訂欄位：\n'{{fields.fieldSystemName}}'",
           "footerBody": "可選。內容在底部渲染一次（例如，結束程式碼）。"
         },
         "combobox": {
@@ -4443,9 +4446,9 @@
       "scimColumnYes": "是的",
       "scimUserLockedTitle": "使用者由 SCIM 管理",
       "scimUserLockedDescription": "該使用者的姓名、電子郵件地址和活動狀態由您的身分提供者管理。請在身分提供者處進行更改，以在此處更新這些資訊。",
-      "groupMappingOverrideTitle": "Managed by Group Mapping",
-      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
-      "groupMappingBadge": "Group Mapped"
+      "groupMappingOverrideTitle": "由群組對應管理",
+      "groupMappingOverrideDescription": "此使用者的存取層級由 SCIM 群組對應管理，可能會在下次同步時被還原。",
+      "groupMappingBadge": "群組已對應"
     },
     "security": {
       "title": "安全",
@@ -4624,14 +4627,14 @@
       "probe": {
         "button": "測試 SCIM",
         "testing": "測試…",
-        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
+        "okBanner": "HTTP {status} — 權杖對 /api/scim/v2/Users 有效。",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "無法連接到SCIM端點。請重試。"
       },
-      "fallbackDefaultTitle": "Default Mapped Access",
-      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
-      "fallbackDefaultLabel": "Default access tier",
-      "fallbackDefaultSaved": "Fallback default saved"
+      "fallbackDefaultTitle": "預設對應存取",
+      "fallbackDefaultDescription": "指派給未被任何群組對應涵蓋的使用者的存取層級。",
+      "fallbackDefaultLabel": "預設存取層級",
+      "fallbackDefaultSaved": "後備預設值已儲存"
     },
     "tags": {
       "add": {
@@ -4821,7 +4824,7 @@
       "filterPlaceholder": "過濾器配置...",
       "allProjects": "所有項目",
       "selectAllTooltip": "選取/取消選取此頁面上的所有配置",
-      "selectAllShiftTooltip": "{count, plural, =0 {Select/Deselect all configurations across all pages} one {Select/Deselect # configuration across all pages} other {Select/Deselect # configurations across all pages}}",
+      "selectAllShiftTooltip": "{count, plural, =0 {選取/取消選取所有頁面中的所有設定} other {選取/取消選取所有頁面中的 # 個設定}}",
       "deselectAllShiftTooltip": "取消選擇/選擇所有頁面上的所有配置",
       "shiftClickHint": "按住 Shift 鍵可選擇/取消選擇所有頁面",
       "bulkEdit": {
@@ -4830,8 +4833,8 @@
         "description": "取代所選配置中的項目分配。配置名稱無法批次編輯。",
         "applyButton": "{count, plural, one {應用於 1 個配置} other {應用於 # 個配置}}",
         "deleteButton": "{count, plural, one {刪除 1 個設定} other {刪除 # 個設定}}",
-        "deleteConfirmTitle": "{count, plural, one {Delete 1 configuration?} other {Delete # configurations?}}",
-        "deleteConfirmMessage": "{count, plural, one {This will delete 1 configuration. This action cannot be undone.} other {This will delete # configurations. This action cannot be undone.}}",
+        "deleteConfirmTitle": "{count, plural, other {刪除 # 個設定？}}",
+        "deleteConfirmMessage": "{count, plural, other {這將刪除 # 個設定。此操作無法復原。}}",
         "applyEnabledLabel": "更改已啟用狀態"
       },
       "categories": {
@@ -4857,7 +4860,7 @@
       "combinations": {
         "title": "組合",
         "description": "管理全域組合",
-        "confirmDescription": "The following {count, number} Configurations will be created:",
+        "confirmDescription": "將建立以下 {count, number} 個設定：",
         "addCombination": "新增組合",
         "editCombination": "編輯組合",
         "selectCombination": "選擇組合",
@@ -4916,14 +4919,14 @@
       "scimManagedTooltip": "由SCIM管理。請從SCIM管理頁面進行管理。",
       "scimNameLockedTitle": "集團由SCIM管理",
       "scimNameLockedDescription": "此群組的名稱和成員由您的身分提供者管理。請在身分提供者處進行更改，以在此處更新。",
-      "mappedAccessColumnHeader": "Mapped Access",
-      "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "No mapping",
-      "mappedAccessSelect": "Select access tier...",
-      "downgradeConfirmTitle": "Confirm Access Change",
-      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
-      "downgradeConfirmApplyAnyway": "Apply anyway",
-      "downgradeConfirmUserRow": "{name}: {from} → {to}",
+      "mappedAccessColumnHeader": "對應存取",
+      "mappedAccessLabel": "對應存取層級",
+      "mappedAccessNone": "無對應",
+      "mappedAccessSelect": "選擇存取層級……",
+      "downgradeConfirmTitle": "確認存取變更",
+      "downgradeConfirmDescription": "{count, plural, other {# 位使用者}} 的存取權限將被降低。是否繼續？",
+      "downgradeConfirmApplyAnyway": "仍要套用",
+      "downgradeConfirmUserRow": "{name}：{from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
@@ -4935,7 +4938,7 @@
       "warning": "此里程碑類型將會新增至所有項目。",
       "wizard": {
         "selectProjects": "選擇項目",
-        "projectsSelected": "{count, plural, =0 {No projects selected} one {# project selected} other {# projects selected}}",
+        "projectsSelected": "{count, plural, =0 {未選擇專案} other {已選擇 # 個專案}}",
         "createMilestone": "創建里程碑",
         "noCommonTypesTitle": "沒有常見的里程碑類型",
         "noCommonTypesDescription": "所選項目之間沒有任何共同的里程碑類型。請確保所有選定項目至少有一個共同的里程碑類型，或選擇其他項目。"
@@ -5111,27 +5114,27 @@
       "status": {
         "active": "積極的",
         "inactive": "非活躍狀態",
-        "awaitingAuthorization": "Awaiting authorization"
+        "awaitingAuthorization": "等待授權"
       },
       "connectedProjects": "關聯項目",
       "noIntegrations": "未配置任何問題集成",
       "testConnection": "測試連接",
       "testSuccess": "連線成功",
       "testSuccessDescription": "問題集成已正確配置並連接",
-      "testCredentialsSaved": "Credentials look good",
-      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
+      "testCredentialsSaved": "憑證看起來沒問題",
+      "testCredentialsSavedDescription": "您的 OAuth 客戶端 ID 和密鑰有效。請儲存整合，然後點按「授權」以連接您的帳戶 — OAuth 2.0 是按使用者連接的，因此在至少有一人授權之前，此整合將保持未啟用狀態。",
       "testFailed": "連線失敗",
       "testFailedDescription": "無法連線到外部服務",
       "testError": "測試錯誤",
       "testErrorDescription": "測試連線時發生錯誤",
-      "authorize": "Authorize",
-      "reauthorize": "Re-authorize",
-      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
-      "syncInProgress": "Re-syncing linked issues...",
-      "syncIntegration": "Re-sync linked issues",
-      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
+      "authorize": "授權",
+      "reauthorize": "重新授權",
+      "authorizeHint": "向提供者授權以連接您的帳戶並完成設定",
+      "syncInProgress": "正在重新同步已連結的問題……",
+      "syncIntegration": "重新同步已連結的問題",
+      "syncIntegrationHint": "僅重新同步已在 TestPlanIt 中連結的問題。新問題不會從外部追蹤系統匯入。",
       "syncSuccess": "同步已排隊",
-      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
+      "syncSuccessDescription": "來自「{name}」的已連結問題正在背景中重新同步。這可能需要一些時間。完成後表格將自動更新。",
       "syncError": "同步失敗",
       "syncErrorDescription": "無法為此整合問題新增同步任務。請稍後重試。",
       "delete": {
@@ -5178,11 +5181,11 @@
         },
         "redmine": {
           "name": "Redmine",
-          "description": "Connect to a self-hosted Redmine instance for issue tracking"
+          "description": "連接到自架的 Redmine 實例以進行問題追蹤"
         },
         "mantisbt": {
           "name": "MantisBT",
-          "description": "Connect to a self-hosted MantisBT instance for issue tracking"
+          "description": "連接到自架的 MantisBT 實例以進行問題追蹤"
         }
       },
       "filterPlaceholder": "過濾器整合…",
@@ -5211,7 +5214,7 @@
         "apiToken": "API令牌",
         "apiTokenPlaceholder": "請輸入您的 API 令牌",
         "apiTokenHelp": "從您的帳戶設定中產生 API 令牌",
-        "jiraUrl": "Jira URL",
+        "jiraUrl": "Jira 網址",
         "jiraUrlPlaceholder": "https://your-site.atlassian.net",
         "jiraUrlHelp": "您的 Jira 實例的 URL",
         "clientId": "客戶ID",
@@ -5220,10 +5223,10 @@
         "clientSecret": "客戶機密",
         "clientSecretPlaceholder": "請輸入您的 OAuth 用戶端金鑰",
         "clientSecretHelp": "來自您的 OAuth 應用程式的用戶端金鑰",
-        "cloudId": "Cloud ID",
+        "cloudId": "雲端 ID",
         "cloudIdPlaceholder": "請輸入您的 Atlassian 雲端 ID",
         "cloudIdHelp": "您的 Atlassian Cloud 實例 ID（可在您的 Jira URL 中找到）",
-        "apiUrl": "API URL",
+        "apiUrl": "API 網址",
         "apiUrlPlaceholder": "https://api.example.com",
         "apiUrlHelp": "服務 API 的基本 URL",
         "personalAccessTokenPlaceholder": "請輸入您的個人存取令牌",
@@ -5255,7 +5258,6 @@
         "encrypted": "加密",
         "encryptedHelp": "該欄位已加密並安全儲存。",
         "changeCredential": "改變",
-        "leaveBlankToKeep": "Leave blank to keep existing value",
         "apiKeyWarningTitle": "API金鑰認證通知",
         "apiKeyWarningDescription": "使用 API 金鑰驗證時，即使電子郵件地址相符，建立問題的報告者也可能與建立該問題的 TestPlanIt 使用者不符：",
         "apiKeyWarningPoint1": "設定 Jira 報告人需要 API 令牌帳戶擁有 Jira 管理員（「修改報告人」）權限。否則，Jira 將忽略該報告人，並將 API 令牌所有者記錄為建立者。",
@@ -5264,10 +5266,10 @@
         "apiKeyWarningPoint4": "請改用 OAuth 2.0，以便在沒有管理員權限的情況下準確地按使用者進行報告者歸屬。",
         "tokenCreatorNoticeTitle": "問題創建者歸屬",
         "tokenCreatorNoticeDescription": "透過此整合建立的問題始終記錄為擁有此存取權杖的帳戶，而不是建立問題的 TestPlanIt 使用者。此提供者的 API 不允許代表其他使用者設定創建者。",
-        "callbackUrlLabel": "Callback URL (redirect URI)",
-        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
-        "callbackUrlCopy": "Copy",
-        "callbackUrlCopied": "Copied",
+        "callbackUrlLabel": "回呼 URL（重新導向 URI）",
+        "callbackUrlDescription": "請在您提供者的 OAuth 應用程式中，將此確切的 URL 註冊為回呼／重新導向 URI。必須完全相符，否則授權將失敗。",
+        "callbackUrlCopy": "複製",
+        "callbackUrlCopied": "已複製",
         "forgeApiKeyLabel": "Forge API 金鑰",
         "forgeApiKeyDescription": "Atlassian Forge 應用程式使用此金鑰來驗證來自 Jira 問題面板的請求。請在此處產生金鑰並將其貼到 Forge 應用程式設定中。",
         "forgeApiKeyPlaceholder": "點選「產生」按鈕建立 API 金鑰",
@@ -5279,18 +5281,18 @@
         "platformGitea": "吉特亞",
         "platformForgejo": "福爾熱",
         "platformGogs": "戈格斯",
-        "redmineApiKey": "Redmine API Key",
-        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
-        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
+        "redmineApiKey": "Redmine API 金鑰",
+        "redmineApiKeyPlaceholder": "請輸入您的 Redmine API 金鑰",
+        "redmineApiKeyHelp": "位於「我的帳戶」→「API 存取金鑰」下（請在「管理」→「設定」→「API」中啟用 REST API）",
         "redmineUrl": "Redmine URL",
         "redmineUrlPlaceholder": "https://redmine.example.com",
-        "redmineUrlHelp": "The base URL of your Redmine instance",
-        "mantisBTApiKey": "MantisBT API Token",
-        "mantisBTApiKeyPlaceholder": "Enter your MantisBT API token",
-        "mantisBTApiKeyHelp": "Create one under your MantisBT account settings → API Tokens",
+        "redmineUrlHelp": "您的 Redmine 實例的基本 URL",
+        "mantisBTApiKey": "MantisBT API 權杖",
+        "mantisBTApiKeyPlaceholder": "請輸入您的 MantisBT API 權杖",
+        "mantisBTApiKeyHelp": "在您的 MantisBT 帳戶設定 →「API 權杖」下建立一個",
         "mantisBTUrl": "MantisBT URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "The base URL of your MantisBT instance"
+        "mantisBTUrlHelp": "您的 MantisBT 實例的基本 URL"
       },
       "authType": {
         "api_key": "API金鑰",
@@ -5503,7 +5505,7 @@
         "generate_from_url": "根據 URL 產生測試案例（需求）",
         "generate_from_url_app": "從 URL 產生測試用例（應用程式測試）",
         "automation_candidates": "自動化候選報告",
-        "derive_case_steps": "AI Step Derivation"
+        "derive_case_steps": "AI 步驟推導"
       }
     },
     "elasticsearch": {
@@ -5570,7 +5572,7 @@
         "forecast-updates": "預測更新",
         "emails": "電子郵件佇列",
         "issue-sync": "問題同步",
-        "testmo-imports": "Testmo Imports",
+        "testmo-imports": "Testmo 匯入",
         "elasticsearch-reindex": "Elasticsearch 重新索引",
         "audit-logs": "審計日誌",
         "budget-alerts": "預算警報",
@@ -5679,15 +5681,15 @@
     },
     "auditLogs": {
       "description": "查看系統範圍內的審計跟踪，以進行安全性和合規性跟踪",
-      "projectDescription": "View the audit trail of actions performed in this project.",
+      "projectDescription": "查看此專案中執行操作的審計追蹤記錄。",
       "filterPlaceholder": "按實體、使用者或操作搜尋…",
       "filterAction": "行動",
       "filterEntityType": "實體類型",
       "allActions": "所有操作",
       "allEntityTypes": "所有實體類型",
-      "allUsers": "All Users",
-      "allProjects": "All Projects",
-      "showing": "Showing {loaded} of {total} entries",
+      "allUsers": "所有使用者",
+      "allProjects": "所有專案",
+      "showing": "顯示 {total} 個項目中的 {loaded} 個",
       "viewDetails": "看詳情",
       "detailTitle": "審計日誌詳情",
       "userInfo": "使用者資訊",
@@ -5715,8 +5717,8 @@
       "systemActor": "系統",
       "systemActorTooltip": "系統執行的操作，而非登入使用者執行的操作。",
       "sourceScim": "SCIM",
-      "relatedChanges": "related changes",
-      "groupedEntry": "Grouped changes from a single action"
+      "relatedChanges": "相關變更",
+      "groupedEntry": "來自單一操作的分組變更"
     }
   },
   "components": {
@@ -5784,7 +5786,7 @@
         "viewUserList": "查看使用者列表",
         "reviewGeneratedCases": "審查產生的測試用例",
         "generateFromUrlCompleteTitle": "頁面抓取成功",
-        "generateFromUrlCompleteMessage": "{pages, plural, one {# page} other {# pages}} crawled from {url} in project \"{projectName}\". Click to review and generate test cases.",
+        "generateFromUrlCompleteMessage": "已從 {url} 爬取 {pages, plural, other {# 頁}}，位於專案「{projectName}」中。按一下以檢閱並產生測試案例。",
         "generateFromUrlFailedTitle": "URL 抓取失敗",
         "reviewRequestedTitle": "請求審查",
         "reviewApprovedTitle": "審核已獲批准",
@@ -5803,16 +5805,16 @@
         "reviewCommentPreview": "評論： {comment}",
         "reviewRequestedEmailMessage": "{actorName} 請您審核項目「{projectName}」中的 {entityLabel} 「{entityName}」進行審核。",
         "reviewApprovedEmailMessage": "{actorName} 已批准您對 {entityLabel} \"{entityName}\" 的項目 \"{projectName} \" 的審核請求。",
-        "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
-        "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewChangesRequestedEmailMessage": "{actorName} 對您在專案「{projectName}」中針對 {entityLabel}「{entityName}」的審核請求要求了變更。",
+        "reviewRejectedEmailMessage": "{actorName} 已拒絕您在專案「{projectName}」中針對 {entityLabel}「{entityName}」的審核請求。",
         "reviewCancelledEmailMessage": "{actorName} 取消了對 {entityLabel} \"{entityName}\" 在項目 \"{projectName} \" 中的審查請求。",
         "reviewReminderTitle": "審核仍在進行中",
         "reviewReminderAction": "仍在等待您的評論",
-        "reviewReminderEmailMessage": "Reminder: {actorName}'s review request on {entityLabel} \"{entityName}\" in project \"{projectName}\" has been pending for {hoursPending} hours.",
+        "reviewReminderEmailMessage": "提醒：{actorName} 在專案「{projectName}」中針對 {entityLabel}「{entityName}」的審核請求已待處理 {hoursPending} 小時。",
         "reviewReminderHoursPending": "等待 {hoursPending, plural, one {小時} other {小時}}",
-        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
-        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
-        "aiStepsDerivedReviewLink": "Review test run"
+        "aiStepsDerivedTitle": "AI 推導測試步驟已就緒",
+        "aiStepsDerivedMessage": "{count, plural, other {# 個測試案例}} 已獲得 AI 推導的步驟 — 請檢查其準確性。",
+        "aiStepsDerivedReviewLink": "檢查測試執行"
       }
     },
     "issues": {
@@ -6069,11 +6071,11 @@
   },
   "help": {
     "project": {
-      "name": "## Project Name\nThe unique identifier for your project.\n\n- Must be unique across all projects\n- Used in navigation and reports\n- Should be clear and descriptive\n- Helps team members identify the project scope",
-      "description": "## Project Description\nAdditional details about the project's purpose and scope.\n\n- Optional but recommended\n- Helps team members understand project goals\n- Can include key objectives or requirements\n- Limited to 256 characters",
-      "icon": "## Project Icon\nA visual identifier for your project.\n\n- Helps quickly identify the project in lists and dashboards\n- Choose from a variety of predefined icons\n- Can be changed at any time\n- Appears in project navigation and reports",
-      "completed": "## Project Status\nIndicates whether the project is active or completed.\n\n- Active projects are available for testing and updates\n- Completed projects are read-only\n- Affects project visibility in dashboards\n- Can be reversed if needed",
-      "completedAt": "## Completion Date\nThe date when the project was marked as completed.\n\n- Automatically set when marking a project as completed\n- Used for reporting and tracking\n- Helps maintain project history\n- Can be modified if needed",
+      "name": "## 專案名稱\n您專案的唯一識別碼。\n\n- 必須在所有專案中保持唯一\n- 用於導覽和報告\n- 應清晰且具描述性\n- 幫助團隊成員了解專案範圍",
+      "description": "## 專案描述\n有關專案目的和範圍的額外詳細資訊。\n\n- 非必填但建議填寫\n- 幫助團隊成員了解專案目標\n- 可包含主要目標或需求\n- 限制為 256 個字元",
+      "icon": "## 專案圖示\n您專案的視覺識別碼。\n\n- 幫助在清單和儀表板中快速識別專案\n- 從多種預定義圖示中選擇\n- 可隨時變更\n- 顯示於專案導覽和報告中",
+      "completed": "## 專案狀態\n表示專案是進行中還是已完成。\n\n- 進行中的專案可供測試和更新\n- 已完成的專案為唯讀\n- 影響專案在儀表板中的可見性\n- 如有需要可還原",
+      "completedAt": "## 完成日期\n專案被標記為已完成的日期。\n\n- 在將專案標記為已完成時自動設定\n- 用於報告和追蹤\n- 幫助維護專案歷史記錄\n- 如有需要可修改",
       "defaultAccess": "## 預設項目存取權限\n定義此項目中使用者和群組的預設存取權限。可以針對每個使用者或每個群組進行覆蓋。",
       "issueTracker": "## 問題追蹤器配置\n選擇用於管理與此項目相關的問題的追蹤器配置。"
     },
@@ -6092,19 +6094,19 @@
       "password": "## 密碼\n使用者帳號密碼。\n\n- 如果設定了無密碼登入方式（Magic Link SSO 提供者或電子郵件伺服器），則此項目為可選 — 留空則必須透過 Magic Link 或 SSO 登入。\n- 如果提供，則必須符合「管理 → 安全性」中設定的密碼策略（最小長度和字元類別）。\n- 用於安全帳戶存取。\n- 應保密。",
       "token": "## 驗證令牌\n輸入您在電子郵件中收到的令牌以驗證您的帳戶。如果您沒有令牌，可以申請一個新的。",
       "confirmPassword": "## 確認密碼\n請重新輸入密碼，並確保輸入正確。\n\n- 必須與密碼完全一致。\n- 有助於防止輸入錯誤。\n- 僅當輸入密碼時需要填寫 — 若密碼欄位為空，則留空。",
-      "access": "## System Access Level\nDetermines the user's system-wide permissions.\n\n- **Admin:** Full system access and configuration\n- **Project Admin:** Can manage assigned projects\n- **User:** Standard access to assigned projects\n- **None:** Can only view their dashboard",
+      "access": "## 系統存取層級\n決定使用者的系統範圍權限。\n\n- **管理員：** 完整的系統存取和設定權限\n- **專案管理員：** 可管理指派的專案\n- **使用者：** 對指派專案的標準存取權限\n- **無：** 僅可檢視其儀表板",
       "role": "## 系統角色\n此角色決定使用者的預設項目權限。\n\n- 定義項目的預設存取等級。\n- 可在角色管理中自訂。\n- 影響可用功能和權限。",
       "active": "## 活動狀態\n控制使用者是否可以存取系統。\n\n- 活動使用者可以登入並存取其指派的資源。\n- 非活動用戶無法登錄，但其資料將會保留。\n  - 使用此選項可暫時停用存取權限，而不會刪除帳戶。",
       "api": "## API 存取\n允許透過 API 端點以程式設計方式存取系統。\n\n- 允許與外部工具和自動化整合。\n- 需要 API 金鑰驗證。\n- 受速率限制和存取控制。",
       "projects": "## 項目分配\n選擇此使用者可以存取的項目。\n\n- 控制哪些項目顯示在使用者的儀表板中。\n- 專案參與的必要條件。\n- 管理者可以稍後修改。\n- 使用「全選」快速指派所有可用項目。",
       "groups": "## 分組分配\n選取此使用者所屬的群組。\n\n- 分組有助於組織使用者和權限。\n- 使用者繼承其所屬群組的權限。\n- 簡化存取管理。\n- 管理員稍後可以修改。",
-      "itemsPerPage": "## Items Per Page\nControls the default number of items shown in tables and lists.\n\n- Affects all paginated views in the application\n- Can be changed at any time\n- Helps manage large data sets efficiently\n- Available options: 10, 25, 50, or 100 items",
-      "dateFormat": "## Date Format\nSets your preferred date display format.\n\n- Applied consistently across the application\n- Helps ensure date interpretation accuracy\n- Changes take effect immediately\n- Examples shown in the dropdown reflect the actual format",
-      "timeFormat": "## Time Format\nSets your preferred time display format.\n\n- Choose between 12-hour and 24-hour formats\n- Applied consistently across the application\n- Changes take effect immediately\n- Examples shown in the dropdown reflect the actual format",
+      "itemsPerPage": "## 每頁項目數\n控制表格和清單中顯示的預設項目數量。\n\n- 影響應用程式中所有分頁檢視\n- 可隨時變更\n- 幫助有效管理大型資料集\n- 可用選項：10、25、50 或 100 個項目",
+      "dateFormat": "## 日期格式\n設定您偏好的日期顯示格式。\n\n- 一致套用於整個應用程式\n- 幫助確保日期解讀的準確性\n- 變更立即生效\n- 下拉式選單中顯示的範例反映實際格式",
+      "timeFormat": "## 時間格式\n設定您偏好的時間顯示格式。\n\n- 可選擇 12 小時制或 24 小時制\n- 一致套用於整個應用程式\n- 變更立即生效\n- 下拉式選單中顯示的範例反映實際格式",
       "timezone": "## 時區\n設定日期和時間顯示的首選時區。\n\n- 在整個應用程式中統一應用",
-      "theme": "## Theme\nChoose your preferred visual theme for the application.\n\n- **System:** Automatically matches your operating system theme\n- **Light:** Clean, bright interface for daytime use\n- **Dark:** Eye-friendly dark mode for low-light environments\n- **Green, Orange, Purple:** A fun pop of color!",
-      "locale": "## Language\nSelect your preferred language for the application interface.\n\n- Changes all text, labels, and messages to your chosen language\n- Date and time formats adjust to match regional conventions\n- Takes effect immediately without requiring a page refresh\n- Available languages depend on installed translations",
-      "notificationMode": "## Notification Preferences\nControls how you receive notifications for work assignments and updates.\n\n- **Use Global Settings:** Follow the system default set by administrators\n- **No Notifications:** Disable all notifications\n- **In-App Only:** Receive notifications only within the application\n- **In-App + Email (Immediate):** Get both in-app notifications and immediate email alerts\n- **In-App + Email (Daily Digest):** Get in-app notifications and a daily email summary\n\nYou can change this preference at any time to suit your workflow."
+      "theme": "## 佈景主題\n選擇您偏好的應用程式視覺佈景主題。\n\n- **系統：** 自動符合您的作業系統佈景主題\n- **淺色：** 適合日間使用的簡潔明亮介面\n- **深色：** 適合低光環境的護眼深色模式\n- **綠色、橙色、紫色：** 有趣的色彩點綴！",
+      "locale": "## 語言\n選擇您偏好的應用程式介面語言。\n\n- 將所有文字、標籤和訊息變更為您選擇的語言\n- 日期和時間格式會調整以符合區域慣例\n- 立即生效，無需重新整理頁面\n- 可用語言取決於已安裝的翻譯",
+      "notificationMode": "## 通知偏好設定\n控制您如何接收工作指派和更新的通知。\n\n- **使用全域設定：** 遵循管理員設定的系統預設值\n- **無通知：** 停用所有通知\n- **僅應用程式內：** 僅在應用程式內接收通知\n- **應用程式內 + 電子郵件（即時）：** 同時取得應用程式內通知和即時電子郵件提醒\n- **應用程式內 + 電子郵件（每日摘要）：** 取得應用程式內通知和每日電子郵件摘要\n\n您可隨時變更此偏好設定以符合您的工作流程。"
     },
     "milestone": {
       "name": "## 里程碑名稱\n一個清晰、描述性的名稱，用於標識專案中的此里程碑。\n\n- 應具有唯一性和意義\n- 幫助團隊成員快速理解里程碑的目的\n- 用於報告和專案追蹤",
@@ -6126,8 +6128,8 @@
       "milestone": "## 里程碑\n將此會話與專案里程碑關聯。\n\n- 協助追蹤測試進度，以達成專案目標。\n- 將相關的測驗會話分組。\n- 支援基於里程碑的報告。",
       "description": "## 描述\n本測試內容的簡要概述。\n\n- 測試的關鍵領域或功能\n- 重要的背景資訊\n- 特殊注意事項或要求",
       "mission": "## 任務\n任務定義了本次測驗的具體目標和目的。\n\n- 你要測試什麼？\n- 重點在於哪些面向？\n- 預期結果是什麼？\n\n清晰的任務有助於維持測驗的專注性和高效率。",
-      "estimate": "## Time Estimate\nEstimated time to complete this testing session.\n\nExamples:\n- \"30m\" for 30 minutes\n- \"1h 30m\" for 1 hour and 30 minutes\n- \"2 days\" for 2 days\n- \"1 week\" for 1 week",
-      "elapsed": "## Elapsed Time\nThe actual time spent on this testing session.\n\nExamples:\n- \"45m\" for 45 minutes\n- \"2h 15m\" for 2 hours and 15 minutes\n- \"3 days\" for 3 days\n\nTrack time accurately to improve future estimates.",
+      "estimate": "## 預估時間\n完成此測試工作階段的預估時間。\n\n範例：\n- 「30m」代表 30 分鐘\n- 「1h 30m」代表 1 小時 30 分鐘\n- 「2 days」代表 2 天\n- 「1 week」代表 1 週",
+      "elapsed": "## 已用時間\n花費在此測試工作階段的實際時間。\n\n範例：\n- 「45m」代表 45 分鐘\n- 「2h 15m」代表 2 小時 15 分鐘\n- 「3 days」代表 3 天\n\n準確記錄時間以改善未來的預估。",
       "state": "## 工作流程狀態\n此測試工作階段在您工作流程中的目前狀態。\n\n- 幫助追蹤會話進度\n- 支援工作流程管理\n- 用於報告和追蹤",
       "assignedTo": "## 指派給\n負責執行本次測試的團隊成員。\n\n- 確定測試執行人\n- 協助資源管理\n- 支持問責和跟踪",
       "tags": "## 標籤\n用於對測試會話進行分類和組織的關鍵字或標籤。\n\n- 方便尋找會話\n- 將相關的測試活動分組\n- 支援篩選和報告",
@@ -6154,7 +6156,7 @@
       "value": "## 值\n此配置的值。"
     },
     "milestoneType": {
-      "icon": "## Milestone Type Icon\nA visual identifier for this milestone type.\n\n- Helps quickly identify the milestone type in lists and dashboards\n- Choose from a variety of predefined icons\n- Can be changed at any time\n- Appears in project navigation and reports",
+      "icon": "## 里程碑類型圖示\n此里程碑類型的視覺識別碼。\n\n- 幫助在清單和儀表板中快速識別里程碑類型\n- 從多種預定義圖示中選擇\n- 可隨時變更\n- 顯示於專案導覽和報告中",
       "name": "## 里程碑類型名稱\n一個清晰、描述性的名稱，用於標識專案中的此里程碑類型。\n\n- 幫助團隊成員快速理解里程碑類型的用途。\n- 用於報告和專案追蹤。",
       "isDefault": "## 預設里程碑類型\n指示此里程碑類型是否為專案的預設類型。\n\n- 預設里程碑類型已預先選擇，適用於新里程碑。\n- 可隨時變更。",
       "projects": "## 關聯項目\n選擇此里程碑類型將適用於哪些項目。\n\n- 如果未選擇任何項目，則里程碑類型將全域可用。\n- 指派給特定項目後，其使用範圍將僅限於這些項目。"
@@ -6176,7 +6178,7 @@
     "group": {
       "name": "## 群組名稱\n一個清晰、簡潔、描述性的名稱或關鍵字，用於所有項目。\n\n- 幫助團隊成員快速找到相關的測試案例、測試運行和會話。",
       "users": "## 使用者\n表示指派給此群組的使用者。",
-      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
+      "mappedAccess": "## 對應存取層級\n此群組的成員在下次同步時將獲得至少此存取層級。\n\n- 使用者所有群組中最高的層級將優先套用\n- 「無對應」表示此群組不會影響存取權限 — 成員將退回至 SCIM 頁面上設定的預設值\n- 對使用者進行手動存取變更將取代對應設定（並會在該使用者的編輯畫面上標記）"
     },
     "template": {
       "name": "## 範本名稱\n此範本的唯一描述性名稱（例如，「標準測試案例」、「API 測試結果」）。",
@@ -6200,17 +6202,17 @@
       "costPerOutputToken": "## 每個輸出代幣的成本（美元）\n模型產生的每個輸出（完成）代幣的成本（以美元計）。\n\n- 通常高於輸入代幣的成本\n- 通常高於輸入代幣的成本 \n - 用於成本追蹤與預算提醒\n- 例如：`0.000015` = 每百萬個輸出代幣 155 美元",
       "monthlyBudget": "## 每月預算（美元）\n此整合的選用支出目標。\n\n- 設定為 `0` 可停用預算追蹤。\n- 預算僅供參考，不會影響 LLM 的使用。\n- 您將在達到預算的 80%、90% 和 100% 時收到通知。\n- 費用是根據上述每個代幣的價格計算。",
       "billingPeriodStartDay": "## 帳單週期起始日\n帳單週期開始的日期（1-31）。\n\n- 預設值 `1` 與日曆月一致。\n- 設定為 `15` 表示每月 15 日至 15 日的週期（例如，與您的供應商發票日期一致）。\n- 值 `29-31` 會自動鎖定到較短月份的最後一天（例如，非閏年的 2 月）。\n- 影響**月度預算**支出窗口和**重置支出**操作。",
-      "defaultTemperature": "## Default Temperature\nControls the randomness of model responses (0–2).\n\n- **0:** Deterministic — identical output for the same input\n- **0.3:** Focused — recommended for test generation and code output\n- **1+:** Creative — more varied responses\n- Individual features can override this in Prompt Config",
-      "timeout": "## Request Timeout (ms)\nHow long to wait for a response before the request is cancelled.\n\n- Value is in milliseconds (e.g. `30000` = 30 seconds)\n- Streaming requests (e.g. code export preview) ignore this timeout\n- Increase for slow or large models\n- Range: 5,000 – 600,000 ms",
+      "defaultTemperature": "## 預設溫度\n控制模型回應的隨機性（0–2）。\n\n- **0：**確定性——相同輸入產生相同輸出\n- **0.3：**聚焦——建議用於測試生成與程式碼輸出\n- **1+：**創意——回應更多樣化\n- 個別功能可在提示設定中覆寫此設定",
+      "timeout": "## 請求逾時（毫秒）\n在請求被取消前等待回應的時間。\n\n- 數值以毫秒為單位（例如 `30000` = 30 秒）\n- 串流請求（例如程式碼匯出預覽）會忽略此逾時設定\n- 若模型較慢或較大，可增加此數值\n- 範圍：5,000 – 600,000 毫秒",
       "streamingEnabled": "## 啟用串流\n逐一令牌地傳輸回應，而不是等待完整輸出。\n\n- 匯出模態方塊中即時程式碼預覽所必需。\n- 降低長時間反應的感知延遲。\n- 建議所有支援的供應商啟用。",
       "isDefault": "## 設定為預設整合\n將此整合設為所有 AI 功能的預設整合。\n\n- 一次只能有一個整合設定為預設整合。\n- 未配置特定提供者的功能將使用預設整合。\n- 可隨時變更。"
     },
     "integration": {
       "name": "## 整合名稱\n用於在整個系統中標識此整合的描述性名稱。\n\n- 必須唯一，以便與其他整合區分開來。\n- 用於專案設定與設定。\n- 應清楚地表明服務和用途。",
-      "authType": "## Authentication Type\nChoose how to authenticate with the external service.\n\n- **API Key:** Simple authentication using email and API token\n- **OAuth 2.0:** Secure authentication using OAuth flow\n- **Personal Access Token:** Direct token-based authentication",
+      "authType": "## 驗證類型\n選擇如何與外部服務進行驗證。\n\n- **API 金鑰：** 使用電子郵件和 API 權杖的簡單驗證\n- **OAuth 2.0：** 使用 OAuth 流程的安全驗證\n- **個人存取權杖：** 直接以權杖為基礎的驗證",
       "email": "## 電子郵件地址\n您的外部服務帳號電子郵件地址。\n\n- 用於 API 金鑰驗證\n- 必須與產生 API 令牌的帳戶匹配\n- Jira 和類似服務必需",
       "apiToken": "## API 令牌\n在外部服務的帳戶設定中產生 API 令牌。\n\n- 通常位於「帳號設定」→「安全性」→「API 令牌」中。\n- 提供安全訪問，無需暴露您的密碼。\n- 可依需要撤銷和重新產生。",
-      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
+      "jiraUrl": "## Jira URL\n您的 Jira 實例的基本 URL。\n\n- 格式：https://your-site.atlassian.net\n- 請勿包含 /browse 或其他路徑\n- 必須可從此伺服器存取",
       "clientId": "## OAuth 用戶端 ID\n來自您的 OAuth 應用程式設定的客戶端 ID。\n\n- 在外部服務的開發者控制台中建立。\n- 用於在 OAuth 流程中識別您的應用程式。\n- 可以安全地在設定檔中共用。",
       "clientSecret": "## OAuth 用戶端金鑰\n來自您的 OAuth 應用程式設定的用戶端金鑰。\n\n- 與客戶端 ID 一起建立\n- 必須保密且安全\n- 用於驗證您的應用程式",
       "personalAccessToken": "## 個人存取權杖\n具有存取外部服務對應權限的個人存取權令牌。\n\n- 在您的帳戶設定中產生\n- 應具有讀寫權限\n- 比密碼驗證更安全",
@@ -6222,12 +6224,12 @@
       "repo": "## 倉庫名稱\n要連結問題的倉庫名稱。\n\n- 確切的倉庫名稱（非完整 URL）\n- 例如：my-project\n- 必須可以使用提供的憑證存取。",
       "instanceUrl": "## 實例 URL\n自託管執行個體的基本 URL。\n\n- 格式：https://git.example.com\n- 請勿包含尾部斜線或路徑\n- 請勿從此伺服器存取",
       "projectPath": "## 專案路徑\nGitLab 專案的完整路徑。\n\n- 格式：命名空間/專案 或 群組/子群組/專案\n- 例如：my-org/my-project\n- 在專案中可找到專案可在專案.",
-      "platform": "## Platform\nThe self-hosted Git platform you are connecting to.\n\n- **Gitea**: gitea.io-based instances\n- **Forgejo**: forgejo.org-based instances (Gitea fork)\n- **Gogs**: gogs.io-based instances\n\nThis controls which icon is shown and may affect API compatibility.",
-      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
-      "mantisBTApiKey": "## MantisBT API Token\nYour personal REST API token.\n\n- Create one under your MantisBT account settings → API Tokens\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
-      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
+      "platform": "## 平台\n您正在連接的自架 Git 平台。\n\n- **Gitea**：基於 gitea.io 的執行個體\n- **Forgejo**：基於 forgejo.org 的執行個體（Gitea 的分支）\n- **Gogs**：基於 gogs.io 的執行個體\n\n這將控制顯示的圖示，並可能影響 API 相容性。",
+      "redmineApiKey": "## Redmine API 金鑰\n您的個人 REST API 存取金鑰。\n\n- 在「管理」→「設定」→「API」下啟用 REST API\n- 從「我的帳戶」→「API 存取金鑰」複製您的金鑰\n- 範圍限於您使用者的權限；共用整合請使用服務帳戶",
+      "redmineUrl": "## Redmine URL\n您的 Redmine 實例的基本 URL。\n\n- 格式：https://redmine.example.com\n- 請勿包含 /issues 或其他路徑\n- 必須可從此伺服器存取",
+      "mantisBTApiKey": "## MantisBT API 權杖\n您的個人 REST API 權杖。\n\n- 在您的 MantisBT 帳戶設定 →「API 權杖」下建立一個\n- 範圍限於您使用者的權限；共用整合請使用服務帳戶",
+      "mantisBTUrl": "## MantisBT URL\n您的 MantisBT 實例的基本 URL。\n\n- 格式：https://mantisbt.example.com\n- 請勿包含 /api/rest 或其他路徑\n- 必須可從此伺服器存取",
+      "githubBaseUrl": "## API 基本 URL\nGitHub Enterprise Server 的完整 GitHub API 根目錄。\n\n- 通常以 /api/v3 結尾\n- 留空則使用 api.github.com\n- 必須可從此伺服器存取"
     },
     "config": {
       "name": "## 設定名稱\n此組態的清晰、描述性名稱。\n\n- 有助於描述構成配置的變體組合（例如「Chrome，Windows 10」、「Safari/macOS 15.5」、「Edge/Windows 11」等）。",
@@ -6251,7 +6253,7 @@
     "issue": {
       "name": "## 問題名稱\n一個清晰、描述性的名稱，在所有項目中使用。\n\n- 有助於描述問題（例如「問題 123」、「錯誤 456」等）。",
       "title": "## 問題標題\n一個易於理解的標題，用來描述問題。\n\n- 提供問題相關的背景資訊。\n- 顯示在清單和問題展示中。\n- 應清晰明了且具描述性。",
-      "externalKey": "## External Key\nThe unique key or identifier from the external issue tracking system.\n\n- For JIRA: Issue key like \"PROJ-123\"\n- For GitHub: Issue number like \"456\"\n- For Azure DevOps: Work item ID\n- Automatically generates the external URL when saved",
+      "externalKey": "## 外部金鑰\n來自外部問題追蹤系統的唯一金鑰或識別碼。\n\n- 適用於 JIRA：問題金鑰，如「PROJ-123」\n- 適用於 GitHub：問題編號，如「456」\n- 適用於 Azure DevOps：工作項目 ID\n- 儲存時會自動產生外部 URL",
       "externalId": "## 外部 ID\n此問題在問題追蹤系統中的唯一識別碼（例如「Issue-123」、「Bug456」等）。\n\n- 這用作基本 URL 中的問題佔位符。",
       "description": "## 描述\n本期內容的簡要概述。\n\n- 正在測試的關鍵領域或功能\n- 重要的背景資訊\n- 特殊考慮或要求",
       "project": "## 項目\n此問題相關的項目。\n\n- 問題可以連結到多個專案的測試案例。\n- 設定主項目有助於組織問題。\n- 可以留空，表示跨專案問題。",
@@ -6280,7 +6282,7 @@
       "iconColor": "## 圖示/顏色\n此工作流程的圖示和顏色。",
       "name": "## 名稱\n一個清晰、描述性的名稱，用於所有項目。\n\n- 有助於描述工作流程（例如「草稿」、「審核中」、「進行中」等）。",
       "workflowType": "## 類型\n工作流程類型（未開始、進行中、已完成）。",
-      "type": "## Workflow Type\nThe category of workflow state (Not Started, In Progress, Completed).\n\n- Determines how this state affects progress tracking\n- Not Started states indicate work hasn't begun\n- In Progress states show active work\n- Completed states mark finished work",
+      "type": "## 工作流程類型\n工作流程狀態的類別（未開始、進行中、已完成）。\n\n- 決定此狀態如何影響進度追蹤\n- 「未開始」狀態表示工作尚未開始\n- 「進行中」狀態表示正在進行的工作\n- 「已完成」狀態表示已完成的工作",
       "isDefault": "## 預設值\n指示此工作流程是否為專案的預設工作流程。\n\n- 預設工作流程已預先選中，用於新的測試運行、會話和自動化。",
       "isEnabled": "## 已啟用\n指示此工作流程是否已啟用。",
       "isActive": "## 活動\n指示此工作流程狀態是否處於作用中且可供使用。\n\n- 更新測試運行、會話或自動化時，可以選擇活動工作流程。\n- 非活動工作流程將會隱藏，但會保留在現有項目中。",
@@ -6416,7 +6418,7 @@
     },
     "codeRepository": {
       "name": "## 儲存庫名稱\n此儲存庫連接的友善顯示名稱。\n\n- 用於在項目代碼上下文設定中標識它。\n- 不需要與提供者上的儲存庫名稱相符。",
-      "provider": "## Git Provider\nThe platform hosting this repository.\n\n- **GitHub** — github.com (cloud or Enterprise)\n- **GitLab** — gitlab.com or self-hosted\n- **Bitbucket Cloud** — bitbucket.org (cloud only)\n- **Azure DevOps** — dev.azure.com\n- **Gitea / Forgejo / Gogs** — self-hosted Git servers with compatible APIs",
+      "provider": "## Git 提供者\n此儲存庫所在的平台。\n\n- **GitHub** — github.com（雲端版或企業版）\n- **GitLab** — gitlab.com 或自架\n- **Bitbucket Cloud** — bitbucket.org（僅雲端版）\n- **Azure DevOps** — dev.azure.com\n- **Gitea / Forgejo / Gogs** — 具有相容 API 的自架 Git 伺服器",
       "githubToken": "## 個人存取令牌\n具有 **Contents: Read** 權限的 GitHub 令牌。\n\n在下列位置產生：GitHub → 個人資料設定 → 開發者設定 → 個人存取權令牌 → 細粒度令牌。",
       "owner": "## 所有者\n擁有該倉庫的 GitHub 組織或使用者帳戶。\n\n- 例如：`myorg` 或 `myusername`\n- 這是您在 github.com 上的倉庫 URL 中的第一個路徑段。",
       "repo": "## 倉庫\n倉庫名稱，不包含所有者前綴。\n\n- 例如：`my-repo`（而非 `myorg/my-repo`）\n- 這是您在 github.com 上的倉庫 URL 中的第二個路徑段。",
@@ -6717,7 +6719,7 @@
       "addDimension": "添加維度…",
       "addMetric": "添加指標…",
       "runReport": "運行報告",
-      "exportCsv": "Export CSV",
+      "exportCsv": "匯出 CSV",
       "noResultsFound": "未找到結果。",
       "selectAtLeastOneDimensionAndMetric": "至少選擇一個維度和一個指標。",
       "noDataMatchingCriteria": "未找到與所選維度和指標相符的資料。",
@@ -6958,7 +6960,7 @@
         },
         "heuristic": {
           "intro": "此項目未配置 LLM 集成，因此排名直接基於選擇策略指標建構。請配置 LLM 整合（管理 → AI 模型），以啟用更豐富的推理，將自訂欄位、關聯問題上下文和案例內容與指標一起納入考慮。",
-          "rankedSummary": "{ranked} of {totalEligible} eligible manual cases ranked.",
+          "rankedSummary": "已排名 {totalEligible} 個符合條件的手動案例中的 {ranked} 個。",
           "strategyExplanation": {
             "most_executed": "案例以手動執行次數排序（從高到低）－這是迴歸頻率的代理指標，自動化可以直接節省最多的測試人員時間。",
             "flakiest_first": "案例按大致的不穩定性（通過/失敗翻轉）排序——不穩定的手動測試是確定性自動化預言機的最佳候選對象。",
@@ -6988,7 +6990,7 @@
             "seconds": "{seconds}s",
             "minutes": "{minutes}米",
             "hours": "{hours}h",
-            "hoursAndMinutes": "{hours}h {minutes}m"
+            "hoursAndMinutes": "{hours} 小時 {minutes} 分"
           },
           "relativeAge": {
             "today": "今天",
@@ -7374,7 +7376,7 @@
       "verifying": "正在核實…",
       "errors": {
         "emptyPassword": "請輸入密碼",
-        "tooManyAttempts": "Too many failed attempts. Please try again later{resetAt, select, null {} other { at {resetAt}}}.",
+        "tooManyAttempts": "失敗次數過多。請稍後再試{resetAt, select, null {} other { 於 {resetAt}}}。",
         "genericError": "發生錯誤，請重試。"
       },
       "attempts": {
@@ -7442,7 +7444,7 @@
         "selectedFile": "已選文件",
         "delimiter": "字段分隔符",
         "delimiters": {
-          "tab": "Tab (\\t)"
+          "tab": "Tab（\\t）"
         },
         "hasHeaders": "第一行包含列標題。",
         "encoding": "文件編碼",
@@ -7526,33 +7528,33 @@
   "search": {
     "title": "搜尋",
     "savedSearches": {
-      "title": "Saved searches",
-      "save": "Save search",
-      "saveTitle": "Save search",
-      "saveDescription": "Name this search so you can revisit it later.",
-      "saveAction": "Save",
-      "nameLabel": "Name",
-      "namePlaceholder": "e.g. Failed runs this sprint",
-      "nameRequired": "Enter a name for this search.",
-      "loginRequired": "You must be signed in to save searches.",
+      "title": "已儲存的搜尋",
+      "save": "儲存搜尋",
+      "saveTitle": "儲存搜尋",
+      "saveDescription": "為此搜尋命名，以便日後重新查看。",
+      "saveAction": "儲存",
+      "nameLabel": "名稱",
+      "namePlaceholder": "例如：本次衝刺中失敗的測試執行",
+      "nameRequired": "請輸入此搜尋的名稱。",
+      "loginRequired": "您必須登入才能儲存搜尋。",
       "descriptionLabel": "描述（可選）",
-      "descriptionPlaceholder": "What this search is for",
-      "saved": "Search saved",
-      "savedDescription": "“{name}” is now in your saved searches.",
-      "saveFailed": "Couldn't save the search. Please try again.",
-      "empty": "No saved searches yet",
-      "emptyHint": "Save a search to revisit it later.",
-      "loaded": "Loaded “{name}”",
-      "loadFailed": "This saved search is no longer valid.",
-      "edit": "Edit",
-      "editTitle": "Edit saved search",
-      "edited": "Saved search updated",
-      "editFailed": "Couldn't update the search. Please try again.",
-      "delete": "Delete",
-      "deleteTitle": "Delete saved search?",
-      "deleteConfirm": "“{name}” will be removed from your saved searches. This can't be undone.",
-      "deleted": "Saved search deleted",
-      "deleteFailed": "Couldn't delete the search. Please try again."
+      "descriptionPlaceholder": "此搜尋的用途",
+      "saved": "搜尋已儲存",
+      "savedDescription": "「{name}」已加入您已儲存的搜尋。",
+      "saveFailed": "無法儲存搜尋，請再試一次。",
+      "empty": "尚無已儲存的搜尋",
+      "emptyHint": "儲存搜尋以便日後重新查看。",
+      "loaded": "已載入「{name}」",
+      "loadFailed": "此已儲存的搜尋已失效。",
+      "edit": "編輯",
+      "editTitle": "編輯已儲存的搜尋",
+      "edited": "已儲存的搜尋已更新",
+      "editFailed": "無法更新搜尋，請再試一次。",
+      "delete": "刪除",
+      "deleteTitle": "刪除已儲存的搜尋？",
+      "deleteConfirm": "「{name}」將從您已儲存的搜尋中移除。此操作無法復原。",
+      "deleted": "已儲存的搜尋已刪除",
+      "deleteFailed": "無法刪除搜尋，請再試一次。"
     },
     "bulk": {
       "crossProjectHint": "（涉及多個項目）",
@@ -7628,7 +7630,7 @@
     "filters": {
       "title": "進階篩選器",
       "active": "過濾器已激活",
-      "activeCount": "{count, plural, =0 {No filters} one {# filter} other {# filters}} active",
+      "activeCount": "{count, plural, =0 {沒有篩選條件} other {# 個篩選條件}} 已啟用",
       "apply": "應用篩選條件",
       "common": "常用過濾器",
       "entitySpecific": "類型特定篩選器",
@@ -7698,14 +7700,14 @@
       "intro": "點擊下方按鈕登入：",
       "signInButton": "登入",
       "copyPasteIntro": "或複製此連結並貼上到瀏覽器中：",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "為了您的安全，此連結只能使用一次。若您需要再次登入，請申請新的連結。",
       "disclaimer": "如果您沒有要求收到這封郵件，您可以忽略它。",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "登入 TestPlanIt\n\n請點按下方連結登入：\n{url}\n\n為了您的安全，此連結只能使用一次。若您需要再次登入，請申請新的連結。\n\n若您沒有申請此電子郵件，可以安心忽略。"
     },
     "passwordless": {
-      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
-      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
+      "codeIntro": "在不同裝置上開啟此連結？請在您申請連結的登入畫面上輸入此代碼：",
+      "deviceNotice": "此連結會讓您從申請連結時所使用的瀏覽器登入。若您在其他地方開啟，將會顯示上方的代碼，供您在原始視窗中輸入。",
+      "textBody": "登入 TestPlanIt\n\n請點按下方連結登入：\n{url}\n\n在不同裝置上開啟此連結？請在您申請連結的登入畫面上輸入此代碼：{code}\n\n若您沒有申請此電子郵件，可以安心忽略。"
     }
   },
   "comments": {
@@ -7772,13 +7774,13 @@
       "description": "點擊標籤可切換是否接受標籤。雙擊可編輯標籤名稱。",
       "selectEntity": "選擇一個實體以查看標籤建議。",
       "noTagsSelected": "未選擇任何標籤",
-      "footerSummary": "{assignCount, plural, one {# tag} other {# tags}} will be assigned, {newCount, plural, one {# new tag} other {# new tags}} will be created",
+      "footerSummary": "{assignCount, plural, other {# 個標籤}}將被指派，{newCount, plural, other {# 個新標籤}}將被建立",
       "footerAssignCount": "{assignCount, plural, one {# 標籤} other {# 標籤}} 將會被分配",
       "footerNewCount": "{newCount, plural, one {# 新標籤} other {# 新標籤}} 將創建",
       "newTagsPopoverTitle": "要建立的新標籤",
       "applying": "正在申請…",
-      "applySuccess": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}",
-      "applySuccessNewTags": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}, {newCount, plural, one {# new tag} other {# new tags}} created",
+      "applySuccess": "{tagCount, plural, other {# 個標籤}}已套用至 {entityCount, plural, other {# 個項目}}",
+      "applySuccessNewTags": "{tagCount, plural, other {# 個標籤}}已套用至 {entityCount, plural, other {# 個項目}}，{newCount, plural, other {# 個新標籤}}已建立",
       "applyError": "標籤應用程式失敗，請重試。",
       "suggestedTags": "建議標籤",
       "noSuggestions": "人工智慧無法產生任何標籤。",
@@ -7949,7 +7951,7 @@
     "importStep2RequiredUnmapped": "必需參數「@{name}」沒有對應的 CSV 欄位。",
     "importStep2Label": "地圖列",
     "importStep3SummaryOk": "{totalRows, plural, =1 {# 行} other {# 行數}} 解析，無錯誤。",
-    "importStep3SummaryErrors": "{totalRows, plural, =1 {# row} other {# rows}} parsed; {errorCount, plural, =1 {# row has} other {# rows have}} errors.",
+    "importStep3SummaryErrors": "已解析 {totalRows, plural, =1 {# 行} other {# 行}}；{errorCount, plural, =1 {# 行有} other {# 行有}} 錯誤。",
     "importStep3PreviewLimit": "顯示前 {limit} 行。下一步將驗證所有行。",
     "importStep3Label": "預覽",
     "importStep4Heading": "確認進口",
@@ -7994,13 +7996,13 @@
     "runPreflightAsync": "將建立 {n, plural, =1 {# 迭代} other {# 迭代}} （後台作業）",
     "runPreflightSoftConfirm": "將建立 {n, plural, =1 {# 迭代} other {# 迭代}} — 需要確認",
     "runPreflightHardRefuse": "無法建立 — {n} 超出 {cap} 上限",
-    "runPreflightTooltip": "{iterations, plural, =1 {# iteration} other {# iterations}} = {cases, plural, =1 {# case} other {# cases}} × {configs, plural, =1 {# config} other {# configs}} × dataset rows",
-    "runPreflightTooltipHeader": "{iterations, plural, =1 {# iteration} other {# iterations}} across {cases, plural, =1 {# parameterized case} other {# parameterized cases}} × {configs, plural, =1 {# config} other {# configs}}",
+    "runPreflightTooltip": "{iterations, plural, =1 {# 次疊代} other {# 次疊代}} = {cases, plural, =1 {# 個案例} other {# 個案例}} × {configs, plural, =1 {# 個設定} other {# 個設定}} × 資料集行",
+    "runPreflightTooltipHeader": "{iterations, plural, =1 {# 次疊代} other {# 次疊代}}，跨 {cases, plural, =1 {# 個參數化案例} other {# 個參數化案例}} × {configs, plural, =1 {# 個設定} other {# 個設定}}",
     "runPreflightTooltipCaseRow": "{title} — {rows, plural, =1 {# 行} other {# 行數}}",
     "chipClickToReveal": "點擊顯示",
     "chipCopyValue": "複製價值",
     "chipCopyAriaLabel": "將 {label} 的值複製到剪貼簿",
-    "chipCopiedToast": "Copied @{label} to clipboard",
+    "chipCopiedToast": "已將 @{label} 複製到剪貼簿",
     "chipCopyFailedToast": "無法將 @{label} 複製到剪貼簿",
     "iterationResultPanelHeading": "提交第 {n} 次迭代的結果，該迭代是 {total} 次迭代的結果。",
     "iterationAddResult": "新增結果",
@@ -8019,7 +8021,7 @@
     "hardRefuseSuggestion2": "取消選擇一個或多個配置。",
     "hardRefuseSuggestion3": "將工作分成多個測試運行。",
     "softConfirmTitle": "產生 {n, plural, =1 {# 迭代次數} other {# 迭代次數}}?",
-    "softConfirmDescription": "{n, plural, =1 {# iteration} other {# iterations}} from {cases, plural, =1 {# case} other {# cases}} × {configs, plural, =1 {# configuration} other {# configurations}}.",
+    "softConfirmDescription": "{n, plural, =1 {# 次疊代} other {# 次疊代}}，來自 {cases, plural, =1 {# 個案例} other {# 個案例}} × {configs, plural, =1 {# 個設定} other {# 個設定}}。",
     "softConfirmGo": "生成迭代",
     "runProgressCounter": "{done} / {total}",
     "runProgressDismissAria": "駁回進度",
@@ -8081,7 +8083,7 @@
     "iterationBulkConfirmDescription": "每個選定的迭代都會收到一個狀態為「{statusName}」的新結果。",
     "iterationBulkConfirm": "馬克 {action}",
     "iterationBulkConfirmReplace": "替換為 {action}",
-    "iterationBulkOverwriteWarning": "{count, plural, =1 {# of the selected iterations already has} other {# of the selected iterations already have}} a result. A new result will be recorded and the latest will replace the current one.",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {已選取的疊代中有 # 個已有} other {已選取的疊代中有 # 個已有}} 結果。將記錄新結果，且最新結果將取代目前的結果。",
     "iterationBulkReasonLabel": "原因（可選）",
     "iterationBulkReasonHelp": "記錄在每項結果中。",
     "iterationBulkSuccess": "{count, plural, =1 {# 迭代次數} other {# 迭代次數}} 已標記 {action}",
@@ -8091,7 +8093,7 @@
     "iterationResetUntestedMissing": "未測試狀態未找到",
     "overrideTitle": "覆蓋迭代 {n} 的值",
     "overrideDescription": "更改僅影響本次迭代。資料集快照和來源資料集保持不變。此操作已記錄在稽核日誌中。",
-    "overrideValidationItem": "@{param}: {message}",
+    "overrideValidationItem": "@{param}：{message}",
     "overrideSensitiveDenied": "您沒有權限編輯敏感值。",
     "datasetSourceLocal": "當地的",
     "datasetSourceShared": "共享",

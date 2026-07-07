@@ -62,7 +62,7 @@
       "expand": "Zwiększać",
       "collapse": "Zawalić się",
       "addResult": "Dodaj wynik",
-      "passAndNext": "Pass & Next",
+      "passAndNext": "Zaliczono i dalej",
       "viewInRepository": "Wyświetl w repozytorium",
       "resultAdded": "Dodano wynik testu",
       "resultAddedDescription": "Wynik testu został pomyślnie dodany.",
@@ -1072,7 +1072,7 @@
         "apple": "Kontynuuj z Apple",
         "microsoft": "Kontynuuj z Microsoft",
         "samlProvider": "Zaloguj się za pomocą {name}",
-        "magicLink": "Sign in with single-use Magic Link",
+        "magicLink": "Zaloguj się za pomocą jednorazowego Magic Link",
         "emailLogin": "Kontynuuj z e-mailem"
       },
       "magicLink": {
@@ -1086,16 +1086,19 @@
         "backToSignIn": "Powrót do logowania"
       },
       "passwordless": {
-        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
-        "codeLabel": "Sign-in code",
-        "verifyCode": "Verify code",
-        "verifying": "Verifying...",
-        "invalidCode": "That code isn't right. Check the email and try again.",
-        "codeExpired": "This sign-in request has expired. Request a new link.",
-        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
-        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
-        "genericError": "We couldn't sign you in. Request a new link and try again.",
-        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+        "waitingInstructions": "Kliknij link w e-mailu, aby zalogować się z tej przeglądarki, lub wpisz poniżej kod z e-maila.",
+        "codeLabel": "Kod logowania",
+        "verifyCode": "Zweryfikuj kod",
+        "verifying": "Weryfikowanie...",
+        "invalidCode": "Ten kod jest nieprawidłowy. Sprawdź e-mail i spróbuj ponownie.",
+        "codeExpired": "To żądanie logowania wygasło. Poproś o nowy link.",
+        "tooManyAttempts": "Za dużo nieprawidłowych prób. Poproś o nowy link, aby spróbować ponownie.",
+        "windowLost": "To okno nie może już zakończyć logowania. Poproś o nowy link.",
+        "genericError": "Nie udało się Cię zalogować. Poproś o nowy link i spróbuj ponownie.",
+        "tooManyRequests": "Za dużo żądań logowania. Poczekaj chwilę i spróbuj ponownie.",
+        "haveCode": "Masz już kod logowania?",
+        "codeEntryDescription": "Wpisz kod z e-maila logowania. Kody działają tylko w przeglądarce, w której poprosiłeś o link.",
+        "backToRequest": "Poproś o nowy link"
       },
       "twoFactor": {
         "title": "Uwierzytelnianie dwuskładnikowe",
@@ -1105,19 +1108,19 @@
       "contactAdmin": "Skontaktuj się z administratorem systemu"
     },
     "passwordless": {
-      "completingSignIn": "Signing you in...",
-      "completeErrorTitle": "We couldn't sign you in",
-      "requestNewLink": "Request a new link",
-      "codeTitle": "Your sign-in code",
-      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
-      "codeCloseNotice": "You can close this window once you've entered the code.",
-      "expiredTitle": "This sign-in link is no longer valid",
-      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
+      "completingSignIn": "Logowanie...",
+      "completeErrorTitle": "Nie udało się Cię zalogować",
+      "requestNewLink": "Poproś o nowy link",
+      "codeTitle": "Twój kod logowania",
+      "codeInstructions": "Otworzyłeś link do logowania na innym urządzeniu lub w innej przeglądarce. Wpisz ten kod na ekranie logowania, na którym pierwotnie o niego poprosiłeś.",
+      "codeCloseNotice": "Możesz zamknąć to okno po wpisaniu kodu.",
+      "expiredTitle": "Ten link do logowania nie jest już prawidłowy",
+      "expiredBody": "Link może wygasnąć lub zostać już wykorzystany. Poproś o nowy na stronie logowania — to zajmie tylko chwilę."
     },
     "errors": {
       "accessDenied": "Dostęp zabroniony. Twoje konto może być nieaktywne lub nie masz uprawnień do logowania.",
       "configuration": "Wystąpił problem z konfiguracją serwera.",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "Ten link do logowania wygasł lub został już użyty. Magic linki można wykorzystać tylko raz — poproś o nowy, aby się zalogować.",
       "invalid2FACode": "Nieprawidłowy kod weryfikacyjny. Spróbuj ponownie.",
       "twoFactorTokenRequired": "Token jest wymagany",
       "verificationCodeRequired": "Wymagany jest kod weryfikacyjny"
@@ -1364,19 +1367,19 @@
           "switchWarning2": "Zachowaj problemy w bazie danych (staną się niepowiązane)",
           "switchWarning3": "Zastąp obecną konfigurację integracji problemów nową",
           "switchWarning4": "Usuń przychodzący webhook skonfigurowany dla bieżącej integracji",
-          "importIssues": "Import Issues",
-          "importTitle": "Import issues from {name}",
-          "importDescription": "Pull issues from this linked project into your project. Existing issues aren't duplicated, and imported issues stay up to date through sync.",
-          "importUpdatedWithin": "Updated within",
-          "importLastDays": "Last {days} days",
-          "importMax": "Maximum to import",
-          "importPreview": "Preview",
-          "importPreviewResult": "~{count, plural, one {# issue} other {# issues}} match this filter. Up to {cap} will be imported.",
-          "importOverCap": "That exceeds the cap of {cap}; only the {cap} most recently updated will be imported.",
-          "importStart": "Import",
-          "importStarted": "Import started. Issues will appear shortly.",
-          "importFailed": "Import failed",
-          "importPreviewFailed": "Couldn't estimate matches"
+          "importIssues": "Importuj problemy",
+          "importTitle": "Importuj problemy z {name}",
+          "importDescription": "Pobierz problemy z tego powiązanego projektu do swojego projektu. Istniejące problemy nie są duplikowane, a zaimportowane problemy są aktualizowane poprzez synchronizację.",
+          "importUpdatedWithin": "Zaktualizowano w ciągu",
+          "importLastDays": "Ostatnie {days} dni",
+          "importMax": "Maksymalna liczba do importu",
+          "importPreview": "Podgląd",
+          "importPreviewResult": "~{count, plural, one {# problem} few {# problemy} many {# problemów} other {# problemu}} spełnia ten filtr. Zaimportowanych zostanie maksymalnie {cap}.",
+          "importOverCap": "Przekracza to limit {cap}; zostanie zaimportowanych tylko {cap} najnowszych zaktualizowanych problemów.",
+          "importStart": "Importuj",
+          "importStarted": "Import rozpoczęty. Problemy pojawią się wkrótce.",
+          "importFailed": "Import nie powiódł się",
+          "importPreviewFailed": "Nie udało się oszacować dopasowań"
         },
         "integrationAssigned": "Integracja przypisana pomyślnie",
         "integrationAssignError": "Nie udało się przypisać integracji problemu do projektu",
@@ -1402,10 +1405,10 @@
             "description": "Połącz się z usługą Azure DevOps, aby śledzić elementy pracy."
           },
           "redmine": {
-            "description": "Connect to a self-hosted Redmine instance for issue tracking."
+            "description": "Połącz się z samodzielnie hostowaną instancją Redmine w celu śledzenia problemów."
           },
           "mantisbt": {
-            "description": "Connect to a self-hosted MantisBT instance for issue tracking."
+            "description": "Połącz się z samodzielnie hostowaną instancją MantisBT w celu śledzenia problemów."
           }
         }
       },
@@ -1519,7 +1522,7 @@
           "jiraIssueDeleted": "Usunięto problem w Jira",
           "githubIssues": "Wydarzenie związane z problemami GitHub",
           "githubPullRequest": "Żądanie ściągnięcia GitHub",
-          "githubPush": "GitHub push",
+          "githubPush": "Push do GitHub",
           "githubIssueComment": "Komentarz do problemu GitHub",
           "adoWorkitemCreated": "Utworzono element roboczy usługi Azure DevOps",
           "adoWorkitemUpdated": "Zaktualizowano element roboczy usługi Azure DevOps",
@@ -1577,7 +1580,7 @@
         "inboundChooserSubmit": "Kontynuować",
         "inboundChooserCancel": "Anulować",
         "inboundEmpty": "Brak skonfigurowanych webhooków przychodzących. Dodaj jeden, aby otrzymywać aktualizacje zgłoszeń z Jira, GitHub, GitLab, Gitea lub Azure DevOps.",
-        "inboundJiraTitle": "Jira inbound webhook",
+        "inboundJiraTitle": "Przychodzący webhook Jira",
         "inboundGithubTitle": "GitHub przychodzący webhook",
         "inboundGithubScopeHint": "Zdarzenia GitHub <code>dotyczące problemów</code> aktualizują powiązane problemy TestPlanIt. Zdarzenia pull request i komentarzy do problemów są akceptowane, ale nie aktualizują jeszcze problemów.",
         "inboundGitlabTitle": "GitLab przychodzący webhook",
@@ -1685,19 +1688,19 @@
         "toastReEnableSuccess": "Ponownie włączono webhook",
         "toastReEnableFailed": "Nie udało się ponownie włączyć: {error}",
         "inboundChooserRedmine": "Redmine",
-        "inboundRedmineTitle": "Redmine inbound webhook",
-        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
-        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
-        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
-        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here.",
+        "inboundRedmineTitle": "Przychodzący webhook Redmine",
+        "inboundRedmineScopeHint": "Wtyczka redmine_webhook nie podpisuje żądań, więc ten adres URL webhooka jest danymi uwierzytelniającymi — traktuj go jako tajny i wymień go, jeśli zostanie ujawniony.",
+        "setupStepsRedmineStep1": "Zainstaluj wtyczkę redmine_webhook na swoim serwerze Redmine (Redmine nie posiada wbudowanych webhooków).",
+        "setupStepsRedmineStep2": "W swoim projekcie Redmine otwórz Ustawienia → Moduły i włącz Webhooki.",
+        "setupStepsRedmineStep3": "Otwórz Ustawienia → Webhooki, wklej powyższy adres URL i zapisz.",
+        "setupStepsRedmineStep4": "Utwórz lub zaktualizuj problem w Redmine; status powiązanego problemu zostanie tutaj zsynchronizowany.",
         "inboundChooserMantisbt": "MantisBT",
-        "inboundMantisbtTitle": "MantisBT inbound webhook",
-        "inboundMantisbtScopeHint": "A MantisBT webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsMantisbtStep1": "Install and enable a MantisBT webhook plugin on your MantisBT server (MantisBT has no built-in webhooks).",
-        "setupStepsMantisbtStep2": "In the plugin configuration, choose the issue created and issue updated events.",
-        "setupStepsMantisbtStep3": "Paste the URL above as the webhook target and save.",
-        "setupStepsMantisbtStep4": "Create or update an issue in MantisBT; the linked issue’s status will sync here."
+        "inboundMantisbtTitle": "Przychodzący webhook MantisBT",
+        "inboundMantisbtScopeHint": "Wtyczka webhooków MantisBT nie podpisuje żądań, więc ten adres URL webhooka jest danymi uwierzytelniającymi — traktuj go jako tajny i wymień go, jeśli zostanie ujawniony.",
+        "setupStepsMantisbtStep1": "Zainstaluj i włącz wtyczkę webhooków MantisBT na swoim serwerze MantisBT (MantisBT nie posiada wbudowanych webhooków).",
+        "setupStepsMantisbtStep2": "W konfiguracji wtyczki wybierz zdarzenia utworzenia i aktualizacji problemu.",
+        "setupStepsMantisbtStep3": "Wklej powyższy adres URL jako cel webhooka i zapisz.",
+        "setupStepsMantisbtStep4": "Utwórz lub zaktualizuj problem w MantisBT; status powiązanego problemu zostanie tutaj zsynchronizowany."
       },
       "aiModels": {
         "description": "Konfiguruj modele AI do inteligentnego generowania i analizy przypadków testowych",
@@ -1887,7 +1890,7 @@
           "scanningFiles": "Skanowanie plików w {scope}…",
           "scanningFilesCount": "Skanowanie plików w {scope}… (znaleziono{count, number})",
           "filtering": "Stosowanie filtrów do plików {count, number}…",
-          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
+          "rateLimited": "Przekroczono limit zapytań u dostawcy — ponawianie za {seconds, number}s…"
         },
         "cache": {
           "title": "Ustawienia pamięci podręcznej",
@@ -1913,8 +1916,8 @@
         "networkError": "Błąd sieciowy podczas odświeżania pamięci podręcznej",
         "refreshSuccess": "Odświeżono pamięć podręczną: {fileCount} plików (zawartość w pamięci podręcznej:{contentCached})",
         "refreshRateLimited": "Odświeżono pamięć podręczną: {fileCount} plików na liście, {contentCached}/{fileCount} zawartości w pamięci podręcznej (ograniczona szybkość — w celu dokończenia należy odświeżyć ponownie)",
-        "refreshComplete": "Cache refreshed: {fileCount} files",
-        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
+        "refreshComplete": "Odświeżono pamięć podręczną: {fileCount} plików",
+        "refreshInProgress": "Odświeżanie pamięci podręcznej wciąż działa w tle. Ten widok zostanie zaktualizowany po zakończeniu.",
         "validation": {
           "pathRequired": "Ścieżka jest wymagana",
           "patternRequired": "Wzór jest wymagany",
@@ -2009,7 +2012,7 @@
       "iterationUnlabeled": "Iteracja #{index, number}",
       "popoverInflightHint": "W tym miejscu wyświetlane są iteracje w trakcie lotu, po ich zarejestrowaniu.",
       "popoverNoTimestamp": "—",
-      "filterStatus": "{count, plural, =0 {Status} one {Status (#)} other {Status (#)}}",
+      "filterStatus": "{count, plural, =0 {Status} one {Status (#)} few {Status (#)} many {Status (#)} other {Status (#)}}",
       "filterConfig": "{count, plural, =0 {Konfiguracja} one {Konfiguracja (#)} other {Konfiguracja (#)}}",
       "filterDataset": "{count, plural, =0 {Zestaw danych} one {Zestaw danych (#)} other {Zestaw danych (#)}}",
       "filterStatusLabel": "Status",
@@ -2139,9 +2142,9 @@
   },
   "sessions": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this session."
+      "trigger": "Aktywność",
+      "title": "Dziennik aktywności",
+      "description": "Wszystkie zmiany odnotowane dla tej sesji."
     },
     "title": "{count, plural, =1 {Sesja} other {Sesje}}",
     "labels": {
@@ -2404,19 +2407,19 @@
         }
       },
       "auditLog": {
-        "title": "Audit Log",
-        "description": "Actions performed by this user",
-        "noEntries": "No activity recorded yet.",
-        "loadMore": "Loading",
-        "viewDetails": "View details",
-        "columnAction": "Action",
-        "columnEntityType": "Type",
-        "columnEntityName": "Name",
-        "columnTimestamp": "Timestamp",
-        "allActions": "All Actions",
-        "allTypes": "All Types",
-        "noMatchingEntries": "No entries match the selected filters.",
-        "showing": "{loaded} of {total} entries"
+        "title": "Dziennik audytu",
+        "description": "Działania wykonane przez tego użytkownika",
+        "noEntries": "Nie odnotowano jeszcze żadnej aktywności.",
+        "loadMore": "Ładowanie",
+        "viewDetails": "Zobacz szczegóły",
+        "columnAction": "Działanie",
+        "columnEntityType": "Typ",
+        "columnEntityName": "Nazwa",
+        "columnTimestamp": "Znacznik czasu",
+        "allActions": "Wszystkie działania",
+        "allTypes": "Wszystkie typy",
+        "noMatchingEntries": "Żaden wpis nie spełnia wybranych filtrów.",
+        "showing": "{loaded} z {total} wpisów"
       },
       "mentionedComments": {
         "title": "Wspomniano w komentarzach",
@@ -2510,9 +2513,9 @@
       "historyView": "Widok historii przypadków testowych"
     },
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test case."
+      "trigger": "Aktywność",
+      "title": "Dziennik aktywności",
+      "description": "Wszystkie zmiany odnotowane dla tego przypadku testowego."
     },
     "fields": {
       "optionNotFound": "Opcja nie znaleziona",
@@ -3359,9 +3362,9 @@
   },
   "runs": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test run."
+      "trigger": "Aktywność",
+      "title": "Dziennik aktywności",
+      "description": "Wszystkie zmiany odnotowane dla tego przebiegu testu."
     },
     "notFound": "Nie znaleziono przebiegu testowego.",
     "add": {
@@ -3725,7 +3728,7 @@
         "jobLoadFailed": "Nie udało się załadować tego zadania importu.",
         "uploadProgressAnalyzing": "Przesyłanie zakończone. Analizowanie pliku…",
         "uploadProgressComplete": "Przesyłanie zakończone",
-        "etaLabel": "ETA: {time}",
+        "etaLabel": "Szacowany czas: {time}",
         "startImportButton": "Rozpocznij import",
         "workflowCreate": {
           "nameLabel": "Nazwa przepływu pracy",
@@ -4443,9 +4446,9 @@
       "scimColumnYes": "Tak",
       "scimUserLockedTitle": "Użytkownik jest zarządzany przez SCIM",
       "scimUserLockedDescription": "Nazwa, adres e-mail i status aktywności tego użytkownika są zarządzane przez Twojego dostawcę tożsamości. Wprowadź zmiany, aby je zaktualizować tutaj.",
-      "groupMappingOverrideTitle": "Managed by Group Mapping",
-      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
-      "groupMappingBadge": "Group Mapped"
+      "groupMappingOverrideTitle": "Zarządzane przez mapowanie grup",
+      "groupMappingOverrideDescription": "Poziom dostępu tego użytkownika jest kontrolowany przez mapowanie grup SCIM i może zostać przywrócony przy następnej synchronizacji.",
+      "groupMappingBadge": "Zmapowane przez grupę"
     },
     "security": {
       "title": "Bezpieczeństwo",
@@ -4490,7 +4493,7 @@
       "saveChanges": "Zapisz zmiany",
       "forceAllUsers": "Wymuś zmianę hasła przez wszystkich użytkowników",
       "forceAllUsersDialogTitle": "Wymuś zmianę hasła dla wszystkich użytkowników",
-      "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
+      "forceAllUsersDialogDescription": "Wymusi to na {count, number} użytkownikach korzystających z danych logowania zmianę hasła przy następnym logowaniu.",
       "forceAllUsersDialogWarning": "Tej czynności nie można cofnąć.",
       "forceAllUsersDialogConfirm": "Wymuś zmianę",
       "saved": "Ustawienia zabezpieczeń zostały zapisane",
@@ -4622,16 +4625,16 @@
         "errorToast": "Nie udało się cofnąć tokena. {reason}"
       },
       "probe": {
-        "button": "Test SCIM",
+        "button": "Testuj SCIM",
         "testing": "Testowanie…",
-        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
+        "okBanner": "HTTP {status} — token działa poprawnie z /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Nie udało się nawiązać połączenia z punktem końcowym SCIM. Spróbuj ponownie."
       },
-      "fallbackDefaultTitle": "Default Mapped Access",
-      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
-      "fallbackDefaultLabel": "Default access tier",
-      "fallbackDefaultSaved": "Fallback default saved"
+      "fallbackDefaultTitle": "Domyślny zmapowany dostęp",
+      "fallbackDefaultDescription": "Poziom dostępu przypisany użytkownikom nieobjętym żadnym mapowaniem grup.",
+      "fallbackDefaultLabel": "Domyślny poziom dostępu",
+      "fallbackDefaultSaved": "Domyślna wartość zastępcza zapisana"
     },
     "tags": {
       "add": {
@@ -4916,13 +4919,13 @@
       "scimManagedTooltip": "Zarządzane przez SCIM. Zarządzaj ze strony administratora SCIM.",
       "scimNameLockedTitle": "Grupą zarządza SCIM",
       "scimNameLockedDescription": "Nazwą i członkami tej grupy zarządza Twój dostawca tożsamości. Wprowadź zmiany, aby je zaktualizować tutaj.",
-      "mappedAccessColumnHeader": "Mapped Access",
-      "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "No mapping",
-      "mappedAccessSelect": "Select access tier...",
-      "downgradeConfirmTitle": "Confirm Access Change",
-      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
-      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "mappedAccessColumnHeader": "Zmapowany dostęp",
+      "mappedAccessLabel": "Zmapowany poziom dostępu",
+      "mappedAccessNone": "Brak mapowania",
+      "mappedAccessSelect": "Wybierz poziom dostępu...",
+      "downgradeConfirmTitle": "Potwierdź zmianę dostępu",
+      "downgradeConfirmDescription": "{count, plural, one {# użytkownik będzie mieć obniżony dostęp} few {# użytkownicy będą mieć obniżony dostęp} many {# użytkowników będzie mieć obniżony dostęp} other {# użytkownika będzie mieć obniżony dostęp}}. Kontynuować?",
+      "downgradeConfirmApplyAnyway": "Zastosuj mimo to",
       "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
@@ -5111,27 +5114,27 @@
       "status": {
         "active": "Aktywny",
         "inactive": "Nieaktywny",
-        "awaitingAuthorization": "Awaiting authorization"
+        "awaitingAuthorization": "Oczekiwanie na autoryzację"
       },
       "connectedProjects": "Połączone projekty",
       "noIntegrations": "Brak skonfigurowanych integracji problemów",
       "testConnection": "Połączenie testowe",
       "testSuccess": "Połączenie pomyślne",
       "testSuccessDescription": "Integracja problemu jest poprawnie skonfigurowana i połączona",
-      "testCredentialsSaved": "Credentials look good",
-      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
+      "testCredentialsSaved": "Dane uwierzytelniające są poprawne",
+      "testCredentialsSavedDescription": "Twój identyfikator klienta OAuth i klucz są prawidłowe. Zapisz integrację, a następnie kliknij Autoryzuj, aby połączyć swoje konto — OAuth 2.0 łączy się dla każdego użytkownika indywidualnie, więc pozostaje nieaktywna, dopóki przynajmniej jedna osoba nie przeprowadzi autoryzacji.",
       "testFailed": "Połączenie nieudane",
       "testFailedDescription": "Nie można połączyć się z usługą zewnętrzną",
       "testError": "Błąd testu",
       "testErrorDescription": "Wystąpił błąd podczas testowania połączenia",
-      "authorize": "Authorize",
-      "reauthorize": "Re-authorize",
-      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
-      "syncInProgress": "Re-syncing linked issues...",
-      "syncIntegration": "Re-sync linked issues",
-      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
+      "authorize": "Autoryzuj",
+      "reauthorize": "Autoryzuj ponownie",
+      "authorizeHint": "Autoryzuj u dostawcy, aby połączyć swoje konto i zakończyć konfigurację",
+      "syncInProgress": "Ponowna synchronizacja powiązanych problemów...",
+      "syncIntegration": "Ponownie zsynchronizuj powiązane problemy",
+      "syncIntegrationHint": "Synchronizuje ponownie tylko problemy już powiązane w TestPlanIt. Nowe problemy nie są importowane z zewnętrznego systemu śledzenia.",
       "syncSuccess": "Synchronizacja w kolejce",
-      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
+      "syncSuccessDescription": "Powiązane problemy z „{name}” są ponownie synchronizowane w tle. Może to potrwać kilka chwil. Tabela zostanie automatycznie zaktualizowana po zakończeniu.",
       "syncError": "Synchronizacja nie powiodła się",
       "syncErrorDescription": "Nie udało się dodać zadania synchronizacji do kolejki dla tej integracji problemu. Spróbuj ponownie później.",
       "delete": {
@@ -5178,11 +5181,11 @@
         },
         "redmine": {
           "name": "Redmine",
-          "description": "Connect to a self-hosted Redmine instance for issue tracking"
+          "description": "Połącz się z samodzielnie hostowaną instancją Redmine w celu śledzenia problemów"
         },
         "mantisbt": {
           "name": "MantisBT",
-          "description": "Connect to a self-hosted MantisBT instance for issue tracking"
+          "description": "Połącz się z samodzielnie hostowaną instancją MantisBT w celu śledzenia problemów"
         }
       },
       "filterPlaceholder": "Integracje filtrów...",
@@ -5255,7 +5258,6 @@
         "encrypted": "Zaszyfrowane",
         "encryptedHelp": "To pole jest szyfrowane i przechowywane bezpiecznie",
         "changeCredential": "Zmiana",
-        "leaveBlankToKeep": "Leave blank to keep existing value",
         "apiKeyWarningTitle": "Powiadomienie o uwierzytelnianiu klucza API",
         "apiKeyWarningDescription": "W przypadku uwierzytelniania kluczem API osoba raportująca utworzone problemy może nie być zgodna z użytkownikiem TestPlanIt, który je utworzył — nawet jeśli adresy e-mail są zgodne:",
         "apiKeyWarningPoint1": "Aby skonfigurować reportera Jira, konto tokena API musi mieć uprawnienia administratora Jira („Modyfikuj Reportera”). Bez nich Jira ignoruje reportera, a właściciel tokena API jest rejestrowany jako twórca.",
@@ -5264,10 +5266,10 @@
         "apiKeyWarningPoint4": "Zamiast tego należy używać protokołu OAuth 2.0 w celu dokładnego przypisywania danych do poszczególnych użytkowników bez konieczności uzyskiwania uprawnień administratora.",
         "tokenCreatorNoticeTitle": "Atrybucja twórcy problemu",
         "tokenCreatorNoticeDescription": "Zgłoszenia utworzone za pośrednictwem tej integracji są zawsze rejestrowane na koncie, do którego należy ten token dostępu, a nie na koncie użytkownika TestPlanIt, który je utworzył. API tego dostawcy nie pozwala na ustawienie autora w imieniu innego użytkownika.",
-        "callbackUrlLabel": "Callback URL (redirect URI)",
-        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
-        "callbackUrlCopy": "Copy",
-        "callbackUrlCopied": "Copied",
+        "callbackUrlLabel": "Adres URL wywołania zwrotnego (URI przekierowania)",
+        "callbackUrlDescription": "Zarejestruj ten dokładny adres URL jako URI wywołania zwrotnego / przekierowania w aplikacji OAuth Twojego dostawcy. Musi się on precyzyjnie zgadzać, w przeciwnym razie autoryzacja się nie powiedzie.",
+        "callbackUrlCopy": "Kopiuj",
+        "callbackUrlCopied": "Skopiowano",
         "forgeApiKeyLabel": "Klucz API Forge",
         "forgeApiKeyDescription": "Używany przez aplikację Atlassian Forge do uwierzytelniania żądań z paneli zgłoszeń Jira. Wygeneruj klucz tutaj i wklej go w ustawieniach aplikacji Forge.",
         "forgeApiKeyPlaceholder": "Kliknij „Generuj”, aby utworzyć klucz API",
@@ -5279,18 +5281,18 @@
         "platformGitea": "Gitea",
         "platformForgejo": "Forgejo",
         "platformGogs": "Gogs",
-        "redmineApiKey": "Redmine API Key",
-        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
-        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
-        "redmineUrl": "Redmine URL",
+        "redmineApiKey": "Klucz API Redmine",
+        "redmineApiKeyPlaceholder": "Wprowadź swój klucz API Redmine",
+        "redmineApiKeyHelp": "Znajdziesz go w Moje konto → Klucz dostępu API (włącz REST API w Administracja → Ustawienia → API)",
+        "redmineUrl": "Adres URL Redmine",
         "redmineUrlPlaceholder": "https://redmine.example.com",
-        "redmineUrlHelp": "The base URL of your Redmine instance",
-        "mantisBTApiKey": "MantisBT API Token",
-        "mantisBTApiKeyPlaceholder": "Enter your MantisBT API token",
-        "mantisBTApiKeyHelp": "Create one under your MantisBT account settings → API Tokens",
-        "mantisBTUrl": "MantisBT URL",
+        "redmineUrlHelp": "Podstawowy adres URL Twojej instancji Redmine",
+        "mantisBTApiKey": "Token API MantisBT",
+        "mantisBTApiKeyPlaceholder": "Wprowadź swój token API MantisBT",
+        "mantisBTApiKeyHelp": "Utwórz go w ustawieniach konta MantisBT → Tokeny API",
+        "mantisBTUrl": "Adres URL MantisBT",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "The base URL of your MantisBT instance"
+        "mantisBTUrlHelp": "Podstawowy adres URL Twojej instancji MantisBT"
       },
       "authType": {
         "api_key": "Klucz API",
@@ -5503,7 +5505,7 @@
         "generate_from_url": "Generuj przypadki testowe z adresu URL (wymagania)",
         "generate_from_url_app": "Generuj przypadki testowe z adresu URL (testowanie aplikacji)",
         "automation_candidates": "Raport kandydatów do automatyzacji",
-        "derive_case_steps": "AI Step Derivation"
+        "derive_case_steps": "Generowanie kroków przez AI"
       }
     },
     "elasticsearch": {
@@ -5679,15 +5681,15 @@
     },
     "auditLogs": {
       "description": "Przeglądaj ścieżkę audytu w całym systemie, aby śledzić bezpieczeństwo i zgodność",
-      "projectDescription": "View the audit trail of actions performed in this project.",
+      "projectDescription": "Zobacz ścieżkę audytu działań wykonanych w tym projekcie.",
       "filterPlaceholder": "Wyszukaj według jednostki, użytkownika lub akcji...",
       "filterAction": "Działanie",
       "filterEntityType": "Typ jednostki",
       "allActions": "Wszystkie akcje",
       "allEntityTypes": "Wszystkie typy jednostek",
-      "allUsers": "All Users",
-      "allProjects": "All Projects",
-      "showing": "Showing {loaded} of {total} entries",
+      "allUsers": "Wszyscy użytkownicy",
+      "allProjects": "Wszystkie projekty",
+      "showing": "Wyświetlanie {loaded} z {total} wpisów",
       "viewDetails": "Zobacz szczegóły",
       "detailTitle": "Szczegóły dziennika audytu",
       "userInfo": "Informacje o użytkowniku",
@@ -5715,8 +5717,8 @@
       "systemActor": "System",
       "systemActorTooltip": "Akcja wykonywana przez system, a nie przez zalogowanego użytkownika",
       "sourceScim": "SCIM",
-      "relatedChanges": "related changes",
-      "groupedEntry": "Grouped changes from a single action"
+      "relatedChanges": "powiązane zmiany",
+      "groupedEntry": "Pogrupowane zmiany z jednej akcji"
     }
   },
   "components": {
@@ -5810,9 +5812,9 @@
         "reviewReminderAction": "nadal czekam na Twoją recenzję",
         "reviewReminderEmailMessage": "Przypomnienie: prośba użytkownika {actorName}z dnia {entityLabel} „{entityName}” w projekcie „{projectName}” oczekuje na rozpatrzenie przez {hoursPending} godzin.",
         "reviewReminderHoursPending": "Oczekiwanie na {hoursPending, plural, one {# godzina} other {# godzina}}",
-        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
-        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
-        "aiStepsDerivedReviewLink": "Review test run"
+        "aiStepsDerivedTitle": "Kroki testowe wygenerowane przez AI są gotowe",
+        "aiStepsDerivedMessage": "Do {count, plural, one {# przypadku testowego} few {# przypadków testowych} many {# przypadków testowych} other {# przypadku testowego}} dodano kroki wygenerowane przez AI — sprawdź ich poprawność.",
+        "aiStepsDerivedReviewLink": "Przejrzyj przebieg testu"
       }
     },
     "issues": {
@@ -6176,7 +6178,7 @@
     "group": {
       "name": "## Nazwa grupy\nJasna, zwięzła, opisowa nazwa lub słowo(a) kluczowe używane we wszystkich projektach.\n\n— Pomaga członkom zespołu szybko znaleźć powiązane przypadki testowe, przebiegi testów i sesje.",
       "users": "## Użytkownicy\nWskazuje użytkowników przypisanych do tej grupy.",
-      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
+      "mappedAccess": "## Zmapowany poziom dostępu\nCzłonkowie tej grupy otrzymają co najmniej ten poziom dostępu przy następnej synchronizacji.\n\n- Wygrywa najwyższy poziom ze wszystkich grup użytkownika\n- „Brak mapowania” oznacza, że ta grupa nie wpływa na dostęp — członkowie korzystają z wartości domyślnej ustawionej na stronie SCIM\n- Ręczna zmiana dostępu użytkownika ma priorytet nad mapowaniem (i jest oznaczona na ekranie edycji tego użytkownika)"
     },
     "template": {
       "name": "## Nazwa szablonu\nUnikalna i opisowa nazwa tego szablonu (np. „Standardowy przypadek testowy”, „Wyniki testów API”).",
@@ -6210,7 +6212,7 @@
       "authType": "## Typ uwierzytelniania\nWybierz sposób uwierzytelniania za pomocą usługi zewnętrznej.\n\n- **Klucz API:** Proste uwierzytelnianie przy użyciu adresu e-mail i tokenu API\n- **OAuth 2.0:** Bezpieczne uwierzytelnianie przy użyciu przepływu OAuth\n- **Token dostępu osobistego:** Bezpośrednie uwierzytelnianie na podstawie tokenu",
       "email": "## Adres e-mail\nTwój adres e-mail konta dla usługi zewnętrznej.\n\n— używany do uwierzytelniania kluczem API\n— musi być zgodny z kontem, które wygenerowało token API\n— wymagany dla Jira i podobnych usług",
       "apiToken": "## Token API\nWygeneruj token API z ustawień konta w usłudze zewnętrznej.\n\n— Zwykle znajduje się w Ustawieniach konta → Bezpieczeństwo → Tokeny API\n— Zapewnia bezpieczny dostęp bez ujawniania hasła\n— Można go cofnąć i wygenerować ponownie w razie potrzeby",
-      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
+      "jiraUrl": "## Adres URL Jira\nPodstawowy adres URL Twojej instancji Jira.\n\n- Format: https://twoja-strona.atlassian.net\n- Nie uwzględniaj ścieżki /browse ani innych ścieżek\n- Musi być dostępny z tego serwera",
       "clientId": "## Identyfikator klienta OAuth\nIdentyfikator klienta z konfiguracji aplikacji OAuth.\n\n— Utworzono w konsoli programisty usługi zewnętrznej\n— Służy do identyfikacji aplikacji podczas przepływu OAuth\n— Można go bezpiecznie udostępniać w plikach konfiguracyjnych",
       "clientSecret": "## Tajny klucz klienta OAuth\nTajny klucz klienta z konfiguracji aplikacji OAuth.\n\n— Tworzony wraz z identyfikatorem klienta\n— Musi być zachowany w tajemnicy i bezpieczny\n— Służy do uwierzytelniania aplikacji",
       "personalAccessToken": "## Osobisty token dostępu\nOsobisty token dostępu z odpowiednimi uprawnieniami do usługi zewnętrznej.\n\n— Generowany w ustawieniach konta\n— Powinien zawierać uprawnienia do odczytu i zapisu\n— Bezpieczniejszy niż uwierzytelnianie hasłem",
@@ -6223,11 +6225,11 @@
       "instanceUrl": "## Adres URL instancji\nPodstawowy adres URL samodzielnie hostowanej instancji.\n\n— Format: https://git.example.com\n— Nie należy uwzględniać końcowych ukośników ani ścieżek\n— Musi być dostępny z tego serwera",
       "projectPath": "## Ścieżka projektu\nPełna ścieżka do Twojego projektu GitLab.\n\n- Format: przestrzeń nazw/projekt lub grupa/podgrupa/projekt\n- Przykład: my-org/my-project\n- Znajduje się w adresie URL projektu: gitlab.com/namespace/project",
       "platform": "## Platforma\nSamodzielnie hostowana platforma Git, z którą się łączysz.\n\n- **Gitea**: instancje oparte na gitea.io\n- **Forgejo**: instancje oparte na forgejo.org (fork Gitea)\n- **Gogs**: instancje oparte na gogs.io\n\nKontroluje, która ikona jest wyświetlana, i może mieć wpływ na zgodność z API.",
-      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
-      "mantisBTApiKey": "## MantisBT API Token\nYour personal REST API token.\n\n- Create one under your MantisBT account settings → API Tokens\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
-      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
+      "redmineApiKey": "## Klucz API Redmine\nTwój osobisty klucz dostępu do REST API.\n\n- Włącz REST API w Administracja → Ustawienia → API\n- Skopiuj swój klucz z Moje konto → Klucz dostępu API\n- Zakres odpowiada uprawnieniom Twojego użytkownika; użyj konta serwisowego dla współdzielonych integracji",
+      "redmineUrl": "## Adres URL Redmine\nPodstawowy adres URL Twojej instancji Redmine.\n\n- Format: https://redmine.example.com\n- Nie uwzględniaj /issues ani innych ścieżek\n- Musi być dostępny z tego serwera",
+      "mantisBTApiKey": "## Token API MantisBT\nTwój osobisty token REST API.\n\n- Utwórz go w ustawieniach konta MantisBT → Tokeny API\n- Zakres odpowiada uprawnieniom Twojego użytkownika; użyj konta serwisowego dla współdzielonych integracji",
+      "mantisBTUrl": "## Adres URL MantisBT\nPodstawowy adres URL Twojej instancji MantisBT.\n\n- Format: https://mantisbt.example.com\n- Nie uwzględniaj /api/rest ani innych ścieżek\n- Musi być dostępny z tego serwera",
+      "githubBaseUrl": "## Podstawowy adres URL API\nPełny katalog główny API GitHub dla GitHub Enterprise Server.\n\n- Zazwyczaj kończy się na /api/v3\n- Pozostaw puste, aby użyć api.github.com\n- Musi być dostępny z tego serwera"
     },
     "config": {
       "name": "## Nazwa konfiguracji\nJasna, opisowa nazwa tej konfiguracji.\n\n— Pomaga opisać warianty konfiguracji (np. „Chrome, Windows 10”, „Safari/macOS 15.5”, „Edge/Windows 11” itd.).",
@@ -6717,7 +6719,7 @@
       "addDimension": "Dodaj wymiar...",
       "addMetric": "Dodaj metrykę...",
       "runReport": "Uruchom raport",
-      "exportCsv": "Export CSV",
+      "exportCsv": "Eksportuj CSV",
       "noResultsFound": "Nie znaleziono wyników.",
       "selectAtLeastOneDimensionAndMetric": "Wybierz co najmniej jeden wymiar i jedną metrykę.",
       "noDataMatchingCriteria": "Nie znaleziono danych odpowiadających wybranym wymiarom i metrykom.",
@@ -7526,33 +7528,33 @@
   "search": {
     "title": "Szukaj",
     "savedSearches": {
-      "title": "Saved searches",
-      "save": "Save search",
-      "saveTitle": "Save search",
-      "saveDescription": "Name this search so you can revisit it later.",
-      "saveAction": "Save",
-      "nameLabel": "Name",
-      "namePlaceholder": "e.g. Failed runs this sprint",
-      "nameRequired": "Enter a name for this search.",
-      "loginRequired": "You must be signed in to save searches.",
+      "title": "Zapisane wyszukiwania",
+      "save": "Zapisz wyszukiwanie",
+      "saveTitle": "Zapisz wyszukiwanie",
+      "saveDescription": "Nazwij to wyszukiwanie, aby móc do niego wrócić później.",
+      "saveAction": "Zapisz",
+      "nameLabel": "Nazwa",
+      "namePlaceholder": "np. Nieudane przebiegi w tym sprincie",
+      "nameRequired": "Wprowadź nazwę dla tego wyszukiwania.",
+      "loginRequired": "Aby zapisywać wyszukiwania, musisz być zalogowany.",
       "descriptionLabel": "Opis (opcjonalnie)",
-      "descriptionPlaceholder": "What this search is for",
-      "saved": "Search saved",
-      "savedDescription": "“{name}” is now in your saved searches.",
-      "saveFailed": "Couldn't save the search. Please try again.",
-      "empty": "No saved searches yet",
-      "emptyHint": "Save a search to revisit it later.",
-      "loaded": "Loaded “{name}”",
-      "loadFailed": "This saved search is no longer valid.",
-      "edit": "Edit",
-      "editTitle": "Edit saved search",
-      "edited": "Saved search updated",
-      "editFailed": "Couldn't update the search. Please try again.",
+      "descriptionPlaceholder": "Do czego służy to wyszukiwanie",
+      "saved": "Wyszukiwanie zapisane",
+      "savedDescription": "„{name}” zostało dodane do zapisanych wyszukiwań.",
+      "saveFailed": "Nie udało się zapisać wyszukiwania. Spróbuj ponownie.",
+      "empty": "Brak zapisanych wyszukiwań",
+      "emptyHint": "Zapisz wyszukiwanie, aby wrócić do niego później.",
+      "loaded": "Wczytano „{name}”",
+      "loadFailed": "To zapisane wyszukiwanie nie jest już prawidłowe.",
+      "edit": "Edytuj",
+      "editTitle": "Edytuj zapisane wyszukiwanie",
+      "edited": "Zapisane wyszukiwanie zaktualizowane",
+      "editFailed": "Nie udało się zaktualizować wyszukiwania. Spróbuj ponownie.",
       "delete": "Usuwać",
-      "deleteTitle": "Delete saved search?",
-      "deleteConfirm": "“{name}” will be removed from your saved searches. This can't be undone.",
-      "deleted": "Saved search deleted",
-      "deleteFailed": "Couldn't delete the search. Please try again."
+      "deleteTitle": "Usunąć zapisane wyszukiwanie?",
+      "deleteConfirm": "„{name}” zostanie usunięte z zapisanych wyszukiwań. Tej operacji nie można odwrócić.",
+      "deleted": "Zapisane wyszukiwanie usunięte",
+      "deleteFailed": "Nie udało się usunąć wyszukiwania. Spróbuj ponownie."
     },
     "bulk": {
       "crossProjectHint": "(obejmujący wiele projektów)",
@@ -7698,14 +7700,14 @@
       "intro": "Kliknij poniższy przycisk, aby się zalogować:",
       "signInButton": "Zalogować się",
       "copyPasteIntro": "Lub skopiuj i wklej ten link do przeglądarki:",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "Dla Twojego bezpieczeństwa ten link można wykorzystać tylko raz. Poproś o nowy link, jeśli chcesz się zalogować ponownie.",
       "disclaimer": "Jeśli nie prosiłeś o wysłanie tego e-maila, możesz go bezpiecznie zignorować.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "Zaloguj się do TestPlanIt\n\nKliknij poniższy link, aby się zalogować:\n{url}\n\nDla Twojego bezpieczeństwa ten link można wykorzystać tylko raz. Poproś o nowy link, jeśli chcesz się zalogować ponownie.\n\nJeśli nie prosiłeś o ten e-mail, możesz go bezpiecznie zignorować."
     },
     "passwordless": {
-      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
-      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
+      "codeIntro": "Otwierasz to na innym urządzeniu? Wpisz ten kod na ekranie logowania, na którym poprosiłeś o link:",
+      "deviceNotice": "Ten link loguje Cię z przeglądarki, w której o niego poprosiłeś. Jeśli otworzysz go gdzie indziej, zobaczysz powyższy kod do wpisania w oryginalnym oknie.",
+      "textBody": "Zaloguj się do TestPlanIt\n\nKliknij poniższy link, aby się zalogować:\n{url}\n\nOtwierasz to na innym urządzeniu? Wpisz ten kod na ekranie logowania, na którym poprosiłeś o link: {code}\n\nJeśli nie prosiłeś o ten e-mail, możesz go bezpiecznie zignorować."
     }
   },
   "comments": {

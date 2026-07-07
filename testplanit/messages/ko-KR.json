@@ -1072,7 +1072,7 @@
         "apple": "Apple에서 계속 진행하세요",
         "microsoft": "Microsoft에서 계속 진행하세요",
         "samlProvider": "{name}로 로그인하세요",
-        "magicLink": "Sign in with single-use Magic Link",
+        "magicLink": "일회용 매직링크로 로그인",
         "emailLogin": "이메일로 계속 진행"
       },
       "magicLink": {
@@ -1086,16 +1086,19 @@
         "backToSignIn": "로그인 페이지로 돌아가기"
       },
       "passwordless": {
-        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
-        "codeLabel": "Sign-in code",
-        "verifyCode": "Verify code",
-        "verifying": "Verifying...",
-        "invalidCode": "That code isn't right. Check the email and try again.",
-        "codeExpired": "This sign-in request has expired. Request a new link.",
-        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
-        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
-        "genericError": "We couldn't sign you in. Request a new link and try again.",
-        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+        "waitingInstructions": "이메일의 링크를 클릭하여 이 브라우저에서 로그인하거나, 아래에 이메일의 코드를 입력하세요.",
+        "codeLabel": "로그인 코드",
+        "verifyCode": "코드 확인",
+        "verifying": "확인 중...",
+        "invalidCode": "코드가 올바르지 않습니다. 이메일을 확인하고 다시 시도하세요.",
+        "codeExpired": "이 로그인 요청이 만료되었습니다. 새 링크를 요청하세요.",
+        "tooManyAttempts": "잘못된 시도가 너무 많습니다. 다시 시도하려면 새 링크를 요청하세요.",
+        "windowLost": "이 창에서는 로그인을 완료할 수 없습니다. 새 링크를 요청하세요.",
+        "genericError": "로그인할 수 없습니다. 새 링크를 요청하고 다시 시도하세요.",
+        "tooManyRequests": "로그인 요청이 너무 많습니다. 잠시 기다린 후 다시 시도하세요.",
+        "haveCode": "이미 로그인 코드가 있으신가요?",
+        "codeEntryDescription": "로그인 이메일의 코드를 입력하세요. 코드는 링크를 요청한 브라우저에서만 작동합니다.",
+        "backToRequest": "대신 새 링크 요청"
       },
       "twoFactor": {
         "title": "2단계 인증",
@@ -1105,19 +1108,19 @@
       "contactAdmin": "시스템 관리자에게 문의하십시오."
     },
     "passwordless": {
-      "completingSignIn": "Signing you in...",
-      "completeErrorTitle": "We couldn't sign you in",
-      "requestNewLink": "Request a new link",
-      "codeTitle": "Your sign-in code",
-      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
-      "codeCloseNotice": "You can close this window once you've entered the code.",
-      "expiredTitle": "This sign-in link is no longer valid",
-      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
+      "completingSignIn": "로그인하는 중...",
+      "completeErrorTitle": "로그인할 수 없습니다",
+      "requestNewLink": "새 링크 요청",
+      "codeTitle": "로그인 코드",
+      "codeInstructions": "다른 기기나 브라우저에서 로그인 링크를 열었습니다. 원래 요청한 로그인 화면에서 이 코드를 입력하세요.",
+      "codeCloseNotice": "코드를 입력한 후에는 이 창을 닫아도 됩니다.",
+      "expiredTitle": "이 로그인 링크는 더 이상 유효하지 않습니다",
+      "expiredBody": "링크가 만료되었거나 이미 사용되었을 수 있습니다. 로그인 페이지에서 새 링크를 요청하세요 — 잠깐이면 됩니다."
     },
     "errors": {
       "accessDenied": "접근이 거부되었습니다. 계정이 비활성화되었거나 로그인 권한이 없을 수 있습니다.",
       "configuration": "서버 구성에 문제가 있습니다.",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "이 로그인 링크가 만료되었거나 이미 사용되었습니다. 매직링크는 한 번만 사용할 수 있습니다 — 로그인하려면 새 링크를 요청하세요.",
       "invalid2FACode": "인증 코드가 잘못되었습니다. 다시 시도해 주세요.",
       "twoFactorTokenRequired": "토큰이 필요합니다",
       "verificationCodeRequired": "인증 코드가 필요합니다."
@@ -1364,19 +1367,19 @@
           "switchWarning2": "데이터베이스에 이슈 정보를 보존합니다(연결 해제됨).",
           "switchWarning3": "현재 문제 통합 구성을 새 구성으로 교체하십시오.",
           "switchWarning4": "현재 통합에 대해 구성된 인바운드 웹훅을 제거합니다.",
-          "importIssues": "Import Issues",
-          "importTitle": "Import issues from {name}",
-          "importDescription": "Pull issues from this linked project into your project. Existing issues aren't duplicated, and imported issues stay up to date through sync.",
-          "importUpdatedWithin": "Updated within",
-          "importLastDays": "Last {days} days",
-          "importMax": "Maximum to import",
-          "importPreview": "Preview",
-          "importPreviewResult": "~{count, plural, one {# issue} other {# issues}} match this filter. Up to {cap} will be imported.",
-          "importOverCap": "That exceeds the cap of {cap}; only the {cap} most recently updated will be imported.",
-          "importStart": "Import",
-          "importStarted": "Import started. Issues will appear shortly.",
-          "importFailed": "Import failed",
-          "importPreviewFailed": "Couldn't estimate matches"
+          "importIssues": "이슈 가져오기",
+          "importTitle": "{name}에서 이슈 가져오기",
+          "importDescription": "이 연결된 프로젝트의 이슈를 내 프로젝트로 가져옵니다. 기존 이슈는 중복되지 않으며 가져온 이슈는 동기화를 통해 최신 상태로 유지됩니다.",
+          "importUpdatedWithin": "업데이트 기간",
+          "importLastDays": "최근 {days}일",
+          "importMax": "최대 가져오기 개수",
+          "importPreview": "미리보기",
+          "importPreviewResult": "이 필터와 일치하는 이슈가 약 {count, plural, other {#개}}입니다. 최대 {cap}개까지 가져옵니다.",
+          "importOverCap": "이는 {cap}개의 한도를 초과합니다. 가장 최근에 업데이트된 {cap}개만 가져옵니다.",
+          "importStart": "가져오기",
+          "importStarted": "가져오기가 시작되었습니다. 이슈가 곧 표시됩니다.",
+          "importFailed": "가져오기 실패",
+          "importPreviewFailed": "일치 항목을 추정할 수 없습니다"
         },
         "integrationAssigned": "통합 작업이 성공적으로 완료되었습니다.",
         "integrationAssignError": "이슈 통합을 프로젝트에 할당하는 데 실패했습니다.",
@@ -1402,10 +1405,10 @@
             "description": "작업 항목 추적을 위해 Azure DevOps에 연결하세요."
           },
           "redmine": {
-            "description": "Connect to a self-hosted Redmine instance for issue tracking."
+            "description": "이슈 추적을 위해 자체 호스팅 Redmine 인스턴스에 연결하세요."
           },
           "mantisbt": {
-            "description": "Connect to a self-hosted MantisBT instance for issue tracking."
+            "description": "이슈 추적을 위해 자체 호스팅 MantisBT 인스턴스에 연결하세요."
           }
         }
       },
@@ -1643,7 +1646,7 @@
         "drawerLabelDirection": "방향",
         "drawerLabelStatusCode": "상태 코드",
         "drawerLabelLatency": "숨어 있음",
-        "drawerLatencyValue": "{ms, number} ms",
+        "drawerLatencyValue": "{ms, number}ms",
         "drawerLatencyUnknown": "—",
         "drawerLabelError": "오류",
         "drawerLabelPayloadDigest": "페이로드 다이제스트",
@@ -1685,19 +1688,19 @@
         "toastReEnableSuccess": "웹훅이 다시 활성화되었습니다",
         "toastReEnableFailed": "재활성화에 실패했습니다: {error}",
         "inboundChooserRedmine": "Redmine",
-        "inboundRedmineTitle": "Redmine inbound webhook",
-        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
-        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
-        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
-        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here.",
+        "inboundRedmineTitle": "Redmine 인바운드 웹훅",
+        "inboundRedmineScopeHint": "redmine_webhook 플러그인은 요청에 서명하지 않으므로 이 웹훅 URL이 자격 증명 역할을 합니다. 비밀 정보로 취급하고 노출된 경우 교체하세요.",
+        "setupStepsRedmineStep1": "Redmine 서버에 redmine_webhook 플러그인을 설치하세요(Redmine에는 기본 제공 웹훅이 없습니다).",
+        "setupStepsRedmineStep2": "Redmine 프로젝트에서 설정 → 모듈을 열고 웹훅을 활성화하세요.",
+        "setupStepsRedmineStep3": "설정 → 웹훅을 열고 위 URL을 붙여넣은 다음 저장하세요.",
+        "setupStepsRedmineStep4": "Redmine에서 이슈를 생성하거나 업데이트하면 연결된 이슈의 상태가 여기에 동기화됩니다.",
         "inboundChooserMantisbt": "MantisBT",
-        "inboundMantisbtTitle": "MantisBT inbound webhook",
-        "inboundMantisbtScopeHint": "A MantisBT webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsMantisbtStep1": "Install and enable a MantisBT webhook plugin on your MantisBT server (MantisBT has no built-in webhooks).",
-        "setupStepsMantisbtStep2": "In the plugin configuration, choose the issue created and issue updated events.",
-        "setupStepsMantisbtStep3": "Paste the URL above as the webhook target and save.",
-        "setupStepsMantisbtStep4": "Create or update an issue in MantisBT; the linked issue’s status will sync here."
+        "inboundMantisbtTitle": "MantisBT 인바운드 웹훅",
+        "inboundMantisbtScopeHint": "MantisBT 웹훅 플러그인은 요청에 서명하지 않으므로 이 웹훅 URL이 자격 증명 역할을 합니다. 비밀 정보로 취급하고 노출된 경우 교체하세요.",
+        "setupStepsMantisbtStep1": "MantisBT 서버에 MantisBT 웹훅 플러그인을 설치하고 활성화하세요(MantisBT에는 기본 제공 웹훅이 없습니다).",
+        "setupStepsMantisbtStep2": "플러그인 설정에서 이슈 생성 및 이슈 업데이트 이벤트를 선택하세요.",
+        "setupStepsMantisbtStep3": "위 URL을 웹훅 대상으로 붙여넣고 저장하세요.",
+        "setupStepsMantisbtStep4": "MantisBT에서 이슈를 생성하거나 업데이트하면 연결된 이슈의 상태가 여기에 동기화됩니다."
       },
       "aiModels": {
         "description": "지능형 테스트 케이스 생성 및 분석을 위한 AI 모델 구성",
@@ -1887,7 +1890,7 @@
           "scanningFiles": "{scope}…에서 파일을 스캔합니다.",
           "scanningFilesCount": "{scope}… 에서 파일을 스캔하는 중입니다 ({count, number} 발견됨)",
           "filtering": "{count, number} 파일…에 필터를 적용합니다.",
-          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
+          "rateLimited": "제공업체에서 속도 제한이 적용되어 {seconds, number}초 후 재시도합니다…"
         },
         "cache": {
           "title": "캐시 설정",
@@ -1913,8 +1916,8 @@
         "networkError": "캐시 새로 고침 중 네트워크 오류 발생",
         "refreshSuccess": "캐시 새로 고침됨: {fileCount} 개 파일 ({contentCached} 개 콘텐츠 캐시됨)",
         "refreshRateLimited": "캐시 새로 고침됨: {fileCount} 개의 파일이 나열되었고, {contentCached}/{fileCount} 개의 콘텐츠가 캐시되었습니다(호출 속도 제한됨 - 완료하려면 다시 새로 고침하세요).",
-        "refreshComplete": "Cache refreshed: {fileCount} files",
-        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
+        "refreshComplete": "캐시 새로고침 완료: 파일 {fileCount}개",
+        "refreshInProgress": "캐시 새로고침이 백그라운드에서 계속 실행 중입니다. 완료되면 여기에 업데이트됩니다.",
         "validation": {
           "pathRequired": "경로가 필요합니다",
           "patternRequired": "패턴이 필요합니다",
@@ -2139,9 +2142,9 @@
   },
   "sessions": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this session."
+      "trigger": "활동",
+      "title": "활동 로그",
+      "description": "이 세션에 기록된 모든 변경 사항입니다."
     },
     "title": "{count, plural, =1 {세션} other {세션들}}",
     "labels": {
@@ -2404,19 +2407,19 @@
         }
       },
       "auditLog": {
-        "title": "Audit Log",
-        "description": "Actions performed by this user",
-        "noEntries": "No activity recorded yet.",
-        "loadMore": "Loading",
-        "viewDetails": "View details",
-        "columnAction": "Action",
-        "columnEntityType": "Type",
-        "columnEntityName": "Name",
-        "columnTimestamp": "Timestamp",
-        "allActions": "All Actions",
-        "allTypes": "All Types",
-        "noMatchingEntries": "No entries match the selected filters.",
-        "showing": "{loaded} of {total} entries"
+        "title": "감사 로그",
+        "description": "이 사용자가 수행한 작업",
+        "noEntries": "아직 기록된 활동이 없습니다.",
+        "loadMore": "로딩 중",
+        "viewDetails": "자세히 보기",
+        "columnAction": "작업",
+        "columnEntityType": "유형",
+        "columnEntityName": "이름",
+        "columnTimestamp": "타임스탬프",
+        "allActions": "모든 작업",
+        "allTypes": "모든 유형",
+        "noMatchingEntries": "선택한 필터와 일치하는 항목이 없습니다.",
+        "showing": "{total}개 중 {loaded}개 항목"
       },
       "mentionedComments": {
         "title": "댓글에서 언급됨",
@@ -2510,9 +2513,9 @@
       "historyView": "테스트 케이스 기록 보기"
     },
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test case."
+      "trigger": "활동",
+      "title": "활동 로그",
+      "description": "이 테스트 케이스에 기록된 모든 변경 사항입니다."
     },
     "fields": {
       "optionNotFound": "옵션을 찾을 수 없습니다",
@@ -2537,7 +2540,7 @@
       "confirmDelete": "삭제 단계 확인 {number, number}?",
       "createSharedSteps": "공유 생성 {number, plural, one {단계} other {단계}}",
       "sharedStepsName": "공유 단계 이름",
-      "sharedStepsDescription": "Enter a name for your new shared {number, plural, one {step} other {steps}}. This will include {number, plural, one {# selected step} other {# selected steps}}.",
+      "sharedStepsDescription": "새 공유 {number, plural, other {단계}}의 이름을 입력하세요. 여기에는 {number, plural, other {선택한 단계 #개}}가 포함됩니다.",
       "notifications": {
         "noStepsSelectedOrNameEmptyWarning": "공유 단계를 생성하려면 단계를 선택하고 이름을 입력하세요.",
         "failedToCreateSharedStepGroupError": "공유 단계를 생성하는 데 실패했습니다. 다시 시도해 주세요.",
@@ -2945,7 +2948,7 @@
       "bulkLinkSuccess": "{count, plural, one {# 연결된 쌍} other {# 연결된 쌍}}",
       "bulkError": "일부 작업에 실패했습니다. 다시 시도해 주세요.",
       "tableHint": "행을 클릭하거나 비교 버튼을 클릭하여 중복된 쌍을 검토하고 해결하세요.",
-      "comparisonTitle": "{caseA} vs {caseB}",
+      "comparisonTitle": "{caseA} 대 {caseB}",
       "comparisonDescription": "이러한 잠재적 중복 항목을 비교하고 해결 방법을 선택하십시오.",
       "selectPrimary": "병합을 위한 기본 사례로 선택하려면 해당 사례를 클릭하십시오.",
       "selectedAsPrimary": "기본으로 선택됨",
@@ -3359,9 +3362,9 @@
   },
   "runs": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test run."
+      "trigger": "활동",
+      "title": "활동 로그",
+      "description": "이 테스트 실행에 기록된 모든 변경 사항입니다."
     },
     "notFound": "테스트 실행을 찾을 수 없습니다.",
     "add": {
@@ -4443,9 +4446,9 @@
       "scimColumnYes": "예",
       "scimUserLockedTitle": "사용자는 SCIM에 의해 관리됩니다.",
       "scimUserLockedDescription": "이 사용자의 이름, 이메일 및 활성 상태는 ID 공급자가 관리합니다. 여기에서도 해당 정보를 업데이트하려면 ID 공급자에서 변경하십시오.",
-      "groupMappingOverrideTitle": "Managed by Group Mapping",
-      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
-      "groupMappingBadge": "Group Mapped"
+      "groupMappingOverrideTitle": "그룹 매핑으로 관리됨",
+      "groupMappingOverrideDescription": "이 사용자의 접근 등급은 SCIM 그룹 매핑에 의해 관리되며 다음 동기화 시 되돌아갈 수 있습니다.",
+      "groupMappingBadge": "그룹 매핑됨"
     },
     "security": {
       "title": "보안",
@@ -4490,7 +4493,7 @@
       "saveChanges": "변경 사항 저장",
       "forceAllUsers": "모든 사용자에게 비밀번호 변경 강제 적용",
       "forceAllUsersDialogTitle": "모든 사용자에 대한 비밀번호 강제 변경",
-      "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
+      "forceAllUsersDialogDescription": "이렇게 하면 자격 증명 기반 사용자 {count, number}명이 다음 로그인 시 비밀번호를 변경해야 합니다.",
       "forceAllUsersDialogWarning": "이 작업은 되돌릴 수 없습니다.",
       "forceAllUsersDialogConfirm": "강제 변화",
       "saved": "보안 설정이 저장되었습니다",
@@ -4624,14 +4627,14 @@
       "probe": {
         "button": "SCIM 테스트",
         "testing": "테스트…",
-        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
+        "okBanner": "HTTP {status} — 토큰이 /api/scim/v2/Users에 대해 작동합니다.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "SCIM 엔드포인트에 연결할 수 없습니다. 다시 시도하십시오."
       },
-      "fallbackDefaultTitle": "Default Mapped Access",
-      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
-      "fallbackDefaultLabel": "Default access tier",
-      "fallbackDefaultSaved": "Fallback default saved"
+      "fallbackDefaultTitle": "기본 매핑 접근",
+      "fallbackDefaultDescription": "그룹 매핑에 포함되지 않은 사용자에게 할당되는 접근 등급입니다.",
+      "fallbackDefaultLabel": "기본 접근 등급",
+      "fallbackDefaultSaved": "기본 대체값이 저장되었습니다"
     },
     "tags": {
       "add": {
@@ -4857,7 +4860,7 @@
       "combinations": {
         "title": "조합",
         "description": "글로벌 조합 관리",
-        "confirmDescription": "The following {count, number} Configurations will be created:",
+        "confirmDescription": "다음 {count, number}개의 구성이 생성됩니다:",
         "addCombination": "조합을 추가하세요",
         "editCombination": "조합 편집",
         "selectCombination": "조합을 선택하세요",
@@ -4916,13 +4919,13 @@
       "scimManagedTooltip": "SCIM에서 관리합니다. SCIM 관리자 페이지에서 관리할 수 있습니다.",
       "scimNameLockedTitle": "이 그룹은 SCIM에서 관리합니다.",
       "scimNameLockedDescription": "이 그룹의 이름과 구성원은 ID 공급자가 관리합니다. 여기에서도 변경 사항을 적용하려면 ID 공급자에서 수정하세요.",
-      "mappedAccessColumnHeader": "Mapped Access",
-      "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "No mapping",
-      "mappedAccessSelect": "Select access tier...",
-      "downgradeConfirmTitle": "Confirm Access Change",
-      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
-      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "mappedAccessColumnHeader": "매핑된 접근",
+      "mappedAccessLabel": "매핑된 접근 등급",
+      "mappedAccessNone": "매핑 없음",
+      "mappedAccessSelect": "접근 등급을 선택하세요...",
+      "downgradeConfirmTitle": "접근 변경 확인",
+      "downgradeConfirmDescription": "{count, plural, other {사용자 #명}}의 접근 권한이 낮아집니다. 계속하시겠습니까?",
+      "downgradeConfirmApplyAnyway": "그래도 적용",
       "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
@@ -5111,27 +5114,27 @@
       "status": {
         "active": "활동적인",
         "inactive": "비활성화됨",
-        "awaitingAuthorization": "Awaiting authorization"
+        "awaitingAuthorization": "인증 대기 중"
       },
       "connectedProjects": "연결된 프로젝트",
       "noIntegrations": "문제 없는 통합 구성 완료",
       "testConnection": "테스트 연결",
       "testSuccess": "연결 성공",
       "testSuccessDescription": "이슈 통합이 올바르게 구성되고 연결되었습니다.",
-      "testCredentialsSaved": "Credentials look good",
-      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
+      "testCredentialsSaved": "자격 증명이 정상입니다",
+      "testCredentialsSavedDescription": "OAuth 클라이언트 ID와 시크릿이 유효합니다. 통합을 저장한 후 승인을 클릭하여 계정을 연결하세요 — OAuth 2.0은 사용자별로 연결되므로 최소 한 명이 승인할 때까지 비활성 상태로 유지됩니다.",
       "testFailed": "연결 실패",
       "testFailedDescription": "외부 서비스에 연결할 수 없습니다.",
       "testError": "테스트 오류",
       "testErrorDescription": "연결 테스트 중 오류가 발생했습니다.",
-      "authorize": "Authorize",
-      "reauthorize": "Re-authorize",
-      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
-      "syncInProgress": "Re-syncing linked issues...",
-      "syncIntegration": "Re-sync linked issues",
-      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
+      "authorize": "승인",
+      "reauthorize": "다시 승인",
+      "authorizeHint": "제공업체를 통해 승인하여 계정을 연결하고 설정을 완료하세요",
+      "syncInProgress": "연결된 이슈를 다시 동기화하는 중...",
+      "syncIntegration": "연결된 이슈 다시 동기화",
+      "syncIntegrationHint": "TestPlanIt에 이미 연결된 이슈만 다시 동기화합니다. 외부 트래커에서 새 이슈를 가져오지는 않습니다.",
       "syncSuccess": "동기화 대기 중",
-      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
+      "syncSuccessDescription": "\"{name}\"의 연결된 이슈가 백그라운드에서 다시 동기화되고 있습니다. 잠시 시간이 걸릴 수 있습니다. 완료되면 표가 자동으로 업데이트됩니다.",
       "syncError": "동기화 실패",
       "syncErrorDescription": "이 문제 통합에 대한 동기화 작업을 대기열에 추가할 수 없습니다. 나중에 다시 시도해 주세요.",
       "delete": {
@@ -5178,11 +5181,11 @@
         },
         "redmine": {
           "name": "Redmine",
-          "description": "Connect to a self-hosted Redmine instance for issue tracking"
+          "description": "이슈 추적을 위해 자체 호스팅 Redmine 인스턴스에 연결하세요"
         },
         "mantisbt": {
           "name": "MantisBT",
-          "description": "Connect to a self-hosted MantisBT instance for issue tracking"
+          "description": "이슈 추적을 위해 자체 호스팅 MantisBT 인스턴스에 연결하세요"
         }
       },
       "filterPlaceholder": "필터 통합...",
@@ -5255,7 +5258,6 @@
         "encrypted": "암호화됨",
         "encryptedHelp": "이 필드는 암호화되어 안전하게 저장됩니다.",
         "changeCredential": "변화",
-        "leaveBlankToKeep": "Leave blank to keep existing value",
         "apiKeyWarningTitle": "API 키 인증 알림",
         "apiKeyWarningDescription": "API 키 인증을 사용하는 경우, 이메일 주소가 일치하더라도 생성된 이슈의 보고자가 해당 이슈를 생성한 TestPlanIt 사용자와 일치하지 않을 수 있습니다.",
         "apiKeyWarningPoint1": "Jira 리포터를 설정하려면 API 토큰 계정에 Jira 관리자 권한(\"리포터 수정\")이 있어야 합니다. 이 권한이 없으면 Jira는 리포터를 무시하고 API 토큰 소유자를 생성자로 기록합니다.",
@@ -5264,10 +5266,10 @@
         "apiKeyWarningPoint4": "관리자 권한 없이 사용자별 정확한 보고자 식별을 위해서는 OAuth 2.0을 사용하십시오.",
         "tokenCreatorNoticeTitle": "문제 제기자 정보",
         "tokenCreatorNoticeDescription": "이 연동을 통해 생성된 이슈는 항상 해당 액세스 토큰을 소유한 계정으로 기록되며, 이슈를 생성한 TestPlanIt 사용자 계정으로는 기록되지 않습니다. 이 공급자의 API는 다른 사용자를 대신하여 생성자를 설정하는 것을 허용하지 않습니다.",
-        "callbackUrlLabel": "Callback URL (redirect URI)",
-        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
-        "callbackUrlCopy": "Copy",
-        "callbackUrlCopied": "Copied",
+        "callbackUrlLabel": "콜백 URL(리디렉션 URI)",
+        "callbackUrlDescription": "제공업체의 OAuth 앱에 이 정확한 URL을 콜백/리디렉션 URI로 등록하세요. 정확히 일치하지 않으면 승인이 실패합니다.",
+        "callbackUrlCopy": "복사",
+        "callbackUrlCopied": "복사됨",
         "forgeApiKeyLabel": "Forge API 키",
         "forgeApiKeyDescription": "Atlassian Forge 앱에서 Jira 이슈 패널의 요청을 인증하는 데 사용됩니다. 여기에서 키를 생성하고 Forge 앱 설정에 붙여넣으세요.",
         "forgeApiKeyPlaceholder": "API 키를 생성하려면 '생성'을 클릭하세요.",
@@ -5279,18 +5281,18 @@
         "platformGitea": "기테아",
         "platformForgejo": "포르제호",
         "platformGogs": "고그스",
-        "redmineApiKey": "Redmine API Key",
-        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
-        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
+        "redmineApiKey": "Redmine API 키",
+        "redmineApiKeyPlaceholder": "Redmine API 키를 입력하세요",
+        "redmineApiKeyHelp": "내 계정 → API 접근 키에서 확인할 수 있습니다(관리 → 설정 → API에서 REST API를 활성화하세요)",
         "redmineUrl": "Redmine URL",
         "redmineUrlPlaceholder": "https://redmine.example.com",
-        "redmineUrlHelp": "The base URL of your Redmine instance",
-        "mantisBTApiKey": "MantisBT API Token",
-        "mantisBTApiKeyPlaceholder": "Enter your MantisBT API token",
-        "mantisBTApiKeyHelp": "Create one under your MantisBT account settings → API Tokens",
+        "redmineUrlHelp": "Redmine 인스턴스의 기본 URL",
+        "mantisBTApiKey": "MantisBT API 토큰",
+        "mantisBTApiKeyPlaceholder": "MantisBT API 토큰을 입력하세요",
+        "mantisBTApiKeyHelp": "MantisBT 계정 설정 → API 토큰에서 생성하세요",
         "mantisBTUrl": "MantisBT URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "The base URL of your MantisBT instance"
+        "mantisBTUrlHelp": "MantisBT 인스턴스의 기본 URL"
       },
       "authType": {
         "api_key": "API 키",
@@ -5488,7 +5490,7 @@
         "warning": "이 작업은 되돌릴 수 없습니다. 이 설정을 사용하는 모든 프로젝트는 기본 프롬프트 설정으로 되돌아갑니다."
       },
       "llmColumn": "법학 석사",
-      "mixedLlms": "{count, number} LLMs",
+      "mixedLlms": "{count, number}개의 LLM",
       "cannotDeleteDefault": "기본 프롬프트 구성을 삭제할 수 없습니다. 먼저 다른 설정을 기본값으로 지정하십시오.",
       "defaultChanged": "기본 프롬프트 구성이 성공적으로 업데이트되었습니다.",
       "featureLabels": {
@@ -5503,7 +5505,7 @@
         "generate_from_url": "URL(요구사항)에서 테스트 케이스 생성",
         "generate_from_url_app": "URL에서 테스트 케이스 생성 (애플리케이션 테스트)",
         "automation_candidates": "자동화 후보 보고서",
-        "derive_case_steps": "AI Step Derivation"
+        "derive_case_steps": "AI 단계 도출"
       }
     },
     "elasticsearch": {
@@ -5679,15 +5681,15 @@
     },
     "auditLogs": {
       "description": "보안 및 규정 준수 추적을 위한 시스템 전반의 감사 기록을 확인하세요.",
-      "projectDescription": "View the audit trail of actions performed in this project.",
+      "projectDescription": "이 프로젝트에서 수행된 작업의 감사 추적을 확인하세요.",
       "filterPlaceholder": "개체, 사용자 또는 작업으로 검색...",
       "filterAction": "행동",
       "filterEntityType": "엔티티 유형",
       "allActions": "모든 작업",
       "allEntityTypes": "모든 엔티티 유형",
-      "allUsers": "All Users",
-      "allProjects": "All Projects",
-      "showing": "Showing {loaded} of {total} entries",
+      "allUsers": "모든 사용자",
+      "allProjects": "모든 프로젝트",
+      "showing": "{total}개 중 {loaded}개 항목 표시 중",
       "viewDetails": "상세 정보 보기",
       "detailTitle": "감사 로그 세부 정보",
       "userInfo": "사용자 정보",
@@ -5715,8 +5717,8 @@
       "systemActor": "체계",
       "systemActorTooltip": "로그인한 사용자가 아닌 시스템에서 수행한 작업입니다.",
       "sourceScim": "SCIM",
-      "relatedChanges": "related changes",
-      "groupedEntry": "Grouped changes from a single action"
+      "relatedChanges": "관련 변경 사항",
+      "groupedEntry": "단일 작업에서 그룹화된 변경 사항"
     }
   },
   "components": {
@@ -5802,17 +5804,17 @@
         "reviewTransition": "전환: {from} → {to}",
         "reviewCommentPreview": "댓글: {comment}",
         "reviewRequestedEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \" \"{entityName}\"에 대한 리뷰를 요청했습니다.",
-        "reviewApprovedEmailMessage": "{actorName} approved your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
-        "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewApprovedEmailMessage": "{actorName} 님이 프로젝트 \"{projectName}\"의 {entityLabel} \"{entityName}\"에 대한 검토 요청을 승인했습니다.",
+        "reviewChangesRequestedEmailMessage": "{actorName} 님이 프로젝트 \"{projectName}\"의 {entityLabel} \"{entityName}\"에 대한 검토 요청에 변경을 요청했습니다.",
         "reviewRejectedEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \"{entityName}\"에 대한 검토 요청을 거부했습니다.",
         "reviewCancelledEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \"{entityName}\"에 대한 검토 요청을 취소했습니다.",
         "reviewReminderTitle": "검토는 아직 진행 중입니다.",
         "reviewReminderAction": "아직 귀하의 리뷰를 기다리고 있습니다.",
         "reviewReminderEmailMessage": "알림: {actorName}님의 {entityLabel} \"{entityName}\" 프로젝트 \"{projectName}\"에 대한 검토 요청이 {hoursPending} 시간 동안 보류 중입니다.",
         "reviewReminderHoursPending": "대기 시간: {hoursPending, plural, one {#시간} other {#시간}}",
-        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
-        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
-        "aiStepsDerivedReviewLink": "Review test run"
+        "aiStepsDerivedTitle": "AI 기반 테스트 단계 준비 완료",
+        "aiStepsDerivedMessage": "{count, plural, other {테스트 케이스 #개}}에 AI가 도출한 단계가 추가되었습니다 — 정확성을 검토하세요.",
+        "aiStepsDerivedReviewLink": "테스트 실행 검토"
       }
     },
     "issues": {
@@ -6176,7 +6178,7 @@
     "group": {
       "name": "## 그룹 이름\n모든 프로젝트에서 사용되는 명확하고 간결하며 설명적인 이름 또는 키워드입니다.\n\n- 팀 구성원이 관련 테스트 케이스, 테스트 실행 및 세션을 빠르게 찾을 수 있도록 도와줍니다.",
       "users": "## 사용자\n이 그룹에 할당된 사용자를 나타냅니다.",
-      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
+      "mappedAccess": "## 매핑된 접근 등급\n이 그룹의 구성원은 다음 동기화 시 최소한 이 접근 등급을 부여받습니다.\n\n- 사용자가 속한 모든 그룹 중 가장 높은 등급이 적용됩니다\n- \"매핑 없음\"은 이 그룹이 접근에 영향을 미치지 않음을 의미합니다 — 구성원은 SCIM 페이지에 설정된 기본값을 따릅니다\n- 사용자에 대한 수동 접근 변경은 매핑을 대체합니다(해당 사용자의 편집 화면에 표시됨)"
     },
     "template": {
       "name": "## 템플릿 이름\n이 템플릿에 대한 고유하고 설명적인 이름입니다(예: '표준 테스트 케이스', 'API 테스트 결과').",
@@ -6210,7 +6212,7 @@
       "authType": "## 인증 유형\n외부 서비스와의 인증 방법을 선택하세요.\n\n- **API 키:** 이메일과 API 토큰을 사용한 간편 인증\n- **OAuth 2.0:** OAuth 흐름을 사용한 보안 인증\n- **개인 액세스 토큰:** 토큰 기반의 직접 인증",
       "email": "## 이메일 주소\n외부 서비스 계정의 이메일 주소입니다.\n\n- API 키 인증에 사용됩니다.\n- API 토큰을 생성한 계정과 일치해야 합니다.\n- Jira 및 유사 서비스에 필수입니다.",
       "apiToken": "## API 토큰\n외부 서비스의 계정 설정에서 API 토큰을 생성하세요.\n\n- 일반적으로 계정 설정 → 보안 → API 토큰에서 찾을 수 있습니다.\n- 비밀번호를 노출하지 않고 안전하게 액세스할 수 있습니다.\n- 필요에 따라 취소하고 다시 생성할 수 있습니다.",
-      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
+      "jiraUrl": "## Jira URL\nJira 인스턴스의 기본 URL입니다.\n\n- 형식: https://your-site.atlassian.net\n- /browse 또는 기타 경로를 포함하지 마세요\n- 이 서버에서 접근 가능해야 합니다",
       "clientId": "## OAuth 클라이언트 ID\nOAuth 애플리케이션 구성에서 가져온 클라이언트 ID입니다.\n\n- 외부 서비스 개발자 콘솔에서 생성\n- OAuth 흐름 중에 애플리케이션을 식별하는 데 사용\n- 구성 파일에서 공유해도 안전함",
       "clientSecret": "## OAuth 클라이언트 시크릿\nOAuth 애플리케이션 구성에서 생성된 클라이언트 시크릿입니다.\n\n- 클라이언트 ID와 함께 생성됩니다.\n- 기밀로 안전하게 보관해야 합니다.\n- 애플리케이션 인증에 사용됩니다.",
       "personalAccessToken": "## 개인 액세스 토큰\n외부 서비스에 대한 적절한 권한이 있는 개인 액세스 토큰입니다.\n\n- 계정 설정에서 생성됩니다.\n- 읽기 및 쓰기 권한이 있어야 합니다.\n- 비밀번호 인증보다 안전합니다.",
@@ -6223,11 +6225,11 @@
       "instanceUrl": "## 인스턴스 URL\n자체 호스팅 인스턴스의 기본 URL입니다.\n\n- 형식: https://git.example.com\n- 끝에 슬래시나 경로를 포함하지 마세요.\n- 이 서버에서 접근 가능해야 합니다.",
       "projectPath": "## 프로젝트 경로\nGitLab 프로젝트의 전체 경로입니다.\n\n- 형식: 네임스페이스/프로젝트 또는 그룹/하위그룹/프로젝트\n- 예시: my-org/my-project\n- 프로젝트 URL에서 찾을 수 있습니다: gitlab.com/namespace/project",
       "platform": "## 플랫폼\n연결할 자체 호스팅 Git 플랫폼입니다.\n\n- **Gitea**: gitea.io 기반 인스턴스\n- **Forgejo**: forgejo.org 기반 인스턴스(Gitea 포크)\n- **Gogs**: gogs.io 기반 인스턴스\n\n이 설정은 표시되는 아이콘을 제어하며 API 호환성에 영향을 줄 수 있습니다.",
-      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
-      "mantisBTApiKey": "## MantisBT API Token\nYour personal REST API token.\n\n- Create one under your MantisBT account settings → API Tokens\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
-      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
+      "redmineApiKey": "## Redmine API 키\n개인 REST API 접근 키입니다.\n\n- 관리 → 설정 → API에서 REST API를 활성화하세요\n- 내 계정 → API 접근 키에서 키를 복사하세요\n- 사용자의 권한 범위로 제한되므로 공유 통합에는 서비스 계정을 사용하세요",
+      "redmineUrl": "## Redmine URL\nRedmine 인스턴스의 기본 URL입니다.\n\n- 형식: https://redmine.example.com\n- /issues 또는 기타 경로를 포함하지 마세요\n- 이 서버에서 접근 가능해야 합니다",
+      "mantisBTApiKey": "## MantisBT API 토큰\n개인 REST API 토큰입니다.\n\n- MantisBT 계정 설정 → API 토큰에서 생성하세요\n- 사용자의 권한 범위로 제한되므로 공유 통합에는 서비스 계정을 사용하세요",
+      "mantisBTUrl": "## MantisBT URL\nMantisBT 인스턴스의 기본 URL입니다.\n\n- 형식: https://mantisbt.example.com\n- /api/rest 또는 기타 경로를 포함하지 마세요\n- 이 서버에서 접근 가능해야 합니다",
+      "githubBaseUrl": "## API 기본 URL\nGitHub Enterprise Server의 전체 GitHub API 루트 경로입니다.\n\n- 일반적으로 /api/v3으로 끝납니다\n- api.github.com을 사용하려면 비워 두세요\n- 이 서버에서 접근 가능해야 합니다"
     },
     "config": {
       "name": "## 구성 이름\n이 구성에 대한 명확하고 설명적인 이름입니다.\n\n- 구성을 구성하는 변형 조합을 설명하는 데 도움이 됩니다(예: \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\" 등).",
@@ -6717,7 +6719,7 @@
       "addDimension": "차원을 더하다...",
       "addMetric": "측정항목을 추가하세요...",
       "runReport": "실행 보고서",
-      "exportCsv": "Export CSV",
+      "exportCsv": "CSV 내보내기",
       "noResultsFound": "검색 결과가 없습니다.",
       "selectAtLeastOneDimensionAndMetric": "최소한 하나의 차원과 하나의 측정 기준을 선택하십시오.",
       "noDataMatchingCriteria": "선택한 차원 및 측정항목과 일치하는 데이터를 찾을 수 없습니다.",
@@ -6958,7 +6960,7 @@
         },
         "heuristic": {
           "intro": "이 프로젝트에는 LLM 통합이 구성되어 있지 않으므로 순위는 선택 전략 지표를 직접 기반으로 계산됩니다. 사용자 지정 필드, 연결된 이슈 컨텍스트 및 사례 콘텐츠를 지표와 함께 고려하여 더욱 정교한 추론을 가능하게 하려면 LLM 통합을 구성하십시오(관리 → AI 모델).",
-          "rankedSummary": "{ranked} of {totalEligible} eligible manual cases ranked.",
+          "rankedSummary": "{totalEligible}개의 적격 수동 사례 중 {ranked}개가 순위가 지정되었습니다.",
           "strategyExplanation": {
             "most_executed": "테스트 케이스는 수동 실행 횟수(가장 높은 것부터) 순으로 정렬됩니다. 이는 자동화를 통해 테스터 시간을 가장 많이 절약할 수 있는 회귀 빈도 지표입니다.",
             "flakiest_first": "테스트 케이스는 대략적인 불안정성(합격/불합격 여부 반전)에 따라 정렬됩니다. 불안정한 수동 테스트는 결정론적 자동화 오라클의 주요 대상입니다.",
@@ -6988,7 +6990,7 @@
             "seconds": "{seconds}s",
             "minutes": "{minutes}m",
             "hours": "{hours}h",
-            "hoursAndMinutes": "{hours}h {minutes}m"
+            "hoursAndMinutes": "{hours}시간 {minutes}분"
           },
           "relativeAge": {
             "today": "오늘",
@@ -7274,7 +7276,7 @@
         }
       },
       "footer": {
-        "poweredBy": "Powered by"
+        "poweredBy": "제공"
       },
       "manageShares": {
         "title": "주식 관리",
@@ -7526,33 +7528,33 @@
   "search": {
     "title": "찾다",
     "savedSearches": {
-      "title": "Saved searches",
-      "save": "Save search",
-      "saveTitle": "Save search",
-      "saveDescription": "Name this search so you can revisit it later.",
-      "saveAction": "Save",
-      "nameLabel": "Name",
-      "namePlaceholder": "e.g. Failed runs this sprint",
-      "nameRequired": "Enter a name for this search.",
-      "loginRequired": "You must be signed in to save searches.",
+      "title": "저장된 검색",
+      "save": "검색 저장",
+      "saveTitle": "검색 저장",
+      "saveDescription": "나중에 다시 볼 수 있도록 이 검색에 이름을 지정하세요.",
+      "saveAction": "저장",
+      "nameLabel": "이름",
+      "namePlaceholder": "예: 이번 스프린트 실패한 실행",
+      "nameRequired": "이 검색의 이름을 입력하세요.",
+      "loginRequired": "검색을 저장하려면 로그인해야 합니다.",
       "descriptionLabel": "설명 (선택 사항)",
-      "descriptionPlaceholder": "What this search is for",
-      "saved": "Search saved",
-      "savedDescription": "“{name}” is now in your saved searches.",
-      "saveFailed": "Couldn't save the search. Please try again.",
-      "empty": "No saved searches yet",
-      "emptyHint": "Save a search to revisit it later.",
-      "loaded": "Loaded “{name}”",
-      "loadFailed": "This saved search is no longer valid.",
-      "edit": "Edit",
-      "editTitle": "Edit saved search",
-      "edited": "Saved search updated",
-      "editFailed": "Couldn't update the search. Please try again.",
-      "delete": "Delete",
-      "deleteTitle": "Delete saved search?",
-      "deleteConfirm": "“{name}” will be removed from your saved searches. This can't be undone.",
-      "deleted": "Saved search deleted",
-      "deleteFailed": "Couldn't delete the search. Please try again."
+      "descriptionPlaceholder": "이 검색의 용도",
+      "saved": "검색이 저장되었습니다",
+      "savedDescription": "“{name}” 검색이 저장되었습니다.",
+      "saveFailed": "검색을 저장할 수 없습니다. 다시 시도해 주세요.",
+      "empty": "아직 저장된 검색이 없습니다",
+      "emptyHint": "나중에 다시 보려면 검색을 저장하세요.",
+      "loaded": "“{name}” 불러옴",
+      "loadFailed": "이 저장된 검색은 더 이상 유효하지 않습니다.",
+      "edit": "편집",
+      "editTitle": "저장된 검색 편집",
+      "edited": "저장된 검색이 업데이트되었습니다",
+      "editFailed": "검색을 업데이트할 수 없습니다. 다시 시도해 주세요.",
+      "delete": "삭제",
+      "deleteTitle": "저장된 검색을 삭제하시겠습니까?",
+      "deleteConfirm": "“{name}” 검색이 삭제됩니다. 이 작업은 취소할 수 없습니다.",
+      "deleted": "저장된 검색이 삭제되었습니다",
+      "deleteFailed": "검색을 삭제할 수 없습니다. 다시 시도해 주세요."
     },
     "bulk": {
       "crossProjectHint": "(여러 프로젝트에 걸쳐)",
@@ -7698,14 +7700,14 @@
       "intro": "아래 버튼을 클릭하여 로그인하세요.",
       "signInButton": "로그인",
       "copyPasteIntro": "또는 이 링크를 복사하여 브라우저에 붙여넣으세요.",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "보안을 위해 이 링크는 한 번만 사용할 수 있습니다. 다시 로그인해야 하는 경우 새 링크를 요청하세요.",
       "disclaimer": "이 이메일을 요청하지 않으셨다면 무시하셔도 됩니다.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "TestPlanIt에 로그인\n\n로그인하려면 아래 링크를 클릭하세요:\n{url}\n\n보안을 위해 이 링크는 한 번만 사용할 수 있습니다. 다시 로그인해야 하는 경우 새 링크를 요청하세요.\n\n이 이메일을 요청하지 않으셨다면 무시하셔도 안전합니다."
     },
     "passwordless": {
-      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
-      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
+      "codeIntro": "다른 기기에서 여셨나요? 링크를 요청한 로그인 화면에서 이 코드를 입력하세요:",
+      "deviceNotice": "이 링크는 요청한 브라우저에서 로그인됩니다. 다른 곳에서 열면 원래 창에 입력할 위의 코드가 표시됩니다.",
+      "textBody": "TestPlanIt에 로그인\n\n로그인하려면 아래 링크를 클릭하세요:\n{url}\n\n다른 기기에서 여셨나요? 링크를 요청한 로그인 화면에서 다음 코드를 입력하세요: {code}\n\n이 이메일을 요청하지 않으셨다면 무시하셔도 안전합니다."
     }
   },
   "comments": {

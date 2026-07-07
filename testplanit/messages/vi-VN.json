@@ -62,7 +62,7 @@
       "expand": "Mở rộng",
       "collapse": "Sụp đổ",
       "addResult": "Thêm kết quả",
-      "passAndNext": "Pass & Next",
+      "passAndNext": "Đạt & Tiếp theo",
       "viewInRepository": "Xem trong kho lưu trữ",
       "resultAdded": "Đã thêm kết quả kiểm tra",
       "resultAddedDescription": "Kết quả kiểm tra đã được thêm thành công.",
@@ -194,7 +194,7 @@
     "auth": {
       "internal": "Email/Mật khẩu",
       "sso": "Chỉ SSO",
-      "both": "Email & SSO",
+      "both": "Email và SSO",
       "scim": "SCIM đã được cấp phép"
     },
     "status": {
@@ -497,7 +497,7 @@
       "moveSuccess": "Vật phẩm đã được di chuyển thành công.",
       "moveError": "Đã xảy ra lỗi trong quá trình di chuyển mục",
       "updateSuccess": "Mục đã được cập nhật thành công.",
-      "updateSuccessCount": "{count, number} items updated successfully",
+      "updateSuccessCount": "{count, number} mục đã được cập nhật thành công",
       "updateError": "Đã xảy ra lỗi trong quá trình cập nhật mục",
       "linkCopied": "Liên kết đã được sao chép vào clipboard",
       "copyFailed": "Không thể sao chép liên kết vào clipboard",
@@ -1072,7 +1072,7 @@
         "apple": "Tiếp tục với Apple",
         "microsoft": "Tiếp tục với Microsoft",
         "samlProvider": "Đăng nhập bằng {name}",
-        "magicLink": "Sign in with single-use Magic Link",
+        "magicLink": "Đăng nhập bằng Liên kết ma thuật dùng một lần",
         "emailLogin": "Tiếp tục với email"
       },
       "magicLink": {
@@ -1086,16 +1086,19 @@
         "backToSignIn": "Quay lại trang đăng nhập"
       },
       "passwordless": {
-        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
-        "codeLabel": "Sign-in code",
-        "verifyCode": "Verify code",
-        "verifying": "Verifying...",
-        "invalidCode": "That code isn't right. Check the email and try again.",
-        "codeExpired": "This sign-in request has expired. Request a new link.",
-        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
-        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
-        "genericError": "We couldn't sign you in. Request a new link and try again.",
-        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+        "waitingInstructions": "Nhấp vào liên kết trong email để đăng nhập từ trình duyệt này, hoặc nhập mã từ email bên dưới.",
+        "codeLabel": "Mã đăng nhập",
+        "verifyCode": "Xác minh mã",
+        "verifying": "Đang xác minh...",
+        "invalidCode": "Mã đó không đúng. Hãy kiểm tra email và thử lại.",
+        "codeExpired": "Yêu cầu đăng nhập này đã hết hạn. Hãy yêu cầu liên kết mới.",
+        "tooManyAttempts": "Quá nhiều lần thử không đúng. Hãy yêu cầu liên kết mới để thử lại.",
+        "windowLost": "Cửa sổ này không thể hoàn tất đăng nhập nữa. Hãy yêu cầu liên kết mới.",
+        "genericError": "Chúng tôi không thể đăng nhập cho bạn. Hãy yêu cầu liên kết mới và thử lại.",
+        "tooManyRequests": "Quá nhiều yêu cầu đăng nhập. Vui lòng chờ một chút và thử lại.",
+        "haveCode": "Đã có mã đăng nhập?",
+        "codeEntryDescription": "Nhập mã từ email đăng nhập của bạn. Mã chỉ hoạt động trên trình duyệt nơi bạn đã yêu cầu liên kết.",
+        "backToRequest": "Yêu cầu liên kết mới thay thế"
       },
       "twoFactor": {
         "title": "Xác thực hai yếu tố",
@@ -1105,19 +1108,19 @@
       "contactAdmin": "Liên hệ với Quản trị viên hệ thống"
     },
     "passwordless": {
-      "completingSignIn": "Signing you in...",
-      "completeErrorTitle": "We couldn't sign you in",
-      "requestNewLink": "Request a new link",
-      "codeTitle": "Your sign-in code",
-      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
-      "codeCloseNotice": "You can close this window once you've entered the code.",
-      "expiredTitle": "This sign-in link is no longer valid",
-      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
+      "completingSignIn": "Đang đăng nhập cho bạn...",
+      "completeErrorTitle": "Chúng tôi không thể đăng nhập cho bạn",
+      "requestNewLink": "Yêu cầu liên kết mới",
+      "codeTitle": "Mã đăng nhập của bạn",
+      "codeInstructions": "Bạn đã mở liên kết đăng nhập trên một thiết bị hoặc trình duyệt khác. Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu ban đầu.",
+      "codeCloseNotice": "Bạn có thể đóng cửa sổ này sau khi đã nhập mã.",
+      "expiredTitle": "Liên kết đăng nhập này không còn hợp lệ",
+      "expiredBody": "Liên kết có thể đã hết hạn hoặc đã được sử dụng. Hãy yêu cầu liên kết mới từ trang đăng nhập — chỉ mất một chút thời gian."
     },
     "errors": {
       "accessDenied": "Truy cập bị từ chối. Tài khoản của bạn có thể không hoạt động hoặc bạn không có quyền đăng nhập.",
       "configuration": "Có vấn đề với cấu hình máy chủ.",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "Liên kết đăng nhập này đã hết hạn hoặc đã được sử dụng. Liên kết ma thuật chỉ có thể được sử dụng một lần — vui lòng yêu cầu liên kết mới để đăng nhập.",
       "invalid2FACode": "Mã xác minh không hợp lệ. Vui lòng thử lại.",
       "twoFactorTokenRequired": "Cần có mã thông báo.",
       "verificationCodeRequired": "Cần có mã xác minh."
@@ -1364,19 +1367,19 @@
           "switchWarning2": "Lưu giữ các vấn đề trong cơ sở dữ liệu (chúng sẽ trở nên không liên kết với nhau)",
           "switchWarning3": "Thay thế cấu hình tích hợp sự cố hiện tại bằng cấu hình mới.",
           "switchWarning4": "Xóa webhook đến được cấu hình cho tích hợp hiện tại.",
-          "importIssues": "Import Issues",
-          "importTitle": "Import issues from {name}",
-          "importDescription": "Pull issues from this linked project into your project. Existing issues aren't duplicated, and imported issues stay up to date through sync.",
-          "importUpdatedWithin": "Updated within",
-          "importLastDays": "Last {days} days",
-          "importMax": "Maximum to import",
-          "importPreview": "Preview",
-          "importPreviewResult": "~{count, plural, one {# issue} other {# issues}} match this filter. Up to {cap} will be imported.",
-          "importOverCap": "That exceeds the cap of {cap}; only the {cap} most recently updated will be imported.",
-          "importStart": "Import",
-          "importStarted": "Import started. Issues will appear shortly.",
-          "importFailed": "Import failed",
-          "importPreviewFailed": "Couldn't estimate matches"
+          "importIssues": "Nhập sự cố",
+          "importTitle": "Nhập sự cố từ {name}",
+          "importDescription": "Kéo các sự cố từ dự án được liên kết này vào dự án của bạn. Các sự cố hiện có sẽ không bị trùng lặp, và các sự cố đã nhập sẽ luôn được cập nhật thông qua đồng bộ.",
+          "importUpdatedWithin": "Đã cập nhật trong vòng",
+          "importLastDays": "{days} ngày qua",
+          "importMax": "Số lượng tối đa để nhập",
+          "importPreview": "Xem trước",
+          "importPreviewResult": "~{count, plural, other {# sự cố}} khớp với bộ lọc này. Tối đa {cap} sẽ được nhập.",
+          "importOverCap": "Vượt quá giới hạn {cap}; chỉ {cap} sự cố được cập nhật gần đây nhất sẽ được nhập.",
+          "importStart": "Nhập",
+          "importStarted": "Đã bắt đầu nhập. Các sự cố sẽ sớm xuất hiện.",
+          "importFailed": "Nhập thất bại",
+          "importPreviewFailed": "Không thể ước tính số lượng khớp"
         },
         "integrationAssigned": "Quá trình tích hợp được thực hiện thành công.",
         "integrationAssignError": "Không thể gán việc tích hợp vấn đề cho dự án.",
@@ -1402,10 +1405,10 @@
             "description": "Kết nối với Azure DevOps để theo dõi các hạng mục công việc."
           },
           "redmine": {
-            "description": "Connect to a self-hosted Redmine instance for issue tracking."
+            "description": "Kết nối với máy chủ Redmine tự lưu trữ để theo dõi sự cố."
           },
           "mantisbt": {
-            "description": "Connect to a self-hosted MantisBT instance for issue tracking."
+            "description": "Kết nối với máy chủ MantisBT tự lưu trữ để theo dõi sự cố."
           }
         }
       },
@@ -1685,19 +1688,19 @@
         "toastReEnableSuccess": "Webhook đã được kích hoạt lại.",
         "toastReEnableFailed": "Không thể kích hoạt lại: {error}",
         "inboundChooserRedmine": "Redmine",
-        "inboundRedmineTitle": "Redmine inbound webhook",
-        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
-        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
-        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
-        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here.",
+        "inboundRedmineTitle": "Webhook đến của Redmine",
+        "inboundRedmineScopeHint": "Plugin redmine_webhook không ký các yêu cầu, vì vậy URL webhook này chính là thông tin xác thực — hãy coi đây là bí mật và thay đổi nó nếu bị lộ.",
+        "setupStepsRedmineStep1": "Cài đặt plugin redmine_webhook trên máy chủ Redmine của bạn (Redmine không có webhook tích hợp sẵn).",
+        "setupStepsRedmineStep2": "Trong dự án Redmine của bạn, mở Settings → Modules và bật Webhooks.",
+        "setupStepsRedmineStep3": "Mở Settings → Webhooks, dán URL ở trên vào và lưu lại.",
+        "setupStepsRedmineStep4": "Tạo hoặc cập nhật một sự cố trong Redmine; trạng thái của sự cố được liên kết sẽ đồng bộ tại đây.",
         "inboundChooserMantisbt": "MantisBT",
-        "inboundMantisbtTitle": "MantisBT inbound webhook",
-        "inboundMantisbtScopeHint": "A MantisBT webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsMantisbtStep1": "Install and enable a MantisBT webhook plugin on your MantisBT server (MantisBT has no built-in webhooks).",
-        "setupStepsMantisbtStep2": "In the plugin configuration, choose the issue created and issue updated events.",
-        "setupStepsMantisbtStep3": "Paste the URL above as the webhook target and save.",
-        "setupStepsMantisbtStep4": "Create or update an issue in MantisBT; the linked issue’s status will sync here."
+        "inboundMantisbtTitle": "Webhook đến của MantisBT",
+        "inboundMantisbtScopeHint": "Plugin webhook MantisBT không ký các yêu cầu, vì vậy URL webhook này chính là thông tin xác thực — hãy coi đây là bí mật và thay đổi nó nếu bị lộ.",
+        "setupStepsMantisbtStep1": "Cài đặt và bật một plugin webhook MantisBT trên máy chủ MantisBT của bạn (MantisBT không có webhook tích hợp sẵn).",
+        "setupStepsMantisbtStep2": "Trong cấu hình plugin, chọn các sự kiện tạo và cập nhật sự cố.",
+        "setupStepsMantisbtStep3": "Dán URL ở trên làm đích webhook và lưu lại.",
+        "setupStepsMantisbtStep4": "Tạo hoặc cập nhật một sự cố trong MantisBT; trạng thái của sự cố được liên kết sẽ đồng bộ tại đây."
       },
       "aiModels": {
         "description": "Cấu hình các mô hình AI để tạo và phân tích trường hợp kiểm thử thông minh.",
@@ -1827,7 +1830,7 @@
           "saving": "Tiết kiệm",
           "savedHint": "Tất cả các thay đổi đã được lưu ở phiên bản {version, number}",
           "unsavedHint": "Thay đổi chưa được lưu",
-          "currentVersionLabel": "v{version, number} (current)",
+          "currentVersionLabel": "v{version, number} (hiện tại)",
           "currentVersionInitialLabel": "Hiện hành",
           "historicalVersionLabel": "v{version, number}",
           "historicalReadOnlyBanner": "Bạn đang xem phiên bản {version, number}. Việc chỉnh sửa sẽ tạo ra một phiên bản mới được phân nhánh từ phiên bản này.",
@@ -1840,7 +1843,7 @@
         "versionPicker": {
           "label": "Phiên bản",
           "loadError": "Không thể tải phiên bản",
-          "currentItemLabel": "v{version, number} (current)",
+          "currentItemLabel": "v{version, number} (hiện tại)",
           "currentItemInitialLabel": "Hiện tại — chưa có phiên bản nào được lưu",
           "historicalItemLabel": "v{version, number}",
           "historicalItemBy": "bởi {name}",
@@ -1887,7 +1890,7 @@
           "scanningFiles": "Đang quét các tập tin trong {scope}…",
           "scanningFilesCount": "Đang quét các tập tin trong {scope}… ({count, number} đã tìm thấy)",
           "filtering": "Áp dụng bộ lọc cho các tệp {count, number}…",
-          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
+          "rateLimited": "Bị giới hạn tốc độ bởi nhà cung cấp — đang thử lại sau {seconds, number} giây…"
         },
         "cache": {
           "title": "Cài đặt bộ nhớ đệm",
@@ -1913,8 +1916,8 @@
         "networkError": "Lỗi mạng trong quá trình làm mới bộ nhớ cache",
         "refreshSuccess": "Bộ nhớ cache đã được làm mới: {fileCount} tập tin ({contentCached} nội dung đã được lưu vào bộ nhớ cache)",
         "refreshRateLimited": "Bộ nhớ cache đã được làm mới: {fileCount} tập tin đã được liệt kê, {contentCached}/{fileCount} nội dung đã được lưu vào bộ nhớ cache (tốc độ truy cập bị giới hạn — hãy làm mới lại để hoàn tất)",
-        "refreshComplete": "Cache refreshed: {fileCount} files",
-        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
+        "refreshComplete": "Đã làm mới bộ nhớ đệm: {fileCount} tệp",
+        "refreshInProgress": "Quá trình làm mới bộ nhớ đệm vẫn đang chạy trong nền. Nó sẽ cập nhật tại đây khi hoàn tất.",
         "validation": {
           "pathRequired": "Cần có đường dẫn.",
           "patternRequired": "Cần có mẫu.",
@@ -2139,9 +2142,9 @@
   },
   "sessions": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this session."
+      "trigger": "Hoạt động",
+      "title": "Nhật ký hoạt động",
+      "description": "Tất cả các thay đổi được ghi lại cho phiên này."
     },
     "title": "{count, plural, =1 {Phiên} other {Các phiên}}",
     "labels": {
@@ -2169,7 +2172,7 @@
     },
     "messages": {
       "createSuccess": "Phiên được tạo thành công",
-      "createSuccessMultiple": "{count, number} Sessions created successfully",
+      "createSuccessMultiple": "{count, number} Phiên đã được tạo thành công",
       "duplicateSuccess": "Phiên làm việc đã được sao chép thành công",
       "duplicateSuccessMultiple": "{count} Phiên đã được sao chép thành công"
     },
@@ -2238,7 +2241,7 @@
       "backToSession": "Trở lại phiên",
       "backToLatest": "Trở lại phiên bản mới nhất",
       "versionInfo": {
-        "created": "Version {number, number} Created",
+        "created": "Phiên bản {number, number} Đã tạo",
         "latestUpdated": "Phiên bản mới nhất {number, number} Đã cập nhật"
       },
       "renderer": {
@@ -2404,19 +2407,19 @@
         }
       },
       "auditLog": {
-        "title": "Audit Log",
-        "description": "Actions performed by this user",
-        "noEntries": "No activity recorded yet.",
-        "loadMore": "Loading",
-        "viewDetails": "View details",
-        "columnAction": "Action",
-        "columnEntityType": "Type",
-        "columnEntityName": "Name",
-        "columnTimestamp": "Timestamp",
-        "allActions": "All Actions",
-        "allTypes": "All Types",
-        "noMatchingEntries": "No entries match the selected filters.",
-        "showing": "{loaded} of {total} entries"
+        "title": "Nhật ký kiểm toán",
+        "description": "Các hành động được thực hiện bởi người dùng này",
+        "noEntries": "Chưa có hoạt động nào được ghi lại.",
+        "loadMore": "Đang tải",
+        "viewDetails": "Xem chi tiết",
+        "columnAction": "Hành động",
+        "columnEntityType": "Loại",
+        "columnEntityName": "Tên",
+        "columnTimestamp": "Dấu thời gian",
+        "allActions": "Tất cả hành động",
+        "allTypes": "Tất cả các loại",
+        "noMatchingEntries": "Không có mục nào khớp với các bộ lọc đã chọn.",
+        "showing": "{loaded} trong số {total} mục"
       },
       "mentionedComments": {
         "title": "Được đề cập trong phần bình luận",
@@ -2510,9 +2513,9 @@
       "historyView": "Chế độ xem lịch sử trường hợp kiểm thử"
     },
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test case."
+      "trigger": "Hoạt động",
+      "title": "Nhật ký hoạt động",
+      "description": "Tất cả các thay đổi được ghi lại cho trường hợp thử nghiệm này."
     },
     "fields": {
       "optionNotFound": "Không tìm thấy tùy chọn",
@@ -2945,7 +2948,7 @@
       "bulkLinkSuccess": "{count, plural, one {# cặp liên kết} other {# các cặp liên kết}}",
       "bulkError": "Một số thao tác đã thất bại. Vui lòng thử lại.",
       "tableHint": "Nhấp vào một hàng hoặc nút So sánh để xem xét và giải quyết cặp trùng lặp.",
-      "comparisonTitle": "{caseA} vs {caseB}",
+      "comparisonTitle": "{caseA} so với {caseB}",
       "comparisonDescription": "So sánh các mục có khả năng trùng lặp này và chọn cách giải quyết chúng.",
       "selectPrimary": "Nhấp vào một trường hợp để chọn nó làm trường hợp chính để hợp nhất.",
       "selectedAsPrimary": "Được chọn làm Chính",
@@ -3359,9 +3362,9 @@
   },
   "runs": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test run."
+      "trigger": "Hoạt động",
+      "title": "Nhật ký hoạt động",
+      "description": "Tất cả các thay đổi được ghi lại cho lần chạy thử nghiệm này."
     },
     "notFound": "Không tìm thấy kết quả chạy thử nghiệm.",
     "add": {
@@ -3370,7 +3373,7 @@
       "success": {
         "title": "Đã thêm thành công lượt chạy thử nghiệm.",
         "description": "{name} đã được thêm vào dự án",
-        "descriptionMultiple": "{count, plural, one {# test run has} other {# test runs have}} been created for {name}"
+        "descriptionMultiple": "{count, plural, other {# lượt chạy thử nghiệm}} đã được tạo cho {name}"
       },
       "estimates": {
         "manual": "Thời gian thao tác bằng tay ước tính",
@@ -3386,7 +3389,7 @@
       "reasoning": "Suy luận AI",
       "reviewSelection": "Xem xét các trường hợp thử nghiệm được đề xuất",
       "viewSuggested": "Xem các trường hợp được đề xuất",
-      "tokenUsage": "{total, number} tokens used",
+      "tokenUsage": "{total, number} token đã sử dụng",
       "noLlmIntegration": "Các tính năng AI yêu cầu tích hợp LLM. Hãy cấu hình tích hợp này trong cài đặt dự án.",
       "configure": {
         "title": "Phạm vi trường hợp thử nghiệm",
@@ -4443,9 +4446,9 @@
       "scimColumnYes": "Đúng",
       "scimUserLockedTitle": "Người dùng được quản lý bởi SCIM",
       "scimUserLockedDescription": "Tên, email và trạng thái hoạt động của người dùng này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật chúng ở đây.",
-      "groupMappingOverrideTitle": "Managed by Group Mapping",
-      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
-      "groupMappingBadge": "Group Mapped"
+      "groupMappingOverrideTitle": "Được quản lý bởi ánh xạ nhóm",
+      "groupMappingOverrideDescription": "Cấp truy cập của người dùng này được quản lý bởi ánh xạ nhóm SCIM và có thể bị hoàn nguyên vào lần đồng bộ tiếp theo.",
+      "groupMappingBadge": "Đã ánh xạ nhóm"
     },
     "security": {
       "title": "Bảo vệ",
@@ -4490,7 +4493,7 @@
       "saveChanges": "Lưu thay đổi",
       "forceAllUsers": "Buộc tất cả người dùng phải thay đổi mật khẩu.",
       "forceAllUsersDialogTitle": "Buộc thay đổi mật khẩu cho tất cả người dùng",
-      "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
+      "forceAllUsersDialogDescription": "Điều này sẽ yêu cầu {count, number} người dùng có thông tin đăng nhập phải thay đổi mật khẩu của họ trong lần đăng nhập tiếp theo.",
       "forceAllUsersDialogWarning": "Hành động này không thể đảo ngược.",
       "forceAllUsersDialogConfirm": "Thay đổi bắt buộc",
       "saved": "Cài đặt bảo mật đã được lưu",
@@ -4624,14 +4627,14 @@
       "probe": {
         "button": "Kiểm tra SCIM",
         "testing": "Đang kiểm tra…",
-        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
+        "okBanner": "HTTP {status} — mã thông báo hoạt động với /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Không thể kết nối đến điểm cuối SCIM. Vui lòng thử lại."
       },
-      "fallbackDefaultTitle": "Default Mapped Access",
-      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
-      "fallbackDefaultLabel": "Default access tier",
-      "fallbackDefaultSaved": "Fallback default saved"
+      "fallbackDefaultTitle": "Quyền truy cập ánh xạ mặc định",
+      "fallbackDefaultDescription": "Cấp truy cập được gán cho người dùng không thuộc bất kỳ ánh xạ nhóm nào.",
+      "fallbackDefaultLabel": "Cấp truy cập mặc định",
+      "fallbackDefaultSaved": "Đã lưu giá trị mặc định dự phòng"
     },
     "tags": {
       "add": {
@@ -4857,7 +4860,7 @@
       "combinations": {
         "title": "Sự kết hợp",
         "description": "Quản lý các tổ hợp toàn cầu",
-        "confirmDescription": "The following {count, number} Configurations will be created:",
+        "confirmDescription": "{count, number} cấu hình sau đây sẽ được tạo:",
         "addCombination": "Thêm tổ hợp",
         "editCombination": "Chỉnh sửa kết hợp",
         "selectCombination": "Chọn các tổ hợp",
@@ -4916,13 +4919,13 @@
       "scimManagedTooltip": "Được quản lý bởi SCIM. Quản lý từ trang quản trị SCIM.",
       "scimNameLockedTitle": "Tập đoàn được quản lý bởi SCIM.",
       "scimNameLockedDescription": "Tên và thành viên của nhóm này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật thông tin tại đây.",
-      "mappedAccessColumnHeader": "Mapped Access",
-      "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "No mapping",
-      "mappedAccessSelect": "Select access tier...",
-      "downgradeConfirmTitle": "Confirm Access Change",
-      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
-      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "mappedAccessColumnHeader": "Quyền truy cập đã ánh xạ",
+      "mappedAccessLabel": "Cấp truy cập đã ánh xạ",
+      "mappedAccessNone": "Không có ánh xạ",
+      "mappedAccessSelect": "Chọn cấp truy cập...",
+      "downgradeConfirmTitle": "Xác nhận thay đổi quyền truy cập",
+      "downgradeConfirmDescription": "{count, plural, other {# người dùng}} sẽ bị giảm quyền truy cập. Tiếp tục?",
+      "downgradeConfirmApplyAnyway": "Vẫn áp dụng",
       "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
@@ -5111,27 +5114,27 @@
       "status": {
         "active": "Tích cực",
         "inactive": "Không hoạt động",
-        "awaitingAuthorization": "Awaiting authorization"
+        "awaitingAuthorization": "Đang chờ ủy quyền"
       },
       "connectedProjects": "Các dự án liên kết",
       "noIntegrations": "Không có vấn đề nào được cấu hình tích hợp",
       "testConnection": "Kiểm tra kết nối",
       "testSuccess": "Kết nối thành công",
       "testSuccessDescription": "Việc tích hợp vấn đề đã được cấu hình và kết nối đúng cách.",
-      "testCredentialsSaved": "Credentials look good",
-      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
+      "testCredentialsSaved": "Thông tin xác thực hợp lệ",
+      "testCredentialsSavedDescription": "ID và bí mật của ứng dụng khách OAuth của bạn hợp lệ. Hãy lưu tích hợp, sau đó nhấp vào Ủy quyền để kết nối tài khoản của bạn — OAuth 2.0 kết nối theo từng người dùng, vì vậy nó vẫn ở trạng thái không hoạt động cho đến khi có ít nhất một người ủy quyền.",
       "testFailed": "Kết nối thất bại",
       "testFailedDescription": "Không thể kết nối với dịch vụ bên ngoài",
       "testError": "Lỗi kiểm thử",
       "testErrorDescription": "Đã xảy ra lỗi trong quá trình kiểm tra kết nối.",
-      "authorize": "Authorize",
-      "reauthorize": "Re-authorize",
-      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
-      "syncInProgress": "Re-syncing linked issues...",
-      "syncIntegration": "Re-sync linked issues",
-      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
+      "authorize": "Ủy quyền",
+      "reauthorize": "Ủy quyền lại",
+      "authorizeHint": "Ủy quyền với nhà cung cấp để kết nối tài khoản của bạn và hoàn tất thiết lập",
+      "syncInProgress": "Đang đồng bộ lại các sự cố được liên kết...",
+      "syncIntegration": "Đồng bộ lại các sự cố được liên kết",
+      "syncIntegrationHint": "Chỉ đồng bộ lại các sự cố đã được liên kết trong TestPlanIt. Các sự cố mới sẽ không được nhập từ trình theo dõi bên ngoài.",
       "syncSuccess": "Đã xếp hàng đồng bộ",
-      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
+      "syncSuccessDescription": "Các sự cố được liên kết từ \"{name}\" đang được đồng bộ lại trong nền. Việc này có thể mất vài phút. Bảng sẽ tự động cập nhật khi hoàn tất.",
       "syncError": "Đồng bộ hóa thất bại",
       "syncErrorDescription": "Không thể xếp hàng công việc đồng bộ cho sự cố tích hợp này. Vui lòng thử lại sau.",
       "delete": {
@@ -5178,11 +5181,11 @@
         },
         "redmine": {
           "name": "Redmine",
-          "description": "Connect to a self-hosted Redmine instance for issue tracking"
+          "description": "Kết nối với máy chủ Redmine tự lưu trữ để theo dõi sự cố"
         },
         "mantisbt": {
           "name": "MantisBT",
-          "description": "Connect to a self-hosted MantisBT instance for issue tracking"
+          "description": "Kết nối với máy chủ MantisBT tự lưu trữ để theo dõi sự cố"
         }
       },
       "filterPlaceholder": "Tích hợp bộ lọc...",
@@ -5255,7 +5258,6 @@
         "encrypted": "Đã mã hóa",
         "encryptedHelp": "Trường này được mã hóa và lưu trữ an toàn.",
         "changeCredential": "Thay đổi",
-        "leaveBlankToKeep": "Leave blank to keep existing value",
         "apiKeyWarningTitle": "Thông báo xác thực khóa API",
         "apiKeyWarningDescription": "Với xác thực bằng khóa API, người báo cáo sự cố được tạo có thể không trùng khớp với người dùng TestPlanIt đã tạo ra chúng — ngay cả khi địa chỉ email trùng khớp:",
         "apiKeyWarningPoint1": "Việc thiết lập người báo cáo Jira yêu cầu tài khoản có mã thông báo API phải có quyền quản trị Jira (\"Sửa đổi người báo cáo\"). Nếu không có quyền này, Jira sẽ bỏ qua người báo cáo và chủ sở hữu mã thông báo API sẽ được ghi nhận là người tạo.",
@@ -5264,10 +5266,10 @@
         "apiKeyWarningPoint4": "Hãy sử dụng OAuth 2.0 để ghi nhận chính xác thông tin người báo cáo mà không cần quyền quản trị viên.",
         "tokenCreatorNoticeTitle": "Ghi nhận người tạo vấn đề",
         "tokenCreatorNoticeDescription": "Các sự cố được tạo ra thông qua quá trình tích hợp này luôn được ghi nhận là do tài khoản sở hữu mã thông báo truy cập đó gây ra, chứ không phải do người dùng TestPlanIt đã tạo ra chúng. API của nhà cung cấp này không cho phép thiết lập người tạo thay mặt người dùng khác.",
-        "callbackUrlLabel": "Callback URL (redirect URI)",
-        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
-        "callbackUrlCopy": "Copy",
-        "callbackUrlCopied": "Copied",
+        "callbackUrlLabel": "URL gọi lại (redirect URI)",
+        "callbackUrlDescription": "Đăng ký URL chính xác này làm callback / redirect URI trong ứng dụng OAuth của nhà cung cấp của bạn. URL này phải khớp chính xác nếu không quá trình ủy quyền sẽ thất bại.",
+        "callbackUrlCopy": "Sao chép",
+        "callbackUrlCopied": "Đã sao chép",
         "forgeApiKeyLabel": "Khóa API Forge",
         "forgeApiKeyDescription": "Được ứng dụng Atlassian Forge sử dụng để xác thực các yêu cầu từ bảng quản lý sự cố Jira. Tạo khóa tại đây và dán vào cài đặt ứng dụng Forge của bạn.",
         "forgeApiKeyPlaceholder": "Nhấp vào Tạo để tạo khóa API.",
@@ -5279,18 +5281,18 @@
         "platformGitea": "Gitea",
         "platformForgejo": "Forgejo",
         "platformGogs": "Gogs",
-        "redmineApiKey": "Redmine API Key",
-        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
-        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
-        "redmineUrl": "Redmine URL",
+        "redmineApiKey": "Khóa API Redmine",
+        "redmineApiKeyPlaceholder": "Nhập khóa API Redmine của bạn",
+        "redmineApiKeyHelp": "Được tìm thấy tại My account → API access key (bật REST API trong Administration → Settings → API)",
+        "redmineUrl": "URL Redmine",
         "redmineUrlPlaceholder": "https://redmine.example.com",
-        "redmineUrlHelp": "The base URL of your Redmine instance",
-        "mantisBTApiKey": "MantisBT API Token",
-        "mantisBTApiKeyPlaceholder": "Enter your MantisBT API token",
-        "mantisBTApiKeyHelp": "Create one under your MantisBT account settings → API Tokens",
-        "mantisBTUrl": "MantisBT URL",
+        "redmineUrlHelp": "URL cơ sở của phiên bản Redmine của bạn",
+        "mantisBTApiKey": "Mã thông báo API MantisBT",
+        "mantisBTApiKeyPlaceholder": "Nhập mã thông báo API MantisBT của bạn",
+        "mantisBTApiKeyHelp": "Tạo một mã tại cài đặt tài khoản MantisBT của bạn → API Tokens",
+        "mantisBTUrl": "URL MantisBT",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "The base URL of your MantisBT instance"
+        "mantisBTUrlHelp": "URL cơ sở của phiên bản MantisBT của bạn"
       },
       "authType": {
         "api_key": "Khóa API",
@@ -5488,7 +5490,7 @@
         "warning": "Thao tác này không thể hoàn tác. Tất cả các dự án sử dụng cấu hình này sẽ trở về cấu hình nhắc lệnh mặc định."
       },
       "llmColumn": "Thạc sĩ Luật",
-      "mixedLlms": "{count, number} LLMs",
+      "mixedLlms": "{count, number} LLM",
       "cannotDeleteDefault": "Không thể xóa cấu hình lời nhắc mặc định. Hãy thiết lập một cấu hình khác làm mặc định trước.",
       "defaultChanged": "Cấu hình lời nhắc mặc định đã được cập nhật thành công.",
       "featureLabels": {
@@ -5503,7 +5505,7 @@
         "generate_from_url": "Tạo các trường hợp kiểm thử từ URL (Yêu cầu)",
         "generate_from_url_app": "Tạo trường hợp kiểm thử từ URL (Kiểm thử ứng dụng)",
         "automation_candidates": "Báo cáo ứng viên tự động hóa",
-        "derive_case_steps": "AI Step Derivation"
+        "derive_case_steps": "Suy luận bước bằng AI"
       }
     },
     "elasticsearch": {
@@ -5679,15 +5681,15 @@
     },
     "auditLogs": {
       "description": "Xem nhật ký kiểm toán toàn hệ thống để theo dõi bảo mật và tuân thủ.",
-      "projectDescription": "View the audit trail of actions performed in this project.",
+      "projectDescription": "Xem dấu vết kiểm toán của các hành động được thực hiện trong dự án này.",
       "filterPlaceholder": "Tìm kiếm theo thực thể, người dùng hoặc hành động...",
       "filterAction": "Hoạt động",
       "filterEntityType": "Loại thực thể",
       "allActions": "Tất cả các hành động",
       "allEntityTypes": "Tất cả các loại thực thể",
-      "allUsers": "All Users",
-      "allProjects": "All Projects",
-      "showing": "Showing {loaded} of {total} entries",
+      "allUsers": "Tất cả người dùng",
+      "allProjects": "Tất cả dự án",
+      "showing": "Đang hiển thị {loaded} trong số {total} mục",
       "viewDetails": "Xem chi tiết",
       "detailTitle": "Chi tiết nhật ký kiểm toán",
       "userInfo": "Thông tin người dùng",
@@ -5715,8 +5717,8 @@
       "systemActor": "Hệ thống",
       "systemActorTooltip": "Hành động này được thực hiện bởi hệ thống, không phải bởi người dùng đã đăng nhập.",
       "sourceScim": "SCIM",
-      "relatedChanges": "related changes",
-      "groupedEntry": "Grouped changes from a single action"
+      "relatedChanges": "các thay đổi liên quan",
+      "groupedEntry": "Các thay đổi được nhóm từ một hành động duy nhất"
     }
   },
   "components": {
@@ -5810,9 +5812,9 @@
         "reviewReminderAction": "vẫn đang chờ đánh giá của bạn về",
         "reviewReminderEmailMessage": "Nhắc nhở: Yêu cầu xem xét của {actorName}đối với {entityLabel} \"{entityName}\" trong dự án \"{projectName}\" đã bị chờ xử lý trong {hoursPending} giờ.",
         "reviewReminderHoursPending": "Đang chờ xử lý trong {hoursPending, plural, one {# giờ} other {# giờ}}",
-        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
-        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
-        "aiStepsDerivedReviewLink": "Review test run"
+        "aiStepsDerivedTitle": "Các bước thử nghiệm được AI suy luận đã sẵn sàng",
+        "aiStepsDerivedMessage": "{count, plural, other {# trường hợp thử nghiệm}} đã được cung cấp các bước do AI suy luận — hãy xem xét lại độ chính xác.",
+        "aiStepsDerivedReviewLink": "Xem xét lần chạy thử nghiệm"
       }
     },
     "issues": {
@@ -5926,7 +5928,7 @@
     "unlinkError": "Không thể hủy liên kết",
     "noIssuesFound": "Không phát hiện vấn đề nào.",
     "startTypingToSearch": "Bắt đầu gõ để tìm kiếm các vấn đề",
-    "selectedCount": "{count, number} selected",
+    "selectedCount": "{count, number} đã được chọn",
     "confirmSelection": "Xác nhận lựa chọn",
     "alreadyLinked": "Đã được liên kết",
     "authenticate": "Xác thực",
@@ -6034,7 +6036,7 @@
     "durationRange": "Thời lượng: {from}giây - {to}giây",
     "seconds": "{seconds}s",
     "testCases": "{count, plural, one {# trường hợp thử nghiệm} other {# các trường hợp thử nghiệm}}",
-    "estimate": "Est: {value}",
+    "estimate": "Ước tính: {value}",
     "partOf": "(Một phần của {parent})",
     "status": "Trạng thái: {status}"
   },
@@ -6176,7 +6178,7 @@
     "group": {
       "name": "## Tên Nhóm\nMột tên hoặc từ khóa rõ ràng, ngắn gọn, mô tả được sử dụng trong tất cả các dự án.\n\n- Giúp các thành viên nhóm nhanh chóng tìm thấy các trường hợp kiểm thử, các lần chạy thử nghiệm và các phiên liên quan.",
       "users": "## Người dùng\nCho biết những người dùng được chỉ định vào nhóm này.",
-      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
+      "mappedAccess": "## Cấp truy cập đã ánh xạ\nCác thành viên của nhóm này được cấp ít nhất cấp truy cập này vào lần đồng bộ tiếp theo.\n\n- Cấp cao nhất trong tất cả các nhóm của người dùng sẽ được áp dụng\n- \"Không có ánh xạ\" nghĩa là nhóm này không ảnh hưởng đến quyền truy cập — các thành viên sẽ sử dụng giá trị mặc định được đặt trên trang SCIM\n- Việc thay đổi quyền truy cập thủ công trên một người dùng sẽ ghi đè lên ánh xạ (và được đánh dấu trên màn hình chỉnh sửa của người dùng đó)"
     },
     "template": {
       "name": "## Tên mẫu\nMột tên duy nhất và mô tả cho mẫu này (ví dụ: 'Trường hợp kiểm thử tiêu chuẩn', 'Kết quả kiểm thử API').",
@@ -6210,7 +6212,7 @@
       "authType": "## Loại xác thực\nChọn cách xác thực với dịch vụ bên ngoài.\n\n- **Khóa API:** Xác thực đơn giản bằng email và mã thông báo API\n- **OAuth 2.0:** Xác thực an toàn bằng quy trình OAuth\n- **Mã thông báo truy cập cá nhân:** Xác thực trực tiếp dựa trên mã thông báo",
       "email": "## Địa chỉ Email\nĐịa chỉ email tài khoản của bạn cho dịch vụ bên ngoài.\n\n- Được sử dụng để xác thực khóa API\n- Phải trùng khớp với tài khoản đã tạo mã thông báo API\n- Bắt buộc đối với Jira và các dịch vụ tương tự",
       "apiToken": "## Mã thông báo API\nTạo mã thông báo API từ cài đặt tài khoản của bạn trong dịch vụ bên ngoài.\n\n- Thường được tìm thấy trong Cài đặt tài khoản → Bảo mật → Mã thông báo API\n- Cung cấp quyền truy cập an toàn mà không cần tiết lộ mật khẩu của bạn\n- Có thể bị thu hồi và tạo lại khi cần",
-      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
+      "jiraUrl": "## URL Jira\nURL cơ sở của phiên bản Jira của bạn.\n\n- Định dạng: https://your-site.atlassian.net\n- Không bao gồm /browse hoặc các đường dẫn khác\n- Phải có thể truy cập được từ máy chủ này",
       "clientId": "## ID máy khách OAuth\nID máy khách từ cấu hình ứng dụng OAuth của bạn.\n\n- Được tạo trong bảng điều khiển dành cho nhà phát triển của dịch vụ bên ngoài\n- Được sử dụng để xác định ứng dụng của bạn trong quá trình OAuth\n- An toàn để chia sẻ trong các tệp cấu hình",
       "clientSecret": "## Mã bí mật máy khách OAuth\nMã bí mật máy khách từ cấu hình ứng dụng OAuth của bạn.\n\n- Được tạo cùng với ID máy khách\n- Phải được giữ bí mật và an toàn\n- Được sử dụng để xác thực ứng dụng của bạn",
       "personalAccessToken": "## Mã truy cập cá nhân\nMã truy cập cá nhân với các quyền phù hợp cho dịch vụ bên ngoài.\n\n- Được tạo trong cài đặt tài khoản của bạn\n- Nên có quyền đọc và ghi\n- An toàn hơn xác thực bằng mật khẩu",
@@ -6223,11 +6225,11 @@
       "instanceUrl": "## URL phiên bản\nURL cơ sở của phiên bản tự lưu trữ của bạn.\n\n- Định dạng: https://git.example.com\n- Không bao gồm dấu gạch chéo hoặc đường dẫn ở cuối\n- Phải có thể truy cập được từ máy chủ này",
       "projectPath": "## Đường dẫn dự án\nĐường dẫn đầy đủ đến dự án GitLab của bạn.\n\n- Định dạng: namespace/project hoặc group/subgroup/project\n- Ví dụ: my-org/my-project\n- Tìm thấy trong URL dự án: gitlab.com/namespace/project",
       "platform": "## Nền tảng\nNền tảng Git tự lưu trữ mà bạn đang kết nối.\n\n- **Gitea**: các phiên bản dựa trên gitea.io\n- **Forgejo**: các phiên bản dựa trên forgejo.org (phiên bản phân nhánh của Gitea)\n- **Gogs**: các phiên bản dựa trên gogs.io\n\nĐiều này kiểm soát biểu tượng nào được hiển thị và có thể ảnh hưởng đến khả năng tương thích API.",
-      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
-      "mantisBTApiKey": "## MantisBT API Token\nYour personal REST API token.\n\n- Create one under your MantisBT account settings → API Tokens\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
-      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
+      "redmineApiKey": "## Khóa API Redmine\nKhóa truy cập REST API cá nhân của bạn.\n\n- Bật REST API trong Administration → Settings → API\n- Sao chép khóa của bạn từ My account → API access key\n- Được giới hạn theo quyền của người dùng của bạn; sử dụng tài khoản dịch vụ cho các tích hợp dùng chung",
+      "redmineUrl": "## URL Redmine\nURL cơ sở của phiên bản Redmine của bạn.\n\n- Định dạng: https://redmine.example.com\n- Không bao gồm /issues hoặc các đường dẫn khác\n- Phải có thể truy cập được từ máy chủ này",
+      "mantisBTApiKey": "## Mã thông báo API MantisBT\nMã thông báo REST API cá nhân của bạn.\n\n- Tạo một mã tại cài đặt tài khoản MantisBT của bạn → API Tokens\n- Được giới hạn theo quyền của người dùng của bạn; sử dụng tài khoản dịch vụ cho các tích hợp dùng chung",
+      "mantisBTUrl": "## URL MantisBT\nURL cơ sở của phiên bản MantisBT của bạn.\n\n- Định dạng: https://mantisbt.example.com\n- Không bao gồm /api/rest hoặc các đường dẫn khác\n- Phải có thể truy cập được từ máy chủ này",
+      "githubBaseUrl": "## URL cơ sở API\nĐường dẫn gốc API GitHub đầy đủ dành cho GitHub Enterprise Server.\n\n- Thường kết thúc bằng /api/v3\n- Để trống nếu muốn sử dụng api.github.com\n- Phải có thể truy cập được từ máy chủ này"
     },
     "config": {
       "name": "## Tên Cấu Hình\nMột tên rõ ràng, mô tả cho cấu hình này.\n\n- Giúp mô tả các tổ hợp biến thể tạo nên Cấu Hình (ví dụ: \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", v.v.).",
@@ -6717,7 +6719,7 @@
       "addDimension": "Thêm chiều sâu...",
       "addMetric": "Thêm số liệu...",
       "runReport": "Chạy báo cáo",
-      "exportCsv": "Export CSV",
+      "exportCsv": "Xuất CSV",
       "noResultsFound": "Không tìm thấy kết quả nào.",
       "selectAtLeastOneDimensionAndMetric": "Hãy chọn ít nhất một chiều và một chỉ số.",
       "noDataMatchingCriteria": "Không tìm thấy dữ liệu nào phù hợp với các chiều và chỉ số đã chọn.",
@@ -6988,7 +6990,7 @@
             "seconds": "{seconds}s",
             "minutes": "{minutes}m",
             "hours": "{hours}h",
-            "hoursAndMinutes": "{hours}h {minutes}m"
+            "hoursAndMinutes": "{hours}g {minutes}p"
           },
           "relativeAge": {
             "today": "Hôm nay",
@@ -7461,7 +7463,7 @@
       "page3": {
         "title": "Xem trước dữ liệu nhập",
         "showing": "Hiển thị {start, number} đến {end, number} trong tổng số {total, number} bước được chia sẻ",
-        "step": "Shared Step {number, number}",
+        "step": "Bước dùng chung {number, number}",
         "noValue": "(trống)"
       }
     },
@@ -7526,33 +7528,33 @@
   "search": {
     "title": "Tìm kiếm",
     "savedSearches": {
-      "title": "Saved searches",
-      "save": "Save search",
-      "saveTitle": "Save search",
-      "saveDescription": "Name this search so you can revisit it later.",
-      "saveAction": "Save",
-      "nameLabel": "Name",
-      "namePlaceholder": "e.g. Failed runs this sprint",
-      "nameRequired": "Enter a name for this search.",
-      "loginRequired": "You must be signed in to save searches.",
+      "title": "Tìm kiếm đã lưu",
+      "save": "Lưu tìm kiếm",
+      "saveTitle": "Lưu tìm kiếm",
+      "saveDescription": "Đặt tên cho tìm kiếm này để bạn có thể xem lại sau.",
+      "saveAction": "Lưu",
+      "nameLabel": "Tên",
+      "namePlaceholder": "ví dụ: Các lần chạy thất bại trong sprint này",
+      "nameRequired": "Nhập tên cho tìm kiếm này.",
+      "loginRequired": "Bạn phải đăng nhập để lưu tìm kiếm.",
       "descriptionLabel": "Mô tả (tùy chọn)",
-      "descriptionPlaceholder": "What this search is for",
-      "saved": "Search saved",
-      "savedDescription": "“{name}” is now in your saved searches.",
-      "saveFailed": "Couldn't save the search. Please try again.",
-      "empty": "No saved searches yet",
-      "emptyHint": "Save a search to revisit it later.",
-      "loaded": "Loaded “{name}”",
-      "loadFailed": "This saved search is no longer valid.",
-      "edit": "Edit",
-      "editTitle": "Edit saved search",
-      "edited": "Saved search updated",
-      "editFailed": "Couldn't update the search. Please try again.",
-      "delete": "Delete",
-      "deleteTitle": "Delete saved search?",
-      "deleteConfirm": "“{name}” will be removed from your saved searches. This can't be undone.",
-      "deleted": "Saved search deleted",
-      "deleteFailed": "Couldn't delete the search. Please try again."
+      "descriptionPlaceholder": "Mục đích của tìm kiếm này",
+      "saved": "Đã lưu tìm kiếm",
+      "savedDescription": "“{name}” hiện đã có trong các tìm kiếm đã lưu của bạn.",
+      "saveFailed": "Không thể lưu tìm kiếm. Vui lòng thử lại.",
+      "empty": "Chưa có tìm kiếm nào được lưu",
+      "emptyHint": "Lưu một tìm kiếm để xem lại sau.",
+      "loaded": "Đã tải “{name}”",
+      "loadFailed": "Tìm kiếm đã lưu này không còn hợp lệ.",
+      "edit": "Chỉnh sửa",
+      "editTitle": "Chỉnh sửa tìm kiếm đã lưu",
+      "edited": "Đã cập nhật tìm kiếm đã lưu",
+      "editFailed": "Không thể cập nhật tìm kiếm. Vui lòng thử lại.",
+      "delete": "Xóa",
+      "deleteTitle": "Xóa tìm kiếm đã lưu?",
+      "deleteConfirm": "“{name}” sẽ bị xóa khỏi các tìm kiếm đã lưu của bạn. Hành động này không thể hoàn tác.",
+      "deleted": "Đã xóa tìm kiếm đã lưu",
+      "deleteFailed": "Không thể xóa tìm kiếm. Vui lòng thử lại."
     },
     "bulk": {
       "crossProjectHint": "(bao gồm nhiều dự án)",
@@ -7698,14 +7700,14 @@
       "intro": "Nhấp vào nút bên dưới để đăng nhập:",
       "signInButton": "Đăng nhập",
       "copyPasteIntro": "Hoặc sao chép và dán liên kết này vào trình duyệt của bạn:",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "Để đảm bảo an toàn cho bạn, liên kết này chỉ có thể được sử dụng một lần. Hãy yêu cầu liên kết mới nếu bạn cần đăng nhập lại.",
       "disclaimer": "Nếu bạn không yêu cầu nhận email này, bạn có thể bỏ qua nó một cách an toàn.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "Đăng nhập vào TestPlanIt\n\nNhấp vào liên kết bên dưới để đăng nhập:\n{url}\n\nĐể đảm bảo an toàn cho bạn, liên kết này chỉ có thể được sử dụng một lần. Hãy yêu cầu liên kết mới nếu bạn cần đăng nhập lại.\n\nNếu bạn không yêu cầu email này, bạn có thể yên tâm bỏ qua nó."
     },
     "passwordless": {
-      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
-      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
+      "codeIntro": "Mở liên kết này trên một thiết bị khác? Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu liên kết:",
+      "deviceNotice": "Liên kết này giúp bạn đăng nhập từ trình duyệt nơi bạn đã yêu cầu nó. Nếu bạn mở nó ở nơi khác, bạn sẽ được hiển thị mã ở trên để nhập vào cửa sổ ban đầu của bạn.",
+      "textBody": "Đăng nhập vào TestPlanIt\n\nNhấp vào liên kết bên dưới để đăng nhập:\n{url}\n\nMở liên kết này trên một thiết bị khác? Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu liên kết: {code}\n\nNếu bạn không yêu cầu email này, bạn có thể yên tâm bỏ qua nó."
     }
   },
   "comments": {
@@ -8079,7 +8081,7 @@
     "overrideUnsavedDiscard": "Hủy bỏ các thay đổi",
     "iterationBulkConfirmTitle": "Đánh dấu {count, plural, =1 {# lần lặp} other {# lần lặp}} là {action}?",
     "iterationBulkConfirmDescription": "Mỗi lần lặp được chọn sẽ nhận được một kết quả mới với trạng thái \"{statusName}\".",
-    "iterationBulkConfirm": "Mark {action}",
+    "iterationBulkConfirm": "Đánh dấu {action}",
     "iterationBulkConfirmReplace": "Thay thế bằng {action}",
     "iterationBulkOverwriteWarning": "{count, plural, =1 {Số lần lặp đã chọn đã có} other {Số lần lặp đã chọn đã có}} kết quả. Một kết quả mới sẽ được ghi lại và kết quả mới nhất sẽ thay thế kết quả hiện tại.",
     "iterationBulkReasonLabel": "Lý do (tùy chọn)",
