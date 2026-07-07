@@ -12,6 +12,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum PendingAuthStatus {
+  PENDING
+  CONSUMED
+  SUPERSEDED
+  LOCKED
+}
+
 enum IdpName {
   OKTA
   ENTRA
@@ -433,6 +440,25 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model PendingAuth {
+  id               String            @id() @default(cuid())
+  email            String
+  verifierHash     String
+  linkTokenHash    String            @unique()
+  codeHash         String
+  status           PendingAuthStatus @default(PENDING)
+  attempts         Int               @default(0)
+  callbackUrl      String?
+  requestIp        String?
+  requestUserAgent String?
+  createdAt        DateTime          @default(now()) @db.Timestamptz(6)
+  expiresAt        DateTime
+  consumedAt       DateTime?
+
+  @@index([email, status])
+  @@index([expiresAt])
 }
 
 model User {

@@ -85,3 +85,86 @@ export async function sendMagicLinkEmail(
     html,
   });
 }
+
+interface SendPasswordlessEmailArgs {
+  /** Recipient email address. */
+  to: string;
+  /** Device-bound callback URL (link token + relay code embedded). */
+  url: string;
+  /** Human-relay code, shown as text for cross-device completion. */
+  code: string;
+  /** Recipient's locale. Falls back to en_US. */
+  locale?: string | null;
+  /** Override the From: address. Defaults to `process.env.EMAIL_FROM`. */
+  from?: string;
+}
+
+/**
+ * Send the device-bound passwordless sign-in email (PASSWORDLESS_DEVICE_BOUND
+ * flow): sign-in button plus the relay code for cross-device completion.
+ *
+ * Unlike the legacy magic-link email there is no "single use" warning — the
+ * link is inert without the requesting browser's verifier cookie and is not
+ * consumed by being opened, so scanner prefetch or a second open is harmless.
+ *
+ * Same error posture as sendMagicLinkEmail: the caller checks account
+ * existence first and must not let transport errors alter its response.
+ */
+export async function sendPasswordlessEmail(
+  args: SendPasswordlessEmailArgs
+): Promise<void> {
+  const userLocale = args.locale || "en_US";
+
+  const t = await getServerTranslations(userLocale, [
+    "email.magicLink.subject",
+    "email.magicLink.heading",
+    "email.magicLink.intro",
+    "email.magicLink.signInButton",
+    "email.magicLink.copyPasteIntro",
+    "email.magicLink.disclaimer",
+    "email.passwordless.codeIntro",
+    "email.passwordless.deviceNotice",
+  ]);
+
+  const displayCode =
+    args.code.length === 8
+      ? `${args.code.slice(0, 4)}-${args.code.slice(4)}`
+      : args.code;
+
+  const text = await getServerTranslation(
+    userLocale,
+    "email.passwordless.textBody",
+    { url: args.url, code: displayCode }
+  );
+
+  const transport = nodemailer.createTransport({
+    host: process.env.EMAIL_SERVER_HOST,
+    port: Number(process.env.EMAIL_SERVER_PORT),
+    auth: {
+      user: process.env.EMAIL_SERVER_USER,
+      pass: process.env.EMAIL_SERVER_PASSWORD,
+    },
+  });
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">${t["email.magicLink.heading"]}</h2>
+      <p>${t["email.magicLink.intro"]}</p>
+      <a href="${args.url}" style="display: inline-block; background-color: ${PURPLE}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">${t["email.magicLink.signInButton"]}</a>
+      <p style="color: #666; font-size: 14px;">${t["email.passwordless.codeIntro"]}</p>
+      <p style="font-size: 28px; font-weight: bold; letter-spacing: 4px; font-family: monospace; color: #333; background-color: #f3f0ff; padding: 12px 16px; border-radius: 6px; display: inline-block;">${displayCode}</p>
+      <p style="color: #666; font-size: 14px;">${t["email.magicLink.copyPasteIntro"]}</p>
+      <p style="color: #666; font-size: 14px; word-break: break-all;">${args.url}</p>
+      <p style="color: #666; font-size: 14px; background-color: #f3f0ff; border-left: 3px solid ${PURPLE}; padding: 12px 16px; border-radius: 4px; margin: 24px 0;">${t["email.passwordless.deviceNotice"]}</p>
+      <p style="color: #999; font-size: 12px; margin-top: 32px;">${t["email.magicLink.disclaimer"]}</p>
+    </div>
+  `;
+
+  await transport.sendMail({
+    to: args.to,
+    from: args.from ?? process.env.EMAIL_FROM,
+    subject: t["email.magicLink.subject"],
+    text,
+    html,
+  });
+}

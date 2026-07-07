@@ -1085,12 +1085,34 @@
         "error": "發送魔法連結失敗，請重試。",
         "backToSignIn": "返回登入頁面"
       },
+      "passwordless": {
+        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
+        "codeLabel": "Sign-in code",
+        "verifyCode": "Verify code",
+        "verifying": "Verifying...",
+        "invalidCode": "That code isn't right. Check the email and try again.",
+        "codeExpired": "This sign-in request has expired. Request a new link.",
+        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
+        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
+        "genericError": "We couldn't sign you in. Request a new link and try again.",
+        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+      },
       "twoFactor": {
         "title": "雙重身份驗證",
         "description": "輸入身份驗證器應用程式中的 6 位元驗證碼，或使用備用驗證碼。"
       },
       "troubleSigningIn": "登入遇到問題？",
       "contactAdmin": "請聯絡系統管理員"
+    },
+    "passwordless": {
+      "completingSignIn": "Signing you in...",
+      "completeErrorTitle": "We couldn't sign you in",
+      "requestNewLink": "Request a new link",
+      "codeTitle": "Your sign-in code",
+      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
+      "codeCloseNotice": "You can close this window once you've entered the code.",
+      "expiredTitle": "This sign-in link is no longer valid",
+      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
     },
     "errors": {
       "accessDenied": "訪問被拒絕。您的帳戶可能已停用或您沒有登入權限。",
@@ -6187,7 +6209,7 @@
       "authType": "## Authentication Type\nChoose how to authenticate with the external service.\n\n- **API Key:** Simple authentication using email and API token\n- **OAuth 2.0:** Secure authentication using OAuth flow\n- **Personal Access Token:** Direct token-based authentication",
       "email": "## 電子郵件地址\n您的外部服務帳號電子郵件地址。\n\n- 用於 API 金鑰驗證\n- 必須與產生 API 令牌的帳戶匹配\n- Jira 和類似服務必需",
       "apiToken": "## API 令牌\n在外部服務的帳戶設定中產生 API 令牌。\n\n- 通常位於「帳號設定」→「安全性」→「API 令牌」中。\n- 提供安全訪問，無需暴露您的密碼。\n- 可依需要撤銷和重新產生。",
-      "jiraUrl": "## Jira URL\n您的 Jira 實例的基本 URL。\n\n- 格式：https://your-site.atlassian.net\n- 請勿包含 /browse 或其他路徑\n- 請勿從此存取伺服器",
+      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
       "clientId": "## OAuth 用戶端 ID\n來自您的 OAuth 應用程式設定的客戶端 ID。\n\n- 在外部服務的開發者控制台中建立。\n- 用於在 OAuth 流程中識別您的應用程式。\n- 可以安全地在設定檔中共用。",
       "clientSecret": "## OAuth 用戶端金鑰\n來自您的 OAuth 應用程式設定的用戶端金鑰。\n\n- 與客戶端 ID 一起建立\n- 必須保密且安全\n- 用於驗證您的應用程式",
       "personalAccessToken": "## 個人存取權杖\n具有存取外部服務對應權限的個人存取權令牌。\n\n- 在您的帳戶設定中產生\n- 應具有讀寫權限\n- 比密碼驗證更安全",
@@ -7678,6 +7700,11 @@
       "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "如果您沒有要求收到這封郵件，您可以忽略它。",
       "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+    },
+    "passwordless": {
+      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
+      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

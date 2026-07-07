@@ -1085,12 +1085,34 @@
         "error": "Não foi possível enviar o link mágico. Tente novamente.",
         "backToSignIn": "Voltar para a página de login"
       },
+      "passwordless": {
+        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
+        "codeLabel": "Sign-in code",
+        "verifyCode": "Verify code",
+        "verifying": "Verifying...",
+        "invalidCode": "That code isn't right. Check the email and try again.",
+        "codeExpired": "This sign-in request has expired. Request a new link.",
+        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
+        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
+        "genericError": "We couldn't sign you in. Request a new link and try again.",
+        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+      },
       "twoFactor": {
         "title": "Autenticação de dois fatores",
         "description": "Insira o código de 6 dígitos do seu aplicativo autenticador ou use um código de backup."
       },
       "troubleSigningIn": "Problemas com o login?",
       "contactAdmin": "Contate o administrador do sistema."
+    },
+    "passwordless": {
+      "completingSignIn": "Signing you in...",
+      "completeErrorTitle": "We couldn't sign you in",
+      "requestNewLink": "Request a new link",
+      "codeTitle": "Your sign-in code",
+      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
+      "codeCloseNotice": "You can close this window once you've entered the code.",
+      "expiredTitle": "This sign-in link is no longer valid",
+      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
     },
     "errors": {
       "accessDenied": "Acesso negado. Sua conta pode estar inativa ou você não tem permissão para fazer login.",
@@ -6187,7 +6209,7 @@
       "authType": "## Tipo de Autenticação\nEscolha como autenticar com o serviço externo.\n\n- **Chave de API:** Autenticação simples usando e-mail e token de API\n- **OAuth 2.0:** Autenticação segura usando o fluxo OAuth\n- **Token de Acesso Pessoal:** Autenticação direta baseada em token",
       "email": "## Endereço de e-mail\nSeu endereço de e-mail para o serviço externo.\n\n- Usado para autenticação da chave da API\n- Deve corresponder à conta que gerou o token da API\n- Obrigatório para o Jira e serviços similares",
       "apiToken": "## Token de API\nGere um token de API nas configurações da sua conta no serviço externo.\n\n- Geralmente encontrado em Configurações da conta → Segurança → Tokens de API\n- Fornece acesso seguro sem expor sua senha\n- Pode ser revogado e regenerado conforme necessário",
-      "jiraUrl": "## URL do Jira\nA URL base da sua instância do Jira.\n\n- Formato: https://seu-site.atlassian.net\n- Não inclua /browse ou outros caminhos\n- Deve ser acessível a partir deste servidor",
+      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
       "clientId": "## ID do Cliente OAuth\nO ID do cliente da configuração do seu aplicativo OAuth.\n\n- Criado no console do desenvolvedor do serviço externo\n- Usado para identificar seu aplicativo durante o fluxo OAuth\n- Pode ser compartilhado com segurança em arquivos de configuração",
       "clientSecret": "## Segredo do Cliente OAuth\nO Segredo do Cliente da configuração do seu aplicativo OAuth.\n\n- Criado junto com o ID do Cliente\n- Deve ser mantido em sigilo e segurança\n- Usado para autenticar seu aplicativo",
       "personalAccessToken": "## Token de Acesso Pessoal\nUm token de acesso pessoal com as permissões apropriadas para o serviço externo.\n\n- Gerado nas configurações da sua conta\n- Deve ter permissões de leitura e gravação\n- Mais seguro do que a autenticação por senha",
@@ -7678,6 +7700,11 @@
       "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "Se você não solicitou este e-mail, pode ignorá-lo sem problemas.",
       "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+    },
+    "passwordless": {
+      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
+      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {
