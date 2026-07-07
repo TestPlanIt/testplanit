@@ -117,6 +117,7 @@ const sidebars: SidebarsConfig = {
               label: 'Authentication',
               items: [
                 'user-guide/sso', // Single Sign-On providers and SAML configuration
+                'user-guide/passwordless-sign-in', // Device-bound magic link + relay code (scanner-proof)
                 'user-guide/security-settings', // Sign-in enforcement, password policy, lockout, enforcement
                 'api-tokens', // API tokens
                 'user-guide/scim', // SCIM 2.0 provisioning from external IdP

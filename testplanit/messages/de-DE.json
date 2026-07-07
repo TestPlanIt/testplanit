@@ -1085,12 +1085,34 @@
         "error": "Der magische Link konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
         "backToSignIn": "Zurück zur Anmeldeseite"
       },
+      "passwordless": {
+        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
+        "codeLabel": "Sign-in code",
+        "verifyCode": "Verify code",
+        "verifying": "Verifying...",
+        "invalidCode": "That code isn't right. Check the email and try again.",
+        "codeExpired": "This sign-in request has expired. Request a new link.",
+        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
+        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
+        "genericError": "We couldn't sign you in. Request a new link and try again.",
+        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+      },
       "twoFactor": {
         "title": "Zwei-Faktor-Authentifizierung",
         "description": "Geben Sie den 6-stelligen Code aus Ihrer Authentifizierungs-App ein oder verwenden Sie einen Ersatzcode."
       },
       "troubleSigningIn": "Probleme beim Anmelden?",
       "contactAdmin": "Wenden Sie sich an den Systemadministrator."
+    },
+    "passwordless": {
+      "completingSignIn": "Signing you in...",
+      "completeErrorTitle": "We couldn't sign you in",
+      "requestNewLink": "Request a new link",
+      "codeTitle": "Your sign-in code",
+      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
+      "codeCloseNotice": "You can close this window once you've entered the code.",
+      "expiredTitle": "This sign-in link is no longer valid",
+      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
     },
     "errors": {
       "accessDenied": "Zugriff verweigert. Ihr Konto ist möglicherweise inaktiv oder Sie haben keine Berechtigung zum Anmelden.",
@@ -6188,7 +6210,7 @@
       "authType": "## Authentifizierungstyp\nWählen Sie die Authentifizierungsmethode für den externen Dienst.\n\n- **API-Schlüssel:** Einfache Authentifizierung mit E-Mail-Adresse und API-Token\n- **OAuth 2.0:** Sichere Authentifizierung über den OAuth-Flow\n- **Persönliches Zugriffstoken:** Direkte tokenbasierte Authentifizierung",
       "email": "## E-Mail-Adresse\nIhre E-Mail-Adresse für den externen Dienst.\n\n- Wird für die API-Schlüsselauthentifizierung verwendet.\n- Muss mit dem Konto übereinstimmen, das das API-Token generiert hat.\n- Erforderlich für Jira und ähnliche Dienste.",
       "apiToken": "## API-Token\nGenerieren Sie einen API-Token in Ihren Kontoeinstellungen beim externen Dienst.\n\n- Normalerweise zu finden unter Kontoeinstellungen → Sicherheit → API-Tokens\n- Gewährleistet sicheren Zugriff, ohne Ihr Passwort preiszugeben\n- Kann bei Bedarf widerrufen und neu generiert werden",
-      "jiraUrl": "## Jira-URL\nDie Basis-URL Ihrer Jira-Instanz.\n\n- Format: https://your-site.atlassian.net\n- Fügen Sie nicht /browse oder andere Pfade hinzu.\n- Muss von diesem Server aus erreichbar sein.",
+      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
       "clientId": "## OAuth-Client-ID\nDie Client-ID aus Ihrer OAuth-Anwendungskonfiguration.\n\n- Erstellt in der Entwicklerkonsole des externen Dienstes.\n- Wird verwendet, um Ihre Anwendung während des OAuth-Ablaufs zu identifizieren.\n- Kann sicher in Konfigurationsdateien weitergegeben werden.",
       "clientSecret": "## OAuth-Clientgeheimnis\nDas Clientgeheimnis aus Ihrer OAuth-Anwendungskonfiguration.\n\n- Wird zusammen mit der Client-ID erstellt.\n- Muss vertraulich und sicher aufbewahrt werden.\n- Wird zur Authentifizierung Ihrer Anwendung verwendet.",
       "personalAccessToken": "## Persönliches Zugriffstoken\nEin persönliches Zugriffstoken mit den entsprechenden Berechtigungen für den externen Dienst.\n\n- Wird in Ihren Kontoeinstellungen generiert.\n- Sollte Lese- und Schreibberechtigungen besitzen.\n- Sicherer als die Passwortauthentifizierung.",
@@ -7679,6 +7701,11 @@
       "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "Wenn Sie diese E-Mail nicht angefordert haben, können Sie sie getrost ignorieren.",
       "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+    },
+    "passwordless": {
+      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
+      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

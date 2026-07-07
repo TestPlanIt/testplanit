@@ -22,6 +22,10 @@ import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 
 import { updateAuditContext } from "~/lib/auditContext";
+import {
+  authorizePasswordlessComplete,
+  isPasswordlessDeviceBoundEnabled,
+} from "~/lib/passwordless";
 import { getCachedSessionUser, touchLastActive } from "~/lib/session-cache";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
@@ -598,6 +602,24 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
         },
         authorize: authorize(db),
       }),
+      // Device-bound passwordless completion (PASSWORDLESS_DEVICE_BOUND).
+      // Exchanges a PendingAuth row (verifier cookie + emailed linkToken or
+      // relay code) for a session; token consumption happens only here, never
+      // on the emailed link's GET, so scanner prefetch cannot burn the link.
+      ...(isPasswordlessDeviceBoundEnabled()
+        ? [
+            CredentialsProvider({
+              id: "passwordless-complete",
+              name: "Passwordless",
+              credentials: {
+                pendingId: { type: "text" },
+                linkToken: { type: "text" },
+                code: { type: "text" },
+              },
+              authorize: authorizePasswordlessComplete(db),
+            }),
+          ]
+        : []),
       // Dynamic providers from database
       ...dynamicProviders,
       // Fallback Google OAuth Provider from environment variables (for backward compatibility)

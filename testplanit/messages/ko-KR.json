@@ -1085,12 +1085,34 @@
         "error": "매직링크 전송에 실패했습니다. 다시 시도해 주세요.",
         "backToSignIn": "로그인 페이지로 돌아가기"
       },
+      "passwordless": {
+        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
+        "codeLabel": "Sign-in code",
+        "verifyCode": "Verify code",
+        "verifying": "Verifying...",
+        "invalidCode": "That code isn't right. Check the email and try again.",
+        "codeExpired": "This sign-in request has expired. Request a new link.",
+        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
+        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
+        "genericError": "We couldn't sign you in. Request a new link and try again.",
+        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+      },
       "twoFactor": {
         "title": "2단계 인증",
         "description": "인증 앱에서 6자리 코드를 입력하거나 백업 코드를 사용하세요."
       },
       "troubleSigningIn": "로그인에 문제가 있으신가요?",
       "contactAdmin": "시스템 관리자에게 문의하십시오."
+    },
+    "passwordless": {
+      "completingSignIn": "Signing you in...",
+      "completeErrorTitle": "We couldn't sign you in",
+      "requestNewLink": "Request a new link",
+      "codeTitle": "Your sign-in code",
+      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
+      "codeCloseNotice": "You can close this window once you've entered the code.",
+      "expiredTitle": "This sign-in link is no longer valid",
+      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
     },
     "errors": {
       "accessDenied": "접근이 거부되었습니다. 계정이 비활성화되었거나 로그인 권한이 없을 수 있습니다.",
@@ -6188,7 +6210,7 @@
       "authType": "## 인증 유형\n외부 서비스와의 인증 방법을 선택하세요.\n\n- **API 키:** 이메일과 API 토큰을 사용한 간편 인증\n- **OAuth 2.0:** OAuth 흐름을 사용한 보안 인증\n- **개인 액세스 토큰:** 토큰 기반의 직접 인증",
       "email": "## 이메일 주소\n외부 서비스 계정의 이메일 주소입니다.\n\n- API 키 인증에 사용됩니다.\n- API 토큰을 생성한 계정과 일치해야 합니다.\n- Jira 및 유사 서비스에 필수입니다.",
       "apiToken": "## API 토큰\n외부 서비스의 계정 설정에서 API 토큰을 생성하세요.\n\n- 일반적으로 계정 설정 → 보안 → API 토큰에서 찾을 수 있습니다.\n- 비밀번호를 노출하지 않고 안전하게 액세스할 수 있습니다.\n- 필요에 따라 취소하고 다시 생성할 수 있습니다.",
-      "jiraUrl": "## Jira URL\nJira 인스턴스의 기본 URL입니다.\n\n- 형식: https://your-site.atlassian.net\n- /browse 또는 기타 경로를 포함하지 마세요.\n- 이 서버에서 접근 가능해야 합니다.",
+      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
       "clientId": "## OAuth 클라이언트 ID\nOAuth 애플리케이션 구성에서 가져온 클라이언트 ID입니다.\n\n- 외부 서비스 개발자 콘솔에서 생성\n- OAuth 흐름 중에 애플리케이션을 식별하는 데 사용\n- 구성 파일에서 공유해도 안전함",
       "clientSecret": "## OAuth 클라이언트 시크릿\nOAuth 애플리케이션 구성에서 생성된 클라이언트 시크릿입니다.\n\n- 클라이언트 ID와 함께 생성됩니다.\n- 기밀로 안전하게 보관해야 합니다.\n- 애플리케이션 인증에 사용됩니다.",
       "personalAccessToken": "## 개인 액세스 토큰\n외부 서비스에 대한 적절한 권한이 있는 개인 액세스 토큰입니다.\n\n- 계정 설정에서 생성됩니다.\n- 읽기 및 쓰기 권한이 있어야 합니다.\n- 비밀번호 인증보다 안전합니다.",
@@ -7679,6 +7701,11 @@
       "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "이 이메일을 요청하지 않으셨다면 무시하셔도 됩니다.",
       "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+    },
+    "passwordless": {
+      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
+      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

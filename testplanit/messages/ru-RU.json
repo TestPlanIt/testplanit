@@ -1085,12 +1085,34 @@
         "error": "Не удалось отправить волшебную ссылку. Пожалуйста, попробуйте еще раз.",
         "backToSignIn": "Вернуться к входу"
       },
+      "passwordless": {
+        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
+        "codeLabel": "Sign-in code",
+        "verifyCode": "Verify code",
+        "verifying": "Verifying...",
+        "invalidCode": "That code isn't right. Check the email and try again.",
+        "codeExpired": "This sign-in request has expired. Request a new link.",
+        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
+        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
+        "genericError": "We couldn't sign you in. Request a new link and try again.",
+        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+      },
       "twoFactor": {
         "title": "Двухфакторная аутентификация",
         "description": "Введите 6-значный код из приложения-аутентификатора или используйте резервный код."
       },
       "troubleSigningIn": "Проблемы со входом в систему?",
       "contactAdmin": "Обратитесь к системному администратору."
+    },
+    "passwordless": {
+      "completingSignIn": "Signing you in...",
+      "completeErrorTitle": "We couldn't sign you in",
+      "requestNewLink": "Request a new link",
+      "codeTitle": "Your sign-in code",
+      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
+      "codeCloseNotice": "You can close this window once you've entered the code.",
+      "expiredTitle": "This sign-in link is no longer valid",
+      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
     },
     "errors": {
       "accessDenied": "Доступ запрещен. Возможно, ваша учетная запись неактивна или у вас нет разрешения на вход.",
@@ -6188,7 +6210,7 @@
       "authType": "## Тип аутентификации\nВыберите способ аутентификации во внешней службе.\n\n- **Ключ API:** Простая аутентификация с использованием электронной почты и токена API\n- **OAuth 2.0:** Безопасная аутентификация с использованием потока OAuth\n- **Персональный токен доступа:** Прямая аутентификация на основе токена",
       "email": "## Адрес электронной почты\nАдрес электронной почты вашей учетной записи для внешнего сервиса.\n\n- Используется для аутентификации по ключу API.\n- Должен совпадать с учетной записью, сгенерировавшей токен API.\n- Требуется для Jira и аналогичных сервисов.",
       "apiToken": "## API-токен\nСгенерируйте API-токен в настройках вашей учетной записи во внешнем сервисе.\n\n- Обычно находится в Настройках учетной записи → Безопасность → API-токены\n- Обеспечивает безопасный доступ без раскрытия вашего пароля\n- Может быть отозван и сгенерирован заново по мере необходимости",
-      "jiraUrl": "## URL Jira\nБазовый URL вашего экземпляра Jira.\n\n- Формат: https://your-site.atlassian.net\n- Не включайте /browse или другие пути\n- Должен быть доступен с этого сервера",
+      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
       "clientId": "## Идентификатор клиента OAuth\nИдентификатор клиента из конфигурации вашего приложения OAuth.\n\n- Создается в консоли разработчика внешнего сервиса.\n- Используется для идентификации вашего приложения во время процесса OAuth.\n- Можно безопасно передавать в файлах конфигурации.",
       "clientSecret": "## Секрет клиента OAuth\nСекрет клиента из конфигурации вашего приложения OAuth.\n\n- Создается вместе с идентификатором клиента.\n- Должен храниться в конфиденциальности и безопасности.\n- Используется для аутентификации вашего приложения.",
       "personalAccessToken": "## Персональный токен доступа\nПерсональный токен доступа с соответствующими правами доступа к внешнему сервису.\n\n- Генерируется в настройках вашей учетной записи.\n- Должен иметь права на чтение и запись.\n- Более безопасен, чем аутентификация по паролю.",
@@ -7679,6 +7701,11 @@
       "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "Если вы не запрашивали это письмо, можете смело его проигнорировать.",
       "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+    },
+    "passwordless": {
+      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
+      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {
