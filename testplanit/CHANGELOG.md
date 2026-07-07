@@ -1,3 +1,9 @@
+## [0.41.2](https://github.com/TestPlanIt/testplanit/compare/v0.41.1...v0.41.2) (2026-07-07)
+
+### Enhancements
+
+* **auth:** enter an existing sign-in code from the Magic Link dialog ([#498](https://github.com/TestPlanIt/testplanit/issues/498)) ([ff7bce4](https://github.com/TestPlanIt/testplanit/commit/ff7bce44e0748e0cc0ce35a6bd3d7db1977786dd))
+
 ## [0.41.1](https://github.com/TestPlanIt/testplanit/compare/v0.41.0...v0.41.1) (2026-07-07)
 
 ### Enhancements
