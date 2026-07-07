@@ -966,7 +966,7 @@ const Signin: NextPage = () => {
                   })}
                 </p>
                 {passwordlessPendingId && (
-                  <div className="mt-6 space-y-3 text-left">
+                  <div className="mt-6 space-y-3 text-start">
                     <p className="text-sm text-muted-foreground text-center">
                       {t("auth.signin.passwordless.waitingInstructions")}
                     </p>
