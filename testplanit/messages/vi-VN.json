@@ -1085,12 +1085,37 @@
         "error": "Không thể gửi liên kết ma thuật. Vui lòng thử lại.",
         "backToSignIn": "Quay lại trang đăng nhập"
       },
+      "passwordless": {
+        "waitingInstructions": "Nhấp vào liên kết trong email để đăng nhập từ trình duyệt này, hoặc nhập mã từ email bên dưới.",
+        "codeLabel": "Mã đăng nhập",
+        "verifyCode": "Xác minh mã",
+        "verifying": "Đang xác minh...",
+        "invalidCode": "Mã đó không đúng. Hãy kiểm tra email và thử lại.",
+        "codeExpired": "Yêu cầu đăng nhập này đã hết hạn. Hãy yêu cầu liên kết mới.",
+        "tooManyAttempts": "Quá nhiều lần thử không đúng. Hãy yêu cầu liên kết mới để thử lại.",
+        "windowLost": "Cửa sổ này không thể hoàn tất đăng nhập nữa. Hãy yêu cầu liên kết mới.",
+        "genericError": "Chúng tôi không thể đăng nhập cho bạn. Hãy yêu cầu liên kết mới và thử lại.",
+        "tooManyRequests": "Quá nhiều yêu cầu đăng nhập. Vui lòng chờ một chút và thử lại.",
+        "haveCode": "Đã có mã đăng nhập?",
+        "codeEntryDescription": "Nhập mã từ email đăng nhập của bạn. Mã chỉ hoạt động trên trình duyệt nơi bạn đã yêu cầu liên kết.",
+        "backToRequest": "Yêu cầu liên kết mới thay thế"
+      },
       "twoFactor": {
         "title": "Xác thực hai yếu tố",
         "description": "Nhập mã 6 chữ số từ ứng dụng xác thực của bạn hoặc sử dụng mã dự phòng."
       },
       "troubleSigningIn": "Gặp sự cố khi đăng nhập?",
       "contactAdmin": "Liên hệ với Quản trị viên hệ thống"
+    },
+    "passwordless": {
+      "completingSignIn": "Đang đăng nhập cho bạn...",
+      "completeErrorTitle": "Chúng tôi không thể đăng nhập cho bạn",
+      "requestNewLink": "Yêu cầu liên kết mới",
+      "codeTitle": "Mã đăng nhập của bạn",
+      "codeInstructions": "Bạn đã mở liên kết đăng nhập trên một thiết bị hoặc trình duyệt khác. Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu ban đầu.",
+      "codeCloseNotice": "Bạn có thể đóng cửa sổ này sau khi đã nhập mã.",
+      "expiredTitle": "Liên kết đăng nhập này không còn hợp lệ",
+      "expiredBody": "Liên kết có thể đã hết hạn hoặc đã được sử dụng. Hãy yêu cầu liên kết mới từ trang đăng nhập — chỉ mất một chút thời gian."
     },
     "errors": {
       "accessDenied": "Truy cập bị từ chối. Tài khoản của bạn có thể không hoạt động hoặc bạn không có quyền đăng nhập.",
@@ -5233,7 +5258,6 @@
         "encrypted": "Đã mã hóa",
         "encryptedHelp": "Trường này được mã hóa và lưu trữ an toàn.",
         "changeCredential": "Thay đổi",
-        "leaveBlankToKeep": "Để trống nếu muốn giữ nguyên giá trị hiện có",
         "apiKeyWarningTitle": "Thông báo xác thực khóa API",
         "apiKeyWarningDescription": "Với xác thực bằng khóa API, người báo cáo sự cố được tạo có thể không trùng khớp với người dùng TestPlanIt đã tạo ra chúng — ngay cả khi địa chỉ email trùng khớp:",
         "apiKeyWarningPoint1": "Việc thiết lập người báo cáo Jira yêu cầu tài khoản có mã thông báo API phải có quyền quản trị Jira (\"Sửa đổi người báo cáo\"). Nếu không có quyền này, Jira sẽ bỏ qua người báo cáo và chủ sở hữu mã thông báo API sẽ được ghi nhận là người tạo.",
@@ -7679,6 +7703,11 @@
       "singleUseNotice": "Để đảm bảo an toàn cho bạn, liên kết này chỉ có thể được sử dụng một lần. Hãy yêu cầu liên kết mới nếu bạn cần đăng nhập lại.",
       "disclaimer": "Nếu bạn không yêu cầu nhận email này, bạn có thể bỏ qua nó một cách an toàn.",
       "textBody": "Đăng nhập vào TestPlanIt\n\nNhấp vào liên kết bên dưới để đăng nhập:\n{url}\n\nĐể đảm bảo an toàn cho bạn, liên kết này chỉ có thể được sử dụng một lần. Hãy yêu cầu liên kết mới nếu bạn cần đăng nhập lại.\n\nNếu bạn không yêu cầu email này, bạn có thể yên tâm bỏ qua nó."
+    },
+    "passwordless": {
+      "codeIntro": "Mở liên kết này trên một thiết bị khác? Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu liên kết:",
+      "deviceNotice": "Liên kết này giúp bạn đăng nhập từ trình duyệt nơi bạn đã yêu cầu nó. Nếu bạn mở nó ở nơi khác, bạn sẽ được hiển thị mã ở trên để nhập vào cửa sổ ban đầu của bạn.",
+      "textBody": "Đăng nhập vào TestPlanIt\n\nNhấp vào liên kết bên dưới để đăng nhập:\n{url}\n\nMở liên kết này trên một thiết bị khác? Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu liên kết: {code}\n\nNếu bạn không yêu cầu email này, bạn có thể yên tâm bỏ qua nó."
     }
   },
   "comments": {

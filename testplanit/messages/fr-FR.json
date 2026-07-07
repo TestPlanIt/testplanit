@@ -1085,12 +1085,37 @@
         "error": "Impossible d'envoyer le lien magique. Veuillez réessayer.",
         "backToSignIn": "Retour à la page de connexion"
       },
+      "passwordless": {
+        "waitingInstructions": "Cliquez sur le lien dans l'e-mail pour vous connecter depuis ce navigateur, ou saisissez le code de l'e-mail ci-dessous.",
+        "codeLabel": "Code de connexion",
+        "verifyCode": "Vérifier le code",
+        "verifying": "Vérification en cours...",
+        "invalidCode": "Ce code n'est pas correct. Vérifiez l'e-mail et réessayez.",
+        "codeExpired": "Cette demande de connexion a expiré. Demandez un nouveau lien.",
+        "tooManyAttempts": "Trop de tentatives incorrectes. Demandez un nouveau lien pour réessayer.",
+        "windowLost": "Cette fenêtre ne peut plus terminer la connexion. Demandez un nouveau lien.",
+        "genericError": "Nous n'avons pas pu vous connecter. Demandez un nouveau lien et réessayez.",
+        "tooManyRequests": "Trop de demandes de connexion. Veuillez patienter un instant et réessayer.",
+        "haveCode": "Vous avez déjà un code de connexion ?",
+        "codeEntryDescription": "Saisissez le code de votre e-mail de connexion. Les codes ne fonctionnent que dans le navigateur où vous avez demandé le lien.",
+        "backToRequest": "Demander un nouveau lien à la place"
+      },
       "twoFactor": {
         "title": "Authentification à deux facteurs",
         "description": "Saisissez le code à 6 chiffres de votre application d'authentification ou utilisez un code de secours."
       },
       "troubleSigningIn": "Problèmes de connexion ?",
       "contactAdmin": "Contactez l'administrateur système"
+    },
+    "passwordless": {
+      "completingSignIn": "Connexion en cours...",
+      "completeErrorTitle": "Nous n'avons pas pu vous connecter",
+      "requestNewLink": "Demander un nouveau lien",
+      "codeTitle": "Votre code de connexion",
+      "codeInstructions": "Vous avez ouvert le lien de connexion sur un autre appareil ou navigateur. Saisissez ce code sur l'écran de connexion où vous l'avez initialement demandé.",
+      "codeCloseNotice": "Vous pouvez fermer cette fenêtre une fois le code saisi.",
+      "expiredTitle": "Ce lien de connexion n'est plus valide",
+      "expiredBody": "Le lien a peut-être expiré ou a déjà été utilisé. Demandez-en un nouveau depuis la page de connexion — cela ne prend qu'un instant."
     },
     "errors": {
       "accessDenied": "Accès refusé. Votre compte est peut-être inactif ou vous n'avez pas l'autorisation de vous connecter.",
@@ -5233,7 +5258,6 @@
         "encrypted": "Crypté",
         "encryptedHelp": "Ce champ est chiffré et stocké en toute sécurité.",
         "changeCredential": "Changement",
-        "leaveBlankToKeep": "Laisser vide pour conserver la valeur existante",
         "apiKeyWarningTitle": "Avis d'authentification par clé API",
         "apiKeyWarningDescription": "Avec l'authentification par clé API, le déclarant des problèmes créés peut ne pas correspondre à l'utilisateur TestPlanIt qui les a créés, même si les adresses e-mail correspondent :",
         "apiKeyWarningPoint1": "La configuration du rapporteur Jira requiert que le compte associé au jeton API dispose des droits d'administrateur Jira (« Modifier le rapporteur »). Sans ces droits, Jira ignore le rapporteur et le propriétaire du jeton API est considéré comme le créateur.",
@@ -7679,6 +7703,11 @@
       "singleUseNotice": "Pour votre sécurité, ce lien ne peut être utilisé qu'une seule fois. Demandez un nouveau lien si vous devez vous reconnecter.",
       "disclaimer": "Si vous n'avez pas demandé cet e-mail, vous pouvez l'ignorer sans problème.",
       "textBody": "Connectez-vous à TestPlanIt\n\nCliquez sur le lien ci-dessous pour vous connecter :\n{url}\n\nPour votre sécurité, ce lien ne peut être utilisé qu'une seule fois. Demandez un nouveau lien si vous devez vous reconnecter.\n\nSi vous n'avez pas demandé cet e-mail, vous pouvez l'ignorer en toute sécurité."
+    },
+    "passwordless": {
+      "codeIntro": "Vous ouvrez ceci sur un autre appareil ? Saisissez ce code sur l'écran de connexion où vous avez demandé le lien :",
+      "deviceNotice": "Ce lien vous connecte depuis le navigateur où vous l'avez demandé. Si vous l'ouvrez ailleurs, le code ci-dessus vous sera présenté pour être saisi dans votre fenêtre d'origine.",
+      "textBody": "Connectez-vous à TestPlanIt\n\nCliquez sur le lien ci-dessous pour vous connecter :\n{url}\n\nVous ouvrez ceci sur un autre appareil ? Saisissez ce code sur l'écran de connexion où vous avez demandé le lien : {code}\n\nSi vous n'avez pas demandé cet e-mail, vous pouvez l'ignorer en toute sécurité."
     }
   },
   "comments": {

@@ -1085,12 +1085,37 @@
         "error": "No se pudo enviar el enlace mágico. Inténtelo de nuevo.",
         "backToSignIn": "Volver a iniciar sesión"
       },
+      "passwordless": {
+        "waitingInstructions": "Haga clic en el enlace del correo electrónico para iniciar sesión desde este navegador, o introduzca el código del correo electrónico a continuación.",
+        "codeLabel": "Código de inicio de sesión",
+        "verifyCode": "Verificar código",
+        "verifying": "Verificando...",
+        "invalidCode": "Ese código no es correcto. Revise el correo electrónico e inténtelo de nuevo.",
+        "codeExpired": "Esta solicitud de inicio de sesión ha expirado. Solicite un nuevo enlace.",
+        "tooManyAttempts": "Demasiados intentos incorrectos. Solicite un nuevo enlace para intentarlo de nuevo.",
+        "windowLost": "Esta ventana ya no puede completar el inicio de sesión. Solicite un nuevo enlace.",
+        "genericError": "No pudimos iniciar su sesión. Solicite un nuevo enlace e inténtelo de nuevo.",
+        "tooManyRequests": "Demasiadas solicitudes de inicio de sesión. Espere un momento e inténtelo de nuevo.",
+        "haveCode": "¿Ya tiene un código de inicio de sesión?",
+        "codeEntryDescription": "Introduzca el código de su correo electrónico de inicio de sesión. Los códigos solo funcionan en el navegador donde solicitó el enlace.",
+        "backToRequest": "Solicitar un nuevo enlace en su lugar"
+      },
       "twoFactor": {
         "title": "Autenticación de dos factores",
         "description": "Ingrese el código de 6 dígitos de su aplicación de autenticación o use un código de respaldo."
       },
       "troubleSigningIn": "¿Problemas para iniciar sesión?",
       "contactAdmin": "Contacte al administrador del sistema"
+    },
+    "passwordless": {
+      "completingSignIn": "Iniciando su sesión...",
+      "completeErrorTitle": "No pudimos iniciar su sesión",
+      "requestNewLink": "Solicitar un nuevo enlace",
+      "codeTitle": "Su código de inicio de sesión",
+      "codeInstructions": "Abrió el enlace de inicio de sesión en un dispositivo o navegador diferente. Introduzca este código en la pantalla de inicio de sesión donde lo solicitó originalmente.",
+      "codeCloseNotice": "Puede cerrar esta ventana una vez que haya introducido el código.",
+      "expiredTitle": "Este enlace de inicio de sesión ya no es válido",
+      "expiredBody": "El enlace puede haber expirado o ya haberse utilizado. Solicite uno nuevo desde la página de inicio de sesión; solo toma un momento."
     },
     "errors": {
       "accessDenied": "Acceso denegado. Es posible que tu cuenta esté inactiva o que no tengas permiso para iniciar sesión.",
@@ -5233,7 +5258,6 @@
         "encrypted": "Cifrado",
         "encryptedHelp": "Este campo está cifrado y almacenado de forma segura",
         "changeCredential": "Cambiar",
-        "leaveBlankToKeep": "Déjelo en blanco para conservar el valor existente",
         "apiKeyWarningTitle": "Aviso de autenticación de clave API",
         "apiKeyWarningDescription": "Con la autenticación mediante clave API, es posible que el informante de los problemas creados no coincida con el usuario de TestPlanIt que los creó, incluso cuando los correos electrónicos coinciden:",
         "apiKeyWarningPoint1": "Para configurar el reportero de Jira, la cuenta del token de API debe tener el permiso de administrador de Jira (\"Modificar reportero\"). Sin este permiso, Jira ignora al reportero y el propietario del token de API se registra como el creador.",
@@ -7679,6 +7703,11 @@
       "singleUseNotice": "Por su seguridad, este enlace solo se puede usar una vez. Solicite un nuevo enlace si necesita iniciar sesión de nuevo.",
       "disclaimer": "Si no solicitaste este correo electrónico, puedes ignorarlo sin problema.",
       "textBody": "Inicie sesión en TestPlanIt\n\nHaga clic en el siguiente enlace para iniciar sesión:\n{url}\n\nPor su seguridad, este enlace solo se puede usar una vez. Solicite un nuevo enlace si necesita iniciar sesión de nuevo.\n\nSi no solicitó este correo electrónico, puede ignorarlo con seguridad."
+    },
+    "passwordless": {
+      "codeIntro": "¿Está abriendo esto en un dispositivo diferente? Introduzca este código en la pantalla de inicio de sesión donde solicitó el enlace:",
+      "deviceNotice": "Este enlace inicia su sesión desde el navegador donde lo solicitó. Si lo abre en cualquier otro lugar, se le mostrará el código anterior para introducirlo en su ventana original.",
+      "textBody": "Inicie sesión en TestPlanIt\n\nHaga clic en el siguiente enlace para iniciar sesión:\n{url}\n\n¿Está abriendo esto en un dispositivo diferente? Introduzca este código en la pantalla de inicio de sesión donde solicitó el enlace: {code}\n\nSi no solicitó este correo electrónico, puede ignorarlo con seguridad."
     }
   },
   "comments": {

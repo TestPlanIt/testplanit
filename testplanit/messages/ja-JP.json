@@ -1085,12 +1085,37 @@
         "error": "マジックリンクの送信に失敗しました。もう一度お試しください。",
         "backToSignIn": "サインインに戻る"
       },
+      "passwordless": {
+        "waitingInstructions": "メール内のリンクをクリックしてこのブラウザからサインインするか、以下にメール内のコードを入力してください。",
+        "codeLabel": "サインインコード",
+        "verifyCode": "コードを確認",
+        "verifying": "確認中…",
+        "invalidCode": "そのコードは正しくありません。メールを確認して、もう一度お試しください。",
+        "codeExpired": "このサインインリクエストは期限切れです。新しいリンクをリクエストしてください。",
+        "tooManyAttempts": "誤った試行が多すぎます。もう一度試すには新しいリンクをリクエストしてください。",
+        "windowLost": "このウィンドウではサインインを完了できなくなりました。新しいリンクをリクエストしてください。",
+        "genericError": "サインインできませんでした。新しいリンクをリクエストして、もう一度お試しください。",
+        "tooManyRequests": "サインインのリクエストが多すぎます。しばらく待ってから、もう一度お試しください。",
+        "haveCode": "サインインコードをお持ちですか？",
+        "codeEntryDescription": "サインインメールに記載されているコードを入力してください。コードはリンクをリクエストしたブラウザでのみ有効です。",
+        "backToRequest": "代わりに新しいリンクをリクエスト"
+      },
       "twoFactor": {
         "title": "二要素認証",
         "description": "認証アプリからの 6 桁のコードを入力するか、バックアップ コードを使用します。"
       },
       "troubleSigningIn": "サインインに問題がありますか?",
       "contactAdmin": "システム管理者に問い合わせる"
+    },
+    "passwordless": {
+      "completingSignIn": "サインインしています…",
+      "completeErrorTitle": "サインインできませんでした",
+      "requestNewLink": "新しいリンクをリクエスト",
+      "codeTitle": "あなたのサインインコード",
+      "codeInstructions": "サインインリンクを別のデバイスまたはブラウザで開きました。最初にリクエストしたサインイン画面でこのコードを入力してください。",
+      "codeCloseNotice": "コードを入力したら、このウィンドウを閉じても構いません。",
+      "expiredTitle": "このサインインリンクは無効になりました",
+      "expiredBody": "リンクは期限切れか、既に使用されている可能性があります。サインインページから新しいリンクをリクエストしてください — すぐに完了します。"
     },
     "errors": {
       "accessDenied": "アクセスが拒否されました。アカウントが非アクティブであるか、サインインする権限がない可能性があります。",
@@ -5233,7 +5258,6 @@
         "encrypted": "暗号化された",
         "encryptedHelp": "このフィールドは暗号化され、安全に保存されます",
         "changeCredential": "変化",
-        "leaveBlankToKeep": "既存の値を保持するには空欄のままにしてください",
         "apiKeyWarningTitle": "APIキー認証に関するお知らせ",
         "apiKeyWarningDescription": "APIキー認証の場合、作成された課題の報告者が、課題を作成したTestPlanItユーザーと一致しない可能性があります。たとえメールアドレスが一致していても同様です。",
         "apiKeyWarningPoint1": "Jiraのレポーターを設定するには、APIトークンアカウントにJira管理者（「レポーターの変更」）権限が必要です。この権限がない場合、Jiraはレポーターを無視し、APIトークンの所有者が作成者として記録されます。",
@@ -7679,6 +7703,11 @@
       "singleUseNotice": "セキュリティ保護のため、このリンクは一度しか使用できません。再度サインインする必要がある場合は、新しいリンクをリクエストしてください。",
       "disclaimer": "このメールをリクエストしていない場合は、無視していただいて構いません。",
       "textBody": "TestPlanItにサインイン\n\n下のリンクをクリックしてサインインしてください：\n{url}\n\nセキュリティ保護のため、このリンクは一度しか使用できません。再度サインインする必要がある場合は、新しいリンクをリクエストしてください。\n\nこのメールに心当たりがない場合は、無視していただいて構いません。"
+    },
+    "passwordless": {
+      "codeIntro": "別のデバイスでこれを開いていますか？リンクをリクエストしたサインイン画面でこのコードを入力してください：",
+      "deviceNotice": "このリンクは、リクエストしたブラウザからサインインします。他の場所で開いた場合は、上記のコードが表示されるので、元のウィンドウに入力してください。",
+      "textBody": "TestPlanItにサインイン\n\n下のリンクをクリックしてサインインしてください：\n{url}\n\n別のデバイスでこれを開いていますか？リンクをリクエストしたサインイン画面で次のコードを入力してください：{code}\n\nこのメールに心当たりがない場合は、無視していただいて構いません。"
     }
   },
   "comments": {
@@ -7862,7 +7891,7 @@
     "renameConfirm": "名前を変更する",
     "renameNoRefsToast": "パラメータ名が変更されました（既存の参照はありません）",
     "selectSourceWarningTitle": "\"@{name} \"のSELECTソースを変更しますか？",
-    "selectSourceWarningDescription": "このパラメータの既存のデータセット値が新しいリストに存在しない可能性があります。この変更後、{invalidCount, plural, =1 {#件の行} other {#件の行}}に対応が必要になります。続行しますか？",
+    "selectSourceWarningDescription": "Existing dataset values for this parameter may not exist in the new list. {invalidCount, plural, =1 {# row will} other {# rows will}} need attention after this change. Continue?",
     "selectSourceConfirm": "ソースを変更する",
     "datasetRowSelectAria": "行を選択",
     "datasetSelectAllPageTooltip": "このページ上のすべての行を選択するには、クリックしてください。Shiftキーを押しながらクリックすると、すべてのページのすべての行を選択できます。",

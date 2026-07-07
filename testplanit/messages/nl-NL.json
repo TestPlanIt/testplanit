@@ -1085,12 +1085,37 @@
         "error": "Het verzenden van de magische link is mislukt. Probeer het opnieuw.",
         "backToSignIn": "Terug naar inloggen"
       },
+      "passwordless": {
+        "waitingInstructions": "Klik op de link in de e-mail om u vanuit deze browser aan te melden, of voer de code uit de e-mail hieronder in.",
+        "codeLabel": "Aanmeldcode",
+        "verifyCode": "Code verifiëren",
+        "verifying": "Bezig met controleren...",
+        "invalidCode": "Die code is niet juist. Controleer de e-mail en probeer het opnieuw.",
+        "codeExpired": "Dit aanmeldingsverzoek is verlopen. Vraag een nieuwe link aan.",
+        "tooManyAttempts": "Te veel onjuiste pogingen. Vraag een nieuwe link aan om het opnieuw te proberen.",
+        "windowLost": "Dit venster kan het aanmelden niet meer voltooien. Vraag een nieuwe link aan.",
+        "genericError": "We konden u niet aanmelden. Vraag een nieuwe link aan en probeer het opnieuw.",
+        "tooManyRequests": "Te veel aanmeldingsverzoeken. Wacht even en probeer het opnieuw.",
+        "haveCode": "Hebt u al een aanmeldcode?",
+        "codeEntryDescription": "Voer de code uit uw aanmeldings-e-mail in. Codes werken alleen in de browser waar u de link hebt aangevraagd.",
+        "backToRequest": "Vraag in plaats daarvan een nieuwe link aan"
+      },
       "twoFactor": {
         "title": "Tweefactorauthenticatie",
         "description": "Voer de 6-cijferige code van uw authenticatie-app in of gebruik een reservecode."
       },
       "troubleSigningIn": "Problemen met inloggen?",
       "contactAdmin": "Neem contact op met de systeembeheerder."
+    },
+    "passwordless": {
+      "completingSignIn": "U wordt aangemeld...",
+      "completeErrorTitle": "We konden u niet aanmelden",
+      "requestNewLink": "Vraag een nieuwe link aan",
+      "codeTitle": "Uw aanmeldcode",
+      "codeInstructions": "U hebt de aanmeldingslink geopend op een ander apparaat of in een andere browser. Voer deze code in op het aanmeldingsscherm waar u deze oorspronkelijk hebt aangevraagd.",
+      "codeCloseNotice": "U kunt dit venster sluiten zodra u de code hebt ingevoerd.",
+      "expiredTitle": "Deze aanmeldingslink is niet meer geldig",
+      "expiredBody": "De link is mogelijk verlopen of al gebruikt. Vraag een nieuwe aan via de aanmeldingspagina — dit duurt maar even."
     },
     "errors": {
       "accessDenied": "Toegang geweigerd. Uw account is mogelijk inactief of u hebt geen toestemming om u aan te melden.",
@@ -5233,7 +5258,6 @@
         "encrypted": "Versleuteld",
         "encryptedHelp": "Dit veld is gecodeerd en veilig opgeslagen",
         "changeCredential": "Wijziging",
-        "leaveBlankToKeep": "Laat leeg om de bestaande waarde te behouden",
         "apiKeyWarningTitle": "Kennisgeving API-sleutelauthenticatie",
         "apiKeyWarningDescription": "Bij authenticatie met een API-sleutel komt de melder van aangemaakte problemen mogelijk niet overeen met de TestPlanIt-gebruiker die ze heeft aangemaakt, zelfs als de e-mailadressen overeenkomen:",
         "apiKeyWarningPoint1": "Voor het instellen van de Jira-reporter is het vereist dat het API-tokenaccount beheerdersrechten (\"Reporter wijzigen\") heeft voor Jira. Zonder deze rechten negeert Jira de reporter en wordt de eigenaar van het API-token als maker geregistreerd.",
@@ -7679,6 +7703,11 @@
       "singleUseNotice": "Voor uw veiligheid kan deze link maar één keer worden gebruikt. Vraag een nieuwe link aan als u opnieuw moet aanmelden.",
       "disclaimer": "Als u deze e-mail niet hebt aangevraagd, kunt u deze gerust negeren.",
       "textBody": "Aanmelden bij TestPlanIt\n\nKlik op de onderstaande link om u aan te melden:\n{url}\n\nVoor uw veiligheid kan deze link maar één keer worden gebruikt. Vraag een nieuwe link aan als u opnieuw moet aanmelden.\n\nAls u deze e-mail niet hebt aangevraagd, kunt u deze veilig negeren."
+    },
+    "passwordless": {
+      "codeIntro": "Open u dit op een ander apparaat? Voer deze code in op het aanmeldingsscherm waar u de link hebt aangevraagd:",
+      "deviceNotice": "Deze link meldt u aan vanuit de browser waar u deze hebt aangevraagd. Als u deze ergens anders opent, krijgt u de bovenstaande code te zien om in uw oorspronkelijke venster in te voeren.",
+      "textBody": "Aanmelden bij TestPlanIt\n\nKlik op de onderstaande link om u aan te melden:\n{url}\n\nOpent u dit op een ander apparaat? Voer deze code in op het aanmeldingsscherm waar u de link hebt aangevraagd: {code}\n\nAls u deze e-mail niet hebt aangevraagd, kunt u deze veilig negeren."
     }
   },
   "comments": {

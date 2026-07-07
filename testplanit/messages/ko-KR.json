@@ -1085,12 +1085,37 @@
         "error": "매직링크 전송에 실패했습니다. 다시 시도해 주세요.",
         "backToSignIn": "로그인 페이지로 돌아가기"
       },
+      "passwordless": {
+        "waitingInstructions": "이메일의 링크를 클릭하여 이 브라우저에서 로그인하거나, 아래에 이메일의 코드를 입력하세요.",
+        "codeLabel": "로그인 코드",
+        "verifyCode": "코드 확인",
+        "verifying": "확인 중...",
+        "invalidCode": "코드가 올바르지 않습니다. 이메일을 확인하고 다시 시도하세요.",
+        "codeExpired": "이 로그인 요청이 만료되었습니다. 새 링크를 요청하세요.",
+        "tooManyAttempts": "잘못된 시도가 너무 많습니다. 다시 시도하려면 새 링크를 요청하세요.",
+        "windowLost": "이 창에서는 로그인을 완료할 수 없습니다. 새 링크를 요청하세요.",
+        "genericError": "로그인할 수 없습니다. 새 링크를 요청하고 다시 시도하세요.",
+        "tooManyRequests": "로그인 요청이 너무 많습니다. 잠시 기다린 후 다시 시도하세요.",
+        "haveCode": "이미 로그인 코드가 있으신가요?",
+        "codeEntryDescription": "로그인 이메일의 코드를 입력하세요. 코드는 링크를 요청한 브라우저에서만 작동합니다.",
+        "backToRequest": "대신 새 링크 요청"
+      },
       "twoFactor": {
         "title": "2단계 인증",
         "description": "인증 앱에서 6자리 코드를 입력하거나 백업 코드를 사용하세요."
       },
       "troubleSigningIn": "로그인에 문제가 있으신가요?",
       "contactAdmin": "시스템 관리자에게 문의하십시오."
+    },
+    "passwordless": {
+      "completingSignIn": "로그인하는 중...",
+      "completeErrorTitle": "로그인할 수 없습니다",
+      "requestNewLink": "새 링크 요청",
+      "codeTitle": "로그인 코드",
+      "codeInstructions": "다른 기기나 브라우저에서 로그인 링크를 열었습니다. 원래 요청한 로그인 화면에서 이 코드를 입력하세요.",
+      "codeCloseNotice": "코드를 입력한 후에는 이 창을 닫아도 됩니다.",
+      "expiredTitle": "이 로그인 링크는 더 이상 유효하지 않습니다",
+      "expiredBody": "링크가 만료되었거나 이미 사용되었을 수 있습니다. 로그인 페이지에서 새 링크를 요청하세요 — 잠깐이면 됩니다."
     },
     "errors": {
       "accessDenied": "접근이 거부되었습니다. 계정이 비활성화되었거나 로그인 권한이 없을 수 있습니다.",
@@ -5233,7 +5258,6 @@
         "encrypted": "암호화됨",
         "encryptedHelp": "이 필드는 암호화되어 안전하게 저장됩니다.",
         "changeCredential": "변화",
-        "leaveBlankToKeep": "기존 값을 유지하려면 비워 두십시오",
         "apiKeyWarningTitle": "API 키 인증 알림",
         "apiKeyWarningDescription": "API 키 인증을 사용하는 경우, 이메일 주소가 일치하더라도 생성된 이슈의 보고자가 해당 이슈를 생성한 TestPlanIt 사용자와 일치하지 않을 수 있습니다.",
         "apiKeyWarningPoint1": "Jira 리포터를 설정하려면 API 토큰 계정에 Jira 관리자 권한(\"리포터 수정\")이 있어야 합니다. 이 권한이 없으면 Jira는 리포터를 무시하고 API 토큰 소유자를 생성자로 기록합니다.",
@@ -7679,6 +7703,11 @@
       "singleUseNotice": "보안을 위해 이 링크는 한 번만 사용할 수 있습니다. 다시 로그인해야 하는 경우 새 링크를 요청하세요.",
       "disclaimer": "이 이메일을 요청하지 않으셨다면 무시하셔도 됩니다.",
       "textBody": "TestPlanIt에 로그인\n\n로그인하려면 아래 링크를 클릭하세요:\n{url}\n\n보안을 위해 이 링크는 한 번만 사용할 수 있습니다. 다시 로그인해야 하는 경우 새 링크를 요청하세요.\n\n이 이메일을 요청하지 않으셨다면 무시하셔도 안전합니다."
+    },
+    "passwordless": {
+      "codeIntro": "다른 기기에서 여셨나요? 링크를 요청한 로그인 화면에서 이 코드를 입력하세요:",
+      "deviceNotice": "이 링크는 요청한 브라우저에서 로그인됩니다. 다른 곳에서 열면 원래 창에 입력할 위의 코드가 표시됩니다.",
+      "textBody": "TestPlanIt에 로그인\n\n로그인하려면 아래 링크를 클릭하세요:\n{url}\n\n다른 기기에서 여셨나요? 링크를 요청한 로그인 화면에서 다음 코드를 입력하세요: {code}\n\n이 이메일을 요청하지 않으셨다면 무시하셔도 안전합니다."
     }
   },
   "comments": {

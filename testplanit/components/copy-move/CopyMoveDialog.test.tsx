@@ -78,6 +78,13 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
+// Folder-subtree cases are fetched via a POST hook (recursive-CTE endpoint) to
+// avoid the GET query-string 414 on deep trees; mock it to the same empty shape
+// the ZenStack repositoryCases.useFindMany mock returned for folderCases.
+vi.mock("~/hooks/useRepositoryCasesByDescendants", () => ({
+  useFindManyRepositoryCasesByDescendants: () => ({ data: [] }),
+}));
+
 vi.mock("~/lib/navigation", () => ({
   Link: ({ href, children, className }: any) => (
     <a href={href} className={className}>

@@ -35,8 +35,18 @@ import {
  */
 
 export interface UseVirtualizedInfiniteListOptions {
-  /** Number of items currently loaded (the accumulated array length). */
+  /** Number of rows currently rendered (the virtualizer item count). */
   count: number;
+  /**
+   * Number of underlying items loaded (pages × page size). Defaults to `count`.
+   * Pass this when the *rendered* `count` can stay flat across fetched pages —
+   * e.g. audit rows that collapse into a shared parent group, so an entire page
+   * of raw rows can roll into a single visible lead row. The load-more guard
+   * and the viewport-fill retry key on this instead of `count`, so pagination
+   * keeps advancing (and can page past a giant collapsed group) even when the
+   * visible row count doesn't grow.
+   */
+  loadedCount?: number;
   /** Estimated row height in px, used before dynamic measurement settles. */
   estimateSize?: number;
   /** Rows rendered beyond the visible window on each side. */
@@ -80,6 +90,7 @@ const useIsomorphicLayoutEffect =
 
 export function useVirtualizedInfiniteList({
   count,
+  loadedCount,
   estimateSize = 140,
   overscan = 6,
   hasMore,
@@ -91,6 +102,12 @@ export function useVirtualizedInfiniteList({
   boundToViewport = true,
   resetKey,
 }: UseVirtualizedInfiniteListOptions) {
+  // The "a page actually landed" signal that releases the load-more guard and
+  // re-attempts the viewport fill. Falls back to the rendered `count` for
+  // un-grouped consumers, where every fetched page grows the visible list; for
+  // grouped consumers the caller passes the raw item count so a page whose rows
+  // all roll into an existing parent group still advances pagination.
+  const loadGuardKey = loadedCount ?? count;
   // A callback ref (rather than a plain useRef) so the effects re-run when the
   // scroll container actually mounts. The container is often rendered *after*
   // this hook (e.g. only once search results arrive), so a one-shot mount
@@ -153,13 +170,16 @@ export function useVirtualizedInfiniteList({
     s.onLoadMore();
   }, []);
 
-  // Release the guard only when `count` actually changes — a new page landed
-  // (grew) or the scope reset (shrank). Keying the reset on real data arrival,
-  // NOT on the `isLoading` flag flickering, is what keeps it race-free: an
-  // isLoading-based reset re-opens the exact double-fire window above.
+  // Release the guard only when a page actually lands (`loadGuardKey` grew) or
+  // the scope resets (shrank). Keying the reset on real data arrival, NOT on the
+  // `isLoading` flag flickering, is what keeps it race-free: an isLoading-based
+  // reset re-opens the exact double-fire window above. Using `loadGuardKey`
+  // (raw item count) rather than the rendered `count` is what lets pagination
+  // advance when a whole page of rows collapses into an already-present parent
+  // group and the visible `count` doesn't change.
   useEffect(() => {
     pendingLoadRef.current = false;
-  }, [count]);
+  }, [loadGuardKey]);
 
   // Sentinel/fill path: defer to the shared guard, and only when the sentinel is
   // actually in view (short result set, or scrolled to the bottom).
@@ -193,9 +213,12 @@ export function useVirtualizedInfiniteList({
 
   // After a page settles (or hasMore flips), pull again if the sentinel is
   // still visible — fills the viewport without waiting for a scroll event.
+  // Keys on `loadGuardKey` too so a page that didn't grow the visible `count`
+  // (all rows rolled into an existing parent group) still re-attempts the fill,
+  // letting the list page past a giant collapsed group.
   useEffect(() => {
     maybeLoadMore();
-  }, [count, hasMore, isLoading, maybeLoadMore]);
+  }, [count, loadGuardKey, hasMore, isLoading, maybeLoadMore]);
 
   // Primary, reliable trigger: watch the virtualizer's own last-rendered row.
   // The virtualizer re-renders on every scroll (that's how it swaps the visible

@@ -1,6 +1,4 @@
 "use client";
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,8 +12,9 @@ import {
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCasesByDescendants";
 
 export interface FolderNode {
   id: number;
@@ -28,7 +27,6 @@ export interface FolderNode {
 
 interface DeleteFolderModalProps {
   folderNode: FolderNode;
-  allFolders: FolderNode[];
   refetchFolders?: () => void;
   refetchCases?: () => void;
   onDeleted?: () => void;
@@ -39,7 +37,6 @@ interface DeleteFolderModalProps {
 
 export function DeleteFolderModal({
   folderNode,
-  allFolders,
   refetchFolders,
   refetchCases,
   onDeleted,
@@ -49,85 +46,45 @@ export function DeleteFolderModal({
 }: DeleteFolderModalProps) {
   const t = useTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateManyCases } =
-    useClientQueries(schema).repositoryCases.useUpdateMany();
-  const { mutateAsync: updateFolder } =
-    useClientQueries(schema).repositoryFolders.useUpdate();
   const { projectId } = useParams<{ projectId: string }>();
 
-  // Helper to get all descendant folder IDs (including self)
-  const getDescendantFolderIds = useCallback(
-    (folderId: number, folders: FolderNode[]): number[] => {
-      const children = folders.filter((f) => f.parent === folderId);
-      let ids = [folderId];
-      children.forEach((child) => {
-        ids = ids.concat(getDescendantFolderIds(child.id, folders));
-      });
-      return ids;
-    },
-    []
-  );
+  // Count the cases that will be deleted for the confirmation message. The
+  // server walks the folder subtree from the single root folderId (recursive
+  // CTE) and returns only the count, so a deep tree never has to enumerate
+  // every descendant folder id in the request — that is what previously
+  // overflowed the GET query string and returned HTTP 414.
+  const { totalCount, isLoading: isCasesLoading } =
+    useFindManyRepositoryCasesByDescendants({
+      projectId: Number(projectId),
+      folderId: folderNode.id,
+      where: { isDeleted: false },
+      enabled: open && !!projectId && folderNode.id !== 0,
+    });
 
-  // All folder IDs to delete
-  const folderIdsToDelete = useMemo(
-    () => getDescendantFolderIds(folderNode.id, allFolders),
-    [folderNode.id, allFolders, getDescendantFolderIds]
-  );
-
-  // Fetch all cases in these folders when dialog is open
-  const { data: cases, isLoading: isCasesLoading } = useClientQueries(
-    schema
-  ).repositoryCases.useFindMany(
-    open && projectId
-      ? {
-          where: {
-            projectId: Number(projectId),
-            folderId: { in: folderIdsToDelete },
-            isDeleted: false,
-          },
-          select: { id: true },
-        }
-      : undefined,
-    { enabled: open && !!projectId }
-  );
-
-  // Count all cases in these folders (from API if available, fallback to old logic)
-  const caseCount = open
-    ? isCasesLoading
-      ? null
-      : cases
-        ? cases.length
-        : 0
-    : 0;
+  const caseCount = open ? (isCasesLoading ? null : (totalCount ?? 0)) : 0;
 
   if (!canAddEdit || folderNode.id === 0) return null;
 
   const handleDelete = async () => {
     setIsSubmitting(true);
     try {
-      // Mark all cases in these folders as deleted
-      await updateManyCases({
-        data: { isDeleted: true },
-        where: { folderId: { in: folderIdsToDelete } },
-      });
-
-      // Rename and mark each folder as deleted individually
-      // Appending timestamp to name frees up the original name for reuse
-      // while avoiding unique constraint violations on multiple soft-deletes
-      const deletionTimestamp = Date.now();
-      await Promise.all(
-        folderIdsToDelete.map((folderId) => {
-          const folder = allFolders.find((f) => f.id === folderId);
-          const originalName = folder?.text || `folder_${folderId}`;
-          return updateFolder({
-            where: { id: folderId },
-            data: {
-              isDeleted: true,
-              name: `${originalName}_deleted_${deletionTimestamp}`,
-            },
-          });
-        })
+      // Delete the whole subtree in one request. The server resolves every
+      // descendant folder and soft-deletes the folders (bulk, with the
+      // name-freeing rename) and their cases atomically — replacing the old
+      // client-side fan-out of one PUT per folder, which exhausted browser
+      // connections (net::ERR_INSUFFICIENT_RESOURCES) on large trees.
+      const res = await fetch(
+        `/api/projects/${projectId}/folders/delete-subtree`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ folderId: folderNode.id }),
+        }
       );
+
+      if (!res.ok) {
+        throw new Error(`Delete failed (status ${res.status})`);
+      }
 
       onClose();
       toast.success(t("repository.deleteFolder.success"));
@@ -136,6 +93,7 @@ export function DeleteFolderModal({
       refetchCases?.();
     } catch (err: any) {
       console.error("Error deleting folder(s):", err);
+      toast.error(t("common.errors.somethingWentWrong"));
     } finally {
       setIsSubmitting(false);
     }

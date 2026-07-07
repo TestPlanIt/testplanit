@@ -1085,12 +1085,37 @@
         "error": "Impossibile inviare il link magico. Riprova.",
         "backToSignIn": "Torna alla pagina di accesso"
       },
+      "passwordless": {
+        "waitingInstructions": "Fai clic sul link nell'email per accedere da questo browser, oppure inserisci il codice dall'email qui sotto.",
+        "codeLabel": "Codice di accesso",
+        "verifyCode": "Verifica codice",
+        "verifying": "Verifica in corso...",
+        "invalidCode": "Il codice non è corretto. Controlla l'email e riprova.",
+        "codeExpired": "Questa richiesta di accesso è scaduta. Richiedi un nuovo link.",
+        "tooManyAttempts": "Troppi tentativi errati. Richiedi un nuovo link per riprovare.",
+        "windowLost": "Questa finestra non può più completare l'accesso. Richiedi un nuovo link.",
+        "genericError": "Non è stato possibile completare l'accesso. Richiedi un nuovo link e riprova.",
+        "tooManyRequests": "Troppe richieste di accesso. Attendi un momento e riprova.",
+        "haveCode": "Hai già un codice di accesso?",
+        "codeEntryDescription": "Inserisci il codice dalla tua email di accesso. I codici funzionano solo nel browser in cui hai richiesto il link.",
+        "backToRequest": "Richiedi invece un nuovo link"
+      },
       "twoFactor": {
         "title": "Autenticazione a due fattori",
         "description": "Inserisci il codice a 6 cifre generato dalla tua app di autenticazione oppure utilizza un codice di backup."
       },
       "troubleSigningIn": "Problemi di accesso?",
       "contactAdmin": "Contattare l'amministratore di sistema"
+    },
+    "passwordless": {
+      "completingSignIn": "Accesso in corso...",
+      "completeErrorTitle": "Non è stato possibile completare l'accesso",
+      "requestNewLink": "Richiedi un nuovo link",
+      "codeTitle": "Il tuo codice di accesso",
+      "codeInstructions": "Hai aperto il link di accesso su un dispositivo o browser diverso. Inserisci questo codice nella schermata di accesso da cui lo hai originariamente richiesto.",
+      "codeCloseNotice": "Puoi chiudere questa finestra una volta inserito il codice.",
+      "expiredTitle": "Questo link di accesso non è più valido",
+      "expiredBody": "Il link potrebbe essere scaduto o già utilizzato. Richiedine uno nuovo dalla pagina di accesso — richiede solo un momento."
     },
     "errors": {
       "accessDenied": "Accesso negato. Il tuo account potrebbe essere inattivo o non hai l'autorizzazione per accedere.",
@@ -5233,7 +5258,6 @@
         "encrypted": "Criptato",
         "encryptedHelp": "Questo campo è crittografato e archiviato in modo sicuro",
         "changeCredential": "Modifica",
-        "leaveBlankToKeep": "Lascia vuoto per mantenere il valore esistente",
         "apiKeyWarningTitle": "Avviso di autenticazione della chiave API",
         "apiKeyWarningDescription": "Con l'autenticazione tramite chiave API, l'autore della segnalazione dei problemi creati potrebbe non corrispondere all'utente di TestPlanIt che li ha creati, anche se gli indirizzi email coincidono:",
         "apiKeyWarningPoint1": "Per impostare il reporter di Jira, l'account del token API deve disporre dell'autorizzazione di amministratore di Jira (\"Modifica reporter\"). In caso contrario, Jira ignora il reporter e il proprietario del token API viene registrato come creatore.",
@@ -7679,6 +7703,11 @@
       "singleUseNotice": "Per motivi di sicurezza, questo link può essere utilizzato solo una volta. Richiedi un nuovo link se devi accedere di nuovo.",
       "disclaimer": "Se non hai richiesto questa email, puoi tranquillamente ignorarla.",
       "textBody": "Accedi a TestPlanIt\n\nFai clic sul link seguente per accedere:\n{url}\n\nPer motivi di sicurezza, questo link può essere utilizzato solo una volta. Richiedi un nuovo link se devi accedere di nuovo.\n\nSe non hai richiesto questa email, puoi ignorarla in tutta sicurezza."
+    },
+    "passwordless": {
+      "codeIntro": "Stai aprendo questo link su un dispositivo diverso? Inserisci questo codice nella schermata di accesso da cui hai richiesto il link:",
+      "deviceNotice": "Questo link ti consente di accedere dal browser in cui lo hai richiesto. Se lo apri altrove, ti verrà mostrato il codice sopra da inserire nella finestra originale.",
+      "textBody": "Accedi a TestPlanIt\n\nFai clic sul link seguente per accedere:\n{url}\n\nStai aprendo questo link su un dispositivo diverso? Inserisci questo codice nella schermata di accesso da cui hai richiesto il link: {code}\n\nSe non hai richiesto questa email, puoi ignorarla in tutta sicurezza."
     }
   },
   "comments": {
@@ -7862,7 +7891,7 @@
     "renameConfirm": "Rinominare",
     "renameNoRefsToast": "Parametro rinominato (nessun riferimento esistente)",
     "selectSourceWarningTitle": "Modificare l'origine SELECT per \"@{name}\"?",
-    "selectSourceWarningDescription": "I valori del set di dati esistenti per questo parametro potrebbero non essere presenti nella nuova lista. {invalidCount, plural, =1 {# riga richiederà} other {# righe richiederanno}} attenzione dopo questa modifica. Continuare?",
+    "selectSourceWarningDescription": "Existing dataset values for this parameter may not exist in the new list. {invalidCount, plural, =1 {# row will} other {# rows will}} need attention after this change. Continue?",
     "selectSourceConfirm": "Cambia sorgente",
     "datasetRowSelectAria": "Seleziona riga",
     "datasetSelectAllPageTooltip": "Fai clic per selezionare tutte le righe di questa pagina. Fai clic tenendo premuto Maiusc per selezionare tutte le righe di tutte le pagine.",

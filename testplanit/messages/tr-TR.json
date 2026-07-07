@@ -1085,12 +1085,37 @@
         "error": "Sihirli bağlantı gönderilemedi. Lütfen tekrar deneyin.",
         "backToSignIn": "Giriş sayfasına geri dön"
       },
+      "passwordless": {
+        "waitingInstructions": "Bu tarayıcıdan giriş yapmak için e-postadaki bağlantıya tıklayın veya aşağıya e-postadaki kodu girin.",
+        "codeLabel": "Giriş kodu",
+        "verifyCode": "Kodu doğrula",
+        "verifying": "Doğrulanıyor...",
+        "invalidCode": "Bu kod doğru değil. E-postayı kontrol edin ve tekrar deneyin.",
+        "codeExpired": "Bu giriş isteğinin süresi doldu. Yeni bir bağlantı isteyin.",
+        "tooManyAttempts": "Çok fazla yanlış deneme yapıldı. Tekrar denemek için yeni bir bağlantı isteyin.",
+        "windowLost": "Bu pencere artık girişi tamamlayamıyor. Yeni bir bağlantı isteyin.",
+        "genericError": "Girişinizi tamamlayamadık. Yeni bir bağlantı isteyip tekrar deneyin.",
+        "tooManyRequests": "Çok fazla giriş isteği yapıldı. Lütfen bir süre bekleyip tekrar deneyin.",
+        "haveCode": "Zaten bir giriş kodunuz mu var?",
+        "codeEntryDescription": "Giriş e-postanızdaki kodu girin. Kodlar yalnızca bağlantıyı istediğiniz tarayıcıda çalışır.",
+        "backToRequest": "Bunun yerine yeni bir bağlantı iste"
+      },
       "twoFactor": {
         "title": "İki Faktörlü Kimlik Doğrulama",
         "description": "Kimlik doğrulama uygulamanızdan aldığınız 6 haneli kodu girin veya yedek bir kod kullanın."
       },
       "troubleSigningIn": "Giriş yaparken sorun mu yaşıyorsunuz?",
       "contactAdmin": "Sistem yöneticisiyle iletişime geçin."
+    },
+    "passwordless": {
+      "completingSignIn": "Giriş yapılıyor...",
+      "completeErrorTitle": "Girişinizi tamamlayamadık",
+      "requestNewLink": "Yeni bir bağlantı iste",
+      "codeTitle": "Giriş kodunuz",
+      "codeInstructions": "Giriş bağlantısını farklı bir cihazda veya tarayıcıda açtınız. Bu kodu, orijinal olarak istekte bulunduğunuz giriş ekranına girin.",
+      "codeCloseNotice": "Kodu girdikten sonra bu pencereyi kapatabilirsiniz.",
+      "expiredTitle": "Bu giriş bağlantısı artık geçerli değil",
+      "expiredBody": "Bağlantının süresi dolmuş veya zaten kullanılmış olabilir. Giriş sayfasından yeni bir tane isteyin — yalnızca bir dakikanızı alır."
     },
     "errors": {
       "accessDenied": "Erişim engellendi. Hesabınız devre dışı olabilir veya oturum açma izniniz olmayabilir.",
@@ -5233,7 +5258,6 @@
         "encrypted": "Şifrelenmiş",
         "encryptedHelp": "Bu alan şifrelenmiş ve güvenli bir şekilde saklanmaktadır.",
         "changeCredential": "Değiştirmek",
-        "leaveBlankToKeep": "Mevcut değeri korumak için boş bırakın",
         "apiKeyWarningTitle": "API Anahtarı Kimlik Doğrulama Bildirimi",
         "apiKeyWarningDescription": "API anahtarı kimlik doğrulamasıyla, oluşturulan sorunlardaki raporu hazırlayan kişi, e-posta adresleri eşleşse bile, sorunları oluşturan TestPlanIt kullanıcısıyla aynı olmayabilir:",
         "apiKeyWarningPoint1": "Jira raporlayıcısını ayarlamak için API belirteci hesabının Jira yöneticisi (\"Raporlayıcıyı Değiştir\") iznine sahip olması gerekir. Bu izin olmadan Jira raporlayıcıyı yok sayar ve API belirteci sahibi oluşturucu olarak kaydedilir.",
@@ -7679,6 +7703,11 @@
       "singleUseNotice": "Güvenliğiniz için bu bağlantı yalnızca bir kez kullanılabilir. Tekrar giriş yapmanız gerekirse yeni bir bağlantı isteyin.",
       "disclaimer": "Bu e-postayı siz talep etmediyseniz, güvenle görmezden gelebilirsiniz.",
       "textBody": "TestPlanIt'e giriş yapın\n\nGiriş yapmak için aşağıdaki bağlantıya tıklayın:\n{url}\n\nGüvenliğiniz için bu bağlantı yalnızca bir kez kullanılabilir. Tekrar giriş yapmanız gerekirse yeni bir bağlantı isteyin.\n\nBu e-postayı siz talep etmediyseniz, güvenle yok sayabilirsiniz."
+    },
+    "passwordless": {
+      "codeIntro": "Bunu farklı bir cihazda mı açıyorsunuz? Bağlantıyı istediğiniz giriş ekranına bu kodu girin:",
+      "deviceNotice": "Bu bağlantı, istekte bulunduğunuz tarayıcıdan giriş yapmanızı sağlar. Başka bir yerde açarsanız, orijinal pencerenize girmeniz için yukarıdaki kod gösterilecektir.",
+      "textBody": "TestPlanIt'e giriş yapın\n\nGiriş yapmak için aşağıdaki bağlantıya tıklayın:\n{url}\n\nBunu farklı bir cihazda mı açıyorsunuz? Bağlantıyı istediğiniz giriş ekranına bu kodu girin: {code}\n\nBu e-postayı siz talep etmediyseniz, güvenle yok sayabilirsiniz."
     }
   },
   "comments": {

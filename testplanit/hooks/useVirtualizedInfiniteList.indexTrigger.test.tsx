@@ -32,6 +32,7 @@ function row(index: number) {
 
 function Harness(props: {
   count: number;
+  loadedCount?: number;
   hasMore: boolean;
   isLoading: boolean;
   onLoadMore: () => void;
@@ -142,6 +143,71 @@ describe("useVirtualizedInfiniteList — virtualizer-index trigger", () => {
       <Harness count={150} hasMore isLoading={false} onLoadMore={onLoadMore} />
     );
     expect(onLoadMore).toHaveBeenCalledTimes(2);
+  });
+
+  it("advances pagination when a page lands but the visible count stays flat (rolled-up parent)", () => {
+    // Models a giant collapsed group: the whole page rolls into one parent, so
+    // the rendered `count` never grows — only the raw `loadedCount` does.
+    mockVirtualItems = [row(0)];
+    const onLoadMore = vi.fn();
+    const { rerender } = render(
+      <Harness
+        count={1}
+        loadedCount={50}
+        hasMore
+        isLoading={false}
+        onLoadMore={onLoadMore}
+        loadMoreThreshold={10}
+      />
+    );
+    // count=1: 0 >= 1 - 1 - 10 → fired once, guard set.
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+
+    // Next page landed: visible count unchanged (still one collapsed parent),
+    // but loadedCount grew — the guard must release so the next page is pulled.
+    mockVirtualItems = [row(0)];
+    rerender(
+      <Harness
+        count={1}
+        loadedCount={100}
+        hasMore
+        isLoading={false}
+        onLoadMore={onLoadMore}
+        loadMoreThreshold={10}
+      />
+    );
+    expect(onLoadMore).toHaveBeenCalledTimes(2);
+  });
+
+  it("does NOT advance when neither the visible count nor the loaded count grows", () => {
+    // No page landed (loadedCount flat) → the guard must hold, so the two
+    // triggers can't double-fire into the fetch abort loop.
+    mockVirtualItems = [row(0)];
+    const onLoadMore = vi.fn();
+    const { rerender } = render(
+      <Harness
+        count={1}
+        loadedCount={50}
+        hasMore
+        isLoading={false}
+        onLoadMore={onLoadMore}
+        loadMoreThreshold={10}
+      />
+    );
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+
+    mockVirtualItems = [row(0)];
+    rerender(
+      <Harness
+        count={1}
+        loadedCount={50}
+        hasMore
+        isLoading={false}
+        onLoadMore={onLoadMore}
+        loadMoreThreshold={10}
+      />
+    );
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
   });
 
   it("stops firing once the loaded window pulls back from the end", () => {

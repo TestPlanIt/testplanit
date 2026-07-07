@@ -36,6 +36,7 @@ import {
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useFindManyRepositoryCasesByDescendants } from "~/hooks/useRepositoryCasesByDescendants";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 import type { FolderTreeNode } from "~/workers/copyMoveWorker";
@@ -158,17 +159,17 @@ export function CopyMoveDialog({
     return new Set(folderSubtreeIds);
   }, [sourceFolderId, targetProjectId, sourceProjectId, folderSubtreeIds]);
 
-  const { data: folderCases = [] } = useClientQueries(
-    schema
-  ).repositoryCases.useFindMany(
-    folderSubtreeIds.length > 0
-      ? {
-          where: { folderId: { in: folderSubtreeIds }, isDeleted: false },
-          select: { id: true, folderId: true },
-        }
-      : undefined,
-    { enabled: folderSubtreeIds.length > 0 }
-  );
+  // Fetch every case in the source subtree via POST (single root folderId → the
+  // server resolves descendants with a recursive CTE) so a deep tree can't
+  // overflow the GET query string with a huge `folderId: { in: [...] }` array
+  // (HTTP 414). Returns the same { id, folderId } rows as the old useFindMany.
+  const { data: folderCases = [] } = useFindManyRepositoryCasesByDescendants({
+    projectId: sourceProjectId,
+    folderId: sourceFolderId ?? 0,
+    where: { isDeleted: false },
+    select: { id: true, folderId: true },
+    enabled: !!sourceFolderId,
+  });
 
   // In folder mode use cases from subtree; otherwise fall back to selectedCaseIds
   const effectiveCaseIds = useMemo(() => {

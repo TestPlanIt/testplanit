@@ -1085,12 +1085,37 @@
         "error": "發送魔法連結失敗，請重試。",
         "backToSignIn": "返回登入頁面"
       },
+      "passwordless": {
+        "waitingInstructions": "點按電子郵件中的連結以從此瀏覽器登入，或於下方輸入電子郵件中的代碼。",
+        "codeLabel": "登入代碼",
+        "verifyCode": "驗證代碼",
+        "verifying": "正在驗證……",
+        "invalidCode": "該代碼不正確。請檢查電子郵件並再試一次。",
+        "codeExpired": "此登入請求已過期。請申請新的連結。",
+        "tooManyAttempts": "錯誤嘗試次數過多。請申請新的連結以再試一次。",
+        "windowLost": "此視窗已無法完成登入。請申請新的連結。",
+        "genericError": "我們無法讓您登入。請申請新的連結並再試一次。",
+        "tooManyRequests": "登入請求過多。請稍候片刻再試一次。",
+        "haveCode": "已經有登入代碼了嗎？",
+        "codeEntryDescription": "請輸入您登入電子郵件中的代碼。代碼僅在您申請連結時所使用的瀏覽器中有效。",
+        "backToRequest": "改為申請新的連結"
+      },
       "twoFactor": {
         "title": "雙重身份驗證",
         "description": "輸入身份驗證器應用程式中的 6 位元驗證碼，或使用備用驗證碼。"
       },
       "troubleSigningIn": "登入遇到問題？",
       "contactAdmin": "請聯絡系統管理員"
+    },
+    "passwordless": {
+      "completingSignIn": "正在為您登入……",
+      "completeErrorTitle": "我們無法讓您登入",
+      "requestNewLink": "申請新的連結",
+      "codeTitle": "您的登入代碼",
+      "codeInstructions": "您在不同的裝置或瀏覽器上開啟了登入連結。請在您最初申請的登入畫面上輸入此代碼。",
+      "codeCloseNotice": "輸入代碼後，您即可關閉此視窗。",
+      "expiredTitle": "此登入連結已失效",
+      "expiredBody": "此連結可能已過期或已被使用。請從登入頁面申請新的連結 — 這只需片刻。"
     },
     "errors": {
       "accessDenied": "訪問被拒絕。您的帳戶可能已停用或您沒有登入權限。",
@@ -5233,7 +5258,6 @@
         "encrypted": "加密",
         "encryptedHelp": "該欄位已加密並安全儲存。",
         "changeCredential": "改變",
-        "leaveBlankToKeep": "留空以保留現有值",
         "apiKeyWarningTitle": "API金鑰認證通知",
         "apiKeyWarningDescription": "使用 API 金鑰驗證時，即使電子郵件地址相符，建立問題的報告者也可能與建立該問題的 TestPlanIt 使用者不符：",
         "apiKeyWarningPoint1": "設定 Jira 報告人需要 API 令牌帳戶擁有 Jira 管理員（「修改報告人」）權限。否則，Jira 將忽略該報告人，並將 API 令牌所有者記錄為建立者。",
@@ -7679,6 +7703,11 @@
       "singleUseNotice": "為了您的安全，此連結只能使用一次。若您需要再次登入，請申請新的連結。",
       "disclaimer": "如果您沒有要求收到這封郵件，您可以忽略它。",
       "textBody": "登入 TestPlanIt\n\n請點按下方連結登入：\n{url}\n\n為了您的安全，此連結只能使用一次。若您需要再次登入，請申請新的連結。\n\n若您沒有申請此電子郵件，可以安心忽略。"
+    },
+    "passwordless": {
+      "codeIntro": "在不同裝置上開啟此連結？請在您申請連結的登入畫面上輸入此代碼：",
+      "deviceNotice": "此連結會讓您從申請連結時所使用的瀏覽器登入。若您在其他地方開啟，將會顯示上方的代碼，供您在原始視窗中輸入。",
+      "textBody": "登入 TestPlanIt\n\n請點按下方連結登入：\n{url}\n\n在不同裝置上開啟此連結？請在您申請連結的登入畫面上輸入此代碼：{code}\n\n若您沒有申請此電子郵件，可以安心忽略。"
     }
   },
   "comments": {

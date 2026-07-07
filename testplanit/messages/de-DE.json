@@ -1036,7 +1036,7 @@
     "plural": {
       "case": "{count, plural, =1 {Fall} other {Fälle}}",
       "result": "{count, plural, =1 {Ergebnis} other {Ergebnisse}}",
-      "run": "{count, plural, =1 {Durchlauf} other {Durchläufe}}",
+      "run": "{count, plural, =1 {run} other {runs}}",
       "comment": "{count, plural, =1 {# Kommentar} other {# Kommentare}}"
     },
     "success": {
@@ -1085,12 +1085,37 @@
         "error": "Der magische Link konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
         "backToSignIn": "Zurück zur Anmeldeseite"
       },
+      "passwordless": {
+        "waitingInstructions": "Klicken Sie auf den Link in der E-Mail, um sich in diesem Browser anzumelden, oder geben Sie unten den Code aus der E-Mail ein.",
+        "codeLabel": "Anmeldecode",
+        "verifyCode": "Code überprüfen",
+        "verifying": "Überprüfung läuft...",
+        "invalidCode": "Dieser Code ist nicht richtig. Überprüfen Sie die E-Mail und versuchen Sie es erneut.",
+        "codeExpired": "Diese Anmeldeanfrage ist abgelaufen. Fordern Sie einen neuen Link an.",
+        "tooManyAttempts": "Zu viele fehlgeschlagene Versuche. Fordern Sie einen neuen Link an, um es erneut zu versuchen.",
+        "windowLost": "Dieses Fenster kann die Anmeldung nicht mehr abschließen. Fordern Sie einen neuen Link an.",
+        "genericError": "Wir konnten Sie nicht anmelden. Fordern Sie einen neuen Link an und versuchen Sie es erneut.",
+        "tooManyRequests": "Zu viele Anmeldeanfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
+        "haveCode": "Haben Sie bereits einen Anmeldecode?",
+        "codeEntryDescription": "Geben Sie den Code aus Ihrer Anmelde-E-Mail ein. Codes funktionieren nur in dem Browser, in dem Sie den Link angefordert haben.",
+        "backToRequest": "Stattdessen einen neuen Link anfordern"
+      },
       "twoFactor": {
         "title": "Zwei-Faktor-Authentifizierung",
         "description": "Geben Sie den 6-stelligen Code aus Ihrer Authentifizierungs-App ein oder verwenden Sie einen Ersatzcode."
       },
       "troubleSigningIn": "Probleme beim Anmelden?",
       "contactAdmin": "Wenden Sie sich an den Systemadministrator."
+    },
+    "passwordless": {
+      "completingSignIn": "Sie werden angemeldet...",
+      "completeErrorTitle": "Wir konnten Sie nicht anmelden",
+      "requestNewLink": "Neuen Link anfordern",
+      "codeTitle": "Ihr Anmeldecode",
+      "codeInstructions": "Sie haben den Anmeldelink auf einem anderen Gerät oder Browser geöffnet. Geben Sie diesen Code auf dem Anmeldebildschirm ein, auf dem Sie ihn ursprünglich angefordert haben.",
+      "codeCloseNotice": "Sie können dieses Fenster schließen, sobald Sie den Code eingegeben haben.",
+      "expiredTitle": "Dieser Anmeldelink ist nicht mehr gültig",
+      "expiredBody": "Der Link ist möglicherweise abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen von der Anmeldeseite an — das dauert nur einen Moment."
     },
     "errors": {
       "accessDenied": "Zugriff verweigert. Ihr Konto ist möglicherweise inaktiv oder Sie haben keine Berechtigung zum Anmelden.",
@@ -5233,7 +5258,6 @@
         "encrypted": "Verschlüsselt",
         "encryptedHelp": "Dieses Feld ist verschlüsselt und sicher gespeichert.",
         "changeCredential": "Ändern",
-        "leaveBlankToKeep": "Leer lassen, um den bestehenden Wert zu behalten",
         "apiKeyWarningTitle": "Hinweis zur API-Schlüsselauthentifizierung",
         "apiKeyWarningDescription": "Bei der API-Schlüssel-Authentifizierung stimmt der Melder erstellter Probleme möglicherweise nicht mit dem TestPlanIt-Benutzer überein, der sie erstellt hat – selbst wenn die E-Mail-Adressen übereinstimmen:",
         "apiKeyWarningPoint1": "Für die Festlegung des Jira-Melders muss das API-Token-Konto über die Jira-Administratorberechtigung („Melder bearbeiten“) verfügen. Andernfalls ignoriert Jira den Melder, und der API-Token-Inhaber wird als Ersteller erfasst.",
@@ -7679,6 +7703,11 @@
       "singleUseNotice": "Aus Sicherheitsgründen kann dieser Link nur einmal verwendet werden. Fordern Sie einen neuen Link an, wenn Sie sich erneut anmelden müssen.",
       "disclaimer": "Wenn Sie diese E-Mail nicht angefordert haben, können Sie sie getrost ignorieren.",
       "textBody": "Bei TestPlanIt anmelden\n\nKlicken Sie auf den folgenden Link, um sich anzumelden:\n{url}\n\nAus Sicherheitsgründen kann dieser Link nur einmal verwendet werden. Fordern Sie einen neuen Link an, wenn Sie sich erneut anmelden müssen.\n\nWenn Sie diese E-Mail nicht angefordert haben, können Sie sie ignorieren."
+    },
+    "passwordless": {
+      "codeIntro": "Öffnen Sie dies auf einem anderen Gerät? Geben Sie diesen Code auf dem Anmeldebildschirm ein, auf dem Sie den Link angefordert haben:",
+      "deviceNotice": "Dieser Link meldet Sie in dem Browser an, in dem Sie ihn angefordert haben. Wenn Sie ihn an einem anderen Ort öffnen, wird Ihnen der obige Code angezeigt, den Sie in Ihrem ursprünglichen Fenster eingeben können.",
+      "textBody": "Bei TestPlanIt anmelden\n\nKlicken Sie auf den folgenden Link, um sich anzumelden:\n{url}\n\nÖffnen Sie dies auf einem anderen Gerät? Geben Sie diesen Code auf dem Anmeldebildschirm ein, auf dem Sie den Link angefordert haben: {code}\n\nWenn Sie diese E-Mail nicht angefordert haben, können Sie sie ignorieren."
     }
   },
   "comments": {

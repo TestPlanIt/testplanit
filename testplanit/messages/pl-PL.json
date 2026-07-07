@@ -1085,12 +1085,37 @@
         "error": "Nie udało się wysłać magicznego linku. Spróbuj ponownie.",
         "backToSignIn": "Powrót do logowania"
       },
+      "passwordless": {
+        "waitingInstructions": "Kliknij link w e-mailu, aby zalogować się z tej przeglądarki, lub wpisz poniżej kod z e-maila.",
+        "codeLabel": "Kod logowania",
+        "verifyCode": "Zweryfikuj kod",
+        "verifying": "Weryfikowanie...",
+        "invalidCode": "Ten kod jest nieprawidłowy. Sprawdź e-mail i spróbuj ponownie.",
+        "codeExpired": "To żądanie logowania wygasło. Poproś o nowy link.",
+        "tooManyAttempts": "Za dużo nieprawidłowych prób. Poproś o nowy link, aby spróbować ponownie.",
+        "windowLost": "To okno nie może już zakończyć logowania. Poproś o nowy link.",
+        "genericError": "Nie udało się Cię zalogować. Poproś o nowy link i spróbuj ponownie.",
+        "tooManyRequests": "Za dużo żądań logowania. Poczekaj chwilę i spróbuj ponownie.",
+        "haveCode": "Masz już kod logowania?",
+        "codeEntryDescription": "Wpisz kod z e-maila logowania. Kody działają tylko w przeglądarce, w której poprosiłeś o link.",
+        "backToRequest": "Poproś o nowy link"
+      },
       "twoFactor": {
         "title": "Uwierzytelnianie dwuskładnikowe",
         "description": "Wprowadź 6-cyfrowy kod z aplikacji uwierzytelniającej lub użyj kodu zapasowego."
       },
       "troubleSigningIn": "Masz problemy z zalogowaniem?",
       "contactAdmin": "Skontaktuj się z administratorem systemu"
+    },
+    "passwordless": {
+      "completingSignIn": "Logowanie...",
+      "completeErrorTitle": "Nie udało się Cię zalogować",
+      "requestNewLink": "Poproś o nowy link",
+      "codeTitle": "Twój kod logowania",
+      "codeInstructions": "Otworzyłeś link do logowania na innym urządzeniu lub w innej przeglądarce. Wpisz ten kod na ekranie logowania, na którym pierwotnie o niego poprosiłeś.",
+      "codeCloseNotice": "Możesz zamknąć to okno po wpisaniu kodu.",
+      "expiredTitle": "Ten link do logowania nie jest już prawidłowy",
+      "expiredBody": "Link może wygasnąć lub zostać już wykorzystany. Poproś o nowy na stronie logowania — to zajmie tylko chwilę."
     },
     "errors": {
       "accessDenied": "Dostęp zabroniony. Twoje konto może być nieaktywne lub nie masz uprawnień do logowania.",
@@ -5233,7 +5258,6 @@
         "encrypted": "Zaszyfrowane",
         "encryptedHelp": "To pole jest szyfrowane i przechowywane bezpiecznie",
         "changeCredential": "Zmiana",
-        "leaveBlankToKeep": "Pozostaw puste, aby zachować istniejącą wartość",
         "apiKeyWarningTitle": "Powiadomienie o uwierzytelnianiu klucza API",
         "apiKeyWarningDescription": "W przypadku uwierzytelniania kluczem API osoba raportująca utworzone problemy może nie być zgodna z użytkownikiem TestPlanIt, który je utworzył — nawet jeśli adresy e-mail są zgodne:",
         "apiKeyWarningPoint1": "Aby skonfigurować reportera Jira, konto tokena API musi mieć uprawnienia administratora Jira („Modyfikuj Reportera”). Bez nich Jira ignoruje reportera, a właściciel tokena API jest rejestrowany jako twórca.",
@@ -7679,6 +7703,11 @@
       "singleUseNotice": "Dla Twojego bezpieczeństwa ten link można wykorzystać tylko raz. Poproś o nowy link, jeśli chcesz się zalogować ponownie.",
       "disclaimer": "Jeśli nie prosiłeś o wysłanie tego e-maila, możesz go bezpiecznie zignorować.",
       "textBody": "Zaloguj się do TestPlanIt\n\nKliknij poniższy link, aby się zalogować:\n{url}\n\nDla Twojego bezpieczeństwa ten link można wykorzystać tylko raz. Poproś o nowy link, jeśli chcesz się zalogować ponownie.\n\nJeśli nie prosiłeś o ten e-mail, możesz go bezpiecznie zignorować."
+    },
+    "passwordless": {
+      "codeIntro": "Otwierasz to na innym urządzeniu? Wpisz ten kod na ekranie logowania, na którym poprosiłeś o link:",
+      "deviceNotice": "Ten link loguje Cię z przeglądarki, w której o niego poprosiłeś. Jeśli otworzysz go gdzie indziej, zobaczysz powyższy kod do wpisania w oryginalnym oknie.",
+      "textBody": "Zaloguj się do TestPlanIt\n\nKliknij poniższy link, aby się zalogować:\n{url}\n\nOtwierasz to na innym urządzeniu? Wpisz ten kod na ekranie logowania, na którym poprosiłeś o link: {code}\n\nJeśli nie prosiłeś o ten e-mail, możesz go bezpiecznie zignorować."
     }
   },
   "comments": {

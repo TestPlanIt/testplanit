@@ -50,6 +50,42 @@ model VerificationToken {
     @@allow('all', true) // NextAuth needs unrestricted access for token verification
 }
 
+enum PendingAuthStatus {
+    PENDING
+    CONSUMED
+    SUPERSEDED
+    LOCKED
+
+    @@deny('create,update,delete', auth() == null)
+    @@allow('read', true)
+}
+
+// Backs the device-bound magic-link + OTP sign-in flow (PASSWORDLESS_DEVICE_BOUND).
+// Stores only HMAC-SHA256 hashes of the three per-request secrets (browser verifier,
+// email link token, human-relay code) — never plaintext. Rows are consumed exactly
+// once via a conditional status transition at final completion; a GET of the emailed
+// link never mutates this table, which is what defeats mail-scanner link prefetch.
+// Server-only table: no @@allow rules, so the enhanced client denies all access and
+// every read/write goes through the raw db client in lib/passwordless.ts.
+model PendingAuth {
+    id               String            @id @default(cuid())
+    email            String
+    verifierHash     String
+    linkTokenHash    String            @unique
+    codeHash         String
+    status           PendingAuthStatus @default(PENDING)
+    attempts         Int               @default(0)
+    callbackUrl      String?
+    requestIp        String?
+    requestUserAgent String?
+    createdAt        DateTime          @default(now()) @db.Timestamptz(6)
+    expiresAt        DateTime
+    consumedAt       DateTime?
+
+    @@index([email, status])
+    @@index([expiresAt])
+}
+
 model User {
     id                              String                        @id @default(cuid())
     name                            String                        @length(1) @deny('update', scimGivenName != null)
