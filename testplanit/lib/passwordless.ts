@@ -100,7 +100,16 @@ function getHmacKey(): string {
   return secret;
 }
 
-/** HMAC-SHA256 (hex) of a secret, keyed with NEXTAUTH_SECRET. */
+/**
+ * HMAC-SHA256 (hex) of a secret, keyed with NEXTAUTH_SECRET.
+ *
+ * Used for the verifier and link token ONLY — both are 256-bit random values,
+ * so a slow KDF adds nothing (key stretching defends low-entropy human
+ * secrets; 2^256 is not brute-forceable at any hash speed) while the HMAC key
+ * keeps a DB-dump-only attacker from verifying guesses at all. The
+ * low-entropy relay code uses bcrypt on top of this — see
+ * hashPasswordlessCode.
+ */
 export function hashPasswordlessSecret(value: string): string {
   return createHmac("sha256", getHmacKey()).update(value).digest("hex");
 }
@@ -115,6 +124,38 @@ export function passwordlessSecretMatches(
   const b = Buffer.from(candidateHash, "hex");
   if (a.length !== b.length || a.length === 0) return false;
   return timingSafeEqual(a, b);
+}
+
+// bcrypt cost for the relay code — matches the credentials flow's cost
+// (server/auth.ts). One hash per request and at most 5 compares per pending
+// row, so the latency is negligible for this path.
+const CODE_BCRYPT_ROUNDS = 10;
+
+/**
+ * Slow hash for the human relay code: bcrypt over the HMAC pre-hash.
+ *
+ * The code is the one low-entropy secret in this flow (~2^39 for 8 chars of
+ * a 30-char alphabet), so unlike the 256-bit verifier/link token it gets key
+ * stretching: an attacker holding BOTH a DB dump and NEXTAUTH_SECRET still
+ * faces bcrypt cost per guess. The HMAC layer underneath keeps a DB-only
+ * dump unverifiable, exactly like the other secrets.
+ *
+ * bcrypt is imported lazily so pages that only need the pure helpers don't
+ * load the native module.
+ */
+export async function hashPasswordlessCode(code: string): Promise<string> {
+  const { hash } = await import("bcrypt");
+  return hash(hashPasswordlessSecret(code), CODE_BCRYPT_ROUNDS);
+}
+
+/** bcrypt comparison of a candidate relay code against a stored code hash. */
+export async function passwordlessCodeMatches(
+  storedHash: string,
+  candidate: string
+): Promise<boolean> {
+  if (!storedHash || !candidate) return false;
+  const { compare } = await import("bcrypt");
+  return compare(hashPasswordlessSecret(candidate), storedHash);
 }
 
 /** 256-bit URL-safe random secret (verifier / link token). */
@@ -292,7 +333,7 @@ export async function createPendingAuth(
       email: args.email,
       verifierHash: hashPasswordlessSecret(verifier),
       linkTokenHash: hashPasswordlessSecret(linkToken),
-      codeHash: hashPasswordlessSecret(code),
+      codeHash: await hashPasswordlessCode(code),
       callbackUrl: args.callbackUrl ?? null,
       requestIp: args.requestIp ?? null,
       requestUserAgent: args.requestUserAgent ?? null,
@@ -399,7 +440,7 @@ export async function consumePendingAuth(
     }
   } else {
     const normalized = normalizePasswordlessCode(code!);
-    if (!passwordlessSecretMatches(row.codeHash, normalized)) {
+    if (!(await passwordlessCodeMatches(row.codeHash, normalized))) {
       const updated = await db.pendingAuth.update({
         where: { id: pendingId },
         data: { attempts: { increment: 1 } },

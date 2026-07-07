@@ -215,7 +215,7 @@ describe("verifier cookie", () => {
     expect(stored).not.toContain(verifier);
     expect(row.verifierHash).toMatch(/^[0-9a-f]{64}$/);
     expect(row.linkTokenHash).toMatch(/^[0-9a-f]{64}$/);
-    expect(row.codeHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(row.codeHash).toMatch(/^\$2[aby]\$/); // bcrypt (slow KDF)
   });
 });
 

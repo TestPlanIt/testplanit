@@ -6,6 +6,7 @@ import {
   isPasswordlessDeviceBoundEnabled,
   isValidPasswordlessCodeFormat,
   normalizePasswordlessCode,
+  passwordlessCodeMatches,
   passwordlessSecretMatches,
   getVerifierCookieName,
 } from "~/lib/passwordless";
@@ -79,7 +80,7 @@ export async function GET(req: NextRequest) {
   const code = normalizePasswordlessCode(rawCode);
   const codeDisplayable =
     isValidPasswordlessCodeFormat(code) &&
-    passwordlessSecretMatches(inspection.row.codeHash, code);
+    (await passwordlessCodeMatches(inspection.row.codeHash, code));
   if (!codeDisplayable) {
     return NextResponse.redirect(
       `${baseUrl}/passwordless/expired?reason=invalid`

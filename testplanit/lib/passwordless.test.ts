@@ -40,6 +40,7 @@ import {
   isValidPasswordlessCodeFormat,
   normalizePasswordlessCode,
   parseVerifierFromCookieHeader,
+  passwordlessCodeMatches,
   passwordlessSecretMatches,
   validateNextAuthCsrf,
 } from "./passwordless";
@@ -250,7 +251,14 @@ describe("createPendingAuth", () => {
     expect(secondRow.linkTokenHash).toBe(
       hashPasswordlessSecret(second.linkToken)
     );
-    expect(secondRow.codeHash).toBe(hashPasswordlessSecret(second.code));
+    // Relay code is bcrypt-hashed (slow KDF for the one low-entropy secret).
+    expect(secondRow.codeHash).toMatch(/^\$2[aby]\$/);
+    expect(await passwordlessCodeMatches(secondRow.codeHash, second.code)).toBe(
+      true
+    );
+    expect(await passwordlessCodeMatches(secondRow.codeHash, "WRONGGGG")).toBe(
+      false
+    );
   });
 
   it("creates a row even when no account exists (enumeration-uniform)", async () => {

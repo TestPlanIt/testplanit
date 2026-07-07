@@ -27,7 +27,8 @@ relay code entered there).
 
 Pending sign-ins last **45 minutes** (mail can be slow), allow **5** code
 attempts before locking, and a new request for the same email supersedes any
-previous pending link. Only HMAC-SHA256 hashes of the secrets are stored.
+previous pending link. Only hashes of the secrets are stored: HMAC-SHA256 for
+the two 256-bit tokens, and bcrypt over the HMAC for the short relay code.
 
 ## Enabling it (per deployment / tenant)
 
