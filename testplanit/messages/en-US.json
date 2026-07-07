@@ -1095,7 +1095,10 @@
         "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
         "windowLost": "This window can no longer complete the sign-in. Request a new link.",
         "genericError": "We couldn't sign you in. Request a new link and try again.",
-        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again.",
+        "haveCode": "Already have a sign-in code?",
+        "codeEntryDescription": "Enter the code from your sign-in email. Codes only work in the browser where you requested the link.",
+        "backToRequest": "Request a new link instead"
       },
       "twoFactor": {
         "title": "Two-Factor Authentication",
