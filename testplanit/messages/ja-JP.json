@@ -1072,7 +1072,7 @@
         "apple": "Appleで続ける",
         "microsoft": "Microsoft で続行",
         "samlProvider": "{name}でサインイン",
-        "magicLink": "Sign in with single-use Magic Link",
+        "magicLink": "使い切りのマジックリンクでサインイン",
         "emailLogin": "メールで続行"
       },
       "magicLink": {
@@ -1086,16 +1086,19 @@
         "backToSignIn": "サインインに戻る"
       },
       "passwordless": {
-        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
-        "codeLabel": "Sign-in code",
-        "verifyCode": "Verify code",
-        "verifying": "Verifying...",
-        "invalidCode": "That code isn't right. Check the email and try again.",
-        "codeExpired": "This sign-in request has expired. Request a new link.",
-        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
-        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
-        "genericError": "We couldn't sign you in. Request a new link and try again.",
-        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+        "waitingInstructions": "メール内のリンクをクリックしてこのブラウザからサインインするか、以下にメール内のコードを入力してください。",
+        "codeLabel": "サインインコード",
+        "verifyCode": "コードを確認",
+        "verifying": "確認中…",
+        "invalidCode": "そのコードは正しくありません。メールを確認して、もう一度お試しください。",
+        "codeExpired": "このサインインリクエストは期限切れです。新しいリンクをリクエストしてください。",
+        "tooManyAttempts": "誤った試行が多すぎます。もう一度試すには新しいリンクをリクエストしてください。",
+        "windowLost": "このウィンドウではサインインを完了できなくなりました。新しいリンクをリクエストしてください。",
+        "genericError": "サインインできませんでした。新しいリンクをリクエストして、もう一度お試しください。",
+        "tooManyRequests": "サインインのリクエストが多すぎます。しばらく待ってから、もう一度お試しください。",
+        "haveCode": "サインインコードをお持ちですか？",
+        "codeEntryDescription": "サインインメールに記載されているコードを入力してください。コードはリンクをリクエストしたブラウザでのみ有効です。",
+        "backToRequest": "代わりに新しいリンクをリクエスト"
       },
       "twoFactor": {
         "title": "二要素認証",
@@ -1105,19 +1108,19 @@
       "contactAdmin": "システム管理者に問い合わせる"
     },
     "passwordless": {
-      "completingSignIn": "Signing you in...",
-      "completeErrorTitle": "We couldn't sign you in",
-      "requestNewLink": "Request a new link",
-      "codeTitle": "Your sign-in code",
-      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
-      "codeCloseNotice": "You can close this window once you've entered the code.",
-      "expiredTitle": "This sign-in link is no longer valid",
-      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
+      "completingSignIn": "サインインしています…",
+      "completeErrorTitle": "サインインできませんでした",
+      "requestNewLink": "新しいリンクをリクエスト",
+      "codeTitle": "あなたのサインインコード",
+      "codeInstructions": "サインインリンクを別のデバイスまたはブラウザで開きました。最初にリクエストしたサインイン画面でこのコードを入力してください。",
+      "codeCloseNotice": "コードを入力したら、このウィンドウを閉じても構いません。",
+      "expiredTitle": "このサインインリンクは無効になりました",
+      "expiredBody": "リンクは期限切れか、既に使用されている可能性があります。サインインページから新しいリンクをリクエストしてください — すぐに完了します。"
     },
     "errors": {
       "accessDenied": "アクセスが拒否されました。アカウントが非アクティブであるか、サインインする権限がない可能性があります。",
       "configuration": "サーバー構成に問題があります。",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "このサインインリンクは期限切れか、既に使用されています。マジックリンクは一度しか使用できません — サインインするには新しいリンクをリクエストしてください。",
       "invalid2FACode": "認証コードが無効です。もう一度お試しください。",
       "twoFactorTokenRequired": "トークンが必要です",
       "verificationCodeRequired": "認証コードが必要です"
@@ -1364,19 +1367,19 @@
           "switchWarning2": "データベース内の問題を保存します（リンクが解除されます）",
           "switchWarning3": "現在の問題統合設定を新しいものに置き換えます",
           "switchWarning4": "現在の統合用に設定されている受信ウェブフックを削除します。",
-          "importIssues": "Import Issues",
-          "importTitle": "Import issues from {name}",
-          "importDescription": "Pull issues from this linked project into your project. Existing issues aren't duplicated, and imported issues stay up to date through sync.",
-          "importUpdatedWithin": "Updated within",
-          "importLastDays": "Last {days} days",
-          "importMax": "Maximum to import",
-          "importPreview": "Preview",
-          "importPreviewResult": "~{count, plural, one {# issue} other {# issues}} match this filter. Up to {cap} will be imported.",
-          "importOverCap": "That exceeds the cap of {cap}; only the {cap} most recently updated will be imported.",
-          "importStart": "Import",
-          "importStarted": "Import started. Issues will appear shortly.",
-          "importFailed": "Import failed",
-          "importPreviewFailed": "Couldn't estimate matches"
+          "importIssues": "課題をインポート",
+          "importTitle": "{name}から課題をインポート",
+          "importDescription": "このリンクされたプロジェクトから課題を取得し、あなたのプロジェクトに取り込みます。既存の課題は重複しません。インポートされた課題は同期を通じて最新の状態に保たれます。",
+          "importUpdatedWithin": "更新期間",
+          "importLastDays": "過去{days}日間",
+          "importMax": "インポートする最大数",
+          "importPreview": "プレビュー",
+          "importPreviewResult": "約{count, plural, other {#件の課題}}がこのフィルターに一致します。最大{cap}件までインポートされます。",
+          "importOverCap": "これは上限の{cap}件を超えています。最近更新された{cap}件のみがインポートされます。",
+          "importStart": "インポート",
+          "importStarted": "インポートを開始しました。まもなく課題が表示されます。",
+          "importFailed": "インポートに失敗しました",
+          "importPreviewFailed": "一致数を見積もれませんでした"
         },
         "integrationAssigned": "統合が正常に割り当てられました",
         "integrationAssignError": "問題統合をプロジェクトに割り当てることができませんでした",
@@ -1402,10 +1405,10 @@
             "description": "作業項目の追跡には、Azure DevOpsに接続してください。"
           },
           "redmine": {
-            "description": "Connect to a self-hosted Redmine instance for issue tracking."
+            "description": "課題追跡のために、自己ホスト型のRedmineインスタンスに接続します。"
           },
           "mantisbt": {
-            "description": "Connect to a self-hosted MantisBT instance for issue tracking."
+            "description": "課題追跡のために、自己ホスト型のMantisBTインスタンスに接続します。"
           }
         }
       },
@@ -1685,19 +1688,19 @@
         "toastReEnableSuccess": "Webhookが再び有効化されました",
         "toastReEnableFailed": "再有効化に失敗しました: {error}",
         "inboundChooserRedmine": "Redmine",
-        "inboundRedmineTitle": "Redmine inbound webhook",
-        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
-        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
-        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
-        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here.",
+        "inboundRedmineTitle": "Redmineインバウンドウェブフック",
+        "inboundRedmineScopeHint": "redmine_webhookプラグインはリクエストに署名しないため、このウェブフックURLが認証情報となります。シークレットとして扱い、漏えいした場合はローテーションしてください。",
+        "setupStepsRedmineStep1": "Redmineサーバーにredmine_webhookプラグインをインストールしてください（Redmineには組み込みのウェブフック機能がありません）。",
+        "setupStepsRedmineStep2": "Redmineプロジェクトで、[設定] → [モジュール] を開き、ウェブフックを有効にしてください。",
+        "setupStepsRedmineStep3": "[設定] → [ウェブフック] を開き、上記のURLを貼り付けて保存してください。",
+        "setupStepsRedmineStep4": "Redmineで課題を作成または更新すると、リンクされた課題のステータスがここに同期されます。",
         "inboundChooserMantisbt": "MantisBT",
-        "inboundMantisbtTitle": "MantisBT inbound webhook",
-        "inboundMantisbtScopeHint": "A MantisBT webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsMantisbtStep1": "Install and enable a MantisBT webhook plugin on your MantisBT server (MantisBT has no built-in webhooks).",
-        "setupStepsMantisbtStep2": "In the plugin configuration, choose the issue created and issue updated events.",
-        "setupStepsMantisbtStep3": "Paste the URL above as the webhook target and save.",
-        "setupStepsMantisbtStep4": "Create or update an issue in MantisBT; the linked issue’s status will sync here."
+        "inboundMantisbtTitle": "MantisBTインバウンドウェブフック",
+        "inboundMantisbtScopeHint": "MantisBTウェブフックプラグインはリクエストに署名しないため、このウェブフックURLが認証情報となります。シークレットとして扱い、漏えいした場合はローテーションしてください。",
+        "setupStepsMantisbtStep1": "MantisBTサーバーにMantisBTウェブフックプラグインをインストールして有効にしてください（MantisBTには組み込みのウェブフック機能がありません）。",
+        "setupStepsMantisbtStep2": "プラグインの設定で、課題作成イベントと課題更新イベントを選択してください。",
+        "setupStepsMantisbtStep3": "上記のURLをウェブフックの送信先として貼り付けて保存してください。",
+        "setupStepsMantisbtStep4": "MantisBTで課題を作成または更新すると、リンクされた課題のステータスがここに同期されます。"
       },
       "aiModels": {
         "description": "インテリジェントなテストケース生成と分析のための AI モデルを構成する",
@@ -1887,7 +1890,7 @@
           "scanningFiles": "{scope}… のファイルをスキャンしています。",
           "scanningFilesCount": "{scope}… 内のファイルをスキャンしています ({count, number} が見つかりました)",
           "filtering": "{count, number} ファイル… にフィルタを適用しています。",
-          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
+          "rateLimited": "プロバイダーによってレート制限されました — {seconds, number}秒後に再試行します…"
         },
         "cache": {
           "title": "キャッシュ設定",
@@ -1913,8 +1916,8 @@
         "networkError": "キャッシュ更新中にネットワークエラーが発生しました",
         "refreshSuccess": "キャッシュが更新されました: {fileCount} 個のファイル ({contentCached} 個のコンテンツがキャッシュされました)",
         "refreshRateLimited": "キャッシュが更新されました: {fileCount} 個のファイルが一覧表示され、 {contentCached}/{fileCount} 個のコンテンツがキャッシュされました (レート制限あり - 完了するには再度更新してください)",
-        "refreshComplete": "Cache refreshed: {fileCount} files",
-        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
+        "refreshComplete": "キャッシュを更新しました：{fileCount} 件のファイル",
+        "refreshInProgress": "キャッシュの更新はバックグラウンドで実行中です。完了するとここに反映されます。",
         "validation": {
           "pathRequired": "パスが必要です",
           "patternRequired": "型紙が必要です",
@@ -2139,9 +2142,9 @@
   },
   "sessions": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this session."
+      "trigger": "活動",
+      "title": "活動ログ",
+      "description": "このセッションで記録されたすべての変更です。"
     },
     "title": "{count, plural, =1 {セッション} other {セッション}}",
     "labels": {
@@ -2404,19 +2407,19 @@
         }
       },
       "auditLog": {
-        "title": "Audit Log",
-        "description": "Actions performed by this user",
-        "noEntries": "No activity recorded yet.",
-        "loadMore": "Loading",
-        "viewDetails": "View details",
-        "columnAction": "Action",
-        "columnEntityType": "Type",
-        "columnEntityName": "Name",
-        "columnTimestamp": "Timestamp",
-        "allActions": "All Actions",
-        "allTypes": "All Types",
-        "noMatchingEntries": "No entries match the selected filters.",
-        "showing": "{loaded} of {total} entries"
+        "title": "監査ログ",
+        "description": "このユーザーが実行したアクション",
+        "noEntries": "記録された活動はまだありません。",
+        "loadMore": "読み込み中",
+        "viewDetails": "詳細を見る",
+        "columnAction": "アクション",
+        "columnEntityType": "タイプ",
+        "columnEntityName": "名前",
+        "columnTimestamp": "タイムスタンプ",
+        "allActions": "すべてのアクション",
+        "allTypes": "すべてのタイプ",
+        "noMatchingEntries": "選択したフィルターに一致するエントリーはありません。",
+        "showing": "{total}件中{loaded}件のエントリー"
       },
       "mentionedComments": {
         "title": "コメントで言及",
@@ -2510,9 +2513,9 @@
       "historyView": "テストケース履歴ビュー"
     },
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test case."
+      "trigger": "活動",
+      "title": "活動ログ",
+      "description": "このテストケースで記録されたすべての変更です。"
     },
     "fields": {
       "optionNotFound": "オプションが見つかりません",
@@ -2945,7 +2948,7 @@
       "bulkLinkSuccess": "{count, plural, one {# ペアがリンクされています} other {# ペアがリンクされています}}",
       "bulkError": "一部の操作が失敗しました。もう一度お試しください。",
       "tableHint": "行をクリックするか、「比較」ボタンをクリックして、重複するペアを確認し、解決してください。",
-      "comparisonTitle": "{caseA} vs {caseB}",
+      "comparisonTitle": "{caseA} 対 {caseB}",
       "comparisonDescription": "これらの重複の可能性のあるものを比較し、解決方法を選択してください。",
       "selectPrimary": "ケースをクリックして、マージのプライマリとして選択します。",
       "selectedAsPrimary": "プライマリとして選択",
@@ -3359,9 +3362,9 @@
   },
   "runs": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test run."
+      "trigger": "活動",
+      "title": "活動ログ",
+      "description": "このテスト実行で記録されたすべての変更です。"
     },
     "notFound": "テスト実行が見つかりません。",
     "add": {
@@ -4443,9 +4446,9 @@
       "scimColumnYes": "はい",
       "scimUserLockedTitle": "ユーザーはSCIMによって管理されています",
       "scimUserLockedDescription": "このユーザー名、メールアドレス、およびアクティブステータスは、ご利用のIDプロバイダーによって管理されています。こちらで更新するには、そちらで変更してください。",
-      "groupMappingOverrideTitle": "Managed by Group Mapping",
-      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
-      "groupMappingBadge": "Group Mapped"
+      "groupMappingOverrideTitle": "グループマッピングによる管理",
+      "groupMappingOverrideDescription": "このユーザーのアクセス階層はSCIMグループマッピングによって管理されており、次回の同期時に元に戻る可能性があります。",
+      "groupMappingBadge": "グループマッピング済み"
     },
     "security": {
       "title": "安全",
@@ -4624,14 +4627,14 @@
       "probe": {
         "button": "SCIMをテストする",
         "testing": "テスト…",
-        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
+        "okBanner": "HTTP {status} — トークンは /api/scim/v2/Users に対して有効です。",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "SCIMエンドポイントに接続できませんでした。再試行します。"
       },
-      "fallbackDefaultTitle": "Default Mapped Access",
-      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
-      "fallbackDefaultLabel": "Default access tier",
-      "fallbackDefaultSaved": "Fallback default saved"
+      "fallbackDefaultTitle": "デフォルトのマッピングアクセス",
+      "fallbackDefaultDescription": "どのグループマッピングにも該当しないユーザーに割り当てられるアクセス階層です。",
+      "fallbackDefaultLabel": "デフォルトのアクセス階層",
+      "fallbackDefaultSaved": "フォールバックデフォルトを保存しました"
     },
     "tags": {
       "add": {
@@ -4916,13 +4919,13 @@
       "scimManagedTooltip": "SCIMによって管理されています。SCIMの管理ページから管理してください。",
       "scimNameLockedTitle": "このグループはSCIMによって運営されています。",
       "scimNameLockedDescription": "このグループ名とメンバーは、ご利用のIDプロバイダーによって管理されています。こちらで情報を更新するには、そちらで変更してください。",
-      "mappedAccessColumnHeader": "Mapped Access",
-      "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "No mapping",
-      "mappedAccessSelect": "Select access tier...",
-      "downgradeConfirmTitle": "Confirm Access Change",
-      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
-      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "mappedAccessColumnHeader": "マッピングされたアクセス",
+      "mappedAccessLabel": "マッピングされたアクセス階層",
+      "mappedAccessNone": "マッピングされていません",
+      "mappedAccessSelect": "アクセス階層を選択…",
+      "downgradeConfirmTitle": "アクセス変更の確認",
+      "downgradeConfirmDescription": "{count, plural, other {# 人のユーザー}}のアクセスが引き下げられます。続行しますか？",
+      "downgradeConfirmApplyAnyway": "とにかく適用",
       "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
@@ -5111,27 +5114,27 @@
       "status": {
         "active": "アクティブ",
         "inactive": "非アクティブ",
-        "awaitingAuthorization": "Awaiting authorization"
+        "awaitingAuthorization": "承認待ち"
       },
       "connectedProjects": "関連プロジェクト",
       "noIntegrations": "問題統合が設定されていません",
       "testConnection": "テスト接続",
       "testSuccess": "接続成功",
       "testSuccessDescription": "問題統合は適切に構成され、接続されています",
-      "testCredentialsSaved": "Credentials look good",
-      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
+      "testCredentialsSaved": "認証情報は問題ありません",
+      "testCredentialsSavedDescription": "OAuthクライアントIDとシークレットは有効です。インテグレーションを保存してから、[承認]をクリックしてアカウントを接続してください — OAuth 2.0はユーザーごとに接続するため、少なくとも1人が承認するまでは非アクティブのままです。",
       "testFailed": "接続に失敗しました",
       "testFailedDescription": "外部サービスに接続できません",
       "testError": "テストエラー",
       "testErrorDescription": "接続テスト中にエラーが発生しました",
-      "authorize": "Authorize",
-      "reauthorize": "Re-authorize",
-      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
-      "syncInProgress": "Re-syncing linked issues...",
-      "syncIntegration": "Re-sync linked issues",
-      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
+      "authorize": "承認",
+      "reauthorize": "再承認",
+      "authorizeHint": "プロバイダーで承認してアカウントを接続し、セットアップを完了してください",
+      "syncInProgress": "リンクされた課題を再同期しています…",
+      "syncIntegration": "リンクされた課題を再同期",
+      "syncIntegrationHint": "TestPlanItに既にリンクされている課題のみを再同期します。外部トラッカーから新しい課題はインポートされません。",
       "syncSuccess": "同期キュー",
-      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
+      "syncSuccessDescription": "「{name}」からのリンクされた課題はバックグラウンドで再同期されています。しばらく時間がかかる場合があります。完了すると表が自動的に更新されます。",
       "syncError": "同期に失敗しました",
       "syncErrorDescription": "この問題の統合に関する同期ジョブをキューに追加できませんでした。しばらくしてからもう一度お試しください。",
       "delete": {
@@ -5178,11 +5181,11 @@
         },
         "redmine": {
           "name": "Redmine",
-          "description": "Connect to a self-hosted Redmine instance for issue tracking"
+          "description": "課題追跡のために、自己ホスト型のRedmineインスタンスに接続します"
         },
         "mantisbt": {
           "name": "MantisBT",
-          "description": "Connect to a self-hosted MantisBT instance for issue tracking"
+          "description": "課題追跡のために、自己ホスト型のMantisBTインスタンスに接続します"
         }
       },
       "filterPlaceholder": "フィルター統合...",
@@ -5263,10 +5266,10 @@
         "apiKeyWarningPoint4": "管理者権限なしでユーザーごとの正確な報告者特定を行うには、OAuth 2.0を使用してください。",
         "tokenCreatorNoticeTitle": "問題作成者の帰属表示",
         "tokenCreatorNoticeDescription": "この連携機能を通じて作成された課題は、作成者である TestPlanIt ユーザーではなく、このアクセス トークンを所有するアカウントに記録されます。このプロバイダーの API では、他のユーザーに代わって作成者を設定することはできません。",
-        "callbackUrlLabel": "Callback URL (redirect URI)",
-        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
-        "callbackUrlCopy": "Copy",
-        "callbackUrlCopied": "Copied",
+        "callbackUrlLabel": "コールバックURL（リダイレクトURI）",
+        "callbackUrlDescription": "このURLを、プロバイダーのOAuthアプリのコールバック／リダイレクトURIとして正確に登録してください。完全に一致しないと承認が失敗します。",
+        "callbackUrlCopy": "コピー",
+        "callbackUrlCopied": "コピーしました",
         "forgeApiKeyLabel": "Forge APIキー",
         "forgeApiKeyDescription": "Atlassian ForgeアプリがJira課題パネルからのリクエストを認証するために使用します。ここでキーを生成し、Forgeアプリの設定に貼り付けてください。",
         "forgeApiKeyPlaceholder": "「生成」をクリックしてAPIキーを作成します。",
@@ -5278,18 +5281,18 @@
         "platformGitea": "ギテア",
         "platformForgejo": "フォルジェホ",
         "platformGogs": "ゴグス",
-        "redmineApiKey": "Redmine API Key",
-        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
-        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
+        "redmineApiKey": "Redmine APIキー",
+        "redmineApiKeyPlaceholder": "Redmine APIキーを入力してください",
+        "redmineApiKeyHelp": "[マイアカウント] → [APIアクセスキー] にあります（[管理] → [設定] → [API] でREST APIを有効にしてください）",
         "redmineUrl": "Redmine URL",
         "redmineUrlPlaceholder": "https://redmine.example.com",
-        "redmineUrlHelp": "The base URL of your Redmine instance",
-        "mantisBTApiKey": "MantisBT API Token",
-        "mantisBTApiKeyPlaceholder": "Enter your MantisBT API token",
-        "mantisBTApiKeyHelp": "Create one under your MantisBT account settings → API Tokens",
+        "redmineUrlHelp": "RedmineインスタンスのベースURL",
+        "mantisBTApiKey": "MantisBT APIトークン",
+        "mantisBTApiKeyPlaceholder": "MantisBT APIトークンを入力してください",
+        "mantisBTApiKeyHelp": "MantisBTのアカウント設定 → [APIトークン] で作成してください",
         "mantisBTUrl": "MantisBT URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "The base URL of your MantisBT instance"
+        "mantisBTUrlHelp": "MantisBTインスタンスのベースURL"
       },
       "authType": {
         "api_key": "APIキー",
@@ -5487,7 +5490,7 @@
         "warning": "この操作は元に戻せません。この設定を使用しているすべてのプロジェクトは、デフォルトのプロンプト設定に戻ります。"
       },
       "llmColumn": "法学修士",
-      "mixedLlms": "{count, number} LLMs",
+      "mixedLlms": "{count, number} 個のLLM",
       "cannotDeleteDefault": "デフォルトのプロンプト設定を削除できません。まず別の設定をデフォルトにしてください。",
       "defaultChanged": "デフォルトのプロンプト設定が正常に更新されました。",
       "featureLabels": {
@@ -5502,7 +5505,7 @@
         "generate_from_url": "URLからテストケースを生成する（要件）",
         "generate_from_url_app": "URLからテストケースを生成する（アプリケーションテスト）",
         "automation_candidates": "自動化候補者レポート",
-        "derive_case_steps": "AI Step Derivation"
+        "derive_case_steps": "AIステップ導出"
       }
     },
     "elasticsearch": {
@@ -5678,15 +5681,15 @@
     },
     "auditLogs": {
       "description": "セキュリティとコンプライアンスの追跡のためのシステム全体の監査証跡を表示する",
-      "projectDescription": "View the audit trail of actions performed in this project.",
+      "projectDescription": "このプロジェクトで実行されたアクションの監査証跡を表示します。",
       "filterPlaceholder": "エンティティ、ユーザー、またはアクションで検索...",
       "filterAction": "アクション",
       "filterEntityType": "エンティティタイプ",
       "allActions": "すべてのアクション",
       "allEntityTypes": "すべてのエンティティタイプ",
-      "allUsers": "All Users",
-      "allProjects": "All Projects",
-      "showing": "Showing {loaded} of {total} entries",
+      "allUsers": "すべてのユーザー",
+      "allProjects": "すべてのプロジェクト",
+      "showing": "{total}件中{loaded}件を表示中",
       "viewDetails": "詳細を表示",
       "detailTitle": "監査ログの詳細",
       "userInfo": "ユーザー情報",
@@ -5714,8 +5717,8 @@
       "systemActor": "システム",
       "systemActorTooltip": "ログインユーザーではなく、システムによって実行された操作",
       "sourceScim": "SCIM",
-      "relatedChanges": "related changes",
-      "groupedEntry": "Grouped changes from a single action"
+      "relatedChanges": "関連する変更",
+      "groupedEntry": "単一のアクションによるグループ化された変更"
     }
   },
   "components": {
@@ -5802,16 +5805,16 @@
         "reviewCommentPreview": "コメント: {comment}",
         "reviewRequestedEmailMessage": "{actorName} は、プロジェクト \"{projectName} \" の {entityLabel} \"{entityName}\" のレビューを依頼しました。",
         "reviewApprovedEmailMessage": "{actorName} がプロジェクト \"{projectName} \" のレビュー依頼を {entityLabel} \"{entityName}\" で承認しました。",
-        "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
-        "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewChangesRequestedEmailMessage": "{actorName} がプロジェクト \"{projectName}\" の {entityLabel} \"{entityName}\" に対するレビュー依頼に変更を要求しました。",
+        "reviewRejectedEmailMessage": "{actorName} がプロジェクト \"{projectName}\" の {entityLabel} \"{entityName}\" に対するレビュー依頼を却下しました。",
         "reviewCancelledEmailMessage": "{actorName} は、プロジェクト \"{projectName} \" の {entityLabel} \"{entityName}\" のレビュー要求をキャンセルしました。",
         "reviewReminderTitle": "審査はまだ保留中です",
         "reviewReminderAction": "まだレビューをお待ちしています",
         "reviewReminderEmailMessage": "リマインダー: {actorName}によるプロジェクト \"{projectName}\" の {entityLabel} \"{entityName}\" のレビュー依頼は、 {hoursPending} 時間保留されています。",
         "reviewReminderHoursPending": "{hoursPending, plural, one {# 時間} other {# 時間}} 保留中",
-        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
-        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
-        "aiStepsDerivedReviewLink": "Review test run"
+        "aiStepsDerivedTitle": "AI導出のテストステップの準備が完了しました",
+        "aiStepsDerivedMessage": "{count, plural, other {#件のテストケース}}にAI導出のステップが付与されました — 正確性を確認してください。",
+        "aiStepsDerivedReviewLink": "テスト実行を確認"
       }
     },
     "issues": {
@@ -6175,7 +6178,7 @@
     "group": {
       "name": "## グループ名\nすべてのプロジェクトで使用される、明確で簡潔な説明的な名前またはキーワード。\n\n- チームメンバーが関連するテストケース、テスト実行、およびセッションをすばやく見つけるのに役立ちます。",
       "users": "## ユーザー\nこのグループに割り当てられているユーザーを示します。",
-      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
+      "mappedAccess": "## マッピングされたアクセス階層\nこのグループのメンバーには、次回の同期時に少なくともこのアクセス階層が付与されます。\n\n- ユーザーが所属するすべてのグループの中で最も高い階層が適用されます\n- 「マッピングされていません」は、このグループがアクセスに影響しないことを意味します — メンバーはSCIMページで設定されたデフォルトにフォールバックします\n- ユーザーへの手動でのアクセス変更はマッピングより優先されます（そのユーザーの編集画面にフラグが表示されます）"
     },
     "template": {
       "name": "## テンプレート名\nこのテンプレートの一意の説明的な名前 (例: '標準テスト ケース'、'API テスト結果')。",
@@ -6209,7 +6212,7 @@
       "authType": "## 認証タイプ\n外部サービスでの認証方法を選択します。\n\n- **APIキー:** メールとAPIトークンを使用したシンプルな認証\n- **OAuth 2.0:** OAuthフローを使用した安全な認証\n- **個人アクセストークン:** トークンベースの直接認証",
       "email": "## メールアドレス\n外部サービス用のアカウントのメールアドレス。\n\n- APIキー認証に使用されます\n- APIトークンを生成したアカウントと一致する必要があります\n- Jiraなどのサービスに必要です",
       "apiToken": "## APIトークン\n外部サービスのアカウント設定からAPIトークンを生成します。\n\n- 通常はアカウント設定 → セキュリティ → APIトークンにあります\n- パスワードを公開することなく安全なアクセスを提供します\n- 必要に応じて取り消しや再生成が可能です",
-      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
+      "jiraUrl": "## Jira URL\nJiraインスタンスのベースURL。\n\n- 形式: https://your-site.atlassian.net\n- /browseやその他のパスを含めないでください\n- このサーバーからアクセスできる必要があります",
       "clientId": "## OAuthクライアントID\nOAuthアプリケーション構成からのクライアントID。\n\n- 外部サービスの開発者コンソールで作成されます\n- OAuthフロー中にアプリケーションを識別するために使用されます\n- 構成ファイルで安全に共有できます",
       "clientSecret": "## OAuthクライアントシークレット\nOAuthアプリケーション構成からのクライアントシークレット。\n\n- クライアントIDと一緒に作成されます\n- 機密性と安全性を保つ必要があります\n- アプリケーションの認証に使用されます",
       "personalAccessToken": "## 個人アクセストークン\n外部サービスへの適切な権限を持つ個人アクセストークン。\n\n- アカウント設定で生成されます\n- 読み取りと書き込みの問題に対する権限が必要です\n- パスワード認証よりも安全です",
@@ -6222,11 +6225,11 @@
       "instanceUrl": "## インスタンス URL\nセルフホスト型インスタンスのベース URL。\n\n- 形式: https://git.example.com\n- 末尾のスラッシュやパスを含めないでください。\n- このサーバーからアクセス可能である必要があります。",
       "projectPath": "## プロジェクトパス\nGitLabプロジェクトへのフルパス。\n\n- 形式: namespace/project または group/subgroup/project\n- 例: my-org/my-project\n- プロジェクトURL: gitlab.com/namespace/project で確認できます。",
       "platform": "## プラットフォーム\n接続先の自己ホスト型 Git プラットフォーム。\n\n- **Gitea**: gitea.io ベースのインスタンス\n- **Forgejo**: forgejo.org ベースのインスタンス (Gitea フォーク)\n- **Gogs**: gogs.io ベースのインスタンス\n\nこれにより、表示されるアイコンが制御され、API の互換性に影響する場合があります。",
-      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
-      "mantisBTApiKey": "## MantisBT API Token\nYour personal REST API token.\n\n- Create one under your MantisBT account settings → API Tokens\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
-      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
+      "redmineApiKey": "## Redmine APIキー\nあなたの個人用REST APIアクセスキーです。\n\n- [管理] → [設定] → [API] でREST APIを有効にしてください\n- [マイアカウント] → [APIアクセスキー] からキーをコピーしてください\n- ユーザーの権限に応じたスコープになります。共有インテグレーションにはサービスアカウントを使用してください",
+      "redmineUrl": "## Redmine URL\nRedmineインスタンスのベースURL。\n\n- 形式: https://redmine.example.com\n- /issuesやその他のパスを含めないでください\n- このサーバーからアクセスできる必要があります",
+      "mantisBTApiKey": "## MantisBT APIトークン\nあなたの個人用REST APIトークンです。\n\n- MantisBTのアカウント設定 → [APIトークン] で作成してください\n- ユーザーの権限に応じたスコープになります。共有インテグレーションにはサービスアカウントを使用してください",
+      "mantisBTUrl": "## MantisBT URL\nMantisBTインスタンスのベースURL。\n\n- 形式: https://mantisbt.example.com\n- /api/restやその他のパスを含めないでください\n- このサーバーからアクセスできる必要があります",
+      "githubBaseUrl": "## APIベースURL\nGitHub Enterprise Serverの完全なGitHub APIルート。\n\n- 通常は/api/v3で終わります\n- api.github.comを使用する場合は空白のままにしてください\n- このサーバーからアクセスできる必要があります"
     },
     "config": {
       "name": "## 構成名\nこの構成の明確で分かりやすい名前。\n\n- 構成を構成するバリアントの組み合わせを説明するのに役立ちます (例: \"Chrome、Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", など)。",
@@ -6957,7 +6960,7 @@
         },
         "heuristic": {
           "intro": "このプロジェクトではLLM連携が設定されていないため、ランキングは選択戦略指標から直接構築されます。LLM連携を設定するには（管理画面 → AIモデル）、カスタムフィールド、関連する課題のコンテキスト、ケースコンテンツなどを指標と併せて考慮した、より高度な推論を有効にしてください。",
-          "rankedSummary": "{ranked} of {totalEligible} eligible manual cases ranked.",
+          "rankedSummary": "{totalEligible} 件の対象手動ケースのうち {ranked} 件がランク付けされました。",
           "strategyExplanation": {
             "most_executed": "ケースは手動実行回数（多い順）で並べられています。これは、自動化によってテスターの時間が最も多く節約できる回帰頻度の指標です。",
             "flakiest_first": "ケースは、おおよその不安定さ（合格/不合格の反転）に基づいて順序付けられます。不安定な手動テストは、決定論的な自動化オラクルの最適な候補です。",
@@ -6987,7 +6990,7 @@
             "seconds": "{seconds}s",
             "minutes": "{minutes}m",
             "hours": "{hours}h",
-            "hoursAndMinutes": "{hours}h {minutes}m"
+            "hoursAndMinutes": "{hours}時間{minutes}分"
           },
           "relativeAge": {
             "today": "今日",
@@ -7525,33 +7528,33 @@
   "search": {
     "title": "検索",
     "savedSearches": {
-      "title": "Saved searches",
-      "save": "Save search",
-      "saveTitle": "Save search",
-      "saveDescription": "Name this search so you can revisit it later.",
-      "saveAction": "Save",
-      "nameLabel": "Name",
-      "namePlaceholder": "e.g. Failed runs this sprint",
-      "nameRequired": "Enter a name for this search.",
-      "loginRequired": "You must be signed in to save searches.",
+      "title": "保存された検索",
+      "save": "検索を保存",
+      "saveTitle": "検索を保存",
+      "saveDescription": "後で見返せるように、この検索に名前を付けてください。",
+      "saveAction": "保存",
+      "nameLabel": "名前",
+      "namePlaceholder": "例：今スプリントの失敗した実行",
+      "nameRequired": "この検索の名前を入力してください。",
+      "loginRequired": "検索を保存するにはサインインする必要があります。",
       "descriptionLabel": "説明（任意）",
-      "descriptionPlaceholder": "What this search is for",
-      "saved": "Search saved",
-      "savedDescription": "“{name}” is now in your saved searches.",
-      "saveFailed": "Couldn't save the search. Please try again.",
-      "empty": "No saved searches yet",
-      "emptyHint": "Save a search to revisit it later.",
-      "loaded": "Loaded “{name}”",
-      "loadFailed": "This saved search is no longer valid.",
-      "edit": "Edit",
-      "editTitle": "Edit saved search",
-      "edited": "Saved search updated",
-      "editFailed": "Couldn't update the search. Please try again.",
+      "descriptionPlaceholder": "この検索の用途",
+      "saved": "検索を保存しました",
+      "savedDescription": "「{name}」を保存された検索に追加しました。",
+      "saveFailed": "検索を保存できませんでした。もう一度お試しください。",
+      "empty": "保存された検索はまだありません",
+      "emptyHint": "検索を保存すると、後で見返すことができます。",
+      "loaded": "「{name}」を読み込みました",
+      "loadFailed": "この保存された検索は無効になりました。",
+      "edit": "編集",
+      "editTitle": "保存された検索を編集",
+      "edited": "保存された検索を更新しました",
+      "editFailed": "検索を更新できませんでした。もう一度お試しください。",
       "delete": "消去",
-      "deleteTitle": "Delete saved search?",
-      "deleteConfirm": "“{name}” will be removed from your saved searches. This can't be undone.",
-      "deleted": "Saved search deleted",
-      "deleteFailed": "Couldn't delete the search. Please try again."
+      "deleteTitle": "保存された検索を削除しますか？",
+      "deleteConfirm": "「{name}」が保存された検索から削除されます。この操作は元に戻せません。",
+      "deleted": "保存された検索を削除しました",
+      "deleteFailed": "検索を削除できませんでした。もう一度お試しください。"
     },
     "bulk": {
       "crossProjectHint": "（複数のプロジェクトにまたがる）",
@@ -7697,14 +7700,14 @@
       "intro": "下のボタンをクリックしてログインしてください。",
       "signInButton": "サインイン",
       "copyPasteIntro": "または、このリンクをコピーしてブラウザに貼り付けてください。",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "セキュリティ保護のため、このリンクは一度しか使用できません。再度サインインする必要がある場合は、新しいリンクをリクエストしてください。",
       "disclaimer": "このメールをリクエストしていない場合は、無視していただいて構いません。",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "TestPlanItにサインイン\n\n下のリンクをクリックしてサインインしてください：\n{url}\n\nセキュリティ保護のため、このリンクは一度しか使用できません。再度サインインする必要がある場合は、新しいリンクをリクエストしてください。\n\nこのメールに心当たりがない場合は、無視していただいて構いません。"
     },
     "passwordless": {
-      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
-      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
+      "codeIntro": "別のデバイスでこれを開いていますか？リンクをリクエストしたサインイン画面でこのコードを入力してください：",
+      "deviceNotice": "このリンクは、リクエストしたブラウザからサインインします。他の場所で開いた場合は、上記のコードが表示されるので、元のウィンドウに入力してください。",
+      "textBody": "TestPlanItにサインイン\n\n下のリンクをクリックしてサインインしてください：\n{url}\n\n別のデバイスでこれを開いていますか？リンクをリクエストしたサインイン画面で次のコードを入力してください：{code}\n\nこのメールに心当たりがない場合は、無視していただいて構いません。"
     }
   },
   "comments": {
