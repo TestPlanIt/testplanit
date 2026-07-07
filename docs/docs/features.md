@@ -203,7 +203,8 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Real-time notification delivery** - Server-sent events push the bell badge instantly, no polling
 - **@mentions** - Tag team members in discussions
 - **Activity feeds** - See recent activity across your projects
-- **Localized UI** - Ship-with-product localization for 13 locales including English, German, Spanish, French, Italian, Japanese, Korean, Dutch, Polish, Portuguese (Brazil), Russian, Turkish, Vietnamese, and Simplified + Traditional Chinese
+- **Localized UI** - Ship-with-product localization for 16 locales including English, Arabic, German, Spanish, French, Italian, Japanese, Korean, Dutch, Polish, Portuguese (Brazil), Russian, Turkish, Vietnamese, and Simplified + Traditional Chinese
+- **Right-to-left (RTL) support** - The entire interface mirrors automatically for right-to-left languages such as Arabic
 
 ### Import & Export
 

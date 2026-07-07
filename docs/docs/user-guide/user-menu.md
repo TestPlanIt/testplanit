@@ -22,6 +22,7 @@ Once opened, the menu displays:
     - Available languages are listed (e.g., English, Spanish).
     - A checkmark indicates the currently active language.
     - Selecting a new language saves the preference to your profile and reloads the application to apply the change.
+    - Selecting a right-to-left language such as العربية (Arabic) also mirrors the entire interface into a right-to-left layout.
 5. **Sign Out**: Logs you out of your current session and redirects you to the Sign In page.
 
 ## Accessibility
