@@ -75,10 +75,12 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   const url = new URL(request.url);
   const pathname = url.pathname;
 
-  // Handle /share routes - redirect to localized version
-  // Share links should work without locale, but we redirect to localized version
-  // based on user preference or browser Accept-Language header
-  if (pathname.startsWith("/share/")) {
+  // Handle /share and /passwordless routes - redirect to localized version
+  // These are entered from emailed (locale-less) URLs, so we redirect to the
+  // localized version based on user preference or browser Accept-Language
+  // header. Without this, the auth guard below would misparse the first path
+  // segment as a locale.
+  if (pathname.startsWith("/share/") || pathname.startsWith("/passwordless/")) {
     // Get user's session to check their preferred locale
     const token = await getToken({
       req: request,
@@ -252,6 +254,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     "/auth/two-factor-setup",
     "/auth/two-factor-verify",
     "/share",
+    "/passwordless",
   ];
 
   // Extract the route path without locale (e.g., /en-US/signin -> /signin)

@@ -105,7 +105,7 @@ const TreeView: React.FC<{
   const treeRef = useRef<TreeApi<ArboristNode>>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const prevSelectedFolderIdRef = useRef<number | null>(null);
-  const [hierarchyData, setHierarchyData] = useState<FolderNode[]>([]);
+  const [, setHierarchyData] = useState<FolderNode[]>([]);
   const [initialOpenState, setInitialOpenState] = useState<
     Record<string, boolean> | undefined
   >(undefined);

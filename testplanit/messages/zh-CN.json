@@ -1072,7 +1072,7 @@
         "apple": "继续使用 Apple",
         "microsoft": "继续使用 Microsoft",
         "samlProvider": "使用 {name}登录",
-        "magicLink": "Sign in with single-use Magic Link",
+        "magicLink": "使用一次性 Magic Link 登录",
         "emailLogin": "继续通过电子邮件"
       },
       "magicLink": {
@@ -1085,6 +1085,21 @@
         "error": "发送魔法链接失败，请重试。",
         "backToSignIn": "返回登录页面"
       },
+      "passwordless": {
+        "waitingInstructions": "点击邮件中的链接从此浏览器登录，或在下方输入邮件中的验证码。",
+        "codeLabel": "登录验证码",
+        "verifyCode": "验证码",
+        "verifying": "正在核实……",
+        "invalidCode": "该验证码不正确。请检查邮件后重试。",
+        "codeExpired": "此登录请求已过期。请申请新链接。",
+        "tooManyAttempts": "错误尝试次数过多。请申请新链接以重试。",
+        "windowLost": "此窗口无法再完成登录。请申请新链接。",
+        "genericError": "我们无法为您登录。请申请新链接后重试。",
+        "tooManyRequests": "登录请求过多。请稍候片刻后重试。",
+        "haveCode": "已有登录验证码？",
+        "codeEntryDescription": "请输入登录邮件中的验证码。验证码仅在您请求该链接的浏览器中有效。",
+        "backToRequest": "改为申请新链接"
+      },
       "twoFactor": {
         "title": "双因素身份验证",
         "description": "输入身份验证器应用程序中的 6 位验证码，或使用备用验证码。"
@@ -1092,10 +1107,20 @@
       "troubleSigningIn": "登录遇到问题？",
       "contactAdmin": "请联系系统管理员"
     },
+    "passwordless": {
+      "completingSignIn": "正在为您登录……",
+      "completeErrorTitle": "我们无法为您登录",
+      "requestNewLink": "申请新链接",
+      "codeTitle": "您的登录验证码",
+      "codeInstructions": "您在其他设备或浏览器上打开了登录链接。请在您最初请求该链接的登录界面上输入此验证码。",
+      "codeCloseNotice": "输入验证码后，您可以关闭此窗口。",
+      "expiredTitle": "此登录链接已失效",
+      "expiredBody": "该链接可能已过期或已被使用。请从登录页面申请一个新链接 — 只需片刻即可完成。"
+    },
     "errors": {
       "accessDenied": "访问被拒绝。您的帐户可能已停用或您没有登录权限。",
       "configuration": "服务器配置存在问题。",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "此登录链接已过期或已被使用。Magic Link 只能使用一次 — 请重新申请以登录。",
       "invalid2FACode": "验证码无效，请重试。",
       "twoFactorTokenRequired": "需要令牌",
       "verificationCodeRequired": "需要验证码"
@@ -1342,19 +1367,19 @@
           "switchWarning2": "保留数据库中的问题（它们将不再关联）",
           "switchWarning3": "将当前问题集成配置替换为新的配置。",
           "switchWarning4": "移除为当前集成配置的入站 Webhook",
-          "importIssues": "Import Issues",
-          "importTitle": "Import issues from {name}",
-          "importDescription": "Pull issues from this linked project into your project. Existing issues aren't duplicated, and imported issues stay up to date through sync.",
-          "importUpdatedWithin": "Updated within",
-          "importLastDays": "Last {days} days",
-          "importMax": "Maximum to import",
-          "importPreview": "Preview",
-          "importPreviewResult": "~{count, plural, one {# issue} other {# issues}} match this filter. Up to {cap} will be imported.",
-          "importOverCap": "That exceeds the cap of {cap}; only the {cap} most recently updated will be imported.",
-          "importStart": "Import",
-          "importStarted": "Import started. Issues will appear shortly.",
-          "importFailed": "Import failed",
-          "importPreviewFailed": "Couldn't estimate matches"
+          "importIssues": "导入问题",
+          "importTitle": "从 {name} 导入问题",
+          "importDescription": "将此关联项目中的问题拉取到您的项目中。已存在的问题不会重复导入，导入的问题将通过同步保持最新。",
+          "importUpdatedWithin": "更新于",
+          "importLastDays": "最近 {days} 天",
+          "importMax": "最大导入数量",
+          "importPreview": "预览",
+          "importPreviewResult": "约有 {count, plural, other {# 个问题}}符合此筛选条件。最多将导入 {cap} 个。",
+          "importOverCap": "这超过了 {cap} 个的上限；将仅导入最近更新的 {cap} 个。",
+          "importStart": "导入",
+          "importStarted": "导入已开始。问题将很快出现。",
+          "importFailed": "导入失败",
+          "importPreviewFailed": "无法估算匹配数量"
         },
         "integrationAssigned": "集成任务已成功分配",
         "integrationAssignError": "未能将问题集成分配给项目",
@@ -1380,10 +1405,10 @@
             "description": "连接到 Azure DevOps 以跟踪工作项。"
           },
           "redmine": {
-            "description": "Connect to a self-hosted Redmine instance for issue tracking."
+            "description": "连接到自托管的 Redmine 实例以进行问题跟踪。"
           },
           "mantisbt": {
-            "description": "Connect to a self-hosted MantisBT instance for issue tracking."
+            "description": "连接到自托管的 MantisBT 实例以进行问题跟踪。"
           }
         }
       },
@@ -1396,11 +1421,11 @@
         "inboundAddButtonAllConfigured": "入站适配器已配置完成。",
         "inboundAddButtonNoIntegration": "在添加入站 webhook 之前，请先为该项目分配一个问题集成。",
         "inboundEmptyWithIntegration": "未配置任何入站 Webhook。 <link>添加一个</link> 以接收来自您分配的问题集成的更新。",
-        "inboundEmptyNoIntegration": "An <link>Issue Integration</link> is required to receive inbound issue updates. Assign one to your project to get started.",
+        "inboundEmptyNoIntegration": "接收入站问题更新需要<link>问题集成</link>。请为您的项目分配一个以开始使用。",
         "deliveriesEmptyNoConfigs": "目前还没有 webhook 发送——请在其他标签页上创建入站或出站 webhook 以开始接收它们。",
         "noConfig": "未配置 webhook",
         "createButton": "创建 webhook",
-        "url": "Webhook URL",
+        "url": "网络钩子 URL",
         "urlHelp": "将此 URL 粘贴到问题跟踪器的 webhook 配置中。",
         "secret": "Webhook 秘密",
         "secretHelp": "将此密钥粘贴到问题跟踪器的 webhook 配置中。",
@@ -1663,19 +1688,19 @@
         "toastReEnableSuccess": "Webhook 已重新启用",
         "toastReEnableFailed": "重新启用失败： {error}",
         "inboundChooserRedmine": "Redmine",
-        "inboundRedmineTitle": "Redmine inbound webhook",
-        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
-        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
-        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
-        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here.",
+        "inboundRedmineTitle": "Redmine 入站 webhook",
+        "inboundRedmineScopeHint": "redmine_webhook 插件不会对请求进行签名，因此此 webhook URL 即为凭据 — 请将其视为机密信息，如泄露应及时轮换。",
+        "setupStepsRedmineStep1": "在您的 Redmine 服务器上安装 redmine_webhook 插件（Redmine 没有内置的 webhook）。",
+        "setupStepsRedmineStep2": "在您的 Redmine 项目中，打开“设置”→“模块”并启用 Webhooks。",
+        "setupStepsRedmineStep3": "打开“设置”→“Webhooks”，粘贴上方的 URL，然后保存。",
+        "setupStepsRedmineStep4": "在 Redmine 中创建或更新一个问题；关联问题的状态将在此处同步。",
         "inboundChooserMantisbt": "MantisBT",
-        "inboundMantisbtTitle": "MantisBT inbound webhook",
-        "inboundMantisbtScopeHint": "A MantisBT webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsMantisbtStep1": "Install and enable a MantisBT webhook plugin on your MantisBT server (MantisBT has no built-in webhooks).",
-        "setupStepsMantisbtStep2": "In the plugin configuration, choose the issue created and issue updated events.",
-        "setupStepsMantisbtStep3": "Paste the URL above as the webhook target and save.",
-        "setupStepsMantisbtStep4": "Create or update an issue in MantisBT; the linked issue’s status will sync here."
+        "inboundMantisbtTitle": "MantisBT 入站 webhook",
+        "inboundMantisbtScopeHint": "MantisBT webhook 插件不会对请求进行签名，因此此 webhook URL 即为凭据 — 请将其视为机密信息，如泄露应及时轮换。",
+        "setupStepsMantisbtStep1": "在您的 MantisBT 服务器上安装并启用一个 MantisBT webhook 插件（MantisBT 没有内置的 webhook）。",
+        "setupStepsMantisbtStep2": "在插件配置中，选择问题创建和问题更新事件。",
+        "setupStepsMantisbtStep3": "将上方的 URL 粘贴为 webhook 目标并保存。",
+        "setupStepsMantisbtStep4": "在 MantisBT 中创建或更新一个问题；关联问题的状态将在此处同步。"
       },
       "aiModels": {
         "description": "配置人工智能模型以实现智能测试用例生成和分析",
@@ -1865,7 +1890,7 @@
           "scanningFiles": "正在扫描 {scope}… 中的文件",
           "scanningFilesCount": "正在扫描 {scope}… 中的文件（已找到{count, number}）",
           "filtering": "对 {count, number} 个文件应用过滤器…",
-          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
+          "rateLimited": "已被提供程序限速 — 将在 {seconds, number} 秒后重试…"
         },
         "cache": {
           "title": "缓存设置",
@@ -1891,8 +1916,8 @@
         "networkError": "缓存刷新期间出现网络错误",
         "refreshSuccess": "缓存已刷新： {fileCount} 个文件（已缓存{contentCached} 个内容）",
         "refreshRateLimited": "缓存已刷新：列出了 {fileCount} 个文件，缓存了 {contentCached}/{fileCount} 个内容（速率受限——请再次刷新以完成）",
-        "refreshComplete": "Cache refreshed: {fileCount} files",
-        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
+        "refreshComplete": "缓存已刷新：{fileCount} 个文件",
+        "refreshInProgress": "缓存刷新仍在后台运行。完成后将在此处更新。",
         "validation": {
           "pathRequired": "路径是必需的",
           "patternRequired": "需要图案",
@@ -2117,9 +2142,9 @@
   },
   "sessions": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this session."
+      "trigger": "活动",
+      "title": "活动日志",
+      "description": "此会话记录的所有更改。"
     },
     "title": "{count, plural, =1 {会话} other {会话}}",
     "labels": {
@@ -2382,19 +2407,19 @@
         }
       },
       "auditLog": {
-        "title": "Audit Log",
-        "description": "Actions performed by this user",
-        "noEntries": "No activity recorded yet.",
-        "loadMore": "Loading",
-        "viewDetails": "View details",
-        "columnAction": "Action",
-        "columnEntityType": "Type",
-        "columnEntityName": "Name",
-        "columnTimestamp": "Timestamp",
-        "allActions": "All Actions",
-        "allTypes": "All Types",
-        "noMatchingEntries": "No entries match the selected filters.",
-        "showing": "{loaded} of {total} entries"
+        "title": "审计日志",
+        "description": "此用户执行的操作",
+        "noEntries": "尚未记录任何活动。",
+        "loadMore": "加载中",
+        "viewDetails": "查看详情",
+        "columnAction": "操作",
+        "columnEntityType": "类型",
+        "columnEntityName": "名称",
+        "columnTimestamp": "时间戳",
+        "allActions": "所有操作",
+        "allTypes": "所有类型",
+        "noMatchingEntries": "没有符合所选筛选条件的条目。",
+        "showing": "{loaded} / {total} 条条目"
       },
       "mentionedComments": {
         "title": "评论中提到",
@@ -2488,9 +2513,9 @@
       "historyView": "测试用例历史记录视图"
     },
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test case."
+      "trigger": "活动",
+      "title": "活动日志",
+      "description": "此测试用例记录的所有更改。"
     },
     "fields": {
       "optionNotFound": "未找到选项",
@@ -2572,7 +2597,7 @@
       "copying": "正在复制…",
       "copyComplete": "{count, plural, =1 {已复制 1 个案例至 {folder}} other {已复制 # 个案例至 {folder}}}{dest, select, samename {} crossProject { 位于 {projectName}} other {}}",
       "moveComplete": "将 1 个案例移至 {count, plural, =1 {{folder}} other {将 # 个案例移至 {folder}}}{dest, select, samename {} crossProject { 中 {projectName}} other {}}",
-      "copyError": "{count, plural, =1 {Failed to copy 1 case to {folder}} other {Failed to copy # cases to {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
+      "copyError": "{count, plural, =1 {无法将 1 个案例复制到 {folder}} other {无法将 # 个案例复制到 {folder}}}{dest, select, samename {} crossProject { 中 {projectName}} other {}}",
       "moveError": "{count, plural, =1 {无法将 1 个案例移动到 {folder}} other {无法将 # 个案例移动到 {folder}}}{dest, select, samename {} crossProject { 中 {projectName}} other {}}",
       "copyAlreadyRunning": "另一份拷贝正在制作中，请稍候。",
       "currentSuffix": "（当前的）",
@@ -2923,7 +2948,7 @@
       "bulkLinkSuccess": "{count, plural, one {# 配对链接} other {# 配对链接}}",
       "bulkError": "部分操作失败，请重试。",
       "tableHint": "单击行或“比较”按钮，查看并解决重复项。",
-      "comparisonTitle": "{caseA} vs {caseB}",
+      "comparisonTitle": "{caseA} 对比 {caseB}",
       "comparisonDescription": "比较这些潜在的重复项，并选择如何解决它们。",
       "selectPrimary": "点击案例即可将其选为主合并案例。",
       "selectedAsPrimary": "选为主要",
@@ -3322,7 +3347,7 @@
       "requestChangesDescription": "在您批准此次变更之前，请告知请求者需要更改哪些内容。",
       "requestChangesCommentPlaceholder": "解释需要做出哪些改变。",
       "rejectTitle": "拒绝此审核请求？",
-      "rejectDescription": "Rejecting blocks <requester></requester> from transitioning <name></name> to <state></state>. A new review request must be created to retry.",
+      "rejectDescription": "拒绝将阻止 <requester></requester> 将 <name></name> 转换为 <state></state>。必须创建新的审核请求才能重试。",
       "rejectCommentPlaceholder": "请解释您拒绝此请求的原因。",
       "commentLabel": "评论",
       "confirmRequestChanges": "发送",
@@ -3337,9 +3362,9 @@
   },
   "runs": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test run."
+      "trigger": "活动",
+      "title": "活动日志",
+      "description": "此测试运行记录的所有更改。"
     },
     "notFound": "未找到测试运行。",
     "add": {
@@ -3348,7 +3373,7 @@
       "success": {
         "title": "测试运行已成功添加",
         "description": "{name} 已添加到项目中",
-        "descriptionMultiple": "{count, plural, one {# test run has} other {# test runs have}} been created for {name}"
+        "descriptionMultiple": "已为 {name} 创建 {count, plural, other {# 个测试运行}}"
       },
       "estimates": {
         "manual": "预计人工时间",
@@ -3681,7 +3706,7 @@
         "importProgressDescription": "{count, plural, =0 {所有已导入的记录（涵盖所有跟踪实体）。} =1 {已导入的记录（涵盖所有跟踪实体）。} other {已导入的记录（涵盖所有跟踪实体）。}}",
         "importProgressTotalRemaining": "{count, plural, =0 {无剩余记录} =1 {剩余 1 条记录} other {剩余记录数}}",
         "importProgressProcessed": "{processed, number}/{total, number} 记录已导入",
-        "importProgressAria": "{percent, number}% of import complete",
+        "importProgressAria": "导入完成 {percent, number}%",
         "importProgressPercentLabel": "{percent, number}%",
         "importDurationLabel": "总耗时：",
         "activityLogTitle": "进口活动",
@@ -4000,7 +4025,7 @@
         "defaultAccessUpdateFailed": "更新默认访问级别失败",
         "emailVerificationEnabled": "新用户现在需要进行电子邮件验证。",
         "emailVerificationDisabled": "新用户不再需要进行电子邮件验证。",
-        "emailVerificationDisabledAndVerified": "Email verification disabled and {count, plural, one {# user account} other {# user accounts}} verified",
+        "emailVerificationDisabledAndVerified": "电子邮件验证已禁用，{count, plural, other {# 个用户帐户}}已验证",
         "emailVerificationUpdateFailed": "电子邮件验证设置更新失败",
         "emailServerNotConfigured": "无法启用电子邮件验证：电子邮件服务器未配置",
         "openRegistrationEnabled": "自助注册功能现已启用。",
@@ -4421,9 +4446,9 @@
       "scimColumnYes": "是的",
       "scimUserLockedTitle": "用户由 SCIM 管理",
       "scimUserLockedDescription": "该用户的姓名、电子邮件地址和活动状态由您的身份提供商管理。请在身份提供商处进行更改，以在此处更新这些信息。",
-      "groupMappingOverrideTitle": "Managed by Group Mapping",
-      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
-      "groupMappingBadge": "Group Mapped"
+      "groupMappingOverrideTitle": "由组映射管理",
+      "groupMappingOverrideDescription": "此用户的访问层级由 SCIM 组映射控制，可能会在下次同步时被还原。",
+      "groupMappingBadge": "已映射到组"
     },
     "security": {
       "title": "安全",
@@ -4602,14 +4627,14 @@
       "probe": {
         "button": "测试 SCIM",
         "testing": "测试…",
-        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
+        "okBanner": "HTTP {status} — 令牌对 /api/scim/v2/Users 有效。",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "无法连接到SCIM端点。请重试。"
       },
-      "fallbackDefaultTitle": "Default Mapped Access",
-      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
-      "fallbackDefaultLabel": "Default access tier",
-      "fallbackDefaultSaved": "Fallback default saved"
+      "fallbackDefaultTitle": "默认映射访问权限",
+      "fallbackDefaultDescription": "分配给未被任何组映射覆盖的用户的访问层级。",
+      "fallbackDefaultLabel": "默认访问层级",
+      "fallbackDefaultSaved": "已保存默认回退设置"
     },
     "tags": {
       "add": {
@@ -4808,8 +4833,8 @@
         "description": "替换所选配置中的项目分配。配置名称无法批量编辑。",
         "applyButton": "{count, plural, one {应用于 1 个配置} other {应用于 # 个配置}}",
         "deleteButton": "{count, plural, one {删除 1 个配置} other {删除 # 个配置}}",
-        "deleteConfirmTitle": "{count, plural, one {Delete 1 configuration?} other {Delete # configurations?}}",
-        "deleteConfirmMessage": "{count, plural, one {This will delete 1 configuration. This action cannot be undone.} other {This will delete # configurations. This action cannot be undone.}}",
+        "deleteConfirmTitle": "{count, plural, other {删除 # 个配置？}}",
+        "deleteConfirmMessage": "{count, plural, other {这将删除 # 个配置。此操作无法撤消。}}",
         "applyEnabledLabel": "更改已启用状态"
       },
       "categories": {
@@ -4835,7 +4860,7 @@
       "combinations": {
         "title": "组合",
         "description": "管理全局组合",
-        "confirmDescription": "The following {count, number} Configurations will be created:",
+        "confirmDescription": "将创建以下 {count, number} 个配置：",
         "addCombination": "添加组合",
         "editCombination": "编辑组合",
         "selectCombination": "选择组合",
@@ -4894,14 +4919,14 @@
       "scimManagedTooltip": "由SCIM管理。请从SCIM管理页面进行管理。",
       "scimNameLockedTitle": "该集团由SCIM管理",
       "scimNameLockedDescription": "此群组的名称和成员由您的身份提供商管理。请在身份提供商处进行更改，以在此处更新。",
-      "mappedAccessColumnHeader": "Mapped Access",
-      "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "No mapping",
-      "mappedAccessSelect": "Select access tier...",
-      "downgradeConfirmTitle": "Confirm Access Change",
-      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
-      "downgradeConfirmApplyAnyway": "Apply anyway",
-      "downgradeConfirmUserRow": "{name}: {from} → {to}",
+      "mappedAccessColumnHeader": "映射访问权限",
+      "mappedAccessLabel": "映射访问层级",
+      "mappedAccessNone": "无映射",
+      "mappedAccessSelect": "选择访问层级……",
+      "downgradeConfirmTitle": "确认访问权限更改",
+      "downgradeConfirmDescription": "{count, plural, other {# 位用户}} 的访问权限将被降低。是否继续？",
+      "downgradeConfirmApplyAnyway": "仍然应用",
+      "downgradeConfirmUserRow": "{name}：{from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
@@ -5089,27 +5114,27 @@
       "status": {
         "active": "积极的",
         "inactive": "非活跃状态",
-        "awaitingAuthorization": "Awaiting authorization"
+        "awaitingAuthorization": "等待授权"
       },
       "connectedProjects": "关联项目",
       "noIntegrations": "未配置任何问题集成",
       "testConnection": "测试连接",
       "testSuccess": "连接成功",
       "testSuccessDescription": "问题集成已正确配置并连接",
-      "testCredentialsSaved": "Credentials look good",
-      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
+      "testCredentialsSaved": "凭据验证通过",
+      "testCredentialsSavedDescription": "您的 OAuth 客户端 ID 和密钥有效。请保存此集成，然后点击“授权”以连接您的账户 — OAuth 2.0 按用户连接，因此在至少有一人授权之前将保持未激活状态。",
       "testFailed": "连接失败",
       "testFailedDescription": "无法连接到外部服务",
       "testError": "测试错误",
       "testErrorDescription": "测试连接时发生错误",
-      "authorize": "Authorize",
-      "reauthorize": "Re-authorize",
-      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
-      "syncInProgress": "Re-syncing linked issues...",
-      "syncIntegration": "Re-sync linked issues",
-      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
+      "authorize": "授权",
+      "reauthorize": "重新授权",
+      "authorizeHint": "向提供程序授权以连接您的账户并完成设置",
+      "syncInProgress": "正在重新同步关联问题……",
+      "syncIntegration": "重新同步关联问题",
+      "syncIntegrationHint": "仅重新同步已在 TestPlanIt 中关联的问题。不会从外部跟踪器导入新问题。",
       "syncSuccess": "同步已排队",
-      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
+      "syncSuccessDescription": "“{name}”的关联问题正在后台重新同步。这可能需要一些时间。完成后表格将自动更新。",
       "syncError": "同步失败",
       "syncErrorDescription": "无法为此集成问题添加同步任务。请稍后重试。",
       "delete": {
@@ -5156,11 +5181,11 @@
         },
         "redmine": {
           "name": "Redmine",
-          "description": "Connect to a self-hosted Redmine instance for issue tracking"
+          "description": "连接到自托管的 Redmine 实例以进行问题跟踪"
         },
         "mantisbt": {
           "name": "MantisBT",
-          "description": "Connect to a self-hosted MantisBT instance for issue tracking"
+          "description": "连接到自托管的 MantisBT 实例以进行问题跟踪"
         }
       },
       "filterPlaceholder": "过滤器集成……",
@@ -5189,7 +5214,7 @@
         "apiToken": "API令牌",
         "apiTokenPlaceholder": "请输入您的 API 令牌",
         "apiTokenHelp": "从您的帐户设置中生成 API 令牌",
-        "jiraUrl": "Jira URL",
+        "jiraUrl": "Jira 地址",
         "jiraUrlPlaceholder": "https://your-site.atlassian.net",
         "jiraUrlHelp": "您的 Jira 实例的 URL",
         "clientId": "客户ID",
@@ -5198,10 +5223,10 @@
         "clientSecret": "客户机密",
         "clientSecretPlaceholder": "请输入您的 OAuth 客户端密钥",
         "clientSecretHelp": "来自您的 OAuth 应用程序的客户端密钥",
-        "cloudId": "Cloud ID",
+        "cloudId": "云 ID",
         "cloudIdPlaceholder": "请输入您的 Atlassian 云 ID",
         "cloudIdHelp": "您的 Atlassian Cloud 实例 ID（可在您的 Jira URL 中找到）",
-        "apiUrl": "API URL",
+        "apiUrl": "API 地址",
         "apiUrlPlaceholder": "https://api.example.com",
         "apiUrlHelp": "服务 API 的基本 URL",
         "personalAccessTokenPlaceholder": "请输入您的个人访问令牌",
@@ -5233,7 +5258,6 @@
         "encrypted": "加密",
         "encryptedHelp": "该字段已加密并安全存储。",
         "changeCredential": "改变",
-        "leaveBlankToKeep": "Leave blank to keep existing value",
         "apiKeyWarningTitle": "API密钥认证通知",
         "apiKeyWarningDescription": "使用 API 密钥身份验证时，即使电子邮件地址匹配，创建问题的报告者也可能与创建该问题的 TestPlanIt 用户不符：",
         "apiKeyWarningPoint1": "设置 Jira 报告人需要 API 令牌帐户拥有 Jira 管理员（“修改报告人”）权限。否则，Jira 将忽略该报告人，并将 API 令牌所有者记录为创建者。",
@@ -5242,10 +5266,10 @@
         "apiKeyWarningPoint4": "请改用 OAuth 2.0，以便在没有管理员权限的情况下准确地按用户进行报告者归属。",
         "tokenCreatorNoticeTitle": "问题创建者归属",
         "tokenCreatorNoticeDescription": "通过此集成创建的问题始终记录为拥有此访问令牌的帐户，而不是创建问题的 TestPlanIt 用户。此提供商的 API 不允许代表其他用户设置创建者。",
-        "callbackUrlLabel": "Callback URL (redirect URI)",
-        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
-        "callbackUrlCopy": "Copy",
-        "callbackUrlCopied": "Copied",
+        "callbackUrlLabel": "回调 URL（重定向 URI）",
+        "callbackUrlDescription": "请在您的提供程序 OAuth 应用中将此确切 URL 注册为回调 / 重定向 URI。必须完全匹配，否则授权将失败。",
+        "callbackUrlCopy": "复制",
+        "callbackUrlCopied": "已复制",
         "forgeApiKeyLabel": "Forge API 密钥",
         "forgeApiKeyDescription": "Atlassian Forge 应用使用此密钥来验证来自 Jira 问题面板的请求。请在此处生成密钥并将其粘贴到 Forge 应用设置中。",
         "forgeApiKeyPlaceholder": "点击“生成”按钮创建 API 密钥",
@@ -5257,18 +5281,18 @@
         "platformGitea": "吉特亚",
         "platformForgejo": "福尔热",
         "platformGogs": "戈格斯",
-        "redmineApiKey": "Redmine API Key",
-        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
-        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
+        "redmineApiKey": "Redmine API 密钥",
+        "redmineApiKeyPlaceholder": "请输入您的 Redmine API 密钥",
+        "redmineApiKeyHelp": "位于“我的账户”→“API 访问密钥”下（需在“管理”→“设置”→“API”中启用 REST API）",
         "redmineUrl": "Redmine URL",
         "redmineUrlPlaceholder": "https://redmine.example.com",
-        "redmineUrlHelp": "The base URL of your Redmine instance",
-        "mantisBTApiKey": "MantisBT API Token",
-        "mantisBTApiKeyPlaceholder": "Enter your MantisBT API token",
-        "mantisBTApiKeyHelp": "Create one under your MantisBT account settings → API Tokens",
+        "redmineUrlHelp": "您的 Redmine 实例的基本 URL",
+        "mantisBTApiKey": "MantisBT API 令牌",
+        "mantisBTApiKeyPlaceholder": "请输入您的 MantisBT API 令牌",
+        "mantisBTApiKeyHelp": "在您的 MantisBT 账户设置 →“API 令牌”下创建一个",
         "mantisBTUrl": "MantisBT URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "The base URL of your MantisBT instance"
+        "mantisBTUrlHelp": "您的 MantisBT 实例的基本 URL"
       },
       "authType": {
         "api_key": "API密钥",
@@ -5481,7 +5505,7 @@
         "generate_from_url": "根据 URL 生成测试用例（需求）",
         "generate_from_url_app": "从 URL 生成测试用例（应用程序测试）",
         "automation_candidates": "自动化候选报告",
-        "derive_case_steps": "AI Step Derivation"
+        "derive_case_steps": "AI 步骤推导"
       }
     },
     "elasticsearch": {
@@ -5548,7 +5572,7 @@
         "forecast-updates": "预测更新",
         "emails": "电子邮件队列",
         "issue-sync": "问题同步",
-        "testmo-imports": "Testmo Imports",
+        "testmo-imports": "Testmo 导入",
         "elasticsearch-reindex": "Elasticsearch 重新索引",
         "audit-logs": "审计日志",
         "budget-alerts": "预算警报",
@@ -5657,15 +5681,15 @@
     },
     "auditLogs": {
       "description": "查看系统范围内的审计跟踪，以进行安全性和合规性跟踪",
-      "projectDescription": "View the audit trail of actions performed in this project.",
+      "projectDescription": "查看此项目中执行操作的审计记录。",
       "filterPlaceholder": "按实体、用户或操作搜索……",
       "filterAction": "行动",
       "filterEntityType": "实体类型",
       "allActions": "所有操作",
       "allEntityTypes": "所有实体类型",
-      "allUsers": "All Users",
-      "allProjects": "All Projects",
-      "showing": "Showing {loaded} of {total} entries",
+      "allUsers": "所有用户",
+      "allProjects": "所有项目",
+      "showing": "显示 {loaded} / {total} 条条目",
       "viewDetails": "查看详情",
       "detailTitle": "审计日志详情",
       "userInfo": "用户信息",
@@ -5693,8 +5717,8 @@
       "systemActor": "系统",
       "systemActorTooltip": "系统执行的操作，而非登录用户执行的操作。",
       "sourceScim": "SCIM",
-      "relatedChanges": "related changes",
-      "groupedEntry": "Grouped changes from a single action"
+      "relatedChanges": "相关更改",
+      "groupedEntry": "来自单个操作的分组更改"
     }
   },
   "components": {
@@ -5781,16 +5805,16 @@
         "reviewCommentPreview": "评论： {comment}",
         "reviewRequestedEmailMessage": "{actorName} 请求您对项目“{projectName}”中的 {entityLabel} “{entityName}”进行审核。",
         "reviewApprovedEmailMessage": "{actorName} 已批准您对 {entityLabel} \"{entityName}\" 的项目 \"{projectName} \" 的审核请求。",
-        "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
-        "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewChangesRequestedEmailMessage": "{actorName} 对您在项目\"{projectName}\"中的 {entityLabel} \"{entityName}\" 的审核请求提出了修改建议。",
+        "reviewRejectedEmailMessage": "{actorName} 拒绝了您在项目\"{projectName}\"中的 {entityLabel} \"{entityName}\" 的审核请求。",
         "reviewCancelledEmailMessage": "{actorName} 取消了对 {entityLabel} \"{entityName}\" 在项目 \"{projectName} \" 中的审查请求。",
         "reviewReminderTitle": "审核仍在进行中",
         "reviewReminderAction": "仍在等待您的评论",
         "reviewReminderEmailMessage": "提醒： {actorName}对 {entityLabel} \"{entityName}\" 在项目 \"{projectName}\" 中的审核请求已等待 {hoursPending} 小时。",
         "reviewReminderHoursPending": "等待 {hoursPending, plural, one {小时} other {小时}}",
-        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
-        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
-        "aiStepsDerivedReviewLink": "Review test run"
+        "aiStepsDerivedTitle": "AI 生成的测试步骤已就绪",
+        "aiStepsDerivedMessage": "{count, plural, other {# 个测试用例已}}获得 AI 生成的步骤 — 请检查其准确性。",
+        "aiStepsDerivedReviewLink": "查看测试运行"
       }
     },
     "issues": {
@@ -6154,7 +6178,7 @@
     "group": {
       "name": "## 组名称\n一个清晰、简洁、描述性的名称或关键词，用于所有项目。\n\n- 帮助团队成员快速找到相关的测试用例、测试运行和会话。",
       "users": "## 用户\n表示分配给此组的用户。",
-      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
+      "mappedAccess": "## 映射访问层级\n此组的成员在下次同步时将至少获得此访问层级。\n\n- 用户所在的所有组中最高的层级将生效\n- “无映射”表示此组不影响访问权限 — 成员将回退到 SCIM 页面上设置的默认值\n- 对用户的手动访问权限更改会优先于映射（并会在该用户的编辑界面上标记出来）"
     },
     "template": {
       "name": "## 模板名称\n此模板的唯一描述性名称（例如，“标准测试用例”、“API 测试结果”）。",
@@ -6201,11 +6225,11 @@
       "instanceUrl": "## 实例 URL\n自托管实例的基本 URL。\n\n- 格式：https://git.example.com\n- 请勿包含尾部斜杠或路径\n- 必须可从此服务器访问",
       "projectPath": "## 项目路径\nGitLab 项目的完整路径。\n\n- 格式：命名空间/项目 或 组/子组/项目\n- 例如：my-org/my-project\n- 可在项目 URL 中找到：gitlab.com/namespace/project",
       "platform": "## 平台\n您正在连接的自托管 Git 平台。\n\n- **Gitea**：基于 gitea.io 的实例\n- **Forgejo**：基于 forgejo.org 的实例（Gitea 的分支）\n- **Gogs**：基于 gogs.io 的实例\n\n此设置控制显示的图标，并可能影响 API 兼容性。",
-      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
-      "mantisBTApiKey": "## MantisBT API Token\nYour personal REST API token.\n\n- Create one under your MantisBT account settings → API Tokens\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
-      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
+      "redmineApiKey": "## Redmine API 密钥\n您的个人 REST API 访问密钥。\n\n- 在“管理”→“设置”→“API”下启用 REST API\n- 从“我的账户”→“API 访问密钥”复制您的密钥\n- 权限范围限定于您用户的权限；共享集成请使用服务账户",
+      "redmineUrl": "## Redmine URL\n您的 Redmine 实例的基本 URL。\n\n- 格式：https://redmine.example.com\n- 请勿包含 /issues 或其他路径\n- 必须可从此服务器访问",
+      "mantisBTApiKey": "## MantisBT API 令牌\n您的个人 REST API 令牌。\n\n- 在您的 MantisBT 账户设置 →“API 令牌”下创建一个\n- 权限范围限定于您用户的权限；共享集成请使用服务账户",
+      "mantisBTUrl": "## MantisBT URL\n您的 MantisBT 实例的基本 URL。\n\n- 格式：https://mantisbt.example.com\n- 请勿包含 /api/rest 或其他路径\n- 必须可从此服务器访问",
+      "githubBaseUrl": "## API 基础 URL\nGitHub Enterprise Server 的完整 GitHub API 根目录。\n\n- 通常以 /api/v3 结尾\n- 留空则使用 api.github.com\n- 必须可从此服务器访问"
     },
     "config": {
       "name": "## 配置名称\n此配置的清晰、描述性名称。\n\n- 有助于描述构成配置的变体组合（例如“Chrome，Windows 10”、“Safari/macOS 15.5”、“Edge/Windows 11”等）。",
@@ -6695,7 +6719,7 @@
       "addDimension": "添加维度……",
       "addMetric": "添加指标……",
       "runReport": "运行报告",
-      "exportCsv": "Export CSV",
+      "exportCsv": "导出 CSV 文件",
       "noResultsFound": "未找到结果。",
       "selectAtLeastOneDimensionAndMetric": "至少选择一个维度和一个指标。",
       "noDataMatchingCriteria": "未找到与所选维度和指标匹配的数据。",
@@ -6936,7 +6960,7 @@
         },
         "heuristic": {
           "intro": "此项目未配置 LLM 集成，因此排名直接基于选择策略指标构建。请配置 LLM 集成（管理 → AI 模型），以启用更丰富的推理，将自定义字段、关联问题上下文和案例内容与指标一起纳入考量。",
-          "rankedSummary": "{ranked} of {totalEligible} eligible manual cases ranked.",
+          "rankedSummary": "已对 {totalEligible} 个符合条件的手动案例中的 {ranked} 个进行排名。",
           "strategyExplanation": {
             "most_executed": "案例按手动执行次数排序（从高到低）——这是回归频率的代理指标，自动化可以直接节省最多的测试人员时间。",
             "flakiest_first": "案例按大致的不稳定性（通过/失败翻转）排序——不稳定的手动测试是确定性自动化预言机的最佳候选对象。",
@@ -6966,7 +6990,7 @@
             "seconds": "{seconds}s",
             "minutes": "{minutes}米",
             "hours": "{hours}h",
-            "hoursAndMinutes": "{hours}h {minutes}m"
+            "hoursAndMinutes": "{hours} 小时 {minutes} 分钟"
           },
           "relativeAge": {
             "today": "今天",
@@ -7352,7 +7376,7 @@
       "verifying": "正在核实……",
       "errors": {
         "emptyPassword": "请输入密码",
-        "tooManyAttempts": "Too many failed attempts. Please try again later{resetAt, select, null {} other { at {resetAt}}}.",
+        "tooManyAttempts": "尝试次数过多。请稍后重试{resetAt, select, null {} other { ，时间为 {resetAt}}}。",
         "genericError": "发生错误，请重试。"
       },
       "attempts": {
@@ -7420,7 +7444,7 @@
         "selectedFile": "选定文件",
         "delimiter": "字段分隔符",
         "delimiters": {
-          "tab": "Tab (\\t)"
+          "tab": "制表符 (\\t)"
         },
         "hasHeaders": "第一行包含列标题。",
         "encoding": "文件编码",
@@ -7504,33 +7528,33 @@
   "search": {
     "title": "搜索",
     "savedSearches": {
-      "title": "Saved searches",
-      "save": "Save search",
-      "saveTitle": "Save search",
-      "saveDescription": "Name this search so you can revisit it later.",
-      "saveAction": "Save",
-      "nameLabel": "Name",
-      "namePlaceholder": "e.g. Failed runs this sprint",
-      "nameRequired": "Enter a name for this search.",
-      "loginRequired": "You must be signed in to save searches.",
+      "title": "已保存的搜索",
+      "save": "保存搜索",
+      "saveTitle": "保存搜索",
+      "saveDescription": "为此搜索命名，以便日后重新查看。",
+      "saveAction": "保存",
+      "nameLabel": "名称",
+      "namePlaceholder": "例如：本次冲刺中失败的运行",
+      "nameRequired": "请输入此搜索的名称。",
+      "loginRequired": "您必须登录后才能保存搜索。",
       "descriptionLabel": "描述（可选）",
-      "descriptionPlaceholder": "What this search is for",
-      "saved": "Search saved",
-      "savedDescription": "“{name}” is now in your saved searches.",
-      "saveFailed": "Couldn't save the search. Please try again.",
-      "empty": "No saved searches yet",
-      "emptyHint": "Save a search to revisit it later.",
-      "loaded": "Loaded “{name}”",
-      "loadFailed": "This saved search is no longer valid.",
-      "edit": "Edit",
-      "editTitle": "Edit saved search",
-      "edited": "Saved search updated",
-      "editFailed": "Couldn't update the search. Please try again.",
+      "descriptionPlaceholder": "此搜索的用途",
+      "saved": "搜索已保存",
+      "savedDescription": "“{name}”现已加入您已保存的搜索。",
+      "saveFailed": "无法保存搜索，请重试。",
+      "empty": "暂无已保存的搜索",
+      "emptyHint": "保存一个搜索以便日后重新查看。",
+      "loaded": "已加载“{name}”",
+      "loadFailed": "此已保存的搜索已失效。",
+      "edit": "编辑",
+      "editTitle": "编辑已保存的搜索",
+      "edited": "已保存的搜索已更新",
+      "editFailed": "无法更新搜索，请重试。",
       "delete": "删除",
-      "deleteTitle": "Delete saved search?",
-      "deleteConfirm": "“{name}” will be removed from your saved searches. This can't be undone.",
-      "deleted": "Saved search deleted",
-      "deleteFailed": "Couldn't delete the search. Please try again."
+      "deleteTitle": "删除已保存的搜索？",
+      "deleteConfirm": "“{name}”将从您已保存的搜索中移除。此操作无法撤销。",
+      "deleted": "已保存的搜索已删除",
+      "deleteFailed": "无法删除搜索，请重试。"
     },
     "bulk": {
       "crossProjectHint": "（涉及多个项目）",
@@ -7676,9 +7700,14 @@
       "intro": "点击下方按钮登录：",
       "signInButton": "登入",
       "copyPasteIntro": "或者复制此链接并粘贴到浏览器中：",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "为了您的安全，此链接只能使用一次。如需再次登录，请申请新链接。",
       "disclaimer": "如果您没有请求收到这封邮件，您可以忽略它。",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "登录 TestPlanIt\n\n点击下方链接登录：\n{url}\n\n为了您的安全，此链接只能使用一次。如需再次登录，请申请新链接。\n\n如果您没有请求此邮件，可以放心忽略它。"
+    },
+    "passwordless": {
+      "codeIntro": "正在其他设备上打开吗？请在您请求该链接的登录界面上输入以下验证码：",
+      "deviceNotice": "此链接会在您请求它的浏览器中为您登录。如果您在其他地方打开它，系统将显示上方的验证码，供您在原始窗口中输入。",
+      "textBody": "登录 TestPlanIt\n\n点击下方链接登录：\n{url}\n\n正在其他设备上打开吗？请在您请求该链接的登录界面上输入以下验证码：{code}\n\n如果您没有请求此邮件，可以放心忽略它。"
     }
   },
   "comments": {
@@ -7751,7 +7780,7 @@
       "newTagsPopoverTitle": "要创建的新标签",
       "applying": "正在申请……",
       "applySuccess": "{tagCount, plural, one {# 标签} other {# 标签}} 应用于 {entityCount, plural, one {# 实体} other {# 实体集}}",
-      "applySuccessNewTags": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}, {newCount, plural, one {# new tag} other {# new tags}} created",
+      "applySuccessNewTags": "{tagCount, plural, other {# 个标签}} 已应用于 {entityCount, plural, other {# 个实体}}，创建了 {newCount, plural, other {# 个新标签}}",
       "applyError": "标签应用失败，请重试。",
       "suggestedTags": "建议标签",
       "noSuggestions": "人工智能无法生成任何标签。",
@@ -7781,7 +7810,7 @@
     },
     "wizard": {
       "description": "AI 将分析您整个项目的测试用例、测试运行和会话，并根据其内容建议相关的标签。",
-      "entityLine": "{count, number} {type}",
+      "entityLine": "{count, number} 个{type}",
       "startAnalysis": "开始分析",
       "untaggedOnly": "仅分析没有现有标签的记录",
       "allowNewTags": "允许创建新标签",
@@ -7973,7 +8002,7 @@
     "chipClickToReveal": "点击显示",
     "chipCopyValue": "复制价值",
     "chipCopyAriaLabel": "将 {label} 的值复制到剪贴板",
-    "chipCopiedToast": "Copied @{label} to clipboard",
+    "chipCopiedToast": "已将 @{label} 复制到剪贴板",
     "chipCopyFailedToast": "无法将 @{label} 复制到剪贴板",
     "iterationResultPanelHeading": "提交第 {n} 次迭代的结果，该迭代是 {total} 次迭代的结果。",
     "iterationAddResult": "添加结果",
@@ -8054,7 +8083,7 @@
     "iterationBulkConfirmDescription": "每个选定的迭代都会收到一个状态为“{statusName}”的新结果。",
     "iterationBulkConfirm": "马克 {action}",
     "iterationBulkConfirmReplace": "替换为 {action}",
-    "iterationBulkOverwriteWarning": "{count, plural, =1 {# of the selected iterations already has} other {# of the selected iterations already have}} a result. A new result will be recorded and the latest will replace the current one.",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {# 个所选迭代已有} other {# 个所选迭代已有}}结果。将记录一个新结果，最新结果将替换当前结果。",
     "iterationBulkReasonLabel": "原因（可选）",
     "iterationBulkReasonHelp": "记录在每项结果中。",
     "iterationBulkSuccess": "{count, plural, =1 {# 迭代次数} other {# 迭代次数}} 已标记 {action}",
@@ -8064,7 +8093,7 @@
     "iterationResetUntestedMissing": "未测试状态未找到",
     "overrideTitle": "覆盖迭代 {n} 的值",
     "overrideDescription": "更改仅影响本次迭代。数据集快照和源数据集保持不变。此操作已记录在审计日志中。",
-    "overrideValidationItem": "@{param}: {message}",
+    "overrideValidationItem": "@{param}：{message}",
     "overrideSensitiveDenied": "您没有权限编辑敏感值。",
     "datasetSourceLocal": "当地的",
     "datasetSourceShared": "共享",
