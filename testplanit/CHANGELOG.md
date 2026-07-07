@@ -1,3 +1,9 @@
+## [0.41.1](https://github.com/TestPlanIt/testplanit/compare/v0.41.0...v0.41.1) (2026-07-07)
+
+### Enhancements
+
+* **auth:** device-bound magic-link sign-in with OTP fallback ([#497](https://github.com/TestPlanIt/testplanit/issues/497)) ([a8a1def](https://github.com/TestPlanIt/testplanit/commit/a8a1deffd3f532dfdf51b6beaa0e10cd2f947bef))
+
 ## [0.41.0](https://github.com/TestPlanIt/testplanit/compare/v0.40.14...v0.41.0) (2026-07-05)
 
 ### Features
