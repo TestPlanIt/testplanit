@@ -1090,7 +1090,22 @@
         "description": "أدخل الرمز المكون من 6 أرقام من تطبيق المصادقة الخاص بك أو استخدم رمز نسخة احتياطية."
       },
       "troubleSigningIn": "تواجه مشكلة في تسجيل الدخول؟",
-      "contactAdmin": "تواصل مع مسؤول النظام"
+      "contactAdmin": "تواصل مع مسؤول النظام",
+      "passwordless": {
+        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
+        "codeLabel": "Sign-in code",
+        "verifyCode": "Verify code",
+        "verifying": "Verifying...",
+        "invalidCode": "That code isn't right. Check the email and try again.",
+        "codeExpired": "This sign-in request has expired. Request a new link.",
+        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
+        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
+        "genericError": "We couldn't sign you in. Request a new link and try again.",
+        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again.",
+        "haveCode": "Already have a sign-in code?",
+        "codeEntryDescription": "Enter the code from your sign-in email. Codes only work in the browser where you requested the link.",
+        "backToRequest": "Request a new link instead"
+      }
     },
     "errors": {
       "accessDenied": "تم رفض الوصول. قد يكون حسابك غير نشط أو ليس لديك إذن لتسجيل الدخول.",
@@ -1176,6 +1191,16 @@
       "policyLowercase": "حرف صغير واحد على الأقل",
       "policyNumbers": "رقم واحد على الأقل",
       "policySpecialChars": "رمز خاص واحد على الأقل ({chars})"
+    },
+    "passwordless": {
+      "completingSignIn": "Signing you in...",
+      "completeErrorTitle": "We couldn't sign you in",
+      "requestNewLink": "Request a new link",
+      "codeTitle": "Your sign-in code",
+      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
+      "codeCloseNotice": "You can close this window once you've entered the code.",
+      "expiredTitle": "This sign-in link is no longer valid",
+      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
     }
   },
   "account": {
@@ -7679,6 +7704,11 @@
       "singleUseNotice": "لأمانك، يمكن استخدام هذا الرابط مرة واحدة فقط. اطلب رابطًا جديدًا إذا احتجت إلى تسجيل الدخول مرة أخرى.",
       "disclaimer": "إذا لم تطلب هذا البريد الإلكتروني، يمكنك تجاهله بأمان.",
       "textBody": "تسجيل الدخول إلى TestPlanIt\n\nانقر على الرابط أدناه لتسجيل الدخول:\n{url}\n\nلأمانك، يمكن استخدام هذا الرابط مرة واحدة فقط. اطلب رابطًا جديدًا إذا احتجت إلى تسجيل الدخول مرة أخرى.\n\nإذا لم تطلب هذا البريد الإلكتروني، يمكنك تجاهله بأمان."
+    },
+    "passwordless": {
+      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
+      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {
