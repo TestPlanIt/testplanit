@@ -74,7 +74,7 @@
       "resultDetails": "Подробности результатов",
       "actionsLabel": "Действия",
       "assign": "Назначать",
-      "assignSelected": "Assign {count, plural, one {# case} other {# cases}}",
+      "assignSelected": "Назначить {count, plural, one {# случай} few {# случая} many {# случаев} other {# случая}}",
       "refresh": "Обновить",
       "addResultSelected": "Добавить результат в {count, plural, one {# случай} other {# случаи}}",
       "resultsAdded": "{count, plural, one {# Результат} other {# Результаты}} Добавлено",
@@ -195,7 +195,7 @@
       "internal": "Электронная почта/Пароль",
       "sso": "Только SSO",
       "both": "Электронная почта и единый вход (SSO)",
-      "scim": "SCIM Provisioned"
+      "scim": "Подготовлено через SCIM"
     },
     "status": {
       "deleted": "Удалено",
@@ -1059,7 +1059,7 @@
     "testResults": {
       "import": {
         "iterationCapExceeded": "Индекс итерации {index} превышает максимально допустимое значение {cap}. Уменьшите количество итераций или разделите выполнение.",
-        "iterationCapExceededMulti": "{count} test cases request iteration indexes above the maximum supported value of {cap}. Reduce the iteration count or split the run."
+        "iterationCapExceededMulti": "{count} тестовых случаев запрашивают индексы итераций выше максимально поддерживаемого значения {cap}. Уменьшите количество итераций или разделите запуск."
       }
     }
   },
@@ -1072,7 +1072,7 @@
         "apple": "Продолжить с Apple",
         "microsoft": "Продолжить работу с Microsoft",
         "samlProvider": "Войдите с помощью {name}",
-        "magicLink": "Sign in with single-use Magic Link",
+        "magicLink": "Войти с помощью одноразовой Magic Link",
         "emailLogin": "Продолжить отправку электронного письма"
       },
       "magicLink": {
@@ -1086,16 +1086,19 @@
         "backToSignIn": "Вернуться к входу"
       },
       "passwordless": {
-        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
-        "codeLabel": "Sign-in code",
-        "verifyCode": "Verify code",
-        "verifying": "Verifying...",
-        "invalidCode": "That code isn't right. Check the email and try again.",
-        "codeExpired": "This sign-in request has expired. Request a new link.",
-        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
-        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
-        "genericError": "We couldn't sign you in. Request a new link and try again.",
-        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+        "waitingInstructions": "Нажмите на ссылку в письме, чтобы войти из этого браузера, или введите код из письма ниже.",
+        "codeLabel": "Код для входа",
+        "verifyCode": "Проверить код",
+        "verifying": "Проверка...",
+        "invalidCode": "Этот код неверен. Проверьте письмо и попробуйте снова.",
+        "codeExpired": "Срок действия этого запроса на вход истёк. Запросите новую ссылку.",
+        "tooManyAttempts": "Слишком много неверных попыток. Запросите новую ссылку, чтобы попробовать снова.",
+        "windowLost": "Это окно больше не может завершить вход. Запросите новую ссылку.",
+        "genericError": "Не удалось выполнить вход. Запросите новую ссылку и попробуйте снова.",
+        "tooManyRequests": "Слишком много запросов на вход. Пожалуйста, подождите немного и попробуйте снова.",
+        "haveCode": "Уже есть код для входа?",
+        "codeEntryDescription": "Введите код из письма для входа. Коды работают только в браузере, где вы запросили ссылку.",
+        "backToRequest": "Запросить новую ссылку"
       },
       "twoFactor": {
         "title": "Двухфакторная аутентификация",
@@ -1105,19 +1108,19 @@
       "contactAdmin": "Обратитесь к системному администратору."
     },
     "passwordless": {
-      "completingSignIn": "Signing you in...",
-      "completeErrorTitle": "We couldn't sign you in",
-      "requestNewLink": "Request a new link",
-      "codeTitle": "Your sign-in code",
-      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
-      "codeCloseNotice": "You can close this window once you've entered the code.",
-      "expiredTitle": "This sign-in link is no longer valid",
-      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
+      "completingSignIn": "Выполняется вход...",
+      "completeErrorTitle": "Не удалось выполнить вход",
+      "requestNewLink": "Запросить новую ссылку",
+      "codeTitle": "Ваш код для входа",
+      "codeInstructions": "Вы открыли ссылку для входа на другом устройстве или в другом браузере. Введите этот код на экране входа, где вы изначально его запросили.",
+      "codeCloseNotice": "Вы можете закрыть это окно после ввода кода.",
+      "expiredTitle": "Эта ссылка для входа больше недействительна",
+      "expiredBody": "Возможно, срок действия ссылки истёк или она уже была использована. Запросите новую на странице входа — это займёт всего мгновение."
     },
     "errors": {
       "accessDenied": "Доступ запрещен. Возможно, ваша учетная запись неактивна или у вас нет разрешения на вход.",
       "configuration": "Возникла проблема с конфигурацией сервера.",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "Срок действия этой ссылки для входа истёк, либо она уже была использована. Ссылки Magic Link можно использовать только один раз — запросите новую, чтобы войти.",
       "invalid2FACode": "Неверный код подтверждения. Пожалуйста, попробуйте еще раз.",
       "twoFactorTokenRequired": "Требуется токен",
       "verificationCodeRequired": "Требуется код подтверждения."
@@ -1364,19 +1367,19 @@
           "switchWarning2": "Сохраните записи в базе данных (они станут несвязанными).",
           "switchWarning3": "Замените текущую конфигурацию интеграции задач на новую.",
           "switchWarning4": "Удалите входящий веб-перехватчик, настроенный для текущей интеграции.",
-          "importIssues": "Import Issues",
-          "importTitle": "Import issues from {name}",
-          "importDescription": "Pull issues from this linked project into your project. Existing issues aren't duplicated, and imported issues stay up to date through sync.",
-          "importUpdatedWithin": "Updated within",
-          "importLastDays": "Last {days} days",
-          "importMax": "Maximum to import",
-          "importPreview": "Preview",
-          "importPreviewResult": "~{count, plural, one {# issue} other {# issues}} match this filter. Up to {cap} will be imported.",
-          "importOverCap": "That exceeds the cap of {cap}; only the {cap} most recently updated will be imported.",
-          "importStart": "Import",
-          "importStarted": "Import started. Issues will appear shortly.",
-          "importFailed": "Import failed",
-          "importPreviewFailed": "Couldn't estimate matches"
+          "importIssues": "Импортировать задачи",
+          "importTitle": "Импортировать задачи из {name}",
+          "importDescription": "Загрузите задачи из этого связанного проекта в свой проект. Существующие задачи не дублируются, а импортированные задачи остаются актуальными благодаря синхронизации.",
+          "importUpdatedWithin": "Обновлено за",
+          "importLastDays": "Последние {days} дней",
+          "importMax": "Максимум для импорта",
+          "importPreview": "Предварительный просмотр",
+          "importPreviewResult": "Этому фильтру соответствует примерно {count, plural, one {# задача} few {# задачи} many {# задач} other {# задач}}. Будет импортировано не более {cap}.",
+          "importOverCap": "Это превышает лимит в {cap}; будут импортированы только {cap} последних обновлённых задач.",
+          "importStart": "Импорт",
+          "importStarted": "Импорт начат. Задачи появятся в ближайшее время.",
+          "importFailed": "Импорт не удался",
+          "importPreviewFailed": "Не удалось оценить количество совпадений"
         },
         "integrationAssigned": "Интеграция успешно завершена.",
         "integrationAssignError": "Не удалось назначить задачу интеграции в проект.",
@@ -1402,10 +1405,10 @@
             "description": "Подключитесь к Azure DevOps для отслеживания рабочих элементов."
           },
           "redmine": {
-            "description": "Connect to a self-hosted Redmine instance for issue tracking."
+            "description": "Подключитесь к самостоятельно размещённому экземпляру Redmine для отслеживания проблем."
           },
           "mantisbt": {
-            "description": "Connect to a self-hosted MantisBT instance for issue tracking."
+            "description": "Подключитесь к самостоятельно размещённому экземпляру MantisBT для отслеживания проблем."
           }
         }
       },
@@ -1519,7 +1522,7 @@
           "jiraIssueDeleted": "Задача в Jira удалена.",
           "githubIssues": "Событие GitHub Issues",
           "githubPullRequest": "Запрос на слияние в GitHub",
-          "githubPush": "GitHub push",
+          "githubPush": "Push в GitHub",
           "githubIssueComment": "комментарий к проблеме на GitHub",
           "adoWorkitemCreated": "Создан элемент задачи Azure DevOps.",
           "adoWorkitemUpdated": "Обновлен рабочий элемент Azure DevOps.",
@@ -1685,19 +1688,19 @@
         "toastReEnableSuccess": "Веб-хук повторно включен.",
         "toastReEnableFailed": "Не удалось повторно включить: {error}",
         "inboundChooserRedmine": "Redmine",
-        "inboundRedmineTitle": "Redmine inbound webhook",
-        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
-        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
-        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
-        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here.",
+        "inboundRedmineTitle": "Входящий веб-хук Redmine",
+        "inboundRedmineScopeHint": "Плагин redmine_webhook не подписывает запросы, поэтому URL этого веб-хука является учётными данными — храните его в секрете и замените, если он был раскрыт.",
+        "setupStepsRedmineStep1": "Установите плагин redmine_webhook на сервере Redmine (в Redmine нет встроенных веб-хуков).",
+        "setupStepsRedmineStep2": "В своём проекте Redmine откройте Настройки → Модули и включите Веб-хуки.",
+        "setupStepsRedmineStep3": "Откройте Настройки → Веб-хуки, вставьте указанный выше URL и сохраните.",
+        "setupStepsRedmineStep4": "Создайте или обновите задачу в Redmine; статус связанной задачи будет синхронизирован здесь.",
         "inboundChooserMantisbt": "MantisBT",
-        "inboundMantisbtTitle": "MantisBT inbound webhook",
-        "inboundMantisbtScopeHint": "A MantisBT webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsMantisbtStep1": "Install and enable a MantisBT webhook plugin on your MantisBT server (MantisBT has no built-in webhooks).",
-        "setupStepsMantisbtStep2": "In the plugin configuration, choose the issue created and issue updated events.",
-        "setupStepsMantisbtStep3": "Paste the URL above as the webhook target and save.",
-        "setupStepsMantisbtStep4": "Create or update an issue in MantisBT; the linked issue’s status will sync here."
+        "inboundMantisbtTitle": "Входящий веб-хук MantisBT",
+        "inboundMantisbtScopeHint": "Плагин веб-хуков MantisBT не подписывает запросы, поэтому URL этого веб-хука является учётными данными — храните его в секрете и замените, если он был раскрыт.",
+        "setupStepsMantisbtStep1": "Установите и включите плагин веб-хуков MantisBT на своём сервере MantisBT (в MantisBT нет встроенных веб-хуков).",
+        "setupStepsMantisbtStep2": "В настройках плагина выберите события создания и обновления задачи.",
+        "setupStepsMantisbtStep3": "Вставьте указанный выше URL в качестве цели веб-хука и сохраните.",
+        "setupStepsMantisbtStep4": "Создайте или обновите задачу в MantisBT; статус связанной задачи будет синхронизирован здесь."
       },
       "aiModels": {
         "description": "Настройте модели ИИ для интеллектуальной генерации и анализа тестовых примеров.",
@@ -1887,7 +1890,7 @@
           "scanningFiles": "Сканирование файлов в {scope}…",
           "scanningFilesCount": "Сканирование файлов в {scope}… ({count, number} найдено)",
           "filtering": "Применение фильтров к {count, number} файлам…",
-          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
+          "rateLimited": "Ограничение скорости запросов провайдером — повторная попытка через {seconds, number} с…"
         },
         "cache": {
           "title": "Настройки кэша",
@@ -1913,8 +1916,8 @@
         "networkError": "Сетевая ошибка во время обновления кэша.",
         "refreshSuccess": "Кэш обновлен: {fileCount} файлов ({contentCached} содержимое кэшировано)",
         "refreshRateLimited": "Кэш обновлен: {fileCount} файлов в списке, содержимое {contentCached}/{fileCount} кэшировано (ограничение скорости — обновите еще раз для завершения)",
-        "refreshComplete": "Cache refreshed: {fileCount} files",
-        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
+        "refreshComplete": "Кэш обновлён: {fileCount} файлов",
+        "refreshInProgress": "Обновление кэша всё ещё выполняется в фоновом режиме. Информация здесь обновится по завершении.",
         "validation": {
           "pathRequired": "Требуется указать путь.",
           "patternRequired": "Требуется шаблон",
@@ -2139,9 +2142,9 @@
   },
   "sessions": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this session."
+      "trigger": "Активность",
+      "title": "Журнал активности",
+      "description": "Все изменения, зафиксированные для этой сессии."
     },
     "title": "{count, plural, =1 {Сессия} other {Сессии}}",
     "labels": {
@@ -2404,19 +2407,19 @@
         }
       },
       "auditLog": {
-        "title": "Audit Log",
-        "description": "Actions performed by this user",
-        "noEntries": "No activity recorded yet.",
-        "loadMore": "Loading",
+        "title": "Журнал аудита",
+        "description": "Действия, выполненные этим пользователем",
+        "noEntries": "Активность пока не зафиксирована.",
+        "loadMore": "Загрузка",
         "viewDetails": "Просмотреть подробности",
         "columnAction": "Действие",
         "columnEntityType": "Тип",
         "columnEntityName": "Имя",
         "columnTimestamp": "Отметка времени",
         "allActions": "Все действия",
-        "allTypes": "All Types",
-        "noMatchingEntries": "No entries match the selected filters.",
-        "showing": "{loaded} of {total} entries"
+        "allTypes": "Все типы",
+        "noMatchingEntries": "Нет записей, соответствующих выбранным фильтрам.",
+        "showing": "{loaded} из {total} записей"
       },
       "mentionedComments": {
         "title": "Упомянуто в комментариях",
@@ -2510,9 +2513,9 @@
       "historyView": "Просмотр истории тестовых случаев"
     },
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test case."
+      "trigger": "Активность",
+      "title": "Журнал активности",
+      "description": "Все изменения, зафиксированные для этого тестового случая."
     },
     "fields": {
       "optionNotFound": "Вариант не найден",
@@ -3359,9 +3362,9 @@
   },
   "runs": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test run."
+      "trigger": "Активность",
+      "title": "Журнал активности",
+      "description": "Все изменения, зафиксированные для этого тестового запуска."
     },
     "notFound": "Тестовый запуск не найден.",
     "add": {
@@ -3380,7 +3383,7 @@
       "creatingProgress": "Создание тестового запуска {current, number} из {total, number}..."
     },
     "magicSelect": {
-      "title": "Magic Select",
+      "title": "Магический выбор",
       "description": "Выбор тестовых примеров с помощью ИИ на основе контекста выполнения теста",
       "counting": "Ищу подходящие тестовые примеры...",
       "reasoning": "Логическое мышление ИИ",
@@ -3725,7 +3728,7 @@
         "jobLoadFailed": "Нам не удалось загрузить это задание импорта.",
         "uploadProgressAnalyzing": "Загрузка завершена. Анализ файла…",
         "uploadProgressComplete": "Загрузка завершена",
-        "etaLabel": "ETA: {time}",
+        "etaLabel": "Расчётное время: {time}",
         "startImportButton": "Начать импорт",
         "workflowCreate": {
           "nameLabel": "Название рабочего процесса",
@@ -4436,16 +4439,16 @@
       "forcePasswordChangeFailed": "Не удалось принудительно изменить пароль.",
       "revokePasswordSuccess": "Пароль аннулирован для {name}",
       "revokePasswordFailed": "Не удалось отозвать пароль.",
-      "scimProvisionerBadge": "SCIM Provisioner",
+      "scimProvisionerBadge": "SCIM-провизионер",
       "scimManagedBadge": "СКИМ",
       "scimManagedTooltip": "Управление осуществляется через SCIM. Управление производится со страницы администрирования SCIM.",
       "scimColumnHeader": "СКИМ",
       "scimColumnYes": "Да",
       "scimUserLockedTitle": "Пользователь управляется системой SCIM.",
       "scimUserLockedDescription": "Имя, адрес электронной почты и статус активности этого пользователя управляются вашим поставщиком идентификационных данных. Чтобы обновить их здесь, внесите изменения в этом поставщике.",
-      "groupMappingOverrideTitle": "Managed by Group Mapping",
-      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
-      "groupMappingBadge": "Group Mapped"
+      "groupMappingOverrideTitle": "Управляется сопоставлением групп",
+      "groupMappingOverrideDescription": "Уровень доступа этого пользователя определяется сопоставлением групп SCIM и может быть возвращён к исходному значению при следующей синхронизации.",
+      "groupMappingBadge": "Сопоставлено с группой"
     },
     "security": {
       "title": "Безопасность",
@@ -4490,7 +4493,7 @@
       "saveChanges": "Сохранить изменения",
       "forceAllUsers": "Принудить всех пользователей к смене пароля",
       "forceAllUsersDialogTitle": "Принудительная смена пароля для всех пользователей",
-      "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
+      "forceAllUsersDialogDescription": "Это потребует от {count, number} пользователей с учетными данными сменить пароль при следующем входе.",
       "forceAllUsersDialogWarning": "Это действие необратимо.",
       "forceAllUsersDialogConfirm": "Силовое изменение",
       "saved": "Сохранены настройки безопасности",
@@ -4624,14 +4627,14 @@
       "probe": {
         "button": "Тест SCIM",
         "testing": "Тестирование…",
-        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
+        "okBanner": "HTTP {status} — токен работает с /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Не удалось установить соединение с конечной точкой SCIM. Повторите попытку."
       },
-      "fallbackDefaultTitle": "Default Mapped Access",
-      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
-      "fallbackDefaultLabel": "Default access tier",
-      "fallbackDefaultSaved": "Fallback default saved"
+      "fallbackDefaultTitle": "Сопоставленный доступ по умолчанию",
+      "fallbackDefaultDescription": "Уровень доступа, назначаемый пользователям, не охваченным ни одним сопоставлением групп.",
+      "fallbackDefaultLabel": "Уровень доступа по умолчанию",
+      "fallbackDefaultSaved": "Резервное значение по умолчанию сохранено"
     },
     "tags": {
       "add": {
@@ -4916,13 +4919,13 @@
       "scimManagedTooltip": "Управление осуществляется через SCIM. Управление производится со страницы администрирования SCIM.",
       "scimNameLockedTitle": "Группа управляется компанией SCIM.",
       "scimNameLockedDescription": "Название и участники этой группы управляются вашим поставщиком идентификационных данных. Чтобы обновить данные здесь, внесите изменения там.",
-      "mappedAccessColumnHeader": "Mapped Access",
-      "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "No mapping",
-      "mappedAccessSelect": "Select access tier...",
-      "downgradeConfirmTitle": "Confirm Access Change",
-      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
-      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "mappedAccessColumnHeader": "Сопоставленный доступ",
+      "mappedAccessLabel": "Сопоставленный уровень доступа",
+      "mappedAccessNone": "Нет сопоставления",
+      "mappedAccessSelect": "Выберите уровень доступа...",
+      "downgradeConfirmTitle": "Подтвердите изменение доступа",
+      "downgradeConfirmDescription": "Уровень доступа будет понижен у {count, plural, one {# пользователя} few {# пользователей} many {# пользователей} other {# пользователей}}. Продолжить?",
+      "downgradeConfirmApplyAnyway": "Всё равно применить",
       "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
@@ -5111,27 +5114,27 @@
       "status": {
         "active": "Активный",
         "inactive": "Неактивный",
-        "awaitingAuthorization": "Awaiting authorization"
+        "awaitingAuthorization": "Ожидание авторизации"
       },
       "connectedProjects": "Связанные проекты",
       "noIntegrations": "Интеграции для решения проблем не настроены.",
       "testConnection": "Проверить соединение",
       "testSuccess": "Соединение установлено успешно.",
       "testSuccessDescription": "Интеграция проблем настроена и подключена должным образом.",
-      "testCredentialsSaved": "Credentials look good",
-      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
+      "testCredentialsSaved": "Учётные данные в порядке",
+      "testCredentialsSavedDescription": "Идентификатор клиента OAuth и секрет действительны. Сохраните интеграцию, затем нажмите «Авторизовать», чтобы подключить свою учётную запись — OAuth 2.0 подключается для каждого пользователя отдельно, поэтому интеграция остаётся неактивной, пока хотя бы один человек не авторизуется.",
       "testFailed": "Соединение не удалось.",
       "testFailedDescription": "Не удалось подключиться к внешнему сервису.",
       "testError": "Ошибка теста",
       "testErrorDescription": "Произошла ошибка при проверке соединения.",
-      "authorize": "Authorize",
-      "reauthorize": "Re-authorize",
-      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
-      "syncInProgress": "Re-syncing linked issues...",
-      "syncIntegration": "Re-sync linked issues",
-      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
+      "authorize": "Авторизовать",
+      "reauthorize": "Повторно авторизовать",
+      "authorizeHint": "Авторизуйтесь у провайдера, чтобы подключить свою учётную запись и завершить настройку",
+      "syncInProgress": "Повторная синхронизация связанных задач...",
+      "syncIntegration": "Повторно синхронизировать связанные задачи",
+      "syncIntegrationHint": "Повторно синхронизирует только задачи, уже связанные в TestPlanIt. Новые задачи не импортируются из внешней системы отслеживания.",
       "syncSuccess": "Синхронизация поставлена в очередь",
-      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
+      "syncSuccessDescription": "Связанные задачи из «{name}» синхронизируются повторно в фоновом режиме. Это может занять некоторое время. Таблица обновится автоматически после завершения.",
       "syncError": "Синхронизация не удалась",
       "syncErrorDescription": "Не удалось поставить в очередь задачу синхронизации для интеграции этой проблемы. Пожалуйста, попробуйте позже.",
       "delete": {
@@ -5178,11 +5181,11 @@
         },
         "redmine": {
           "name": "Redmine",
-          "description": "Connect to a self-hosted Redmine instance for issue tracking"
+          "description": "Подключитесь к самостоятельно размещённому экземпляру Redmine для отслеживания проблем"
         },
         "mantisbt": {
           "name": "MantisBT",
-          "description": "Connect to a self-hosted MantisBT instance for issue tracking"
+          "description": "Подключитесь к самостоятельно размещённому экземпляру MantisBT для отслеживания проблем"
         }
       },
       "filterPlaceholder": "Интеграция фильтров...",
@@ -5263,10 +5266,10 @@
         "apiKeyWarningPoint4": "Для точного указания авторства каждого пользователя без прав администратора используйте OAuth 2.0.",
         "tokenCreatorNoticeTitle": "указание авторства выпуска",
         "tokenCreatorNoticeDescription": "Задачи, созданные с помощью этой интеграции, всегда записываются от имени учетной записи, владеющей этим токеном доступа, а не от имени пользователя TestPlanIt, который их создал. API этого поставщика не позволяет устанавливать имя создателя от имени другого пользователя.",
-        "callbackUrlLabel": "Callback URL (redirect URI)",
-        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
-        "callbackUrlCopy": "Copy",
-        "callbackUrlCopied": "Copied",
+        "callbackUrlLabel": "URL обратного вызова (redirect URI)",
+        "callbackUrlDescription": "Зарегистрируйте именно этот URL в качестве callback / redirect URI в OAuth-приложении вашего провайдера. Он должен точно совпадать, иначе авторизация завершится ошибкой.",
+        "callbackUrlCopy": "Копировать",
+        "callbackUrlCopied": "Скопировано",
         "forgeApiKeyLabel": "Подделать ключ API",
         "forgeApiKeyDescription": "Используется приложением Atlassian Forge для аутентификации запросов из панелей задач Jira. Сгенерируйте ключ здесь и вставьте его в настройки вашего приложения Forge.",
         "forgeApiKeyPlaceholder": "Нажмите «Сгенерировать», чтобы создать ключ API.",
@@ -5278,18 +5281,18 @@
         "platformGitea": "Гитеа",
         "platformForgejo": "Форгехо",
         "platformGogs": "Гогс",
-        "redmineApiKey": "Redmine API Key",
-        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
-        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
-        "redmineUrl": "Redmine URL",
+        "redmineApiKey": "API-ключ Redmine",
+        "redmineApiKeyPlaceholder": "Введите свой API-ключ Redmine",
+        "redmineApiKeyHelp": "Находится в разделе Мой аккаунт → Ключ доступа к API (включите REST API в Администрирование → Настройки → API)",
+        "redmineUrl": "URL Redmine",
         "redmineUrlPlaceholder": "https://redmine.example.com",
-        "redmineUrlHelp": "The base URL of your Redmine instance",
-        "mantisBTApiKey": "MantisBT API Token",
-        "mantisBTApiKeyPlaceholder": "Enter your MantisBT API token",
-        "mantisBTApiKeyHelp": "Create one under your MantisBT account settings → API Tokens",
-        "mantisBTUrl": "MantisBT URL",
+        "redmineUrlHelp": "Базовый URL вашего экземпляра Redmine",
+        "mantisBTApiKey": "API-токен MantisBT",
+        "mantisBTApiKeyPlaceholder": "Введите свой API-токен MantisBT",
+        "mantisBTApiKeyHelp": "Создайте его в настройках учётной записи MantisBT → API-токены",
+        "mantisBTUrl": "URL MantisBT",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "The base URL of your MantisBT instance"
+        "mantisBTUrlHelp": "Базовый URL вашего экземпляра MantisBT"
       },
       "authType": {
         "api_key": "Ключ API",
@@ -5487,7 +5490,7 @@
         "warning": "Это действие необратимо. Все проекты, использующие эту конфигурацию, вернутся к конфигурации приглашения командной строки по умолчанию."
       },
       "llmColumn": "магистр права",
-      "mixedLlms": "{count, number} LLMs",
+      "mixedLlms": "{count, number} LLM",
       "cannotDeleteDefault": "Невозможно удалить конфигурацию приглашения по умолчанию. Сначала установите другую конфигурацию по умолчанию.",
       "defaultChanged": "Настройки приглашения командной строки по умолчанию успешно обновлены.",
       "featureLabels": {
@@ -5502,7 +5505,7 @@
         "generate_from_url": "Создание тестовых сценариев на основе URL-адреса (требования)",
         "generate_from_url_app": "Генерация тестовых сценариев из URL-адреса (тестирование приложений)",
         "automation_candidates": "Отчет о кандидатах на автоматизацию",
-        "derive_case_steps": "AI Step Derivation"
+        "derive_case_steps": "Формирование шагов ИИ"
       }
     },
     "elasticsearch": {
@@ -5569,15 +5572,15 @@
         "forecast-updates": "Обновления прогнозов",
         "emails": "Очередь электронных писем",
         "issue-sync": "Синхронизация проблем",
-        "testmo-imports": "Testmo Imports",
-        "elasticsearch-reindex": "Elasticsearch Reindex",
+        "testmo-imports": "Импорт Testmo",
+        "elasticsearch-reindex": "Переиндексация Elasticsearch",
         "audit-logs": "Журналы аудита",
         "budget-alerts": "Уведомления о бюджете",
         "auto-tag": "Автоматическая разметка с помощью ИИ",
         "repo-cache": "Кэш репозитория",
         "copy-move": "Копировать и переместить",
         "duplicate-scan": "Повторное сканирование",
-        "magic-select": "Magic Select",
+        "magic-select": "Волшебный выбор",
         "step-scan": "Пошаговое сканирование"
       },
       "status": {
@@ -5678,15 +5681,15 @@
     },
     "auditLogs": {
       "description": "Просматривайте общесистемный журнал аудита для отслеживания безопасности и соответствия требованиям.",
-      "projectDescription": "View the audit trail of actions performed in this project.",
+      "projectDescription": "Просмотр журнала аудита действий, выполненных в этом проекте.",
       "filterPlaceholder": "Поиск по сущности, пользователю или действию...",
       "filterAction": "Действие",
       "filterEntityType": "Тип сущности",
       "allActions": "Все действия",
       "allEntityTypes": "Все типы сущностей",
-      "allUsers": "All Users",
+      "allUsers": "Все пользователи",
       "allProjects": "Все проекты",
-      "showing": "Showing {loaded} of {total} entries",
+      "showing": "Показано {loaded} из {total} записей",
       "viewDetails": "Просмотреть подробности",
       "detailTitle": "Подробная информация из журнала аудита",
       "userInfo": "Информация о пользователе",
@@ -5714,8 +5717,8 @@
       "systemActor": "Система",
       "systemActorTooltip": "Действие выполняется системой, а не авторизованным пользователем.",
       "sourceScim": "СКИМ",
-      "relatedChanges": "related changes",
-      "groupedEntry": "Grouped changes from a single action"
+      "relatedChanges": "связанные изменения",
+      "groupedEntry": "Сгруппированные изменения из одного действия"
     }
   },
   "components": {
@@ -5809,9 +5812,9 @@
         "reviewReminderAction": "всё ещё ждёт вашего отзыва",
         "reviewReminderEmailMessage": "Напоминание: Запрос на проверку проекта {actorName}по проекту {entityLabel} \"{entityName}\" в проекте \"{projectName}\" находится в ожидании уже {hoursPending} часов.",
         "reviewReminderHoursPending": "Ожидается в течение {hoursPending, plural, one {# часов} other {# часов}}",
-        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
-        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
-        "aiStepsDerivedReviewLink": "Review test run"
+        "aiStepsDerivedTitle": "Шаги теста, созданные ИИ, готовы",
+        "aiStepsDerivedMessage": "Для {count, plural, one {# тестового случая} few {# тестовых случаев} many {# тестовых случаев} other {# тестовых случаев}} были сгенерированы шаги ИИ — проверьте их точность.",
+        "aiStepsDerivedReviewLink": "Просмотреть тестовый запуск"
       }
     },
     "issues": {
@@ -6175,7 +6178,7 @@
     "group": {
       "name": "## Название группы\nЧеткое, краткое, описательное название или ключевое слово (или слова), используемое во всех проектах.\n\n- Помогает членам команды быстро находить связанные тестовые случаи, тестовые запуски и сессии.",
       "users": "## Пользователи\nУказывает пользователей, назначенных в эту группу.",
-      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
+      "mappedAccess": "## Сопоставленный уровень доступа\nУчастникам этой группы при следующей синхронизации будет предоставлен как минимум этот уровень доступа.\n\n- Побеждает наивысший уровень среди всех групп пользователя\n- Значение «Нет сопоставления» означает, что эта группа не влияет на доступ — участники получают значение по умолчанию, заданное на странице SCIM\n- Ручное изменение доступа пользователя имеет приоритет над сопоставлением (и отмечается на экране редактирования этого пользователя)"
     },
     "template": {
       "name": "## Название шаблона\nУникальное и описательное имя для этого шаблона (например, «Стандартный тестовый случай», «Результаты тестирования API»).",
@@ -6209,7 +6212,7 @@
       "authType": "## Тип аутентификации\nВыберите способ аутентификации во внешней службе.\n\n- **Ключ API:** Простая аутентификация с использованием электронной почты и токена API\n- **OAuth 2.0:** Безопасная аутентификация с использованием потока OAuth\n- **Персональный токен доступа:** Прямая аутентификация на основе токена",
       "email": "## Адрес электронной почты\nАдрес электронной почты вашей учетной записи для внешнего сервиса.\n\n- Используется для аутентификации по ключу API.\n- Должен совпадать с учетной записью, сгенерировавшей токен API.\n- Требуется для Jira и аналогичных сервисов.",
       "apiToken": "## API-токен\nСгенерируйте API-токен в настройках вашей учетной записи во внешнем сервисе.\n\n- Обычно находится в Настройках учетной записи → Безопасность → API-токены\n- Обеспечивает безопасный доступ без раскрытия вашего пароля\n- Может быть отозван и сгенерирован заново по мере необходимости",
-      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
+      "jiraUrl": "## URL Jira\nБазовый URL вашего экземпляра Jira.\n\n- Формат: https://your-site.atlassian.net\n- Не включайте /browse или другие пути\n- Должен быть доступен с этого сервера",
       "clientId": "## Идентификатор клиента OAuth\nИдентификатор клиента из конфигурации вашего приложения OAuth.\n\n- Создается в консоли разработчика внешнего сервиса.\n- Используется для идентификации вашего приложения во время процесса OAuth.\n- Можно безопасно передавать в файлах конфигурации.",
       "clientSecret": "## Секрет клиента OAuth\nСекрет клиента из конфигурации вашего приложения OAuth.\n\n- Создается вместе с идентификатором клиента.\n- Должен храниться в конфиденциальности и безопасности.\n- Используется для аутентификации вашего приложения.",
       "personalAccessToken": "## Персональный токен доступа\nПерсональный токен доступа с соответствующими правами доступа к внешнему сервису.\n\n- Генерируется в настройках вашей учетной записи.\n- Должен иметь права на чтение и запись.\n- Более безопасен, чем аутентификация по паролю.",
@@ -6222,11 +6225,11 @@
       "instanceUrl": "## URL экземпляра\nБазовый URL вашего самостоятельно размещенного экземпляра.\n\n- Формат: https://git.example.com\n- Не включайте косые черты или пути в конце\n- Должен быть доступен с этого сервера",
       "projectPath": "## Путь к проекту\nПолный путь к вашему проекту GitLab.\n\n- Формат: пространство имен/проект или группа/подгруппа/проект\n- Пример: my-org/my-project\n- Находится в URL проекта: gitlab.com/namespace/project",
       "platform": "## Платформа\nСамостоятельно размещенная платформа Git, к которой вы подключаетесь.\n\n- **Gitea**: экземпляры на основе gitea.io\n- **Forgejo**: экземпляры на основе forgejo.org (форк Gitea)\n- **Gogs**: экземпляры на основе gogs.io\n\nЭтот параметр определяет, какой значок отображается, и может повлиять на совместимость API.",
-      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
-      "mantisBTApiKey": "## MantisBT API Token\nYour personal REST API token.\n\n- Create one under your MantisBT account settings → API Tokens\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
-      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
+      "redmineApiKey": "## API-ключ Redmine\nВаш личный ключ доступа к REST API.\n\n- Включите REST API в разделе Администрирование → Настройки → API\n- Скопируйте ключ из раздела Мой аккаунт → Ключ доступа к API\n- Ограничен правами вашего пользователя; для общих интеграций используйте служебную учётную запись",
+      "redmineUrl": "## URL Redmine\nБазовый URL вашего экземпляра Redmine.\n\n- Формат: https://redmine.example.com\n- Не включайте /issues или другие пути\n- Должен быть доступен с этого сервера",
+      "mantisBTApiKey": "## API-токен MantisBT\nВаш личный токен REST API.\n\n- Создайте его в настройках учётной записи MantisBT → API-токены\n- Ограничен правами вашего пользователя; для общих интеграций используйте служебную учётную запись",
+      "mantisBTUrl": "## URL MantisBT\nБазовый URL вашего экземпляра MantisBT.\n\n- Формат: https://mantisbt.example.com\n- Не включайте /api/rest или другие пути\n- Должен быть доступен с этого сервера",
+      "githubBaseUrl": "## Базовый URL API\nПолный корневой адрес GitHub API для GitHub Enterprise Server.\n\n- Обычно заканчивается на /api/v3\n- Оставьте поле пустым, чтобы использовать api.github.com\n- Должен быть доступен с этого сервера"
     },
     "config": {
       "name": "## Название конфигурации\nЧеткое, описательное название для этой конфигурации.\n\n- Помогает описать варианты комбинаций, составляющих конфигурацию (например, \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\" и т. д.).",
@@ -6946,12 +6949,12 @@
         "heuristicBadge": "Эвристический",
         "heuristicBadgeTooltip": "Интеграция с LLM для этого проекта не настроена, поэтому этот рейтинг был сформирован непосредственно на основе метрики стратегии выбора. Настройте LLM (Администрирование → Модели ИИ) для более глубокого анализа, учитывающего пользовательские поля, контекст связанных задач и содержимое обращения.",
         "sourcedFromNewestN": "Топ {ranked} из {total} подходящих случаев, рассматриваемых вручную через {strategy}",
-        "sourcedFromAll": "Ranked all {total} eligible manual cases via {strategy}",
+        "sourcedFromAll": "Ранжированы все {total} подходящих ручных случаев через {strategy}",
         "metric": {
           "executions": "{count} бежит",
           "forecast": "{value} прогноз",
           "forecastUnset": "Нет прогноза",
-          "flakiness": "Flips {value}%",
+          "flakiness": "Переключения {value}%",
           "flakinessUnset": "Нет данных о перевороте",
           "createdLabel": "Созданный"
         },
@@ -6987,7 +6990,7 @@
             "seconds": "{seconds}с",
             "minutes": "{minutes}м",
             "hours": "{hours}h",
-            "hoursAndMinutes": "{hours}h {minutes}m"
+            "hoursAndMinutes": "{hours}ч {minutes}м"
           },
           "relativeAge": {
             "today": "сегодня",
@@ -7525,33 +7528,33 @@
   "search": {
     "title": "Поиск",
     "savedSearches": {
-      "title": "Saved searches",
-      "save": "Save search",
-      "saveTitle": "Save search",
-      "saveDescription": "Name this search so you can revisit it later.",
+      "title": "Сохранённые поиски",
+      "save": "Сохранить поиск",
+      "saveTitle": "Сохранить поиск",
+      "saveDescription": "Назовите этот поиск, чтобы вернуться к нему позже.",
       "saveAction": "Сохранять",
       "nameLabel": "Имя",
-      "namePlaceholder": "e.g. Failed runs this sprint",
-      "nameRequired": "Enter a name for this search.",
-      "loginRequired": "You must be signed in to save searches.",
+      "namePlaceholder": "например, Неудачные запуски в этом спринте",
+      "nameRequired": "Введите название для этого поиска.",
+      "loginRequired": "Для сохранения поисков необходимо войти в систему.",
       "descriptionLabel": "Описание (необязательно)",
-      "descriptionPlaceholder": "What this search is for",
-      "saved": "Search saved",
-      "savedDescription": "“{name}” is now in your saved searches.",
-      "saveFailed": "Couldn't save the search. Please try again.",
-      "empty": "No saved searches yet",
-      "emptyHint": "Save a search to revisit it later.",
-      "loaded": "Loaded “{name}”",
-      "loadFailed": "This saved search is no longer valid.",
+      "descriptionPlaceholder": "Для чего нужен этот поиск",
+      "saved": "Поиск сохранён",
+      "savedDescription": "«{name}» теперь в ваших сохранённых поисках.",
+      "saveFailed": "Не удалось сохранить поиск. Пожалуйста, попробуйте ещё раз.",
+      "empty": "Сохранённых поисков пока нет",
+      "emptyHint": "Сохраните поиск, чтобы вернуться к нему позже.",
+      "loaded": "Загружено «{name}»",
+      "loadFailed": "Этот сохранённый поиск больше недействителен.",
       "edit": "Редактировать",
-      "editTitle": "Edit saved search",
-      "edited": "Saved search updated",
-      "editFailed": "Couldn't update the search. Please try again.",
+      "editTitle": "Изменить сохранённый поиск",
+      "edited": "Сохранённый поиск обновлён",
+      "editFailed": "Не удалось обновить поиск. Пожалуйста, попробуйте ещё раз.",
       "delete": "Удалить",
-      "deleteTitle": "Delete saved search?",
-      "deleteConfirm": "“{name}” will be removed from your saved searches. This can't be undone.",
-      "deleted": "Saved search deleted",
-      "deleteFailed": "Couldn't delete the search. Please try again."
+      "deleteTitle": "Удалить сохранённый поиск?",
+      "deleteConfirm": "«{name}» будет удалён из ваших сохранённых поисков. Это действие нельзя отменить.",
+      "deleted": "Сохранённый поиск удалён",
+      "deleteFailed": "Не удалось удалить поиск. Пожалуйста, попробуйте ещё раз."
     },
     "bulk": {
       "crossProjectHint": "(охватывает несколько проектов)",
@@ -7697,14 +7700,14 @@
       "intro": "Нажмите кнопку ниже, чтобы войти:",
       "signInButton": "Войти",
       "copyPasteIntro": "Или скопируйте и вставьте эту ссылку в свой браузер:",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "В целях безопасности эту ссылку можно использовать только один раз. Если вам нужно войти снова, запросите новую ссылку.",
       "disclaimer": "Если вы не запрашивали это письмо, можете смело его проигнорировать.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "Вход в TestPlanIt\n\nНажмите на ссылку ниже, чтобы войти:\n{url}\n\nВ целях безопасности эту ссылку можно использовать только один раз. Если вам нужно войти снова, запросите новую ссылку.\n\nЕсли вы не запрашивали это письмо, вы можете спокойно проигнорировать его."
     },
     "passwordless": {
-      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
-      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
+      "codeIntro": "Открываете это на другом устройстве? Введите этот код на экране входа, где вы запросили ссылку:",
+      "deviceNotice": "Эта ссылка выполняет вход из браузера, в котором вы её запросили. Если вы откроете её в другом месте, вам будет показан код выше, который нужно ввести в исходном окне.",
+      "textBody": "Вход в TestPlanIt\n\nНажмите на ссылку ниже, чтобы войти:\n{url}\n\nОткрываете это на другом устройстве? Введите этот код на экране входа, где вы запросили ссылку: {code}\n\nЕсли вы не запрашивали это письмо, вы можете спокойно проигнорировать его."
     }
   },
   "comments": {
@@ -7753,7 +7756,7 @@
   },
   "autoTag": {
     "actions": {
-      "aiTag": "AI Tag",
+      "aiTag": "Тег ИИ",
       "tagAll": "Отметить всех",
       "aiAutoTag": "Автоматическая маркировка",
       "tagActions": "Действия с тегами",
