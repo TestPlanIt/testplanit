@@ -62,7 +62,7 @@
       "expand": "Uitbreiden",
       "collapse": "Instorten",
       "addResult": "Resultaat toevoegen",
-      "passAndNext": "Pass & Next",
+      "passAndNext": "Slagen & Volgende",
       "viewInRepository": "Bekijk in repository",
       "resultAdded": "Testresultaat toegevoegd",
       "resultAddedDescription": "Het testresultaat is succesvol toegevoegd.",
@@ -146,7 +146,7 @@
             "label": "Formaat van de casus-ID in de testnaam",
             "brackets": "Haakjes — [123]",
             "c": "C-voorvoegsel — C123",
-            "tc": "TC-prefix — TC-123"
+            "tc": "TC-voorvoegsel — TC-123"
           },
           "progress": {
             "initializing": "Importeren initialiseren...",
@@ -370,7 +370,7 @@
       "provider": "Aanbieder",
       "updatedAt": "Bijgewerkt op",
       "tools": "Hulpmiddelen",
-      "codeRepository": "Code Repo",
+      "codeRepository": "Coderepo",
       "aiModels": "Standaard LLM",
       "configKeys": {
         "edit_results_duration": "Bewerken Resultaten Duur",
@@ -418,7 +418,7 @@
       }
     },
     "filter": {
-      "placeholder": "Filter {item}..."
+      "placeholder": "{item} filteren..."
     },
     "access": {
       "admin": "Beheerder",
@@ -1072,7 +1072,7 @@
         "apple": "Doorgaan met Apple",
         "microsoft": "Ga verder met Microsoft",
         "samlProvider": "Meld je aan met {name}",
-        "magicLink": "Sign in with single-use Magic Link",
+        "magicLink": "Aanmelden met eenmalige Magic Link",
         "emailLogin": "Doorgaan met e-mail"
       },
       "magicLink": {
@@ -1095,7 +1095,7 @@
     "errors": {
       "accessDenied": "Toegang geweigerd. Uw account is mogelijk inactief of u hebt geen toestemming om u aan te melden.",
       "configuration": "Er is een probleem met de serverconfiguratie.",
-      "verification": "This sign-in link has expired or was already used. Magic links can only be used once — please request a new one to sign in.",
+      "verification": "Deze aanmeldingslink is verlopen of al gebruikt. Magic links kunnen maar één keer worden gebruikt — vraag een nieuwe aan om u aan te melden.",
       "invalid2FACode": "Ongeldige verificatiecode. Probeer het opnieuw.",
       "twoFactorTokenRequired": "Token vereist",
       "verificationCodeRequired": "Een verificatiecode is vereist."
@@ -1342,19 +1342,19 @@
           "switchWarning2": "Behoud de problemen in de database (ze worden losgekoppeld)",
           "switchWarning3": "Vervang de huidige probleemintegratieconfiguratie door de nieuwe",
           "switchWarning4": "Verwijder de inkomende webhook die is geconfigureerd voor de huidige integratie.",
-          "importIssues": "Import Issues",
-          "importTitle": "Import issues from {name}",
-          "importDescription": "Pull issues from this linked project into your project. Existing issues aren't duplicated, and imported issues stay up to date through sync.",
-          "importUpdatedWithin": "Updated within",
-          "importLastDays": "Last {days} days",
-          "importMax": "Maximum to import",
-          "importPreview": "Preview",
-          "importPreviewResult": "~{count, plural, one {# issue} other {# issues}} match this filter. Up to {cap} will be imported.",
-          "importOverCap": "That exceeds the cap of {cap}; only the {cap} most recently updated will be imported.",
-          "importStart": "Import",
-          "importStarted": "Import started. Issues will appear shortly.",
-          "importFailed": "Import failed",
-          "importPreviewFailed": "Couldn't estimate matches"
+          "importIssues": "Issues importeren",
+          "importTitle": "Issues importeren vanuit {name}",
+          "importDescription": "Haal issues op vanuit dit gekoppelde project naar uw project. Bestaande issues worden niet gedupliceerd en geïmporteerde issues blijven actueel via synchronisatie.",
+          "importUpdatedWithin": "Bijgewerkt binnen",
+          "importLastDays": "Laatste {days} dagen",
+          "importMax": "Maximum aantal te importeren",
+          "importPreview": "Voorbeeld",
+          "importPreviewResult": "~{count, plural, one {# issue} other {# issues}} komen overeen met dit filter. Tot {cap} zullen worden geïmporteerd.",
+          "importOverCap": "Dat overschrijdt de limiet van {cap}; alleen de {cap} meest recent bijgewerkte zullen worden geïmporteerd.",
+          "importStart": "Importeren",
+          "importStarted": "Import gestart. Issues verschijnen binnenkort.",
+          "importFailed": "Importeren mislukt",
+          "importPreviewFailed": "Kan overeenkomsten niet schatten"
         },
         "integrationAssigned": "Integratie succesvol toegewezen",
         "integrationAssignError": "Het is niet gelukt om de probleemintegratie aan het project toe te wijzen",
@@ -1380,10 +1380,10 @@
             "description": "Maak verbinding met Azure DevOps voor het bijhouden van werkitems."
           },
           "redmine": {
-            "description": "Connect to a self-hosted Redmine instance for issue tracking."
+            "description": "Maak verbinding met een zelfgehoste Redmine-instantie voor het bijhouden van problemen."
           },
           "mantisbt": {
-            "description": "Connect to a self-hosted MantisBT instance for issue tracking."
+            "description": "Maak verbinding met een zelfgehoste MantisBT-instantie voor het bijhouden van problemen."
           }
         }
       },
@@ -1496,7 +1496,7 @@
           "jiraIssueUpdated": "Jira-ticket bijgewerkt",
           "jiraIssueDeleted": "Jira-ticket verwijderd",
           "githubIssues": "GitHub issues-evenement",
-          "githubPullRequest": "GitHub pull request",
+          "githubPullRequest": "GitHub pull-verzoek",
           "githubPush": "GitHub push",
           "githubIssueComment": "GitHub-probleemreactie",
           "adoWorkitemCreated": "Azure DevOps-werkitem aangemaakt",
@@ -1663,19 +1663,19 @@
         "toastReEnableSuccess": "Webhook opnieuw ingeschakeld",
         "toastReEnableFailed": "Opnieuw inschakelen mislukt: {error}",
         "inboundChooserRedmine": "Redmine",
-        "inboundRedmineTitle": "Redmine inbound webhook",
-        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
-        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
-        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
-        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here.",
+        "inboundRedmineTitle": "Inkomende Redmine-webhook",
+        "inboundRedmineScopeHint": "De redmine_webhook-plugin ondertekent verzoeken niet, dus deze webhook-URL is de referentie — behandel deze als een geheim en wijzig deze als hij wordt blootgesteld.",
+        "setupStepsRedmineStep1": "Installeer de redmine_webhook-plugin op uw Redmine-server (Redmine heeft geen ingebouwde webhooks).",
+        "setupStepsRedmineStep2": "Open in uw Redmine-project Instellingen → Modules en schakel Webhooks in.",
+        "setupStepsRedmineStep3": "Open Instellingen → Webhooks, plak de URL hierboven en sla op.",
+        "setupStepsRedmineStep4": "Maak of update een issue in Redmine; de status van het gekoppelde issue wordt hier gesynchroniseerd.",
         "inboundChooserMantisbt": "MantisBT",
-        "inboundMantisbtTitle": "MantisBT inbound webhook",
-        "inboundMantisbtScopeHint": "A MantisBT webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
-        "setupStepsMantisbtStep1": "Install and enable a MantisBT webhook plugin on your MantisBT server (MantisBT has no built-in webhooks).",
-        "setupStepsMantisbtStep2": "In the plugin configuration, choose the issue created and issue updated events.",
-        "setupStepsMantisbtStep3": "Paste the URL above as the webhook target and save.",
-        "setupStepsMantisbtStep4": "Create or update an issue in MantisBT; the linked issue’s status will sync here."
+        "inboundMantisbtTitle": "Inkomende MantisBT-webhook",
+        "inboundMantisbtScopeHint": "Een MantisBT-webhookplugin ondertekent verzoeken niet, dus deze webhook-URL is de referentie — behandel deze als een geheim en wijzig deze als hij wordt blootgesteld.",
+        "setupStepsMantisbtStep1": "Installeer en schakel een MantisBT-webhookplugin in op uw MantisBT-server (MantisBT heeft geen ingebouwde webhooks).",
+        "setupStepsMantisbtStep2": "Selecteer in de plugin-configuratie de events voor het aanmaken en bijwerken van issues.",
+        "setupStepsMantisbtStep3": "Plak de URL hierboven als webhookdoel en sla op.",
+        "setupStepsMantisbtStep4": "Maak of update een issue in MantisBT; de status van het gekoppelde issue wordt hier gesynchroniseerd."
       },
       "aiModels": {
         "description": "Configureer AI-modellen voor het genereren en analyseren van intelligente testcases",
@@ -1865,7 +1865,7 @@
           "scanningFiles": "Bestanden scannen in {scope}…",
           "scanningFilesCount": "Bestanden scannen in {scope}… ({count, number} gevonden)",
           "filtering": "Filters toepassen op {count, number} bestanden…",
-          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
+          "rateLimited": "Snelheidslimiet bereikt bij de provider — nieuwe poging over {seconds, number}s…"
         },
         "cache": {
           "title": "Cache-instellingen",
@@ -1891,8 +1891,8 @@
         "networkError": "Netwerkfout tijdens het vernieuwen van de cache.",
         "refreshSuccess": "Cache vernieuwd: {fileCount} bestanden ({contentCached} inhoud in cache opgeslagen)",
         "refreshRateLimited": "Cache vernieuwd: {fileCount} bestanden weergegeven, {contentCached}/{fileCount} inhoud in cache opgeslagen (snelheid beperkt — vernieuw opnieuw om te voltooien)",
-        "refreshComplete": "Cache refreshed: {fileCount} files",
-        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
+        "refreshComplete": "Cache vernieuwd: {fileCount} bestanden",
+        "refreshInProgress": "Het vernieuwen van de cache wordt nog op de achtergrond uitgevoerd. Dit wordt hier bijgewerkt zodra het is voltooid.",
         "validation": {
           "pathRequired": "Pad is vereist",
           "patternRequired": "Een patroon is vereist.",
@@ -2117,9 +2117,9 @@
   },
   "sessions": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this session."
+      "trigger": "Activiteit",
+      "title": "Activiteitenlogboek",
+      "description": "Alle wijzigingen vastgelegd voor deze sessie."
     },
     "title": "{count, plural, =1 {Sessie} other {Sessies}}",
     "labels": {
@@ -2382,19 +2382,19 @@
         }
       },
       "auditLog": {
-        "title": "Audit Log",
-        "description": "Actions performed by this user",
-        "noEntries": "No activity recorded yet.",
-        "loadMore": "Loading",
-        "viewDetails": "View details",
-        "columnAction": "Action",
+        "title": "Auditlogboek",
+        "description": "Acties uitgevoerd door deze gebruiker",
+        "noEntries": "Nog geen activiteit vastgelegd.",
+        "loadMore": "Bezig met laden",
+        "viewDetails": "Bekijk details",
+        "columnAction": "Actie",
         "columnEntityType": "Type",
-        "columnEntityName": "Name",
-        "columnTimestamp": "Timestamp",
-        "allActions": "All Actions",
-        "allTypes": "All Types",
-        "noMatchingEntries": "No entries match the selected filters.",
-        "showing": "{loaded} of {total} entries"
+        "columnEntityName": "Naam",
+        "columnTimestamp": "Tijdstempel",
+        "allActions": "Alle acties",
+        "allTypes": "Alle typen",
+        "noMatchingEntries": "Geen items komen overeen met de geselecteerde filters.",
+        "showing": "{loaded} van {total} items"
       },
       "mentionedComments": {
         "title": "Vermeld in de reacties",
@@ -2488,9 +2488,9 @@
       "historyView": "Testcase geschiedenisweergave"
     },
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test case."
+      "trigger": "Activiteit",
+      "title": "Activiteitenlogboek",
+      "description": "Alle wijzigingen vastgelegd voor deze testcase."
     },
     "fields": {
       "optionNotFound": "Optie niet gevonden",
@@ -2549,7 +2549,7 @@
     "templateNotAssignedWarning": "Deze testcase gebruikt de sjabloon \"{templateName}\", die momenteel niet is toegewezen aan het project \"{projectName}\". Mogelijk moet u deze sjabloon aan het project toewijzen of de testcase aanpassen om een andere sjabloon te gebruiken.",
     "orphanedStepsWarning": "Deze testcase heeft stappen, maar de huidige sjabloon \"{templateName}\" bevat geen veld voor stappen. De stappen kunnen pas worden bewerkt als de testcase een sjabloon met een veld voor stappen heeft.",
     "orphanedFieldsWarning": "Deze testcase heeft {count, plural, =1 {# veldwaarde} other {# veldwaarden}} die {count, plural, =1 {is} other {zijn}} niet opgenomen in de huidige sjabloon \"{templateName}\". {count, plural, =1 {Dit veld is} other {Deze velden zijn}} hieronder weergegeven, maar kunnen mogelijk pas worden bewerkt nadat ze aan de sjabloon zijn toegevoegd.",
-    "title": "Test Case Repository",
+    "title": "Testcase-repository",
     "folders": "Mappen",
     "showDescendants": "Toon alle afstammelingen",
     "addFolder": "Map toevoegen",
@@ -3209,7 +3209,7 @@
       "filters": {
         "hideCompletedSessions": "Verberg voltooide sessies",
         "hideCompletedTestRuns": "Verberg voltooide testruns",
-        "caseTypeLabel": "Case type",
+        "caseTypeLabel": "Casetype",
         "allCases": "Alle"
       }
     },
@@ -3337,9 +3337,9 @@
   },
   "runs": {
     "auditLog": {
-      "trigger": "Activity",
-      "title": "Activity Log",
-      "description": "All changes recorded for this test run."
+      "trigger": "Activiteit",
+      "title": "Activiteitenlogboek",
+      "description": "Alle wijzigingen vastgelegd voor deze testrun."
     },
     "notFound": "Testrun niet gevonden.",
     "add": {
@@ -3548,7 +3548,7 @@
             "upload": "Uploaden exporteren",
             "analysis": "Beoordelingsanalyse",
             "mapping": "Toewijzing configureren",
-            "import": "Monitor import"
+            "import": "Import bewaken"
           },
           "stepIndicator": "Stap {step, number} van {total, number}"
         },
@@ -3627,7 +3627,7 @@
           "repository_folders": "Repositorymappen",
           "repository_cases": "Repository-cases",
           "repository_case_steps": "Stappen in het repository-casescenario",
-          "repository_case_tags": "Repository case tags",
+          "repository_case_tags": "Repository-casetags",
           "milestones": "Mijlpalen",
           "runs": "Testruns",
           "run_tests": "Testuitvoeringsgevallen",
@@ -4051,7 +4051,7 @@
           "description": "Stel uw SAML Identity Provider-configuratie in. U kunt deze gegevens opvragen bij uw SAML IdP.",
           "entryPoint": "SSO-invoerpunt-URL",
           "issuer": "Uitgever (Entiteits-ID)",
-          "callbackUrl": "ACS (Callback) URL",
+          "callbackUrl": "ACS (terugbel-) URL",
           "logoutUrl": "SLO-uitlog-URL (optioneel)",
           "entryPointPlaceholder": "https://uw-idp.com/sso/saml",
           "issuerPlaceholder": "urn:uw-idp:entiteits-id",
@@ -4421,9 +4421,9 @@
       "scimColumnYes": "Ja",
       "scimUserLockedTitle": "De gebruiker wordt beheerd door SCIM.",
       "scimUserLockedDescription": "De naam, het e-mailadres en de actieve status van deze gebruiker worden beheerd door uw identiteitsprovider. Wijzigingen daar doorvoeren om ze hier bij te werken.",
-      "groupMappingOverrideTitle": "Managed by Group Mapping",
-      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
-      "groupMappingBadge": "Group Mapped"
+      "groupMappingOverrideTitle": "Beheerd door groepskoppeling",
+      "groupMappingOverrideDescription": "Het toegangsniveau van deze gebruiker wordt bepaald door een SCIM-groepskoppeling en kan bij de volgende synchronisatie worden teruggezet.",
+      "groupMappingBadge": "Groep gekoppeld"
     },
     "security": {
       "title": "Beveiliging",
@@ -4600,16 +4600,16 @@
         "errorToast": "Kon het token niet intrekken. {reason}"
       },
       "probe": {
-        "button": "Test SCIM",
+        "button": "SCIM testen",
         "testing": "Testen…",
-        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
+        "okBanner": "HTTP {status} — token werkt tegen /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Het SCIM-eindpunt kon niet worden bereikt. Probeer het opnieuw."
       },
-      "fallbackDefaultTitle": "Default Mapped Access",
-      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
-      "fallbackDefaultLabel": "Default access tier",
-      "fallbackDefaultSaved": "Fallback default saved"
+      "fallbackDefaultTitle": "Standaard gekoppelde toegang",
+      "fallbackDefaultDescription": "Toegangsniveau toegewezen aan gebruikers die niet onder een groepskoppeling vallen.",
+      "fallbackDefaultLabel": "Standaard toegangsniveau",
+      "fallbackDefaultSaved": "Fallback-standaard opgeslagen"
     },
     "tags": {
       "add": {
@@ -4894,13 +4894,13 @@
       "scimManagedTooltip": "Beheerd door SCIM. Beheer via de SCIM-beheerpagina.",
       "scimNameLockedTitle": "De groep wordt beheerd door SCIM.",
       "scimNameLockedDescription": "De naam en leden van deze groep worden beheerd door uw identiteitsprovider. Breng daar wijzigingen aan om ze hier bij te werken.",
-      "mappedAccessColumnHeader": "Mapped Access",
-      "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "No mapping",
-      "mappedAccessSelect": "Select access tier...",
-      "downgradeConfirmTitle": "Confirm Access Change",
-      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
-      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "mappedAccessColumnHeader": "Gekoppelde toegang",
+      "mappedAccessLabel": "Gekoppeld toegangsniveau",
+      "mappedAccessNone": "Geen koppeling",
+      "mappedAccessSelect": "Selecteer toegangsniveau...",
+      "downgradeConfirmTitle": "Toegangswijziging bevestigen",
+      "downgradeConfirmDescription": "{count, plural, one {# gebruiker} other {# gebruikers}} zouden een lager toegangsniveau krijgen. Doorgaan?",
+      "downgradeConfirmApplyAnyway": "Toch toepassen",
       "downgradeConfirmUserRow": "{name}: {from} → {to}",
       "downgradeConfirmAccessChange": "{from} → {to}"
     },
@@ -5004,7 +5004,7 @@
         "configVariants": "Configuratievarianten",
         "repositories": "Opslagplaatsen",
         "repositoryFolders": "Repository-mappen",
-        "repositoryCaseLinks": "Repository Case Links",
+        "repositoryCaseLinks": "Repository-testcasekoppelingen",
         "repositoryCaseVersions": "Repository Case-versies",
         "testRunStepResults": "Resultaten van de testrunstap",
         "issueConfigs": "Probleemconfiguraties",
@@ -5089,27 +5089,27 @@
       "status": {
         "active": "Actief",
         "inactive": "Inactief",
-        "awaitingAuthorization": "Awaiting authorization"
+        "awaitingAuthorization": "Wachten op autorisatie"
       },
       "connectedProjects": "Verbonden projecten",
       "noIntegrations": "Geen probleemintegraties geconfigureerd",
       "testConnection": "Testverbinding",
       "testSuccess": "Verbinding succesvol",
       "testSuccessDescription": "De probleemintegratie is correct geconfigureerd en aangesloten",
-      "testCredentialsSaved": "Credentials look good",
-      "testCredentialsSavedDescription": "Your OAuth client ID and secret are valid. Save the integration, then click Authorize to connect your account — OAuth 2.0 connects per user, so it stays inactive until at least one person authorizes.",
+      "testCredentialsSaved": "Referenties zien er goed uit",
+      "testCredentialsSavedDescription": "Uw OAuth-client-ID en -secret zijn geldig. Sla de integratie op en klik daarna op Autoriseren om uw account te verbinden — OAuth 2.0 maakt verbinding per gebruiker, dus deze blijft inactief totdat minstens één persoon autoriseert.",
       "testFailed": "Verbinding mislukt",
       "testFailedDescription": "Kan geen verbinding maken met de externe service",
       "testError": "Testfout",
       "testErrorDescription": "Er is een fout opgetreden tijdens het testen van de verbinding",
-      "authorize": "Authorize",
-      "reauthorize": "Re-authorize",
-      "authorizeHint": "Authorize with the provider to connect your account and finish setup",
-      "syncInProgress": "Re-syncing linked issues...",
-      "syncIntegration": "Re-sync linked issues",
-      "syncIntegrationHint": "Only re-syncs issues already linked in TestPlanIt. New issues aren't imported from the external tracker.",
+      "authorize": "Autoriseren",
+      "reauthorize": "Opnieuw autoriseren",
+      "authorizeHint": "Autoriseer bij de provider om uw account te verbinden en de installatie te voltooien",
+      "syncInProgress": "Gekoppelde issues opnieuw synchroniseren...",
+      "syncIntegration": "Gekoppelde issues opnieuw synchroniseren",
+      "syncIntegrationHint": "Synchroniseert alleen issues die al gekoppeld zijn in TestPlanIt. Nieuwe issues worden niet geïmporteerd vanuit het externe tracksysteem.",
       "syncSuccess": "Synchronisatie in de wachtrij",
-      "syncSuccessDescription": "Linked issues from \"{name}\" are being re-synced in the background. This may take a few moments. The table will update automatically when complete.",
+      "syncSuccessDescription": "Gekoppelde issues van \"{name}\" worden op de achtergrond opnieuw gesynchroniseerd. Dit kan even duren. De tabel wordt automatisch bijgewerkt zodra dit is voltooid.",
       "syncError": "Synchronisatie mislukt",
       "syncErrorDescription": "Het is niet gelukt om een synchronisatietaak voor deze integratie in de wachtrij te plaatsen. Probeer het later opnieuw.",
       "delete": {
@@ -5156,11 +5156,11 @@
         },
         "redmine": {
           "name": "Redmine",
-          "description": "Connect to a self-hosted Redmine instance for issue tracking"
+          "description": "Maak verbinding met een zelfgehoste Redmine-instantie voor het bijhouden van problemen"
         },
         "mantisbt": {
           "name": "MantisBT",
-          "description": "Connect to a self-hosted MantisBT instance for issue tracking"
+          "description": "Maak verbinding met een zelfgehoste MantisBT-instantie voor het bijhouden van problemen"
         }
       },
       "filterPlaceholder": "Integraties filteren...",
@@ -5233,7 +5233,7 @@
         "encrypted": "Versleuteld",
         "encryptedHelp": "Dit veld is gecodeerd en veilig opgeslagen",
         "changeCredential": "Wijziging",
-        "leaveBlankToKeep": "Leave blank to keep existing value",
+        "leaveBlankToKeep": "Laat leeg om de bestaande waarde te behouden",
         "apiKeyWarningTitle": "Kennisgeving API-sleutelauthenticatie",
         "apiKeyWarningDescription": "Bij authenticatie met een API-sleutel komt de melder van aangemaakte problemen mogelijk niet overeen met de TestPlanIt-gebruiker die ze heeft aangemaakt, zelfs als de e-mailadressen overeenkomen:",
         "apiKeyWarningPoint1": "Voor het instellen van de Jira-reporter is het vereist dat het API-tokenaccount beheerdersrechten (\"Reporter wijzigen\") heeft voor Jira. Zonder deze rechten negeert Jira de reporter en wordt de eigenaar van het API-token als maker geregistreerd.",
@@ -5242,10 +5242,10 @@
         "apiKeyWarningPoint4": "Gebruik in plaats daarvan OAuth 2.0 voor nauwkeurige toewijzing van melders per gebruiker, zonder beheerdersrechten.",
         "tokenCreatorNoticeTitle": "Naamsvermelding van de maker van het probleem",
         "tokenCreatorNoticeDescription": "Issues die via deze integratie worden aangemaakt, worden altijd geregistreerd onder het account dat eigenaar is van dit toegangstoken, en niet onder de TestPlanIt-gebruiker die ze heeft aangemaakt. De API van deze provider staat niet toe dat de maker namens een andere gebruiker wordt ingesteld.",
-        "callbackUrlLabel": "Callback URL (redirect URI)",
-        "callbackUrlDescription": "Register this exact URL as the callback / redirect URI in your provider's OAuth app. It must match precisely or authorization will fail.",
-        "callbackUrlCopy": "Copy",
-        "callbackUrlCopied": "Copied",
+        "callbackUrlLabel": "Callback-URL (redirect-URI)",
+        "callbackUrlDescription": "Registreer precies deze URL als de callback-/redirect-URI in de OAuth-app van uw provider. Deze moet exact overeenkomen, anders mislukt de autorisatie.",
+        "callbackUrlCopy": "Kopiëren",
+        "callbackUrlCopied": "Gekopieerd",
         "forgeApiKeyLabel": "Forge API-sleutel",
         "forgeApiKeyDescription": "Deze sleutel wordt door de Atlassian Forge-app gebruikt om verzoeken vanuit Jira-issuepanelen te authenticeren. Genereer hier een sleutel en plak deze in de instellingen van uw Forge-app.",
         "forgeApiKeyPlaceholder": "Klik op Genereren om een API-sleutel aan te maken.",
@@ -5257,18 +5257,18 @@
         "platformGitea": "Gitea",
         "platformForgejo": "Forgejo",
         "platformGogs": "Gogs",
-        "redmineApiKey": "Redmine API Key",
-        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
-        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
-        "redmineUrl": "Redmine URL",
+        "redmineApiKey": "Redmine API-sleutel",
+        "redmineApiKeyPlaceholder": "Voer uw Redmine API-sleutel in",
+        "redmineApiKeyHelp": "Te vinden onder Mijn account → API-toegangssleutel (schakel de REST API in via Administratie → Instellingen → API)",
+        "redmineUrl": "Redmine-URL",
         "redmineUrlPlaceholder": "https://redmine.example.com",
-        "redmineUrlHelp": "The base URL of your Redmine instance",
-        "mantisBTApiKey": "MantisBT API Token",
-        "mantisBTApiKeyPlaceholder": "Enter your MantisBT API token",
-        "mantisBTApiKeyHelp": "Create one under your MantisBT account settings → API Tokens",
-        "mantisBTUrl": "MantisBT URL",
+        "redmineUrlHelp": "De basis-URL van uw Redmine-instantie",
+        "mantisBTApiKey": "MantisBT API-token",
+        "mantisBTApiKeyPlaceholder": "Voer uw MantisBT API-token in",
+        "mantisBTApiKeyHelp": "Maak er een aan bij uw MantisBT-accountinstellingen → API-tokens",
+        "mantisBTUrl": "MantisBT-URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "The base URL of your MantisBT instance"
+        "mantisBTUrlHelp": "De basis-URL van uw MantisBT-instantie"
       },
       "authType": {
         "api_key": "API-sleutel",
@@ -5466,7 +5466,7 @@
         "warning": "Deze actie kan niet ongedaan worden gemaakt. Alle projecten die deze configuratie gebruiken, zullen terugkeren naar de standaard promptconfiguratie."
       },
       "llmColumn": "LLM",
-      "mixedLlms": "{count, number} LLMs",
+      "mixedLlms": "{count, number} LLM's",
       "cannotDeleteDefault": "De standaard promptconfiguratie kan niet worden verwijderd. Stel eerst een andere prompt als standaard in.",
       "defaultChanged": "De standaard promptconfiguratie is succesvol bijgewerkt.",
       "featureLabels": {
@@ -5481,7 +5481,7 @@
         "generate_from_url": "Testcases genereren vanuit URL (vereisten)",
         "generate_from_url_app": "Testcases genereren vanuit URL (applicatietesten)",
         "automation_candidates": "Rapport over automatiseringskandidaten",
-        "derive_case_steps": "AI Step Derivation"
+        "derive_case_steps": "AI-afleiding van stappen"
       }
     },
     "elasticsearch": {
@@ -5548,7 +5548,7 @@
         "forecast-updates": "Weersverwachtingen",
         "emails": "E-mailwachtrij",
         "issue-sync": "Probleem synchronisatie",
-        "testmo-imports": "Testmo Imports",
+        "testmo-imports": "Testmo-imports",
         "elasticsearch-reindex": "Elasticsearch-herindexering",
         "audit-logs": "Auditlogboeken",
         "budget-alerts": "Budgetwaarschuwingen",
@@ -5657,15 +5657,15 @@
     },
     "auditLogs": {
       "description": "Bekijk het systeemwijde auditlogboek voor het bijhouden van beveiliging en naleving.",
-      "projectDescription": "View the audit trail of actions performed in this project.",
+      "projectDescription": "Bekijk het auditspoor van acties die in dit project zijn uitgevoerd.",
       "filterPlaceholder": "Zoeken op entiteit, gebruiker of actie...",
       "filterAction": "Actie",
       "filterEntityType": "Entiteitstype",
       "allActions": "Alle acties",
       "allEntityTypes": "Alle entiteitstypen",
-      "allUsers": "All Users",
-      "allProjects": "All Projects",
-      "showing": "Showing {loaded} of {total} entries",
+      "allUsers": "Alle gebruikers",
+      "allProjects": "Alle projecten",
+      "showing": "{loaded} van {total} items weergegeven",
       "viewDetails": "Bekijk details",
       "detailTitle": "Auditlogboekdetails",
       "userInfo": "Gebruikersinformatie",
@@ -5693,8 +5693,8 @@
       "systemActor": "Systeem",
       "systemActorTooltip": "Actie uitgevoerd door het systeem, niet door een ingelogde gebruiker.",
       "sourceScim": "SCIM",
-      "relatedChanges": "related changes",
-      "groupedEntry": "Grouped changes from a single action"
+      "relatedChanges": "gerelateerde wijzigingen",
+      "groupedEntry": "Gegroepeerde wijzigingen van één actie"
     }
   },
   "components": {
@@ -5736,7 +5736,7 @@
         "assignedMultipleTestCases": "toegewezen aan jou {count, plural, one {# testgeval} other {# testgevallen}}",
         "assignedSession": "je toegewezen aan sessie",
         "mentionedYouInComment": "noemde je in een reactie op",
-        "inProject": "in project",
+        "inProject": "in het project",
         "testRun": "Testrun:",
         "casesInProject": "{count, plural, =1 {# geval} other {# gevallen}} in",
         "sentBy": "Verzonden door {name}",
@@ -5788,9 +5788,9 @@
         "reviewReminderAction": "wacht nog steeds op uw beoordeling van",
         "reviewReminderEmailMessage": "Herinnering: Het beoordelingsverzoek van {actorName}voor {entityLabel} \"{entityName}\" in project \"{projectName}\" is al {hoursPending} uur in behandeling.",
         "reviewReminderHoursPending": "In afwachting van {hoursPending, plural, one {# uur} other {# uur}}",
-        "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
-        "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
-        "aiStepsDerivedReviewLink": "Review test run"
+        "aiStepsDerivedTitle": "AI-afgeleide teststappen gereed",
+        "aiStepsDerivedMessage": "{count, plural, one {# testcase heeft} other {# testcases hebben}} AI-afgeleide stappen gekregen — controleer op juistheid.",
+        "aiStepsDerivedReviewLink": "Testrun controleren"
       }
     },
     "issues": {
@@ -6012,7 +6012,7 @@
     "durationRange": "Duur: {from}s - {to}s",
     "seconds": "{seconds}s",
     "testCases": "{count, plural, one {# testgeval} other {# testgevallen}}",
-    "estimate": "Est: {value}",
+    "estimate": "Schatting: {value}",
     "partOf": "(Deel van {parent})",
     "status": "Status: {status}"
   },
@@ -6154,7 +6154,7 @@
     "group": {
       "name": "## Groepsnaam\nEen duidelijke, beknopte, beschrijvende naam of trefwoord(en) die in alle projecten wordt gebruikt.\n\n- Helpt teamleden snel gerelateerde testcases, testruns en sessies te vinden.",
       "users": "## Gebruikers\nGeeft de gebruikers aan die aan deze groep zijn toegewezen.",
-      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
+      "mappedAccess": "## Gekoppeld toegangsniveau\nLeden van deze groep krijgen bij de volgende synchronisatie minimaal dit toegangsniveau.\n\n- Het hoogste niveau van alle groepen van een gebruiker geldt\n- \"Geen koppeling\" betekent dat deze groep geen invloed heeft op de toegang — leden vallen terug op de standaardinstelling op de SCIM-pagina\n- Een handmatige toegangswijziging bij een gebruiker heeft voorrang op de koppeling (en wordt gemarkeerd op het bewerkingsscherm van die gebruiker)"
     },
     "template": {
       "name": "## Sjabloonnaam\nEen unieke en beschrijvende naam voor deze sjabloon (bijv. 'Standaardtestgeval', 'API-testresultaten').",
@@ -6201,11 +6201,11 @@
       "instanceUrl": "## Instantie-URL\nDe basis-URL van uw zelfgehoste instantie.\n\n- Formaat: https://git.example.com\n- Geen afsluitende schuine strepen of paden\n- Moet toegankelijk zijn vanaf deze server",
       "projectPath": "## Projectpad\nHet volledige pad naar je GitLab-project.\n\n- Formaat: namespace/project of groep/subgroep/project\n- Voorbeeld: my-org/my-project\n- Te vinden in de project-URL: gitlab.com/namespace/project",
       "platform": "## Platform\nHet zelfgehoste Git-platform waarmee u verbinding maakt.\n\n- **Gitea**: instanties gebaseerd op gitea.io\n- **Forgejo**: instanties gebaseerd op forgejo.org (fork van Gitea)\n- **Gogs**: instanties gebaseerd op gogs.io\n\nDit bepaalt welk pictogram wordt weergegeven en kan de API-compatibiliteit beïnvloeden.",
-      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
-      "mantisBTApiKey": "## MantisBT API Token\nYour personal REST API token.\n\n- Create one under your MantisBT account settings → API Tokens\n- Scoped to your user’s permissions; use a service account for shared integrations",
-      "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
-      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
+      "redmineApiKey": "## Redmine API-sleutel\nUw persoonlijke REST API-toegangssleutel.\n\n- Schakel de REST API in via Administratie → Instellingen → API\n- Kopieer uw sleutel via Mijn account → API-toegangssleutel\n- Beperkt tot de rechten van uw gebruiker; gebruik een serviceaccount voor gedeelde integraties",
+      "redmineUrl": "## Redmine URL\nDe basis-URL van uw Redmine-instantie.\n\n- Formaat: https://redmine.example.com\n- Voeg geen /issues of andere paden toe\n- Moet toegankelijk zijn vanaf deze server",
+      "mantisBTApiKey": "## MantisBT API-token\nUw persoonlijke REST API-token.\n\n- Maak er een aan bij uw MantisBT-accountinstellingen → API-tokens\n- Beperkt tot de rechten van uw gebruiker; gebruik een serviceaccount voor gedeelde integraties",
+      "mantisBTUrl": "## MantisBT URL\nDe basis-URL van uw MantisBT-instantie.\n\n- Formaat: https://mantisbt.example.com\n- Voeg geen /api/rest of andere paden toe\n- Moet toegankelijk zijn vanaf deze server",
+      "githubBaseUrl": "## API-basis-URL\nVolledige GitHub API-root voor GitHub Enterprise Server.\n\n- Eindigt doorgaans op /api/v3\n- Laat dit veld leeg om api.github.com te gebruiken\n- Moet toegankelijk zijn vanaf deze server"
     },
     "config": {
       "name": "## Configuratienaam\nEen duidelijke, beschrijvende naam voor deze configuratie.\n\n- Helpt bij het beschrijven van de variantcombinaties waaruit de configuratie bestaat (bijv. \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", enz.).",
@@ -6606,7 +6606,7 @@
           "content": "Elk project heeft een documentatiepagina. Gebruik deze voor testplannen, projectnotities of links naar externe bronnen."
         },
         "documentationContent": {
-          "title": "Rich Text Editor",
+          "title": "Rich Text-editor",
           "content": "De documentatie ondersteunt opmaak met koppen, lijsten, links en afbeeldingen. Probeer deze pagina te bewerken om te zien hoe het werkt."
         },
         "milestones": {
@@ -6695,7 +6695,7 @@
       "addDimension": "Voeg dimensie toe...",
       "addMetric": "Metrisch toevoegen...",
       "runReport": "Rapport uitvoeren",
-      "exportCsv": "Export CSV",
+      "exportCsv": "Exporteer naar CSV",
       "noResultsFound": "Geen resultaten gevonden.",
       "selectAtLeastOneDimensionAndMetric": "Selecteer minimaal één dimensie en één metriek.",
       "noDataMatchingCriteria": "Er zijn geen gegevens gevonden die overeenkomen met de geselecteerde dimensies en statistieken.",
@@ -6827,7 +6827,7 @@
       "flakyTests": {
         "consecutiveRuns": "Laatste opeenvolgende runs",
         "consecutiveRunsHelp": "Aantal recente testuitvoeringen om te analyseren (5-30). Resultaten met de status 'niet getest' worden uitgesloten.",
-        "flipThreshold": "Minimum Flips",
+        "flipThreshold": "Minimum aantal flips",
         "flipThresholdHelp": "Het minimale aantal geslaagde/mislukte overgangen is vereist om als onbetrouwbaar te worden beschouwd.",
         "flips": "Flips",
         "lastNResults": "Laatste {count, plural, one {# Resultaat} other {# Resultaten}}",
@@ -6930,7 +6930,7 @@
           "executions": "{count} loopt",
           "forecast": "{value} voorspelling",
           "forecastUnset": "Geen voorspelling",
-          "flakiness": "Flips {value}%",
+          "flakiness": "Wisselingen {value}%",
           "flakinessUnset": "Geen flip-gegevens",
           "createdLabel": "Gemaakt"
         },
@@ -6966,7 +6966,7 @@
             "seconds": "{seconds}s",
             "minutes": "{minutes}m",
             "hours": "{hours}h",
-            "hoursAndMinutes": "{hours}h {minutes}m"
+            "hoursAndMinutes": "{hours}u {minutes}m"
           },
           "relativeAge": {
             "today": "Vandaag",
@@ -7504,33 +7504,33 @@
   "search": {
     "title": "Zoekopdracht",
     "savedSearches": {
-      "title": "Saved searches",
-      "save": "Save search",
-      "saveTitle": "Save search",
-      "saveDescription": "Name this search so you can revisit it later.",
-      "saveAction": "Save",
+      "title": "Opgeslagen zoekopdrachten",
+      "save": "Zoekopdracht opslaan",
+      "saveTitle": "Zoekopdracht opslaan",
+      "saveDescription": "Geef deze zoekopdracht een naam zodat u die later kunt terugvinden.",
+      "saveAction": "Opslaan",
       "nameLabel": "Naam",
-      "namePlaceholder": "e.g. Failed runs this sprint",
-      "nameRequired": "Enter a name for this search.",
-      "loginRequired": "You must be signed in to save searches.",
+      "namePlaceholder": "bijv. Mislukte testruns deze sprint",
+      "nameRequired": "Voer een naam in voor deze zoekopdracht.",
+      "loginRequired": "U moet aangemeld zijn om zoekopdrachten op te slaan.",
       "descriptionLabel": "Beschrijving (optioneel)",
-      "descriptionPlaceholder": "What this search is for",
-      "saved": "Search saved",
-      "savedDescription": "“{name}” is now in your saved searches.",
-      "saveFailed": "Couldn't save the search. Please try again.",
-      "empty": "No saved searches yet",
-      "emptyHint": "Save a search to revisit it later.",
-      "loaded": "Loaded “{name}”",
-      "loadFailed": "This saved search is no longer valid.",
-      "edit": "Edit",
-      "editTitle": "Edit saved search",
-      "edited": "Saved search updated",
-      "editFailed": "Couldn't update the search. Please try again.",
+      "descriptionPlaceholder": "Waarvoor deze zoekopdracht dient",
+      "saved": "Zoekopdracht opgeslagen",
+      "savedDescription": "“{name}” staat nu bij uw opgeslagen zoekopdrachten.",
+      "saveFailed": "Kan de zoekopdracht niet opslaan. Probeer het opnieuw.",
+      "empty": "Nog geen opgeslagen zoekopdrachten",
+      "emptyHint": "Sla een zoekopdracht op om die later terug te vinden.",
+      "loaded": "“{name}” geladen",
+      "loadFailed": "Deze opgeslagen zoekopdracht is niet meer geldig.",
+      "edit": "Bewerken",
+      "editTitle": "Opgeslagen zoekopdracht bewerken",
+      "edited": "Opgeslagen zoekopdracht bijgewerkt",
+      "editFailed": "Kan de zoekopdracht niet bijwerken. Probeer het opnieuw.",
       "delete": "Verwijderen",
-      "deleteTitle": "Delete saved search?",
-      "deleteConfirm": "“{name}” will be removed from your saved searches. This can't be undone.",
-      "deleted": "Saved search deleted",
-      "deleteFailed": "Couldn't delete the search. Please try again."
+      "deleteTitle": "Opgeslagen zoekopdracht verwijderen?",
+      "deleteConfirm": "“{name}” wordt verwijderd uit uw opgeslagen zoekopdrachten. Dit kan niet ongedaan worden gemaakt.",
+      "deleted": "Opgeslagen zoekopdracht verwijderd",
+      "deleteFailed": "Kan de zoekopdracht niet verwijderen. Probeer het opnieuw."
     },
     "bulk": {
       "crossProjectHint": "(omvattend meerdere projecten)",
@@ -7676,9 +7676,9 @@
       "intro": "Klik op de onderstaande knop om in te loggen:",
       "signInButton": "Inloggen",
       "copyPasteIntro": "Of kopieer en plak deze link in uw browser:",
-      "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
+      "singleUseNotice": "Voor uw veiligheid kan deze link maar één keer worden gebruikt. Vraag een nieuwe link aan als u opnieuw moet aanmelden.",
       "disclaimer": "Als u deze e-mail niet hebt aangevraagd, kunt u deze gerust negeren.",
-      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+      "textBody": "Aanmelden bij TestPlanIt\n\nKlik op de onderstaande link om u aan te melden:\n{url}\n\nVoor uw veiligheid kan deze link maar één keer worden gebruikt. Vraag een nieuwe link aan als u opnieuw moet aanmelden.\n\nAls u deze e-mail niet hebt aangevraagd, kunt u deze veilig negeren."
     }
   },
   "comments": {
@@ -7977,7 +7977,7 @@
     "chipCopyFailedToast": "Het kopiëren van @{label} naar het klembord is mislukt.",
     "iterationResultPanelHeading": "Dien het resultaat in voor iteratie {n} van {total}",
     "iterationAddResult": "Voeg resultaat toe",
-    "iterationPassAndNext": "Pass & Next iteration",
+    "iterationPassAndNext": "Slagen & volgende iteratie",
     "iterationOtherStatuses": "Andere statussen",
     "iterationAllComplete": "Alle iteraties voltooid",
     "hardRefuseTitle": "Kan niet aanmaken — te veel iteraties",
@@ -8052,7 +8052,7 @@
     "overrideUnsavedDiscard": "Wijzigingen negeren",
     "iterationBulkConfirmTitle": "Markeer {count, plural, =1 {# iteratie} other {# iteraties}} als {action}?",
     "iterationBulkConfirmDescription": "Elke geselecteerde iteratie ontvangt een nieuw resultaat met de status \"{statusName}\".",
-    "iterationBulkConfirm": "Mark {action}",
+    "iterationBulkConfirm": "Markeer {action}",
     "iterationBulkConfirmReplace": "Vervangen door {action}",
     "iterationBulkOverwriteWarning": "{count, plural, =1 {# van de geselecteerde iteraties heeft al} other {# van de geselecteerde iteraties heeft al}} een resultaat. Een nieuw resultaat wordt vastgelegd en het meest recente resultaat vervangt het huidige.",
     "iterationBulkReasonLabel": "Reden (optioneel)",
