@@ -177,17 +177,17 @@ const SessionItem: React.FC<SessionItemProps> = ({
                       </p>
                       {testSession.configuration && (
                         <p className="flex text-xs text-background">
-                          <Combine className="w-4 h-4 shrink-0 mr-1" />
+                          <Combine className="w-4 h-4 shrink-0 me-1" />
                           {testSession.configuration.name}
                         </p>
                       )}
                     </TooltipContent>
                   </Tooltip>
                 )}
-                <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
               </h3>
             </Link>
-            <div className="inline-flex items-center ml-1 align-middle">
+            <div className="inline-flex items-center ms-1 align-middle">
               <PendingReviewBadge pendingRequest={pendingRequest} />
             </div>
           </div>
@@ -217,7 +217,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
             </TooltipTrigger>
             <TooltipContent>
               <p className="flex">
-                <Combine className="w-4 h-4 shrink-0 mr-1" />
+                <Combine className="w-4 h-4 shrink-0 me-1" />
                 {testSession.configuration.name}
               </p>
             </TooltipContent>
@@ -282,7 +282,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
                     }
                     data-testid={`session-edit-${testSession.id}`}
                   >
-                    <Pencil className="mr-2 h-4 w-4" />
+                    <Pencil className="me-2 h-4 w-4" />
                     {t("common.actions.edit")}
                   </DropdownMenuItem>
                 )}
@@ -298,14 +298,14 @@ const SessionItem: React.FC<SessionItemProps> = ({
                     }
                     data-testid={`session-duplicate-${testSession.id}`}
                   >
-                    <Copy className="mr-2 h-4 w-4" />
+                    <Copy className="me-2 h-4 w-4" />
                     {t("common.actions.duplicate")}
                   </DropdownMenuItem>
                 )}
 
                 {showCompleteItem && (
                   <DropdownMenuItem onSelect={() => onComplete(testSession)}>
-                    <CheckCircle className="mr-2 h-4 w-4" />
+                    <CheckCircle className="me-2 h-4 w-4" />
                     {t("sessions.actions.complete")}
                   </DropdownMenuItem>
                 )}

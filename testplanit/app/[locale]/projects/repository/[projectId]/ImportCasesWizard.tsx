@@ -1002,7 +1002,7 @@ export function ImportCasesWizard({
     <div>
       <Label className={error ? "text-destructive" : ""}>
         {children}
-        {required && <span className="text-destructive ml-1">{"*"}</span>}
+        {required && <span className="text-destructive ms-1">{"*"}</span>}
       </Label>
       {error && <p className="text-destructive text-sm mt-1">{error}</p>}
     </div>
@@ -1217,7 +1217,7 @@ export function ImportCasesWizard({
                 {template.templateName}
                 {template.isDefault && (
                   <Tooltip>
-                    <TooltipTrigger className="ml-1" asChild>
+                    <TooltipTrigger className="ms-1" asChild>
                       <Badge variant="secondary">
                         <Star className="h-3 w-3 fill-current text-primary-background" />
                       </Badge>
@@ -1308,7 +1308,7 @@ export function ImportCasesWizard({
                     <SelectItem key={field.id} value={field.id}>
                       {field.displayName}
                       {field.isRequired && (
-                        <Badge variant="secondary" className="ml-2">
+                        <Badge variant="secondary" className="ms-2">
                           {tCommon("fields.required")}
                         </Badge>
                       )}
@@ -1347,7 +1347,7 @@ export function ImportCasesWizard({
                   >
                     <span className="font-medium">{mapping.csvColumn}</span>
                     <span className="text-muted-foreground">{"→"}</span>
-                    <span className="text-right">{field?.displayName}</span>
+                    <span className="text-end">{field?.displayName}</span>
                   </div>
                 );
               })}
@@ -1373,7 +1373,7 @@ export function ImportCasesWizard({
                     {t("importWizard.page3.folderSplitMode.plain")}
                   </Label>
                 </div>
-                <p className="text-sm text-muted-foreground ml-6">
+                <p className="text-sm text-muted-foreground ms-6">
                   {t("importWizard.page3.folderSplitMode.plainExample")}
                 </p>
               </div>
@@ -1388,7 +1388,7 @@ export function ImportCasesWizard({
                     {t("importWizard.page3.folderSplitMode.slash")}
                   </Label>
                 </div>
-                <p className="text-sm text-muted-foreground ml-6">
+                <p className="text-sm text-muted-foreground ms-6">
                   {t("importWizard.page3.folderSplitMode.slashExample")}
                 </p>
               </div>
@@ -1403,7 +1403,7 @@ export function ImportCasesWizard({
                     {t("importWizard.page3.folderSplitMode.dot")}
                   </Label>
                 </div>
-                <p className="text-sm text-muted-foreground ml-6">
+                <p className="text-sm text-muted-foreground ms-6">
                   {t("importWizard.page3.folderSplitMode.dotExample")}
                 </p>
               </div>
@@ -1418,7 +1418,7 @@ export function ImportCasesWizard({
                     {t("importWizard.page3.folderSplitMode.greaterThan")}
                   </Label>
                 </div>
-                <p className="text-sm text-muted-foreground ml-6">
+                <p className="text-sm text-muted-foreground ms-6">
                   {t("importWizard.page3.folderSplitMode.greaterThanExample")}
                 </p>
               </div>

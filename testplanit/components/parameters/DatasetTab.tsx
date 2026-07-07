@@ -1211,7 +1211,7 @@ export function DatasetTab({
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="px-1 py-0 h-auto ml-auto"
+                      className="px-1 py-0 h-auto ms-auto"
                       aria-label={t("datasetColumnMenuLabel", { name: p.name })}
                       data-testid={`dataset-column-menu-${p.name}`}
                     >
@@ -1740,7 +1740,7 @@ export function DatasetTab({
                             // background in dark mode and pairs only with
                             // its own foreground token; we render plain
                             // muted text in the header.
-                            className="px-2 py-1 text-left bg-muted/50 border-b font-medium"
+                            className="px-2 py-1 text-start bg-muted/50 border-b font-medium"
                             style={
                               fixedWidth
                                 ? {
@@ -1796,14 +1796,14 @@ export function DatasetTab({
                           >
                             {dropIndicator === "top" && (
                               <div
-                                className="absolute top-0 left-0 right-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
+                                className="absolute top-0 start-0 end-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
                                 aria-hidden="true"
                                 data-testid={`dataset-row-drop-indicator-top-${row.original.id}`}
                               />
                             )}
                             {dropIndicator === "bottom" && (
                               <div
-                                className="absolute bottom-0 left-0 right-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
+                                className="absolute bottom-0 start-0 end-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
                                 aria-hidden="true"
                                 data-testid={`dataset-row-drop-indicator-bottom-${row.original.id}`}
                               />
@@ -1867,7 +1867,7 @@ export function DatasetTab({
       )}
 
       <div
-        className="p-2 pl-4 pr-2 border-t flex items-center justify-end gap-3"
+        className="p-2 ps-4 pe-2 border-t flex items-center justify-end gap-3"
         data-testid="dataset-tab-footer"
       >
         {totalRows > 0 && (

@@ -138,7 +138,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
             className="w-5 h-5"
             name={milestoneType.icon?.name as IconName}
           />
-          <span className="ml-1">{milestoneType.name}</span>
+          <span className="ms-1">{milestoneType.name}</span>
         </div>
       ),
     })) || [];
@@ -278,7 +278,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
         <React.Fragment key={milestone.value}>
           <SelectItem
             value={milestone.value}
-            style={{ paddingLeft: `${level * 20}px` }}
+            style={{ paddingInlineStart: `${level * 20}px` }}
           >
             {milestone.label}
           </SelectItem>

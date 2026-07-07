@@ -74,7 +74,7 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
           {t("projects.overview.seeAllActiveTestRuns", {
             count: testRunsCount?.length ?? 0,
           })}
-          <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
         </Link>
       </p>
       <div className="flex flex-col">
@@ -83,7 +83,7 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
         </h2>
         <ul className="flex flex-col w-full space-y-4">
           {testRuns.map((testRun) => (
-            <li key={testRun.id} className="ml-6">
+            <li key={testRun.id} className="ms-6">
               <div className="grid grid-cols-[1fr,2fr] gap-4 items-center">
                 {/* Left column - Test run name and created date */}
                 <div className="flex flex-col space-y-1 min-w-0">
@@ -93,14 +93,14 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
                     className="block"
                   >
                     <div className="flex items-center group">
-                      <PlayCircle className="h-5 w-5 shrink-0 mr-2" />
-                      <span className="font-medium truncate pr-1">
+                      <PlayCircle className="h-5 w-5 shrink-0 me-2" />
+                      <span className="font-medium truncate pe-1">
                         {testRun.name}
                       </span>
                       {(testRun as any).configurationGroupId && (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="shrink-0 mr-1">
+                            <span className="shrink-0 me-1">
                               <Combine className="w-4 h-4 text-muted-foreground" />
                             </span>
                           </TooltipTrigger>
@@ -110,7 +110,7 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
                             </p>
                             {testRun.configuration && (
                               <p className="flex text-xs text-background">
-                                <Combine className="w-4 h-4 shrink-0 mr-1" />
+                                <Combine className="w-4 h-4 shrink-0 me-1" />
                                 {testRun.configuration.name}
                               </p>
                             )}
@@ -122,8 +122,8 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
                   </Link>
 
                   {/* Second row - Created date */}
-                  <div className="text-sm text-muted-foreground ml-7 flex items-center min-w-0">
-                    <span className="shrink-0 whitespace-nowrap mr-1">
+                  <div className="text-sm text-muted-foreground ms-7 flex items-center min-w-0">
+                    <span className="shrink-0 whitespace-nowrap me-1">
                       {t("common.fields.created")}
                       {": "}
                     </span>

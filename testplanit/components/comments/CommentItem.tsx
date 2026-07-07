@@ -114,20 +114,20 @@ export function CommentItem({
 
   const accentClasses = (() => {
     if (commentType === "REVIEW_REQUEST") {
-      return "border-l-4 border-l-primary";
+      return "border-s-4 border-s-primary";
     }
     if (commentType === "REVIEW_DECISION") {
       switch (comment.reviewRequest?.status) {
         case "APPROVED":
-          return "border-l-4 border-l-emerald-500";
+          return "border-s-4 border-s-emerald-500";
         case "CHANGES_REQUESTED":
-          return "border-l-4 border-l-amber-500";
+          return "border-s-4 border-s-amber-500";
         case "REJECTED":
-          return "border-l-4 border-l-destructive";
+          return "border-s-4 border-s-destructive";
         case "CANCELLED":
-          return "border-l-4 border-l-muted-foreground";
+          return "border-s-4 border-s-muted-foreground";
         default:
-          return "border-l-4 border-l-muted-foreground";
+          return "border-s-4 border-s-muted-foreground";
       }
     }
     return "";
@@ -265,7 +265,7 @@ export function CommentItem({
                 <DropdownMenuContent align="end">
                   {canEdit && (
                     <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                      <Edit className="mr-2 h-4 w-4" />
+                      <Edit className="me-2 h-4 w-4" />
                       {t("common.actions.edit")}
                     </DropdownMenuItem>
                   )}
@@ -274,7 +274,7 @@ export function CommentItem({
                       onClick={handleDeleteClick}
                       className="text-destructive focus:text-destructive"
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash2 className="me-2 h-4 w-4" />
                       {t("common.actions.delete")}
                     </DropdownMenuItem>
                   )}

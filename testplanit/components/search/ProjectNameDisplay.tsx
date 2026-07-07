@@ -29,7 +29,7 @@ export const ProjectNameDisplay: React.FC<ProjectNameDisplayProps> = ({
       <Tooltip>
         <TooltipTrigger
           type="button"
-          className="text-left truncate max-w-[200px] inline-block"
+          className="text-start truncate max-w-[200px] inline-block"
         >
           {projectName}
         </TooltipTrigger>

@@ -745,7 +745,7 @@ export function TestRunCaseDetails({
   };
 
   return (
-    <div className="h-full overflow-y-auto space-y-2 relative -ml-1">
+    <div className="h-full overflow-y-auto space-y-2 relative -ms-1">
       {isTransitioning && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="flex flex-col items-center gap-2">
@@ -787,7 +787,7 @@ export function TestRunCaseDetails({
                       size="sm"
                       onClick={handleQuickPass}
                       disabled={isDisabled}
-                      className="flex items-center rounded-r-none border-r-0"
+                      className="flex items-center rounded-e-none border-e-0"
                     >
                       <CheckCircle className="h-4 w-4" />
                       {tCommon("actions.passAndNext")}
@@ -799,7 +799,7 @@ export function TestRunCaseDetails({
                           variant="outline"
                           size="sm"
                           disabled={isDisabled}
-                          className="flex items-center rounded-l-none border-l-0"
+                          className="flex items-center rounded-s-none border-s-0"
                         >
                           <ChevronDown className="h-4 w-4" />
                         </Button>
@@ -917,7 +917,7 @@ export function TestRunCaseDetails({
                             className="flex items-center cursor-pointer"
                           >
                             <div
-                              className="w-3 h-3 rounded-full mr-2"
+                              className="w-3 h-3 rounded-full me-2"
                               style={{
                                 backgroundColor:
                                   status.color?.value || "#B1B2B3",
@@ -925,7 +925,7 @@ export function TestRunCaseDetails({
                             />
                             <span className="flex-1">{status.name}</span>
                             {status.isSuccess && (
-                              <CheckCircle className="h-4 w-4 ml-2 text-muted-foreground" />
+                              <CheckCircle className="h-4 w-4 ms-2 text-muted-foreground" />
                             )}
                           </DropdownMenuItem>
                         ))}
@@ -967,7 +967,7 @@ export function TestRunCaseDetails({
         </div>
         {/* --- Previous/Next Buttons --- */}
         <TooltipProvider>
-          <div className="flex items-center gap-2 shrink-0 mr-8">
+          <div className="flex items-center gap-2 shrink-0 me-8">
             {/* Prev Button */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -1096,7 +1096,7 @@ export function TestRunCaseDetails({
                       }`}
                     >
                       <div
-                        className="w-3 h-3 rounded-full mr-2"
+                        className="w-3 h-3 rounded-full me-2"
                         style={{
                           backgroundColor:
                             statusOption.color?.value || "#B1B2B3",
@@ -1104,7 +1104,7 @@ export function TestRunCaseDetails({
                       />
                       <span className="flex-1">{statusOption.name}</span>
                       {statusOption.id === displayStatus.id && (
-                        <Check className="h-4 w-4 ml-2 text-muted-foreground" />
+                        <Check className="h-4 w-4 ms-2 text-muted-foreground" />
                       )}
                     </DropdownMenuItem>
                   ))}
@@ -1115,7 +1115,7 @@ export function TestRunCaseDetails({
         </div>
       </div>
       <Card
-        className="p-4 space-y-4 border-none rounded-none ml-1"
+        className="p-4 space-y-4 border-none rounded-none ms-1"
         shadow="none"
       >
         <div className="flex justify-between">

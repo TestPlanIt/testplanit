@@ -192,7 +192,7 @@ export default function QuickScriptTemplates() {
               <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
                 <CardTitle>
                   <div className="flex items-center">
-                    <ScrollText className="mr-1" />
+                    <ScrollText className="me-1" />
                     {t("title")}
                   </div>
                 </CardTitle>
@@ -217,12 +217,12 @@ export default function QuickScriptTemplates() {
           <CardContent>
             <div className="flex flex-wrap items-center gap-3 mb-4">
               <div className="relative flex-1 min-w-50">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder={t("filterPlaceholder")}
                   value={filterText}
                   onChange={(e) => setFilterText(e.target.value)}
-                  className="pl-9"
+                  className="ps-9"
                   data-testid="quickscript-templates-filter"
                 />
               </div>
@@ -332,16 +332,16 @@ export default function QuickScriptTemplates() {
                         <table className="w-full text-sm">
                           <thead>
                             <tr className="border-b bg-muted/50">
-                              <th className="px-4 py-2 text-left font-medium">
+                              <th className="px-4 py-2 text-start font-medium">
                                 {tCommon("name")}
                               </th>
-                              <th className="px-4 py-2 text-left font-medium">
+                              <th className="px-4 py-2 text-start font-medium">
                                 {t("fields.framework")}
                               </th>
-                              <th className="px-4 py-2 text-left font-medium">
+                              <th className="px-4 py-2 text-start font-medium">
                                 {t("fields.fileExtension")}
                               </th>
-                              <th className="px-4 py-2 text-left font-medium">
+                              <th className="px-4 py-2 text-start font-medium">
                                 {tCommon("fields.locale")}
                               </th>
                               <th className="px-4 py-2 text-center font-medium">

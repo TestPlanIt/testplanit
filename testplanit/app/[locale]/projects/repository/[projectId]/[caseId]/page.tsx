@@ -1934,7 +1934,7 @@ export default function TestCaseDetails() {
               </div>
               <div className="flex items-start justify-between text-primary text-xl md:text-2xl max-w-full">
                 {isEditMode && !isSubmitting ? (
-                  <div className="w-full mr-6 -mt-2">
+                  <div className="w-full me-6 -mt-2">
                     <FormField
                       control={control}
                       name="name"
@@ -1953,7 +1953,7 @@ export default function TestCaseDetails() {
                         </FormItem>
                       )}
                     />
-                    <span className="absolute top-0 left-0 ml-[-18px] mt-2.5">
+                    <span className="absolute top-0 start-0 ms-[-18px] mt-2.5">
                       <Asterisk className="w-3 h-3 text-destructive" />
                     </span>
                   </div>
@@ -1967,7 +1967,7 @@ export default function TestCaseDetails() {
                           type="button"
                           variant="outline"
                           size="icon"
-                          className="mr-2"
+                          className="me-2"
                           aria-label={t("common.aria.backToTestCase")}
                         >
                           <ArrowLeft className="h-4 w-4" />
@@ -2025,7 +2025,7 @@ export default function TestCaseDetails() {
                             return (
                               <Button type="submit" variant="default">
                                 <div className="flex items-center">
-                                  <Save className="w-5 h-5 mr-2" />
+                                  <Save className="w-5 h-5 me-2" />
                                   <div>{t("common.actions.save")}</div>
                                 </div>
                               </Button>
@@ -2047,7 +2047,7 @@ export default function TestCaseDetails() {
                                     className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
                                   >
                                     <div className="flex items-center">
-                                      <Save className="w-5 h-5 mr-2" />
+                                      <Save className="w-5 h-5 me-2" />
                                       <div>{t("common.actions.save")}</div>
                                     </div>
                                   </Button>
@@ -2064,7 +2064,7 @@ export default function TestCaseDetails() {
                           disabled={isLoadingSharedStepGroups}
                         >
                           <div className="flex items-center">
-                            <CircleSlash2 className="w-5 h-5 mr-2" />
+                            <CircleSlash2 className="w-5 h-5 me-2" />
                             <div>{t("common.cancel")}</div>
                           </div>
                         </Button>
@@ -2345,7 +2345,7 @@ export default function TestCaseDetails() {
                         return (
                           <li
                             key={`case-field-${field.caseField.id}-${fieldIndex}`}
-                            className="mb-2 mr-6"
+                            className="mb-2 me-6"
                           >
                             {field.caseField.type.type !== "Steps" && (
                               <div className="font-bold flex items-center">
@@ -2358,7 +2358,7 @@ export default function TestCaseDetails() {
                                 {field.caseField.isRestricted && (
                                   <span
                                     title={t("common.aria.restrictedField")}
-                                    className="ml-1 text-muted-foreground"
+                                    className="ms-1 text-muted-foreground"
                                   >
                                     <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                                   </span>
@@ -2437,7 +2437,7 @@ export default function TestCaseDetails() {
                     !testcase.template?.caseFields?.some(
                       (f) => f.caseField.type.type === "Steps"
                     ) && (
-                      <div className="mb-4 mr-6">
+                      <div className="mb-4 me-6">
                         <Alert className="border-warning/50 bg-warning/10 mb-2">
                           <AlertCircle className="h-4 w-4 text-warning" />
                           <AlertDescription className="text-sm text-warning-foreground">
@@ -2476,7 +2476,7 @@ export default function TestCaseDetails() {
                     if (orphanedFieldValues.length === 0) return null;
 
                     return (
-                      <div className="mb-4 mr-6">
+                      <div className="mb-4 me-6">
                         <Alert className="border-warning/50 bg-warning/10 mb-2">
                           <AlertCircle className="h-4 w-4 text-warning" />
                           <AlertDescription className="text-sm text-warning-foreground">
@@ -2540,7 +2540,7 @@ export default function TestCaseDetails() {
                           <div className="font-bold mb-1">
                             {t("common.fields.steps")}
                           </div>
-                          <ul className="list-disc ml-6">
+                          <ul className="list-disc ms-6">
                             {junitSteps.map((step, index) => (
                               <li key={`junit-step-${step.id}-${index}`}>
                                 {step.name}
@@ -2555,7 +2555,7 @@ export default function TestCaseDetails() {
                           <div className="font-bold mb-1">
                             {t("common.fields.attachments")}
                           </div>
-                          <ul className="list-disc ml-6">
+                          <ul className="list-disc ms-6">
                             {junitAttachments.map((att, index) => (
                               <li key={`junit-att-${att.id}-${index}`}>
                                 {att.name} {"("}
@@ -2571,7 +2571,7 @@ export default function TestCaseDetails() {
                           <div className="font-bold mb-1">
                             {t("common.fields.properties")}
                           </div>
-                          <ul className="list-disc ml-6">
+                          <ul className="list-disc ms-6">
                             {junitProperties.map((prop, index) => (
                               <li key={`junit-prop-${prop.id}-${index}`}>
                                 {prop.name}
@@ -2598,8 +2598,8 @@ export default function TestCaseDetails() {
                         aria-label={t("common.aria.togglePanel")}
                         className={`p-0 transform ${
                           isCollapsedLeft
-                            ? "rounded-l-none rotate-180"
-                            : "rounded-r-none"
+                            ? "rounded-s-none rotate-180"
+                            : "rounded-e-none"
                         }`}
                       >
                         <ChevronLeft />
@@ -2629,8 +2629,8 @@ export default function TestCaseDetails() {
                         aria-label={t("common.aria.togglePanel")}
                         className={`p-0 transform ${
                           isCollapsedRight
-                            ? "rounded-l-none"
-                            : "rounded-r-none rotate-180"
+                            ? "rounded-s-none"
+                            : "rounded-e-none rotate-180"
                         }`}
                       >
                         <ChevronLeft />

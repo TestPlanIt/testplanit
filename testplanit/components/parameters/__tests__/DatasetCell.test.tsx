@@ -86,7 +86,7 @@ describe("DatasetCell — read mode", () => {
     expect(input.value).toBe("alice");
   });
 
-  it("Test 2: INTEGER value renders with font-mono tabular-nums text-right", () => {
+  it("Test 2: INTEGER value renders with font-mono tabular-nums text-end", () => {
     render(
       <DatasetCell
         rowId={1}
@@ -109,7 +109,7 @@ describe("DatasetCell — read mode", () => {
     ) as HTMLInputElement;
     expect(input.className).toContain("font-mono");
     expect(input.className).toContain("tabular-nums");
-    expect(input.className).toContain("text-right");
+    expect(input.className).toContain("text-end");
     expect(input.value).toBe("42");
   });
 

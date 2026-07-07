@@ -165,7 +165,7 @@ const Projects = () => {
           <CardHeader>
             <CardTitle data-testid="projects-page-title">
               <div className="flex items-center">
-                <Boxes className="w-5 h-5 mr-1" />
+                <Boxes className="w-5 h-5 me-1" />
                 {t("home.dashboard.projects", { count: projectCount })}
               </div>
             </CardTitle>

@@ -1130,7 +1130,7 @@ function RankedList({
                   className="grid grid-cols-[auto_1fr_auto] gap-3 items-start border rounded-md p-3"
                   data-testid={`automation-candidate-${c.caseId}`}
                 >
-                  <div className="text-sm font-mono text-muted-foreground w-8 text-right shrink-0 pt-0.5">
+                  <div className="text-sm font-mono text-muted-foreground w-8 text-end shrink-0 pt-0.5">
                     {`#${c.rank}`}
                   </div>
                   <div className="min-w-0 space-y-1">
@@ -1162,7 +1162,7 @@ function RankedList({
                       {c.rationale}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end gap-1 max-w-[140px] text-xs text-right pt-0.5 break-words [&_*]:whitespace-normal">
+                  <div className="flex flex-col items-end gap-1 max-w-[140px] text-xs text-end pt-0.5 break-words [&_*]:whitespace-normal">
                     <Badge variant="default">
                       {t("rankedList.score", {
                         score: String(Math.round(c.score)),

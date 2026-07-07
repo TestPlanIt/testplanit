@@ -364,7 +364,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
       </CardHeader>
       <CardContent className="p-0">
         {!links || links.length === 0 ? (
-          <div className="text-muted-foreground ml-6 -mt-8 mb-4 text-sm">
+          <div className="text-muted-foreground ms-6 -mt-8 mb-4 text-sm">
             {tLinkedCases("noLinkedCases")}
           </div>
         ) : (
@@ -386,7 +386,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                 <TableHead className="w-[180px]">
                   {tLinkedCases("on")}
                 </TableHead>
-                <TableHead className="w-[60px] text-right">
+                <TableHead className="w-[60px] text-end">
                   {tGlobal("common.actions.remove")}
                 </TableHead>
               </TableRow>
@@ -574,7 +574,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                               </span>
                               <div>
                                 {date && (
-                                  <span className="ml-1 text-xs text-muted-foreground font-normal flex items-start gap-1">
+                                  <span className="ms-1 text-xs text-muted-foreground font-normal flex items-start gap-1">
                                     <Calendar className="w-4 h-4 shrink-0" />
                                     <DateFormatter
                                       date={date}
@@ -610,7 +610,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                           timezone={session?.user.preferences?.timezone}
                         />
                       </TableCell>
-                      <TableCell className="w-[60px] text-right">
+                      <TableCell className="w-[60px] text-end">
                         {canManageLinks && (
                           <Popover
                             open={openPopoverLinkId === link.id}
@@ -738,7 +738,7 @@ function AddLinkDialog({
                 <Button
                   type="button"
                   variant="outline"
-                  className="justify-start text-left w-full"
+                  className="justify-start text-start w-full"
                 >
                   {value ? (
                     <span className="flex items-center gap-1 overflow-hidden">

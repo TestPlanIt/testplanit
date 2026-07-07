@@ -170,7 +170,7 @@ export function AsyncCombobox<T>({
     renderOption(value)
   ) : showUnassigned ? (
     <div className="flex items-center text-start">
-      {unassignedIcon ?? <UserX className="mr-2 h-4 w-4" />}
+      {unassignedIcon ?? <UserX className="me-2 h-4 w-4" />}
       <span>{unassignedLabel || tCommon("labels.unassigned")}</span>
     </div>
   ) : (
@@ -248,7 +248,7 @@ export function AsyncCombobox<T>({
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className={cn("justify-start text-left group", className)}
+              className={cn("justify-start text-start group", className)}
               disabled={disabled}
             >
               {defaultContent}
@@ -289,12 +289,12 @@ export function AsyncCombobox<T>({
                     }}
                   >
                     <div className="flex items-center w-full">
-                      {unassignedIcon ?? <UserX className="mr-2 h-4 w-4" />}
+                      {unassignedIcon ?? <UserX className="me-2 h-4 w-4" />}
                       <span>
                         {unassignedLabel || tCommon("labels.unassigned")}
                       </span>
                       {!value && (
-                        <Check className="ml-auto h-4 w-4 text-muted-foreground" />
+                        <Check className="ms-auto h-4 w-4 text-muted-foreground" />
                       )}
                     </div>
                   </CommandItem>
@@ -316,7 +316,7 @@ export function AsyncCombobox<T>({
                         {renderOption(option)}
                         {value &&
                           getOptionValue(option) === getOptionValue(value) && (
-                            <Check className="ml-auto h-4 w-4 text-muted-foreground" />
+                            <Check className="ms-auto h-4 w-4 text-muted-foreground" />
                           )}
                       </div>
                     </CommandItem>

@@ -222,7 +222,7 @@ export function ShareLinkList({
               )}
               <TableHead>{tCommon("fields.title")}</TableHead>
               <TableHead>{t("columns.mode")}</TableHead>
-              <TableHead className="text-right">{t("columns.views")}</TableHead>
+              <TableHead className="text-end">{t("columns.views")}</TableHead>
               <TableHead>{tCommon("fields.notificationMode")}</TableHead>
               <TableHead>{tCommon("fields.created")}</TableHead>
               <TableHead>{t("columns.expires")}</TableHead>
@@ -269,7 +269,7 @@ export function ShareLinkList({
                       {share.mode.replace("_", " ")}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     <div className="flex items-center gap-1 justify-end">
                       <Eye className="h-3 w-3 text-muted-foreground" />
                       <span>{share.viewCount}</span>
@@ -356,7 +356,7 @@ export function ShareLinkList({
                             </>
                           ) : (
                             <>
-                              <Copy className="mr-1 h-4 w-4" />
+                              <Copy className="me-1 h-4 w-4" />
                               {t("actions.copyLink")}
                             </>
                           )}
@@ -370,7 +370,7 @@ export function ShareLinkList({
                                 setEditDialogOpen(true);
                               }}
                             >
-                              <Pencil className="mr-1 h-4 w-4" />
+                              <Pencil className="me-1 h-4 w-4" />
                               {tCommon("actions.edit")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -381,7 +381,7 @@ export function ShareLinkList({
                               }}
                               className="text-destructive"
                             >
-                              <Ban className="mr-1 h-4 w-4" />
+                              <Ban className="me-1 h-4 w-4" />
                               {t("actions.revoke")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -392,7 +392,7 @@ export function ShareLinkList({
                               }}
                               className="text-destructive"
                             >
-                              <Trash2 className="mr-1 h-4 w-4" />
+                              <Trash2 className="me-1 h-4 w-4" />
                               {tCommon("actions.delete")}
                             </DropdownMenuItem>
                           </>
@@ -405,7 +405,7 @@ export function ShareLinkList({
                             }}
                             className="text-destructive"
                           >
-                            <Trash2 className="mr-1 h-4 w-4" />
+                            <Trash2 className="me-1 h-4 w-4" />
                             {tCommon("actions.delete")}
                           </DropdownMenuItem>
                         )}

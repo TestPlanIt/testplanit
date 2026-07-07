@@ -1977,7 +1977,7 @@ function ReportBuilderContent({
         >
           <Card
             shadow="none"
-            className="rounded-none border-y-0 border-l-0 flex flex-col"
+            className="rounded-none border-y-0 border-s-0 flex flex-col"
           >
             <CardContent className="grow overflow-y-auto pb-6">
               <Tabs
@@ -2235,7 +2235,7 @@ function ReportBuilderContent({
                                     : flakyAutomatedFilter === "manual"
                                       ? tCommon("fields.manual")
                                       : tCommon("fields.automated")}
-                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent
@@ -2362,7 +2362,7 @@ function ReportBuilderContent({
                                       : lookbackDays === 90
                                         ? tReports("dateRange.last3Months")
                                         : tReports("dateRange.last12Months")}
-                                  <ChevronDown className="ml-2 h-4 w-4" />
+                                  <ChevronDown className="ms-2 h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="start">
@@ -2408,7 +2408,7 @@ function ReportBuilderContent({
                                     : healthAutomatedFilter === "manual"
                                       ? tCommon("fields.manual")
                                       : tCommon("fields.automated")}
-                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent
@@ -2473,7 +2473,7 @@ function ReportBuilderContent({
                                           : tReports(
                                               "testCaseHealth.healthStatus.neverExecuted"
                                             )}
-                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent
@@ -2545,7 +2545,7 @@ function ReportBuilderContent({
                                     : healthStaleFilter === "stale"
                                       ? tReports("testCaseHealth.stale")
                                       : tReports("testCaseHealth.notStale")}
-                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent
@@ -2986,7 +2986,7 @@ function ReportBuilderContent({
             type="button"
             onClick={toggleCollapse}
             variant="secondary"
-            className="p-0 -ml-1 rounded-l-none"
+            className="p-0 -ms-1 rounded-s-none"
           >
             {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
           </Button>

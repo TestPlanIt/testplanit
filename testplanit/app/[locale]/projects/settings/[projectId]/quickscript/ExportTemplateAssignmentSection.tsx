@@ -208,7 +208,7 @@ export function ExportTemplateAssignmentSection({
                 renderOption={(tpl) => (
                   <span className="flex items-center w-full">
                     <span>{tpl.name}</span>
-                    <span className="flex items-center gap-1.5 ml-auto mr-2">
+                    <span className="flex items-center gap-1.5 ms-auto me-2">
                       {tpl.category && (
                         <Badge
                           variant="secondary"

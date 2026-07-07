@@ -240,7 +240,7 @@ function IntegrationList() {
                 data-testid="integrations-admin-page-title"
                 className="items-center flex"
               >
-                <Plug className="inline mr-2 h-8 w-8" />
+                <Plug className="inline me-2 h-8 w-8" />
                 {tAdminMenu("integrations")}
               </CardTitle>
               <CardDescription data-testid="integrations-admin-page-description">
@@ -337,7 +337,7 @@ function IntegrationList() {
                 <p className="font-medium text-foreground">
                   {t("delete.warningTitle")}
                 </p>
-                <ul className="list-disc pl-5 space-y-1 text-destructive">
+                <ul className="list-disc ps-5 space-y-1 text-destructive">
                   <li>{t("delete.warning1")}</li>
                   <li>{t("delete.warning2")}</li>
                   <li>{t("delete.warning3")}</li>

@@ -754,7 +754,7 @@ export function EditResultField({
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel className="ml-2 flex items-center">
+                    <FormLabel className="ms-2 flex items-center">
                       {tCommon("fields.enabled")}
                       <HelpPopover helpKey="resultField.enabled" />
                     </FormLabel>
@@ -773,7 +773,7 @@ export function EditResultField({
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel className="ml-2 flex items-center">
+                    <FormLabel className="ms-2 flex items-center">
                       {tCommon("fields.required")}
                       <HelpPopover helpKey="resultField.required" />
                     </FormLabel>
@@ -792,7 +792,7 @@ export function EditResultField({
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel className="ml-2 flex items-center">
+                    <FormLabel className="ms-2 flex items-center">
                       {tCommon("fields.restricted")}
                       <HelpPopover helpKey="resultField.restricted" />
                     </FormLabel>

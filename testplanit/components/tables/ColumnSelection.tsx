@@ -367,7 +367,7 @@ export function ColumnSelection<TData>({
         className="text-sm whitespace-nowrap flex items-center"
         data-testid="column-selection-trigger"
       >
-        <Columns3 className="w-4 h-4 mr-1" />
+        <Columns3 className="w-4 h-4 me-1" />
         {t("table.columns.columns")}
       </PopoverTrigger>
       <PopoverContent className="w-fit grid max-w-sm">
@@ -383,7 +383,7 @@ export function ColumnSelection<TData>({
             </Button>
           </div>
           <ScrollArea className="h-[300px]">
-            <div className="flex gap-2 pr-4">
+            <div className="flex gap-2 pe-4">
               <div className="flex flex-col space-y-1 flex-1">
                 {leftColumns.map((column) => {
                   const columnId = column.id;

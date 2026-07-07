@@ -237,7 +237,7 @@ function CodeRepositoryList() {
                 data-testid="code-repositories-admin-page-title"
                 className="items-center flex"
               >
-                <GitBranch className="inline mr-2 h-8 w-8" />
+                <GitBranch className="inline me-2 h-8 w-8" />
                 {t("title")}
               </CardTitle>
               <CardDescription data-testid="code-repositories-admin-page-description">

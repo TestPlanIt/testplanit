@@ -100,7 +100,7 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({
                   {opt.icon && (
                     <DynamicIcon
                       name={opt.icon.name as IconName}
-                      className="h-3 w-3 mr-1"
+                      className="h-3 w-3 me-1"
                       color={opt.iconColor?.value}
                     />
                   )}
@@ -124,7 +124,7 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({
                 {field.fieldOption.icon && (
                   <DynamicIcon
                     name={field.fieldOption.icon.name as IconName}
-                    className="h-3 w-3 mr-1"
+                    className="h-3 w-3 me-1"
                     color={field.fieldOption.iconColor?.value}
                   />
                 )}

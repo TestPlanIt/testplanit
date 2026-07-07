@@ -35,7 +35,7 @@ export const MilestoneIconAndName: React.FC<MilestoneIconAndNameProps> = ({
           className="w-6 h-6 shrink-0"
         />
         <span className="truncate">{milestone.name}</span>
-        <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
       </span>
     </Link>
   );

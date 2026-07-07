@@ -574,7 +574,7 @@ export default function TestCaseVersions() {
             className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`}
           />
         )}
-        {prefix && <span className="relative mr-1">{prefix}</span>}
+        {prefix && <span className="relative me-1">{prefix}</span>}
         <div className="relative">
           <TagsDisplay id={tag} name={tag} size="large" />
         </div>
@@ -626,7 +626,7 @@ export default function TestCaseVersions() {
             className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`}
           />
         )}
-        {prefix && <span className="relative mr-1">{prefix}</span>}
+        {prefix && <span className="relative me-1">{prefix}</span>}
         <div className="relative">
           <IssuesDisplay
             id={issue.id}
@@ -833,7 +833,7 @@ export default function TestCaseVersions() {
                     }
 
                     return (
-                      <li key={field.caseField.id} className="mb-2 mr-6">
+                      <li key={field.caseField.id} className="mb-2 me-6">
                         {field.caseField.type.type !== "Steps" && (
                           <div className="font-bold">
                             {field.caseField.displayName}
@@ -891,7 +891,7 @@ export default function TestCaseVersions() {
                   {testcase?.steps &&
                     (transformedSteps.length > 0 ||
                       transformedPreviousSteps.length > 0) && (
-                      <li className="mb-2 mr-6">
+                      <li className="mb-2 me-6">
                         {previousTestcase ? (
                           <StepsDisplay
                             steps={transformedSteps}
@@ -922,8 +922,8 @@ export default function TestCaseVersions() {
                     size="sm"
                     className={`p-0 transform ${
                       isCollapsedLeft
-                        ? "rounded-l-none rotate-180"
-                        : "rounded-r-none"
+                        ? "rounded-s-none rotate-180"
+                        : "rounded-e-none"
                     }`}
                   >
                     <ChevronLeft />
@@ -948,8 +948,8 @@ export default function TestCaseVersions() {
                     size="sm"
                     className={`p-0 transform ${
                       isCollapsedRight
-                        ? "rounded-l-none"
-                        : "rounded-r-none rotate-180"
+                        ? "rounded-s-none"
+                        : "rounded-e-none rotate-180"
                     }`}
                   >
                     <ChevronLeft />
@@ -987,9 +987,9 @@ export default function TestCaseVersions() {
                 role="region"
                 aria-label={t("repository.version.metadataRegion")}
               >
-                <ul className="list-none ml-1" role="list">
+                <ul className="list-none ms-1" role="list">
                   {testcase.estimate !== null && (
-                    <li className="mb-2 mr-6">
+                    <li className="mb-2 me-6">
                       <div className="font-bold">
                         {t("common.fields.estimate")}
                       </div>
@@ -1010,7 +1010,7 @@ export default function TestCaseVersions() {
                     </li>
                   )}
 
-                  <li className="mb-2 mr-6">
+                  <li className="mb-2 me-6">
                     <div className="font-bold">
                       {t("common.fields.automated")}
                     </div>
@@ -1107,7 +1107,7 @@ export default function TestCaseVersions() {
                       version: version?.toString() || "",
                     })}
                   </div>
-                  <li className="mb-2 mr-6">
+                  <li className="mb-2 me-6">
                     <div className="flex space-x-1">
                       <div>
                         <DateFormatter
@@ -1139,10 +1139,10 @@ export default function TestCaseVersions() {
                           {t("repository.version.latestVersionUpdated", {
                             version: versions[0].version,
                           })}
-                          <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                         </Link>
                       </div>
-                      <li className="mb-2 mr-6">
+                      <li className="mb-2 me-6">
                         <div className="flex space-x-1">
                           <div>
                             <DateFormatter

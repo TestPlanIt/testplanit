@@ -74,7 +74,7 @@ export function ShareLayoutContent({
         <Toaster richColors toastOptions={{ className: "!z-[9999]" }} />
 
         {/* Branding footer */}
-        <footer className="fixed bottom-4 right-4 z-50 flex items-center gap-2">
+        <footer className="fixed bottom-4 end-4 z-50 flex items-center gap-2">
           <span className="text-xs text-muted-foreground">
             {t("poweredBy")}
           </span>

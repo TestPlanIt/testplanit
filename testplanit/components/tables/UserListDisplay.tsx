@@ -45,7 +45,7 @@ export const UserListDisplay: React.FC<UserListProps> = ({ users }) => {
       <PopoverTrigger asChild>
         <button className="cursor-pointer">
           <Badge>
-            <UserRoundIcon className="w-4 h-4 mr-1" />
+            <UserRoundIcon className="w-4 h-4 me-1" />
             {allUsers.length}
           </Badge>
         </button>

@@ -1855,7 +1855,7 @@ export function BulkEditModal({
                       {currentPreview.stepsPreview.map((stepPreview) => (
                         <div
                           key={stepPreview.stepNumber}
-                          className="pl-2 border-l-2 border-muted"
+                          className="ps-2 border-s-2 border-muted"
                         >
                           <div className="font-medium text-xs text-muted-foreground">
                             {t("common.fields.step") + " "}
@@ -1978,7 +1978,7 @@ export function BulkEditModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grow overflow-y-auto pr-6 pl-2 py-4 space-y-4">
+        <div className="grow overflow-y-auto pe-6 ps-2 py-4 space-y-4">
           {isLoading && (
             <div className="flex justify-center items-center h-40">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -2059,7 +2059,7 @@ export function BulkEditModal({
                         {field.isCustom && field.field?.isRestricted && (
                           <span
                             title={tCommon("aria.restrictedField")}
-                            className="ml-1 text-muted-foreground"
+                            className="ms-1 text-muted-foreground"
                           >
                             <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                           </span>
@@ -2208,7 +2208,7 @@ export function BulkEditModal({
                   }
                 >
                   {(isUpdating || isSaving) && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   )}
                   {tCommon("actions.save")}
                 </Button>

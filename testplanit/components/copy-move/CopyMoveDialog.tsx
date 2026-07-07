@@ -547,13 +547,13 @@ export function CopyMoveDialog({
                       {p.isCurrent && (
                         <span
                           data-testid="copy-move-project-current-suffix"
-                          className="ml-1 text-xs opacity-60"
+                          className="ms-1 text-xs opacity-60"
                         >
                           {tGlobal("repository.dragDrop.currentSuffix")}
                         </span>
                       )}
                       {p.isCompleted && (
-                        <span className="ml-auto text-xs text-muted-foreground">
+                        <span className="ms-auto text-xs text-muted-foreground">
                           {t("completed")}
                         </span>
                       )}
@@ -581,7 +581,7 @@ export function CopyMoveDialog({
                         <div
                           data-testid={`copy-move-folder-option-${f.id}`}
                           className="flex items-center gap-1.5"
-                          style={{ paddingLeft: `${f.depth * 12}px` }}
+                          style={{ paddingInlineStart: `${f.depth * 12}px` }}
                         >
                           <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
                           <span className="truncate">{f.name}</span>
@@ -748,7 +748,7 @@ export function CopyMoveDialog({
                 <Alert className="border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20">
                   <AlertTitle>{t("templateMismatch")}</AlertTitle>
                   <AlertDescription>
-                    <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                    <ul className="list-disc ps-4 mt-1 space-y-0.5">
                       {preflight.missingTemplates.map((tpl) => (
                         <li key={tpl.id} className="text-xs">
                           {tpl.name}
@@ -785,7 +785,7 @@ export function CopyMoveDialog({
                 <Alert className="border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20">
                   <AlertTitle>{t("workflowFallback")}</AlertTitle>
                   <AlertDescription>
-                    <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                    <ul className="list-disc ps-4 mt-1 space-y-0.5">
                       {workflowFallbacks.map((m) => (
                         <li key={m.sourceStateId} className="text-xs">
                           {m.sourceStateName} {"->"} {m.targetStateName}{" "}
@@ -951,7 +951,7 @@ export function CopyMoveDialog({
                         {t("errorCount", { count: job.result.errors.length })}
                       </button>
                       {errorsExpanded && (
-                        <ul className="text-xs space-y-1 pl-5 list-disc">
+                        <ul className="text-xs space-y-1 ps-5 list-disc">
                           {job.result.errors.map((err) => (
                             <li key={err.caseId}>
                               <span className="font-medium">
@@ -1017,7 +1017,7 @@ export function CopyMoveDialog({
                 disabled={!canGo}
               >
                 {job.isPrefighting ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="h-4 w-4 animate-spin me-2" />
                 ) : null}
                 {t("go")}
               </Button>

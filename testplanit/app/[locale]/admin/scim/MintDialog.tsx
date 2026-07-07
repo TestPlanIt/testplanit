@@ -436,7 +436,7 @@ export function MintDialog({ open, onOpenChange, onSuccess }: MintDialogProps) {
                               type="button"
                               variant="outline"
                               className={cn(
-                                "w-full justify-start text-left font-normal",
+                                "w-full justify-start text-start font-normal",
                                 !field.value && "text-muted-foreground"
                               )}
                               data-testid="scim-mint-dialog-custom-date-trigger"

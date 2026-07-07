@@ -1226,7 +1226,7 @@ export function CreateProjectWizard({
                                 {role.name}
                                 {role.isDefault && (
                                   <Tooltip>
-                                    <TooltipTrigger className="ml-1" asChild>
+                                    <TooltipTrigger className="ms-1" asChild>
                                       <Badge variant="secondary">
                                         <Star className="h-3 w-3 fill-current text-primary-background" />
                                       </Badge>
@@ -2040,7 +2040,7 @@ export function CreateProjectWizard({
               {t(stepTitles[currentStep] as any)}
             </div>
 
-            <ScrollArea className="flex-1 min-h-0 pr-4 *:data-radix-scroll-area-viewport:max-h-[calc(90vh-280px)]">
+            <ScrollArea className="flex-1 min-h-0 pe-4 *:data-radix-scroll-area-viewport:max-h-[calc(90vh-280px)]">
               {renderStepContent()}
             </ScrollArea>
 

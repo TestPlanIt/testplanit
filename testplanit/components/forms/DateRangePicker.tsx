@@ -262,7 +262,7 @@ export function DateRangePicker({
         <Button
           variant="outline"
           className={cn(
-            "justify-start text-left font-normal",
+            "justify-start text-start font-normal",
             !value && "text-muted-foreground",
             className
           )}
@@ -274,7 +274,7 @@ export function DateRangePicker({
           ) : (
             <span>{placeholder || tReports("dateRange.selectDateRange")}</span>
           )}
-          <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
+          <CalendarDays className="ms-auto h-4 w-4 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="center" sideOffset={5}>
@@ -292,7 +292,7 @@ export function DateRangePicker({
                 data-testid="date-range-preset-select"
               >
                 {getSelectedLabel()}
-                <CalendarDays className="ml-2 h-4 w-4 opacity-50" />
+                <CalendarDays className="ms-2 h-4 w-4 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">

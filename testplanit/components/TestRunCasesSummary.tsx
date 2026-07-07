@@ -389,7 +389,7 @@ export function TestRunCasesSummary({
         {/* Summary text below the bar */}
         <div className="flex justify-between items-center">
           <div
-            className="text-muted-foreground text-xs truncate grow mr-2"
+            className="text-muted-foreground text-xs truncate grow me-2"
             title={summaryTitle}
           >
             {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
@@ -397,9 +397,9 @@ export function TestRunCasesSummary({
             {totalElapsedDisplay ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex items-center ml-1 cursor-default">
+                  <span className="inline-flex items-center ms-1 cursor-default">
                     {" • "}
-                    <Clock className="h-3 w-3 ml-1" />
+                    <Clock className="h-3 w-3 ms-1" />
                     {totalElapsedDisplay}
                   </span>
                 </TooltipTrigger>
@@ -586,7 +586,7 @@ export function TestRunCasesSummary({
                           locale,
                         })}
                         {item.resultCount && item.resultCount > 1 && (
-                          <span className="ml-1">
+                          <span className="ms-1">
                             {`(${item.resultCount} ${tGlobal("common.results")})`}
                           </span>
                         )}
@@ -627,7 +627,7 @@ export function TestRunCasesSummary({
       <div className="flex justify-between items-center">
         {/* Summary text below the bar */}
         <div
-          className="text-muted-foreground text-xs truncate grow mr-2"
+          className="text-muted-foreground text-xs truncate grow me-2"
           title={`${summaryText}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
         >
           {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
@@ -636,11 +636,11 @@ export function TestRunCasesSummary({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ml-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default"
                   data-testid="total-elapsed-display"
                 >
                   {" • "}
-                  <Clock className="h-3 w-3 ml-1" />
+                  <Clock className="h-3 w-3 ms-1" />
                   {`${totalElapsedText}`}
                 </span>
               </TooltipTrigger>
@@ -655,11 +655,11 @@ export function TestRunCasesSummary({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ml-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default"
                   data-testid="total-estimate-display"
                 >
                   {" • "}
-                  <CalendarClock className="h-3 w-3 ml-1" />
+                  <CalendarClock className="h-3 w-3 ms-1" />
                   {`${totalEstimateText}`}
                 </span>
               </TooltipTrigger>

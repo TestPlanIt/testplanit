@@ -212,7 +212,7 @@ export function CustomFieldFilters({
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-start text-left font-normal",
+                  "w-full justify-start text-start font-normal",
                   !filter.value && "text-muted-foreground"
                 )}
               >

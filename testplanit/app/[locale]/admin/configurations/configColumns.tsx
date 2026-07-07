@@ -247,7 +247,7 @@ export const useColumns = (
                   >
                     <Badge>
                       {" "}
-                      <Component className="w-4 h-4 mr-1" />
+                      <Component className="w-4 h-4 me-1" />
                       {row.original.variants.length}
                     </Badge>
                   </PopoverTrigger>
@@ -259,7 +259,7 @@ export const useColumns = (
                         ) : (
                           <CircleSlash2 className="w-4 h-4 text-destructive" />
                         )}
-                        <span className="ml-1">{variant.variant.name}</span>
+                        <span className="ms-1">{variant.variant.name}</span>
                       </Badge>
                     ))}
                   </PopoverContent>
@@ -289,7 +289,7 @@ export const useColumns = (
                     }}
                   >
                     <Badge>
-                      <Boxes className="w-4 h-4 mr-1" />
+                      <Boxes className="w-4 h-4 me-1" />
                       {projects.length}
                     </Badge>
                   </PopoverTrigger>

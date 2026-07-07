@@ -395,12 +395,12 @@ export function ReviewStatusBanner({
             : "review-status-banner-changes-requested"
         }
         {...(isRejected ? { variant: "destructive" as const } : {})}
-        // `pr-44` reserves the right gutter for the "Request review
+        // `pe-44` reserves the right gutter for the "Request review
         // again" button so the description text doesn't run under it.
         // The button itself is absolute-positioned below, anchored to
         // the top-right corner so reviewers find the call-to-action in
         // the same spot the PENDING banner puts "Cancel request".
-        className="mb-2 pr-44"
+        className="mb-2 pe-44"
       >
         <DecisionIcon className="h-5 w-5" />
         <AlertTitle>
@@ -419,7 +419,7 @@ export function ReviewStatusBanner({
             >
               <span>{t("reviews.banner.decidedBy")}</span>
               <UserMention userId={decider.id} />
-              <RelativeTimeTooltip date={decidedAt} className="ml-1" />
+              <RelativeTimeTooltip date={decidedAt} className="ms-1" />
             </div>
           )}
 
@@ -434,7 +434,7 @@ export function ReviewStatusBanner({
           */}
           {latest.decisionComment && (
             <p
-              className="line-clamp-6 break-words whitespace-pre-line border-l-2 border-current pl-2"
+              className="line-clamp-6 break-words whitespace-pre-line border-s-2 border-current ps-2"
               data-testid="review-status-banner-decision-comment"
             >
               {latest.decisionComment}
@@ -447,11 +447,11 @@ export function ReviewStatusBanner({
           size="sm"
           onClick={() => setRequestAgainOpen(true)}
           data-testid="request-review-again-button"
-          // The Alert root applies `[&>svg~*]:pl-7` to every sibling of
+          // The Alert root applies `[&>svg~*]:ps-7` to every sibling of
           // its icon — including this absolute-positioned button. Reset
           // back to size="sm"'s normal x-padding so the text isn't
           // shoved off-center.
-          className="absolute right-3 top-3 !pl-3"
+          className="absolute end-3 top-3 !ps-3"
         >
           {t("reviews.banner.requestAgain")}
         </Button>

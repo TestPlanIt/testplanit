@@ -135,7 +135,7 @@ export default function ResultFields() {
             <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
               <CardTitle>
                 <div className="flex items-center">
-                  <SquareCheck className="mr-1" />
+                  <SquareCheck className="me-1" />
                   {tGlobal("common.fields.resultFields")}
                 </div>
               </CardTitle>{" "}

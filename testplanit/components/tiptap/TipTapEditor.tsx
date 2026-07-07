@@ -262,12 +262,12 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           },
           bulletList: {
             HTMLAttributes: {
-              class: "list-disc list-outside pl-5",
+              class: "list-disc list-outside ps-5",
             },
           },
           orderedList: {
             HTMLAttributes: {
-              class: "list-decimal list-outside pl-5",
+              class: "list-decimal list-outside ps-5",
             },
           },
           listItem: {
@@ -319,7 +319,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         Placeholder.configure({
           placeholder,
           emptyEditorClass:
-            "before:content-[attr(data-placeholder)] before:text-muted-foreground before:float-left before:pointer-events-none",
+            "before:content-[attr(data-placeholder)] before:text-muted-foreground before:float-start before:pointer-events-none",
         }),
         Markdown,
         Table,
@@ -1357,7 +1357,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         <ContentItemMenu editor={editor} editable={!readOnly} />
         <EditorContent
           editor={editor}
-          className={`mt-0.5 ${!readOnly ? "pl-3 border-4 border-primary/20" : ""} border-accent-foreground/10 border rounded-lg prose prose-xs sm:prose-sm lg:prose xl:prose-lg max-w-none w-full focus:outline-none ${styles.editorContent}`}
+          className={`mt-0.5 ${!readOnly ? "ps-3 border-4 border-primary/20" : ""} border-accent-foreground/10 border rounded-lg prose prose-xs sm:prose-sm lg:prose xl:prose-lg max-w-none w-full focus:outline-none ${styles.editorContent}`}
         />
       </div>
       {parameters && parameters.length > 0 && editor && (
@@ -1416,7 +1416,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 {isAiLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin" />
-                    <span className="ml-2">{tAi("generating")}</span>
+                    <span className="ms-2">{tAi("generating")}</span>
                   </div>
                 ) : (
                   <div

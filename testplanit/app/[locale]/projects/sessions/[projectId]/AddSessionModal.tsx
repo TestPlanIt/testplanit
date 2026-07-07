@@ -934,7 +934,7 @@ export function AddSessionModal({
                           <div className="flex items-center">
                             {t("common.fields.configurations")}
                             {selectedConfigs.length > 0 && (
-                              <span className="ml-1 text-muted-foreground">
+                              <span className="ms-1 text-muted-foreground">
                                 {"("}
                                 {selectedConfigs.length}
                                 {")"}
@@ -1025,7 +1025,7 @@ export function AddSessionModal({
               <div className="flex items-center justify-center">
                 <Separator orientation="vertical" className="h-full" />
               </div>
-              <div className="space-y-4 mr-6 max-w-[265px]">
+              <div className="space-y-4 me-6 max-w-[265px]">
                 <FormField
                   control={control}
                   name="templateId"

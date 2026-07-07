@@ -355,7 +355,7 @@ function ConfigCategoriesList() {
   const renderExpandedRow = (row: ConfigCategoryWithVariants) => (
     <div className="p-4 bg-muted/50">
       {/* Display existing variants */}
-      <ul className="list-outside ml-4 space-y-2 mb-4">
+      <ul className="list-outside ms-4 space-y-2 mb-4">
         {row.variants.map((variant) => (
           <li
             key={variant.id}
@@ -368,7 +368,7 @@ function ConfigCategoriesList() {
                   handleToggleVariant(variant.id!, variant.isEnabled)
                 }
                 id={`checkbox-${variant.id}`}
-                className="mr-2 w-8 h-4"
+                className="me-2 w-8 h-4"
               />
               <Label
                 htmlFor={`checkbox-${variant.id}`}
@@ -389,7 +389,7 @@ function ConfigCategoriesList() {
               </Button>
               <Button
                 variant="link"
-                className="p-0 ml-2"
+                className="p-0 ms-2"
                 onClick={() => setVariantToDelete(variant)}
               >
                 <Trash className="h-4 w-4" />
@@ -400,7 +400,7 @@ function ConfigCategoriesList() {
       </ul>
 
       {/* Add new variant section (conditional) */}
-      <div className="ml-4">
+      <div className="ms-4">
         {addingVariantForCategory === row.id ? (
           <div className="flex items-center gap-2 mt-2">
             <Input

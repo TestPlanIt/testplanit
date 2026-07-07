@@ -193,10 +193,10 @@ describe("ReviewInboxButton", () => {
     render(<ReviewInboxButton />);
     const badge = screen.getByTestId("review-inbox-count-badge");
     const cls = badge.className;
-    // Mirror of NotificationBell positioning: absolute -top-1 -right-1 …
+    // Mirror of NotificationBell positioning: absolute -top-1 -end-1 …
     expect(cls).toMatch(/absolute/);
     expect(cls).toMatch(/-top-1/);
-    expect(cls).toMatch(/-right-1/);
+    expect(cls).toMatch(/-end-1/);
   });
 
   it("(h) aria-label is set on the button with the i18n key (count passed through to next-intl)", () => {

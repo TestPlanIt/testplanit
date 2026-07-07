@@ -69,7 +69,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           >
             <ProjectIcon iconUrl={project.iconUrl} height={25} width={25} />
             <div className="truncate">{project.name}</div>
-            <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0" />
+            <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0" />
           </Link>
         </CardTitle>
         {project.note && (
@@ -132,7 +132,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           {isLoadingIssueCounts ? (
             <div className="flex items-center gap-1">
               <Bug className="w-4 h-4 text-muted-foreground mt-1" />
-              <LoadingSpinner className="ml-1 w-2 h-2 text-muted-foreground" />
+              <LoadingSpinner className="ms-1 w-2 h-2 text-muted-foreground" />
             </div>
           ) : (
             issueCount > 0 && (

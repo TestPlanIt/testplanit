@@ -53,7 +53,7 @@ export const useColumns = (
         size: 500,
         cell: ({ row }) => (
           <div className="relative flex items-center gap-1 group/row">
-            <GripVertical className="absolute -left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground opacity-0 group-hover/row:opacity-100 transition-opacity cursor-grab" />
+            <GripVertical className="absolute -start-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground opacity-0 group-hover/row:opacity-100 transition-opacity cursor-grab" />
             <DynamicIcon
               name={(row.original.icon?.name ?? "circle") as IconName}
               color={row.original.color?.value}

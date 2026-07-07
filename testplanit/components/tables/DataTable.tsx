@@ -430,7 +430,7 @@ export function DataTable<TData extends DataRow, TValue>({
                 <button
                   onClick={row.getToggleExpandedHandler()}
                   style={{ cursor: "pointer" }}
-                  className="mr-2"
+                  className="me-2"
                   aria-label={tooltipText}
                 >
                   <span
@@ -737,7 +737,7 @@ export function DataTable<TData extends DataRow, TValue>({
                             <button
                               onClick={header.column.getToggleGroupingHandler()}
                               style={{ cursor: "pointer" }}
-                              className="mr-1"
+                              className="me-1"
                               title={
                                 header.column.getIsGrouped()
                                   ? "Ungroup"
@@ -764,7 +764,7 @@ export function DataTable<TData extends DataRow, TValue>({
                           {isSortable && (
                             <div
                               onClick={() => handleSortIconClick(header)}
-                              className="ml-1 cursor-pointer"
+                              className="ms-1 cursor-pointer"
                               aria-label={t("sort")}
                               role="button"
                             >
@@ -801,7 +801,7 @@ export function DataTable<TData extends DataRow, TValue>({
                             onDoubleClick={() => header.column.resetSize()}
                             onMouseDown={(e) => handleMouseDown(header, e)}
                             onTouchStart={header.getResizeHandler()}
-                            className={`absolute right-[-14px] h-full top-0 w-2 cursor-col-resize select-none touch-none ${
+                            className={`absolute end-[-14px] h-full top-0 w-2 cursor-col-resize select-none touch-none ${
                               header.column.getIsResizing()
                                 ? "bg-primary/50"
                                 : "hover:bg-primary/20"
@@ -900,7 +900,7 @@ export function DataTable<TData extends DataRow, TValue>({
                               variant: "ghost",
                               onClick: row.getToggleExpandedHandler(),
                               style: { cursor: "pointer" },
-                              className: "mr-1 p-1",
+                              className: "me-1 p-1",
                             }}
                           >
                             <span
@@ -953,8 +953,8 @@ export function DataTable<TData extends DataRow, TValue>({
                             !column.getIsLastColumn(
                               column.getIsPinned() as "left" | "right"
                             ))
-                            ? "border-r-0"
-                            : "border-r border-accent"
+                            ? "border-e-0"
+                            : "border-e border-accent"
                         }`}
                       >
                         {/* Render content directly like SortableItem does to preserve cell alignment */}

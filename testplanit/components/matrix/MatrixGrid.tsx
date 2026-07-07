@@ -181,7 +181,7 @@ export function MatrixGrid({
         {/* Top-left corner — sticky top + left so it always covers the
             intersection of the column-header strip and the left rail. */}
         <div
-          className="sticky top-0 left-0 z-30 flex items-center border-r border-b bg-background px-2 text-xs font-medium text-muted-foreground"
+          className="sticky top-0 start-0 z-30 flex items-center border-e border-b bg-background px-2 text-xs font-medium text-muted-foreground"
           style={{
             width: LEFT_RAIL_WIDTH,
             height: HEADER_HEIGHT,
@@ -207,7 +207,7 @@ export function MatrixGrid({
           {axes.configAxis.map((cfg, i) => (
             <div
               key={cfg.configId}
-              className="absolute flex items-center border-r px-2 text-xs font-medium"
+              className="absolute flex items-center border-e px-2 text-xs font-medium"
               style={{
                 left: i * CELL_WIDTH,
                 width: CELL_WIDTH,
@@ -224,7 +224,7 @@ export function MatrixGrid({
             row-virtualizer total height. The leading sub-row of each case
             renders the case name + a top border to imply the row-span. */}
         <div
-          className="sticky left-0 z-10 bg-background"
+          className="sticky start-0 z-10 bg-background"
           style={{
             width: LEFT_RAIL_WIDTH,
             height: totalGridHeight,
@@ -238,10 +238,10 @@ export function MatrixGrid({
             return (
               <div
                 key={vRow.key}
-                className={`absolute flex items-center border-r px-2 text-xs ${
+                className={`absolute flex items-center border-e px-2 text-xs ${
                   isCaseRow
                     ? "border-t font-medium"
-                    : "pl-4 text-muted-foreground"
+                    : "ps-4 text-muted-foreground"
                 }`}
                 style={{
                   top: vRow.start,
@@ -308,7 +308,7 @@ export function MatrixGrid({
               return (
                 <div
                   key={`${vRow.key}-${vCol.key}`}
-                  className="absolute border-r border-b"
+                  className="absolute border-e border-b"
                   style={{
                     top: vRow.start,
                     left: vCol.start,

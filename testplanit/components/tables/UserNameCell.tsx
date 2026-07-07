@@ -69,13 +69,13 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
         <TooltipTrigger asChild>
           <div
             className={cn(
-              "flex items-center truncate text-left min-w-0",
+              "flex items-center truncate text-start min-w-0",
               isCurrentUser && "font-extrabold",
               className
             )}
           >
             {isCurrentUser && (
-              <Star className="w-4 h-4 min-w-4 mr-1 fill-primary text-primary shrink-0" />
+              <Star className="w-4 h-4 min-w-4 me-1 fill-primary text-primary shrink-0" />
             )}
             <span className="truncate">{user?.name}</span>
           </div>
@@ -104,7 +104,7 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
         >
           {content}
           {!shrinkLink && (
-            <LinkIcon className="w-4 h-4 shrink-0 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <LinkIcon className="w-4 h-4 shrink-0 ms-1 opacity-0 group-hover:opacity-100 transition-opacity" />
           )}
         </Link>
       )}

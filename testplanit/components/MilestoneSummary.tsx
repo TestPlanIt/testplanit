@@ -284,7 +284,7 @@ export function MilestoneSummary({
       <div className="flex flex-wrap justify-between items-center gap-y-1">
         {/* Summary text below the bar */}
         <div
-          className="text-muted-foreground text-xs truncate grow mr-2"
+          className="text-muted-foreground text-xs truncate grow me-2"
           title={`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
         >
           {`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}`}
@@ -292,11 +292,11 @@ export function MilestoneSummary({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ml-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default"
                   data-testid="total-elapsed-display"
                 >
                   {" • "}
-                  <Clock className="h-3 w-3 ml-1" />
+                  <Clock className="h-3 w-3 ms-1" />
                   {`${totalElapsedText}`}
                 </span>
               </TooltipTrigger>
@@ -311,11 +311,11 @@ export function MilestoneSummary({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ml-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default"
                   data-testid="total-estimate-display"
                 >
                   {" • "}
-                  <CalendarClock className="h-3 w-3 ml-1" />
+                  <CalendarClock className="h-3 w-3 ms-1" />
                   {`${totalEstimateText}`}
                 </span>
               </TooltipTrigger>

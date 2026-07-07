@@ -63,7 +63,7 @@ export const ResultFieldListDisplay: React.FC<ResultFieldListProps> = ({
       <Popover>
         <PopoverTrigger>
           <Badge>
-            <SquareCheck className="w-4 h-4 mr-1" />
+            <SquareCheck className="w-4 h-4 me-1" />
             {allResultFields.length}
           </Badge>
         </PopoverTrigger>

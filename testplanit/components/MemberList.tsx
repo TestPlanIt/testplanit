@@ -78,7 +78,7 @@ export const MemberList: React.FC<MemberListProps> = ({
       {overflowCount > 0 && (
         <Popover>
           <PopoverTrigger asChild>
-            <button className="flex items-center justify-center ml-2 text-sm text-gray-600 hover:text-gray-800 cursor-pointer">
+            <button className="flex items-center justify-center ms-2 text-sm text-gray-600 hover:text-gray-800 cursor-pointer">
               {`+${overflowCount} more...`}
             </button>
           </PopoverTrigger>

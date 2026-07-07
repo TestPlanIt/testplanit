@@ -333,25 +333,25 @@ const ResizableImageComponent = (props: any) => {
             <>
               {/* Top-left */}
               <div
-                className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 border border-white cursor-nw-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute -top-1 -start-1 w-3 h-3 bg-blue-500 border border-white cursor-nw-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
                 onMouseDown={(e) => handleMouseDown(e, "top-left")}
                 style={{ pointerEvents: "auto" }}
               />
               {/* Top-right */}
               <div
-                className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 border border-white cursor-ne-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute -top-1 -end-1 w-3 h-3 bg-blue-500 border border-white cursor-ne-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
                 onMouseDown={(e) => handleMouseDown(e, "top-right")}
                 style={{ pointerEvents: "auto" }}
               />
               {/* Bottom-left */}
               <div
-                className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 border border-white cursor-sw-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute -bottom-1 -start-1 w-3 h-3 bg-blue-500 border border-white cursor-sw-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
                 onMouseDown={(e) => handleMouseDown(e, "bottom-left")}
                 style={{ pointerEvents: "auto" }}
               />
               {/* Bottom-right */}
               <div
-                className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 border border-white cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute -bottom-1 -end-1 w-3 h-3 bg-blue-500 border border-white cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
                 onMouseDown={(e) => handleMouseDown(e, "bottom-right")}
                 style={{ pointerEvents: "auto" }}
               />

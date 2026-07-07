@@ -343,7 +343,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                 <table className="w-full border-collapse border-2">
                   <thead className="bg-primary/10 border">
                     <tr className="border-b">
-                      <th className="p-2 text-left text-sm font-medium">
+                      <th className="p-2 text-start text-sm font-medium">
                         {t("admin.roles.edit.areaHeader")}
                       </th>
                       {/* Add/Edit Header Checkbox */}

@@ -441,7 +441,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
             type="submit"
             variant="secondary"
             disabled={isSubmitting}
-            className="-mt-2 group mr-2 px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+            className="-mt-2 group me-2 px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
             data-testid="inline-add-case-button"
           >
             {isSubmitting ? (

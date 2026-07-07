@@ -209,7 +209,7 @@ function UserOptionRow({
         image-having users (no generic UserIcon fallback that breaks the
         line up).
       */}
-      <span data-kind-icon="user" className="mr-2 inline-flex h-5 w-5">
+      <span data-kind-icon="user" className="me-2 inline-flex h-5 w-5">
         <Avatar
           image={option.image}
           alt={option.name}
@@ -247,7 +247,7 @@ function RoleOptionRow({
         and the Admin menu) — using it here keeps roles visually
         identifiable everywhere a role is named.
       */}
-      <span data-kind-icon="role" className="mr-2 inline-flex h-5 w-5">
+      <span data-kind-icon="role" className="me-2 inline-flex h-5 w-5">
         <Drama className="h-5 w-5" />
       </span>
       <div className="flex flex-col">

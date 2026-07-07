@@ -73,7 +73,7 @@ export default function ApiDocsPage() {
                 type="button"
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className="rounded-lg border bg-card p-6 text-left transition-colors hover:bg-accent"
+                className="rounded-lg border bg-card p-6 text-start transition-colors hover:bg-accent"
               >
                 <h2 className="mb-2 text-xl font-semibold">{category.title}</h2>
                 <p className="text-sm text-muted-foreground">

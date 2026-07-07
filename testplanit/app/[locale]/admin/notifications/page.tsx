@@ -288,7 +288,7 @@ function NotificationSettingsContent() {
                 data-testid="notifications-page-title"
                 className="items-center flex"
               >
-                <Bell className="inline mr-2 h-8 w-8" />
+                <Bell className="inline me-2 h-8 w-8" />
                 {t("title")}
               </CardTitle>
               <CardDescription data-testid="notifications-page-description">
@@ -363,7 +363,7 @@ function NotificationSettingsContent() {
                 data-testid="system-notifications-section"
                 className="items-center flex"
               >
-                <Megaphone className="inline mr-2 h-8 w-8" />
+                <Megaphone className="inline me-2 h-8 w-8" />
                 {t("systemNotification.title")}
               </CardTitle>
               <CardDescription data-testid="system-notifications-description">

@@ -15,8 +15,8 @@ export const ImageBlockView = (props: ReactNodeViewProps<HTMLElement>) => {
   const { src } = attrs;
 
   const wrapperClassName = cn(
-    attrs.align === "left" ? "ml-0" : "ml-auto",
-    attrs.align === "right" ? "mr-0" : "mr-auto",
+    attrs.align === "left" ? "ms-0" : "ms-auto",
+    attrs.align === "right" ? "me-0" : "me-auto",
     attrs.align === "center" && "mx-auto"
   );
 

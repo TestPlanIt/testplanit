@@ -140,7 +140,7 @@ export default function MilestoneFormControls({
         <div className="flex items-center">
           <DynamicIcon
             name={(type.icon?.name as IconName) || "milestone"}
-            className="w-4 h-4 mr-2 shrink-0"
+            className="w-4 h-4 me-2 shrink-0"
           />
           <span>{type.name}</span>
         </div>
@@ -156,7 +156,7 @@ export default function MilestoneFormControls({
         <div className="flex items-center">
           <DynamicIcon
             name={(m.milestoneType?.icon?.name as IconName) || "milestone"}
-            className="w-4 h-4 mr-2"
+            className="w-4 h-4 me-2"
           />
           <span>{m.name}</span>
         </div>

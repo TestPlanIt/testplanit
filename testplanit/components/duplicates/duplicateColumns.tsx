@@ -167,7 +167,7 @@ export const getColumns = (
     enableResizing: true,
     size: 100,
     cell: ({ row }) => (
-      <span className="text-right block">
+      <span className="text-end block">
         {(row.original.score * 100).toFixed(2)}
         {"%"}
       </span>

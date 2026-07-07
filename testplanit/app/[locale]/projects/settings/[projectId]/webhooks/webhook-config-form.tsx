@@ -732,7 +732,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         data-testid={`webhook-inbound-setup-steps-${adapterType.toLowerCase().replace("_", "-")}`}
       >
         <div className="text-xs font-medium">{t("setupStepsTitle")}</div>
-        <ol className="list-decimal space-y-1 pl-5 text-xs text-muted-foreground">
+        <ol className="list-decimal space-y-1 ps-5 text-xs text-muted-foreground">
           {stepKeys[adapterType].map((k) => (
             <li key={k}>{t(k as any)}</li>
           ))}
@@ -1092,7 +1092,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 <span>{t("reEnable")}</span>
               </Button>
             )}
-            <div className="ml-auto flex flex-wrap gap-2">
+            <div className="ms-auto flex flex-wrap gap-2">
               <Button
                 type="button"
                 variant="destructive"

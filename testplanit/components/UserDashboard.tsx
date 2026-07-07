@@ -844,7 +844,7 @@ export function UserDashboard() {
                 count: runsRequiringAttention.length,
               })}
             </h3>
-            <div className="space-y-4 pl-6">
+            <div className="space-y-4 ps-6">
               {runsRequiringAttention.map((run) => (
                 <div key={run.id} className="border p-3 rounded-md">
                   <div className="mb-2 flex items-center justify-between gap-2">
@@ -854,9 +854,9 @@ export function UserDashboard() {
                       className="font-medium hover:underline flex items-center gap-1 group max-w-[75%]"
                     >
                       <span className="truncate">{run.name}</span>
-                      <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </Link>
-                    <span className="text-xs text-muted-foreground ml-2 max-w-[25%] truncate">
+                    <span className="text-xs text-muted-foreground ms-2 max-w-[25%] truncate">
                       {run.project.name}
                     </span>
                   </div>
@@ -879,7 +879,7 @@ export function UserDashboard() {
                 count: userActiveSessions.length,
               })}
             </h3>
-            <div className="space-y-4 pl-6">
+            <div className="space-y-4 ps-6">
               {(userActiveSessions as SessionWithProject[])?.map((session) => (
                 <div key={session.id} className="border p-3 rounded-md">
                   <div className="mb-2 flex items-center justify-between gap-2">
@@ -889,9 +889,9 @@ export function UserDashboard() {
                       className="font-medium hover:underline flex items-center gap-1 group max-w-[75%]"
                     >
                       <span className="truncate">{session.name}</span>
-                      <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </Link>
-                    <span className="text-xs text-muted-foreground ml-2 max-w-[25%] truncate">
+                    <span className="text-xs text-muted-foreground ms-2 max-w-[25%] truncate">
                       {session.project.name}
                     </span>
                   </div>

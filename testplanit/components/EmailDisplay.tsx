@@ -24,7 +24,7 @@ export const EmailCell: React.FC<EmailCellProps> = ({ email, fullWidth }) => {
       >
         <span className="flex items-center truncate gap-1">
           <Tooltip>
-            <TooltipTrigger type="button" className="text-left block truncate">
+            <TooltipTrigger type="button" className="text-start block truncate">
               {email}
               {/* Apply flex and items-center to this span */}
             </TooltipTrigger>
@@ -34,7 +34,7 @@ export const EmailCell: React.FC<EmailCellProps> = ({ email, fullWidth }) => {
             </TooltipContent>
           </Tooltip>
         </span>
-        <ExternalLink className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <ExternalLink className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
       </Link>
     </span>
   );

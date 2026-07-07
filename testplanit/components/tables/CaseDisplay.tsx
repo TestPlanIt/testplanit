@@ -93,11 +93,11 @@ export const CaseDisplay: React.FC<Case> = ({
       {nameDisplay}
       {linkTarget === "_blank" ? (
         <ExternalLink
-          className={`${iconSizeClass} inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
+          className={`${iconSizeClass} inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
         />
       ) : isLargeOrXl ? (
         <LinkIcon
-          className={`${iconSizeClass} inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
+          className={`${iconSizeClass} inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
         />
       ) : null}
     </Link>
@@ -121,7 +121,7 @@ export const CaseDisplay: React.FC<Case> = ({
   return shouldShowTooltip ? (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="text-left">{content}</div>
+        <div className="text-start">{content}</div>
       </TooltipTrigger>
       <TooltipContent>
         <div>{name}</div>

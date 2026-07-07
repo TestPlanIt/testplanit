@@ -26,7 +26,7 @@ export function EntitySuggestions({
   if (entity.failed) {
     return (
       <ScrollArea className="h-full">
-        <div className="space-y-6 pr-4">
+        <div className="space-y-6 pe-4">
           <h3 className="text-sm font-medium">{entity.entityName}</h3>
           <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-3">
             <AlertTriangle className="h-4 w-4 shrink-0 text-destructive mt-0.5" />
@@ -44,7 +44,7 @@ export function EntitySuggestions({
 
   return (
     <ScrollArea className="h-full">
-      <div className="space-y-6 pr-4">
+      <div className="space-y-6 pe-4">
         {/* Header */}
         <h3 className="text-sm font-medium">{entity.entityName}</h3>
 
@@ -84,7 +84,7 @@ export function EntitySuggestions({
             <div className="flex flex-wrap gap-2">
               {entity.currentTags.map((tagName) => (
                 <Badge key={tagName} variant="secondary" className="opacity-50">
-                  <Tag className="mr-1 h-3 w-3" />
+                  <Tag className="me-1 h-3 w-3" />
                   {tagName}
                 </Badge>
               ))}

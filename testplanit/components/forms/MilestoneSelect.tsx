@@ -70,7 +70,7 @@ const renderMilestoneOptions = (
       <React.Fragment key={milestone.value}>
         <SelectItem
           value={milestone.value}
-          style={{ paddingLeft: `${level * 20}px` }}
+          style={{ paddingInlineStart: `${level * 20}px` }}
         >
           <div className="flex items-center gap-1">
             {milestone.milestoneType?.icon?.name && (

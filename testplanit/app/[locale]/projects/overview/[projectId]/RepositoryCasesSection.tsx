@@ -262,11 +262,11 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
             count:
               repositoryCasesTotalCount || repositoryCasesLatestFive.length,
           })}
-          <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
         </Link>
       </p>
       <div className="flex">
-        <div className="flex flex-col pr-6 w-1/2 mr-2 overflow-hidden">
+        <div className="flex flex-col pe-6 w-1/2 me-2 overflow-hidden">
           <h2 className="text-primary mb-2">{t("latestTestCases")}</h2>
           <ul className="flex flex-col space-y-1">
             {repositoryCasesLatestFive.map((caseItem) => {
@@ -275,13 +275,13 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
               return (
                 <li
                   key={caseItem.id}
-                  className="ml-6 w-full flex items-start space-y-1 group"
+                  className="ms-6 w-full flex items-start space-y-1 group"
                 >
                   <Link
                     className="flex items-start flex-1 min-w-0"
                     href={`/projects/repository/${projectId}/${caseItem.id}`}
                   >
-                    <div className="flex items-center flex-1 min-w-0 mr-2">
+                    <div className="flex items-center flex-1 min-w-0 me-2">
                       <CaseDisplay
                         id={caseItem.id}
                         name={caseItem.name}
@@ -291,11 +291,11 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
                         hasParameters={caseItem.hasParameters}
                         className="line-clamp-2"
                       />
-                      <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </div>
                   </Link>
                   {caseIssues.length > 0 && (
-                    <div className="shrink-0 mr-6">
+                    <div className="shrink-0 me-6">
                       <IssuesListDisplay
                         issues={caseIssues.map((issue) => ({
                           ...issue,
@@ -310,7 +310,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
           </ul>
         </div>
         <Separator className="h-auto" orientation="vertical" />
-        <div className="pl-6 w-1/2 overflow-hidden">
+        <div className="ps-6 w-1/2 overflow-hidden">
           <h2 className="text-primary mb-2">{t("testCaseBreakdown")}</h2>
           <ProjectOverviewSunburstChart data={repositoryCasesBreakdownData} />
         </div>

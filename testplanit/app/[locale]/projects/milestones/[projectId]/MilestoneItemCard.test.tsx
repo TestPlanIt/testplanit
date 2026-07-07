@@ -662,7 +662,7 @@ describe("MilestoneItemCard", () => {
         />
       );
       const card = container.firstChild as HTMLElement;
-      expect(card.style.marginLeft).toBe("40px");
+      expect(card.style.marginInlineStart).toBe("40px");
     });
 
     it("applies no margin-left when level=0 (default)", () => {
@@ -679,7 +679,7 @@ describe("MilestoneItemCard", () => {
         />
       );
       const card = container.firstChild as HTMLElement;
-      expect(card.style.marginLeft).toBe("0px");
+      expect(card.style.marginInlineStart).toBe("0px");
     });
 
     it("renders in compact mode without sm:grid classes", () => {

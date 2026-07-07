@@ -49,14 +49,14 @@ export function GroupNameCell({ groupId }: GroupNameCellProps) {
     <span className="flex items-center">
       {isScimManaged ? (
         <UserRoundCog
-          className="mr-1 h-4 w-4"
+          className="me-1 h-4 w-4"
           aria-label={tGroups("scimManagedTooltip")}
           data-testid="scim-managed-group-icon"
         >
           <title>{tGroups("scimManagedTooltip")}</title>
         </UserRoundCog>
       ) : (
-        <UsersRound className="mr-1 h-4 w-4" />
+        <UsersRound className="me-1 h-4 w-4" />
       )}
       {group.name}
     </span>

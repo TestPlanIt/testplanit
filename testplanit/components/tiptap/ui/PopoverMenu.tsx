@@ -85,7 +85,7 @@ export const Item = ({
   className?: string;
 }) => {
   const className = cn(
-    "flex items-center gap-2 p-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 text-left bg-transparent w-full rounded",
+    "flex items-center gap-2 p-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 text-start bg-transparent w-full rounded",
     !isActive && !disabled,
     "hover:bg-neutral-100 hover:text-neutral-800 dark:hover:bg-neutral-900 dark:hover:text-neutral-200",
     isActive &&

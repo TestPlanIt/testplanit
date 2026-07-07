@@ -160,7 +160,7 @@ export function MultiAsyncCombobox<T>({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between text-left font-normal min-h-10 h-auto",
+            "w-full justify-between text-start font-normal min-h-10 h-auto",
             !value.length && "text-muted-foreground",
             className
           )}
@@ -176,7 +176,7 @@ export function MultiAsyncCombobox<T>({
                 <Badge
                   key={getOptionValue(v)}
                   variant="secondary"
-                  className="mr-1 shrink-0 min-w-[80px] max-w-[200px] overflow-hidden"
+                  className="me-1 shrink-0 min-w-[80px] max-w-[200px] overflow-hidden"
                   title={getOptionLabel(v)}
                 >
                   <span className="min-w-0 flex-1 truncate">
@@ -188,7 +188,7 @@ export function MultiAsyncCombobox<T>({
                     title={getOptionLabel(v)}
                     role="button"
                     tabIndex={0}
-                    className="ml-1 rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background cursor-pointer opacity-70 hover:opacity-100 hover:bg-destructive/20 flex items-center"
+                    className="ms-1 rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background cursor-pointer opacity-70 hover:opacity-100 hover:bg-destructive/20 flex items-center"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         removeOption(v, e as unknown as React.MouseEvent);
@@ -309,7 +309,7 @@ export function MultiAsyncCombobox<T>({
                           <div className="flex items-center w-full [&_a]:no-underline [&_a]:text-inherit [&_a:hover]:text-inherit">
                             {renderOption(option)}
                             {!hideSelected && isSelected(option) ? (
-                              <Check className="ml-auto h-4 w-4" />
+                              <Check className="ms-auto h-4 w-4" />
                             ) : (
                               <Check className="text-transparent" />
                             )}

@@ -148,7 +148,7 @@ export function useIssueColumns({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm text-left cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm text-start cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
                   style={{ maxWidth: column.getSize() }}
                   title={plainText}
                 >
@@ -217,7 +217,7 @@ export function useIssueColumns({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm text-left cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm text-start cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
                   style={{ maxWidth: column.getSize() }}
                   title={plainText}
                 >
@@ -229,7 +229,7 @@ export function useIssueColumns({
                   <h4 className="font-semibold text-sm">{tDescription}</h4>
                   {hasHtml ? (
                     <div
-                      className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4"
+                      className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ms-4 [&_ol]:list-decimal [&_ol]:ms-4"
                       dangerouslySetInnerHTML={{
                         __html: DOMPurify.sanitize(description, {
                           ALLOWED_TAGS: [

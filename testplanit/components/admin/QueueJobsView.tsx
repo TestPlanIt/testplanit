@@ -322,7 +322,7 @@ export function QueueJobsView({
                     <TableHead>{t("table.attempts")}</TableHead>
                     <TableHead>{tGlobal("common.fields.created")}</TableHead>
                     <TableHead>{tGlobal("common.fields.duration")}</TableHead>
-                    <TableHead className="text-right">
+                    <TableHead className="text-end">
                       {tGlobal("common.actions.actionsLabel")}
                     </TableHead>
                   </TableRow>
@@ -345,7 +345,7 @@ export function QueueJobsView({
                       <TableCell>
                         {formatDuration(job.processedOn, job.finishedOn)}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-end">
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="ghost"

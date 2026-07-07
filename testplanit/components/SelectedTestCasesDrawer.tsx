@@ -175,12 +175,12 @@ export function SelectedTestCasesDrawer({
           )}
           {/* Index column (when not using checkboxes) */}
           {!useCheckboxes && (
-            <div className="shrink-0 w-8 text-right text-muted-foreground text-sm">
+            <div className="shrink-0 w-8 text-end text-muted-foreground text-sm">
               {globalIndex}
             </div>
           )}
           {/* Name column */}
-          <div className="flex-1 min-w-0 ml-2">
+          <div className="flex-1 min-w-0 ms-2">
             <CaseDisplay
               id={testCase.id}
               name={testCase.name}
@@ -193,7 +193,7 @@ export function SelectedTestCasesDrawer({
             />
           </div>
           {/* Workflow state column */}
-          <div className="shrink-0 w-24 flex items-center justify-end ml-2">
+          <div className="shrink-0 w-24 flex items-center justify-end ms-2">
             {testCase.state.icon &&
             testCase.state.icon.name &&
             testCase.state.color &&
@@ -218,7 +218,7 @@ export function SelectedTestCasesDrawer({
           </div>
           {/* Remove button column (when not using checkboxes) */}
           {isEditMode && !useCheckboxes && (
-            <div className="shrink-0 w-10 flex justify-end items-center ml-2">
+            <div className="shrink-0 w-10 flex justify-end items-center ms-2">
               <Button
                 type="button"
                 variant="destructive"
@@ -234,20 +234,20 @@ export function SelectedTestCasesDrawer({
             </div>
           )}
         </div>
-        <div className="text-right pr-12 mt-1">
+        <div className="text-end pe-12 mt-1">
           {(typeof testCase.estimate === "number" ||
             testCase.estimate === null ||
             typeof testCase.forecastManual === "number" ||
             testCase.forecastManual === null ||
             typeof testCase.forecastAutomated === "number" ||
             testCase.forecastAutomated === null) && (
-            <div className="w-full pl-10 pb-1 text-xs text-muted-foreground flex flex-row items-center justify-end divide-x divide-current">
+            <div className="w-full ps-10 pb-1 text-xs text-muted-foreground flex flex-row items-center justify-end divide-x divide-current">
               {(() => {
                 const elements = [];
                 if (typeof testCase.estimate === "number") {
                   elements.push(
                     <span key="estimate" className="py-1">
-                      <Label className="mr-1 text-xs">
+                      <Label className="me-1 text-xs">
                         {t("common.fields.estimate")}:
                       </Label>
                       <span>
@@ -261,7 +261,7 @@ export function SelectedTestCasesDrawer({
                 if (typeof testCase.forecastManual === "number") {
                   elements.push(
                     <span key="forecastManual" className="py-1">
-                      <Label className="mr-1 text-xs">
+                      <Label className="me-1 text-xs">
                         {t("common.fields.forecastManual")}:
                       </Label>
                       <span>
@@ -275,7 +275,7 @@ export function SelectedTestCasesDrawer({
                 if (typeof testCase.forecastAutomated === "number") {
                   elements.push(
                     <span key="forecastAutomated" className="py-1">
-                      <Label className="mr-1 text-xs">
+                      <Label className="me-1 text-xs">
                         {t("common.fields.forecastAutomated")}:
                       </Label>
                       <span>
@@ -291,8 +291,8 @@ export function SelectedTestCasesDrawer({
                   <div
                     key={idx}
                     className={`
-                  ${idx === 0 ? "pr-2" : "px-2"}
-                  ${idx === elements.length - 1 ? "pl-2" : "px-2"}
+                  ${idx === 0 ? "pe-2" : "px-2"}
+                  ${idx === elements.length - 1 ? "ps-2" : "px-2"}
                   `}
                   >
                     {el}

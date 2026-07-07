@@ -156,7 +156,7 @@ const DraggableItem = ({
       />
 
       {isEditing ? (
-        <div className="flex flex-col w-full mr-12 pr-12">
+        <div className="flex flex-col w-full me-12 pe-12">
           <Input
             type="text"
             value={newName}
@@ -175,7 +175,7 @@ const DraggableItem = ({
             type="button"
             variant="link"
             onClick={handleEditClick}
-            className="text-primary ml-2 p-0"
+            className="text-primary ms-2 p-0"
           >
             <Edit3 size={16} />
           </Button>
@@ -339,14 +339,14 @@ const DraggableList: React.FC<DraggableListProps> = ({
             className={`${columns} shadow-xs text-muted-foreground font-medium sticky top-0 z-10 bg-background border border-foreground/10`}
           >
             <span />
-            <span className="ml-2">{t("common.fields.icon")}</span>
+            <span className="ms-2">{t("common.fields.icon")}</span>
             <span>{t("common.fields.options.label")}</span>
             {showDefault ? (
-              <span className="ml-2">{t("common.fields.default")}</span>
+              <span className="ms-2">{t("common.fields.default")}</span>
             ) : (
-              <span className="ml-2" />
+              <span className="ms-2" />
             )}
-            <span className="ml-2">{t("common.fields.enabled")}</span>
+            <span className="ms-2">{t("common.fields.enabled")}</span>
             <span>{t("common.actions.remove")}</span>
           </div>
         )}

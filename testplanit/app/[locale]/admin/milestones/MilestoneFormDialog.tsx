@@ -147,7 +147,7 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
               className="w-5 h-5"
               name={milestoneType.icon?.name as IconName}
             />
-            <span className="ml-1">{milestoneType.name}</span>
+            <span className="ms-1">{milestoneType.name}</span>
           </div>
         ),
       })) || [],

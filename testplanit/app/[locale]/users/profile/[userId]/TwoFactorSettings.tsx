@@ -510,7 +510,7 @@ export function TwoFactorSettings({
               }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {isLoading && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
               {t("users.profile.twoFactor.disable")}
             </AlertDialogAction>
           </AlertDialogFooter>

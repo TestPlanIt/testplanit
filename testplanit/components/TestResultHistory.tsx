@@ -253,12 +253,12 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
           onClick={() => handleAddToTestRun(testRun.id)}
           className="flex items-center"
         >
-          <PlayCircle className="mr-1 h-4 w-4 shrink-0" />
+          <PlayCircle className="me-1 h-4 w-4 shrink-0" />
           <span className="truncate">{testRun.name}</span>
           {(testRun as any).configurationGroupId && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="ml-1 shrink-0">
+                <span className="ms-1 shrink-0">
                   <Combine className="w-3 h-3 text-muted-foreground" />
                 </span>
               </TooltipTrigger>
@@ -268,7 +268,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
                 </p>
                 {testRun.configuration && (
                   <p className="flex text-xs text-background">
-                    <Combine className="w-3 h-3 shrink-0 mr-1" />
+                    <Combine className="w-3 h-3 shrink-0 me-1" />
                     {testRun.configuration.name}
                   </p>
                 )}
@@ -428,12 +428,12 @@ const StepResultsDisplay = ({
                     <div className="flex items-center">
                       <Layers
                         size={16}
-                        className="mr-2 text-primary shrink-0"
+                        className="me-2 text-primary shrink-0"
                       />
                       {tCommon("fields.step")} {stepCounter} -{" "}
                       {stepResult.step.sharedStepGroup?.name ||
                         tCommon("fields.steps")}
-                      <span className="text-xs text-muted-foreground ml-1">
+                      <span className="text-xs text-muted-foreground ms-1">
                         {tRepository("steps.sharedGroupSuffix")}
                       </span>
                     </div>
@@ -593,7 +593,7 @@ const RenderSharedGroupInHistoryList: React.FC<{
 
   if (isLoading) {
     return (
-      <div className="ml-4 pl-4 py-4 border-l border-dashed">
+      <div className="ms-4 ps-4 py-4 border-s border-dashed">
         <LoadingSpinner className="h-6" />
       </div>
     );
@@ -601,14 +601,14 @@ const RenderSharedGroupInHistoryList: React.FC<{
 
   if (!items || items.length === 0) {
     return (
-      <div className="ml-4 pl-4 text-sm text-muted-foreground py-1 border-l border-dashed">
+      <div className="ms-4 ps-4 text-sm text-muted-foreground py-1 border-s border-dashed">
         {tRepository("steps.noStepsInSharedGroup")}
       </div>
     );
   }
 
   return (
-    <ol className="list-decimal overflow-hidden w-full pl-8 border-l border-dashed ml-4 pr-4">
+    <ol className="list-decimal overflow-hidden w-full ps-8 border-s border-dashed ms-4 pe-4">
       {items.map((item, itemIndex) => {
         const stepContentString = item.step
           ? typeof item.step === "string"
@@ -659,7 +659,7 @@ const RenderSharedGroupInHistoryList: React.FC<{
                     color: "white",
                     borderColor: itemResult.status.color.value,
                   }}
-                  className="ml-2 shrink-0"
+                  className="ms-2 shrink-0"
                 >
                   {itemResult.status.name}
                 </Badge>
@@ -1458,14 +1458,14 @@ export default function TestResultHistory({
                             <div className="font-medium truncate flex items-center">
                               {result.associatedTestRun.isDeleted ? (
                                 <>
-                                  <Trash2 className="w-4 h-4 inline mr-1 shrink-0 text-muted-foreground/50" />
+                                  <Trash2 className="w-4 h-4 inline me-1 shrink-0 text-muted-foreground/50" />
                                   <span className="truncate text-muted-foreground/50 line-through">
                                     {result.associatedTestRun.name}
                                   </span>
                                 </>
                               ) : (
                                 <>
-                                  <Bot className="w-4 h-4 inline mr-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
+                                  <Bot className="w-4 h-4 inline me-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
                                   <Link
                                     href={`/projects/runs/${activeProjectId}/${result.associatedTestRun.id}?selectedCase=${fetchedTestCase.id}&view=status`}
                                     className="hover:underline truncate"
@@ -1477,7 +1477,7 @@ export default function TestResultHistory({
                             </div>
                           ) : (
                             <div className="font-medium truncate flex items-center">
-                              <Bot className="w-4 h-4 inline mr-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
+                              <Bot className="w-4 h-4 inline me-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
                               <span className="truncate">
                                 {result.testSuiteName || "JUnit Import"}
                               </span>
@@ -1492,7 +1492,7 @@ export default function TestResultHistory({
                           />
                         ) : (
                           <div className="font-medium truncate flex items-center">
-                            <PlayCircle className="w-4 h-4 inline mr-1 shrink-0" />
+                            <PlayCircle className="w-4 h-4 inline me-1 shrink-0" />
                             <span className="truncate">
                               {tCases("unknownRun")}
                             </span>
@@ -1501,7 +1501,7 @@ export default function TestResultHistory({
                         {result.associatedTestRun &&
                           !result.associatedTestRun.isDeleted &&
                           result.sourceType !== "junit" && (
-                            <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                            <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                           )}
                       </div>
                     </TableCell>
@@ -1711,10 +1711,10 @@ export default function TestResultHistory({
                                     </div>
                                     {result.iteration.parameterSchema.length >
                                       0 && (
-                                      <table className="w-full text-left mt-1">
+                                      <table className="w-full text-start mt-1">
                                         <thead>
                                           <tr className="border-b">
-                                            <th className="font-medium pr-4 py-1">
+                                            <th className="font-medium pe-4 py-1">
                                               {tParams(
                                                 "iterationIssueTableHeaderParameter"
                                               )}
@@ -1762,7 +1762,7 @@ export default function TestResultHistory({
                                               }
                                               return (
                                                 <tr key={p.name}>
-                                                  <td className="pr-4 py-1 font-mono">
+                                                  <td className="pe-4 py-1 font-mono">
                                                     {"@"}
                                                     {p.name}
                                                   </td>

@@ -332,7 +332,7 @@ function ScopedAuditLogContent({
       </div>
 
       {rows.length > 0 && (
-        <p className="text-right text-xs text-muted-foreground">
+        <p className="text-end text-xs text-muted-foreground">
           {tProfile("showing", {
             loaded: rows.length.toLocaleString(),
             total: (totalCount ?? rows.length).toLocaleString(),

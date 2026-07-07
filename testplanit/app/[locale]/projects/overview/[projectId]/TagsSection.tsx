@@ -149,7 +149,7 @@ const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
       <p className="text-sm text-muted-foreground mb-4">
         <Link href={`/projects/tags/${projectId}`} className="group">
           {t("projects.overview.seeAllTags")}
-          <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
         </Link>
       </p>
       <div className="flex-1 min-h-[300px]">

@@ -470,7 +470,7 @@ const AddConfigurationWizard = (): React.ReactElement => {
                 {stepTitles[currentStep]}
               </div>
 
-              <ScrollArea className="flex-1 min-h-0 pr-4">
+              <ScrollArea className="flex-1 min-h-0 pe-4">
                 {currentStep === WizardStep.VARIANTS && (
                   <div className="space-y-4">
                     {categories
@@ -483,9 +483,9 @@ const AddConfigurationWizard = (): React.ReactElement => {
                               onClick={() => toggleCategory(category.id)}
                             >
                               {expandedCategories.has(category.id) ? (
-                                <ChevronDown className="mr-2" />
+                                <ChevronDown className="me-2" />
                               ) : (
-                                <ChevronRight className="mr-2" />
+                                <ChevronRight className="me-2" />
                               )}
                               {category.name}
                             </FormLabel>
@@ -515,7 +515,7 @@ const AddConfigurationWizard = (): React.ReactElement => {
                             // column-2, then column-3 — same pattern as
                             // ColumnSelection. Keeps shift+click range
                             // selection visually intuitive.
-                            <div className="pl-6 flex gap-4">
+                            <div className="ps-6 flex gap-4">
                               {splitIntoColumns(category.variants, 3).map(
                                 (colVariants, colIdx) => (
                                   <div

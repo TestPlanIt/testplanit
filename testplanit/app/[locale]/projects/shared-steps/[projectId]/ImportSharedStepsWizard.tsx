@@ -462,7 +462,7 @@ export function ImportSharedStepsWizard({
     <div>
       <Label className={error ? "text-destructive" : ""}>
         {children}
-        {required && <span className="text-destructive ml-1">{"*"}</span>}
+        {required && <span className="text-destructive ms-1">{"*"}</span>}
       </Label>
       {error && <p className="text-destructive text-sm mt-1">{error}</p>}
     </div>
@@ -629,7 +629,7 @@ export function ImportSharedStepsWizard({
                     <SelectItem key={field.id} value={field.id}>
                       {field.displayName}
                       {field.isRequired && (
-                        <Badge variant="secondary" className="ml-2">
+                        <Badge variant="secondary" className="ms-2">
                           {tCommon("fields.required")}
                         </Badge>
                       )}

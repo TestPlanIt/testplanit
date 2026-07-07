@@ -267,11 +267,11 @@ function TypeIconWithParamBadge({
 }) {
   const t = useTranslations("parameters");
   if (isSoftDeletedInRun) {
-    return <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />;
+    return <Trash2 className="w-4 h-4 me-1 text-muted-foreground shrink-0" />;
   }
   const Base = automated || isAutomatedCaseSource(source) ? Bot : ListChecks;
   return (
-    <span className="inline-flex items-center gap-1 shrink-0 mr-1">
+    <span className="inline-flex items-center gap-1 shrink-0 me-1">
       <Base className={cn("w-4 h-4 shrink-0", colorClass)} />
       {hasParameters && (
         <span
@@ -420,7 +420,7 @@ const NameCell = React.memo(function NameCell({
           onClick={handleClick}
         >
           {name}
-          <ArrowRight className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          <ArrowRight className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
         </div>
 
         {showFolderInfo && folder && (
@@ -429,7 +429,7 @@ const NameCell = React.memo(function NameCell({
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className="ml-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[150px] flex items-center hover:bg-muted/80 transition-colors cursor-pointer"
+                  className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[150px] flex items-center hover:bg-muted/80 transition-colors cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -439,7 +439,7 @@ const NameCell = React.memo(function NameCell({
                     router.push(`${pathname}?${params.toString()}`);
                   }}
                 >
-                  <Folder className="w-3 h-3 mr-1 shrink-0" />
+                  <Folder className="w-3 h-3 me-1 shrink-0" />
                   {folder.name}
                 </button>
               </TooltipTrigger>
@@ -483,7 +483,7 @@ const NameCell = React.memo(function NameCell({
           }}
         >
           {name}
-          <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
         </div>
       </Link>
 
@@ -493,7 +493,7 @@ const NameCell = React.memo(function NameCell({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="ml-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[150px] flex items-center hover:bg-muted/80 transition-colors cursor-pointer"
+                className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[150px] flex items-center hover:bg-muted/80 transition-colors cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -503,7 +503,7 @@ const NameCell = React.memo(function NameCell({
                   router.push(`${pathname}?${params.toString()}`);
                 }}
               >
-                <Folder className="w-3 h-3 mr-1 shrink-0" />
+                <Folder className="w-3 h-3 me-1 shrink-0" />
                 {folder.name}
               </button>
             </TooltipTrigger>
@@ -795,11 +795,11 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                   <StatusDotDisplay
                     name={statusOption.name}
                     color={statusOption.color?.value}
-                    dotClassName="w-3 h-3 rounded-full mr-2"
+                    dotClassName="w-3 h-3 rounded-full me-2"
                     nameClassName="flex-1"
                   />
                   {statusOption.id === displayStatus.id && (
-                    <Check className="h-4 w-4 ml-2 text-muted-foreground" />
+                    <Check className="h-4 w-4 ms-2 text-muted-foreground" />
                   )}
                 </DropdownMenuItem>
               ))}
@@ -812,7 +812,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 ml-1 ${isMenuDisabled || isDisabled ? "text-muted-foreground opacity-30 cursor-not-allowed" : ""}`}
+              className={`h-8 w-8 ms-1 ${isMenuDisabled || isDisabled ? "text-muted-foreground opacity-30 cursor-not-allowed" : ""}`}
               disabled={isMenuDisabled || isDisabled}
             >
               <MoreVertical className="h-4 w-4" />
@@ -830,7 +830,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                   disabled={isDisabled}
                   style={{ opacity: isDisabled ? 0.5 : 1 }}
                 >
-                  <UserCog className="mr-2 h-4 w-4" />
+                  <UserCog className="me-2 h-4 w-4" />
                   <span>
                     {t("common.actions.assignSelected", {
                       count: selectedCount,
@@ -844,7 +844,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                     disabled={isDisabled}
                     style={{ opacity: isDisabled ? 0.5 : 1 }}
                   >
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="me-2 h-4 w-4" />
                     <span>
                       {t("common.actions.addResultSelected", {
                         count: selectedCount,
@@ -861,7 +861,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                   disabled={isDisabled}
                   style={{ opacity: isDisabled ? 0.5 : 1 }}
                 >
-                  <UserCog className="mr-2 h-4 w-4" />
+                  <UserCog className="me-2 h-4 w-4" />
                   <span>{t("common.actions.assign")}</span>
                 </DropdownMenuItem>
                 {!isParameterized && (
@@ -871,7 +871,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                     disabled={isDisabled}
                     style={{ opacity: isDisabled ? 0.5 : 1 }}
                   >
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="me-2 h-4 w-4" />
                     <span>{t("common.actions.addResult")}</span>
                   </DropdownMenuItem>
                 )}
@@ -882,7 +882,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
               target="_blank"
             >
               <DropdownMenuItem className="flex items-center cursor-pointer">
-                <ExternalLink className="mr-2 h-4 w-4" />
+                <ExternalLink className="me-2 h-4 w-4" />
                 <span>{t("common.actions.viewInRepository")}</span>
               </DropdownMenuItem>
             </Link>
@@ -1000,7 +1000,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
           key={testRun.id}
           onClick={() => handleAddToTestRun(testRun.id)}
         >
-          <PlayCircle className="mr-1 h-4 w-4" />
+          <PlayCircle className="me-1 h-4 w-4" />
           <span>{testRun.name}</span>
         </DropdownMenuItem>
       ))}
@@ -1059,7 +1059,7 @@ const ActionsCell = React.memo(function ActionsCell({
               href={`/projects/repository/${row.original.projectId}/${row.original.id}?edit=true`}
             >
               <DropdownMenuItem data-testid={`edit-case-${row.original.id}`}>
-                <SquarePen className="mr-2 h-4 w-4" />
+                <SquarePen className="me-2 h-4 w-4" />
                 <span>{t("common.actions.edit")}</span>
               </DropdownMenuItem>
             </Link>
@@ -1073,7 +1073,7 @@ const ActionsCell = React.memo(function ActionsCell({
                 onClick={() => onQuickScript(row.original.id)}
                 data-testid={`quickscript-case-${row.original.id}`}
               >
-                <ScrollText className="mr-2 h-4 w-4" />
+                <ScrollText className="me-2 h-4 w-4" />
                 <span>{t("repository.cases.quickScript")}</span>
               </DropdownMenuItem>
             )}
@@ -1087,13 +1087,13 @@ const ActionsCell = React.memo(function ActionsCell({
                 data-testid={`add-to-test-run-draft-${row.original.id}`}
                 title={t("repository.cases.addToRunDraftBlocked")}
               >
-                <PlusSquare className="mr-2 h-4 w-4" />
+                <PlusSquare className="me-2 h-4 w-4" />
                 <span>{t("common.actions.addToTestRun")}</span>
               </DropdownMenuItem>
             ) : (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
-                  <PlusSquare className="mr-2 h-4 w-4" />
+                  <PlusSquare className="me-2 h-4 w-4" />
                   <span>{t("common.actions.addToTestRun")}</span>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
@@ -1109,7 +1109,7 @@ const ActionsCell = React.memo(function ActionsCell({
               onClick={() => onCopyMove(row.original.id)}
               data-testid={`copy-move-case-${row.original.id}`}
             >
-              <ArrowRightLeft className="mr-2 h-4 w-4" />
+              <ArrowRightLeft className="me-2 h-4 w-4" />
               <span>{t("repository.cases.copyMoveToProject")}</span>
             </DropdownMenuItem>
           )}
@@ -1121,7 +1121,7 @@ const ActionsCell = React.memo(function ActionsCell({
               }}
               className="text-destructive focus:text-destructive"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
+              <Trash2 className="me-2 h-4 w-4" />
               <span>{t("common.actions.delete")}</span>
             </DropdownMenuItem>
           )}
@@ -1522,7 +1522,7 @@ export const getColumns = (
       return (
         <div
           // Use the calculated showHandle to set padding
-          className={`flex items-center justify-center w-full ${showHandle ? "pl-6" : "pl-3"}`}
+          className={`flex items-center justify-center w-full ${showHandle ? "ps-6" : "ps-3"}`}
           onClick={(e) => e.stopPropagation()}
         >
           <SelectAllCheckbox
@@ -1630,7 +1630,7 @@ export const getColumns = (
                       name={fieldOption.fieldOption.icon?.name as IconName}
                       color={fieldOption.fieldOption.iconColor?.value}
                     />
-                    <span className="pr-1">{fieldOption.fieldOption.name}</span>
+                    <span className="pe-1">{fieldOption.fieldOption.name}</span>
                     {index < fieldOptions.length - 1 && (
                       <Separator orientation="vertical" />
                     )}
@@ -1827,7 +1827,7 @@ export const getColumns = (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Flame className="h-4 w-4 mr-1 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
+                    <Flame className="h-4 w-4 me-1 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
                   </TooltipTrigger>
                   <TooltipContent>{columnTranslations.newBadge}</TooltipContent>
                 </Tooltip>
@@ -1862,7 +1862,7 @@ export const getColumns = (
               />
             </div>
             {renderPendingBadge ? (
-              <div className="ml-2 shrink-0">
+              <div className="ms-2 shrink-0">
                 {renderPendingBadge(row.original.id)}
               </div>
             ) : null}
@@ -2378,7 +2378,7 @@ export const getColumns = (
       orderedColumns.push({
         id: "actions",
         header: () => (
-          <div className="-ml-1 flex justify-center" style={{ width: 55 }}>
+          <div className="-ms-1 flex justify-center" style={{ width: 55 }}>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </div>
         ),

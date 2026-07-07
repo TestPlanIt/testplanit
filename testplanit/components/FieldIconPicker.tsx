@@ -127,7 +127,7 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
           onValueChange={(value) => handleIconSelect(parseInt(value))}
         >
           <SelectTrigger
-            className="w-15 pl-2 pr-0 m-0"
+            className="w-15 ps-2 pe-0 m-0"
             aria-label="icon-picker"
           >
             {selectedIcon && (

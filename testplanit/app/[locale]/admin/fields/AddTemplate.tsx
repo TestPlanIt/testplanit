@@ -367,7 +367,7 @@ export function AddTemplate({ open, onClose }: AddTemplateProps) {
                       />
                     </FormControl>
                     {isDefault && (
-                      <div className="flex items-center ml-2">
+                      <div className="flex items-center ms-2">
                         <FormMessage>{t("defaultTemplateHint")}</FormMessage>
                       </div>
                     )}

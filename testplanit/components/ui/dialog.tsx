@@ -52,7 +52,7 @@ const DialogContent = React.forwardRef<
         {...props}
       >
         {children}
-        <div className="absolute right-4 top-4 space-x-2">
+        <div className="absolute end-4 top-4 space-x-2">
           <button
             className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none"
             onClick={toggleFullScreen}
@@ -79,7 +79,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-1.5 text-center sm:text-left",
+      "flex flex-col space-y-1.5 text-center sm:text-start",
       className
     )}
     {...props}

@@ -412,7 +412,7 @@ const Signin: NextPage = () => {
               }}
               priority={true}
             />
-            <div className="ml-3 flex flex-col">
+            <div className="ms-3 flex flex-col">
               <span className="scroll-m-20 text-4xl font-semibold tracking-tight lg:text-5xl text-[rgb(133,89,233)]">
                 {tCommon("branding.name")}
               </span>
@@ -564,7 +564,7 @@ const Signin: NextPage = () => {
                     {t("common.or")}{" "}
                     <Link href="/signup" className="group underline">
                       {t("auth.signin.createAccount")}
-                      <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </Link>
                   </div>
                 )}

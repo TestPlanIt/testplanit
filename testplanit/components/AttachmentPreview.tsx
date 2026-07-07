@@ -196,13 +196,13 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         ),
         ul: ({ node, ...props }) => (
           <ul
-            className="list-disc pl-5 mb-3 text-foreground marker:text-foreground"
+            className="list-disc ps-5 mb-3 text-foreground marker:text-foreground"
             {...props}
           />
         ),
         ol: ({ node, ...props }) => (
           <ol
-            className="list-decimal pl-5 mb-3 text-foreground marker:text-foreground"
+            className="list-decimal ps-5 mb-3 text-foreground marker:text-foreground"
             {...props}
           />
         ),
@@ -251,7 +251,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         pre: ({ children }: any) => <>{children}</>,
         blockquote: ({ node, ...props }) => (
           <blockquote
-            className="border-l-4 border-border pl-4 italic my-3"
+            className="border-s-4 border-border ps-4 italic my-3"
             {...props}
           />
         ),
@@ -261,12 +261,12 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
         ),
         th: ({ node, ...props }) => (
           <th
-            className="border border-border bg-muted p-2 text-left font-semibold"
+            className="border border-border bg-muted p-2 text-start font-semibold"
             {...props}
           />
         ),
         td: ({ node, ...props }) => (
-          <td className="border border-border p-2 text-left" {...props} />
+          <td className="border border-border p-2 text-start" {...props} />
         ),
         strong: ({ node, ...props }) => (
           <strong className="font-semibold text-foreground" {...props} />

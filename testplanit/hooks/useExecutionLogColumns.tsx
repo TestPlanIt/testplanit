@@ -83,7 +83,7 @@ export function useExecutionLogColumns(
             const row = info.row.original;
             if (isStepRow(row)) {
               return (
-                <div className="pl-6 text-sm space-y-1 py-1">
+                <div className="ps-6 text-sm space-y-1 py-1">
                   <div className="flex gap-2 items-start">
                     <span className="text-muted-foreground shrink-0 inline-flex items-center gap-1">
                       {row.sharedGroupName && (

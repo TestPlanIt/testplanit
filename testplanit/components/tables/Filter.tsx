@@ -34,7 +34,7 @@ const Filter: React.FC<FilterProps> = ({
         placeholder={placeholder || t("filter")}
         value={inputValue}
         onChange={handleChange}
-        className="max-w-lg pl-8"
+        className="max-w-lg ps-8"
         data-testid={dataTestId}
       />
     </div>

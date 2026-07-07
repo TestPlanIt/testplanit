@@ -218,7 +218,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
           {role.name}
           {role.isDefault && (
             <Tooltip>
-              <TooltipTrigger className="ml-1" asChild>
+              <TooltipTrigger className="ms-1" asChild>
                 <Badge variant="secondary">
                   <Star className="h-3 w-3 fill-current text-primary-background" />
                 </Badge>
@@ -546,7 +546,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
                     <FormLabel className="flex items-center">
                       {tCommon("fields.password")}
                       {!passwordRequired && (
-                        <span className="text-muted-foreground text-xs ml-2">
+                        <span className="text-muted-foreground text-xs ms-2">
                           {"("}
                           {tCommon("fields.optional")}
                           {")"}
@@ -584,7 +584,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
                     <FormLabel className="flex items-center">
                       {tCommon("fields.confirmPassword")}
                       {!passwordRequired && (
-                        <span className="text-muted-foreground text-xs ml-2">
+                        <span className="text-muted-foreground text-xs ms-2">
                           {"("}
                           {tCommon("fields.optional")}
                           {")"}
@@ -831,7 +831,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
                     <FormLabel className="flex items-center">
                       {tCommon("fields.apiAccess")}
                       {accessValue === "ADMIN" && (
-                        <span className="text-muted-foreground text-xs ml-2">
+                        <span className="text-muted-foreground text-xs ms-2">
                           {"("}
                           {tCommon("fields.requiredForAdmin")}
                           {")"}

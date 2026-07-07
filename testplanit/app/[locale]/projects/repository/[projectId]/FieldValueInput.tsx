@@ -281,7 +281,7 @@ export function FieldValueInput({
                 <SelectItem key={option.id} value={option.id.toString()}>
                   <div className="flex items-center">
                     <DynamicIcon
-                      className="shrink-0 mr-1 h-4 w-4"
+                      className="shrink-0 me-1 h-4 w-4"
                       name={option.icon as IconName}
                       color={option.iconColor}
                     />
@@ -301,7 +301,7 @@ export function FieldValueInput({
           label: (
             <div className="flex items-center">
               <DynamicIcon
-                className="h-4 w-4 mr-1"
+                className="h-4 w-4 me-1"
                 name={fo.fieldOption.icon?.name as IconName}
                 color={fo.fieldOption.iconColor?.value}
               />
@@ -355,11 +355,11 @@ export function FieldValueInput({
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-start text-left font-normal",
+                "w-full justify-start text-start font-normal",
                 !safeDateValue && "text-muted-foreground"
               )}
             >
-              <CalendarDays className="mr-2 h-4 w-4" />
+              <CalendarDays className="me-2 h-4 w-4" />
               {safeDateValue ? (
                 format(safeDateValue, "PPP", {
                   locale: getDateFnsLocale(locale),

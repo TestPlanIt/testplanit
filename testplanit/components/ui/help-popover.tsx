@@ -47,10 +47,10 @@ export function HelpPopover({
       <p className="mb-3 text-sm text-foreground" {...props} />
     ),
     ul: ({ node, ...props }) => (
-      <ul className="list-disc pl-5 mb-3" {...props} />
+      <ul className="list-disc ps-5 mb-3" {...props} />
     ),
     ol: ({ node, ...props }) => (
-      <ol className="list-decimal pl-5 mb-3" {...props} />
+      <ol className="list-decimal ps-5 mb-3" {...props} />
     ),
     li: ({ node, ...props }) => <li className="mb-1 text-sm" {...props} />,
     a: ({ href, children }) => (
@@ -76,7 +76,7 @@ export function HelpPopover({
     ),
     blockquote: ({ node, ...props }) => (
       <blockquote
-        className="border-l-4 border-border pl-4 italic my-3"
+        className="border-s-4 border-border ps-4 italic my-3"
         {...props}
       />
     ),
@@ -86,12 +86,12 @@ export function HelpPopover({
     ),
     th: ({ node, ...props }) => (
       <th
-        className="border border-border bg-muted p-2 text-left font-semibold"
+        className="border border-border bg-muted p-2 text-start font-semibold"
         {...props}
       />
     ),
     td: ({ node, ...props }) => (
-      <td className="border border-border p-2 text-left" {...props} />
+      <td className="border border-border p-2 text-start" {...props} />
     ),
   };
 
@@ -100,7 +100,7 @@ export function HelpPopover({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="ml-2 inline-flex"
+          className="ms-2 inline-flex"
           tabIndex={tabIndex}
           aria-label={tCommon("aria.help")}
         >

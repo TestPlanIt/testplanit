@@ -187,7 +187,7 @@ export default function TrashPage() {
       <CardHeader className="w-full">
         <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
           <div className="flex items-center">
-            <Trash2 className="mr-2" size={32} />
+            <Trash2 className="me-2" size={32} />
             {tGlobal("admin.menu.trash")}
           </div>
         </div>
@@ -200,7 +200,7 @@ export default function TrashPage() {
                 <div className="flex items-center">
                   <DynamicIcon
                     name={itemType.iconName as IconName}
-                    className="mr-2 h-5 w-5"
+                    className="me-2 h-5 w-5"
                   />
                   {tGlobal(itemType.translationKey as any)}
                 </div>

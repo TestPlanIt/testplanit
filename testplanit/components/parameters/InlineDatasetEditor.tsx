@@ -209,7 +209,7 @@ export function InlineDatasetEditor({
             onClick={addParameter}
             data-testid={`${testIdPrefix}-add-parameter`}
           >
-            <Plus className="mr-1 h-3.5 w-3.5" />
+            <Plus className="me-1 h-3.5 w-3.5" />
             {t("formAdd")}
           </Button>
         </div>
@@ -293,7 +293,7 @@ export function InlineDatasetEditor({
                         aria-label={t("formSensitive")}
                       />
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-end">
                       <Button
                         type="button"
                         variant="ghost"
@@ -324,7 +324,7 @@ export function InlineDatasetEditor({
             disabled={parameters.length === 0}
             data-testid={`${testIdPrefix}-add-row`}
           >
-            <Plus className="mr-1 h-3.5 w-3.5" />
+            <Plus className="me-1 h-3.5 w-3.5" />
             {t("datasetAddRow")}
           </Button>
         </div>
@@ -416,7 +416,7 @@ export function InlineDatasetEditor({
                       </TableCell>
                     );
                   })}
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     <Button
                       type="button"
                       variant="ghost"

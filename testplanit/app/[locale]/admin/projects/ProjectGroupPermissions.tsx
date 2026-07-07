@@ -129,14 +129,14 @@ export function ProjectGroupPermissions({
         <table className="w-full caption-bottom text-sm">
           <thead className="[&_tr]:border-b">
             <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {tGlobal("reports.dimensions.group")}
               </th>
               {/* Add Members Header */}
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {tCommon("fields.members")}
               </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {t("tableHeaders.projectAccess")}
               </th>
             </tr>
@@ -227,7 +227,7 @@ export function ProjectGroupPermissions({
                               {role.name}
                               {role.isDefault && (
                                 <Tooltip>
-                                  <TooltipTrigger className="ml-1" asChild>
+                                  <TooltipTrigger className="ms-1" asChild>
                                     <Badge variant="secondary">
                                       <Star className="h-3 w-3 fill-current text-primary-background" />
                                     </Badge>
@@ -245,7 +245,7 @@ export function ProjectGroupPermissions({
                       <p className="text-xs text-muted-foreground flex items-center whitespace-nowrap">
                         {" "}
                         {/* Removed pt-1, added whitespace-nowrap */}
-                        <span className="mr-1">
+                        <span className="me-1">
                           {t("labels.access.effectiveAccess")}:
                         </span>
                         {/* Render RoleNameCell or text based on logic */}
@@ -257,7 +257,7 @@ export function ProjectGroupPermissions({
                           )}
                         {currentAccessType ===
                           ProjectAccessType.GLOBAL_ROLE && (
-                          <span className="italic text-muted-foreground ml-1">
+                          <span className="italic text-muted-foreground ms-1">
                             {tGlobal("common.labels.access.usersGlobalRole")}
                           </span>
                         )}
@@ -271,7 +271,7 @@ export function ProjectGroupPermissions({
                         {currentAccessType === "PROJECT_DEFAULT" &&
                           defaultProjectAccessType ===
                             ProjectAccessType.GLOBAL_ROLE && (
-                            <span className="italic text-muted-foreground ml-1">
+                            <span className="italic text-muted-foreground ms-1">
                               {tGlobal("common.labels.access.usersGlobalRole")}
                             </span>
                           )}
@@ -285,7 +285,7 @@ export function ProjectGroupPermissions({
                           (currentAccessType ===
                             ProjectAccessType.SPECIFIC_ROLE &&
                             (!currentRoleId || currentRoleId === "NONE"))) && (
-                          <span className="italic text-muted-foreground ml-1">
+                          <span className="italic text-muted-foreground ms-1">
                             {currentAccessType === ProjectAccessType.NO_ACCESS
                               ? "-"
                               : t("labels.noEffect")}

@@ -125,11 +125,11 @@ export function TemplateVariableInserter({
         <SelectGroup>
           <SelectLabel>{tCommon("fields.caseFields")}</SelectLabel>
           {CASE_VARIABLES.map((v) => (
-            <SelectItem key={v.value} value={v.value} className="pl-6">
+            <SelectItem key={v.value} value={v.value} className="ps-6">
               {v.label}
               <Badge
                 variant="outline"
-                className="ml-4 text-xs text-current opacity-60"
+                className="ms-4 text-xs text-current opacity-60"
               >
                 {v.type}
               </Badge>
@@ -139,11 +139,11 @@ export function TemplateVariableInserter({
         <SelectGroup>
           <SelectLabel>{tCommon("fields.steps")}</SelectLabel>
           {STEP_VARIABLES.map((v) => (
-            <SelectItem key={v.value} value={v.value} className="pl-6">
+            <SelectItem key={v.value} value={v.value} className="ps-6">
               {v.isBlock ? t("stepsBlock") : v.label}
               <Badge
                 variant="outline"
-                className="ml-4 text-xs text-current opacity-60"
+                className="ms-4 text-xs text-current opacity-60"
               >
                 {v.type}
               </Badge>
@@ -157,12 +157,12 @@ export function TemplateVariableInserter({
               <SelectItem
                 key={field.systemName}
                 value={`{{fields.${field.systemName}}}`}
-                className="pl-6"
+                className="ps-6"
               >
                 {field.displayName}
                 <Badge
                   variant="outline"
-                  className="ml-4 text-xs text-current opacity-60"
+                  className="ms-4 text-xs text-current opacity-60"
                 >
                   {field.type.type}
                 </Badge>

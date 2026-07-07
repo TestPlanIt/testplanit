@@ -1157,22 +1157,22 @@ const TreeView: React.FC<{
           />
         </Button>
         <IconComponent
-          className={`w-4 h-4 ml-1 ${
+          className={`w-4 h-4 ms-1 ${
             isSelected ? "text-secondary-foreground" : "text-muted-foreground"
           }`}
         />
-        <span className="ml-2 truncate flex-1">{node.data.name}</span>
+        <span className="ms-2 truncate flex-1">{node.data.name}</span>
 
         {pendingCopyTargets.has(data?.folderId ?? -1) && (
           <Loader2
-            className="ml-2 h-3 w-3 animate-spin text-primary shrink-0"
+            className="ms-2 h-3 w-3 animate-spin text-primary shrink-0"
             data-testid={`folder-row-copy-progress-${data?.folderId}`}
             aria-label={t("repository.dragDrop.copying")}
           />
         )}
 
         {canAddEdit && !filteredFolders && data?.folderId !== 0 && (
-          <div className="ml-1 flex items-center h-7 invisible group-hover:visible shrink-0">
+          <div className="ms-1 flex items-center h-7 invisible group-hover:visible shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -1241,7 +1241,7 @@ const TreeView: React.FC<{
 
         {data && (data.directCaseCount > 0 || data.totalCaseCount > 0) && (
           <span
-            className={`ml-2 text-xs shrink-0 ${isSelected ? "text-secondary-foreground" : "text-muted-foreground"}`}
+            className={`ms-2 text-xs shrink-0 ${isSelected ? "text-secondary-foreground" : "text-muted-foreground"}`}
           >
             {`(${data.directCaseCount}/${data.totalCaseCount})`}
           </span>
@@ -1369,7 +1369,7 @@ const TreeView: React.FC<{
           >
             {/* Drop indicator line with circle - matches react-arborist cursor style */}
             {isOverBottom && (
-              <div className="absolute top-0 left-0 right-6 flex items-center z-10 pointer-events-none">
+              <div className="absolute top-0 start-0 end-6 flex items-center z-10 pointer-events-none">
                 <div
                   className="rounded-full"
                   style={{

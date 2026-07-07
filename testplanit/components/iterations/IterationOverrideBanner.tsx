@@ -32,7 +32,7 @@ export function IterationOverrideBanner({
           <Button
             variant="link"
             size="sm"
-            className="ml-1 h-auto p-0 align-baseline"
+            className="ms-1 h-auto p-0 align-baseline"
             onClick={onViewHistory}
             data-testid="iteration-override-banner-history"
           >

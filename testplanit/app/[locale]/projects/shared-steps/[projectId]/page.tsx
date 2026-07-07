@@ -85,7 +85,7 @@ function TestCaseCount({ groupId, t }: { groupId: number; t: any }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <span className="ml-1 cursor-pointer underline underline-offset-2">
+        <span className="ms-1 cursor-pointer underline underline-offset-2">
           {label}
         </span>
       </PopoverTrigger>
@@ -93,7 +93,7 @@ function TestCaseCount({ groupId, t }: { groupId: number; t: any }) {
         <div>
           {steps && steps.length > 0 ? (
             steps.map((testcase: any) => (
-              <Badge key={testcase.id} className="mb-1 mr-1">
+              <Badge key={testcase.id} className="mb-1 me-1">
                 <CaseDisplay
                   id={testcase.id}
                   name={testcase.name}
@@ -445,7 +445,7 @@ export default function SharedStepsPage() {
                         {group.name}
                       </span>
                       <span
-                        className="text-xs text-muted-foreground ml-2"
+                        className="text-xs text-muted-foreground ms-2"
                         data-testid="group-steps-count"
                       >
                         {t("stepsCount", { count: group.items?.length || 0 })} |
@@ -505,7 +505,7 @@ export default function SharedStepsPage() {
                               disabled={saving}
                               variant="outline"
                               data-testid="cancel-edit-group-btn"
-                              className="ml-2"
+                              className="ms-2"
                             >
                               <CircleSlash2 className="w-4 h-4" />
                               {tCommon("cancel")}
@@ -515,7 +515,7 @@ export default function SharedStepsPage() {
                               disabled={saving}
                               variant="default"
                               data-testid="save-group-btn"
-                              className="ml-2"
+                              className="ms-2"
                             >
                               <Save className="w-4 h-4" />
                               {saving
@@ -530,7 +530,7 @@ export default function SharedStepsPage() {
                             disabled={saving}
                             variant="destructive"
                             data-testid="delete-group-btn-main"
-                            className="ml-2"
+                            className="ms-2"
                           >
                             <Trash2 className="w-4 h-4" />
                             {tCommon("actions.delete")}
@@ -551,7 +551,7 @@ export default function SharedStepsPage() {
                             variant="outline"
                             onClick={() => setEditMode(true)}
                             data-testid="edit-group-name-btn-main"
-                            className="ml-2"
+                            className="ms-2"
                           >
                             <Edit className="w-4 h-4" />
                             {tCommon("actions.edit")}

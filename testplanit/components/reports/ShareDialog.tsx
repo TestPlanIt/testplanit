@@ -398,7 +398,7 @@ export function ShareDialog({
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-start font-normal",
                       !expiresAt && "text-muted-foreground"
                     )}
                   >

@@ -132,7 +132,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
       style={{
         backgroundColor: bg,
         borderColor: border,
-        marginLeft: `${level * 20}px`,
+        marginInlineStart: `${level * 20}px`,
         width: `calc(100% - ${level * 20}px)`,
       }}
     >
@@ -144,7 +144,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
         <div className="flex items-start flex-1 min-w-0">
           {startDate && (
             <div
-              className={`${compact ? "hidden" : "hidden sm:block"} mr-4 pt-1`}
+              className={`${compact ? "hidden" : "hidden sm:block"} me-4 pt-1`}
             >
               <CalendarDisplay date={startDate} />
             </div>
@@ -152,7 +152,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
           <div className="flex-1 min-w-0">
             <MilestoneIconAndName milestone={milestone} projectId={projectId} />
             <p
-              className={`${compact ? "hidden" : "hidden sm:block"} text-md text-muted-foreground ml-7`}
+              className={`${compact ? "hidden" : "hidden sm:block"} text-md text-muted-foreground ms-7`}
             >
               <TextFromJson
                 jsonString={milestone.note as string}
@@ -160,7 +160,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                 room={`milestone-note-${milestone.id}`}
               />
             </p>
-            <div className={`${compact ? "hidden" : "hidden sm:block"} ml-7`}>
+            <div className={`${compact ? "hidden" : "hidden sm:block"} ms-7`}>
               <DateTextDisplay
                 startDate={startDate}
                 endDate={endDate}
@@ -213,7 +213,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                     <DropdownMenuItem
                       onSelect={() => onStartMilestone(milestone)}
                     >
-                      <SquarePlay className="w-5 h-5 mr-2" />
+                      <SquarePlay className="w-5 h-5 me-2" />
                       {tGlobal("common.actions.start")}
                     </DropdownMenuItem>
                   )}
@@ -221,7 +221,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                     <DropdownMenuItem
                       onSelect={() => onStopMilestone(milestone)}
                     >
-                      <StopCircle className="w-5 h-5 mr-2" />
+                      <StopCircle className="w-5 h-5 me-2" />
                       {t("status.stop")}
                     </DropdownMenuItem>
                   )}
@@ -230,13 +230,13 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                       onSelect={() => onReopenMilestone(milestone)}
                       disabled={isParentCompleted(milestone.parentId)}
                     >
-                      <RotateCcw className="w-5 h-5 mr-2" />
+                      <RotateCcw className="w-5 h-5 me-2" />
                       {t("status.reopen")}
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onSelect={() => onOpenEditModal(milestone)}>
                     <div className="flex items-center">
-                      <SquarePen className="w-5 h-5 mr-2" />
+                      <SquarePen className="w-5 h-5 me-2" />
                       {tCommon("actions.edit")}
                     </div>
                   </DropdownMenuItem>
@@ -244,7 +244,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                     <DropdownMenuItem
                       onSelect={() => onOpenCompleteDialog(milestone)}
                     >
-                      <CheckCircle className="w-5 h-5 mr-2" />
+                      <CheckCircle className="w-5 h-5 me-2" />
                       {tGlobal("common.actions.complete")}
                     </DropdownMenuItem>
                   )}
@@ -253,7 +253,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                     className="text-destructive hover:text-destructive-foreground"
                   >
                     <div className="flex items-center">
-                      <Trash2 className="w-5 h-5 mr-2" />
+                      <Trash2 className="w-5 h-5 me-2" />
                       {tCommon("actions.delete")}
                     </div>
                   </DropdownMenuItem>
@@ -265,7 +265,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
       </div>
 
       {/* Mobile-only: date text as its own row */}
-      <div className={`${compact ? "" : "sm:hidden"} ml-7`}>
+      <div className={`${compact ? "" : "sm:hidden"} ms-7`}>
         <DateTextDisplay
           startDate={startDate}
           endDate={endDate}

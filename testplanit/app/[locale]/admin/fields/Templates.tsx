@@ -187,7 +187,7 @@ export default function TemplateComponent() {
               <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
                 <CardTitle>
                   <div className="flex items-center">
-                    <LayoutTemplate className="mr-1" />
+                    <LayoutTemplate className="me-1" />
                     {tGlobal("common.labels.templates")}
                   </div>
                 </CardTitle>

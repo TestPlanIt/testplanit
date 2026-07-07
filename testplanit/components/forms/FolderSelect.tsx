@@ -59,7 +59,7 @@ const renderFolderOptions = (
       <React.Fragment key={folder.value}>
         <SelectItem
           value={folder.value}
-          style={{ paddingLeft: `${level * 10 + 5}px` }}
+          style={{ paddingInlineStart: `${level * 10 + 5}px` }}
         >
           <div className="flex items-center gap-1 max-w-[600px]">
             {folder.icon?.name ? (

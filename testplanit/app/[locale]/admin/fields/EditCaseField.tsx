@@ -767,7 +767,7 @@ export function EditCaseField({
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel className="ml-2 flex items-center">
+                    <FormLabel className="ms-2 flex items-center">
                       {tCommon("fields.enabled")}
                       <HelpPopover helpKey="caseField.enabled" />
                     </FormLabel>
@@ -786,7 +786,7 @@ export function EditCaseField({
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel className="ml-2 flex items-center">
+                    <FormLabel className="ms-2 flex items-center">
                       {tCommon("fields.required")}
                       <HelpPopover helpKey="caseField.required" />
                     </FormLabel>
@@ -805,7 +805,7 @@ export function EditCaseField({
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel className="ml-2 flex items-center">
+                    <FormLabel className="ms-2 flex items-center">
                       {tCommon("fields.restricted")}
                       <HelpPopover helpKey="caseField.restricted" />
                     </FormLabel>

@@ -565,7 +565,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                       height={160}
                     />
                     {user.image && user?.id === session?.user?.id && (
-                      <div className="absolute -top-2 -right-2">
+                      <div className="absolute -top-2 -end-2">
                         <RemoveAvatar user={user} />
                       </div>
                     )}
@@ -928,7 +928,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                   )}
                                   <div className="flex items-start justify-between gap-4">
                                     <span className="text-sm">{row.label}</span>
-                                    <span className="text-sm text-right break-all">
+                                    <span className="text-sm text-end break-all">
                                       {row.value}
                                     </span>
                                   </div>
@@ -1437,7 +1437,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                             >
                                               {tNotifications("mode.useGlobal")}
                                               {globalSettings?.value && (
-                                                <span className="text-sm text-primary/60 font-semibold ml-1">
+                                                <span className="text-sm text-primary/60 font-semibold ms-1">
                                                   {`(${getGlobalModeLabel(
                                                     (
                                                       globalSettings.value as any

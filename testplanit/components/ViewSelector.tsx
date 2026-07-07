@@ -198,7 +198,7 @@ export function ViewSelector({
   return (
     <div className="flex flex-col pt-0.5     w-full">
       <Select value={selectedItem} onValueChange={onValueChange}>
-        <SelectTrigger className="mr-6 ml-1 text-primary text-lg md:text-xl font-extrabold">
+        <SelectTrigger className="me-6 ms-1 text-primary text-lg md:text-xl font-extrabold">
           <SelectValue placeholder={tCommon("placeholders.selectOption")} />
         </SelectTrigger>
         <SelectContent className="text-primary text-lg md:text-xl font-extrabold">
@@ -222,7 +222,7 @@ export function ViewSelector({
               role="button"
               tabIndex={0}
               className={cn(
-                "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                 selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
               )}
               onClick={(e) => handleFilterClick(null, e)}
@@ -230,7 +230,7 @@ export function ViewSelector({
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span className="truncate">{t("views.allTemplates")}</span>
               </div>
-              <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+              <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                 {viewOptions?.templates.reduce(
                   (sum, template) => sum + (template.count || 0),
                   0
@@ -243,7 +243,7 @@ export function ViewSelector({
                 tabIndex={0}
                 key={template.id}
                 className={cn(
-                  "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                  "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                   isValueSelected(template.id) &&
                     "bg-primary/20 hover:bg-primary/30"
                 )}
@@ -253,7 +253,7 @@ export function ViewSelector({
                   <LayoutTemplate className="w-4 h-4 shrink-0" />
                   <span className="truncate">{template.name}</span>
                 </div>
-                <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                   {template.count || 0}
                 </span>
               </div>
@@ -267,7 +267,7 @@ export function ViewSelector({
               role="button"
               tabIndex={0}
               className={cn(
-                "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                 selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
               )}
               onClick={(e) => handleFilterClick(null, e)}
@@ -275,7 +275,7 @@ export function ViewSelector({
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span className="truncate">{t("views.allStates")}</span>
               </div>
-              <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+              <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                 {viewOptions?.states.reduce(
                   (sum, state) => sum + (state.count || 0),
                   0
@@ -288,7 +288,7 @@ export function ViewSelector({
                 tabIndex={0}
                 key={state.id}
                 className={cn(
-                  "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                  "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                   isValueSelected(state.id) &&
                     "bg-primary/20 hover:bg-primary/30"
                 )}
@@ -302,7 +302,7 @@ export function ViewSelector({
                   />
                   <span className="truncate">{state.name}</span>
                 </div>
-                <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                   {state.count || 0}
                 </span>
               </div>
@@ -316,7 +316,7 @@ export function ViewSelector({
               role="button"
               tabIndex={0}
               className={cn(
-                "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                 selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
               )}
               onClick={(e) => handleFilterClick(null, e)}
@@ -325,7 +325,7 @@ export function ViewSelector({
                 <Users className="w-4 h-4 shrink-0" />
                 <span className="truncate">{t("views.allCreators")}</span>
               </div>
-              <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+              <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                 {viewOptions?.creators.reduce(
                   (sum, creator) => sum + (creator.count || 0),
                   0
@@ -338,7 +338,7 @@ export function ViewSelector({
                 tabIndex={0}
                 key={creator.id}
                 className={cn(
-                  "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                  "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                   isValueSelected(creator.id) &&
                     "bg-primary/20 hover:bg-primary/30"
                 )}
@@ -347,7 +347,7 @@ export function ViewSelector({
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <UserNameCell userId={creator.id} hideLink={true} />
                 </div>
-                <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                   {creator.count || 0}
                 </span>
               </div>
@@ -361,7 +361,7 @@ export function ViewSelector({
               role="button"
               tabIndex={0}
               className={cn(
-                "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                 selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
               )}
               onClick={(e) => handleFilterClick(null, e)}
@@ -369,7 +369,7 @@ export function ViewSelector({
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span className="truncate">{t("views.allCases")}</span>
               </div>
-              <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+              <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                 {totalCount}
               </span>
             </div>
@@ -381,7 +381,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key={item.value.toString()}
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected(item.value ? 1 : 0) &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -399,7 +399,7 @@ export function ViewSelector({
                           : tCommon("fields.notAutomated")}
                       </span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {item.count}
                     </span>
                   </div>
@@ -415,7 +415,7 @@ export function ViewSelector({
               role="button"
               tabIndex={0}
               className={cn(
-                "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                 selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
               )}
               onClick={(e) => handleFilterClick(null, e)}
@@ -423,7 +423,7 @@ export function ViewSelector({
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span className="truncate">{t("views.allCases")}</span>
               </div>
-              <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+              <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                 {totalCount}
               </span>
             </div>
@@ -435,7 +435,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key={item.value.toString()}
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected(item.value ? 1 : 0) &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -453,7 +453,7 @@ export function ViewSelector({
                           : tCommon("fields.notParameterized")}
                       </span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {item.count}
                     </span>
                   </div>
@@ -476,7 +476,7 @@ export function ViewSelector({
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                     selectedFilter === null &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
@@ -488,7 +488,7 @@ export function ViewSelector({
                       {tCommon("filters.allStatuses")}
                     </span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                     {(viewOptions as any)?.testRunOptions?.totalCount ||
                       totalCount}
                   </span>
@@ -497,7 +497,7 @@ export function ViewSelector({
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                     isValueSelected("untested") &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
@@ -512,7 +512,7 @@ export function ViewSelector({
                       {tCommon("labels.untested")}
                     </span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                     {untestedCount}
                   </span>
                 </div>
@@ -524,7 +524,7 @@ export function ViewSelector({
                       tabIndex={0}
                       key={status.id}
                       className={cn(
-                        "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                        "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                         isValueSelected(status.id) &&
                           "bg-primary/20 hover:bg-primary/30"
                       )}
@@ -539,7 +539,7 @@ export function ViewSelector({
                         />
                         <span className="truncate">{status.name}</span>
                       </div>
-                      <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                         {status.count || 0}
                       </span>
                     </div>
@@ -563,7 +563,7 @@ export function ViewSelector({
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                     selectedFilter === null &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
@@ -573,7 +573,7 @@ export function ViewSelector({
                     <Users className="w-4 h-4 shrink-0" />
                     <span className="truncate">{t("views.allAssignees")}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                     {(viewOptions as any)?.testRunOptions?.totalCount ||
                       totalCount}
                   </span>
@@ -582,7 +582,7 @@ export function ViewSelector({
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                     isValueSelected("unassigned") &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
@@ -594,7 +594,7 @@ export function ViewSelector({
                       {tCommon("labels.unassigned")}
                     </span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                     {unassignedCount}
                   </span>
                 </div>
@@ -609,7 +609,7 @@ export function ViewSelector({
                       tabIndex={0}
                       key={user.id}
                       className={cn(
-                        "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                        "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                         isValueSelected(user.id) &&
                           "bg-primary/20 hover:bg-primary/30"
                       )}
@@ -621,7 +621,7 @@ export function ViewSelector({
                           hideLink={true}
                         />
                       </div>
-                      <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                         {user.count || 0}
                       </span>
                     </div>
@@ -640,7 +640,7 @@ export function ViewSelector({
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                     isValueSelected(tagOption.id) &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
@@ -650,7 +650,7 @@ export function ViewSelector({
                     <span className="truncate">{tagOption.name}</span>
                   </div>
                   {tagOption.count !== undefined && (
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {tagOption.count}
                     </span>
                   )}
@@ -669,7 +669,7 @@ export function ViewSelector({
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                     isValueSelected(issueOption.id) &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
@@ -679,7 +679,7 @@ export function ViewSelector({
                     <span className="truncate">{issueOption.name}</span>
                   </div>
                   {issueOption.count !== undefined && (
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {issueOption.count}
                     </span>
                   )}
@@ -694,7 +694,7 @@ export function ViewSelector({
               role="button"
               tabIndex={0}
               className={cn(
-                "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                 selectedFilter === null && "bg-primary/20 hover:bg-primary/30"
               )}
               onClick={(e) => handleFilterClick(null, e)}
@@ -702,7 +702,7 @@ export function ViewSelector({
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span className="truncate">{tCommon("fields.mixed")}</span>
               </div>
-              <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+              <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                 {totalCount}
               </span>
             </div>
@@ -725,7 +725,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key="checked"
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected(1) && "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={(e) => handleFilterClick(1, e)}
@@ -735,7 +735,7 @@ export function ViewSelector({
                         {tCommon("fields.checked")}
                       </span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {checkedCount}
                     </span>
                   </div>,
@@ -744,7 +744,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key="unchecked"
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected(2) && "bg-primary/20 hover:bg-primary/30"
                     )}
                     onClick={(e) => handleFilterClick(2, e)}
@@ -752,7 +752,7 @@ export function ViewSelector({
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="truncate">{t("fields.unchecked")}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {uncheckedCount}
                     </span>
                   </div>,
@@ -771,7 +771,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key="no-value"
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected("none") &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -782,7 +782,7 @@ export function ViewSelector({
                         {t("fields.noValue")}
                       </span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {noValueCount}
                     </span>
                   </div>,
@@ -792,7 +792,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key="has-value"
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected("hasValue") &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -801,7 +801,7 @@ export function ViewSelector({
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="truncate">{t("fields.hasValue")}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {hasValueCount}
                     </span>
                   </div>,
@@ -843,7 +843,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key="no-value"
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected("none") &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -854,7 +854,7 @@ export function ViewSelector({
                         {t("fields.noDate")}
                       </span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {noValueCount}
                     </span>
                   </div>,
@@ -864,7 +864,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key="has-value"
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected("hasValue") &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -873,7 +873,7 @@ export function ViewSelector({
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="truncate">{t("fields.hasDate")}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {hasValueCount}
                     </span>
                   </div>,
@@ -929,7 +929,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key="has-value"
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected("hasValue") &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -938,7 +938,7 @@ export function ViewSelector({
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="truncate">{t("fields.hasText")}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {hasValueCount}
                     </span>
                   </div>,
@@ -947,7 +947,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key="no-value"
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected("none") &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -958,7 +958,7 @@ export function ViewSelector({
                         {t("fields.noText")}
                       </span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {noValueCount}
                     </span>
                   </div>,
@@ -1001,7 +1001,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key="has-value"
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected("hasValue") &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -1010,7 +1010,7 @@ export function ViewSelector({
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="truncate">{t("fields.hasLink")}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {hasValueCount}
                     </span>
                   </div>,
@@ -1019,7 +1019,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key="no-value"
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected("none") &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -1030,7 +1030,7 @@ export function ViewSelector({
                         {t("fields.noLink")}
                       </span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {noValueCount}
                     </span>
                   </div>,
@@ -1073,7 +1073,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key="has-value"
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected("hasValue") &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -1082,7 +1082,7 @@ export function ViewSelector({
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="truncate">{t("fields.hasSteps")}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {hasValueCount}
                     </span>
                   </div>,
@@ -1091,7 +1091,7 @@ export function ViewSelector({
                     tabIndex={0}
                     key="no-value"
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected("none") &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -1102,7 +1102,7 @@ export function ViewSelector({
                         {t("fields.noSteps")}
                       </span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {noValueCount}
                     </span>
                   </div>,
@@ -1158,7 +1158,7 @@ export function ViewSelector({
                       tabIndex={0}
                       key="none-option"
                       className={cn(
-                        "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                        "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                         isValueSelected("none") &&
                           "bg-primary/20 hover:bg-primary/30"
                       )}
@@ -1170,7 +1170,7 @@ export function ViewSelector({
                           {tCommon("access.none")}
                         </span>
                       </div>
-                      <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                         {noneCount}
                       </span>
                     </div>
@@ -1189,7 +1189,7 @@ export function ViewSelector({
                         tabIndex={0}
                         key={`option-${option.id}`}
                         className={cn(
-                          "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                          "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                           isValueSelected(option.id) &&
                             "bg-primary/20 hover:bg-primary/30"
                         )}
@@ -1205,7 +1205,7 @@ export function ViewSelector({
                           )}
                           <span className="truncate">{option.name}</span>
                         </div>
-                        <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                        <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                           {option.count || 0}
                         </span>
                       </div>

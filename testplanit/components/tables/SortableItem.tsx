@@ -256,16 +256,16 @@ function SortableItem<
       "z-10",
       "p-2",
       "align-middle",
-      "border-r",
+      "border-e",
       "border-accent",
       "whitespace-nowrap",
     ];
 
     // Apply background based on pinned status first
     if (isPinned) {
-      classes.push("bg-background border-r-0"); // Use bg-background for pinned cells like in DataTable non-sortable rows
+      classes.push("bg-background border-e-0"); // Use bg-background for pinned cells like in DataTable non-sortable rows
     } else if (isSelected) {
-      classes.push("bg-primary/20 border-r-0"); // Apply selection highlight if not pinned
+      classes.push("bg-primary/20 border-e-0"); // Apply selection highlight if not pinned
     }
     // If not pinned and not selected, the background will be inherited from the TableRow (hover:bg-muted/50)
 

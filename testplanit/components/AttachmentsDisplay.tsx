@@ -212,7 +212,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
   );
 
   return (
-    <div className="h-fit w-full mr-12">
+    <div className="h-fit w-full me-12">
       {sortedAttachments.map((attachment, index) => {
         const previousAttachment = findPreviousAttachment(attachment);
         const isMarkedForDelete = isPendingDelete(attachment.id);
@@ -313,7 +313,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                     }`}
                   >
                     <div
-                      className={`text-left min-w-[50px] w-full ${
+                      className={`text-start min-w-[50px] w-full ${
                         attachment.mimeType === "text/uri-list"
                           ? "grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-x-6 gap-y-2"
                           : "space-y-2"
@@ -484,7 +484,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                 key={prevAttachment.id}
               >
                 <div className="relative">
-                  <div className="absolute top-2 left-2 text-red-700 dark:text-red-400 text-xl">
+                  <div className="absolute top-2 start-2 text-red-700 dark:text-red-400 text-xl">
                     <Minus className="w-4 h-4" />
                   </div>
                 </div>
@@ -507,7 +507,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                         className="h-full bg-primary/50 m-1"
                       />
                       <div className="md:w-1/3 w-full flex flex-col justify-start items-start p-4 overflow-hidden h-fit">
-                        <div className="text-left space-y-2 min-w-[50px] w-full">
+                        <div className="text-start space-y-2 min-w-[50px] w-full">
                           <div className="text-sm truncate">
                             <strong>{t("common.fields.description")}</strong>
                             <div className="w-full h-20 max-h-24 md:max-h-48 overflow-auto">

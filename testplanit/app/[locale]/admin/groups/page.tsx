@@ -149,7 +149,7 @@ function GroupList() {
               </div>
               <div>
                 <Button onClick={() => setAddGroupOpen(true)}>
-                  <CirclePlus className="w-4 mr-1" />
+                  <CirclePlus className="w-4 me-1" />
                   <span className="hidden md:inline">{t("add.button")}</span>
                   <span className="md:hidden">{tCommon("add")}</span>
                 </Button>

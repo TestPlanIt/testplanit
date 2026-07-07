@@ -135,7 +135,7 @@ export default function CaseFields() {
             <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
               <CardTitle>
                 <div className="flex items-center">
-                  <LayoutList className="mr-1" />
+                  <LayoutList className="me-1" />
                   {tGlobal("common.fields.caseFields")}
                 </div>
               </CardTitle>

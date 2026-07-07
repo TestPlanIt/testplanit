@@ -200,7 +200,7 @@ export default function ProjectDocumentation({
                   <Button onClick={() => setIsEditing(!isEditing)}>
                     <div className="flex items-center">
                       <div>
-                        <SquarePen className="h-5 w-5 mr-2" />
+                        <SquarePen className="h-5 w-5 me-2" />
                       </div>
                       <div>
                         {t("common.actions.edit")}{" "}
@@ -234,13 +234,13 @@ export default function ProjectDocumentation({
           <div className="flex gap-2 p-4">
             <Button variant="default" onClick={handleSaveDocs}>
               <div className="flex items-center">
-                <Save className="w-5 h-5 mr-2" />
+                <Save className="w-5 h-5 me-2" />
                 <div>{t("common.actions.save")}</div>
               </div>
             </Button>
             <Button variant="outline" onClick={handleCancelEdit}>
               <div className="flex items-center">
-                <CircleSlash2 className="w-5 h-5 mr-2" />
+                <CircleSlash2 className="w-5 h-5 me-2" />
                 <div>{t("common.cancel")}</div>
               </div>
             </Button>

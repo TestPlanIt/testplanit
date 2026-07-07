@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { ReviewGateMutationListener } from "@/components/reviews/ReviewGateMutationListener";
 import { RunGenerationProgressMount } from "@/components/runs/RunGenerationProgressToast";
 import { UpgradeNotificationChecker } from "@/components/UpgradeNotificationChecker";
+import { DirectionProvider } from "@radix-ui/react-direction";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
@@ -10,6 +11,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Toaster } from "sonner";
 import { NextStepOnboarding } from "~/components/onboarding/NextStepOnboarding";
+import { getLocaleDirection } from "~/i18n/direction";
 import { locales } from "~/i18n/navigation";
 import "~/styles/globals.css";
 import "~/styles/tiptap-mentions.css";
@@ -44,22 +46,25 @@ export default async function RootLayout(props: any) {
     "en-US" | "es-ES";
   if (!locales.includes(locale as any)) notFound();
   const messages = (await import(`../../messages/${locale}.json`)).default;
+  const dir = getLocaleDirection(locale);
 
   return (
     <Providers>
       <NextIntlClientProvider messages={messages} locale={locale}>
-        <NextStepOnboarding>
-          <UpgradeNotificationChecker />
-          <ReviewGateMutationListener />
-          <div className="m-4">
-            <div>
-              <Header />
+        <DirectionProvider dir={dir}>
+          <NextStepOnboarding>
+            <UpgradeNotificationChecker />
+            <ReviewGateMutationListener />
+            <div className="m-4">
+              <div>
+                <Header />
+              </div>
+              {props.children}
+              <Toaster richColors className="!z-[9999]" />
+              <RunGenerationProgressMount />
             </div>
-            {props.children}
-            <Toaster richColors className="!z-[9999]" />
-            <RunGenerationProgressMount />
-          </div>
-        </NextStepOnboarding>
+          </NextStepOnboarding>
+        </DirectionProvider>
       </NextIntlClientProvider>
     </Providers>
   );

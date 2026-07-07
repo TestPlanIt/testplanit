@@ -39,7 +39,7 @@ export function ReportFilterChips({
         <Badge
           key={`${filter.filterType}-${filter.valueId}-${index}`}
           variant="secondary"
-          className="pl-2 pr-1 py-1 gap-1.5"
+          className="ps-2 pe-1 py-1 gap-1.5"
         >
           <div className="flex items-center gap-1.5">
             {filter.icon && (

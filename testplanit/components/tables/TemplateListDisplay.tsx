@@ -61,7 +61,7 @@ export const TemplateListDisplay: React.FC<TemplateListProps> = ({
       <Popover>
         <PopoverTrigger>
           <Badge>
-            <LayoutTemplate className="w-4 h-4 mr-1" />
+            <LayoutTemplate className="w-4 h-4 me-1" />
             {allTemplates.length}
           </Badge>
         </PopoverTrigger>

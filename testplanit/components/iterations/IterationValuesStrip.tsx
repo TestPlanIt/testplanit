@@ -95,7 +95,7 @@ export function IterationValuesStrip({
               {isOverridden && (
                 <Badge
                   variant="outline"
-                  className="ml-1 h-4 px-1 text-[0.6875rem] gap-0.5"
+                  className="ms-1 h-4 px-1 text-[0.6875rem] gap-0.5"
                   data-testid={`iteration-values-chip-${p.name}-overridden`}
                 >
                   <Pencil className="h-3 w-3" />

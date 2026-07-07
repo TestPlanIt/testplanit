@@ -183,7 +183,7 @@ function MatrixCellLegend() {
         name={t("legendUntestedName")}
         color={LEGEND_COLORS.untested}
       />
-      <span className="ml-auto italic">{t("legendClickHint")}</span>
+      <span className="ms-auto italic">{t("legendClickHint")}</span>
     </div>
   );
 }

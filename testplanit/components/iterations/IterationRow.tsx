@@ -111,7 +111,7 @@ export function IterationRow({
 
   const checkboxVisible = hasSelection || isSelected;
   const rowBg = isActive
-    ? "bg-primary/10 border-l-2 border-l-primary"
+    ? "bg-primary/10 border-s-2 border-s-primary"
     : isSelected
       ? "bg-accent/50"
       : "bg-card hover:bg-muted/50";
@@ -130,7 +130,7 @@ export function IterationRow({
       data-row-index={iteration.rowIndex}
       onClick={handleRowClick}
       onKeyDown={handleKeyDown}
-      className={`group iteration-row flex items-center gap-2 px-3 py-2 min-h-11 w-full text-left border-b border-border/50 cursor-pointer ${rowBg} ${disabledCls} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1`}
+      className={`group iteration-row flex items-center gap-2 px-3 py-2 min-h-11 w-full text-start border-b border-border/50 cursor-pointer ${rowBg} ${disabledCls} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1`}
       aria-current={isActive ? "true" : undefined}
     >
       <span
@@ -175,7 +175,7 @@ export function IterationRow({
       </TooltipProvider>
 
       {isActive && (
-        <span data-iteration-row-stop="" className="ml-auto">
+        <span data-iteration-row-stop="" className="ms-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -196,7 +196,7 @@ export function IterationRow({
                 disabled={isRunCompleted}
                 data-testid="iteration-menu-override-values"
               >
-                <Pencil className="mr-2 h-4 w-4" />
+                <Pencil className="me-2 h-4 w-4" />
                 {t("iterationOverrideValues")}
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -204,7 +204,7 @@ export function IterationRow({
                 disabled={isRunCompleted}
                 data-testid="iteration-menu-skip"
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="me-2 h-4 w-4" />
                 {t("iterationSkip")}
               </DropdownMenuItem>
               {iteration.isCompleted && (
@@ -216,7 +216,7 @@ export function IterationRow({
                     className="text-destructive focus:text-destructive"
                     data-testid="iteration-menu-reset"
                   >
-                    <RotateCcw className="mr-2 h-4 w-4" />
+                    <RotateCcw className="me-2 h-4 w-4" />
                     {t("iterationReset")}
                   </DropdownMenuItem>
                 </>

@@ -251,7 +251,7 @@ export function DateFilterInput({
                 ) : (
                   <span>{t("search.selectDate")}</span>
                 )}
-                <CalendarDays className="ml-auto h-3 w-3 opacity-50" />
+                <CalendarDays className="ms-auto h-3 w-3 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -288,7 +288,7 @@ export function DateFilterInput({
                     ) : (
                       <span>{t("search.selectDate")}</span>
                     )}
-                    <CalendarDays className="ml-auto h-3 w-3 opacity-50" />
+                    <CalendarDays className="ms-auto h-3 w-3 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

@@ -45,7 +45,7 @@ const RenderSharedGroupInList: React.FC<RenderSharedGroupInListProps> = ({
 
   if (isLoading) {
     return (
-      <li className="ml-4 text-sm text-muted-foreground py-1">
+      <li className="ms-4 text-sm text-muted-foreground py-1">
         {t("loadingSharedStepsItems")}
       </li>
     );
@@ -53,14 +53,14 @@ const RenderSharedGroupInList: React.FC<RenderSharedGroupInListProps> = ({
 
   if (!items || items.length === 0) {
     return (
-      <li className="ml-4 text-sm text-muted-foreground py-1">
+      <li className="ms-4 text-sm text-muted-foreground py-1">
         {t("noStepsInSharedGroup")}
       </li>
     );
   }
 
   return (
-    <ol className="list-decimal overflow-hidden w-full pl-4">
+    <ol className="list-decimal overflow-hidden w-full ps-4">
       {items.map((item, itemIndex) => {
         const stepContentString = item.step
           ? typeof item.step === "string"
@@ -109,7 +109,7 @@ export const StepsListDisplay: React.FC<StepsListProps> = ({ steps }) => {
     <Popover>
       <PopoverTrigger>
         <Badge>
-          <ListOrdered className="w-4 h-4 mr-1" />
+          <ListOrdered className="w-4 h-4 me-1" />
           {sortedSteps.length}
         </Badge>
       </PopoverTrigger>
@@ -117,7 +117,7 @@ export const StepsListDisplay: React.FC<StepsListProps> = ({ steps }) => {
         className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)] lg:w-[400px]"
         onWheel={(e) => e.stopPropagation()}
       >
-        <ol className="pl-6 overflow-hidden w-full list-decimal">
+        <ol className="ps-6 overflow-hidden w-full list-decimal">
           {sortedSteps.map((step, index) => {
             if (step.sharedStepGroupId) {
               return (
@@ -126,10 +126,10 @@ export const StepsListDisplay: React.FC<StepsListProps> = ({ steps }) => {
                     <div className="flex items-center">
                       <Layers
                         size={16}
-                        className="mr-2 text-primary shrink-0"
+                        className="me-2 text-primary shrink-0"
                       />
                       {step.sharedStepGroup?.name || t("common.fields.steps")}
-                      <span className="text-xs text-muted-foreground ml-1">
+                      <span className="text-xs text-muted-foreground ms-1">
                         {t("repository.steps.sharedGroupSuffix")}
                       </span>
                     </div>

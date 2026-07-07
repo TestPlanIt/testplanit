@@ -753,7 +753,7 @@ export function AddResultFieldModal({
                   <FormLabel className="flex items-center">
                     <span>{tCommon("fields.systemName")}</span>
                     <HelpPopover helpKey="resultField.systemName" />
-                    <div className="text-muted-foreground text-sm ml-2">
+                    <div className="text-muted-foreground text-sm ms-2">
                       {tCommon("fields.hints.systemName")}
                     </div>
                   </FormLabel>

@@ -137,7 +137,7 @@ const VerifyEmail = () => {
                 }}
                 priority={true}
               />
-              <div className="ml-3 flex flex-col">
+              <div className="ms-3 flex flex-col">
                 <span className="scroll-m-20 text-4xl font-semibold tracking-tight lg:text-5xl text-[rgb(133,89,233)]">
                   {tCommon("branding.name")}
                 </span>

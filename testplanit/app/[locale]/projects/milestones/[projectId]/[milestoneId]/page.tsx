@@ -605,7 +605,7 @@ export default function MilestoneDetailsPage() {
                   )}
                 </CardTitle>
               </div>
-              <div className="flex flex-col gap-2 ml-4">
+              <div className="flex flex-col gap-2 ms-4">
                 {isEditMode ? (
                   <>
                     <div className="flex gap-2">
@@ -983,7 +983,7 @@ export default function MilestoneDetailsPage() {
                 defaultSize={20}
                 minSize={10}
               >
-                <div className="pl-4 pr-1 pb-1 h-full">
+                <div className="ps-4 pe-1 pb-1 h-full">
                   <div className="space-y-4">
                     <MilestoneFormControls
                       isEditMode={isEditMode}

@@ -394,12 +394,12 @@ function Tags() {
                             {p.name}
                           </span>
                           {p.isCompleted && (
-                            <span className="ml-2 text-xs text-muted-foreground">
+                            <span className="ms-2 text-xs text-muted-foreground">
                               {"(Complete)"}
                             </span>
                           )}
                           {!hasLlm && (
-                            <span className="ml-2 text-xs text-muted-foreground">
+                            <span className="ms-2 text-xs text-muted-foreground">
                               {t("autoTag.wizard.noLlmConfigured")}
                             </span>
                           )}

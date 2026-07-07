@@ -1258,7 +1258,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                   collapsedSize={0}
                   minSize={0}
                   collapsible
-                  className={`p-0 m-0 mr-4 ${
+                  className={`p-0 m-0 me-4 ${
                     isTransitioning
                       ? "transition-all duration-300 ease-in-out"
                       : ""
@@ -1394,7 +1394,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                   <Button
                     onClick={toggleCollapse}
                     variant="secondary"
-                    className="p-0 -ml-1 rounded-l-none"
+                    className="p-0 -ms-1 rounded-s-none"
                     type="button"
                   >
                     {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
@@ -1406,7 +1406,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                   collapsedSize={0}
                   minSize={0}
                   collapsible
-                  className="p-0 m-0 min-w-0 ml-4"
+                  className="p-0 m-0 min-w-0 ms-4"
                 >
                   <FormField
                     control={control}

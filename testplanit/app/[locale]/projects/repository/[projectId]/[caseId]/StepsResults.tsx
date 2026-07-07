@@ -46,7 +46,7 @@ const RenderSharedGroupItemsForResults: React.FC<
 
   if (isLoading) {
     return (
-      <p className="ml-8 text-sm text-muted-foreground py-1">
+      <p className="ms-8 text-sm text-muted-foreground py-1">
         {t("loadingSharedStepsItems")}
       </p>
     );
@@ -54,14 +54,14 @@ const RenderSharedGroupItemsForResults: React.FC<
 
   if (!items || items.length === 0) {
     return (
-      <p className="ml-8 text-sm text-muted-foreground py-1">
+      <p className="ms-8 text-sm text-muted-foreground py-1">
         {t("noStepsInSharedGroup")}
       </p>
     );
   }
 
   return (
-    <div className="ml-8 mt-1 space-y-2 border-l-2 border-dashed border-primary/20 pl-3 py-1 w-full pr-8">
+    <div className="ms-8 mt-1 space-y-2 border-s-2 border-dashed border-primary/20 ps-3 py-1 w-full pe-8">
       {items.map((item, itemIndex) => {
         let stepContent, expectedResultContent;
         try {
@@ -139,7 +139,7 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
 
   return (
     <div className="mt-2" data-testid="steps-results">
-      <ol className="ml-1 mr-6 min-w-[200px]">
+      <ol className="ms-1 me-6 min-w-[200px]">
         {steps.map((step, index) => {
           if (step.sharedStepGroupId) {
             return (
@@ -156,8 +156,8 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
                     >
                       {index + 1}
                     </div>
-                    <div className="ml-4 flex items-center mt-2">
-                      <Layers className="h-5 w-5 mr-2 text-primary shrink-0" />
+                    <div className="ms-4 flex items-center mt-2">
+                      <Layers className="h-5 w-5 me-2 text-primary shrink-0" />
                       <span className="text-sm">
                         {t_repo_steps("sharedStepGroupTitle", {
                           name:

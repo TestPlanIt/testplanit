@@ -142,7 +142,7 @@ export default function DuplicatesPage() {
     <div className="py-6 px-2">
       <div className="mb-6 flex items-center gap-2">
         <Link href={`/projects/repository/${projectId}`}>
-          <Button variant="outline" size="icon" className="mr-2">
+          <Button variant="outline" size="icon" className="me-2">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>

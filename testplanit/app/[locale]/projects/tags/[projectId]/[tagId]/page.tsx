@@ -574,7 +574,7 @@ function TagDetail() {
 
             <TabsContent value="cases" className="max-w-full overflow-hidden">
               {(casesCount ?? 0) > 0 && (
-                <p className="mb-2 text-right text-sm text-muted-foreground">
+                <p className="mb-2 text-end text-sm text-muted-foreground">
                   {t("admin.auditLogs.showing", {
                     loaded: mappedCases.length.toLocaleString(),
                     total: (casesCount ?? mappedCases.length).toLocaleString(),
@@ -604,7 +604,7 @@ function TagDetail() {
 
             <TabsContent value="testRuns">
               {(testRunsCount ?? 0) > 0 && (
-                <p className="mb-2 text-right text-sm text-muted-foreground">
+                <p className="mb-2 text-end text-sm text-muted-foreground">
                   {t("admin.auditLogs.showing", {
                     loaded: mappedTestRuns.length.toLocaleString(),
                     total: (
@@ -636,7 +636,7 @@ function TagDetail() {
 
             <TabsContent value="sessions">
               {(sessionsCount ?? 0) > 0 && (
-                <p className="mb-2 text-right text-sm text-muted-foreground">
+                <p className="mb-2 text-end text-sm text-muted-foreground">
                   {t("admin.auditLogs.showing", {
                     loaded: mappedSessions.length.toLocaleString(),
                     total: (

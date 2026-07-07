@@ -517,7 +517,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                     {user.accessSource === "GROUP_MAPPING" && (
                       <Badge
                         variant="secondary"
-                        className="ml-2"
+                        className="ms-2"
                         data-testid="group-mapping-badge"
                       >
                         {tAdmin("groupMappingBadge")}
@@ -729,7 +729,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                   <FormLabel className="flex items-center">
                     {tCommon("fields.apiAccess")}
                     {accessValue === "ADMIN" && (
-                      <span className="text-muted-foreground text-xs ml-2">
+                      <span className="text-muted-foreground text-xs ms-2">
                         {"("}
                         {tCommon("fields.requiredForAdmin")}
                         {")"}

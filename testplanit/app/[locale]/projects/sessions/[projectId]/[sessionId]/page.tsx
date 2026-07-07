@@ -1789,7 +1789,7 @@ export default function SessionPage() {
           <CardHeader>
             <div className="flex justify-between items-start">
               {!isEditMode && (
-                <div className="mr-2">
+                <div className="me-2">
                   <Link href={`/projects/sessions/${projectId}`}>
                     <Button type="button" variant="outline" size="icon">
                       <ArrowLeft className="h-4 w-4" />
@@ -1797,7 +1797,7 @@ export default function SessionPage() {
                   </Link>
                 </div>
               )}
-              <CardTitle className="w-full pr-4 text-xl md:text-2xl mr-4">
+              <CardTitle className="w-full pe-4 text-xl md:text-2xl me-4">
                 {isEditMode ? (
                   <FormField
                     control={control}
@@ -1837,7 +1837,7 @@ export default function SessionPage() {
                     >
                       <CircleCheckBig className="h-6 w-6 shrink-0" />
                       <div className="hidden md:block">
-                        <span className="mr-1">
+                        <span className="me-1">
                           {tCommon("fields.completedOn")}
                         </span>
                         <DateFormatter
@@ -2259,7 +2259,7 @@ export default function SessionPage() {
                   type="button"
                   onClick={toggleCollapseLeft}
                   variant="secondary"
-                  className="p-0 rounded-r-none"
+                  className="p-0 rounded-e-none"
                 >
                   {isCollapsedLeft ? <ChevronRight /> : <ChevronLeft />}
                 </Button>
@@ -2272,7 +2272,7 @@ export default function SessionPage() {
                   type="button"
                   onClick={toggleCollapseRight}
                   variant="secondary"
-                  className={`p-0 transform ${isCollapsedRight ? "rounded-l-none" : "rounded-r-none rotate-180"}`}
+                  className={`p-0 transform ${isCollapsedRight ? "rounded-s-none" : "rounded-e-none rotate-180"}`}
                 >
                   <ChevronLeft />
                 </Button>

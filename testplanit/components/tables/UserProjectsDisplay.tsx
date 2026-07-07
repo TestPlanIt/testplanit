@@ -82,7 +82,7 @@ export const UserProjectsDisplay: React.FC<UserProjectsDisplayProps> = ({
       <Popover>
         <PopoverTrigger>
           <Badge>
-            <BoxesIcon className="w-4 h-4 mr-1" />
+            <BoxesIcon className="w-4 h-4 me-1" />
             {projects.length}
           </Badge>
         </PopoverTrigger>

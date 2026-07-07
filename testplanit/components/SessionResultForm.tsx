@@ -813,7 +813,7 @@ export function SessionResultForm({
                         >
                           <div className="flex items-center w-full truncate">
                             <div
-                              className="w-3 h-3 rounded-full mr-2 shrink-0"
+                              className="w-3 h-3 rounded-full me-2 shrink-0"
                               style={{
                                 backgroundColor:
                                   status.color?.value || "#B1B2B3",
@@ -971,7 +971,7 @@ export function SessionResultForm({
                               >
                                 <div className="flex items-center w-full truncate">
                                   <div
-                                    className="w-3 h-3 rounded-full mr-2 shrink-0"
+                                    className="w-3 h-3 rounded-full me-2 shrink-0"
                                     style={{
                                       backgroundColor:
                                         status.color?.value || "#B1B2B3",

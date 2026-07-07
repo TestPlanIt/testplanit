@@ -297,7 +297,7 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-start font-normal",
                     !field.value && "text-muted-foreground"
                   )}
                   disabled={disabled}
@@ -310,7 +310,7 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
                       {placeholder || tReports("dateRange.selectDateRange")}
                     </span>
                   )}
-                  <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
+                  <CalendarDays className="ms-auto h-4 w-4 opacity-50" />
                 </Button>
               </FormControl>
             </PopoverTrigger>
@@ -333,7 +333,7 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
                       data-testid="date-range-preset-select"
                     >
                       {getSelectedLabel()}
-                      <CalendarDays className="ml-2 h-4 w-4 opacity-50" />
+                      <CalendarDays className="ms-2 h-4 w-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-56">

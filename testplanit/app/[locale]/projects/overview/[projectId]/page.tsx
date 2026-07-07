@@ -163,8 +163,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                     size="sm"
                     className={`p-0 transform ${
                       isLeftCollapsed
-                        ? "rounded-l-none rotate-180"
-                        : "rounded-r-none"
+                        ? "rounded-s-none rotate-180"
+                        : "rounded-e-none"
                     }`}
                   >
                     <ChevronLeft />
@@ -192,8 +192,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                     size="sm"
                     className={`p-0 transform ${
                       isRightCollapsed
-                        ? "rounded-l-none"
-                        : "rounded-r-none rotate-180"
+                        ? "rounded-s-none"
+                        : "rounded-e-none rotate-180"
                     }`}
                   >
                     <ChevronLeft />
@@ -224,7 +224,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
               isTransitioning ? "transition-all duration-300 ease-in-out" : ""
             }`}
           >
-            <div className="h-full overflow-auto pr-4">
+            <div className="h-full overflow-auto pe-4">
               <Accordion
                 type="multiple"
                 defaultValue={[
@@ -241,7 +241,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                 >
                   <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
                     <div className="flex items-center text-2xl font-semibold text-primary">
-                      <ListTree className="mr-2 h-6 w-6" />
+                      <ListTree className="me-2 h-6 w-6" />
                       {t("repository.title")}
                     </div>
                   </AccordionTrigger>
@@ -256,7 +256,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                 >
                   <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
                     <div className="flex items-center text-2xl font-semibold text-primary">
-                      <PlayCircle className="mr-2 h-6 w-6" />
+                      <PlayCircle className="me-2 h-6 w-6" />
                       {t("projects.overview.activeTestRuns")}
                     </div>
                   </AccordionTrigger>
@@ -271,7 +271,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                 >
                   <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
                     <div className="flex items-center text-2xl font-semibold text-primary">
-                      <Compass className="mr-2 h-6 w-6" />
+                      <Compass className="me-2 h-6 w-6" />
                       {t("home.dashboard.activeSessions")}
                     </div>
                   </AccordionTrigger>
@@ -286,7 +286,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                 >
                   <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
                     <div className="flex items-center text-2xl font-semibold text-primary">
-                      <TagsIcon className="mr-2 h-6 w-6" />
+                      <TagsIcon className="me-2 h-6 w-6" />
                       {t("common.fields.tags")}
                     </div>
                   </AccordionTrigger>

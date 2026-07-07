@@ -321,7 +321,7 @@ const BasicInfoDialog = React.memo(
                           <div className="flex items-center">
                             {tCommon("fields.configurations")}
                             {selectedConfigs.length > 0 && (
-                              <span className="ml-1 text-muted-foreground">
+                              <span className="ms-1 text-muted-foreground">
                                 {"("}
                                 {selectedConfigs.length}
                                 {")"}
@@ -736,7 +736,7 @@ const TestCasesDialog = React.memo(
 
     return (
       <>
-        <DialogHeader className="p-6 pb-0 pr-4">
+        <DialogHeader className="p-6 pb-0 pe-4">
           <DialogTitle>{tRepository("cases.selectCases")}</DialogTitle>
           <DialogDescription asChild>
             <div className="flex justify-between items-start text-muted-foreground">
@@ -829,7 +829,7 @@ const TestCasesDialog = React.memo(
         </div>
         <div className="p-6 bg-background border-t flex justify-end items-center gap-2">
           {selectedTestCases.length > 0 && numericProjectId ? (
-            <div className="mr-auto">
+            <div className="me-auto">
               <RunPreflightChip
                 caseIds={selectedTestCases}
                 configIds={watchedConfigIds}

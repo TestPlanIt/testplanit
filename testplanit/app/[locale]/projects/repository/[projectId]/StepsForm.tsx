@@ -229,13 +229,13 @@ const StepItem: React.FC<StepItemProps> = ({
                   <div
                     {...attributes}
                     {...listeners}
-                    className="cursor-ns-resize mr-2"
+                    className="cursor-ns-resize me-2"
                   >
                     <MoveVertical className="h-4 w-4" />
                   </div>
                 )}
                 <FormLabel className="font-bold flex items-center">
-                  <Layers className="h-5 w-5 ml-2 mr-1" />
+                  <Layers className="h-5 w-5 ms-2 me-1" />
                   {t("sharedStepGroupTitle", {
                     name: field.sharedStepGroupName || "",
                   })}
@@ -256,7 +256,7 @@ const StepItem: React.FC<StepItemProps> = ({
                     <Button
                       type="button"
                       variant="destructive"
-                      className="ml-auto"
+                      className="ms-auto"
                       data-testid={`delete-step-${index}`}
                     >
                       <Trash2 className="h-5 w-5" />
@@ -293,7 +293,7 @@ const StepItem: React.FC<StepItemProps> = ({
             </div>
             {/* Display individual shared steps (read-only) */}
             {sharedItemsIsLoading && (
-              <p className="ml-6 text-sm text-muted-foreground">
+              <p className="ms-6 text-sm text-muted-foreground">
                 {t("loadingSharedStepsItems")}
               </p>
             )}
@@ -343,10 +343,10 @@ const StepItem: React.FC<StepItemProps> = ({
                   return (
                     <div
                       key={item.id || itemIndex}
-                      className="ml-6 mt-1 p-2 border-l-2 border-dashed border-primary/20"
+                      className="ms-6 mt-1 p-2 border-s-2 border-dashed border-primary/20"
                     >
                       <Label className="mb-1 flex items-center font-semibold">
-                        <ListOrdered className="mr-1 h-5 w-5 shrink-0" />
+                        <ListOrdered className="me-1 h-5 w-5 shrink-0" />
                         {tCommon("fields.step")} {item.order + 1}
                       </Label>
 
@@ -357,7 +357,7 @@ const StepItem: React.FC<StepItemProps> = ({
                         className="min-h-10 bg-background/50 p-1 rounded text-sm"
                       />
                       <Label className="mt-4 mb-1 flex items-center font-semibold">
-                        <SearchCheck className="mr-1 h-5 w-5 shrink-0" />
+                        <SearchCheck className="me-1 h-5 w-5 shrink-0" />
                         {tCommon("fields.expectedResult")}
                       </Label>
                       <TipTapEditor
@@ -373,7 +373,7 @@ const StepItem: React.FC<StepItemProps> = ({
               </div>
             )}
             {sharedItemsData && sharedItemsData.length === 0 && (
-              <p className="ml-6 text-sm text-muted-foreground">
+              <p className="ms-6 text-sm text-muted-foreground">
                 {t("noStepsInSharedGroup")}
               </p>
             )}
@@ -399,7 +399,7 @@ const StepItem: React.FC<StepItemProps> = ({
                   id={`select-step-${index}`}
                   checked={isSelected}
                   onCheckedChange={() => onToggleSelection(index)}
-                  className="mr-2 ml-1"
+                  className="me-2 ms-1"
                   aria-label={`Select step ${index + 1}`}
                 />
               )}
@@ -414,7 +414,7 @@ const StepItem: React.FC<StepItemProps> = ({
               )}
               <FormLabel className="font-bold flex items-center">
                 <ListOrdered
-                  className={`h-5 w-5 ml-${readOnly ? "2" : "6"} mr-1`}
+                  className={`h-5 w-5 ml-${readOnly ? "2" : "6"} me-1`}
                 />
                 {tCommon("fields.step")} {index + 1}
               </FormLabel>
@@ -434,7 +434,7 @@ const StepItem: React.FC<StepItemProps> = ({
                   <Button
                     type="button"
                     variant="destructive"
-                    className="ml-auto"
+                    className="ms-auto"
                     data-testid={`delete-step-${index}`}
                   >
                     <Trash2 className="h-5 w-5" />
@@ -447,7 +447,7 @@ const StepItem: React.FC<StepItemProps> = ({
                       <Button
                         type="button"
                         variant="secondary"
-                        className="ml-auto"
+                        className="ms-auto"
                         onClick={() => handlePopoverOpenChange(index, false)}
                       >
                         <CircleSlash2 className="h-4 w-4" />
@@ -462,7 +462,7 @@ const StepItem: React.FC<StepItemProps> = ({
                           handleRemove(index);
                           handlePopoverOpenChange(index, false);
                         }}
-                        className="ml-auto"
+                        className="ms-auto"
                       >
                         <Trash2 className="h-4 w-4" /> {t("delete")}
                       </Button>
@@ -486,7 +486,7 @@ const StepItem: React.FC<StepItemProps> = ({
           </div>
           <div className="w-full ring-2 ring-primary/50 p-1 rounded-md bg-primary-foreground mb-2 rounded-t-none">
             <FormLabel className="font-bold flex items-center">
-              <SearchCheck className="h-5 w-5 mr-1" />
+              <SearchCheck className="h-5 w-5 me-1" />
               {tCommon("fields.expectedResult")}
             </FormLabel>
             <FormControl>
@@ -969,7 +969,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
-              <Layers className="h-5 w-5 mr-1" />
+              <Layers className="h-5 w-5 me-1" />
               {tRepoSteps("createSharedSteps", {
                 number: selectedStepIndices.length || 0,
               })}
@@ -1013,7 +1013,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
-              <Layers className="h-5 w-5 mr-1" />
+              <Layers className="h-5 w-5 me-1" />
               {tRepoSteps("selectSharedStepsTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -1030,7 +1030,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
               renderOption={(group: SharedStepGroupWithCount) => (
                 <div className="flex items-center justify-between w-full">
                   {group.name}
-                  <span className="text-xs text-muted-foreground ml-1">
+                  <span className="text-xs text-muted-foreground ms-1">
                     {tRepoSteps("stepsCountLabel", {
                       count: group._count?.items || 0,
                     })}
@@ -1100,7 +1100,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
                       return (
                         <div
                           key={item.id || itemIndex}
-                          className="p-2 border-l-2 border-dashed border-primary/20 bg-background/70 rounded-r-md"
+                          className="p-2 border-s-2 border-dashed border-primary/20 bg-background/70 rounded-e-md"
                         >
                           <div className="font-semibold text-xs mb-1 text-foreground/80">
                             {tCommon("fields.step")} {item.order + 1}
