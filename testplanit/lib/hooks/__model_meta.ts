@@ -116,6 +116,67 @@ const metadata: ModelMeta = {
                 },
             },
         },
+        pendingAuth: {
+            name: 'PendingAuth', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, email: {
+                    name: "email",
+                    type: "String",
+                }, verifierHash: {
+                    name: "verifierHash",
+                    type: "String",
+                }, linkTokenHash: {
+                    name: "linkTokenHash",
+                    type: "String",
+                }, codeHash: {
+                    name: "codeHash",
+                    type: "String",
+                }, status: {
+                    name: "status",
+                    type: "PendingAuthStatus",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, attempts: {
+                    name: "attempts",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 0 }] }],
+                }, callbackUrl: {
+                    name: "callbackUrl",
+                    type: "String",
+                    isOptional: true,
+                }, requestIp: {
+                    name: "requestIp",
+                    type: "String",
+                    isOptional: true,
+                }, requestUserAgent: {
+                    name: "requestUserAgent",
+                    type: "String",
+                    isOptional: true,
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, expiresAt: {
+                    name: "expiresAt",
+                    type: "DateTime",
+                }, consumedAt: {
+                    name: "consumedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, linkTokenHash: {
+                    name: "linkTokenHash",
+                    fields: ["linkTokenHash"]
+                },
+            },
+        },
         user: {
             name: 'User', fields: {
                 id: {

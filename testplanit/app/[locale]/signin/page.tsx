@@ -1,7 +1,7 @@
 "use client";
 
 import type { NextPage } from "next";
-import { signIn } from "next-auth/react";
+import { getCsrfToken, signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -37,6 +37,7 @@ import { Input } from "@/components/ui/input";
 import {
   InputOTP,
   InputOTPGroup,
+  InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { LinkIcon, Loader2, Mail, Shield } from "lucide-react";
@@ -96,6 +97,14 @@ const Signin: NextPage = () => {
   const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [magicLinkEmail, setMagicLinkEmail] = useState("");
+  // Device-bound passwordless flow (PASSWORDLESS_DEVICE_BOUND): id of the
+  // pending sign-in this browser requested, plus relay-code entry state.
+  const [passwordlessPendingId, setPasswordlessPendingId] = useState<
+    string | null
+  >(null);
+  const [passwordlessCode, setPasswordlessCode] = useState("");
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [passwordlessError, setPasswordlessError] = useState("");
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
   const [sessionCleared, setSessionCleared] = useState(false);
   // 2FA state
@@ -370,6 +379,7 @@ const Signin: NextPage = () => {
     data: z.infer<typeof MagicLinkFormSchema>
   ) {
     setIsSendingMagicLink(true);
+    setPasswordlessError("");
     try {
       // Clear any existing session cookies first to ensure clean state
       clearSessionCookies();
@@ -379,11 +389,41 @@ const Signin: NextPage = () => {
       // Get callback URL from search params, default to "/"
       const callbackUrl = searchParams.get("callbackUrl") || "/";
 
-      await signIn("email", {
-        email: data.email,
-        redirect: false,
-        callbackUrl,
-      });
+      // Try the device-bound flow first (PASSWORDLESS_DEVICE_BOUND); the
+      // endpoint answers { enabled: false } when the deployment has the flag
+      // off, in which case we fall back to the stock EmailProvider flow.
+      let deviceBound = false;
+      try {
+        const csrfToken = await getCsrfToken();
+        const res = await fetch("/api/auth/passwordless/request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: data.email, callbackUrl, csrfToken }),
+        });
+        if (res.ok) {
+          const body = await res.json();
+          if (body.enabled) {
+            deviceBound = true;
+            setPasswordlessPendingId(body.pendingId);
+          }
+        } else if (res.status === 429) {
+          // Throttled: don't double-send through the legacy flow.
+          setPasswordlessError(t("auth.signin.passwordless.tooManyRequests"));
+          setIsSendingMagicLink(false);
+          return;
+        }
+      } catch (error) {
+        console.error("Passwordless request error:", error);
+        // Fall through to the legacy flow.
+      }
+
+      if (!deviceBound) {
+        await signIn("email", {
+          email: data.email,
+          redirect: false,
+          callbackUrl,
+        });
+      }
 
       // Always show success message regardless of result
       // This prevents email enumeration attacks
@@ -398,6 +438,79 @@ const Signin: NextPage = () => {
       setIsSendingMagicLink(false);
     }
   }
+
+  // Shared post-sign-in handling (locale cookie + redirect), mirroring the
+  // credentials flow above.
+  async function completeSignedInRedirect() {
+    const response = await fetch("/api/auth/session");
+    const session = await response.json();
+    if (session?.user?.preferences?.locale) {
+      const urlLocale = session.user.preferences.locale.replace("_", "-");
+      document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+    }
+    const callbackUrl = searchParams.get("callbackUrl") || "/";
+    router.push(callbackUrl);
+  }
+
+  async function handleVerifyPasswordlessCode() {
+    if (!passwordlessPendingId || isVerifyingCode) return;
+    const code = passwordlessCode.replace(/[\s-]/g, "");
+    if (code.length < 8) return;
+
+    setIsVerifyingCode(true);
+    setPasswordlessError("");
+
+    const result = await signIn("passwordless-complete", {
+      redirect: false,
+      pendingId: passwordlessPendingId,
+      code,
+    });
+
+    if (result?.ok) {
+      await completeSignedInRedirect();
+      return;
+    }
+
+    switch (result?.error) {
+      case "PASSWORDLESS_EXPIRED":
+        setPasswordlessError(t("auth.signin.passwordless.codeExpired"));
+        break;
+      case "PASSWORDLESS_LOCKED":
+        setPasswordlessError(t("auth.signin.passwordless.tooManyAttempts"));
+        break;
+      case "PASSWORDLESS_NO_VERIFIER":
+        setPasswordlessError(t("auth.signin.passwordless.windowLost"));
+        break;
+      default:
+        setPasswordlessError(t("auth.signin.passwordless.invalidCode"));
+    }
+    setIsVerifyingCode(false);
+  }
+
+  // While the device-bound waiting screen is up, watch for the sign-in
+  // completing in another tab of this browser (user clicked the emailed link)
+  // and advance this window too.
+  useEffect(() => {
+    if (!magicLinkSent || !passwordlessPendingId) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch("/api/auth/session");
+        const session = await res.json();
+        if (session?.user?.id) {
+          clearInterval(interval);
+          if (session.user.preferences?.locale) {
+            const urlLocale = session.user.preferences.locale.replace("_", "-");
+            document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+          }
+          router.push(searchParams.get("callbackUrl") || "/");
+        }
+      } catch {
+        // Transient network error — keep polling.
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [magicLinkSent, passwordlessPendingId]);
 
   return (
     <div className="flex items-center justify-center">
@@ -645,6 +758,10 @@ const Signin: NextPage = () => {
             magicLinkForm.reset();
             setMagicLinkEmail("");
             setMagicLinkSent(false);
+            setPasswordlessPendingId(null);
+            setPasswordlessCode("");
+            setPasswordlessError("");
+            setIsVerifyingCode(false);
           }
         }}
       >
@@ -662,6 +779,13 @@ const Signin: NextPage = () => {
                 onSubmit={magicLinkForm.handleSubmit(handleSendMagicLink)}
                 className="space-y-4"
               >
+                {passwordlessError && (
+                  <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
+                    <p className="text-sm text-destructive text-center">
+                      {passwordlessError}
+                    </p>
+                  </div>
+                )}
                 <FormField
                   control={magicLinkForm.control}
                   name="email"
@@ -721,14 +845,87 @@ const Signin: NextPage = () => {
                     email: magicLinkEmail,
                   })}
                 </p>
+                {passwordlessPendingId && (
+                  <div className="mt-6 space-y-3 text-left">
+                    <p className="text-sm text-muted-foreground text-center">
+                      {t("auth.signin.passwordless.waitingInstructions")}
+                    </p>
+                    {passwordlessError && (
+                      <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
+                        <p className="text-sm text-destructive text-center">
+                          {passwordlessError}
+                        </p>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        {t("auth.signin.passwordless.codeLabel")}
+                      </label>
+                      <div className="flex justify-center">
+                        <InputOTP
+                          maxLength={8}
+                          value={passwordlessCode}
+                          onChange={(value) =>
+                            setPasswordlessCode(value.toUpperCase())
+                          }
+                          onComplete={() => void handleVerifyPasswordlessCode()}
+                          pattern="^[a-zA-Z0-9]*$"
+                          pasteTransformer={(pasted) =>
+                            pasted.replace(/[\s-]/g, "")
+                          }
+                          autoComplete="one-time-code"
+                          disabled={isVerifyingCode}
+                          data-testid="passwordless-code-input"
+                        >
+                          <InputOTPGroup>
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                            <InputOTPSlot index={3} />
+                          </InputOTPGroup>
+                          <InputOTPSeparator />
+                          <InputOTPGroup>
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
+                            <InputOTPSlot index={6} />
+                            <InputOTPSlot index={7} />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      className="w-full"
+                      onClick={handleVerifyPasswordlessCode}
+                      disabled={
+                        isVerifyingCode ||
+                        passwordlessCode.replace(/[\s-]/g, "").length < 8
+                      }
+                      data-testid="passwordless-verify-code-button"
+                    >
+                      {isVerifyingCode ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {t("auth.signin.passwordless.verifying")}
+                        </>
+                      ) : (
+                        t("auth.signin.passwordless.verifyCode")
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <Button
+                  variant={passwordlessPendingId ? "outline" : "default"}
                   onClick={() => {
                     setShowMagicLinkInput(false);
                     magicLinkForm.reset();
                     setMagicLinkEmail("");
                     setMagicLinkSent(false);
+                    setPasswordlessPendingId(null);
+                    setPasswordlessCode("");
+                    setPasswordlessError("");
                   }}
                   className="w-full"
                 >

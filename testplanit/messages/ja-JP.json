@@ -1085,12 +1085,34 @@
         "error": "マジックリンクの送信に失敗しました。もう一度お試しください。",
         "backToSignIn": "サインインに戻る"
       },
+      "passwordless": {
+        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
+        "codeLabel": "Sign-in code",
+        "verifyCode": "Verify code",
+        "verifying": "Verifying...",
+        "invalidCode": "That code isn't right. Check the email and try again.",
+        "codeExpired": "This sign-in request has expired. Request a new link.",
+        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
+        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
+        "genericError": "We couldn't sign you in. Request a new link and try again.",
+        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+      },
       "twoFactor": {
         "title": "二要素認証",
         "description": "認証アプリからの 6 桁のコードを入力するか、バックアップ コードを使用します。"
       },
       "troubleSigningIn": "サインインに問題がありますか?",
       "contactAdmin": "システム管理者に問い合わせる"
+    },
+    "passwordless": {
+      "completingSignIn": "Signing you in...",
+      "completeErrorTitle": "We couldn't sign you in",
+      "requestNewLink": "Request a new link",
+      "codeTitle": "Your sign-in code",
+      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
+      "codeCloseNotice": "You can close this window once you've entered the code.",
+      "expiredTitle": "This sign-in link is no longer valid",
+      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
     },
     "errors": {
       "accessDenied": "アクセスが拒否されました。アカウントが非アクティブであるか、サインインする権限がない可能性があります。",
@@ -6187,7 +6209,7 @@
       "authType": "## 認証タイプ\n外部サービスでの認証方法を選択します。\n\n- **APIキー:** メールとAPIトークンを使用したシンプルな認証\n- **OAuth 2.0:** OAuthフローを使用した安全な認証\n- **個人アクセストークン:** トークンベースの直接認証",
       "email": "## メールアドレス\n外部サービス用のアカウントのメールアドレス。\n\n- APIキー認証に使用されます\n- APIトークンを生成したアカウントと一致する必要があります\n- Jiraなどのサービスに必要です",
       "apiToken": "## APIトークン\n外部サービスのアカウント設定からAPIトークンを生成します。\n\n- 通常はアカウント設定 → セキュリティ → APIトークンにあります\n- パスワードを公開することなく安全なアクセスを提供します\n- 必要に応じて取り消しや再生成が可能です",
-      "jiraUrl": "## Jira URL\nJiraインスタンスのベースURL。\n\n- 形式: https://your-site.atlassian.net\n- /browseやその他のパスを含めないでください\n- このサーバーからアクセスできる必要があります",
+      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
       "clientId": "## OAuthクライアントID\nOAuthアプリケーション構成からのクライアントID。\n\n- 外部サービスの開発者コンソールで作成されます\n- OAuthフロー中にアプリケーションを識別するために使用されます\n- 構成ファイルで安全に共有できます",
       "clientSecret": "## OAuthクライアントシークレット\nOAuthアプリケーション構成からのクライアントシークレット。\n\n- クライアントIDと一緒に作成されます\n- 機密性と安全性を保つ必要があります\n- アプリケーションの認証に使用されます",
       "personalAccessToken": "## 個人アクセストークン\n外部サービスへの適切な権限を持つ個人アクセストークン。\n\n- アカウント設定で生成されます\n- 読み取りと書き込みの問題に対する権限が必要です\n- パスワード認証よりも安全です",
@@ -7678,6 +7700,11 @@
       "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "このメールをリクエストしていない場合は、無視していただいて構いません。",
       "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+    },
+    "passwordless": {
+      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
+      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

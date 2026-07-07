@@ -1085,12 +1085,34 @@
         "error": "发送魔法链接失败，请重试。",
         "backToSignIn": "返回登录页面"
       },
+      "passwordless": {
+        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
+        "codeLabel": "Sign-in code",
+        "verifyCode": "Verify code",
+        "verifying": "Verifying...",
+        "invalidCode": "That code isn't right. Check the email and try again.",
+        "codeExpired": "This sign-in request has expired. Request a new link.",
+        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
+        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
+        "genericError": "We couldn't sign you in. Request a new link and try again.",
+        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+      },
       "twoFactor": {
         "title": "双因素身份验证",
         "description": "输入身份验证器应用程序中的 6 位验证码，或使用备用验证码。"
       },
       "troubleSigningIn": "登录遇到问题？",
       "contactAdmin": "请联系系统管理员"
+    },
+    "passwordless": {
+      "completingSignIn": "Signing you in...",
+      "completeErrorTitle": "We couldn't sign you in",
+      "requestNewLink": "Request a new link",
+      "codeTitle": "Your sign-in code",
+      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
+      "codeCloseNotice": "You can close this window once you've entered the code.",
+      "expiredTitle": "This sign-in link is no longer valid",
+      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
     },
     "errors": {
       "accessDenied": "访问被拒绝。您的帐户可能已停用或您没有登录权限。",
@@ -6187,7 +6209,7 @@
       "authType": "## 身份验证类型\n选择如何与外部服务进行身份验证。\n\n- **API 密钥：** 使用电子邮件和 API 令牌进行简单身份验证\n- **OAuth 2.0：** 使用 OAuth 流程进行安全身份验证\n- **个人访问令牌：** 基于令牌的直接身份验证",
       "email": "## 电子邮件地址\n您的外部服务帐户电子邮件地址。\n\n- 用于 API 密钥身份验证\n- 必须与生成 API 令牌的帐户匹配\n- Jira 和类似服务必需",
       "apiToken": "## API 令牌\n在外部服务的帐户设置中生成 API 令牌。\n\n- 通常位于“帐户设置”→“安全”→“API 令牌”中。\n- 提供安全访问，无需暴露您的密码。\n- 可根据需要撤销和重新生成。",
-      "jiraUrl": "## Jira URL\n您的 Jira 实例的基本 URL。\n\n- 格式：https://your-site.atlassian.net\n- 请勿包含 /browse 或其他路径\n- 必须可从此服务器访问",
+      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
       "clientId": "## OAuth 客户端 ID\n来自您的 OAuth 应用程序配置的客户端 ID。\n\n- 在外部服务的开发者控制台中创建。\n- 用于在 OAuth 流程中识别您的应用程序。\n- 可以安全地在配置文件中共享。",
       "clientSecret": "## OAuth 客户端密钥\n来自您的 OAuth 应用程序配置的客户端密钥。\n\n- 与客户端 ID 一起创建\n- 必须保密且安全\n- 用于验证您的应用程序",
       "personalAccessToken": "## 个人访问令牌\n具有访问外部服务相应权限的个人访问令牌。\n\n- 在您的帐户设置中生成\n- 应具有读写权限\n- 比密码验证更安全",
@@ -7678,6 +7700,11 @@
       "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "如果您没有请求收到这封邮件，您可以忽略它。",
       "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+    },
+    "passwordless": {
+      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
+      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

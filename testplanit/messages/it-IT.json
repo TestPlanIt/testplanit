@@ -1085,12 +1085,34 @@
         "error": "Impossibile inviare il link magico. Riprova.",
         "backToSignIn": "Torna alla pagina di accesso"
       },
+      "passwordless": {
+        "waitingInstructions": "Click the link in the email to sign in from this browser, or enter the code from the email below.",
+        "codeLabel": "Sign-in code",
+        "verifyCode": "Verify code",
+        "verifying": "Verifying...",
+        "invalidCode": "That code isn't right. Check the email and try again.",
+        "codeExpired": "This sign-in request has expired. Request a new link.",
+        "tooManyAttempts": "Too many incorrect attempts. Request a new link to try again.",
+        "windowLost": "This window can no longer complete the sign-in. Request a new link.",
+        "genericError": "We couldn't sign you in. Request a new link and try again.",
+        "tooManyRequests": "Too many sign-in requests. Please wait a moment and try again."
+      },
       "twoFactor": {
         "title": "Autenticazione a due fattori",
         "description": "Inserisci il codice a 6 cifre generato dalla tua app di autenticazione oppure utilizza un codice di backup."
       },
       "troubleSigningIn": "Problemi di accesso?",
       "contactAdmin": "Contattare l'amministratore di sistema"
+    },
+    "passwordless": {
+      "completingSignIn": "Signing you in...",
+      "completeErrorTitle": "We couldn't sign you in",
+      "requestNewLink": "Request a new link",
+      "codeTitle": "Your sign-in code",
+      "codeInstructions": "You opened the sign-in link on a different device or browser. Enter this code on the sign-in screen where you originally requested it.",
+      "codeCloseNotice": "You can close this window once you've entered the code.",
+      "expiredTitle": "This sign-in link is no longer valid",
+      "expiredBody": "The link may have expired or already been used. Request a new one from the sign-in page — it only takes a moment."
     },
     "errors": {
       "accessDenied": "Accesso negato. Il tuo account potrebbe essere inattivo o non hai l'autorizzazione per accedere.",
@@ -6187,7 +6209,7 @@
       "authType": "## Tipo di autenticazione\nScegli come autenticarti con il servizio esterno.\n\n- **Chiave API:** Autenticazione semplice tramite e-mail e token API\n- **OAuth 2.0:** Autenticazione sicura tramite flusso OAuth\n- **Token di accesso personale:** Autenticazione diretta basata su token",
       "email": "## Indirizzo email\nL'indirizzo email del tuo account per il servizio esterno.\n\n- Utilizzato per l'autenticazione tramite chiave API\n- Deve corrispondere all'account che ha generato il token API\n- Obbligatorio per Jira e servizi simili",
       "apiToken": "## Token API\nGenera un token API dalle impostazioni del tuo account nel servizio esterno.\n\n- Solitamente si trova in Impostazioni account → Sicurezza → Token API\n- Fornisce un accesso sicuro senza esporre la tua password\n- Può essere revocato e rigenerato secondo necessità",
-      "jiraUrl": "## URL Jira\nL'URL di base della tua istanza Jira.\n\n- Formato: https://your-site.atlassian.net\n- Non includere /browse o altri percorsi\n- Deve essere accessibile da questo server",
+      "jiraUrl": "## Jira URL\nThe base URL of your Jira instance.\n\n- Format: https://your-site.atlassian.net\n- Do not include /browse or other paths\n- Must be accessible from this server",
       "clientId": "## ID client OAuth\nID client dalla configurazione dell'applicazione OAuth.\n\n- Creato nella console per sviluppatori del servizio esterno\n- Utilizzato per identificare l'applicazione durante il flusso OAuth\n- Sicuro da condividere nei file di configurazione",
       "clientSecret": "## Segreto client OAuth\nIl segreto client dalla configurazione dell'applicazione OAuth.\n\n- Creato insieme all'ID client\n- Deve essere mantenuto riservato e sicuro\n- Utilizzato per autenticare l'applicazione",
       "personalAccessToken": "## Token di accesso personale\nUn token di accesso personale con autorizzazioni appropriate per il servizio esterno.\n\n- Generato nelle impostazioni del tuo account\n- Dovrebbe avere autorizzazioni per problemi di lettura e scrittura\n- Più sicuro dell'autenticazione tramite password",
@@ -7678,6 +7700,11 @@
       "singleUseNotice": "For your security, this link can only be used once. Request a new link if you need to sign in again.",
       "disclaimer": "Se non hai richiesto questa email, puoi tranquillamente ignorarla.",
       "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nFor your security, this link can only be used once. Request a new link if you need to sign in again.\n\nIf you did not request this email, you can safely ignore it."
+    },
+    "passwordless": {
+      "codeIntro": "Opening this on a different device? Enter this code on the sign-in screen where you requested the link:",
+      "deviceNotice": "This link signs you in from the browser where you requested it. If you open it anywhere else, you'll be shown the code above to enter in your original window.",
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nOpening this on a different device? Enter this code on the sign-in screen where you requested the link: {code}\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {
