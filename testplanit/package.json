@@ -76,7 +76,7 @@
     "crowdin:upload:sources": "crowdin upload sources",
     "crowdin:upload:translations": "crowdin upload translations",
     "crowdin:download": "crowdin download",
-    "crowdin:pre-translate": "crowdin pre-translate --method=mt --engine-id=609928",
+    "crowdin:pre-translate": "crowdin pre-translate --method=ai --ai-prompt-id=536391",
     "crowdin:sync": "pnpm crowdin:upload:sources && pnpm crowdin:pre-translate && pnpm crowdin:download",
     "elasticsearch:reindex": "tsx scripts/reindexAllEntities.ts",
     "elasticsearch:reindex:fresh": "tsx scripts/reindexAllEntities.ts --fresh",
