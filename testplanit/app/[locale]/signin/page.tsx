@@ -105,6 +105,10 @@ const Signin: NextPage = () => {
   const [passwordlessCode, setPasswordlessCode] = useState("");
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [passwordlessError, setPasswordlessError] = useState("");
+  // "Already have a code?" mode: code entry without client-side pending
+  // state. The HttpOnly verifier cookie identifies the pending sign-in
+  // server-side, so this works even after the dialog was closed and reopened.
+  const [showCodeEntry, setShowCodeEntry] = useState(false);
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
   const [sessionCleared, setSessionCleared] = useState(false);
   // 2FA state
@@ -453,16 +457,19 @@ const Signin: NextPage = () => {
   }
 
   async function handleVerifyPasswordlessCode() {
-    if (!passwordlessPendingId || isVerifyingCode) return;
+    if (isVerifyingCode) return;
     const code = passwordlessCode.replace(/[\s-]/g, "");
     if (code.length < 8) return;
 
     setIsVerifyingCode(true);
     setPasswordlessError("");
 
+    // pendingId is optional: without it the server resolves the pending
+    // sign-in from this browser's verifier cookie ("Already have a code?"
+    // after the dialog was closed).
     const result = await signIn("passwordless-complete", {
       redirect: false,
-      pendingId: passwordlessPendingId,
+      ...(passwordlessPendingId ? { pendingId: passwordlessPendingId } : {}),
       code,
     });
 
@@ -511,6 +518,71 @@ const Signin: NextPage = () => {
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [magicLinkSent, passwordlessPendingId]);
+
+  // Shared relay-code entry (error + OTP slots + verify button), used by both
+  // the post-request waiting view and the standalone "Already have a code?"
+  // view.
+  const passwordlessCodeEntry = (
+    <>
+      {passwordlessError && (
+        <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
+          <p className="text-sm text-destructive text-center">
+            {passwordlessError}
+          </p>
+        </div>
+      )}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">
+          {t("auth.signin.passwordless.codeLabel")}
+        </label>
+        <div className="flex justify-center">
+          <InputOTP
+            maxLength={8}
+            value={passwordlessCode}
+            onChange={(value) => setPasswordlessCode(value.toUpperCase())}
+            onComplete={() => void handleVerifyPasswordlessCode()}
+            pattern="^[a-zA-Z0-9]*$"
+            pasteTransformer={(pasted) => pasted.replace(/[\s-]/g, "")}
+            autoComplete="one-time-code"
+            disabled={isVerifyingCode}
+            data-testid="passwordless-code-input"
+          >
+            <InputOTPGroup>
+              <InputOTPSlot index={0} />
+              <InputOTPSlot index={1} />
+              <InputOTPSlot index={2} />
+              <InputOTPSlot index={3} />
+            </InputOTPGroup>
+            <InputOTPSeparator />
+            <InputOTPGroup>
+              <InputOTPSlot index={4} />
+              <InputOTPSlot index={5} />
+              <InputOTPSlot index={6} />
+              <InputOTPSlot index={7} />
+            </InputOTPGroup>
+          </InputOTP>
+        </div>
+      </div>
+      <Button
+        type="button"
+        className="w-full"
+        onClick={handleVerifyPasswordlessCode}
+        disabled={
+          isVerifyingCode || passwordlessCode.replace(/[\s-]/g, "").length < 8
+        }
+        data-testid="passwordless-verify-code-button"
+      >
+        {isVerifyingCode ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {t("auth.signin.passwordless.verifying")}
+          </>
+        ) : (
+          t("auth.signin.passwordless.verifyCode")
+        )}
+      </Button>
+    </>
+  );
 
   return (
     <div className="flex items-center justify-center">
@@ -762,6 +834,7 @@ const Signin: NextPage = () => {
             setPasswordlessCode("");
             setPasswordlessError("");
             setIsVerifyingCode(false);
+            setShowCodeEntry(false);
           }
         }}
       >
@@ -773,7 +846,44 @@ const Signin: NextPage = () => {
             </DialogDescription>
           </DialogHeader>
 
-          {!magicLinkSent ? (
+          {!magicLinkSent && showCodeEntry ? (
+            <>
+              <div className="py-4 space-y-3">
+                <p className="text-sm text-muted-foreground text-center">
+                  {t("auth.signin.passwordless.codeEntryDescription")}
+                </p>
+                {passwordlessCodeEntry}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCodeEntry(false);
+                    setPasswordlessCode("");
+                    setPasswordlessError("");
+                  }}
+                  className="text-xs text-primary hover:underline w-full text-center"
+                >
+                  {t("auth.signin.passwordless.backToRequest")}
+                </button>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setShowMagicLinkInput(false);
+                    magicLinkForm.reset();
+                    setPasswordlessCode("");
+                    setPasswordlessError("");
+                    setShowCodeEntry(false);
+                  }}
+                  disabled={isVerifyingCode}
+                >
+                  {t("common.actions.close")}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : !magicLinkSent ? (
             <Form {...magicLinkForm}>
               <form
                 onSubmit={magicLinkForm.handleSubmit(handleSendMagicLink)}
@@ -806,6 +916,17 @@ const Signin: NextPage = () => {
                     </FormItem>
                   )}
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCodeEntry(true);
+                    setPasswordlessError("");
+                  }}
+                  className="text-xs text-primary hover:underline w-full text-center"
+                  data-testid="passwordless-have-code-button"
+                >
+                  {t("auth.signin.passwordless.haveCode")}
+                </button>
                 <DialogFooter>
                   <Button
                     type="button"
@@ -850,68 +971,7 @@ const Signin: NextPage = () => {
                     <p className="text-sm text-muted-foreground text-center">
                       {t("auth.signin.passwordless.waitingInstructions")}
                     </p>
-                    {passwordlessError && (
-                      <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
-                        <p className="text-sm text-destructive text-center">
-                          {passwordlessError}
-                        </p>
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        {t("auth.signin.passwordless.codeLabel")}
-                      </label>
-                      <div className="flex justify-center">
-                        <InputOTP
-                          maxLength={8}
-                          value={passwordlessCode}
-                          onChange={(value) =>
-                            setPasswordlessCode(value.toUpperCase())
-                          }
-                          onComplete={() => void handleVerifyPasswordlessCode()}
-                          pattern="^[a-zA-Z0-9]*$"
-                          pasteTransformer={(pasted) =>
-                            pasted.replace(/[\s-]/g, "")
-                          }
-                          autoComplete="one-time-code"
-                          disabled={isVerifyingCode}
-                          data-testid="passwordless-code-input"
-                        >
-                          <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                          </InputOTPGroup>
-                          <InputOTPSeparator />
-                          <InputOTPGroup>
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                            <InputOTPSlot index={6} />
-                            <InputOTPSlot index={7} />
-                          </InputOTPGroup>
-                        </InputOTP>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      className="w-full"
-                      onClick={handleVerifyPasswordlessCode}
-                      disabled={
-                        isVerifyingCode ||
-                        passwordlessCode.replace(/[\s-]/g, "").length < 8
-                      }
-                      data-testid="passwordless-verify-code-button"
-                    >
-                      {isVerifyingCode ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          {t("auth.signin.passwordless.verifying")}
-                        </>
-                      ) : (
-                        t("auth.signin.passwordless.verifyCode")
-                      )}
-                    </Button>
+                    {passwordlessCodeEntry}
                   </div>
                 )}
               </div>
@@ -926,6 +986,7 @@ const Signin: NextPage = () => {
                     setPasswordlessPendingId(null);
                     setPasswordlessCode("");
                     setPasswordlessError("");
+                    setShowCodeEntry(false);
                   }}
                   className="w-full"
                 >

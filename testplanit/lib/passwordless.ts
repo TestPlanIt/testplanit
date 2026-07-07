@@ -510,19 +510,27 @@ export function authorizePasswordlessComplete(prisma: PendingAuthDb) {
   ): Promise<{ id: string; email: string; name: string | null } | null> => {
     if (!isPasswordlessDeviceBoundEnabled()) return null;
 
-    const pendingId = credentials?.pendingId;
-    if (!pendingId || (!credentials?.linkToken && !credentials?.code)) {
+    if (!credentials?.linkToken && !credentials?.code) {
       throw new Error(PASSWORDLESS_ERRORS.invalid);
     }
 
     const cookieHeader =
       typeof req?.headers?.cookie === "string" ? req.headers.cookie : null;
     const bound = parseVerifierFromCookieHeader(cookieHeader);
-    if (!bound || bound.pendingId !== pendingId) {
+    if (
+      !bound ||
+      (credentials.pendingId && bound.pendingId !== credentials.pendingId)
+    ) {
       // Original window lost its cookie (or a foreign browser is posting):
       // the UI tells the user to request a fresh link.
       throw new Error(PASSWORDLESS_ERRORS.no_verifier);
     }
+
+    // pendingId may be omitted (e.g. the sign-in dialog was closed and
+    // reopened, losing its client state): the verifier cookie already names
+    // the one pending sign-in this browser requested, so fall back to it.
+    // When the client does send an id it must match the cookie's.
+    const pendingId = credentials.pendingId || bound.pendingId;
 
     const result = await consumePendingAuth(prisma, {
       pendingId,

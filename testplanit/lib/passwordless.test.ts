@@ -508,6 +508,40 @@ describe("authorizePasswordlessComplete (NextAuth provider)", () => {
     expect(rows.get(created.id)!.status).toBe("PENDING");
   });
 
+  it("derives the pending sign-in from the cookie when pendingId is omitted", async () => {
+    // "Already have a code?": the dialog was closed and reopened, losing its
+    // client-side pendingId — the verifier cookie alone must suffice.
+    const { db, rows } = makeFakeDb();
+    const created = await createPendingAuth(db, { email: "a@example.com" });
+    db.user.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "a@example.com",
+      name: "Alice",
+      isActive: true,
+    });
+
+    const authorize = authorizePasswordlessComplete(db);
+    const user = await authorize(
+      { code: created.code },
+      makeReq(encodeVerifierCookie(created.id, created.verifier))
+    );
+    expect(user).toEqual({
+      id: "user-1",
+      email: "a@example.com",
+      name: "Alice",
+    });
+    expect(rows.get(created.id)!.status).toBe("CONSUMED");
+  });
+
+  it("fails code-only completion without a verifier cookie", async () => {
+    const { db } = makeFakeDb();
+    const created = await createPendingAuth(db, { email: "a@example.com" });
+    const authorize = authorizePasswordlessComplete(db);
+    await expect(authorize({ code: created.code }, makeReq())).rejects.toThrow(
+      "PASSWORDLESS_NO_VERIFIER"
+    );
+  });
+
   it("fails when the cookie belongs to a different pending sign-in", async () => {
     const { db } = makeFakeDb();
     const created = await createPendingAuth(db, { email: "a@example.com" });
