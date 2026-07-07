@@ -109,7 +109,7 @@ export function EntityDetailPopover({
         <button
           type="button"
           className={cn(
-            "cursor-pointer truncate text-left hover:underline",
+            "cursor-pointer truncate text-start hover:underline",
             className
           )}
         >

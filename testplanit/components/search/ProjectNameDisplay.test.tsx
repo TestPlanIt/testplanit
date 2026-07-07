@@ -148,7 +148,7 @@ describe("ProjectNameDisplay Component", () => {
     render(<ProjectNameDisplay {...defaultProps} />);
 
     const tooltipTrigger = screen.getByTestId("tooltip-trigger");
-    expect(tooltipTrigger).toHaveClass("text-left");
+    expect(tooltipTrigger).toHaveClass("text-start");
     expect(tooltipTrigger).toHaveClass("truncate");
     expect(tooltipTrigger).toHaveClass("max-w-[200px]");
     expect(tooltipTrigger).toHaveClass("inline-block");

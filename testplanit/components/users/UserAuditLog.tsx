@@ -359,7 +359,7 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
       </div>
 
       {rows.length > 0 && (
-        <p className="text-xs text-muted-foreground text-right">
+        <p className="text-xs text-muted-foreground text-end">
           {tProfile("showing", {
             loaded: rows.length.toLocaleString(),
             total: (totalCount ?? rows.length).toLocaleString(),

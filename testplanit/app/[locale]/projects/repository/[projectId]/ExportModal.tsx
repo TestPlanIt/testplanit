@@ -143,7 +143,7 @@ export function ExportModal({
           <div className="flex justify-between items-center gap-4 flex-wrap">
             <Label
               htmlFor="scope"
-              className="text-right whitespace-nowrap shrink-0 flex items-center"
+              className="text-end whitespace-nowrap shrink-0 flex items-center"
             >
               {tGlobal("repository.cases.export")}
               <HelpPopover helpKey="exportModal.scope" />
@@ -205,7 +205,7 @@ export function ExportModal({
           <div className="flex justify-between items-center gap-4 flex-wrap">
             <Label
               htmlFor="format"
-              className="text-right whitespace-nowrap shrink-0 flex items-center"
+              className="text-end whitespace-nowrap shrink-0 flex items-center"
             >
               {tGlobal("repository.exportModal.format.label")}
               <HelpPopover helpKey="exportModal.format" />
@@ -246,7 +246,7 @@ export function ExportModal({
               <div className="flex justify-between items-center gap-4 flex-wrap">
                 <Label
                   htmlFor="columns"
-                  className="text-right whitespace-nowrap shrink-0 flex items-center"
+                  className="text-end whitespace-nowrap shrink-0 flex items-center"
                 >
                   {tGlobal("common.table.columns.columns")}
                   <HelpPopover helpKey="exportModal.columns" />
@@ -287,7 +287,7 @@ export function ExportModal({
               <div className="flex justify-between items-center gap-4 flex-wrap">
                 <Label
                   htmlFor="delimiter"
-                  className="text-right whitespace-nowrap shrink-0 flex items-center"
+                  className="text-end whitespace-nowrap shrink-0 flex items-center"
                 >
                   {tGlobal("repository.exportModal.delimiter.label")}
                   <HelpPopover helpKey="exportModal.delimiter" />
@@ -329,7 +329,7 @@ export function ExportModal({
               <div className="flex justify-between items-center gap-4 flex-wrap">
                 <Label
                   htmlFor="textLongFormat"
-                  className="text-right whitespace-nowrap shrink-0 flex items-center"
+                  className="text-end whitespace-nowrap shrink-0 flex items-center"
                 >
                   {t("textLongFormat.label")}
                   <HelpPopover helpKey="exportModal.textLongFormat" />
@@ -389,7 +389,7 @@ export function ExportModal({
               <div className="flex justify-between items-center gap-4 flex-wrap">
                 <Label
                   htmlFor="stepsFormat"
-                  className="text-right whitespace-nowrap shrink-0 flex items-center"
+                  className="text-end whitespace-nowrap shrink-0 flex items-center"
                 >
                   {tGlobal("repository.exportModal.stepsFormat.label")}
                   <HelpPopover helpKey="exportModal.stepsFormat" />
@@ -449,7 +449,7 @@ export function ExportModal({
               <div className="flex justify-between items-center gap-4 flex-wrap">
                 <Label
                   htmlFor="rowMode"
-                  className="text-right whitespace-nowrap shrink-0 flex items-center"
+                  className="text-end whitespace-nowrap shrink-0 flex items-center"
                 >
                   {t("rowMode.label")}
                   <HelpPopover helpKey="exportModal.rowMode" />
@@ -490,7 +490,7 @@ export function ExportModal({
               <div className="flex justify-between items-center gap-4 flex-wrap">
                 <Label
                   htmlFor="attachmentFormat"
-                  className="text-right whitespace-nowrap shrink-0 flex items-center"
+                  className="text-end whitespace-nowrap shrink-0 flex items-center"
                 >
                   {tGlobal("repository.exportModal.attachmentFormat.label")}
                   <HelpPopover helpKey="exportModal.attachmentFormat" />
@@ -541,7 +541,7 @@ export function ExportModal({
               <div className="flex justify-between items-center gap-4 flex-wrap">
                 <Label
                   htmlFor="columns-pdf"
-                  className="text-right whitespace-nowrap shrink-0 flex items-center"
+                  className="text-end whitespace-nowrap shrink-0 flex items-center"
                 >
                   {tGlobal("common.table.columns.columns")}
                   <HelpPopover helpKey="exportModal.columns" />
@@ -585,7 +585,7 @@ export function ExportModal({
               <div className="flex justify-between items-center gap-4 flex-wrap">
                 <Label
                   htmlFor="attachmentFormat-pdf"
-                  className="text-right whitespace-nowrap shrink-0 flex items-center"
+                  className="text-end whitespace-nowrap shrink-0 flex items-center"
                 >
                   {tGlobal("repository.exportModal.attachmentFormat.label")}
                   <HelpPopover helpKey="exportModal.attachmentFormat" />

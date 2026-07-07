@@ -630,7 +630,7 @@ export function SearchIssuesDialog({
 
           <div className="space-y-4 max-w-[660px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={t("issues.searchPlaceholder")}
                 value={searchQuery}
@@ -638,7 +638,7 @@ export function SearchIssuesDialog({
                   pollingForKeyRef.current = null;
                   setSearchQuery(e.target.value);
                 }}
-                className="pl-10"
+                className="ps-10"
               />
             </div>
 
@@ -700,7 +700,7 @@ export function SearchIssuesDialog({
                         searchFailures.length,
                     })}
                   </p>
-                  <ul className="mt-2 list-disc pl-5 space-y-1 text-sm">
+                  <ul className="mt-2 list-disc ps-5 space-y-1 text-sm">
                     {searchFailures.map((f) => (
                       <li key={f.projectKey}>
                         <span className="font-medium">{f.projectKey}</span>:{" "}
@@ -725,7 +725,7 @@ export function SearchIssuesDialog({
                       onClick={() => handleAuthenticate(authError)}
                     >
                       {t("issues.authenticate")}
-                      <ExternalLink className="ml-2 h-4 w-4" />
+                      <ExternalLink className="ms-2 h-4 w-4" />
                     </Button>
                   )}
                 </AlertDescription>
@@ -820,7 +820,7 @@ export function SearchIssuesDialog({
                                       ? issue.title
                                       : issue.name}
                                   </span>
-                                  <span className="ml-auto flex items-center gap-2 shrink-0">
+                                  <span className="ms-auto flex items-center gap-2 shrink-0">
                                     {isAlreadyLinked && (
                                       <Badge
                                         variant="secondary"

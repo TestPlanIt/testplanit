@@ -64,7 +64,7 @@ export function TestRunNameDisplay({
   const configIndicator = configurationGroupId ? (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="ml-1 shrink-0">
+        <span className="ms-1 shrink-0">
           <Combine className="w-3 h-3 text-muted-foreground" />
         </span>
       </TooltipTrigger>
@@ -72,7 +72,7 @@ export function TestRunNameDisplay({
         <p className="text-background/50">{t("multiConfiguration")}</p>
         {configuration && (
           <p className="flex text-xs text-background">
-            <Combine className="w-3 h-3 shrink-0 mr-1" />
+            <Combine className="w-3 h-3 shrink-0 me-1" />
             {configuration.name}
           </p>
         )}

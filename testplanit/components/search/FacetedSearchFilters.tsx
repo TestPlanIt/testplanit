@@ -657,13 +657,13 @@ export function FacetedSearchFilters({
 
       {/* Search within filters */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
           type="text"
           placeholder={t("search.filters.searchPlaceholder")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="ps-10"
         />
       </div>
 
@@ -756,7 +756,7 @@ export function FacetedSearchFilters({
                               (b) => b.key === project.id.toString()
                             );
                             return bucket ? (
-                              <span className="text-muted-foreground ml-1 shrink-0">
+                              <span className="text-muted-foreground ms-1 shrink-0">
                                 {`(${bucket.doc_count})`}
                               </span>
                             ) : null;
@@ -794,7 +794,7 @@ export function FacetedSearchFilters({
                               ).map((state) => (
                                 <div
                                   key={state.id}
-                                  className="flex items-center space-x-2 ml-2"
+                                  className="flex items-center space-x-2 ms-2"
                                 >
                                   <Checkbox
                                     id={`state-${state.id}`}
@@ -863,7 +863,7 @@ export function FacetedSearchFilters({
                               ).map((state) => (
                                 <div
                                   key={state.id}
-                                  className="flex items-center space-x-2 ml-2"
+                                  className="flex items-center space-x-2 ms-2"
                                 >
                                   <Checkbox
                                     id={`state-${state.id}`}
@@ -934,7 +934,7 @@ export function FacetedSearchFilters({
                               ).map((state) => (
                                 <div
                                   key={state.id}
-                                  className="flex items-center space-x-2 ml-2"
+                                  className="flex items-center space-x-2 ms-2"
                                 >
                                   <Checkbox
                                     id={`state-${state.id}`}
@@ -1180,7 +1180,7 @@ export function FacetedSearchFilters({
                         <Button
                           variant="outline"
                           className={cn(
-                            "justify-start text-left font-normal min-w-0 w-full",
+                            "justify-start text-start font-normal min-w-0 w-full",
                             !baseFilters.dateRange?.from &&
                               "text-muted-foreground"
                           )}
@@ -1217,7 +1217,7 @@ export function FacetedSearchFilters({
                         <Button
                           variant="outline"
                           className={cn(
-                            "justify-start text-left font-normal min-w-0 w-full",
+                            "justify-start text-start font-normal min-w-0 w-full",
                             !baseFilters.dateRange?.to &&
                               "text-muted-foreground"
                           )}
@@ -2129,7 +2129,7 @@ export function FacetedSearchFilters({
                           <Button
                             variant="outline"
                             className={cn(
-                              "justify-start text-left font-normal min-w-0 w-full",
+                              "justify-start text-start font-normal min-w-0 w-full",
                               !localFilters.milestone?.dueDateRange?.from &&
                                 "text-muted-foreground"
                             )}
@@ -2172,7 +2172,7 @@ export function FacetedSearchFilters({
                           <Button
                             variant="outline"
                             className={cn(
-                              "justify-start text-left font-normal min-w-0 w-full",
+                              "justify-start text-start font-normal min-w-0 w-full",
                               !localFilters.milestone?.dueDateRange?.to &&
                                 "text-muted-foreground"
                             )}

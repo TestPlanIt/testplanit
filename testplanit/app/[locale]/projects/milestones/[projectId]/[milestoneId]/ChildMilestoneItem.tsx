@@ -87,7 +87,7 @@ export default function ChildMilestoneItem({
     <React.Fragment>
       <div
         className="flex flex-col gap-1 hover:bg-accent/50 rounded-md p-2 cursor-pointer"
-        style={{ marginLeft: `${level * 16}px` }}
+        style={{ marginInlineStart: `${level * 16}px` }}
         onClick={onMilestoneClick(milestone.id)}
       >
         <div className="grid grid-cols-[1fr,auto] w-full items-start gap-x-2">
@@ -173,7 +173,7 @@ export default function ChildMilestoneItem({
                 {t(`statusLabels.${getStatus(milestone)}` as any)}
               </Badge>
             )}
-            <div className="min-w-[200px] text-right">
+            <div className="min-w-[200px] text-end">
               <DateTextDisplay
                 startDate={
                   milestone.startedAt ? new Date(milestone.startedAt) : null

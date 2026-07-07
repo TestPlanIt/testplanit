@@ -808,7 +808,7 @@ export function CreateIssueDialog({
                       onClick={() => handleAuthenticate(authError)}
                     >
                       {t("issues.authenticate")}
-                      <ExternalLink className="ml-2 h-4 w-4" />
+                      <ExternalLink className="ms-2 h-4 w-4" />
                     </Button>
                   )}
                 </AlertDescription>
@@ -982,7 +982,7 @@ export function CreateIssueDialog({
             {/* Dynamic fields based on issue type */}
             {loadingFields && (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-4 w-4 animate-spin me-2" />
                 <span className="text-sm text-muted-foreground">
                   {t("common.loading")}
                 </span>

@@ -227,7 +227,7 @@ export default function SessionVersionPage() {
     <Card>
       <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="w-full pr-4 mr-4">
+          <CardTitle className="w-full pe-4 me-4">
             {(() => {
               const hasNameChanged =
                 currentVersion?.name !== previousVersion?.name;
@@ -378,8 +378,8 @@ export default function SessionVersionPage() {
                   size="sm"
                   className={`p-0 transform ${
                     isCollapsedLeft
-                      ? "rounded-l-none rotate-180"
-                      : "rounded-r-none"
+                      ? "rounded-s-none rotate-180"
+                      : "rounded-e-none"
                   }`}
                 >
                   <ChevronLeft />
@@ -405,8 +405,8 @@ export default function SessionVersionPage() {
                   size="sm"
                   className={`p-0 transform ${
                     isCollapsedRight
-                      ? "rounded-l-none"
-                      : "rounded-r-none rotate-180"
+                      ? "rounded-s-none"
+                      : "rounded-e-none rotate-180"
                   }`}
                 >
                   <ChevronLeft />
@@ -531,7 +531,7 @@ export default function SessionVersionPage() {
               />
               <Separator className="my-4" />
 
-              <div className="mb-1 mr-6">
+              <div className="mb-1 me-6">
                 <div className="font-bold mt-2">
                   {t("sessions.version.versionInfo.created", {
                     number: typeof version === "number" ? version : 0,
@@ -559,7 +559,7 @@ export default function SessionVersionPage() {
               />
               {versions?.length && versions.length > 1 && (
                 <>
-                  <div className="mb-2 mr-6">
+                  <div className="mb-2 me-6">
                     <div className="font-bold mt-2">
                       <Link
                         href={`/projects/sessions/${projectId}/${sessionId}`}
@@ -569,7 +569,7 @@ export default function SessionVersionPage() {
                         {t("sessions.version.versionInfo.latestUpdated", {
                           number: versions[0].version,
                         })}
-                        <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                       </Link>
                     </div>
                     <div className="flex space-x-1">

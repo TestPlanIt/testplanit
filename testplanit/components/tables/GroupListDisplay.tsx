@@ -41,7 +41,7 @@ export const GroupListDisplay: React.FC<GroupListProps> = ({ groups }) => {
     <Popover>
       <PopoverTrigger>
         <Badge>
-          <UsersRoundIcon className="w-4 h-4 mr-1" />
+          <UsersRoundIcon className="w-4 h-4 me-1" />
           {allGroups.length}
         </Badge>
       </PopoverTrigger>
@@ -55,9 +55,9 @@ export const GroupListDisplay: React.FC<GroupListProps> = ({ groups }) => {
               title={isScimManaged ? tGroups("scimManagedTooltip") : undefined}
             >
               {isScimManaged ? (
-                <UserRoundCog className="w-4 h-4 mr-1" />
+                <UserRoundCog className="w-4 h-4 me-1" />
               ) : (
-                <UsersRound className="w-4 h-4 mr-1" />
+                <UsersRound className="w-4 h-4 me-1" />
               )}
               {group.name}
             </Badge>

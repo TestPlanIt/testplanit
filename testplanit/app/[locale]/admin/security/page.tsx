@@ -221,7 +221,7 @@ export default function SecurityAdminPage() {
       {/* Page Header */}
       <div className="pt-4">
         <h1 className="flex items-center text-primary text-2xl md:text-4xl font-bold">
-          <Shield className="inline mr-2 h-8 w-8" />
+          <Shield className="inline me-2 h-8 w-8" />
           <span>{t("title")}</span>
         </h1>
         <p className="text-muted-foreground mt-1">{t("description")}</p>

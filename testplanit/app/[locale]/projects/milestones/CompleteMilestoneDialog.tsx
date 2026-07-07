@@ -277,9 +277,9 @@ export function CompleteMilestoneDialog({
               <DialogHeader>
                 <DialogTitle className="flex items-center">
                   {!showConfirmation ? (
-                    <CalendarDays className="w-6 h-6 mr-2" />
+                    <CalendarDays className="w-6 h-6 me-2" />
                   ) : (
-                    <AlertTriangle className="w-6 h-6 mr-2 text-destructive" />
+                    <AlertTriangle className="w-6 h-6 me-2 text-destructive" />
                   )}
                   {showConfirmation
                     ? t("milestones.completeDialog.confirmTitle")
@@ -295,7 +295,7 @@ export function CompleteMilestoneDialog({
                         <p>
                           {t("milestones.completeDialog.confirmDescription")}
                         </p>
-                        <ul className="list-disc pl-5 mt-2 text-sm">
+                        <ul className="list-disc ps-5 mt-2 text-sm">
                           {completeTestRuns &&
                             impactData.activeTestRuns > 0 && (
                               <li>
@@ -340,7 +340,7 @@ export function CompleteMilestoneDialog({
                         <p className="mt-4">
                           {t("milestones.completeDialog.itemsRemaining")}
                         </p>
-                        <ul className="list-disc pl-5 mt-2 text-sm">
+                        <ul className="list-disc ps-5 mt-2 text-sm">
                           {!completeTestRuns &&
                             impactData.activeTestRuns > 0 && (
                               <li>
@@ -409,7 +409,7 @@ export function CompleteMilestoneDialog({
                           {completeTestRuns &&
                             runWorkflows &&
                             runWorkflows.length > 0 && (
-                              <div className="ml-6 space-y-2">
+                              <div className="ms-6 space-y-2">
                                 <label className="text-sm font-medium">
                                   {t(
                                     "milestones.completeDialog.testRunStateLabel"
@@ -490,7 +490,7 @@ export function CompleteMilestoneDialog({
                           {completeSessions &&
                             sessionWorkflows &&
                             sessionWorkflows.length > 0 && (
-                              <div className="ml-6 space-y-2">
+                              <div className="ms-6 space-y-2">
                                 <label className="text-sm font-medium">
                                   {t(
                                     "milestones.completeDialog.sessionStateLabel"

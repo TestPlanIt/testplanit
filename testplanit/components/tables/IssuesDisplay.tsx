@@ -458,7 +458,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
           </PopoverContent>
         </Popover>
         {linkHref && (
-          <ExternalLink className="w-4 h-4 -ml-1 mr-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <ExternalLink className="w-4 h-4 -ms-1 me-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
         )}
       </div>
     );
@@ -617,7 +617,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
             </div>
           </PopoverContent>
         </Popover>
-        <ExternalLink className="w-4 h-4 -ml-1 mr-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <ExternalLink className="w-4 h-4 -ms-1 me-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
     );
   }

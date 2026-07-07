@@ -693,7 +693,7 @@ export function UnifiedSearch({
               key={vItem.key}
               data-index={vItem.index}
               ref={measureElement}
-              className="absolute left-0 top-0 w-full pb-2"
+              className="absolute start-0 top-0 w-full pb-2"
               style={{ transform: `translateY(${vItem.start}px)` }}
             >
               <SearchResultCard
@@ -758,7 +758,7 @@ export function UnifiedSearch({
               {t("search.results.tryAdjusting")}
             </p>
           </div>
-          <div className="ml-2 border-l-8 pl-2">
+          <div className="ms-2 border-s-8 ps-2">
             <SearchHelpContent />
           </div>
         </div>
@@ -793,7 +793,7 @@ export function UnifiedSearch({
               <TabsTrigger value="all" className="gap-2">
                 <Search className="h-4 w-4" />
                 {t("search.allTypes")}
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant="secondary" className="ms-1">
                   {results.entityTypeCounts
                     ? Object.values(results.entityTypeCounts).reduce(
                         (sum, count) => sum + count,
@@ -823,7 +823,7 @@ export function UnifiedSearch({
                       className="h-4 w-4"
                     />
                     {getEntityLabel(entityType)}
-                    <Badge variant="secondary" className="ml-1">
+                    <Badge variant="secondary" className="ms-1">
                       {count}
                     </Badge>
                   </TabsTrigger>
@@ -851,20 +851,20 @@ export function UnifiedSearch({
       <div className="space-y-2">
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               type="text"
               placeholder={searchPlaceholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="pl-10 pr-10"
+              className="ps-10 pe-10"
               autoFocus
             />
             {query && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7"
+                className="absolute end-1 top-1/2 transform -translate-y-1/2 h-7 w-7"
                 onClick={clearSearch}
               >
                 <X className="h-4 w-4" />
@@ -929,7 +929,7 @@ export function UnifiedSearch({
                 {getActiveFilterCount() > 0 && (
                   <Badge
                     variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                    className="absolute -top-1 -end-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
                   >
                     {getActiveFilterCount()}
                   </Badge>
@@ -1049,7 +1049,7 @@ export function UnifiedSearch({
 
       {selectedCaseRows.size > 0 && (
         <div
-          className="fixed bottom-0 right-0 z-50 w-full border-t bg-background/95 shadow-lg backdrop-blur sm:max-w-3xl supports-[backdrop-filter]:bg-background/80"
+          className="fixed bottom-0 end-0 z-50 w-full border-t bg-background/95 shadow-lg backdrop-blur sm:max-w-3xl supports-[backdrop-filter]:bg-background/80"
           data-testid="bulk-action-toolbar"
         >
           <div className="flex flex-wrap items-center justify-between gap-3 p-3">
@@ -1312,7 +1312,7 @@ function SearchResultCard({
                             className={cn(
                               "flex gap-2 rounded px-2 py-1",
                               hasHighlights &&
-                                "bg-yellow-50 dark:bg-yellow-900/20 border-l-2 border-yellow-400"
+                                "bg-yellow-50 dark:bg-yellow-900/20 border-s-2 border-yellow-400"
                             )}
                           >
                             <span className="font-medium shrink-0">
@@ -1712,11 +1712,11 @@ function SearchResultCard({
                 hit.source.name
               )}
             </h4>
-            <Badge variant="outline" className="ml-2 shrink-0">
+            <Badge variant="outline" className="ms-2 shrink-0">
               {getEntityLabel(hit.entityType)}
             </Badge>
             {hit.source.isDeleted && (
-              <Badge variant="destructive" className="ml-2 shrink-0">
+              <Badge variant="destructive" className="ms-2 shrink-0">
                 {t("common.status.deleted")}
               </Badge>
             )}

@@ -379,7 +379,7 @@ export default function AdminMenu() {
                 className="border-0 rounded-none overflow-visible mb-0"
                 data-testid={`admin-menu-section-${group.key}`}
               >
-                <AccordionTrigger className="ml-3 py-2 mt-2 px-0 bg-transparent hover:bg-transparent uppercase text-xs hover:no-underline flex border-b-2 border-primary/40 md:border-b-0">
+                <AccordionTrigger className="ms-3 py-2 mt-2 px-0 bg-transparent hover:bg-transparent uppercase text-xs hover:no-underline flex border-b-2 border-primary/40 md:border-b-0">
                   <span className="md:hidden">
                     {(() => {
                       const Icon = sectionIcons[group.key];

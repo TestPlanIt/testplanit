@@ -1441,7 +1441,7 @@ export function SessionResultsList({
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="text-md pr-2">
+                  <div className="text-md pe-2">
                     <DateFormatter
                       date={result.createdAt}
                       formatString={
@@ -1726,7 +1726,7 @@ export function SessionResultsList({
                             >
                               <div className="flex items-center">
                                 <div
-                                  className="w-3 h-3 rounded-full mr-2"
+                                  className="w-3 h-3 rounded-full me-2"
                                   style={{
                                     backgroundColor: getColorValue(
                                       status.color

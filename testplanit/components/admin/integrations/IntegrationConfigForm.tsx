@@ -412,7 +412,7 @@ export function IntegrationConfigForm({
             <FormLabel className="flex items-center">
               {getFieldLabel(field.label)}
               {field.required && (
-                <span className="text-destructive ml-1">{"*"}</span>
+                <span className="text-destructive ms-1">{"*"}</span>
               )}
               {field.help && (
                 <HelpPopover

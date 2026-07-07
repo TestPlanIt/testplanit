@@ -510,7 +510,7 @@ export function VirtualizedDataTable({
                   key={header.id}
                   role="columnheader"
                   className={cn(
-                    "relative flex select-none items-center gap-1 border-r px-3 py-2 text-xs font-medium last:border-r-0",
+                    "relative flex select-none items-center gap-1 border-e px-3 py-2 text-xs font-medium last:border-e-0",
                     isFlex ? "min-w-0" : "shrink-0"
                   )}
                   style={
@@ -522,7 +522,7 @@ export function VirtualizedDataTable({
                   {column.getCanGroup() && onGroupingChange ? (
                     <button
                       onClick={column.getToggleGroupingHandler()}
-                      className="mr-1"
+                      className="me-1"
                       aria-label={
                         column.getIsGrouped()
                           ? tAria("grouped")
@@ -547,7 +547,7 @@ export function VirtualizedDataTable({
                   {isSortable && column.id !== "expander" && (
                     <button
                       onClick={() => onSortChange?.(column.id)}
-                      className="ml-1 shrink-0"
+                      className="ms-1 shrink-0"
                       aria-label={t("sort")}
                     >
                       {isActiveSort && direction === "asc" ? (
@@ -572,7 +572,7 @@ export function VirtualizedDataTable({
                       aria-label={t("resize")}
                       title={t("resize")}
                       className={cn(
-                        "absolute right-0 top-0 z-10 h-full w-1.5 cursor-col-resize touch-none select-none transition-colors hover:bg-primary/40",
+                        "absolute end-0 top-0 z-10 h-full w-1.5 cursor-col-resize touch-none select-none transition-colors hover:bg-primary/40",
                         column.getIsResizing() ? "bg-primary" : "bg-transparent"
                       )}
                       data-testid={`${testIdPrefix}-resize-${column.id}`}
@@ -628,7 +628,7 @@ export function VirtualizedDataTable({
                     data-row-id={row.original?.id}
                     data-testid={`${rowTestIdPrefix}-${row.original?.id ?? vItem.index}`}
                     className={cn(
-                      "absolute left-0 top-0 flex border-b",
+                      "absolute start-0 top-0 flex border-b",
                       isGrouped
                         ? "bg-muted font-semibold text-foreground"
                         : isSubRow
@@ -655,7 +655,7 @@ export function VirtualizedDataTable({
                           <div className="flex items-center gap-1">
                             <button
                               onClick={row.getToggleExpandedHandler()}
-                              className="mr-1 p-1"
+                              className="me-1 p-1"
                               aria-label={
                                 row.getIsExpanded()
                                   ? tActions("collapse")
@@ -700,14 +700,14 @@ export function VirtualizedDataTable({
                           key={column.id}
                           role="cell"
                           className={cn(
-                            "flex min-w-0 items-center overflow-hidden border-r px-3 py-2 text-sm last:border-r-0",
+                            "flex min-w-0 items-center overflow-hidden border-e px-3 py-2 text-sm last:border-e-0",
                             !isFlex && "shrink-0",
                             // Nesting guide: a wide colored bar on the RIGHT edge of
                             // the first (indent) cell of a sub-row, marking where the
                             // nested content begins.
                             isSubRow &&
                               cellIndex === 0 &&
-                              "border-r-4 border-r-primary"
+                              "border-e-4 border-e-primary"
                           )}
                           style={
                             isFlex

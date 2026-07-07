@@ -578,7 +578,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
               //      verbose workflow-state name) would silently expand
               //      the column and break the truncation we've set up on
               //      the cell.
-              //   2. `[&_td:has([data-transition-inner])]:border-r-transparent`
+              //   2. `[&_td:has([data-transition-inner])]:border-e-transparent`
               //      hides the vertical column-divider on the From and
               //      Arrow cells so the From → Arrow → To sequence reads
               //      as a single transition expression instead of three
@@ -591,7 +591,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
               //      `w-full` on the inner `<Table>` so the table
               //      collapses to the sum of its column widths instead
               //      of stretching to the full browser viewport.
-              <div className="[&_table]:table-fixed [&_table]:!w-auto [&_td:has([data-transition-inner])]:border-r-transparent [&_tbody_tr]:h-12">
+              <div className="[&_table]:table-fixed [&_table]:!w-auto [&_td:has([data-transition-inner])]:border-e-transparent [&_tbody_tr]:h-12">
                 <DataTable
                   columns={columns as any}
                   data={tableData as any}

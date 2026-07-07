@@ -315,7 +315,7 @@ export const Header = () => {
                 data-testid="global-search-trigger"
               >
                 <Search className="h-5 w-5" />
-                <span className="absolute left-12 transform -translate-x-1/2 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span className="absolute start-12 transform -translate-x-1/2 rtl:translate-x-1/2 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   {isMac ? "⌘K" : "Ctrl+K"}
                 </span>
               </Button>
@@ -339,7 +339,7 @@ export const Header = () => {
                     }
                     className="cursor-pointer"
                   >
-                    <Navigation className="mr-2 h-4 w-4" />
+                    <Navigation className="me-2 h-4 w-4" />
                     {t("help.menu.startTour")}
                   </DropdownMenuItem>
                   {isOnProjectPage &&
@@ -352,7 +352,7 @@ export const Header = () => {
                         }
                         className="cursor-pointer"
                       >
-                        <Waypoints className="mr-2 h-4 w-4" />
+                        <Waypoints className="me-2 h-4 w-4" />
                         {t("help.menu.startDemoProjectTour")}
                       </DropdownMenuItem>
                     ) : (
@@ -362,7 +362,7 @@ export const Header = () => {
                         }
                         className="cursor-pointer"
                       >
-                        <Waypoints className="mr-2 h-4 w-4" />
+                        <Waypoints className="me-2 h-4 w-4" />
                         {t("help.menu.startProjectTour")}
                       </DropdownMenuItem>
                     ))}
@@ -375,7 +375,7 @@ export const Header = () => {
                       }
                       className="cursor-pointer"
                     >
-                      <Waypoints className="mr-2 h-4 w-4" />
+                      <Waypoints className="me-2 h-4 w-4" />
                       {t("help.menu.startDemoProjectTour")}
                     </DropdownMenuItem>
                   )}
@@ -386,7 +386,7 @@ export const Header = () => {
                       }
                       className="cursor-pointer"
                     >
-                      <LucideWaypoints className="mr-2 h-4 w-4" />
+                      <LucideWaypoints className="me-2 h-4 w-4" />
                       {t("help.menu.startAdminTour")}
                     </DropdownMenuItem>
                   )}
@@ -396,7 +396,7 @@ export const Header = () => {
                     }
                     className="cursor-pointer"
                   >
-                    <BookOpen className="mr-2 h-4 w-4" />
+                    <BookOpen className="me-2 h-4 w-4" />
                     {t("common.fields.documentation")}
                   </DropdownMenuItem>
                   {feedbackSurveyUrl && (
@@ -404,7 +404,7 @@ export const Header = () => {
                       onClick={() => setIsFeedbackOpen(true)}
                       className="cursor-pointer"
                     >
-                      <MessageSquareHeart className="mr-2 h-4 w-4" />
+                      <MessageSquareHeart className="me-2 h-4 w-4" />
                       {t("feedback.menuItem")}
                     </DropdownMenuItem>
                   )}

@@ -205,7 +205,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                               <Button
                                 type="button"
                                 variant="destructive"
-                                className="ml-auto w-fit"
+                                className="ms-auto w-fit"
                               >
                                 <Trash2 className="h-5 w-5" />
                               </Button>
@@ -217,7 +217,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                                   <Button
                                     type="button"
                                     variant="secondary"
-                                    className="ml-auto"
+                                    className="ms-auto"
                                     onClick={() =>
                                       handlePopoverOpenChange(index, false)
                                     }
@@ -231,7 +231,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                                     type="button"
                                     variant="destructive"
                                     onClick={() => handleDelete(index)}
-                                    className="ml-auto"
+                                    className="ms-auto"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                     {t("common.actions.delete")}
@@ -276,7 +276,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                         }`}
                       >
                         <div
-                          className={`text-left w-full ${
+                          className={`text-start w-full ${
                             attachment.mimeType === "text/uri-list"
                               ? "grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-x-6 gap-y-2"
                               : "space-y-2"
@@ -348,14 +348,14 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
             </CarouselContent>
           </Carousel>
           <Button
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 p-2"
+            className="absolute start-0 top-1/2 transform -translate-y-1/2 p-2"
             onClick={handlePrev}
             disabled={current === 0}
           >
             <ChevronLeft className="w-6 h-6" />
           </Button>
           <Button
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 p-2"
+            className="absolute end-0 top-1/2 transform -translate-y-1/2 p-2"
             onClick={handleNext}
             disabled={current === attachments.length - 1}
           >

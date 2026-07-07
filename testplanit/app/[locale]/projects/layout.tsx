@@ -40,13 +40,13 @@ export default function ProjectsLayout(props: any) {
           type="button"
           onClick={handleToggleCollapse}
           variant="secondary"
-          className="hidden md:flex absolute -right-4 top-12 z-20 p-0 rounded-l-none"
+          className="hidden md:flex absolute -end-4 top-12 z-20 p-0 rounded-s-none"
           aria-label={t("togglePanel")}
         >
           {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
         </Button>
       </div>
-      <div className="ml-4 w-full overflow-x-hidden">{props.children}</div>
+      <div className="ms-4 w-full overflow-x-hidden">{props.children}</div>
     </div>
   );
 }

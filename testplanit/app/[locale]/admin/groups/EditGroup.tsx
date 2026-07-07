@@ -347,7 +347,7 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
 
               <div className="space-y-2 pt-4 border-t">
                 <FormLabel className="flex items-center">
-                  <Users className="w-4 h-4 mr-1" />
+                  <Users className="w-4 h-4 me-1" />
                   {tCommon("labels.assignedUsersCount", {
                     count: assignedUsers.length,
                   })}

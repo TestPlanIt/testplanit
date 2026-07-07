@@ -156,7 +156,7 @@ const DraggableTestRunWrapper: React.FC<DraggableTestRunWrapperProps> = ({
           ref={(node) => {
             drag(node);
           }}
-          className="absolute -left-4 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          className="absolute -start-4 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10"
         >
           <GripVertical className="h-5 w-5 text-muted-foreground" />
         </div>
@@ -704,12 +704,12 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
           onDropTestRun={handleDropTestRun}
           className={
             depth > 0
-              ? "w-full pl-4 bg-muted rounded-lg mb-4"
+              ? "w-full ps-4 bg-muted rounded-lg mb-4"
               : "w-full rounded-lg bg-muted mb-4"
           }
         >
           <div
-            className={`milestone-grid bg-primary/10 p-2 pr-4 ${
+            className={`milestone-grid bg-primary/10 p-2 pe-4 ${
               depth === 0 ? "rounded-t-lg" : ""
             }`}
           >
@@ -784,10 +784,13 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
 
           {/* Render test runs under this milestone FIRST */}
           {hasTestRunsUnderMilestone && (
-            <div className="test-runs-container bg-muted pr-4 pb-2 mb-2">
+            <div className="test-runs-container bg-muted pe-4 pb-2 mb-2">
               {currentGroupedRuns.milestones[milestone.id]?.testRuns.map(
                 (testRun) => (
-                  <div key={testRun.id} style={{ paddingLeft: "2.5rem" }}>
+                  <div
+                    key={testRun.id}
+                    style={{ paddingInlineStart: "2.5rem" }}
+                  >
                     <DraggableTestRunWrapper
                       testRunId={testRun.id}
                       testRunName={testRun.name}
@@ -902,7 +905,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               </div>
             )}
             {currentGroupedRuns.unscheduled.map((testRun) => (
-              <div key={testRun.id} className="pl-4 pr-4">
+              <div key={testRun.id} className="ps-4 pe-4">
                 <DraggableTestRunWrapper
                   testRunId={testRun.id}
                   testRunName={testRun.name}

@@ -1560,7 +1560,7 @@ export default function TestRunPage() {
           <CardHeader>
             <div className="flex justify-between items-start">
               {!isEditMode && (
-                <div className="mr-2">
+                <div className="me-2">
                   <Link href={`/projects/runs/${projectId}`}>
                     <Button type="button" variant="outline" size="icon">
                       <ArrowLeft className="h-4 w-4" />
@@ -1568,7 +1568,7 @@ export default function TestRunPage() {
                   </Link>
                 </div>
               )}
-              <CardTitle className="flex-1 pr-4 text-xl md:text-2xl mr-4">
+              <CardTitle className="flex-1 pe-4 text-xl md:text-2xl me-4">
                 {isEditMode ? (
                   <FormField
                     control={form.control}
@@ -1578,7 +1578,7 @@ export default function TestRunPage() {
                         <FormControl>
                           <Textarea
                             {...field}
-                            className="text-xl md:text-2xl mr-4"
+                            className="text-xl md:text-2xl me-4"
                             readOnly={!canAddEditRun}
                           />
                         </FormControl>
@@ -1599,7 +1599,7 @@ export default function TestRunPage() {
                     >
                       <CircleCheckBig className="h-6 w-6 shrink-0" />
                       <div className="hidden md:block">
-                        <span className="mr-1">
+                        <span className="me-1">
                           {t("common.fields.completedOn")}
                         </span>
                         <DateFormatter
@@ -1758,7 +1758,7 @@ export default function TestRunPage() {
                                   variant="default"
                                   disabled={isSubmitting || !canAddEditRun}
                                 >
-                                  <Save className="h-4 w-4 mr-2" />{" "}
+                                  <Save className="h-4 w-4 me-2" />{" "}
                                   {t("common.actions.save")}
                                 </Button>
                               );
@@ -1774,7 +1774,7 @@ export default function TestRunPage() {
                                       disabled
                                       className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
                                     >
-                                      <Save className="h-4 w-4 mr-2" />{" "}
+                                      <Save className="h-4 w-4 me-2" />{" "}
                                       {t("common.actions.save")}
                                     </Button>
                                   </span>
@@ -1791,7 +1791,7 @@ export default function TestRunPage() {
                             onClick={handleCancel}
                             disabled={isSubmitting}
                           >
-                            <CircleSlash2 className="h-4 w-4 mr-2" />{" "}
+                            <CircleSlash2 className="h-4 w-4 me-2" />{" "}
                             {t("common.cancel")}
                           </Button>
                         </div>
@@ -1990,7 +1990,7 @@ export default function TestRunPage() {
                         onClick={toggleCollapseRight}
                         variant="secondary"
                         size="sm"
-                        className={`p-0 transform ${isCollapsedRight ? "rounded-l-none" : "rounded-r-none rotate-180"}`}
+                        className={`p-0 transform ${isCollapsedRight ? "rounded-s-none" : "rounded-e-none rotate-180"}`}
                       >
                         <ChevronLeft />
                       </Button>
@@ -2146,7 +2146,7 @@ export default function TestRunPage() {
         <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
-              <TriangleAlert className="w-6 h-6 mr-2" />
+              <TriangleAlert className="w-6 h-6 me-2" />
               {t("common.dialogs.confirmAction.title", {
                 action: "Remove Cases",
               })}

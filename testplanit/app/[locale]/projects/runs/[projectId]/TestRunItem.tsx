@@ -275,7 +275,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                     </Tooltip>
                   )}
                   {isAutomatedRun ? (
-                    <Bot className="w-6 h-6 inline mr-1 shrink-0 border-2 text-primary border-primary rounded-full p-0.5" />
+                    <Bot className="w-6 h-6 inline me-1 shrink-0 border-2 text-primary border-primary rounded-full p-0.5" />
                   ) : (
                     <DynamicIcon
                       name="play-circle"
@@ -305,17 +305,17 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                         </p>
                         {testRun.configuration && (
                           <p className="flex text-xs text-background">
-                            <Combine className="w-4 h-4 shrink-0 mr-1" />
+                            <Combine className="w-4 h-4 shrink-0 me-1" />
                             {testRun.configuration.name}
                           </p>
                         )}
                       </TooltipContent>
                     </Tooltip>
                   )}
-                  <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                 </h3>
               </Link>
-              <div className="inline-flex items-center ml-1 align-middle">
+              <div className="inline-flex items-center ms-1 align-middle">
                 <PendingReviewBadge pendingRequest={pendingRequest} />
               </div>
             </div>
@@ -343,7 +343,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
               </TooltipTrigger>
               <TooltipContent>
                 <p className="flex">
-                  <Combine className="w-4 h-4 shrink-0 mr-1" />
+                  <Combine className="w-4 h-4 shrink-0 me-1" />
                   {testRun.configuration.name}
                 </p>
               </TooltipContent>
@@ -400,14 +400,14 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
 
             {/* MemberList */}
             {!testRun.isCompleted && (
-              <div className="w-full flex justify-end pr-1">
-                <div className="ml-2">
+              <div className="w-full flex justify-end pe-1">
+                <div className="ms-2">
                   <MemberList users={users} />
                 </div>
               </div>
             )}
           </div>
-          <div className="flex items-center justify-end space-x-2 pr-1">
+          <div className="flex items-center justify-end space-x-2 pe-1">
             {showMoreMenu && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -431,7 +431,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                         }
                         data-testid={`testrun-edit-${testRun.id}`}
                       >
-                        <Pencil className="mr-2 h-4 w-4" />{" "}
+                        <Pencil className="me-2 h-4 w-4" />{" "}
                         {tCommon("actions.edit")}
                       </DropdownMenuItem>
                     )}
@@ -444,7 +444,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                         }
                         data-testid={`testrun-duplicate-${testRun.id}`}
                       >
-                        <Copy className="mr-2 h-4 w-4" />
+                        <Copy className="me-2 h-4 w-4" />
                         {tCommon("actions.duplicate")}
                       </DropdownMenuItem>
                     )}
@@ -457,7 +457,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                         }}
                         data-testid={`testrun-complete-trigger-${testRun.id}`}
                       >
-                        <CheckCircle className="mr-2 h-4 w-4" />
+                        <CheckCircle className="me-2 h-4 w-4" />
                         {tCommon("actions.complete")}
                       </DropdownMenuItem>
                     )}

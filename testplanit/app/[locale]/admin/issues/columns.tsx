@@ -211,7 +211,7 @@ export function useIssueColumns({
                   </h4>
                   {hasHtml ? (
                     <div
-                      className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4"
+                      className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ms-4 [&_ol]:list-decimal [&_ol]:ms-4"
                       dangerouslySetInnerHTML={{
                         __html: DOMPurify.sanitize(description, {
                           ALLOWED_TAGS: [

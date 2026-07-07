@@ -113,7 +113,7 @@ export function PreviewStep({
           <thead className="bg-muted/30 sticky top-0">
             <tr>
               {mappedHeaders.map(({ paramName }) => (
-                <th key={paramName} className="px-2 py-1 text-left font-mono">
+                <th key={paramName} className="px-2 py-1 text-start font-mono">
                   {`@${paramName}`}
                 </th>
               ))}
@@ -142,7 +142,7 @@ export function PreviewStep({
                       {error ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="absolute top-0 right-0 p-0.5">
+                            <span className="absolute top-0 end-0 p-0.5">
                               <AlertCircle className="text-destructive w-3 h-3" />
                             </span>
                           </TooltipTrigger>

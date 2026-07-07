@@ -923,7 +923,7 @@ export default function SSOAdminPage() {
           data-testid="sso-page-title"
           className="flex items-center text-primary text-2xl md:text-4xl font-bold"
         >
-          <ShieldUser className="inline mr-2 h-8 w-8" />
+          <ShieldUser className="inline me-2 h-8 w-8" />
           <span>{t("admin.menu.sso")}</span>
         </h1>
         <p
@@ -938,7 +938,7 @@ export default function SSOAdminPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <KeyRound className="inline mr-2 h-6 w-6" />
+            <KeyRound className="inline me-2 h-6 w-6" />
             <span>{t("admin.sso.sections.providers.title")}</span>
           </CardTitle>
           <CardDescription>
@@ -1165,7 +1165,7 @@ export default function SSOAdminPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Mail className="inline mr-2 h-6 w-6" />
+            <Mail className="inline me-2 h-6 w-6" />
             <span>{t("admin.sso.registration.title")}</span>
           </CardTitle>
           <CardDescription>
@@ -1191,7 +1191,7 @@ export default function SSOAdminPage() {
 
           {/* Default Access Level Setting */}
           <div className="flex items-center justify-between">
-            <div className="flex-1 mr-4">
+            <div className="flex-1 me-4">
               <Label className="text-base font-medium">
                 {t("admin.sso.registration.defaultAccess.title")}
               </Label>
@@ -1397,7 +1397,7 @@ export default function SSOAdminPage() {
             </div>
             <div className="text-sm text-muted-foreground">
               <p>{t("admin.sso.dialogs.googleOAuth.instructions.title")}</p>
-              <ol className="list-decimal ml-4 space-y-1">
+              <ol className="list-decimal ms-4 space-y-1">
                 <li>{t("admin.sso.dialogs.googleOAuth.instructions.step1")}</li>
                 <li>{t("admin.sso.dialogs.googleOAuth.instructions.step2")}</li>
                 <li>{t("admin.sso.dialogs.googleOAuth.instructions.step3")}</li>
@@ -1554,7 +1554,7 @@ export default function SSOAdminPage() {
 
             <div className="md:col-span-2 text-sm text-muted-foreground">
               <p>{t("admin.sso.dialogs.saml.instructions.title")}</p>
-              <ol className="list-decimal ml-4 space-y-1">
+              <ol className="list-decimal ms-4 space-y-1">
                 <li>{t("admin.sso.dialogs.saml.instructions.step1")}</li>
                 <li>{t("admin.sso.dialogs.saml.instructions.step2")}</li>
                 <li>{t("admin.sso.dialogs.saml.instructions.step3")}</li>
@@ -1666,7 +1666,7 @@ export default function SSOAdminPage() {
             </div>
             <div className="text-sm text-muted-foreground">
               <p>{t("common.dialogs.complete.apple.instructions.title")}</p>
-              <ol className="list-decimal ml-4 space-y-1">
+              <ol className="list-decimal ms-4 space-y-1">
                 <li>{t("common.dialogs.complete.apple.instructions.step1")}</li>
                 <li>{t("common.dialogs.complete.apple.instructions.step2")}</li>
                 <li>{t("common.dialogs.complete.apple.instructions.step3")}</li>
@@ -1770,7 +1770,7 @@ export default function SSOAdminPage() {
             </div>
             <div className="text-sm text-muted-foreground">
               <p>{t("admin.sso.dialogs.microsoft.instructions.title")}</p>
-              <ol className="list-decimal ml-4 space-y-1">
+              <ol className="list-decimal ms-4 space-y-1">
                 <li>{t("admin.sso.dialogs.microsoft.instructions.step1")}</li>
                 <li>{t("admin.sso.dialogs.microsoft.instructions.step2")}</li>
                 <li>{t("admin.sso.dialogs.microsoft.instructions.step3")}</li>

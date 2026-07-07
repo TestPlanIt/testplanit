@@ -66,7 +66,7 @@ export function DatePickerField<T extends FieldValues = FieldValues>({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-[240px] pl-3 text-left font-normal",
+                    "w-[240px] ps-3 text-start font-normal",
                     !field.value && "text-muted-foreground"
                   )}
                   disabled={disabled}
@@ -78,7 +78,7 @@ export function DatePickerField<T extends FieldValues = FieldValues>({
                   ) : (
                     <span>{placeholder}</span>
                   )}
-                  <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
+                  <CalendarDays className="ms-auto h-4 w-4 opacity-50" />
                 </Button>
               </FormControl>
             </PopoverTrigger>

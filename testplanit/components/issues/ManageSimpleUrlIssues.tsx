@@ -163,7 +163,7 @@ export function ManageSimpleUrlIssues({
           return (
             <div
               key={issue.id}
-              className="inline-flex items-center rounded-md bg-primary text-primary-foreground pl-0.5 pr-0.5 py-0 gap-0.5"
+              className="inline-flex items-center rounded-md bg-primary text-primary-foreground ps-0.5 pe-0.5 py-0 gap-0.5"
             >
               <IssuesDisplay
                 id={issue.id}

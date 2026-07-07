@@ -45,7 +45,7 @@ export function getJunitColumns({
               projectId={isDeleted ? undefined : projectId}
             />
             {!isDeleted && (
-              <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             )}
           </span>
         );
@@ -144,7 +144,7 @@ export function getJunitColumns({
       cell: ({ row }: { row: { original: any } }) =>
         Array.isArray(row.original.properties) &&
         row.original.properties.length > 0 ? (
-          <ul className="list-disc ml-2">
+          <ul className="list-disc ms-2">
             {row.original.properties.map((prop: any) => (
               <li key={prop.id}>
                 <span>{prop.name}</span>: {prop.value}

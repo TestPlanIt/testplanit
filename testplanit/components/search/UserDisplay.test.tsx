@@ -240,7 +240,7 @@ describe("UserDisplay Component", () => {
       );
 
       const tooltipTrigger = screen.getByTestId("tooltip-trigger");
-      expect(tooltipTrigger).toHaveClass("text-left");
+      expect(tooltipTrigger).toHaveClass("text-start");
       expect(tooltipTrigger).toHaveClass("min-w-0");
       expect(tooltipTrigger).toHaveClass("flex-1");
       expect(tooltipTrigger).toHaveClass("overflow-hidden");

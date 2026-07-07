@@ -331,7 +331,7 @@ function JunitTableSection({
           <CardHeader>
             <div className="flex justify-between items-start">
               {!isEditMode && (
-                <div className="mr-2">
+                <div className="me-2">
                   <Link href={`/projects/runs/${projectId}`}>
                     <Button type="button" variant="outline" size="icon">
                       <ArrowLeft className="h-4 w-4" />
@@ -339,7 +339,7 @@ function JunitTableSection({
                   </Link>
                 </div>
               )}
-              <CardTitle className="w-full pr-4 text-xl md:text-2xl mr-4">
+              <CardTitle className="w-full pe-4 text-xl md:text-2xl me-4">
                 {isEditMode ? (
                   <FormField
                     control={form.control}
@@ -349,7 +349,7 @@ function JunitTableSection({
                         <FormControl>
                           <Textarea
                             {...field}
-                            className="text-xl md:text-2xl mr-4"
+                            className="text-xl md:text-2xl me-4"
                             readOnly={!canAddEditRun}
                           />
                         </FormControl>
@@ -370,7 +370,7 @@ function JunitTableSection({
                     >
                       <CircleCheckBig className="h-6 w-6 shrink-0" />
                       <div className="hidden md:block">
-                        <span className="mr-1">
+                        <span className="me-1">
                           {t("common.fields.completedOn")}
                         </span>
                         <DateFormatter
@@ -607,7 +607,7 @@ function JunitTableSection({
                         onClick={toggleCollapseRight}
                         variant="secondary"
                         size="sm"
-                        className={`p-0 transform ${isCollapsedRight ? "rounded-l-none" : "rounded-r-none rotate-180"}`}
+                        className={`p-0 transform ${isCollapsedRight ? "rounded-s-none" : "rounded-e-none rotate-180"}`}
                       >
                         <ChevronLeft />
                       </Button>

@@ -480,12 +480,12 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
           key={milestone.id}
           className={
             depth > 0
-              ? "w-full pl-4 bg-muted rounded-lg mb-4"
+              ? "w-full ps-4 bg-muted rounded-lg mb-4"
               : "w-full rounded-lg bg-muted mb-4"
           }
         >
           <div
-            className={`milestone-grid bg-primary/10 p-2 pr-4 ${depth === 0 ? "rounded-t-lg" : ""}`}
+            className={`milestone-grid bg-primary/10 p-2 pe-4 ${depth === 0 ? "rounded-t-lg" : ""}`}
           >
             {/* Milestone Name */}
             <div className="flex items-center gap-1 justify-start min-w-0">
@@ -542,10 +542,13 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
 
           {/* Render sessions under this milestone FIRST */}
           {hasSessionsUnderMilestone && (
-            <div className="sessions-container bg-muted pr-4 pb-2 mb-2">
+            <div className="sessions-container bg-muted pe-4 pb-2 mb-2">
               {groupedSessions.milestones[milestone.id]?.testSessions.map(
                 (testSession) => (
-                  <div key={testSession.id} style={{ paddingLeft: "1.5rem" }}>
+                  <div
+                    key={testSession.id}
+                    style={{ paddingInlineStart: "1.5rem" }}
+                  >
                     <SessionItem
                       key={testSession.id}
                       testSession={testSession}
@@ -608,7 +611,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
               </div>
             )}
             {groupedSessions.unscheduled.map((testSession) => (
-              <div key={testSession.id} className="pl-4 pr-4">
+              <div key={testSession.id} className="ps-4 pe-4">
                 <SessionItem
                   testSession={testSession}
                   isCompleted={testSession.isCompleted}

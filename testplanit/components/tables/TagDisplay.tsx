@@ -26,7 +26,7 @@ export const TagsDisplay: React.FC<Tags> = ({
   }
 
   const tagClassName =
-    size === "large" ? "w-5 h-5 shrink-0 mr-1" : "w-4 h-4 shrink-0 mr-1";
+    size === "large" ? "w-5 h-5 shrink-0 me-1" : "w-4 h-4 shrink-0 me-1";
   const textClassName =
     size === "large"
       ? "overflow-hidden truncate max-w-xs text-base flex items-center"
@@ -36,14 +36,14 @@ export const TagsDisplay: React.FC<Tags> = ({
     <Tooltip>
       <TooltipTrigger type="button" className="cursor-default">
         <div className="flex items-center max-w-full">
-          <Badge key={id} className="mr-1 mb-1">
+          <Badge key={id} className="me-1 mb-1">
             {link ? (
               <Link href={link} className={textClassName}>
                 <Tag className={tagClassName} />
                 <span className="truncate">{name}</span>
               </Link>
             ) : (
-              <div className="flex items-center mr-1">
+              <div className="flex items-center me-1">
                 <Tag className={tagClassName} />
                 <span className={textClassName}>{name}</span>
               </div>

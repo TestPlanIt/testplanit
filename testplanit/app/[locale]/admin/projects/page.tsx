@@ -498,7 +498,7 @@ function ProjectAdmin() {
                     {completedAt
                       ? format(completedAt, "PPP")
                       : tGlobal("common.placeholders.date")}
-                    <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
+                    <CalendarDays className="ms-auto h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

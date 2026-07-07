@@ -977,7 +977,7 @@ export function EditProjectModal({
                                   {role.name}
                                   {role.isDefault && (
                                     <Tooltip>
-                                      <TooltipTrigger className="ml-1" asChild>
+                                      <TooltipTrigger className="ms-1" asChild>
                                         <Badge variant="secondary">
                                           <Star className="h-3 w-3 fill-current text-primary-background" />
                                         </Badge>

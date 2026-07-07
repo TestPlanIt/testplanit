@@ -305,7 +305,7 @@ function Configurations(): React.ReactElement | null {
                   showTotal={true}
                   showUnassigned={true}
                   unassignedLabel={t("allProjects")}
-                  unassignedIcon={<Boxes className="mr-2 h-4 w-4" />}
+                  unassignedIcon={<Boxes className="me-2 h-4 w-4" />}
                 />
                 {selectedConfigurationIds.length > 0 && (
                   <Button

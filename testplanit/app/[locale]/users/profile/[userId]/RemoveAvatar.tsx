@@ -76,7 +76,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
             <Button
               type="button"
               variant="secondary"
-              className="ml-auto"
+              className="ms-auto"
               onClick={() => setOpenPopover(false)}
               disabled={isLoading}
             >
@@ -88,7 +88,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
               type="button"
               variant="destructive"
               onClick={onRemove}
-              className="ml-auto"
+              className="ms-auto"
               disabled={isLoading}
             >
               <Trash2 className="h-4 w-4" /> {tCommon("actions.delete")}

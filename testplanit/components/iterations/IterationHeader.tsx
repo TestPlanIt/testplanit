@@ -64,7 +64,7 @@ export function IterationHeader({
 
   return (
     <header
-      className="flex items-center justify-between gap-4 pl-4 pr-12 py-3 border-b bg-muted/30"
+      className="flex items-center justify-between gap-4 ps-4 pe-12 py-3 border-b bg-muted/30"
       data-testid="iteration-header"
     >
       <TooltipProvider>
@@ -109,7 +109,7 @@ export function IterationHeader({
           </Tooltip>
         </div>
       </TooltipProvider>
-      <div className="flex items-center gap-3 ml-auto">
+      <div className="flex items-center gap-3 ms-auto">
         {status && (
           <span
             className="inline-flex items-center gap-2 text-sm"
@@ -139,7 +139,7 @@ export function IterationHeader({
               disabled={isRunCompleted}
               data-testid="iteration-header-menu-override-values"
             >
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil className="me-2 h-4 w-4" />
               {t("iterationOverrideValues")}
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -147,7 +147,7 @@ export function IterationHeader({
               disabled={isRunCompleted}
               data-testid="iteration-header-menu-skip"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="me-2 h-4 w-4" />
               {t("iterationSkip")}
             </DropdownMenuItem>
             {hasResult && (
@@ -159,7 +159,7 @@ export function IterationHeader({
                   className="text-destructive focus:text-destructive"
                   data-testid="iteration-header-menu-reset"
                 >
-                  <RotateCcw className="mr-2 h-4 w-4" />
+                  <RotateCcw className="me-2 h-4 w-4" />
                   {t("iterationReset")}
                 </DropdownMenuItem>
               </>

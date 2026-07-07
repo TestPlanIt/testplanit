@@ -230,19 +230,19 @@ function WorkflowComponent() {
           <div className="flex items-center text-primary text-xl md:text-2xl">
             {scope === "CASES" && (
               <>
-                <scopeDisplayData.CASES.icon className="mr-2" />
+                <scopeDisplayData.CASES.icon className="me-2" />
                 {scopeDisplayData.CASES.text}
               </>
             )}
             {scope === "RUNS" && (
               <>
-                <scopeDisplayData.RUNS.icon className="mr-2" />
+                <scopeDisplayData.RUNS.icon className="me-2" />
                 {scopeDisplayData.RUNS.text}
               </>
             )}
             {scope === "SESSIONS" && (
               <>
-                <scopeDisplayData.SESSIONS.icon className="mr-2" />
+                <scopeDisplayData.SESSIONS.icon className="me-2" />
                 {scopeDisplayData.SESSIONS.text}
               </>
             )}

@@ -349,7 +349,7 @@ function CasePanel({
                       {caseDetails.steps.map((step, i) => (
                         <div
                           key={step.id ?? i}
-                          className="text-sm border-l-2 border-muted pl-2"
+                          className="text-sm border-s-2 border-muted ps-2"
                         >
                           <div className="font-medium">
                             {`${i + 1}. `}
@@ -455,7 +455,7 @@ function CasePanel({
           {lastRun ? (
             <div>
               <span className="font-medium">{lastRun.testRun?.name ?? ""}</span>
-              <span className="text-muted-foreground ml-2">
+              <span className="text-muted-foreground ms-2">
                 {lastRun.status?.name ?? ""}
                 {" — "}
                 <DateFormatter
@@ -675,7 +675,7 @@ export function DuplicateComparisonDialog({
           >
             {isSubmitting && activeAction === "dismiss" ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-4 w-4 me-2 animate-spin" />
                 {t("dismissing")}
               </>
             ) : (
@@ -692,7 +692,7 @@ export function DuplicateComparisonDialog({
             >
               {isSubmitting && activeAction === "link" ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 me-2 animate-spin" />
                   {t("linking")}
                 </>
               ) : (
@@ -707,7 +707,7 @@ export function DuplicateComparisonDialog({
             >
               {isSubmitting && activeAction === "merge" ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 me-2 animate-spin" />
                   {t("merging")}
                 </>
               ) : (

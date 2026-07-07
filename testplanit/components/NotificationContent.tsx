@@ -94,7 +94,7 @@ export function NotificationContent({
             data.testRunGroups.map((group: any) => (
               <div
                 key={group.testRunId}
-                className="mt-2 pl-2 border-l-2 border-muted"
+                className="mt-2 ps-2 border-s-2 border-muted"
               >
                 <div className="flex items-center gap-1 flex-wrap">
                   <span className="text-xs">{t("testRun")}</span>

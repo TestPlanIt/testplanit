@@ -151,8 +151,8 @@ export function SharedDatasetVersionPicker({
               // a light-bg / dark-text pair in dark theme; mixing dark
               // text with the light bg via opacity produces a mid-gray
               // that drops below readable contrast). Visual hierarchy
-              // for the subtext comes from font size + `ml-2` spacing.
-              <span className="text-sm ml-2">
+              // for the subtext comes from font size + `ms-2` spacing.
+              <span className="text-sm ms-2">
                 {t("historicalItemBy", { name: v.createdBy.name })}
               </span>
             ) : null}

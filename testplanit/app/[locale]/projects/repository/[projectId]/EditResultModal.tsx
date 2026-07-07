@@ -1141,7 +1141,7 @@ export function EditResultModal({
                       <SelectItem key={status.id} value={status.id.toString()}>
                         <div className="flex items-center">
                           <div
-                            className="w-3 h-3 rounded-full mr-2"
+                            className="w-3 h-3 rounded-full me-2"
                             style={{
                               backgroundColor: status.color?.value || "#B1B2B3",
                             }}
@@ -1261,7 +1261,7 @@ export function EditResultModal({
                   {isRestricted && (
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1299,7 +1299,7 @@ export function EditResultModal({
                   {isRestricted && (
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1344,7 +1344,7 @@ export function EditResultModal({
                   {isRestricted && (
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1409,7 +1409,7 @@ export function EditResultModal({
                       {isRestricted && (
                         <span
                           title={tCommon("aria.restrictedField")}
-                          className="ml-1"
+                          className="ms-1"
                         >
                           <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                         </span>
@@ -1454,7 +1454,7 @@ export function EditResultModal({
                   {isRestricted && (
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1545,7 +1545,7 @@ export function EditResultModal({
           <DialogDescription>
             <div className="text-sm text-muted-foreground flex items-center">
               <div className="flex items-center">
-                <ListChecks className="mr-1 h-4 w-4 shrink-0" />
+                <ListChecks className="me-1 h-4 w-4 shrink-0" />
                 {caseName}
               </div>
             </div>
@@ -1592,7 +1592,7 @@ export function EditResultModal({
                             >
                               <div className="flex items-center">
                                 <div
-                                  className="w-3 h-3 rounded-full mr-2"
+                                  className="w-3 h-3 rounded-full me-2"
                                   style={{
                                     backgroundColor:
                                       status.color?.value || "#B1B2B3",

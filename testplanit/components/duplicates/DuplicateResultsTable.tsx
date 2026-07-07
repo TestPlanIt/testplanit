@@ -398,7 +398,7 @@ export function DuplicateResultsTable({
       {/* Bulk action bar */}
       {selectedCount > 0 && (
         <div className="flex items-center gap-2 mt-4 mb-2 p-2 bg-muted/50 rounded-lg border h-12">
-          <span className="text-sm text-muted-foreground mr-2">
+          <span className="text-sm text-muted-foreground me-2">
             {t("selected", { count: selectedCount })}
           </span>
           <Button

@@ -73,7 +73,7 @@
 
 :global(.dark) .editorContent blockquote {
   color: #d1d5db !important;
-  border-left-color: #6b7280 !important;
+  border-inline-start-color: #6b7280 !important;
 }
 
 :global(.dark) .editorContent ul {
@@ -108,7 +108,7 @@
   min-width: 100px;
   padding: 0.5rem !important;
   position: relative;
-  text-align: left;
+  text-align: start;
   vertical-align: top;
 }
 
@@ -203,14 +203,14 @@
 .editorContent table :global(.grip-column) {
   width: calc(100% + 1px);
   height: 12px;
-  left: 0;
-  margin-left: -1px;
+  inset-inline-start: 0;
+  margin-inline-start: -1px;
   top: -12px;
-  border-left: 1px solid rgba(0, 0, 0, 0.2);
+  border-inline-start: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 :global(.dark) .editorContent table :global(.grip-column) {
-  border-left-color: rgba(203, 213, 225, 0.15);
+  border-inline-start-color: rgba(203, 213, 225, 0.15);
 }
 
 .editorContent table :global(.grip-column):hover {
@@ -263,7 +263,7 @@
 .editorContent table :global(.grip-row) {
   height: calc(100% + 1px);
   width: 12px;
-  left: -12px;
+  inset-inline-start: -12px;
   top: 0;
   margin-top: -1px;
   border-top: 1px solid rgba(0, 0, 0, 0.2);
@@ -288,11 +288,11 @@
 }
 
 .editorContent table :global(.grip-row):hover::before {
-  border-left: 2px dotted rgba(0, 0, 0, 0.6);
+  border-inline-start: 2px dotted rgba(0, 0, 0, 0.6);
 }
 
 :global(.dark) .editorContent table :global(.grip-row):hover::before {
-  border-left-color: rgba(203, 213, 225, 0.4);
+  border-inline-start-color: rgba(203, 213, 225, 0.4);
 }
 
 .editorContent table :global(.grip-row.first) {
@@ -316,7 +316,7 @@
 }
 
 .editorContent table :global(.grip-row.selected)::before {
-  border-left: 2px dotted currentColor;
+  border-inline-start: 2px dotted currentColor;
 }
 
 /* Drag handle styles */

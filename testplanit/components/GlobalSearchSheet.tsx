@@ -84,7 +84,7 @@ export function GlobalSearchSheet({ isOpen, onClose }: GlobalSearchSheetProps) {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="ml-2 inline-flex"
+                  className="ms-2 inline-flex"
                   aria-label={t("common.aria.help")}
                 >
                   <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />

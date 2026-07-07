@@ -129,7 +129,7 @@ export function ManageTags({
 
   const formatCreateLabel = (inputValue: string) => (
     <div className="flex items-center">
-      <CirclePlus className="mr-1 w-4 h-4 shrink-0" />
+      <CirclePlus className="me-1 w-4 h-4 shrink-0" />
       <span>{tCommon("actions.createTag", { name: inputValue })}</span>
     </div>
   );

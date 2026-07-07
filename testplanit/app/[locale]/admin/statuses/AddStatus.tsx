@@ -313,7 +313,7 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
                   <FormLabel className="flex items-center">
                     {tCommon("fields.systemName")}
                     <HelpPopover helpKey="status.systemName" />
-                    <div className="text-muted-foreground text-sm ml-1">
+                    <div className="text-muted-foreground text-sm ms-1">
                       {t("systemNameHelp")}
                     </div>
                   </FormLabel>

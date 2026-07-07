@@ -29,7 +29,7 @@ const LoadingWrapper = ({ label }: LoadingWrapperProps) => {
 export const Loader = ({ hasOverlay = true, label }: LoaderProps) => {
   return hasOverlay ? (
     createPortal(
-      <div className="items-center justify-center bg-black/60 flex h-full w-full fixed top-0 left-0 select-none z-9999">
+      <div className="items-center justify-center bg-black/60 flex h-full w-full fixed top-0 start-0 select-none z-9999">
         <LoadingWrapper label={label} />
       </div>,
       document.body

@@ -46,7 +46,7 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
       <div className="h-full flex flex-col border rounded-lg bg-card text-card-foreground shadow-sm">
         <div className="p-6 pb-4 border-b">
           <h3 className="text-2xl font-semibold leading-none tracking-tight text-primary flex items-center">
-            <Milestone className="mr-1" />
+            <Milestone className="me-1" />
             <div>{t("projects.overview.currentMilestones")}</div>
           </h3>
         </div>
@@ -61,7 +61,7 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
     <div className="h-full flex flex-col border rounded-lg bg-card text-card-foreground shadow-sm">
       <div className="p-6 pb-4 border-b">
         <h3 className="text-2xl font-semibold leading-none tracking-tight text-primary flex items-center">
-          <Milestone className="mr-1" />
+          <Milestone className="me-1" />
           <div>{t("projects.overview.currentMilestones")}</div>
         </h3>
         {milestones?.length ? (
@@ -74,7 +74,7 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
               {t("projects.overview.seeAllMilestones", {
                 count: milestonesCountResult?.length ?? 0,
               })}
-              <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             </Link>
           </p>
         ) : null}

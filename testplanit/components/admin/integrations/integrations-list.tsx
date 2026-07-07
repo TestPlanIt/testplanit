@@ -176,7 +176,7 @@ export function IntegrationsList({
                 {integration.name}
               </CardTitle>
               {isActive && (
-                <Badge variant="default" className="ml-auto">
+                <Badge variant="default" className="ms-auto">
                   {tCommon("fields.isActive")}
                 </Badge>
               )}
@@ -290,7 +290,7 @@ export function IntegrationsList({
                 <p className="font-medium">
                   {t("integration.removeWarningTitle")}
                 </p>
-                <ul className="list-disc pl-5 space-y-1">
+                <ul className="list-disc ps-5 space-y-1">
                   <li>{t("integration.removeWarning1")}</li>
                   <li>{t("integration.removeWarning2")}</li>
                   <li>{t("integration.removeWarning3")}</li>
@@ -333,7 +333,7 @@ export function IntegrationsList({
                 <p className="font-medium">
                   {t("integration.switchWarningTitle")}
                 </p>
-                <ul className="list-disc pl-5 space-y-1 text-destructive">
+                <ul className="list-disc ps-5 space-y-1 text-destructive">
                   <li>{t("integration.switchWarning1")}</li>
                   <li>{t("integration.switchWarning2")}</li>
                   <li>{t("integration.switchWarning3")}</li>

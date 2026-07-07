@@ -819,7 +819,7 @@ export function QuickScriptModal({
                             : t("templatePlaceholder")}
                           {selectedTemplate?.isDefault && (
                             <Tooltip>
-                              <TooltipTrigger className="ml-1" asChild>
+                              <TooltipTrigger className="ms-1" asChild>
                                 <Badge variant="secondary">
                                   <Star className="h-3 w-3 fill-current text-primary-background" />
                                 </Badge>
@@ -830,7 +830,7 @@ export function QuickScriptModal({
                             </Tooltip>
                           )}
                         </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -856,7 +856,7 @@ export function QuickScriptModal({
                                   >
                                     <Check
                                       className={cn(
-                                        "mr-2 h-4 w-4",
+                                        "me-2 h-4 w-4",
                                         effectiveTemplateId === String(tmpl.id)
                                           ? "opacity-100"
                                           : "opacity-0"
@@ -866,7 +866,7 @@ export function QuickScriptModal({
                                     {tmpl.isDefault && (
                                       <Tooltip>
                                         <TooltipTrigger
-                                          className="ml-1"
+                                          className="ms-1"
                                           asChild
                                         >
                                           <Badge variant="secondary">

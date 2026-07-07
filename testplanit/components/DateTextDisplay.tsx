@@ -22,7 +22,7 @@ export function DateTextDisplay({
   const tGlobal = useTranslations();
 
   const content = (
-    <div className="text-sm text-muted-foreground text-right">
+    <div className="text-sm text-muted-foreground text-end">
       {startDate && !isCompleted && (
         <span className="whitespace-nowrap">
           <DateFormatter

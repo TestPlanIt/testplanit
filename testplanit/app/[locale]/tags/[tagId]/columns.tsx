@@ -217,7 +217,7 @@ const TestRunLinkDisplay: React.FC<{
       : maxLines === 2
         ? "line-clamp-2"
         : "line-clamp-3";
-  const textClass = cn(clampClass, "flex-1 text-left");
+  const textClass = cn(clampClass, "flex-1 text-start");
   const shouldShowTooltip = true;
 
   const content = (

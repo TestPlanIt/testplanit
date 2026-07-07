@@ -107,7 +107,7 @@ export const ProjectQuickSelector = () => {
                   {project.name}
                 </span>
                 {project.isCompleted && (
-                  <span className="ml-2 text-xs text-muted-foreground">
+                  <span className="ms-2 text-xs text-muted-foreground">
                     {"(Complete)"}
                   </span>
                 )}

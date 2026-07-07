@@ -270,7 +270,7 @@ export function IterationResultPanel({
               onClick={() =>
                 successStatus && submitWithStatus(successStatus.id, true)
               }
-              className="rounded-r-none border-r-0"
+              className="rounded-e-none border-e-0"
               data-testid="iteration-pass-and-next-button"
             >
               <CheckCircle className="h-4 w-4" />
@@ -283,7 +283,7 @@ export function IterationResultPanel({
                   variant="default"
                   size="sm"
                   disabled={isDisabled || isSubmitting}
-                  className="rounded-l-none px-1.5"
+                  className="rounded-s-none px-1.5"
                   data-testid="iteration-status-dropdown-trigger"
                   aria-label={t("iterationOtherStatuses")}
                 >
@@ -302,14 +302,14 @@ export function IterationResultPanel({
                     data-testid={`iteration-status-${status.id}`}
                   >
                     <div
-                      className="w-3 h-3 rounded-full mr-2 shrink-0"
+                      className="w-3 h-3 rounded-full me-2 shrink-0"
                       style={{
                         backgroundColor: status.color?.value || "#B1B2B3",
                       }}
                     />
                     <span className="flex-1 text-sm">{status.name}</span>
                     {status.isSuccess && (
-                      <CheckCircle className="h-4 w-4 ml-2 text-muted-foreground" />
+                      <CheckCircle className="h-4 w-4 ms-2 text-muted-foreground" />
                     )}
                   </DropdownMenuItem>
                 ))}

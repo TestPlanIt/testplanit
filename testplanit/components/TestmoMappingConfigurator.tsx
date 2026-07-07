@@ -1532,7 +1532,7 @@ function WorkflowMappingSection({
                                 <SelectItem
                                   key={option.value}
                                   value={option.value}
-                                  className="ml-2"
+                                  className="ms-2"
                                 >
                                   {option.label}
                                 </SelectItem>
@@ -2607,7 +2607,7 @@ function ConfigurationMappingSection({
                                             key={option.value}
                                             value={option.value}
                                           >
-                                            <div className="flex flex-col text-left">
+                                            <div className="flex flex-col text-start">
                                               <span>{option.label}</span>
                                               {option.categoryName && (
                                                 <span className="text-xs text-muted-foreground">
@@ -5440,7 +5440,7 @@ function TemplateFieldMappingSection({
                                     <SelectItem
                                       key={`${group.key}-${option.value}`}
                                       value={option.value}
-                                      className="pl-6"
+                                      className="ps-6"
                                       disabled={isDisabled}
                                     >
                                       {renderTargetOption(
@@ -5481,7 +5481,7 @@ function TemplateFieldMappingSection({
                           ) {
                             return (
                               <p className="text-xs text-primary font-bold flex items-start">
-                                <AlertTriangle className="w-4 h-4 mr-1 inline" />
+                                <AlertTriangle className="w-4 h-4 me-1 inline" />
                                 {t("templateFieldTypeMismatchWarning", {
                                   source: field.fieldType,
                                   target: selected.typeName,
@@ -5493,13 +5493,13 @@ function TemplateFieldMappingSection({
                         })()}
                         {missingTarget && (
                           <p className="text-xs text-destructive flex items-start">
-                            <AlertTriangle className="w-4 h-4 mr-1 inline" />
+                            <AlertTriangle className="w-4 h-4 me-1 inline" />
                             {t("templateFieldIssueMissingTarget")}
                           </p>
                         )}
                         {isTargetInUse && (
                           <p className="text-xs text-destructive flex items-start">
-                            <AlertTriangle className="w-4 h-4 mr-1 inline" />
+                            <AlertTriangle className="w-4 h-4 me-1 inline" />
                             {t("templateFieldDuplicateTargetWarning")}
                           </p>
                         )}
@@ -5591,7 +5591,7 @@ function TemplateFieldMappingSection({
                       )}
                       {missingCreateDetails && (
                         <p className="text-xs text-destructive flex items-start">
-                          <AlertTriangle className="w-4 h-4 mr-1 inline" />
+                          <AlertTriangle className="w-4 h-4 me-1 inline" />
                           {t("templateFieldIssueMissingDetails")}
                         </p>
                       )}
@@ -6156,7 +6156,7 @@ function MilestoneTypeMappingSection({
                                 ) : null}
                                 <span>{option.label}</span>
                                 {option.isDefault && (
-                                  <Badge variant="outline" className="ml-2">
+                                  <Badge variant="outline" className="ms-2">
                                     {t("milestoneDefaultLabel")}
                                   </Badge>
                                 )}

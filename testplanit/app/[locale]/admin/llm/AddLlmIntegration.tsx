@@ -654,7 +654,7 @@ export function AddLlmIntegration({
             >
               <AccordionItem value="provider">
                 <AccordionTrigger>
-                  <div className="flex items-center gap-4 flex-1 min-w-0 mr-2">
+                  <div className="flex items-center gap-4 flex-1 min-w-0 me-2">
                     <span className="shrink-0 flex items-center gap-2">
                       {sectionsWithErrors.has("provider") && (
                         <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
@@ -662,7 +662,7 @@ export function AddLlmIntegration({
                       {tLlm("sections.provider")}
                     </span>
                     {providerLabel && (
-                      <span className="text-xs text-muted-foreground font-normal truncate ml-auto">
+                      <span className="text-xs text-muted-foreground font-normal truncate ms-auto">
                         {watchedModel
                           ? `${providerLabel} / ${watchedModel}`
                           : providerLabel}
@@ -784,7 +784,7 @@ export function AddLlmIntegration({
                             {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
                               fetchingModels && (
                                 <div className="flex items-center text-sm text-muted-foreground">
-                                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                  <Loader2 className="h-4 w-4 animate-spin me-1" />
                                   {t("fetchingModels")}
                                 </div>
                               )}

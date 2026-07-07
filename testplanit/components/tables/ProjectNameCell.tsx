@@ -29,14 +29,14 @@ export const ProjectNameCell: React.FC<ProjectNameCellProps> = ({
         href={`/projects/overview/${projectId}`}
       >
         <Tooltip>
-          <TooltipTrigger type="button" className="text-left block truncate">
+          <TooltipTrigger type="button" className="text-start block truncate">
             <span className="truncate">{value}</span>
           </TooltipTrigger>
           <TooltipContent align="start">
             <div>{value}</div>
           </TooltipContent>
         </Tooltip>
-        <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
       </Link>
       {note && (
         <div className="text-sm text-foreground font-extralight">{note}</div>

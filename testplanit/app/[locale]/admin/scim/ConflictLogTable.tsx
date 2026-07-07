@@ -164,7 +164,7 @@ export function ConflictLogTable() {
         className="py-8 text-center text-sm text-muted-foreground"
       >
         <Loader2 className="inline h-4 w-4 animate-spin" />
-        <span className="ml-2">{t("loading")}</span>
+        <span className="ms-2">{t("loading")}</span>
       </div>
     );
   }

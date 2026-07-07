@@ -115,7 +115,7 @@ export function FeedbackBanner({
   return (
     <div className="flex items-center justify-center gap-2 bg-primary/10 border-b border-primary/20 px-4 py-2 text-sm">
       <MessageSquareHeart className="h-4 w-4 text-primary shrink-0" />
-      <span className="text-foreground mr-4">
+      <span className="text-foreground me-4">
         {t("feedback.bannerMessage")}
       </span>
       <Button variant="secondary" size="sm" onClick={handleOpenSurvey}>
@@ -123,7 +123,7 @@ export function FeedbackBanner({
       </Button>
       <button
         onClick={handleDismiss}
-        className="text-muted-foreground hover:text-foreground transition-colors ml-1"
+        className="text-muted-foreground hover:text-foreground transition-colors ms-1"
         aria-label={t("common.actions.close")}
       >
         <X className="h-4 w-4" />

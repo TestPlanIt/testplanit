@@ -595,7 +595,7 @@ export function ProjectIntegrationSettings({
                         <div className="p-3 bg-muted rounded-md text-sm space-y-2">
                           <p>{t("integration.removeProjectConfirmation")}</p>
                           {isLastActiveMapping && hasInboundWebhook && (
-                            <ul className="list-disc pl-5 text-muted-foreground">
+                            <ul className="list-disc ps-5 text-muted-foreground">
                               <li>
                                 {t(
                                   "integration.removeProjectWebhookCascadeBullet"

@@ -425,7 +425,7 @@ export function SessionVersionRenderer({
             </span>
             <DynamicIcon name="check-circle" className="h-6 w-6 shrink-0" />
             <div className="flex items-center truncate">
-              <span className="mr-1">{t("common.fields.completedOn")}</span>
+              <span className="me-1">{t("common.fields.completedOn")}</span>
               <span className="truncate">
                 <DateFormatter
                   date={testSession.completedAt}

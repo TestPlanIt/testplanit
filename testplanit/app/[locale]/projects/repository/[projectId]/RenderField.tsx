@@ -109,7 +109,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
                     {option.fieldOption.icon &&
                       option.fieldOption.iconColor && (
                         <DynamicIcon
-                          className="h-4 w-4 mr-1"
+                          className="h-4 w-4 me-1"
                           name={option.fieldOption.icon.name}
                           color={option.fieldOption.iconColor.value}
                         />
@@ -135,7 +135,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
                     {option.fieldOption.icon &&
                       option.fieldOption.iconColor && (
                         <DynamicIcon
-                          className="h-4 w-4 mr-1"
+                          className="h-4 w-4 me-1"
                           name={option.fieldOption.icon.name}
                           color={option.fieldOption.iconColor.value}
                         />
@@ -184,7 +184,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
                         {option.fieldOption.icon &&
                           option.fieldOption.iconColor && (
                             <DynamicIcon
-                              className="h-4 w-4 mr-1"
+                              className="h-4 w-4 me-1"
                               name={option.fieldOption.icon.name}
                               color={option.fieldOption.iconColor.value}
                             />
@@ -364,7 +364,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
             {isFieldRestricted && (
               <span
                 title={tCommon("aria.restrictedField")}
-                className="ml-1 text-muted-foreground"
+                className="ms-1 text-muted-foreground"
               >
                 <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
               </span>

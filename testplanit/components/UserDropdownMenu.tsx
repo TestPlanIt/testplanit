@@ -267,16 +267,16 @@ export function UserDropdownMenu() {
     return (
       <DropdownMenuItem onClick={updateTheme} className="flex items-center">
         {isActive && (
-          <span className="mr-2">
+          <span className="me-2">
             <Check className="w-4 h-4" />
           </span>
         )}
         {!isActive && (
-          <span className="mr-2 opacity-0">
+          <span className="me-2 opacity-0">
             <Check className="w-4 h-4" />
           </span>
         )}
-        <span className={cn("mr-2", color)}>{icon}</span>
+        <span className={cn("me-2", color)}>{icon}</span>
         <span className="grow">
           {t(`themes.${themeName.toLowerCase()}` as any)}
         </span>
@@ -315,12 +315,12 @@ export function UserDropdownMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={onViewProfile}>
-            <User className="h-4 w-4 mr-2" />
+            <User className="h-4 w-4 me-2" />
             {t("viewProfile")}
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger data-testid="theme-submenu-trigger">
-              <Sun className="h-4 w-4 mr-2" />
+              <Sun className="h-4 w-4 me-2" />
               {tCommon("fields.theme")}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -365,7 +365,7 @@ export function UserDropdownMenu() {
           </DropdownMenuSub>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Globe className="h-4 w-4 mr-2" />
+              <Globe className="h-4 w-4 me-2" />
               {tCommon("fields.locale")}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -379,7 +379,7 @@ export function UserDropdownMenu() {
                     >
                       <Check
                         className={cn(
-                          "h-4 w-4 mr-2",
+                          "h-4 w-4 me-2",
                           session?.user?.preferences?.locale === value
                             ? "opacity-100"
                             : "opacity-0"
@@ -396,7 +396,7 @@ export function UserDropdownMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={onSignout} disabled={isLoggingOut}>
-            <LogOut className="h-4 w-4 mr-2" />
+            <LogOut className="h-4 w-4 me-2" />
             {tCommon("actions.signOut")}
           </DropdownMenuItem>
         </DropdownMenuGroup>

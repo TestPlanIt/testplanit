@@ -408,7 +408,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                   {isLoadingCasesForStatusList ? (
                     <LoadingSpinnerAlert />
                   ) : availableStatuses.length > 0 ? (
-                    <div className="max-h-40 overflow-y-auto space-y-2 pr-2 border rounded-md p-2">
+                    <div className="max-h-40 overflow-y-auto space-y-2 pe-2 border rounded-md p-2">
                       {availableStatuses.map((status) => (
                         <FormField
                           key={status.id}
@@ -451,7 +451,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                                   >
                                     {status.name}
                                   </Badge>
-                                  <span className="ml-1.5 text-muted-foreground">
+                                  <span className="ms-1.5 text-muted-foreground">
                                     {`(${status.count} ${tCommon("plural.case", { count: status.count })})`}
                                   </span>
                                 </FormLabel>

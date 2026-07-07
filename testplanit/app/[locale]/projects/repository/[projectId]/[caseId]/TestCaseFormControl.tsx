@@ -76,13 +76,13 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
 
   return (
     <div role="region" aria-label={t("repository.version.detailsRegion")}>
-      <ul className="ml-1 list-none" role="list">
+      <ul className="ms-1 list-none" role="list">
         {isEditMode && !isSubmitting ? (
           <>
             <FormField
               name="estimate"
               render={({ field }) => (
-                <li className="mb-2 mr-6">
+                <li className="mb-2 me-6">
                   <label htmlFor="estimate" className="font-bold">
                     {t("common.fields.estimate")}
                   </label>
@@ -111,7 +111,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
             <FormField
               name="automated"
               render={({ field }) => (
-                <li className="mb-2 mr-6">
+                <li className="mb-2 me-6">
                   <div className="flex items-center gap-1">
                     <label htmlFor="automated" className="font-bold">
                       {t("common.fields.automated")}
@@ -224,7 +224,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
         ) : (
           <>
             {testcase.estimate != null && testcase.estimate > 0 && (
-              <li className="mb-2 mr-6">
+              <li className="mb-2 me-6">
                 <div id="estimate-display" className="font-bold">
                   {t("common.fields.estimate")}
                 </div>
@@ -239,7 +239,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
             )}
 
             {testcase.forecastManual != null && testcase.forecastManual > 0 && (
-              <li className="mb-2 mr-6">
+              <li className="mb-2 me-6">
                 <div id="forecast-display" className="font-bold">
                   {t("common.fields.forecast")}
                 </div>
@@ -398,7 +398,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                 </li>
               )}
             {!isEditMode && !isSubmitting && session?.user && (
-              <li id="comments" className="mt-2 mr-1">
+              <li id="comments" className="mt-2 me-1">
                 <CommentsSection
                   projectId={testcase.projectId}
                   entityType="repositoryCase"

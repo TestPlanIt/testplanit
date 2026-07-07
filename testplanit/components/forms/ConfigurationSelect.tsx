@@ -61,7 +61,7 @@ export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
       showTotal={true}
       showUnassigned={true}
       unassignedLabel={tCommon("access.none")}
-      unassignedIcon={<CircleSlash2 className="mr-2 h-4 w-4" />}
+      unassignedIcon={<CircleSlash2 className="me-2 h-4 w-4" />}
     />
   );
 };

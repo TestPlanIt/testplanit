@@ -1509,7 +1509,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                   >
                     <div className="flex flex-col h-full">
                       <div
-                        className="flex items-start justify-between mr-2 shrink-0"
+                        className="flex items-start justify-between me-2 shrink-0"
                         data-testid="repository-left-panel-header"
                       >
                         <ViewSelector
@@ -1522,7 +1522,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           viewOptions={viewOptions}
                           totalCount={viewOptionsData?.totalCount || 0}
                         />
-                        <div className="ml-4">
+                        <div className="ms-4">
                           {selectedItem === "folders" &&
                             !hideHeader &&
                             canAddEdit && (
@@ -1617,7 +1617,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                       type="button"
                       onClick={toggleCollapse}
                       variant="secondary"
-                      className="p-0 -ml-1 rounded-l-none"
+                      className="p-0 -ms-1 rounded-s-none"
                       disabled={isEsSearchActive}
                     >
                       {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
@@ -1642,7 +1642,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           {/* Elasticsearch search bar for selection mode */}
                           {isSelectionMode && (
                             <div className="relative flex-1 max-w-md">
-                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                              <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                               <Input
                                 type="text"
                                 placeholder={t(
@@ -1652,13 +1652,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 onChange={(e) =>
                                   setEsSearchQuery(e.target.value)
                                 }
-                                className="pl-10 pr-10 h-8"
+                                className="ps-10 pe-10 h-8"
                               />
                               {esSearchQuery && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6"
+                                  className="absolute end-1 top-1/2 transform -translate-y-1/2 h-6 w-6"
                                   onClick={cancelEsSearch}
                                 >
                                   <X className="h-4 w-4" />
@@ -1760,7 +1760,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                     pressed={showDescendants}
                                     onPressedChange={setShowDescendants}
                                     aria-label={t("repository.showDescendants")}
-                                    className="h-7 gap-1 text-xs mr-2 shrink-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                                    className="h-7 gap-1 text-xs me-2 shrink-0 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                                   >
                                     <FolderDown className="h-3.5 w-3.5" />
                                     {t("repository.showDescendants")}
@@ -1784,7 +1784,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
 
                                     if (!isEmpty) {
                                       return (
-                                        <div className="ml-4 bg-muted rounded-lg">
+                                        <div className="ms-4 bg-muted rounded-lg">
                                           <TipTapEditor
                                             content={docsContent}
                                             readOnly={true}

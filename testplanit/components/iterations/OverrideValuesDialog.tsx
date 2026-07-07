@@ -281,7 +281,7 @@ export function OverrideValuesDialog({
                       >
                         {`@${p.name}`}
                         {sensitive && (
-                          <span className="text-muted-foreground ml-1 font-sans">
+                          <span className="text-muted-foreground ms-1 font-sans">
                             {`(${t("formSensitive").toLowerCase()})`}
                           </span>
                         )}

@@ -956,7 +956,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                                   {tag}
                                   <button
                                     type="button"
-                                    className="ml-0.5 rounded-full hover:bg-muted p-0.5"
+                                    className="ms-0.5 rounded-full hover:bg-muted p-0.5"
                                     onClick={() => {
                                       field.onChange(
                                         tags.filter((_, i) => i !== idx)
@@ -1095,7 +1095,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                 {testCase.steps.map((step, si) => (
                   <div
                     key={si}
-                    className="pl-2 border-l-2 border-muted text-xs text-muted-foreground"
+                    className="ps-2 border-s-2 border-muted text-xs text-muted-foreground"
                   >
                     <div>
                       <span className="font-medium">
@@ -1145,14 +1145,14 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
           <div className="flex-1 min-w-0">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1 min-w-0">
-                <CollapsibleTrigger className="flex items-center gap-1.5 text-left group">
+                <CollapsibleTrigger className="flex items-center gap-1.5 text-start group">
                   <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   <h4 className="font-medium wrap-break-word">
                     {testCase.name}
                   </h4>
                 </CollapsibleTrigger>
                 {folderLabel && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground ml-5.5">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground ms-5.5">
                     <FolderOpen className="w-3 h-3 shrink-0" />
                     <span>{folderLabel}</span>
                   </div>
@@ -1165,7 +1165,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                   onClick={onStartEdit}
                   disabled={disabled}
                 >
-                  <SquarePen className="w-4 h-4 mr-1" />
+                  <SquarePen className="w-4 h-4 me-1" />
                   {tCommon("actions.edit")}
                 </Button>
               </div>
@@ -1173,7 +1173,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
           </div>
         </div>
         <CollapsibleContent>
-          <div className="px-4 pb-4 pl-[4.25rem] space-y-3">
+          <div className="px-4 pb-4 ps-[4.25rem] space-y-3">
             {renderFieldList(false)}
 
             <div className="flex flex-wrap items-center gap-2">
@@ -1184,7 +1184,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                     variant="outline"
                     className="text-xs text-primary"
                   >
-                    <Tag className="h-3 w-3 shrink-0 mr-1" />
+                    <Tag className="h-3 w-3 shrink-0 me-1" />
                     {tag}
                   </Badge>
                 ))}
@@ -1208,11 +1208,11 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                       data-testid="wizard-preview-parameter-chip"
                     >
                       {p.name}
-                      <span className="ml-1 text-muted-foreground">
+                      <span className="ms-1 text-muted-foreground">
                         {`(${p.type.toLowerCase()})`}
                       </span>
                       {p.sensitive && (
-                        <span className="ml-1 text-destructive">
+                        <span className="ms-1 text-destructive">
                           {`· ${_t("generateTestCases.parameterChipSensitive")}`}
                         </span>
                       )}
@@ -1259,7 +1259,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                         {testCase.parameters?.map((p) => (
                           <th
                             key={`${testCase.id}-th-${p.name}`}
-                            className="px-2 py-1 text-left font-medium"
+                            className="px-2 py-1 text-start font-medium"
                           >
                             {p.name}
                           </th>
@@ -3568,7 +3568,7 @@ export function GenerateTestCasesWizard({
             </DialogDescription>
             <Alert className="mt-2 bg-primary/10 border-primary/50">
               <AlertDescription>
-                <div className="flex items-center gap-2 text-xs text-left">
+                <div className="flex items-center gap-2 text-xs text-start">
                   <Info className="w-4 h-4 text-muted-foreground shrink-0" />
                   {t("generateTestCases.selectSource.folderContextTip", {
                     folderName:
@@ -3629,9 +3629,9 @@ export function GenerateTestCasesWizard({
                               {page.title || page.url}
                             </span>
                             {page.spaWarning && (
-                              <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 inline ml-1" />
+                              <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 inline ms-1" />
                             )}
-                            <span className="text-muted-foreground ml-1">
+                            <span className="text-muted-foreground ms-1">
                               {"("}
                               {pageTestCount}
                               {")"}
@@ -3714,7 +3714,7 @@ export function GenerateTestCasesWizard({
                               `${llmErrorTranslationKey}.suggestionsHeading` as any
                             )}
                           </p>
-                          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                          <ul className="mt-2 list-disc space-y-1 ps-5 text-sm text-muted-foreground">
                             {llmError.suggestions.map((suggestion) => (
                               <li key={suggestion}>{suggestion}</li>
                             ))}
@@ -4007,7 +4007,7 @@ export function GenerateTestCasesWizard({
                                       variant="outline"
                                       size="sm"
                                       onClick={() => setSelectedIssue(null)}
-                                      className="ml-4"
+                                      className="ms-4"
                                     >
                                       {tCommon("cancel")}
                                     </Button>
@@ -4054,7 +4054,7 @@ export function GenerateTestCasesWizard({
                                         >
                                           <button
                                             type="button"
-                                            className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                                            className="flex items-center gap-3 flex-1 min-w-0 text-start"
                                             onClick={() => {
                                               if (isInProgress) {
                                                 setUrlJobId(job.jobId);
@@ -4121,14 +4121,14 @@ export function GenerateTestCasesWizard({
                                                       }
                                                     />
                                                     {job.hasGeneratedResults ? (
-                                                      <span className="ml-1 text-primary">
+                                                      <span className="ms-1 text-primary">
                                                         {"·"}{" "}
                                                         {t(
                                                           "generateTestCases.selectSource.recentJobHasResults"
                                                         )}
                                                       </span>
                                                     ) : (
-                                                      <span className="ml-1">
+                                                      <span className="ms-1">
                                                         {"·"}{" "}
                                                         {t(
                                                           "generateTestCases.selectSource.recentJobClickToGenerate"
@@ -4494,7 +4494,7 @@ export function GenerateTestCasesWizard({
                                   <span>{template.templateName}</span>
                                   {template.isDefault && (
                                     <Tooltip>
-                                      <TooltipTrigger className="ml-1" asChild>
+                                      <TooltipTrigger className="ms-1" asChild>
                                         <Badge variant="secondary">
                                           <Star className="h-3 w-3 fill-current text-primary-background" />
                                         </Badge>

@@ -613,7 +613,7 @@ function AuditLogsContent({ session }: { session: Session }) {
                   showTotal
                   showUnassigned
                   unassignedLabel={t("allUsers")}
-                  unassignedIcon={<Users className="mr-2 h-4 w-4" />}
+                  unassignedIcon={<Users className="me-2 h-4 w-4" />}
                   renderOption={(u) => {
                     const isSystem = u.userId === SYSTEM_ACTOR_ID;
                     const primary = isSystem

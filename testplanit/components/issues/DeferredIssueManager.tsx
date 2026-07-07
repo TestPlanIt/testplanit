@@ -196,7 +196,7 @@ export function DeferredIssueManager({
             className={`hover:bg-accent hover:text-accent-foreground hover:border-primary transition-colors group overflow-hidden ${maxBadgeWidth}`}
           >
             <div className="flex items-center min-w-0">
-              <Bug className="w-4 h-4 shrink-0 mr-1" />
+              <Bug className="w-4 h-4 shrink-0 me-1" />
               {issue.externalUrl ? (
                 <a
                   href={issue.externalUrl}
@@ -221,7 +221,7 @@ export function DeferredIssueManager({
                 title={t("common.aria.removeIssue")}
                 onClick={() => handleRemoveIssue(issue.id)}
                 disabled={disabled}
-                className="ml-2 shrink-0 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
+                className="ms-2 shrink-0 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
               >
                 <X className="h-3 w-3" />
               </button>

@@ -1551,7 +1551,7 @@ export function AddResultModal({
                   {isRestricted && ( // Add LockIcon
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1590,7 +1590,7 @@ export function AddResultModal({
                   {isRestricted && ( // Add LockIcon
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1635,7 +1635,7 @@ export function AddResultModal({
                   {isRestricted && ( // Add LockIcon
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1726,7 +1726,7 @@ export function AddResultModal({
                       {isRestricted && ( // Add LockIcon
                         <span
                           title={tCommon("aria.restrictedField")}
-                          className="ml-1"
+                          className="ms-1"
                         >
                           <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                         </span>
@@ -1773,7 +1773,7 @@ export function AddResultModal({
                     {isRestricted && ( // Add LockIcon
                       <span
                         title={tCommon("aria.restrictedField")}
-                        className="ml-1"
+                        className="ms-1"
                       >
                         <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                       </span>
@@ -1826,7 +1826,7 @@ export function AddResultModal({
                 })
               ) : (
                 <div className="flex items-center">
-                  <ListChecks className="mr-1 h-4 w-4 shrink-0" />
+                  <ListChecks className="me-1 h-4 w-4 shrink-0" />
                   {caseName}
                 </div>
               )}
@@ -1876,7 +1876,7 @@ export function AddResultModal({
                             >
                               <div className="flex items-center">
                                 <div
-                                  className="w-3 h-3 rounded-full mr-2"
+                                  className="w-3 h-3 rounded-full me-2"
                                   style={{
                                     backgroundColor:
                                       status.color?.value || "#B1B2B3",
@@ -2018,7 +2018,7 @@ export function AddResultModal({
                           className="space-y-2 border-2 border-primary/20 rounded-lg bg-muted/60 p-2"
                         >
                           <div className="flex items-center font-bold text-primary mb-2">
-                            <Layers className="mr-2 h-5 w-5 shrink-0" />
+                            <Layers className="me-2 h-5 w-5 shrink-0" />
                             {step.sharedStepGroup.name ||
                               t("repository.steps.unnamedSharedGroup")}
                           </div>
@@ -2146,7 +2146,7 @@ export function AddResultModal({
                                         >
                                           <div className="flex items-center">
                                             <div
-                                              className="w-3 h-3 rounded-full mr-2"
+                                              className="w-3 h-3 rounded-full me-2"
                                               style={{
                                                 backgroundColor:
                                                   status.color?.value ||
@@ -2380,7 +2380,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
   }
 
   return (
-    <div className="space-y-4 ml-4 pl-4 border-l-2 border-dashed">
+    <div className="space-y-4 ms-4 ps-4 border-s-2 border-dashed">
       {items.map((item, index) => {
         const itemIdStr = item.id.toString();
         let stepContent, expectedResultContent;
@@ -2476,7 +2476,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
                             >
                               <div className="flex items-center">
                                 <div
-                                  className="w-3 h-3 rounded-full mr-2"
+                                  className="w-3 h-3 rounded-full me-2"
                                   style={{
                                     backgroundColor:
                                       status.color?.value || "#B1B2B3",

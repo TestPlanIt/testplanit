@@ -176,7 +176,7 @@ function PromptConfigList() {
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
               <CardTitle data-testid="prompts-admin-page-title">
-                <MessageSquareCode className="inline mr-2 h-8 w-8" />
+                <MessageSquareCode className="inline me-2 h-8 w-8" />
                 {t("title")}
               </CardTitle>
             </div>

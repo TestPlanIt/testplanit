@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import { getLocale } from "next-intl/server";
 import Script from "next/script";
+import { getLocaleDirection } from "~/i18n/direction";
 import "~/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -67,9 +68,10 @@ export default async function RootLayout({
     isMultiTenant || (isHosted && !hasPublicEndpoint) ? "proxy" : "direct";
 
   const locale = await getLocale();
+  const dir = getLocaleDirection(locale);
 
   return (
-    <html lang={locale} className={`${notoSans.variable}`}>
+    <html lang={locale} dir={dir} className={`${notoSans.variable}`}>
       <head>
         <meta name="storage-mode" content={storageMode} />
         <Script

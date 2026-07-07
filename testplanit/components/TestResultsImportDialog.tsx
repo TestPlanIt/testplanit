@@ -658,7 +658,7 @@ export default function TestResultsImportDialog({
                                   {template.templateName}
                                   {template.isDefault && (
                                     <Tooltip>
-                                      <TooltipTrigger className="ml-1" asChild>
+                                      <TooltipTrigger className="ms-1" asChild>
                                         <Badge variant="secondary">
                                           <Star className="h-3 w-3 fill-current text-primary-background" />
                                         </Badge>
@@ -732,7 +732,7 @@ export default function TestResultsImportDialog({
                         <sup>
                           <Asterisk className="w-3 h-3 text-destructive" />
                         </sup>
-                        <span className="ml-2 text-xs text-muted-foreground">
+                        <span className="ms-2 text-xs text-muted-foreground">
                           {`(${acceptedExtensions})`}
                         </span>
                       </FormLabel>

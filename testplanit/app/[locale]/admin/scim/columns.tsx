@@ -63,7 +63,7 @@ export const useColumns = (
           if (revokedAt) {
             return (
               <Badge variant="destructive">
-                <Ban className="size-3 mr-1" aria-hidden="true" />
+                <Ban className="size-3 me-1" aria-hidden="true" />
                 {tApiTokens("status.revoked")}
               </Badge>
             );
@@ -71,7 +71,7 @@ export const useColumns = (
           if (expiresAt && new Date(expiresAt) < new Date()) {
             return (
               <Badge variant="outline">
-                <Clock className="size-3 mr-1" aria-hidden="true" />
+                <Clock className="size-3 me-1" aria-hidden="true" />
                 {t("status.expired")}
               </Badge>
             );
@@ -79,14 +79,14 @@ export const useColumns = (
           if (!isActive) {
             return (
               <Badge variant="secondary">
-                <UserMinus className="size-3 mr-1" aria-hidden="true" />
+                <UserMinus className="size-3 me-1" aria-hidden="true" />
                 {t("status.deactivated")}
               </Badge>
             );
           }
           return (
             <Badge variant="default">
-              <CheckCircle2 className="size-3 mr-1" aria-hidden="true" />
+              <CheckCircle2 className="size-3 me-1" aria-hidden="true" />
               {t("status.active")}
             </Badge>
           );

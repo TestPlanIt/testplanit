@@ -2324,7 +2324,7 @@ export function TestmoImportPanel() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("testmo.datasetTable.name")}</TableHead>
-                  <TableHead className="text-right">
+                  <TableHead className="text-end">
                     {t("testmo.datasetTable.rows")}
                   </TableHead>
                 </TableRow>
@@ -2343,7 +2343,7 @@ export function TestmoImportPanel() {
                       <TableCell className="font-medium">
                         {dataset.name}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-end">
                         {dataset.rowCount.toLocaleString()}
                       </TableCell>
                     </TableRow>
@@ -2481,7 +2481,7 @@ export function TestmoImportPanel() {
           <AlertTitle>{t("testmo.mappingOutstandingTitle")}</AlertTitle>
           <AlertDescription>
             <p>{t("testmo.mappingOutstandingDescription")}</p>
-            <ul className="mt-2 list-disc space-y-1 pl-4">
+            <ul className="mt-2 list-disc space-y-1 ps-4">
               {blockingDatasets.map((item) => (
                 <li key={item.key}>
                   {t("testmo.mappingOutstandingItem", {
@@ -3089,7 +3089,7 @@ export function TestmoImportPanel() {
             </div>
           </div>
           <ScrollArea className="h-64">
-            <div className="space-y-3 pr-2">
+            <div className="space-y-3 pe-2">
               {displayedActivityLogEntries.map((entry, index) => (
                 <div
                   key={`${entry.type}-${entry.timestamp ?? "no-time"}-${index}`}

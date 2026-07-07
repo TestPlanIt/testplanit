@@ -69,7 +69,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         aria-label="color-picker"
       >
         <div
-          className="aspect-square min-w-5 min-h-5 w-full rounded-full ml-2"
+          className="aspect-square min-w-5 min-h-5 w-full rounded-full ms-2"
           style={{
             backgroundColor:
               colors.find((c) => c.id === selectedColorId)?.value || "#000000",

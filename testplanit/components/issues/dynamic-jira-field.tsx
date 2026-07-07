@@ -72,7 +72,7 @@ function DescriptionField({
         <FormLabel>
           {field.name}
           {field.required && (
-            <span className="text-destructive ml-1">{"*"}</span>
+            <span className="text-destructive ms-1">{"*"}</span>
           )}
         </FormLabel>
         {field.description && (
@@ -125,7 +125,7 @@ function UserPickerField({
         <FormLabel>
           {field.name}
           {field.required && (
-            <span className="text-destructive ml-1">{"*"}</span>
+            <span className="text-destructive ms-1">{"*"}</span>
           )}
         </FormLabel>
         {field.description && (
@@ -210,7 +210,7 @@ function LabelsInput({
     <FormItem>
       <FormLabel>
         {field.name}
-        {field.required && <span className="text-destructive ml-1">{"*"}</span>}
+        {field.required && <span className="text-destructive ms-1">{"*"}</span>}
       </FormLabel>
       <FormControl>
         <div className="space-y-2">
@@ -250,7 +250,7 @@ function LabelsInput({
                   onClick={() => removeLabel(label)}
                 >
                   {label}
-                  <span className="ml-1">{"×"}</span>
+                  <span className="ms-1">{"×"}</span>
                 </Badge>
               ))}
             </div>
@@ -290,7 +290,7 @@ export function DynamicJiraField({
             <FormLabel>
               {field.name}
               {field.required && (
-                <span className="text-destructive ml-1">{"*"}</span>
+                <span className="text-destructive ms-1">{"*"}</span>
               )}
             </FormLabel>
             {field.description && (
@@ -339,7 +339,7 @@ export function DynamicJiraField({
               <FormLabel>
                 {field.name}
                 {field.required && (
-                  <span className="text-destructive ml-1">{"*"}</span>
+                  <span className="text-destructive ms-1">{"*"}</span>
                 )}
               </FormLabel>
               {field.description && (
@@ -371,7 +371,7 @@ export function DynamicJiraField({
                 renderOption={(opt) => opt.label}
                 getOptionValue={(opt) => opt.value || ""}
                 placeholder={t("common.select")}
-                className="w-full text-left"
+                className="w-full text-start"
                 showTotal
               />
             </FormControl>
@@ -396,7 +396,7 @@ export function DynamicJiraField({
                 <FormLabel>
                   {field.name}
                   {field.required && (
-                    <span className="text-destructive ml-1">{"*"}</span>
+                    <span className="text-destructive ms-1">{"*"}</span>
                   )}
                 </FormLabel>
                 {field.description && (
@@ -462,7 +462,7 @@ export function DynamicJiraField({
                     <FormLabel>
                       {field.name}
                       {field.required && (
-                        <span className="text-destructive ml-1">{"*"}</span>
+                        <span className="text-destructive ms-1">{"*"}</span>
                       )}
                     </FormLabel>
                     {field.allowedValues && field.allowedValues[0] && (
@@ -517,7 +517,7 @@ export function DynamicJiraField({
               <FormLabel>
                 {field.name}
                 {field.required && (
-                  <span className="text-destructive ml-1">{"*"}</span>
+                  <span className="text-destructive ms-1">{"*"}</span>
                 )}
               </FormLabel>
               <FormControl>
@@ -579,7 +579,7 @@ export function DynamicJiraField({
                   <FormLabel>
                     {field.name}
                     {field.required && (
-                      <span className="text-destructive ml-1">{"*"}</span>
+                      <span className="text-destructive ms-1">{"*"}</span>
                     )}
                   </FormLabel>
                   {field.description && (
@@ -630,7 +630,7 @@ export function DynamicJiraField({
             <FormLabel>
               {field.name}
               {field.required && (
-                <span className="text-destructive ml-1">{"*"}</span>
+                <span className="text-destructive ms-1">{"*"}</span>
               )}
             </FormLabel>
             <FormControl>

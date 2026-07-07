@@ -286,7 +286,7 @@ export function ExportPreviewPane({
                       variant={
                         result.generatedBy === "ai" ? "default" : "secondary"
                       }
-                      className="flex items-center gap-1 ml-2"
+                      className="flex items-center gap-1 ms-2"
                     >
                       {result.generatedBy === "ai"
                         ? t("aiGenerated")
@@ -470,7 +470,7 @@ function SingleResultView({
             ) : (
               <RefreshCw className="h-3 w-3" />
             )}
-            <span className="ml-1 text-xs">{t("retryButton")}</span>
+            <span className="ms-1 text-xs">{t("retryButton")}</span>
           </Button>
         </div>
       )}
@@ -529,7 +529,7 @@ function ContextFilesList({ files }: { files: string[] }) {
         {t("contextFiles", { count: files.length })}
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <ul className="mt-1 space-y-0.5 pl-4">
+        <ul className="mt-1 space-y-0.5 ps-4">
           {files.map((f) => (
             <li
               key={f}

@@ -1104,7 +1104,7 @@ export default function QuickScriptPage() {
               </p>
               <div>
                 <p className="font-medium">{t("disconnectWarningTitle")}</p>
-                <ul className="list-disc pl-5 mt-1">
+                <ul className="list-disc ps-5 mt-1">
                   <li>{t("disconnectWarning1")}</li>
                   <li>{t("disconnectWarning2")}</li>
                   <li>{t("disconnectWarning3")}</li>

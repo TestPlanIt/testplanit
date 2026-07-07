@@ -81,7 +81,7 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
     <Popover>
       <PopoverTrigger>
         <Badge>
-          <Milestone className="w-4 h-4 mr-1" />
+          <Milestone className="w-4 h-4 me-1" />
           {milestones.length}
         </Badge>
       </PopoverTrigger>

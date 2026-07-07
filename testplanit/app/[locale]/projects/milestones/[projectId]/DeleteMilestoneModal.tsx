@@ -81,7 +81,7 @@ export function DeleteMilestoneModal({
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center">
-            <TriangleAlert className="w-6 h-6 mr-2" />
+            <TriangleAlert className="w-6 h-6 me-2" />
             {t("title")}
           </AlertDialogTitle>
           <AlertDialogDescription>

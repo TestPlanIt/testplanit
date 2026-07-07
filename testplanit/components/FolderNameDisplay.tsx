@@ -85,9 +85,9 @@ export function FolderNameDisplay({
     >
       {inner}
       {linkTarget === "_blank" ? (
-        <ExternalLink className="w-4 h-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <ExternalLink className="w-4 h-4 ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
       ) : (
-        <LinkIcon className="w-4 h-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <LinkIcon className="w-4 h-4 ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
       )}
     </Link>
   ) : (
@@ -103,7 +103,7 @@ export function FolderNameDisplay({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="text-left max-w-full">{content}</div>
+        <div className="text-start max-w-full">{content}</div>
       </TooltipTrigger>
       <TooltipContent>
         <div>{displayName}</div>

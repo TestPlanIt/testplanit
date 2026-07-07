@@ -238,13 +238,13 @@ export function ProjectUserPermissions({
         <table className="w-full caption-bottom text-sm">
           <thead className="[&_tr]:border-b">
             <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {tGlobal("common.access.user")}
               </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {t("tableHeaders.globalRole")}
               </th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              <th className="h-12 px-4 text-start align-middle font-medium text-muted-foreground">
                 {t("tableHeaders.projectAccess")}
               </th>
               <th className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
@@ -339,15 +339,15 @@ export function ProjectUserPermissions({
                   key={userId}
                   className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
                 >
-                  <td className="pl-4 align-middle">
+                  <td className="ps-4 align-middle">
                     <UserNameCell userId={userId} hideLink={true} />
                   </td>
-                  <td className="pl-4 align-middle text-muted-foreground">
+                  <td className="ps-4 align-middle text-muted-foreground">
                     <RoleNameCell
                       roleId={user.roleId ? user.roleId.toString() : null}
                     />
                   </td>
-                  <td className="pl-1 align-middle">
+                  <td className="ps-1 align-middle">
                     <Select
                       value={combinedValue}
                       onValueChange={(value) =>
@@ -366,7 +366,7 @@ export function ProjectUserPermissions({
                             >
                               {effectiveAccessDisplay}
                             </span>
-                            <span className="ml-1 text-xs text-muted-foreground truncate flex items-center">
+                            <span className="ms-1 text-xs text-muted-foreground truncate flex items-center">
                               {/* Show the role based on current form state */}
                               {currentAccessType === "SPECIFIC_ROLE" &&
                               currentRoleId &&

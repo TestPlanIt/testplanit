@@ -61,12 +61,12 @@ export const ProjectDropdownMenu = ({
       <SelectTrigger
         data-testid="project-dropdown-trigger"
         aria-label={t("common.aria.selectProject")}
-        className={`${isCollapsed ? "w-[60px]" : "w-[60px] md:w-[175px]"} -ml-5 md:ml-0 ${currentProject?.isCompleted ? "bg-muted-foreground/20" : ""}`}
+        className={`${isCollapsed ? "w-[60px]" : "w-[60px] md:w-[175px]"} -ms-5 md:ms-0 ${currentProject?.isCompleted ? "bg-muted-foreground/20" : ""}`}
       >
         <div
           className={`${isCollapsed ? "w-[60px]" : "w-[60px] md:w-[175px]"}`}
         >
-          <div className="text-left mr-4">
+          <div className="text-start me-4">
             <div className="flex items-center gap-1 min-w-5 min-h-5">
               <div className="max-w-5 max-h-5">
                 <ProjectIcon

@@ -67,7 +67,7 @@ export const getColumns = (
     enableResizing: true,
     size: 80,
     cell: ({ row }) => (
-      <span className="text-right block font-medium">
+      <span className="text-end block font-medium">
         {row.original.stepCount}
       </span>
     ),

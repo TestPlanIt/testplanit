@@ -90,7 +90,7 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
   const textClass = cn(
     clampClass ?? "truncate",
     className,
-    "flex-1 text-left",
+    "flex-1 text-start",
     isDeleted && "line-through"
   );
 
@@ -133,7 +133,7 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
           </p>
           {configurationGroupId && configuration && (
             <p className="flex text-xs mt-1">
-              <Combine className="w-3 h-3 shrink-0 mr-1" />
+              <Combine className="w-3 h-3 shrink-0 me-1" />
               {configuration.name}
             </p>
           )}
@@ -179,7 +179,7 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
         <span>{name}</span>
         {configurationGroupId && configuration && (
           <p className="flex text-xs mt-1">
-            <Combine className="w-3 h-3 shrink-0 mr-1" />
+            <Combine className="w-3 h-3 shrink-0 me-1" />
             {configuration.name}
           </p>
         )}

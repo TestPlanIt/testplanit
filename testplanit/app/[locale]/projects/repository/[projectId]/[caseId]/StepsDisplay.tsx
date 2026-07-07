@@ -71,7 +71,7 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
 
   if (isLoading) {
     return (
-      <p className="ml-6 text-sm text-muted-foreground p-2">
+      <p className="ms-6 text-sm text-muted-foreground p-2">
         {t_steps("loadingSharedStepsItems")}
       </p>
     );
@@ -79,14 +79,14 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
 
   if (!items || items.length === 0) {
     return (
-      <p className="ml-6 text-sm text-muted-foreground p-2">
+      <p className="ms-6 text-sm text-muted-foreground p-2">
         {t_steps("noStepsInSharedGroup")}
       </p>
     );
   }
 
   return (
-    <div className="ml-6 mt-1 p-2 border-l-2 border-dashed border-primary/20 space-y-2 w-full pr-8">
+    <div className="ms-6 mt-1 p-2 border-s-2 border-dashed border-primary/20 space-y-2 w-full pe-8">
       {items.map((item, itemIndex) => {
         // console.log("RenderSharedGroupItems mapping item:", {
         //   item,
@@ -99,7 +99,7 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
             className="border-2 border-primary/20 rounded-lg p-2"
           >
             <div className="font-semibold mb-1 text-foreground/80 flex items-start w-full">
-              <div className="mr-2 font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 shrink-0 mt-2">
+              <div className="me-2 font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 shrink-0 mt-2">
                 {item.order + 1}
               </div>
               <div className="w-full">
@@ -113,7 +113,7 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
               </div>
             </div>
             <div className="font-semibold mb-1 text-foreground/80 flex items-start">
-              <SearchCheck className="mr-2 text-primary h-6 w-6 shrink-0 mt-2" />
+              <SearchCheck className="me-2 text-primary h-6 w-6 shrink-0 mt-2" />
               <div className="w-full">
                 {renderFieldValue(
                   item.expectedResult,
@@ -308,7 +308,7 @@ export const StepsDisplay: React.FC<StepsProps> = ({
         <div className="font-bold pb-2">{tGlobal("common.fields.steps")}</div>
       </div>
       {steps.length > 0 && (
-        <ol className="ml-1 mr-6 min-w-[200px]">
+        <ol className="ms-1 me-6 min-w-[200px]">
           {steps.map((step, index) => {
             const previousStep = previousSteps
               ? previousSteps[index]
@@ -338,12 +338,12 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                     <div className="flex items-center justify-between pb-2 space-x-2 cursor-default w-full">
                       <div className="flex items-center font-bold">
                         <div
-                          className="mr-2 font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 shrink-0 mt-2"
+                          className="me-2 font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 shrink-0 mt-2"
                           data-testid={`step-badge-${index}`}
                         >
                           {index + 1}
                         </div>
-                        <Layers className="h-5 w-5 ml-1 mr-2 text-primary" />
+                        <Layers className="h-5 w-5 ms-1 me-2 text-primary" />
                         {t_repo_steps("sharedStepGroupTitle", {
                           name:
                             step.sharedStepGroup?.name ||

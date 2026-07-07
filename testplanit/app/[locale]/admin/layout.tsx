@@ -32,7 +32,7 @@ export default function AdminLayout(props: any) {
       <div className="sticky w-[57px] md:w-[225px] top-0 z-10 h-screen">
         <AdminMenu />
       </div>
-      <div className="ml-4 w-full overflow-x-hidden">{props.children}</div>
+      <div className="ms-4 w-full overflow-x-hidden">{props.children}</div>
     </div>
   );
 }

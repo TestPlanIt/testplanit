@@ -387,7 +387,7 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
           <div>
             <p className="text-2xl font-bold text-destructive">
               {summaryMetrics.needsAttention}
-              <span className="text-sm font-normal ml-1">
+              <span className="text-sm font-normal ms-1">
                 {"("}
                 {summaryMetrics.needsAttentionPct}
                 {"%)"}
@@ -419,7 +419,7 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
           <div>
             <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
               {summaryMetrics.staleCount}
-              <span className="text-sm font-normal ml-1">
+              <span className="text-sm font-normal ms-1">
                 {"("}
                 {summaryMetrics.stalePct}
                 {"%)"}
@@ -439,7 +439,7 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
           <div>
             <p className="text-2xl font-bold text-success">
               {summaryMetrics.healthy}
-              <span className="text-sm font-normal ml-1">
+              <span className="text-sm font-normal ms-1">
                 {"("}
                 {summaryMetrics.healthyPct}
                 {"%)"}
@@ -483,7 +483,7 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
                     <p className="font-semibold">
                       {t("healthScoreTooltip.title")}
                     </p>
-                    <ul className="list-disc pl-3 space-y-0.5">
+                    <ul className="list-disc ps-3 space-y-0.5">
                       <li>{t("healthScoreTooltip.neverExecuted")}</li>
                       <li>{t("healthScoreTooltip.stale90")}</li>
                       <li>{t("healthScoreTooltip.stale60")}</li>

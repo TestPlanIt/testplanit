@@ -49,7 +49,7 @@ export const useColumns = (
               {isScimManaged && (
                 <Badge
                   variant="secondary"
-                  className="ml-1"
+                  className="ms-1"
                   title={tGroups("scimManagedTooltip")}
                   data-testid="scim-managed-group-badge"
                 >

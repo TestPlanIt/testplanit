@@ -86,7 +86,7 @@ export function AuditLogDetailModal({
             {tGlobal("common.loading")}
           </div>
         ) : (
-          <div className="max-h-[60vh] overflow-y-auto pr-4">
+          <div className="max-h-[60vh] overflow-y-auto pe-4">
             <div className="space-y-4">
               {/* Basic Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

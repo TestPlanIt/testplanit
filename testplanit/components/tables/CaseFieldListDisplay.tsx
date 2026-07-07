@@ -60,7 +60,7 @@ export const CaseFieldListDisplay: React.FC<CaseFieldListProps> = ({
       <Popover>
         <PopoverTrigger>
           <Badge>
-            <LayoutList className="w-4 h-4 mr-1" />
+            <LayoutList className="w-4 h-4 me-1" />
             {allCaseFields.length}
           </Badge>
         </PopoverTrigger>

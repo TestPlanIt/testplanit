@@ -261,7 +261,7 @@ export function QueueManagement() {
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
-              <span className="ml-2">{tGlobal("common.actions.refresh")}</span>
+              <span className="ms-2">{tGlobal("common.actions.refresh")}</span>
             </Button>
           </div>
         </CardHeader>
@@ -271,25 +271,21 @@ export function QueueManagement() {
               <TableRow>
                 <TableHead>{t("table.queue")}</TableHead>
                 <TableHead>{tGlobal("common.actions.status")}</TableHead>
-                <TableHead className="text-right">
+                <TableHead className="text-end">
                   {t("table.concurrency")}
                 </TableHead>
-                <TableHead className="text-right">
-                  {t("table.waiting")}
-                </TableHead>
-                <TableHead className="text-right">
+                <TableHead className="text-end">{t("table.waiting")}</TableHead>
+                <TableHead className="text-end">
                   {tGlobal("common.fields.isActive")}
                 </TableHead>
-                <TableHead className="text-right">
+                <TableHead className="text-end">
                   {tGlobal("common.fields.completed")}
                 </TableHead>
-                <TableHead className="text-right">
-                  {t("table.failed")}
-                </TableHead>
-                <TableHead className="text-right">
+                <TableHead className="text-end">{t("table.failed")}</TableHead>
+                <TableHead className="text-end">
                   {tGlobal("milestones.statusLabels.delayed")}
                 </TableHead>
-                <TableHead className="text-right">
+                <TableHead className="text-end">
                   {tGlobal("common.actions.actionsLabel")}
                 </TableHead>
               </TableRow>
@@ -305,21 +301,21 @@ export function QueueManagement() {
                     {getQueueDisplayName(queue.name)}
                   </TableCell>
                   <TableCell>{getStatusBadge(queue)}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     <Badge variant="secondary" className="font-mono">
                       {queue.concurrency}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     {queue.counts?.waiting ?? "-"}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     {queue.counts?.active ?? "-"}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     {queue.counts?.completed ?? "-"}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     <div className="flex items-center justify-end gap-1">
                       {queue.counts && queue.counts.failed > 0 && (
                         <AlertTriangle className="h-3 w-3 text-destructive" />
@@ -327,10 +323,10 @@ export function QueueManagement() {
                       {queue.counts?.failed ?? "-"}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     {queue.counts?.delayed ?? "-"}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     <div
                       className="flex justify-end gap-2"
                       onClick={(e) => e.stopPropagation()}
