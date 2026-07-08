@@ -1128,6 +1128,75 @@ export class JiraAdapter extends BaseAdapter {
     };
   }
 
+  /**
+   * Membership fetch for a milestone (Jira Fix Version / Sprint). Mirrors
+   * searchIssues' pagination idiom but is a separate method rather than a
+   * searchIssues option — the JQL clause (fixVersion=/sprint=) and the
+   * `parent` field addition have no equivalent hook in searchIssues' filter
+   * set (D-14 / interfaces lock, IssueAdapter.ts:271-279).
+   */
+  async getMilestoneIssues(
+    ref: { id: string; kind: "RELEASE" | "ITERATION" },
+    options?: { pageToken?: string; limit?: number }
+  ): Promise<{
+    issues: IssueData[];
+    total?: number;
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    // Cloud-only, same limitation as searchIssues' `/rest/api/3/search/jql`
+    // (no v2/Server equivalent) — clean no-op skip on Server/DC rather than
+    // throwing, per deferred-items.md.
+    if (this.deployment === "server") {
+      return { issues: [], hasMore: false };
+    }
+
+    const jqlClause =
+      ref.kind === "RELEASE"
+        ? `fixVersion = ${ref.id}`
+        : `sprint = ${ref.id}`;
+
+    const params = new URLSearchParams({
+      jql: jqlClause,
+      maxResults: (options?.limit || 50).toString(),
+      fields:
+        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated,parent",
+    });
+    if (options?.pageToken) {
+      params.set("nextPageToken", options.pageToken);
+    }
+
+    // NOTE: intentionally NOT parameterized on this.apiVersion — same
+    // Cloud-only rationale as searchIssues above (`/rest/api/3/search/jql`
+    // has no v2 equivalent; Server/DC is handled by the no-op guard above).
+    const searchUrl = this.buildUrl(
+      `/rest/api/3/search/jql?${params.toString()}`
+    );
+
+    const response = await this.makeRequest<any>(searchUrl);
+
+    const issues = (response.issues || []).map((issue: any) =>
+      this.mapJiraIssue(issue)
+    );
+    const nextPageToken: string | undefined = response.nextPageToken;
+    const hasMore =
+      typeof response.isLast === "boolean"
+        ? !response.isLast
+        : nextPageToken
+          ? true
+          : typeof response.total === "number"
+            ? (response.startAt || 0) + issues.length < response.total
+            : issues.length >= (options?.limit || 50);
+
+    return {
+      issues,
+      total:
+        typeof response.total === "number" ? response.total : issues.length,
+      hasMore,
+      nextPageToken,
+    };
+  }
+
   protected async addComment(issueId: string, comment: string): Promise<void> {
     await this.makeRequest(
       this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}/comment`),
@@ -1249,6 +1318,13 @@ export class JiraAdapter extends BaseAdapter {
             .filter((n: string | null): n is string => n !== null)
         : [],
       customFields: this.extractCustomFields(fields),
+      // Parent ref (D-14): mirrors the mapLinkedIssues guard below — only
+      // set when the source issue actually has a parent (sub-task / epic
+      // child). Requires the request's `fields` param to include `parent`.
+      parent:
+        fields.parent && fields.parent.id
+          ? { id: String(fields.parent.id), key: fields.parent.key }
+          : undefined,
       createdAt: new Date(fields.created),
       updatedAt: new Date(fields.updated),
       url: `${jiraIssue.self.split("/rest/")[0]}/browse/${jiraIssue.key}`,

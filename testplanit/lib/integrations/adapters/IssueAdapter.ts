@@ -101,6 +101,13 @@ export interface IssueData {
    */
   components?: string[];
   customFields?: Record<string, any>;
+  /**
+   * Parent issue ref (Jira sub-task/child-of-epic `fields.parent`, or the
+   * provider's equivalent hierarchy pointer). Present only when the source
+   * issue has a parent — mirrors mapLinkedIssues' `fields.parent && fields.parent.id`
+   * guard, surfaced here for the membership-import path (D-14).
+   */
+  parent?: { id: string; key?: string };
   createdAt: Date;
   updatedAt: Date;
   url?: string;
