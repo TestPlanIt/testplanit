@@ -1157,11 +1157,20 @@ const TreeView: React.FC<{
           />
         </Button>
         <IconComponent
-          className={`w-4 h-4 ms-1 ${
+          className={`w-4 h-4 ms-1 shrink-0 ${
             isSelected ? "text-secondary-foreground" : "text-muted-foreground"
           }`}
         />
-        <span className="ms-2 truncate flex-1">{node.data.name}</span>
+        <span
+          className="ms-2 truncate flex-1 min-w-0"
+          title={
+            data && (data.directCaseCount > 0 || data.totalCaseCount > 0)
+              ? `${node.data.name} (${data.directCaseCount}/${data.totalCaseCount})`
+              : node.data.name
+          }
+        >
+          {node.data.name}
+        </span>
 
         {pendingCopyTargets.has(data?.folderId ?? -1) && (
           <Loader2
@@ -1328,6 +1337,7 @@ const TreeView: React.FC<{
           indent={24}
           rowHeight={32}
           overscanCount={0}
+          rowClassName="min-w-0!"
           onScroll={() => {
             // Update visible node count when tree scrolls/renders
             if (treeRef.current) {
