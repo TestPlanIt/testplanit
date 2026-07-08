@@ -1379,7 +1379,18 @@
           "importStart": "Import",
           "importStarted": "Import started. Issues will appear shortly.",
           "importFailed": "Import failed",
-          "importPreviewFailed": "Couldn't estimate matches"
+          "importPreviewFailed": "Couldn't estimate matches",
+          "milestoneSync": {
+            "title": "Milestone Sync",
+            "description": "Sync TestPlanIt Milestones from this tracker's time-based artifacts.",
+            "enableLabel": "Enable milestone sync",
+            "releasesLabel": "Releases",
+            "sprintsLabel": "Sprints",
+            "kindsLabel": "Kinds to sync",
+            "autoTrackLabel": "Automatically add new ones",
+            "settingsSaved": "Milestone sync settings saved",
+            "saveError": "Failed to save milestone sync settings"
+          }
         },
         "integrationAssigned": "Integration assigned successfully",
         "integrationAssignError": "Failed to assign issue integration to project",
