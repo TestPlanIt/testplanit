@@ -68,6 +68,7 @@ import {
 import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
 import ChildMilestoneItem from "./ChildMilestoneItem";
+import { MemberIssuesTable } from "./MemberIssuesTable";
 import MilestoneFormControls from "./MilestoneFormControls";
 import { buildMilestoneUpdatePayload } from "./milestoneUpdatePayload";
 
@@ -706,6 +707,16 @@ export default function MilestoneDetailsPage() {
                   milestoneId={milestone.id}
                   projectId={projectId}
                 />
+              </div>
+            )}
+
+            {/* Member Issues section (MLINK-04, D-07) — what's in this
+                milestone (via MilestoneIssue links) and how its testing is
+                going. Distinct from MilestoneSummary's linked-defect list
+                above (D-16 vocabulary). */}
+            {!isEditMode && milestone && (
+              <div className="mb-6">
+                <MemberIssuesTable milestoneId={milestone.id} projectId={Number(projectId)} />
               </div>
             )}
 
