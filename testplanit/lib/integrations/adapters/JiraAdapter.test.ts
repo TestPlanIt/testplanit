@@ -2582,4 +2582,214 @@ describe("JiraAdapter Data Center / Server", () => {
       body: "contract comment",
     });
   });
+
+  // Rich text on Data Center: descriptions are Jira Wiki Markup, not stripped
+  // plain text (proven live — a wiki-markup string round-trips to formatted
+  // HTML via Jira's own renderer). These guard the write side (TipTap/HTML ->
+  // wiki markup) and the read side (Jira-rendered HTML in / renderedFields /
+  // renderedBody).
+
+  it("createIssue: sends a formatted description as Jira Wiki Markup (not stripped plain text)", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice" }),
+    });
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    // create -> {id,key,self}, then getIssue for the full issue
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        json: () =>
+          Promise.resolve({
+            id: "20001",
+            key: "DC-1",
+            self: "https://jira.mycompany.domain/rest/api/2/issue/20001",
+          }),
+      })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(dcIssue) });
+
+    // TipTap doc as emitted by the rich-text editor: a paragraph with a bold
+    // run and a link, then a bullet list.
+    await adapter.createIssue({
+      title: "DC rich text",
+      projectId: "DC",
+      issueType: "10001",
+      description: {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              { type: "text", text: "see " },
+              { type: "text", text: "bold", marks: [{ type: "bold" }] },
+              { type: "text", text: " and " },
+              {
+                type: "text",
+                text: "a link",
+                marks: [
+                  { type: "link", attrs: { href: "https://example.com" } },
+                ],
+              },
+            ],
+          },
+          {
+            type: "bulletList",
+            content: [
+              {
+                type: "listItem",
+                content: [
+                  { type: "paragraph", content: [{ type: "text", text: "one" }] },
+                ],
+              },
+              {
+                type: "listItem",
+                content: [
+                  { type: "paragraph", content: [{ type: "text", text: "two" }] },
+                ],
+              },
+            ],
+          },
+        ],
+      } as any,
+    });
+
+    const createCall = mockFetch.mock.calls.find(
+      (c: any[]) =>
+        typeof c[0] === "string" && c[0].endsWith("/rest/api/2/issue")
+    );
+    expect(createCall).toBeTruthy();
+    const body = JSON.parse((createCall![1] as any).body);
+    // A plain string field (wiki markup), NOT an ADF object — and formatting
+    // is preserved, not stripped.
+    expect(typeof body.fields.description).toBe("string");
+    expect(body.fields.description).toBe(
+      "see *bold* and [a link|https://example.com]\n\n* one\n* two"
+    );
+  });
+
+  it("updateIssue: sends a formatted description as Jira Wiki Markup", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice" }),
+    });
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    // PUT -> 204, then getIssue
+    mockFetch
+      .mockResolvedValueOnce({ ok: true, status: 204 })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(dcIssue) });
+
+    await adapter.updateIssue("DC-1", {
+      description: {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "now italic", marks: [{ type: "italic" }] }],
+          },
+        ],
+      } as any,
+    });
+
+    const updateCall = mockFetch.mock.calls.find(
+      (c: any[]) =>
+        typeof c[0] === "string" &&
+        c[0].endsWith("/rest/api/2/issue/DC-1") &&
+        (c[1] as any)?.method === "PUT"
+    );
+    expect(updateCall).toBeTruthy();
+    const body = JSON.parse((updateCall![1] as any).body);
+    expect(body.fields.description).toBe("_now italic_");
+  });
+
+  it("getIssue: requests renderedFields and surfaces Jira's rendered HTML on Data Center", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice" }),
+    });
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    // dcIssue.fields.description is raw wiki markup; renderedFields carries
+    // Jira's own HTML rendering of it (shape matches a live GET recording).
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          ...dcIssue,
+          fields: { ...dcIssue.fields, description: "*bold* body" },
+          renderedFields: { description: "<p><b>bold</b> body</p>" },
+        }),
+    });
+
+    const issue = await adapter.getIssue("DC-1");
+
+    const getCall = mockFetch.mock.calls.find(
+      (c: any[]) =>
+        typeof c[0] === "string" &&
+        c[0].includes("/rest/api/2/issue/DC-1?")
+    );
+    expect(getCall).toBeTruthy();
+    // expand must include renderedFields (URLSearchParams encodes the comma)
+    expect(decodeURIComponent(getCall![0] as string)).toContain(
+      "expand=names,schema,renderedFields"
+    );
+    // The rendered HTML wins over the raw "*bold* body" markup.
+    expect(issue.description).toBe("<p><b>bold</b> body</p>");
+  });
+
+  it("getIssueComments: requests renderedBody and surfaces Jira's rendered HTML on Data Center", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice" }),
+    });
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          comments: [
+            {
+              id: "1",
+              author: { displayName: "Alice" },
+              body: "*bold* comment",
+              renderedBody: "<p><b>bold</b> comment</p>",
+              created: "2024-01-15T10:00:00.000Z",
+            },
+          ],
+        }),
+    });
+
+    const comments = await adapter.getIssueComments("DC-1");
+
+    const getCall = mockFetch.mock.calls.find(
+      (c: any[]) =>
+        typeof c[0] === "string" && c[0].includes("/comment")
+    );
+    expect(getCall).toBeTruthy();
+    expect(getCall![0] as string).toContain("expand=renderedBody");
+    expect(comments[0]!.body).toBe("<p><b>bold</b> comment</p>");
+  });
 });

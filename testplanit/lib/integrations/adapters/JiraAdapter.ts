@@ -10,13 +10,13 @@ import {
   UpdateIssueData,
 } from "./IssueAdapter";
 import {
+  adfToWikiMarkup,
   buildAuthHeader,
   detectJiraDeployment,
   JiraApiVersion,
   JiraAuthCredentials,
   JiraAuthScheme,
   JiraDeploymentType,
-  contentToString,
   mapCustomFieldUserRefs,
   pickUserId,
   resolveAuthScheme,
@@ -519,8 +519,9 @@ export class JiraAdapter extends BaseAdapter {
     let descriptionField;
     if (data.description) {
       if (this.deployment === "server") {
-        // DC REST API v2 expects a plain string, not ADF
-        descriptionField = contentToString(data.description);
+        // DC REST API v2 expects Jira Wiki Markup (rich text), NOT ADF and
+        // NOT stripped plain text — see toServerDescription / adfToWikiMarkup.
+        descriptionField = this.toServerDescription(data.description);
       } else {
         // Cloud REST API v3 expects ADF (Atlassian Document Format)
         // Check if description is TipTap JSON
@@ -636,8 +637,11 @@ export class JiraAdapter extends BaseAdapter {
 
     if (data.description !== undefined) {
       if (this.deployment === "server") {
-        // DC REST API v2 expects a plain string, not ADF
-        updatePayload.fields.description = contentToString(data.description);
+        // DC REST API v2 expects Jira Wiki Markup (rich text), NOT ADF and
+        // NOT stripped plain text — see toServerDescription / adfToWikiMarkup.
+        updatePayload.fields.description = this.toServerDescription(
+          data.description
+        );
       } else {
         // Cloud REST API v3 expects ADF
         // Check if description is TipTap JSON
@@ -718,7 +722,12 @@ export class JiraAdapter extends BaseAdapter {
     const params = new URLSearchParams({
       fields:
         "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated",
-      expand: "names,schema",
+      // Server/Data Center stores descriptions as Jira Wiki Markup strings;
+      // ask Jira to also return its own rendered HTML (renderedFields) so the
+      // read side can surface formatting instead of raw markup. Cloud returns
+      // ADF and is parsed by adfToHtml, so it doesn't need this.
+      expand:
+        this.deployment === "server" ? "names,schema,renderedFields" : "names,schema",
     });
 
     const response = await this.makeRequest<any>(
@@ -753,9 +762,15 @@ export class JiraAdapter extends BaseAdapter {
   async getIssueComments(issueId: string): Promise<IssueComment[]> {
     try {
       const encodedId = encodeURIComponent(issueId);
-      const response = await this.makeRequest<any>(
-        this.buildUrl(`/rest/api/${this.apiVersion}/issue/${encodedId}/comment`)
-      );
+      // On Server/Data Center, ask Jira to render each comment's wiki-markup
+      // body to HTML (renderedBody) so formatting survives the read — same
+      // reason as getIssue's renderedFields. Cloud bodies are ADF (parsed by
+      // adfToHtml), so it doesn't need the expand.
+      const commentPath =
+        this.deployment === "server"
+          ? `/rest/api/${this.apiVersion}/issue/${encodedId}/comment?expand=renderedBody`
+          : `/rest/api/${this.apiVersion}/issue/${encodedId}/comment`;
+      const response = await this.makeRequest<any>(this.buildUrl(commentPath));
       return this.mapJiraComments(response);
     } catch (error) {
       const status = this.parseStatusFromError(error);
@@ -990,7 +1005,10 @@ export class JiraAdapter extends BaseAdapter {
       id: jiraIssue.id,
       key: jiraIssue.key,
       title: fields.summary,
-      description: this.extractDescription(fields.description),
+      description: this.extractDescription(
+        fields.description,
+        jiraIssue.renderedFields?.description
+      ),
       status: fields.status.name,
       priority: fields.priority?.name,
       issueType: fields.issuetype
@@ -1102,14 +1120,25 @@ export class JiraAdapter extends BaseAdapter {
           c.author?.emailAddress ??
           c.author?.accountId ??
           "Unknown",
-        body: this.extractDescription(c.body) ?? "",
+        body: this.extractDescription(c.body, c.renderedBody) ?? "",
         created: c.created ?? "",
       });
     }
     return out;
   }
 
-  private extractDescription(description: any): string | undefined {
+  private extractDescription(
+    description: any,
+    renderedHtml?: string
+  ): string | undefined {
+    // Server/Data Center returns rich text as Jira Wiki Markup; when the read
+    // asked Jira to render it (renderedFields / renderedBody), prefer that
+    // HTML so formatting survives instead of surfacing raw markup like
+    // "*bold*". Cloud never passes this, so its ADF path below is untouched.
+    if (typeof renderedHtml === "string") {
+      return renderedHtml.trim() || undefined;
+    }
+
     if (!description) return undefined;
 
     // Handle ADF (Atlassian Document Format)
@@ -1442,6 +1471,31 @@ export class JiraAdapter extends BaseAdapter {
     }
 
     return customFields;
+  }
+
+  /**
+   * Convert a create/update description into what Jira Server / Data Center
+   * stores in a rich-text field: Jira Wiki Markup. The write-side sibling of
+   * the Cloud ADF path above. TipTap docs (the rich-text editor's output)
+   * and HTML both normalize through the same converters Cloud uses, then
+   * serialize to wiki markup; a bare string is already valid wiki markup and
+   * passes through unchanged. Empty input yields "" — DC rejects a null
+   * description ("Operation value must be a string").
+   */
+  private toServerDescription(description: unknown): string {
+    if (!description) return "";
+    if (
+      typeof description === "object" &&
+      (description as { type?: string }).type === "doc"
+    ) {
+      return adfToWikiMarkup(this.tiptapToAdf(description));
+    }
+    if (typeof description === "string") {
+      return description.includes("<") && description.includes(">")
+        ? adfToWikiMarkup(this.htmlToAdf(description))
+        : description;
+    }
+    return String(description);
   }
 
   private tiptapToAdf(tiptapJson: any): any {
