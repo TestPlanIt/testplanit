@@ -601,6 +601,107 @@ describe("MilestoneItemCard", () => {
     });
   });
 
+  describe("synced milestone (integrationId != null) action gating", () => {
+    it("hides Start for a synced not-started milestone but keeps Edit and Delete", () => {
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        isStarted: false,
+        isCompleted: false,
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      const items = screen.getAllByTestId("dropdown-item");
+      const itemTexts = items.map((el) => el.textContent);
+      expect(itemTexts.some((t) => t?.includes("start"))).toBe(false);
+      expect(itemTexts.some((t) => t?.includes("edit"))).toBe(true);
+      expect(itemTexts.some((t) => t?.includes("delete"))).toBe(true);
+    });
+
+    it("hides Stop and Complete for a synced started milestone", () => {
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        isStarted: true,
+        isCompleted: false,
+        startedAt: new Date("2024-01-01"),
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      const items = screen.getAllByTestId("dropdown-item");
+      const itemTexts = items.map((el) => el.textContent);
+      expect(itemTexts.some((t) => t?.includes("stop"))).toBe(false);
+      expect(itemTexts.some((t) => t?.includes("complete"))).toBe(false);
+    });
+
+    it("hides Reopen for a synced completed milestone", () => {
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        isStarted: false,
+        isCompleted: true,
+        completedAt: new Date("2024-03-01"),
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      const items = screen.getAllByTestId("dropdown-item");
+      const itemTexts = items.map((el) => el.textContent);
+      expect(itemTexts.some((t) => t?.includes("reopen"))).toBe(false);
+      expect(itemTexts.some((t) => t?.includes("edit"))).toBe(true);
+      expect(itemTexts.some((t) => t?.includes("delete"))).toBe(true);
+    });
+
+    it("still shows the state-mutating actions for a local (non-synced) milestone", () => {
+      const milestone = createMilestone({
+        integrationId: null,
+        isStarted: true,
+        isCompleted: false,
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      const items = screen.getAllByTestId("dropdown-item");
+      const itemTexts = items.map((el) => el.textContent);
+      expect(itemTexts.some((t) => t?.includes("stop"))).toBe(true);
+      expect(itemTexts.some((t) => t?.includes("complete"))).toBe(true);
+    });
+  });
+
   describe("callback invocations", () => {
     it("calls onOpenEditModal when Edit is clicked", () => {
       const milestone = createMilestone({
