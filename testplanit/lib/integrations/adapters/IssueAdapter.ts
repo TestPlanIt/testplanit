@@ -244,8 +244,16 @@ export interface IssueAdapter {
    * Fetch time-based tracker artifacts (Jira Fix Versions / Sprints, or the
    * provider's equivalent) for milestone sync. Adapters without the
    * `milestones` capability omit this method and declare `milestones: false`.
+   *
+   * `projectKey` is required: every Jira endpoint this method calls
+   * (`/project/{key}/version`, board discovery's `projectKeyOrId`) is
+   * project-scoped, and the adapter instance itself is integration-scoped,
+   * not project-scoped — the same reason `getIssueTypes`/`searchUsers` take
+   * `projectKey` as an explicit caller parameter rather than reading it off
+   * adapter config.
    */
   getExternalMilestones?(options: {
+    projectKey: string;
     kind?: "RELEASE" | "ITERATION";
     includeClosed?: boolean;
     pageToken?: string;

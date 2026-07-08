@@ -2,6 +2,7 @@ import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
   CreateIssueData,
+  ExternalMilestone,
   IssueAdapterCapabilities,
   IssueComment,
   IssueData,
@@ -689,6 +690,283 @@ export class JiraAdapter extends BaseAdapter {
       );
       return [];
     }
+  }
+
+  /**
+   * Fetch RELEASE (project versions) and/or ITERATION (sprints, via board
+   * auto-discovery) milestones for the given project. Routes through
+   * `this.apiVersion` for the versions endpoint (v3 Cloud / v2 Server); the
+   * Agile API (`/rest/agile/1.0/...`) is deployment-agnostic and never
+   * versioned (Assumption A3).
+   *
+   * ITERATION discovers ALL boards for the project and fetches sprints from
+   * each, deduping by sprint id (D5, locked design) — a Jira project can
+   * have multiple boards (e.g. a Kanban + a Scrum board) whose sprint lists
+   * overlap.
+   *
+   * Each upstream call is wrapped independently so a partial board failure
+   * degrades gracefully (mirrors getLinkedIssues/getIssueComments) rather
+   * than failing the whole fetch.
+   */
+  async getExternalMilestones(options: {
+    projectKey: string;
+    kind?: "RELEASE" | "ITERATION";
+    includeClosed?: boolean;
+    pageToken?: string;
+  }): Promise<{
+    items: ExternalMilestone[];
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    const { projectKey, kind, includeClosed = false } = options;
+    const items: ExternalMilestone[] = [];
+
+    if (!kind || kind === "RELEASE") {
+      items.push(...(await this.fetchJiraVersions(projectKey)));
+    }
+
+    if (!kind || kind === "ITERATION") {
+      items.push(...(await this.fetchJiraSprints(projectKey)));
+    }
+
+    const filtered = includeClosed
+      ? items
+      : items.filter((item) => item.state !== "CLOSED");
+
+    // Both upstream fetches page internally and return their full result
+    // set (versions: numeric-scale per project; sprints: bounded by board
+    // count), so there is nothing left to paginate at this level.
+    return {
+      items: filtered,
+      hasMore: false,
+    };
+  }
+
+  /**
+   * RELEASE milestones: page through the project-versions endpoint
+   * (offset-based startAt/maxResults/total per research Open Question 3)
+   * and map each version to an ExternalMilestone.
+   */
+  private async fetchJiraVersions(
+    projectKey: string
+  ): Promise<ExternalMilestone[]> {
+    const versions: ExternalMilestone[] = [];
+    let startAt = 0;
+    const maxResults = 50;
+
+    try {
+      while (true) {
+        const params = new URLSearchParams({
+          startAt: startAt.toString(),
+          maxResults: maxResults.toString(),
+        });
+        const response = await this.makeRequest<any>(
+          this.buildUrl(
+            `/rest/api/${this.apiVersion}/project/${encodeURIComponent(
+              projectKey
+            )}/version?${params.toString()}`
+          )
+        );
+
+        const pageValues: any[] = Array.isArray(response?.values)
+          ? response.values
+          : [];
+        for (const raw of pageValues) {
+          const mapped = this.mapJiraVersion(raw);
+          if (mapped) versions.push(mapped);
+        }
+
+        const isLast =
+          typeof response?.isLast === "boolean"
+            ? response.isLast
+            : pageValues.length < maxResults;
+        if (isLast || pageValues.length === 0) break;
+        startAt += pageValues.length;
+      }
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[JiraAdapter] fetchJiraVersions failed for %s:`,
+        projectKey,
+        error
+      );
+    }
+
+    return versions;
+  }
+
+  private mapJiraVersion(raw: any): ExternalMilestone | null {
+    if (!raw || raw.id == null) return null;
+
+    const released = raw.released === true;
+    const archived = raw.archived === true;
+    let state: ExternalMilestone["state"];
+    let rawState: string;
+    if (archived) {
+      state = "CLOSED";
+      rawState = "archived";
+    } else if (released) {
+      state = "CLOSED";
+      rawState = "released";
+    } else {
+      const startDate = raw.startDate ? new Date(raw.startDate) : undefined;
+      const isFuture = !startDate || startDate.getTime() > Date.now();
+      state = isFuture ? "FUTURE" : "ACTIVE";
+      rawState = isFuture ? "future" : "active";
+    }
+
+    return {
+      id: String(raw.id),
+      kind: "RELEASE",
+      name: raw.name ?? String(raw.id),
+      description: raw.description,
+      startDate: raw.startDate ? new Date(raw.startDate) : undefined,
+      endDate: raw.releaseDate ? new Date(raw.releaseDate) : undefined,
+      state,
+      rawState,
+      url: raw.self,
+    };
+  }
+
+  /**
+   * ITERATION milestones: discover every board for the project, fetch
+   * sprints per board, and dedupe by sprint id (D5) since a Jira project
+   * can have multiple boards whose sprint lists overlap.
+   */
+  private async fetchJiraSprints(
+    projectKey: string
+  ): Promise<ExternalMilestone[]> {
+    const boardIds = await this.discoverJiraBoards(projectKey);
+    const bySprintId = new Map<string, ExternalMilestone>();
+
+    for (const boardId of boardIds) {
+      try {
+        let startAt = 0;
+        const maxResults = 50;
+        while (true) {
+          const params = new URLSearchParams({
+            startAt: startAt.toString(),
+            maxResults: maxResults.toString(),
+          });
+          const response = await this.makeRequest<any>(
+            this.buildUrl(
+              `/rest/agile/1.0/board/${boardId}/sprint?${params.toString()}`
+            )
+          );
+
+          const pageValues: any[] = Array.isArray(response?.values)
+            ? response.values
+            : [];
+          for (const raw of pageValues) {
+            const mapped = this.mapJiraSprint(raw);
+            if (mapped && !bySprintId.has(mapped.id)) {
+              bySprintId.set(mapped.id, mapped);
+            }
+          }
+
+          const isLast =
+            typeof response?.isLast === "boolean"
+              ? response.isLast
+              : pageValues.length < maxResults;
+          if (isLast || pageValues.length === 0) break;
+          startAt += pageValues.length;
+        }
+      } catch (error) {
+        const status = this.parseStatusFromError(error);
+        const level = status === null || status >= 500 ? "error" : "warn";
+        console[level](
+          `[JiraAdapter] fetchJiraSprints failed for board %s (project %s):`,
+          boardId,
+          projectKey,
+          error
+        );
+        // Continue with remaining boards — a single board failure should
+        // not drop sprints discovered on other boards.
+      }
+    }
+
+    return Array.from(bySprintId.values());
+  }
+
+  /**
+   * Board discovery for the project: `/rest/agile/1.0/board?projectKeyOrId=`,
+   * paginated. Returns board ids only — sprint-fetching is done separately
+   * per board so a single board's failure doesn't abort discovery of the
+   * rest.
+   */
+  private async discoverJiraBoards(projectKey: string): Promise<string[]> {
+    const boardIds: string[] = [];
+    let startAt = 0;
+    const maxResults = 50;
+
+    try {
+      while (true) {
+        const params = new URLSearchParams({
+          projectKeyOrId: projectKey,
+          startAt: startAt.toString(),
+          maxResults: maxResults.toString(),
+        });
+        const response = await this.makeRequest<any>(
+          this.buildUrl(`/rest/agile/1.0/board?${params.toString()}`)
+        );
+
+        const pageValues: any[] = Array.isArray(response?.values)
+          ? response.values
+          : [];
+        for (const board of pageValues) {
+          if (board?.id != null) boardIds.push(String(board.id));
+        }
+
+        const isLast =
+          typeof response?.isLast === "boolean"
+            ? response.isLast
+            : pageValues.length < maxResults;
+        if (isLast || pageValues.length === 0) break;
+        startAt += pageValues.length;
+      }
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[JiraAdapter] discoverJiraBoards failed for %s:`,
+        projectKey,
+        error
+      );
+    }
+
+    return boardIds;
+  }
+
+  private mapJiraSprint(raw: any): ExternalMilestone | null {
+    if (!raw || raw.id == null) return null;
+
+    const rawState =
+      typeof raw.state === "string" ? raw.state.toLowerCase() : undefined;
+    let state: ExternalMilestone["state"];
+    switch (rawState) {
+      case "closed":
+        state = "CLOSED";
+        break;
+      case "active":
+        state = "ACTIVE";
+        break;
+      case "future":
+      default:
+        state = "FUTURE";
+        break;
+    }
+
+    return {
+      id: String(raw.id),
+      kind: "ITERATION",
+      name: raw.name ?? String(raw.id),
+      description: raw.goal,
+      startDate: raw.startDate ? new Date(raw.startDate) : undefined,
+      endDate: raw.endDate ? new Date(raw.endDate) : undefined,
+      state,
+      rawState,
+    };
   }
 
   async searchIssues(options: IssueSearchOptions): Promise<{
