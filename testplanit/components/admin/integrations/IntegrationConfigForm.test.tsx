@@ -122,6 +122,31 @@ describe("IntegrationConfigForm", () => {
       expect(passwordInputs.length).toBeGreaterThanOrEqual(1);
     });
 
+    it("renders username and password fields for the Data Center Basic flow", () => {
+      const onCredentialsChange = vi.fn();
+      render(
+        <IntegrationConfigForm
+          {...defaultProps}
+          provider="JIRA"
+          authType="API_KEY"
+          onCredentialsChange={onCredentialsChange}
+        />
+      );
+
+      const usernameInput = screen.getByPlaceholderText("usernamePlaceholder");
+      fireEvent.change(usernameInput, { target: { value: "alice" } });
+      expect(onCredentialsChange).toHaveBeenCalledWith(
+        expect.objectContaining({ username: "alice" })
+      );
+
+      const passwordInput = screen.getByPlaceholderText("passwordPlaceholder");
+      expect((passwordInput as HTMLInputElement).type).toBe("password");
+      fireEvent.change(passwordInput, { target: { value: "secret" } });
+      expect(onCredentialsChange).toHaveBeenCalledWith(
+        expect.objectContaining({ password: "secret" })
+      );
+    });
+
     it("shows API key warning alert", () => {
       render(
         <IntegrationConfigForm
@@ -384,7 +409,12 @@ describe("IntegrationConfigForm", () => {
           {...defaultProps}
           provider="JIRA"
           authType="API_KEY"
-          credentials={{ email: "user@example.com", apiToken: "mytoken123" }}
+          credentials={{
+            email: "user@example.com",
+            apiToken: "mytoken123",
+            username: "user@example.com",
+            password: "mytoken123",
+          }}
           isEdit={true}
         />
       );
