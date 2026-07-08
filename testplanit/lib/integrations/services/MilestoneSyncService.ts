@@ -27,12 +27,27 @@ export interface MilestoneSyncServiceOptions {
    *   • webhook (Phase 19)    → 15
    */
   minFreshnessSeconds?: number;
+  /**
+   * When set, scopes the refresh's milestone lookup to rows owned by this
+   * project. `[externalId, integrationId]` is globally unique but a single
+   * Integration can be mapped to many projects, so a caller authorized for
+   * project A must not be able to refresh (or probe the existence of)
+   * project B's milestone through the shared integration. The `/now` route
+   * always passes the projectId it authorized against.
+   */
+  projectId?: number;
 }
 
 export interface MilestoneRefreshResult {
   success: boolean;
   cached?: boolean;
   locked?: boolean;
+  /**
+   * True when no linked Milestones row matches the requested
+   * externalId/integrationId (within the caller's project scope, when
+   * `projectId` was provided) — callers map this to a 404 rather than a 500.
+   */
+  notFound?: boolean;
   error?: string;
 }
 
@@ -155,14 +170,20 @@ export class MilestoneSyncService {
     integrationId: number,
     externalId: string,
     serviceOptions: MilestoneSyncServiceOptions,
-    inner: () => Promise<{ success: boolean; error?: string }>
+    inner: () => Promise<MilestoneRefreshResult>
   ): Promise<MilestoneRefreshResult> {
     const db = serviceOptions.dbClient || defaultDb;
     const minFreshnessSeconds = serviceOptions.minFreshnessSeconds ?? 0;
     try {
       if (minFreshnessSeconds > 0) {
         const stored = await db.milestones.findFirst({
-          where: { integrationId, externalId },
+          where: {
+            integrationId,
+            externalId,
+            ...(serviceOptions.projectId != null
+              ? { projectId: serviceOptions.projectId }
+              : {}),
+          },
           select: { lastSyncedAt: true },
         });
         if (stored?.lastSyncedAt) {
@@ -302,11 +323,17 @@ export class MilestoneSyncService {
     integrationId: number,
     externalId: string,
     serviceOptions: MilestoneSyncServiceOptions
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<MilestoneRefreshResult> {
     const db = serviceOptions.dbClient || defaultDb;
     try {
       const existing = await db.milestones.findFirst({
-        where: { integrationId, externalId },
+        where: {
+          integrationId,
+          externalId,
+          ...(serviceOptions.projectId != null
+            ? { projectId: serviceOptions.projectId }
+            : {}),
+        },
         select: {
           id: true,
           projectId: true,
@@ -315,9 +342,11 @@ export class MilestoneSyncService {
         },
       });
       if (!existing) {
-        throw new Error(
-          `Cannot refresh milestone ${externalId}: no linked Milestones row for integration ${integrationId}`
-        );
+        return {
+          success: false,
+          notFound: true,
+          error: `Cannot refresh milestone ${externalId}: no linked Milestones row for integration ${integrationId}`,
+        };
       }
 
       const integrationProject = await db.integrationProject.findFirst({
@@ -665,7 +694,7 @@ export class MilestoneSyncService {
             userId,
             integrationId,
             externalId,
-            serviceOptions
+            { ...serviceOptions, projectId }
           );
           if (result.success && !result.cached && !result.locked) {
             refreshed++;

@@ -74,17 +74,22 @@ export const POST = withAuditContext(
       const minFreshnessSeconds = triggerParam === "hover" ? 300 : 0;
 
       if (externalId) {
+        // Scope the refresh to the project this request was authorized
+        // against — [externalId, integrationId] is globally unique across
+        // projects sharing the integration, so an unscoped lookup would let
+        // a project-admin of project A refresh (and existence-probe)
+        // project B's milestone.
         const result = await milestoneSyncService.performMilestoneRefresh(
           session.user.id,
           integrationId,
           externalId,
-          { minFreshnessSeconds }
+          { minFreshnessSeconds, projectId: auth.projectId }
         );
 
         if (!result.success) {
           return NextResponse.json(
             { error: result.error || "Failed to sync milestone" },
-            { status: 500 }
+            { status: result.notFound ? 404 : 500 }
           );
         }
 

@@ -181,6 +181,80 @@ describe("performMilestoneRefresh — freshness gate", () => {
   });
 });
 
+describe("performMilestoneRefresh — project scoping", () => {
+  it("scopes the milestone lookup by projectId when provided", async () => {
+    const result = await milestoneSyncService.performMilestoneRefresh(
+      "user-1",
+      1,
+      "10001",
+      { minFreshnessSeconds: 0, projectId: 100 }
+    );
+
+    expect(result.success).toBe(true);
+    expect(mockMilestonesFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          integrationId: 1,
+          externalId: "10001",
+          projectId: 100,
+        }),
+      })
+    );
+  });
+
+  it("also scopes the freshness-gate lookup by projectId", async () => {
+    mockMilestonesFindFirst.mockResolvedValueOnce({
+      id: 1,
+      lastSyncedAt: new Date(Date.now() - 60_000),
+    });
+
+    const result = await milestoneSyncService.performMilestoneRefresh(
+      "user-1",
+      1,
+      "10001",
+      { minFreshnessSeconds: 300, projectId: 100 }
+    );
+
+    expect(result).toEqual({ success: true, cached: true });
+    expect(mockMilestonesFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ projectId: 100 }),
+      })
+    );
+  });
+
+  it("returns notFound (no upstream fetch, no write) when the externalId belongs to another project", async () => {
+    // Simulates a project-admin of project A passing project B's externalId:
+    // the projectId-scoped lookup finds no row.
+    mockMilestonesFindFirst.mockResolvedValue(null);
+
+    const result = await milestoneSyncService.performMilestoneRefresh(
+      "user-1",
+      1,
+      "10001",
+      { minFreshnessSeconds: 0, projectId: 999 }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.notFound).toBe(true);
+    expect(mockGetExternalMilestones).not.toHaveBeenCalled();
+    expect(mockMilestonesUpsert).not.toHaveBeenCalled();
+  });
+
+  it("does not constrain the lookup when projectId is omitted (worker refresh path)", async () => {
+    const result = await milestoneSyncService.performMilestoneRefresh(
+      "user-1",
+      1,
+      "10001",
+      { minFreshnessSeconds: 0 }
+    );
+
+    expect(result.success).toBe(true);
+    const where = mockMilestonesFindFirst.mock.calls[0][0].where;
+    expect(where).not.toHaveProperty("projectId");
+  });
+});
+
 describe("performMilestoneRefresh — per-entity Valkey lock", () => {
   it("manual trigger acquires + releases the lock around a successful sync", async () => {
     await milestoneSyncService.performMilestoneRefresh("user-1", 1, "10001", {
