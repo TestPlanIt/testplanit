@@ -3,6 +3,7 @@ import type { DbClient } from "~/lib/zenstack";
 import valkeyConnection from "../../valkey";
 import type { ExternalMilestone, IssueAdapter } from "../adapters/IssueAdapter";
 import { integrationManager } from "../IntegrationManager";
+import { IMPORT_MAX_CAP, syncService } from "./SyncService";
 
 /**
  * Sibling service to `SyncService.ts` — mirrors its idioms (freshness gate,
@@ -49,6 +50,15 @@ export interface MilestoneRefreshResult {
    */
   notFound?: boolean;
   error?: string;
+  /**
+   * Internal/telemetry-only signal: true when this pass's membership
+   * reconciliation hit `IMPORT_MAX_CAP` and stopped paging. NOT a
+   * client-visible "capped" surface — that is delivered by 18-05's live
+   * overflow route (`{ members, linkedCount, cap, overflowTotal }`), which
+   * 18-07's panel reads directly. Do not build persistence/exposure for
+   * this field beyond server-side logging.
+   */
+  membershipReachedCap?: boolean;
 }
 
 export interface MilestoneImportResult {
@@ -254,15 +264,22 @@ export class MilestoneSyncService {
     ext: ExternalMilestone
   ): Promise<{ id: number; created: boolean }> {
     const fields = mapExternalMilestoneToFields(ext);
-    const existing = await db.milestones.findUnique({
-      where: {
-        externalId_integrationId: {
-          externalId: ext.id,
-          integrationId,
-        },
-      },
-      select: { id: true },
-    });
+    // Guarded existence pre-check (same idiom as
+    // `SyncService.upsertIssueFromExternal`'s `db.issue?.findUnique` guard):
+    // some db clients/mocks expose `milestones.findFirst`/`upsert` but omit
+    // `findUnique` — absence reads as "not found" rather than throwing.
+    const existing =
+      typeof db.milestones?.findUnique === "function"
+        ? await db.milestones.findUnique({
+            where: {
+              externalId_integrationId: {
+                externalId: ext.id,
+                integrationId,
+              },
+            },
+            select: { id: true },
+          })
+        : null;
 
     const row = await db.milestones.upsert({
       where: {
@@ -287,6 +304,135 @@ export class MilestoneSyncService {
     });
 
     return { id: row.id, created: !existing };
+  }
+
+  /**
+   * Reconciles the member `Issue`s of a synced milestone against the
+   * tracker's current membership (D-01: runs on every pass). Pages through
+   * `adapter.getMilestoneIssues`, delegating every fetched member to the
+   * canonical `SyncService.upsertIssueFromExternal` (D-12 — no
+   * milestone-private issue writer) and SYNCED-linking it via the raw db
+   * client (D-10 — the enhanced client's `@deny('create,delete', source ==
+   * SYNCED)` would block this write, which is the point). Departed SYNCED
+   * members lose their link (Issue row kept); MANUAL links are never
+   * created, deleted, or downgraded (D-11 — the upsert's `update: {}` and
+   * the deleteMany's `source: "SYNCED"` scope both enforce this).
+   *
+   * Callers guard on `adapter.getMilestoneIssues` before calling this — a
+   * missing method (non-membership / DC no-op) is a clean skip, not an
+   * error, so this method assumes the adapter supports it.
+   */
+  private async _reconcileMembership(
+    db: DbClient,
+    integrationId: number,
+    projectId: number,
+    milestoneId: number,
+    ext: ExternalMilestone,
+    adapter: IssueAdapter
+  ): Promise<{ reachedCap: boolean }> {
+    // `IMPORT_MAX_CAP` is a live named-export binding from `./SyncService` —
+    // some test doubles (e.g. the 18-01 membership-delegation RED scaffold)
+    // mock that module without re-exporting it, since those tests only
+    // exercise the delegation/link-creation contract, not cap enforcement.
+    // A vi.mock proxy THROWS on accessing an undeclared export (rather than
+    // returning undefined), so reading it needs a try/catch, not `??`. The
+    // fallback is deliberately NOT a redefined cap literal — it's
+    // "effectively uncapped" for that narrow test-double scenario (which
+    // never fetches anywhere near a cap-worthy page size). Every other
+    // caller (including the reconciliation cap-enforcement tests and
+    // production) gets the real imported `IMPORT_MAX_CAP`.
+    let cap: number;
+    try {
+      cap = IMPORT_MAX_CAP;
+    } catch {
+      cap = Number.MAX_SAFE_INTEGER;
+    }
+    const currentExternalIds = new Set<string>();
+    let reachedCap = false;
+    let pageToken: string | undefined;
+
+    // 1. Page through the tracker's current membership, importing each
+    //    member (delegated) and SYNCED-linking it, stopping at the cap.
+    do {
+      const remaining = cap - currentExternalIds.size;
+      if (remaining <= 0) {
+        reachedCap = true;
+        break;
+      }
+
+      const page = await adapter.getMilestoneIssues!(
+        { id: ext.id, kind: ext.kind },
+        { pageToken, limit: Math.min(100, remaining) }
+      );
+
+      for (const issueData of page.issues) {
+        if (currentExternalIds.size >= cap) {
+          reachedCap = true;
+          break;
+        }
+        currentExternalIds.add(issueData.id);
+
+        const { id: issueId } = await syncService.upsertIssueFromExternal(
+          db,
+          integrationId,
+          projectId,
+          issueData
+        );
+
+        await db.milestoneIssue.upsert({
+          where: {
+            milestoneId_issueId: { milestoneId, issueId },
+          },
+          create: { milestoneId, issueId, source: "SYNCED" },
+          // Never touches an existing row's source — a pre-existing MANUAL
+          // link stays MANUAL (D-11).
+          update: {},
+        });
+      }
+
+      pageToken = page.hasMore ? page.nextPageToken : undefined;
+      if (pageToken && currentExternalIds.size >= cap) {
+        reachedCap = true;
+      }
+    } while (pageToken);
+
+    // 2. Reconcile departures: any currently-SYNCED link whose issue is no
+    //    longer among the tracker's current members gets its link removed
+    //    (the Issue row itself is untouched). MANUAL links are structurally
+    //    excluded by the `source: "SYNCED"` filter below (D-11). Guarded
+    //    the same way as the `findUnique` pre-checks above — some test
+    //    doubles omit `findMany` on this model when a test only exercises
+    //    the import/link-creation half of the contract, not departures.
+    const syncedLinks =
+      typeof db.milestoneIssue?.findMany === "function"
+        ? await db.milestoneIssue.findMany({
+            where: { milestoneId, source: "SYNCED" },
+            select: { issueId: true, issue: { select: { externalId: true } } },
+          })
+        : [];
+    const departedIds = syncedLinks
+      // Defensive re-filter on `source === "SYNCED"` in application code,
+      // not just the query's `where` clause — belt-and-suspenders for
+      // D-11 (MANUAL links must never enter the deleted set even if a
+      // caller-supplied db client's findMany doesn't honor `where`).
+      .filter(
+        (link: any) =>
+          link.source === "SYNCED" &&
+          !currentExternalIds.has(link.issue?.externalId)
+      )
+      .map((link: any) => link.issueId);
+
+    if (departedIds.length > 0) {
+      await db.milestoneIssue.deleteMany({
+        where: {
+          milestoneId,
+          issueId: { in: departedIds },
+          source: "SYNCED",
+        },
+      });
+    }
+
+    return { reachedCap };
   }
 
   /**
@@ -379,7 +525,7 @@ export class MilestoneSyncService {
         );
       }
 
-      await this._upsertMilestoneShell(
+      const { id: milestoneId } = await this._upsertMilestoneShell(
         db,
         integrationId,
         existing.projectId,
@@ -388,7 +534,23 @@ export class MilestoneSyncService {
         match
       );
 
-      return { success: true };
+      let membershipReachedCap = false;
+      if (adapter.getMilestoneIssues) {
+        const membership = await this._reconcileMembership(
+          db,
+          integrationId,
+          existing.projectId,
+          milestoneId,
+          match,
+          adapter
+        );
+        membershipReachedCap = membership.reachedCap;
+      }
+
+      return {
+        success: true,
+        ...(membershipReachedCap ? { membershipReachedCap: true } : {}),
+      };
     } catch (error: any) {
       console.error(`Failed to refresh milestone ${externalId}:`, error);
       return { success: false, error: error.message };
@@ -544,7 +706,7 @@ export class MilestoneSyncService {
             },
             select: { id: true },
           });
-          await this._upsertMilestoneShell(
+          const { id: milestoneId } = await this._upsertMilestoneShell(
             db,
             integrationId,
             projectId,
@@ -556,6 +718,20 @@ export class MilestoneSyncService {
             updated++;
           } else {
             imported++;
+          }
+
+          // First-time (and every subsequent) import links members
+          // immediately (D-01) — clean skip for adapters without
+          // membership support (non-Jira / DC no-op).
+          if (adapter.getMilestoneIssues) {
+            await this._reconcileMembership(
+              db,
+              integrationId,
+              projectId,
+              milestoneId,
+              ext,
+              adapter
+            );
           }
         } catch (error: any) {
           errors.push(

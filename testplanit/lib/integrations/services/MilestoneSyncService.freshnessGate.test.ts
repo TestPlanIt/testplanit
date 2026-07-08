@@ -67,6 +67,18 @@ vi.mock("../../valkey", () => ({
   },
 }));
 
+// `MilestoneSyncService.ts` (18-04) statically imports `IMPORT_MAX_CAP` +
+// `syncService` from `./SyncService` for membership reconciliation delegation
+// (D-12) — mocked here purely to avoid pulling in `SyncService.ts`'s full
+// import chain (notably `IssueCache`, which needs a real Valkey connection
+// this suite's minimal `set`/`del`-only mock above doesn't provide). This
+// suite's adapter mock never declares `getMilestoneIssues`, so
+// `_reconcileMembership` is never invoked — these are clean-skip stubs.
+vi.mock("./SyncService", () => ({
+  syncService: { upsertIssueFromExternal: vi.fn() },
+  IMPORT_MAX_CAP: 1000,
+}));
+
 // ─── Imports under test ──────────────────────────────────────────────────
 import { milestoneSyncService } from "./MilestoneSyncService";
 
