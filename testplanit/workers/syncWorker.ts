@@ -1,6 +1,7 @@
 import { Job, Worker } from "bullmq";
 import { runWithAuditContext } from "../lib/auditContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
+import { milestoneSyncService } from "../lib/integrations/services/MilestoneSyncService";
 import {
   SyncJobData,
   syncService,
@@ -233,6 +234,169 @@ const processor = async (job: Job<MultiTenantSyncJobData>) =>
           return result;
         } catch (error) {
           console.error(`Failed to refresh issue ${jobData.issueId}:`, error);
+          throw error;
+        }
+
+      case "sync-milestones":
+        try {
+          if (!jobData.projectId) {
+            throw new Error(
+              "Project ID is required for milestone project sync"
+            );
+          }
+
+          const milestoneSyncData = (jobData.data ?? {}) as {
+            minFreshnessSeconds?: number;
+          };
+
+          const result = await milestoneSyncService.performProjectMilestoneSync(
+            jobData.userId,
+            jobData.integrationId,
+            Number(jobData.projectId),
+            {
+              ...serviceOptions,
+              minFreshnessSeconds: milestoneSyncData.minFreshnessSeconds,
+            }
+          );
+
+          // Audit logging — record the auto-track + refresh pass.
+          captureAuditEvent({
+            action: "BULK_UPDATE",
+            entityType: "Milestones",
+            entityId: `sync-${jobData.integrationId}-${Date.now()}`,
+            entityName: `Milestone Sync`,
+            userId: jobData.userId,
+            projectId: Number(jobData.projectId),
+            tenantId: jobData.tenantId,
+            metadata: {
+              source: "sync-worker:milestones",
+              integrationId: jobData.integrationId,
+              autoImported: result.autoImported,
+              refreshed: result.refreshed,
+              errorCount: result.errors.length,
+              jobId: job.id,
+            },
+          }).catch(() => {});
+
+          if (result.errors.length > 0) {
+            console.warn(
+              `Milestone sync completed with ${result.errors.length} errors:`,
+              result.errors
+            );
+          }
+
+          console.log(
+            `Milestone sync: auto-imported ${result.autoImported}, refreshed ${result.refreshed}`
+          );
+          return result;
+        } catch (error) {
+          console.error("Failed to sync milestones:", error);
+          throw error;
+        }
+
+      case "refresh-milestone":
+        try {
+          const refreshData = (jobData.data ?? {}) as {
+            externalId?: string;
+            minFreshnessSeconds?: number;
+          };
+          if (!refreshData.externalId) {
+            throw new Error("externalId is required for milestone refresh");
+          }
+
+          const result = await milestoneSyncService.performMilestoneRefresh(
+            jobData.userId,
+            jobData.integrationId,
+            refreshData.externalId,
+            {
+              ...serviceOptions,
+              minFreshnessSeconds: refreshData.minFreshnessSeconds,
+            }
+          );
+
+          if (!result.success) {
+            throw new Error(result.error || "Failed to refresh milestone");
+          }
+
+          // Audit logging — record single milestone refresh
+          captureAuditEvent({
+            action: "UPDATE",
+            entityType: "Milestones",
+            entityId: String(refreshData.externalId),
+            userId: jobData.userId,
+            tenantId: jobData.tenantId,
+            metadata: {
+              source: "sync-worker:refresh-milestone",
+              integrationId: jobData.integrationId,
+              jobId: job.id,
+            },
+          }).catch(() => {});
+
+          console.log(
+            `Refreshed milestone ${refreshData.externalId} successfully`
+          );
+          return result;
+        } catch (error) {
+          console.error("Failed to refresh milestone:", error);
+          throw error;
+        }
+
+      case "import-milestones":
+        try {
+          if (!jobData.projectId) {
+            throw new Error("Project ID is required for milestone import");
+          }
+
+          const importData = (jobData.data ?? {}) as {
+            externalIds?: string[];
+            kinds?: Array<"RELEASE" | "ITERATION">;
+            createdById?: string;
+          };
+
+          const result = await milestoneSyncService.performMilestoneImport(
+            jobData.userId,
+            jobData.integrationId,
+            Number(jobData.projectId),
+            {
+              externalIds: importData.externalIds,
+              kinds: importData.kinds,
+            },
+            importData.createdById ?? jobData.userId,
+            serviceOptions
+          );
+
+          // Audit logging — record the bulk import as a Milestones mutation batch.
+          captureAuditEvent({
+            action: "BULK_UPDATE",
+            entityType: "Milestones",
+            entityId: `import-${jobData.integrationId}-${jobData.projectId}`,
+            entityName: `Milestone Import`,
+            userId: jobData.userId,
+            projectId: Number(jobData.projectId),
+            tenantId: jobData.tenantId,
+            metadata: {
+              source: "sync-worker:import-milestones",
+              integrationId: jobData.integrationId,
+              importedCount: result.imported,
+              updatedCount: result.updated,
+              errorCount: result.errors.length,
+              jobId: job.id,
+            },
+          }).catch(() => {});
+
+          if (result.errors.length > 0) {
+            console.warn(
+              `Milestone import completed with ${result.errors.length} errors:`,
+              result.errors
+            );
+          }
+
+          console.log(
+            `Imported ${result.imported} milestones (updated ${result.updated})`
+          );
+          return result;
+        } catch (error) {
+          console.error("Failed to import milestones:", error);
           throw error;
         }
 

@@ -299,6 +299,12 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
               completedAt: {
                 lte: now, // Due date has passed
               },
+              // LOCK-04: synced milestones (integrationId != null) are
+              // tracker-owned — MilestoneSyncService is the sole writer of
+              // isCompleted for them. Without this filter, the completion
+              // worker would race MilestoneSyncService and overwrite the
+              // tracker's state.
+              integrationId: null,
             },
             select: {
               id: true,
