@@ -30,6 +30,7 @@ import { MemberIssueRowActions, MilestoneIssueManager } from "@/components/issue
 import type { CoverageBreakdown } from "./CoverageChip";
 import type { ExtendedMemberIssue } from "./MemberIssuesColumns";
 import { useMemberIssueColumns } from "./MemberIssuesColumns";
+import { MemberIssuesOverflowPanel } from "./MemberIssuesOverflowPanel";
 import type { MemberCoverageResponse } from "~/app/api/milestones/[milestoneId]/members/coverage/route";
 
 interface MemberIssuesTableProps {
@@ -328,7 +329,20 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
 
         {!isLoading && sortedRows.length === 0 ? (
           <div className="text-sm text-muted-foreground py-8 text-center" data-testid="member-issues-empty">
-            {rows.length === 0 ? t("empty") : t("emptyFiltered")}
+            {rows.length === 0 ? (
+              <div className="flex flex-col items-center gap-3">
+                <span>{t("empty")}</span>
+                <MilestoneIssueManager
+                  milestoneId={milestoneId}
+                  projectId={projectId}
+                  integrationId={milestoneRow?.integrationId ?? undefined}
+                  linkedIssueIds={[]}
+                  onLinked={handleRefresh}
+                />
+              </div>
+            ) : (
+              t("emptyFiltered")
+            )}
           </div>
         ) : (
           <VirtualizedDataTable
@@ -345,6 +359,15 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
             testIdPrefix="member-issues-table"
             rowTestIdPrefix="member-issue-row"
           />
+        )}
+
+        {!isLoading && (
+          <div className="mt-4">
+            <MemberIssuesOverflowPanel
+              milestoneId={milestoneId}
+              onImported={handleRefresh}
+            />
+          </div>
         )}
       </CardContent>
     </Card>

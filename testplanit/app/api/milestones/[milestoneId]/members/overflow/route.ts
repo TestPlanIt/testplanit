@@ -2,6 +2,8 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { baseDb } from "~/lib/db";
 import { integrationManager } from "~/lib/integrations/IntegrationManager";
+import { authorizeProjectMilestoneSyncAdmin } from "~/lib/integrations/importAuthorization";
+import { milestoneSyncService } from "~/lib/integrations/services/MilestoneSyncService";
 import { IMPORT_MAX_CAP } from "~/lib/integrations/services/SyncService";
 import { authOptions } from "~/server/auth";
 
@@ -157,6 +159,118 @@ export async function GET(
     console.error("Milestone member overflow error:", error);
     return NextResponse.json(
       { error: "Failed to fetch member overflow" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/milestones/[milestoneId]/members/overflow
+ *
+ * "Import & link" for the overflow panel (MLINK-02/MLINK-03, T-18-07-01).
+ * Accepts NO client-supplied external-id list — it re-derives the
+ * milestone's integration context server-side and re-runs the SAME
+ * server-validated reconciliation path as the milestone-sync "Sync now"
+ * button (`MilestoneSyncService.performMilestoneRefresh`, which internally
+ * re-fetches live tracker membership via the adapter and diffs it against
+ * local SYNCED links — `_reconcileMembership`). A client cannot force a
+ * specific set of issues to be linked; it can only ask "sync this milestone
+ * now" and the server decides what's actually a member.
+ */
+export async function POST(
+  _req: NextRequest,
+  context: { params: Promise<{ milestoneId: string }> }
+) {
+  const { milestoneId: milestoneIdParam } = await context.params;
+  const milestoneId = Number(milestoneIdParam);
+
+  if (isNaN(milestoneId)) {
+    return NextResponse.json(
+      { error: "Invalid milestone ID" },
+      { status: 400 }
+    );
+  }
+
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const milestone = await baseDb.milestones.findUnique({
+      where: { id: milestoneId },
+      select: {
+        id: true,
+        projectId: true,
+        externalId: true,
+        integrationId: true,
+      },
+    });
+
+    if (!milestone) {
+      return NextResponse.json(
+        { error: "Milestone not found" },
+        { status: 404 }
+      );
+    }
+
+    if (!milestone.externalId || !milestone.integrationId) {
+      return NextResponse.json(
+        { error: "Milestone is not synced with an issue tracker" },
+        { status: 400 }
+      );
+    }
+
+    // Resolve the IntegrationProject mapping for this milestone's own
+    // project + integration so we can reuse the same project-admin gate
+    // (authorizeProjectMilestoneSyncAdmin) the milestone-sync "Sync now"
+    // route uses — never trusting a client-supplied mapping id.
+    const mapping = await baseDb.integrationProject.findFirst({
+      where: {
+        isActive: true,
+        projectIntegration: {
+          projectId: milestone.projectId,
+          integrationId: milestone.integrationId,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (!mapping) {
+      return NextResponse.json(
+        { error: "Integration mapping not found" },
+        { status: 404 }
+      );
+    }
+
+    const auth = await authorizeProjectMilestoneSyncAdmin(
+      session,
+      milestone.integrationId,
+      mapping.id
+    );
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
+    const result = await milestoneSyncService.performMilestoneRefresh(
+      session.user.id!,
+      milestone.integrationId,
+      milestone.externalId,
+      { minFreshnessSeconds: 0, projectId: auth.projectId }
+    );
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || "Failed to import member issues" },
+        { status: result.notFound ? 404 : 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Milestone member overflow import error:", error);
+    return NextResponse.json(
+      { error: "Failed to import member issues" },
       { status: 500 }
     );
   }

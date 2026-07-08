@@ -2202,7 +2202,15 @@
       "linkSuccess": "Issue linked to this milestone.",
       "linkError": "Failed to link the issue to this milestone.",
       "unlinkSuccess": "Issue removed from this milestone.",
-      "unlinkError": "Failed to remove the issue from this milestone."
+      "unlinkError": "Failed to remove the issue from this milestone.",
+      "overflowTitle": "More issues in Jira",
+      "overflowDescription": "These issues are in the linked Jira version/sprint but aren't linked here yet.",
+      "overflowCapped": "Capped at {cap} — {overflowTotal} more in Jira",
+      "overflowMoreAvailable": "{overflowTotal} more available in Jira",
+      "overflowImportAction": "Import & link",
+      "overflowImportSuccess": "Import started — issues will appear as they sync.",
+      "overflowImportError": "Failed to import member issues from Jira.",
+      "emptyCta": "Link an issue to get started."
     }
   },
   "sessions": {
