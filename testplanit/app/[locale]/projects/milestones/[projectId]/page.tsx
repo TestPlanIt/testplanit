@@ -19,7 +19,7 @@ import { ApplicationArea } from "~/zenstack/models";
 import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useRouter } from "~/lib/navigation";
@@ -116,6 +116,44 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     isClientLoading ||
     isLoadingPermissions;
 
+  // MSYNC-04 (Blocker 3): distinct synced-integration ids present among the
+  // loaded milestones, so the passive-refresh mount effect below fires ONE
+  // project-level request per integration rather than one per milestone.
+  const syncedIntegrationIds = React.useMemo(() => {
+    const ids = new Set<number>();
+    for (const milestone of [
+      ...(incompleteMilestones ?? []),
+      ...(completedMilestones ?? []),
+    ]) {
+      if (milestone.integrationId != null) {
+        ids.add(milestone.integrationId);
+      }
+    }
+    return Array.from(ids);
+  }, [incompleteMilestones, completedMilestones]);
+
+  // Resolve the active IntegrationProject (projectMappingId) for each
+  // synced integration found above — the same mapping lookup
+  // ImportMilestonesDialog's caller uses, reused here rather than
+  // reinvented.
+  const { data: syncedIntegrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
+    {
+      where: {
+        isActive: true,
+        projectIntegration: {
+          projectId: Number(projectId),
+          integrationId: { in: syncedIntegrationIds },
+        },
+      },
+      select: { id: true, projectIntegration: { select: { integrationId: true } } },
+    },
+    { enabled: isAuthenticated && syncedIntegrationIds.length > 0 }
+  );
+
+  const hasFiredPassiveRefresh = useRef(false);
+
   useEffect(() => {
     // Don't make routing decisions until session is loaded
     if (isAuthLoading) {
@@ -132,6 +170,34 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
       setIsClientLoading(false);
     }
   }, [project, router, isAuthLoading, isAuthenticated, isLoadingProject]);
+
+  useEffect(() => {
+    if (hasFiredPassiveRefresh.current) return;
+    if (!isAuthenticated) return;
+    if (syncedIntegrationIds.length === 0) return;
+    if (!syncedIntegrationProjects) return;
+
+    hasFiredPassiveRefresh.current = true;
+
+    for (const integrationId of syncedIntegrationIds) {
+      const mapping = syncedIntegrationProjects.find(
+        (ip) => ip.projectIntegration?.integrationId === integrationId
+      );
+      if (!mapping) continue;
+
+      void fetch(
+        `/api/integrations/${integrationId}/milestone-sync/now?trigger=hover`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectMappingId: mapping.id }),
+        }
+      ).catch(() => {
+        // Fire-and-forget background freshness nudge — failures are
+        // non-blocking, the next mount or manual "Sync now" will retry.
+      });
+    }
+  }, [isAuthenticated, syncedIntegrationIds, syncedIntegrationProjects]);
 
   // Wait for session to load
   if (isAuthLoading) {
