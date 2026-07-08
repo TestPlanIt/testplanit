@@ -45,11 +45,7 @@ vi.mock("@/components/tiptap/TipTapEditor", () => ({
 
 vi.mock("@/components/forms/DatePickerField", () => ({
   DatePickerField: ({ name, disabled }: any) => (
-    <input
-      data-testid={`datepicker-${name}`}
-      disabled={disabled}
-      readOnly
-    />
+    <input data-testid={`datepicker-${name}`} disabled={disabled} readOnly />
   ),
 }));
 
@@ -116,7 +112,8 @@ vi.mock("@/components/ui/separator", () => ({
 }));
 
 vi.mock("~/utils/milestoneUtils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("~/utils/milestoneUtils")>();
+  const actual =
+    await importOriginal<typeof import("~/utils/milestoneUtils")>();
   return {
     ...actual,
     createColorMap: () => ({}),

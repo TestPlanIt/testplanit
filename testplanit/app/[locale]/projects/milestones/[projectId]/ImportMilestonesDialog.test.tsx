@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // --- Stable mock refs via vi.hoisted() ---
 const { mockFindManyMilestones, mockFetch } = vi.hoisted(() => {
   return {
-    mockFindManyMilestones: vi.fn(() => ({ data: [] })),
+    mockFindManyMilestones: vi.fn(),
     mockFetch: vi.fn(),
   };
 });
@@ -196,7 +196,7 @@ describe("ImportMilestonesDialog", () => {
   });
 
   it("selecting items and confirming POSTs the chosen externalIds to /import", async () => {
-    mockFetch.mockImplementation((url: string, options?: any) => {
+    mockFetch.mockImplementation((url: string, _options?: any) => {
       if (typeof url === "string" && url.includes("milestone-sync/preview")) {
         return Promise.resolve(
           makePreviewResponse([

@@ -11,19 +11,20 @@ const {
 } = vi.hoisted(() => {
   return {
     mockFindManyMilestones: vi.fn(),
-    mockFindFirstProjects: vi.fn(() => ({
-      data: { id: 42, name: "Demo Project", iconUrl: null },
-      isLoading: false,
-    })),
-    mockFindManyIntegrationProject: vi.fn(() => ({ data: [] })),
+    mockFindFirstProjects: vi.fn(),
+    mockFindManyIntegrationProject: vi.fn(),
     mockFetch: vi.fn(),
   };
 });
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    projects: { useFindFirst: (...args: any[]) => mockFindFirstProjects(...args) },
-    milestones: { useFindMany: (...args: any[]) => mockFindManyMilestones(...args) },
+    projects: {
+      useFindFirst: (...args: any[]) => mockFindFirstProjects(...args),
+    },
+    milestones: {
+      useFindMany: (...args: any[]) => mockFindManyMilestones(...args),
+    },
     integrationProject: {
       useFindMany: (...args: any[]) => mockFindManyIntegrationProject(...args),
     },
@@ -111,6 +112,7 @@ describe("Milestones page — passive refresh mount effect", () => {
       data: { id: 42, name: "Demo Project", iconUrl: null },
       isLoading: false,
     });
+    mockFindManyIntegrationProject.mockReturnValue({ data: [] });
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({}) });
   });
 
@@ -139,7 +141,9 @@ describe("Milestones page — passive refresh mount effect", () => {
     });
 
     await act(async () => {
-      render(<ProjectMilestones params={Promise.resolve({ projectId: "42" })} />);
+      render(
+        <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
+      );
     });
 
     await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
@@ -165,7 +169,9 @@ describe("Milestones page — passive refresh mount effect", () => {
     });
 
     await act(async () => {
-      render(<ProjectMilestones params={Promise.resolve({ projectId: "42" })} />);
+      render(
+        <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
+      );
     });
 
     // Give effects a tick to (not) fire.
@@ -193,7 +199,9 @@ describe("Milestones page — passive refresh mount effect", () => {
     });
 
     await act(async () => {
-      render(<ProjectMilestones params={Promise.resolve({ projectId: "42" })} />);
+      render(
+        <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
+      );
     });
 
     await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));

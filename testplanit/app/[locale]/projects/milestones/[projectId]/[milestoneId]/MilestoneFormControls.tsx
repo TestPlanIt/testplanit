@@ -201,7 +201,9 @@ export default function MilestoneFormControls({
         <Alert data-testid="milestone-sync-locked-alert">
           <Cloud className="h-4 w-4" aria-hidden="true" />
           <AlertTitle>{t("sync.managedByJira")}</AlertTitle>
-          <AlertDescription>{t("sync.managedByJiraDescription")}</AlertDescription>
+          <AlertDescription>
+            {t("sync.managedByJiraDescription")}
+          </AlertDescription>
         </Alert>
       )}
       {isEditMode ? (

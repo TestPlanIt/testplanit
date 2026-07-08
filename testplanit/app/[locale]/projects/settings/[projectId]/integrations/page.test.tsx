@@ -11,18 +11,22 @@ const {
   return {
     mockFindFirstProjects: vi.fn(),
     mockFindManyProjectIntegration: vi.fn(),
-    mockFindManyIntegration: vi.fn(() => ({ data: [], isLoading: false })),
+    mockFindManyIntegration: vi.fn(),
   };
 });
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
-    projects: { useFindFirst: (...args: any[]) => mockFindFirstProjects(...args) },
+    projects: {
+      useFindFirst: (...args: any[]) => mockFindFirstProjects(...args),
+    },
     projectIntegration: {
       useFindMany: (...args: any[]) => mockFindManyProjectIntegration(...args),
       useUpdate: () => ({ mutateAsync: vi.fn() }),
     },
-    integration: { useFindMany: (...args: any[]) => mockFindManyIntegration(...args) },
+    integration: {
+      useFindMany: (...args: any[]) => mockFindManyIntegration(...args),
+    },
   }),
 }));
 
@@ -112,6 +116,7 @@ describe("ProjectIntegrationsPage — milestone sync mount", () => {
       },
       isLoading: false,
     });
+    mockFindManyIntegration.mockReturnValue({ data: [], isLoading: false });
   });
 
   it("mounts MilestoneSyncSettings alongside ProjectIntegrationSettings for a Jira project integration", () => {

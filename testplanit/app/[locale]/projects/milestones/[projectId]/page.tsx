@@ -147,7 +147,10 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
           integrationId: { in: syncedIntegrationIds },
         },
       },
-      select: { id: true, projectIntegration: { select: { integrationId: true } } },
+      select: {
+        id: true,
+        projectIntegration: { select: { integrationId: true } },
+      },
     },
     { enabled: isAuthenticated && syncedIntegrationIds.length > 0 }
   );
