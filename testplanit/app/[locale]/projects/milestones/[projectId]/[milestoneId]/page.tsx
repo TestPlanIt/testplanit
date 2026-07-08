@@ -593,6 +593,7 @@ export default function MilestoneDetailsPage() {
                           <FormControl>
                             <Textarea
                               {...field}
+                              disabled={milestone?.integrationId != null}
                               className="text-xl md:text-2xl w-full"
                             />
                           </FormControl>

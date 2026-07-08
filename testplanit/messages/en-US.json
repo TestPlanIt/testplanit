@@ -2169,6 +2169,7 @@
       "managedByJiraDescription": "This milestone's name, dates, and status are managed by Jira. Make changes there to update them here.",
       "lastSynced": "Last synced {time}",
       "openInJira": "Open in Jira",
+      "providerJira": "Jira",
       "sourceBadge": "{provider} · {kind} · {state}",
       "syncNow": "Sync now"
     }

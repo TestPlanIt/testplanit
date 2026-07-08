@@ -18,6 +18,7 @@ import {
 import { parseISO } from "date-fns";
 import {
   CheckCircle,
+  ExternalLink,
   MoreVertical,
   RotateCcw,
   SquarePen,
@@ -150,7 +151,44 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <MilestoneIconAndName milestone={milestone} projectId={projectId} />
+            <div className="flex items-center gap-2">
+              <MilestoneIconAndName
+                milestone={milestone}
+                projectId={projectId}
+              />
+              {milestone.integrationId != null && (
+                <>
+                  <Badge
+                    data-testid="milestone-source-badge"
+                    variant="secondary"
+                    className="text-xs shrink-0"
+                  >
+                    {t("sync.sourceBadge", {
+                      provider: t("sync.providerJira"),
+                      kind:
+                        milestone.externalKind === "RELEASE"
+                          ? t("import.kindRelease")
+                          : t("import.kindSprint"),
+                      state: milestone.externalState ?? "",
+                    })}
+                  </Badge>
+                  {milestone.externalUrl && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0 text-muted-foreground hover:opacity-50"
+                      title={t("sync.openInJira")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(milestone.externalUrl!, "_blank");
+                      }}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
             <p
               className={`${compact ? "hidden" : "hidden sm:block"} text-md text-muted-foreground ms-7`}
             >

@@ -5,6 +5,7 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import { UserDisplay } from "@/components/search/UserDisplay";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
   FormControl,
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { Cloud } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -187,8 +189,21 @@ export default function MilestoneFormControls({
     ));
   };
 
+  // LOCK-01/04: tracker-owned fields (name/note/dates/started/completed) are
+  // locked once a milestone is synced from Jira; automaticCompletion is
+  // force-disabled since the tracker — not the local auto-complete worker —
+  // owns isCompleted for a synced milestone (see forecastWorker LOCK-04).
+  const isSynced = milestone?.integrationId != null;
+
   return (
     <div className="space-y-4">
+      {isSynced && (
+        <Alert data-testid="milestone-sync-locked-alert">
+          <Cloud className="h-4 w-4" aria-hidden="true" />
+          <AlertTitle>{t("sync.managedByJira")}</AlertTitle>
+          <AlertDescription>{t("sync.managedByJiraDescription")}</AlertDescription>
+        </Alert>
+      )}
       {isEditMode ? (
         <>
           <div className="space-y-2">
@@ -201,7 +216,7 @@ export default function MilestoneFormControls({
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      disabled={!isEditMode}
+                      disabled={!isEditMode || isSynced}
                     />
                   </FormControl>
                   <FormLabel>{tCommon("fields.started")}</FormLabel>
@@ -214,7 +229,7 @@ export default function MilestoneFormControls({
               name="startedAt"
               label={tCommon("fields.startDate")}
               placeholder={tCommon("fields.startDate")}
-              disabled={!isEditMode}
+              disabled={!isEditMode || isSynced}
             />
           </div>
           <Separator />
@@ -228,7 +243,7 @@ export default function MilestoneFormControls({
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      disabled={!isEditMode}
+                      disabled={!isEditMode || isSynced}
                     />
                   </FormControl>
                   <FormLabel>{tCommon("fields.completed")}</FormLabel>
@@ -241,28 +256,30 @@ export default function MilestoneFormControls({
               name="completedAt"
               label={tGlobal("milestones.fields.dueDate")}
               placeholder={tGlobal("milestones.fields.dueDate")}
-              disabled={!isEditMode}
+              disabled={!isEditMode || isSynced}
             />
-            <FormField
-              control={control}
-              name="automaticCompletion"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={!isEditMode || !hasDueDate}
-                    />
-                  </FormControl>
-                  <FormLabel className="flex items-center">
-                    {t("fields.automaticCompletion")}
-                    <HelpPopover helpKey="milestone.automaticCompletion" />
-                  </FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!isSynced && (
+              <FormField
+                control={control}
+                name="automaticCompletion"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={!isEditMode || !hasDueDate}
+                      />
+                    </FormControl>
+                    <FormLabel className="flex items-center">
+                      {t("fields.automaticCompletion")}
+                      <HelpPopover helpKey="milestone.automaticCompletion" />
+                    </FormLabel>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={control}
               name="enableNotifications"
@@ -377,11 +394,11 @@ export default function MilestoneFormControls({
                     field.value ? JSON.parse(field.value) : emptyEditorContent
                   }
                   onUpdate={(newContent) => {
-                    if (isEditMode) {
+                    if (isEditMode && !isSynced) {
                       field.onChange(JSON.stringify(newContent));
                     }
                   }}
-                  readOnly={!isEditMode}
+                  readOnly={!isEditMode || isSynced}
                   className="h-auto"
                   placeholder={t("placeholders.description")}
                   projectId={projectId}
@@ -463,6 +480,14 @@ export default function MilestoneFormControls({
             userImage={milestone.creator.image}
             size="small"
           />
+        </div>
+      )}
+
+      {isSynced && milestone?.lastSyncedAt && (
+        <div className="text-xs text-muted-foreground">
+          {t("sync.lastSynced", {
+            time: new Date(milestone.lastSyncedAt).toLocaleString(),
+          })}
         </div>
       )}
     </div>
