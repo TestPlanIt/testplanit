@@ -68,6 +68,7 @@ e2e/a11y/test-results/
 
 # ZenStack v3 generated ORM client (produced by `zenstack generate` / postinstall)
 /zenstack/
+/~schema.prisma
 
 # DB backups
 backups/
