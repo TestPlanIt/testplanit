@@ -868,6 +868,11 @@ model MilestoneIssue {
     )
 
     @@allow('all', auth().access == 'ADMIN')
+    // Tracker contract: the sync service owns SYNCED membership. Block
+    // enhanced-client create/delete so users cannot forge or remove a
+    // tracker-derived link. The sync service uses the raw prisma client
+    // and bypasses these policies; see MilestoneSyncService.
+    @@deny('create,delete', source == SYNCED)
 }
 
 model FieldIcon {
