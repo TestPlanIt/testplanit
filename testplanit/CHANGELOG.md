@@ -1,3 +1,9 @@
+## [0.41.3](https://github.com/TestPlanIt/testplanit/compare/v0.41.2...v0.41.3) (2026-07-08)
+
+### Bug Fixes
+
+* **audit:** stop FK-poison re-poll loop in CDC audit-log writer ([#503](https://github.com/TestPlanIt/testplanit/issues/503)) ([b87f29f](https://github.com/TestPlanIt/testplanit/commit/b87f29ff8cc502220ef32eed7191665d49119c92))
+
 ## [0.41.2](https://github.com/TestPlanIt/testplanit/compare/v0.41.1...v0.41.2) (2026-07-07)
 
 ### Enhancements
