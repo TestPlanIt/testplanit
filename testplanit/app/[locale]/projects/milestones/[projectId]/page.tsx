@@ -14,15 +14,24 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddMilestone } from "@/projects/milestones/[projectId]/AddMilestoneModal";
+import { ImportMilestonesDialog } from "@/projects/milestones/[projectId]/ImportMilestonesDialog";
 import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay";
 import { ApplicationArea } from "~/zenstack/models";
-import { CirclePlus } from "lucide-react";
+import { CirclePlus, Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 import { use, useEffect, useRef, useState } from "react";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useRouter } from "~/lib/navigation";
+
+/**
+ * Providers whose adapter declares a non-`false` `milestones` capability
+ * (`IssueAdapterCapabilities.milestones`). Mirrors the same client-safe map
+ * used by `milestone-sync-settings.tsx` — source of truth is each adapter's
+ * `getCapabilities()` in `lib/integrations/adapters/*Adapter.ts`.
+ */
+const MILESTONE_CAPABLE_PROVIDERS = new Set(["JIRA"]);
 
 interface ProjectMilestonesProps {
   params: Promise<{ projectId: string }>;
@@ -34,6 +43,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   const router = useRouter();
   const [isClientLoading, setIsClientLoading] = useState(true);
   const [addMilestoneOpen, setAddMilestoneOpen] = useState(false);
+  const [importMilestonesOpen, setImportMilestonesOpen] = useState(false);
   const {
     session,
     isLoading: isAuthLoading,
@@ -155,6 +165,56 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     { enabled: isAuthenticated && syncedIntegrationIds.length > 0 }
   );
 
+  // Import from Jira trigger (MSYNC-02): find an active, milestone-sync
+  // capable ProjectIntegration for this project with milestoneSync.enabled
+  // in its config. Reuses the same capability list milestone-sync-settings.tsx
+  // gates on, since adapters run server-side only.
+  const { data: milestoneSyncIntegrations } = useClientQueries(
+    schema
+  ).projectIntegration.useFindMany(
+    {
+      where: {
+        projectId: Number(projectId),
+        isActive: true,
+        integration: {
+          isDeleted: false,
+          provider: { in: Array.from(MILESTONE_CAPABLE_PROVIDERS) as any },
+        },
+      },
+      select: {
+        id: true,
+        integrationId: true,
+        config: true,
+      },
+    },
+    { enabled: isAuthenticated }
+  );
+
+  const importCapableProjectIntegration = React.useMemo(() => {
+    return (milestoneSyncIntegrations ?? []).find((pi) => {
+      const config = (pi.config as Record<string, any>) || {};
+      return config?.milestoneSync?.enabled === true;
+    });
+  }, [milestoneSyncIntegrations]);
+
+  const { data: importIntegrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
+    {
+      where: {
+        projectIntegrationId: importCapableProjectIntegration?.id,
+        isActive: true,
+      },
+      select: { id: true },
+    },
+    { enabled: isAuthenticated && !!importCapableProjectIntegration }
+  );
+
+  const importProjectMappingId = importIntegrationProjects?.[0]?.id;
+
+  const canImportFromJira =
+    canAddEdit && !!importCapableProjectIntegration && !!importProjectMappingId;
+
   const hasFiredPassiveRefresh = useRef(false);
 
   useEffect(() => {
@@ -239,7 +299,19 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
                   <CardTitle>{t("common.fields.milestones")}</CardTitle>
                 </div>
                 {canAddEdit && (
-                  <div>
+                  <div className="flex items-center gap-2">
+                    {canImportFromJira && (
+                      <Button
+                        data-testid="import-milestones-button"
+                        variant="outline"
+                        onClick={() => setImportMilestonesOpen(true)}
+                      >
+                        <Download className="w-4" />
+                        <span className="hidden md:inline">
+                          {t("milestones.import.importTitle")}
+                        </span>
+                      </Button>
+                    )}
                     <Button
                       data-testid="new-milestone-button"
                       onClick={() => setAddMilestoneOpen(true)}
@@ -255,6 +327,19 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
                         onClose={() => setAddMilestoneOpen(false)}
                       />
                     )}
+                    {canImportFromJira &&
+                      importCapableProjectIntegration &&
+                      importProjectMappingId && (
+                        <ImportMilestonesDialog
+                          integrationId={
+                            importCapableProjectIntegration.integrationId
+                          }
+                          projectId={Number(projectId)}
+                          projectMappingId={importProjectMappingId}
+                          open={importMilestonesOpen}
+                          onOpenChange={setImportMilestonesOpen}
+                        />
+                      )}
                   </div>
                 )}
               </div>

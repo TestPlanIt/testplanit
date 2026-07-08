@@ -1,4 +1,10 @@
-import { act, render, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -38,6 +44,8 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 
 vi.stubGlobal("fetch", mockFetch);
 
+let canAddEdit = true;
+
 vi.mock("~/hooks/useRequireAuth", () => ({
   useRequireAuth: () => ({
     session: { user: { id: "user-1", access: "ADMIN" } },
@@ -48,7 +56,7 @@ vi.mock("~/hooks/useRequireAuth", () => ({
 
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: () => ({
-    permissions: { canAddEdit: true },
+    permissions: { canAddEdit },
     isLoading: false,
   }),
 }));
@@ -78,7 +86,12 @@ vi.mock("@/projects/milestones/[projectId]/MilestoneDisplay", () => ({
 }));
 
 vi.mock("@/projects/milestones/[projectId]/ImportMilestonesDialog", () => ({
-  ImportMilestonesDialog: () => <div data-testid="import-milestones-dialog" />,
+  ImportMilestonesDialog: ({ open, onOpenChange }: any) =>
+    open ? (
+      <div data-testid="import-milestones-dialog">
+        <button onClick={() => onOpenChange(false)}>close</button>
+      </div>
+    ) : null,
 }));
 
 vi.mock("@/components/ui/card", () => ({
@@ -90,8 +103,10 @@ vi.mock("@/components/ui/card", () => ({
 }));
 
 vi.mock("@/components/ui/button", () => ({
-  Button: ({ children, onClick }: any) => (
-    <button onClick={onClick}>{children}</button>
+  Button: ({ children, onClick, "data-testid": testId }: any) => (
+    <button data-testid={testId} onClick={onClick}>
+      {children}
+    </button>
   ),
 }));
 
@@ -104,48 +119,64 @@ vi.mock("@/components/ui/tabs", () => ({
 
 import ProjectMilestones from "./page";
 
-function makeMilestone(overrides: Partial<any> = {}) {
-  return {
-    id: 1,
-    name: "M",
-    integrationId: null,
-    isCompleted: false,
-    ...overrides,
-  };
-}
-
-describe("Milestones page — passive refresh mount effect", () => {
+describe("Milestones page — Import from Jira trigger", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    canAddEdit = true;
     mockFindFirstProjects.mockReturnValue({
       data: { id: 42, name: "Demo Project", iconUrl: null },
       isLoading: false,
     });
+    mockFindManyMilestones.mockReturnValue({ data: [] });
     mockFindManyIntegrationProject.mockReturnValue({ data: [] });
     mockFindManyProjectIntegration.mockReturnValue({ data: [] });
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({}) });
   });
 
-  it("fires one project-level /now?trigger=hover POST per distinct synced integration on mount", async () => {
-    mockFindManyMilestones.mockImplementation((query: any) => {
-      const isCompletedFilter = query?.where?.AND?.find(
-        (c: any) => "isCompleted" in c
-      )?.isCompleted;
-      if (isCompletedFilter === false) {
-        return {
-          data: [
-            makeMilestone({ id: 1, integrationId: 5 }),
-            makeMilestone({ id: 2, integrationId: 5 }), // same integration
-          ],
-        };
+  it("renders the Import from Jira button for an enabled Jira integration + admin, and opens the dialog on click", async () => {
+    mockFindManyProjectIntegration.mockReturnValue({
+      data: [
+        {
+          id: "pi-1",
+          integrationId: 9,
+          config: { milestoneSync: { enabled: true } },
+        },
+      ],
+    });
+    mockFindManyIntegrationProject.mockImplementation((query: any) => {
+      if (query?.where?.projectIntegrationId === "pi-1") {
+        return { data: [{ id: "mapping-9" }] };
       }
       return { data: [] };
     });
-    mockFindManyIntegrationProject.mockReturnValue({
+
+    await act(async () => {
+      render(
+        <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
+      );
+    });
+
+    const button = await screen.findByTestId("import-milestones-button");
+    expect(button).toBeInTheDocument();
+
+    expect(
+      screen.queryByTestId("import-milestones-dialog")
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(button);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("import-milestones-dialog")).toBeInTheDocument()
+    );
+  });
+
+  it("does not render the button when milestoneSync is not enabled", async () => {
+    mockFindManyProjectIntegration.mockReturnValue({
       data: [
         {
-          id: "mapping-5",
-          projectIntegration: { integrationId: 5 },
+          id: "pi-1",
+          integrationId: 9,
+          config: { milestoneSync: { enabled: false } },
         },
       ],
     });
@@ -156,27 +187,16 @@ describe("Milestones page — passive refresh mount effect", () => {
       );
     });
 
-    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      "/api/integrations/5/milestone-sync/now?trigger=hover",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ projectMappingId: "mapping-5" }),
-      })
+    await waitFor(() =>
+      expect(mockFindManyProjectIntegration).toHaveBeenCalled()
     );
+    expect(
+      screen.queryByTestId("import-milestones-button")
+    ).not.toBeInTheDocument();
   });
 
-  it("fires nothing when only local milestones are present", async () => {
-    mockFindManyMilestones.mockImplementation((query: any) => {
-      const isCompletedFilter = query?.where?.AND?.find(
-        (c: any) => "isCompleted" in c
-      )?.isCompleted;
-      if (isCompletedFilter === false) {
-        return { data: [makeMilestone({ id: 1, integrationId: null })] };
-      }
-      return { data: [] };
-    });
+  it("does not render the button when there is no milestone-capable active integration", async () => {
+    mockFindManyProjectIntegration.mockReturnValue({ data: [] });
 
     await act(async () => {
       render(
@@ -184,28 +204,27 @@ describe("Milestones page — passive refresh mount effect", () => {
       );
     });
 
-    // Give effects a tick to (not) fire.
-    await waitFor(() => expect(mockFindManyMilestones).toHaveBeenCalled());
-    expect(mockFetch).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(mockFindManyProjectIntegration).toHaveBeenCalled()
+    );
+    expect(
+      screen.queryByTestId("import-milestones-button")
+    ).not.toBeInTheDocument();
   });
 
-  it("two synced milestones on the same integration produce exactly one call", async () => {
-    mockFindManyMilestones.mockImplementation((query: any) => {
-      const isCompletedFilter = query?.where?.AND?.find(
-        (c: any) => "isCompleted" in c
-      )?.isCompleted;
-      if (isCompletedFilter === false) {
-        return {
-          data: [
-            makeMilestone({ id: 1, integrationId: 7 }),
-            makeMilestone({ id: 2, integrationId: 7 }),
-          ],
-        };
-      }
-      return { data: [] };
+  it("does not render the button when the user lacks canAddEdit permission", async () => {
+    canAddEdit = false;
+    mockFindManyProjectIntegration.mockReturnValue({
+      data: [
+        {
+          id: "pi-1",
+          integrationId: 9,
+          config: { milestoneSync: { enabled: true } },
+        },
+      ],
     });
     mockFindManyIntegrationProject.mockReturnValue({
-      data: [{ id: "mapping-7", projectIntegration: { integrationId: 7 } }],
+      data: [{ id: "mapping-9" }],
     });
 
     await act(async () => {
@@ -214,12 +233,15 @@ describe("Milestones page — passive refresh mount effect", () => {
       );
     });
 
-    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
-    expect(mockFetch).toHaveBeenCalledWith(
-      "/api/integrations/7/milestone-sync/now?trigger=hover",
-      expect.objectContaining({
-        body: JSON.stringify({ projectMappingId: "mapping-7" }),
-      })
+    await waitFor(() =>
+      expect(mockFindManyProjectIntegration).toHaveBeenCalled()
     );
+    expect(
+      screen.queryByTestId("import-milestones-button")
+    ).not.toBeInTheDocument();
+    // New Milestone button should also be gone since it shares canAddEdit gating.
+    expect(
+      screen.queryByTestId("new-milestone-button")
+    ).not.toBeInTheDocument();
   });
 });
