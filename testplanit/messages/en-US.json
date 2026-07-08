@@ -2149,6 +2149,28 @@
     "notifications": {
       "dueSoon": "Milestone \"{name}\" is due on {dueDate}",
       "overdue": "Milestone \"{name}\" was due on {dueDate}"
+    },
+    "import": {
+      "importTitle": "Import from Jira",
+      "importDescription": "Select the Jira Fix Versions and Sprints to sync as TestPlanIt Milestones.",
+      "showClosed": "Show closed",
+      "alreadyLinked": "Already linked",
+      "selectedCount": "{count, plural, one {# selected} other {# selected}}",
+      "confirmSelection": "Import Selected",
+      "empty": "No milestones found",
+      "previewFailed": "Failed to load milestones from Jira",
+      "importFailed": "Failed to import selected milestones",
+      "importStarted": "Import started",
+      "kindRelease": "Release",
+      "kindSprint": "Sprint"
+    },
+    "sync": {
+      "managedByJira": "Managed by Jira",
+      "managedByJiraDescription": "This milestone's name, dates, and status are managed by Jira. Make changes there to update them here.",
+      "lastSynced": "Last synced {time}",
+      "openInJira": "Open in Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "Sync now"
     }
   },
   "sessions": {
