@@ -1081,8 +1081,11 @@ export class JiraAdapter extends BaseAdapter {
     const params = new URLSearchParams({
       jql: jqlString,
       maxResults: (options.limit || 50).toString(),
+      // `parent` included (D-14) so regular bulk-import issues capture
+      // hierarchy the same way membership import does — consistency across
+      // both synced-issue paths that feed buildSyncedIssueData.
       fields:
-        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated",
+        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated,parent",
     });
     if (options.pageToken) {
       params.set("nextPageToken", options.pageToken);

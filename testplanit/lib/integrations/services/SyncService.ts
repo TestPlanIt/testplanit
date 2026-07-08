@@ -79,12 +79,20 @@ export interface IssueRefreshResult {
 export interface SyncedIssueData {
   labels: string[];
   components: string[];
+  /**
+   * Parent issue ref (Jira sub-task/child-of-epic, or the provider's
+   * equivalent hierarchy pointer) — D-14. Present only when the source
+   * issue carries a parent; omitted otherwise so existing rows without a
+   * parent don't gain a spurious key.
+   */
+  parent?: { id: string; key?: string };
 }
 
 export function buildSyncedIssueData(issueData: IssueData): SyncedIssueData {
   return {
     labels: Array.isArray(issueData.labels) ? issueData.labels : [],
     components: Array.isArray(issueData.components) ? issueData.components : [],
+    ...(issueData.parent ? { parent: issueData.parent } : {}),
   };
 }
 
@@ -874,7 +882,7 @@ export class SyncService {
   /**
    * Bulk-import issues from a linked external project into its TestPlanIt
    * project. Pages `adapter.searchIssues` scoped to the recency window, upserts
-   * each result via `_createIssueFromExternal` (dedup on
+   * each result via `upsertIssueFromExternal` (dedup on
    * `(externalId, integrationId)`, resurrect-on-collision, ES index + SSE), and
    * stops at the requested cap / IMPORT_MAX_CAP / IMPORT_MAX_PAGES. Reuses the
    * per-project `syncStatus` badge (syncing → completed/error), so the settings
@@ -1003,7 +1011,7 @@ export class SyncService {
           }
           matched++;
           try {
-            await this._createIssueFromExternal(
+            await this.upsertIssueFromExternal(
               db,
               integrationId,
               projectId,
@@ -1413,7 +1421,7 @@ export class SyncService {
     // No local issue — caller must have opted into create-if-missing
     // (inbound webhook handler does, manual sync button does not).
     if (createIfMissing) {
-      await this._createIssueFromExternal(
+      await this.upsertIssueFromExternal(
         db,
         integrationId,
         createIfMissing.projectId,
@@ -1503,12 +1511,12 @@ export class SyncService {
    * already use `__system__` for `userId`; here `createdById` needs to
    * point at a real User row, so the project creator is the right surrogate.
    */
-  private async _createIssueFromExternal(
+  async upsertIssueFromExternal(
     db: any,
     integrationId: number,
     projectId: number,
     issueData: IssueData
-  ): Promise<void> {
+  ): Promise<{ id: number; created: boolean }> {
     // `Projects.createdBy` is the User.id string; the `creator` relation
     // joins to the User row. We just need the FK value here.
     const project = await db.projects.findUnique({
@@ -1520,6 +1528,24 @@ export class SyncService {
         `Cannot auto-create issue ${issueData.key || issueData.id}: project ${projectId} has no creator on record (required for Issue.createdById)`
       );
     }
+
+    // Existence pre-check to derive `created` — db.issue.upsert doesn't
+    // itself report which branch it took, and callers (membership import,
+    // 18-04) need to distinguish "newly imported" from "already tracked"
+    // for their summary counts. Guarded for db clients/mocks that don't
+    // expose findUnique on this model — absence reads as "not found".
+    const existing =
+      typeof db.issue?.findUnique === "function"
+        ? await db.issue.findUnique({
+            where: {
+              externalId_integrationId: {
+                externalId: issueData.id,
+                integrationId,
+              },
+            },
+            select: { id: true },
+          })
+        : null;
 
     // Resurrect-on-collision: if a prior soft-deleted Issue exists for
     // this (externalId, integrationId), `create` would 23505. Upsert with
@@ -1547,7 +1573,7 @@ export class SyncService {
       lastSyncedAt: new Date(),
       projectId,
     };
-    const created = await db.issue.upsert({
+    const upserted = await db.issue.upsert({
       where: {
         externalId_integrationId: {
           externalId: issueData.id,
@@ -1568,9 +1594,9 @@ export class SyncService {
 
     // Index newly-created issues just like manual import does. Best-effort
     // — search index drift is recoverable, the row commit isn't.
-    await syncIssueToElasticsearch(created.id).catch((error: any) => {
+    await syncIssueToElasticsearch(upserted.id).catch((error: any) => {
       console.error(
-        `Failed to sync newly created issue ${created.id} to Elasticsearch:`,
+        `Failed to sync newly created issue ${upserted.id} to Elasticsearch:`,
         error
       );
     });
@@ -1579,10 +1605,12 @@ export class SyncService {
     // issues view. Best-effort — same posture as the Elasticsearch index.
     await publishIssueUpdate({
       projectId,
-      issueId: created.id,
+      issueId: upserted.id,
       event: "issue-created",
       tenantId: getCurrentTenantId() ?? "default",
     });
+
+    return { id: upserted.id, created: !existing };
   }
 
   /**
