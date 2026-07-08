@@ -19,6 +19,19 @@
  * bold/italic/underline/strike/code/link marks, headings, nested and mixed
  * bullet/ordered lists, block quotes, code blocks (with language),
  * horizontal rules, hard breaks, and tables.
+ *
+ * Renderer assumption: this presumes the target field uses Jira's
+ * **Wiki Style Renderer**, which is the default for Description and Comment
+ * on Server/DC. An admin can instead assign the **Default Text Renderer**
+ * (Admin → Issues → Field Configurations → Renderers) to a field, in which
+ * case the field stores literal plain text and this markup would show
+ * verbatim (e.g. "*bold*") rather than rendered. Jira exposes no field
+ * renderer in createmeta/editmeta, so it can't be detected before a write;
+ * the plain-text-renderer configuration is uncommon and the failure mode is
+ * cosmetic and admin-fixable, so we assume the wiki renderer. (Note: this is
+ * distinct from the per-user "Rich Text Editing" preference, which only
+ * toggles the WYSIWYG editor vs. a raw wiki-markup textarea — the field is
+ * wiki-rendered either way, so that preference does not affect this output.)
  */
 
 /**

@@ -242,6 +242,8 @@ Two credential shapes are supported (pick one):
 
 Reporter attribution on Server / Data Center matches users by `name`/`key` (Cloud matches by `accountId`); the same Modify Reporter permission rule above applies.
 
+Rich text in issue descriptions and comments is sent as [Jira Wiki Markup](https://jira.atlassian.com/secure/WikiRendererHelpAction.jspa?section=all) (Server / Data Center's native format) and read back using Jira's own rendering, so formatting — bold, headings, lists, links, code — is preserved. This assumes the Description and Comment fields use the default **Wiki Style Renderer**. If your administrator has switched a field to the **Default Text Renderer** (Administration → Issues → Field Configurations → Renderers), formatting will appear as literal markup there; switch it back to the Wiki Style Renderer to restore rich text.
+
 If auto-detection ever picks the wrong deployment, force it by adding `deploymentType: "server"` (or `"cloud"`) and optionally `authScheme: "bearer"` (or `"basic"`) to the integration's settings.
 
 #### Jira with OAuth 2.0
