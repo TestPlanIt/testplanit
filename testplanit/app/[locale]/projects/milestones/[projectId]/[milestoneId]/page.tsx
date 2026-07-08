@@ -69,6 +69,7 @@ import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
 import ChildMilestoneItem from "./ChildMilestoneItem";
 import MilestoneFormControls from "./MilestoneFormControls";
+import { buildMilestoneUpdatePayload } from "./milestoneUpdatePayload";
 
 interface MilestoneForecastData {
   manualEstimate: number;
@@ -433,17 +434,14 @@ export default function MilestoneDetailsPage() {
 
     setIsSubmitting(true);
     try {
-      // Transform enableNotifications checkbox to notifyDaysBefore value
-      const { enableNotifications, ...restData } = data;
-      const updateData = {
-        ...restData,
-        parentId: data.parentId ? Number(data.parentId) : null,
-        automaticCompletion: data.completedAt
-          ? data.automaticCompletion
-          : false,
-        notifyDaysBefore:
-          data.completedAt && enableNotifications ? data.notifyDaysBefore : 0,
-      };
+      // Transforms enableNotifications into notifyDaysBefore, and strips the
+      // tracker-owned fields (name/note/dates/state) for synced milestones —
+      // those are locked by field-level @deny rules and their mere presence
+      // in the payload would reject the whole update.
+      const updateData = buildMilestoneUpdatePayload(
+        data,
+        milestone.integrationId != null
+      );
 
       await updateMilestone({
         where: { id: Number(milestoneId) },
