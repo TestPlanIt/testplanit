@@ -307,7 +307,12 @@ export class MilestoneSyncService {
     try {
       const existing = await db.milestones.findFirst({
         where: { integrationId, externalId },
-        select: { id: true, projectId: true, milestoneTypesId: true },
+        select: {
+          id: true,
+          projectId: true,
+          milestoneTypesId: true,
+          externalKind: true,
+        },
       });
       if (!existing) {
         throw new Error(
@@ -331,6 +336,11 @@ export class MilestoneSyncService {
       const adapter = await this._getAdapter(integrationId, db);
       const { items } = await adapter.getExternalMilestones!({
         projectKey: integrationProject.externalProjectKey,
+        // Scope the fetch to the milestone's known kind when available —
+        // avoids an unnecessary second-kind fan-out on every refresh.
+        ...(existing.externalKind
+          ? { kind: existing.externalKind as "RELEASE" | "ITERATION" }
+          : {}),
         includeClosed: true,
       });
       const match = items.find((item) => item.id === externalId);
@@ -535,6 +545,152 @@ export class MilestoneSyncService {
         success: false,
         imported,
         updated,
+        errors: [...errors, error.message],
+      };
+    }
+  }
+
+  /**
+   * The auto-track pass (D1 / MSYNC-01) — triggered from the project-level
+   * "Sync now" / page-load `sync-milestones` job (17-05's `/now` route,
+   * dispatched by syncWorker.ts's `sync-milestones` case, Task 4). Reads
+   * `ProjectIntegration.config.milestoneSync`:
+   *   - `enabled: false` → no-op (early return)
+   *   - For each configured `kind`, fetches the tracker's CURRENT
+   *     filter-matching artifacts (`includeClosed: false` — unreleased
+   *     versions + active/future sprints, the same default import filter)
+   *   - Diffs those external ids against the project's already-linked
+   *     `Milestones.externalId`s for this integration
+   *   - When `autoTrack` is true: imports the NEW (unseen) external ids via
+   *     `performMilestoneImport`, attributed to `autoTrackAdminId` (Warning
+   *     1 — NOT the triggering user, who may just be a page-load visitor)
+   *   - Regardless of `autoTrack`: refreshes the already-linked milestones
+   *     at the pass's freshness gate, so opening the page updates existing
+   *     rows even when auto-track is off
+   */
+  async performProjectMilestoneSync(
+    userId: string,
+    integrationId: number,
+    projectId: number,
+    serviceOptions: MilestoneSyncServiceOptions = {}
+  ): Promise<ProjectMilestoneSyncResult> {
+    const db = serviceOptions.dbClient || defaultDb;
+    const errors: string[] = [];
+    let autoImported = 0;
+    let refreshed = 0;
+
+    try {
+      const projectIntegration = await db.projectIntegration.findUnique({
+        where: { projectId_integrationId: { projectId, integrationId } },
+        select: { config: true },
+      });
+      const milestoneSyncConfig =
+        (projectIntegration?.config as any)?.milestoneSync ?? {};
+
+      if (milestoneSyncConfig.enabled === false) {
+        return { success: true, autoImported: 0, refreshed: 0, errors: [] };
+      }
+
+      const kinds: Array<"RELEASE" | "ITERATION"> =
+        milestoneSyncConfig.kinds ?? ["RELEASE", "ITERATION"];
+      const autoTrack = milestoneSyncConfig.autoTrack === true;
+      const autoTrackAdminId: string | undefined =
+        milestoneSyncConfig.autoTrackAdminId;
+
+      const projectKey = await this._resolveProjectKey(
+        db,
+        integrationId,
+        projectId
+      );
+      const adapter = await this._getAdapter(integrationId, db);
+
+      // Current filter-matching artifacts (the same default import filter:
+      // unreleased versions + active/future sprints), scoped to the
+      // configured kinds only (kinds gating).
+      const currentMatches: ExternalMilestone[] = [];
+      for (const kind of kinds) {
+        try {
+          const { items } = await adapter.getExternalMilestones!({
+            projectKey,
+            kind,
+            includeClosed: false,
+          });
+          currentMatches.push(...items);
+        } catch (error: any) {
+          errors.push(
+            `Failed to fetch ${kind} milestones for project ${projectId}: ${error.message}`
+          );
+        }
+      }
+
+      const linked = await db.milestones.findMany({
+        where: { integrationId, projectId, externalId: { not: null } },
+        select: { externalId: true },
+      });
+      const linkedExternalIds = new Set(
+        linked.map((row) => row.externalId as string)
+      );
+
+      if (autoTrack) {
+        const newIds = currentMatches
+          .map((item) => item.id)
+          .filter((id) => !linkedExternalIds.has(id));
+
+        if (newIds.length > 0) {
+          if (!autoTrackAdminId) {
+            errors.push(
+              `Cannot auto-import ${newIds.length} new milestone(s) for project ${projectId}: milestoneSync.autoTrackAdminId is not configured`
+            );
+          } else {
+            const importResult = await this.performMilestoneImport(
+              userId,
+              integrationId,
+              projectId,
+              { externalIds: newIds, kinds },
+              autoTrackAdminId,
+              serviceOptions
+            );
+            autoImported = importResult.imported;
+            errors.push(...importResult.errors);
+          }
+        }
+      }
+
+      // Refresh already-linked milestones regardless of autoTrack, gated by
+      // the pass's freshness/lock idioms so concurrent page-loads within
+      // the freshness window don't stampede the upstream API.
+      for (const externalId of linkedExternalIds) {
+        try {
+          const result = await this.performMilestoneRefresh(
+            userId,
+            integrationId,
+            externalId,
+            serviceOptions
+          );
+          if (result.success && !result.cached && !result.locked) {
+            refreshed++;
+          } else if (!result.success) {
+            errors.push(
+              `Failed to refresh milestone ${externalId}: ${result.error}`
+            );
+          }
+        } catch (error: any) {
+          errors.push(
+            `Failed to refresh milestone ${externalId}: ${error.message}`
+          );
+        }
+      }
+
+      return { success: true, autoImported, refreshed, errors };
+    } catch (error: any) {
+      console.error(
+        `Failed to run project milestone sync for project ${projectId}:`,
+        error
+      );
+      return {
+        success: false,
+        autoImported,
+        refreshed,
         errors: [...errors, error.message],
       };
     }
