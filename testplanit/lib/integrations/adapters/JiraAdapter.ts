@@ -768,16 +768,23 @@ export class JiraAdapter extends BaseAdapter {
           )
         );
 
-        const pageValues: any[] = Array.isArray(response?.values)
-          ? response.values
-          : [];
+        // Older Jira Server/DC deployments return a bare JSON array (the
+        // non-paginated versions shape) instead of the `{ values, isLast }`
+        // envelope — treat a bare array as a single, complete page.
+        const isBareArray = Array.isArray(response);
+        const pageValues: any[] = isBareArray
+          ? response
+          : Array.isArray(response?.values)
+            ? response.values
+            : [];
         for (const raw of pageValues) {
           const mapped = this.mapJiraVersion(raw);
           if (mapped) versions.push(mapped);
         }
 
-        const isLast =
-          typeof response?.isLast === "boolean"
+        const isLast = isBareArray
+          ? true
+          : typeof response?.isLast === "boolean"
             ? response.isLast
             : pageValues.length < maxResults;
         if (isLast || pageValues.length === 0) break;
@@ -855,9 +862,14 @@ export class JiraAdapter extends BaseAdapter {
             )
           );
 
-          const pageValues: any[] = Array.isArray(response?.values)
-            ? response.values
-            : [];
+          // Same bare-array tolerance as fetchJiraVersions — some Server/DC
+          // responses omit the `{ values, isLast }` pagination envelope.
+          const isBareArray = Array.isArray(response);
+          const pageValues: any[] = isBareArray
+            ? response
+            : Array.isArray(response?.values)
+              ? response.values
+              : [];
           for (const raw of pageValues) {
             const mapped = this.mapJiraSprint(raw);
             if (mapped && !bySprintId.has(mapped.id)) {
@@ -865,8 +877,9 @@ export class JiraAdapter extends BaseAdapter {
             }
           }
 
-          const isLast =
-            typeof response?.isLast === "boolean"
+          const isLast = isBareArray
+            ? true
+            : typeof response?.isLast === "boolean"
               ? response.isLast
               : pageValues.length < maxResults;
           if (isLast || pageValues.length === 0) break;

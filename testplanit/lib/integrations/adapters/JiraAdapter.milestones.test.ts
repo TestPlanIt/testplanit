@@ -391,6 +391,52 @@ describe("JiraAdapter.getExternalMilestones", () => {
     });
   });
 
+  describe("bare-array responses (older Server/DC, no pagination envelope)", () => {
+    it("maps versions from a bare-array response as a single complete page", async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse([
+          { id: "10000", name: "v1.0", released: false, archived: false },
+          { id: "10001", name: "v1.1", released: false, archived: false },
+        ])
+      );
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "TEST",
+        kind: "RELEASE",
+        includeClosed: true,
+      });
+
+      expect(result.items.map((item) => item.id)).toEqual(["10000", "10001"]);
+      // A bare array has no envelope to page through — exactly one request.
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("maps sprints from a bare-array response as a single complete page", async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ values: [{ id: "1", name: "Board 1" }], isLast: true })
+      );
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse([
+          { id: "100", name: "Sprint 1", state: "active" },
+          { id: "101", name: "Sprint 2", state: "future" },
+        ])
+      );
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "TEST",
+        kind: "ITERATION",
+        includeClosed: true,
+      });
+
+      expect(result.items.map((item) => item.id).sort()).toEqual([
+        "100",
+        "101",
+      ]);
+      // Board discovery + one sprint page — no second sprint request.
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe("fail-soft on upstream errors", () => {
     it("returns an empty RELEASE list (not a throw) when the versions endpoint fails", async () => {
       mockFetch.mockResolvedValueOnce({
