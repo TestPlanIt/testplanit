@@ -748,6 +748,84 @@ describe("MilestoneItemCard", () => {
     });
   });
 
+  describe("external tracker link safety", () => {
+    const findExternalLinkButton = () =>
+      screen
+        .queryAllByTestId("action-button")
+        .find((el) => el.getAttribute("data-variant") === "ghost");
+
+    it("opens an https externalUrl in a new tab with noopener,noreferrer", () => {
+      const openSpy = vi
+        .spyOn(window, "open")
+        .mockImplementation(() => null as any);
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        externalUrl: "https://jira.example.com/versions/10001",
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      const linkButton = findExternalLinkButton();
+      expect(linkButton).toBeDefined();
+      fireEvent.click(linkButton!);
+      expect(openSpy).toHaveBeenCalledWith(
+        "https://jira.example.com/versions/10001",
+        "_blank",
+        "noopener,noreferrer"
+      );
+      openSpy.mockRestore();
+    });
+
+    it("does not render the open button for a javascript: externalUrl", () => {
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        externalUrl: "javascript:alert(1)",
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      expect(findExternalLinkButton()).toBeUndefined();
+    });
+
+    it("does not render the open button for a non-http scheme", () => {
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        externalUrl: "data:text/html,<script>alert(1)</script>",
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          {...cbs}
+        />
+      );
+
+      expect(findExternalLinkButton()).toBeUndefined();
+    });
+  });
+
   describe("level and compact props", () => {
     it("applies margin-left based on level prop", () => {
       const milestone = createMilestone();

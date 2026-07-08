@@ -44,6 +44,14 @@ interface MilestoneForecastData {
   areAllCasesAutomated: boolean;
 }
 
+/**
+ * A synced milestone's `externalUrl` is tracker-provided and written through
+ * the raw db client, which bypasses the schema's `@url` validation — so only
+ * render the open-in-tracker button for http(s) URLs (never `javascript:`
+ * etc.) and open without an opener reference to prevent reverse tab-nabbing.
+ */
+const SAFE_EXTERNAL_URL_RE = /^https?:\/\//i;
+
 interface MilestoneItemCardProps {
   milestone: MilestonesWithTypes;
   projectId?: number;
@@ -177,20 +185,25 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                       state: milestone.externalState ?? "",
                     })}
                   </Badge>
-                  {milestone.externalUrl && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 shrink-0 text-muted-foreground hover:opacity-50"
-                      title={t("sync.openInJira")}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(milestone.externalUrl!, "_blank");
-                      }}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
+                  {milestone.externalUrl &&
+                    SAFE_EXTERNAL_URL_RE.test(milestone.externalUrl) && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0 text-muted-foreground hover:opacity-50"
+                        title={t("sync.openInJira")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(
+                            milestone.externalUrl!,
+                            "_blank",
+                            "noopener,noreferrer"
+                          );
+                        }}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                 </>
               )}
             </div>
