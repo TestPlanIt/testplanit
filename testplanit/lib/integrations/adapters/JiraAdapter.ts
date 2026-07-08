@@ -704,9 +704,12 @@ export class JiraAdapter extends BaseAdapter {
    * have multiple boards (e.g. a Kanban + a Scrum board) whose sprint lists
    * overlap.
    *
-   * Each upstream call is wrapped independently so a partial board failure
-   * degrades gracefully (mirrors getLinkedIssues/getIssueComments) rather
-   * than failing the whole fetch.
+   * Error semantics: a PARTIAL board failure degrades gracefully (sprints
+   * from healthy boards are still returned), and a 404 from board discovery
+   * is treated as "no agile support". But hard failures — versions endpoint
+   * errors, board-discovery auth/server errors, or every board's sprint
+   * fetch failing — PROPAGATE, so callers can distinguish a broken
+   * connection from a genuinely empty result.
    */
   async getExternalMilestones(options: {
     projectKey: string;
@@ -798,6 +801,10 @@ export class JiraAdapter extends BaseAdapter {
         projectKey,
         error
       );
+      // Propagate instead of returning [] — an auth/permission/network
+      // failure must be distinguishable from "project has no versions" so
+      // callers can surface a real error instead of an empty picker.
+      throw error;
     }
 
     return versions;
@@ -846,6 +853,8 @@ export class JiraAdapter extends BaseAdapter {
   ): Promise<ExternalMilestone[]> {
     const boardIds = await this.discoverJiraBoards(projectKey);
     const bySprintId = new Map<string, ExternalMilestone>();
+    let failedBoards = 0;
+    let firstBoardError: unknown = null;
 
     for (const boardId of boardIds) {
       try {
@@ -896,7 +905,16 @@ export class JiraAdapter extends BaseAdapter {
         );
         // Continue with remaining boards — a single board failure should
         // not drop sprints discovered on other boards.
+        failedBoards += 1;
+        if (firstBoardError === null) firstBoardError = error;
       }
+    }
+
+    // Partial board failures degrade gracefully, but when EVERY board fetch
+    // failed the caller must see the failure — otherwise a credential or
+    // permission problem is indistinguishable from "no sprints".
+    if (boardIds.length > 0 && failedBoards === boardIds.length) {
+      throw firstBoardError;
     }
 
     return Array.from(bySprintId.values());
@@ -940,12 +958,26 @@ export class JiraAdapter extends BaseAdapter {
       }
     } catch (error) {
       const status = this.parseStatusFromError(error);
+      if (status === 404) {
+        // Agile API unavailable (no Jira Software on this instance) — treat
+        // as "no boards" rather than a hard failure so RELEASE-only fetches
+        // and kind-less previews still work.
+        console.warn(
+          `[JiraAdapter] discoverJiraBoards: agile API unavailable for %s:`,
+          projectKey,
+          error
+        );
+        return boardIds;
+      }
       const level = status === null || status >= 500 ? "error" : "warn";
       console[level](
         `[JiraAdapter] discoverJiraBoards failed for %s:`,
         projectKey,
         error
       );
+      // Propagate auth/permission/server failures so an empty sprint list
+      // is never silently returned for a broken connection.
+      throw error;
     }
 
     return boardIds;

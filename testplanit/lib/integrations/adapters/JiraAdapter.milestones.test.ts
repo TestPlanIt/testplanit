@@ -437,20 +437,94 @@ describe("JiraAdapter.getExternalMilestones", () => {
     });
   });
 
-  describe("fail-soft on upstream errors", () => {
-    it("returns an empty RELEASE list (not a throw) when the versions endpoint fails", async () => {
+  describe("hard-failure propagation vs partial degradation", () => {
+    it("propagates a server failure from the versions endpoint instead of returning empty", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
         text: () => Promise.resolve("Internal Server Error"),
       });
 
+      await expect(
+        adapter.getExternalMilestones({
+          projectKey: "TEST",
+          kind: "RELEASE",
+        })
+      ).rejects.toThrow("HTTP 500");
+    });
+
+    it("propagates an auth failure (401) from the versions endpoint so bad credentials are surfaced", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () => Promise.resolve("Unauthorized"),
+      });
+
+      await expect(
+        adapter.getExternalMilestones({
+          projectKey: "TEST",
+          kind: "RELEASE",
+        })
+      ).rejects.toThrow("HTTP 401");
+    });
+
+    it("propagates an auth failure from board discovery instead of returning zero sprints", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        text: () => Promise.resolve("Forbidden"),
+      });
+
+      await expect(
+        adapter.getExternalMilestones({
+          projectKey: "TEST",
+          kind: "ITERATION",
+        })
+      ).rejects.toThrow("HTTP 403");
+    });
+
+    it("treats a 404 from board discovery as no agile support (empty, not a throw)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve("Not Found"),
+      });
+
       const result = await adapter.getExternalMilestones({
         projectKey: "TEST",
-        kind: "RELEASE",
+        kind: "ITERATION",
       });
 
       expect(result.items).toEqual([]);
+    });
+
+    it("propagates when every board's sprint fetch fails", async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({
+          values: [
+            { id: "1", name: "Board 1" },
+            { id: "2", name: "Board 2" },
+          ],
+          isLast: true,
+        })
+      );
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () => Promise.resolve("Unauthorized"),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () => Promise.resolve("Unauthorized"),
+      });
+
+      await expect(
+        adapter.getExternalMilestones({
+          projectKey: "TEST",
+          kind: "ITERATION",
+        })
+      ).rejects.toThrow("HTTP 401");
     });
 
     it("still returns sprints from a healthy board when one board's sprint fetch fails", async () => {
