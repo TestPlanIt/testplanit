@@ -372,14 +372,6 @@ export function deriveAction(row: RawDclRow): AuditActionLiteral {
 }
 
 /**
- * Insert the materialized rows into AuditLog inside the given transaction, idempotently. Each row is
- * a single INSERT carrying `ON CONFLICT (audit_log_cdc_idempotency columns) DO NOTHING` — a partial
- * unique index over (operationId, sourceTable, entityId, action) WHERE operationId IS NOT NULL — so
- * a re-poll over already-materialized non-null-operationId rows inserts nothing. Returns the count
- * actually inserted (conflicts return 0 rowcount). Uses raw SQL because the named partial-index
- * conflict arbiter is not expressible through the Prisma model API.
- */
-/**
  * Join two diff entries for the SAME column into one, comma-listing the distinct
  * displayed values (e.g. two workflow assignments → `newName: "Default, Smoke"`).
  */
@@ -484,48 +476,180 @@ export function summarizeBulkCaseChanges(
   });
 }
 
+/** Savepoint names for the FK-poison isolation backstop in writeAuditLogRows (constant, not row data). */
+const BATCH_SAVEPOINT = "audit_cdc_batch";
+const ROW_SAVEPOINT = "audit_cdc_row";
+
+/** Coerce a materialized row's projectId to a finite integer, or null when absent/unparseable. */
+function toProjectId(raw: string | null): number | null {
+  if (raw == null) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Resolve which of the batch's referenced project ids still exist. `AuditLog.projectId` has an FK to
+ * Projects (ON DELETE SET NULL), but SET NULL only rewrites EXISTING rows — it does nothing for a
+ * fresh INSERT, so a captured projectId that points at an already-deleted project would 23503-abort
+ * the whole batch INSERT (and, since inserts + the processed=true cursor share one transaction, wedge
+ * the tenant's audit pipeline in an infinite re-poll). Resolving the live set once per batch lets us
+ * null the danglers before the write — matching the FK's SET NULL intent while preserving the audit
+ * trail. One query for the whole batch (no per-row N+1).
+ */
+async function resolveExistingProjectIds(
+  tx: RawTxClient,
+  materialized: MaterializedRow[]
+): Promise<Set<number>> {
+  const referenced = new Set<number>();
+  for (const m of materialized) {
+    const pid = toProjectId(m.projectId);
+    if (pid != null) referenced.add(pid);
+  }
+  if (referenced.size === 0) return referenced;
+  const rows = await tx.$queryRawUnsafe<
+    Array<{ id: number | bigint | string }>
+  >(`SELECT id FROM "Projects" WHERE id = ANY($1::int[])`, [...referenced]);
+  return new Set(rows.map((r) => Number(r.id)));
+}
+
+/**
+ * Insert ONE materialized row into AuditLog, idempotently. Carries `ON CONFLICT (operationId,
+ * sourceTable, entityId, action) WHERE operationId IS NOT NULL DO NOTHING` — a partial unique index —
+ * so a re-poll over already-materialized non-null-operationId rows inserts nothing. Returns the count
+ * actually inserted (a conflict returns 0). `projectId` is passed already-validated (or null); raw
+ * SQL is required because the named partial-index conflict arbiter is not expressible through the
+ * Prisma model API. AuditLog.id is @default(cuid()) (generated app-side by Prisma, NOT in Postgres),
+ * so a raw INSERT must supply it — gen_random_uuid()::text is a fine unique id; the idempotency index
+ * (not the PK) is what de-dupes CDC rows.
+ */
+async function insertAuditLogRow(
+  tx: RawTxClient,
+  m: MaterializedRow,
+  projectId: number | null
+): Promise<number> {
+  const changesJson = JSON.stringify(m.changes);
+  const metadataJson = JSON.stringify({
+    cdc: true,
+    sourceTable: m.sourceTable,
+    sourceRowId: String(m.sourceRowId),
+    tenant: m.tenant,
+  });
+  const result = await tx.$executeRaw`
+    INSERT INTO "AuditLog"
+      ("id", "userId", "userName", "userEmail", "action", "entityType", "entityId", "entityName", "changes", "metadata", "operationId", "sourceTable", "projectId", "timestamp")
+    VALUES (
+      gen_random_uuid()::text,
+      ${m.actor},
+      ${m.userName},
+      ${m.userEmail},
+      ${m.action}::"AuditAction",
+      ${m.entityType},
+      ${m.entityId},
+      ${m.entityName},
+      ${changesJson}::jsonb,
+      ${metadataJson}::jsonb,
+      ${m.operationId},
+      ${m.sourceTable},
+      ${projectId},
+      now()
+    )
+    ON CONFLICT ("operationId", "sourceTable", "entityId", "action") WHERE "operationId" IS NOT NULL
+    DO NOTHING
+  `;
+  return Number(result) || 0;
+}
+
+/**
+ * Slow path (only entered after the fast batch INSERT hit a residual constraint error): re-insert the
+ * rows one at a time under a per-row SAVEPOINT so a single un-insertable row is isolated instead of
+ * wedging the whole batch. On an error the row is retried once with projectId forced NULL — this
+ * absorbs the narrow TOCTOU race where a project is deleted by a concurrent transaction between the
+ * batch resolve and the insert (SET-NULL semantics again). If it STILL fails it is logged and skipped
+ * so the poll can never infinite-loop on one poison row (criterion: a single bad row must not wedge
+ * the batch). The good rows still commit with the outer transaction.
+ */
+async function insertRowsIsolated(
+  tx: RawTxClient,
+  materialized: MaterializedRow[],
+  existingProjectIds: Set<number>
+): Promise<number> {
+  let written = 0;
+  for (const m of materialized) {
+    const pid = toProjectId(m.projectId);
+    const safePid = pid != null && existingProjectIds.has(pid) ? pid : null;
+    await tx.$executeRawUnsafe(`SAVEPOINT ${ROW_SAVEPOINT}`);
+    try {
+      written += await insertAuditLogRow(tx, m, safePid);
+    } catch {
+      await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${ROW_SAVEPOINT}`);
+      try {
+        // Retry with no project association (a project must have vanished under us mid-batch).
+        written += await insertAuditLogRow(tx, m, null);
+        console.warn(
+          `[correlation] nulled dangling projectId for AuditLog row (source ${m.sourceTable}:${String(m.sourceRowId)}) after FK error`
+        );
+      } catch (secondErr) {
+        await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${ROW_SAVEPOINT}`);
+        console.error(
+          `[correlation] skipping un-insertable AuditLog row (source ${m.sourceTable}:${String(m.sourceRowId)}):`,
+          secondErr
+        );
+      }
+    }
+    await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${ROW_SAVEPOINT}`);
+  }
+  return written;
+}
+
+/**
+ * Insert the materialized rows into AuditLog inside the given transaction, idempotently, and return
+ * the count actually written. Two-layer FK-poison protection (a captured projectId can point at a
+ * since-deleted project — see resolveExistingProjectIds):
+ *   1. PRIMARY — resolve the batch's live project ids once and null any dangling reference before the
+ *      write. This alone fixes the reported infinite-loop bug (a committed cascade delete leaves the
+ *      project simply absent, so its id is nulled and the INSERT never violates the FK).
+ *   2. BACKSTOP — run the batch under a SAVEPOINT; if a residual constraint error slips through (e.g.
+ *      a concurrent delete between the resolve and the insert), roll the batch back and re-insert
+ *      row-by-row so the single offender is isolated/skipped rather than aborting every row. This
+ *      guarantees one un-insertable row can never wedge the batch in a re-poll loop again.
+ * The happy path costs one extra resolve SELECT plus a SAVEPOINT/RELEASE pair; the per-row isolation
+ * only runs on an actual error. Idempotency (ON CONFLICT DO NOTHING) is identical on both paths.
+ */
 export async function writeAuditLogRows(
   tx: RawTxClient,
   materialized: MaterializedRow[]
 ): Promise<number> {
-  let written = 0;
-  for (const m of materialized) {
-    const changesJson = JSON.stringify(m.changes);
-    const metadataJson = JSON.stringify({
-      cdc: true,
-      sourceTable: m.sourceTable,
-      sourceRowId: String(m.sourceRowId),
-      tenant: m.tenant,
-    });
-    // cuid()-style id is provided by a DB default? AuditLog.id has @default(cuid()) which Prisma
-    // generates application-side, NOT in Postgres. For a raw INSERT we must supply the id, so use
-    // gen_random_uuid()::text — a stable unique id; the idempotency index (not the PK) is what
-    // de-dupes CDC rows, so any unique id is correct here.
-    const result = await tx.$executeRaw`
-      INSERT INTO "AuditLog"
-        ("id", "userId", "userName", "userEmail", "action", "entityType", "entityId", "entityName", "changes", "metadata", "operationId", "sourceTable", "projectId", "timestamp")
-      VALUES (
-        gen_random_uuid()::text,
-        ${m.actor},
-        ${m.userName},
-        ${m.userEmail},
-        ${m.action}::"AuditAction",
-        ${m.entityType},
-        ${m.entityId},
-        ${m.entityName},
-        ${changesJson}::jsonb,
-        ${metadataJson}::jsonb,
-        ${m.operationId},
-        ${m.sourceTable},
-        ${m.projectId ? Number(m.projectId) : null},
-        now()
-      )
-      ON CONFLICT ("operationId", "sourceTable", "entityId", "action") WHERE "operationId" IS NOT NULL
-      DO NOTHING
-    `;
-    written += Number(result) || 0;
+  if (materialized.length === 0) return 0;
+
+  const existingProjectIds = await resolveExistingProjectIds(tx, materialized);
+
+  // Fast path: one savepoint wraps the whole batch. Sanitized rows never FK-violate, so this commits
+  // in the overwhelming common case; the savepoint only matters if a residual error appears.
+  await tx.$executeRawUnsafe(`SAVEPOINT ${BATCH_SAVEPOINT}`);
+  try {
+    let written = 0;
+    for (const m of materialized) {
+      const pid = toProjectId(m.projectId);
+      const safePid = pid != null && existingProjectIds.has(pid) ? pid : null;
+      written += await insertAuditLogRow(tx, m, safePid);
+    }
+    await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${BATCH_SAVEPOINT}`);
+    return written;
+  } catch (batchErr) {
+    // A residual constraint error aborted the batch INSERT. Undo the partial batch and isolate.
+    await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT ${BATCH_SAVEPOINT}`);
+    console.error(
+      "[correlation] batch AuditLog insert hit a constraint error; retrying rows in isolation:",
+      batchErr
+    );
+    const written = await insertRowsIsolated(
+      tx,
+      materialized,
+      existingProjectIds
+    );
+    await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${BATCH_SAVEPOINT}`);
+    return written;
   }
-  return written;
 }
 
 /** The minimal raw-client surface this module needs (prismaBase satisfies it). */
@@ -542,6 +666,8 @@ export interface RawTxClient {
     query: string,
     ...values: unknown[]
   ) => Promise<T>;
+  /** Used for the FK-poison isolation savepoints in writeAuditLogRows (SAVEPOINT/RELEASE/ROLLBACK TO). */
+  $executeRawUnsafe: (query: string, ...values: unknown[]) => Promise<number>;
 }
 export interface RawPrismaClient extends RawTxClient {
   $transaction: <T>(fn: (tx: RawTxClient) => Promise<T>) => Promise<T>;
