@@ -126,9 +126,14 @@ function tiptapFromPlainText(text: string | null | undefined): any | null {
  * kind-agnostic aside from `externalKind`.
  */
 function mapExternalMilestoneToFields(ext: ExternalMilestone) {
+  const note = tiptapFromPlainText(ext.description);
   return {
     name: ext.name,
-    note: tiptapFromPlainText(ext.description),
+    // ZenStack v3's Kysely CRUD layer rejects a literal `null` for an
+    // optional Json field (it expects the key omitted, not JS `null`) —
+    // spread `note` in only when present so an empty description doesn't
+    // produce a payload the Zod schema rejects.
+    ...(note !== null ? { note } : {}),
     startedAt: ext.startDate ?? null,
     completedAt: ext.endDate ?? null,
     isStarted: ext.state === "ACTIVE",
@@ -348,6 +353,190 @@ export class MilestoneSyncService {
     } catch (error: any) {
       console.error(`Failed to refresh milestone ${externalId}:`, error);
       return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Auto-provisions the "Release" and "Sprint" `MilestoneTypes` (MAP-03)
+   * and assigns both to the project via `MilestoneTypesAssignment`,
+   * returning a `kind -> milestoneTypeId` map. Idempotent — re-provisioning
+   * an already-provisioned project is a no-op (name-keyed upsert + upsert
+   * on the composite `projectId_milestoneTypeId` key).
+   *
+   * `MilestoneTypes`/`MilestoneTypesAssignment` are `@@allow('all',
+   * auth().access == 'ADMIN')`-gated (admin-only), so this MUST run through
+   * the raw db client — the policy-enforced client would reject the write
+   * for any non-admin acting user. Mirrors `testCaseImport.ts`'s
+   * name-keyed tag-upsert idiom (lines 298-306), adapted to rawDb since
+   * there is no user-initiated transaction context here.
+   */
+  private async _provisionMilestoneTypes(
+    db: DbClient,
+    projectId: number
+  ): Promise<Record<"RELEASE" | "ITERATION", number>> {
+    const releaseType = await db.milestoneTypes.upsert({
+      where: { name: "Release" },
+      create: { name: "Release", isDefault: false, isDeleted: false },
+      update: {},
+      select: { id: true },
+    });
+    const sprintType = await db.milestoneTypes.upsert({
+      where: { name: "Sprint" },
+      create: { name: "Sprint", isDefault: false, isDeleted: false },
+      update: {},
+      select: { id: true },
+    });
+
+    await db.milestoneTypesAssignment.upsert({
+      where: {
+        projectId_milestoneTypeId: {
+          projectId,
+          milestoneTypeId: releaseType.id,
+        },
+      },
+      create: { projectId, milestoneTypeId: releaseType.id },
+      update: {},
+    });
+    await db.milestoneTypesAssignment.upsert({
+      where: {
+        projectId_milestoneTypeId: {
+          projectId,
+          milestoneTypeId: sprintType.id,
+        },
+      },
+      create: { projectId, milestoneTypeId: sprintType.id },
+      update: {},
+    });
+
+    return { RELEASE: releaseType.id, ITERATION: sprintType.id };
+  }
+
+  /**
+   * Resolves the `IntegrationProject.externalProjectKey` for a given
+   * (integrationId, projectId) pair — every `getExternalMilestones` call
+   * needs a project key (17-03 deviation: the adapter is integration-scoped,
+   * not project-scoped).
+   */
+  private async _resolveProjectKey(
+    db: DbClient,
+    integrationId: number,
+    projectId: number
+  ): Promise<string> {
+    const integrationProject = await db.integrationProject.findFirst({
+      where: {
+        projectIntegration: { integrationId, projectId },
+        isActive: true,
+      },
+      select: { externalProjectKey: true },
+    });
+    if (!integrationProject) {
+      throw new Error(
+        `No active IntegrationProject mapping for integration ${integrationId} / project ${projectId}`
+      );
+    }
+    return integrationProject.externalProjectKey;
+  }
+
+  /**
+   * Imports selected (or auto-tracked) external milestones as local shells.
+   * Provisions the Release/Sprint types once, then upserts each match.
+   *
+   * Attribution (CONTEXT.md): `createdById` is threaded from the caller —
+   * a route acting on behalf of a signed-in admin passes `session.user.id`
+   * (explicit import ⇒ acting admin); `performProjectMilestoneSync`'s
+   * auto-track pass (Task 3) passes `config.milestoneSync.autoTrackAdminId`
+   * instead, so auto-added milestones are attributed to the admin who
+   * enabled sync, not the user whose page-load triggered the pass.
+   */
+  async performMilestoneImport(
+    userId: string,
+    integrationId: number,
+    projectId: number,
+    selection: {
+      externalIds?: string[];
+      kinds?: Array<"RELEASE" | "ITERATION">;
+    },
+    createdById: string = userId,
+    serviceOptions: MilestoneSyncServiceOptions = {}
+  ): Promise<MilestoneImportResult> {
+    const db = serviceOptions.dbClient || defaultDb;
+    const errors: string[] = [];
+    let imported = 0;
+    let updated = 0;
+
+    try {
+      const typeMap = await this._provisionMilestoneTypes(db, projectId);
+      const projectKey = await this._resolveProjectKey(
+        db,
+        integrationId,
+        projectId
+      );
+      const adapter = await this._getAdapter(integrationId, db);
+
+      const kinds = selection.kinds ?? ["RELEASE", "ITERATION"];
+      const fetched: ExternalMilestone[] = [];
+      for (const kind of kinds) {
+        try {
+          const { items } = await adapter.getExternalMilestones!({
+            projectKey,
+            kind,
+            includeClosed: true,
+          });
+          fetched.push(...items);
+        } catch (error: any) {
+          errors.push(
+            `Failed to fetch ${kind} milestones for project ${projectId}: ${error.message}`
+          );
+        }
+      }
+
+      const targets = selection.externalIds
+        ? fetched.filter((item) => selection.externalIds!.includes(item.id))
+        : fetched;
+
+      for (const ext of targets) {
+        try {
+          const existing = await db.milestones.findUnique({
+            where: {
+              externalId_integrationId: {
+                externalId: ext.id,
+                integrationId,
+              },
+            },
+            select: { id: true },
+          });
+          await this._upsertMilestoneShell(
+            db,
+            integrationId,
+            projectId,
+            typeMap[ext.kind],
+            createdById,
+            ext
+          );
+          if (existing) {
+            updated++;
+          } else {
+            imported++;
+          }
+        } catch (error: any) {
+          errors.push(
+            `Failed to import milestone ${ext.id} (${ext.name}): ${error.message}`
+          );
+        }
+      }
+
+      return { success: errors.length === 0, imported, updated, errors };
+    } catch (error: any) {
+      console.error(
+        `Failed to import milestones for project ${projectId}:`,
+        error
+      );
+      return {
+        success: false,
+        imported,
+        updated,
+        errors: [...errors, error.message],
+      };
     }
   }
 }

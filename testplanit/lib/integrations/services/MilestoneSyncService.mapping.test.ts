@@ -149,7 +149,7 @@ describe("RELEASE field mapping (MAP-01)", () => {
     expect(call.create.isCompleted).toBe(false);
   });
 
-  it("maps missing description to note=null (not an empty doc)", async () => {
+  it("maps missing description to an omitted note field (not an empty doc, not literal null — ZenStack v3's Kysely CRUD layer rejects null Json)", async () => {
     mockGetExternalMilestones.mockResolvedValue({
       items: [
         {
@@ -168,7 +168,8 @@ describe("RELEASE field mapping (MAP-01)", () => {
     });
 
     const call = mockMilestonesUpsert.mock.calls[0][0];
-    expect(call.create.note).toBeNull();
+    expect(call.create.note).toBeUndefined();
+    expect("note" in call.create).toBe(false);
     expect(call.create.isStarted).toBe(false);
     expect(call.create.isCompleted).toBe(false);
   });

@@ -30,7 +30,9 @@ const mockGetExternalMilestones = vi.fn();
 vi.mock("../IntegrationManager", () => ({
   integrationManager: {
     getAdapter: vi.fn().mockResolvedValue({
-      getCapabilities: () => ({ milestones: { kinds: ["RELEASE"], webhooks: false } }),
+      getCapabilities: () => ({
+        milestones: { kinds: ["RELEASE"], webhooks: false },
+      }),
       getExternalMilestones: (...args: any[]) =>
         mockGetExternalMilestones(...args),
     }),
@@ -212,9 +214,7 @@ describe("performMilestoneRefresh — per-entity Valkey lock", () => {
 
     const lockKeys = mockValkeySet.mock.calls.map((c) => c[0]);
     expect(lockKeys).toEqual(["sync-lock:milestone:1:10001"]);
-    expect(lockKeys.every((k) => !k.startsWith("sync-lock:issue:"))).toBe(
-      true
-    );
+    expect(lockKeys.every((k) => !k.startsWith("sync-lock:issue:"))).toBe(true);
   });
 
   it("releases the lock even when the upstream sync throws", async () => {

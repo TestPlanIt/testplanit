@@ -14,34 +14,34 @@ const milestonesTable = new Map<string, any>();
 let nextId = 1;
 
 const mockMilestonesFindFirst = vi.fn();
-const mockMilestonesFindUnique = vi.fn(
-  async ({ where }: { where: { externalId_integrationId: { externalId: string; integrationId: number } } }) => {
-    const key = `${where.externalId_integrationId.externalId}:${where.externalId_integrationId.integrationId}`;
-    return milestonesTable.get(key) ?? null;
-  }
-);
-const mockMilestonesUpsert = vi.fn(
-  async ({
-    where,
-    create,
-    update,
-  }: {
-    where: { externalId_integrationId: { externalId: string; integrationId: number } };
+const mockMilestonesFindUnique = vi.fn((...args: any[]) => {
+  const { where } = args[0] as {
+    where: {
+      externalId_integrationId: { externalId: string; integrationId: number };
+    };
+  };
+  const key = `${where.externalId_integrationId.externalId}:${where.externalId_integrationId.integrationId}`;
+  return Promise.resolve(milestonesTable.get(key) ?? null);
+});
+const mockMilestonesUpsert = vi.fn((...args: any[]) => {
+  const { where, create, update } = args[0] as {
+    where: {
+      externalId_integrationId: { externalId: string; integrationId: number };
+    };
     create: any;
     update: any;
-  }) => {
-    const key = `${where.externalId_integrationId.externalId}:${where.externalId_integrationId.integrationId}`;
-    const existing = milestonesTable.get(key);
-    if (existing) {
-      const updated = { ...existing, ...update };
-      milestonesTable.set(key, updated);
-      return updated;
-    }
-    const created = { id: nextId++, ...create };
-    milestonesTable.set(key, created);
-    return created;
+  };
+  const key = `${where.externalId_integrationId.externalId}:${where.externalId_integrationId.integrationId}`;
+  const existing = milestonesTable.get(key);
+  if (existing) {
+    const updated = { ...existing, ...update };
+    milestonesTable.set(key, updated);
+    return Promise.resolve(updated);
   }
-);
+  const created = { id: nextId++, ...create };
+  milestonesTable.set(key, created);
+  return Promise.resolve(created);
+});
 const mockIntegrationProjectFindFirst = vi.fn();
 
 vi.mock("@/lib/rawDb", () => ({
