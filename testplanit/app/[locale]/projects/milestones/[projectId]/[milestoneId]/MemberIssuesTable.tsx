@@ -26,6 +26,7 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { MemberIssueRowActions, MilestoneIssueManager } from "@/components/issues/MilestoneIssueManager";
 import type { CoverageBreakdown } from "./CoverageChip";
 import type { ExtendedMemberIssue } from "./MemberIssuesColumns";
 import { useMemberIssueColumns } from "./MemberIssuesColumns";
@@ -93,6 +94,13 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
   } = useClientQueries(schema).milestoneIssue.useFindMany({
     where: { milestoneId },
     include: { issue: true },
+  });
+
+  // Needed so MilestoneIssueManager can resolve a search-selected external
+  // issue via issue.useUpsert() keyed on externalId_integrationId (D-09).
+  const { data: milestoneRow } = useClientQueries(schema).milestones.useFindFirst({
+    where: { id: milestoneId },
+    select: { integrationId: true },
   });
 
   // Milestone-level "syncing…" indicator (D-03): client-side refresh-in-flight
@@ -200,6 +208,14 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
       sourceManual: t("sourceManual"),
     },
     projectId,
+    renderRowActions: (row) => (
+      <MemberIssueRowActions
+        milestoneId={milestoneId}
+        issueId={row.issueId}
+        source={row.source}
+        onUnlinked={handleRefresh}
+      />
+    ),
   });
 
   const handleSortChange = (column: string) => {
@@ -228,18 +244,27 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
               </Badge>
             )}
           </CardTitle>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isSyncing}
-            className="text-muted-foreground"
-            data-testid="member-issues-refresh"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
-            {t("refresh")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <MilestoneIssueManager
+              milestoneId={milestoneId}
+              projectId={projectId}
+              integrationId={milestoneRow?.integrationId ?? undefined}
+              linkedIssueIds={rows.map((row) => row.issueId)}
+              onLinked={handleRefresh}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isSyncing}
+              className="text-muted-foreground"
+              data-testid="member-issues-refresh"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+              {t("refresh")}
+            </Button>
+          </div>
         </div>
         <CardDescription>{t("sectionDescription")}</CardDescription>
       </CardHeader>

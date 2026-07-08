@@ -20,22 +20,35 @@ function renderWithQueryClient(ui: React.ReactElement) {
 }
 
 // --- Stable mock refs via vi.hoisted() ---
-const { mockFindManyMilestoneIssue, mockFetch } = vi.hoisted(() => {
-  return {
-    mockFindManyMilestoneIssue: vi.fn(),
-    mockFetch: vi.fn(),
-  };
-});
+const { mockFindManyMilestoneIssue, mockFindFirstMilestones, mockFetch } =
+  vi.hoisted(() => {
+    return {
+      mockFindManyMilestoneIssue: vi.fn(),
+      mockFindFirstMilestones: vi.fn(),
+      mockFetch: vi.fn(),
+    };
+  });
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     milestoneIssue: {
       useFindMany: (...args: any[]) => mockFindManyMilestoneIssue(...args),
     },
+    milestones: {
+      useFindFirst: (...args: any[]) => mockFindFirstMilestones(...args),
+    },
   }),
 }));
 
 vi.mock("~/zenstack/schema", () => ({ schema: {} }));
+
+// MilestoneIssueManager (the "Add issue" entry point + upsert/link logic) has
+// its own dedicated component test — stub it here to keep this file focused
+// on MemberIssuesTable's own data-shaping/filter/render behavior.
+vi.mock("@/components/issues/MilestoneIssueManager", () => ({
+  MilestoneIssueManager: () => <div data-testid="milestone-issue-manager-stub" />,
+  MemberIssueRowActions: () => <div data-testid="member-issue-row-actions-stub" />,
+}));
 
 vi.stubGlobal("fetch", mockFetch);
 
@@ -121,6 +134,11 @@ function buildRow(overrides: Partial<any> = {}) {
 describe("MemberIssuesTable", () => {
   beforeEach(() => {
     mockFindManyMilestoneIssue.mockReset();
+    mockFindFirstMilestones.mockReset();
+    mockFindFirstMilestones.mockReturnValue({
+      data: { integrationId: null },
+      isLoading: false,
+    });
     mockFetch.mockReset();
     mockFetch.mockResolvedValue({
       ok: true,

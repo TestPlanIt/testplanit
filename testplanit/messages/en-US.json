@@ -2195,7 +2195,14 @@
       "filterAllSources": "All sources",
       "filterAllTypes": "All types",
       "empty": "No issues linked to this milestone yet.",
-      "emptyFiltered": "No issues match the current filters."
+      "emptyFiltered": "No issues match the current filters.",
+      "addMember": "Add issue",
+      "unlink": "Unlink",
+      "managedByJira": "Managed by Jira — remove it from the version/sprint in Jira",
+      "linkSuccess": "Issue linked to this milestone.",
+      "linkError": "Failed to link the issue to this milestone.",
+      "unlinkSuccess": "Issue removed from this milestone.",
+      "unlinkError": "Failed to remove the issue from this milestone."
     }
   },
   "sessions": {
