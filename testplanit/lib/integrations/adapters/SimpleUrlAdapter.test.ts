@@ -45,6 +45,7 @@ describe("SimpleUrlAdapter", () => {
         attachments: false,
         linkedIssues: false,
         comments: false,
+        milestones: false,
       });
     });
   });

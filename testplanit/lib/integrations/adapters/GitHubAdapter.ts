@@ -99,6 +99,7 @@ export class GitHubAdapter extends BaseAdapter {
       attachments: false, // GitHub doesn't support direct attachments on issues
       linkedIssues: true,
       comments: true,
+      milestones: false,
     };
   }
 

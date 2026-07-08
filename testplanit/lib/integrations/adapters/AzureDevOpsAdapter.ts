@@ -38,6 +38,7 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       attachments: true,
       linkedIssues: true,
       comments: true,
+      milestones: false,
     };
   }
 

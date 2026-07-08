@@ -69,6 +69,7 @@ describe("JiraAdapter", () => {
         attachments: true,
         linkedIssues: true,
         comments: true,
+        milestones: { kinds: ["RELEASE", "ITERATION"], webhooks: true },
       });
     });
   });

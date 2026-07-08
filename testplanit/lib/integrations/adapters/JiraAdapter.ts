@@ -128,6 +128,7 @@ export class JiraAdapter extends BaseAdapter {
       attachments: true,
       linkedIssues: true,
       comments: true,
+      milestones: { kinds: ["RELEASE", "ITERATION"], webhooks: true },
     };
   }
 
@@ -221,7 +222,10 @@ export class JiraAdapter extends BaseAdapter {
         `${this.baseUrl}/rest/api/${this.apiVersion}/project/search`,
         {
           headers: {
-            Authorization: buildJiraAuthHeader(this.deployment, this.apiKeyCreds),
+            Authorization: buildJiraAuthHeader(
+              this.deployment,
+              this.apiKeyCreds
+            ),
             Accept: "application/json",
           },
         }
@@ -438,8 +442,8 @@ export class JiraAdapter extends BaseAdapter {
   private hasApiKeyCredentials(): boolean {
     return Boolean(
       (this.apiKeyCreds.email && this.apiKeyCreds.apiToken) ||
-        this.apiKeyCreds.apiToken ||
-        (this.apiKeyCreds.username && this.apiKeyCreds.password)
+      this.apiKeyCreds.apiToken ||
+      (this.apiKeyCreds.username && this.apiKeyCreds.password)
     );
   }
 
@@ -847,7 +851,9 @@ export class JiraAdapter extends BaseAdapter {
 
     // Execute the transition
     await this.makeRequest(
-      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}/transitions`),
+      this.buildUrl(
+        `/rest/api/${this.apiVersion}/issue/${issueId}/transitions`
+      ),
       {
         method: "POST",
         body: JSON.stringify({

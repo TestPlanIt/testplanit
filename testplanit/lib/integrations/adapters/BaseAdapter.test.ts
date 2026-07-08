@@ -23,6 +23,7 @@ class TestAdapter extends BaseAdapter {
       attachments: false,
       linkedIssues: false,
       comments: false,
+      milestones: false,
     };
   }
 
