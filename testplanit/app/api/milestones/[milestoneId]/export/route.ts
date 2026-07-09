@@ -17,6 +17,7 @@ import {
   getSessionSegments,
   getTestRunSegments,
 } from "~/lib/services/milestoneSummary";
+import { getVisibleMilestone } from "~/lib/services/milestoneAccess";
 import { authOptions } from "~/server/auth";
 
 export type { MilestoneExportData };
@@ -56,6 +57,16 @@ export async function GET(
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Policy-scoped visibility gate first; detail fields are then fetched
+    // via baseDb — visibility is already decided.
+    const visible = await getVisibleMilestone(session, milestoneId);
+    if (!visible) {
+      return NextResponse.json(
+        { error: "Milestone not found" },
+        { status: 404 }
+      );
     }
 
     const milestone = await baseDb.milestones.findUnique({

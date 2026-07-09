@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { baseDb } from "~/lib/db";
+import { getVisibleMilestone } from "~/lib/services/milestoneAccess";
 import { integrationManager } from "~/lib/integrations/IntegrationManager";
 import { authorizeProjectMilestoneSyncAdmin } from "~/lib/integrations/importAuthorization";
 import { milestoneSyncService } from "~/lib/integrations/services/MilestoneSyncService";
@@ -66,6 +67,17 @@ export async function GET(
   }
 
   try {
+    // Policy-scoped visibility gate first (T-18-05-01): unauthorized users
+    // get the same 404 as a missing milestone. Detail fields are then
+    // fetched via baseDb — visibility is already decided.
+    const visible = await getVisibleMilestone(session, milestoneId);
+    if (!visible) {
+      return NextResponse.json(
+        { error: "Milestone not found" },
+        { status: 404 }
+      );
+    }
+
     // Resolve the milestone row server-side — projectId/externalId/
     // integrationId are NEVER trusted from client input.
     const milestone = await baseDb.milestones.findUnique({

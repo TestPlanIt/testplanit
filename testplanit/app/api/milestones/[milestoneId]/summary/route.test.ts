@@ -24,6 +24,11 @@ vi.mock("~/lib/db", () => ({
   },
 }));
 
+const mockGetVisibleMilestone = vi.fn();
+vi.mock("~/lib/services/milestoneAccess", () => ({
+  getVisibleMilestone: (...args: any[]) => mockGetVisibleMilestone(...args),
+}));
+
 vi.mock("~/lib/services/milestoneDescendants", () => ({
   getAllDescendantMilestoneIds: vi.fn(),
 }));
@@ -103,7 +108,7 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
   describe("Milestone existence", () => {
     it("returns 404 when milestone does not exist", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (baseDb.milestones.findUnique as any).mockResolvedValue(null);
+      mockGetVisibleMilestone.mockResolvedValue(null);
 
       const [req, ctx] = createRequest("999");
       const response = await GET(req, ctx);
@@ -117,7 +122,7 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
   describe("Success", () => {
     it("returns MilestoneSummaryData structure for existing milestone", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (baseDb.milestones.findUnique as any).mockResolvedValue(mockMilestone);
+      mockGetVisibleMilestone.mockResolvedValue(mockMilestone);
       (baseDb.comment.count as any).mockResolvedValue(3);
 
       const [req, ctx] = createRequest("1");
@@ -139,7 +144,7 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
 
     it("fetches descendants and includes them in queries", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (baseDb.milestones.findUnique as any).mockResolvedValue(mockMilestone);
+      mockGetVisibleMilestone.mockResolvedValue(mockMilestone);
       (getAllDescendantMilestoneIds as any).mockResolvedValue([2, 3]);
       (baseDb.comment.count as any).mockResolvedValue(0);
 
@@ -151,7 +156,7 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
 
     it("returns zero completion rate when no test cases", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (baseDb.milestones.findUnique as any).mockResolvedValue(mockMilestone);
+      mockGetVisibleMilestone.mockResolvedValue(mockMilestone);
       // calculateMilestoneCompletion uses $queryRaw returning count=0
       (baseDb.$queryRaw as any).mockResolvedValue([{ count: BigInt(0) }]);
 
@@ -165,7 +170,7 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
 
     it("returns empty segments and issues when milestone has no runs or sessions", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (baseDb.milestones.findUnique as any).mockResolvedValue(mockMilestone);
+      mockGetVisibleMilestone.mockResolvedValue(mockMilestone);
       (baseDb.$queryRaw as any).mockResolvedValue([]);
       (baseDb.comment.count as any).mockResolvedValue(0);
       (baseDb.issue.findMany as any).mockResolvedValue([]);
@@ -184,7 +189,7 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
   describe("Error handling", () => {
     it("returns 500 when database throws", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      (baseDb.milestones.findUnique as any).mockRejectedValue(
+      mockGetVisibleMilestone.mockRejectedValue(
         new Error("DB connection failed")
       );
 

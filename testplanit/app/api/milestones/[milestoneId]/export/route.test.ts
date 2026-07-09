@@ -48,6 +48,11 @@ import {
   getSessionSegments,
   getTestRunSegments,
 } from "~/lib/services/milestoneSummary";
+const mockGetVisibleMilestone = vi.fn();
+vi.mock("~/lib/services/milestoneAccess", () => ({
+  getVisibleMilestone: (...args: any[]) => mockGetVisibleMilestone(...args),
+}));
+
 import { getServerSession } from "next-auth";
 import { GET } from "./route";
 
@@ -120,6 +125,7 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
     (getSessionSegments as any).mockResolvedValue([]);
     (calculateMilestoneCompletion as any).mockResolvedValue(0);
     (getMilestoneLinkedIssues as any).mockResolvedValue([]);
+    mockGetVisibleMilestone.mockResolvedValue({ id: 1, projectId: 10 });
     (baseDb.milestones.findUnique as any).mockResolvedValue(baseMilestone);
     (baseDb.milestones.findMany as any).mockResolvedValue([]);
     (baseDb.reviewRequest.findMany as any).mockResolvedValue([]);

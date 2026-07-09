@@ -13,6 +13,11 @@ vi.mock("~/lib/services/milestoneDescendants", () => ({
   getAllDescendantMilestoneIds: vi.fn(),
 }));
 
+const mockGetVisibleMilestone = vi.fn();
+vi.mock("~/lib/services/milestoneAccess", () => ({
+  getVisibleMilestone: (...args: any[]) => mockGetVisibleMilestone(...args),
+}));
+
 import { getServerSession } from "next-auth";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import { GET } from "./route";
@@ -34,6 +39,7 @@ const mockSession = {
 describe("GET /api/milestones/[milestoneId]/descendants", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetVisibleMilestone.mockResolvedValue({ id: 1, projectId: 10 });
   });
 
   describe("Authentication", () => {
@@ -116,5 +122,21 @@ describe("GET /api/milestones/[milestoneId]/descendants", () => {
       expect(response.status).toBe(500);
       expect(data.error).toBe("Failed to fetch milestone descendants");
     });
+  });
+});
+
+describe("GET /api/milestones/[milestoneId]/descendants — visibility gate", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (getServerSession as any).mockResolvedValue(mockSession);
+  });
+
+  it("returns 404 when the policy-scoped lookup can't see the milestone", async () => {
+    mockGetVisibleMilestone.mockResolvedValue(null);
+
+    const [req, ctx] = createRequest("1");
+    const response = await GET(req, ctx);
+
+    expect(response.status).toBe(404);
   });
 });

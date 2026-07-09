@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { baseDb } from "~/lib/db";
+import { getVisibleMilestone } from "~/lib/services/milestoneAccess";
 import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import { authOptions } from "~/server/auth";
 
@@ -32,11 +32,9 @@ import { authOptions } from "~/server/auth";
  *
  * projectId is always re-derived server-side from the milestone row; a
  * client-supplied projectId is never trusted (T-18-05-01/V13). Access is
- * gated the same way the sibling milestone routes (summary/, forecast/,
- * descendants/) are: authenticated session + the milestone row existing.
- * `baseDb` is the raw ZenStack client (no per-row access policy) — this
- * matches the existing milestone-detail read surface, which is reached only
- * through UI already scoped to projects the session can see.
+ * gated by the policy-scoped visibility check (getVisibleMilestone): the
+ * enhanced client's project-scoped Milestones read ACL must return the row
+ * or the route responds 404.
  */
 export type {
   CoverageBreakdown,
@@ -64,13 +62,10 @@ export async function GET(
   }
 
   try {
-    // Resolve the milestone row server-side — projectId is NEVER trusted
-    // from client input (V13 / T-18-05-01).
-    const milestone = await baseDb.milestones.findUnique({
-      where: { id: milestoneId },
-      select: { id: true, projectId: true },
-    });
-
+    // Policy-scoped visibility gate (T-18-01-02/T-18-05-01): the enhanced
+    // client's project-scoped read ACL decides access; unauthorized users
+    // get the same 404 as a missing milestone.
+    const milestone = await getVisibleMilestone(session, milestoneId);
     if (!milestone) {
       return NextResponse.json(
         { error: "Milestone not found" },

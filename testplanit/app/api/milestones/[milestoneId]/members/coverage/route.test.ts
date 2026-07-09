@@ -43,6 +43,11 @@ vi.mock("~/lib/services/milestoneDescendants", () => ({
   getAllDescendantMilestoneIds: vi.fn(),
 }));
 
+const mockGetVisibleMilestone = vi.fn();
+vi.mock("~/lib/services/milestoneAccess", () => ({
+  getVisibleMilestone: (...args: any[]) => mockGetVisibleMilestone(...args),
+}));
+
 const mockMilestonesFindUnique = vi.fn();
 const mockMilestoneIssueFindMany = vi.fn();
 const mockQueryRaw = vi.fn();
@@ -80,6 +85,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   (getServerSession as any).mockResolvedValue(mockSession);
   (getAllDescendantMilestoneIds as any).mockResolvedValue([]);
+  mockGetVisibleMilestone.mockResolvedValue({ id: 1, projectId: 100 });
   mockMilestonesFindUnique.mockResolvedValue({ id: 1, projectId: 100 });
   mockMilestoneIssueFindMany.mockResolvedValue([]);
   mockQueryRaw.mockResolvedValue([]);
@@ -97,19 +103,28 @@ describe("GET /api/milestones/[milestoneId]/members/coverage — auth (T-18-01-0
   });
 
   it("re-derives projectId from the milestone row server-side — never trusts a client-supplied projectId", async () => {
-    mockMilestonesFindUnique.mockResolvedValue({ id: 1, projectId: 100 });
+    mockGetVisibleMilestone.mockResolvedValue({ id: 1, projectId: 100 });
 
     const { GET } = await import("./route");
     const [req, ctx] = createRequest("1");
     await GET(req, ctx);
 
-    // The route must look up the milestone row (which carries projectId)
-    // rather than accept ?projectId= from the query string.
-    expect(mockMilestonesFindUnique).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ id: 1 }),
-      })
-    );
+    // The route must resolve the milestone through the policy-scoped
+    // visibility gate (which carries projectId) rather than accept
+    // ?projectId= from the query string.
+    expect(mockGetVisibleMilestone).toHaveBeenCalledWith(expect.anything(), 1);
+  });
+
+  it("returns 404 when the policy-scoped lookup can't see the milestone (unauthorized project or missing row)", async () => {
+    mockGetVisibleMilestone.mockResolvedValue(null);
+
+    const { GET } = await import("./route");
+    const [req, ctx] = createRequest("1");
+    const response = await GET(req, ctx);
+
+    expect(response.status).toBe(404);
+    // The coverage computation must never run for an invisible milestone.
+    expect(mockQueryRaw).not.toHaveBeenCalled();
   });
 });
 
