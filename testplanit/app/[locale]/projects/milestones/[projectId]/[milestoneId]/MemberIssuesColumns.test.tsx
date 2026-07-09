@@ -3,6 +3,15 @@ import { describe, expect, it, vi } from "vitest";
 import type { ExtendedMemberIssue } from "./MemberIssuesColumns";
 import { useMemberIssueColumns } from "./MemberIssuesColumns";
 
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    status: {
+      useFindMany: () => ({ data: [] }),
+    },
+  }),
+}));
+vi.mock("~/zenstack/schema", () => ({ schema: {} }));
+
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));

@@ -45,10 +45,16 @@ describe("CoverageChip", () => {
         }}
       />
     );
-    expect(screen.getByText("coveragePassed: 2")).toBeInTheDocument();
-    expect(screen.getByText("coverageFailed: 1")).toBeInTheDocument();
-    expect(screen.getByText("coverageInProgress: 1")).toBeInTheDocument();
-    expect(screen.queryByText(/coverageNotRun/)).not.toBeInTheDocument();
+    // Matrix-style pips: passed 2, failed 1, untested 1 (inProgress folds
+    // into Untested — no completed outcome yet); tooltip keeps the full
+    // four-way breakdown.
+    expect(screen.getByLabelText("coveragePassed: 2")).toBeInTheDocument();
+    expect(screen.getByLabelText("coverageFailed: 1")).toBeInTheDocument();
+    expect(screen.getByLabelText("coverageUntested: 1")).toBeInTheDocument();
+    expect(screen.getByTestId("coverage-pips")).toHaveAttribute(
+      "title",
+      expect.stringContaining("coverageInProgress: 1")
+    );
   });
 
   it("does not render the Uncovered style for a covered-but-all-notRun breakdown", () => {
@@ -65,6 +71,6 @@ describe("CoverageChip", () => {
       />
     );
     expect(screen.queryByText("coverageUncovered")).not.toBeInTheDocument();
-    expect(screen.getByText("coverageNotRun: 2")).toBeInTheDocument();
+    expect(screen.getByLabelText("coverageUntested: 2")).toBeInTheDocument();
   });
 });

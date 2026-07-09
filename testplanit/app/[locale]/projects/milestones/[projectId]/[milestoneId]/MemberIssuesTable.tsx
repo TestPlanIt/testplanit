@@ -32,6 +32,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MemberIssueRowActions, MilestoneIssueManager } from "@/components/issues/MilestoneIssueManager";
+import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
 import type { CoverageBreakdown } from "./CoverageChip";
 import type { ExtendedMemberIssue } from "./MemberIssuesColumns";
 import { useMemberIssueColumns } from "./MemberIssuesColumns";
@@ -315,6 +316,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
             )}
           </CardTitle>
           <div className="flex items-center gap-2">
+            <IterationStatusLegendPopover projectId={projectId} />
             <MilestoneIssueManager
               milestoneId={milestoneId}
               projectId={projectId}

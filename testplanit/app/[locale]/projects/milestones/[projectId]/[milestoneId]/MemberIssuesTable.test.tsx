@@ -37,7 +37,16 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     milestones: {
       useFindFirst: (...args: any[]) => mockFindFirstMilestones(...args),
     },
+    status: {
+      useFindMany: () => ({ data: [] }),
+    },
   }),
+}));
+
+vi.mock("@/components/iterations/IterationStatusLegendPopover", () => ({
+  IterationStatusLegendPopover: () => (
+    <div data-testid="iteration-status-legend-stub" />
+  ),
 }));
 
 vi.mock("~/zenstack/schema", () => ({ schema: {} }));
