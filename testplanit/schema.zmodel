@@ -17,6 +17,16 @@ plugin hooks {
 plugin zod {
     provider = '@core/zod'
     version = 'v4'
+    // Only generate model/enum schemas — skip the ~19k CRUD input/object
+    // schemas (objects/, input/), which nothing consumes: the model RPC route
+    // creates its NextRequestHandler without the `zodSchemas` option, and no
+    // app code imports the input schema trees. The enhancer's runtime
+    // validation (@length/@email/@url/@@validate) uses the model schemas,
+    // which this keeps. Cuts `zenstack generate` from ~12.6 GB peak / ~4.5 min
+    // (OOMs even with an 8 GB heap cap) to ~2.5 GB / ~40 s, so `pnpm install`
+    // works on ordinary dev machines and servers. If the RPC handler ever
+    // opts into `zodSchemas` input validation, this must be revisited.
+    modelOnly = true
 }
 
 plugin openapi {
