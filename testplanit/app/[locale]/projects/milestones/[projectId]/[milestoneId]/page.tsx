@@ -32,7 +32,7 @@ import {
 } from "@/projects/sessions/[projectId]/[sessionId]/CompleteSessionDialog";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ApplicationArea } from "~/zenstack/models";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   CircleCheckBig,
@@ -58,6 +58,7 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { useExportMilestonePdf } from "~/hooks/pdf/useExportMilestonePdf";
+import { useMilestoneLiveStream } from "~/hooks/useMilestoneLiveStream";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { Link, useRouter } from "~/lib/navigation";
 import {
@@ -192,6 +193,29 @@ export default function MilestoneDetailsPage() {
         },
       },
     },
+  });
+
+  const queryClient = useQueryClient();
+
+  // D-15/D-16: subscribe this detail page to its per-entity milestone
+  // stream so the fields, badge, member table, and coverage all react live
+  // on a wake-up — no bespoke 45s passive-refresh window exists on this
+  // page today, so this is a net-new subscriber, not a retirement.
+  useMilestoneLiveStream({
+    milestoneId: Number(milestoneId),
+    onWakeUp: React.useCallback(() => {
+      void queryClient.invalidateQueries({
+        predicate: (query) =>
+          JSON.stringify(query.queryKey).includes("Milestones") ||
+          JSON.stringify(query.queryKey).includes("MilestoneIssue"),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["milestoneMemberCoverage", Number(milestoneId)],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["milestoneMemberOverflow", Number(milestoneId)],
+      });
+    }, [queryClient, milestoneId]),
   });
 
   const { data: milestoneTypes, isLoading: isTypesLoading } = useClientQueries(

@@ -1,6 +1,22 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+}
+
+function renderWithQueryClient(ui: React.ReactElement) {
+  const testQueryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={testQueryClient}>{ui}</QueryClientProvider>
+  );
+}
 
 // --- Stable mock refs via vi.hoisted() ---
 const {
@@ -151,7 +167,7 @@ describe("Milestones page — passive refresh mount effect", () => {
     });
 
     await act(async () => {
-      render(
+      renderWithQueryClient(
         <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
       );
     });
@@ -179,7 +195,7 @@ describe("Milestones page — passive refresh mount effect", () => {
     });
 
     await act(async () => {
-      render(
+      renderWithQueryClient(
         <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
       );
     });
@@ -209,7 +225,7 @@ describe("Milestones page — passive refresh mount effect", () => {
     });
 
     await act(async () => {
-      render(
+      renderWithQueryClient(
         <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
       );
     });
@@ -221,5 +237,36 @@ describe("Milestones page — passive refresh mount effect", () => {
         body: JSON.stringify({ projectMappingId: "mapping-7" }),
       })
     );
+  });
+});
+
+describe("Milestones page — 45s passive-refresh polling retired (D-16)", () => {
+  it("the page source no longer contains the 45s background-sync polling bridge", async () => {
+    // The 45s CLIENT POLLING bridge (isBackgroundSyncPolling /
+    // startBackgroundSyncPolling / backgroundPollTimerRef) is retired in
+    // favor of useProjectMilestoneStream (D-15/D-16). jsdom has no
+    // EventSource, so the SSE mount itself isn't observable here — that
+    // coverage lives in hooks/useMilestoneLiveStream.test.ts (Plan 02).
+    // This asserts the retirement at the source level via the compiled
+    // page module: none of the retired identifiers survive.
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const pageSource = await fs.readFile(
+      path.join(
+        process.cwd(),
+        "app/[locale]/projects/milestones/[projectId]/page.tsx"
+      ),
+      "utf-8"
+    );
+    expect(pageSource).not.toMatch(
+      /isBackgroundSyncPolling|startBackgroundSyncPolling|backgroundPollTimerRef/
+    );
+    // The per-project SSE subscriber replaces it.
+    expect(pageSource).toMatch(/useProjectMilestoneStream/);
+    // The import-dialog 3s/60s window (belt-and-braces, D-16) stays intact.
+    expect(pageSource).toMatch(/pendingImportIds/);
+    expect(pageSource).toMatch(/startImportPolling/);
+    expect(pageSource).toMatch(/60_000/);
+    expect(pageSource).toMatch(/3000/);
   });
 });

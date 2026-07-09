@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loading } from "@/components/Loading";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 import { use, useEffect, useRef, useState } from "react";
+import { useProjectMilestoneStream } from "~/hooks/useMilestoneLiveStream";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useRouter } from "~/lib/navigation";
@@ -55,6 +57,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   const { permissions, isLoading: isLoadingPermissions } =
     useProjectPermissions(projectId, ApplicationArea.Milestones);
   const canAddEdit = permissions?.canAddEdit ?? false;
+  const queryClient = useQueryClient();
 
   const { data: project, isLoading: isLoadingProject } = useClientQueries(
     schema
@@ -86,34 +89,8 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   const [pendingImportIds, setPendingImportIds] = useState<Set<string> | null>(
     null
   );
-  // Background sync passes (page-load freshness / auto-track) also create
-  // rows from a worker AFTER this page mounted — poll briefly whenever one
-  // was just fired, so auto-tracked milestones appear without a manual
-  // browser refresh. (Real-time SSE for milestone events is Phase 19's
-  // webhook work.)
-  const [isBackgroundSyncPolling, setIsBackgroundSyncPolling] =
-    useState(false);
-  const backgroundPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-  const startBackgroundSyncPolling = React.useCallback(() => {
-    setIsBackgroundSyncPolling(true);
-    if (backgroundPollTimerRef.current)
-      clearTimeout(backgroundPollTimerRef.current);
-    backgroundPollTimerRef.current = setTimeout(
-      () => setIsBackgroundSyncPolling(false),
-      45_000
-    );
-  }, []);
-  useEffect(
-    () => () => {
-      if (backgroundPollTimerRef.current)
-        clearTimeout(backgroundPollTimerRef.current);
-    },
-    []
-  );
   const isImportPolling = pendingImportIds !== null;
-  const isMilestonePolling = isImportPolling || isBackgroundSyncPolling;
+  const isMilestonePolling = isImportPolling;
   const importPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
@@ -135,6 +112,20 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     },
     []
   );
+
+  // D-15/D-16: one project-level SSE subscriber replaces the retired 45s
+  // passive-refresh polling window above — a wake-up for any milestone in
+  // this project invalidates the same incomplete/completed milestone
+  // queries the polling window used to force-refetch.
+  useProjectMilestoneStream({
+    projectId: Number(projectId),
+    onWakeUp: React.useCallback(() => {
+      void queryClient.invalidateQueries({
+        predicate: (query) =>
+          JSON.stringify(query.queryKey).includes("Milestones"),
+      });
+    }, [queryClient]),
+  });
 
   const { data: incompleteMilestones } = useClientQueries(
     schema
@@ -331,7 +322,6 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     if (!syncedIntegrationProjects) return;
 
     hasFiredPassiveRefresh.current = true;
-    startBackgroundSyncPolling();
 
     for (const integrationId of syncedIntegrationIds) {
       const mapping = syncedIntegrationProjects.find(
@@ -351,7 +341,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
         // non-blocking, the next mount or manual "Sync now" will retry.
       });
     }
-  }, [isAuthenticated, syncedIntegrationIds, syncedIntegrationProjects, startBackgroundSyncPolling]);
+  }, [isAuthenticated, syncedIntegrationIds, syncedIntegrationProjects]);
 
   // Wait for session to load
   if (isAuthLoading) {
