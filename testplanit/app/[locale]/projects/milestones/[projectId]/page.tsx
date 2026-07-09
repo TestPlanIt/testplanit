@@ -4,6 +4,7 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Loading } from "@/components/Loading";
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +18,8 @@ import { AddMilestone } from "@/projects/milestones/[projectId]/AddMilestoneModa
 import { ImportMilestonesDialog } from "@/projects/milestones/[projectId]/ImportMilestonesDialog";
 import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay";
 import { ApplicationArea } from "~/zenstack/models";
-import { CirclePlus, Download } from "lucide-react";
+import { CirclePlus, Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 import { use, useEffect, useRef, useState } from "react";
@@ -75,20 +77,30 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   );
 
   // Import runs as a background queue job — the dialog closes when the job
-  // is QUEUED, and the worker creates the Milestones rows seconds later. A
-  // one-shot refetch would race the worker, so imports open a bounded
-  // polling window (3s interval, 30s cap) on the milestone queries below.
-  const [isImportPolling, setIsImportPolling] = useState(false);
+  // is QUEUED, and the worker creates the Milestones rows seconds later.
+  // Track the queued externalIds: while any are outstanding the milestone
+  // queries poll (3s), an "Importing…" badge shows what's happening (D-03
+  // feedback pattern), and when the last one lands we toast completion.
+  // A 60s cap avoids polling forever if the worker is down — with a
+  // "still running" notice so silence never reads as "nothing happened".
+  const [pendingImportIds, setPendingImportIds] = useState<Set<string> | null>(
+    null
+  );
+  const isImportPolling = pendingImportIds !== null;
   const importPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
-  const startImportPolling = React.useCallback(() => {
-    setIsImportPolling(true);
+  const startImportPolling = React.useCallback((externalIds: string[]) => {
+    setPendingImportIds(new Set(externalIds));
     if (importPollTimerRef.current) clearTimeout(importPollTimerRef.current);
-    importPollTimerRef.current = setTimeout(
-      () => setIsImportPolling(false),
-      30_000
-    );
+    importPollTimerRef.current = setTimeout(() => {
+      setPendingImportIds((prev) => {
+        if (prev && prev.size > 0) {
+          toast.info(t("milestones.import.stillRunning"));
+        }
+        return null;
+      });
+    }, 60_000);
   }, []);
   useEffect(
     () => () => {
@@ -146,6 +158,30 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   },
   { refetchInterval: isImportPolling ? 3000 : false }
   );
+
+  // Mark queued imports as landed once their externalIds show up in the
+  // loaded milestone lists; toast completion when the last one arrives.
+  useEffect(() => {
+    if (!pendingImportIds || pendingImportIds.size === 0) return;
+    const loadedExternalIds = new Set(
+      [...(incompleteMilestones ?? []), ...(completedMilestones ?? [])]
+        .map((m) => m.externalId)
+        .filter((id): id is string => Boolean(id))
+    );
+    const stillPending = new Set(
+      Array.from(pendingImportIds).filter((id) => !loadedExternalIds.has(id))
+    );
+    if (stillPending.size === pendingImportIds.size) return;
+    if (stillPending.size === 0) {
+      if (importPollTimerRef.current) clearTimeout(importPollTimerRef.current);
+      setPendingImportIds(null);
+      toast.success(
+        t("milestones.import.completed", { count: pendingImportIds.size })
+      );
+    } else {
+      setPendingImportIds(stillPending);
+    }
+  }, [incompleteMilestones, completedMilestones, pendingImportIds, t]);
 
   const isLoading =
     isAuthLoading ||
@@ -327,6 +363,18 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
                 </div>
                 {canAddEdit && (
                   <div className="flex items-center gap-2">
+                    {isImportPolling && (
+                      <Badge
+                        variant="outline"
+                        className="flex items-center gap-1 text-muted-foreground"
+                        data-testid="import-milestones-progress"
+                      >
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        {t("milestones.import.importing", {
+                          count: pendingImportIds?.size ?? 0,
+                        })}
+                      </Badge>
+                    )}
                     {canImportFromJira && (
                       <Button
                         data-testid="import-milestones-button"

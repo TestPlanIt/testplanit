@@ -44,8 +44,9 @@ interface ImportMilestonesDialogProps {
   projectMappingId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Called after an import is successfully queued, so the caller can refetch. */
-  onStarted?: () => void;
+  /** Called with the queued externalIds after an import is successfully
+   *  queued, so the caller can poll/track their arrival. */
+  onStarted?: (externalIds: string[]) => void;
 }
 
 export function ImportMilestonesDialog({
@@ -221,8 +222,9 @@ export function ImportMilestonesDialog({
         throw new Error(data?.error || t("importFailed"));
       }
       toast.success(t("importStarted"));
+      const queuedIds = Array.from(selectedIds);
       setSelectedIds(new Set());
-      onStarted?.();
+      onStarted?.(queuedIds);
       onOpenChange(false);
     } catch (e: any) {
       setError(e?.message || t("importFailed"));

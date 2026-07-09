@@ -2166,7 +2166,10 @@
       "selectAll": "Select all",
       "searchPlaceholder": "Search releases and sprints...",
       "emptyFiltered": "No milestones match your filters.",
-      "partialWarning": "Some Jira projects could not be fetched:"
+      "partialWarning": "Some Jira projects could not be fetched:",
+      "importing": "Importing {count, plural, one {# milestone} other {# milestones}} from Jira…",
+      "completed": "Imported {count, plural, one {# milestone} other {# milestones}} from Jira",
+      "stillRunning": "The import is still running in the background — milestones will appear when it finishes."
     },
     "sync": {
       "managedByJira": "Managed by Jira",
