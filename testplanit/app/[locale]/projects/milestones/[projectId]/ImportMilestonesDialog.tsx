@@ -14,10 +14,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
-import { AlertCircle, Loader2, PackageOpen } from "lucide-react";
+import { AlertCircle, Loader2, PackageOpen, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -32,6 +33,8 @@ interface ExternalMilestone {
   state: "FUTURE" | "ACTIVE" | "CLOSED";
   rawState?: string;
   url?: string;
+  /** Mapping(s) whose fetch returned this artifact (multi-mapping projects). */
+  sourceProjects?: { id: string; key: string; name: string }[];
 }
 
 interface ImportMilestonesDialogProps {
@@ -55,6 +58,7 @@ export function ImportMilestonesDialog({
 }: ImportMilestonesDialogProps) {
   const t = useTranslations("milestones.import");
   const tCommon = useTranslations("common");
+  const tIssues = useTranslations("issues");
 
   const [items, setItems] = useState<ExternalMilestone[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,6 +66,9 @@ export function ImportMilestonesDialog({
   const [includeClosed, setIncludeClosed] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isImporting, setIsImporting] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [projectFilter, setProjectFilter] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
 
   // Already-linked external ids for this integration in this project, so
   // the picker can disable+badge rows the same way search-issues-dialog
@@ -104,6 +111,7 @@ export function ImportMilestonesDialog({
           throw new Error(data?.error || t("previewFailed"));
         }
         setItems(data.items ?? []);
+        setWarnings(Array.isArray(data.warnings) ? data.warnings : []);
       } catch (e: any) {
         setError(e?.message || t("previewFailed"));
         setItems([]);
@@ -120,6 +128,9 @@ export function ImportMilestonesDialog({
       setIncludeClosed(false);
       setSelectedIds(new Set());
       setError(null);
+      setSearchText("");
+      setProjectFilter(null);
+      setWarnings([]);
       void fetchPreview(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,8 +141,41 @@ export function ImportMilestonesDialog({
     void fetchPreview(checked);
   };
 
+  // Distinct source Jira projects present in the result set — drives the
+  // filter chips (mirrors search-issues-dialog's 2+ mappings rule).
+  const sourceProjectOptions: { id: string; key: string; name: string }[] = [];
+  {
+    const seen = new Set<string>();
+    for (const item of items) {
+      for (const sp of item.sourceProjects ?? []) {
+        if (!seen.has(sp.id)) {
+          seen.add(sp.id);
+          sourceProjectOptions.push(sp);
+        }
+      }
+    }
+  }
+  const showProjectMeta = sourceProjectOptions.length >= 2;
+
+  const normalizedSearch = searchText.trim().toLowerCase();
+  const visibleItems = items.filter((item) => {
+    if (
+      projectFilter &&
+      !(item.sourceProjects ?? []).some((sp) => sp.id === projectFilter)
+    ) {
+      return false;
+    }
+    if (
+      normalizedSearch &&
+      !item.name.toLowerCase().includes(normalizedSearch)
+    ) {
+      return false;
+    }
+    return true;
+  });
+
   // All/None toggle operates on the currently-visible, not-yet-linked rows.
-  const selectableIds = items
+  const selectableIds = visibleItems
     .filter((item) => !linkedExternalIds.has(item.id))
     .map((item) => item.id);
   const allSelectableSelected =
@@ -195,6 +239,42 @@ export function ImportMilestonesDialog({
           <DialogDescription>{t("importDescription")}</DialogDescription>
         </DialogHeader>
 
+        <div className="relative">
+          <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            data-testid="import-milestones-search"
+            placeholder={t("searchPlaceholder")}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="ps-10"
+          />
+        </div>
+
+        {showProjectMeta && (
+          <div className="flex flex-wrap gap-1">
+            <Badge
+              variant={projectFilter === null ? "default" : "outline"}
+              className="cursor-pointer"
+              data-testid="import-milestones-project-all"
+              onClick={() => setProjectFilter(null)}
+            >
+              {tIssues("filterAll")}
+            </Badge>
+            {sourceProjectOptions.map((sp) => (
+              <Badge
+                key={sp.id}
+                variant={projectFilter === sp.id ? "default" : "outline"}
+                className="cursor-pointer max-w-40 truncate"
+                data-testid="import-milestones-project-chip"
+                title={sp.name}
+                onClick={() => setProjectFilter(sp.id)}
+              >
+                {sp.name}
+              </Badge>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Switch
@@ -234,19 +314,30 @@ export function ImportMilestonesDialog({
           </Alert>
         )}
 
+        {warnings.length > 0 && (
+          <Alert data-testid="import-milestones-warnings">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {t("partialWarning")} {warnings.join("; ")}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <ScrollArea className="h-[360px] rounded-md border w-full">
           {isLoading ? (
             <div className="flex items-center justify-center p-8">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
-          ) : items.length === 0 ? (
+          ) : visibleItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-center">
               <PackageOpen className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-sm text-muted-foreground">{t("empty")}</p>
+              <p className="text-sm text-muted-foreground">
+                {items.length === 0 ? t("empty") : t("emptyFiltered")}
+              </p>
             </div>
           ) : (
             <div className="p-4 space-y-2 w-full">
-              {items.map((item) => {
+              {visibleItems.map((item) => {
                 const isAlreadyLinked = linkedExternalIds.has(item.id);
                 const isSelected = selectedIds.has(item.id);
                 return (
@@ -291,6 +382,20 @@ export function ImportMilestonesDialog({
                               : t("kindSprint")}
                           </span>
                           {item.rawState && <span>{item.rawState}</span>}
+                          {showProjectMeta &&
+                            (item.sourceProjects ?? []).length > 0 && (
+                              <span
+                                className="truncate"
+                                data-testid="import-milestone-source"
+                                title={(item.sourceProjects ?? [])
+                                  .map((sp) => sp.name)
+                                  .join(", ")}
+                              >
+                                {(item.sourceProjects ?? [])
+                                  .map((sp) => sp.key)
+                                  .join(" · ")}
+                              </span>
+                            )}
                         </div>
                       </div>
                     </div>

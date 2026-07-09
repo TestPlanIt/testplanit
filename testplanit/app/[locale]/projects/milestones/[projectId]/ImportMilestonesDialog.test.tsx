@@ -57,12 +57,20 @@ vi.mock("@/components/ui/scroll-area", () => ({
 }));
 
 vi.mock("@/components/ui/alert", () => ({
-  Alert: ({ children }: any) => <div role="alert">{children}</div>,
+  Alert: ({ children, "data-testid": dataTestId }: any) => (
+    <div role="alert" data-testid={dataTestId}>
+      {children}
+    </div>
+  ),
   AlertDescription: ({ children }: any) => <div>{children}</div>,
 }));
 
 vi.mock("@/components/ui/badge", () => ({
-  Badge: ({ children }: any) => <span data-testid="badge">{children}</span>,
+  Badge: ({ children, onClick, title, "data-testid": dataTestId }: any) => (
+    <span data-testid={dataTestId ?? "badge"} title={title} onClick={onClick}>
+      {children}
+    </span>
+  ),
 }));
 
 vi.mock("@/components/ui/button", () => ({
@@ -306,6 +314,126 @@ describe("ImportMilestonesDialog", () => {
           }),
         })
       )
+    );
+  });
+});
+
+describe("ImportMilestonesDialog — multi-project picker", () => {
+  const multiItems = [
+    {
+      id: "v-1",
+      kind: "RELEASE",
+      name: "Android Icebox",
+      state: "FUTURE",
+      rawState: "future",
+      sourceProjects: [{ id: "map-abt", key: "ABT", name: "Allego Bug Tracking" }],
+    },
+    {
+      id: "s-1",
+      kind: "ITERATION",
+      name: "Admin 9.2 S1",
+      state: "ACTIVE",
+      rawState: "active",
+      sourceProjects: [{ id: "map-adm", key: "ADM", name: "Admin Tools" }],
+    },
+    {
+      id: "s-9",
+      kind: "ITERATION",
+      name: "Shared Sprint",
+      state: "ACTIVE",
+      rawState: "active",
+      sourceProjects: [
+        { id: "map-abt", key: "ABT", name: "Allego Bug Tracking" },
+        { id: "map-adm", key: "ADM", name: "Admin Tools" },
+      ],
+    },
+  ];
+
+  const baseProps = {
+    integrationId: 9,
+    projectId: 370,
+    projectMappingId: "map-abt",
+    open: true,
+    onOpenChange: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFindManyMilestones.mockReturnValue({ data: [] });
+    mockFetch.mockResolvedValue(makePreviewResponse(multiItems));
+  });
+
+  it("shows project chips and per-row source labels when 2+ Jira projects are present", async () => {
+    render(<ImportMilestonesDialog {...baseProps} />);
+    await screen.findByText("Android Icebox");
+
+    expect(screen.getByTestId("import-milestones-project-all")).toBeInTheDocument();
+    expect(screen.getAllByTestId("import-milestones-project-chip")).toHaveLength(2);
+    const sources = screen.getAllByTestId("import-milestone-source");
+    expect(sources.map((el) => el.textContent)).toEqual([
+      "ABT",
+      "ADM",
+      "ABT · ADM",
+    ]);
+  });
+
+  it("filters rows by the selected project chip, including shared artifacts", async () => {
+    render(<ImportMilestonesDialog {...baseProps} />);
+    await screen.findByText("Android Icebox");
+
+    const chips = screen.getAllByTestId("import-milestones-project-chip");
+    fireEvent.click(chips[1]); // Admin Tools
+
+    expect(screen.queryByText("Android Icebox")).not.toBeInTheDocument();
+    expect(screen.getByText("Admin 9.2 S1")).toBeInTheDocument();
+    expect(screen.getByText("Shared Sprint")).toBeInTheDocument();
+  });
+
+  it("search text filters the pre-loaded list without refetching", async () => {
+    render(<ImportMilestonesDialog {...baseProps} />);
+    await screen.findByText("Android Icebox");
+    const fetchCalls = mockFetch.mock.calls.length;
+
+    fireEvent.change(screen.getByTestId("import-milestones-search"), {
+      target: { value: "icebox" },
+    });
+
+    expect(screen.getByText("Android Icebox")).toBeInTheDocument();
+    expect(screen.queryByText("Admin 9.2 S1")).not.toBeInTheDocument();
+    expect(mockFetch.mock.calls.length).toBe(fetchCalls);
+  });
+
+  it("select-all only selects the currently filtered rows", async () => {
+    render(<ImportMilestonesDialog {...baseProps} />);
+    await screen.findByText("Android Icebox");
+
+    const chips = screen.getAllByTestId("import-milestones-project-chip");
+    fireEvent.click(chips[0]); // ABT: Android Icebox + Shared Sprint
+    fireEvent.click(screen.getByTestId("import-milestones-select-all"));
+
+    // The file's t() mock doesn't interpolate params — count the checked
+    // row checkboxes instead (2 visible under the ABT filter).
+    const rows = screen.getAllByTestId("import-milestone-row");
+    const checked = rows.filter(
+      (r) => (within(r).getByRole("checkbox") as HTMLInputElement).checked
+    );
+    expect(rows).toHaveLength(2);
+    expect(checked).toHaveLength(2);
+  });
+
+  it("surfaces partial mapping-fetch warnings without blocking the list", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        items: multiItems.slice(1),
+        hasMore: false,
+        warnings: ["ABT: HTTP 400: boom"],
+      }),
+    });
+    render(<ImportMilestonesDialog {...baseProps} />);
+    await screen.findByText("Admin 9.2 S1");
+    expect(screen.getByTestId("import-milestones-warnings").textContent).toContain(
+      "ABT: HTTP 400: boom"
     );
   });
 });

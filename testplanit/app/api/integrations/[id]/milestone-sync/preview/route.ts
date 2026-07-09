@@ -93,11 +93,25 @@ export const GET = withAuditContext(
         }
       }
 
-      const mapping = await baseDb.integrationProject.findFirst({
-        where: { id: projectMappingId, isActive: true },
-        select: { externalProjectKey: true },
+      // The caller's mapping id anchors authorization; the preview itself
+      // spans EVERY active mapping for this project+integration (a project
+      // can map several Jira projects — import/auto-track already union
+      // them, so the picker must show the same universe). Each item is
+      // annotated with the mapping(s) whose fetch returned it so the
+      // dialog can label rows and offer a per-project filter.
+      const mappings = await baseDb.integrationProject.findMany({
+        where: {
+          projectIntegration: { integrationId, projectId: auth.projectId },
+          isActive: true,
+        },
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          externalProjectKey: true,
+          externalProjectName: true,
+        },
       });
-      if (!mapping) {
+      if (mappings.length === 0) {
         return NextResponse.json(
           { error: "Integration mapping not found" },
           { status: 404 }
@@ -120,14 +134,50 @@ export const GET = withAuditContext(
         );
       }
 
-      const result = await adapter.getExternalMilestones({
-        projectKey: mapping.externalProjectKey,
-        ...(kind ? { kind } : {}),
-        includeClosed,
-        ...(pageToken ? { pageToken } : {}),
-      });
+      const byId = new Map<string, any>();
+      const fetchErrors: string[] = [];
+      for (const mapping of mappings) {
+        const sourceProject = {
+          id: mapping.id,
+          key: mapping.externalProjectKey,
+          name: mapping.externalProjectName || mapping.externalProjectKey,
+        };
+        try {
+          const result = await adapter.getExternalMilestones({
+            projectKey: mapping.externalProjectKey,
+            ...(kind ? { kind } : {}),
+            includeClosed,
+            ...(pageToken ? { pageToken } : {}),
+          });
+          for (const item of result.items) {
+            const existing = byId.get(item.id);
+            if (existing) {
+              // Same artifact under multiple mappings (shared sprint
+              // boards) — record every source so project filtering
+              // matches either.
+              existing.sourceProjects.push(sourceProject);
+            } else {
+              byId.set(item.id, { ...item, sourceProjects: [sourceProject] });
+            }
+          }
+        } catch (error: any) {
+          fetchErrors.push(
+            `${sourceProject.key}: ${error?.message ?? "fetch failed"}`
+          );
+        }
+      }
 
-      return NextResponse.json(result);
+      // Every mapping failed ⇒ a real connectivity/credential problem the
+      // admin must see; partial failure degrades gracefully.
+      if (byId.size === 0 && fetchErrors.length === mappings.length) {
+        return NextResponse.json({ error: fetchErrors[0] }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        items: Array.from(byId.values()),
+        hasMore: false,
+        ...(fetchErrors.length > 0 ? { warnings: fetchErrors } : {}),
+      });
     } catch (error: any) {
       console.error("Error previewing milestone sync:", error);
       return NextResponse.json(

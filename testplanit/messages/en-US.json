@@ -2163,7 +2163,10 @@
       "importStarted": "Import started",
       "kindRelease": "Release",
       "kindSprint": "Sprint",
-      "selectAll": "Select all"
+      "selectAll": "Select all",
+      "searchPlaceholder": "Search releases and sprints...",
+      "emptyFiltered": "No milestones match your filters.",
+      "partialWarning": "Some Jira projects could not be fetched:"
     },
     "sync": {
       "managedByJira": "Managed by Jira",
