@@ -80,5 +80,5 @@ Only system administrators and project administrators can import issues — the 
 ## Related pages
 
 - [Issue Integrations (Administration)](../../integrations.md) — create and authorize integrations globally.
-- [Webhooks](../../webhooks.md) — receive issue updates and push events for this project.
+- [Webhooks](../../webhooks.md) — receive issue updates and push events for this project, including [milestone sync events](../../webhooks.md#milestone-sync-events-versionsprint) (version/sprint) for projects with synced Milestones.
 - [Advanced settings](advanced.md) — optionally require a linked issue when recording a failure.
