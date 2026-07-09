@@ -560,5 +560,67 @@ describe("JiraAdapter.getExternalMilestones", () => {
       expect(result.items).toHaveLength(1);
       expect(result.items[0].id).toBe("300");
     });
+
+    it("treats a 400 'board does not support sprints' as a skip — a Kanban-only project previews cleanly instead of throwing", async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({
+          values: [{ id: "7", name: "Kanban Board" }],
+          isLast: true,
+        })
+      );
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        text: () =>
+          Promise.resolve(
+            '{"errorMessages":["The board does not support sprints"],"errors":{}}'
+          ),
+      });
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "TEST",
+        kind: "ITERATION",
+        includeClosed: true,
+      });
+
+      expect(result.items).toEqual([]);
+    });
+
+    it("skips a 400 Kanban board but still returns sprints from the project's Scrum board", async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({
+          values: [
+            { id: "7", name: "Kanban Board" },
+            { id: "8", name: "Scrum Board" },
+          ],
+          isLast: true,
+        })
+      );
+      // Kanban board: 400 does-not-support-sprints
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        text: () =>
+          Promise.resolve(
+            '{"errorMessages":["The board does not support sprints"],"errors":{}}'
+          ),
+      });
+      // Scrum board succeeds
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({
+          values: [{ id: "301", name: "Sprint Y", state: "future" }],
+          isLast: true,
+        })
+      );
+
+      const result = await adapter.getExternalMilestones({
+        projectKey: "TEST",
+        kind: "ITERATION",
+        includeClosed: true,
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe("301");
+    });
   });
 });

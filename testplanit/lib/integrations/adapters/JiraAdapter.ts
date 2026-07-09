@@ -896,6 +896,19 @@ export class JiraAdapter extends BaseAdapter {
         }
       } catch (error) {
         const status = this.parseStatusFromError(error);
+        // A 400 from the sprint endpoint means the board type doesn't
+        // support sprints (Kanban boards) — an expected per-board
+        // condition, not a fetch failure. Skip it WITHOUT counting toward
+        // failedBoards, so a project whose only board is Kanban still
+        // previews its versions cleanly instead of erroring out.
+        if (status === 400) {
+          console.warn(
+            `[JiraAdapter] board %s does not support sprints — skipped (project %s)`,
+            boardId,
+            projectKey
+          );
+          continue;
+        }
         const level = status === null || status >= 500 ? "error" : "warn";
         console[level](
           `[JiraAdapter] fetchJiraSprints failed for board %s (project %s):`,
