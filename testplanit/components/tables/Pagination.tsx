@@ -108,8 +108,8 @@ const PaginationComponent: React.FC<PaginationProps> = ({
               isActive={currentPage === i}
               className={`px-2 py-1 h-auto ${
                 currentPage === i
-                  ? "text-primary-foreground no-underline bg-primary/50 pointer-events-none text-primary-background"
-                  : "hover:bg-primary/50 hover:text-accent-foreground"
+                  ? "text-primary-foreground no-underline bg-primary/50 pointer-events-none"
+                  : "hover:bg-primary/50 hover:text-primary-foreground"
               }`}
             >
               {i}

@@ -11,7 +11,7 @@ export function CalendarDisplay({
 }: CalendarDisplayProps) {
   return (
     <div className="flex flex-col items-center justify-center w-20 border-4 border-primary rounded-lg bg-primary text-accent">
-      <span className="text-sm font-semibold bg-accent text-secondary-foreground w-full text-center rounded-t-lg p-1">
+      <span className="text-sm font-semibold bg-accent text-accent-foreground w-full text-center rounded-t-lg p-1">
         <DateFormatter
           date={date}
           formatString={showYear ? "MMM yyyy" : "MMM"}
