@@ -139,17 +139,19 @@ describe("Milestone Auto-Completion Job", () => {
   });
 
   describe("JOB_AUTO_COMPLETE_MILESTONES — LOCK-04 (real processor invocation)", () => {
-    it("queries with integrationId: null so a synced milestone is never returned even when automaticCompletion is true and completedAt is in the past", async () => {
+    it("queries local-or-detached only so an actively-synced milestone is never returned even when automaticCompletion is true and completedAt is in the past", async () => {
       const { processor, JOB_AUTO_COMPLETE_MILESTONES } =
         await import("./forecastWorker");
 
-      // Real query behavior: a synced milestone (integrationId set) with
-      // automaticCompletion=true and a past completedAt would match every
-      // OTHER filter — only the integrationId: null clause excludes it.
-      // The mock simply returns [] (as a correctly-scoped real Postgres
-      // query would for a WHERE that includes integrationId: null when the
-      // only matching row has integrationId != null) so this test asserts
-      // the where-clause shape itself, not simulated DB filtering.
+      // Real query behavior: an actively-synced milestone (integrationId
+      // set, detachedAt null) with automaticCompletion=true and a past
+      // completedAt would match every OTHER filter — only the
+      // local-or-detached OR clause excludes it (LOCK-04 + HOOK-02: a
+      // converted milestone keeps integrationId non-null but becomes
+      // eligible again once detachedAt is set). The mock simply returns []
+      // (as a correctly-scoped real Postgres query would when the only
+      // matching row is actively synced) so this test asserts the
+      // where-clause shape itself, not simulated DB filtering.
       mockDb.milestones.findMany.mockResolvedValue([]);
 
       const job = {
@@ -162,7 +164,9 @@ describe("Milestone Auto-Completion Job", () => {
 
       expect(mockDb.milestones.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ integrationId: null }),
+          where: expect.objectContaining({
+            OR: [{ integrationId: null }, { detachedAt: { not: null } }],
+          }),
         })
       );
       // No milestone was returned (the synced one is filtered out), so
@@ -194,7 +198,9 @@ describe("Milestone Auto-Completion Job", () => {
 
       expect(mockDb.milestones.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ integrationId: null }),
+          where: expect.objectContaining({
+            OR: [{ integrationId: null }, { detachedAt: { not: null } }],
+          }),
         })
       );
       expect(mockDb.milestones.update).toHaveBeenCalledWith({
