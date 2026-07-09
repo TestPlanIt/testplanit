@@ -246,6 +246,20 @@ describe("MemberIssuesTable", () => {
     });
   });
 
+  it("shows the member total in the section header", () => {
+    mockFindManyMilestoneIssue.mockReturnValue({
+      data: [
+        buildRow(),
+        buildRow({ issueId: 11, issue: { id: 11, name: "ISS-11" } }),
+      ],
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+    renderWithQueryClient(<MemberIssuesTable milestoneId={450} projectId={370} />);
+    expect(screen.getByTestId("member-issues-count")).toHaveTextContent("2");
+  });
+
   it("collapses the section and remembers the preference in localStorage", async () => {
     window.localStorage.removeItem("tpi.milestone.memberIssues.collapsed");
     mockFindManyMilestoneIssue.mockReturnValue({

@@ -284,6 +284,15 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
               </Button>
             </CollapsibleTrigger>
             {t("sectionTitle")}
+            {!isLoadingMembers && (
+              <Badge
+                variant="secondary"
+                className="text-muted-foreground"
+                data-testid="member-issues-count"
+              >
+                {rows.length}
+              </Badge>
+            )}
             {isSyncing && (
               <Badge
                 variant="outline"
