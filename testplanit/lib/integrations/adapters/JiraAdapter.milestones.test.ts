@@ -228,6 +228,36 @@ describe("JiraAdapter.getExternalMilestones", () => {
     });
   });
 
+  describe("upstream error body sanitation", () => {
+    it("strips HTML error pages and truncates the excerpt in thrown errors", async () => {
+      const cloudfrontHtml = `<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01"><HTML><HEAD><TITLE>ERROR: The request could not be satisfied</TITLE></HEAD><BODY><H1>414 ERROR</H1><H2>The request could not be satisfied.</H2>${"x".repeat(600)}</BODY></HTML>`;
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 414,
+        text: () => Promise.resolve(cloudfrontHtml),
+      });
+
+      await expect(
+        adapter.getExternalMilestones({ projectKey: "TEST", kind: "RELEASE" })
+      ).rejects.toThrow(/HTTP 414: ERROR: The request could not be satisfied/);
+
+      try {
+        mockFetch.mockResolvedValueOnce({
+          ok: false,
+          status: 414,
+          text: () => Promise.resolve(cloudfrontHtml),
+        });
+        await adapter.getExternalMilestones({
+          projectKey: "TEST",
+          kind: "RELEASE",
+        });
+      } catch (error: any) {
+        expect(error.message).not.toContain("<HTML>");
+        expect(error.message.length).toBeLessThan(350);
+      }
+    });
+  });
+
   describe("ITERATION mapping + board discovery + dedupe", () => {
     it("maps sprint states to normalized state + rawState", async () => {
       mockFetch.mockResolvedValueOnce(

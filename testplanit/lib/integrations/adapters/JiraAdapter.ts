@@ -22,6 +22,26 @@ import {
 /**
  * Jira integration adapter implementing OAuth authentication
  */
+/**
+ * Upstream error bodies surface in UI alerts (search fan-out, import
+ * picker warnings). Proxies/CDNs answer with full HTML error pages (e.g.
+ * CloudFront 414 on an oversized JQL URL) — strip markup and truncate so
+ * users see "HTTP 414: The request could not be satisfied…", not a page
+ * of raw HTML.
+ */
+const UPSTREAM_ERROR_EXCERPT_MAX = 300;
+function sanitizeUpstreamErrorBody(body: string): string {
+  const text = /<[a-z!/][^>]*>/i.test(body)
+    ? body
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+    : body.trim();
+  return text.length > UPSTREAM_ERROR_EXCERPT_MAX
+    ? `${text.slice(0, UPSTREAM_ERROR_EXCERPT_MAX)}…`
+    : text;
+}
+
 export class JiraAdapter extends BaseAdapter {
   public supportsOAuth = true;
 
@@ -424,7 +444,9 @@ export class JiraAdapter extends BaseAdapter {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        throw new Error(
+          `HTTP ${response.status}: ${sanitizeUpstreamErrorBody(errorText)}`
+        );
       }
 
       return response.json();

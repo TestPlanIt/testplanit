@@ -25,6 +25,16 @@ export async function GET(
     );
   }
 
+  // Backstop for the client-side 255-char cap: an oversized term would be
+  // forwarded into the tracker's GET URL and bounce off URL-length limits
+  // (CloudFront 414) — reject with a clean message instead.
+  if (query.length > 512) {
+    return Response.json(
+      { error: "Search query is too long (max 512 characters)" },
+      { status: 400 }
+    );
+  }
+
   try {
     const db = await getEnhancedDb(session);
     const { id } = await params;

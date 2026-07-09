@@ -634,9 +634,13 @@ export function SearchIssuesDialog({
               <Input
                 placeholder={t("issues.searchPlaceholder")}
                 value={searchQuery}
+                // The term travels as a GET param into the tracker's JQL
+                // URL — an accidental large paste blows past URL limits
+                // (CloudFront 414). Cap well below them.
+                maxLength={255}
                 onChange={(e) => {
                   pollingForKeyRef.current = null;
-                  setSearchQuery(e.target.value);
+                  setSearchQuery(e.target.value.slice(0, 255));
                 }}
                 className="ps-10"
               />
