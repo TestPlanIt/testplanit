@@ -11,7 +11,7 @@ vi.mock("~/lib/multiTenantDb", () => ({
 }));
 
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
-import { publishTestRunWakeUp } from "./publish";
+import { publishMilestoneWakeUp, publishTestRunWakeUp } from "./publish";
 
 async function flushImmediate() {
   await new Promise<void>((resolve) => setImmediate(resolve));
@@ -109,35 +109,124 @@ describe("publishTestRunWakeUp", () => {
 });
 
 /**
- * Wave 0 RED scaffold (19-01) for `publishMilestoneWakeUp` — the
- * not-yet-added sibling to `publishTestRunWakeUp` above, implemented in
- * Plan 02 (D-13/D-14 SSE). Every behavior is enumerated with `it.todo(...)`
- * rather than a failing assertion so the suite runs green-on-todo; no
- * separate top-level import is needed since `publishTestRunWakeUp` is
- * already imported above and `it.todo` bodies never execute — Plan 02
- * fills these in with real assertions once `publishMilestoneWakeUp` exists.
+ * `publishMilestoneWakeUp` — the sibling to `publishTestRunWakeUp` above,
+ * mirroring its exact behavior for milestones (D-13/D-14).
  *
  * See: .planning/phases/19-webhooks-lifecycle/19-VALIDATION.md (19-02-T1),
  *      19-PATTERNS.md "SSE wake-up publish (D-14 hard constraint)".
  */
 describe("publishMilestoneWakeUp", () => {
-  it.todo(
-    "publishes the wake-up to both the per-milestone and per-project channels"
-  );
+  beforeEach(() => {
+    mockPublish.mockReset();
+    mockPublish.mockResolvedValue(1);
+    vi.mocked(getCurrentTenantId).mockReturnValue("acme");
+  });
 
-  it.todo("falls back to the default tenant when one is not resolved");
+  it("publishes the wake-up to both the per-milestone and per-project channels", async () => {
+    publishMilestoneWakeUp({
+      event: "milestone.updated",
+      milestoneId: 42,
+      projectId: 7,
+    });
+    await flushImmediate();
+    expect(mockPublish).toHaveBeenCalledTimes(2);
+    const channels = mockPublish.mock.calls.map((c) => c[0]);
+    expect(channels).toContain("live:tenant:acme:milestone:42");
+    expect(channels).toContain("live:tenant:acme:project:7:milestones");
+    const bodies = mockPublish.mock.calls.map((c) =>
+      JSON.parse(c[1] as string)
+    );
+    for (const body of bodies) {
+      expect(body).toEqual({
+        event: "milestone.updated",
+        milestoneId: 42,
+        projectId: 7,
+      });
+    }
+  });
 
-  it.todo(
-    "defers both publishes until after setImmediate (fires after the surrounding tx commits — D-14)"
-  );
+  it("falls back to the default tenant when one is not resolved", async () => {
+    vi.mocked(getCurrentTenantId).mockReturnValue(undefined);
+    publishMilestoneWakeUp({
+      event: "milestone.created",
+      milestoneId: 7,
+      projectId: 3,
+    });
+    await flushImmediate();
+    const channels = mockPublish.mock.calls.map((c) => c[0]);
+    expect(channels).toContain("live:tenant:default:milestone:7");
+    expect(channels).toContain("live:tenant:default:project:3:milestones");
+  });
 
-  it.todo(
-    "swallows a per-channel publish rejection independently (one channel failing does not block the other)"
-  );
+  it("defers both publishes until after setImmediate (fires after the surrounding tx commits — D-14)", async () => {
+    publishMilestoneWakeUp({
+      event: "milestone.membership_changed",
+      milestoneId: 1,
+      projectId: 2,
+    });
+    expect(mockPublish).not.toHaveBeenCalled();
+    await flushImmediate();
+    expect(mockPublish).toHaveBeenCalledTimes(2);
+  });
 
-  it.todo(
-    "sends a thin payload only ({ event, milestoneId, projectId, targetId? }) — never milestone data"
-  );
+  it("swallows a per-channel publish rejection independently (one channel failing does not block the other)", async () => {
+    mockPublish.mockRejectedValueOnce(new Error("valkey down"));
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    publishMilestoneWakeUp({
+      event: "milestone.converted",
+      milestoneId: 1,
+      projectId: 5,
+    });
+    await flushImmediate();
+    await flushImmediate(); // unhandled rejection .catch handler is a microtask
+    expect(spy).toHaveBeenCalled();
+    expect(mockPublish).toHaveBeenCalledTimes(2);
+    spy.mockRestore();
+  });
 
-  it.todo("no-ops when valkeyConnection is unavailable (single-pod dev)");
+  it("sends a thin payload only ({ event, milestoneId, projectId, targetId? }) — never milestone data", async () => {
+    publishMilestoneWakeUp({
+      event: "milestone.membership_changed",
+      milestoneId: 42,
+      projectId: 7,
+      targetId: 999,
+    });
+    await flushImmediate();
+    for (const call of mockPublish.mock.calls) {
+      const body = JSON.parse(call[1] as string);
+      expect(Object.keys(body).sort()).toEqual(
+        ["event", "milestoneId", "projectId", "targetId"].sort()
+      );
+    }
+  });
+});
+
+/**
+ * `publishMilestoneWakeUp` no-op when Valkey is unavailable (single-pod
+ * dev / SKIP_VALKEY_CONNECTION). Isolated in its own module registry reset
+ * because `~/lib/valkey`'s default export must resolve to `null` for this
+ * one behavior, unlike every other test in this file.
+ */
+describe("publishMilestoneWakeUp (no valkeyConnection)", () => {
+  it("no-ops when valkeyConnection is unavailable (single-pod dev)", async () => {
+    vi.resetModules();
+    const localMockPublish = vi.fn();
+    vi.doMock("~/lib/valkey", () => ({ default: null }));
+    vi.doMock("~/lib/multiTenantDb", () => ({
+      getCurrentTenantId: () => "acme",
+    }));
+    const { publishMilestoneWakeUp: publishWithNullConn } = await import(
+      "./publish"
+    );
+    publishWithNullConn({
+      event: "milestone.updated",
+      milestoneId: 1,
+      projectId: 1,
+    });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect(localMockPublish).not.toHaveBeenCalled();
+    vi.doUnmock("~/lib/valkey");
+    vi.doUnmock("~/lib/multiTenantDb");
+    vi.resetModules();
+  });
 });
