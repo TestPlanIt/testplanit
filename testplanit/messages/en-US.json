@@ -2178,7 +2178,15 @@
       "openInJira": "Open in Jira",
       "providerJira": "Jira",
       "sourceBadge": "{provider} · {kind} · {state}",
-      "syncNow": "Sync now"
+      "syncNow": "Sync now",
+      "unlinkMenuItem": "Unlink from {provider}",
+      "unlinkConfirmTitle": "Unlink milestone?",
+      "unlinkConfirmDescription": "This stops syncing with the tracker: fields become editable again, synced issue links become manual (yours to keep or remove), and re-linking is possible later by importing this artifact again.",
+      "unlinkConfirmAction": "Unlink",
+      "unlinkSuccess": "Milestone unlinked from the tracker.",
+      "unlinkError": "Failed to unlink the milestone.",
+      "sourceRemoved": "source removed in {provider}",
+      "mergedInto": "merged into {target}"
     },
     "members": {
       "sectionTitle": "Issues",
