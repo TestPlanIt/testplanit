@@ -65,8 +65,35 @@ function isCreatedEvent(eventType: string): boolean {
 async function resolveMilestoneEventProject(
   ref: MilestoneEventRef
 ): Promise<{ projectId: number; integrationId: number } | null> {
+  // Already-tracked artifacts resolve to the project of their OWN Milestones
+  // row — `[externalId, integrationId]` is globally unique, so the row is
+  // the authoritative owner. Mapping-based resolution (below) is only a
+  // fallback for untracked artifacts (created events): the same Jira project
+  // can be mapped into multiple TPI projects on one integration, and picking
+  // a mapping's project for a milestone that lives in the OTHER project
+  // makes every refresh/convert silently miss (WR-07).
+  const findTrackedProject = async (
+    integrationIds: number[]
+  ): Promise<{ projectId: number; integrationId: number } | null> => {
+    if (integrationIds.length === 0) return null;
+    const tracked = await baseDb.milestones.findFirst({
+      where: {
+        externalId: ref.externalId,
+        integrationId: { in: integrationIds },
+      },
+      select: { projectId: true, integrationId: true },
+    });
+    if (tracked?.integrationId == null) return null;
+    return {
+      projectId: tracked.projectId,
+      integrationId: tracked.integrationId,
+    };
+  };
+
   if (ref.kind === "RELEASE") {
-    const integrationProject = await baseDb.integrationProject.findFirst({
+    // ALL active mappings for this external project — NEVER findFirst/
+    // distinct: every mapping row must be matchable (CR-02 class).
+    const mappings = await baseDb.integrationProject.findMany({
       where: {
         externalProjectId: ref.externalProjectId,
         isActive: true,
@@ -82,27 +109,44 @@ async function resolveMilestoneEventProject(
       },
       orderBy: { createdAt: "asc" },
     });
-    if (!integrationProject) return null;
+    if (mappings.length === 0) return null;
+
+    const integrationIds = [
+      ...new Set(
+        mappings.map(
+          (m: {
+            projectIntegration: { projectId: number; integrationId: number };
+          }) => m.projectIntegration.integrationId
+        )
+      ),
+    ] as number[];
+    const tracked = await findTrackedProject(integrationIds);
+    if (tracked) return tracked;
+
+    // Untracked (e.g. version_created): fall back to the oldest mapping —
+    // deterministic, matching the pre-existing behavior for new artifacts.
     return {
-      projectId: integrationProject.projectIntegration.projectId,
-      integrationId: integrationProject.projectIntegration.integrationId,
+      projectId: mappings[0].projectIntegration.projectId,
+      integrationId: mappings[0].projectIntegration.integrationId,
     };
   }
 
   // ITERATION (sprint): resolve originBoardId -> project via the Jira
   // adapter's cached single-board lookup. A sprint's board could in theory
-  // belong to any integration configured in this deployment — probe each
-  // active Jira integration's mapped IntegrationProjects for a matching
-  // externalProjectId once the board lookup returns one, rather than trying
-  // every integration's adapter (which would mean an upstream call per
-  // integration per event). Instead: since `resolveBoardProject` is called
-  // per-integration, and the receiver only knows the RECEIVING
-  // webhookConfig's provider (JIRA) — not which specific integration owns
-  // the board — probe active JIRA integrations that have at least one
-  // IntegrationProject mapping, resolving the board against each until one
-  // yields a match. In the common single-Jira-integration deployment this
-  // is exactly one call.
-  const candidateIntegrations = await baseDb.integrationProject.findMany({
+  // belong to any integration configured in this deployment — the receiver
+  // only knows the RECEIVING webhookConfig's provider (JIRA), not which
+  // specific integration owns the board — so probe active JIRA integrations
+  // that have at least one IntegrationProject mapping, resolving the board
+  // against each until one yields a match. In the common
+  // single-Jira-integration deployment this is exactly one call.
+  //
+  // The FULL mapping list is kept for the match — no `distinct`, which
+  // ZenStack v3 executes as Postgres DISTINCT ON and therefore collapses a
+  // ProjectIntegration mapped to multiple Jira projects down to ONE
+  // arbitrary externalProjectId row, making boards owned by any
+  // non-retained mapping permanently unmatchable (CR-02). Integrations are
+  // deduped only for the board-lookup loop.
+  const mappings = await baseDb.integrationProject.findMany({
     where: {
       isActive: true,
       projectIntegration: {
@@ -116,15 +160,19 @@ async function resolveMilestoneEventProject(
         select: { projectId: true, integrationId: true },
       },
     },
-    distinct: ["projectIntegrationId"],
   });
 
-  const seenIntegrationIds = new Set<number>();
-  for (const candidate of candidateIntegrations) {
-    const integrationId = candidate.projectIntegration.integrationId;
-    if (seenIntegrationIds.has(integrationId)) continue;
-    seenIntegrationIds.add(integrationId);
+  const integrationIds = [
+    ...new Set(
+      mappings.map(
+        (m: {
+          projectIntegration: { projectId: number; integrationId: number };
+        }) => m.projectIntegration.integrationId
+      )
+    ),
+  ] as number[];
 
+  for (const integrationId of integrationIds) {
     const adapter = await integrationManager.getAdapter(
       String(integrationId),
       baseDb
@@ -134,10 +182,18 @@ async function resolveMilestoneEventProject(
     const boardProject = await adapter.resolveBoardProject(ref.originBoardId);
     if (!boardProject) continue;
 
-    const match = candidateIntegrations.find(
-      (c) =>
-        c.projectIntegration.integrationId === integrationId &&
-        c.externalProjectId === boardProject.projectId
+    // Board confirmed to exist on this integration's Jira — if the sprint
+    // is already tracked here, its own row wins (WR-07 parity for sprints).
+    const tracked = await findTrackedProject([integrationId]);
+    if (tracked) return tracked;
+
+    const match = mappings.find(
+      (m: {
+        externalProjectId: string;
+        projectIntegration: { projectId: number; integrationId: number };
+      }) =>
+        m.projectIntegration.integrationId === integrationId &&
+        m.externalProjectId === boardProject.projectId
     );
     if (match) {
       return {

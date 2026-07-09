@@ -26,9 +26,6 @@ const mocks = vi.hoisted(() => {
     },
   };
   const $transaction = vi.fn(async (fn: any) => fn(tx));
-  const integrationProjectFindFirst = vi.fn(
-    async (..._args: any[]): Promise<any> => null
-  );
   const integrationProjectFindMany = vi.fn(
     async (..._args: any[]): Promise<any[]> => []
   );
@@ -59,7 +56,6 @@ const mocks = vi.hoisted(() => {
     baseDb: {
       $transaction,
       integrationProject: {
-        findFirst: integrationProjectFindFirst,
         findMany: integrationProjectFindMany,
       },
       projectIntegration: { findUnique: projectIntegrationFindUnique },
@@ -74,7 +70,6 @@ const mocks = vi.hoisted(() => {
     integrationManager: { getAdapter: integrationManagerGetAdapter },
     integrationManagerGetAdapter,
     boardAdapter,
-    integrationProjectFindFirst,
     integrationProjectFindMany,
     projectIntegrationFindUnique,
     milestonesFindFirst,
@@ -147,8 +142,6 @@ const resetMocks = () => {
   mocks.tx.webhookEventDedup.create.mockResolvedValue({});
   mocks.tx.webhookEventDedup.findFirst.mockResolvedValue(null);
 
-  mocks.integrationProjectFindFirst.mockReset();
-  mocks.integrationProjectFindFirst.mockResolvedValue(null);
   mocks.integrationProjectFindMany.mockReset();
   mocks.integrationProjectFindMany.mockResolvedValue([]);
   mocks.projectIntegrationFindUnique.mockReset();
@@ -189,9 +182,9 @@ describe("applyInboundMilestoneEvent", () => {
       externalProjectId: "10050",
       merge: false,
     });
-    mocks.integrationProjectFindFirst.mockResolvedValue(
-      activeIntegrationProject()
-    );
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
 
     const result = await applyInboundMilestoneEvent(baseInput());
 
@@ -212,9 +205,9 @@ describe("applyInboundMilestoneEvent", () => {
       externalProjectId: "10050",
       merge: false,
     });
-    mocks.integrationProjectFindFirst.mockResolvedValue(
-      activeIntegrationProject()
-    );
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
     mocks.projectIntegrationFindUnique.mockResolvedValue({
       config: { milestoneSync: { autoTrack: false } },
     });
@@ -236,9 +229,9 @@ describe("applyInboundMilestoneEvent", () => {
       externalProjectId: "10050",
       merge: false,
     });
-    mocks.integrationProjectFindFirst.mockResolvedValue(
-      activeIntegrationProject()
-    );
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
     mocks.projectIntegrationFindUnique.mockResolvedValue({
       config: { milestoneSync: { autoTrack: true } },
     });
@@ -292,6 +285,139 @@ describe("applyInboundMilestoneEvent", () => {
     );
   });
 
+  it("REGRESSION (CR-02): a sprint event matches a project's SECOND mapping — the full mapping list is queried (no distinct collapse) and the board resolves against every mapping row", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "ITERATION",
+      externalId: "55",
+      originBoardId: "3",
+    });
+    // ONE ProjectIntegration (projectId 7 / integration 42) mapped to TWO
+    // Jira projects. A `distinct: ["projectIntegrationId"]` fetch would
+    // retain only the first row (externalProjectId "10050") and the board
+    // owned by the second mapping ("20060") could never match.
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject({ externalProjectId: "10050" }),
+      activeIntegrationProject({ externalProjectId: "20060" }),
+    ]);
+    mocks.boardAdapter.resolveBoardProject.mockResolvedValue({
+      projectId: "20060",
+      projectKey: "ADM",
+    });
+
+    const result = await applyInboundMilestoneEvent(
+      baseInput({
+        eventType: "sprint_updated",
+        payload: {
+          eventType: "sprint_updated",
+          issueKey: "",
+          externalStatus: "",
+          synthetic: false,
+          data: {
+            webhookEvent: "sprint_updated",
+            sprint: { id: 55, originBoardId: 3 },
+          },
+        },
+      })
+    );
+
+    // The mapping query must NOT collapse rows per projectIntegration.
+    const findManyArgs = mocks.integrationProjectFindMany.mock.calls[0]?.[0];
+    expect(findManyArgs).not.toHaveProperty("distinct");
+    // Integrations are still deduped for the board lookup — one upstream
+    // call, not one per mapping row.
+    expect(mocks.boardAdapter.resolveBoardProject).toHaveBeenCalledTimes(1);
+    expect(result.outcome).toBe("refreshed");
+    expect(mocks.performMilestoneRefresh).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      "55",
+      { minFreshnessSeconds: 15, projectId: 7 }
+    );
+  });
+
+  it("REGRESSION (CR-02): sprint_deleted for a milestone reachable only via a non-first mapping still converts (no silent lock-forever drop)", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "ITERATION",
+      externalId: "55",
+      originBoardId: "3",
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject({ externalProjectId: "10050" }),
+      activeIntegrationProject({ externalProjectId: "20060" }),
+    ]);
+    mocks.boardAdapter.resolveBoardProject.mockResolvedValue({
+      projectId: "20060",
+      projectKey: "ADM",
+    });
+    mocks.milestonesFindFirst.mockResolvedValue({
+      id: 777,
+      projectId: 7,
+      integrationId: 42,
+    });
+
+    const result = await applyInboundMilestoneEvent(
+      baseInput({
+        eventType: "sprint_deleted",
+        payload: {
+          eventType: "sprint_deleted",
+          issueKey: "",
+          externalStatus: "",
+          synthetic: false,
+          data: {
+            webhookEvent: "sprint_deleted",
+            sprint: { id: 55, originBoardId: 3 },
+          },
+        },
+      })
+    );
+
+    expect(result.outcome).toBe("converted");
+    expect(mocks.convertMilestoneToLocal).toHaveBeenCalledWith(
+      mocks.baseDb,
+      777,
+      "deleted",
+      undefined
+    );
+  });
+
+  it("REGRESSION (WR-07): a version event for a milestone tracked in the SECOND TPI project mapped to the same Jira project resolves via the milestone row, not the oldest mapping", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    // The same Jira project ("10050") mapped into TWO TPI projects (7 and 8)
+    // on one integration. The tracked Milestones row lives in project 8 —
+    // an oldest-mapping pick (project 7) would make performMilestoneRefresh
+    // return notFound forever.
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject({
+        projectIntegration: { projectId: 7, integrationId: 42 },
+      }),
+      activeIntegrationProject({
+        projectIntegration: { projectId: 8, integrationId: 42 },
+      }),
+    ]);
+    mocks.milestonesFindFirst.mockResolvedValue({
+      projectId: 8,
+      integrationId: 42,
+    });
+
+    const result = await applyInboundMilestoneEvent(baseInput());
+
+    expect(result.outcome).toBe("refreshed");
+    expect(mocks.performMilestoneRefresh).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      "10100",
+      { minFreshnessSeconds: 15, projectId: 8 }
+    );
+  });
+
   it("HOOK-01/D-03: an event whose resolved project has no active integration mapping is silently acked (200) with NO write", async () => {
     const applyInboundMilestoneEvent = await importSut();
     (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
@@ -300,7 +426,7 @@ describe("applyInboundMilestoneEvent", () => {
       externalProjectId: "unmapped-project",
       merge: false,
     });
-    mocks.integrationProjectFindFirst.mockResolvedValue(null);
+    mocks.integrationProjectFindMany.mockResolvedValue([]);
 
     const result = await applyInboundMilestoneEvent(baseInput());
 
@@ -320,11 +446,11 @@ describe("applyInboundMilestoneEvent", () => {
       externalProjectId: "10050",
       merge: false,
     });
-    mocks.integrationProjectFindFirst.mockResolvedValue(
+    mocks.integrationProjectFindMany.mockResolvedValue([
       activeIntegrationProject({
         projectIntegration: { projectId: 99, integrationId: 42 },
-      })
-    );
+      }),
+    ]);
 
     await applyInboundMilestoneEvent(baseInput());
 
@@ -347,9 +473,9 @@ describe("applyInboundMilestoneEvent", () => {
       externalProjectId: "10050",
       merge: false,
     });
-    mocks.integrationProjectFindFirst.mockResolvedValue(
-      activeIntegrationProject()
-    );
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
     mocks.milestonesFindFirst.mockResolvedValue({ id: 555 });
 
     const result = await applyInboundMilestoneEvent(
@@ -374,9 +500,9 @@ describe("applyInboundMilestoneEvent", () => {
       merge: true,
       mergedToExternalId: "10200",
     });
-    mocks.integrationProjectFindFirst.mockResolvedValue(
-      activeIntegrationProject()
-    );
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
     mocks.milestonesFindFirst.mockResolvedValue({ id: 555 });
 
     const result = await applyInboundMilestoneEvent(
@@ -441,9 +567,9 @@ describe("applyInboundMilestoneEvent", () => {
       externalProjectId: "10050",
       merge: false,
     });
-    mocks.integrationProjectFindFirst.mockResolvedValue(
-      activeIntegrationProject()
-    );
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
     mocks.milestonesFindFirst.mockResolvedValue(null);
 
     const result = await applyInboundMilestoneEvent(
@@ -479,9 +605,9 @@ describe("applyInboundMilestoneEvent", () => {
       externalProjectId: "10050",
       merge: false,
     });
-    mocks.integrationProjectFindFirst.mockResolvedValue(
-      activeIntegrationProject()
-    );
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
 
     await applyInboundMilestoneEvent(baseInput());
 
@@ -535,9 +661,9 @@ describe("applyInboundMilestoneEvent", () => {
       externalProjectId: "10050",
       merge: false,
     });
-    mocks.integrationProjectFindFirst.mockResolvedValue(
-      activeIntegrationProject()
-    );
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
     mocks.milestonesFindFirst.mockResolvedValue({ id: 555 });
 
     await applyInboundMilestoneEvent(
