@@ -33,7 +33,7 @@ const {
     mockCreateMilestoneIssue: vi.fn(),
     mockDeleteMilestoneIssue: vi.fn(),
     mockUpsertIssue: vi.fn(),
-    mockFindFirstProjectIntegration: vi.fn(() => ({ data: undefined })),
+    mockFindFirstProjectIntegration: vi.fn((..._args: any[]) => ({ data: undefined }) as any),
   };
 });
 
@@ -137,6 +137,7 @@ vi.mock("./search-issues-dialog", () => ({
 
 describe("MilestoneIssueManager", () => {
   beforeEach(() => {
+    mockFindFirstProjectIntegration.mockReturnValue({ data: undefined });
     mockCreateMilestoneIssue.mockReset();
     mockDeleteMilestoneIssue.mockReset();
     mockUpsertIssue.mockReset();
