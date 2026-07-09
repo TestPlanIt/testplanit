@@ -14,6 +14,10 @@ Before you begin, ensure you have the following installed:
 - [pnpm](https://pnpm.io/) v11 — the repository pins the exact version via the `packageManager` field in the root `package.json`, so the simplest setup is to run `corepack enable` (Corepack ships with Node.js) and let it provision the matching pnpm automatically
 - Git
 
+**System requirements:**
+
+- **RAM:** about **2 GB free** for `pnpm install` (the ZenStack code-generation step peaks under 0.5 GB) and about **8 GB free** for a production `pnpm build` (the Next.js/Turbopack build peaks around 7 GB across its process tree). Lower-memory machines can add swap; the steps then complete more slowly instead of being killed. For production, the [Docker images](./docker-setup.md) remain the recommended path — the same build there also fits ~8 GB.
+
 **Required Services:**
 
 - **[PostgreSQL](https://www.postgresql.org/)** - Main database
