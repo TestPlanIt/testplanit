@@ -10,6 +10,7 @@ import {
   type MilestoneExportData,
 } from "~/lib/services/milestoneExport";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
+import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import {
   calculateMilestoneCompletion,
   getMilestoneLinkedIssues,
@@ -142,6 +143,74 @@ export async function GET(
       status: issue.externalStatus,
     }));
 
+    // Member Issues panel (MLINK-04): the milestone's MilestoneIssue rows
+    // with the same per-status coverage the Issues section displays.
+    const UNTESTED_COLOR = "#9ca3af";
+    const memberRows = await baseDb.milestoneIssue.findMany({
+      where: { milestoneId },
+      include: {
+        issue: {
+          select: {
+            id: true,
+            name: true,
+            title: true,
+            externalKey: true,
+            externalStatus: true,
+            status: true,
+          },
+        },
+      },
+    });
+    const memberCoverage =
+      memberRows.length > 0 ? await getMemberCoverage(milestoneId) : {};
+
+    const memberIssues = memberRows
+      .map((row) => {
+        const breakdown = memberCoverage[row.issueId];
+        const coverageStatuses = (breakdown?.statuses ?? []).map((entry) => ({
+          statusName: entry.name,
+          count: entry.count,
+          colorValue: entry.color ?? UNTESTED_COLOR,
+        }));
+        return {
+          key: row.issue?.externalKey || row.issue?.name || String(row.issueId),
+          title: row.issue?.title || row.issue?.name || "",
+          status: row.issue?.externalStatus ?? row.issue?.status ?? null,
+          source: row.source as "SYNCED" | "MANUAL",
+          coverageStatuses,
+          untested: breakdown?.untested ?? 0,
+          // Same rule as the UI: uncovered = no completed outcome in scope.
+          uncovered: !breakdown || coverageStatuses.length === 0,
+        };
+      })
+      .sort((a, b) => a.key.localeCompare(b.key));
+
+    const memberTotalsByStatus = new Map<
+      string,
+      { statusName: string; count: number; colorValue: string }
+    >();
+    let memberUntestedTotal = 0;
+    let memberUncoveredIssues = 0;
+    for (const member of memberIssues) {
+      memberUntestedTotal += member.untested;
+      if (member.uncovered) memberUncoveredIssues += 1;
+      for (const entry of member.coverageStatuses) {
+        const existing = memberTotalsByStatus.get(entry.statusName);
+        if (existing) {
+          existing.count += entry.count;
+        } else {
+          memberTotalsByStatus.set(entry.statusName, { ...entry });
+        }
+      }
+    }
+    const memberCoverageTotals = {
+      statuses: Array.from(memberTotalsByStatus.values()).sort(
+        (a, b) => b.count - a.count
+      ),
+      untested: memberUntestedTotal,
+      uncoveredIssues: memberUncoveredIssues,
+    };
+
     // Review & Approval decisions for the contributing runs and sessions.
     const entityNameByKey = new Map<string, string>();
     for (const r of testRuns) entityNameByKey.set(`RUN:${r.id}`, r.name);
@@ -204,6 +273,8 @@ export async function GET(
       sessions,
       descendants,
       issues,
+      memberIssues,
+      memberCoverageTotals,
       reviewDecisions,
       generatedAt: new Date().toISOString(),
       projectId: milestone.projectId,

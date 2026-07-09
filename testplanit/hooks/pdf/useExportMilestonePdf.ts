@@ -185,6 +185,64 @@ export function useExportMilestonePdf({
         });
       }
 
+      // --- Member Issues (milestone-sync Issues panel, MLINK-04) ---
+      if (data.memberIssues.length > 0) {
+        pdf.renderSectionHeader(`Member Issues (${data.memberIssues.length})`);
+        const totals = data.memberCoverageTotals;
+        const totalsTokens: StatusToken[] = [
+          ...statusTokens(totals.statuses),
+          ...(totals.untested > 0
+            ? [
+                {
+                  text: `Untested: ${totals.untested}`,
+                  color: hexToRgb("#9ca3af"),
+                },
+              ]
+            : []),
+          ...(totals.uncoveredIssues > 0
+            ? [
+                {
+                  text: `Uncovered issues: ${totals.uncoveredIssues}`,
+                  color: hexToRgb("#d97706"),
+                },
+              ]
+            : []),
+        ];
+        if (totalsTokens.length > 0) {
+          pdf.renderStatusBreakdown("Coverage Totals", totalsTokens);
+        }
+        pdf.renderTable({
+          columns: [
+            { header: "Issue", width: 1.8 },
+            { header: "Title", width: 4 },
+            { header: "Status", width: 1.6 },
+            { header: "Coverage", width: 3.2 },
+            { header: "Source", width: 1.2 },
+          ],
+          rows: data.memberIssues.map((member) => [
+            member.key,
+            member.title,
+            member.status ?? "—",
+            member.uncovered
+              ? ([
+                  { text: "Uncovered", color: hexToRgb("#d97706") },
+                ] as StatusToken[])
+              : ([
+                  ...statusTokens(member.coverageStatuses),
+                  ...(member.untested > 0
+                    ? [
+                        {
+                          text: `Untested: ${member.untested}`,
+                          color: hexToRgb("#9ca3af"),
+                        },
+                      ]
+                    : []),
+                ] as StatusToken[]),
+            member.source === "SYNCED" ? "Synced" : "Manual",
+          ]),
+        });
+      }
+
       // --- Review & Approval decisions ---
       if (data.reviewDecisions.length > 0) {
         pdf.renderSectionHeader(
