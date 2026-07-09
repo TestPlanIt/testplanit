@@ -161,6 +161,66 @@ export abstract class BaseLlmAdapter {
   }
 
   /**
+   * Strip the query string and any embedded credentials from a URL so it's
+   * safe to include in user-facing error messages / logs (e.g. Gemini passes
+   * the API key as a `?key=` query param). Returns the input unchanged if it
+   * can't be parsed.
+   */
+  protected redactUrlForDisplay(url: string): string {
+    try {
+      const parsed = new URL(url);
+      return `${parsed.origin}${parsed.pathname}`;
+    } catch {
+      return url;
+    }
+  }
+
+  /**
+   * Build a concise one-line reason from a failed HTTP response. Handles the
+   * common JSON error shapes — Anthropic/OpenAI `{ error: { message } }`,
+   * FastAPI/LiteLLM `{ detail }`, and plain `{ message }` — and falls back to
+   * a truncated raw body. Used by `testConnection()` implementations to record
+   * why a connection attempt failed instead of dropping the reason.
+   */
+  protected summarizeHttpError(
+    status: number,
+    statusText: string,
+    body: string
+  ): string {
+    let detail = "";
+    try {
+      const json = JSON.parse(body);
+      const candidate =
+        json?.error?.message ??
+        (typeof json?.error === "string" ? json.error : undefined) ??
+        json?.detail ??
+        json?.message;
+      if (typeof candidate === "string") {
+        detail = candidate;
+      }
+    } catch {
+      detail = body.trim().slice(0, 300);
+    }
+    const base = statusText ? `${status} ${statusText}` : `${status}`;
+    return detail ? `${base}: ${detail}` : base;
+  }
+
+  /**
+   * Turn an exception thrown while attempting a connection into a concise,
+   * human-readable reason, distinguishing timeouts from other network errors.
+   * The URL is redacted so it's safe to surface.
+   */
+  protected describeConnectionError(url: string, error: any): string {
+    const safeUrl = this.redactUrlForDisplay(url);
+    if (error?.name === "TimeoutError" || error?.name === "AbortError") {
+      return `Request timed out (${safeUrl}).`;
+    }
+    return `Network error reaching ${safeUrl}: ${
+      error?.message ?? "unknown error"
+    }`;
+  }
+
+  /**
    * Get timeout for requests
    */
   getTimeout(): number {

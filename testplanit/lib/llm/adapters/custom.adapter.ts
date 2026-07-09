@@ -261,6 +261,7 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
   }
 
   async testConnection(): Promise<boolean> {
+    this.lastTestConnectionError = undefined;
     try {
       const testRequest = this.buildCustomRequest(
         {
@@ -279,8 +280,23 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
         signal: AbortSignal.timeout(5000),
       });
 
-      return response.status === 200 || response.status === 400;
-    } catch {
+      // 200 = success, 400 = reachable + authenticated (bad request body)
+      if (response.status === 200 || response.status === 400) {
+        return true;
+      }
+
+      const body = await response.text().catch(() => "");
+      this.lastTestConnectionError = this.summarizeHttpError(
+        response.status,
+        response.statusText,
+        body
+      );
+      return false;
+    } catch (error) {
+      this.lastTestConnectionError = this.describeConnectionError(
+        this.endpoint,
+        error
+      );
       return false;
     }
   }

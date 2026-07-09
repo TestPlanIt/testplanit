@@ -458,9 +458,13 @@ export class GeminiAdapter extends BaseLlmAdapter {
   }
 
   async testConnection(): Promise<boolean> {
+    this.lastTestConnectionError = undefined;
+    // The API key is passed as a `?key=` query param; keep the keyed URL out of
+    // any recorded error message (base helpers redact the query anyway).
+    const displayUrl = `${this.baseUrl}/models`;
     try {
       const response = await this.safeFetch(
-        `${this.baseUrl}/models?key=${this.apiKey}`,
+        `${displayUrl}?key=${this.apiKey}`,
         {
           method: "GET",
           headers: {
@@ -470,17 +474,25 @@ export class GeminiAdapter extends BaseLlmAdapter {
         }
       );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(
-          "Gemini test connection error:",
-          response.status,
-          errorText
-        );
+      if (response.ok) {
+        return true;
       }
 
-      return response.ok;
+      // Capture the real reason so the admin UI can show it instead of a
+      // generic "failed to connect".
+      const errorText = await response.text().catch(() => "");
+      this.lastTestConnectionError = this.summarizeHttpError(
+        response.status,
+        response.statusText,
+        errorText
+      );
+      console.error("Gemini test connection error:", response.status, errorText);
+      return false;
     } catch (error) {
+      this.lastTestConnectionError = this.describeConnectionError(
+        displayUrl,
+        error
+      );
       console.error("Gemini test connection error:", error);
       return false;
     }

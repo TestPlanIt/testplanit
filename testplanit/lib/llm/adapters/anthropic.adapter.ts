@@ -296,44 +296,9 @@ export class AnthropicAdapter extends BaseLlmAdapter {
       );
       return false;
     } catch (error: any) {
-      if (error?.name === "TimeoutError" || error?.name === "AbortError") {
-        this.lastTestConnectionError = `Request timed out after 10s (${url}).`;
-      } else {
-        this.lastTestConnectionError = `Network error reaching ${url}: ${
-          error?.message ?? "unknown error"
-        }`;
-      }
+      this.lastTestConnectionError = this.describeConnectionError(url, error);
       return false;
     }
-  }
-
-  /**
-   * Build a concise one-line reason from a failed HTTP response. Handles the
-   * common JSON error shapes — Anthropic/OpenAI `{ error: { message } }`,
-   * FastAPI/LiteLLM `{ detail }`, and plain `{ message }` — and falls back to
-   * a truncated raw body.
-   */
-  private summarizeHttpError(
-    status: number,
-    statusText: string,
-    body: string
-  ): string {
-    let detail = "";
-    try {
-      const json = JSON.parse(body);
-      const candidate =
-        json?.error?.message ??
-        (typeof json?.error === "string" ? json.error : undefined) ??
-        json?.detail ??
-        json?.message;
-      if (typeof candidate === "string") {
-        detail = candidate;
-      }
-    } catch {
-      detail = body.trim().slice(0, 300);
-    }
-    const base = statusText ? `${status} ${statusText}` : `${status}`;
-    return detail ? `${base}: ${detail}` : base;
   }
 
   getProviderName(): string {

@@ -306,6 +306,37 @@ describe("AnthropicAdapter", () => {
 
       const result = await adapter.testConnection();
       expect(result).toBe(false);
+      expect(adapter.getLastTestConnectionError()).toContain(
+        "Network error reaching"
+      );
+      expect(adapter.getLastTestConnectionError()).toContain("Network error");
+    });
+
+    it("should capture the provider message on a non-2xx/400 response", async () => {
+      const config = createTestConfig();
+      const adapter = new AnthropicAdapter(config);
+
+      // Real-world LiteLLM proxy response: the key can list models but isn't
+      // authorized for the selected one.
+      mockFetch.mockResolvedValueOnce({
+        status: 403,
+        statusText: "Forbidden",
+        text: async () =>
+          JSON.stringify({
+            error: {
+              message:
+                "User not allowed to access model. Tried to access claude-haiku-4-5",
+              type: "key_model_access_denied",
+              code: "403",
+            },
+          }),
+      });
+
+      const result = await adapter.testConnection();
+      expect(result).toBe(false);
+      expect(adapter.getLastTestConnectionError()).toBe(
+        "403 Forbidden: User not allowed to access model. Tried to access claude-haiku-4-5"
+      );
     });
   });
 
