@@ -15,11 +15,7 @@ import type {
   MilestoneIssue as MilestoneIssueRow,
 } from "~/zenstack/models";
 import { buildSimpleUrlLink } from "~/lib/integrations/simpleUrl";
-import {
-  CoverageBreakdown,
-  CoverageChip,
-  useCoveragePipColors,
-} from "./CoverageChip";
+import { CoverageBreakdown, CoverageChip } from "./CoverageChip";
 
 /**
  * Row shape for the Member Issues table: a `MilestoneIssue` link row plus its
@@ -97,9 +93,6 @@ export function useMemberIssueColumns({
   projectId,
   renderRowActions,
 }: UseMemberIssueColumnsArgs): ColumnDef<ExtendedMemberIssue>[] {
-  // Status-driven pip colors for the coverage column (matrix display model).
-  const pipColors = useCoveragePipColors(projectId);
-  const pipColorsKey = `${pipColors.passed ?? ""}|${pipColors.failed ?? ""}`;
   const {
     key: tKey,
     description: tDescription,
@@ -254,7 +247,7 @@ export function useMemberIssueColumns({
         size: 260,
         minSize: 150,
         maxSize: 420,
-        cell: ({ row }) => <CoverageChip breakdown={row.original.coverage} pipColors={pipColors} />,
+        cell: ({ row }) => <CoverageChip breakdown={row.original.coverage} />,
       },
       {
         id: "source",
@@ -293,9 +286,6 @@ export function useMemberIssueColumns({
 
     return columns;
   }, [
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- pipColorsKey
-    // stands in for the pipColors object to keep column identity stable.
-    pipColorsKey,
     tKey,
     tDescription,
     tStatus,

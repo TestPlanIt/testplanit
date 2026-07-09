@@ -55,6 +55,7 @@ const baseRow: ExtendedMemberIssue = {
     inProgress: 0,
     notRun: 1,
     uncovered: false,
+    statuses: [],
   },
 };
 

@@ -18,6 +18,7 @@ describe("CoverageChip", () => {
           inProgress: 0,
           notRun: 0,
           uncovered: true,
+          statuses: [],
         }}
       />
     );
@@ -34,7 +35,7 @@ describe("CoverageChip", () => {
     expect(screen.getByText("coverageUncovered")).toBeInTheDocument();
   });
 
-  it("renders passed/failed/inProgress/notRun segments when covered", () => {
+  it("renders one pip per actual status among latest results, plus Untested", () => {
     render(
       <CoverageChip
         breakdown={{
@@ -44,18 +45,23 @@ describe("CoverageChip", () => {
           inProgress: 1,
           notRun: 0,
           uncovered: false,
+          statuses: [
+            { statusId: 1, name: "Passed", color: "#22c55e", count: 2 },
+            { statusId: 2, name: "Failed", color: "#ef4444", count: 1 },
+            { statusId: 5, name: "In Automation", color: "#3b82f6", count: 1 },
+          ],
         }}
       />
     );
-    // Matrix-style pips: passed 2, failed 1, untested 1 (inProgress folds
-    // into Untested — no completed outcome yet); tooltip keeps the full
-    // four-way breakdown.
-    expect(screen.getByLabelText("coveragePassed: 2")).toBeInTheDocument();
-    expect(screen.getByLabelText("coverageFailed: 1")).toBeInTheDocument();
-    expect(screen.getByLabelText("coverageUntested: 1")).toBeInTheDocument();
+    // Matrix display model: real project statuses, not buckets.
+    expect(screen.getByLabelText("Passed: 2")).toBeInTheDocument();
+    expect(screen.getByLabelText("Failed: 1")).toBeInTheDocument();
+    expect(screen.getByLabelText("In Automation: 1")).toBeInTheDocument();
+    // All 4 linked cases have latest results — no Untested pip.
+    expect(screen.queryByLabelText(/coverageUntested/)).not.toBeInTheDocument();
     expect(screen.getByTestId("coverage-pips")).toHaveAttribute(
       "title",
-      expect.stringContaining("coverageInProgress: 1")
+      expect.stringContaining("In Automation: 1")
     );
   });
 
@@ -69,6 +75,7 @@ describe("CoverageChip", () => {
           inProgress: 0,
           notRun: 2,
           uncovered: false,
+          statuses: [],
         }}
       />
     );

@@ -1,7 +1,5 @@
 "use client";
 
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import { useTranslations } from "next-intl";
 import { cn } from "~/utils";
@@ -10,6 +8,13 @@ import {
   resolvePipColor,
 } from "@/components/iterations/IterationStatusPip";
 
+export interface CoverageStatusCount {
+  statusId: number;
+  name: string;
+  color: string | null;
+  count: number;
+}
+
 export interface CoverageBreakdown {
   linkedCaseCount: number;
   passed: number;
@@ -17,59 +22,28 @@ export interface CoverageBreakdown {
   inProgress: number;
   notRun: number;
   uncovered: boolean;
-}
-
-/**
- * Coverage pip colors come from the project's real Test-Run statuses (the
- * same admin-configured colors the Parameterized Test Iteration Matrix
- * uses): passed = first isSuccess status, failed = first isFailure status.
- * Untested falls back to the pip's notStarted semantic token.
- */
-export function useCoveragePipColors(projectId: number): {
-  passed?: string;
-  failed?: string;
-} {
-  const { data: statuses } = useClientQueries(schema).status.useFindMany({
-    where: {
-      AND: [
-        { isEnabled: true },
-        { isDeleted: false },
-        { projects: { some: { projectId: Number(projectId) } } },
-        { scope: { some: { scope: { name: "Test Run" } } } },
-      ],
-    },
-    include: { color: { select: { value: true } } },
-    orderBy: { order: "asc" },
-  });
-
-  return {
-    passed: statuses?.find((status) => status.isSuccess)?.color?.value,
-    failed: statuses?.find((status) => status.isFailure)?.color?.value,
-  };
+  statuses: CoverageStatusCount[];
 }
 
 interface CoverageChipProps {
   breakdown: CoverageBreakdown | undefined;
-  /** Status-driven pip colors (useCoveragePipColors). */
-  pipColors?: { passed?: string; failed?: string };
   className?: string;
 }
 
 /**
  * Per-issue coverage display for the Member Issues table (MLINK-04,
- * D-04/D-05), rendered the way the Parameterized Test Iteration Matrix
- * shows results: status pips (project status colors) with counts —
- * Passed / Failed / Untested — plus the shared status legend at the
- * section level. In-progress executions count toward Untested (no
- * completed outcome yet); the tooltip carries the full breakdown.
- * Issues with no linked cases keep the visually distinct "Uncovered"
- * chip (outlined/amber) — a gap warning, not another result color (D-05).
+ * D-04/D-05), using the Parameterized Test Iteration Matrix display model:
+ * one status pip per ACTUAL project status among the linked cases' latest
+ * in-scope results, tinted with the admin-configured status color, plus an
+ * Untested pip (muted notStarted token) for linked cases with no in-scope
+ * result. The shared IterationStatusLegendPopover at the section level
+ * explains the colors — and now matches exactly, since any project status
+ * can appear here.
+ *
+ * Issues with no linked cases keep the visually distinct "Uncovered" chip
+ * (warning tokens) — a gap warning, not another result color (D-05).
  */
-export function CoverageChip({
-  breakdown,
-  pipColors,
-  className,
-}: CoverageChipProps) {
+export function CoverageChip({ breakdown, className }: CoverageChipProps) {
   const t = useTranslations("milestones.members");
 
   if (!breakdown || breakdown.uncovered) {
@@ -88,25 +62,22 @@ export function CoverageChip({
     );
   }
 
-  const untested = breakdown.notRun + breakdown.inProgress;
+  const statuses = breakdown.statuses ?? [];
+  const testedCount = statuses.reduce((sum, entry) => sum + entry.count, 0);
+  const untested = Math.max(0, breakdown.linkedCaseCount - testedCount);
+
   const segments: Array<{
     key: string;
     label: string;
     count: number;
     color: string;
   }> = [
-    {
-      key: "passed",
-      label: t("coveragePassed"),
-      count: breakdown.passed,
-      color: resolvePipColor("passed", pipColors?.passed),
-    },
-    {
-      key: "failed",
-      label: t("coverageFailed"),
-      count: breakdown.failed,
-      color: resolvePipColor("failed", pipColors?.failed),
-    },
+    ...statuses.map((entry) => ({
+      key: `status-${entry.statusId}`,
+      label: entry.name,
+      count: entry.count,
+      color: resolvePipColor("passed", entry.color ?? undefined),
+    })),
     {
       key: "untested",
       label: t("coverageUntested"),
@@ -115,12 +86,9 @@ export function CoverageChip({
     },
   ].filter((segment) => segment.count > 0);
 
-  const tooltip = [
-    `${t("coveragePassed")}: ${breakdown.passed}`,
-    `${t("coverageFailed")}: ${breakdown.failed}`,
-    `${t("coverageInProgress")}: ${breakdown.inProgress}`,
-    `${t("coverageNotRun")}: ${breakdown.notRun}`,
-  ].join(" · ");
+  const tooltip = segments
+    .map((segment) => `${segment.label}: ${segment.count}`)
+    .join(" \u00b7 ");
 
   return (
     <div

@@ -38,6 +38,13 @@ import { authOptions } from "~/server/auth";
  * matches the existing milestone-detail read surface, which is reached only
  * through UI already scoped to projects the session can see.
  */
+export type CoverageStatusCount = {
+  statusId: number;
+  name: string;
+  color: string | null;
+  count: number;
+};
+
 export type CoverageBreakdown = {
   linkedCaseCount: number;
   passed: number;
@@ -45,6 +52,14 @@ export type CoverageBreakdown = {
   inProgress: number;
   notRun: number;
   uncovered: boolean;
+  /**
+   * Latest-result counts per ACTUAL project status (the iteration-matrix
+   * display model): one entry per distinct status among the linked cases'
+   * latest in-scope results, with the admin-configured color. Cases with
+   * no in-scope result are not represented here — the UI derives its
+   * Untested count as linkedCaseCount - sum(statuses[].count).
+   */
+  statuses: CoverageStatusCount[];
 };
 
 export type MemberCoverageResponse = Record<number, CoverageBreakdown>;
@@ -160,6 +175,67 @@ export async function GET(
       GROUP BY lc."issueId"
     `;
 
+    // Per-status counts for the same latest-result set (matrix display
+    // model): group by the result's real Status with its color.
+    const statusRows = await baseDb.$queryRaw<
+      Array<{
+        issueId: number;
+        statusId: number;
+        name: string;
+        color: string | null;
+        count: bigint | number;
+      }>
+    >`
+      WITH linked_cases AS (
+        SELECT rci."issueId", rci."caseId"
+        FROM "RepositoryCaseIssue" rci
+        WHERE rci."issueId" = ANY(${memberIssueIds}::int[])
+      ),
+      latest_result AS (
+        SELECT DISTINCT ON (lc."issueId", lc."caseId")
+          lc."issueId",
+          lc."caseId",
+          trc.id AS "testRunCaseId",
+          trc."statusId" AS "statusId"
+        FROM linked_cases lc
+        LEFT JOIN "TestRunCases" trc
+          ON trc."repositoryCaseId" = lc."caseId"
+          AND trc."isDeleted" = false
+        LEFT JOIN "TestRuns" tr
+          ON tr.id = trc."testRunId"
+          AND tr."milestoneId" = ANY(${scopedMilestoneIds}::int[])
+        WHERE tr.id IS NOT NULL OR trc.id IS NULL
+        ORDER BY lc."issueId", lc."caseId", trc."completedAt" DESC NULLS LAST, trc.id DESC
+      )
+      SELECT
+        lr."issueId" AS "issueId",
+        lr."statusId" AS "statusId",
+        s.name AS "name",
+        c.value AS "color",
+        COUNT(*) AS "count"
+      FROM latest_result lr
+      JOIN "Status" s ON s.id = lr."statusId"
+      LEFT JOIN "Color" c ON c.id = s."colorId"
+      WHERE lr."testRunCaseId" IS NOT NULL
+      GROUP BY lr."issueId", lr."statusId", s.name, c.value
+      ORDER BY lr."issueId", COUNT(*) DESC
+    `;
+
+    const statusesByIssueId = new Map<number, CoverageStatusCount[]>();
+    for (const row of statusRows) {
+      // Guard: only well-formed per-status rows (also keeps unit-test mocks
+      // that stub a single shared $queryRaw return inert here).
+      if (typeof row.statusId !== "number" || !row.name) continue;
+      const list = statusesByIssueId.get(row.issueId) ?? [];
+      list.push({
+        statusId: row.statusId,
+        name: row.name,
+        color: row.color ?? null,
+        count: Number(row.count),
+      });
+      statusesByIssueId.set(row.issueId, list);
+    }
+
     const breakdownByIssueId = new Map<number, CoverageBreakdown>();
     rows.forEach((row) => {
       breakdownByIssueId.set(row.issueId, {
@@ -169,6 +245,7 @@ export async function GET(
         inProgress: Number(row.inProgress),
         notRun: Number(row.notRun),
         uncovered: Number(row.linkedCaseCount) === 0,
+        statuses: statusesByIssueId.get(row.issueId) ?? [],
       });
     });
 
@@ -181,6 +258,7 @@ export async function GET(
         inProgress: 0,
         notRun: 0,
         uncovered: true,
+        statuses: [],
       };
     });
 
