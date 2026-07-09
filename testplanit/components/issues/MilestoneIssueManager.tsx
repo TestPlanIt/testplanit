@@ -94,6 +94,24 @@ export function MilestoneIssueManager({
     useClientQueries(schema).milestoneIssue.useCreate();
   const { mutateAsync: upsertIssue } = useClientQueries(schema).issue.useUpsert();
 
+  // MLINK-03: manual linking works on ANY milestone, synced or local. A
+  // LOCAL milestone has no integrationId of its own, but the search dialog
+  // still finds external issues through the PROJECT's active integration —
+  // resolve that as the fallback so external selections can be upserted
+  // (a project has at most one active integration; see
+  // project_single_active_integration).
+  const { data: activeProjectIntegration } = useClientQueries(
+    schema
+  ).projectIntegration.useFindFirst(
+    {
+      where: { projectId, isActive: true },
+      select: { integrationId: true },
+    },
+    { enabled: integrationId == null }
+  );
+  const resolvedIntegrationId =
+    integrationId ?? activeProjectIntegration?.integrationId;
+
   const linkExistingIssue = async (issueId: number) => {
     await createMilestoneIssue({
       data: {
@@ -110,7 +128,7 @@ export function MilestoneIssueManager({
       let issueId: number;
 
       if (issue.isExternal) {
-        if (!integrationId) {
+        if (!resolvedIntegrationId) {
           throw new Error("No active integration to resolve external issue");
         }
         const externalId = issue.externalId || issue.key || issue.id;
@@ -118,7 +136,7 @@ export function MilestoneIssueManager({
           where: {
             externalId_integrationId: {
               externalId: String(externalId),
-              integrationId,
+              integrationId: resolvedIntegrationId,
             },
           },
           create: {
@@ -129,7 +147,7 @@ export function MilestoneIssueManager({
             externalUrl: issue.externalUrl,
             externalStatus: issue.externalStatus || issue.status,
             status: issue.status,
-            integration: { connect: { id: integrationId } },
+            integration: { connect: { id: resolvedIntegrationId } },
             project: { connect: { id: projectId } },
           } as any,
           update: {

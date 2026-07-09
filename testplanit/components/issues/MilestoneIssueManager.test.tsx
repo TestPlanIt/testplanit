@@ -27,11 +27,13 @@ const {
   mockCreateMilestoneIssue,
   mockDeleteMilestoneIssue,
   mockUpsertIssue,
+  mockFindFirstProjectIntegration,
 } = vi.hoisted(() => {
   return {
     mockCreateMilestoneIssue: vi.fn(),
     mockDeleteMilestoneIssue: vi.fn(),
     mockUpsertIssue: vi.fn(),
+    mockFindFirstProjectIntegration: vi.fn(() => ({ data: undefined })),
   };
 });
 
@@ -43,6 +45,9 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     },
     issue: {
       useUpsert: () => ({ mutateAsync: mockUpsertIssue }),
+    },
+    projectIntegration: {
+      useFindFirst: (...args: any[]) => mockFindFirstProjectIntegration(...args),
     },
   }),
 }));
@@ -160,6 +165,43 @@ describe("MilestoneIssueManager", () => {
     });
     // Internal issue already has an Issue row — no upsert call needed.
     expect(mockUpsertIssue).not.toHaveBeenCalled();
+  });
+
+  it("links an external issue on a LOCAL milestone by resolving the project's active integration", async () => {
+    // The 8.14 regression: a local milestone has no integrationId of its
+    // own, but the project's active integration must be used as fallback.
+    mockFindFirstProjectIntegration.mockReturnValue({
+      data: { integrationId: 9 },
+    });
+    mockUpsertIssue.mockResolvedValue({ id: 77 });
+    mockCreateMilestoneIssue.mockResolvedValue({});
+
+    renderWithQueryClient(
+      <MilestoneIssueManager
+        milestoneId={348}
+        projectId={370}
+        linkedIssueIds={[]}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("member-issues-add-button"));
+    fireEvent.click(screen.getByTestId("select-external-issue"));
+
+    await waitFor(() => {
+      expect(mockUpsertIssue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            externalId_integrationId: {
+              externalId: "10002",
+              integrationId: 9,
+            },
+          },
+        })
+      );
+    });
+    expect(mockCreateMilestoneIssue).toHaveBeenCalledWith({
+      data: { milestoneId: 348, issueId: 77, source: "MANUAL" },
+    });
   });
 
   it("resolves an external issue via issue.useUpsert (externalId_integrationId) before linking", async () => {
