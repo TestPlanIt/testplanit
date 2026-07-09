@@ -94,7 +94,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
     refetch: refetchMembers,
   } = useClientQueries(schema).milestoneIssue.useFindMany({
     where: { milestoneId },
-    include: { issue: true },
+    include: { issue: { include: { integration: true } } },
   });
 
   // Needed so MilestoneIssueManager can resolve a search-selected external

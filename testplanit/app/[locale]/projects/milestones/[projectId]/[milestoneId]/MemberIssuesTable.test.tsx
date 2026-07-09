@@ -56,6 +56,10 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
+vi.mock("@/components/tables/IssuesDisplay", () => ({
+  IssuesDisplay: ({ name }: any) => <span data-testid="issues-display">{name}</span>,
+}));
+
 vi.mock("@/components/IssueStatusDisplay", () => ({
   IssueStatusDisplay: ({ status }: any) => (
     <span data-testid="status-display">{status}</span>

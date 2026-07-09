@@ -2179,7 +2179,7 @@
       "sectionDescription": "What's in this milestone and how its testing is going.",
       "syncing": "Syncing…",
       "refresh": "Refresh",
-      "columnKey": "Key",
+      "columnKey": "Name",
       "columnTitle": "Title",
       "columnStatus": "Status",
       "columnCoverage": "Coverage",

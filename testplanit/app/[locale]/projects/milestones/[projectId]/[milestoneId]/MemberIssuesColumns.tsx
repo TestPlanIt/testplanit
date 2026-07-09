@@ -1,9 +1,14 @@
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { Badge } from "@/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import type { Issue, MilestoneIssue as MilestoneIssueRow } from "~/zenstack/models";
-import { Link } from "~/lib/navigation";
+import type {
+  Integration,
+  Issue,
+  MilestoneIssue as MilestoneIssueRow,
+} from "~/zenstack/models";
+import { buildSimpleUrlLink } from "~/lib/integrations/simpleUrl";
 import { CoverageBreakdown, CoverageChip } from "./CoverageChip";
 
 /**
@@ -18,8 +23,29 @@ import { CoverageBreakdown, CoverageChip } from "./CoverageChip";
  * naming conflict.
  */
 export interface ExtendedMemberIssue extends MilestoneIssueRow {
-  issue: Issue;
+  issue: Issue & { integration?: Integration | null };
   coverage?: CoverageBreakdown;
+}
+
+/**
+ * Same external-URL resolution the project Issues page uses: SIMPLE_URL
+ * issues build their link from the integration's baseUrl; tracker issues
+ * use the stored externalUrl.
+ */
+function resolveMemberIssueUrl(
+  issue: ExtendedMemberIssue["issue"]
+): string | null {
+  if (issue.integration?.provider === "SIMPLE_URL") {
+    const settings =
+      issue.integration.settings &&
+      typeof issue.integration.settings === "object"
+        ? (issue.integration.settings as Record<string, unknown>)
+        : null;
+    const baseUrl =
+      typeof settings?.baseUrl === "string" ? settings.baseUrl : undefined;
+    return buildSimpleUrlLink(baseUrl, issue.externalId);
+  }
+  return issue.externalUrl ?? null;
 }
 
 export interface MemberIssuesColumnsTranslations {
@@ -72,17 +98,34 @@ export function useMemberIssueColumns({
         size: 160,
         minSize: 100,
         maxSize: 320,
-        cell: ({ row }) => {
+        cell: ({ row, column }) => {
           const issue = row.original.issue;
           if (!issue) return <span className="text-muted-foreground">-</span>;
           return (
-            <Link
-              href={`/projects/issues/${projectId}?issueId=${issue.id}`}
-              className="text-sm font-medium hover:text-primary hover:underline"
-              onClick={(e) => e.stopPropagation()}
+            <div
+              data-row-id={issue.id}
+              style={{ maxWidth: column.getSize() }}
+              className="overflow-hidden"
             >
-              {issue.name}
-            </Link>
+              <IssuesDisplay
+                id={issue.id}
+                name={issue.name}
+                externalId={issue.externalId}
+                externalUrl={resolveMemberIssueUrl(issue)}
+                title={issue.title}
+                description={issue.description}
+                status={issue.externalStatus}
+                priority={issue.priority}
+                lastSyncedAt={issue.lastSyncedAt}
+                projectIds={[projectId]}
+                size="small"
+                data={issue.data}
+                integrationProvider={issue.integration?.provider}
+                integrationId={issue.integration?.id}
+                issueTypeName={issue.issueTypeName}
+                issueTypeIconUrl={issue.issueTypeIconUrl}
+              />
+            </div>
           );
         },
       },
