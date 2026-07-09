@@ -781,7 +781,7 @@ export class JiraAdapter extends BaseAdapter {
             ? response.values
             : [];
         for (const raw of pageValues) {
-          const mapped = this.mapJiraVersion(raw);
+          const mapped = this.mapJiraVersion(raw, projectKey);
           if (mapped) versions.push(mapped);
         }
 
@@ -810,7 +810,15 @@ export class JiraAdapter extends BaseAdapter {
     return versions;
   }
 
-  private mapJiraVersion(raw: any): ExternalMilestone | null {
+  /** Admin-entered baseUrl may carry a trailing slash — strip for link building. */
+  private userFacingBaseUrl(): string {
+    return (this.baseUrl ?? "").replace(/\/+$/, "");
+  }
+
+  private mapJiraVersion(
+    raw: any,
+    projectKey: string
+  ): ExternalMilestone | null {
     if (!raw || raw.id == null) return null;
 
     const released = raw.released === true;
@@ -839,7 +847,9 @@ export class JiraAdapter extends BaseAdapter {
       endDate: raw.releaseDate ? new Date(raw.releaseDate) : undefined,
       state,
       rawState,
-      url: raw.self,
+      // raw.self is the REST resource (JSON) — link users to the project's
+      // releases page for this version instead. Same path on Cloud and DC.
+      url: `${this.userFacingBaseUrl()}/projects/${encodeURIComponent(projectKey)}/versions/${encodeURIComponent(String(raw.id))}`,
     };
   }
 
@@ -1024,6 +1034,15 @@ export class JiraAdapter extends BaseAdapter {
       endDate: raw.endDate ? new Date(raw.endDate) : undefined,
       state,
       rawState,
+      // Sprints have no user-facing permalink in their payload; the origin
+      // board is the closest stable target. RapidBoard.jspa is a
+      // deployment-agnostic redirect (Cloud forwards to the modern board
+      // UI; Server/DC serves it directly).
+      ...(raw.originBoardId != null
+        ? {
+            url: `${this.userFacingBaseUrl()}/secure/RapidBoard.jspa?rapidView=${encodeURIComponent(String(raw.originBoardId))}&sprint=${encodeURIComponent(String(raw.id))}`,
+          }
+        : {}),
     };
   }
 

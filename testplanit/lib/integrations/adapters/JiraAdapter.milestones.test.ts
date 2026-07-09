@@ -179,6 +179,55 @@ describe("JiraAdapter.getExternalMilestones", () => {
     });
   });
 
+  describe("user-facing external URLs", () => {
+    it("maps a version to the project releases page, not the REST self link", async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({
+          values: [
+            {
+              id: 10000,
+              name: "v1.0",
+              released: false,
+              archived: false,
+              self: "https://test.atlassian.net/rest/api/3/version/10000",
+            },
+          ],
+          isLast: true,
+        })
+      );
+      const result = await adapter.getExternalMilestones({
+        projectKey: "TEST",
+        kind: "RELEASE",
+        includeClosed: true,
+      });
+      expect(result.items[0].url).toBe(
+        "https://test.atlassian.net/projects/TEST/versions/10000"
+      );
+    });
+
+    it("maps a sprint to its origin board via the deployment-agnostic redirect", async () => {
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({ values: [{ id: "9", name: "Board" }], isLast: true })
+      );
+      mockFetch.mockResolvedValueOnce(
+        jsonResponse({
+          values: [
+            { id: 300, name: "Sprint X", state: "active", originBoardId: 9 },
+          ],
+          isLast: true,
+        })
+      );
+      const result = await adapter.getExternalMilestones({
+        projectKey: "TEST",
+        kind: "ITERATION",
+        includeClosed: true,
+      });
+      expect(result.items[0].url).toBe(
+        "https://test.atlassian.net/secure/RapidBoard.jspa?rapidView=9&sprint=300"
+      );
+    });
+  });
+
   describe("ITERATION mapping + board discovery + dedupe", () => {
     it("maps sprint states to normalized state + rawState", async () => {
       mockFetch.mockResolvedValueOnce(
