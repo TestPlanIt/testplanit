@@ -67,7 +67,7 @@ describe("CoverageChip", () => {
     );
   });
 
-  it("does not render the Uncovered style for a covered-but-all-notRun breakdown", () => {
+  it("shows the Uncovered badge when linked cases have no completed outcome, with the untested tooltip", () => {
     render(
       <CoverageChip
         breakdown={{
@@ -82,7 +82,10 @@ describe("CoverageChip", () => {
         }}
       />
     );
-    expect(screen.queryByText("coverageUncovered")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("labels.untested: 2")).toBeInTheDocument();
+    // No isCompleted=true statuses in scope ⇒ Uncovered, even though cases
+    // are linked; the tooltip preserves the untested count.
+    const badge = screen.getByText("coverageUncovered");
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveAttribute("title", "labels.untested: 2");
   });
 });

@@ -49,10 +49,24 @@ export function CoverageChip({ breakdown, className }: CoverageChipProps) {
   const t = useTranslations("milestones.members");
   const tCommon = useTranslations("common");
 
-  if (!breakdown || breakdown.uncovered) {
+  const statuses = breakdown?.statuses ?? [];
+  // Single explicit Untested aggregate from the API (Reports convention):
+  // missing results + no-status/non-completed results + system 'untested'.
+  const untested = breakdown?.untested ?? 0;
+
+  // Uncovered = no COMPLETED test outcome in scope: either the issue has
+  // no linked cases at all, or none of its linked cases has a completed
+  // in-scope result. The tooltip keeps the untested count so "cases exist
+  // but were never executed here" stays visible.
+  if (!breakdown || breakdown.uncovered || statuses.length === 0) {
+    const tooltip =
+      breakdown && breakdown.linkedCaseCount > 0
+        ? `${tCommon("labels.untested")}: ${untested}`
+        : undefined;
     return (
       <Badge
         variant="outline"
+        title={tooltip}
         className={cn(
           // Theme-adaptive warning tokens (see components/ui/warning-alert.tsx) —
           // hardcoded ambers were unreadable on several light themes.
@@ -64,11 +78,6 @@ export function CoverageChip({ breakdown, className }: CoverageChipProps) {
       </Badge>
     );
   }
-
-  const statuses = breakdown.statuses ?? [];
-  // Single explicit Untested aggregate from the API (Reports convention):
-  // no-result cases + no-status results + system-'untested' results.
-  const untested = breakdown.untested ?? 0;
 
   const segments: Array<{
     key: string;

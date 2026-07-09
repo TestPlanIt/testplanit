@@ -57,7 +57,9 @@ function matchesCoverageState(
   if (!breakdown) return filter === "UNCOVERED";
   switch (filter) {
     case "UNCOVERED":
-      return breakdown.uncovered;
+      // Matches the chip: uncovered = no completed outcome in scope, not
+      // just "no linked cases".
+      return breakdown.uncovered || (breakdown.statuses?.length ?? 0) === 0;
     case "PASSED":
       return breakdown.passed > 0;
     case "FAILED":
