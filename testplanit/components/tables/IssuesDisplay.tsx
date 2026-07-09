@@ -75,6 +75,13 @@ interface JiraIssueDetails {
 // Entries are cleared when the popover closes, so they only hold in-flight data.
 const issuePopoverOpen = new Map<number, boolean>();
 const issueJiraCache = new Map<number, JiraIssueDetails>();
+// Last hover-sync attempt per issue id. Module-level (not a ref) because a
+// parent refetch can remount this component while the cursor never left the
+// badge — a per-mount ref forgets the attempt and the re-fired mouseover
+// would POST /sync again on every remount. The server's freshness gate
+// (300s) is authoritative; this only suppresses the redundant round-trips.
+const issueSyncAttempts = new Map<number, number>();
+const SYNC_ATTEMPT_THROTTLE_MS = 30_000;
 
 export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   id,
@@ -132,6 +139,11 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   const triggerSyncIfNeeded = () => {
     if (syncTriggeredRef.current) return;
     if (!integrationId || !integrationProvider) return;
+    const lastAttempt = issueSyncAttempts.get(id);
+    if (lastAttempt && Date.now() - lastAttempt < SYNC_ATTEMPT_THROTTLE_MS) {
+      return;
+    }
+    issueSyncAttempts.set(id, Date.now());
     syncTriggeredRef.current = true;
 
     // Fire and forget — the server returns `cached: true` cheaply when the

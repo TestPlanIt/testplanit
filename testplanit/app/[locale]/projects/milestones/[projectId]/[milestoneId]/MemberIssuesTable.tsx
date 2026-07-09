@@ -29,7 +29,7 @@ import {
 import type { VisibilityState } from "@tanstack/react-table";
 import { ChevronDown, Loader2, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MemberIssueRowActions, MilestoneIssueManager } from "@/components/issues/MilestoneIssueManager";
 import type { CoverageBreakdown } from "./CoverageChip";
@@ -133,10 +133,10 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
 
   const isSyncing = isFetchingMembers || isFetchingCoverage;
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     void refetchMembers();
     void refetchCoverage();
-  };
+  }, [refetchMembers, refetchCoverage]);
 
   const rows: ExtendedMemberIssue[] = useMemo(() => {
     if (!memberRows) return [];
@@ -205,6 +205,24 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
     return sorted;
   }, [filteredRows, sortConfig]);
 
+  // Stable identity — this feeds useMemberIssueColumns' useMemo deps; an
+  // inline arrow here regenerated the column defs on EVERY table render,
+  // which remounted every cell (flexRender treats a new cell function as a
+  // new component type). Remounting the issue badge under a stationary
+  // cursor re-fired mouseover -> hover-sync -> refetch -> render -> remount
+  // — an endless popover-flicker loop.
+  const renderRowActions = useCallback(
+    (row: ExtendedMemberIssue) => (
+      <MemberIssueRowActions
+        milestoneId={milestoneId}
+        issueId={row.issueId}
+        source={row.source}
+        onUnlinked={handleRefresh}
+      />
+    ),
+    [milestoneId, handleRefresh]
+  );
+
   const columns = useMemberIssueColumns({
     translations: {
       key: t("columnKey"),
@@ -216,14 +234,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
       sourceManual: t("sourceManual"),
     },
     projectId,
-    renderRowActions: (row) => (
-      <MemberIssueRowActions
-        milestoneId={milestoneId}
-        issueId={row.issueId}
-        source={row.source}
-        onUnlinked={handleRefresh}
-      />
-    ),
+    renderRowActions,
   });
 
   const handleSortChange = (column: string) => {
