@@ -90,6 +90,14 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
+const addRunModalProps: { current: any } = { current: null };
+vi.mock("@/[locale]/projects/runs/[projectId]/AddTestRunModal", () => ({
+  default: (props: any) => {
+    addRunModalProps.current = props;
+    return <div data-testid="add-test-run-modal-stub" />;
+  },
+}));
+
 vi.mock("@/components/tables/CaseListDisplay", () => ({
   CasesListDisplay: ({ count, isLoading }: any) => (
     <span data-testid="cases-list-display">
@@ -460,6 +468,7 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
     mockToastInfo.mockReset();
     mockToastError.mockReset();
     mockRouterPush.mockReset();
+    addRunModalProps.current = null;
     sessionStorage.clear();
 
     mockFindManyMilestoneIssue.mockReturnValue({
@@ -533,20 +542,16 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
     const button = await screen.findByTestId("member-issues-create-run");
     fireEvent.click(button);
 
+    // The wizard opens IN PLACE — no navigation to the runs page.
     await waitFor(() => {
-      expect(mockRouterPush).toHaveBeenCalledWith(
-        "/projects/runs/7?openAddRun=true"
-      );
+      expect(screen.getByTestId("add-test-run-modal-stub")).toBeInTheDocument();
     });
-    expect(
-      JSON.parse(sessionStorage.getItem("createTestRun_selectedCases") ?? "[]")
-    ).toEqual([101, 102]);
+    expect(mockRouterPush).not.toHaveBeenCalled();
+    expect(addRunModalProps.current.initialSelectedCaseIds).toEqual([101, 102]);
     // Pre-linked issues: only SELECTED issues that contributed a seeded
     // case (the decoy 999 on every case link must be dropped).
-    expect(
-      JSON.parse(sessionStorage.getItem("createTestRun_linkedIssues") ?? "[]")
-    ).toEqual([10]);
-    expect(sessionStorage.getItem("createTestRun_milestoneId")).toBe("42");
+    expect(addRunModalProps.current.initialLinkedIssueIds).toEqual([10]);
+    expect(addRunModalProps.current.defaultMilestoneId).toBe(42);
 
     // The case-resolution query targets exactly the selected issueIds.
     const caseCall = mockFetch.mock.calls
@@ -571,7 +576,7 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(mockRouterPush).toHaveBeenCalled();
+      expect(screen.getByTestId("add-test-run-modal-stub")).toBeInTheDocument();
     });
     const caseCall = mockFetch.mock.calls
       .map(([url]: any[]) => url)
@@ -592,10 +597,9 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
     await waitFor(() => {
       expect(mockToastInfo).toHaveBeenCalledWith("createRunNoCases");
     });
-    expect(mockRouterPush).not.toHaveBeenCalled();
-    expect(sessionStorage.getItem("createTestRun_selectedCases")).toBeNull();
-    expect(sessionStorage.getItem("createTestRun_linkedIssues")).toBeNull();
-    expect(sessionStorage.getItem("createTestRun_milestoneId")).toBeNull();
+    expect(
+      screen.queryByTestId("add-test-run-modal-stub")
+    ).not.toBeInTheDocument();
   });
 
   it("honors excludeNotStartedFromRuns: filters ineligible cases, toasts the skipped count, seeds the rest", async () => {
@@ -611,16 +615,12 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
     fireEvent.click(await screen.findByTestId("member-issues-create-run"));
 
     await waitFor(() => {
-      expect(mockRouterPush).toHaveBeenCalledWith(
-        "/projects/runs/7?openAddRun=true"
-      );
+      expect(screen.getByTestId("add-test-run-modal-stub")).toBeInTheDocument();
     });
     expect(mockToastInfo).toHaveBeenCalledWith(
       "projects.settings.advanced.excludeNotStarted.skippedToast"
     );
-    expect(
-      JSON.parse(sessionStorage.getItem("createTestRun_selectedCases") ?? "[]")
-    ).toEqual([101]);
+    expect(addRunModalProps.current.initialSelectedCaseIds).toEqual([101]);
 
     // The eligibility query is scoped to the linked ids with the
     // NOT_STARTED workflow exclusion, mirroring the repository flow.
@@ -652,7 +652,9 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
     await waitFor(() => {
       expect(mockToastError).toHaveBeenCalledWith("errors.somethingWentWrong");
     });
-    expect(mockRouterPush).not.toHaveBeenCalled();
+    expect(
+      screen.queryByTestId("add-test-run-modal-stub")
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -671,6 +673,7 @@ describe("MemberIssuesTable — range select and case counts", () => {
     mockFetch.mockReset();
     mockToastInfo.mockReset();
     mockRouterPush.mockReset();
+    addRunModalProps.current = null;
     sessionStorage.clear();
 
     mockFindManyMilestoneIssue.mockReturnValue({
@@ -719,7 +722,7 @@ describe("MemberIssuesTable — range select and case counts", () => {
 
     fireEvent.click(await screen.findByTestId("member-issues-create-run"));
     await waitFor(() => {
-      expect(mockRouterPush).toHaveBeenCalled();
+      expect(screen.getByTestId("add-test-run-modal-stub")).toBeInTheDocument();
     });
     const caseCall = mockFetch.mock.calls
       .map(([url]: any[]) => url)
@@ -739,7 +742,7 @@ describe("MemberIssuesTable — range select and case counts", () => {
 
     fireEvent.click(await screen.findByTestId("member-issues-create-run"));
     await waitFor(() => {
-      expect(mockRouterPush).toHaveBeenCalled();
+      expect(screen.getByTestId("add-test-run-modal-stub")).toBeInTheDocument();
     });
     const caseCall = mockFetch.mock.calls
       .map(([url]: any[]) => url)

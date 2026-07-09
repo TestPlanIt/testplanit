@@ -28,10 +28,10 @@ import {
 import type { RowSelectionState, VisibilityState } from "@tanstack/react-table";
 import { ChevronDown, Loader2, PlayCircle, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "~/lib/navigation";
 import { toast } from "sonner";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import AddTestRunModal from "@/[locale]/projects/runs/[projectId]/AddTestRunModal";
 import { MemberIssueRowActions, MilestoneIssueManager } from "@/components/issues/MilestoneIssueManager";
 import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
 import type { CoverageBreakdown } from "./CoverageChip";
@@ -284,12 +284,16 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
 
   // Row selection (issueId-keyed via getRowId, so filter/sort can't
   // re-target selections) drives "Create test run from selected issues":
-  // resolve every non-deleted case linked to the selected issues and hand
-  // off through the SAME sessionStorage + openAddRun mechanism the
-  // repository's bulk create-run uses (Cases.tsx handleCreateTestRun).
-  const router = useRouter();
+  // resolve every non-deleted case linked to the selected issues, then open
+  // the Add Test Run wizard RIGHT HERE — no navigation to the runs page, so
+  // cancelling doesn't strand the user; success/errors surface via the
+  // wizard's own toasts.
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [isResolvingRun, setIsResolvingRun] = useState(false);
+  const [runSeed, setRunSeed] = useState<{
+    caseIds: number[];
+    issueIds: number[];
+  } | null>(null);
   const selectedIssueIds = Object.keys(rowSelection)
     .filter((id) => rowSelection[id])
     .map(Number)
@@ -417,19 +421,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
         )
       );
 
-      sessionStorage.setItem(
-        "createTestRun_selectedCases",
-        JSON.stringify(idsToSeed)
-      );
-      sessionStorage.setItem(
-        "createTestRun_linkedIssues",
-        JSON.stringify(contributingIssueIds)
-      );
-      sessionStorage.setItem(
-        "createTestRun_milestoneId",
-        String(milestoneId)
-      );
-      router.push(`/projects/runs/${projectId}?openAddRun=true`);
+      setRunSeed({ caseIds: idsToSeed, issueIds: contributingIssueIds });
     } catch (err) {
       console.error("Failed to resolve cases for selected issues:", err);
       toast.error(tCommon("errors.somethingWentWrong"));
@@ -773,6 +765,19 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
       </CardContent>
       </CollapsibleContent>
       </Collapsible>
+
+      {runSeed && (
+        <AddTestRunModal
+          open
+          onClose={() => setRunSeed(null)}
+          initialSelectedCaseIds={runSeed.caseIds}
+          onSelectedCasesChange={(cases) =>
+            setRunSeed((prev) => (prev ? { ...prev, caseIds: cases } : prev))
+          }
+          initialLinkedIssueIds={runSeed.issueIds}
+          defaultMilestoneId={milestoneId}
+        />
+      )}
     </Card>
   );
 }
