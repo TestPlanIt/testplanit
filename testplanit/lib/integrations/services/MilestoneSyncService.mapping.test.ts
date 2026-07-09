@@ -51,6 +51,7 @@ beforeEach(() => {
     projectId: 100,
     milestoneTypesId: 5,
     lastSyncedAt: null,
+    isDeleted: false,
   });
   mockMilestonesFindUnique.mockResolvedValue(null);
   mockMilestonesUpsert.mockResolvedValue({ id: 1 });

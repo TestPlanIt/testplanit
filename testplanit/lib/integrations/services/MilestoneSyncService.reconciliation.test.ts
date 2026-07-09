@@ -108,6 +108,7 @@ beforeEach(() => {
     projectId: 100,
     milestoneTypesId: 5,
     externalKind: "RELEASE",
+    isDeleted: false,
   });
   mockIntegrationProjectFindMany.mockResolvedValue([
     { externalProjectKey: "TPI" },

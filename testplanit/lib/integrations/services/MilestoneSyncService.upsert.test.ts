@@ -83,6 +83,7 @@ beforeEach(() => {
     projectId: 100,
     milestoneTypesId: 5,
     lastSyncedAt: null,
+    isDeleted: false,
   });
   mockIntegrationProjectFindMany.mockResolvedValue([
     { externalProjectKey: "TEST" },
@@ -216,5 +217,27 @@ describe("Milestone upsert idempotency (MSYNC-03)", () => {
     expect(secondCall.update.milestoneTypesId).toBeUndefined();
     expect(secondCall.update.createdBy).toBeUndefined();
     expect(secondCall.update.name).toBe("v3.0 renamed");
+  });
+
+  it("update payload includes isDeleted: false — an explicit re-import (refresh path exercises the same upsert) resurrects a tombstoned row", async () => {
+    mockGetExternalMilestones.mockResolvedValueOnce({
+      items: [
+        {
+          id: "8000",
+          kind: "RELEASE",
+          name: "v4.0",
+          state: "ACTIVE",
+          rawState: "unreleased",
+        },
+      ],
+      hasMore: false,
+    });
+
+    await milestoneSyncService.performMilestoneRefresh("user-1", 11, "8000", {
+      minFreshnessSeconds: 0,
+    });
+
+    const call = mockMilestonesUpsert.mock.calls[0][0];
+    expect(call.update.isDeleted).toBe(false);
   });
 });

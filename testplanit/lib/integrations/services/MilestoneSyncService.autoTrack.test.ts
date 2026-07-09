@@ -102,13 +102,16 @@ beforeEach(() => {
     ...create,
   }));
   // Default: v1 is already linked, v2-new / sprint-new are not.
-  mockMilestonesFindMany.mockResolvedValue([{ externalId: "v1" }]);
+  mockMilestonesFindMany.mockResolvedValue([
+    { externalId: "v1", isDeleted: false },
+  ]);
   mockMilestonesFindFirst.mockResolvedValue({
     id: 1,
     projectId: 100,
     milestoneTypesId: 5,
     externalKind: "RELEASE",
     lastSyncedAt: null,
+    isDeleted: false,
   });
   mockGetExternalMilestones.mockImplementation(
     async ({ kind }: { kind: "RELEASE" | "ITERATION" }) => ({
@@ -279,5 +282,100 @@ describe("performProjectMilestoneSync — autoTrack=false", () => {
       (c) => c[0].update !== undefined && c[0].create.externalId === "v1"
     );
     expect(refreshUpsertCall).toBeTruthy();
+  });
+});
+
+describe("performProjectMilestoneSync — tombstone semantics (soft-deleted synced milestone)", () => {
+  it("a tombstoned (isDeleted) row still counts as 'linked' in the auto-track diff — it is NOT re-imported", async () => {
+    mockProjectIntegrationFindUnique.mockResolvedValue({
+      config: {
+        milestoneSync: {
+          enabled: true,
+          kinds: ["RELEASE"],
+          autoTrack: true,
+          autoTrackAdminId: "admin-1",
+        },
+      },
+    });
+    // v1 is linked but soft-deleted; v2-new is genuinely new.
+    mockMilestonesFindMany.mockResolvedValue([
+      { externalId: "v1", isDeleted: true },
+    ]);
+
+    const result = await milestoneSyncService.performProjectMilestoneSync(
+      "triggering-user",
+      1,
+      100
+    );
+
+    expect(result.success).toBe(true);
+    // v1 must NOT be re-imported despite currentMatches including it.
+    const v1UpsertCall = mockMilestonesUpsert.mock.calls.find(
+      (c) => c[0].create.externalId === "v1"
+    );
+    expect(v1UpsertCall).toBeUndefined();
+    // v2-new is genuinely unseen and still gets auto-imported.
+    expect(result.autoImported).toBe(1);
+    const v2UpsertCall = mockMilestonesUpsert.mock.calls.find(
+      (c) => c[0].create.externalId === "v2-new"
+    );
+    expect(v2UpsertCall).toBeTruthy();
+  });
+
+  it("a tombstoned (isDeleted) row is skipped by the refresh loop — no adapter fetch/write for it", async () => {
+    mockProjectIntegrationFindUnique.mockResolvedValue({
+      config: {
+        milestoneSync: {
+          enabled: true,
+          kinds: ["RELEASE"],
+          autoTrack: false,
+        },
+      },
+    });
+    mockMilestonesFindMany.mockResolvedValue([
+      { externalId: "v1", isDeleted: true },
+    ]);
+
+    const result = await milestoneSyncService.performProjectMilestoneSync(
+      "triggering-user",
+      1,
+      100
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.refreshed).toBe(0);
+    const v1UpsertCall = mockMilestonesUpsert.mock.calls.find(
+      (c) => c[0].update !== undefined && c[0].create.externalId === "v1"
+    );
+    expect(v1UpsertCall).toBeUndefined();
+  });
+
+  it("mixed linked set: a non-deleted row IS refreshed while a tombstoned row is skipped, in the same pass", async () => {
+    mockProjectIntegrationFindUnique.mockResolvedValue({
+      config: {
+        milestoneSync: {
+          enabled: true,
+          kinds: ["RELEASE"],
+          autoTrack: false,
+        },
+      },
+    });
+    mockMilestonesFindMany.mockResolvedValue([
+      { externalId: "v1", isDeleted: false },
+      { externalId: "v1-deleted", isDeleted: true },
+    ]);
+
+    const result = await milestoneSyncService.performProjectMilestoneSync(
+      "triggering-user",
+      1,
+      100
+    );
+
+    expect(result.refreshed).toBe(1);
+    const refreshedIds = mockMilestonesUpsert.mock.calls
+      .filter((c) => c[0].update !== undefined)
+      .map((c) => c[0].create.externalId);
+    expect(refreshedIds).toContain("v1");
+    expect(refreshedIds).not.toContain("v1-deleted");
   });
 });

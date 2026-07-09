@@ -102,6 +102,7 @@ beforeEach(() => {
     projectId: 100,
     milestoneTypesId: 5,
     lastSyncedAt: null,
+    isDeleted: false,
   });
   mockMilestonesFindUnique.mockResolvedValue(null);
   mockMilestonesUpsert.mockResolvedValue({ id: 1 });
@@ -264,6 +265,30 @@ describe("performMilestoneRefresh — project scoping", () => {
     expect(result.success).toBe(true);
     const where = mockMilestonesFindFirst.mock.calls[0][0].where;
     expect(where).not.toHaveProperty("projectId");
+  });
+});
+
+describe("performMilestoneRefresh — tombstone semantics (soft-deleted synced milestone)", () => {
+  it("early-returns success with NO adapter fetch and no write when the local row is soft-deleted", async () => {
+    mockMilestonesFindFirst.mockResolvedValueOnce({
+      id: 1,
+      projectId: 100,
+      milestoneTypesId: 5,
+      lastSyncedAt: null,
+      isDeleted: true,
+    });
+
+    const result = await milestoneSyncService.performMilestoneRefresh(
+      "user-1",
+      1,
+      "10001",
+      { minFreshnessSeconds: 0 }
+    );
+
+    expect(result).toEqual({ success: true });
+    expect(mockGetExternalMilestones).not.toHaveBeenCalled();
+    expect(mockMilestonesUpsert).not.toHaveBeenCalled();
+    expect(mockIntegrationProjectFindMany).not.toHaveBeenCalled();
   });
 });
 

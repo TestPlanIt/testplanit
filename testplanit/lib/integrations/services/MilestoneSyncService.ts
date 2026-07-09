@@ -300,6 +300,15 @@ export class MilestoneSyncService {
       update: {
         ...fields,
         lastSyncedAt: new Date(),
+        // Explicit re-import (picker) is the ONLY resurrect path for a
+        // tombstoned (soft-deleted) synced milestone — TPI-side delete of a
+        // synced milestone means "stop tracking", and the auto-track diff
+        // deliberately does not re-surface tombstones (see the comment at
+        // that diff below). But a user explicitly re-selecting a
+        // previously-deleted row in the picker (which excludes already-
+        // linked, non-deleted rows from its candidate list, so a deleted
+        // row IS re-selectable) must bring it back.
+        isDeleted: false,
       },
     });
 
@@ -485,6 +494,7 @@ export class MilestoneSyncService {
           projectId: true,
           milestoneTypesId: true,
           externalKind: true,
+          isDeleted: true,
         },
       });
       if (!existing) {
@@ -493,6 +503,15 @@ export class MilestoneSyncService {
           notFound: true,
           error: `Cannot refresh milestone ${externalId}: no linked Milestones row for integration ${integrationId}`,
         };
+      }
+
+      // A soft-deleted (tombstoned) synced milestone means "stop tracking"
+      // (user-approved decision) — refresh is a clean no-op success with NO
+      // adapter fetch and no write. The only way to bring it back is an
+      // explicit re-import through the picker (`_upsertMilestoneShell`'s
+      // `update.isDeleted: false`), never an automatic refresh pass.
+      if (existing.isDeleted) {
+        return { success: true };
       }
 
       const projectKeys = await this._resolveProjectKeys(
@@ -910,11 +929,20 @@ export class MilestoneSyncService {
 
       const linked = await db.milestones.findMany({
         where: { integrationId, projectId, externalId: { not: null } },
-        select: { externalId: true },
+        select: { externalId: true, isDeleted: true },
       });
+      // Deliberately includes soft-deleted (tombstoned) rows — a TPI-side
+      // delete of a synced milestone means "stop tracking", so a tombstone
+      // must keep counting as "linked" here or the diff below would treat
+      // it as newly-appeared and auto-re-import it every pass. The refresh
+      // loop below is what actually excludes tombstones from further
+      // upstream writes; this diff only decides "is this externalId new".
       const linkedExternalIds = new Set(
         linked.map((row) => row.externalId as string)
       );
+      const nonDeletedLinkedExternalIds = linked
+        .filter((row) => !row.isDeleted)
+        .map((row) => row.externalId as string);
 
       if (autoTrack) {
         const newIds = currentMatches
@@ -943,8 +971,11 @@ export class MilestoneSyncService {
 
       // Refresh already-linked milestones regardless of autoTrack, gated by
       // the pass's freshness/lock idioms so concurrent page-loads within
-      // the freshness window don't stampede the upstream API.
-      for (const externalId of linkedExternalIds) {
+      // the freshness window don't stampede the upstream API. Tombstoned
+      // (soft-deleted) rows are skipped here — they stay out of any
+      // automatic upstream fetch/write; only an explicit re-import through
+      // the picker can resurrect one (see `_upsertMilestoneShell`).
+      for (const externalId of nonDeletedLinkedExternalIds) {
         try {
           const result = await this.performMilestoneRefresh(
             userId,
