@@ -1,4 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const mockValkeyGet = vi.fn();
+const mockValkeySet = vi.fn();
+vi.mock("~/lib/valkey", () => ({
+  default: {
+    get: (...args: unknown[]) => mockValkeyGet(...args),
+    set: (...args: unknown[]) => mockValkeySet(...args),
+  },
+}));
+
 import { JiraAdapter } from "./JiraAdapter";
 
 // Mock global fetch
@@ -1917,6 +1927,106 @@ describe("JiraAdapter", () => {
       const result = await adapter.getIssue("TEST-123");
 
       expect(result.description).toBe("Plain text description");
+    });
+  });
+
+  describe("resolveBoardProject", () => {
+    let boardAdapter: JiraAdapter;
+
+    beforeEach(async () => {
+      mockValkeyGet.mockReset();
+      mockValkeySet.mockReset();
+      mockValkeyGet.mockResolvedValue(null);
+      mockValkeySet.mockResolvedValue("OK");
+
+      boardAdapter = new JiraAdapter({
+        provider: "JIRA",
+        baseUrl: "https://test.atlassian.net",
+        integrationId: 42,
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ accountId: "test-user" }),
+      });
+      await boardAdapter.authenticate({
+        type: "api_key",
+        email: "test@example.com",
+        apiToken: "test-token",
+        baseUrl: "https://test.atlassian.net",
+      });
+    });
+
+    it("fetches a SINGLE board (not a project's board list) and returns location.projectId/projectKey", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 7,
+            location: { projectId: "10050", projectKey: "DEMO" },
+          }),
+      });
+
+      const result = await boardAdapter.resolveBoardProject("7");
+
+      expect(result).toEqual({ projectId: "10050", projectKey: "DEMO" });
+      const calledUrl = mockFetch.mock.calls[1][0] as string;
+      expect(calledUrl).toContain("/rest/agile/1.0/board/7");
+      expect(calledUrl).not.toContain("projectKeyOrId");
+    });
+
+    it("caches the result in Valkey under jira-board-project:<integrationId>:<boardId>", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 7,
+            location: { projectId: "10050", projectKey: "DEMO" },
+          }),
+      });
+
+      await boardAdapter.resolveBoardProject("7");
+
+      expect(mockValkeySet).toHaveBeenCalledWith(
+        "jira-board-project:42:7",
+        JSON.stringify({ projectId: "10050", projectKey: "DEMO" }),
+        "EX",
+        expect.any(Number)
+      );
+    });
+
+    it("returns a cached result without calling fetch again", async () => {
+      mockValkeyGet.mockResolvedValueOnce(
+        JSON.stringify({ projectId: "999", projectKey: "CACHED" })
+      );
+
+      const result = await boardAdapter.resolveBoardProject("7");
+
+      expect(result).toEqual({ projectId: "999", projectKey: "CACHED" });
+      // Only the beforeEach's authenticate() call hit fetch — no board fetch.
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("returns null (never throws) on a 404 board lookup", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve("Board does not exist"),
+      });
+
+      const result = await boardAdapter.resolveBoardProject("999");
+
+      expect(result).toBeNull();
+    });
+
+    it("returns null when location.projectId is absent (defensive parse, MEDIUM-confidence shape)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 7, name: "Board without location" }),
+      });
+
+      const result = await boardAdapter.resolveBoardProject("7");
+
+      expect(result).toBeNull();
     });
   });
 });

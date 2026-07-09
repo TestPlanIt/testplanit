@@ -1,3 +1,4 @@
+import valkeyConnection from "~/lib/valkey";
 import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
@@ -18,6 +19,13 @@ import {
   jiraApiVersion,
   resolveJiraDeployment,
 } from "./jiraDeployment";
+
+/**
+ * Board -> project ownership is near-static (boards rarely move between
+ * projects), so a multi-hour TTL avoids a per-event upstream call during
+ * sprint webhook bursts without risking long-lived staleness.
+ */
+const JIRA_BOARD_PROJECT_CACHE_TTL_SECONDS = 6 * 60 * 60; // 6 hours
 
 /**
  * Jira integration adapter implementing OAuth authentication
@@ -1026,6 +1034,116 @@ export class JiraAdapter extends BaseAdapter {
     }
 
     return boardIds;
+  }
+
+  /**
+   * Resolve a single board's owning project — the INVERSE direction of
+   * `discoverJiraBoards` (project -> boards). Sprint webhook payloads only
+   * carry `originBoardId` (Pitfall 2), never a project reference, so
+   * `applyInboundMilestoneEvent` needs this direct board -> project lookup
+   * to resolve which TestPlanIt project a `sprint_*` event belongs to.
+   *
+   * `GET /rest/agile/1.0/board/{boardId}` returns `location.projectId` /
+   * `location.projectKey` (RESEARCH.md A1 — MEDIUM confidence, verified via
+   * multiple independent community payload examples, not a schema-verified
+   * response contract). The parse is deliberately defensive: any absent or
+   * differently-shaped `location` degrades to `null` (the D-03 unmatched/
+   * ack-and-drop path) rather than a thrown error, since a malformed/legacy
+   * response here must never surface as a 500 to the Jira webhook sender.
+   *
+   * Cached in Valkey (`jira-board-project:<integrationId>:<boardId>`, a
+   * multi-hour TTL) since board->project ownership is near-static and a
+   * cache hit avoids a per-event upstream call during sprint webhook bursts
+   * (T-19-04-03). Fail-open without a Valkey connection — fetch directly,
+   * skip caching, mirroring `MilestoneSyncService`'s lock-key idiom.
+   */
+  async resolveBoardProject(
+    boardId: string
+  ): Promise<{ projectId: string; projectKey: string } | null> {
+    const integrationId = this.config?.integrationId;
+    const cacheKey =
+      integrationId != null
+        ? `jira-board-project:${integrationId}:${boardId}`
+        : null;
+
+    if (cacheKey) {
+      try {
+        const cached = await valkeyConnection?.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached) as { projectId: string; projectKey: string };
+        }
+      } catch (error) {
+        // Cache read failures (connection blip, bad JSON) fall through to a
+        // direct upstream fetch — never let a cache problem block resolution.
+        console.warn(
+          `[JiraAdapter] resolveBoardProject: cache read failed for board %s:`,
+          boardId,
+          error
+        );
+      }
+    }
+
+    let response: any;
+    try {
+      response = await this.makeRequest<any>(
+        this.buildUrl(`/rest/agile/1.0/board/${boardId}`)
+      );
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      if (status === 404 || status === 403 || status === 401) {
+        // Unmatched board / no permission — the D-03 ack-and-drop path.
+        // Never throw for this; the caller acks the webhook and drops it.
+        console.debug(
+          `[JiraAdapter] resolveBoardProject: board %s not found/unauthorized (status %s)`,
+          boardId,
+          status
+        );
+        return null;
+      }
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[JiraAdapter] resolveBoardProject failed for board %s:`,
+        boardId,
+        error
+      );
+      return null;
+    }
+
+    const projectId = response?.location?.projectId;
+    const projectKey = response?.location?.projectKey;
+    if (
+      typeof projectId !== "string" && typeof projectId !== "number"
+    ) {
+      console.debug(
+        `[JiraAdapter] resolveBoardProject: board %s response missing location.projectId — treating as unmatched`,
+        boardId
+      );
+      return null;
+    }
+
+    const result = {
+      projectId: String(projectId),
+      projectKey: typeof projectKey === "string" ? projectKey : "",
+    };
+
+    if (cacheKey && valkeyConnection) {
+      try {
+        await valkeyConnection.set(
+          cacheKey,
+          JSON.stringify(result),
+          "EX",
+          JIRA_BOARD_PROJECT_CACHE_TTL_SECONDS
+        );
+      } catch (error) {
+        console.warn(
+          `[JiraAdapter] resolveBoardProject: cache write failed for board %s:`,
+          boardId,
+          error
+        );
+      }
+    }
+
+    return result;
   }
 
   private mapJiraSprint(raw: any): ExternalMilestone | null {
