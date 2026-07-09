@@ -40,6 +40,11 @@ export function MemberIssuesOverflowPanel({
 }: MemberIssuesOverflowPanelProps) {
   const t = useTranslations("milestones.members");
   const [isImporting, setIsImporting] = useState(false);
+  // Import & link queues a worker job — the links land seconds after the
+  // POST returns, so a one-shot refetch would race it. Poll briefly after
+  // an import until the live diff drains (bounded, same pattern as the
+  // milestones page).
+  const [pollUntil, setPollUntil] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery<MemberOverflowResponse>({
     queryKey: ["milestoneMemberOverflow", milestoneId],
@@ -53,6 +58,13 @@ export function MemberIssuesOverflowPanel({
       return response.json();
     },
     staleTime: 30000,
+    refetchInterval: (query) => {
+      if (!pollUntil || Date.now() > pollUntil) return false;
+      // Stop early once the drift drained.
+      const members = query.state.data?.members;
+      if (members && members.length === 0) return false;
+      return 3000;
+    },
   });
 
   // Self-gated on a non-empty `members` array — never on a table-surfaced
@@ -77,6 +89,7 @@ export function MemberIssuesOverflowPanel({
         throw new Error(body?.error || t("overflowImportError"));
       }
       toast.success(t("overflowImportSuccess"));
+      setPollUntil(Date.now() + 45_000);
       onImported?.();
     } catch (err) {
       toast.error(
