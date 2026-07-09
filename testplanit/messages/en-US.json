@@ -2220,7 +2220,8 @@
       "columnDescription": "Description",
       "unlinkConfirmTitle": "Unlink issue?",
       "unlinkConfirmDescription": "This removes the issue from this milestone. The issue itself is kept and can be linked again later.",
-      "totalsUncovered": "{count, plural, one {# uncovered issue} other {# uncovered issues}}"
+      "totalsUncovered": "{count, plural, one {# uncovered issue} other {# uncovered issues}}",
+      "filterHasUntested": "Has untested cases"
     }
   },
   "sessions": {

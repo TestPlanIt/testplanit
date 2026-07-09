@@ -460,7 +460,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
               <SelectItem value="all">{t("filterAllCoverage")}</SelectItem>
               <SelectItem value="UNCOVERED">{t("coverageUncovered")}</SelectItem>
               <SelectItem value="UNTESTED">
-                {tCommon("labels.untested")}
+                {t("filterHasUntested")}
               </SelectItem>
               {coverageTotals.statuses.map((entry) => (
                 <SelectItem
