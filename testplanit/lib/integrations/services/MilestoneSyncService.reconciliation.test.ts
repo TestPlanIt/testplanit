@@ -172,6 +172,54 @@ describe("MilestoneSyncService reconciliation — departed members", () => {
     expect(mockIssueDelete).not.toHaveBeenCalled();
   });
 
+  it("REGRESSION (CR-01): departure reconciliation works against a client that HONORS `select` — `source` must be in the select or the defensive re-filter turns the pass into dead code", async () => {
+    // Unlike the plain mockResolvedValue doubles above (which return full
+    // rows regardless of `select`, masking a missing-select bug), this fake
+    // projects rows through the query's `select` clause exactly like the
+    // real ZenStack/Kysely client: an unselected field comes back undefined.
+    const storedLinks = [
+      { issueId: 777, source: "SYNCED", issue: { externalId: "ext-departed" } },
+    ];
+    const projectSelect = (row: any, select: any): any =>
+      Object.fromEntries(
+        Object.entries(select).map(([key, value]) => [
+          key,
+          value === true
+            ? row[key]
+            : projectSelect(row[key], (value as any).select),
+        ])
+      );
+    mockMilestoneIssueFindMany.mockImplementation(async (args: any) =>
+      storedLinks.map((row) =>
+        args?.select ? projectSelect(row, args.select) : row
+      )
+    );
+    mockGetMilestoneIssues.mockResolvedValue({
+      issues: [makeExtIssue({ id: "ext-1" })],
+      hasMore: false,
+    });
+
+    await milestoneSyncService.performMilestoneRefresh("user-1", 1, "v1");
+
+    // The select shape itself must request `source` (belt) …
+    const findManyArgs = mockMilestoneIssueFindMany.mock.calls[0]?.[0];
+    expect(findManyArgs?.select).toEqual(
+      expect.objectContaining({ issueId: true, source: true })
+    );
+    // … and the departed member must actually be unlinked (suspenders).
+    expect(mockMilestoneIssueDeleteMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          milestoneId: 1,
+          issueId: expect.objectContaining({
+            in: expect.arrayContaining([777]),
+          }),
+          source: "SYNCED",
+        }),
+      })
+    );
+  });
+
   it("never deletes a MANUAL link for a departed issue — deleteMany where-clause is scoped to source: SYNCED, excluding MANUAL rows", async () => {
     mockMilestoneIssueFindMany.mockResolvedValue([
       { issueId: 777, source: "SYNCED", issue: { externalId: "ext-departed" } },

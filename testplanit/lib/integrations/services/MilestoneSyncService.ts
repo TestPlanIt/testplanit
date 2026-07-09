@@ -625,7 +625,15 @@ export class MilestoneSyncService {
       typeof db.milestoneIssue?.findMany === "function"
         ? await db.milestoneIssue.findMany({
             where: { milestoneId, source: "SYNCED" },
-            select: { issueId: true, issue: { select: { externalId: true } } },
+            select: {
+              issueId: true,
+              // `source` MUST be selected — the defensive re-filter below
+              // reads `link.source`, and a real client honors `select`
+              // (omitting it makes every row's source undefined, turning the
+              // whole departure pass into dead code).
+              source: true,
+              issue: { select: { externalId: true } },
+            },
           })
         : [];
     const departedIds = syncedLinks
