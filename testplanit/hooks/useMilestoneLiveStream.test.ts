@@ -1,72 +1,263 @@
-import { describe, it } from "vitest";
+import { renderHook } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  useMilestoneLiveStream,
+  useProjectMilestoneStream,
+} from "./useMilestoneLiveStream";
 
 /**
- * Wave 0 RED scaffold (19-01) for `useMilestoneLiveStream` /
- * `useProjectMilestoneStream` — the not-yet-created hook pair implemented
- * in Plan 02 (SSE). Mirrors `hooks/useTestRunLiveStream.ts` /
- * `useTestRunLiveStream.test.tsx` verbatim per D-14/D-15 (mirror Test
- * Runs, not the Issue-badge singleton-manager pattern — no high-
- * multiplicity-mount problem to solve here).
- *
- * Every behavior is enumerated with `it.todo(...)` rather than a failing
- * assertion so the Wave 0 suite runs green-on-todo. Deliberately NO
- * top-level import of the not-yet-existing `./useMilestoneLiveStream`
- * module — `it.todo` bodies never execute, so a static import would only
- * crash the suite at transform time for no verification benefit.
+ * Mirrors `hooks/useTestRunLiveStream.test.tsx` verbatim per D-14/D-15
+ * (mirror Test Runs, not the Issue-badge singleton-manager pattern — no
+ * high-multiplicity-mount problem to solve here).
  *
  * See: .planning/phases/19-webhooks-lifecycle/19-VALIDATION.md
- *      (19-02-T3 fills these green), 19-PATTERNS.md (hook analog,
- *      latest-ref pattern, per-entity vs per-project subscribe/cleanup).
+ *      (19-02-T3), 19-PATTERNS.md (hook analog, latest-ref pattern,
+ *      per-entity vs per-project subscribe/cleanup).
  */
 
+interface MockEventSource {
+  url: string;
+  onmessage: ((msg: MessageEvent) => void) | null;
+  onerror: ((err: Event) => void) | null;
+  close: ReturnType<typeof vi.fn>;
+}
+
+const created: MockEventSource[] = [];
+const OriginalEventSource = globalThis.EventSource;
+
+beforeEach(() => {
+  created.length = 0;
+  // Replace with a constructor that records each instance.
+  (globalThis as { EventSource: unknown }).EventSource = function (
+    url: string
+  ) {
+    const inst: MockEventSource = {
+      url,
+      onmessage: null,
+      onerror: null,
+      close: vi.fn(),
+    };
+    created.push(inst);
+    return inst;
+  } as unknown as typeof globalThis.EventSource;
+});
+
+afterEach(() => {
+  (globalThis as { EventSource: unknown }).EventSource =
+    OriginalEventSource as unknown;
+});
+
 describe("useMilestoneLiveStream", () => {
-  it.todo(
-    "opens an EventSource on /api/milestones/{milestoneId}/stream for a valid milestoneId"
-  );
+  it("opens an EventSource on /api/milestones/{milestoneId}/stream for a valid milestoneId", () => {
+    const onWakeUp = vi.fn();
+    renderHook(() => useMilestoneLiveStream({ milestoneId: 42, onWakeUp }));
+    expect(created).toHaveLength(1);
+    expect(created[0]!.url).toBe("/api/milestones/42/stream");
+  });
 
-  it.todo("does not open a stream when disabled");
+  it("does not open a stream when disabled", () => {
+    renderHook(() =>
+      useMilestoneLiveStream({
+        milestoneId: 42,
+        enabled: false,
+        onWakeUp: vi.fn(),
+      })
+    );
+    expect(created).toHaveLength(0);
+  });
 
-  it.todo("does not open a stream for a null or zero milestoneId");
+  it("does not open a stream for a null or zero milestoneId", () => {
+    renderHook(() =>
+      useMilestoneLiveStream({ milestoneId: null, onWakeUp: vi.fn() })
+    );
+    expect(created).toHaveLength(0);
+    renderHook(() =>
+      useMilestoneLiveStream({ milestoneId: 0, onWakeUp: vi.fn() })
+    );
+    expect(created).toHaveLength(0);
+  });
 
-  it.todo("invokes onWakeUp with the parsed payload on each message");
+  it("invokes onWakeUp with the parsed payload on each message", () => {
+    const onWakeUp = vi.fn();
+    renderHook(() => useMilestoneLiveStream({ milestoneId: 7, onWakeUp }));
+    const es = created[0]!;
+    es.onmessage!({
+      data: '{"event":"milestone.updated","milestoneId":7,"projectId":3}',
+    } as MessageEvent);
+    expect(onWakeUp).toHaveBeenCalledWith({
+      event: "milestone.updated",
+      milestoneId: 7,
+      projectId: 3,
+    });
+  });
 
-  it.todo("swallows malformed (non-JSON) messages without throwing");
+  it("swallows malformed (non-JSON) messages without throwing", () => {
+    const onWakeUp = vi.fn();
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    renderHook(() => useMilestoneLiveStream({ milestoneId: 7, onWakeUp }));
+    const es = created[0]!;
+    es.onmessage!({ data: "not-json" } as MessageEvent);
+    expect(onWakeUp).not.toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
 
-  it.todo("closes the EventSource on unmount");
+  it("closes the EventSource on unmount", () => {
+    const { unmount } = renderHook(() =>
+      useMilestoneLiveStream({ milestoneId: 7, onWakeUp: vi.fn() })
+    );
+    const es = created[0]!;
+    unmount();
+    expect(es.close).toHaveBeenCalled();
+  });
 
-  it.todo("recreates the EventSource when milestoneId changes");
+  it("recreates the EventSource when milestoneId changes", () => {
+    const onWakeUp = vi.fn();
+    const { rerender } = renderHook(
+      (args: { milestoneId: number }) =>
+        useMilestoneLiveStream({ milestoneId: args.milestoneId, onWakeUp }),
+      { initialProps: { milestoneId: 1 } }
+    );
+    expect(created).toHaveLength(1);
+    expect(created[0]!.url).toBe("/api/milestones/1/stream");
+    rerender({ milestoneId: 2 });
+    expect(created).toHaveLength(2);
+    expect(created[0]!.close).toHaveBeenCalled();
+    expect(created[1]!.url).toBe("/api/milestones/2/stream");
+  });
 
-  it.todo(
-    "does not recreate the connection when onWakeUp identity changes (latest-ref pattern)"
-  );
+  it("does not recreate the connection when onWakeUp identity changes (latest-ref pattern)", () => {
+    const { rerender } = renderHook(
+      (args: { onWakeUp: () => void }) =>
+        useMilestoneLiveStream({ milestoneId: 1, onWakeUp: args.onWakeUp }),
+      { initialProps: { onWakeUp: vi.fn() } }
+    );
+    expect(created).toHaveLength(1);
+    const closesBefore = created[0]!.close.mock.calls.length;
+    rerender({ onWakeUp: vi.fn() });
+    expect(created).toHaveLength(1);
+    expect(created[0]!.close.mock.calls.length).toBe(closesBefore);
+  });
 });
 
 describe("useProjectMilestoneStream", () => {
-  it.todo(
-    "opens a single EventSource on /api/projects/{projectId}/milestones/stream"
-  );
+  it("opens a single EventSource on /api/projects/{projectId}/milestones/stream", () => {
+    renderHook(() =>
+      useProjectMilestoneStream({ projectId: 293, onWakeUp: vi.fn() })
+    );
+    expect(created).toHaveLength(1);
+    expect(created[0]!.url).toBe("/api/projects/293/milestones/stream");
+  });
 
-  it.todo("does not open the stream when disabled");
+  it("does not open the stream when disabled", () => {
+    renderHook(() =>
+      useProjectMilestoneStream({
+        projectId: 1,
+        enabled: false,
+        onWakeUp: vi.fn(),
+      })
+    );
+    expect(created).toHaveLength(0);
+  });
 
-  it.todo("does not open the stream for a null/zero/negative projectId");
+  it("does not open the stream for a null/zero/negative projectId", () => {
+    renderHook(() =>
+      useProjectMilestoneStream({ projectId: null, onWakeUp: vi.fn() })
+    );
+    expect(created).toHaveLength(0);
+    renderHook(() =>
+      useProjectMilestoneStream({ projectId: 0, onWakeUp: vi.fn() })
+    );
+    expect(created).toHaveLength(0);
+    renderHook(() =>
+      useProjectMilestoneStream({ projectId: -1, onWakeUp: vi.fn() })
+    );
+    expect(created).toHaveLength(0);
+  });
 
-  it.todo(
-    "invokes onWakeUp with the parsed payload (including milestoneId) for each message"
-  );
+  it("invokes onWakeUp with the parsed payload (including milestoneId) for each message", () => {
+    const onWakeUp = vi.fn();
+    renderHook(() => useProjectMilestoneStream({ projectId: 293, onWakeUp }));
+    const es = created[0]!;
+    es.onmessage!({
+      data: '{"event":"milestone.updated","milestoneId":18,"projectId":293,"targetId":555}',
+    } as MessageEvent);
+    es.onmessage!({
+      data: '{"event":"milestone.membership_changed","milestoneId":19,"projectId":293}',
+    } as MessageEvent);
+    expect(onWakeUp).toHaveBeenCalledTimes(2);
+    expect(onWakeUp).toHaveBeenCalledWith({
+      event: "milestone.updated",
+      milestoneId: 18,
+      projectId: 293,
+      targetId: 555,
+    });
+    expect(onWakeUp).toHaveBeenCalledWith({
+      event: "milestone.membership_changed",
+      milestoneId: 19,
+      projectId: 293,
+    });
+  });
 
-  it.todo("swallows malformed (non-JSON) messages without throwing");
+  it("swallows malformed (non-JSON) messages without throwing", () => {
+    const onWakeUp = vi.fn();
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    renderHook(() => useProjectMilestoneStream({ projectId: 1, onWakeUp }));
+    created[0]!.onmessage!({ data: "not-json" } as MessageEvent);
+    expect(onWakeUp).not.toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
 
-  it.todo("closes the EventSource on unmount");
+  it("closes the EventSource on unmount", () => {
+    const { unmount } = renderHook(() =>
+      useProjectMilestoneStream({ projectId: 1, onWakeUp: vi.fn() })
+    );
+    const es = created[0]!;
+    unmount();
+    expect(es.close).toHaveBeenCalled();
+  });
 
-  it.todo("recreates the EventSource when projectId changes");
+  it("recreates the EventSource when projectId changes", () => {
+    const onWakeUp = vi.fn();
+    const { rerender } = renderHook(
+      (args: { projectId: number }) =>
+        useProjectMilestoneStream({ projectId: args.projectId, onWakeUp }),
+      { initialProps: { projectId: 1 } }
+    );
+    expect(created).toHaveLength(1);
+    expect(created[0]!.url).toBe("/api/projects/1/milestones/stream");
+    rerender({ projectId: 2 });
+    expect(created).toHaveLength(2);
+    expect(created[0]!.close).toHaveBeenCalled();
+    expect(created[1]!.url).toBe("/api/projects/2/milestones/stream");
+  });
 
-  it.todo(
-    "does not recreate the connection when onWakeUp identity changes (latest-ref pattern)"
-  );
+  it("does not recreate the connection when onWakeUp identity changes (latest-ref pattern)", () => {
+    // Regression: invalidate-on-wake-up loops change the callback's
+    // identity on every wake-up. Without the latest-ref pattern, every
+    // wake-up would close + reopen the EventSource — the exact server
+    // thrash this whole pattern is meant to prevent.
+    const { rerender } = renderHook(
+      (args: { onWakeUp: () => void }) =>
+        useProjectMilestoneStream({ projectId: 1, onWakeUp: args.onWakeUp }),
+      { initialProps: { onWakeUp: vi.fn() } }
+    );
+    expect(created).toHaveLength(1);
+    const closesBefore = created[0]!.close.mock.calls.length;
+    rerender({ onWakeUp: vi.fn() });
+    expect(created).toHaveLength(1);
+    expect(created[0]!.close.mock.calls.length).toBe(closesBefore);
+  });
 
   // D-15: all milestone surfaces (list cards, detail fields/badge/member
-  // table/coverage, import picker) subscribe via this SAME hook pair.
-  it.todo(
-    "is the single shared hook pair for all milestone live-update surfaces — no bespoke third variant per D-15"
-  );
+  // table/coverage, import picker) subscribe via this SAME hook pair —
+  // demonstrated by the two describe blocks above being the ONLY exports
+  // of this module (no bespoke third variant).
+  it("is the single shared hook pair for all milestone live-update surfaces — no bespoke third variant per D-15", async () => {
+    const moduleExports = await import("./useMilestoneLiveStream");
+    expect(Object.keys(moduleExports).sort()).toEqual(
+      ["useMilestoneLiveStream", "useProjectMilestoneStream"].sort()
+    );
+  });
 });
