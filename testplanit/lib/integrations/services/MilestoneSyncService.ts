@@ -1,5 +1,8 @@
 import { rawDb as defaultDb } from "@/lib/rawDb";
-import type { DbClient } from "~/lib/zenstack";
+import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
+import { publishMilestoneWakeUp } from "~/lib/live/publish";
+import { captureAuditEvent } from "~/lib/services/auditLog";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 import valkeyConnection from "../../valkey";
 import type { ExternalMilestone, IssueAdapter } from "../adapters/IssueAdapter";
 import { integrationManager } from "../IntegrationManager";
@@ -84,6 +87,22 @@ export interface ProjectMilestoneSyncResult {
   errors: string[];
   /** True when the project-level freshness marker short-circuited the pass. */
   cached?: boolean;
+}
+
+/**
+ * Why a milestone was converted from synced to local (HOOK-02 / D-05..D-12).
+ * THREE distinct values persisted into `Milestones.externalState` — a
+ * "manual_unlink" must NEVER collapse into "deleted": Plan 05's badge
+ * renders a permanent removed/merged badge for "deleted"/"merged" and NO
+ * badge for "manual_unlink" (D-11), which is only possible if the three
+ * reasons stay distinguishable downstream.
+ */
+export type MilestoneConversionReason = "deleted" | "merged" | "manual_unlink";
+
+export interface ConvertMilestoneToLocalResult {
+  success: boolean;
+  /** True when the milestone was already detached — idempotent no-op. */
+  alreadyDetached?: boolean;
 }
 
 /**
@@ -365,10 +384,144 @@ export class MilestoneSyncService {
         // linked, non-deleted rows from its candidate list, so a deleted
         // row IS re-selectable) must bring it back.
         isDeleted: false,
+        // Re-link on re-import (D-07/D-12): a previously-converted
+        // (detached) milestone found again via the same [externalId,
+        // integrationId] pairing re-attaches instead of creating a
+        // duplicate — clearing detachedAt resumes tracker-owned field
+        // locks and re-establishes sync eligibility for the SAME row,
+        // preserving its runs/sessions/links.
+        detachedAt: null,
       },
     });
 
-    return { id: row.id, created: !existing };
+    const result = { id: row.id, created: !existing };
+    // D-13: one publish call site per write path — the creating branch of
+    // the shell upsert. Update-branch refreshes publish from their own
+    // caller (_performMilestoneRefreshInner) to avoid double-firing on
+    // every field sync.
+    if (result.created) {
+      publishMilestoneWakeUp({
+        event: "milestone.created",
+        milestoneId: result.id,
+        projectId,
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Converts a synced milestone to a fully local one (HOOK-02 / D-05..D-12).
+   * Called from the webhook apply service (upstream delete/merge, Plan 04)
+   * or the manual unlink route (Plan 05) — never from client-trusted input.
+   *
+   * ONE `db.$transaction` wraps both writes so the milestone can never be
+   * observed half-detached with stale SYNCED links (T-19-03-02):
+   *   1. `Milestones.detachedAt = now()` — the lock-lift signal.
+   *      `integrationId` is DELIBERATELY left untouched (Pitfall 3): nulling
+   *      it would destroy the `[externalId, integrationId]` re-link identity
+   *      and make the permanent badge guard disappear.
+   *   2. `Milestones.externalState` gets a THREE-WAY value — "merged" /
+   *      "manual_unlink" / "deleted" — so Plan 05's badge can render the
+   *      permanent removed/merged badge ONLY for deleted/merged and NO
+   *      badge for manual_unlink (D-11). manual_unlink must NEVER collapse
+   *      into "deleted".
+   *   3. `MilestoneIssue` rows for this milestone with `source: "SYNCED"`
+   *      flip to `source: "MANUAL"` (D-05) — MANUAL-is-sticky semantics
+   *      (Phase 18 D-11) now govern every link.
+   *
+   * Idempotent: calling this on an already-detached milestone is a clean
+   * no-op success, mirroring the existing `isDeleted` tombstone
+   * short-circuit at `_performMilestoneRefreshInner`.
+   *
+   * Raw-db write path bypassing `@deny('update', integrationId != null &&
+   * detachedAt == null)` — the ONLY writer permitted through those field
+   * locks, same contract `_upsertMilestoneShell` documents.
+   *
+   * Post-commit (after the transaction settles, never inside it):
+   *   - A reason-tagged audit event (`captureAuditEvent`, action UPDATE,
+   *     entityType "Milestones") records `metadata.reason` so every
+   *     conversion — especially a manual unlink — is traceable
+   *     (T-19-05-04 depends on this).
+   *   - `publishMilestoneWakeUp({ event: "milestone.converted" })` AND a
+   *     membership-aware `milestone.membership_changed` wake-up, since the
+   *     bulk SYNCED->MANUAL flip changes what the member table should show
+   *     (RESEARCH.md Pitfall 5).
+   */
+  async convertMilestoneToLocal(
+    db: DbClient,
+    milestoneId: number,
+    reason: MilestoneConversionReason,
+    mergedToExternalId?: string
+  ): Promise<ConvertMilestoneToLocalResult> {
+    const existing = await db.milestones.findUnique({
+      where: { id: milestoneId },
+      select: { id: true, projectId: true, detachedAt: true },
+    });
+    if (!existing) {
+      return { success: false };
+    }
+
+    // Idempotent early-return, mirroring the `isDeleted` tombstone
+    // short-circuit — a second conversion call (e.g. a redelivered webhook,
+    // or an unlink click racing a webhook-driven conversion) must not
+    // double-flip already-MANUAL links or overwrite an earlier reason.
+    if (existing.detachedAt) {
+      return { success: true, alreadyDetached: true };
+    }
+
+    const externalState: "deleted" | "merged" | "manual_unlink" =
+      reason === "merged"
+        ? "merged"
+        : reason === "manual_unlink"
+          ? "manual_unlink"
+          : "deleted";
+
+    await db.$transaction(async (tx: TxClient) => {
+      await tx.milestones.update({
+        where: { id: milestoneId },
+        data: {
+          detachedAt: new Date(),
+          // integrationId is DELIBERATELY left non-null — see Pitfall 3.
+          externalState,
+          // Spread-in-only-when-present idiom (mapExternalMilestoneToFields
+          // precedent) — mergedToExternalId is only meaningful on a merge.
+          ...(mergedToExternalId ? { mergedToExternalId } : {}),
+        },
+      });
+      await tx.milestoneIssue.updateMany({
+        where: { milestoneId, source: "SYNCED" },
+        data: { source: "MANUAL" },
+      });
+    });
+
+    await captureAuditEvent({
+      action: "UPDATE",
+      entityType: "Milestones",
+      entityId: String(milestoneId),
+      projectId: existing.projectId,
+      userId: SYSTEM_ACTOR_ID,
+      metadata: {
+        reason,
+        ...(mergedToExternalId ? { mergedToExternalId } : {}),
+      },
+    });
+
+    publishMilestoneWakeUp({
+      event: "milestone.converted",
+      milestoneId,
+      projectId: existing.projectId,
+    });
+    // Pitfall 5: the bulk SYNCED->MANUAL flip changes what the member table
+    // should render — fire a membership-aware wake-up too so it re-renders
+    // without a hard refresh.
+    publishMilestoneWakeUp({
+      event: "milestone.membership_changed",
+      milestoneId,
+      projectId: existing.projectId,
+    });
+
+    return { success: true };
   }
 
   /**
@@ -551,6 +704,7 @@ export class MilestoneSyncService {
           milestoneTypesId: true,
           externalKind: true,
           isDeleted: true,
+          detachedAt: true,
         },
       });
       if (!existing) {
@@ -566,7 +720,15 @@ export class MilestoneSyncService {
       // adapter fetch and no write. The only way to bring it back is an
       // explicit re-import through the picker (`_upsertMilestoneShell`'s
       // `update.isDeleted: false`), never an automatic refresh pass.
-      if (existing.isDeleted) {
+      //
+      // A converted (detached) milestone is likewise no longer sync-eligible
+      // — HOOK-02/Pitfall 3/4: `integrationId` stays non-null after
+      // conversion (identity + badge), so a naive `isDeleted`-only check
+      // would keep pulling upstream state into a row the user (or upstream)
+      // deliberately detached. Only an explicit re-import through the
+      // picker (`_upsertMilestoneShell`'s `update.detachedAt: null`)
+      // re-attaches it, never an automatic refresh pass.
+      if (existing.isDeleted || existing.detachedAt) {
         return { success: true };
       }
 
@@ -619,7 +781,7 @@ export class MilestoneSyncService {
         );
       }
 
-      const { id: milestoneId } = await this._upsertMilestoneShell(
+      const { id: milestoneId, created } = await this._upsertMilestoneShell(
         db,
         integrationId,
         existing.projectId,
@@ -627,6 +789,17 @@ export class MilestoneSyncService {
         userId,
         match
       );
+      // _upsertMilestoneShell already publishes `milestone.created` on the
+      // creating branch — a refresh pass that updates an existing row gets
+      // its own `milestone.updated` wake-up here (D-13: one call site per
+      // write path).
+      if (!created) {
+        publishMilestoneWakeUp({
+          event: "milestone.updated",
+          milestoneId,
+          projectId: existing.projectId,
+        });
+      }
 
       let membershipReachedCap = false;
       if (adapter.getMilestoneIssues) {
@@ -639,6 +812,11 @@ export class MilestoneSyncService {
           adapter
         );
         membershipReachedCap = membership.reachedCap;
+        publishMilestoneWakeUp({
+          event: "milestone.membership_changed",
+          milestoneId,
+          projectId: existing.projectId,
+        });
       }
 
       return {

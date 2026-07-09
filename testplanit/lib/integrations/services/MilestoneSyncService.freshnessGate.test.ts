@@ -47,23 +47,30 @@ vi.mock("../IntegrationManager", () => ({
 
 // Valkey mock — simulates a real lock: the first SET NX wins, subsequent
 // callers see the existing key and SET NX returns null (lock held).
-const { mockValkeyStore, mockValkeySet, mockValkeyDel } = vi.hoisted(() => {
-  const store = new Map<string, string>();
-  return {
-    mockValkeyStore: store,
-    mockValkeySet: vi.fn(
-      async (key: string, _val: string, ..._opts: unknown[]) => {
-        if (store.has(key)) return null;
-        store.set(key, "1");
-        return "OK";
-      }
-    ),
-    mockValkeyDel: vi.fn(async (key: string) => {
-      store.delete(key);
-      return 1;
-    }),
-  };
-});
+const { mockValkeyStore, mockValkeySet, mockValkeyDel, mockValkeyPublish } =
+  vi.hoisted(() => {
+    const store = new Map<string, string>();
+    return {
+      mockValkeyStore: store,
+      mockValkeySet: vi.fn(
+        async (key: string, _val: string, ..._opts: unknown[]) => {
+          if (store.has(key)) return null;
+          store.set(key, "1");
+          return "OK";
+        }
+      ),
+      mockValkeyDel: vi.fn(async (key: string) => {
+        store.delete(key);
+        return 1;
+      }),
+      // 19-03: MilestoneSyncService write paths now call
+      // publishMilestoneWakeUp (D-13), which reaches this same mocked
+      // module (lib/live/publish.ts resolves `../../valkey` to the
+      // identical file) — a no-op async stub keeps the wake-up's
+      // fire-and-forget `.catch()` chain from throwing.
+      mockValkeyPublish: vi.fn(async (_channel: string, _body: string) => 1),
+    };
+  });
 
 vi.mock("../../valkey", () => ({
   default: {
@@ -71,6 +78,8 @@ vi.mock("../../valkey", () => ({
       mockValkeySet(key, val, ...opts),
     del: (key: string) => mockValkeyDel(key),
     exists: async (key: string) => (mockValkeyStore.has(key) ? 1 : 0),
+    publish: (channel: string, body: string) =>
+      mockValkeyPublish(channel, body),
   },
 }));
 
@@ -411,10 +420,14 @@ describe("performProjectMilestoneSync — project-pass freshness marker", () => 
     await milestoneSyncService.performProjectMilestoneSync("user-1", 4, 100, {
       minFreshnessSeconds: 300,
     });
-    const otherProject =
-      await milestoneSyncService.performProjectMilestoneSync("user-1", 4, 200, {
+    const otherProject = await milestoneSyncService.performProjectMilestoneSync(
+      "user-1",
+      4,
+      200,
+      {
         minFreshnessSeconds: 300,
-      });
+      }
+    );
     expect(otherProject.cached).toBeUndefined();
     expect(mockGetExternalMilestones).toHaveBeenCalledTimes(2);
   });
