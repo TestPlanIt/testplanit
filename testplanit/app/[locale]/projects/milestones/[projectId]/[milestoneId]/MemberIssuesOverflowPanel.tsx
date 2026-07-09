@@ -5,12 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Loader2, PackageOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import type { MemberOverflowResponse } from "~/app/api/milestones/[milestoneId]/members/overflow/route";
+import { useMilestoneLiveStream } from "~/hooks/useMilestoneLiveStream";
 
 interface MemberIssuesOverflowPanelProps {
   milestoneId: number;
@@ -39,14 +40,10 @@ export function MemberIssuesOverflowPanel({
   onImported,
 }: MemberIssuesOverflowPanelProps) {
   const t = useTranslations("milestones.members");
+  const queryClient = useQueryClient();
   const [isImporting, setIsImporting] = useState(false);
-  // Import & link queues a worker job — the links land seconds after the
-  // POST returns, so a one-shot refetch would race it. Poll briefly after
-  // an import until the live diff drains (bounded, same pattern as the
-  // milestones page).
-  const [pollUntil, setPollUntil] = useState<number | null>(null);
 
-  const { data, isLoading } = useQuery<MemberOverflowResponse>({
+  const { data, isLoading, refetch } = useQuery<MemberOverflowResponse>({
     queryKey: ["milestoneMemberOverflow", milestoneId],
     queryFn: async () => {
       const response = await fetch(
@@ -58,13 +55,28 @@ export function MemberIssuesOverflowPanel({
       return response.json();
     },
     staleTime: 30000,
-    refetchInterval: (query) => {
-      if (!pollUntil || Date.now() > pollUntil) return false;
-      // Stop early once the drift drained.
-      const members = query.state.data?.members;
-      if (members && members.length === 0) return false;
-      return 3000;
-    },
+  });
+
+  // Import & link queues a worker job — the links land seconds after the
+  // POST returns, so a one-shot refetch would race it. Rather than a
+  // time-boxed poll (retired, D-16), subscribe to this milestone's SSE
+  // stream and refetch when a milestone.membership_changed wake-up lands
+  // (import completion and conversion both emit this — RESEARCH.md Pitfall
+  // 5). Mirrors useIssueUpdateStream's coalesced-invalidation shape rather
+  // than a bespoke debounce: every wake-up just re-marks this one query
+  // stale via invalidateQueries, letting React Query's own de-dup collapse
+  // a wake-up burst into a single in-flight refetch.
+  useMilestoneLiveStream({
+    milestoneId,
+    onWakeUp: useCallback(
+      (event) => {
+        if (event.event !== "milestone.membership_changed") return;
+        void queryClient.invalidateQueries({
+          queryKey: ["milestoneMemberOverflow", milestoneId],
+        });
+      },
+      [queryClient, milestoneId]
+    ),
   });
 
   // Self-gated on a non-empty `members` array — never on a table-surfaced
@@ -89,7 +101,11 @@ export function MemberIssuesOverflowPanel({
         throw new Error(body?.error || t("overflowImportError"));
       }
       toast.success(t("overflowImportSuccess"));
-      setPollUntil(Date.now() + 45_000);
+      // One immediate refetch in case the POST's own writes already landed
+      // synchronously; the milestone.membership_changed wake-up (subscribed
+      // above) catches the worker-completed links that land moments later —
+      // no time-boxed poll needed (D-16).
+      void refetch();
       onImported?.();
     } catch (err) {
       toast.error(
