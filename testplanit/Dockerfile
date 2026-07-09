@@ -47,7 +47,9 @@ RUN if [ -f ".docker-version.json" ]; then \
         node scripts/generate-version.js || echo "Version generation skipped (git info not available)"; \
     fi
 
-ENV NODE_OPTIONS="--max-old-space-size=16384"
+# 8192 is ample headroom: the ZenStack generate step peaks ~0.5 GB and the whole
+# build tree peaks ~7 GB (next build self-caps at 4096 via the build script).
+ENV NODE_OPTIONS="--max-old-space-size=8192"
 # `-o zenstack` writes the v3 client to testplanit/zenstack (the `~/zenstack/*`
 # import path), matching package.json's `generate` script. The flag is required:
 # without it generate uses the default output dir and the build stage's
@@ -127,7 +129,9 @@ RUN cd /app/deploy/node_modules/.pnpm && \
 FROM base AS build
 ARG BASE_DOMAIN
 ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=16384"
+# next build self-caps at 4096 (build script); the whole build tree peaks ~7 GB,
+# so 8192 leaves comfortable headroom.
+ENV NODE_OPTIONS="--max-old-space-size=8192"
 ENV VALKEY_URL=valkey://dummy:6379
 ENV DATABASE_URL=postgresql://dummy:dummy@dummy:5432/dummy
 ENV NEXTAUTH_SECRET=dummy-build-secret-min-32-characters-long

@@ -172,11 +172,14 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
   }
 
   async testConnection(): Promise<boolean> {
+    this.lastTestConnectionError = undefined;
     try {
       const sanitizedUrl = this.validateAndSanitizeUrl(
         this.getChatCompletionsUrl()
       );
       if (!sanitizedUrl) {
+        this.lastTestConnectionError =
+          "Invalid or missing Azure endpoint / deployment configuration.";
         return false;
       }
 
@@ -190,8 +193,23 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
         signal: AbortSignal.timeout(5000),
       });
 
-      return response.status === 200 || response.status === 400;
-    } catch {
+      // 200 = success, 400 = reachable + authenticated (bad request body)
+      if (response.status === 200 || response.status === 400) {
+        return true;
+      }
+
+      const body = await response.text().catch(() => "");
+      this.lastTestConnectionError = this.summarizeHttpError(
+        response.status,
+        response.statusText,
+        body
+      );
+      return false;
+    } catch (error) {
+      this.lastTestConnectionError = this.describeConnectionError(
+        this.getChatCompletionsUrl(),
+        error
+      );
       return false;
     }
   }

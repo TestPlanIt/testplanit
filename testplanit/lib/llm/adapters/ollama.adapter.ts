@@ -330,13 +330,27 @@ export class OllamaAdapter extends BaseLlmAdapter {
   }
 
   async testConnection(): Promise<boolean> {
+    this.lastTestConnectionError = undefined;
+    const url = `${this.baseUrl}/api/tags`;
     try {
-      const response = await this.safeFetch(`${this.baseUrl}/api/tags`, {
+      const response = await this.safeFetch(url, {
         headers: this.getHeaders(),
         signal: AbortSignal.timeout(5000),
       });
-      return response.ok;
-    } catch {
+
+      if (response.ok) {
+        return true;
+      }
+
+      const body = await response.text().catch(() => "");
+      this.lastTestConnectionError = this.summarizeHttpError(
+        response.status,
+        response.statusText,
+        body
+      );
+      return false;
+    } catch (error) {
+      this.lastTestConnectionError = this.describeConnectionError(url, error);
       return false;
     }
   }

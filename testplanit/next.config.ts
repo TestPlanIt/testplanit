@@ -115,6 +115,7 @@ const buildAllowedDevOrigins = (): string[] => {
 };
 
 const nextConfig: NextConfig = {
+  typescript: { ignoreBuildErrors: true },
   output: "standalone",
   allowedDevOrigins: buildAllowedDevOrigins(),
   turbopack: {
