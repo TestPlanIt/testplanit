@@ -55,11 +55,16 @@ export type CoverageBreakdown = {
   /**
    * Latest-result counts per ACTUAL project status (the iteration-matrix
    * display model): one entry per distinct status among the linked cases'
-   * latest in-scope results, with the admin-configured color. Cases with
-   * no in-scope result are not represented here — the UI derives its
-   * Untested count as linkedCaseCount - sum(statuses[].count).
+   * latest in-scope results, with the admin-configured color. The system
+   * 'untested' status is deliberately excluded — it folds into `untested`.
    */
   statuses: CoverageStatusCount[];
+  /**
+   * Single explicit Untested aggregate (the Reports convention): linked
+   * cases with no in-scope result, results with no status, and results
+   * carrying the system 'untested' status.
+   */
+  untested: number;
 };
 
 export type MemberCoverageResponse = Record<number, CoverageBreakdown>;
@@ -217,6 +222,7 @@ export async function GET(
       JOIN "Status" s ON s.id = lr."statusId"
       LEFT JOIN "Color" c ON c.id = s."colorId"
       WHERE lr."testRunCaseId" IS NOT NULL
+        AND s."systemName" IS DISTINCT FROM 'untested'
       GROUP BY lr."issueId", lr."statusId", s.name, c.value
       ORDER BY lr."issueId", COUNT(*) DESC
     `;
@@ -246,6 +252,14 @@ export async function GET(
         notRun: Number(row.notRun),
         uncovered: Number(row.linkedCaseCount) === 0,
         statuses: statusesByIssueId.get(row.issueId) ?? [],
+        untested: Math.max(
+          0,
+          Number(row.linkedCaseCount) -
+            (statusesByIssueId.get(row.issueId) ?? []).reduce(
+              (sum, entry) => sum + entry.count,
+              0
+            )
+        ),
       });
     });
 
@@ -259,6 +273,7 @@ export async function GET(
         notRun: 0,
         uncovered: true,
         statuses: [],
+        untested: 0,
       };
     });
 

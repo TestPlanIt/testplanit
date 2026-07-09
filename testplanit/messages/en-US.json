@@ -2219,8 +2219,7 @@
       "emptyCta": "Link an issue to get started.",
       "columnDescription": "Description",
       "unlinkConfirmTitle": "Unlink issue?",
-      "unlinkConfirmDescription": "This removes the issue from this milestone. The issue itself is kept and can be linked again later.",
-      "coverageUntested": "Untested"
+      "unlinkConfirmDescription": "This removes the issue from this milestone. The issue itself is kept and can be linked again later."
     }
   },
   "sessions": {

@@ -56,6 +56,7 @@ const baseRow: ExtendedMemberIssue = {
     notRun: 1,
     uncovered: false,
     statuses: [],
+    untested: 0,
   },
 };
 

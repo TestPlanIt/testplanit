@@ -19,6 +19,7 @@ describe("CoverageChip", () => {
           notRun: 0,
           uncovered: true,
           statuses: [],
+          untested: 0,
         }}
       />
     );
@@ -50,6 +51,7 @@ describe("CoverageChip", () => {
             { statusId: 2, name: "Failed", color: "#ef4444", count: 1 },
             { statusId: 5, name: "In Automation", color: "#3b82f6", count: 1 },
           ],
+          untested: 0,
         }}
       />
     );
@@ -58,7 +60,7 @@ describe("CoverageChip", () => {
     expect(screen.getByLabelText("Failed: 1")).toBeInTheDocument();
     expect(screen.getByLabelText("In Automation: 1")).toBeInTheDocument();
     // All 4 linked cases have latest results — no Untested pip.
-    expect(screen.queryByLabelText(/coverageUntested/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/labels.untested/)).not.toBeInTheDocument();
     expect(screen.getByTestId("coverage-pips")).toHaveAttribute(
       "title",
       expect.stringContaining("In Automation: 1")
@@ -76,10 +78,11 @@ describe("CoverageChip", () => {
           notRun: 2,
           uncovered: false,
           statuses: [],
+          untested: 2,
         }}
       />
     );
     expect(screen.queryByText("coverageUncovered")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("coverageUntested: 2")).toBeInTheDocument();
+    expect(screen.getByLabelText("labels.untested: 2")).toBeInTheDocument();
   });
 });

@@ -23,6 +23,8 @@ export interface CoverageBreakdown {
   notRun: number;
   uncovered: boolean;
   statuses: CoverageStatusCount[];
+  /** Explicit single Untested aggregate (Reports convention). */
+  untested: number;
 }
 
 interface CoverageChipProps {
@@ -45,6 +47,7 @@ interface CoverageChipProps {
  */
 export function CoverageChip({ breakdown, className }: CoverageChipProps) {
   const t = useTranslations("milestones.members");
+  const tCommon = useTranslations("common");
 
   if (!breakdown || breakdown.uncovered) {
     return (
@@ -63,8 +66,9 @@ export function CoverageChip({ breakdown, className }: CoverageChipProps) {
   }
 
   const statuses = breakdown.statuses ?? [];
-  const testedCount = statuses.reduce((sum, entry) => sum + entry.count, 0);
-  const untested = Math.max(0, breakdown.linkedCaseCount - testedCount);
+  // Single explicit Untested aggregate from the API (Reports convention):
+  // no-result cases + no-status results + system-'untested' results.
+  const untested = breakdown.untested ?? 0;
 
   const segments: Array<{
     key: string;
@@ -80,7 +84,7 @@ export function CoverageChip({ breakdown, className }: CoverageChipProps) {
     })),
     {
       key: "untested",
-      label: t("coverageUntested"),
+      label: tCommon("labels.untested"),
       count: untested,
       color: resolvePipColor("notStarted"),
     },
