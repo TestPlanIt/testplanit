@@ -1,5 +1,6 @@
 "use client";
 
+import type { QueryClient } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
@@ -30,6 +31,57 @@ import { subscribeToIssueUpdates } from "./issueUpdateStreamManager";
  * `getEnhancedDb` (Architectural Directive 2 — pub/sub is untrusted
  * plumbing).
  */
+// Issue + its explicit link tables — rows here ARE issue data regardless
+// of the query's args.
+const ISSUE_FAMILY_MODELS = new Set([
+  "issue",
+  "milestoneissue",
+  "repositorycaseissue",
+]);
+
+// Coalesce invalidation bursts. One SSE event fans out to EVERY mounted
+// subscriber (a page with 39 issue badges gets 39 onUpdate callbacks for a
+// single upstream event), and several events can land close together.
+// Uninhibited, each callback issues its own invalidateQueries and
+// invalidations arriving while a refetch is already in flight re-mark the
+// queries stale — producing 2-3 back-to-back refetch/render cycles (visible
+// as popover/badge flicker). A single fixed-window schedule turns any burst
+// into exactly one invalidation pass. Exported for tests.
+const INVALIDATE_COALESCE_MS = 200;
+let invalidateTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingQueryClient: QueryClient | null = null;
+
+export function scheduleIssueInvalidation(queryClient: QueryClient): void {
+  pendingQueryClient = queryClient;
+  if (invalidateTimer !== null) return; // burst already scheduled
+  invalidateTimer = setTimeout(() => {
+    invalidateTimer = null;
+    const client = pendingQueryClient;
+    pendingQueryClient = null;
+    void client?.invalidateQueries({
+      predicate: (query) => isIssueBearingQueryKey(query.queryKey),
+    });
+  }, INVALIDATE_COALESCE_MS);
+}
+
+/**
+ * True when a React Query key belongs to a ZenStack query that carries
+ * Issue data — either an issue-family model, or any model whose query
+ * args reference an issue relation. Exported for tests.
+ */
+export function isIssueBearingQueryKey(queryKey: unknown): boolean {
+  if (!Array.isArray(queryKey) || queryKey[0] !== "zenstack") return false;
+  const model = queryKey[1];
+  if (typeof model !== "string") return false;
+  if (ISSUE_FAMILY_MODELS.has(model.toLowerCase())) return true;
+  try {
+    return JSON.stringify(queryKey.slice(2)).toLowerCase().includes("issue");
+  } catch {
+    // Unserializable args — err on the side of refetching.
+    return true;
+  }
+}
+
 export function useIssueUpdateStream(
   projectIds: number | number[] | null | undefined
 ) {
@@ -52,28 +104,27 @@ export function useIssueUpdateStream(
     if (depKey === "") return;
     const onUpdate = () => {
       // ZenStack's queryKey shape is `["zenstack", model, operation, args,
-      // options]` (verified against the v2.22 / v3.6 runtimes). React
-      // Query treats a partial key as a prefix, so `["zenstack"]` matches
-      // every ZenStack-issued query on the page — `useFindManyIssue`,
-      // `useFindUniqueIssue`, AND every parent-model query that may
-      // include Issue data via a relation (e.g.
-      // `useFindManyRepositoryCaseVersions` with `include: { issues }`,
-      // `useFindManySessions` w/ included issues, etc.).
+      // options]` (verified against the v2.22 / v3.6 runtimes). An Issue
+      // update only affects queries that actually carry Issue data, so the
+      // invalidation is scoped by `isIssueBearingQueryKey` instead of the
+      // former `["zenstack"]` prefix (which refetched EVERY ZenStack query
+      // on the page — nav-bar notifications, project lists, color tables —
+      // ~30 refetches per hover-sync on a busy page):
       //
-      // Why so broad: an Issue update changes data the user sees in many
-      // shapes — the issue badge title, a row showing "linked issues
-      // count", a popover of related sessions, a test run's failure
-      // panel. Tracking every consumer's queryKey shape is brittle; the
-      // alternative is "anything fetched via ZenStack might be affected,
-      // refetch the active ones." React Query's invalidation is cheap
-      // (refetch only fires on queries with active observers — i.e.
-      // queries actually mounted on the current page).
+      //   1. Issue-family models (Issue + its explicit link tables) are
+      //      always issue-bearing.
+      //   2. Any other model's query is issue-bearing when its serialized
+      //      args mention an issue relation (`include: { issues }`,
+      //      `caseIssues`, `milestoneIssues`, ... — every Issue relation
+      //      name in schema.zmodel contains "issue"). Substring false
+      //      positives just cause a harmless extra refetch.
       //
       // Non-ZenStack queries (REST calls from `app/api/...` routes etc.)
       // are NOT touched — their keys don't start with "zenstack".
-      void queryClient.invalidateQueries({
-        queryKey: ["zenstack"],
-      });
+      //
+      // The call is coalesced: any burst of subscriber callbacks / SSE
+      // events within the window produces ONE invalidation pass.
+      scheduleIssueInvalidation(queryClient);
     };
 
     const ids = depKey.split(",").map((s) => Number(s));
