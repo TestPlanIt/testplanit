@@ -115,6 +115,7 @@ export interface ApplyInboundMilestoneEventInput {
  */
 export type MilestoneDeliveryOutcome =
   | "refreshed" // resolved project matched an active integration; performMilestoneRefresh invoked
+  | "imported" // version_created/sprint_created with auto-track ON; performMilestoneImport invoked (D-02)
   | "converted" // version_deleted/merged or sprint_deleted; convertMilestoneToLocal invoked
   | "unmatched" // D-03: resolved project/board has no active integration mapping — silent ack, no write
   | "no-ref" // adapter could not extract a milestone ref from the payload

@@ -44,6 +44,13 @@ const mocks = vi.hoisted(() => {
   };
   const getAdapter = vi.fn(() => adapter);
   const performMilestoneRefresh = vi.fn(async () => ({ success: true }));
+  const performMilestoneImport = vi.fn(async () => ({
+    success: true,
+    imported: 1,
+    updated: 0,
+    errors: [] as string[],
+    membershipErrors: [] as string[],
+  }));
   const convertMilestoneToLocal = vi.fn(async () => ({ success: true }));
   const boardAdapter = {
     resolveBoardProject: vi.fn(async (..._args: any[]): Promise<any> => null),
@@ -64,8 +71,13 @@ const mocks = vi.hoisted(() => {
     captureAuditEvent: vi.fn(async () => undefined),
     adapter,
     getAdapter,
-    milestoneSyncService: { performMilestoneRefresh, convertMilestoneToLocal },
+    milestoneSyncService: {
+      performMilestoneRefresh,
+      performMilestoneImport,
+      convertMilestoneToLocal,
+    },
     performMilestoneRefresh,
+    performMilestoneImport,
     convertMilestoneToLocal,
     integrationManager: { getAdapter: integrationManagerGetAdapter },
     integrationManagerGetAdapter,
@@ -151,6 +163,14 @@ const resetMocks = () => {
 
   mocks.performMilestoneRefresh.mockReset();
   mocks.performMilestoneRefresh.mockResolvedValue({ success: true });
+  mocks.performMilestoneImport.mockReset();
+  mocks.performMilestoneImport.mockResolvedValue({
+    success: true,
+    imported: 1,
+    updated: 0,
+    errors: [],
+    membershipErrors: [],
+  });
   mocks.convertMilestoneToLocal.mockReset();
   mocks.convertMilestoneToLocal.mockResolvedValue({ success: true });
   mocks.integrationManagerGetAdapter.mockReset();
@@ -221,7 +241,87 @@ describe("applyInboundMilestoneEvent", () => {
     expect(mocks.performMilestoneRefresh).not.toHaveBeenCalled();
   });
 
-  it("HOOK-01: jira:version_created DOES refresh when auto-track is ON", async () => {
+  it("HOOK-01 (WR-01): jira:version_created with auto-track ON IMPORTS the new artifact (a refresh would notFound-no-op — no linked row exists yet), attributed to autoTrackAdminId", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
+    mocks.projectIntegrationFindUnique.mockResolvedValue({
+      config: {
+        milestoneSync: { autoTrack: true, autoTrackAdminId: "admin-1" },
+      },
+    });
+
+    const result = await applyInboundMilestoneEvent(
+      baseInput({ eventType: "jira:version_created" })
+    );
+
+    expect(result.outcome).toBe("imported");
+    expect(mocks.performMilestoneImport).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      7,
+      { externalIds: ["10100"], kinds: ["RELEASE"] },
+      "admin-1"
+    );
+    // Never the dead refresh dispatch — performMilestoneRefresh returns
+    // notFound for a row that does not exist yet.
+    expect(mocks.performMilestoneRefresh).not.toHaveBeenCalled();
+  });
+
+  it("HOOK-01 (WR-01): sprint_created with auto-track ON imports with kind ITERATION", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "ITERATION",
+      externalId: "55",
+      originBoardId: "3",
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
+    mocks.boardAdapter.resolveBoardProject.mockResolvedValue({
+      projectId: "10050",
+      projectKey: "DEMO",
+    });
+    mocks.projectIntegrationFindUnique.mockResolvedValue({
+      config: {
+        milestoneSync: { autoTrack: true, autoTrackAdminId: "admin-1" },
+      },
+    });
+
+    const result = await applyInboundMilestoneEvent(
+      baseInput({
+        eventType: "sprint_created",
+        payload: {
+          eventType: "sprint_created",
+          issueKey: "",
+          externalStatus: "",
+          synthetic: false,
+          data: {
+            webhookEvent: "sprint_created",
+            sprint: { id: 55, originBoardId: 3 },
+          },
+        },
+      })
+    );
+
+    expect(result.outcome).toBe("imported");
+    expect(mocks.performMilestoneImport).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      7,
+      { externalIds: ["55"], kinds: ["ITERATION"] },
+      "admin-1"
+    );
+  });
+
+  it("HOOK-01 (WR-01): jira:version_created with auto-track ON but NO autoTrackAdminId configured refuses to import (mirrors performProjectMilestoneSync's attribution rule)", async () => {
     const applyInboundMilestoneEvent = await importSut();
     (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
       kind: "RELEASE",
@@ -240,8 +340,10 @@ describe("applyInboundMilestoneEvent", () => {
       baseInput({ eventType: "jira:version_created" })
     );
 
-    expect(result.outcome).toBe("refreshed");
-    expect(mocks.performMilestoneRefresh).toHaveBeenCalledTimes(1);
+    expect(result.outcome).toBe("unmatched");
+    expect(result.reason).toBe("auto-track-admin-missing");
+    expect(mocks.performMilestoneImport).not.toHaveBeenCalled();
+    expect(mocks.performMilestoneRefresh).not.toHaveBeenCalled();
   });
 
   it("HOOK-01: sprint_updated resolves its project via board->project lookup, not payload.project (sprints carry no project field)", async () => {

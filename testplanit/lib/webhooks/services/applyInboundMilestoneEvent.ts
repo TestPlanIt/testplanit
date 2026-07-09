@@ -210,8 +210,9 @@ async function resolveMilestoneEventProject(
  * Domain entry point for jira:version_* / sprint_* inbound webhook events —
  * sibling to `applyInboundIssueUpdate.ts`, sharing the exact same delivery
  * LOG + dedup + shared-tail + audit transaction shape, but dispatching to
- * `MilestoneSyncService.performMilestoneRefresh` / `.convertMilestoneToLocal`
- * instead of Issue field updates.
+ * `MilestoneSyncService.performMilestoneRefresh` / `.performMilestoneImport`
+ * (created events, D-02) / `.convertMilestoneToLocal` instead of Issue field
+ * updates.
  *
  * Critical divergence from the issue-update sibling: this service resolves
  * the event's OWN project from the payload (Pitfall 6), NEVER the receiving
@@ -371,8 +372,12 @@ export async function applyInboundMilestoneEvent(
   // refresh vs convert. Wrapped so a throw here never surfaces as a 500 —
   // the dedup row is already committed, and the next webhook event (or a
   // manual sync) reconciles.
-  let finalOutcome: "refreshed" | "converted" | "unmatched" | "error" =
-    "unmatched";
+  let finalOutcome:
+    | "refreshed"
+    | "imported"
+    | "converted"
+    | "unmatched"
+    | "error" = "unmatched";
   let milestoneId: number | undefined;
   try {
     const resolved = await resolveMilestoneEventProject(ref);
@@ -412,55 +417,99 @@ export async function applyInboundMilestoneEvent(
           milestoneId = existing.id;
           finalOutcome = "converted";
         }
-      } else {
-        // Refresh path. version_created/sprint_created only refresh when
-        // auto-track is ON for the resolved project (D-02) — an unlinked
-        // milestone with auto-track OFF is a clean no-op ack.
-        if (isCreatedEvent(eventType)) {
-          const projectIntegration = await baseDb.projectIntegration.findUnique(
-            {
-              where: {
-                projectId_integrationId: {
-                  projectId: resolved.projectId,
-                  integrationId: resolved.integrationId,
-                },
-              },
-              select: { config: true },
-            }
-          );
-          const autoTrack =
-            (projectIntegration?.config as any)?.milestoneSync?.autoTrack ===
-            true;
-          if (!autoTrack) {
-            console.debug(
-              `[applyInboundMilestoneEvent] ${eventType} for project ${resolved.projectId} — auto-track is OFF, no-op (D-02)`
-            );
-            finalOutcome = "unmatched";
-            // Skip refresh entirely — fall through to the finally-style
-            // return below.
-            await captureAuditEvent({
-              action: "WEBHOOK_RECEIVED",
-              entityType: "WebhookDelivery",
-              entityId: txResult.deliveryId,
+      } else if (isCreatedEvent(eventType)) {
+        // Created path (D-02): version_created/sprint_created only act when
+        // auto-track is ON for the resolved project — an unlinked milestone
+        // with auto-track OFF is a clean no-op ack.
+        const projectIntegration = await baseDb.projectIntegration.findUnique({
+          where: {
+            projectId_integrationId: {
               projectId: resolved.projectId,
-              userId: SYSTEM_ACTOR_ID,
-              metadata: {
-                adapterType,
-                eventType,
-                payloadDigest,
-                webhookConfigId,
-                outcome: "unmatched",
-                reason: "auto-track-off",
-              },
-            });
-            return {
+              integrationId: resolved.integrationId,
+            },
+          },
+          select: { config: true },
+        });
+        const milestoneSyncConfig =
+          (projectIntegration?.config as any)?.milestoneSync ?? {};
+        const autoTrack = milestoneSyncConfig.autoTrack === true;
+        if (!autoTrack) {
+          console.debug(
+            `[applyInboundMilestoneEvent] ${eventType} for project ${resolved.projectId} — auto-track is OFF, no-op (D-02)`
+          );
+          finalOutcome = "unmatched";
+          // Skip entirely — fall through to the finally-style return below.
+          await captureAuditEvent({
+            action: "WEBHOOK_RECEIVED",
+            entityType: "WebhookDelivery",
+            entityId: txResult.deliveryId,
+            projectId: resolved.projectId,
+            userId: SYSTEM_ACTOR_ID,
+            metadata: {
+              adapterType,
+              eventType,
+              payloadDigest,
+              webhookConfigId,
               outcome: "unmatched",
-              deliveryId: txResult.deliveryId,
               reason: "auto-track-off",
-            };
-          }
+            },
+          });
+          return {
+            outcome: "unmatched",
+            deliveryId: txResult.deliveryId,
+            reason: "auto-track-off",
+          };
         }
 
+        // A created event means no linked Milestones row exists yet, so
+        // `performMilestoneRefresh` would return `notFound` without writing
+        // anything — the new artifact must be IMPORTED instead. Attribution
+        // matches `performProjectMilestoneSync`'s auto-track pass: the
+        // imported row is credited to `autoTrackAdminId` (the admin who
+        // enabled sync), never a system placeholder, and a missing admin id
+        // is a configuration error, not an import-as-somebody-else.
+        const autoTrackAdminId: string | undefined =
+          milestoneSyncConfig.autoTrackAdminId;
+        if (!autoTrackAdminId) {
+          console.error(
+            `[applyInboundMilestoneEvent] ${eventType} for project ${resolved.projectId} — auto-track is ON but milestoneSync.autoTrackAdminId is not configured; cannot import`
+          );
+          await captureAuditEvent({
+            action: "WEBHOOK_RECEIVED",
+            entityType: "WebhookDelivery",
+            entityId: txResult.deliveryId,
+            projectId: resolved.projectId,
+            userId: SYSTEM_ACTOR_ID,
+            metadata: {
+              adapterType,
+              eventType,
+              payloadDigest,
+              webhookConfigId,
+              outcome: "unmatched",
+              reason: "auto-track-admin-missing",
+            },
+          });
+          return {
+            outcome: "unmatched",
+            deliveryId: txResult.deliveryId,
+            reason: "auto-track-admin-missing",
+          };
+        }
+
+        const importResult = await milestoneSyncService.performMilestoneImport(
+          SYSTEM_ACTOR_ID,
+          resolved.integrationId,
+          resolved.projectId,
+          { externalIds: [ref.externalId], kinds: [ref.kind] },
+          autoTrackAdminId
+        );
+        if (!importResult.success) {
+          console.error(
+            `[applyInboundMilestoneEvent] performMilestoneImport failed for externalId=${ref.externalId} integration=${resolved.integrationId}: ${importResult.errors.join("; ") || "unknown"}`
+          );
+        }
+        finalOutcome = "imported";
+      } else {
         const refreshResult =
           await milestoneSyncService.performMilestoneRefresh(
             SYSTEM_ACTOR_ID,
