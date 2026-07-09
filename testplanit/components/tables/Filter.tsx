@@ -2,12 +2,15 @@ import { useDebounce } from "@/components/Debounce";
 import { Input } from "@/components/ui/input";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
+import { cn } from "~/utils";
 
 interface FilterProps {
   initialSearchString?: string;
   placeholder?: string;
   onSearchChange: (value: string) => void;
   dataTestId?: string;
+  /** Applied to the wrapper — lets callers size the search box. */
+  className?: string;
 }
 
 const Filter: React.FC<FilterProps> = ({
@@ -15,6 +18,7 @@ const Filter: React.FC<FilterProps> = ({
   onSearchChange,
   placeholder,
   dataTestId,
+  className,
 }) => {
   const t = useTranslations("common.table");
   const [inputValue, setInputValue] = useState(initialSearchString);
@@ -29,7 +33,7 @@ const Filter: React.FC<FilterProps> = ({
   };
 
   return (
-    <div className="relative">
+    <div className={cn("relative", className)}>
       <Input
         placeholder={placeholder || t("filter")}
         value={inputValue}

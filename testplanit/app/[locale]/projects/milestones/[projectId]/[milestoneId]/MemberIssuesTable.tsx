@@ -51,7 +51,12 @@ interface MemberIssuesTableProps {
   projectId: number;
 }
 
-type CoverageStateFilter = "" | "UNCOVERED" | "PASSED" | "FAILED" | "IN_PROGRESS" | "NOT_RUN";
+/**
+ * "" = all · UNCOVERED = no completed outcome · UNTESTED = has untested
+ * linked cases · `status:<id>` = has a completed outcome with that status.
+ * Mirrors exactly what the Coverage column can display.
+ */
+type CoverageStateFilter = "" | "UNCOVERED" | "UNTESTED" | `status:${number}`;
 type SourceFilter = "" | "SYNCED" | "MANUAL";
 
 function matchesCoverageState(
@@ -60,22 +65,21 @@ function matchesCoverageState(
 ): boolean {
   if (!filter) return true;
   if (!breakdown) return filter === "UNCOVERED";
-  switch (filter) {
-    case "UNCOVERED":
-      // Matches the chip: uncovered = no completed outcome in scope, not
-      // just "no linked cases".
-      return !hasCompletedCoverage(breakdown);
-    case "PASSED":
-      return breakdown.passed > 0;
-    case "FAILED":
-      return breakdown.failed > 0;
-    case "IN_PROGRESS":
-      return breakdown.inProgress > 0;
-    case "NOT_RUN":
-      return breakdown.notRun > 0;
-    default:
-      return true;
+  if (filter === "UNCOVERED") {
+    // Matches the chip: uncovered = no completed outcome in scope, not
+    // just "no linked cases".
+    return !hasCompletedCoverage(breakdown);
   }
+  if (filter === "UNTESTED") {
+    return (breakdown.untested ?? 0) > 0;
+  }
+  if (filter.startsWith("status:")) {
+    const statusId = Number(filter.slice("status:".length));
+    return (breakdown.statuses ?? []).some(
+      (entry) => entry.statusId === statusId && entry.count > 0
+    );
+  }
+  return true;
 }
 
 /**
@@ -441,6 +445,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
             initialSearchString={searchString}
             onSearchChange={setSearchString}
             dataTestId="member-issues-search"
+            className="grow max-w-lg"
           />
           <Select
             value={coverageFilter || "all"}
@@ -454,10 +459,17 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
             <SelectContent>
               <SelectItem value="all">{t("filterAllCoverage")}</SelectItem>
               <SelectItem value="UNCOVERED">{t("coverageUncovered")}</SelectItem>
-              <SelectItem value="FAILED">{t("coverageFailed")}</SelectItem>
-              <SelectItem value="PASSED">{t("coveragePassed")}</SelectItem>
-              <SelectItem value="IN_PROGRESS">{t("coverageInProgress")}</SelectItem>
-              <SelectItem value="NOT_RUN">{t("coverageNotRun")}</SelectItem>
+              <SelectItem value="UNTESTED">
+                {tCommon("labels.untested")}
+              </SelectItem>
+              {coverageTotals.statuses.map((entry) => (
+                <SelectItem
+                  key={`filter-status-${entry.statusId}`}
+                  value={`status:${entry.statusId}`}
+                >
+                  {entry.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select
