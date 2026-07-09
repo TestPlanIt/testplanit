@@ -495,31 +495,50 @@ export class MilestoneSyncService {
         };
       }
 
-      const integrationProject = await db.integrationProject.findFirst({
-        where: {
-          projectIntegration: { integrationId, projectId: existing.projectId },
-          isActive: true,
-        },
-        select: { externalProjectKey: true },
-      });
-      if (!integrationProject) {
-        throw new Error(
-          `Cannot refresh milestone ${externalId}: no active IntegrationProject mapping for project ${existing.projectId}`
-        );
-      }
+      const projectKeys = await this._resolveProjectKeys(
+        db,
+        integrationId,
+        existing.projectId
+      );
 
       const adapter = await this._getAdapter(integrationId, db);
-      const { items } = await adapter.getExternalMilestones!({
-        projectKey: integrationProject.externalProjectKey,
-        // Scope the fetch to the milestone's known kind when available —
-        // avoids an unnecessary second-kind fan-out on every refresh.
-        ...(existing.externalKind
-          ? { kind: existing.externalKind as "RELEASE" | "ITERATION" }
-          : {}),
-        includeClosed: true,
-      });
-      const match = items.find((item) => item.id === externalId);
+      // Try each mapped project key in turn — with 2+ mappings on the same
+      // integration/project, the artifact may only be visible under one of
+      // them (e.g. an ABT-only sprint when the project is also mapped to
+      // ADM). A key whose fetch throws must NOT be treated as "the artifact
+      // isn't there" — only surface "no longer present upstream" once every
+      // key has been tried and none produced a match; if every key's fetch
+      // errored, propagate the fetch error instead (mirrors the
+      // all-boards-failed rule in JiraAdapter.fetchJiraSprints).
+      let match: ExternalMilestone | undefined;
+      let firstFetchError: unknown = null;
+      let allKeysErrored = true;
+      for (const projectKey of projectKeys) {
+        try {
+          const { items } = await adapter.getExternalMilestones!({
+            projectKey,
+            // Scope the fetch to the milestone's known kind when available —
+            // avoids an unnecessary second-kind fan-out on every refresh.
+            ...(existing.externalKind
+              ? { kind: existing.externalKind as "RELEASE" | "ITERATION" }
+              : {}),
+            includeClosed: true,
+          });
+          allKeysErrored = false;
+          match = items.find((item) => item.id === externalId);
+          if (match) break;
+        } catch (error) {
+          if (firstFetchError === null) firstFetchError = error;
+          console.warn(
+            `[MilestoneSyncService] getExternalMilestones failed for project key ${projectKey} (integration ${integrationId}):`,
+            error
+          );
+        }
+      }
       if (!match) {
+        if (allKeysErrored && firstFetchError !== null) {
+          throw firstFetchError;
+        }
         throw new Error(
           `Milestone ${externalId} no longer present upstream for project ${existing.projectId}`
         );
@@ -613,29 +632,87 @@ export class MilestoneSyncService {
   }
 
   /**
-   * Resolves the `IntegrationProject.externalProjectKey` for a given
-   * (integrationId, projectId) pair — every `getExternalMilestones` call
-   * needs a project key (17-03 deviation: the adapter is integration-scoped,
-   * not project-scoped).
+   * Resolves ALL active `IntegrationProject.externalProjectKey`s for a given
+   * (integrationId, projectId) pair — a project can be mapped to more than
+   * one external project key on the same integration (e.g. TPI mapped to
+   * both ABT and ADM in Jira), and every one of them must be consulted so
+   * an artifact that only exists under a non-first mapping isn't silently
+   * dropped. `orderBy: createdAt asc` keeps the fetch order deterministic
+   * across calls (helps test/debug reproducibility, not a correctness
+   * requirement since callers union across all keys).
    */
-  private async _resolveProjectKey(
+  private async _resolveProjectKeys(
     db: DbClient,
     integrationId: number,
     projectId: number
-  ): Promise<string> {
-    const integrationProject = await db.integrationProject.findFirst({
+  ): Promise<string[]> {
+    const integrationProjects = await db.integrationProject.findMany({
       where: {
         projectIntegration: { integrationId, projectId },
         isActive: true,
       },
+      orderBy: { createdAt: "asc" },
       select: { externalProjectKey: true },
     });
-    if (!integrationProject) {
+    if (integrationProjects.length === 0) {
       throw new Error(
         `No active IntegrationProject mapping for integration ${integrationId} / project ${projectId}`
       );
     }
-    return integrationProject.externalProjectKey;
+    return integrationProjects.map(
+      (ip: { externalProjectKey: string }) => ip.externalProjectKey
+    );
+  }
+
+  /**
+   * Fetches one `kind` of external milestone across ALL of a project's
+   * mapped project keys and dedupes by item id (first wins) — sprints on a
+   * shared Jira board WILL appear under multiple project keys, so a naive
+   * concat would double-import/double-count them. Per-key fetch failures
+   * are collected rather than aborting the whole union: a single bad
+   * mapping (revoked scope, deleted external project) shouldn't block
+   * artifacts visible under the project's other mappings. Only when EVERY
+   * key failed is the failure surfaced — a credential/permission problem
+   * must not be swallowed as "no milestones" (mirrors the all-boards-failed
+   * rule in `JiraAdapter.fetchJiraSprints`).
+   */
+  private async _fetchKindAcrossKeys(
+    adapter: IssueAdapter,
+    keys: string[],
+    kind: "RELEASE" | "ITERATION",
+    includeClosed: boolean
+  ): Promise<ExternalMilestone[]> {
+    const byId = new Map<string, ExternalMilestone>();
+    let failedKeys = 0;
+    let firstError: unknown = null;
+
+    for (const projectKey of keys) {
+      try {
+        const { items } = await adapter.getExternalMilestones!({
+          projectKey,
+          kind,
+          includeClosed,
+        });
+        for (const item of items) {
+          if (!byId.has(item.id)) {
+            byId.set(item.id, item);
+          }
+        }
+      } catch (error) {
+        failedKeys += 1;
+        if (firstError === null) firstError = error;
+        console.warn(
+          `[MilestoneSyncService] getExternalMilestones(${kind}) failed for project key ${projectKey}:`,
+          error
+        );
+      }
+    }
+
+    if (keys.length > 0 && failedKeys === keys.length) {
+      throw firstError;
+    }
+
+    return Array.from(byId.values());
   }
 
   /**
@@ -667,7 +744,7 @@ export class MilestoneSyncService {
 
     try {
       const typeMap = await this._provisionMilestoneTypes(db, projectId);
-      const projectKey = await this._resolveProjectKey(
+      const projectKeys = await this._resolveProjectKeys(
         db,
         integrationId,
         projectId
@@ -678,11 +755,12 @@ export class MilestoneSyncService {
       const fetched: ExternalMilestone[] = [];
       for (const kind of kinds) {
         try {
-          const { items } = await adapter.getExternalMilestones!({
-            projectKey,
+          const items = await this._fetchKindAcrossKeys(
+            adapter,
+            projectKeys,
             kind,
-            includeClosed: true,
-          });
+            true
+          );
           fetched.push(...items);
         } catch (error: any) {
           errors.push(
@@ -802,7 +880,7 @@ export class MilestoneSyncService {
       const autoTrackAdminId: string | undefined =
         milestoneSyncConfig.autoTrackAdminId;
 
-      const projectKey = await this._resolveProjectKey(
+      const projectKeys = await this._resolveProjectKeys(
         db,
         integrationId,
         projectId
@@ -811,15 +889,17 @@ export class MilestoneSyncService {
 
       // Current filter-matching artifacts (the same default import filter:
       // unreleased versions + active/future sprints), scoped to the
-      // configured kinds only (kinds gating).
+      // configured kinds only (kinds gating), unioned across every active
+      // project-key mapping.
       const currentMatches: ExternalMilestone[] = [];
       for (const kind of kinds) {
         try {
-          const { items } = await adapter.getExternalMilestones!({
-            projectKey,
+          const items = await this._fetchKindAcrossKeys(
+            adapter,
+            projectKeys,
             kind,
-            includeClosed: false,
-          });
+            false
+          );
           currentMatches.push(...items);
         } catch (error: any) {
           errors.push(

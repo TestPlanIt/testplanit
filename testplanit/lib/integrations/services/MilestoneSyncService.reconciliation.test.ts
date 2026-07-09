@@ -25,7 +25,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ─── Mocks ────────────────────────────────────────────────────────────────
 const mockMilestonesFindFirst = vi.fn();
 const mockMilestonesUpsert = vi.fn();
-const mockProjectIntegrationFindFirst = vi.fn();
+const mockIntegrationProjectFindMany = vi.fn();
 const mockMilestoneIssueUpsert = vi.fn();
 const mockMilestoneIssueDeleteMany = vi.fn();
 const mockMilestoneIssueFindMany = vi.fn();
@@ -39,7 +39,7 @@ vi.mock("@/lib/rawDb", () => ({
       upsert: (...args: any[]) => mockMilestonesUpsert(...args),
     },
     integrationProject: {
-      findFirst: (...args: any[]) => mockProjectIntegrationFindFirst(...args),
+      findMany: (...args: any[]) => mockIntegrationProjectFindMany(...args),
     },
     milestoneIssue: {
       upsert: (...args: any[]) => mockMilestoneIssueUpsert(...args),
@@ -109,9 +109,9 @@ beforeEach(() => {
     milestoneTypesId: 5,
     externalKind: "RELEASE",
   });
-  mockProjectIntegrationFindFirst.mockResolvedValue({
-    externalProjectKey: "TPI",
-  });
+  mockIntegrationProjectFindMany.mockResolvedValue([
+    { externalProjectKey: "TPI" },
+  ]);
   mockGetExternalMilestones.mockResolvedValue({
     items: [RELEASE_MATCH],
     hasMore: false,

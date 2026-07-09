@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockMilestonesFindFirst = vi.fn();
 const mockMilestonesFindUnique = vi.fn();
 const mockMilestonesUpsert = vi.fn();
-const mockIntegrationProjectFindFirst = vi.fn();
+const mockIntegrationProjectFindMany = vi.fn();
 
 vi.mock("@/lib/rawDb", () => ({
   rawDb: {
@@ -22,7 +22,7 @@ vi.mock("@/lib/rawDb", () => ({
       upsert: (...args: any[]) => mockMilestonesUpsert(...args),
     },
     integrationProject: {
-      findFirst: (...args: any[]) => mockIntegrationProjectFindFirst(...args),
+      findMany: (...args: any[]) => mockIntegrationProjectFindMany(...args),
     },
   },
 }));
@@ -54,9 +54,9 @@ beforeEach(() => {
   });
   mockMilestonesFindUnique.mockResolvedValue(null);
   mockMilestonesUpsert.mockResolvedValue({ id: 1 });
-  mockIntegrationProjectFindFirst.mockResolvedValue({
-    externalProjectKey: "TEST",
-  });
+  mockIntegrationProjectFindMany.mockResolvedValue([
+    { externalProjectKey: "TEST" },
+  ]);
 });
 
 describe("RELEASE field mapping (MAP-01)", () => {

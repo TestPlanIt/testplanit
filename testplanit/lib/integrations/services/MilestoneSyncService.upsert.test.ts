@@ -42,7 +42,7 @@ const mockMilestonesUpsert = vi.fn((...args: any[]) => {
   milestonesTable.set(key, created);
   return Promise.resolve(created);
 });
-const mockIntegrationProjectFindFirst = vi.fn();
+const mockIntegrationProjectFindMany = vi.fn();
 
 vi.mock("@/lib/rawDb", () => ({
   rawDb: {
@@ -52,7 +52,7 @@ vi.mock("@/lib/rawDb", () => ({
       upsert: (...args: any[]) => mockMilestonesUpsert(...args),
     },
     integrationProject: {
-      findFirst: (...args: any[]) => mockIntegrationProjectFindFirst(...args),
+      findMany: (...args: any[]) => mockIntegrationProjectFindMany(...args),
     },
   },
 }));
@@ -84,9 +84,9 @@ beforeEach(() => {
     milestoneTypesId: 5,
     lastSyncedAt: null,
   });
-  mockIntegrationProjectFindFirst.mockResolvedValue({
-    externalProjectKey: "TEST",
-  });
+  mockIntegrationProjectFindMany.mockResolvedValue([
+    { externalProjectKey: "TEST" },
+  ]);
 });
 
 describe("Milestone upsert idempotency (MSYNC-03)", () => {

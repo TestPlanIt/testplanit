@@ -31,7 +31,7 @@ const mockMilestoneTypesUpsert = vi.fn();
 const mockMilestoneTypesAssignmentUpsert = vi.fn();
 const mockMilestonesFindUnique = vi.fn();
 const mockMilestonesUpsert = vi.fn();
-const mockIntegrationProjectFindFirst = vi.fn();
+const mockIntegrationProjectFindMany = vi.fn();
 
 vi.mock("@/lib/rawDb", () => ({
   rawDb: {
@@ -46,7 +46,7 @@ vi.mock("@/lib/rawDb", () => ({
       upsert: (...args: any[]) => mockMilestonesUpsert(...args),
     },
     integrationProject: {
-      findFirst: (...args: any[]) => mockIntegrationProjectFindFirst(...args),
+      findMany: (...args: any[]) => mockIntegrationProjectFindMany(...args),
     },
   },
 }));
@@ -81,9 +81,9 @@ beforeEach(() => {
     id: 5000,
     ...create,
   }));
-  mockIntegrationProjectFindFirst.mockResolvedValue({
-    externalProjectKey: "TEST",
-  });
+  mockIntegrationProjectFindMany.mockResolvedValue([
+    { externalProjectKey: "TEST" },
+  ]);
 });
 
 describe("MilestoneType provisioning (mocked)", () => {

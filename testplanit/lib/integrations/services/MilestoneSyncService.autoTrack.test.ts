@@ -21,7 +21,7 @@ const mockMilestonesFindUnique = vi.fn();
 const mockMilestonesUpsert = vi.fn();
 const mockMilestoneTypesUpsert = vi.fn();
 const mockMilestoneTypesAssignmentUpsert = vi.fn();
-const mockIntegrationProjectFindFirst = vi.fn();
+const mockIntegrationProjectFindMany = vi.fn();
 
 vi.mock("@/lib/rawDb", () => ({
   rawDb: {
@@ -41,7 +41,7 @@ vi.mock("@/lib/rawDb", () => ({
       upsert: (...args: any[]) => mockMilestoneTypesAssignmentUpsert(...args),
     },
     integrationProject: {
-      findFirst: (...args: any[]) => mockIntegrationProjectFindFirst(...args),
+      findMany: (...args: any[]) => mockIntegrationProjectFindMany(...args),
     },
   },
 }));
@@ -87,9 +87,9 @@ const SPRINT_NEW = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockIntegrationProjectFindFirst.mockResolvedValue({
-    externalProjectKey: "TEST",
-  });
+  mockIntegrationProjectFindMany.mockResolvedValue([
+    { externalProjectKey: "TEST" },
+  ]);
   mockMilestoneTypesUpsert.mockImplementation(
     async ({ where }: { where: { name: string } }) => ({
       id: where.name === "Release" ? 1001 : 1002,
