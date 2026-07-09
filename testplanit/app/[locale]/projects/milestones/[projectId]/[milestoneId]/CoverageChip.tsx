@@ -77,7 +77,9 @@ export function CoverageChip({
       <Badge
         variant="outline"
         className={cn(
-          "whitespace-nowrap border-dashed border-amber-400 text-amber-700 dark:border-amber-600 dark:text-amber-400",
+          // Theme-adaptive warning tokens (see components/ui/warning-alert.tsx) —
+          // hardcoded ambers were unreadable on several light themes.
+          "whitespace-nowrap border-dashed border-warning bg-warning/15 text-foreground",
           className
         )}
       >

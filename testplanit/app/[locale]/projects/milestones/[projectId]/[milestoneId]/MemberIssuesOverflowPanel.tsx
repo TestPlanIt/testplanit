@@ -101,7 +101,7 @@ export function MemberIssuesOverflowPanel({
           {isTrueCapHit ? (
             <Badge
               variant="outline"
-              className="border-amber-400 text-amber-700 dark:text-amber-400"
+              className="border-warning bg-warning/15 text-foreground"
               data-testid="member-issues-overflow-capped-badge"
             >
               {t("overflowCapped", { cap, overflowTotal })}

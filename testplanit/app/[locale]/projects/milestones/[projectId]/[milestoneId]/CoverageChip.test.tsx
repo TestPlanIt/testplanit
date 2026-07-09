@@ -23,8 +23,10 @@ describe("CoverageChip", () => {
     );
     const badge = screen.getByText("coverageUncovered");
     expect(badge).toBeInTheDocument();
-    // Distinct outlined/amber style, not a result color (D-05).
-    expect(badge.className).toMatch(/amber/);
+    // Distinct warning-token style, not a result color (D-05) — tokens
+    // adapt per theme where hardcoded ambers did not.
+    expect(badge.className).toMatch(/border-warning/);
+    expect(badge.className).toMatch(/border-dashed/);
   });
 
   it("renders an Uncovered chip when breakdown is undefined", () => {
