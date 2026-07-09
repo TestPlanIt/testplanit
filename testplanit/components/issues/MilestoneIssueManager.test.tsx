@@ -78,6 +78,22 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 // SearchIssuesDialog pulls in a large tree of ZenStack-hook-driven search UI
 // that isn't relevant to this component's own create/delete wiring — stub it
 // down to a trigger that lets the test simulate an issue selection.
+vi.mock("@/components/ui/alert-dialog", () => ({
+  AlertDialog: ({ children, open }: any) =>
+    open ? <div data-testid="alert-dialog">{children}</div> : null,
+  AlertDialogContent: ({ children }: any) => <div>{children}</div>,
+  AlertDialogHeader: ({ children }: any) => <div>{children}</div>,
+  AlertDialogTitle: ({ children }: any) => <h2>{children}</h2>,
+  AlertDialogDescription: ({ children }: any) => <p>{children}</p>,
+  AlertDialogFooter: ({ children }: any) => <div>{children}</div>,
+  AlertDialogCancel: ({ children, ...props }: any) => (
+    <button {...props}>{children}</button>
+  ),
+  AlertDialogAction: ({ children, onClick, ...props }: any) => (
+    <button onClick={onClick} {...props}>{children}</button>
+  ),
+}));
+
 vi.mock("./search-issues-dialog", () => ({
   SearchIssuesDialog: ({ open, onIssueSelected }: any) => {
     if (!open) return null;
@@ -193,11 +209,26 @@ describe("MemberIssueRowActions", () => {
 
     fireEvent.click(screen.getByTestId("member-issue-unlink"));
 
+    // Unlink is gated behind a confirmation dialog — nothing deleted yet.
+    expect(mockDeleteMilestoneIssue).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("member-issue-unlink-confirm"));
+
     await waitFor(() => {
       expect(mockDeleteMilestoneIssue).toHaveBeenCalledWith({
         where: { milestoneId_issueId: { milestoneId: 42, issueId: 55 } },
       });
     });
+  });
+
+  it("cancelling the confirmation leaves the link intact", async () => {
+    renderWithQueryClient(
+      <MemberIssueRowActions milestoneId={42} issueId={55} source="MANUAL" />
+    );
+
+    fireEvent.click(screen.getByTestId("member-issue-unlink"));
+    fireEvent.click(screen.getByTestId("member-issue-unlink-cancel"));
+
+    expect(mockDeleteMilestoneIssue).not.toHaveBeenCalled();
   });
 
   it("does NOT call delete for a SYNCED row — shows the managed-by-Jira lock instead", () => {

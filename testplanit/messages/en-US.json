@@ -2211,7 +2211,9 @@
       "overflowImportSuccess": "Import started — issues will appear as they sync.",
       "overflowImportError": "Failed to import member issues from Jira.",
       "emptyCta": "Link an issue to get started.",
-      "columnDescription": "Description"
+      "columnDescription": "Description",
+      "unlinkConfirmTitle": "Unlink issue?",
+      "unlinkConfirmDescription": "This removes the issue from this milestone. The issue itself is kept and can be linked again later."
     }
   },
   "sessions": {

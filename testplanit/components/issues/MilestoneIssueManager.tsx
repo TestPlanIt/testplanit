@@ -2,6 +2,16 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -199,6 +209,7 @@ export function MemberIssueRowActions({
   const { mutateAsync: deleteMilestoneIssue } =
     useClientQueries(schema).milestoneIssue.useDelete();
   const [isUnlinking, setIsUnlinking] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const isSynced = source === "SYNCED";
 
@@ -233,29 +244,53 @@ export function MemberIssueRowActions({
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          aria-label={tCommon("actions.actionsLabel")}
-          data-testid="member-issue-row-actions"
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
-          disabled={isUnlinking}
-          onClick={() => void handleUnlink()}
-          data-testid="member-issue-unlink"
-        >
-          <X className="h-4 w-4" />
-          {t("unlink")}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            aria-label={tCommon("actions.actionsLabel")}
+            data-testid="member-issue-row-actions"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            disabled={isUnlinking}
+            onClick={() => setConfirmOpen(true)}
+            data-testid="member-issue-unlink"
+          >
+            <X className="h-4 w-4" />
+            {t("unlink")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("unlinkConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("unlinkConfirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="member-issue-unlink-cancel">
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => void handleUnlink()}
+              data-testid="member-issue-unlink-confirm"
+            >
+              {t("unlink")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
