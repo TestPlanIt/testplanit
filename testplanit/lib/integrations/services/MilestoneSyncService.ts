@@ -63,9 +63,18 @@ export interface MilestoneRefreshResult {
 
 export interface MilestoneImportResult {
   success: boolean;
+  /**
+   * Shell-level counters: a milestone counts as imported/updated once its
+   * shell upsert succeeds, even if its membership reconciliation then
+   * partially fails — check `membershipErrors` to distinguish "shell ok,
+   * members incomplete" from a failed import (WR-03).
+   */
   imported: number;
   updated: number;
+  /** Shell/fetch-level failures — these mean the import itself broke. */
   errors: string[];
+  /** Membership reconciliation failures for successfully-imported shells. */
+  membershipErrors: string[];
 }
 
 export interface ProjectMilestoneSyncResult {
@@ -758,6 +767,7 @@ export class MilestoneSyncService {
   ): Promise<MilestoneImportResult> {
     const db = serviceOptions.dbClient || defaultDb;
     const errors: string[] = [];
+    const membershipErrors: string[] = [];
     let imported = 0;
     let updated = 0;
 
@@ -819,16 +829,25 @@ export class MilestoneSyncService {
 
           // First-time (and every subsequent) import links members
           // immediately (D-01) — clean skip for adapters without
-          // membership support (non-Jira / DC no-op).
+          // membership support (non-Jira / DC no-op). Membership failures
+          // are tracked separately from shell failures (WR-03): the shell
+          // row IS imported at this point, so the caller must be able to
+          // distinguish "imported but members incomplete" from "failed".
           if (adapter.getMilestoneIssues) {
-            await this._reconcileMembership(
-              db,
-              integrationId,
-              projectId,
-              milestoneId,
-              ext,
-              adapter
-            );
+            try {
+              await this._reconcileMembership(
+                db,
+                integrationId,
+                projectId,
+                milestoneId,
+                ext,
+                adapter
+              );
+            } catch (error: any) {
+              membershipErrors.push(
+                `Membership sync failed for milestone ${ext.id} (${ext.name}): ${error.message}`
+              );
+            }
           }
         } catch (error: any) {
           errors.push(
@@ -837,7 +856,13 @@ export class MilestoneSyncService {
         }
       }
 
-      return { success: errors.length === 0, imported, updated, errors };
+      return {
+        success: errors.length === 0,
+        imported,
+        updated,
+        errors,
+        membershipErrors,
+      };
     } catch (error: any) {
       console.error(
         `Failed to import milestones for project ${projectId}:`,
@@ -848,6 +873,7 @@ export class MilestoneSyncService {
         imported,
         updated,
         errors: [...errors, error.message],
+        membershipErrors,
       };
     }
   }

@@ -1606,7 +1606,9 @@ export class SyncService {
     await publishIssueUpdate({
       projectId,
       issueId: upserted.id,
-      event: "issue-created",
+      // WR-02: reconciliation re-upserts long-existing issues on every
+      // pass — signal the branch actually taken, not always "created".
+      event: existing ? "issue-updated" : "issue-created",
       tenantId: getCurrentTenantId() ?? "default",
     });
 

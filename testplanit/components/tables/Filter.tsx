@@ -33,12 +33,12 @@ const Filter: React.FC<FilterProps> = ({
   };
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative w-full max-w-lg", className)}>
       <Input
         placeholder={placeholder || t("filter")}
         value={inputValue}
         onChange={handleChange}
-        className="max-w-lg ps-8"
+        className="w-full ps-8"
         data-testid={dataTestId}
       />
     </div>

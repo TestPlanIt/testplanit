@@ -120,7 +120,10 @@ export async function GET(
     const kind = milestone.externalKind === "ITERATION" ? "ITERATION" : "RELEASE";
 
     // Live-fetch tracker members, paginating beyond the local cap so the
-    // overflow diff can surface what the cap truncated.
+    // overflow diff can surface what the cap truncated — but bounded at
+    // IMPORT_MAX_CAP live items, mirroring _reconcileMembership's fan-out
+    // cap (WR-01): this route is polled after imports, so an unbounded
+    // loop against a huge shared sprint would hammer the tracker API.
     const liveMembers: OverflowMember[] = [];
     let pageToken: string | undefined;
     let liveTotal = 0;
@@ -143,7 +146,7 @@ export async function GET(
       }
 
       pageToken = page.hasMore ? page.nextPageToken : undefined;
-    } while (pageToken);
+    } while (pageToken && liveTotal < IMPORT_MAX_CAP);
 
     const overflowTotal = Math.max(liveTotal - linkedCount, liveMembers.length);
 

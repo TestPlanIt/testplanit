@@ -83,6 +83,19 @@ const issueJiraCache = new Map<number, JiraIssueDetails>();
 const issueSyncAttempts = new Map<number, number>();
 const SYNC_ATTEMPT_THROTTLE_MS = 30_000;
 
+// Entries older than the throttle window are dead weight — prune them
+// whenever the map grows past a small bound so a long-lived tab that
+// renders many issue tables doesn't accumulate ids forever (WR-05).
+const SYNC_ATTEMPTS_PRUNE_THRESHOLD = 500;
+function pruneStaleSyncAttempts(now: number): void {
+  if (issueSyncAttempts.size < SYNC_ATTEMPTS_PRUNE_THRESHOLD) return;
+  for (const [issueId, attemptedAt] of issueSyncAttempts) {
+    if (now - attemptedAt >= SYNC_ATTEMPT_THROTTLE_MS) {
+      issueSyncAttempts.delete(issueId);
+    }
+  }
+}
+
 export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   id,
   name,
@@ -139,11 +152,13 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   const triggerSyncIfNeeded = () => {
     if (syncTriggeredRef.current) return;
     if (!integrationId || !integrationProvider) return;
+    const now = Date.now();
     const lastAttempt = issueSyncAttempts.get(id);
-    if (lastAttempt && Date.now() - lastAttempt < SYNC_ATTEMPT_THROTTLE_MS) {
+    if (lastAttempt && now - lastAttempt < SYNC_ATTEMPT_THROTTLE_MS) {
       return;
     }
-    issueSyncAttempts.set(id, Date.now());
+    pruneStaleSyncAttempts(now);
+    issueSyncAttempts.set(id, now);
     syncTriggeredRef.current = true;
 
     // Fire and forget — the server returns `cached: true` cheaply when the
