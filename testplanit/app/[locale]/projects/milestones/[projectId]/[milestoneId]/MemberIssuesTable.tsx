@@ -359,7 +359,6 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
             )}
           </CardTitle>
           <div className="flex items-center gap-2">
-            <IterationStatusLegendPopover projectId={projectId} />
             <MilestoneIssueManager
               milestoneId={milestoneId}
               projectId={projectId}
@@ -429,6 +428,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
                   })}
                 </Badge>
               )}
+              <IterationStatusLegendPopover projectId={projectId} />
             </div>
           )}
       </CardHeader>
