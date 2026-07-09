@@ -599,7 +599,7 @@ export default function MilestoneDetailsPage() {
                     </Button>
                   </Link>
                 )}
-                <CardTitle className="w-full text-xl md:text-2xl">
+                <CardTitle className="grow min-w-0 text-xl md:text-2xl">
                   {isEditMode ? (
                     <FormField
                       control={methods.control}
@@ -739,7 +739,10 @@ export default function MilestoneDetailsPage() {
                 above (D-16 vocabulary). */}
             {!isEditMode && milestone && (
               <div className="mb-6">
-                <MemberIssuesTable milestoneId={milestone.id} projectId={Number(projectId)} />
+                <MemberIssuesTable
+                  milestoneId={milestone.id}
+                  projectId={Number(projectId)}
+                />
               </div>
             )}
 
