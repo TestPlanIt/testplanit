@@ -11,6 +11,10 @@ vi.mock("next-intl", () => ({
   useTranslations: mockUseTranslations,
 }));
 
+vi.mock("~/lib/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
 vi.stubGlobal("fetch", mockFetch);
 
 // Mock sub-components that fetch data or have complex deps
@@ -116,12 +120,23 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenuGroup: ({ children }: any) => (
     <div data-testid="dropdown-group">{children}</div>
   ),
-  DropdownMenuItem: ({ children, onSelect, disabled, className }: any) => (
+  DropdownMenuItem: ({
+    children,
+    onSelect,
+    onClick,
+    disabled,
+    className,
+    "data-testid": testId,
+  }: any) => (
     <div
-      data-testid="dropdown-item"
+      data-testid={testId ?? "dropdown-item"}
       data-disabled={String(!!disabled)}
+      aria-disabled={disabled ? "true" : undefined}
       className={className}
-      onClick={() => onSelect?.()}
+      onClick={() => {
+        onSelect?.();
+        onClick?.();
+      }}
       role="menuitem"
     >
       {children}
@@ -764,12 +779,10 @@ describe("MilestoneItemCard", () => {
   });
 
   describe("external tracker link safety", () => {
-    // The badge itself is the open-in-tracker link (shared
-    // MilestoneSourceBadge); linkable state = role="link".
-    const findExternalLinkBadge = () => {
-      const badge = screen.queryByTestId("milestone-source-badge");
-      return badge?.getAttribute("role") === "link" ? badge : undefined;
-    };
+    // The badge (shared MilestoneSourceBadge) is a DropdownMenu trigger
+    // (D-09); the open-in-tracker action now lives in its menu. This test
+    // file's DropdownMenu mock (above) always renders content, so no
+    // explicit "open" interaction is needed to reach the menu item.
 
     it("opens an https externalUrl in a new tab with noopener,noreferrer", () => {
       const openSpy = vi
@@ -791,9 +804,10 @@ describe("MilestoneItemCard", () => {
         />
       );
 
-      const linkBadge = findExternalLinkBadge();
-      expect(linkBadge).toBeDefined();
-      fireEvent.click(linkBadge!);
+      expect(
+        screen.getByTestId("milestone-open-in-tracker")
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("milestone-source-menu-open"));
       expect(openSpy).toHaveBeenCalledWith(
         "https://jira.example.com/versions/10001",
         "_blank",
@@ -819,7 +833,7 @@ describe("MilestoneItemCard", () => {
         />
       );
 
-      expect(findExternalLinkBadge()).toBeUndefined();
+      expect(screen.queryByTestId("milestone-open-in-tracker")).toBeNull();
     });
 
     it("does not render the open button for a non-http scheme", () => {
@@ -839,7 +853,7 @@ describe("MilestoneItemCard", () => {
         />
       );
 
-      expect(findExternalLinkBadge()).toBeUndefined();
+      expect(screen.queryByTestId("milestone-open-in-tracker")).toBeNull();
     });
   });
 
