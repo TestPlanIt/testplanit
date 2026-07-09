@@ -98,18 +98,21 @@ export async function GET(
       );
     }
 
-    // Local SYNCED links are ground truth for "already linked" regardless
-    // of adapter support — count them even for a not-yet-synced milestone.
-    const syncedLinks = await baseDb.milestoneIssue.findMany({
-      where: { milestoneId, source: "SYNCED" },
+    // ALL local links are ground truth for "already linked" regardless of
+    // source — the member table shows SYNCED and MANUAL links alike, and
+    // MANUAL is sticky (Phase 18 D-11): an upstream member linked manually
+    // stays MANUAL forever, so filtering to SYNCED here double-lists every
+    // such issue in the overflow alert.
+    const links = await baseDb.milestoneIssue.findMany({
+      where: { milestoneId },
       select: {
         issueId: true,
         issue: { select: { externalId: true } },
       },
     });
-    const linkedCount = syncedLinks.length;
+    const linkedCount = links.length;
     const linkedExternalIds = new Set(
-      syncedLinks
+      links
         .map((link) => link.issue.externalId)
         .filter((id): id is string => id !== null)
     );
@@ -129,7 +132,8 @@ export async function GET(
       return NextResponse.json({ ...EMPTY_ENVELOPE, linkedCount });
     }
 
-    const kind = milestone.externalKind === "ITERATION" ? "ITERATION" : "RELEASE";
+    const kind =
+      milestone.externalKind === "ITERATION" ? "ITERATION" : "RELEASE";
 
     // Live-fetch tracker members, paginating beyond the local cap so the
     // overflow diff can surface what the cap truncated — but bounded at
