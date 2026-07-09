@@ -16,11 +16,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockMilestonesFindUnique = vi.fn((..._args: any[]): Promise<any> =>
   Promise.resolve(undefined)
 );
-const mockTxMilestonesUpdate = vi.fn();
+const mockTxMilestonesUpdateMany = vi.fn();
 const mockTxMilestoneIssueUpdateMany = vi.fn();
 const mockTransaction = vi.fn((..._args: any[]) =>
   (_args[0] as (tx: any) => Promise<any>)({
-    milestones: { update: mockTxMilestonesUpdate },
+    milestones: { updateMany: mockTxMilestonesUpdateMany },
     milestoneIssue: { updateMany: mockTxMilestoneIssueUpdateMany },
   })
 );
@@ -60,7 +60,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockTransaction.mockImplementation(async (fn: any) =>
     fn({
-      milestones: { update: mockTxMilestonesUpdate },
+      milestones: { updateMany: mockTxMilestonesUpdateMany },
       milestoneIssue: { updateMany: mockTxMilestoneIssueUpdateMany },
     })
   );
@@ -69,6 +69,9 @@ beforeEach(() => {
     projectId: 100,
     detachedAt: null,
   });
+  // WR-03: the detach is an atomic conditional updateMany ({ id,
+  // detachedAt: null }); production destructures `count` from the result.
+  mockTxMilestonesUpdateMany.mockResolvedValue({ count: 1 });
   mockCaptureAuditEvent.mockResolvedValue(undefined);
 });
 
@@ -86,9 +89,11 @@ describe("MilestoneSyncService.convertMilestoneToLocal", () => {
     const after = Date.now();
 
     expect(result.success).toBe(true);
-    expect(mockTxMilestonesUpdate).toHaveBeenCalledTimes(1);
-    const call = mockTxMilestonesUpdate.mock.calls[0][0];
-    expect(call.where).toEqual({ id: 42 });
+    expect(mockTxMilestonesUpdateMany).toHaveBeenCalledTimes(1);
+    const call = mockTxMilestonesUpdateMany.mock.calls[0][0];
+    // WR-03: the where-clause carries the atomic race guard — only a row
+    // still detachedAt:null may be claimed.
+    expect(call.where).toEqual({ id: 42, detachedAt: null });
     expect(call.data.detachedAt).toBeInstanceOf(Date);
     expect(call.data.detachedAt.getTime()).toBeGreaterThanOrEqual(before);
     expect(call.data.detachedAt.getTime()).toBeLessThanOrEqual(after);
@@ -106,7 +111,7 @@ describe("MilestoneSyncService.convertMilestoneToLocal", () => {
       "deleted"
     );
 
-    const call = mockTxMilestonesUpdate.mock.calls[0][0];
+    const call = mockTxMilestonesUpdateMany.mock.calls[0][0];
     expect(call.data).not.toHaveProperty("externalId");
     expect(call.data).not.toHaveProperty("integrationId");
   });
@@ -127,7 +132,7 @@ describe("MilestoneSyncService.convertMilestoneToLocal", () => {
       data: { source: "MANUAL" },
     });
     // Both writes happened inside the SAME $transaction callback invocation.
-    expect(mockTxMilestonesUpdate.mock.invocationCallOrder[0]).toBeLessThan(
+    expect(mockTxMilestonesUpdateMany.mock.invocationCallOrder[0]).toBeLessThan(
       mockTxMilestoneIssueUpdateMany.mock.invocationCallOrder[0]
     );
   });
@@ -154,6 +159,29 @@ describe("MilestoneSyncService.convertMilestoneToLocal", () => {
     expect(mockPublishMilestoneWakeUp).not.toHaveBeenCalled();
   });
 
+  it("REGRESSION (WR-03): a conversion racing another conversion (both saw detachedAt null pre-tx) loses atomically — 0 rows claimed means NO link flip, NO audit, NO wake-up, and the earlier reason survives", async () => {
+    // Both callers passed the pre-tx findUnique check (detachedAt: null),
+    // but the concurrent winner committed first — this call's conditional
+    // updateMany matches 0 rows.
+    mockTxMilestonesUpdateMany.mockResolvedValue({ count: 0 });
+
+    const result = await milestoneSyncService.convertMilestoneToLocal(
+      {
+        milestones: { findUnique: mockMilestonesFindUnique },
+        $transaction: mockTransaction,
+      } as any,
+      42,
+      "manual_unlink"
+    );
+
+    expect(result).toEqual({ success: true, alreadyDetached: true });
+    // The loser must not double-flip links nor emit a second (reason-
+    // misattributed) audit event or wake-up.
+    expect(mockTxMilestoneIssueUpdateMany).not.toHaveBeenCalled();
+    expect(mockCaptureAuditEvent).not.toHaveBeenCalled();
+    expect(mockPublishMilestoneWakeUp).not.toHaveBeenCalled();
+  });
+
   it("writes externalState='deleted' for the upstream-delete conversion reason", async () => {
     await milestoneSyncService.convertMilestoneToLocal(
       {
@@ -164,7 +192,7 @@ describe("MilestoneSyncService.convertMilestoneToLocal", () => {
       "deleted"
     );
 
-    const call = mockTxMilestonesUpdate.mock.calls[0][0];
+    const call = mockTxMilestonesUpdateMany.mock.calls[0][0];
     expect(call.data.externalState).toBe("deleted");
     expect(call.data).not.toHaveProperty("mergedToExternalId");
   });
@@ -180,7 +208,7 @@ describe("MilestoneSyncService.convertMilestoneToLocal", () => {
       "ext-9999"
     );
 
-    const call = mockTxMilestonesUpdate.mock.calls[0][0];
+    const call = mockTxMilestonesUpdateMany.mock.calls[0][0];
     expect(call.data.externalState).toBe("merged");
     expect(call.data.mergedToExternalId).toBe("ext-9999");
   });
@@ -195,7 +223,7 @@ describe("MilestoneSyncService.convertMilestoneToLocal", () => {
       "manual_unlink"
     );
 
-    const call = mockTxMilestonesUpdate.mock.calls[0][0];
+    const call = mockTxMilestonesUpdateMany.mock.calls[0][0];
     // manual_unlink must NEVER collapse into "deleted" — Plan 05's badge
     // guard depends on this exact three-way distinction (D-11).
     expect(call.data.externalState).toBe("manual_unlink");
@@ -206,7 +234,7 @@ describe("MilestoneSyncService.convertMilestoneToLocal", () => {
     const callOrder: string[] = [];
     mockTransaction.mockImplementationOnce(async (fn: any) => {
       const result = await fn({
-        milestones: { update: mockTxMilestonesUpdate },
+        milestones: { updateMany: mockTxMilestonesUpdateMany },
         milestoneIssue: { updateMany: mockTxMilestoneIssueUpdateMany },
       });
       callOrder.push("transaction-committed");
@@ -280,7 +308,7 @@ describe("MilestoneSyncService.convertMilestoneToLocal", () => {
       "deleted"
     );
 
-    const call = mockTxMilestonesUpdate.mock.calls[0][0];
+    const call = mockTxMilestonesUpdateMany.mock.calls[0][0];
     expect(call.data).not.toHaveProperty("isCompleted");
     expect(call.data).not.toHaveProperty("automaticCompletion");
   });

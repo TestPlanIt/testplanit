@@ -466,6 +466,10 @@ export class MilestoneSyncService {
     // short-circuit — a second conversion call (e.g. a redelivered webhook,
     // or an unlink click racing a webhook-driven conversion) must not
     // double-flip already-MANUAL links or overwrite an earlier reason.
+    // This pre-check is only a cheap fast path: the AUTHORITATIVE guard is
+    // the conditional `detachedAt: null` updateMany inside the transaction
+    // below, since two concurrent callers can both observe null here
+    // (check-then-act) and the loser must not overwrite the winner's reason.
     if (existing.detachedAt) {
       return { success: true, alreadyDetached: true };
     }
@@ -477,9 +481,12 @@ export class MilestoneSyncService {
           ? "manual_unlink"
           : "deleted";
 
-    await db.$transaction(async (tx: TxClient) => {
-      await tx.milestones.update({
-        where: { id: milestoneId },
+    const detached = await db.$transaction(async (tx: TxClient) => {
+      // Atomic claim: only the FIRST conversion sees detachedAt still null.
+      // A racing second conversion matches 0 rows and must leave both the
+      // earlier reason (externalState) and the earlier timestamp untouched.
+      const { count } = await tx.milestones.updateMany({
+        where: { id: milestoneId, detachedAt: null },
         data: {
           detachedAt: new Date(),
           // integrationId is DELIBERATELY left non-null — see Pitfall 3.
@@ -489,11 +496,22 @@ export class MilestoneSyncService {
           ...(mergedToExternalId ? { mergedToExternalId } : {}),
         },
       });
+      if (count === 0) {
+        return false;
+      }
       await tx.milestoneIssue.updateMany({
         where: { milestoneId, source: "SYNCED" },
         data: { source: "MANUAL" },
       });
+      return true;
     });
+
+    // Lost the race — the concurrent winner already emitted the audit event
+    // and wake-ups for its own (earlier) reason; re-emitting here would
+    // misattribute the conversion to this call's reason.
+    if (!detached) {
+      return { success: true, alreadyDetached: true };
+    }
 
     await captureAuditEvent({
       action: "UPDATE",
