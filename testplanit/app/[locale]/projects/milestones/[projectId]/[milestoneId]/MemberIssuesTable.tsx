@@ -667,7 +667,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
             initialSearchString={searchString}
             onSearchChange={setSearchString}
             dataTestId="member-issues-search"
-            className="grow max-w-lg"
+            className="grow shrink basis-[120px] min-w-[120px] max-w-lg"
           />
           <Select
             value={coverageFilter || "all"}
@@ -675,7 +675,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
               setCoverageFilter(value === "all" ? "" : (value as CoverageStateFilter))
             }
           >
-            <SelectTrigger className="w-[160px]" data-testid="member-issues-coverage-filter">
+            <SelectTrigger className="w-[160px] shrink-0" data-testid="member-issues-coverage-filter">
               <SelectValue placeholder={t("filterAllCoverage")} />
             </SelectTrigger>
             <SelectContent>
@@ -698,7 +698,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
             value={sourceFilter || "all"}
             onValueChange={(value) => setSourceFilter(value === "all" ? "" : (value as SourceFilter))}
           >
-            <SelectTrigger className="w-[140px]" data-testid="member-issues-source-filter">
+            <SelectTrigger className="w-[140px] shrink-0" data-testid="member-issues-source-filter">
               <SelectValue placeholder={t("filterAllSources")} />
             </SelectTrigger>
             <SelectContent>
@@ -711,7 +711,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
             value={issueTypeFilter || "all"}
             onValueChange={(value) => setIssueTypeFilter(value === "all" ? "" : value)}
           >
-            <SelectTrigger className="w-[140px]" data-testid="member-issues-type-filter">
+            <SelectTrigger className="w-[140px] shrink-0" data-testid="member-issues-type-filter">
               <SelectValue placeholder={t("filterAllTypes")} />
             </SelectTrigger>
             <SelectContent>

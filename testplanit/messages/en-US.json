@@ -2200,7 +2200,6 @@
       "filterAllTypes": "All types",
       "empty": "No issues linked to this milestone yet.",
       "emptyFiltered": "No issues match the current filters.",
-      "addMember": "Add issue",
       "unlink": "Unlink",
       "managedByJira": "Managed by Jira — remove it from the version/sprint in Jira",
       "linkSuccess": "Issue linked to this milestone.",

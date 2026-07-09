@@ -87,6 +87,7 @@ export function MilestoneIssueManager({
   onLinked,
 }: MilestoneIssueManagerProps) {
   const t = useTranslations("milestones.members");
+  const tIssues = useTranslations("issues");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
 
@@ -184,7 +185,7 @@ export function MilestoneIssueManager({
         data-testid="member-issues-add-button"
       >
         <Plus className="h-4 w-4" />
-        {t("addMember")}
+        {tIssues("linkIssue")}
       </Button>
 
       {isSearchOpen && (
