@@ -7,6 +7,7 @@ import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
 import TextFromJson from "@/components/TextFromJson";
 import { Badge } from "@/components/ui/badge";
+import { MilestoneSourceBadge } from "./MilestoneSourceBadge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,7 +19,6 @@ import {
 import { parseISO } from "date-fns";
 import {
   CheckCircle,
-  ExternalLink,
   MoreVertical,
   RotateCcw,
   SquarePen,
@@ -43,14 +43,6 @@ interface MilestoneForecastData {
   automatedEstimate: number;
   areAllCasesAutomated: boolean;
 }
-
-/**
- * A synced milestone's `externalUrl` is tracker-provided and written through
- * the raw db client, which bypasses the schema's `@url` validation — so only
- * render the open-in-tracker button for http(s) URLs (never `javascript:`
- * etc.) and open without an opener reference to prevent reverse tab-nabbing.
- */
-const SAFE_EXTERNAL_URL_RE = /^https?:\/\//i;
 
 interface MilestoneItemCardProps {
   milestone: MilestonesWithTypes;
@@ -169,43 +161,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                 milestone={milestone}
                 projectId={projectId}
               />
-              {milestone.integrationId != null && (
-                <>
-                  <Badge
-                    data-testid="milestone-source-badge"
-                    variant="secondary"
-                    className="text-xs shrink-0"
-                  >
-                    {t("sync.sourceBadge", {
-                      provider: t("sync.providerJira"),
-                      kind:
-                        milestone.externalKind === "RELEASE"
-                          ? t("import.kindRelease")
-                          : t("import.kindSprint"),
-                      state: milestone.externalState ?? "",
-                    })}
-                  </Badge>
-                  {milestone.externalUrl &&
-                    SAFE_EXTERNAL_URL_RE.test(milestone.externalUrl) && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 shrink-0 text-muted-foreground hover:opacity-50"
-                        title={t("sync.openInJira")}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(
-                            milestone.externalUrl!,
-                            "_blank",
-                            "noopener,noreferrer"
-                          );
-                        }}
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                </>
-              )}
+              <MilestoneSourceBadge milestone={milestone} />
             </div>
             <p
               className={`${compact ? "hidden" : "hidden sm:block"} text-md text-muted-foreground ms-7`}

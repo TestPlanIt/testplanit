@@ -63,8 +63,23 @@ vi.mock("@/components/TextFromJson", () => ({
 
 // Mock shadcn/ui badge
 vi.mock("@/components/ui/badge", () => ({
-  Badge: ({ children, style, className }: any) => (
-    <span data-testid="status-badge" style={style} className={className}>
+  Badge: ({
+    children,
+    style,
+    className,
+    role,
+    title,
+    onClick,
+    "data-testid": dataTestId,
+  }: any) => (
+    <span
+      data-testid={dataTestId ?? "status-badge"}
+      style={style}
+      className={className}
+      role={role}
+      title={title}
+      onClick={onClick}
+    >
       {children}
     </span>
   ),
@@ -749,10 +764,12 @@ describe("MilestoneItemCard", () => {
   });
 
   describe("external tracker link safety", () => {
-    const findExternalLinkButton = () =>
-      screen
-        .queryAllByTestId("action-button")
-        .find((el) => el.getAttribute("data-variant") === "ghost");
+    // The badge itself is the open-in-tracker link (shared
+    // MilestoneSourceBadge); linkable state = role="link".
+    const findExternalLinkBadge = () => {
+      const badge = screen.queryByTestId("milestone-source-badge");
+      return badge?.getAttribute("role") === "link" ? badge : undefined;
+    };
 
     it("opens an https externalUrl in a new tab with noopener,noreferrer", () => {
       const openSpy = vi
@@ -774,9 +791,9 @@ describe("MilestoneItemCard", () => {
         />
       );
 
-      const linkButton = findExternalLinkButton();
-      expect(linkButton).toBeDefined();
-      fireEvent.click(linkButton!);
+      const linkBadge = findExternalLinkBadge();
+      expect(linkBadge).toBeDefined();
+      fireEvent.click(linkBadge!);
       expect(openSpy).toHaveBeenCalledWith(
         "https://jira.example.com/versions/10001",
         "_blank",
@@ -802,7 +819,7 @@ describe("MilestoneItemCard", () => {
         />
       );
 
-      expect(findExternalLinkButton()).toBeUndefined();
+      expect(findExternalLinkBadge()).toBeUndefined();
     });
 
     it("does not render the open button for a non-http scheme", () => {
@@ -822,7 +839,7 @@ describe("MilestoneItemCard", () => {
         />
       );
 
-      expect(findExternalLinkButton()).toBeUndefined();
+      expect(findExternalLinkBadge()).toBeUndefined();
     });
   });
 
