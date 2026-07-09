@@ -197,6 +197,15 @@ export const jiraAdapter: WebhookAdapter = {
       ) {
         return null;
       }
+      // Jira board ids are integers. `originBoardId` is attacker-influenced
+      // wire input (any holder of a valid webhook HMAC) that downstream gets
+      // interpolated into the Jira REST path (`/rest/agile/1.0/board/{id}`)
+      // AND into the Valkey cache key — a non-numeric value like
+      // "1/../../api/3/x?y=" would otherwise become an authenticated
+      // request-forgery primitive against the integration's Jira host.
+      if (!/^\d+$/.test(String(originBoardId))) {
+        return null;
+      }
       return {
         kind: "ITERATION",
         externalId: String(externalId),

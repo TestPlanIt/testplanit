@@ -2028,5 +2028,18 @@ describe("JiraAdapter", () => {
 
       expect(result).toBeNull();
     });
+
+    it("REGRESSION (WR-06): rejects a non-numeric board id WITHOUT any upstream request or cache access — the id is interpolated into the REST path and cache key", async () => {
+      const result = await boardAdapter.resolveBoardProject(
+        "1/../../api/3/anything?x="
+      );
+
+      expect(result).toBeNull();
+      // Only the beforeEach's authenticate() call hit fetch — the forged id
+      // never reached makeRequest, and the cache was never consulted.
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockValkeyGet).not.toHaveBeenCalled();
+      expect(mockValkeySet).not.toHaveBeenCalled();
+    });
   });
 });

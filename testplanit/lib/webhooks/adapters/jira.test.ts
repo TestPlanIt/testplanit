@@ -418,6 +418,48 @@ describe("jiraAdapter — version/sprint milestone events (Pitfall 1 fix)", () =
     }
   });
 
+  it("REGRESSION (WR-06): a sprint payload with a NON-NUMERIC originBoardId returns null — the value is later interpolated into the Jira REST path and must never carry path traversal", () => {
+    const forgedPayload = {
+      webhookEvent: "sprint_updated",
+      sprint: { id: 55, originBoardId: "1/../../api/3/anything?x=" },
+    };
+    const body = bodyOf(forgedPayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const ref = jiraAdapter.extractMilestoneEventRef!(
+      result.payload,
+      result.payload.eventType
+    );
+    expect(ref).toBeNull();
+  });
+
+  it("WR-06: a numeric-string originBoardId still extracts (the guard rejects shape, not type)", () => {
+    const sprintPayload = {
+      webhookEvent: "sprint_updated",
+      sprint: { id: 55, originBoardId: "17" },
+    };
+    const body = bodyOf(sprintPayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const ref = jiraAdapter.extractMilestoneEventRef!(
+      result.payload,
+      result.payload.eventType
+    );
+    expect(ref).toEqual({
+      kind: "ITERATION",
+      externalId: "55",
+      originBoardId: "17",
+    });
+  });
+
   it("a sprint_deleted payload without a valid sprint.id returns null from extractMilestoneEventRef (defensive guard)", () => {
     const malformedPayload = {
       webhookEvent: "sprint_deleted",

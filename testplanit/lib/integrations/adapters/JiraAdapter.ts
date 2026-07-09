@@ -1060,6 +1060,20 @@ export class JiraAdapter extends BaseAdapter {
   async resolveBoardProject(
     boardId: string
   ): Promise<{ projectId: string; projectKey: string } | null> {
+    // Jira board ids are integers. `boardId` originates from webhook wire
+    // input (sprint.originBoardId) and is interpolated into the REST path
+    // and the cache key below — reject anything non-numeric here too
+    // (defense in depth behind the extraction-time guard in
+    // lib/webhooks/adapters/jira.ts) so this method can never be steered
+    // into an authenticated request to an arbitrary path.
+    if (!/^\d+$/.test(boardId)) {
+      console.debug(
+        `[JiraAdapter] resolveBoardProject: rejecting non-numeric board id %s`,
+        boardId
+      );
+      return null;
+    }
+
     const integrationId = this.config?.integrationId;
     const cacheKey =
       integrationId != null
