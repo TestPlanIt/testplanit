@@ -614,44 +614,58 @@ export default function MilestoneDetailsPage() {
                     milestone?.name
                   )}
                 </CardTitle>
-                {!isEditMode && milestone?.integrationId != null && (
-                  <div className="flex items-center gap-1 shrink-0 mt-2">
-                    <Badge
-                      data-testid="milestone-source-badge"
-                      variant="secondary"
-                      className="text-xs shrink-0"
-                    >
-                      {t("sync.sourceBadge", {
-                        provider: t("sync.providerJira"),
-                        kind:
-                          milestone.externalKind === "RELEASE"
-                            ? t("import.kindRelease")
-                            : t("import.kindSprint"),
-                        state: milestone.externalState ?? "",
-                      })}
-                    </Badge>
-                    {milestone.externalUrl &&
-                      SAFE_EXTERNAL_URL_RE.test(milestone.externalUrl) && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 shrink-0 text-muted-foreground hover:opacity-50"
-                          title={t("sync.openInJira")}
-                          data-testid="milestone-open-in-tracker"
-                          onClick={() =>
-                            window.open(
-                              milestone.externalUrl!,
-                              "_blank",
-                              "noopener,noreferrer"
-                            )
-                          }
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                  </div>
-                )}
+                {!isEditMode &&
+                  milestone?.integrationId != null &&
+                  (() => {
+                    const safeExternalUrl =
+                      milestone.externalUrl &&
+                      SAFE_EXTERNAL_URL_RE.test(milestone.externalUrl)
+                        ? milestone.externalUrl
+                        : null;
+                    const badgeLabel = t("sync.sourceBadge", {
+                      provider: t("sync.providerJira"),
+                      kind:
+                        milestone.externalKind === "RELEASE"
+                          ? t("import.kindRelease")
+                          : t("import.kindSprint"),
+                      state: milestone.externalState ?? "",
+                    });
+                    // The badge itself is the open-in-tracker link; the
+                    // external-link icon is revealed on hover only.
+                    return (
+                      <Badge
+                        data-testid="milestone-source-badge"
+                        variant="secondary"
+                        role={safeExternalUrl ? "link" : undefined}
+                        title={
+                          safeExternalUrl ? t("sync.openInJira") : undefined
+                        }
+                        className={`text-xs shrink-0 mt-2 gap-1 ${
+                          safeExternalUrl
+                            ? "group cursor-pointer hover:bg-secondary/80"
+                            : ""
+                        }`}
+                        onClick={
+                          safeExternalUrl
+                            ? () =>
+                                window.open(
+                                  safeExternalUrl,
+                                  "_blank",
+                                  "noopener,noreferrer"
+                                )
+                            : undefined
+                        }
+                      >
+                        {badgeLabel}
+                        {safeExternalUrl && (
+                          <ExternalLink
+                            data-testid="milestone-open-in-tracker"
+                            className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                          />
+                        )}
+                      </Badge>
+                    );
+                  })()}
               </div>
               <div className="flex flex-col gap-2 ms-4">
                 {isEditMode ? (
