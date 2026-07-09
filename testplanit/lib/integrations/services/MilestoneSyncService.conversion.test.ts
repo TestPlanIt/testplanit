@@ -269,6 +269,46 @@ describe("MilestoneSyncService.convertMilestoneToLocal", () => {
     );
   });
 
+  it("REGRESSION (WR-04): the audit event is attributed to the passed actorUserId — a manual unlink records the acting admin, not __system__", async () => {
+    await milestoneSyncService.convertMilestoneToLocal(
+      {
+        milestones: { findUnique: mockMilestonesFindUnique },
+        $transaction: mockTransaction,
+      } as any,
+      42,
+      "manual_unlink",
+      undefined,
+      "admin-7"
+    );
+
+    expect(mockCaptureAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entityType: "Milestones",
+        entityId: "42",
+        userId: "admin-7",
+        metadata: expect.objectContaining({ reason: "manual_unlink" }),
+      })
+    );
+  });
+
+  it("WR-04: the audit actor defaults to SYSTEM_ACTOR_ID when no actor is passed (webhook-driven conversions)", async () => {
+    await milestoneSyncService.convertMilestoneToLocal(
+      {
+        milestones: { findUnique: mockMilestonesFindUnique },
+        $transaction: mockTransaction,
+      } as any,
+      42,
+      "deleted"
+    );
+
+    expect(mockCaptureAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "__system__",
+        metadata: expect.objectContaining({ reason: "deleted" }),
+      })
+    );
+  });
+
   it("writes via the raw db client (rawDb/defaultDb), never the enhanced/policy-governed client — mirrors _upsertMilestoneShell's documented bypass contract", async () => {
     // The service method takes `db` as an explicit parameter (same contract
     // as every other raw-db write path in this file, e.g.

@@ -84,7 +84,7 @@ describe("POST /api/milestones/[milestoneId]/unlink", () => {
     });
   });
 
-  it("a project-admin session unlinks — calls convertMilestoneToLocal with reason 'manual_unlink'", async () => {
+  it("a project-admin session unlinks — calls convertMilestoneToLocal with reason 'manual_unlink' attributed to the acting admin (WR-04), never the system actor", async () => {
     const res = await POST(createRequest(), params("42"));
 
     expect(res.status).toBe(200);
@@ -93,7 +93,9 @@ describe("POST /api/milestones/[milestoneId]/unlink", () => {
     expect(milestoneSyncService.convertMilestoneToLocal).toHaveBeenCalledWith(
       baseDb,
       42,
-      "manual_unlink"
+      "manual_unlink",
+      undefined,
+      "user-1"
     );
   });
 

@@ -111,11 +111,16 @@ export async function POST(
     // D-11/D-12: same detached mechanics as an upstream deleted/merged
     // conversion; only the reason (and therefore the badge) differs.
     // convertMilestoneToLocal is idempotent — calling unlink twice on an
-    // already-detached milestone succeeds as a no-op.
+    // already-detached milestone succeeds as a no-op. The acting admin's
+    // user id is passed as the audit actor (T-19-05-04): a manual unlink is
+    // an admin-initiated action and must never be attributed to
+    // SYSTEM_ACTOR_ID the way webhook-driven conversions are.
     const result = await milestoneSyncService.convertMilestoneToLocal(
       baseDb,
       milestoneId,
-      "manual_unlink"
+      "manual_unlink",
+      undefined,
+      session.user.id
     );
 
     if (!result.success) {

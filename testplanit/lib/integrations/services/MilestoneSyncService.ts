@@ -442,7 +442,10 @@ export class MilestoneSyncService {
    *   - A reason-tagged audit event (`captureAuditEvent`, action UPDATE,
    *     entityType "Milestones") records `metadata.reason` so every
    *     conversion — especially a manual unlink — is traceable
-   *     (T-19-05-04 depends on this).
+   *     (T-19-05-04 depends on this). `actorUserId` attributes the event:
+   *     webhook-driven conversions default to SYSTEM_ACTOR_ID, while the
+   *     unlink route passes the acting admin's session user id so the
+   *     trail answers WHO unlinked, not just that a system actor did.
    *   - `publishMilestoneWakeUp({ event: "milestone.converted" })` AND a
    *     membership-aware `milestone.membership_changed` wake-up, since the
    *     bulk SYNCED->MANUAL flip changes what the member table should show
@@ -452,7 +455,8 @@ export class MilestoneSyncService {
     db: DbClient,
     milestoneId: number,
     reason: MilestoneConversionReason,
-    mergedToExternalId?: string
+    mergedToExternalId?: string,
+    actorUserId: string = SYSTEM_ACTOR_ID
   ): Promise<ConvertMilestoneToLocalResult> {
     const existing = await db.milestones.findUnique({
       where: { id: milestoneId },
@@ -518,7 +522,7 @@ export class MilestoneSyncService {
       entityType: "Milestones",
       entityId: String(milestoneId),
       projectId: existing.projectId,
-      userId: SYSTEM_ACTOR_ID,
+      userId: actorUserId,
       metadata: {
         reason,
         ...(mergedToExternalId ? { mergedToExternalId } : {}),
