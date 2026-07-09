@@ -6,6 +6,7 @@ import { ForecastDisplay } from "@/components/ForecastDisplay";
 import LoadingSpinnerPage from "@/components/LoadingSpinnerAlert";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -38,6 +39,7 @@ import {
   CircleCheckBig,
   CircleSlash2,
   Compass,
+  ExternalLink,
   FileDown,
   PlayCircle,
   Save,
@@ -78,6 +80,14 @@ interface MilestoneForecastData {
   automatedEstimate: number;
   areAllCasesAutomated: boolean;
 }
+
+/**
+ * A synced milestone's `externalUrl` is tracker-provided and written through
+ * the raw db client, which bypasses the schema's `@url` validation — so only
+ * render the open-in-tracker button for http(s) URLs (never `javascript:`
+ * etc.) and open without an opener reference to prevent reverse tab-nabbing.
+ */
+const SAFE_EXTERNAL_URL_RE = /^https?:\/\//i;
 
 export default function MilestoneDetailsPage() {
   const { projectId, milestoneId } = useParams<{
@@ -604,6 +614,44 @@ export default function MilestoneDetailsPage() {
                     milestone?.name
                   )}
                 </CardTitle>
+                {!isEditMode && milestone?.integrationId != null && (
+                  <div className="flex items-center gap-1 shrink-0 mt-2">
+                    <Badge
+                      data-testid="milestone-source-badge"
+                      variant="secondary"
+                      className="text-xs shrink-0"
+                    >
+                      {t("sync.sourceBadge", {
+                        provider: t("sync.providerJira"),
+                        kind:
+                          milestone.externalKind === "RELEASE"
+                            ? t("import.kindRelease")
+                            : t("import.kindSprint"),
+                        state: milestone.externalState ?? "",
+                      })}
+                    </Badge>
+                    {milestone.externalUrl &&
+                      SAFE_EXTERNAL_URL_RE.test(milestone.externalUrl) && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0 text-muted-foreground hover:opacity-50"
+                          title={t("sync.openInJira")}
+                          data-testid="milestone-open-in-tracker"
+                          onClick={() =>
+                            window.open(
+                              milestone.externalUrl!,
+                              "_blank",
+                              "noopener,noreferrer"
+                            )
+                          }
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                  </div>
+                )}
               </div>
               <div className="flex flex-col gap-2 ms-4">
                 {isEditMode ? (
