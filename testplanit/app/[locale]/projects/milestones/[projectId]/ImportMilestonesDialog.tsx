@@ -130,6 +130,20 @@ export function ImportMilestonesDialog({
     void fetchPreview(checked);
   };
 
+  // All/None toggle operates on the currently-visible, not-yet-linked rows.
+  const selectableIds = items
+    .filter((item) => !linkedExternalIds.has(item.id))
+    .map((item) => item.id);
+  const allSelectableSelected =
+    selectableIds.length > 0 &&
+    selectableIds.every((id) => selectedIds.has(id));
+
+  const toggleSelectAll = () => {
+    setSelectedIds(
+      allSelectableSelected ? new Set() : new Set(selectableIds)
+    );
+  };
+
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -181,16 +195,36 @@ export function ImportMilestonesDialog({
           <DialogDescription>{t("importDescription")}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center gap-2">
-          <Switch
-            id="milestone-import-show-closed"
-            checked={includeClosed}
-            onCheckedChange={handleShowClosedToggle}
-            disabled={isLoading}
-          />
-          <Label htmlFor="milestone-import-show-closed">
-            {t("showClosed")}
-          </Label>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="milestone-import-show-closed"
+              checked={includeClosed}
+              onCheckedChange={handleShowClosedToggle}
+              disabled={isLoading}
+            />
+            <Label htmlFor="milestone-import-show-closed">
+              {t("showClosed")}
+            </Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="milestone-import-select-all"
+              data-testid="import-milestones-select-all"
+              checked={
+                selectableIds.length > 0 && allSelectableSelected
+                  ? true
+                  : selectedIds.size > 0
+                    ? "indeterminate"
+                    : false
+              }
+              disabled={isLoading || selectableIds.length === 0}
+              onCheckedChange={toggleSelectAll}
+            />
+            <Label htmlFor="milestone-import-select-all">
+              {t("selectAll")}
+            </Label>
+          </div>
         </div>
 
         {error && (

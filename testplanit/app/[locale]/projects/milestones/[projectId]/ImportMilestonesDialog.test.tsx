@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -74,13 +74,22 @@ vi.mock("@/components/ui/button", () => ({
 }));
 
 vi.mock("@/components/ui/checkbox", () => ({
-  Checkbox: ({ checked, disabled, onCheckedChange, onClick }: any) => (
+  Checkbox: ({
+    checked,
+    disabled,
+    onCheckedChange,
+    onClick,
+    id,
+    "data-testid": dataTestId,
+  }: any) => (
     <input
       type="checkbox"
       role="checkbox"
-      checked={!!checked}
+      id={id}
+      data-testid={dataTestId}
+      checked={checked === true}
       disabled={disabled}
-      onChange={() => onCheckedChange?.(!checked)}
+      onChange={() => onCheckedChange?.(!(checked === true))}
       onClick={onClick}
     />
   ),
@@ -171,7 +180,8 @@ describe("ImportMilestonesDialog", () => {
     render(<ImportMilestonesDialog {...baseProps} />);
 
     await screen.findByText("v1.0");
-    const checkbox = screen.getByRole("checkbox") as HTMLInputElement;
+    const row = screen.getByTestId("import-milestone-row");
+    const checkbox = within(row).getByRole("checkbox") as HTMLInputElement;
     expect(checkbox.disabled).toBe(true);
     expect(screen.getByTestId("badge")).toHaveTextContent("alreadyLinked");
   });
@@ -193,6 +203,55 @@ describe("ImportMilestonesDialog", () => {
         expect.stringContaining("includeClosed=true")
       )
     );
+  });
+
+  it("select-all toggles every selectable row on and off, skipping already-linked items", async () => {
+    mockFetch.mockResolvedValue(
+      makePreviewResponse([
+        {
+          id: "10001",
+          kind: "RELEASE",
+          name: "v1.0",
+          state: "ACTIVE",
+          rawState: "unreleased",
+        },
+        {
+          id: "10002",
+          kind: "ITERATION",
+          name: "Sprint 9",
+          state: "FUTURE",
+          rawState: "future",
+        },
+        {
+          id: "linked-1",
+          kind: "RELEASE",
+          name: "v0.9",
+          state: "ACTIVE",
+          rawState: "unreleased",
+        },
+      ])
+    );
+
+    mockFindManyMilestones.mockReturnValue({
+      data: [{ externalId: "linked-1" }],
+    });
+
+    render(<ImportMilestonesDialog {...baseProps} />);
+
+    await screen.findByText("v1.0");
+    const selectAll = screen.getByTestId("import-milestones-select-all");
+
+    fireEvent.click(selectAll);
+    // Both selectable rows selected; the already-linked row is not.
+    expect(screen.getByText(/selectedCount/)).toBeInTheDocument();
+    const rows = screen.getAllByTestId("import-milestone-row");
+    const checkedStates = rows.map(
+      (r) => (within(r).getByRole("checkbox") as HTMLInputElement).checked
+    );
+    expect(checkedStates.filter(Boolean)).toHaveLength(2);
+
+    fireEvent.click(selectAll);
+    expect(screen.queryByText(/selectedCount/)).not.toBeInTheDocument();
   });
 
   it("selecting items and confirming POSTs the chosen externalIds to /import", async () => {
@@ -229,8 +288,9 @@ describe("ImportMilestonesDialog", () => {
     render(<ImportMilestonesDialog {...baseProps} />);
 
     await screen.findByText("v1.0");
-    const checkboxes = screen.getAllByRole("checkbox");
-    fireEvent.click(checkboxes[0]);
+    const rows = screen.getAllByTestId("import-milestone-row");
+    const row = rows.find((r) => within(r).queryByText("v1.0"))!;
+    fireEvent.click(within(row).getByRole("checkbox"));
 
     const confirmButton = await screen.findByText("confirmSelection");
     fireEvent.click(confirmButton);

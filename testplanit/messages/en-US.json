@@ -2162,7 +2162,8 @@
       "importFailed": "Failed to import selected milestones",
       "importStarted": "Import started",
       "kindRelease": "Release",
-      "kindSprint": "Sprint"
+      "kindSprint": "Sprint",
+      "selectAll": "Select all"
     },
     "sync": {
       "managedByJira": "Managed by Jira",
