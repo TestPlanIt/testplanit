@@ -74,6 +74,29 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     }
   );
 
+  // Import runs as a background queue job — the dialog closes when the job
+  // is QUEUED, and the worker creates the Milestones rows seconds later. A
+  // one-shot refetch would race the worker, so imports open a bounded
+  // polling window (3s interval, 30s cap) on the milestone queries below.
+  const [isImportPolling, setIsImportPolling] = useState(false);
+  const importPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const startImportPolling = React.useCallback(() => {
+    setIsImportPolling(true);
+    if (importPollTimerRef.current) clearTimeout(importPollTimerRef.current);
+    importPollTimerRef.current = setTimeout(
+      () => setIsImportPolling(false),
+      30_000
+    );
+  }, []);
+  useEffect(
+    () => () => {
+      if (importPollTimerRef.current) clearTimeout(importPollTimerRef.current);
+    },
+    []
+  );
+
   const { data: incompleteMilestones } = useClientQueries(
     schema
   ).milestones.useFindMany({
@@ -97,7 +120,9 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
         },
       },
     },
-  });
+  },
+  { refetchInterval: isImportPolling ? 3000 : false }
+  );
 
   const { data: completedMilestones } = useClientQueries(
     schema
@@ -118,7 +143,9 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
         },
       },
     },
-  });
+  },
+  { refetchInterval: isImportPolling ? 3000 : false }
+  );
 
   const isLoading =
     isAuthLoading ||
@@ -338,6 +365,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
                           projectMappingId={importProjectMappingId}
                           open={importMilestonesOpen}
                           onOpenChange={setImportMilestonesOpen}
+                          onStarted={startImportPolling}
                         />
                       )}
                   </div>
