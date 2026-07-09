@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -608,14 +607,13 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
             </Button>
           </div>
         </div>
-        <CardDescription>{t("sectionDescription")}</CardDescription>
         {rows.length > 0 &&
           !isLoadingCoverage &&
           (coverageTotals.statuses.length > 0 ||
             coverageTotals.untested > 0 ||
             coverageTotals.uncoveredIssues > 0) && (
             <div
-              className="flex items-center gap-3 flex-wrap text-xs font-medium pt-1"
+              className="flex items-center justify-end gap-3 flex-wrap text-xs font-medium pt-1"
               data-testid="member-issues-coverage-totals"
             >
               {coverageTotals.statuses.map((entry) => (
@@ -665,7 +663,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
         <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap mb-4">
           <Filter
             key="member-issues-filter"
-            placeholder={t("filterPlaceholder")}
+            placeholder={tGlobal("admin.issues.filterPlaceholder")}
             initialSearchString={searchString}
             onSearchChange={setSearchString}
             dataTestId="member-issues-search"

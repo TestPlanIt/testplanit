@@ -10,18 +10,24 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ─── Mocks ────────────────────────────────────────────────────────────────
 const mockMilestonesFindFirst = vi.fn();
 const mockMilestonesFindUnique = vi.fn();
+const mockMilestonesFindMany = vi.fn();
 const mockMilestonesUpsert = vi.fn();
 const mockIntegrationProjectFindMany = vi.fn();
+const mockProjectIntegrationFindUnique = vi.fn();
 
 vi.mock("@/lib/rawDb", () => ({
   rawDb: {
     milestones: {
       findFirst: (...args: any[]) => mockMilestonesFindFirst(...args),
       findUnique: (...args: any[]) => mockMilestonesFindUnique(...args),
+      findMany: (...args: any[]) => mockMilestonesFindMany(...args),
       upsert: (...args: any[]) => mockMilestonesUpsert(...args),
     },
     integrationProject: {
       findMany: (...args: any[]) => mockIntegrationProjectFindMany(...args),
+    },
+    projectIntegration: {
+      findUnique: (...args: any[]) => mockProjectIntegrationFindUnique(...args),
     },
   },
 }));
@@ -64,6 +70,7 @@ vi.mock("../../valkey", () => ({
     set: (key: string, val: string, ...opts: unknown[]) =>
       mockValkeySet(key, val, ...opts),
     del: (key: string) => mockValkeyDel(key),
+    exists: async (key: string) => (mockValkeyStore.has(key) ? 1 : 0),
   },
 }));
 
@@ -339,5 +346,76 @@ describe("performMilestoneRefresh — per-entity Valkey lock", () => {
     expect(result.success).toBe(false);
     expect(mockValkeyDel).toHaveBeenCalledTimes(1);
     expect(mockValkeyStore.size).toBe(0);
+  });
+});
+
+describe("performProjectMilestoneSync — project-pass freshness marker", () => {
+  beforeEach(() => {
+    mockProjectIntegrationFindUnique.mockResolvedValue({
+      config: {
+        milestoneSync: { enabled: true, kinds: ["RELEASE"], autoTrack: false },
+      },
+    });
+    // No linked milestones — isolates the marker behavior around the
+    // auto-track kind fetch, which is the ungated upstream cost.
+    mockMilestonesFindMany.mockResolvedValue([]);
+  });
+
+  it("a passive pass runs once, then short-circuits inside the window with zero upstream fetches", async () => {
+    const first = await milestoneSyncService.performProjectMilestoneSync(
+      "user-1",
+      4,
+      100,
+      { minFreshnessSeconds: 300 }
+    );
+    expect(first.success).toBe(true);
+    expect(first.cached).toBeUndefined();
+    expect(mockGetExternalMilestones).toHaveBeenCalledTimes(1);
+
+    const second = await milestoneSyncService.performProjectMilestoneSync(
+      "user-1",
+      4,
+      100,
+      { minFreshnessSeconds: 300 }
+    );
+    expect(second).toEqual({
+      success: true,
+      autoImported: 0,
+      refreshed: 0,
+      errors: [],
+      cached: true,
+    });
+    // Still exactly one upstream fetch — the marker made the second pass a
+    // true no-op.
+    expect(mockGetExternalMilestones).toHaveBeenCalledTimes(1);
+  });
+
+  it("a manual pass (minFreshnessSeconds=0) bypasses the marker", async () => {
+    await milestoneSyncService.performProjectMilestoneSync("user-1", 4, 100, {
+      minFreshnessSeconds: 300,
+    });
+    expect(mockGetExternalMilestones).toHaveBeenCalledTimes(1);
+
+    const manual = await milestoneSyncService.performProjectMilestoneSync(
+      "user-1",
+      4,
+      100,
+      { minFreshnessSeconds: 0 }
+    );
+    expect(manual.success).toBe(true);
+    expect(manual.cached).toBeUndefined();
+    expect(mockGetExternalMilestones).toHaveBeenCalledTimes(2);
+  });
+
+  it("the marker is scoped per integration+project", async () => {
+    await milestoneSyncService.performProjectMilestoneSync("user-1", 4, 100, {
+      minFreshnessSeconds: 300,
+    });
+    const otherProject =
+      await milestoneSyncService.performProjectMilestoneSync("user-1", 4, 200, {
+        minFreshnessSeconds: 300,
+      });
+    expect(otherProject.cached).toBeUndefined();
+    expect(mockGetExternalMilestones).toHaveBeenCalledTimes(2);
   });
 });

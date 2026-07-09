@@ -82,6 +82,8 @@ export interface ProjectMilestoneSyncResult {
   autoImported: number;
   refreshed: number;
   errors: string[];
+  /** True when the project-level freshness marker short-circuited the pass. */
+  cached?: boolean;
 }
 
 /**
@@ -90,6 +92,9 @@ export interface ProjectMilestoneSyncResult {
  * happens to collide between an issue and a milestone never cross-locks.
  */
 const MILESTONE_SYNC_LOCK_TTL_SECONDS = 60;
+// Matches the ?trigger=hover freshness window (300s) used by the passive
+// page-load refresh — see app/api/integrations/[id]/milestone-sync/now.
+const PROJECT_PASS_FRESHNESS_TTL_SECONDS = 300;
 
 function milestoneSyncLockKey(
   integrationId: number,
@@ -122,6 +127,48 @@ async function releaseMilestoneSyncLock(
 ): Promise<void> {
   if (!valkeyConnection) return;
   await valkeyConnection.del(milestoneSyncLockKey(integrationId, externalId));
+}
+
+/**
+ * Project-pass freshness marker. The per-milestone gate above only protects
+ * the refresh loop — the auto-track diff at the top of
+ * `performProjectMilestoneSync` fetches every configured kind from the
+ * upstream API before that loop is reached, so an ungated pass still costs
+ * kind x mapping upstream calls on EVERY page load. The marker makes a
+ * passive (minFreshnessSeconds > 0) pass a true no-op inside the window;
+ * manual "Sync now" passes 0 and bypasses it. Fail-open without Valkey.
+ */
+function projectPassFreshnessKey(
+  integrationId: number,
+  projectId: number
+): string {
+  return `sync-fresh:milestone-project:${integrationId}:${projectId}`;
+}
+
+async function isProjectPassFresh(
+  integrationId: number,
+  projectId: number
+): Promise<boolean> {
+  if (!valkeyConnection) return false;
+  return (
+    (await valkeyConnection.exists(
+      projectPassFreshnessKey(integrationId, projectId)
+    )) === 1
+  );
+}
+
+async function markProjectPassFresh(
+  integrationId: number,
+  projectId: number,
+  ttlSeconds: number
+): Promise<void> {
+  if (!valkeyConnection || ttlSeconds <= 0) return;
+  await valkeyConnection.set(
+    projectPassFreshnessKey(integrationId, projectId),
+    "1",
+    "EX",
+    ttlSeconds
+  );
 }
 
 /**
@@ -908,6 +955,20 @@ export class MilestoneSyncService {
     let refreshed = 0;
 
     try {
+      const minFreshnessSeconds = serviceOptions.minFreshnessSeconds ?? 0;
+      if (
+        minFreshnessSeconds > 0 &&
+        (await isProjectPassFresh(integrationId, projectId))
+      ) {
+        return {
+          success: true,
+          autoImported: 0,
+          refreshed: 0,
+          errors: [],
+          cached: true,
+        };
+      }
+
       const projectIntegration = await db.projectIntegration.findUnique({
         where: { projectId_integrationId: { projectId, integrationId } },
         select: { config: true },
@@ -1022,6 +1083,15 @@ export class MilestoneSyncService {
           );
         }
       }
+
+      // Stamp the pass regardless of trigger — a manual "Sync now" also
+      // buys the passive window (matches the per-milestone lastSyncedAt
+      // semantics).
+      await markProjectPassFresh(
+        integrationId,
+        projectId,
+        Math.max(minFreshnessSeconds, PROJECT_PASS_FRESHNESS_TTL_SECONDS)
+      );
 
       return { success: true, autoImported, refreshed, errors };
     } catch (error: any) {

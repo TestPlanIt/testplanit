@@ -2182,7 +2182,6 @@
     },
     "members": {
       "sectionTitle": "Issues",
-      "sectionDescription": "What's in this milestone and how its testing is going.",
       "syncing": "Syncing…",
       "refresh": "Refresh",
       "columnKey": "Name",
@@ -2196,7 +2195,6 @@
       "coverageInProgress": "In Progress",
       "coverageNotRun": "Not Run",
       "coverageUncovered": "Uncovered",
-      "filterPlaceholder": "Search member issues…",
       "filterAllCoverage": "All coverage",
       "filterAllSources": "All sources",
       "filterAllTypes": "All types",

@@ -82,6 +82,11 @@ const issueJiraCache = new Map<number, JiraIssueDetails>();
 // (300s) is authoritative; this only suppresses the redundant round-trips.
 const issueSyncAttempts = new Map<number, number>();
 const SYNC_ATTEMPT_THROTTLE_MS = 30_000;
+// Client mirror of the server's ?trigger=hover freshness window (300s in
+// SyncService.performIssueRefresh): when the row data already says the
+// issue was synced inside the window, skip the POST entirely instead of
+// paying a round-trip just to hear "cached: true".
+const HOVER_SYNC_FRESHNESS_MS = 300_000;
 
 // Entries older than the throttle window are dead weight — prune them
 // whenever the map grows past a small bound so a long-lived tab that
@@ -153,6 +158,13 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
     if (syncTriggeredRef.current) return;
     if (!integrationId || !integrationProvider) return;
     const now = Date.now();
+    // Already fresh per the data we're rendering — no request needed.
+    if (lastSyncedAt) {
+      const syncedAgoMs = now - new Date(lastSyncedAt).getTime();
+      if (syncedAgoMs >= 0 && syncedAgoMs < HOVER_SYNC_FRESHNESS_MS) {
+        return;
+      }
+    }
     const lastAttempt = issueSyncAttempts.get(id);
     if (lastAttempt && now - lastAttempt < SYNC_ATTEMPT_THROTTLE_MS) {
       return;
