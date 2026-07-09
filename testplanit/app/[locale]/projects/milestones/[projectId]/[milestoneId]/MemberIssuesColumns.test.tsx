@@ -31,6 +31,7 @@ const translations = {
   key: "Key",
   description: "Description",
   status: "Status",
+  cases: "Test Cases",
   coverage: "Coverage",
   source: "Source",
   sourceSynced: "Synced",
@@ -67,7 +68,7 @@ describe("useMemberIssueColumns", () => {
       useMemberIssueColumns({ translations, projectId: 5 })
     );
     const ids = result.current.map((col) => col.id);
-    expect(ids).toEqual(["select", "key", "description", "status", "coverage", "source"]);
+    expect(ids).toEqual(["select", "key", "description", "status", "cases", "coverage", "source"]);
   });
 
   it("adds a row-actions column when renderRowActions is provided", () => {

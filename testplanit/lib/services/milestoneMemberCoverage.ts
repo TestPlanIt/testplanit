@@ -71,6 +71,8 @@ export async function getMemberCoverage(
     WITH linked_cases AS (
       SELECT rci."issueId", rci."caseId"
       FROM "RepositoryCaseIssue" rci
+      JOIN "RepositoryCases" rc
+        ON rc.id = rci."caseId" AND rc."isDeleted" = false
       WHERE rci."issueId" = ANY(${memberIssueIds}::int[])
     ),
     latest_result AS (
@@ -127,6 +129,8 @@ export async function getMemberCoverage(
     WITH linked_cases AS (
       SELECT rci."issueId", rci."caseId"
       FROM "RepositoryCaseIssue" rci
+      JOIN "RepositoryCases" rc
+        ON rc.id = rci."caseId" AND rc."isDeleted" = false
       WHERE rci."issueId" = ANY(${memberIssueIds}::int[])
     ),
     latest_result AS (

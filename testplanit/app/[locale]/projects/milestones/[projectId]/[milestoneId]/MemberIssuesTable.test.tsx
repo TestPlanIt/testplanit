@@ -90,6 +90,14 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
+vi.mock("@/components/tables/CaseListDisplay", () => ({
+  CasesListDisplay: ({ count, isLoading }: any) => (
+    <span data-testid="cases-list-display">
+      {isLoading ? "loading" : String(count)}
+    </span>
+  ),
+}));
+
 vi.mock("@/components/tables/IssuesDisplay", () => ({
   IssuesDisplay: ({ name }: any) => <span data-testid="issues-display">{name}</span>,
 }));
@@ -488,10 +496,19 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
       if (url.includes("/members/coverage")) return respond({});
       if (url.includes("/members/overflow"))
         return respond({ members: [], linkedCount: 0, cap: 0, overflowTotal: 0 });
+      if (url.includes("repositoryCases/count")) {
+        return respond({ data: linkedCaseIds.length });
+      }
       if (url.includes("repositoryCases/findMany")) {
         const q = parseQ(url);
         if (q.where?.caseIssues) {
-          return respond({ data: linkedCaseIds.map((id) => ({ id })) });
+          return respond({
+            data: linkedCaseIds.map((id) => ({
+              id,
+              // 999 is never a selected issue — the handoff must drop it.
+              caseIssues: [{ issueId: 10 }, { issueId: 999 }],
+            })),
+          });
         }
         return respond({ data: eligibleCaseIds.map((id) => ({ id })) });
       }
@@ -524,6 +541,12 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
     expect(
       JSON.parse(sessionStorage.getItem("createTestRun_selectedCases") ?? "[]")
     ).toEqual([101, 102]);
+    // Pre-linked issues: only SELECTED issues that contributed a seeded
+    // case (the decoy 999 on every case link must be dropped).
+    expect(
+      JSON.parse(sessionStorage.getItem("createTestRun_linkedIssues") ?? "[]")
+    ).toEqual([10]);
+    expect(sessionStorage.getItem("createTestRun_milestoneId")).toBe("42");
 
     // The case-resolution query targets exactly the selected issueIds.
     const caseCall = mockFetch.mock.calls
@@ -571,6 +594,8 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
     });
     expect(mockRouterPush).not.toHaveBeenCalled();
     expect(sessionStorage.getItem("createTestRun_selectedCases")).toBeNull();
+    expect(sessionStorage.getItem("createTestRun_linkedIssues")).toBeNull();
+    expect(sessionStorage.getItem("createTestRun_milestoneId")).toBeNull();
   });
 
   it("honors excludeNotStartedFromRuns: filters ineligible cases, toasts the skipped count, seeds the rest", async () => {
@@ -625,8 +650,131 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
     fireEvent.click(await screen.findByTestId("member-issues-create-run"));
 
     await waitFor(() => {
-      expect(mockToastError).toHaveBeenCalledWith("createRunError");
+      expect(mockToastError).toHaveBeenCalledWith("errors.somethingWentWrong");
     });
     expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+});
+
+describe("MemberIssuesTable — range select and case counts", () => {
+  const respond = (payload: any) => ({ ok: true, json: async () => payload });
+  const parseQ = (url: string) =>
+    JSON.parse(new URL(url, "http://localhost").searchParams.get("q") ?? "{}");
+
+  beforeEach(() => {
+    mockFindManyMilestoneIssue.mockReset();
+    mockFindFirstMilestones.mockReset();
+    mockFindFirstMilestones.mockReturnValue({
+      data: { integrationId: null },
+      isLoading: false,
+    });
+    mockFetch.mockReset();
+    mockToastInfo.mockReset();
+    mockRouterPush.mockReset();
+    sessionStorage.clear();
+
+    mockFindManyMilestoneIssue.mockReturnValue({
+      data: [10, 11, 12, 13].map((issueId, i) =>
+        buildRow({
+          issueId,
+          issue: {
+            id: issueId,
+            name: `PROJ-${i + 1}`,
+            title: `Issue ${i + 1}`,
+            externalStatus: "Open",
+            status: "open",
+            issueTypeName: "Bug",
+          },
+        })
+      ),
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+
+    mockFetch.mockImplementation(async (url: string) => {
+      if (url.includes("/members/coverage"))
+        return respond({
+          10: { linkedCaseCount: 3, passed: 0, failed: 0, inProgress: 0, notRun: 3, uncovered: false, statuses: [], untested: 3 },
+          11: { linkedCaseCount: 0, passed: 0, failed: 0, inProgress: 0, notRun: 0, uncovered: true, statuses: [], untested: 0 },
+        });
+      if (url.includes("/members/overflow"))
+        return respond({ members: [], linkedCount: 0, cap: 0, overflowTotal: 0 });
+      if (url.includes("repositoryCases/count")) return respond({ data: 7 });
+      if (url.includes("repositoryCases/findMany"))
+        return respond({ data: [{ id: 101 }] });
+      if (url.includes("projects/findFirst"))
+        return respond({ data: { excludeNotStartedFromRuns: false } });
+      return respond({});
+    });
+  });
+
+  it("shift-click selects the whole range between the two clicks in view order", async () => {
+    renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
+    const checkboxes = await screen.findAllByTestId("member-issue-row-select");
+    expect(checkboxes).toHaveLength(4);
+
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(checkboxes[3], { shiftKey: true });
+
+    fireEvent.click(await screen.findByTestId("member-issues-create-run"));
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalled();
+    });
+    const caseCall = mockFetch.mock.calls
+      .map(([url]: any[]) => url)
+      .find((url: string) => url.includes("repositoryCases/findMany"));
+    expect(parseQ(caseCall).where.caseIssues.some.issueId.in.sort()).toEqual([
+      10, 11, 12, 13,
+    ]);
+  });
+
+  it("plain clicks still toggle single rows (and deselect)", async () => {
+    renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
+    const checkboxes = await screen.findAllByTestId("member-issue-row-select");
+
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(checkboxes[2]);
+    fireEvent.click(checkboxes[0]); // deselect the first again
+
+    fireEvent.click(await screen.findByTestId("member-issues-create-run"));
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalled();
+    });
+    const caseCall = mockFetch.mock.calls
+      .map(([url]: any[]) => url)
+      .find((url: string) => url.includes("repositoryCases/findMany"));
+    expect(parseQ(caseCall).where.caseIssues.some.issueId.in).toEqual([12]);
+  });
+
+  it("fetches the distinct linked-case count for the selection (button subtitle)", async () => {
+    renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
+    const checkboxes = await screen.findAllByTestId("member-issue-row-select");
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(checkboxes[1]);
+
+    // The count refires per selection change — assert the final selection's
+    // query landed, not the first.
+    await waitFor(() => {
+      const countWheres = mockFetch.mock.calls
+        .map(([url]: any[]) => url)
+        .filter((url: string) => url.includes("repositoryCases/count"))
+        .map((url: string) => parseQ(url).where);
+      expect(countWheres).toContainEqual({
+        isDeleted: false,
+        caseIssues: { some: { issueId: { in: [10, 11] } } },
+      });
+    });
+  });
+
+  it("renders the per-issue linked-cases badge (CasesListDisplay) from coverage data", async () => {
+    renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
+    await waitFor(() => {
+      const counts = screen
+        .getAllByTestId("member-issue-case-count")
+        .map((el) => el.textContent);
+      // Issues absent from the coverage payload are still loading.
+      expect(counts).toEqual(["3", "0", "loading", "loading"]);
+    });
   });
 });

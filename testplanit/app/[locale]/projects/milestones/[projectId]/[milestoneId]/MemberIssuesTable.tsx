@@ -27,11 +27,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { RowSelectionState, VisibilityState } from "@tanstack/react-table";
-import { ChevronDown, ListChecks, Loader2, RefreshCw } from "lucide-react";
+import { ChevronDown, Loader2, PlayCircle, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "~/lib/navigation";
 import { toast } from "sonner";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MemberIssueRowActions, MilestoneIssueManager } from "@/components/issues/MilestoneIssueManager";
 import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
@@ -94,8 +94,9 @@ function matchesCoverageState(
 export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableProps) {
   const t = useTranslations("milestones.members");
   const tCommon = useTranslations("common");
-  // Unscoped: the skipped-cases toast key lives under projects.settings
-  // (shared verbatim with the repository create-run flow).
+  // Unscoped: reused keys from other namespaces (projects.settings skipped
+  // toast, repository.cases button label) — shared with the repository
+  // create-run flow rather than duplicated here.
   const tGlobal = useTranslations();
 
   const [searchString, setSearchString] = useState("");
@@ -246,6 +247,12 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
           );
         case "source":
           return dir * (a.source ?? "").localeCompare(b.source ?? "");
+        case "cases":
+          return (
+            dir *
+            ((a.coverage?.linkedCaseCount ?? 0) -
+              (b.coverage?.linkedCaseCount ?? 0))
+          );
         case "coverage": {
           // Shared sort value (CoverageChip) — displayed-Uncovered rows
           // group together instead of interleaving by linked-case count.
@@ -288,14 +295,49 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
     .filter((id) => rowSelection[id])
     .map(Number)
     .filter((id) => Number.isInteger(id));
+  const sortedSelectedIds = useMemo(
+    () => [...selectedIssueIds].sort((a, b) => a - b),
+    // Key on content, not array identity — selectedIssueIds is rebuilt
+    // every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedIssueIds.join(",")]
+  );
+
+  // Distinct linked-case count for the current selection, so the button can
+  // say how many cases the run will seed. A count query (not a sum of the
+  // per-issue column) because a case linked to several selected issues must
+  // count once.
+  const { data: selectedCaseCount } = useQuery<number>({
+    queryKey: ["memberIssuesRunCaseCount", sortedSelectedIds],
+    enabled: sortedSelectedIds.length > 0,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const q = {
+        where: {
+          isDeleted: false,
+          caseIssues: { some: { issueId: { in: sortedSelectedIds } } },
+        },
+      };
+      const resp = await fetch(
+        `/api/model/repositoryCases/count?q=${encodeURIComponent(JSON.stringify(q))}`,
+        { credentials: "include" }
+      );
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const body = await resp.json();
+      return Number(body?.data ?? 0);
+    },
+  });
 
   const handleCreateTestRun = async () => {
     if (selectedIssueIds.length === 0 || isResolvingRun) return;
     setIsResolvingRun(true);
     try {
-      const fetchCaseIds = async (where: Record<string, unknown>) => {
+      const fetchCases = async (
+        where: Record<string, unknown>,
+        select: Record<string, unknown>
+      ) => {
         const params = new URLSearchParams({
-          q: JSON.stringify({ where, select: { id: true } }),
+          q: JSON.stringify({ where, select }),
         });
         const resp = await fetch(
           `/api/model/repositoryCases/findMany?${params.toString()}`,
@@ -303,13 +345,23 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
         );
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const body = await resp.json();
-        return ((body?.data ?? []) as Array<{ id: number }>).map((c) => c.id);
+        return (body?.data ?? []) as Array<{
+          id: number;
+          caseIssues?: Array<{ issueId: number }>;
+        }>;
       };
 
-      const linkedCaseIds = await fetchCaseIds({
-        isDeleted: false,
-        caseIssues: { some: { issueId: { in: selectedIssueIds } } },
-      });
+      // Cases come back WITH their issue links so the handoff can pre-link
+      // exactly the selected issues that contributed at least one seeded
+      // case (case-less selections must not be linked to the new run).
+      const linkedCases = await fetchCases(
+        {
+          isDeleted: false,
+          caseIssues: { some: { issueId: { in: selectedIssueIds } } },
+        },
+        { id: true, caseIssues: { select: { issueId: true } } }
+      );
+      const linkedCaseIds = linkedCases.map((c) => c.id);
       if (linkedCaseIds.length === 0) {
         toast.info(t("createRunNoCases"));
         return;
@@ -330,10 +382,15 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
       );
       const settingsBody = settingsResp.ok ? await settingsResp.json() : null;
       if (settingsBody?.data?.excludeNotStartedFromRuns) {
-        const eligibleIds = await fetchCaseIds({
-          id: { in: linkedCaseIds },
-          state: { workflowType: { not: "NOT_STARTED" } },
-        });
+        const eligibleIds = (
+          await fetchCases(
+            {
+              id: { in: linkedCaseIds },
+              state: { workflowType: { not: "NOT_STARTED" } },
+            },
+            { id: true }
+          )
+        ).map((c) => c.id);
         const skippedCount = linkedCaseIds.length - eligibleIds.length;
         if (skippedCount > 0) {
           toast.info(
@@ -347,25 +404,80 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
         idsToSeed = eligibleIds;
       }
 
+      // Selected issues that own >=1 seeded case — these get pre-linked on
+      // the Add Run form, along with this milestone.
+      const seededIdSet = new Set(idsToSeed);
+      const selectedIdSet = new Set(selectedIssueIds);
+      const contributingIssueIds = Array.from(
+        new Set(
+          linkedCases
+            .filter((c) => seededIdSet.has(c.id))
+            .flatMap((c) => c.caseIssues ?? [])
+            .map((link) => link.issueId)
+            .filter((issueId) => selectedIdSet.has(issueId))
+        )
+      );
+
       sessionStorage.setItem(
         "createTestRun_selectedCases",
         JSON.stringify(idsToSeed)
       );
+      sessionStorage.setItem(
+        "createTestRun_linkedIssues",
+        JSON.stringify(contributingIssueIds)
+      );
+      sessionStorage.setItem(
+        "createTestRun_milestoneId",
+        String(milestoneId)
+      );
       router.push(`/projects/runs/${projectId}?openAddRun=true`);
     } catch (err) {
       console.error("Failed to resolve cases for selected issues:", err);
-      toast.error(t("createRunError"));
+      toast.error(tCommon("errors.somethingWentWrong"));
     } finally {
       setIsResolvingRun(false);
     }
   };
 
+  // Shift-click range selection over the CURRENT sorted/filtered view,
+  // mirroring the repository table (Cases.tsx handleCheckboxClick). Ref
+  // indirection keeps the handler's identity stable — it feeds the columns
+  // useMemo, and regenerating column defs remounts every cell (the
+  // popover-flicker loop above).
+  const rangeStateRef = useRef({ sortedRows, rowSelection });
+  rangeStateRef.current = { sortedRows, rowSelection };
+  const lastToggledIssueIdRef = useRef<number | null>(null);
+  const handleRowCheckboxClick = useCallback(
+    (issueId: number, event: React.MouseEvent<HTMLButtonElement>) => {
+      const { sortedRows: view, rowSelection: current } = rangeStateRef.current;
+      const last = lastToggledIssueIdRef.current;
+      if (event.shiftKey && last != null && last !== issueId) {
+        const ids = view.map((row) => row.issueId);
+        const from = ids.indexOf(last);
+        const to = ids.indexOf(issueId);
+        if (from !== -1 && to !== -1) {
+          const [start, end] = from < to ? [from, to] : [to, from];
+          const next = { ...current };
+          for (let i = start; i <= end; i++) next[String(ids[i])] = true;
+          setRowSelection(next);
+          return;
+        }
+      }
+      const key = String(issueId);
+      const willSelect = !current[key];
+      setRowSelection({ ...current, [key]: willSelect });
+      if (willSelect) lastToggledIssueIdRef.current = issueId;
+    },
+    []
+  );
+
   const columns = useMemberIssueColumns({
     translations: {
-      selectRow: t("selectRow"),
+      selectRow: tCommon("aria.selectRow"),
       key: t("columnKey"),
       description: t("columnDescription"),
       status: t("columnStatus"),
+      cases: tCommon("fields.testCases"),
       coverage: t("columnCoverage"),
       source: t("columnSource"),
       sourceSynced: t("sourceSynced"),
@@ -373,6 +485,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
     },
     projectId,
     renderRowActions,
+    onRowCheckboxClick: handleRowCheckboxClick,
   });
 
   const handleSortChange = (column: string) => {
@@ -464,9 +577,14 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
                 {isResolvingRun ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <ListChecks className="h-3.5 w-3.5" />
+                  <PlayCircle className="h-3.5 w-3.5" />
                 )}
-                {t("createTestRun", { count: selectedIssueIds.length })}
+                {selectedCaseCount != null
+                  ? t("createTestRunDetailed", {
+                      issues: selectedIssueIds.length,
+                      cases: selectedCaseCount,
+                    })
+                  : tGlobal("repository.cases.createTestRun")}
               </Button>
             )}
             <MilestoneIssueManager

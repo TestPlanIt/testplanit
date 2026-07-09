@@ -1,5 +1,6 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
+import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -77,6 +78,7 @@ export interface MemberIssuesColumnsTranslations {
   key: string;
   description: string;
   status: string;
+  cases: string;
   coverage: string;
   source: string;
   sourceSynced: string;
@@ -88,6 +90,15 @@ interface UseMemberIssueColumnsArgs {
   projectId: number;
   /** Row-actions slot — the unlink action is wired in 18-07. */
   renderRowActions?: (row: ExtendedMemberIssue) => React.ReactNode;
+  /**
+   * Owns the row-checkbox toggle so the table can implement shift-click
+   * range selection over its sorted view (the onCheckedChange fallback
+   * can't see the mouse event). Same split as the repository select column.
+   */
+  onRowCheckboxClick?: (
+    issueId: number,
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => void;
 }
 
 /**
@@ -98,12 +109,14 @@ export function useMemberIssueColumns({
   translations,
   projectId,
   renderRowActions,
+  onRowCheckboxClick,
 }: UseMemberIssueColumnsArgs): ColumnDef<ExtendedMemberIssue>[] {
   const {
     selectRow: tSelectRow,
     key: tKey,
     description: tDescription,
     status: tStatus,
+    cases: tCases,
     coverage: tCoverage,
     source: tSource,
     sourceSynced: tSourceSynced,
@@ -117,9 +130,13 @@ export function useMemberIssueColumns({
         enableSorting: false,
         enableResizing: false,
         enableHiding: false,
-        size: 36,
-        minSize: 36,
-        maxSize: 36,
+        size: 48,
+        minSize: 48,
+        maxSize: 48,
+        // No centering wrappers: the header content renders inside the
+        // table's TruncatedHeaderLabel span (shrink-to-content), so a
+        // centered header checkbox lands a few px off the centered body
+        // ones. Left-anchoring both rides the cells' identical px-3.
         header: ({ table }) => (
           <Checkbox
             data-testid="member-issues-select-all-rows"
@@ -140,8 +157,15 @@ export function useMemberIssueColumns({
           <Checkbox
             data-testid="member-issue-row-select"
             checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(value === true)}
-            onClick={(e) => e.stopPropagation()}
+            onCheckedChange={(value) => {
+              // Fallback only — with the range handler wired, onClick owns
+              // the toggle because it can read shiftKey.
+              if (!onRowCheckboxClick) row.toggleSelected(value === true);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRowCheckboxClick?.(row.original.issueId, e);
+            }}
             aria-label={tSelectRow}
           />
         ),
@@ -279,13 +303,36 @@ export function useMemberIssueColumns({
         },
       },
       {
+        id: "cases",
+        accessorKey: "coverage.linkedCaseCount",
+        accessorFn: (row) => row.coverage?.linkedCaseCount ?? 0,
+        header: tCases,
+        enableSorting: true,
+        enableResizing: true,
+        size: 110,
+        minSize: 80,
+        maxSize: 160,
+        cell: ({ row }) => (
+          // Same linked-cases badge/list the project Issues page uses for
+          // its Test Cases column — count comes from the coverage fetch, so
+          // the component skips its own count query.
+          <div className="text-center" data-testid="member-issue-case-count">
+            <CasesListDisplay
+              count={row.original.coverage?.linkedCaseCount}
+              filter={{ caseIssues: { some: { issueId: row.original.issueId } } }}
+              isLoading={!row.original.coverage}
+            />
+          </div>
+        ),
+      },
+      {
         id: "coverage",
         accessorKey: "coverage",
         accessorFn: (row) => coverageSortValue(row.coverage),
         header: tCoverage,
         enableSorting: true,
         enableResizing: true,
-        size: 260,
+        size: 170,
         minSize: 150,
         maxSize: 420,
         cell: ({ row }) => <CoverageChip breakdown={row.original.coverage} />,
@@ -331,11 +378,13 @@ export function useMemberIssueColumns({
     tKey,
     tDescription,
     tStatus,
+    tCases,
     tCoverage,
     tSource,
     tSourceSynced,
     tSourceManual,
     projectId,
     renderRowActions,
+    onRowCheckboxClick,
   ]);
 }

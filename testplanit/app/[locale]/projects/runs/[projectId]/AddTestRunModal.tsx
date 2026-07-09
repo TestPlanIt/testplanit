@@ -879,6 +879,8 @@ interface AddTestRunModalProps {
   initialSelectedCaseIds: number[];
   onSelectedCasesChange: (cases: number[]) => void;
   duplicationPreset?: AddRunModalDuplicationPreset;
+  /** Issues to pre-link on open (e.g. create-run-from-milestone-issues). */
+  initialLinkedIssueIds?: number[];
 }
 
 export default function AddTestRunModal({
@@ -888,6 +890,7 @@ export default function AddTestRunModal({
   initialSelectedCaseIds,
   onSelectedCasesChange,
   duplicationPreset,
+  initialLinkedIssueIds,
 }: AddTestRunModalProps) {
   const formInitializedRef = useRef(false);
   const [step, setStep] = useState(0);
@@ -966,7 +969,13 @@ export default function AddTestRunModal({
     where: {
       projectId: Number(projectId),
       isDeleted: false,
-      isCompleted: false,
+      // Completed milestones aren't offered — except a caller-provided
+      // default (create-run-from-milestone on a closed sprint), which must
+      // be visible or the preset would silently ride along as a hidden
+      // form value.
+      ...(defaultMilestoneId != null
+        ? { OR: [{ isCompleted: false }, { id: defaultMilestoneId }] }
+        : { isCompleted: false }),
     },
     include: {
       milestoneType: { include: { icon: true } },
@@ -1067,6 +1076,11 @@ export default function AddTestRunModal({
       return;
     }
     if (formInitializedRef.current) return;
+    // Both init branches below need the default workflow — claiming
+    // "initialized" before it loads (a fresh page load opening straight
+    // into the dialog) skipped initialization entirely, so presets like
+    // initialLinkedIssueIds never applied.
+    if (!defaultWorkflow) return;
     formInitializedRef.current = true;
 
     if (duplicationPreset && defaultWorkflow) {
@@ -1168,7 +1182,7 @@ export default function AddTestRunModal({
         testCases: initialSelectedCaseIds,
       });
       setSelectedTags([]);
-      setLinkedIssueIds([]);
+      setLinkedIssueIds(initialLinkedIssueIds ?? []);
     }
     // This effect should run when the modal opens or when key dependencies for defaults change.
     // Explicitly not including `reset` in deps as it's stable, but form values depend on these.
@@ -1178,6 +1192,7 @@ export default function AddTestRunModal({
     defaultWorkflow,
     initialSelectedCaseIds,
     defaultMilestoneId,
+    initialLinkedIssueIds,
     workflowsOptions,
     reset,
     tCommon,

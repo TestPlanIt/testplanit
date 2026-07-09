@@ -2222,10 +2222,8 @@
       "unlinkConfirmDescription": "This removes the issue from this milestone. The issue itself is kept and can be linked again later.",
       "totalsUncovered": "{count, plural, one {# uncovered issue} other {# uncovered issues}}",
       "filterHasUntested": "Has untested cases",
-      "selectRow": "Select row",
-      "createTestRun": "Create test run ({count, number})",
       "createRunNoCases": "None of the selected issues have linked test cases.",
-      "createRunError": "Failed to find test cases for the selected issues."
+      "createTestRunDetailed": "Create test run ({issues, plural, one {# issue} other {# issues}} · {cases, plural, one {# case} other {# cases}})"
     }
   },
   "sessions": {
