@@ -1,6 +1,12 @@
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import DOMPurify from "dompurify";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import type {
@@ -27,6 +33,19 @@ export interface ExtendedMemberIssue extends MilestoneIssueRow {
   coverage?: CoverageBreakdown;
 }
 
+// Same helper the project Issues page keeps file-local for its
+// description column: plain-text preview of possibly-HTML content.
+function stripHtmlTags(html: string | null | undefined): string {
+  if (!html) return "";
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim();
+}
+
 /**
  * Same external-URL resolution the project Issues page uses: SIMPLE_URL
  * issues build their link from the integration's baseUrl; tracker issues
@@ -50,7 +69,7 @@ function resolveMemberIssueUrl(
 
 export interface MemberIssuesColumnsTranslations {
   key: string;
-  title: string;
+  description: string;
   status: string;
   coverage: string;
   source: string;
@@ -76,7 +95,7 @@ export function useMemberIssueColumns({
 }: UseMemberIssueColumnsArgs): ColumnDef<ExtendedMemberIssue>[] {
   const {
     key: tKey,
-    title: tTitle,
+    description: tDescription,
     status: tStatus,
     coverage: tCoverage,
     source: tSource,
@@ -95,9 +114,9 @@ export function useMemberIssueColumns({
         enableResizing: true,
         enableHiding: false,
         meta: { isPinned: "left" },
-        size: 160,
-        minSize: 100,
-        maxSize: 320,
+        size: 300,
+        minSize: 150,
+        maxSize: 600,
         cell: ({ row, column }) => {
           const issue = row.original.issue;
           if (!issue) return <span className="text-muted-foreground">-</span>;
@@ -130,26 +149,73 @@ export function useMemberIssueColumns({
         },
       },
       {
-        id: "title",
-        accessorKey: "issue.title",
-        accessorFn: (row) => row.issue?.title ?? "",
-        header: tTitle,
-        enableSorting: true,
+        id: "description",
+        accessorKey: "issue.description",
+        accessorFn: (row) => stripHtmlTags(row.issue?.description),
+        header: tDescription,
+        enableSorting: false,
         enableResizing: true,
         size: 300,
         minSize: 150,
         maxSize: 600,
         cell: ({ row, column }) => {
-          const title = row.original.issue?.title;
-          if (!title) return <span className="text-muted-foreground">-</span>;
+          const description = row.original.issue?.description;
+          const plainText = stripHtmlTags(description);
+
+          if (!plainText)
+            return <span className="text-muted-foreground">-</span>;
+
+          const hasHtml = description && /<[^>]+>/.test(description);
+
           return (
-            <div
-              className="line-clamp-2 overflow-hidden text-ellipsis text-sm"
-              style={{ maxWidth: column.getSize() }}
-              title={title}
-            >
-              {title}
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <div
+                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                  style={{ maxWidth: column.getSize() }}
+                  title={plainText}
+                >
+                  {plainText}
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm">{tDescription}</h4>
+                  {hasHtml ? (
+                    <div
+                      className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ms-4 [&_ol]:list-decimal [&_ol]:ms-4"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(description!, {
+                          ALLOWED_TAGS: [
+                            "p",
+                            "br",
+                            "a",
+                            "strong",
+                            "em",
+                            "u",
+                            "ul",
+                            "ol",
+                            "li",
+                            "h1",
+                            "h2",
+                            "h3",
+                            "h4",
+                            "h5",
+                            "h6",
+                            "blockquote",
+                            "code",
+                            "pre",
+                          ],
+                          ALLOWED_ATTR: ["href", "target", "rel"],
+                        }),
+                      }}
+                    />
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">{description}</p>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           );
         },
       },
@@ -221,7 +287,7 @@ export function useMemberIssueColumns({
     return columns;
   }, [
     tKey,
-    tTitle,
+    tDescription,
     tStatus,
     tCoverage,
     tSource,

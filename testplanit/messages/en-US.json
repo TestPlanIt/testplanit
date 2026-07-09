@@ -2180,7 +2180,6 @@
       "syncing": "Syncing…",
       "refresh": "Refresh",
       "columnKey": "Name",
-      "columnTitle": "Title",
       "columnStatus": "Status",
       "columnCoverage": "Coverage",
       "columnSource": "Source",
@@ -2211,7 +2210,8 @@
       "overflowImportAction": "Import & link",
       "overflowImportSuccess": "Import started — issues will appear as they sync.",
       "overflowImportError": "Failed to import member issues from Jira.",
-      "emptyCta": "Link an issue to get started."
+      "emptyCta": "Link an issue to get started.",
+      "columnDescription": "Description"
     }
   },
   "sessions": {

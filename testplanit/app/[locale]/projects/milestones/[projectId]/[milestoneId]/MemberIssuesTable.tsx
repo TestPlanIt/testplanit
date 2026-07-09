@@ -13,6 +13,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -22,9 +27,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { VisibilityState } from "@tanstack/react-table";
-import { Loader2, RefreshCw } from "lucide-react";
+import { ChevronDown, Loader2, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MemberIssueRowActions, MilestoneIssueManager } from "@/components/issues/MilestoneIssueManager";
 import type { CoverageBreakdown } from "./CoverageChip";
@@ -32,6 +37,8 @@ import type { ExtendedMemberIssue } from "./MemberIssuesColumns";
 import { useMemberIssueColumns } from "./MemberIssuesColumns";
 import { MemberIssuesOverflowPanel } from "./MemberIssuesOverflowPanel";
 import type { MemberCoverageResponse } from "~/app/api/milestones/[milestoneId]/members/coverage/route";
+
+const MEMBER_ISSUES_COLLAPSED_KEY = "tpi.milestone.memberIssues.collapsed";
 
 interface MemberIssuesTableProps {
   milestoneId: number;
@@ -201,7 +208,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
   const columns = useMemberIssueColumns({
     translations: {
       key: t("columnKey"),
-      title: t("columnTitle"),
+      description: t("columnDescription"),
       status: t("columnStatus"),
       coverage: t("columnCoverage"),
       source: t("columnSource"),
@@ -228,11 +235,54 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
 
   const isLoading = isLoadingMembers || isLoadingCoverage;
 
+  // Collapsed preference persists across refreshes. Seeded in an effect
+  // (not the useState initializer) so the SSR pass and first client render
+  // agree; localStorage is client-only.
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      setIsCollapsed(
+        window.localStorage.getItem(MEMBER_ISSUES_COLLAPSED_KEY) === "true"
+      );
+    } catch {
+      // localStorage unavailable (private mode etc.) — stay expanded.
+    }
+  }, []);
+  const handleCollapsedChange = (open: boolean) => {
+    setIsCollapsed(!open);
+    try {
+      window.localStorage.setItem(
+        MEMBER_ISSUES_COLLAPSED_KEY,
+        String(!open)
+      );
+    } catch {
+      // Persistence is best-effort.
+    }
+  };
+
   return (
     <Card data-testid="member-issues-section">
+      <Collapsible open={!isCollapsed} onOpenChange={handleCollapsedChange}>
       <CardHeader>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <CardTitle className="flex items-center gap-2">
+            <CollapsibleTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 text-muted-foreground"
+                aria-expanded={!isCollapsed}
+                aria-label={t("sectionTitle")}
+                data-testid="member-issues-collapse-toggle"
+              >
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${
+                    isCollapsed ? "-rotate-90" : ""
+                  }`}
+                />
+              </Button>
+            </CollapsibleTrigger>
             {t("sectionTitle")}
             {isSyncing && (
               <Badge
@@ -269,6 +319,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
         </div>
         <CardDescription>{t("sectionDescription")}</CardDescription>
       </CardHeader>
+      <CollapsibleContent>
       <CardContent>
         <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap mb-4">
           <Filter
@@ -370,6 +421,8 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
           </div>
         )}
       </CardContent>
+      </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 }

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemberIssuesTable } from "./MemberIssuesTable";
@@ -244,6 +244,37 @@ describe("MemberIssuesTable", () => {
     await waitFor(() => {
       expect(screen.queryByTestId("member-issues-syncing-badge")).not.toBeInTheDocument();
     });
+  });
+
+  it("collapses the section and remembers the preference in localStorage", async () => {
+    window.localStorage.removeItem("tpi.milestone.memberIssues.collapsed");
+    mockFindManyMilestoneIssue.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+    const first = renderWithQueryClient(
+      <MemberIssuesTable milestoneId={450} projectId={370} />
+    );
+
+    expect(screen.getByTestId("member-issues-search")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("member-issues-collapse-toggle"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("member-issues-search")).not.toBeInTheDocument()
+    );
+    expect(
+      window.localStorage.getItem("tpi.milestone.memberIssues.collapsed")
+    ).toBe("true");
+
+    first.unmount();
+    renderWithQueryClient(<MemberIssuesTable milestoneId={450} projectId={370} />);
+    // The post-mount effect reads the stored preference and collapses.
+    await waitFor(() =>
+      expect(screen.queryByTestId("member-issues-search")).not.toBeInTheDocument()
+    );
+    window.localStorage.removeItem("tpi.milestone.memberIssues.collapsed");
   });
 
   it("renders the four filters (text, coverage, source, issue type)", () => {

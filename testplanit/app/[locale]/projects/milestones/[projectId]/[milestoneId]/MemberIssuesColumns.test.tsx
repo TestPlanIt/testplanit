@@ -19,7 +19,7 @@ vi.mock("~/lib/navigation", () => ({
 
 const translations = {
   key: "Key",
-  title: "Title",
+  description: "Description",
   status: "Status",
   coverage: "Coverage",
   source: "Source",
@@ -50,12 +50,12 @@ const baseRow: ExtendedMemberIssue = {
 };
 
 describe("useMemberIssueColumns", () => {
-  it("returns columns for key/title/status/coverage/source", () => {
+  it("returns columns for key/description/status/coverage/source", () => {
     const { result } = renderHook(() =>
       useMemberIssueColumns({ translations, projectId: 5 })
     );
     const ids = result.current.map((col) => col.id);
-    expect(ids).toEqual(["key", "title", "status", "coverage", "source"]);
+    expect(ids).toEqual(["key", "description", "status", "coverage", "source"]);
   });
 
   it("adds a row-actions column when renderRowActions is provided", () => {
