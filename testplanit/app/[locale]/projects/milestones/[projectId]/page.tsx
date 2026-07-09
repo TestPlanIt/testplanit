@@ -86,7 +86,34 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   const [pendingImportIds, setPendingImportIds] = useState<Set<string> | null>(
     null
   );
+  // Background sync passes (page-load freshness / auto-track) also create
+  // rows from a worker AFTER this page mounted — poll briefly whenever one
+  // was just fired, so auto-tracked milestones appear without a manual
+  // browser refresh. (Real-time SSE for milestone events is Phase 19's
+  // webhook work.)
+  const [isBackgroundSyncPolling, setIsBackgroundSyncPolling] =
+    useState(false);
+  const backgroundPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const startBackgroundSyncPolling = React.useCallback(() => {
+    setIsBackgroundSyncPolling(true);
+    if (backgroundPollTimerRef.current)
+      clearTimeout(backgroundPollTimerRef.current);
+    backgroundPollTimerRef.current = setTimeout(
+      () => setIsBackgroundSyncPolling(false),
+      45_000
+    );
+  }, []);
+  useEffect(
+    () => () => {
+      if (backgroundPollTimerRef.current)
+        clearTimeout(backgroundPollTimerRef.current);
+    },
+    []
+  );
   const isImportPolling = pendingImportIds !== null;
+  const isMilestonePolling = isImportPolling || isBackgroundSyncPolling;
   const importPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
@@ -133,7 +160,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
       },
     },
   },
-  { refetchInterval: isImportPolling ? 3000 : false }
+  { refetchInterval: isMilestonePolling ? 3000 : false }
   );
 
   const { data: completedMilestones } = useClientQueries(
@@ -156,7 +183,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
       },
     },
   },
-  { refetchInterval: isImportPolling ? 3000 : false }
+  { refetchInterval: isMilestonePolling ? 3000 : false }
   );
 
   // Mark queued imports as landed once their externalIds show up in the
@@ -304,6 +331,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     if (!syncedIntegrationProjects) return;
 
     hasFiredPassiveRefresh.current = true;
+    startBackgroundSyncPolling();
 
     for (const integrationId of syncedIntegrationIds) {
       const mapping = syncedIntegrationProjects.find(
@@ -323,7 +351,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
         // non-blocking, the next mount or manual "Sync now" will retry.
       });
     }
-  }, [isAuthenticated, syncedIntegrationIds, syncedIntegrationProjects]);
+  }, [isAuthenticated, syncedIntegrationIds, syncedIntegrationProjects, startBackgroundSyncPolling]);
 
   // Wait for session to load
   if (isAuthLoading) {
