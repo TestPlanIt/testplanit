@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   act,
   fireEvent,
@@ -7,6 +8,21 @@ import {
 } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+}
+
+function renderWithQueryClient(ui: React.ReactElement) {
+  const testQueryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={testQueryClient}>{ui}</QueryClientProvider>
+  );
+}
 
 // --- Stable mock refs via vi.hoisted() ---
 const {
@@ -151,7 +167,7 @@ describe("Milestones page — Import from Jira trigger", () => {
     });
 
     await act(async () => {
-      render(
+      renderWithQueryClient(
         <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
       );
     });
@@ -182,7 +198,7 @@ describe("Milestones page — Import from Jira trigger", () => {
     });
 
     await act(async () => {
-      render(
+      renderWithQueryClient(
         <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
       );
     });
@@ -199,7 +215,7 @@ describe("Milestones page — Import from Jira trigger", () => {
     mockFindManyProjectIntegration.mockReturnValue({ data: [] });
 
     await act(async () => {
-      render(
+      renderWithQueryClient(
         <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
       );
     });
@@ -228,7 +244,7 @@ describe("Milestones page — Import from Jira trigger", () => {
     });
 
     await act(async () => {
-      render(
+      renderWithQueryClient(
         <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
       );
     });
