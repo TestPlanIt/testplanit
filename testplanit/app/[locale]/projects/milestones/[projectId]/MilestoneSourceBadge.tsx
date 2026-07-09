@@ -74,19 +74,23 @@ function RemovedOrMergedBadge({
   className,
 }: MilestoneSourceBadgeProps) {
   const t = useTranslations("milestones");
+  const router = useRouter();
   const provider = t("sync.providerJira");
   const isMerged = milestone.externalState === "merged";
 
   // Only look up the merge target when we actually need it — this query is
   // scoped to the rare "merged" case so it never fires for the common
   // synced/deleted/manual_unlink paths across a list of milestone cards.
+  // `projectId` is selected so the click below can navigate ABSOLUTELY —
+  // a relative `../${id}` resolves against whichever page the badge happens
+  // to render on (list vs detail) and lands on the wrong route for both.
   const { data: target } = useClientQueries(schema).milestones.useFindFirst(
     {
       where: {
         externalId: milestone.mergedToExternalId ?? undefined,
         integrationId: milestone.integrationId ?? undefined,
       },
-      select: { id: true, name: true },
+      select: { id: true, name: true, projectId: true },
     },
     { enabled: Boolean(isMerged && milestone.mergedToExternalId) }
   );
@@ -114,7 +118,13 @@ function RemovedOrMergedBadge({
         isLinkable
           ? (e) => {
               e.stopPropagation();
-              window.location.assign(`../${target.id}`);
+              // Absolute path via the i18n router (~/lib/navigation) — the
+              // badge renders on both the milestones LIST and the milestone
+              // DETAIL page, so any relative navigation is wrong on at
+              // least one of them.
+              router.push(
+                `/projects/milestones/${target.projectId}/${target.id}`
+              );
             }
           : undefined
       }

@@ -9,12 +9,14 @@ vi.mock("next-intl", () => ({
 
 vi.mock("~/zenstack/schema", () => ({ schema: {} }));
 
-const { mockFindFirstMilestones, mockRouterRefresh } = vi.hoisted(() => ({
-  mockFindFirstMilestones: vi.fn(
-    (..._args: any[]) => ({ data: undefined }) as any
-  ),
-  mockRouterRefresh: vi.fn(),
-}));
+const { mockFindFirstMilestones, mockRouterRefresh, mockRouterPush } =
+  vi.hoisted(() => ({
+    mockFindFirstMilestones: vi.fn(
+      (..._args: any[]) => ({ data: undefined }) as any
+    ),
+    mockRouterRefresh: vi.fn(),
+    mockRouterPush: vi.fn(),
+  }));
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
@@ -25,7 +27,7 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 }));
 
 vi.mock("~/lib/navigation", () => ({
-  useRouter: () => ({ refresh: mockRouterRefresh }),
+  useRouter: () => ({ refresh: mockRouterRefresh, push: mockRouterPush }),
 }));
 
 vi.mock("sonner", () => ({
@@ -57,6 +59,7 @@ describe("MilestoneSourceBadge", () => {
     mockFindFirstMilestones.mockReset();
     mockFindFirstMilestones.mockReturnValue({ data: undefined });
     mockRouterRefresh.mockReset();
+    mockRouterPush.mockReset();
     global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
   });
 
@@ -109,6 +112,56 @@ describe("MilestoneSourceBadge", () => {
     const badge = screen.getByTestId("milestone-source-badge");
     expect(badge).toBeInTheDocument();
     expect(screen.queryByTestId("milestone-source-menu-unlink")).toBeNull();
+  });
+
+  it("REGRESSION (WR-02): clicking a merged badge with a tracked target navigates ABSOLUTELY to the target's own project detail page via the i18n router", () => {
+    // Absolute navigation is required — the badge renders on both the
+    // milestones LIST (/projects/milestones/7) and the milestone DETAIL
+    // (/projects/milestones/7/42) pages, so a relative `../${id}` resolves
+    // to a different (wrong) route on each.
+    mockFindFirstMilestones.mockReturnValue({
+      data: { id: 100, name: "v2.0", projectId: 7 },
+    });
+    render(
+      <MilestoneSourceBadge
+        milestone={{
+          ...synced,
+          externalState: "merged",
+          detachedAt: new Date().toISOString(),
+          mergedToExternalId: "10099",
+        }}
+      />
+    );
+
+    // The merge-target query must select projectId for the absolute path.
+    const queryArgs = mockFindFirstMilestones.mock.calls[0]?.[0];
+    expect(queryArgs?.select).toEqual(
+      expect.objectContaining({ id: true, projectId: true })
+    );
+
+    fireEvent.click(screen.getByTestId("milestone-source-badge"));
+
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      "/projects/milestones/7/100"
+    );
+  });
+
+  it("a merged badge whose target is NOT tracked locally is not clickable", () => {
+    mockFindFirstMilestones.mockReturnValue({ data: undefined });
+    render(
+      <MilestoneSourceBadge
+        milestone={{
+          ...synced,
+          externalState: "merged",
+          detachedAt: new Date().toISOString(),
+          mergedToExternalId: "10099",
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("milestone-source-badge"));
+
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it("shows a two-item dropdown menu (Open/Unlink) when actively synced", () => {
