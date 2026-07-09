@@ -286,6 +286,19 @@ export interface IssueAdapter {
   }>;
 
   /**
+   * Resolve a single board's owning project — sprint webhook payloads carry
+   * only `originBoardId` (no project reference), so `applyInboundMilestoneEvent`
+   * needs board->project resolution to find which TestPlanIt project a
+   * `sprint_*` event belongs to. Optional — only adapters with ITERATION
+   * milestone support (Jira today) implement this. Returns `null` (never
+   * throws) when the board is unmatched/unauthorized — the D-03
+   * ack-and-drop path.
+   */
+  resolveBoardProject?(
+    boardId: string
+  ): Promise<{ projectId: string; projectKey: string } | null>;
+
+  /**
    * Register a webhook for receiving updates
    */
   registerWebhook?(

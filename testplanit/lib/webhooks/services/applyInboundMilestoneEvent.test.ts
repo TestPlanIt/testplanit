@@ -1,81 +1,561 @@
-import { describe, it } from "vitest";
+import type { AdapterType } from "~/zenstack/models";
+import type { Mock } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import type { ApplyInboundMilestoneEventInput } from "./types";
 
 /**
- * Wave 0 RED scaffold (19-01) for `applyInboundMilestoneEvent` — the
- * not-yet-created sibling to `applyInboundIssueUpdate.ts` that routes
- * Jira `jira:version_*`/`sprint_*` webhook events to MilestoneSyncService
- * instead of the Issue-update path. Implemented in Plan 04 (HOOK-01).
- *
- * Every behavior below is enumerated with `it.todo(...)` rather than a
- * failing assertion so the Wave 0 suite runs green-on-todo (Nyquist
- * sampling stays clean while every required behavior is pinned for later
- * plans to fill in). Deliberately NO top-level import of the not-yet-
- * existing `./applyInboundMilestoneEvent` module — `it.todo` bodies never
- * execute, so a static import would only serve to crash the suite at
- * transform time for no verification benefit.
- *
- * See: .planning/phases/19-webhooks-lifecycle/19-VALIDATION.md
- *      (19-04-T3 fills these green), 19-PATTERNS.md (applyInboundIssueUpdate
- *      analog), 19-RESEARCH.md Pitfall 6 (webhook project resolution).
+ * Hoisted mocks mirroring `applyInboundIssueUpdate.test.ts`'s shape:
+ * `baseDb` (delivery-log tx + post-commit lookups), `captureAuditEvent`,
+ * `getAdapter` (adapter-side `extractMilestoneEventRef`), `integrationManager`
+ * (board->project resolution for sprint events), and `milestoneSyncService`
+ * (refresh/convert dispatch targets).
  */
+const mocks = vi.hoisted(() => {
+  const tx = {
+    webhookDelivery: {
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    webhookEventDedup: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
+    },
+    webhookConfig: {
+      update: vi.fn(),
+    },
+  };
+  const $transaction = vi.fn(async (fn: any) => fn(tx));
+  const integrationProjectFindFirst = vi.fn(
+    async (..._args: any[]): Promise<any> => null
+  );
+  const integrationProjectFindMany = vi.fn(
+    async (..._args: any[]): Promise<any[]> => []
+  );
+  const projectIntegrationFindUnique = vi.fn(
+    async (..._args: any[]): Promise<any> => null
+  );
+  const milestonesFindFirst = vi.fn(
+    async (..._args: any[]): Promise<any> => null
+  );
+  const adapter = {
+    adapterType: "JIRA" as AdapterType,
+    verify: vi.fn(),
+    extractLinkedIssueRef: vi.fn(),
+    extractExternalStatus: vi.fn(),
+    extractMilestoneEventRef: vi.fn(),
+  };
+  const getAdapter = vi.fn(() => adapter);
+  const performMilestoneRefresh = vi.fn(async () => ({ success: true }));
+  const convertMilestoneToLocal = vi.fn(async () => ({ success: true }));
+  const boardAdapter = {
+    resolveBoardProject: vi.fn(async (..._args: any[]): Promise<any> => null),
+  };
+  const integrationManagerGetAdapter = vi.fn(
+    async (..._args: any[]): Promise<any> => boardAdapter
+  );
+  return {
+    tx,
+    baseDb: {
+      $transaction,
+      integrationProject: {
+        findFirst: integrationProjectFindFirst,
+        findMany: integrationProjectFindMany,
+      },
+      projectIntegration: { findUnique: projectIntegrationFindUnique },
+      milestones: { findFirst: milestonesFindFirst },
+    },
+    captureAuditEvent: vi.fn(async () => undefined),
+    adapter,
+    getAdapter,
+    milestoneSyncService: { performMilestoneRefresh, convertMilestoneToLocal },
+    performMilestoneRefresh,
+    convertMilestoneToLocal,
+    integrationManager: { getAdapter: integrationManagerGetAdapter },
+    integrationManagerGetAdapter,
+    boardAdapter,
+    integrationProjectFindFirst,
+    integrationProjectFindMany,
+    projectIntegrationFindUnique,
+    milestonesFindFirst,
+  };
+});
+
+vi.mock("~/lib/db", () => ({
+  baseDb: mocks.baseDb,
+}));
+
+vi.mock("~/lib/services/auditLog", () => ({
+  captureAuditEvent: mocks.captureAuditEvent,
+}));
+
+vi.mock("~/lib/webhooks/adapters", () => ({
+  getAdapter: mocks.getAdapter,
+}));
+
+vi.mock("~/lib/integrations/services/MilestoneSyncService", () => ({
+  milestoneSyncService: mocks.milestoneSyncService,
+}));
+
+vi.mock("~/lib/integrations/IntegrationManager", () => ({
+  integrationManager: mocks.integrationManager,
+}));
+
+const importSut = async () =>
+  (await import("./applyInboundMilestoneEvent")).applyInboundMilestoneEvent;
+
+const RECEIVED_AT = new Date("2026-07-09T20:00:00.000Z");
+
+const baseInput = (
+  overrides: Partial<ApplyInboundMilestoneEventInput> = {}
+): ApplyInboundMilestoneEventInput => ({
+  webhookConfigId: "wc_demo",
+  adapterType: "JIRA",
+  eventType: "jira:version_updated",
+  payload: {
+    eventType: "jira:version_updated",
+    issueKey: "",
+    externalStatus: "",
+    synthetic: false,
+    data: {
+      webhookEvent: "jira:version_updated",
+      version: { id: "10100" },
+      project: { id: "10050" },
+    },
+  },
+  payloadDigest: "deadbeef".padEnd(64, "0"),
+  receivedAt: RECEIVED_AT,
+  latencyMs: 12,
+  statusCode: 200,
+  ...overrides,
+});
+
+const resetMocks = () => {
+  for (const model of Object.values(mocks.tx)) {
+    for (const fn of Object.values(model)) {
+      (fn as ReturnType<typeof vi.fn>).mockReset();
+    }
+  }
+  mocks.baseDb.$transaction.mockClear();
+  mocks.baseDb.$transaction.mockImplementation(async (fn: any) => fn(mocks.tx));
+  mocks.captureAuditEvent.mockReset();
+  mocks.captureAuditEvent.mockResolvedValue(undefined);
+
+  mocks.tx.webhookDelivery.create.mockResolvedValue({ id: "del_1" });
+  mocks.tx.webhookDelivery.update.mockResolvedValue({});
+  mocks.tx.webhookConfig.update.mockResolvedValue({});
+  mocks.tx.webhookEventDedup.create.mockResolvedValue({});
+  mocks.tx.webhookEventDedup.findFirst.mockResolvedValue(null);
+
+  mocks.integrationProjectFindFirst.mockReset();
+  mocks.integrationProjectFindFirst.mockResolvedValue(null);
+  mocks.integrationProjectFindMany.mockReset();
+  mocks.integrationProjectFindMany.mockResolvedValue([]);
+  mocks.projectIntegrationFindUnique.mockReset();
+  mocks.projectIntegrationFindUnique.mockResolvedValue(null);
+  mocks.milestonesFindFirst.mockReset();
+  mocks.milestonesFindFirst.mockResolvedValue(null);
+
+  mocks.performMilestoneRefresh.mockReset();
+  mocks.performMilestoneRefresh.mockResolvedValue({ success: true });
+  mocks.convertMilestoneToLocal.mockReset();
+  mocks.convertMilestoneToLocal.mockResolvedValue({ success: true });
+  mocks.integrationManagerGetAdapter.mockReset();
+  mocks.integrationManagerGetAdapter.mockResolvedValue(mocks.boardAdapter);
+  mocks.boardAdapter.resolveBoardProject.mockReset();
+  mocks.boardAdapter.resolveBoardProject.mockResolvedValue(null);
+
+  (mocks.adapter.extractMilestoneEventRef as Mock).mockReset();
+  mocks.getAdapter.mockClear();
+  mocks.getAdapter.mockReturnValue(mocks.adapter);
+};
+
+const activeIntegrationProject = (overrides: Record<string, unknown> = {}) => ({
+  externalProjectId: "10050",
+  projectIntegration: { projectId: 7, integrationId: 42 },
+  ...overrides,
+});
 
 describe("applyInboundMilestoneEvent", () => {
-  // HOOK-01: a jira:version_updated event for a linked milestone triggers
-  // performMilestoneRefresh with the webhook freshness window.
-  it.todo(
-    "HOOK-01: jira:version_updated for a linked milestone calls performMilestoneRefresh with minFreshnessSeconds:15"
-  );
+  beforeEach(() => {
+    resetMocks();
+  });
 
-  it.todo(
-    "HOOK-01: jira:version_created is a no-op when the project's auto-track setting is OFF (D-02)"
-  );
+  it("HOOK-01: jira:version_updated for a linked milestone calls performMilestoneRefresh with minFreshnessSeconds:15", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindFirst.mockResolvedValue(
+      activeIntegrationProject()
+    );
 
-  it.todo(
-    "HOOK-01: sprint_updated resolves its project via board->project lookup, not payload.project (sprints carry no project field)"
-  );
+    const result = await applyInboundMilestoneEvent(baseInput());
 
-  // D-03: site-wide admin webhooks fire for projects/boards TestPlanIt
-  // doesn't track — that is expected, not an error.
-  it.todo(
-    "HOOK-01/D-03: an event whose resolved project has no active integration mapping is silently acked (200) with NO write"
-  );
+    expect(result.outcome).toBe("refreshed");
+    expect(mocks.performMilestoneRefresh).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      "10100",
+      { minFreshnessSeconds: 15, projectId: 7 }
+    );
+  });
 
-  // Pitfall 6: the receiving WebhookConfig.projectId is NOT necessarily the
-  // event's own project — must resolve project from the payload, never
-  // assume it equals webhookConfig.projectId.
-  it.todo(
-    "Pitfall 6: resolves the milestone event's own project from the payload, never assumes webhookConfig.projectId"
-  );
+  it("HOOK-01: jira:version_created is a no-op when the project's auto-track setting is OFF (D-02)", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindFirst.mockResolvedValue(
+      activeIntegrationProject()
+    );
+    mocks.projectIntegrationFindUnique.mockResolvedValue({
+      config: { milestoneSync: { autoTrack: false } },
+    });
 
-  // HOOK-02: delete/merge events convert the milestone to local instead of
-  // refreshing it.
-  it.todo(
-    "HOOK-02: jira:version_deleted calls convertMilestoneToLocal with reason 'deleted'"
-  );
+    const result = await applyInboundMilestoneEvent(
+      baseInput({ eventType: "jira:version_created" })
+    );
 
-  it.todo(
-    "HOOK-02: a version merged into another (payload.mergedTo present) calls convertMilestoneToLocal with reason 'merged' and the merge target's external id"
-  );
+    expect(result.outcome).toBe("unmatched");
+    expect(result.reason).toBe("auto-track-off");
+    expect(mocks.performMilestoneRefresh).not.toHaveBeenCalled();
+  });
 
-  it.todo(
-    "HOOK-02: sprint_deleted calls convertMilestoneToLocal with reason 'deleted'"
-  );
+  it("HOOK-01: jira:version_created DOES refresh when auto-track is ON", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindFirst.mockResolvedValue(
+      activeIntegrationProject()
+    );
+    mocks.projectIntegrationFindUnique.mockResolvedValue({
+      config: { milestoneSync: { autoTrack: true } },
+    });
 
-  // Route-level dispatch: version/sprint eventTypes route here; issue
-  // eventTypes keep routing to applyInboundIssueUpdate unchanged.
-  it.todo(
-    "route dispatch: jira:version_* and sprint_* eventTypes route to applyInboundMilestoneEvent"
-  );
+    const result = await applyInboundMilestoneEvent(
+      baseInput({ eventType: "jira:version_created" })
+    );
 
-  it.todo(
-    "route dispatch: issue eventTypes (jira:issue_updated etc.) continue to route to applyInboundIssueUpdate, unaffected by this service's addition"
-  );
+    expect(result.outcome).toBe("refreshed");
+    expect(mocks.performMilestoneRefresh).toHaveBeenCalledTimes(1);
+  });
 
-  it.todo(
-    "webhook delivery/dedup transaction shape mirrors applyInboundIssueUpdate: delivery row always inserted first, pre-INSERT SELECT dedup check, shared finalize tail for every outcome"
-  );
+  it("HOOK-01: sprint_updated resolves its project via board->project lookup, not payload.project (sprints carry no project field)", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "ITERATION",
+      externalId: "55",
+      originBoardId: "3",
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
+    mocks.boardAdapter.resolveBoardProject.mockResolvedValue({
+      projectId: "10050",
+      projectKey: "DEMO",
+    });
 
-  it.todo(
-    "audit emission: WEBHOOK_RECEIVED on the WebhookDelivery row, awaited, after tx commit — separate from convertMilestoneToLocal's own audit event"
-  );
+    const result = await applyInboundMilestoneEvent(
+      baseInput({
+        eventType: "sprint_updated",
+        payload: {
+          eventType: "sprint_updated",
+          issueKey: "",
+          externalStatus: "",
+          synthetic: false,
+          data: {
+            webhookEvent: "sprint_updated",
+            sprint: { id: 55, originBoardId: 3 },
+          },
+        },
+      })
+    );
+
+    expect(mocks.boardAdapter.resolveBoardProject).toHaveBeenCalledWith("3");
+    expect(result.outcome).toBe("refreshed");
+    expect(mocks.performMilestoneRefresh).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      "55",
+      { minFreshnessSeconds: 15, projectId: 7 }
+    );
+  });
+
+  it("HOOK-01/D-03: an event whose resolved project has no active integration mapping is silently acked (200) with NO write", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "unmapped-project",
+      merge: false,
+    });
+    mocks.integrationProjectFindFirst.mockResolvedValue(null);
+
+    const result = await applyInboundMilestoneEvent(baseInput());
+
+    expect(result.outcome).toBe("unmatched");
+    expect(mocks.performMilestoneRefresh).not.toHaveBeenCalled();
+    expect(mocks.convertMilestoneToLocal).not.toHaveBeenCalled();
+  });
+
+  it("Pitfall 6: resolves the milestone event's own project from the payload, never assumes webhookConfig.projectId", async () => {
+    // ApplyInboundMilestoneEventInput deliberately carries NO projectId field
+    // at all — this test asserts the type shape itself enforces the rule
+    // (a TS compile error would occur if the input required projectId).
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindFirst.mockResolvedValue(
+      activeIntegrationProject({
+        projectIntegration: { projectId: 99, integrationId: 42 },
+      })
+    );
+
+    await applyInboundMilestoneEvent(baseInput());
+
+    // The resolved projectId (99, from the payload's own project.id lookup)
+    // is what gets passed to performMilestoneRefresh — NOT any
+    // webhookConfig-derived value (the input type has no such field).
+    expect(mocks.performMilestoneRefresh).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      "10100",
+      { minFreshnessSeconds: 15, projectId: 99 }
+    );
+  });
+
+  it("HOOK-02: jira:version_deleted calls convertMilestoneToLocal with reason 'deleted'", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindFirst.mockResolvedValue(
+      activeIntegrationProject()
+    );
+    mocks.milestonesFindFirst.mockResolvedValue({ id: 555 });
+
+    const result = await applyInboundMilestoneEvent(
+      baseInput({ eventType: "jira:version_deleted" })
+    );
+
+    expect(result.outcome).toBe("converted");
+    expect(mocks.convertMilestoneToLocal).toHaveBeenCalledWith(
+      mocks.baseDb,
+      555,
+      "deleted",
+      undefined
+    );
+  });
+
+  it("HOOK-02: a version merged into another (payload.mergedTo present) calls convertMilestoneToLocal with reason 'merged' and the merge target's external id", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: true,
+      mergedToExternalId: "10200",
+    });
+    mocks.integrationProjectFindFirst.mockResolvedValue(
+      activeIntegrationProject()
+    );
+    mocks.milestonesFindFirst.mockResolvedValue({ id: 555 });
+
+    const result = await applyInboundMilestoneEvent(
+      baseInput({ eventType: "jira:version_deleted" })
+    );
+
+    expect(result.outcome).toBe("converted");
+    expect(mocks.convertMilestoneToLocal).toHaveBeenCalledWith(
+      mocks.baseDb,
+      555,
+      "merged",
+      "10200"
+    );
+  });
+
+  it("HOOK-02: sprint_deleted calls convertMilestoneToLocal with reason 'deleted'", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "ITERATION",
+      externalId: "55",
+      originBoardId: "3",
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
+    mocks.boardAdapter.resolveBoardProject.mockResolvedValue({
+      projectId: "10050",
+      projectKey: "DEMO",
+    });
+    mocks.milestonesFindFirst.mockResolvedValue({ id: 777 });
+
+    const result = await applyInboundMilestoneEvent(
+      baseInput({
+        eventType: "sprint_deleted",
+        payload: {
+          eventType: "sprint_deleted",
+          issueKey: "",
+          externalStatus: "",
+          synthetic: false,
+          data: {
+            webhookEvent: "sprint_deleted",
+            sprint: { id: 55, originBoardId: 3 },
+          },
+        },
+      })
+    );
+
+    expect(result.outcome).toBe("converted");
+    expect(mocks.convertMilestoneToLocal).toHaveBeenCalledWith(
+      mocks.baseDb,
+      777,
+      "deleted",
+      undefined
+    );
+  });
+
+  it("a convert event for a milestone with no local row is dropped (unmatched) rather than erroring", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindFirst.mockResolvedValue(
+      activeIntegrationProject()
+    );
+    mocks.milestonesFindFirst.mockResolvedValue(null);
+
+    const result = await applyInboundMilestoneEvent(
+      baseInput({ eventType: "jira:version_deleted" })
+    );
+
+    expect(result.outcome).toBe("unmatched");
+    expect(mocks.convertMilestoneToLocal).not.toHaveBeenCalled();
+  });
+
+  it("route dispatch: jira:version_* and sprint_* eventTypes route to applyInboundMilestoneEvent — verified via isMilestoneEventType", async () => {
+    const { isMilestoneEventType } =
+      await import("~/lib/webhooks/adapters/types");
+    expect(isMilestoneEventType("jira:version_updated")).toBe(true);
+    expect(isMilestoneEventType("jira:version_deleted")).toBe(true);
+    expect(isMilestoneEventType("sprint_created")).toBe(true);
+    expect(isMilestoneEventType("sprint_deleted")).toBe(true);
+  });
+
+  it("route dispatch: issue eventTypes (jira:issue_updated etc.) continue to route to applyInboundIssueUpdate, unaffected by this service's addition", async () => {
+    const { isMilestoneEventType } =
+      await import("~/lib/webhooks/adapters/types");
+    expect(isMilestoneEventType("jira:issue_updated")).toBe(false);
+    expect(isMilestoneEventType("jira:issue_created")).toBe(false);
+    expect(isMilestoneEventType("jira:issue_deleted")).toBe(false);
+  });
+
+  it("webhook delivery/dedup transaction shape mirrors applyInboundIssueUpdate: delivery row always inserted first, pre-INSERT SELECT dedup check, shared finalize tail for every outcome", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindFirst.mockResolvedValue(
+      activeIntegrationProject()
+    );
+
+    await applyInboundMilestoneEvent(baseInput());
+
+    expect(mocks.tx.webhookDelivery.create).toHaveBeenCalledTimes(1);
+    expect(mocks.tx.webhookEventDedup.findFirst).toHaveBeenCalledTimes(1);
+    expect(mocks.tx.webhookEventDedup.create).toHaveBeenCalledTimes(1);
+    expect(mocks.tx.webhookDelivery.update).toHaveBeenCalledWith({
+      where: { id: "del_1" },
+      data: { statusCode: 200, latencyMs: 12, error: null },
+    });
+    expect(mocks.tx.webhookConfig.update).toHaveBeenCalledWith({
+      where: { id: "wc_demo" },
+      data: { lastReceivedAt: RECEIVED_AT },
+    });
+  });
+
+  it("a duplicate payloadDigest short-circuits without dispatching refresh/convert", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.tx.webhookEventDedup.findFirst.mockResolvedValue({ id: "dedup_1" });
+
+    const result = await applyInboundMilestoneEvent(baseInput());
+
+    expect(result.outcome).toBe("duplicate");
+    expect(mocks.tx.webhookEventDedup.create).not.toHaveBeenCalled();
+    expect(mocks.performMilestoneRefresh).not.toHaveBeenCalled();
+    expect(mocks.convertMilestoneToLocal).not.toHaveBeenCalled();
+  });
+
+  it("a payload the adapter cannot extract a ref from returns no-ref without touching dedup", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue(null);
+
+    const result = await applyInboundMilestoneEvent(baseInput());
+
+    expect(result.outcome).toBe("no-ref");
+    expect(mocks.tx.webhookEventDedup.findFirst).not.toHaveBeenCalled();
+    expect(mocks.tx.webhookEventDedup.create).not.toHaveBeenCalled();
+  });
+
+  it("audit emission: WEBHOOK_RECEIVED on the WebhookDelivery row, awaited, after tx commit — separate from convertMilestoneToLocal's own audit event", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindFirst.mockResolvedValue(
+      activeIntegrationProject()
+    );
+    mocks.milestonesFindFirst.mockResolvedValue({ id: 555 });
+
+    await applyInboundMilestoneEvent(
+      baseInput({ eventType: "jira:version_deleted" })
+    );
+
+    expect(mocks.captureAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "WEBHOOK_RECEIVED",
+        entityType: "WebhookDelivery",
+        entityId: "del_1",
+        userId: "__system__",
+        metadata: expect.objectContaining({ outcome: "converted" }),
+      })
+    );
+    // The service itself never calls convertMilestoneToLocal's own audit
+    // logic directly — that's an internal concern of MilestoneSyncService,
+    // mocked here and asserted only via the call above.
+    expect(mocks.convertMilestoneToLocal).toHaveBeenCalledTimes(1);
+  });
 });

@@ -81,3 +81,52 @@ export interface ApplyInboundIssueUpdateResult {
   /** Human-readable error/skip reason mirroring the WebhookDelivery.error column. */
   reason?: string;
 }
+
+/**
+ * Input passed by the receiver for a jira:version_* / sprint_* eventType,
+ * after successful HMAC verification + parse. Sibling to
+ * `ApplyInboundIssueUpdateInput` — same shape, no `projectId` field because
+ * the milestone event resolves its OWN project from the payload (Pitfall 6),
+ * never the receiving WebhookConfig's project.
+ */
+export interface ApplyInboundMilestoneEventInput {
+  /** The verified WebhookConfig row (looked up by token in the receiver). */
+  webhookConfigId: string;
+  /** Resolved from the verified WebhookConfig row; service uses this to call getAdapter(). */
+  adapterType: AdapterType;
+  /** Event identifier (e.g. "jira:version_updated", "sprint_deleted"). */
+  eventType: string;
+  /** Parsed webhook payload from the adapter's verify() success branch. */
+  payload: ParsedWebhookPayload;
+  /** SHA-256 hex digest of the raw request body — primary idempotency key, also stored on the delivery row. */
+  payloadDigest: string;
+  /** Wall-clock receive time (set by the receiver before calling the service). */
+  receivedAt: Date;
+  /** Latency in ms from receive to current moment — service will record on the delivery row. */
+  latencyMs: number;
+  /** HTTP status code the receiver intends to return — recorded on the delivery row. Default 200 for successful processing. */
+  statusCode: number;
+}
+
+/**
+ * Closed-set outcome enum for milestone events. Mirrors `DeliveryOutcome`'s
+ * shape/HTTP-mapping contract (receiver maps `error` -> 5xx, everything else
+ * -> 200) but with milestone-specific outcome names.
+ */
+export type MilestoneDeliveryOutcome =
+  | "refreshed" // resolved project matched an active integration; performMilestoneRefresh invoked
+  | "converted" // version_deleted/merged or sprint_deleted; convertMilestoneToLocal invoked
+  | "unmatched" // D-03: resolved project/board has no active integration mapping — silent ack, no write
+  | "no-ref" // adapter could not extract a milestone ref from the payload
+  | "duplicate" // dedup row pre-existed for this payloadDigest
+  | "error"; // unexpected DB error during processing — receiver returns 500
+
+export interface ApplyInboundMilestoneEventResult {
+  outcome: MilestoneDeliveryOutcome;
+  /** ID of the WebhookDelivery row written (always set unless outcome === "error" pre-insert). */
+  deliveryId?: string;
+  /** Milestones.id affected (only set when outcome === "refreshed" or "converted" and a linked row was found). */
+  milestoneId?: number;
+  /** Human-readable error/skip reason mirroring the WebhookDelivery.error column. */
+  reason?: string;
+}

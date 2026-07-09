@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => {
     getAdapter: vi.fn(() => adapter),
     adapter,
     applyInboundIssueUpdate: vi.fn(),
+    applyInboundMilestoneEvent: vi.fn(),
     decrypt: vi.fn(async (input: string) => input.replace(/^enc:/, "")),
   };
 });
@@ -44,6 +45,10 @@ vi.mock("~/lib/webhooks/adapters", () => ({
 
 vi.mock("~/lib/webhooks/services/applyInboundIssueUpdate", () => ({
   applyInboundIssueUpdate: mocks.applyInboundIssueUpdate,
+}));
+
+vi.mock("~/lib/webhooks/services/applyInboundMilestoneEvent", () => ({
+  applyInboundMilestoneEvent: mocks.applyInboundMilestoneEvent,
 }));
 
 vi.mock("~/utils/encryption", () => ({
@@ -522,5 +527,110 @@ describe("MAX_WEBHOOK_BYTES (5 MB cap)", () => {
     const [rawBuf] = mocks.adapter.verify.mock.calls[0]!;
     expect(Buffer.isBuffer(rawBuf)).toBe(true);
     expect((rawBuf as Buffer).byteLength).toBe(5_242_880);
+  });
+});
+
+describe("POST /api/webhooks/[token] — eventType dispatch (19-04)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.decrypt.mockImplementation(async (input: string) =>
+      input.replace(/^enc:/, "")
+    );
+    mocks.getAdapter.mockReturnValue(mocks.adapter);
+  });
+
+  it("a jira:version_updated eventType routes to applyInboundMilestoneEvent, NOT applyInboundIssueUpdate", async () => {
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.adapter.verify.mockReturnValueOnce({
+      valid: true,
+      payload: {
+        eventType: "jira:version_updated",
+        issueKey: "",
+        externalStatus: "",
+        synthetic: false,
+        data: { webhookEvent: "jira:version_updated" },
+      },
+    } satisfies VerifyResult);
+    mocks.applyInboundMilestoneEvent.mockResolvedValueOnce({
+      outcome: "refreshed",
+      deliveryId: "del-milestone-1",
+    });
+
+    const { req, params } = makeRequest("{}", FULL_TOKEN);
+    const res = await POST(req, { params });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, outcome: "refreshed" });
+    expect(mocks.applyInboundMilestoneEvent).toHaveBeenCalledTimes(1);
+    expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
+  });
+
+  it("a sprint_deleted eventType routes to applyInboundMilestoneEvent, NOT applyInboundIssueUpdate", async () => {
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.adapter.verify.mockReturnValueOnce({
+      valid: true,
+      payload: {
+        eventType: "sprint_deleted",
+        issueKey: "",
+        externalStatus: "",
+        synthetic: false,
+        data: { webhookEvent: "sprint_deleted" },
+      },
+    } satisfies VerifyResult);
+    mocks.applyInboundMilestoneEvent.mockResolvedValueOnce({
+      outcome: "converted",
+      deliveryId: "del-milestone-2",
+    });
+
+    const { req, params } = makeRequest("{}", FULL_TOKEN);
+    const res = await POST(req, { params });
+
+    expect(res.status).toBe(200);
+    expect(mocks.applyInboundMilestoneEvent).toHaveBeenCalledTimes(1);
+    expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
+  });
+
+  it("REGRESSION: a jira:issue_updated eventType still routes to applyInboundIssueUpdate, NOT applyInboundMilestoneEvent", async () => {
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.adapter.verify.mockReturnValueOnce({
+      valid: true,
+      payload: VALID_PAYLOAD,
+    } satisfies VerifyResult);
+    mocks.applyInboundIssueUpdate.mockResolvedValueOnce({
+      outcome: "updated",
+      deliveryId: "del-issue-1",
+      issueId: 7,
+    });
+
+    const { req, params } = makeRequest("{}", FULL_TOKEN);
+    const res = await POST(req, { params });
+
+    expect(res.status).toBe(200);
+    expect(mocks.applyInboundIssueUpdate).toHaveBeenCalledTimes(1);
+    expect(mocks.applyInboundMilestoneEvent).not.toHaveBeenCalled();
+  });
+
+  it("applyInboundMilestoneEvent 'error' outcome maps to 500, same as applyInboundIssueUpdate", async () => {
+    mocks.baseDb.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
+    mocks.adapter.verify.mockReturnValueOnce({
+      valid: true,
+      payload: {
+        eventType: "jira:version_updated",
+        issueKey: "",
+        externalStatus: "",
+        synthetic: false,
+        data: {},
+      },
+    } satisfies VerifyResult);
+    mocks.applyInboundMilestoneEvent.mockResolvedValueOnce({
+      outcome: "error",
+      reason: "db exploded",
+    });
+
+    const { req, params } = makeRequest("{}", FULL_TOKEN);
+    const res = await POST(req, { params });
+
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ ok: false });
   });
 });

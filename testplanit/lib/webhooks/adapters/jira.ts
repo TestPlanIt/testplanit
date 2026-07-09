@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { AdapterType } from "~/zenstack/models";
+import { isMilestoneEventType } from "./types";
 import type {
   ParsedWebhookPayload,
   VerifyResult,
@@ -103,10 +104,7 @@ function buildPayload(p: JiraWebhookPayload): ParsedWebhookPayload | null {
   // Branch BEFORE the issue-shaped extraction (Pattern 1) — version/sprint
   // payloads have no `issue` object and would otherwise always fail the
   // `!issueKey || !externalStatus` check below and silently no-op (Pitfall 1).
-  if (
-    eventType.startsWith("jira:version_") ||
-    eventType.startsWith("sprint_")
-  ) {
+  if (isMilestoneEventType(eventType)) {
     return buildMilestoneEventPayload(p, eventType);
   }
 
@@ -195,8 +193,7 @@ export const jiraAdapter: WebhookAdapter = {
       const originBoardId = p.sprint?.originBoardId;
       if (
         (typeof externalId !== "string" && typeof externalId !== "number") ||
-        (typeof originBoardId !== "string" &&
-          typeof originBoardId !== "number")
+        (typeof originBoardId !== "string" && typeof originBoardId !== "number")
       ) {
         return null;
       }
@@ -210,10 +207,7 @@ export const jiraAdapter: WebhookAdapter = {
     if (eventType.startsWith("jira:version_")) {
       const externalId = p.version?.id;
       const externalProjectId = p.project?.id;
-      if (
-        typeof externalId !== "string" &&
-        typeof externalId !== "number"
-      ) {
+      if (typeof externalId !== "string" && typeof externalId !== "number") {
         return null;
       }
       if (

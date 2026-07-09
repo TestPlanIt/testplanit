@@ -68,6 +68,20 @@ export type MilestoneEventRef =
       originBoardId: string;
     };
 
+/**
+ * Shared eventType-shape predicate for the receiver route's dispatch branch
+ * (version/sprint -> applyInboundMilestoneEvent, else -> applyInboundIssueUpdate).
+ * Lives at the adapter/service boundary — NOT inlined in the route — so the
+ * route stays provider-agnostic (dispatches on eventType SHAPE, never a
+ * hardcoded Jira object-shape check) and the prefix logic has exactly one
+ * source of truth shared with `buildPayload`'s own branch in `jira.ts`.
+ */
+export function isMilestoneEventType(eventType: string): boolean {
+  return (
+    eventType.startsWith("jira:version_") || eventType.startsWith("sprint_")
+  );
+}
+
 export interface WebhookAdapter {
   readonly adapterType: AdapterType;
   /**

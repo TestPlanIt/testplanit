@@ -1070,7 +1070,10 @@ export class JiraAdapter extends BaseAdapter {
       try {
         const cached = await valkeyConnection?.get(cacheKey);
         if (cached) {
-          return JSON.parse(cached) as { projectId: string; projectKey: string };
+          return JSON.parse(cached) as {
+            projectId: string;
+            projectKey: string;
+          };
         }
       } catch (error) {
         // Cache read failures (connection blip, bad JSON) fall through to a
@@ -1111,9 +1114,7 @@ export class JiraAdapter extends BaseAdapter {
 
     const projectId = response?.location?.projectId;
     const projectKey = response?.location?.projectKey;
-    if (
-      typeof projectId !== "string" && typeof projectId !== "number"
-    ) {
+    if (typeof projectId !== "string" && typeof projectId !== "number") {
       console.debug(
         `[JiraAdapter] resolveBoardProject: board %s response missing location.projectId — treating as unmatched`,
         boardId
@@ -1327,9 +1328,7 @@ export class JiraAdapter extends BaseAdapter {
     }
 
     const jqlClause =
-      ref.kind === "RELEASE"
-        ? `fixVersion = ${ref.id}`
-        : `sprint = ${ref.id}`;
+      ref.kind === "RELEASE" ? `fixVersion = ${ref.id}` : `sprint = ${ref.id}`;
 
     const params = new URLSearchParams({
       jql: jqlClause,
