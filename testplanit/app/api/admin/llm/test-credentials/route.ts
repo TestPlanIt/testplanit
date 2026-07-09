@@ -113,6 +113,14 @@ export async function POST(request: NextRequest) {
       // Connection test result obtained
 
       if (!isConnected) {
+        // The adapter records the real failure reason (HTTP status + provider
+        // message) when it can; prefer it over the generic fallback so admins
+        // see what actually went wrong (bad key, model not permitted, etc.).
+        const detail = adapter.getLastTestConnectionError();
+        if (detail) {
+          console.warn("Test connection failed for %s: %s", provider, detail);
+        }
+
         // Try to provide more specific error messages
         let errorMessage: string;
 
@@ -132,6 +140,8 @@ export async function POST(request: NextRequest) {
           errorMessage = `Failed to connect to Ollama at ${endpoint || "http://localhost:11434"}. Make sure Ollama is running.`;
         } else if (!endpoint) {
           errorMessage = "Endpoint URL is required";
+        } else if (detail) {
+          errorMessage = `Failed to connect to ${provider}: ${detail}`;
         } else {
           errorMessage = `Failed to connect to ${provider}. Please check your credentials and endpoint.`;
         }
