@@ -59,10 +59,10 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
-    "@types/node": "^26.0.1",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@types/node": "^26.1.1",
+    "@vitest/coverage-v8": "^4.1.10",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   }
 }
