@@ -287,7 +287,6 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
             {!isLoadingMembers && (
               <Badge
                 variant="secondary"
-                className="text-muted-foreground"
                 data-testid="member-issues-count"
               >
                 {rows.length}
