@@ -275,6 +275,8 @@ const baseMockMilestone: Milestones = {
   externalUrl: null,
   integrationId: null,
   lastSyncedAt: null,
+  detachedAt: null,
+  mergedToExternalId: null,
 };
 
 // Mock Milestone Type and Icon for MilestonesWithTypes
