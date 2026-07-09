@@ -1,3 +1,4 @@
+import { Checkbox } from "@/components/ui/checkbox";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +73,7 @@ function resolveMemberIssueUrl(
 }
 
 export interface MemberIssuesColumnsTranslations {
+  selectRow: string;
   key: string;
   description: string;
   status: string;
@@ -98,6 +100,7 @@ export function useMemberIssueColumns({
   renderRowActions,
 }: UseMemberIssueColumnsArgs): ColumnDef<ExtendedMemberIssue>[] {
   const {
+    selectRow: tSelectRow,
     key: tKey,
     description: tDescription,
     status: tStatus,
@@ -109,6 +112,40 @@ export function useMemberIssueColumns({
 
   return useMemo(() => {
     const columns: ColumnDef<ExtendedMemberIssue>[] = [
+      {
+        id: "select",
+        enableSorting: false,
+        enableResizing: false,
+        enableHiding: false,
+        size: 36,
+        minSize: 36,
+        maxSize: 36,
+        header: ({ table }) => (
+          <Checkbox
+            data-testid="member-issues-select-all-rows"
+            checked={
+              table.getIsAllRowsSelected()
+                ? true
+                : table.getIsSomeRowsSelected()
+                  ? "indeterminate"
+                  : false
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllRowsSelected(value === true)
+            }
+            aria-label={tSelectRow}
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            data-testid="member-issue-row-select"
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(value === true)}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={tSelectRow}
+          />
+        ),
+      },
       {
         id: "key",
         accessorKey: "issue.name",
@@ -290,6 +327,7 @@ export function useMemberIssueColumns({
 
     return columns;
   }, [
+    tSelectRow,
     tKey,
     tDescription,
     tStatus,

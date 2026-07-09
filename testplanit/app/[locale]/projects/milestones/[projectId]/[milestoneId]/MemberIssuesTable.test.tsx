@@ -61,6 +61,31 @@ vi.mock("@/components/issues/MilestoneIssueManager", () => ({
 
 vi.stubGlobal("fetch", mockFetch);
 
+const { mockToastInfo, mockToastError, mockRouterPush } = vi.hoisted(() => ({
+  mockToastInfo: vi.fn(),
+  mockToastError: vi.fn(),
+  mockRouterPush: vi.fn(),
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    info: (...args: any[]) => mockToastInfo(...args),
+    error: (...args: any[]) => mockToastError(...args),
+    success: vi.fn(),
+  },
+}));
+
+vi.mock("@/components/ui/checkbox", () => ({
+  Checkbox: ({ checked, onCheckedChange, ...props }: any) => (
+    <input
+      type="checkbox"
+      checked={checked === true}
+      onChange={(e: any) => onCheckedChange?.(e.target.checked)}
+      {...props}
+    />
+  ),
+}));
+
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
@@ -77,6 +102,7 @@ vi.mock("@/components/IssueStatusDisplay", () => ({
 
 vi.mock("~/lib/navigation", () => ({
   Link: ({ children, href }: any) => <a href={href}>{children}</a>,
+  useRouter: () => ({ push: mockRouterPush }),
 }));
 
 vi.mock("@/components/ui/select", () => ({
@@ -102,7 +128,20 @@ const dataTableLastProps: { current: any } = { current: null };
 vi.mock("@/components/tables/VirtualizedDataTable", () => ({
   VirtualizedDataTable: (props: any) => {
     dataTableLastProps.current = props;
-    const { columns, data } = props;
+    const { columns, data, rowSelection, onRowSelectionChange, getRowId } =
+      props;
+    // Minimal TanStack row-selection shim: getIsSelected/toggleSelected read
+    // and write the controlled rowSelection prop keyed via getRowId, so the
+    // select-column cell behaves like the real table in jsdom.
+    const rowHandle = (row: any, rowIndex: number) => {
+      const id = getRowId ? getRowId(row, rowIndex) : String(rowIndex);
+      return {
+        original: row,
+        getIsSelected: () => Boolean(rowSelection?.[id]),
+        toggleSelected: (value: boolean) =>
+          onRowSelectionChange?.({ ...(rowSelection ?? {}), [id]: value }),
+      };
+    };
     return (
       <table data-testid="member-issues-data-table">
         <tbody>
@@ -112,7 +151,7 @@ vi.mock("@/components/tables/VirtualizedDataTable", () => ({
                 <td key={col.id ?? colIndex}>
                   {col.cell
                     ? col.cell({
-                        row: { original: row },
+                        row: rowHandle(row, rowIndex),
                         column: { getSize: () => col.size ?? 150 },
                       })
                     : null}
@@ -393,5 +432,201 @@ describe("MemberIssuesTable", () => {
     // persisted syncStatus column (D-03) — nothing in the rendered output
     // should reference `syncStatus`.
     expect(document.body.innerHTML).not.toMatch(/syncStatus/);
+  });
+});
+
+describe("MemberIssuesTable — create test run from selected issues", () => {
+  const respond = (payload: any) => ({ ok: true, json: async () => payload });
+
+  const parseQ = (url: string) =>
+    JSON.parse(new URL(url, "http://localhost").searchParams.get("q") ?? "{}");
+
+  beforeEach(() => {
+    mockFindManyMilestoneIssue.mockReset();
+    mockFindFirstMilestones.mockReset();
+    mockFindFirstMilestones.mockReturnValue({
+      data: { integrationId: null },
+      isLoading: false,
+    });
+    mockFetch.mockReset();
+    mockToastInfo.mockReset();
+    mockToastError.mockReset();
+    mockRouterPush.mockReset();
+    sessionStorage.clear();
+
+    mockFindManyMilestoneIssue.mockReturnValue({
+      data: [
+        buildRow(),
+        buildRow({
+          issueId: 11,
+          issue: {
+            id: 11,
+            name: "PROJ-2",
+            title: "Second issue",
+            externalStatus: "Open",
+            status: "open",
+            issueTypeName: "Story",
+          },
+        }),
+      ],
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+  });
+
+  function mockFetchRoutes({
+    linkedCaseIds = [101, 102],
+    eligibleCaseIds = [101],
+    excludeNotStarted = false,
+  }: {
+    linkedCaseIds?: number[];
+    eligibleCaseIds?: number[];
+    excludeNotStarted?: boolean;
+  } = {}) {
+    mockFetch.mockImplementation(async (url: string) => {
+      if (url.includes("/members/coverage")) return respond({});
+      if (url.includes("/members/overflow"))
+        return respond({ members: [], linkedCount: 0, cap: 0, overflowTotal: 0 });
+      if (url.includes("repositoryCases/findMany")) {
+        const q = parseQ(url);
+        if (q.where?.caseIssues) {
+          return respond({ data: linkedCaseIds.map((id) => ({ id })) });
+        }
+        return respond({ data: eligibleCaseIds.map((id) => ({ id })) });
+      }
+      if (url.includes("projects/findFirst")) {
+        return respond({ data: { excludeNotStartedFromRuns: excludeNotStarted } });
+      }
+      return respond({});
+    });
+  }
+
+  it("shows the create-run button once a row is selected and hands off via sessionStorage + openAddRun", async () => {
+    mockFetchRoutes({ linkedCaseIds: [101, 102] });
+
+    renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
+
+    // No selection -> no button.
+    expect(screen.queryByTestId("member-issues-create-run")).not.toBeInTheDocument();
+
+    const checkboxes = await screen.findAllByTestId("member-issue-row-select");
+    fireEvent.click(checkboxes[0]);
+
+    const button = await screen.findByTestId("member-issues-create-run");
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        "/projects/runs/7?openAddRun=true"
+      );
+    });
+    expect(
+      JSON.parse(sessionStorage.getItem("createTestRun_selectedCases") ?? "[]")
+    ).toEqual([101, 102]);
+
+    // The case-resolution query targets exactly the selected issueIds.
+    const caseCall = mockFetch.mock.calls
+      .map(([url]: any[]) => url)
+      .find((url: string) => url.includes("repositoryCases/findMany"));
+    const q = parseQ(caseCall);
+    expect(q.where).toEqual({
+      isDeleted: false,
+      caseIssues: { some: { issueId: { in: [10] } } },
+    });
+  });
+
+  it("selects every row through the header toggle-all checkbox", async () => {
+    mockFetchRoutes();
+
+    renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
+    const checkboxes = await screen.findAllByTestId("member-issue-row-select");
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(checkboxes[1]);
+
+    const button = await screen.findByTestId("member-issues-create-run");
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalled();
+    });
+    const caseCall = mockFetch.mock.calls
+      .map(([url]: any[]) => url)
+      .find((url: string) => url.includes("repositoryCases/findMany"));
+    expect(parseQ(caseCall).where.caseIssues.some.issueId.in.sort()).toEqual([
+      10, 11,
+    ]);
+  });
+
+  it("toasts and stays put when the selected issues have no linked cases", async () => {
+    mockFetchRoutes({ linkedCaseIds: [] });
+
+    renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
+    const checkboxes = await screen.findAllByTestId("member-issue-row-select");
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(await screen.findByTestId("member-issues-create-run"));
+
+    await waitFor(() => {
+      expect(mockToastInfo).toHaveBeenCalledWith("createRunNoCases");
+    });
+    expect(mockRouterPush).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem("createTestRun_selectedCases")).toBeNull();
+  });
+
+  it("honors excludeNotStartedFromRuns: filters ineligible cases, toasts the skipped count, seeds the rest", async () => {
+    mockFetchRoutes({
+      linkedCaseIds: [101, 102, 103],
+      eligibleCaseIds: [101],
+      excludeNotStarted: true,
+    });
+
+    renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
+    const checkboxes = await screen.findAllByTestId("member-issue-row-select");
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(await screen.findByTestId("member-issues-create-run"));
+
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        "/projects/runs/7?openAddRun=true"
+      );
+    });
+    expect(mockToastInfo).toHaveBeenCalledWith(
+      "projects.settings.advanced.excludeNotStarted.skippedToast"
+    );
+    expect(
+      JSON.parse(sessionStorage.getItem("createTestRun_selectedCases") ?? "[]")
+    ).toEqual([101]);
+
+    // The eligibility query is scoped to the linked ids with the
+    // NOT_STARTED workflow exclusion, mirroring the repository flow.
+    const eligibleCall = mockFetch.mock.calls
+      .map(([url]: any[]) => url)
+      .filter((url: string) => url.includes("repositoryCases/findMany"))
+      .map(parseQ)
+      .find((q: any) => q.where?.state);
+    expect(eligibleCall.where).toEqual({
+      id: { in: [101, 102, 103] },
+      state: { workflowType: { not: "NOT_STARTED" } },
+    });
+  });
+
+  it("surfaces a resolver failure as an error toast without navigating", async () => {
+    mockFetch.mockImplementation(async (url: string) => {
+      if (url.includes("repositoryCases/findMany"))
+        return { ok: false, status: 500, json: async () => ({}) };
+      if (url.includes("/members/overflow"))
+        return respond({ members: [], linkedCount: 0, cap: 0, overflowTotal: 0 });
+      return respond({});
+    });
+
+    renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
+    const checkboxes = await screen.findAllByTestId("member-issue-row-select");
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(await screen.findByTestId("member-issues-create-run"));
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith("createRunError");
+    });
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 });

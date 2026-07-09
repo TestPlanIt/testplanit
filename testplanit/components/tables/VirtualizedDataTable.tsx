@@ -131,6 +131,10 @@ interface VirtualizedDataTableProps {
    */
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  /** Stable row identity for selection state — without it TanStack keys
+   * selection by row INDEX, which silently re-targets selections when the
+   * data is filtered or re-sorted. */
+  getRowId?: (originalRow: any, index: number) => string;
 
   /**
    * Id of a column that should flex to absorb any horizontal space left over
@@ -232,6 +236,7 @@ export function VirtualizedDataTable({
   subRowsLabel,
   rowSelection,
   onRowSelectionChange,
+  getRowId,
   flexColumnId,
   columnSizingStorageKey,
   hasMore = false,
@@ -366,6 +371,7 @@ export function VirtualizedDataTable({
     enableSorting: true,
     enableColumnResizing: true,
     enableRowSelection: rowSelection !== undefined,
+    ...(getRowId ? { getRowId } : {}),
     columnResizeMode: "onChange",
     state: {
       columnVisibility,

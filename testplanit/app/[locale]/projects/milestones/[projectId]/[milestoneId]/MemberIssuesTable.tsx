@@ -26,9 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { VisibilityState } from "@tanstack/react-table";
-import { ChevronDown, Loader2, RefreshCw } from "lucide-react";
+import type { RowSelectionState, VisibilityState } from "@tanstack/react-table";
+import { ChevronDown, ListChecks, Loader2, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "~/lib/navigation";
+import { toast } from "sonner";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MemberIssueRowActions, MilestoneIssueManager } from "@/components/issues/MilestoneIssueManager";
@@ -92,6 +94,9 @@ function matchesCoverageState(
 export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableProps) {
   const t = useTranslations("milestones.members");
   const tCommon = useTranslations("common");
+  // Unscoped: the skipped-cases toast key lives under projects.settings
+  // (shared verbatim with the repository create-run flow).
+  const tGlobal = useTranslations();
 
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 300);
@@ -271,8 +276,93 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
     [milestoneId, handleRefresh]
   );
 
+  // Row selection (issueId-keyed via getRowId, so filter/sort can't
+  // re-target selections) drives "Create test run from selected issues":
+  // resolve every non-deleted case linked to the selected issues and hand
+  // off through the SAME sessionStorage + openAddRun mechanism the
+  // repository's bulk create-run uses (Cases.tsx handleCreateTestRun).
+  const router = useRouter();
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [isResolvingRun, setIsResolvingRun] = useState(false);
+  const selectedIssueIds = Object.keys(rowSelection)
+    .filter((id) => rowSelection[id])
+    .map(Number)
+    .filter((id) => Number.isInteger(id));
+
+  const handleCreateTestRun = async () => {
+    if (selectedIssueIds.length === 0 || isResolvingRun) return;
+    setIsResolvingRun(true);
+    try {
+      const fetchCaseIds = async (where: Record<string, unknown>) => {
+        const params = new URLSearchParams({
+          q: JSON.stringify({ where, select: { id: true } }),
+        });
+        const resp = await fetch(
+          `/api/model/repositoryCases/findMany?${params.toString()}`,
+          { credentials: "include" }
+        );
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const body = await resp.json();
+        return ((body?.data ?? []) as Array<{ id: number }>).map((c) => c.id);
+      };
+
+      const linkedCaseIds = await fetchCaseIds({
+        isDeleted: false,
+        caseIssues: { some: { issueId: { in: selectedIssueIds } } },
+      });
+      if (linkedCaseIds.length === 0) {
+        toast.info(t("createRunNoCases"));
+        return;
+      }
+
+      // Parity with the repository flow: honor the project's
+      // exclude-not-started-from-runs setting, with the same skipped toast.
+      let idsToSeed = linkedCaseIds;
+      const settingsParams = new URLSearchParams({
+        q: JSON.stringify({
+          where: { id: projectId },
+          select: { excludeNotStartedFromRuns: true },
+        }),
+      });
+      const settingsResp = await fetch(
+        `/api/model/projects/findFirst?${settingsParams.toString()}`,
+        { credentials: "include" }
+      );
+      const settingsBody = settingsResp.ok ? await settingsResp.json() : null;
+      if (settingsBody?.data?.excludeNotStartedFromRuns) {
+        const eligibleIds = await fetchCaseIds({
+          id: { in: linkedCaseIds },
+          state: { workflowType: { not: "NOT_STARTED" } },
+        });
+        const skippedCount = linkedCaseIds.length - eligibleIds.length;
+        if (skippedCount > 0) {
+          toast.info(
+            tGlobal(
+              "projects.settings.advanced.excludeNotStarted.skippedToast",
+              { count: skippedCount }
+            )
+          );
+        }
+        if (eligibleIds.length === 0) return;
+        idsToSeed = eligibleIds;
+      }
+
+      sessionStorage.setItem(
+        "createTestRun_selectedCases",
+        JSON.stringify(idsToSeed)
+      );
+      router.push(`/projects/runs/${projectId}?openAddRun=true`);
+    } catch (err) {
+      console.error("Failed to resolve cases for selected issues:", err);
+      toast.error(t("createRunError"));
+    } finally {
+      setIsResolvingRun(false);
+    }
+  };
+
   const columns = useMemberIssueColumns({
     translations: {
+      selectRow: t("selectRow"),
       key: t("columnKey"),
       description: t("columnDescription"),
       status: t("columnStatus"),
@@ -363,6 +453,22 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
             )}
           </CardTitle>
           <div className="flex items-center gap-2">
+            {selectedIssueIds.length > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => void handleCreateTestRun()}
+                disabled={isResolvingRun}
+                data-testid="member-issues-create-run"
+              >
+                {isResolvingRun ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <ListChecks className="h-3.5 w-3.5" />
+                )}
+                {t("createTestRun", { count: selectedIssueIds.length })}
+              </Button>
+            )}
             <MilestoneIssueManager
               milestoneId={milestoneId}
               projectId={projectId}
@@ -530,6 +636,9 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
             columnVisibility={columnVisibility}
             onColumnVisibilityChange={setColumnVisibility}
             hasMore={false}
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+            getRowId={(row: ExtendedMemberIssue) => String(row.issueId)}
             estimateSize={56}
             resetKey={`${debouncedSearchString}|${coverageFilter}|${sourceFilter}|${issueTypeFilter}|${sortConfig.column}|${sortConfig.direction}`}
             testIdPrefix="member-issues-table"

@@ -27,6 +27,7 @@ vi.mock("~/lib/navigation", () => ({
 }));
 
 const translations = {
+  selectRow: "Select",
   key: "Key",
   description: "Description",
   status: "Status",
@@ -66,7 +67,7 @@ describe("useMemberIssueColumns", () => {
       useMemberIssueColumns({ translations, projectId: 5 })
     );
     const ids = result.current.map((col) => col.id);
-    expect(ids).toEqual(["key", "description", "status", "coverage", "source"]);
+    expect(ids).toEqual(["select", "key", "description", "status", "coverage", "source"]);
   });
 
   it("adds a row-actions column when renderRowActions is provided", () => {
