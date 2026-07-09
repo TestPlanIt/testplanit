@@ -35,6 +35,10 @@ import { MemberIssueRowActions, MilestoneIssueManager } from "@/components/issue
 import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
 import type { CoverageBreakdown } from "./CoverageChip";
 import { coverageSortValue, hasCompletedCoverage } from "./CoverageChip";
+import {
+  IterationStatusPip,
+  resolvePipColor,
+} from "@/components/iterations/IterationStatusPip";
 import type { ExtendedMemberIssue } from "./MemberIssuesColumns";
 import { useMemberIssueColumns } from "./MemberIssuesColumns";
 import { MemberIssuesOverflowPanel } from "./MemberIssuesOverflowPanel";
@@ -83,6 +87,7 @@ function matchesCoverageState(
  */
 export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableProps) {
   const t = useTranslations("milestones.members");
+  const tCommon = useTranslations("common");
 
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 300);
@@ -135,6 +140,7 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
     staleTime: 30000,
   });
 
+
   const isSyncing = isFetchingMembers || isFetchingCoverage;
 
   const handleRefresh = useCallback(() => {
@@ -149,6 +155,40 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
       coverage: coverageData?.[row.issueId],
     }));
   }, [memberRows, coverageData]);
+
+  // Milestone-total coverage: aggregate every member issue's per-status
+  // counts (matrix pips) + one Untested total + how many issues are
+  // Uncovered (no completed outcome). Totals cover ALL members, not the
+  // filtered view — it's the milestone's coverage, not the table's.
+  const coverageTotals = useMemo(() => {
+    const byStatus = new Map<
+      number,
+      { statusId: number; name: string; color: string | null; count: number }
+    >();
+    let untested = 0;
+    let uncoveredIssues = 0;
+    for (const row of rows) {
+      const breakdown = row.coverage;
+      if (!hasCompletedCoverage(breakdown)) {
+        uncoveredIssues += 1;
+      }
+      if (!breakdown) continue;
+      untested += breakdown.untested ?? 0;
+      for (const entry of breakdown.statuses ?? []) {
+        const existing = byStatus.get(entry.statusId);
+        if (existing) {
+          existing.count += entry.count;
+        } else {
+          byStatus.set(entry.statusId, { ...entry });
+        }
+      }
+    }
+    return {
+      statuses: Array.from(byStatus.values()).sort((a, b) => b.count - a.count),
+      untested,
+      uncoveredIssues,
+    };
+  }, [rows]);
 
   const issueTypes = useMemo(() => {
     const seen = new Map<string, string>();
@@ -342,6 +382,55 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
           </div>
         </div>
         <CardDescription>{t("sectionDescription")}</CardDescription>
+        {rows.length > 0 &&
+          !isLoadingCoverage &&
+          (coverageTotals.statuses.length > 0 ||
+            coverageTotals.untested > 0 ||
+            coverageTotals.uncoveredIssues > 0) && (
+            <div
+              className="flex items-center gap-3 flex-wrap text-xs font-medium pt-1"
+              data-testid="member-issues-coverage-totals"
+            >
+              {coverageTotals.statuses.map((entry) => (
+                <span
+                  key={`total-${entry.statusId}`}
+                  className="flex items-center gap-1 whitespace-nowrap"
+                  aria-label={`${entry.name}: ${entry.count}`}
+                  title={entry.name}
+                >
+                  <IterationStatusPip
+                    glyph="passed"
+                    statusColor={entry.color ?? undefined}
+                  />
+                  {entry.count}
+                </span>
+              ))}
+              {coverageTotals.untested > 0 && (
+                <span
+                  className="flex items-center gap-1 whitespace-nowrap"
+                  aria-label={`${tCommon("labels.untested")}: ${coverageTotals.untested}`}
+                  title={tCommon("labels.untested")}
+                >
+                  <IterationStatusPip
+                    glyph="notStarted"
+                    statusColor={resolvePipColor("notStarted")}
+                  />
+                  {coverageTotals.untested}
+                </span>
+              )}
+              {coverageTotals.uncoveredIssues > 0 && (
+                <Badge
+                  variant="outline"
+                  className="border-dashed border-warning bg-warning/15 text-foreground"
+                  data-testid="member-issues-totals-uncovered"
+                >
+                  {t("totalsUncovered", {
+                    count: coverageTotals.uncoveredIssues,
+                  })}
+                </Badge>
+              )}
+            </div>
+          )}
       </CardHeader>
       <CollapsibleContent>
       <CardContent>

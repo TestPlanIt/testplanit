@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemberIssuesTable } from "./MemberIssuesTable";
@@ -267,6 +267,70 @@ describe("MemberIssuesTable", () => {
     });
     renderWithQueryClient(<MemberIssuesTable milestoneId={450} projectId={370} />);
     expect(screen.getByTestId("member-issues-count")).toHaveTextContent("2");
+  });
+
+  it("aggregates per-status totals and uncovered count in the header strip", async () => {
+    mockFindManyMilestoneIssue.mockReturnValue({
+      data: [
+        buildRow(),
+        buildRow({ issueId: 11, issue: { id: 11, name: "ISS-11" } }),
+        buildRow({ issueId: 12, issue: { id: 12, name: "ISS-12" } }),
+      ],
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        10: {
+          linkedCaseCount: 3,
+          passed: 2,
+          failed: 1,
+          inProgress: 0,
+          notRun: 0,
+          uncovered: false,
+          statuses: [
+            { statusId: 1, name: "Passed", color: "#0f0", count: 2 },
+            { statusId: 2, name: "Failed", color: "#f00", count: 1 },
+          ],
+          untested: 0,
+        },
+        11: {
+          linkedCaseCount: 2,
+          passed: 1,
+          failed: 0,
+          inProgress: 0,
+          notRun: 1,
+          uncovered: false,
+          statuses: [{ statusId: 1, name: "Passed", color: "#0f0", count: 1 }],
+          untested: 1,
+        },
+        12: {
+          linkedCaseCount: 0,
+          passed: 0,
+          failed: 0,
+          inProgress: 0,
+          notRun: 0,
+          uncovered: true,
+          statuses: [],
+          untested: 0,
+        },
+      }),
+    });
+
+    renderWithQueryClient(<MemberIssuesTable milestoneId={450} projectId={370} />);
+
+    // The strip can render early (pre-coverage every row counts as
+    // uncovered) — wait for the aggregated status pips specifically.
+    await waitFor(() => {
+      expect(screen.getByLabelText("Passed: 3")).toBeInTheDocument();
+    });
+    const strip = screen.getByTestId("member-issues-coverage-totals");
+    // Passed 2+1=3, Failed 1, Untested 1, 1 uncovered issue.
+    expect(within(strip).getByLabelText("Failed: 1")).toBeInTheDocument();
+    expect(within(strip).getByLabelText("labels.untested: 1")).toBeInTheDocument();
+    expect(screen.getByTestId("member-issues-totals-uncovered")).toBeInTheDocument();
   });
 
   it("collapses the section and remembers the preference in localStorage", async () => {
