@@ -48,7 +48,10 @@ export const GET = withAuditContext(
           { status: 400 }
         );
       }
-      const kind = kindParam as "RELEASE" | "ITERATION" | undefined;
+      let kind = (kindParam ?? undefined) as
+        | "RELEASE"
+        | "ITERATION"
+        | undefined;
 
       const includeClosed = searchParams.get("includeClosed") === "true";
       const pageToken = searchParams.get("pageToken") ?? undefined;
@@ -63,6 +66,31 @@ export const GET = withAuditContext(
           { error: auth.error },
           { status: auth.status }
         );
+      }
+
+      // When the caller doesn't ask for a specific kind, constrain the
+      // preview to the kinds this project has enabled in its milestone-sync
+      // settings — an admin who unchecked Sprints should not see (or pay
+      // the board-discovery cost for) sprint fetches in the picker. Config
+      // absent or both kinds enabled ⇒ unconstrained, matching old behavior.
+      if (!kind) {
+        const projectIntegration = await baseDb.projectIntegration.findFirst({
+          where: {
+            projectId: auth.projectId,
+            integrationId,
+            isActive: true,
+          },
+          select: { config: true },
+        });
+        const configuredKinds = (projectIntegration?.config as any)
+          ?.milestoneSync?.kinds;
+        if (
+          Array.isArray(configuredKinds) &&
+          configuredKinds.length === 1 &&
+          VALID_KINDS.has(configuredKinds[0])
+        ) {
+          kind = configuredKinds[0] as "RELEASE" | "ITERATION";
+        }
       }
 
       const mapping = await baseDb.integrationProject.findFirst({
