@@ -72,7 +72,13 @@ export class AnthropicAdapter extends BaseLlmAdapter {
   constructor(config: LlmAdapterConfig) {
     super(config);
     this.apiKey = config.apiKey || "";
-    this.baseUrl = config.baseUrl || "https://api.anthropic.com/v1";
+    // Strip trailing slashes so appending `/messages` can't produce a double
+    // slash (e.g. a user-supplied `.../v1/` becoming `.../v1//messages`).
+    // Mirrors the normalization the available-models route already does.
+    this.baseUrl = (config.baseUrl || "https://api.anthropic.com/v1").replace(
+      /\/+$/,
+      ""
+    );
 
     if (!this.apiKey) {
       throw this.createError(
@@ -257,10 +263,12 @@ export class AnthropicAdapter extends BaseLlmAdapter {
   }
 
   async testConnection(): Promise<boolean> {
+    this.lastTestConnectionError = undefined;
+    const url = `${this.baseUrl}/messages`;
     try {
       // Send a minimal chat request to the same endpoint used by actual calls.
       // This catches misconfigurations like a missing /v1 path segment.
-      const response = await this.safeFetch(`${this.baseUrl}/messages`, {
+      const response = await this.safeFetch(url, {
         method: "POST",
         headers: this.getAnthropicHeaders(),
         body: JSON.stringify({
@@ -272,10 +280,60 @@ export class AnthropicAdapter extends BaseLlmAdapter {
       });
 
       // 200 = success, 400 = bad request (but endpoint is reachable and authenticated)
-      return response.status === 200 || response.status === 400;
-    } catch {
+      if (response.status === 200 || response.status === 400) {
+        return true;
+      }
+
+      // Capture the real reason (status + provider message) so the admin UI
+      // can show it instead of a generic "failed to connect". A proxy like
+      // LiteLLM, for example, returns 401/403 here when the key isn't
+      // authorized for the selected model.
+      const body = await response.text().catch(() => "");
+      this.lastTestConnectionError = this.summarizeHttpError(
+        response.status,
+        response.statusText,
+        body
+      );
+      return false;
+    } catch (error: any) {
+      if (error?.name === "TimeoutError" || error?.name === "AbortError") {
+        this.lastTestConnectionError = `Request timed out after 10s (${url}).`;
+      } else {
+        this.lastTestConnectionError = `Network error reaching ${url}: ${
+          error?.message ?? "unknown error"
+        }`;
+      }
       return false;
     }
+  }
+
+  /**
+   * Build a concise one-line reason from a failed HTTP response. Handles the
+   * common JSON error shapes — Anthropic/OpenAI `{ error: { message } }`,
+   * FastAPI/LiteLLM `{ detail }`, and plain `{ message }` — and falls back to
+   * a truncated raw body.
+   */
+  private summarizeHttpError(
+    status: number,
+    statusText: string,
+    body: string
+  ): string {
+    let detail = "";
+    try {
+      const json = JSON.parse(body);
+      const candidate =
+        json?.error?.message ??
+        (typeof json?.error === "string" ? json.error : undefined) ??
+        json?.detail ??
+        json?.message;
+      if (typeof candidate === "string") {
+        detail = candidate;
+      }
+    } catch {
+      detail = body.trim().slice(0, 300);
+    }
+    const base = statusText ? `${status} ${statusText}` : `${status}`;
+    return detail ? `${base}: ${detail}` : base;
   }
 
   getProviderName(): string {

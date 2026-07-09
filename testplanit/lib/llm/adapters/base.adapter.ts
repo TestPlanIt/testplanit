@@ -59,6 +59,15 @@ function sanitizeUrl(url: string): string {
 export abstract class BaseLlmAdapter {
   protected config: LlmAdapterConfig;
 
+  /**
+   * Detail about why the most recent `testConnection()` attempt failed
+   * (HTTP status + provider message, or a network/timeout description).
+   * Adapters set this so callers can surface the real reason instead of a
+   * generic "failed to connect". Undefined after a successful attempt or
+   * when an adapter doesn't record detail.
+   */
+  protected lastTestConnectionError?: string;
+
   constructor(config: LlmAdapterConfig) {
     this.config = config;
     if (config.baseUrl) {
@@ -141,6 +150,14 @@ export abstract class BaseLlmAdapter {
    */
   getDefaultModel(): string {
     return this.config.config.defaultModel;
+  }
+
+  /**
+   * Return the reason the most recent `testConnection()` call failed, if the
+   * adapter recorded one. See {@link lastTestConnectionError}.
+   */
+  getLastTestConnectionError(): string | undefined {
+    return this.lastTestConnectionError;
   }
 
   /**
