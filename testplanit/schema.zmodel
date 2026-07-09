@@ -721,16 +721,16 @@ model Milestones {
     children            Milestones[]           @relation("MilestoneParent")
     milestoneType       MilestoneTypes         @relation(fields: [milestoneTypesId], references: [id])
     milestoneTypesId    Int
-    name                String                 @length(1) @deny('update', integrationId != null)
-    note                Json?                  @deny('update', integrationId != null)
+    name                String                 @length(1) @deny('update', integrationId != null && detachedAt == null)
+    note                Json?                  @deny('update', integrationId != null && detachedAt == null)
     docs                Json?
-    isStarted           Boolean                @default(false) @deny('update', integrationId != null)
-    isCompleted         Boolean                @default(false) @deny('update', integrationId != null)
+    isStarted           Boolean                @default(false) @deny('update', integrationId != null && detachedAt == null)
+    isCompleted         Boolean                @default(false) @deny('update', integrationId != null && detachedAt == null)
     isDeleted           Boolean                @default(false)
     automaticCompletion Boolean                @default(false)
     notifyDaysBefore    Int                    @default(0)
-    startedAt           DateTime?              @db.Timestamptz(6) @deny('update', integrationId != null)
-    completedAt         DateTime?              @db.Timestamptz(6) @deny('update', integrationId != null)
+    startedAt           DateTime?              @db.Timestamptz(6) @deny('update', integrationId != null && detachedAt == null)
+    completedAt         DateTime?              @db.Timestamptz(6) @deny('update', integrationId != null && detachedAt == null)
     createdAt           DateTime               @default(now()) @db.Timestamptz(6)
     creator             User                   @relation(fields: [createdBy], references: [id])
     createdBy           String
@@ -744,6 +744,18 @@ model Milestones {
     integrationId       Int?
     integration         Integration?           @relation(fields: [integrationId], references: [id], onDelete: SetNull)
     lastSyncedAt        DateTime?              @db.Timestamptz(6)
+    // Lifecycle marker: set (raw-db only, never via the enhanced client) when
+    // an upstream Jira version/sprint is deleted or merged away, or an admin
+    // manually unlinks. Three orthogonal, independently-queryable states:
+    // tracked (isDeleted == false && detachedAt == null), tombstoned
+    // (isDeleted == true), detached (detachedAt != null — was synced, now
+    // permanently local, tracker-owned field locks lift, integrationId stays
+    // non-null for badge/re-link/[externalId,integrationId] identity).
+    detachedAt          DateTime?              @db.Timestamptz(6)
+    // D-08 merge target: the external id of the version/sprint this
+    // milestone was merged into upstream. Populated only on the merge
+    // variant of conversion; null for delete/manual_unlink.
+    mergedToExternalId  String?
     milestoneIssues     MilestoneIssue[]
 
     @@unique([externalId, integrationId])
