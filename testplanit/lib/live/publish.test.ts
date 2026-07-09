@@ -107,3 +107,37 @@ describe("publishTestRunWakeUp", () => {
     spy.mockRestore();
   });
 });
+
+/**
+ * Wave 0 RED scaffold (19-01) for `publishMilestoneWakeUp` — the
+ * not-yet-added sibling to `publishTestRunWakeUp` above, implemented in
+ * Plan 02 (D-13/D-14 SSE). Every behavior is enumerated with `it.todo(...)`
+ * rather than a failing assertion so the suite runs green-on-todo; no
+ * separate top-level import is needed since `publishTestRunWakeUp` is
+ * already imported above and `it.todo` bodies never execute — Plan 02
+ * fills these in with real assertions once `publishMilestoneWakeUp` exists.
+ *
+ * See: .planning/phases/19-webhooks-lifecycle/19-VALIDATION.md (19-02-T1),
+ *      19-PATTERNS.md "SSE wake-up publish (D-14 hard constraint)".
+ */
+describe("publishMilestoneWakeUp", () => {
+  it.todo(
+    "publishes the wake-up to both the per-milestone and per-project channels"
+  );
+
+  it.todo("falls back to the default tenant when one is not resolved");
+
+  it.todo(
+    "defers both publishes until after setImmediate (fires after the surrounding tx commits — D-14)"
+  );
+
+  it.todo(
+    "swallows a per-channel publish rejection independently (one channel failing does not block the other)"
+  );
+
+  it.todo(
+    "sends a thin payload only ({ event, milestoneId, projectId, targetId? }) — never milestone data"
+  );
+
+  it.todo("no-ops when valkeyConnection is unavailable (single-pod dev)");
+});
