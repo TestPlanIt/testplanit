@@ -27,6 +27,37 @@ export interface CoverageBreakdown {
   untested: number;
 }
 
+/**
+ * Single source of truth for "does this issue count as covered?" — shared
+ * by the chip, the coverage filter, and the coverage column sort so the
+ * three can never disagree. Covered = at least one linked case whose
+ * latest in-scope result carries a COMPLETED status.
+ */
+export function hasCompletedCoverage(
+  breakdown: CoverageBreakdown | undefined
+): boolean {
+  return (
+    !!breakdown &&
+    !breakdown.uncovered &&
+    (breakdown.statuses?.length ?? 0) > 0
+  );
+}
+
+/**
+ * Sort value for the Coverage column: displayed-Uncovered rows group
+ * together below/above everything (-1); covered rows order by their
+ * completed-outcome total.
+ */
+export function coverageSortValue(
+  breakdown: CoverageBreakdown | undefined
+): number {
+  if (!hasCompletedCoverage(breakdown)) return -1;
+  return (breakdown!.statuses ?? []).reduce(
+    (sum, entry) => sum + entry.count,
+    0
+  );
+}
+
 interface CoverageChipProps {
   breakdown: CoverageBreakdown | undefined;
   className?: string;
@@ -58,7 +89,7 @@ export function CoverageChip({ breakdown, className }: CoverageChipProps) {
   // no linked cases at all, or none of its linked cases has a completed
   // in-scope result. The tooltip keeps the untested count so "cases exist
   // but were never executed here" stays visible.
-  if (!breakdown || breakdown.uncovered || statuses.length === 0) {
+  if (!hasCompletedCoverage(breakdown)) {
     const tooltip =
       breakdown && breakdown.linkedCaseCount > 0
         ? `${tCommon("labels.untested")}: ${untested}`

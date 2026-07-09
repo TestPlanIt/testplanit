@@ -1,7 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
-import { CoverageChip } from "./CoverageChip";
+import {
+  CoverageChip,
+  coverageSortValue,
+  hasCompletedCoverage,
+} from "./CoverageChip";
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -87,5 +91,48 @@ describe("CoverageChip", () => {
     const badge = screen.getByText("coverageUncovered");
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveAttribute("title", "labels.untested: 2");
+  });
+});
+
+describe("coverageSortValue / hasCompletedCoverage", () => {
+  const covered = {
+    linkedCaseCount: 5,
+    passed: 3,
+    failed: 1,
+    inProgress: 0,
+    notRun: 1,
+    uncovered: false,
+    statuses: [
+      { statusId: 1, name: "Passed", color: null, count: 3 },
+      { statusId: 2, name: "Failed", color: null, count: 1 },
+    ],
+    untested: 1,
+  };
+
+  it("groups every displayed-Uncovered variant at the same sort value", () => {
+    const noBreakdown = coverageSortValue(undefined);
+    const noCases = coverageSortValue({
+      ...covered,
+      linkedCaseCount: 0,
+      statuses: [],
+      uncovered: true,
+      untested: 0,
+    });
+    // Linked cases but zero completed outcomes — previously interleaved
+    // by linkedCaseCount when sorting.
+    const linkedButNeverCompleted = coverageSortValue({
+      ...covered,
+      linkedCaseCount: 27,
+      statuses: [],
+      untested: 27,
+    });
+    expect(noBreakdown).toBe(-1);
+    expect(noCases).toBe(-1);
+    expect(linkedButNeverCompleted).toBe(-1);
+  });
+
+  it("orders covered rows by completed-outcome total", () => {
+    expect(coverageSortValue(covered)).toBe(4);
+    expect(hasCompletedCoverage(covered)).toBe(true);
   });
 });

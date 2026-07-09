@@ -34,6 +34,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MemberIssueRowActions, MilestoneIssueManager } from "@/components/issues/MilestoneIssueManager";
 import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
 import type { CoverageBreakdown } from "./CoverageChip";
+import { coverageSortValue, hasCompletedCoverage } from "./CoverageChip";
 import type { ExtendedMemberIssue } from "./MemberIssuesColumns";
 import { useMemberIssueColumns } from "./MemberIssuesColumns";
 import { MemberIssuesOverflowPanel } from "./MemberIssuesOverflowPanel";
@@ -59,7 +60,7 @@ function matchesCoverageState(
     case "UNCOVERED":
       // Matches the chip: uncovered = no completed outcome in scope, not
       // just "no linked cases".
-      return breakdown.uncovered || (breakdown.statuses?.length ?? 0) === 0;
+      return !hasCompletedCoverage(breakdown);
     case "PASSED":
       return breakdown.passed > 0;
     case "FAILED":
@@ -197,9 +198,9 @@ export function MemberIssuesTable({ milestoneId, projectId }: MemberIssuesTableP
         case "source":
           return dir * (a.source ?? "").localeCompare(b.source ?? "");
         case "coverage": {
-          const av = a.coverage?.uncovered ? -1 : (a.coverage?.linkedCaseCount ?? 0);
-          const bv = b.coverage?.uncovered ? -1 : (b.coverage?.linkedCaseCount ?? 0);
-          return dir * (av - bv);
+          // Shared sort value (CoverageChip) — displayed-Uncovered rows
+          // group together instead of interleaving by linked-case count.
+          return dir * (coverageSortValue(a.coverage) - coverageSortValue(b.coverage));
         }
         default:
           return 0;

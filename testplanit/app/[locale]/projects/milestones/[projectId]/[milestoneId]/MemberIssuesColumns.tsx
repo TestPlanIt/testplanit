@@ -15,7 +15,11 @@ import type {
   MilestoneIssue as MilestoneIssueRow,
 } from "~/zenstack/models";
 import { buildSimpleUrlLink } from "~/lib/integrations/simpleUrl";
-import { CoverageBreakdown, CoverageChip } from "./CoverageChip";
+import {
+  CoverageBreakdown,
+  CoverageChip,
+  coverageSortValue,
+} from "./CoverageChip";
 
 /**
  * Row shape for the Member Issues table: a `MilestoneIssue` link row plus its
@@ -240,7 +244,7 @@ export function useMemberIssueColumns({
       {
         id: "coverage",
         accessorKey: "coverage",
-        accessorFn: (row) => (row.coverage?.uncovered ? -1 : (row.coverage?.linkedCaseCount ?? 0)),
+        accessorFn: (row) => coverageSortValue(row.coverage),
         header: tCoverage,
         enableSorting: true,
         enableResizing: true,
