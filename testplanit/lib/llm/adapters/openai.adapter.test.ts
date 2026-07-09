@@ -315,6 +315,7 @@ describe("OpenAIAdapter", () => {
       const result = await adapter.testConnection();
 
       expect(result).toBe(false);
+      expect(adapter.getLastTestConnectionError()).toBe("401: Unauthorized");
       consoleSpy.mockRestore();
     });
 
@@ -331,6 +332,10 @@ describe("OpenAIAdapter", () => {
       const result = await adapter.testConnection();
 
       expect(result).toBe(false);
+      // The reason is recorded, with the URL redacted (no query/credentials).
+      expect(adapter.getLastTestConnectionError()).toBe(
+        "Network error reaching https://api.openai.com/v1/models: Network error"
+      );
       consoleSpy.mockRestore();
     });
   });

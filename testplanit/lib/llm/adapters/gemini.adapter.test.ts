@@ -352,6 +352,28 @@ describe("GeminiAdapter", () => {
         .mockImplementation(() => {});
       const result = await adapter.testConnection();
       expect(result).toBe(false);
+      expect(adapter.getLastTestConnectionError()).toBe("401: Unauthorized");
+      consoleSpy.mockRestore();
+    });
+
+    it("should not leak the API key into the recorded error", async () => {
+      const config = createTestConfig();
+      const adapter = new GeminiAdapter(config);
+
+      mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const result = await adapter.testConnection();
+      expect(result).toBe(false);
+
+      const recorded = adapter.getLastTestConnectionError();
+      expect(recorded).toContain("Network error reaching");
+      // Gemini passes the key as a ?key= query param — it must never appear
+      // in the surfaced error message.
+      expect(recorded).not.toContain("test-gemini-api-key");
+      expect(recorded).not.toContain("key=");
       consoleSpy.mockRestore();
     });
   });

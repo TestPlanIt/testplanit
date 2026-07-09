@@ -256,19 +256,30 @@ export class OpenAIAdapter extends BaseLlmAdapter {
   }
 
   async testConnection(): Promise<boolean> {
+    this.lastTestConnectionError = undefined;
+    const url = `${this.baseUrl}/models`;
     try {
-      const response = await this.safeFetch(`${this.baseUrl}/models`, {
+      const response = await this.safeFetch(url, {
         headers: this.getOpenAIHeaders(),
         signal: AbortSignal.timeout(5000),
       });
 
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("OpenAI test failed:", response.status, text);
+      if (response.ok) {
+        return true;
       }
 
-      return response.ok;
+      // Capture the real reason (status + provider message) so the admin UI
+      // can show it instead of a generic "failed to connect".
+      const text = await response.text().catch(() => "");
+      this.lastTestConnectionError = this.summarizeHttpError(
+        response.status,
+        response.statusText,
+        text
+      );
+      console.error("OpenAI test failed:", response.status, text);
+      return false;
     } catch (error) {
+      this.lastTestConnectionError = this.describeConnectionError(url, error);
       console.error("OpenAI test connection error:", error);
       return false;
     }
