@@ -1,7 +1,10 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { baseDb } from "~/lib/db";
-import { authorizeProjectMilestoneSyncAdmin } from "~/lib/integrations/importAuthorization";
+import {
+  authorizeProjectAdminForProject,
+  authorizeProjectMilestoneSyncAdmin,
+} from "~/lib/integrations/importAuthorization";
 import { milestoneSyncService } from "~/lib/integrations/services/MilestoneSyncService";
 import { authOptions } from "~/server/auth";
 
@@ -88,24 +91,43 @@ export async function POST(
       select: { id: true },
     });
 
-    if (!mapping) {
-      return NextResponse.json(
-        { error: "Integration mapping not found" },
-        { status: 404 }
+    if (mapping) {
+      // T-19-05-01: reuse authorizeProjectMilestoneSyncAdmin UNMODIFIED — it
+      // already encodes the Milestones @@allow ACL (creator / Project Admin
+      // role / PROJECTADMIN / ADMIN) that the raw-db conversion below must
+      // replicate in application code, since baseDb bypasses policy.
+      const auth = await authorizeProjectMilestoneSyncAdmin(
+        session,
+        milestone.integrationId,
+        mapping.id
       );
-    }
-
-    // T-19-05-01: reuse authorizeProjectMilestoneSyncAdmin UNMODIFIED — it
-    // already encodes the Milestones @@allow ACL (creator / Project Admin
-    // role / PROJECTADMIN / ADMIN) that the raw-db conversion below must
-    // replicate in application code, since baseDb bypasses policy.
-    const auth = await authorizeProjectMilestoneSyncAdmin(
-      session,
-      milestone.integrationId,
-      mapping.id
-    );
-    if (!auth.ok) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
+      if (!auth.ok) {
+        return NextResponse.json(
+          { error: auth.error },
+          { status: auth.status }
+        );
+      }
+    } else {
+      // WR-05: no ACTIVE mapping — the integration↔project mapping (or the
+      // whole ProjectIntegration) was deactivated/removed AFTER this
+      // milestone was synced. The milestone still has integrationId set and
+      // detachedAt null, so the schema @deny locks keep every tracker-owned
+      // field frozen and no refresh can ever reach it again. Unlink is the
+      // ONE designed escape hatch for exactly this orphaned state, so it
+      // must not 404 here: fall back to the same project-admin condition
+      // against the milestone's own projectId (which this route already
+      // resolved server-side — the mapping was only ever a means to derive
+      // it).
+      const auth = await authorizeProjectAdminForProject(
+        session,
+        milestone.projectId
+      );
+      if (!auth.ok) {
+        return NextResponse.json(
+          { error: auth.error },
+          { status: auth.status }
+        );
+      }
     }
 
     // D-11/D-12: same detached mechanics as an upstream deleted/merged

@@ -32,6 +32,7 @@ vi.mock("~/lib/db", () => ({
 
 vi.mock("~/lib/integrations/importAuthorization", () => ({
   authorizeProjectMilestoneSyncAdmin: vi.fn(),
+  authorizeProjectAdminForProject: vi.fn(),
 }));
 
 vi.mock("~/lib/integrations/services/MilestoneSyncService", () => ({
@@ -41,7 +42,10 @@ vi.mock("~/lib/integrations/services/MilestoneSyncService", () => ({
 }));
 
 import { baseDb } from "~/lib/db";
-import { authorizeProjectMilestoneSyncAdmin } from "~/lib/integrations/importAuthorization";
+import {
+  authorizeProjectAdminForProject,
+  authorizeProjectMilestoneSyncAdmin,
+} from "~/lib/integrations/importAuthorization";
 import { milestoneSyncService } from "~/lib/integrations/services/MilestoneSyncService";
 import { getServerSession } from "next-auth";
 
@@ -78,6 +82,11 @@ describe("POST /api/milestones/[milestoneId]/unlink", () => {
       status: 200,
       projectId: 7,
       provider: "JIRA",
+    });
+    (authorizeProjectAdminForProject as any).mockResolvedValue({
+      ok: true,
+      status: 200,
+      projectId: 7,
     });
     (milestoneSyncService.convertMilestoneToLocal as any).mockResolvedValue({
       success: true,
@@ -157,13 +166,42 @@ describe("POST /api/milestones/[milestoneId]/unlink", () => {
     );
   });
 
-  it("resolves the IntegrationProject mapping server-side before authorizing; missing mapping gets 404", async () => {
+  it("REGRESSION (WR-05): a synced milestone whose integration mapping was deactivated can STILL be unlinked — falls back to a project-admin check on the milestone's own projectId instead of 404ing", async () => {
+    // The orphaned state: milestone has integrationId set + detachedAt null
+    // (fields locked, refreshes unreachable), but no ACTIVE mapping exists
+    // any more. Unlink is the one designed escape hatch and must keep
+    // working here.
     (baseDb.integrationProject.findFirst as any).mockResolvedValue(null);
 
     const res = await POST(createRequest(), params("42"));
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(200);
+    expect(authorizeProjectAdminForProject).toHaveBeenCalledWith(
+      expect.anything(),
+      SYNCED_MILESTONE.projectId
+    );
+    // The mapping-based gate is unusable without a mapping — never called.
     expect(authorizeProjectMilestoneSyncAdmin).not.toHaveBeenCalled();
+    expect(milestoneSyncService.convertMilestoneToLocal).toHaveBeenCalledWith(
+      baseDb,
+      42,
+      "manual_unlink",
+      undefined,
+      "user-1"
+    );
+  });
+
+  it("WR-05: a NON-admin still gets 403 on the deactivated-mapping fallback path — the fallback relaxes the 404, not the admin gate", async () => {
+    (baseDb.integrationProject.findFirst as any).mockResolvedValue(null);
+    (authorizeProjectAdminForProject as any).mockResolvedValue({
+      ok: false,
+      status: 403,
+      error: "Forbidden",
+    });
+
+    const res = await POST(createRequest(), params("42"));
+
+    expect(res.status).toBe(403);
     expect(milestoneSyncService.convertMilestoneToLocal).not.toHaveBeenCalled();
   });
 
