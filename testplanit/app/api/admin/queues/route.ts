@@ -62,6 +62,11 @@ export async function GET(request: NextRequest) {
       "duplicate-scan": 1,
       "magic-select": 1,
       "step-scan": 1,
+      "derive-case-steps": 2,
+      "generate-from-url": 1,
+      "iteration-generation": 1,
+      "webhook-dispatch": 5,
+      "scim-access-recompute": 1,
     };
 
     // Get configured concurrency from environment (or use defaults)
@@ -135,28 +140,34 @@ export async function GET(request: NextRequest) {
           String(defaultConcurrency["step-scan"]),
         10
       ),
+      // derive-case-steps and webhook-dispatch read env overrides in their
+      // workers; generate-from-url, iteration-generation and
+      // scim-access-recompute run a fixed concurrency of 1.
+      "derive-case-steps": parseInt(
+        process.env.DERIVE_CASE_STEPS_CONCURRENCY ||
+          String(defaultConcurrency["derive-case-steps"]),
+        10
+      ),
+      "generate-from-url": defaultConcurrency["generate-from-url"],
+      "iteration-generation": defaultConcurrency["iteration-generation"],
+      "webhook-dispatch": parseInt(
+        process.env.WEBHOOK_DISPATCH_CONCURRENCY ||
+          String(defaultConcurrency["webhook-dispatch"]),
+        10
+      ),
+      "scim-access-recompute": defaultConcurrency["scim-access-recompute"],
     };
 
+    // Build the display list dynamically from EVERY registered queue rather
+    // than a hardcoded subset — each BullMQ Queue exposes its own canonical
+    // `name`, so queues added later (e.g. derive-case-steps, webhook-dispatch,
+    // milestone-sync's future queue) surface automatically instead of being
+    // silently dropped. Concurrency falls back to 1 for any queue not listed
+    // in the map above.
     const allQueues = getAllQueues();
-    const queues = [
-      { name: "forecast-updates", queue: allQueues.forecastQueue },
-      { name: "notifications", queue: allQueues.notificationQueue },
-      { name: "emails", queue: allQueues.emailQueue },
-      { name: "issue-sync", queue: allQueues.syncQueue },
-      { name: "testmo-imports", queue: allQueues.testmoImportQueue },
-      {
-        name: "elasticsearch-reindex",
-        queue: allQueues.elasticsearchReindexQueue,
-      },
-      { name: "audit-logs", queue: allQueues.auditLogQueue },
-      { name: "budget-alerts", queue: allQueues.budgetAlertQueue },
-      { name: "auto-tag", queue: allQueues.autoTagQueue },
-      { name: "repo-cache", queue: allQueues.repoCacheQueue },
-      { name: "copy-move", queue: allQueues.copyMoveQueue },
-      { name: "duplicate-scan", queue: allQueues.duplicateScanQueue },
-      { name: "magic-select", queue: allQueues["magic-select"] },
-      { name: "step-scan", queue: allQueues.stepScanQueue },
-    ];
+    const queues = Object.values(allQueues)
+      .filter((queue): queue is NonNullable<typeof queue> => Boolean(queue))
+      .map((queue) => ({ name: queue.name, queue }));
 
     // Get current tenant ID for filtering in multi-tenant mode
     const currentTenantId = getCurrentTenantId();

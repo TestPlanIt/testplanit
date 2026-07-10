@@ -177,7 +177,17 @@ export function QueueManagement() {
       "magic-select": t("queueNames.magic-select"),
       "step-scan": t("queueNames.step-scan"),
     };
-    return queueNames[name] || name;
+    // Queues without a curated localized label (e.g. ones added after this
+    // map) fall back to a humanized version of their name — "webhook-dispatch"
+    // -> "Webhook Dispatch" — so the dynamically-listed queues still read
+    // cleanly instead of showing a raw kebab-case key.
+    return (
+      queueNames[name] ||
+      name
+        .split(/[-_]/)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+    );
   };
 
   const _getTotalJobs = (counts: QueueCounts | null) => {
