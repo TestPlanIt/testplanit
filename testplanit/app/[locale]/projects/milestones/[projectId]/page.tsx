@@ -95,18 +95,21 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   const isImportPolling = pendingImportIds !== null;
   const isMilestonePolling = isImportPolling;
   const importPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const startImportPolling = React.useCallback((externalIds: string[]) => {
-    setPendingImportIds(new Set(externalIds));
-    if (importPollTimerRef.current) clearTimeout(importPollTimerRef.current);
-    importPollTimerRef.current = setTimeout(() => {
-      setPendingImportIds((prev) => {
-        if (prev && prev.size > 0) {
-          toast.info(t("milestones.import.stillRunning"));
-        }
-        return null;
-      });
-    }, 60_000);
-  }, []);
+  const startImportPolling = React.useCallback(
+    (externalIds: string[]) => {
+      setPendingImportIds(new Set(externalIds));
+      if (importPollTimerRef.current) clearTimeout(importPollTimerRef.current);
+      importPollTimerRef.current = setTimeout(() => {
+        setPendingImportIds((prev) => {
+          if (prev && prev.size > 0) {
+            toast.info(t("milestones.import.stillRunning"));
+          }
+          return null;
+        });
+      }, 60_000);
+    },
+    [t]
+  );
   useEffect(
     () => () => {
       if (importPollTimerRef.current) clearTimeout(importPollTimerRef.current);

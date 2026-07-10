@@ -323,12 +323,17 @@ export function MemberIssuesTable({
     .filter((id) => rowSelection[id])
     .map(Number)
     .filter((id) => Number.isInteger(id));
+  // Key on content, not array identity — selectedIssueIds is rebuilt
+  // every render.
+  const selectedIssueIdsKey = selectedIssueIds.join(",");
   const sortedSelectedIds = useMemo(
-    () => [...selectedIssueIds].sort((a, b) => a - b),
-    // Key on content, not array identity — selectedIssueIds is rebuilt
-    // every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedIssueIds.join(",")]
+    () =>
+      selectedIssueIdsKey
+        .split(",")
+        .filter(Boolean)
+        .map(Number)
+        .sort((a, b) => a - b),
+    [selectedIssueIdsKey]
   );
 
   // Distinct linked-case count for the current selection, so the button can
@@ -461,7 +466,9 @@ export function MemberIssuesTable({
   // useMemo, and regenerating column defs remounts every cell (the
   // popover-flicker loop above).
   const rangeStateRef = useRef({ sortedRows, rowSelection });
-  rangeStateRef.current = { sortedRows, rowSelection };
+  useEffect(() => {
+    rangeStateRef.current = { sortedRows, rowSelection };
+  });
   const lastToggledIssueIdRef = useRef<number | null>(null);
   const handleRowCheckboxClick = useCallback(
     (issueId: number, event: React.MouseEvent<HTMLButtonElement>) => {
