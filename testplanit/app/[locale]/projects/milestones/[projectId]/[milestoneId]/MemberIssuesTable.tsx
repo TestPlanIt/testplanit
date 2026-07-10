@@ -138,7 +138,6 @@ export function MemberIssuesTable({
   const {
     data: memberRows,
     isLoading: isLoadingMembers,
-    isFetching: isFetchingMembers,
     refetch: refetchMembers,
   } = useClientQueries(schema).milestoneIssue.useFindMany({
     where: { milestoneId },
@@ -154,13 +153,9 @@ export function MemberIssuesTable({
     select: { integrationId: true },
   });
 
-  // Milestone-level "syncing…" indicator (D-03): client-side refresh-in-flight
-  // state derived from whether a refresh triggered by this section is
-  // currently pending — no `Milestones.syncStatus` column exists.
   const {
     data: coverageData,
     isLoading: isLoadingCoverage,
-    isFetching: isFetchingCoverage,
     refetch: refetchCoverage,
   } = useQuery<MemberCoverageResponse>({
     queryKey: ["milestoneMemberCoverage", milestoneId],
@@ -176,11 +171,16 @@ export function MemberIssuesTable({
     staleTime: 30000,
   });
 
-  const isSyncing = isFetchingMembers || isFetchingCoverage;
+  // Spin/disable the Refresh button only for a USER-initiated refresh —
+  // deriving it from isFetching made it strobe on every background
+  // SSE-wake-up refetch.
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   const handleRefresh = useCallback(() => {
-    void refetchMembers();
-    void refetchCoverage();
+    setIsManualRefreshing(true);
+    void Promise.allSettled([refetchMembers(), refetchCoverage()]).finally(() =>
+      setIsManualRefreshing(false)
+    );
   }, [refetchMembers, refetchCoverage]);
 
   const rows: ExtendedMemberIssue[] = useMemo(() => {
@@ -606,16 +606,6 @@ export function MemberIssuesTable({
                   {rows.length}
                 </Badge>
               )}
-              {isSyncing && (
-                <Badge
-                  variant="outline"
-                  className="flex items-center gap-1 text-muted-foreground"
-                  data-testid="member-issues-syncing-badge"
-                >
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  {t("syncing")}
-                </Badge>
-              )}
             </div>
             <div className="flex items-center gap-2">
               {selectedIssueIds.length > 0 && (
@@ -653,12 +643,12 @@ export function MemberIssuesTable({
                 variant="ghost"
                 size="sm"
                 onClick={handleRefresh}
-                disabled={isSyncing}
+                disabled={isManualRefreshing}
                 className="text-muted-foreground"
                 data-testid="member-issues-refresh"
               >
                 <RefreshCw
-                  className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`}
+                  className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`}
                 />
                 {t("refresh")}
               </Button>

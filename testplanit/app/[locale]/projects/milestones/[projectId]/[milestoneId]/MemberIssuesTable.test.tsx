@@ -314,7 +314,7 @@ describe("MemberIssuesTable", () => {
     });
   });
 
-  it("shows the syncing badge while member rows or coverage are in flight", () => {
+  it("never renders a syncing badge, even while member rows are in flight (SSE refetch bursts made it flash)", () => {
     mockFindManyMilestoneIssue.mockReturnValue({
       data: [buildRow()],
       isLoading: false,
@@ -325,30 +325,8 @@ describe("MemberIssuesTable", () => {
     renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
 
     expect(
-      screen.getByTestId("member-issues-syncing-badge")
-    ).toBeInTheDocument();
-  });
-
-  it("does not show the syncing badge when nothing is in flight", async () => {
-    mockFindManyMilestoneIssue.mockReturnValue({
-      data: [buildRow()],
-      isLoading: false,
-      isFetching: false,
-      refetch: vi.fn(),
-    });
-
-    renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
-
-    // Wait for the coverage query to settle before asserting the syncing
-    // badge is gone -- useQuery starts isFetching=true on mount.
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalled();
-    });
-    await waitFor(() => {
-      expect(
-        screen.queryByTestId("member-issues-syncing-badge")
-      ).not.toBeInTheDocument();
-    });
+      screen.queryByTestId("member-issues-syncing-badge")
+    ).not.toBeInTheDocument();
   });
 
   it("shows the member total in the section header", () => {
