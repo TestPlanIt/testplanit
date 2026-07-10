@@ -424,9 +424,10 @@ describeIntegration("MilestoneType provisioning + import (live DB)", () => {
 
     const created = await realDb.milestones.findUnique({
       where: {
-        externalId_integrationId: {
+        externalId_integrationId_projectId: {
           externalId: `${STAMP}-v1`,
           integrationId,
+          projectId,
         },
       },
       select: { id: true, createdBy: true, milestoneTypesId: true },

@@ -1,37 +1,45 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * Idempotent upsert on `[externalId, integrationId]` (MSYNC-03) — a second
- * upsert against the same key must UPDATE the existing row, never create a
- * duplicate, and must reflect the latest ExternalMilestone fields.
+ * Idempotent upsert on `[externalId, integrationId, projectId]` (MSYNC-03) —
+ * a second upsert against the same key must UPDATE the existing row, never
+ * create a duplicate, and must reflect the latest ExternalMilestone fields.
+ * The identity is PER PROJECT: the same external artifact imported into a
+ * different project creates an independent row.
  */
 
 // ─── Mocks ────────────────────────────────────────────────────────────────
-// In-memory "table" keyed by `${externalId}:${integrationId}` so upsert
-// calls behave like a real unique-constrained upsert across calls within a
-// single test.
+// In-memory "table" keyed by `${externalId}:${integrationId}:${projectId}`
+// so upsert calls behave like a real unique-constrained upsert across calls
+// within a single test.
 const milestonesTable = new Map<string, any>();
 let nextId = 1;
 
+type MilestoneWhereKey = {
+  externalId_integrationId_projectId: {
+    externalId: string;
+    integrationId: number;
+    projectId: number;
+  };
+};
+
+function tableKey(where: MilestoneWhereKey): string {
+  const key = where.externalId_integrationId_projectId;
+  return `${key.externalId}:${key.integrationId}:${key.projectId}`;
+}
+
 const mockMilestonesFindFirst = vi.fn();
 const mockMilestonesFindUnique = vi.fn((...args: any[]) => {
-  const { where } = args[0] as {
-    where: {
-      externalId_integrationId: { externalId: string; integrationId: number };
-    };
-  };
-  const key = `${where.externalId_integrationId.externalId}:${where.externalId_integrationId.integrationId}`;
-  return Promise.resolve(milestonesTable.get(key) ?? null);
+  const { where } = args[0] as { where: MilestoneWhereKey };
+  return Promise.resolve(milestonesTable.get(tableKey(where)) ?? null);
 });
 const mockMilestonesUpsert = vi.fn((...args: any[]) => {
   const { where, create, update } = args[0] as {
-    where: {
-      externalId_integrationId: { externalId: string; integrationId: number };
-    };
+    where: MilestoneWhereKey;
     create: any;
     update: any;
   };
-  const key = `${where.externalId_integrationId.externalId}:${where.externalId_integrationId.integrationId}`;
+  const key = tableKey(where);
   const existing = milestonesTable.get(key);
   if (existing) {
     const updated = { ...existing, ...update };
@@ -113,7 +121,7 @@ describe("Milestone upsert idempotency (MSYNC-03)", () => {
     );
     expect(first.success).toBe(true);
     expect(milestonesTable.size).toBe(1);
-    const afterFirst = milestonesTable.get("5000:42");
+    const afterFirst = milestonesTable.get("5000:42:100");
     expect(afterFirst.name).toBe("v1.0");
     expect(afterFirst.isCompleted).toBe(false);
 
@@ -141,13 +149,13 @@ describe("Milestone upsert idempotency (MSYNC-03)", () => {
 
     // Still exactly one row — the second call updated in place.
     expect(milestonesTable.size).toBe(1);
-    const afterSecond = milestonesTable.get("5000:42");
+    const afterSecond = milestonesTable.get("5000:42:100");
     expect(afterSecond.id).toBe(afterFirst.id);
     expect(afterSecond.isCompleted).toBe(true);
     expect(afterSecond.externalState).toBe("released");
   });
 
-  it("upsert call uses externalId_integrationId as the where clause (idempotent key)", async () => {
+  it("upsert call uses externalId_integrationId_projectId as the where clause (per-project idempotent key)", async () => {
     mockGetExternalMilestones.mockResolvedValue({
       items: [
         {
@@ -168,7 +176,11 @@ describe("Milestone upsert idempotency (MSYNC-03)", () => {
     expect(mockMilestonesUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          externalId_integrationId: { externalId: "6000", integrationId: 7 },
+          externalId_integrationId_projectId: {
+            externalId: "6000",
+            integrationId: 7,
+            projectId: 100,
+          },
         },
       })
     );
@@ -239,5 +251,53 @@ describe("Milestone upsert idempotency (MSYNC-03)", () => {
 
     const call = mockMilestonesUpsert.mock.calls[0][0];
     expect(call.update.isDeleted).toBe(false);
+  });
+
+  it("REGRESSION: importing the same artifact into a SECOND project creates an independent row, leaving the first project's (deleted) row untouched", async () => {
+    // Project A (100) already tracks artifact 9000 — but the user deleted
+    // it (tombstone). The reported bug: importing 9000 into project B (200)
+    // matched A's row via the old global [externalId, integrationId] key
+    // and REVIVED it in project A instead of creating B's own row.
+    milestonesTable.set("9000:13:100", {
+      id: 77,
+      projectId: 100,
+      isDeleted: true,
+      name: "Sprint 9",
+    });
+    nextId = 78;
+
+    const ext = {
+      id: "9000",
+      kind: "RELEASE" as const,
+      name: "Sprint 9",
+      state: "ACTIVE" as const,
+      rawState: "active",
+    };
+    mockGetExternalMilestones.mockResolvedValue({
+      items: [ext],
+      hasMore: false,
+    });
+    // performMilestoneImport provisions types via rawDb models the mock
+    // doesn't implement — call the shell upsert directly, which is the
+    // exact write the import path funnels through.
+    const result = await (milestoneSyncService as any)._upsertMilestoneShell(
+      (await import("@/lib/rawDb")).rawDb,
+      13,
+      200,
+      5,
+      "user-1",
+      ext
+    );
+
+    // A NEW row for project B…
+    expect(result.created).toBe(true);
+    const projectBRow = milestonesTable.get("9000:13:200");
+    expect(projectBRow).toBeTruthy();
+    expect(projectBRow.projectId).toBe(200);
+    expect(projectBRow.isDeleted).toBeUndefined(); // fresh create, no tombstone
+    // …and project A's tombstoned row is completely untouched.
+    const projectARow = milestonesTable.get("9000:13:100");
+    expect(projectARow.id).toBe(77);
+    expect(projectARow.isDeleted).toBe(true);
   });
 });

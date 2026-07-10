@@ -750,7 +750,8 @@ model Milestones {
     // tracked (isDeleted == false && detachedAt == null), tombstoned
     // (isDeleted == true), detached (detachedAt != null — was synced, now
     // permanently local, tracker-owned field locks lift, integrationId stays
-    // non-null for badge/re-link/[externalId,integrationId] identity).
+    // non-null for badge/re-link/[externalId,integrationId,projectId]
+    // identity).
     detachedAt          DateTime?              @db.Timestamptz(6)
     // D-08 merge target: the external id of the version/sprint this
     // milestone was merged into upstream. Populated only on the merge
@@ -758,7 +759,11 @@ model Milestones {
     mergedToExternalId  String?
     milestoneIssues     MilestoneIssue[]
 
-    @@unique([externalId, integrationId])
+    // External identity is PER PROJECT: the same tracker artifact (version/
+    // sprint) can be tracked independently by several TestPlanIt projects,
+    // each with its own row, lifecycle, and membership — importing it into
+    // one project must never revive or mutate another project's row.
+    @@unique([externalId, integrationId, projectId])
     @@index([projectId, isDeleted])
     @@index([parentId])
     @@index([isCompleted, isDeleted])

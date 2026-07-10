@@ -51,7 +51,26 @@ function isCreatedEvent(eventType: string): boolean {
 }
 
 /**
- * Resolve the event's OWN project — NEVER the receiving WebhookConfig's
+ * Every dispatch target an inbound milestone event fans out to. External
+ * identity is per-project ([externalId, integrationId, projectId]): the
+ * same tracker artifact may be tracked independently by several TestPlanIt
+ * projects, so one upstream event can affect many rows.
+ */
+interface ResolvedMilestoneTargets {
+  /** Every Milestones row tracking this artifact, across all projects —
+   *  refresh/convert events apply to each of these rows. */
+  tracked: Array<{
+    milestoneId: number;
+    projectId: number;
+    integrationId: number;
+  }>;
+  /** Every active mapping matching the artifact's external project/board —
+   *  the candidate projects a created event may auto-track into. */
+  mappedProjects: Array<{ projectId: number; integrationId: number }>;
+}
+
+/**
+ * Resolve the event's OWN project(s) — NEVER the receiving WebhookConfig's
  * project (Pitfall 6 / T-19-04-01). Version events carry `project.id`
  * directly; sprint events carry only `originBoardId`, resolved via
  * `JiraAdapter.resolveBoardProject` (cached).
@@ -62,32 +81,55 @@ function isCreatedEvent(eventType: string): boolean {
  * perspective, and both are legitimate non-error states for a site-wide
  * admin webhook.
  */
-async function resolveMilestoneEventProject(
+async function resolveMilestoneEventTargets(
   ref: MilestoneEventRef
-): Promise<{ projectId: number; integrationId: number } | null> {
-  // Already-tracked artifacts resolve to the project of their OWN Milestones
-  // row — `[externalId, integrationId]` is globally unique, so the row is
-  // the authoritative owner. Mapping-based resolution (below) is only a
-  // fallback for untracked artifacts (created events): the same Jira project
-  // can be mapped into multiple TPI projects on one integration, and picking
-  // a mapping's project for a milestone that lives in the OTHER project
-  // makes every refresh/convert silently miss (WR-07).
-  const findTrackedProject = async (
+): Promise<ResolvedMilestoneTargets | null> {
+  // Already-tracked artifacts resolve to their OWN Milestones rows — one per
+  // tracking project — so refresh/convert dispatch reaches every project
+  // independently (WR-07: picking a mapping's project for a milestone that
+  // lives in another project makes its refresh/convert silently miss).
+  // Mapping-based resolution feeds the created-event auto-track path.
+  const findTrackedRows = async (
     integrationIds: number[]
-  ): Promise<{ projectId: number; integrationId: number } | null> => {
-    if (integrationIds.length === 0) return null;
-    const tracked = await baseDb.milestones.findFirst({
+  ): Promise<ResolvedMilestoneTargets["tracked"]> => {
+    if (integrationIds.length === 0) return [];
+    const rows = await baseDb.milestones.findMany({
       where: {
         externalId: ref.externalId,
         integrationId: { in: integrationIds },
       },
-      select: { projectId: true, integrationId: true },
+      select: { id: true, projectId: true, integrationId: true },
+      orderBy: { id: "asc" },
     });
-    if (tracked?.integrationId == null) return null;
-    return {
-      projectId: tracked.projectId,
-      integrationId: tracked.integrationId,
-    };
+    return rows
+      .filter(
+        (row: { integrationId: number | null }) => row.integrationId != null
+      )
+      .map(
+        (row: {
+          id: number;
+          projectId: number;
+          integrationId: number | null;
+        }) => ({
+          milestoneId: row.id,
+          projectId: row.projectId,
+          integrationId: row.integrationId as number,
+        })
+      );
+  };
+
+  const dedupProjects = (
+    entries: Array<{ projectId: number; integrationId: number }>
+  ): Array<{ projectId: number; integrationId: number }> => {
+    const seen = new Set<string>();
+    const result: Array<{ projectId: number; integrationId: number }> = [];
+    for (const entry of entries) {
+      const key = `${entry.projectId}:${entry.integrationId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(entry);
+    }
+    return result;
   };
 
   if (ref.kind === "RELEASE") {
@@ -120,15 +162,15 @@ async function resolveMilestoneEventProject(
         )
       ),
     ] as number[];
-    const tracked = await findTrackedProject(integrationIds);
-    if (tracked) return tracked;
-
-    // Untracked (e.g. version_created): fall back to the oldest mapping —
-    // deterministic, matching the pre-existing behavior for new artifacts.
-    return {
-      projectId: mappings[0].projectIntegration.projectId,
-      integrationId: mappings[0].projectIntegration.integrationId,
-    };
+    const tracked = await findTrackedRows(integrationIds);
+    const mappedProjects = dedupProjects(
+      mappings.map(
+        (m: {
+          projectIntegration: { projectId: number; integrationId: number };
+        }) => m.projectIntegration
+      )
+    );
+    return { tracked, mappedProjects };
   }
 
   // ITERATION (sprint): resolve originBoardId -> project via the Jira
@@ -182,24 +224,28 @@ async function resolveMilestoneEventProject(
     const boardProject = await adapter.resolveBoardProject(ref.originBoardId);
     if (!boardProject) continue;
 
-    // Board confirmed to exist on this integration's Jira — if the sprint
-    // is already tracked here, its own row wins (WR-07 parity for sprints).
-    const tracked = await findTrackedProject([integrationId]);
-    if (tracked) return tracked;
-
-    const match = mappings.find(
-      (m: {
-        externalProjectId: string;
-        projectIntegration: { projectId: number; integrationId: number };
-      }) =>
-        m.projectIntegration.integrationId === integrationId &&
-        m.externalProjectId === boardProject.projectId
+    // Board confirmed to exist on this integration's Jira — collect every
+    // tracking row (WR-07 parity for sprints, per-project fan-out) plus
+    // every mapping for the board's own project (created-event candidates).
+    const tracked = await findTrackedRows([integrationId]);
+    const mappedProjects = dedupProjects(
+      mappings
+        .filter(
+          (m: {
+            externalProjectId: string;
+            projectIntegration: { projectId: number; integrationId: number };
+          }) =>
+            m.projectIntegration.integrationId === integrationId &&
+            m.externalProjectId === boardProject.projectId
+        )
+        .map(
+          (m: {
+            projectIntegration: { projectId: number; integrationId: number };
+          }) => m.projectIntegration
+        )
     );
-    if (match) {
-      return {
-        projectId: match.projectIntegration.projectId,
-        integrationId,
-      };
+    if (tracked.length > 0 || mappedProjects.length > 0) {
+      return { tracked, mappedProjects };
     }
   }
 
@@ -377,8 +423,11 @@ export async function applyInboundMilestoneEvent(
     "unmatched";
   let milestoneId: number | undefined;
   try {
-    const resolved = await resolveMilestoneEventProject(ref);
-    if (!resolved) {
+    const resolved = await resolveMilestoneEventTargets(ref);
+    if (
+      !resolved ||
+      (resolved.tracked.length === 0 && resolved.mappedProjects.length === 0)
+    ) {
       // D-03: unmatched project/board — silent ack, debug log, no write.
       console.debug(
         `[applyInboundMilestoneEvent] unmatched project/board for ${ref.kind} externalId=${ref.externalId} — no active integration mapping`
@@ -388,16 +437,9 @@ export async function applyInboundMilestoneEvent(
       const classification = classifyMilestoneEvent(eventType, ref);
 
       if (classification === "convert") {
-        const existing = await baseDb.milestones.findFirst({
-          where: {
-            externalId: ref.externalId,
-            integrationId: resolved.integrationId,
-          },
-          select: { id: true },
-        });
-        if (!existing) {
+        if (resolved.tracked.length === 0) {
           console.debug(
-            `[applyInboundMilestoneEvent] convert event for untracked milestone externalId=${ref.externalId} integration=${resolved.integrationId} — no local row, dropping`
+            `[applyInboundMilestoneEvent] convert event for untracked milestone externalId=${ref.externalId} — no local row, dropping`
           );
           finalOutcome = "unmatched";
         } else {
@@ -405,124 +447,143 @@ export async function applyInboundMilestoneEvent(
             ref.kind === "RELEASE" && ref.merge ? "merged" : "deleted";
           const mergedToExternalId =
             ref.kind === "RELEASE" ? ref.mergedToExternalId : undefined;
-          await milestoneSyncService.convertMilestoneToLocal(
-            baseDb,
-            existing.id,
-            reason,
-            mergedToExternalId
-          );
-          milestoneId = existing.id;
+          // One upstream artifact may be tracked by several projects
+          // (per-project identity) — the upstream deletion/merge converts
+          // EVERY tracking row, each in its own transaction.
+          for (const row of resolved.tracked) {
+            await milestoneSyncService.convertMilestoneToLocal(
+              baseDb,
+              row.milestoneId,
+              reason,
+              mergedToExternalId
+            );
+          }
+          milestoneId = resolved.tracked[0].milestoneId;
           finalOutcome = "converted";
         }
       } else if (isCreatedEvent(eventType)) {
-        // Created path (D-02): version_created/sprint_created only act when
-        // auto-track is ON for the resolved project — an unlinked milestone
-        // with auto-track OFF is a clean no-op ack.
-        const projectIntegration = await baseDb.projectIntegration.findUnique({
-          where: {
-            projectId_integrationId: {
-              projectId: resolved.projectId,
-              integrationId: resolved.integrationId,
-            },
-          },
-          select: { config: true },
-        });
-        const milestoneSyncConfig =
-          (projectIntegration?.config as any)?.milestoneSync ?? {};
-        const autoTrack = milestoneSyncConfig.autoTrack === true;
-        if (!autoTrack) {
-          console.debug(
-            `[applyInboundMilestoneEvent] ${eventType} for project ${resolved.projectId} — auto-track is OFF, no-op (D-02)`
-          );
-          finalOutcome = "unmatched";
-          // Skip entirely — fall through to the finally-style return below.
-          await captureAuditEvent({
-            action: "WEBHOOK_RECEIVED",
-            entityType: "WebhookDelivery",
-            entityId: txResult.deliveryId,
-            projectId: resolved.projectId,
-            userId: SYSTEM_ACTOR_ID,
-            metadata: {
-              adapterType,
-              eventType,
-              payloadDigest,
-              webhookConfigId,
-              outcome: "unmatched",
-              reason: "auto-track-off",
-            },
-          });
-          return {
-            outcome: "unmatched",
-            deliveryId: txResult.deliveryId,
-            reason: "auto-track-off",
-          };
-        }
-
-        // A created event means no linked Milestones row exists yet, so
-        // `performMilestoneRefresh` would return `notFound` without writing
-        // anything — the new artifact must be IMPORTED instead. Attribution
-        // matches `performProjectMilestoneSync`'s auto-track pass: the
-        // imported row is credited to `autoTrackAdminId` (the admin who
-        // enabled sync), never a system placeholder, and a missing admin id
-        // is a configuration error, not an import-as-somebody-else.
-        const autoTrackAdminId: string | undefined =
-          milestoneSyncConfig.autoTrackAdminId;
-        if (!autoTrackAdminId) {
-          console.error(
-            `[applyInboundMilestoneEvent] ${eventType} for project ${resolved.projectId} — auto-track is ON but milestoneSync.autoTrackAdminId is not configured; cannot import`
-          );
-          await captureAuditEvent({
-            action: "WEBHOOK_RECEIVED",
-            entityType: "WebhookDelivery",
-            entityId: txResult.deliveryId,
-            projectId: resolved.projectId,
-            userId: SYSTEM_ACTOR_ID,
-            metadata: {
-              adapterType,
-              eventType,
-              payloadDigest,
-              webhookConfigId,
-              outcome: "unmatched",
-              reason: "auto-track-admin-missing",
-            },
-          });
-          return {
-            outcome: "unmatched",
-            deliveryId: txResult.deliveryId,
-            reason: "auto-track-admin-missing",
-          };
-        }
-
-        const importResult = await milestoneSyncService.performMilestoneImport(
-          SYSTEM_ACTOR_ID,
-          resolved.integrationId,
-          resolved.projectId,
-          { externalIds: [ref.externalId], kinds: [ref.kind] },
-          autoTrackAdminId
-        );
-        if (!importResult.success) {
-          console.error(
-            `[applyInboundMilestoneEvent] performMilestoneImport failed for externalId=${ref.externalId} integration=${resolved.integrationId}: ${importResult.errors.join("; ") || "unknown"}`
-          );
-        }
-        finalOutcome = "imported";
-      } else {
-        const refreshResult =
-          await milestoneSyncService.performMilestoneRefresh(
-            SYSTEM_ACTOR_ID,
-            resolved.integrationId,
-            ref.externalId,
+        // Created path (D-02): version_created/sprint_created only act on
+        // mapped projects with auto-track ON — for every other mapped
+        // project the new artifact is a clean no-op ack. With per-project
+        // identity, EVERY mapped project with auto-track ON imports its
+        // own independent row.
+        let importedProjects = 0;
+        let skipReason: "auto-track-off" | "auto-track-admin-missing" | null =
+          null;
+        for (const target of resolved.mappedProjects) {
+          const projectIntegration = await baseDb.projectIntegration.findUnique(
             {
-              minFreshnessSeconds: WEBHOOK_SYNC_FRESHNESS_SECONDS,
-              projectId: resolved.projectId,
+              where: {
+                projectId_integrationId: {
+                  projectId: target.projectId,
+                  integrationId: target.integrationId,
+                },
+              },
+              select: { config: true },
             }
           );
-        if (!refreshResult.success && !refreshResult.notFound) {
-          console.error(
-            `[applyInboundMilestoneEvent] performMilestoneRefresh failed for externalId=${ref.externalId} integration=${resolved.integrationId}: ${refreshResult.error ?? "unknown"}`
-          );
+          const milestoneSyncConfig =
+            (projectIntegration?.config as any)?.milestoneSync ?? {};
+          if (milestoneSyncConfig.autoTrack !== true) {
+            console.debug(
+              `[applyInboundMilestoneEvent] ${eventType} for project ${target.projectId} — auto-track is OFF, no-op (D-02)`
+            );
+            skipReason = skipReason ?? "auto-track-off";
+            continue;
+          }
+
+          // A created event means no linked row exists for this project
+          // yet, so `performMilestoneRefresh` would return `notFound`
+          // without writing anything — the new artifact must be IMPORTED
+          // instead. Attribution matches `performProjectMilestoneSync`'s
+          // auto-track pass: the imported row is credited to
+          // `autoTrackAdminId` (the admin who enabled sync), never a
+          // system placeholder, and a missing admin id is a configuration
+          // error, not an import-as-somebody-else.
+          const autoTrackAdminId: string | undefined =
+            milestoneSyncConfig.autoTrackAdminId;
+          if (!autoTrackAdminId) {
+            console.error(
+              `[applyInboundMilestoneEvent] ${eventType} for project ${target.projectId} — auto-track is ON but milestoneSync.autoTrackAdminId is not configured; cannot import`
+            );
+            skipReason = skipReason ?? "auto-track-admin-missing";
+            continue;
+          }
+
+          const importResult =
+            await milestoneSyncService.performMilestoneImport(
+              SYSTEM_ACTOR_ID,
+              target.integrationId,
+              target.projectId,
+              { externalIds: [ref.externalId], kinds: [ref.kind] },
+              autoTrackAdminId
+            );
+          if (!importResult.success) {
+            console.error(
+              `[applyInboundMilestoneEvent] performMilestoneImport failed for externalId=${ref.externalId} project=${target.projectId} integration=${target.integrationId}: ${importResult.errors.join("; ") || "unknown"}`
+            );
+          }
+          importedProjects++;
         }
-        finalOutcome = "refreshed";
+
+        if (importedProjects > 0) {
+          finalOutcome = "imported";
+        } else {
+          // Every mapped project skipped — preserve the pre-fan-out
+          // observability: ack as unmatched with the (first) skip reason.
+          finalOutcome = "unmatched";
+          await captureAuditEvent({
+            action: "WEBHOOK_RECEIVED",
+            entityType: "WebhookDelivery",
+            entityId: txResult.deliveryId,
+            projectId: resolved.mappedProjects[0]?.projectId,
+            userId: SYSTEM_ACTOR_ID,
+            metadata: {
+              adapterType,
+              eventType,
+              payloadDigest,
+              webhookConfigId,
+              outcome: "unmatched",
+              reason: skipReason ?? "auto-track-off",
+            },
+          });
+          return {
+            outcome: "unmatched",
+            deliveryId: txResult.deliveryId,
+            reason: skipReason ?? "auto-track-off",
+          };
+        }
+      } else {
+        if (resolved.tracked.length === 0) {
+          // Update-class event for an artifact no project tracks — nothing
+          // to refresh (only created events import, D-02). Clean ack.
+          console.debug(
+            `[applyInboundMilestoneEvent] ${eventType} for untracked milestone externalId=${ref.externalId} — no local row, dropping`
+          );
+          finalOutcome = "unmatched";
+        } else {
+          // Refresh EVERY tracking row — each project's row gates on its
+          // own per-project freshness window and sync lock.
+          for (const row of resolved.tracked) {
+            const refreshResult =
+              await milestoneSyncService.performMilestoneRefresh(
+                SYSTEM_ACTOR_ID,
+                row.integrationId,
+                ref.externalId,
+                {
+                  minFreshnessSeconds: WEBHOOK_SYNC_FRESHNESS_SECONDS,
+                  projectId: row.projectId,
+                }
+              );
+            if (!refreshResult.success && !refreshResult.notFound) {
+              console.error(
+                `[applyInboundMilestoneEvent] performMilestoneRefresh failed for externalId=${ref.externalId} project=${row.projectId} integration=${row.integrationId}: ${refreshResult.error ?? "unknown"}`
+              );
+            }
+          }
+          milestoneId = resolved.tracked[0].milestoneId;
+          finalOutcome = "refreshed";
+        }
       }
     }
   } catch (err) {

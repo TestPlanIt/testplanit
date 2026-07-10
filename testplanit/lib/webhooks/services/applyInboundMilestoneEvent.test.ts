@@ -32,8 +32,8 @@ const mocks = vi.hoisted(() => {
   const projectIntegrationFindUnique = vi.fn(
     async (..._args: any[]): Promise<any> => null
   );
-  const milestonesFindFirst = vi.fn(
-    async (..._args: any[]): Promise<any> => null
+  const milestonesFindMany = vi.fn(
+    async (..._args: any[]): Promise<any[]> => []
   );
   const adapter = {
     adapterType: "JIRA" as AdapterType,
@@ -66,7 +66,7 @@ const mocks = vi.hoisted(() => {
         findMany: integrationProjectFindMany,
       },
       projectIntegration: { findUnique: projectIntegrationFindUnique },
-      milestones: { findFirst: milestonesFindFirst },
+      milestones: { findMany: milestonesFindMany },
     },
     captureAuditEvent: vi.fn(async () => undefined),
     adapter,
@@ -84,7 +84,7 @@ const mocks = vi.hoisted(() => {
     boardAdapter,
     integrationProjectFindMany,
     projectIntegrationFindUnique,
-    milestonesFindFirst,
+    milestonesFindMany,
   };
 });
 
@@ -158,8 +158,8 @@ const resetMocks = () => {
   mocks.integrationProjectFindMany.mockResolvedValue([]);
   mocks.projectIntegrationFindUnique.mockReset();
   mocks.projectIntegrationFindUnique.mockResolvedValue(null);
-  mocks.milestonesFindFirst.mockReset();
-  mocks.milestonesFindFirst.mockResolvedValue(null);
+  mocks.milestonesFindMany.mockReset();
+  mocks.milestonesFindMany.mockResolvedValue([]);
 
   mocks.performMilestoneRefresh.mockReset();
   mocks.performMilestoneRefresh.mockResolvedValue({ success: true });
@@ -204,6 +204,9 @@ describe("applyInboundMilestoneEvent", () => {
     });
     mocks.integrationProjectFindMany.mockResolvedValue([
       activeIntegrationProject(),
+    ]);
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 555, projectId: 7, integrationId: 42 },
     ]);
 
     const result = await applyInboundMilestoneEvent(baseInput());
@@ -360,6 +363,9 @@ describe("applyInboundMilestoneEvent", () => {
       projectId: "10050",
       projectKey: "DEMO",
     });
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 556, projectId: 7, integrationId: 42 },
+    ]);
 
     const result = await applyInboundMilestoneEvent(
       baseInput({
@@ -406,6 +412,9 @@ describe("applyInboundMilestoneEvent", () => {
       projectId: "20060",
       projectKey: "ADM",
     });
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 557, projectId: 7, integrationId: 42 },
+    ]);
 
     const result = await applyInboundMilestoneEvent(
       baseInput({
@@ -453,11 +462,9 @@ describe("applyInboundMilestoneEvent", () => {
       projectId: "20060",
       projectKey: "ADM",
     });
-    mocks.milestonesFindFirst.mockResolvedValue({
-      id: 777,
-      projectId: 7,
-      integrationId: 42,
-    });
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 777, projectId: 7, integrationId: 42 },
+    ]);
 
     const result = await applyInboundMilestoneEvent(
       baseInput({
@@ -504,10 +511,9 @@ describe("applyInboundMilestoneEvent", () => {
         projectIntegration: { projectId: 8, integrationId: 42 },
       }),
     ]);
-    mocks.milestonesFindFirst.mockResolvedValue({
-      projectId: 8,
-      integrationId: 42,
-    });
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 808, projectId: 8, integrationId: 42 },
+    ]);
 
     const result = await applyInboundMilestoneEvent(baseInput());
 
@@ -553,6 +559,9 @@ describe("applyInboundMilestoneEvent", () => {
         projectIntegration: { projectId: 99, integrationId: 42 },
       }),
     ]);
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 990, projectId: 99, integrationId: 42 },
+    ]);
 
     await applyInboundMilestoneEvent(baseInput());
 
@@ -578,7 +587,9 @@ describe("applyInboundMilestoneEvent", () => {
     mocks.integrationProjectFindMany.mockResolvedValue([
       activeIntegrationProject(),
     ]);
-    mocks.milestonesFindFirst.mockResolvedValue({ id: 555 });
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 555, projectId: 7, integrationId: 42 },
+    ]);
 
     const result = await applyInboundMilestoneEvent(
       baseInput({ eventType: "jira:version_deleted" })
@@ -605,7 +616,9 @@ describe("applyInboundMilestoneEvent", () => {
     mocks.integrationProjectFindMany.mockResolvedValue([
       activeIntegrationProject(),
     ]);
-    mocks.milestonesFindFirst.mockResolvedValue({ id: 555 });
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 555, projectId: 7, integrationId: 42 },
+    ]);
 
     const result = await applyInboundMilestoneEvent(
       baseInput({ eventType: "jira:version_deleted" })
@@ -634,7 +647,9 @@ describe("applyInboundMilestoneEvent", () => {
       projectId: "10050",
       projectKey: "DEMO",
     });
-    mocks.milestonesFindFirst.mockResolvedValue({ id: 777 });
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 777, projectId: 7, integrationId: 42 },
+    ]);
 
     const result = await applyInboundMilestoneEvent(
       baseInput({
@@ -661,6 +676,127 @@ describe("applyInboundMilestoneEvent", () => {
     );
   });
 
+  it("PER-PROJECT FAN-OUT: an update event refreshes EVERY project tracking the artifact, each scoped to its own row", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject({
+        projectIntegration: { projectId: 7, integrationId: 42 },
+      }),
+      activeIntegrationProject({
+        projectIntegration: { projectId: 8, integrationId: 42 },
+      }),
+    ]);
+    // External identity is per-project: BOTH projects track the same
+    // artifact via their own rows.
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 701, projectId: 7, integrationId: 42 },
+      { id: 801, projectId: 8, integrationId: 42 },
+    ]);
+
+    const result = await applyInboundMilestoneEvent(baseInput());
+
+    expect(result.outcome).toBe("refreshed");
+    expect(mocks.performMilestoneRefresh).toHaveBeenCalledTimes(2);
+    expect(mocks.performMilestoneRefresh).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      "10100",
+      { minFreshnessSeconds: 15, projectId: 7 }
+    );
+    expect(mocks.performMilestoneRefresh).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      "10100",
+      { minFreshnessSeconds: 15, projectId: 8 }
+    );
+  });
+
+  it("PER-PROJECT FAN-OUT: an upstream deletion converts EVERY project's tracking row, not just the first", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 701, projectId: 7, integrationId: 42 },
+      { id: 801, projectId: 8, integrationId: 42 },
+    ]);
+
+    const result = await applyInboundMilestoneEvent(
+      baseInput({ eventType: "jira:version_deleted" })
+    );
+
+    expect(result.outcome).toBe("converted");
+    expect(mocks.convertMilestoneToLocal).toHaveBeenCalledTimes(2);
+    expect(mocks.convertMilestoneToLocal).toHaveBeenCalledWith(
+      mocks.baseDb,
+      701,
+      "deleted",
+      undefined
+    );
+    expect(mocks.convertMilestoneToLocal).toHaveBeenCalledWith(
+      mocks.baseDb,
+      801,
+      "deleted",
+      undefined
+    );
+  });
+
+  it("PER-PROJECT FAN-OUT: a created event imports into EVERY mapped project with auto-track ON, skipping projects with it OFF", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject({
+        projectIntegration: { projectId: 7, integrationId: 42 },
+      }),
+      activeIntegrationProject({
+        projectIntegration: { projectId: 8, integrationId: 42 },
+      }),
+    ]);
+    // Project 7: auto-track ON; project 8: auto-track OFF.
+    mocks.projectIntegrationFindUnique.mockImplementation(async (args: any) => {
+      const projectId = args?.where?.projectId_integrationId?.projectId;
+      if (projectId === 7) {
+        return {
+          config: {
+            milestoneSync: { autoTrack: true, autoTrackAdminId: "admin-1" },
+          },
+        };
+      }
+      return { config: { milestoneSync: { autoTrack: false } } };
+    });
+
+    const result = await applyInboundMilestoneEvent(
+      baseInput({ eventType: "jira:version_created" })
+    );
+
+    expect(result.outcome).toBe("imported");
+    expect(mocks.performMilestoneImport).toHaveBeenCalledTimes(1);
+    expect(mocks.performMilestoneImport).toHaveBeenCalledWith(
+      "__system__",
+      42,
+      7,
+      { externalIds: ["10100"], kinds: ["RELEASE"] },
+      "admin-1"
+    );
+  });
+
   it("a convert event for a milestone with no local row is dropped (unmatched) rather than erroring", async () => {
     const applyInboundMilestoneEvent = await importSut();
     (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
@@ -672,7 +808,7 @@ describe("applyInboundMilestoneEvent", () => {
     mocks.integrationProjectFindMany.mockResolvedValue([
       activeIntegrationProject(),
     ]);
-    mocks.milestonesFindFirst.mockResolvedValue(null);
+    mocks.milestonesFindMany.mockResolvedValue([]);
 
     const result = await applyInboundMilestoneEvent(
       baseInput({ eventType: "jira:version_deleted" })
@@ -766,7 +902,9 @@ describe("applyInboundMilestoneEvent", () => {
     mocks.integrationProjectFindMany.mockResolvedValue([
       activeIntegrationProject(),
     ]);
-    mocks.milestonesFindFirst.mockResolvedValue({ id: 555 });
+    mocks.milestonesFindMany.mockResolvedValue([
+      { id: 555, projectId: 7, integrationId: 42 },
+    ]);
 
     await applyInboundMilestoneEvent(
       baseInput({ eventType: "jira:version_deleted" })

@@ -299,6 +299,7 @@ const processor = async (job: Job<MultiTenantSyncJobData>) =>
           const refreshData = (jobData.data ?? {}) as {
             externalId?: string;
             minFreshnessSeconds?: number;
+            projectId?: number;
           };
           if (!refreshData.externalId) {
             throw new Error("externalId is required for milestone refresh");
@@ -311,6 +312,10 @@ const processor = async (job: Job<MultiTenantSyncJobData>) =>
             {
               ...serviceOptions,
               minFreshnessSeconds: refreshData.minFreshnessSeconds,
+              // External identity is per-project — scope when the enqueuer
+              // supplied a project (an unscoped refresh picks an arbitrary
+              // row when several projects track the same artifact).
+              projectId: refreshData.projectId,
             }
           );
 

@@ -43,6 +43,8 @@ The dialog previews the tracker's Fix Versions and Sprints across **all** of the
 * **Multi-select:** Pick any number of artifacts to import in one pass.
 * **Already Linked badge:** Marks artifacts already tracked as a milestone in this project. A milestone that was previously unlinked or converted to local shows as importable again; importing it re-attaches the existing milestone — its test runs and links stay intact — instead of creating a duplicate.
 
+Milestones are tracked **per project**: several TestPlanIt projects can import the same Jira version or sprint, and each project gets its own independent milestone — synced, unlinked, or deleted without affecting any other project's copy of the same artifact.
+
 Import runs in the background: the dialog closes as soon as the import is queued, an **Importing…** indicator shows progress on the list page, and a toast confirms once the import completes.
 
 :::info Permissions Required

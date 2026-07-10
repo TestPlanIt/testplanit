@@ -75,10 +75,11 @@ export const POST = withAuditContext(
 
       if (externalId) {
         // Scope the refresh to the project this request was authorized
-        // against — [externalId, integrationId] is globally unique across
-        // projects sharing the integration, so an unscoped lookup would let
-        // a project-admin of project A refresh (and existence-probe)
-        // project B's milestone.
+        // against — external identity is per-project ([externalId,
+        // integrationId, projectId]), and several projects sharing the
+        // integration can track the same artifact, so an unscoped lookup
+        // would let a project-admin of project A refresh (and
+        // existence-probe) project B's milestone.
         const result = await milestoneSyncService.performMilestoneRefresh(
           session.user.id,
           integrationId,

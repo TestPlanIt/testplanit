@@ -33,11 +33,13 @@ export interface MilestoneSyncServiceOptions {
   minFreshnessSeconds?: number;
   /**
    * When set, scopes the refresh's milestone lookup to rows owned by this
-   * project. `[externalId, integrationId]` is globally unique but a single
-   * Integration can be mapped to many projects, so a caller authorized for
-   * project A must not be able to refresh (or probe the existence of)
-   * project B's milestone through the shared integration. The `/now` route
-   * always passes the projectId it authorized against.
+   * project. External identity is per-project ([externalId, integrationId,
+   * projectId]) — the same artifact can be tracked by several projects on
+   * one integration — so a caller authorized for project A must not be
+   * able to refresh (or probe the existence of) project B's milestone
+   * through the shared integration. Every live caller (the `/now` route,
+   * the project sync pass, the members-overflow refresh, and the webhook
+   * fan-out) passes the projectId it resolved/authorized against.
    */
   projectId?: number;
 }
@@ -117,19 +119,29 @@ const PROJECT_PASS_FRESHNESS_TTL_SECONDS = 300;
 
 function milestoneSyncLockKey(
   integrationId: number,
-  externalId: string
+  externalId: string,
+  projectId?: number
 ): string {
-  return `sync-lock:milestone:${integrationId}:${externalId}`;
+  // External identity is per-project ([externalId, integrationId,
+  // projectId]), so the lock scopes to the project when known — two
+  // projects tracking the same artifact must not contend (a "locked"
+  // result reads as success and would silently skip the second project's
+  // refresh). The unscoped form only serves callers with no project
+  // context, which never coexist with scoped refreshes of the same row.
+  return projectId != null
+    ? `sync-lock:milestone:${integrationId}:${externalId}:${projectId}`
+    : `sync-lock:milestone:${integrationId}:${externalId}`;
 }
 
 async function acquireMilestoneSyncLock(
   integrationId: number,
-  externalId: string
+  externalId: string,
+  projectId?: number
 ): Promise<boolean> {
   // Fail-open if Valkey isn't connected — better availability than blocking
   // sync entirely on cache infra (matches SyncService precedent).
   if (!valkeyConnection) return true;
-  const key = milestoneSyncLockKey(integrationId, externalId);
+  const key = milestoneSyncLockKey(integrationId, externalId, projectId);
   const result = await valkeyConnection.set(
     key,
     "1",
@@ -142,10 +154,13 @@ async function acquireMilestoneSyncLock(
 
 async function releaseMilestoneSyncLock(
   integrationId: number,
-  externalId: string
+  externalId: string,
+  projectId?: number
 ): Promise<void> {
   if (!valkeyConnection) return;
-  await valkeyConnection.del(milestoneSyncLockKey(integrationId, externalId));
+  await valkeyConnection.del(
+    milestoneSyncLockKey(integrationId, externalId, projectId)
+  );
 }
 
 /**
@@ -249,7 +264,9 @@ export class MilestoneSyncService {
    * Shared gate + lock around any inner milestone sync, mirroring
    * `SyncService._withGateAndLock` (lines 1130-1181). Milestones has no
    * `externalKey` fallback (unlike Issue), so the freshness lookup is a
-   * plain `{ integrationId, externalId }` match.
+   * plain `{ integrationId, externalId }` match, project-scoped when the
+   * caller passed `serviceOptions.projectId` (which every live caller does
+   * — identity is per-project).
    */
   private async _withGateAndLock(
     integrationId: number,
@@ -281,7 +298,8 @@ export class MilestoneSyncService {
 
       const acquired = await acquireMilestoneSyncLock(
         integrationId,
-        externalId
+        externalId,
+        serviceOptions.projectId
       );
       if (!acquired) {
         return { success: true, locked: true };
@@ -290,7 +308,11 @@ export class MilestoneSyncService {
       try {
         return await inner();
       } finally {
-        await releaseMilestoneSyncLock(integrationId, externalId);
+        await releaseMilestoneSyncLock(
+          integrationId,
+          externalId,
+          serviceOptions.projectId
+        );
       }
     } catch (error: any) {
       console.error(`Failed to refresh milestone ${externalId}:`, error);
@@ -323,12 +345,16 @@ export class MilestoneSyncService {
   }
 
   /**
-   * Idempotent shell upsert on `[externalId, integrationId]` — the ONLY
-   * write path through the new `@deny('update', integrationId != null)`
-   * locks (raw db, per Shared Patterns "Raw-db write path bypassing
+   * Idempotent shell upsert on `[externalId, integrationId, projectId]` —
+   * the ONLY write path through the new `@deny('update', integrationId !=
+   * null)` locks (raw db, per Shared Patterns "Raw-db write path bypassing
    * @deny"). `milestoneTypeId`/`projectId`/`createdById` are only set on
    * CREATE — an update never touches ownership/type assignment fields
    * mirroring `_createIssueFromExternal`'s create/update split.
+   *
+   * The identity is PER PROJECT: importing an artifact into project B while
+   * project A tracks (or tombstoned, or detached) the same artifact creates
+   * a brand-new row for B and never revives or mutates A's row.
    */
   private async _upsertMilestoneShell(
     db: DbClient,
@@ -347,9 +373,10 @@ export class MilestoneSyncService {
       typeof db.milestones?.findUnique === "function"
         ? await db.milestones.findUnique({
             where: {
-              externalId_integrationId: {
+              externalId_integrationId_projectId: {
                 externalId: ext.id,
                 integrationId,
+                projectId,
               },
             },
             select: { id: true },
@@ -358,9 +385,10 @@ export class MilestoneSyncService {
 
     const row = await db.milestones.upsert({
       where: {
-        externalId_integrationId: {
+        externalId_integrationId_projectId: {
           externalId: ext.id,
           integrationId,
+          projectId,
         },
       },
       create: {
@@ -386,10 +414,11 @@ export class MilestoneSyncService {
         isDeleted: false,
         // Re-link on re-import (D-07/D-12): a previously-converted
         // (detached) milestone found again via the same [externalId,
-        // integrationId] pairing re-attaches instead of creating a
-        // duplicate — clearing detachedAt resumes tracker-owned field
+        // integrationId, projectId] pairing re-attaches instead of creating
+        // a duplicate — clearing detachedAt resumes tracker-owned field
         // locks and re-establishes sync eligibility for the SAME row,
-        // preserving its runs/sessions/links.
+        // preserving its runs/sessions/links. Re-attachment is per project:
+        // only THIS project's row is revived, never another project's.
         detachedAt: null,
       },
     });
@@ -419,8 +448,8 @@ export class MilestoneSyncService {
    * observed half-detached with stale SYNCED links (T-19-03-02):
    *   1. `Milestones.detachedAt = now()` — the lock-lift signal.
    *      `integrationId` is DELIBERATELY left untouched (Pitfall 3): nulling
-   *      it would destroy the `[externalId, integrationId]` re-link identity
-   *      and make the permanent badge guard disappear.
+   *      it would destroy the `[externalId, integrationId, projectId]`
+   *      re-link identity and make the permanent badge guard disappear.
    *   2. `Milestones.externalState` gets a THREE-WAY value — "merged" /
    *      "manual_unlink" / "deleted" — so Plan 05's badge can render the
    *      permanent removed/merged badge ONLY for deleted/merged and NO
@@ -1061,9 +1090,10 @@ export class MilestoneSyncService {
         try {
           const existing = await db.milestones.findUnique({
             where: {
-              externalId_integrationId: {
+              externalId_integrationId_projectId: {
                 externalId: ext.id,
                 integrationId,
+                projectId,
               },
             },
             select: { id: true },
