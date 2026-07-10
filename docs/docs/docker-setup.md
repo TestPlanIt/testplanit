@@ -29,12 +29,12 @@ The Docker Compose setup starts these containerized services:
 - Git
 - **RAM Requirements:**
 
-  | Phase                    | Minimum | Recommended | Notes                                      |
-  | -------------------------- | --------- | ------------- | -------------------------------------------- |
-  | **Building**             | 24GB    | 24GB+       | Required during initial build and updates  |
-  | **Running (Full Stack)** | 8GB     | 14GB        | All services combined                      |
+  | Phase                    | Minimum | Recommended | Notes                             |
+  | ------------------------ | ------- | ----------- | --------------------------------- |
+  | **Building**             | 8GB     | 8GB         | Peaks ~7GB, only during the build |
+  | **Running (Full Stack)** | 8GB     | 14GB        | All services combined             |
 
-  **Memory-constrained systems:** Allocate 24GB to Docker for building, then reduce to 8-14GB for running after build completes.
+  **Memory-constrained systems:** The build peaks around 7GB and the running stack needs 8–14GB, so a machine sized for the running total also covers builds.
 
   **Per-service breakdown (running):**
 
