@@ -93,6 +93,13 @@ export async function GET(
       milestone.projectId
     );
 
+    // Scope count: this milestone's own MilestoneIssue links only (D-15,
+    // never descendant-scoped) — distinct from `issues` above, which rolls
+    // up test-run/session defects across the whole descendant tree.
+    const scopeCount = await baseDb.milestoneIssue.count({
+      where: { milestoneId },
+    });
+
     const response: MilestoneSummaryData = {
       milestoneId,
       totalItems,
@@ -102,6 +109,7 @@ export async function GET(
       commentsCount,
       segments: allSegments,
       issues,
+      scopeCount,
     };
 
     return NextResponse.json(response);

@@ -2,16 +2,16 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useQuery } from "@tanstack/react-query";
 import {
   ArrowUpDown,
+  Bug,
   CalendarClock,
   CheckCircle2,
   Clock,
@@ -24,7 +24,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import type { MilestoneSummaryData } from "~/app/api/milestones/[milestoneId]/summary/route";
+import { useMilestoneSummary } from "~/hooks/useMilestoneSummary";
 import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
@@ -34,31 +34,29 @@ interface MilestoneSummaryProps {
   milestoneId: number;
   projectId?: string | number;
   className?: ClassValue;
+  // Detail page only: makes the count chips clickable, scrolling to and
+  // expanding the corresponding Issues card section. Omitted on the
+  // milestones LIST page (MilestoneItemCard), where the chips render as
+  // plain text — the whole card is already a clickable row there, and a
+  // nested interactive chip would create a nested-link/click conflict.
+  onScopeChipClick?: () => void;
+  onFoundInTestingChipClick?: () => void;
 }
 
 export function MilestoneSummary({
   milestoneId,
   projectId,
   className,
+  onScopeChipClick,
+  onFoundInTestingChipClick,
 }: MilestoneSummaryProps) {
   const tCommon = useTranslations("common");
+  const tMilestones = useTranslations("milestones");
   const tGlobal = useTranslations();
   const locale = useLocale();
   const { data: _session } = useSession();
 
-  // Fetch summary data from API
-  const { data: summaryData, isLoading } = useQuery<MilestoneSummaryData>({
-    queryKey: ["milestoneSummary", milestoneId],
-    queryFn: async () => {
-      const response = await fetch(`/api/milestones/${milestoneId}/summary`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch milestone summary");
-      }
-      return response.json();
-    },
-    enabled: !!milestoneId,
-    staleTime: 30000, // Cache for 30 seconds
-  });
+  const { data: summaryData, isLoading } = useMilestoneSummary(milestoneId);
 
   const { data: firstStatus } = useClientQueries(schema).status.useFindFirst({
     where: {
@@ -398,10 +396,82 @@ export function MilestoneSummary({
             </Link>
           )}
 
-          {/* Display aggregated issues list if any exist */}
-          {summaryData.issues && summaryData.issues.length > 0 && (
-            <div>
-              <IssuesListDisplay issues={summaryData.issues} size="small" />
+          {/* Paired issue-count chips: this milestone's scope (MilestoneIssue
+              links, D-15 — this milestone only) vs. what testing turned up
+              (test-run/session-linked defects, rolled up through
+              descendants). Two unrelated counts that both used to render as
+              one "issues" chip, which confused users when they diverged. */}
+          {(summaryData.scopeCount > 0 ||
+            (summaryData.issues && summaryData.issues.length > 0)) && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {summaryData.scopeCount > 0 &&
+                (onScopeChipClick ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onScopeChipClick();
+                    }}
+                    className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                    data-testid="milestone-summary-scope-chip"
+                  >
+                    <Badge className="cursor-pointer text-xs px-1.5 py-0">
+                      {summaryData.scopeCount}
+                    </Badge>
+                    {tMilestones("summary.inScope", {
+                      count: summaryData.scopeCount,
+                    })}
+                  </button>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1"
+                    data-testid="milestone-summary-scope-chip"
+                  >
+                    <Badge className="text-xs px-1.5 py-0">
+                      {summaryData.scopeCount}
+                    </Badge>
+                    {tMilestones("summary.inScope", {
+                      count: summaryData.scopeCount,
+                    })}
+                  </span>
+                ))}
+              {summaryData.scopeCount > 0 &&
+                summaryData.issues &&
+                summaryData.issues.length > 0 && <span>{"·"}</span>}
+              {summaryData.issues &&
+                summaryData.issues.length > 0 &&
+                (onFoundInTestingChipClick ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFoundInTestingChipClick();
+                    }}
+                    className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                    data-testid="milestone-summary-found-chip"
+                  >
+                    <Badge className="cursor-pointer text-xs px-1.5 py-0">
+                      <Bug className="w-3 h-3 me-0.5 shrink-0" />
+                      {summaryData.issues.length}
+                    </Badge>
+                    {tMilestones("summary.foundInTesting", {
+                      count: summaryData.issues.length,
+                    })}
+                  </button>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1"
+                    data-testid="milestone-summary-found-chip"
+                  >
+                    <Badge className="text-xs px-1.5 py-0">
+                      <Bug className="w-3 h-3 me-0.5 shrink-0" />
+                      {summaryData.issues.length}
+                    </Badge>
+                    {tMilestones("summary.foundInTesting", {
+                      count: summaryData.issues.length,
+                    })}
+                  </span>
+                ))}
             </div>
           )}
         </div>

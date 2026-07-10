@@ -20,6 +20,9 @@ vi.mock("~/lib/db", () => ({
     issue: {
       findMany: vi.fn(),
     },
+    milestoneIssue: {
+      count: vi.fn(),
+    },
     $queryRaw: vi.fn(),
   },
 }));
@@ -66,6 +69,7 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
     (baseDb.$queryRaw as any).mockResolvedValue([]);
     (baseDb.comment.count as any).mockResolvedValue(0);
     (baseDb.issue.findMany as any).mockResolvedValue([]);
+    (baseDb.milestoneIssue.count as any).mockResolvedValue(0);
   });
 
   describe("Input validation", () => {
@@ -138,8 +142,26 @@ describe("GET /api/milestones/[milestoneId]/summary", () => {
       expect(data).toHaveProperty("commentsCount", 3);
       expect(data).toHaveProperty("segments");
       expect(data).toHaveProperty("issues");
+      expect(data).toHaveProperty("scopeCount");
       expect(Array.isArray(data.segments)).toBe(true);
       expect(Array.isArray(data.issues)).toBe(true);
+    });
+
+    it("returns scopeCount scoped to THIS milestone only (D-15, not allMilestoneIds)", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      mockGetVisibleMilestone.mockResolvedValue(mockMilestone);
+      (getAllDescendantMilestoneIds as any).mockResolvedValue([2, 3]);
+      (baseDb.milestoneIssue.count as any).mockResolvedValue(12);
+
+      const [req, ctx] = createRequest("1");
+      const response = await GET(req, ctx);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.scopeCount).toBe(12);
+      expect(baseDb.milestoneIssue.count).toHaveBeenCalledWith({
+        where: { milestoneId: 1 },
+      });
     });
 
     it("fetches descendants and includes them in queries", async () => {
