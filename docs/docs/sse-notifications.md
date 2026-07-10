@@ -5,12 +5,14 @@ title: SSE Notifications and Live Updates
 
 # SSE Notifications and Live Updates
 
-TestPlanIt uses [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) with [Valkey](https://valkey.io/) (or Redis) pub/sub fan-out to push updates to clients in near-real time. Two long-lived streams share this transport:
+TestPlanIt uses [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) with [Valkey](https://valkey.io/) (or Redis) pub/sub fan-out to push updates to clients in near-real time. Several long-lived streams share this transport:
 
 - **`/api/notifications/stream`** — powers the in-app notification bell. One connection per signed-in user.
 - **`/api/issues/stream?projectId=<id>`** — powers live issue updates driven by inbound webhooks. One connection per project per browser, regardless of how many components on the page are watching that project.
+- **`/api/milestones/{milestoneId}/stream`** — powers live updates on a single milestone's detail page. One connection per milestone per browser.
+- **`/api/projects/{projectId}/milestones/stream`** — powers live updates for every milestone in a project at once. One connection per project per browser; list pages hold a single connection covering every milestone card rather than one per card.
 
-Both streams have the same ingress/proxy requirements (no buffering, long idle timeouts) and the same observability surface; the differences are limited to the connection caps each route applies. This page documents how the transport works, the ingress/proxy configuration required to make long-lived streams reliable behind a load balancer, and the tuning knobs available to operators.
+All streams have the same ingress/proxy requirements (no buffering, long idle timeouts) and the same observability surface; the differences are limited to the connection caps each route applies. This page documents how the transport works, the ingress/proxy configuration required to make long-lived streams reliable behind a load balancer, and the tuning knobs available to operators.
 
 ## What it is and how it works
 
@@ -33,6 +35,17 @@ A single shared Valkey instance handles fan-out for every tenant; isolation is b
 The `/api/issues/stream` route follows the same publish/subscribe model with project-scoped channels (`issues:tenant:<tenantId>:project:<projectId>`). Inbound webhook handlers publish a small `{event, issueId, projectId}` envelope after applying the upstream change to the linked `Issue` row. Authentication and project-access enforcement happen at subscribe time — the route refuses to subscribe a user who cannot read the project, mirroring the policy gate that the notification bell relies on for tenant isolation.
 
 In the browser, the React client uses a refcounted singleton EventSource per project: the first component that subscribes to a project opens the connection, additional subscribers share it, and the connection closes when the last subscriber unmounts. This keeps file-descriptor pressure low — a page with twenty issue badges, a list, and a detail popover for the same project still uses one EventSource. The route's per-user cap therefore bounds the number of distinct projects a user can watch concurrently from one browser, not the number of components on the page.
+
+### Milestone streams
+
+Milestones publish over a pair of routes rather than one:
+
+- `/api/milestones/[milestoneId]/stream` — a per-milestone channel (`live:tenant:<tenantId>:milestone:<milestoneId>`) for the milestone detail page.
+- `/api/projects/[projectId]/milestones/stream` — a per-project channel (`live:tenant:<tenantId>:project:<projectId>:milestones`) for the milestones list page and the Import from Jira picker, so a project with many milestones doesn't open one connection per card.
+
+Every wake-up is published to both channels, so either consumer pattern stays current. Payloads are the same thin wake-up shape as the other streams — an event name plus the affected ids (`{event, milestoneId, projectId, targetId?}`), for events like `milestone.updated`, `milestone.converted`, and `milestone.membership_changed` — never the milestone data itself; clients refetch through the normal policy-enforced API on every wake-up. Both routes gate subscription on the requesting user being able to read the milestone or project (a 404, not a 403, on a failed check, so an inaccessible id isn't confirmed to exist), send the same `{event:"sync"}` checkpoint right after subscribing, and emit the same 25-second heartbeat comment as the notifications and issues streams.
+
+In the browser, both hooks (`useMilestoneLiveStream`, `useProjectMilestoneStream`) share the same refcounted singleton-EventSource registry: every component subscribed to the same milestone or project stream reuses one connection, which closes after a short grace period once the last subscriber unmounts.
 
 ## Ingress and proxy configuration
 
@@ -106,10 +119,10 @@ HTTP/2 is enabled by default on ALB v2; no extra configuration needed. SSE multi
 
 ### Plain nginx (non-ingress)
 
-For deployments that put TestPlanIt behind a manually configured nginx (e.g. on a single docker-compose host), add a location block for each stream. Both routes need the same directives, so a regex location is the most compact way to cover both:
+For deployments that put TestPlanIt behind a manually configured nginx (e.g. on a single docker-compose host), add a location block for each stream. All routes need the same directives, so a regex location is the most compact way to cover them:
 
 ```nginx
-location ~ ^/api/(notifications|issues)/stream {
+location ~ ^/api/(notifications|issues)/stream|^/api/milestones/[^/]+/stream|^/api/projects/[^/]+/milestones/stream {
   proxy_pass http://testplanit_upstream;
   proxy_http_version 1.1;
   proxy_set_header Connection "";
@@ -140,6 +153,10 @@ Each route has its own per-tenant and per-user connection caps so a misbehaving 
 | `SSE_ISSUES_PER_USER_CAP`   | `8`     | Maximum concurrent issue-update connections per user per pod. Higher than the notifications cap because the singleton EventSource manager opens one connection per project the user is watching, and a project switcher / multi-project workflow can legitimately need more open project streams than notification streams (which are user-scoped). |
 
 All four variables are read once at module load. Restart the application pods after changing them.
+
+### Milestone stream caps
+
+The milestone routes don't implement their own per-tenant or per-user connection caps — there is no `SSE_MILESTONES_*` equivalent to the variables above. They share the same Valkey connection, the same subscribe-time access gate, and the same fail-closed `503`/`Retry-After: 30` response when Valkey isn't reachable, but connection volume for these two routes is bounded only by the browser-side refcounted singleton (one connection per milestone or per project, however many components subscribe) rather than a server-side cap.
 
 ## Observability
 
@@ -178,3 +195,8 @@ The TestPlanIt helm chart is planned for a future milestone. The same TestPlanIt
 - Publisher: `testplanit/workers/notificationWorker.ts` (after `prisma.notification.create`)
 - Valkey wiring: `testplanit/lib/valkey.ts` (default singleton + `createSubscriberClient` factory)
 - Bell client: `testplanit/components/NotificationBell.tsx` (EventSource useEffect)
+- Milestone per-milestone route: `testplanit/app/api/milestones/[milestoneId]/stream/route.ts`
+- Milestone per-project route: `testplanit/app/api/projects/[projectId]/milestones/stream/route.ts`
+- Milestone channel helpers: `testplanit/lib/live/channels.ts` (`milestoneChannel`, `milestoneProjectChannel`)
+- Milestone publisher: `testplanit/lib/live/publish.ts` (`publishMilestoneWakeUp`)
+- Milestone client hooks: `testplanit/hooks/useMilestoneLiveStream.ts` (`useMilestoneLiveStream`, `useProjectMilestoneStream`, refcounted singleton EventSource registry)

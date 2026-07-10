@@ -12,7 +12,7 @@ This page provides a detailed view and editing capabilities for a specific proje
 The page uses a resizable two-panel layout:
 
 - **Left Panel (Main Content)**:
-  - **Milestone Name**: Displays the name (editable in Edit Mode).
+  - **Milestone Name**: Displays the name (editable in Edit Mode). A milestone synced from an external tracker shows a [source badge](#source-badge) next to the name.
   - **Documentation**: Shows the rich text documentation associated with this milestone (`docs` field). Editable in Edit Mode via a `TipTapEditor`.
   - **(View Mode Only)** Lists of:
     - **Child Milestones**: Displays any direct children of this milestone, showing their name, status badge, and dates. Clicking a child navigates to its own detail page.
@@ -37,6 +37,67 @@ In the default view mode:
   - **Type**: Shows the selected Milestone Type.
   - **Parent**: Shows the parent milestone, if any.
 
+## Source Badge
+
+A milestone synced from an external tracker (currently Jira) shows a badge next to its name with three segments, for example **Jira · Sprint · active**: the tracker's icon, the milestone's kind (**Release** or **Sprint**), and its current tracker-reported state.
+
+- **Project admins** see the badge as a menu trigger. Clicking it opens:
+  - **Open in Jira** — opens the linked artifact in a new tab. Disabled if no external URL is stored for the milestone.
+  - **Unlink from Jira** — detaches the milestone from the tracker after a confirmation dialog explaining the consequences: sync stops, the milestone's fields become editable again, its synced issue links become manual (yours to keep or remove), and the milestone can be re-linked later by importing the same artifact again from the [Milestones list](./milestones.md).
+- Everyone else sees the badge as a plain link to the tracker (or a static, non-clickable label if no URL is stored) — no menu.
+- On narrow layouts the badge collapses one segment at a time — state, then kind, then the provider name — down to just the tracker icon. The full label remains available on hover.
+- If the milestone's upstream artifact is deleted or merged into another artifact in the tracker, the badge becomes permanent and non-dismissible, reading **source removed in Jira** or **merged into \{target\}** (the latter links to the target milestone when it's still resolvable). This badge no longer offers a menu — the milestone has become local.
+- A milestone that was **manually** unlinked shows **no badge at all**. Once you choose to unlink, the milestone behaves like any other local milestone with no residual marker.
+
+The same badge appears on milestone cards on the [Milestones list](./milestones.md).
+
+:::info Permissions Required
+Unlinking a milestone from Jira requires **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../permissions-guide.md).
+:::
+
+## Summary
+
+At the top of the page (view mode only), a summary bar breaks down the test run and session results contributing to the milestone. When the milestone has related issues, two count chips appear next to it:
+
+- **Target icon** — the number of issues **in scope**: issues linked to this milestone directly, whether synced from Jira or linked manually.
+- **Bug icon** — the number of issues **found in testing**: defects surfaced by test runs and sessions linked to this milestone and its child milestones.
+
+Hovering either chip shows its full label as a tooltip. Clicking a chip scrolls down to the [Issues card](#issues) and expands the matching section.
+
+## Issues
+
+Below the summary, the **Issues** card gathers every issue related to the milestone into two independently collapsible sections. Each section remembers whether you last left it expanded or collapsed.
+
+### In Scope
+
+Issues that belong to this milestone: those synced automatically from the linked Jira sprint or version, plus any linked manually. Each row shows:
+
+- **Coverage** — a chip summarizing the latest completed outcome of every test case linked to that issue, as one colored pip per status plus an Untested pip, or an **Uncovered** chip when none of the linked cases has a completed result yet.
+- **Source** — **Synced** or **Manual**.
+
+Above the table, milestone-wide coverage totals roll up every listed issue's per-status pips — with a legend popover explaining the colors — plus a count of uncovered issues.
+
+A filter row (search, coverage state, source, and issue type) appears once there's at least one issue to filter; it stays hidden on an empty section.
+
+Select one or more issues and click **Create test run** to open the Add Test Run wizard pre-seeded with every non-deleted test case linked to the selected issues, with the contributing issues pre-linked to the new run.
+
+Use **Link Issue** to attach an issue manually, and the per-row action to unlink one. Synced issue links can't be unlinked here — they're marked "Managed by Jira" and must be removed from the version/sprint in Jira instead.
+
+When the linked Jira sprint or version has more issues than are linked here — because an automatic sync hit its import cap, or membership has simply drifted since the last sync — a **More issues in Jira** panel appears below the table listing the missing issues, with an **Import & link** action to pull them in.
+
+:::info Permissions Required
+
+- **Linking an issue, unlinking a manually-linked issue, and creating a test run from selected issues** require the `Add/Edit` permission for the `Milestones` application area.
+- **Import & link** (the overflow panel) requires **project admin** status.
+
+:::
+
+### Found in Testing
+
+A read-only list of issues surfaced by test runs and sessions linked to this milestone **and its child milestones**. An issue that also appears in **In scope** carries an **In scope** badge here.
+
+This section has no linking controls of its own — to change what a milestone is linked to, use **In scope** above.
+
 ## Editing Details (Edit Mode)
 
 Clicking the **Edit** button (or accessing via an edit link) activates Edit Mode:
@@ -49,6 +110,14 @@ Clicking the **Edit** button (or accessing via an edit link) activates Edit Mode
 - **Saving**: Click **Save** (icon: Save) to persist changes. A success/error toast message appears.
 - **Canceling**: Click **Cancel** (icon: CircleSlash2) to discard changes and revert to the last saved state.
 - **Deleting**: Click **Delete** to open the confirmation modal (cascades to children). On successful deletion, you are redirected back to the main Milestones list.
+
+On a milestone that's actively synced from Jira, several fields are locked because the tracker owns them:
+
+:::warning Managed by Jira
+The **Name**, **Started**/**Completed** toggles, **Start**/**Due** dates, and **Description** are read-only while the milestone is synced — an amber notice explains this in the right panel. The **Auto-Complete** toggle is hidden entirely, since the tracker (not the local auto-complete worker) owns whether a synced milestone is complete. **Type**, **Parent**, and the notification settings stay editable.
+
+These locks lift once the milestone is no longer actively synced — either its upstream artifact was removed in Jira, or it was [manually unlinked](#source-badge) — at which point it behaves like any local milestone.
+:::
 
 :::info Permissions Required
 
@@ -75,6 +144,10 @@ Dates and durations are formatted for your locale. As with the test run and sess
 ## Automatic Completion
 
 Milestones can be configured to automatically mark themselves as completed when their due date is reached.
+
+:::note
+Automatic Completion is unavailable while a milestone is actively synced from Jira — the tracker owns the milestone's completion state, so the **Auto-Complete** toggle is hidden (see [Editing Details](#editing-details-edit-mode)). It becomes available again once the milestone is local — either its upstream artifact was removed in Jira or it was manually unlinked.
+:::
 
 ### Enabling Auto-Complete
 

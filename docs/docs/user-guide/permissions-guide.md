@@ -253,6 +253,17 @@ Permissions are granted per application area. The complete list of areas is:
 - **Reporting** - Reports and analytics
 - **Settings** - Project settings
 
+:::note Milestone sync actions require project admin
+Most milestone actions follow the `Milestones` area's **Add/Edit** permission as described above — including linking or unlinking individual issues and editing milestone fields. A few actions that reach out to the external tracker instead require **project admin** status (the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access), regardless of the acting user's `Milestones` permission:
+
+- **Import from Jira**
+- **Sync now**
+- **Unlink from Jira**
+- **Import & link** (the member-issues overflow panel)
+
+See [Milestone Details](./projects/milestone-details.md) and [Milestones](./projects/milestones.md) for where these actions appear.
+:::
+
 ### Permission Types
 
 For each application area, roles can have:

@@ -13,12 +13,16 @@ Navigate to **Projects -> [Your Project] -> Milestones** from the sidebar.
 
 ## Viewing Milestones
 
-The page shows a table with the following columns:
+The page shows milestones as cards, grouped under two tabs:
 
-* **Name:** The name of the milestone (clickable link to the Milestone Details page).
-* **Status:** The current status of the milestone (e.g., Open, In Progress, Completed).
-* **Due Date:** The target completion date for the milestone.
-* **Actions:** (Usually contains an edit button or link).
+* **Active:** Milestones that haven't been marked complete.
+* **Completed:** Milestones that have been marked complete.
+
+Within each tab, child milestones are nested and indented beneath their parent. Each card shows the milestone's name, type icon, status badge, start/due dates, a [summary bar](./milestone-details.md#summary) of its test run and session results, and a forecast estimate.
+
+A milestone synced from an external tracker (currently Jira) shows a [source badge](./milestone-details.md#source-badge) next to its name — for example **Jira · Sprint · active**.
+
+When a milestone has related issues, its summary bar carries the same paired count chips documented on the [Milestone Details](./milestone-details.md#summary) page — a **Target** icon for issues in scope and a **Bug** icon for issues found in testing. On this page, clicking a chip opens a popover listing its issues instead of navigating to the details page.
 
 ## Adding a New Milestone
 
@@ -28,14 +32,22 @@ Click the **Add Milestone** button located in the top-right corner of the page.
 Adding milestones requires the `Add/Edit` permission for the `Milestones` application area for the specific project. Users without this permission will not see the "Add Milestone" button.
 :::
 
-## Searching and Filtering
+## Import from Jira
 
-* **Search:** Use the search bar to find milestones by name.
-* **Filtering:** Apply filters (e.g., by status) if available.
+When a milestone-capable integration (currently Jira) has milestone sync enabled for at least one of the project's linked external projects, an **Import from Jira** button appears next to **Add Milestone**.
 
-## Sorting
+The dialog previews the tracker's Fix Versions and Sprints across **all** of the project's Jira mappings, with:
 
-Click on column headers to sort the list by that column.
+* **Show closed:** A toggle (off by default) that includes closed or released artifacts in the preview.
+* **Search and per-Jira-project filter chips:** Narrow the preview when the project has more than one Jira mapping.
+* **Multi-select:** Pick any number of artifacts to import in one pass.
+* **Already Linked badge:** Marks artifacts already tracked as a milestone in this project. A milestone that was previously unlinked or converted to local shows as importable again; importing it re-attaches the existing milestone — its test runs and links stay intact — instead of creating a duplicate.
+
+Import runs in the background: the dialog closes as soon as the import is queued, an **Importing…** indicator shows progress on the list page, and a toast confirms once the import completes.
+
+:::info Permissions Required
+Importing from Jira requires **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../permissions-guide.md).
+:::
 
 ## Navigation
 

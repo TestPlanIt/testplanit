@@ -97,6 +97,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Due dates** - Set target dates and monitor timeline adherence
 - **Alerts** - Receive notifications when milestone due dates are approaching
 - **Milestone types** - Define custom milestone categories (releases, sprints, etc.)
+- **Jira milestone sync** - Import Jira Fix Versions and Sprints as Milestones, kept fresh via webhooks and periodic refresh, with synced issue membership and per-issue test coverage
 
 ### Issue Tracking Integration
 
