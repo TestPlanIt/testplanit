@@ -1086,9 +1086,9 @@
         "backToSignIn": "Вернуться к входу"
       },
       "passwordless": {
-        "waitingInstructions": "Нажмите на ссылку в письме, чтобы войти из этого браузера, или введите код из письма ниже.",
+        "waitingInstructions": "Перейдите по ссылке в письме, чтобы войти из этого браузера, или введите код из письма ниже.",
         "codeLabel": "Код для входа",
-        "verifyCode": "Проверить код",
+        "verifyCode": "Подтвердить код",
         "verifying": "Проверка...",
         "invalidCode": "Этот код неверен. Проверьте письмо и попробуйте снова.",
         "codeExpired": "Срок действия этого запроса на вход истёк. Запросите новую ссылку.",
@@ -1098,7 +1098,7 @@
         "tooManyRequests": "Слишком много запросов на вход. Пожалуйста, подождите немного и попробуйте снова.",
         "haveCode": "Уже есть код для входа?",
         "codeEntryDescription": "Введите код из письма для входа. Коды работают только в браузере, где вы запросили ссылку.",
-        "backToRequest": "Запросить новую ссылку"
+        "backToRequest": "Запросить новую ссылку вместо этого"
       },
       "twoFactor": {
         "title": "Двухфакторная аутентификация",
@@ -1112,10 +1112,10 @@
       "completeErrorTitle": "Не удалось выполнить вход",
       "requestNewLink": "Запросить новую ссылку",
       "codeTitle": "Ваш код для входа",
-      "codeInstructions": "Вы открыли ссылку для входа на другом устройстве или в другом браузере. Введите этот код на экране входа, где вы изначально его запросили.",
-      "codeCloseNotice": "Вы можете закрыть это окно после ввода кода.",
-      "expiredTitle": "Эта ссылка для входа больше недействительна",
-      "expiredBody": "Возможно, срок действия ссылки истёк или она уже была использована. Запросите новую на странице входа — это займёт всего мгновение."
+      "codeInstructions": "Вы открыли ссылку для входа на другом устройстве или в другом браузере. Введите этот код на экране входа, где вы первоначально его запросили.",
+      "codeCloseNotice": "Вы можете закрыть это окно после того, как введёте код.",
+      "expiredTitle": "Эта ссылка для входа больше не действительна",
+      "expiredBody": "Возможно, срок действия ссылки истёк или она уже была использована. Запросите новую на странице входа — это займёт всего минуту."
     },
     "errors": {
       "accessDenied": "Доступ запрещен. Возможно, ваша учетная запись неактивна или у вас нет разрешения на вход.",
@@ -3713,7 +3713,7 @@
         "activityLogDescription": "Подробный журнал фоновых этапов импорта. Временные метки соответствуют часовому поясу сервера.",
         "activitySummaryProcessed": "{count, plural, =1 {# обработанная запись} other {# обработанные записи}}",
         "activitySummaryCreated": "{count, plural, =1 {# создано} other {# создано}}",
-        "activitySummaryMapped": "{count, plural, =1 {# mapped} other {# mapped}}",
+        "activitySummaryMapped": "{count, plural, =1 {# сопоставлено} other {# сопоставлено}}",
         "activitySummaryUnknown": "Шаг импорта",
         "activityDefaultMessage": "Импорт обновления",
         "previousImportsHeading": "Просмотрите предыдущие импорты.",
@@ -5210,19 +5210,19 @@
         "authType": "Тип аутентификации",
         "authTypeHelp": "Выберите способ аутентификации во внешней службе.",
         "emailPlaceholder": "ваш-email@example.com",
-        "emailHelp": "Адрес электронной почты вашей учетной записи. Обязателен для Jira Cloud (в паре с API-токеном ниже). Не используется для Jira Server / Data Center — там оставьте поле пустым и используйте либо только поле «API-токен» (персональный токен доступа), либо поля «Имя пользователя» / «Пароль» ниже.",
+        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
         "apiToken": "API-токен",
         "apiTokenPlaceholder": "Введите свой API-токен",
-        "apiTokenHelp": "Jira Cloud: сгенерируйте API-токен в настройках учетной записи Atlassian и укажите его в паре с адресом электронной почты выше. Jira Server / Data Center: вставьте персональный токен доступа (PAT, отправляется как Bearer). Оставьте поле пустым, если вместо этого используете поля «Имя пользователя» / «Пароль» ниже.",
-        "username": "Имя пользователя",
-        "usernamePlaceholder": "Введите имя пользователя",
-        "usernameHelp": "Только для Jira Server / Data Center — имя пользователя вашей учетной записи в паре с паролем ниже (Basic-аутентификация). Оставьте пустым для Jira Cloud или при использовании персонального токена доступа (PAT) в поле «API-токен».",
-        "password": "Пароль",
-        "passwordPlaceholder": "Введите пароль",
-        "passwordHelp": "Только для Jira Server / Data Center — пароль вашей учетной записи в паре с именем пользователя выше (Basic-аутентификация). Оставьте пустым для Jira Cloud или при использовании персонального токена доступа (PAT) в поле «API-токен».",
+        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your username",
+        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "password": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
         "jiraUrl": "URL Jira",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net или https://jira.mycompany.domain",
-        "jiraUrlHelp": "Базовый URL-адрес вашего экземпляра Jira — Atlassian Cloud (https://your-site.atlassian.net) или самостоятельно размещенный Server / Data Center (https://jira.mycompany.domain).",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
+        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
         "clientId": "Идентификатор клиента",
         "clientIdPlaceholder": "Введите свой идентификатор клиента OAuth.",
         "clientIdHelp": "Идентификатор клиента из вашего приложения OAuth.",
@@ -7712,8 +7712,8 @@
     },
     "passwordless": {
       "codeIntro": "Открываете это на другом устройстве? Введите этот код на экране входа, где вы запросили ссылку:",
-      "deviceNotice": "Эта ссылка выполняет вход из браузера, в котором вы её запросили. Если вы откроете её в другом месте, вам будет показан код выше, который нужно ввести в исходном окне.",
-      "textBody": "Вход в TestPlanIt\n\nНажмите на ссылку ниже, чтобы войти:\n{url}\n\nОткрываете это на другом устройстве? Введите этот код на экране входа, где вы запросили ссылку: {code}\n\nЕсли вы не запрашивали это письмо, вы можете спокойно проигнорировать его."
+      "deviceNotice": "Эта ссылка выполняет вход из браузера, где вы её запросили. Если вы откроете её где-то ещё, вам будет показан код выше, который нужно ввести в исходном окне.",
+      "textBody": "Войдите в TestPlanIt\n\nПерейдите по ссылке ниже, чтобы войти:\n{url}\n\nОткрываете это на другом устройстве? Введите этот код на экране входа, где вы запросили ссылку: {code}\n\nЕсли вы не запрашивали это письмо, вы можете спокойно игнорировать его."
     }
   },
   "comments": {

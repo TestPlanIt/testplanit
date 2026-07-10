@@ -1086,19 +1086,19 @@
         "backToSignIn": "Powrót do logowania"
       },
       "passwordless": {
-        "waitingInstructions": "Kliknij link w e-mailu, aby zalogować się z tej przeglądarki, lub wpisz poniżej kod z e-maila.",
+        "waitingInstructions": "Kliknij łącze w e-mailu, aby zalogować się w tej przeglądarce, lub wpisz kod z e-maila poniżej.",
         "codeLabel": "Kod logowania",
         "verifyCode": "Zweryfikuj kod",
         "verifying": "Weryfikowanie...",
         "invalidCode": "Ten kod jest nieprawidłowy. Sprawdź e-mail i spróbuj ponownie.",
-        "codeExpired": "To żądanie logowania wygasło. Poproś o nowy link.",
-        "tooManyAttempts": "Za dużo nieprawidłowych prób. Poproś o nowy link, aby spróbować ponownie.",
-        "windowLost": "To okno nie może już zakończyć logowania. Poproś o nowy link.",
-        "genericError": "Nie udało się Cię zalogować. Poproś o nowy link i spróbuj ponownie.",
+        "codeExpired": "To żądanie logowania wygasło. Poproś o nowe łącze.",
+        "tooManyAttempts": "Za dużo nieprawidłowych prób. Poproś o nowe łącze, aby spróbować ponownie.",
+        "windowLost": "To okno nie może już zakończyć logowania. Poproś o nowe łącze.",
+        "genericError": "Nie mogliśmy Cię zalogować. Poproś o nowe łącze i spróbuj ponownie.",
         "tooManyRequests": "Za dużo żądań logowania. Poczekaj chwilę i spróbuj ponownie.",
         "haveCode": "Masz już kod logowania?",
-        "codeEntryDescription": "Wpisz kod z e-maila logowania. Kody działają tylko w przeglądarce, w której poprosiłeś o link.",
-        "backToRequest": "Poproś o nowy link"
+        "codeEntryDescription": "Wpisz kod z e-maila logowania. Kody działają tylko w przeglądarce, w której poprosiłeś o łącze.",
+        "backToRequest": "Poproś o nowe łącze"
       },
       "twoFactor": {
         "title": "Uwierzytelnianie dwuskładnikowe",
@@ -1109,13 +1109,13 @@
     },
     "passwordless": {
       "completingSignIn": "Logowanie...",
-      "completeErrorTitle": "Nie udało się Cię zalogować",
-      "requestNewLink": "Poproś o nowy link",
+      "completeErrorTitle": "Nie mogliśmy Cię zalogować",
+      "requestNewLink": "Poproś o nowe łącze",
       "codeTitle": "Twój kod logowania",
-      "codeInstructions": "Otworzyłeś link do logowania na innym urządzeniu lub w innej przeglądarce. Wpisz ten kod na ekranie logowania, na którym pierwotnie o niego poprosiłeś.",
+      "codeInstructions": "Otworzyłeś łącze logowania na innym urządzeniu lub w innej przeglądarce. Wpisz ten kod na ekranie logowania, gdzie oryginalnie o niego poprosiłeś.",
       "codeCloseNotice": "Możesz zamknąć to okno po wpisaniu kodu.",
-      "expiredTitle": "Ten link do logowania nie jest już prawidłowy",
-      "expiredBody": "Link może wygasnąć lub zostać już wykorzystany. Poproś o nowy na stronie logowania — to zajmie tylko chwilę."
+      "expiredTitle": "To łącze logowania nie jest już aktywne",
+      "expiredBody": "Łącze mogło wygasnąć lub zostało już użyte. Poproś o nowe na stronie logowania — zajmie to tylko chwilę."
     },
     "errors": {
       "accessDenied": "Dostęp zabroniony. Twoje konto może być nieaktywne lub nie masz uprawnień do logowania.",
@@ -5210,19 +5210,19 @@
         "authType": "Typ uwierzytelniania",
         "authTypeHelp": "Wybierz sposób uwierzytelniania za pomocą usługi zewnętrznej",
         "emailPlaceholder": "twój-email@example.com",
-        "emailHelp": "Adres e-mail Twojego konta. Wymagany dla Jira Cloud (razem z tokenem API poniżej). Nieużywany w Jira Server / Data Center — pozostaw tam puste i użyj albo samego pola „Token API” (osobisty token dostępu), albo pól „Nazwa użytkownika” / „Hasło” poniżej.",
+        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
         "apiToken": "Token API",
         "apiTokenPlaceholder": "Wprowadź swój token API",
-        "apiTokenHelp": "Jira Cloud: wygeneruj token API w ustawieniach konta Atlassian i użyj go razem z adresem e-mail powyżej. Jira Server / Data Center: wklej osobisty token dostępu (wysyłany jako Bearer). Pozostaw to pole puste, jeśli zamiast tego używasz pól „Nazwa użytkownika” / „Hasło” poniżej.",
-        "username": "Nazwa użytkownika",
-        "usernamePlaceholder": "Wprowadź swoją nazwę użytkownika",
-        "usernameHelp": "Tylko dla Jira Server / Data Center — nazwa użytkownika Twojego konta, używana razem z hasłem poniżej (uwierzytelnianie Basic). Pozostaw puste dla Jira Cloud lub gdy używasz osobistego tokenu dostępu (PAT) w polu „Token API”.",
-        "password": "Hasło",
-        "passwordPlaceholder": "Wprowadź swoje hasło",
-        "passwordHelp": "Tylko dla Jira Server / Data Center — hasło Twojego konta, używane razem z nazwą użytkownika powyżej (uwierzytelnianie Basic). Pozostaw puste dla Jira Cloud lub gdy używasz osobistego tokenu dostępu (PAT) w polu „Token API”.",
+        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your username",
+        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "password": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
         "jiraUrl": "Adres URL Jira",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net lub https://jira.mycompany.domain",
-        "jiraUrlHelp": "Bazowy adres URL Twojej instancji Jira — Atlassian Cloud (https://your-site.atlassian.net) lub samodzielnie hostowany Server / Data Center (https://jira.mycompany.domain).",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
+        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
         "clientId": "Identyfikator klienta",
         "clientIdPlaceholder": "Wprowadź swój identyfikator klienta OAuth",
         "clientIdHelp": "Identyfikator klienta z Twojej aplikacji OAuth",
@@ -7711,9 +7711,9 @@
       "textBody": "Zaloguj się do TestPlanIt\n\nKliknij poniższy link, aby się zalogować:\n{url}\n\nDla Twojego bezpieczeństwa ten link można wykorzystać tylko raz. Poproś o nowy link, jeśli chcesz się zalogować ponownie.\n\nJeśli nie prosiłeś o ten e-mail, możesz go bezpiecznie zignorować."
     },
     "passwordless": {
-      "codeIntro": "Otwierasz to na innym urządzeniu? Wpisz ten kod na ekranie logowania, na którym poprosiłeś o link:",
-      "deviceNotice": "Ten link loguje Cię z przeglądarki, w której o niego poprosiłeś. Jeśli otworzysz go gdzie indziej, zobaczysz powyższy kod do wpisania w oryginalnym oknie.",
-      "textBody": "Zaloguj się do TestPlanIt\n\nKliknij poniższy link, aby się zalogować:\n{url}\n\nOtwierasz to na innym urządzeniu? Wpisz ten kod na ekranie logowania, na którym poprosiłeś o link: {code}\n\nJeśli nie prosiłeś o ten e-mail, możesz go bezpiecznie zignorować."
+      "codeIntro": "Otwierasz to na innym urządzeniu? Wpisz ten kod na ekranie logowania, gdzie poprosiłeś o łącze:",
+      "deviceNotice": "To łącze loguje Cię z przeglądarki, w której o nie poprosiłeś. Jeśli otworzysz je gdzie indziej, zobaczysz powyższy kod do wpisania w oryginalnym oknie.",
+      "textBody": "Zaloguj się do TestPlanIt\n\nKliknij poniższe łącze, aby się zalogować:\n{url}\n\nOtwierasz to na innym urządzeniu? Wpisz ten kod na ekranie logowania, gdzie poprosiłeś o łącze: {code}\n\nJeśli nie prosiłeś o ten e-mail, możesz go bezpiecznie zignorować."
     }
   },
   "comments": {

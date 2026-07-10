@@ -1086,19 +1086,19 @@
         "backToSignIn": "返回登入頁面"
       },
       "passwordless": {
-        "waitingInstructions": "點按電子郵件中的連結以從此瀏覽器登入，或於下方輸入電子郵件中的代碼。",
-        "codeLabel": "登入代碼",
+        "waitingInstructions": "點擊電子郵件中的連結以在此瀏覽器登入，或輸入下方電子郵件中的驗證碼。",
+        "codeLabel": "登入驗證碼",
         "verifyCode": "驗證代碼",
-        "verifying": "正在驗證……",
-        "invalidCode": "該代碼不正確。請檢查電子郵件並再試一次。",
-        "codeExpired": "此登入請求已過期。請申請新的連結。",
-        "tooManyAttempts": "錯誤嘗試次數過多。請申請新的連結以再試一次。",
-        "windowLost": "此視窗已無法完成登入。請申請新的連結。",
-        "genericError": "我們無法讓您登入。請申請新的連結並再試一次。",
-        "tooManyRequests": "登入請求過多。請稍候片刻再試一次。",
-        "haveCode": "已經有登入代碼了嗎？",
-        "codeEntryDescription": "請輸入您登入電子郵件中的代碼。代碼僅在您申請連結時所使用的瀏覽器中有效。",
-        "backToRequest": "改為申請新的連結"
+        "verifying": "正在核實……",
+        "invalidCode": "此代碼不正確。請檢查電子郵件並重試。",
+        "codeExpired": "此登入請求已過期。請重新請求連結。",
+        "tooManyAttempts": "錯誤嘗試次數過多。請請求新連結以重試。",
+        "windowLost": "此視窗無法再完成登入。請請求新連結。",
+        "genericError": "我們無法為您登入。請請求新連結並重試。",
+        "tooManyRequests": "登入請求次數過多。請稍候片刻後再試。",
+        "haveCode": "已經有登入驗證碼？",
+        "codeEntryDescription": "輸入登入電子郵件中的驗證碼。驗證碼僅在您請求連結的瀏覽器中有效。",
+        "backToRequest": "改為請求新連結"
       },
       "twoFactor": {
         "title": "雙重身份驗證",
@@ -1109,13 +1109,13 @@
     },
     "passwordless": {
       "completingSignIn": "正在為您登入……",
-      "completeErrorTitle": "我們無法讓您登入",
-      "requestNewLink": "申請新的連結",
-      "codeTitle": "您的登入代碼",
-      "codeInstructions": "您在不同的裝置或瀏覽器上開啟了登入連結。請在您最初申請的登入畫面上輸入此代碼。",
-      "codeCloseNotice": "輸入代碼後，您即可關閉此視窗。",
+      "completeErrorTitle": "我們無法為您登入",
+      "requestNewLink": "請求新連結",
+      "codeTitle": "您的登入驗證碼",
+      "codeInstructions": "您在不同的裝置或瀏覽器上開啟了登入連結。請在您最初請求連結的登入畫面上輸入此代碼。",
+      "codeCloseNotice": "輸入代碼後，您可以關閉此視窗。",
       "expiredTitle": "此登入連結已失效",
-      "expiredBody": "此連結可能已過期或已被使用。請從登入頁面申請新的連結 — 這只需片刻。"
+      "expiredBody": "此連結可能已過期或已被使用。請從登入頁面請求新連結——只需片刻時間。"
     },
     "errors": {
       "accessDenied": "訪問被拒絕。您的帳戶可能已停用或您沒有登入權限。",
@@ -5210,19 +5210,19 @@
         "authType": "身份驗證類型",
         "authTypeHelp": "選擇如何透過外部服務進行身份驗證",
         "emailPlaceholder": "您的郵件地址@example.com",
-        "emailHelp": "您帳戶的電子郵件地址。Jira Cloud 必填（與下方的 API 令牌搭配使用）。Jira Server / Data Center 不使用此欄位 — 請留空，並僅使用 API 令牌欄位（個人存取權杖），或使用下方的使用者名稱／密碼欄位。",
+        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
         "apiToken": "API令牌",
         "apiTokenPlaceholder": "請輸入您的 API 令牌",
-        "apiTokenHelp": "Jira Cloud：在 Atlassian 帳戶設定中產生 API 令牌，並與上方的電子郵件搭配使用。Jira Server / Data Center：貼上個人存取權杖（以 Bearer 方式傳送）。如果改用下方的使用者名稱／密碼欄位，請將此欄位留空。",
-        "username": "使用者名稱",
-        "usernamePlaceholder": "請輸入您的使用者名稱",
-        "usernameHelp": "僅適用於 Jira Server / Data Center — 您帳戶的使用者名稱，與下方的密碼搭配使用（Basic 驗證）。使用 Jira Cloud，或在 API 令牌欄位中使用個人存取權杖（PAT）時，請留空。",
-        "password": "密碼",
-        "passwordPlaceholder": "請輸入您的密碼",
-        "passwordHelp": "僅適用於 Jira Server / Data Center — 您帳戶的密碼，與上方的使用者名稱搭配使用（Basic 驗證）。使用 Jira Cloud，或在 API 令牌欄位中使用個人存取權杖（PAT）時，請留空。",
+        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your username",
+        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "password": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
         "jiraUrl": "Jira 網址",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net 或 https://jira.mycompany.domain",
-        "jiraUrlHelp": "您的 Jira 實例的基礎 URL — Atlassian Cloud（https://your-site.atlassian.net）或自行託管的 Server / Data Center（https://jira.mycompany.domain）。",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
+        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
         "clientId": "客戶ID",
         "clientIdPlaceholder": "請輸入您的 OAuth 用戶端 ID",
         "clientIdHelp": "來自您的 OAuth 應用程式的用戶端 ID",
@@ -7711,9 +7711,9 @@
       "textBody": "登入 TestPlanIt\n\n請點按下方連結登入：\n{url}\n\n為了您的安全，此連結只能使用一次。若您需要再次登入，請申請新的連結。\n\n若您沒有申請此電子郵件，可以安心忽略。"
     },
     "passwordless": {
-      "codeIntro": "在不同裝置上開啟此連結？請在您申請連結的登入畫面上輸入此代碼：",
-      "deviceNotice": "此連結會讓您從申請連結時所使用的瀏覽器登入。若您在其他地方開啟，將會顯示上方的代碼，供您在原始視窗中輸入。",
-      "textBody": "登入 TestPlanIt\n\n請點按下方連結登入：\n{url}\n\n在不同裝置上開啟此連結？請在您申請連結的登入畫面上輸入此代碼：{code}\n\n若您沒有申請此電子郵件，可以安心忽略。"
+      "codeIntro": "在不同裝置上開啟此內容？請在您請求連結的登入畫面上輸入此代碼：",
+      "deviceNotice": "此連結會從您請求連結的瀏覽器為您登入。如果您在其他地方開啟它，將顯示上方的代碼，供您在原始視窗中輸入。",
+      "textBody": "登入 TestPlanIt\n\n點擊下方連結以登入：\n{url}\n\n在不同裝置上開啟此內容？請在您請求連結的登入畫面上輸入此代碼：{code}\n\n如果您並未請求此電子郵件，可以安全地忽略它。"
     }
   },
   "comments": {

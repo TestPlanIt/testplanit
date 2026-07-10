@@ -1090,15 +1090,15 @@
         "codeLabel": "Mã đăng nhập",
         "verifyCode": "Xác minh mã",
         "verifying": "Đang xác minh...",
-        "invalidCode": "Mã đó không đúng. Hãy kiểm tra email và thử lại.",
-        "codeExpired": "Yêu cầu đăng nhập này đã hết hạn. Hãy yêu cầu liên kết mới.",
-        "tooManyAttempts": "Quá nhiều lần thử không đúng. Hãy yêu cầu liên kết mới để thử lại.",
-        "windowLost": "Cửa sổ này không thể hoàn tất đăng nhập nữa. Hãy yêu cầu liên kết mới.",
-        "genericError": "Chúng tôi không thể đăng nhập cho bạn. Hãy yêu cầu liên kết mới và thử lại.",
-        "tooManyRequests": "Quá nhiều yêu cầu đăng nhập. Vui lòng chờ một chút và thử lại.",
+        "invalidCode": "Mã không đúng. Hãy kiểm tra email và thử lại.",
+        "codeExpired": "Yêu cầu đăng nhập này đã hết hạn. Hãy yêu cầu một liên kết mới.",
+        "tooManyAttempts": "Quá nhiều lần thử không đúng. Hãy yêu cầu một liên kết mới để thử lại.",
+        "windowLost": "Cửa sổ này không thể hoàn tất việc đăng nhập nữa. Hãy yêu cầu một liên kết mới.",
+        "genericError": "Chúng tôi không thể đăng nhập cho bạn. Hãy yêu cầu một liên kết mới và thử lại.",
+        "tooManyRequests": "Quá nhiều yêu cầu đăng nhập. Vui lòng đợi một chút và thử lại.",
         "haveCode": "Đã có mã đăng nhập?",
-        "codeEntryDescription": "Nhập mã từ email đăng nhập của bạn. Mã chỉ hoạt động trên trình duyệt nơi bạn đã yêu cầu liên kết.",
-        "backToRequest": "Yêu cầu liên kết mới thay thế"
+        "codeEntryDescription": "Nhập mã từ email đăng nhập của bạn. Mã chỉ hoạt động trong trình duyệt mà bạn đã yêu cầu liên kết.",
+        "backToRequest": "Yêu cầu một liên kết mới thay thế"
       },
       "twoFactor": {
         "title": "Xác thực hai yếu tố",
@@ -1110,12 +1110,12 @@
     "passwordless": {
       "completingSignIn": "Đang đăng nhập cho bạn...",
       "completeErrorTitle": "Chúng tôi không thể đăng nhập cho bạn",
-      "requestNewLink": "Yêu cầu liên kết mới",
+      "requestNewLink": "Yêu cầu một liên kết mới",
       "codeTitle": "Mã đăng nhập của bạn",
       "codeInstructions": "Bạn đã mở liên kết đăng nhập trên một thiết bị hoặc trình duyệt khác. Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu ban đầu.",
       "codeCloseNotice": "Bạn có thể đóng cửa sổ này sau khi đã nhập mã.",
       "expiredTitle": "Liên kết đăng nhập này không còn hợp lệ",
-      "expiredBody": "Liên kết có thể đã hết hạn hoặc đã được sử dụng. Hãy yêu cầu liên kết mới từ trang đăng nhập — chỉ mất một chút thời gian."
+      "expiredBody": "Liên kết có thể đã hết hạn hoặc đã được sử dụng. Hãy yêu cầu một liên kết mới từ trang đăng nhập — chỉ mất một chút thời gian."
     },
     "errors": {
       "accessDenied": "Truy cập bị từ chối. Tài khoản của bạn có thể không hoạt động hoặc bạn không có quyền đăng nhập.",
@@ -5210,19 +5210,19 @@
         "authType": "Loại xác thực",
         "authTypeHelp": "Chọn cách xác thực với dịch vụ bên ngoài",
         "emailPlaceholder": "your-email@example.com",
-        "emailHelp": "Địa chỉ email tài khoản của bạn. Bắt buộc đối với Jira Cloud (dùng cùng với mã thông báo API bên dưới). Không dùng cho Jira Server / Data Center — hãy để trống và chỉ dùng trường Mã thông báo API (mã thông báo truy cập cá nhân) hoặc các trường Tên người dùng / Mật khẩu bên dưới.",
+        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
         "apiToken": "Mã thông báo API",
         "apiTokenPlaceholder": "Nhập mã thông báo API của bạn",
-        "apiTokenHelp": "Jira Cloud: tạo mã thông báo API trong cài đặt tài khoản Atlassian và dùng cùng với email bên trên. Jira Server / Data Center: dán mã thông báo truy cập cá nhân (được gửi dưới dạng Bearer). Để trống trường này nếu bạn dùng các trường Tên người dùng / Mật khẩu bên dưới.",
-        "username": "Tên người dùng",
-        "usernamePlaceholder": "Nhập tên người dùng của bạn",
-        "usernameHelp": "Chỉ dành cho Jira Server / Data Center — tên người dùng của tài khoản, dùng cùng với mật khẩu bên dưới (xác thực Basic). Để trống đối với Jira Cloud hoặc khi dùng mã thông báo truy cập cá nhân (PAT) trong trường Mã thông báo API.",
-        "password": "Mật khẩu",
-        "passwordPlaceholder": "Nhập mật khẩu của bạn",
-        "passwordHelp": "Chỉ dành cho Jira Server / Data Center — mật khẩu của tài khoản, dùng cùng với tên người dùng bên trên (xác thực Basic). Để trống đối với Jira Cloud hoặc khi dùng mã thông báo truy cập cá nhân (PAT) trong trường Mã thông báo API.",
+        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your username",
+        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "password": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
         "jiraUrl": "URL Jira",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net hoặc https://jira.mycompany.domain",
-        "jiraUrlHelp": "URL cơ sở của phiên bản Jira của bạn — Atlassian Cloud (https://your-site.atlassian.net) hoặc Server / Data Center tự lưu trữ (https://jira.mycompany.domain).",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
+        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
         "clientId": "Mã khách hàng",
         "clientIdPlaceholder": "Nhập ID máy khách OAuth của bạn",
         "clientIdHelp": "Mã định danh khách hàng (Client ID) từ ứng dụng OAuth của bạn",
@@ -7711,9 +7711,9 @@
       "textBody": "Đăng nhập vào TestPlanIt\n\nNhấp vào liên kết bên dưới để đăng nhập:\n{url}\n\nĐể đảm bảo an toàn cho bạn, liên kết này chỉ có thể được sử dụng một lần. Hãy yêu cầu liên kết mới nếu bạn cần đăng nhập lại.\n\nNếu bạn không yêu cầu email này, bạn có thể yên tâm bỏ qua nó."
     },
     "passwordless": {
-      "codeIntro": "Mở liên kết này trên một thiết bị khác? Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu liên kết:",
-      "deviceNotice": "Liên kết này giúp bạn đăng nhập từ trình duyệt nơi bạn đã yêu cầu nó. Nếu bạn mở nó ở nơi khác, bạn sẽ được hiển thị mã ở trên để nhập vào cửa sổ ban đầu của bạn.",
-      "textBody": "Đăng nhập vào TestPlanIt\n\nNhấp vào liên kết bên dưới để đăng nhập:\n{url}\n\nMở liên kết này trên một thiết bị khác? Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu liên kết: {code}\n\nNếu bạn không yêu cầu email này, bạn có thể yên tâm bỏ qua nó."
+      "codeIntro": "Đang mở trên một thiết bị khác? Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu liên kết:",
+      "deviceNotice": "Liên kết này sẽ đăng nhập cho bạn từ trình duyệt nơi bạn đã yêu cầu nó. Nếu bạn mở nó ở nơi khác, bạn sẽ được hiển thị mã ở trên để nhập vào cửa sổ ban đầu của bạn.",
+      "textBody": "Đăng nhập vào TestPlanIt\n\nNhấp vào liên kết dưới đây để đăng nhập:\n{url}\n\nĐang mở trên một thiết bị khác? Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu liên kết: {code}\n\nNếu bạn không yêu cầu email này, bạn có thể yên tâm bỏ qua nó."
     }
   },
   "comments": {

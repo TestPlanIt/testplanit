@@ -1036,7 +1036,7 @@
     "plural": {
       "case": "{count, plural, =1 {Fall} other {Fälle}}",
       "result": "{count, plural, =1 {Ergebnis} other {Ergebnisse}}",
-      "run": "{count, plural, =1 {run} other {runs}}",
+      "run": "{count, plural, =1 {Durchlauf} other {Durchläufe}}",
       "comment": "{count, plural, =1 {# Kommentar} other {# Kommentare}}"
     },
     "success": {
@@ -1086,13 +1086,13 @@
         "backToSignIn": "Zurück zur Anmeldeseite"
       },
       "passwordless": {
-        "waitingInstructions": "Klicken Sie auf den Link in der E-Mail, um sich in diesem Browser anzumelden, oder geben Sie unten den Code aus der E-Mail ein.",
+        "waitingInstructions": "Klicken Sie auf den Link in der E-Mail, um sich in diesem Browser anzumelden, oder geben Sie den Code aus der E-Mail unten ein.",
         "codeLabel": "Anmeldecode",
         "verifyCode": "Code überprüfen",
         "verifying": "Überprüfung läuft...",
         "invalidCode": "Dieser Code ist nicht richtig. Überprüfen Sie die E-Mail und versuchen Sie es erneut.",
         "codeExpired": "Diese Anmeldeanfrage ist abgelaufen. Fordern Sie einen neuen Link an.",
-        "tooManyAttempts": "Zu viele fehlgeschlagene Versuche. Fordern Sie einen neuen Link an, um es erneut zu versuchen.",
+        "tooManyAttempts": "Zu viele fehlerhafte Versuche. Fordern Sie einen neuen Link an, um es erneut zu versuchen.",
         "windowLost": "Dieses Fenster kann die Anmeldung nicht mehr abschließen. Fordern Sie einen neuen Link an.",
         "genericError": "Wir konnten Sie nicht anmelden. Fordern Sie einen neuen Link an und versuchen Sie es erneut.",
         "tooManyRequests": "Zu viele Anmeldeanfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
@@ -1115,7 +1115,7 @@
       "codeInstructions": "Sie haben den Anmeldelink auf einem anderen Gerät oder Browser geöffnet. Geben Sie diesen Code auf dem Anmeldebildschirm ein, auf dem Sie ihn ursprünglich angefordert haben.",
       "codeCloseNotice": "Sie können dieses Fenster schließen, sobald Sie den Code eingegeben haben.",
       "expiredTitle": "Dieser Anmeldelink ist nicht mehr gültig",
-      "expiredBody": "Der Link ist möglicherweise abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen von der Anmeldeseite an — das dauert nur einen Moment."
+      "expiredBody": "Der Link ist möglicherweise abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen von der Anmeldeseite an — es dauert nur einen Moment."
     },
     "errors": {
       "accessDenied": "Zugriff verweigert. Ihr Konto ist möglicherweise inaktiv oder Sie haben keine Berechtigung zum Anmelden.",
@@ -5210,19 +5210,19 @@
         "authType": "Authentifizierungstyp",
         "authTypeHelp": "Wählen Sie aus, wie Sie sich beim externen Dienst authentifizieren möchten.",
         "emailPlaceholder": "Ihre-E-Mail-Adresse@Beispiel.com",
-        "emailHelp": "Die E-Mail-Adresse Ihres Kontos. Erforderlich für Jira Cloud (zusammen mit einem API-Token unten). Für Jira Server / Data Center nicht verwendet — lassen Sie das Feld dort leer und nutzen Sie entweder nur das Feld „API-Token“ (Personal Access Token) oder die Felder „Benutzername“ / „Passwort“ unten.",
+        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
         "apiToken": "API-Token",
         "apiTokenPlaceholder": "Geben Sie Ihr API-Token ein.",
-        "apiTokenHelp": "Jira Cloud: Generieren Sie ein API-Token in Ihren Atlassian-Kontoeinstellungen und verwenden Sie es zusammen mit Ihrer E-Mail-Adresse oben. Jira Server / Data Center: Fügen Sie ein Personal Access Token ein (wird als Bearer gesendet). Lassen Sie das Feld leer, wenn Sie stattdessen die Felder „Benutzername“ / „Passwort“ unten verwenden.",
-        "username": "Benutzername",
-        "usernamePlaceholder": "Geben Sie Ihren Benutzernamen ein.",
-        "usernameHelp": "Nur für Jira Server / Data Center — der Benutzername Ihres Kontos, zusammen mit dem Passwort unten (Basic-Authentifizierung). Lassen Sie das Feld für Jira Cloud leer, ebenso bei Verwendung eines Personal Access Token im Feld „API-Token“.",
-        "password": "Passwort",
-        "passwordPlaceholder": "Geben Sie Ihr Passwort ein.",
-        "passwordHelp": "Nur für Jira Server / Data Center — das Passwort Ihres Kontos, zusammen mit dem Benutzernamen oben (Basic-Authentifizierung). Lassen Sie das Feld für Jira Cloud leer, ebenso bei Verwendung eines Personal Access Token im Feld „API-Token“.",
+        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your username",
+        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "password": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
         "jiraUrl": "Jira-URL",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net oder https://jira.mycompany.domain",
-        "jiraUrlHelp": "Die Basis-URL Ihrer Jira-Instanz — Atlassian Cloud (https://your-site.atlassian.net) oder eine selbst gehostete Server-/Data-Center-Instanz (https://jira.mycompany.domain).",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
+        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
         "clientId": "Client-ID",
         "clientIdPlaceholder": "Geben Sie Ihre OAuth-Client-ID ein.",
         "clientIdHelp": "Die Client-ID aus Ihrer OAuth-Anwendung",
@@ -7712,7 +7712,7 @@
     },
     "passwordless": {
       "codeIntro": "Öffnen Sie dies auf einem anderen Gerät? Geben Sie diesen Code auf dem Anmeldebildschirm ein, auf dem Sie den Link angefordert haben:",
-      "deviceNotice": "Dieser Link meldet Sie in dem Browser an, in dem Sie ihn angefordert haben. Wenn Sie ihn an einem anderen Ort öffnen, wird Ihnen der obige Code angezeigt, den Sie in Ihrem ursprünglichen Fenster eingeben können.",
+      "deviceNotice": "Dieser Link meldet Sie in dem Browser an, in dem Sie ihn angefordert haben. Wenn Sie ihn anderswo öffnen, wird Ihnen der obige Code angezeigt, den Sie in Ihrem ursprünglichen Fenster eingeben können.",
       "textBody": "Bei TestPlanIt anmelden\n\nKlicken Sie auf den folgenden Link, um sich anzumelden:\n{url}\n\nÖffnen Sie dies auf einem anderen Gerät? Geben Sie diesen Code auf dem Anmeldebildschirm ein, auf dem Sie den Link angefordert haben: {code}\n\nWenn Sie diese E-Mail nicht angefordert haben, können Sie sie ignorieren."
     }
   },

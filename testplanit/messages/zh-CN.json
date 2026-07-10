@@ -1086,19 +1086,19 @@
         "backToSignIn": "返回登录页面"
       },
       "passwordless": {
-        "waitingInstructions": "点击邮件中的链接从此浏览器登录，或在下方输入邮件中的验证码。",
-        "codeLabel": "登录验证码",
-        "verifyCode": "验证码",
+        "waitingInstructions": "点击电子邮件中的链接以从此浏览器登录，或在下方输入电子邮件中的代码。",
+        "codeLabel": "登录代码",
+        "verifyCode": "验证代码",
         "verifying": "正在核实……",
-        "invalidCode": "该验证码不正确。请检查邮件后重试。",
-        "codeExpired": "此登录请求已过期。请申请新链接。",
-        "tooManyAttempts": "错误尝试次数过多。请申请新链接以重试。",
-        "windowLost": "此窗口无法再完成登录。请申请新链接。",
-        "genericError": "我们无法为您登录。请申请新链接后重试。",
+        "invalidCode": "该代码不正确。请检查电子邮件并重试。",
+        "codeExpired": "此登录请求已过期。请请求新链接。",
+        "tooManyAttempts": "错误尝试次数过多。请请求新链接以重试。",
+        "windowLost": "此窗口已无法完成登录。请请求新链接。",
+        "genericError": "我们无法为您登录。请请求新链接并重试。",
         "tooManyRequests": "登录请求过多。请稍候片刻后重试。",
-        "haveCode": "已有登录验证码？",
-        "codeEntryDescription": "请输入登录邮件中的验证码。验证码仅在您请求该链接的浏览器中有效。",
-        "backToRequest": "改为申请新链接"
+        "haveCode": "已经有登录代码了？",
+        "codeEntryDescription": "请输入登录电子邮件中的代码。代码仅在您请求链接的浏览器中有效。",
+        "backToRequest": "改为请求新链接"
       },
       "twoFactor": {
         "title": "双因素身份验证",
@@ -1110,12 +1110,12 @@
     "passwordless": {
       "completingSignIn": "正在为您登录……",
       "completeErrorTitle": "我们无法为您登录",
-      "requestNewLink": "申请新链接",
-      "codeTitle": "您的登录验证码",
-      "codeInstructions": "您在其他设备或浏览器上打开了登录链接。请在您最初请求该链接的登录界面上输入此验证码。",
-      "codeCloseNotice": "输入验证码后，您可以关闭此窗口。",
+      "requestNewLink": "请求新链接",
+      "codeTitle": "您的登录代码",
+      "codeInstructions": "您在不同的设备或浏览器上打开了登录链接。请在您最初请求链接的登录界面上输入此代码。",
+      "codeCloseNotice": "输入代码后，您可以关闭此窗口。",
       "expiredTitle": "此登录链接已失效",
-      "expiredBody": "该链接可能已过期或已被使用。请从登录页面申请一个新链接 — 只需片刻即可完成。"
+      "expiredBody": "该链接可能已过期或已被使用。请从登录页面请求一个新链接——这只需要片刻。"
     },
     "errors": {
       "accessDenied": "访问被拒绝。您的帐户可能已停用或您没有登录权限。",
@@ -2281,7 +2281,7 @@
   "home": {
     "dashboard": {
       "title": "您的仪表盘",
-      "users": "There {count, plural, =1 {is # User} other {are # Users}}",
+      "users": "有 {count, plural, =1 {# 个用户} other {# 个用户}}",
       "yourProjects": "您的项目",
       "projects": "您有权访问 {count, plural, =1 {# 项目} other {# 项目集}}",
       "loading": "正在加载仪表盘...",
@@ -2755,7 +2755,7 @@
       "activeRunWarningMessage": "此测试用例属于 {count, plural, =1 {# 活动测试运行} other {# 活动测试运行}}。删除它会将这些运行标记为已删除。"
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {Deleting this folder will also delete all subfolders. Are you sure?} one {Deleting this folder will also delete 1 test case in this folder and all subfolders. Are you sure?} other {Deleting this folder will also delete # test cases in this folder and all subfolders. Are you sure?}}",
+      "confirmMessage": "{count, plural, =0 {删除此文件夹将同时删除所有子文件夹。您确定要继续吗？} other {删除此文件夹将同时删除该文件夹及其所有子文件夹中的 # 个测试用例。您确定要继续吗？}}",
       "warning": "此文件夹及其所有测试用例将从项目中移除。这些测试用例的历史数据（包括结果）仍将保留在项目中。",
       "confirm": "确认删除文件夹",
       "success": "文件夹及其所有子文件夹/案例已成功删除。"
@@ -5210,19 +5210,19 @@
         "authType": "身份验证类型",
         "authTypeHelp": "选择如何通过外部服务进行身份验证",
         "emailPlaceholder": "您的邮箱地址@example.com",
-        "emailHelp": "您帐户的电子邮件地址。Jira Cloud 必填（与下方的 API 令牌配合使用）。Jira Server / Data Center 不使用此字段 — 请留空，并仅使用 API 令牌字段（个人访问令牌），或使用下方的用户名/密码字段。",
+        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
         "apiToken": "API令牌",
         "apiTokenPlaceholder": "请输入您的 API 令牌",
-        "apiTokenHelp": "Jira Cloud：在 Atlassian 帐户设置中生成 API 令牌，并与上方的电子邮件配合使用。Jira Server / Data Center：粘贴个人访问令牌（以 Bearer 方式发送）。如果改用下方的用户名/密码字段，请将此字段留空。",
-        "username": "用户名",
-        "usernamePlaceholder": "请输入您的用户名",
-        "usernameHelp": "仅适用于 Jira Server / Data Center — 您帐户的用户名，与下方的密码配合使用（Basic 认证）。使用 Jira Cloud，或在 API 令牌字段中使用个人访问令牌（PAT）时，请留空。",
-        "password": "密码",
-        "passwordPlaceholder": "请输入您的密码",
-        "passwordHelp": "仅适用于 Jira Server / Data Center — 您帐户的密码，与上方的用户名配合使用（Basic 认证）。使用 Jira Cloud，或在 API 令牌字段中使用个人访问令牌（PAT）时，请留空。",
+        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your username",
+        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "password": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
         "jiraUrl": "Jira 地址",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net 或 https://jira.mycompany.domain",
-        "jiraUrlHelp": "您的 Jira 实例的基础 URL — Atlassian Cloud（https://your-site.atlassian.net）或自托管的 Server / Data Center（https://jira.mycompany.domain）。",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
+        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
         "clientId": "客户ID",
         "clientIdPlaceholder": "请输入您的 OAuth 客户端 ID",
         "clientIdHelp": "来自您的 OAuth 应用程序的客户端 ID",
@@ -7711,9 +7711,9 @@
       "textBody": "登录 TestPlanIt\n\n点击下方链接登录：\n{url}\n\n为了您的安全，此链接只能使用一次。如需再次登录，请申请新链接。\n\n如果您没有请求此邮件，可以放心忽略它。"
     },
     "passwordless": {
-      "codeIntro": "正在其他设备上打开吗？请在您请求该链接的登录界面上输入以下验证码：",
-      "deviceNotice": "此链接会在您请求它的浏览器中为您登录。如果您在其他地方打开它，系统将显示上方的验证码，供您在原始窗口中输入。",
-      "textBody": "登录 TestPlanIt\n\n点击下方链接登录：\n{url}\n\n正在其他设备上打开吗？请在您请求该链接的登录界面上输入以下验证码：{code}\n\n如果您没有请求此邮件，可以放心忽略它。"
+      "codeIntro": "在不同设备上打开此链接？请在您请求链接的登录界面上输入以下代码：",
+      "deviceNotice": "此链接会从您请求它的浏览器为您登录。如果您在其他地方打开它，系统会向您显示上方的代码，供您在原始窗口中输入。",
+      "textBody": "登录 TestPlanIt\n\n点击下方链接登录：\n{url}\n\n在不同设备上打开此链接？请在您请求链接的登录界面上输入此代码：{code}\n\n如果您没有请求此电子邮件，可以放心忽略它。"
     }
   },
   "comments": {

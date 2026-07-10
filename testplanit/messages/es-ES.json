@@ -1086,18 +1086,18 @@
         "backToSignIn": "Volver a iniciar sesión"
       },
       "passwordless": {
-        "waitingInstructions": "Haga clic en el enlace del correo electrónico para iniciar sesión desde este navegador, o introduzca el código del correo electrónico a continuación.",
+        "waitingInstructions": "Haz clic en el enlace del correo electrónico para iniciar sesión desde este navegador, o introduce el código del correo electrónico a continuación.",
         "codeLabel": "Código de inicio de sesión",
         "verifyCode": "Verificar código",
         "verifying": "Verificando...",
-        "invalidCode": "Ese código no es correcto. Revise el correo electrónico e inténtelo de nuevo.",
-        "codeExpired": "Esta solicitud de inicio de sesión ha expirado. Solicite un nuevo enlace.",
-        "tooManyAttempts": "Demasiados intentos incorrectos. Solicite un nuevo enlace para intentarlo de nuevo.",
-        "windowLost": "Esta ventana ya no puede completar el inicio de sesión. Solicite un nuevo enlace.",
-        "genericError": "No pudimos iniciar su sesión. Solicite un nuevo enlace e inténtelo de nuevo.",
-        "tooManyRequests": "Demasiadas solicitudes de inicio de sesión. Espere un momento e inténtelo de nuevo.",
-        "haveCode": "¿Ya tiene un código de inicio de sesión?",
-        "codeEntryDescription": "Introduzca el código de su correo electrónico de inicio de sesión. Los códigos solo funcionan en el navegador donde solicitó el enlace.",
+        "invalidCode": "Ese código no es correcto. Revisa el correo electrónico e inténtalo de nuevo.",
+        "codeExpired": "Esta solicitud de inicio de sesión ha expirado. Solicita un nuevo enlace.",
+        "tooManyAttempts": "Demasiados intentos incorrectos. Solicita un nuevo enlace para volver a intentarlo.",
+        "windowLost": "Esta ventana ya no puede completar el inicio de sesión. Solicita un nuevo enlace.",
+        "genericError": "No pudimos iniciar tu sesión. Solicita un nuevo enlace e inténtalo de nuevo.",
+        "tooManyRequests": "Demasiadas solicitudes de inicio de sesión. Espera un momento e inténtalo de nuevo.",
+        "haveCode": "¿Ya tienes un código de inicio de sesión?",
+        "codeEntryDescription": "Introduce el código de tu correo electrónico de inicio de sesión. Los códigos solo funcionan en el navegador donde solicitaste el enlace.",
         "backToRequest": "Solicitar un nuevo enlace en su lugar"
       },
       "twoFactor": {
@@ -1108,14 +1108,14 @@
       "contactAdmin": "Contacte al administrador del sistema"
     },
     "passwordless": {
-      "completingSignIn": "Iniciando su sesión...",
-      "completeErrorTitle": "No pudimos iniciar su sesión",
+      "completingSignIn": "Iniciando tu sesión...",
+      "completeErrorTitle": "No pudimos iniciar tu sesión",
       "requestNewLink": "Solicitar un nuevo enlace",
-      "codeTitle": "Su código de inicio de sesión",
-      "codeInstructions": "Abrió el enlace de inicio de sesión en un dispositivo o navegador diferente. Introduzca este código en la pantalla de inicio de sesión donde lo solicitó originalmente.",
-      "codeCloseNotice": "Puede cerrar esta ventana una vez que haya introducido el código.",
+      "codeTitle": "Tu código de inicio de sesión",
+      "codeInstructions": "Abriste el enlace de inicio de sesión en un dispositivo o navegador diferente. Introduce este código en la pantalla de inicio de sesión donde lo solicitaste originalmente.",
+      "codeCloseNotice": "Puedes cerrar esta ventana una vez que hayas introducido el código.",
       "expiredTitle": "Este enlace de inicio de sesión ya no es válido",
-      "expiredBody": "El enlace puede haber expirado o ya haberse utilizado. Solicite uno nuevo desde la página de inicio de sesión; solo toma un momento."
+      "expiredBody": "El enlace puede haber caducado o ya haber sido utilizado. Solicita uno nuevo desde la página de inicio de sesión; solo toma un momento."
     },
     "errors": {
       "accessDenied": "Acceso denegado. Es posible que tu cuenta esté inactiva o que no tengas permiso para iniciar sesión.",
@@ -5210,19 +5210,19 @@
         "authType": "Tipo de autenticación",
         "authTypeHelp": "Elija cómo autenticarse con el servicio externo",
         "emailPlaceholder": "tu-email@ejemplo.com",
-        "emailHelp": "Dirección de correo electrónico de tu cuenta. Obligatoria para Jira Cloud (junto con un token de API abajo). No se usa en Jira Server / Data Center: déjala en blanco allí y usa solo el campo «Token de API» (token de acceso personal) o los campos «Nombre de usuario» / «Contraseña» de abajo.",
+        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
         "apiToken": "Token de API",
         "apiTokenPlaceholder": "Introduzca su token API",
-        "apiTokenHelp": "Jira Cloud: genera un token de API en la configuración de tu cuenta de Atlassian y úsalo junto con tu correo electrónico de arriba. Jira Server / Data Center: pega un token de acceso personal (se envía como Bearer). Deja este campo en blanco si usas los campos «Nombre de usuario» / «Contraseña» de abajo.",
-        "username": "Nombre de usuario",
-        "usernamePlaceholder": "Introduzca su nombre de usuario",
-        "usernameHelp": "Solo para Jira Server / Data Center: el nombre de usuario de tu cuenta, junto con la contraseña de abajo (autenticación Basic). Déjalo en blanco para Jira Cloud o si usas un token de acceso personal (PAT) en el campo «Token de API».",
-        "password": "Contraseña",
-        "passwordPlaceholder": "Introduzca su contraseña",
-        "passwordHelp": "Solo para Jira Server / Data Center: la contraseña de tu cuenta, junto con el nombre de usuario de arriba (autenticación Basic). Déjala en blanco para Jira Cloud o si usas un token de acceso personal (PAT) en el campo «Token de API».",
+        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your username",
+        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "password": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
         "jiraUrl": "URL de Jira",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net o https://jira.mycompany.domain",
-        "jiraUrlHelp": "La URL base de tu instancia de Jira: Atlassian Cloud (https://your-site.atlassian.net) o Server / Data Center autoalojado (https://jira.mycompany.domain).",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
+        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
         "clientId": "ID de cliente",
         "clientIdPlaceholder": "Introduzca su ID de cliente de OAuth",
         "clientIdHelp": "El ID de cliente de su aplicación OAuth",
@@ -7711,9 +7711,9 @@
       "textBody": "Inicie sesión en TestPlanIt\n\nHaga clic en el siguiente enlace para iniciar sesión:\n{url}\n\nPor su seguridad, este enlace solo se puede usar una vez. Solicite un nuevo enlace si necesita iniciar sesión de nuevo.\n\nSi no solicitó este correo electrónico, puede ignorarlo con seguridad."
     },
     "passwordless": {
-      "codeIntro": "¿Está abriendo esto en un dispositivo diferente? Introduzca este código en la pantalla de inicio de sesión donde solicitó el enlace:",
-      "deviceNotice": "Este enlace inicia su sesión desde el navegador donde lo solicitó. Si lo abre en cualquier otro lugar, se le mostrará el código anterior para introducirlo en su ventana original.",
-      "textBody": "Inicie sesión en TestPlanIt\n\nHaga clic en el siguiente enlace para iniciar sesión:\n{url}\n\n¿Está abriendo esto en un dispositivo diferente? Introduzca este código en la pantalla de inicio de sesión donde solicitó el enlace: {code}\n\nSi no solicitó este correo electrónico, puede ignorarlo con seguridad."
+      "codeIntro": "¿Abriendo esto en un dispositivo diferente? Introduce este código en la pantalla de inicio de sesión donde solicitaste el enlace:",
+      "deviceNotice": "Este enlace inicia tu sesión desde el navegador donde lo solicitaste. Si lo abres en otro lugar, se te mostrará el código anterior para que lo introduzcas en tu ventana original.",
+      "textBody": "Inicia sesión en TestPlanIt\n\nHaz clic en el enlace a continuación para iniciar sesión:\n{url}\n\n¿Abriendo esto en un dispositivo diferente? Introduce este código en la pantalla de inicio de sesión donde solicitaste el enlace: {code}\n\nSi no solicitaste este correo electrónico, puedes ignorarlo sin problema."
     }
   },
   "comments": {

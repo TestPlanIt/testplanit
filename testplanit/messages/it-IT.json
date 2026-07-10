@@ -1086,7 +1086,7 @@
         "backToSignIn": "Torna alla pagina di accesso"
       },
       "passwordless": {
-        "waitingInstructions": "Fai clic sul link nell'email per accedere da questo browser, oppure inserisci il codice dall'email qui sotto.",
+        "waitingInstructions": "Fai clic sul link nell'email per accedere da questo browser, oppure inserisci il codice riportato nell'email qui sotto.",
         "codeLabel": "Codice di accesso",
         "verifyCode": "Verifica codice",
         "verifying": "Verifica in corso...",
@@ -1094,10 +1094,10 @@
         "codeExpired": "Questa richiesta di accesso è scaduta. Richiedi un nuovo link.",
         "tooManyAttempts": "Troppi tentativi errati. Richiedi un nuovo link per riprovare.",
         "windowLost": "Questa finestra non può più completare l'accesso. Richiedi un nuovo link.",
-        "genericError": "Non è stato possibile completare l'accesso. Richiedi un nuovo link e riprova.",
+        "genericError": "Non è stato possibile accedere. Richiedi un nuovo link e riprova.",
         "tooManyRequests": "Troppe richieste di accesso. Attendi un momento e riprova.",
         "haveCode": "Hai già un codice di accesso?",
-        "codeEntryDescription": "Inserisci il codice dalla tua email di accesso. I codici funzionano solo nel browser in cui hai richiesto il link.",
+        "codeEntryDescription": "Inserisci il codice ricevuto nell'email di accesso. I codici funzionano solo nel browser in cui hai richiesto il link.",
         "backToRequest": "Richiedi invece un nuovo link"
       },
       "twoFactor": {
@@ -1109,13 +1109,13 @@
     },
     "passwordless": {
       "completingSignIn": "Accesso in corso...",
-      "completeErrorTitle": "Non è stato possibile completare l'accesso",
+      "completeErrorTitle": "Non è stato possibile accedere",
       "requestNewLink": "Richiedi un nuovo link",
       "codeTitle": "Il tuo codice di accesso",
-      "codeInstructions": "Hai aperto il link di accesso su un dispositivo o browser diverso. Inserisci questo codice nella schermata di accesso da cui lo hai originariamente richiesto.",
+      "codeInstructions": "Hai aperto il link di accesso su un dispositivo o browser diverso. Inserisci questo codice nella schermata di accesso in cui l'hai originariamente richiesto.",
       "codeCloseNotice": "Puoi chiudere questa finestra una volta inserito il codice.",
       "expiredTitle": "Questo link di accesso non è più valido",
-      "expiredBody": "Il link potrebbe essere scaduto o già utilizzato. Richiedine uno nuovo dalla pagina di accesso — richiede solo un momento."
+      "expiredBody": "Il link potrebbe essere scaduto o già utilizzato. Richiedine uno nuovo dalla pagina di accesso — è questione di un momento."
     },
     "errors": {
       "accessDenied": "Accesso negato. Il tuo account potrebbe essere inattivo o non hai l'autorizzazione per accedere.",
@@ -5210,19 +5210,19 @@
         "authType": "Tipo di autenticazione",
         "authTypeHelp": "Scegli come autenticarti con il servizio esterno",
         "emailPlaceholder": "la-tua-email@esempio.com",
-        "emailHelp": "L'indirizzo email del tuo account. Obbligatorio per Jira Cloud (insieme a un token API qui sotto). Non usato per Jira Server / Data Center — lì lascia vuoto e usa solo il campo «Token API» (token di accesso personale) oppure i campi «Nome utente» / «Password» qui sotto.",
+        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
         "apiToken": "Token API",
         "apiTokenPlaceholder": "Inserisci il tuo token API",
-        "apiTokenHelp": "Jira Cloud: genera un token API dalle impostazioni del tuo account Atlassian e usalo insieme all'email qui sopra. Jira Server / Data Center: incolla un token di accesso personale (inviato come Bearer). Lascia vuoto questo campo se usi invece i campi «Nome utente» / «Password» qui sotto.",
-        "username": "Nome utente",
-        "usernamePlaceholder": "Inserisci il tuo nome utente",
-        "usernameHelp": "Solo per Jira Server / Data Center — il nome utente del tuo account, insieme alla password qui sotto (autenticazione Basic). Lascia vuoto per Jira Cloud o se usi un token di accesso personale (PAT) nel campo «Token API».",
+        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your username",
+        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
         "password": "Password",
-        "passwordPlaceholder": "Inserisci la tua password",
-        "passwordHelp": "Solo per Jira Server / Data Center — la password del tuo account, insieme al nome utente qui sopra (autenticazione Basic). Lascia vuoto per Jira Cloud o se usi un token di accesso personale (PAT) nel campo «Token API».",
+        "passwordPlaceholder": "Enter your password",
+        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
         "jiraUrl": "URL di Jira",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net o https://jira.mycompany.domain",
-        "jiraUrlHelp": "L'URL di base della tua istanza Jira — Atlassian Cloud (https://your-site.atlassian.net) oppure Server / Data Center self-hosted (https://jira.mycompany.domain).",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
+        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
         "clientId": "ID cliente",
         "clientIdPlaceholder": "Inserisci il tuo ID client OAuth",
         "clientIdHelp": "L'ID client della tua applicazione OAuth",
@@ -7711,9 +7711,9 @@
       "textBody": "Accedi a TestPlanIt\n\nFai clic sul link seguente per accedere:\n{url}\n\nPer motivi di sicurezza, questo link può essere utilizzato solo una volta. Richiedi un nuovo link se devi accedere di nuovo.\n\nSe non hai richiesto questa email, puoi ignorarla in tutta sicurezza."
     },
     "passwordless": {
-      "codeIntro": "Stai aprendo questo link su un dispositivo diverso? Inserisci questo codice nella schermata di accesso da cui hai richiesto il link:",
-      "deviceNotice": "Questo link ti consente di accedere dal browser in cui lo hai richiesto. Se lo apri altrove, ti verrà mostrato il codice sopra da inserire nella finestra originale.",
-      "textBody": "Accedi a TestPlanIt\n\nFai clic sul link seguente per accedere:\n{url}\n\nStai aprendo questo link su un dispositivo diverso? Inserisci questo codice nella schermata di accesso da cui hai richiesto il link: {code}\n\nSe non hai richiesto questa email, puoi ignorarla in tutta sicurezza."
+      "codeIntro": "Stai aprendo questo su un dispositivo diverso? Inserisci questo codice nella schermata di accesso in cui hai richiesto il link:",
+      "deviceNotice": "Questo link ti consente di accedere dal browser in cui l'hai richiesto. Se lo apri altrove, ti verrà mostrato il codice sopra da inserire nella finestra originale.",
+      "textBody": "Accedi a TestPlanIt\n\nFai clic sul link seguente per accedere:\n{url}\n\nStai aprendo questo su un dispositivo diverso? Inserisci questo codice nella schermata di accesso in cui hai richiesto il link: {code}\n\nSe non hai richiesto questa email, puoi tranquillamente ignorarla."
     }
   },
   "comments": {
@@ -7897,7 +7897,7 @@
     "renameConfirm": "Rinominare",
     "renameNoRefsToast": "Parametro rinominato (nessun riferimento esistente)",
     "selectSourceWarningTitle": "Modificare l'origine SELECT per \"@{name}\"?",
-    "selectSourceWarningDescription": "Existing dataset values for this parameter may not exist in the new list. {invalidCount, plural, =1 {# row will} other {# rows will}} need attention after this change. Continue?",
+    "selectSourceWarningDescription": "I valori del set di dati esistenti per questo parametro potrebbero non essere presenti nella nuova lista. {invalidCount, plural, =1 {# riga richiederà} other {# righe richiederanno}} attenzione dopo questa modifica. Continuare?",
     "selectSourceConfirm": "Cambia sorgente",
     "datasetRowSelectAria": "Seleziona riga",
     "datasetSelectAllPageTooltip": "Fai clic per selezionare tutte le righe di questa pagina. Fai clic tenendo premuto Maiusc per selezionare tutte le righe di tutte le pagine.",

@@ -1086,19 +1086,19 @@
         "backToSignIn": "Giriş sayfasına geri dön"
       },
       "passwordless": {
-        "waitingInstructions": "Bu tarayıcıdan giriş yapmak için e-postadaki bağlantıya tıklayın veya aşağıya e-postadaki kodu girin.",
+        "waitingInstructions": "E-postadaki bağlantıya tıklayarak bu tarayıcıdan giriş yapın veya aşağıya e-postadaki kodu girin.",
         "codeLabel": "Giriş kodu",
         "verifyCode": "Kodu doğrula",
         "verifying": "Doğrulanıyor...",
         "invalidCode": "Bu kod doğru değil. E-postayı kontrol edin ve tekrar deneyin.",
         "codeExpired": "Bu giriş isteğinin süresi doldu. Yeni bir bağlantı isteyin.",
-        "tooManyAttempts": "Çok fazla yanlış deneme yapıldı. Tekrar denemek için yeni bir bağlantı isteyin.",
+        "tooManyAttempts": "Çok fazla hatalı deneme yapıldı. Tekrar denemek için yeni bir bağlantı isteyin.",
         "windowLost": "Bu pencere artık girişi tamamlayamıyor. Yeni bir bağlantı isteyin.",
-        "genericError": "Girişinizi tamamlayamadık. Yeni bir bağlantı isteyip tekrar deneyin.",
-        "tooManyRequests": "Çok fazla giriş isteği yapıldı. Lütfen bir süre bekleyip tekrar deneyin.",
-        "haveCode": "Zaten bir giriş kodunuz mu var?",
+        "genericError": "Giriş yapamadık. Yeni bir bağlantı isteyin ve tekrar deneyin.",
+        "tooManyRequests": "Çok fazla giriş isteği yapıldı. Lütfen biraz bekleyip tekrar deneyin.",
+        "haveCode": "Zaten bir giriş kodunuz var mı?",
         "codeEntryDescription": "Giriş e-postanızdaki kodu girin. Kodlar yalnızca bağlantıyı istediğiniz tarayıcıda çalışır.",
-        "backToRequest": "Bunun yerine yeni bir bağlantı iste"
+        "backToRequest": "Bunun yerine yeni bir bağlantı isteyin"
       },
       "twoFactor": {
         "title": "İki Faktörlü Kimlik Doğrulama",
@@ -1109,13 +1109,13 @@
     },
     "passwordless": {
       "completingSignIn": "Giriş yapılıyor...",
-      "completeErrorTitle": "Girişinizi tamamlayamadık",
-      "requestNewLink": "Yeni bir bağlantı iste",
+      "completeErrorTitle": "Giriş yapamadık",
+      "requestNewLink": "Yeni bir bağlantı isteyin",
       "codeTitle": "Giriş kodunuz",
-      "codeInstructions": "Giriş bağlantısını farklı bir cihazda veya tarayıcıda açtınız. Bu kodu, orijinal olarak istekte bulunduğunuz giriş ekranına girin.",
+      "codeInstructions": "Giriş bağlantısını farklı bir cihaz veya tarayıcıda açtınız. Bu kodu, bağlantıyı ilk istediğiniz giriş ekranına girin.",
       "codeCloseNotice": "Kodu girdikten sonra bu pencereyi kapatabilirsiniz.",
       "expiredTitle": "Bu giriş bağlantısı artık geçerli değil",
-      "expiredBody": "Bağlantının süresi dolmuş veya zaten kullanılmış olabilir. Giriş sayfasından yeni bir tane isteyin — yalnızca bir dakikanızı alır."
+      "expiredBody": "Bağlantının süresi dolmuş veya zaten kullanılmış olabilir. Giriş sayfasından yeni bir bağlantı isteyin — bu sadece bir dakikanızı alır."
     },
     "errors": {
       "accessDenied": "Erişim engellendi. Hesabınız devre dışı olabilir veya oturum açma izniniz olmayabilir.",
@@ -5210,19 +5210,19 @@
         "authType": "Kimlik Doğrulama Türü",
         "authTypeHelp": "Harici hizmetle nasıl kimlik doğrulaması yapacağınızı seçin.",
         "emailPlaceholder": "your-email@example.com",
-        "emailHelp": "Hesabınızın e-posta adresi. Jira Cloud için zorunludur (aşağıdaki API belirteci ile birlikte kullanılır). Jira Server / Data Center'da kullanılmaz — orada boş bırakın ve yalnızca API Token alanını (kişisel erişim belirteci) veya aşağıdaki Kullanıcı adı / Parola alanlarını kullanın.",
+        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
         "apiToken": "API Token",
         "apiTokenPlaceholder": "API belirtecinizi girin",
-        "apiTokenHelp": "Jira Cloud: Atlassian hesap ayarlarınızdan bir API belirteci oluşturun ve yukarıdaki e-posta adresinizle birlikte kullanın. Jira Server / Data Center: bir kişisel erişim belirteci yapıştırın (Bearer olarak gönderilir). Bunun yerine aşağıdaki Kullanıcı adı / Parola alanlarını kullanıyorsanız bu alanı boş bırakın.",
-        "username": "Kullanıcı adı",
-        "usernamePlaceholder": "Kullanıcı adınızı girin",
-        "usernameHelp": "Yalnızca Jira Server / Data Center için — hesabınızın kullanıcı adı, aşağıdaki parola ile birlikte kullanılır (Basic kimlik doğrulaması). Jira Cloud için veya API Token alanında kişisel erişim belirteci (PAT) kullanıyorsanız boş bırakın.",
-        "password": "Parola",
-        "passwordPlaceholder": "Parolanızı girin",
-        "passwordHelp": "Yalnızca Jira Server / Data Center için — hesabınızın parolası, yukarıdaki kullanıcı adı ile birlikte kullanılır (Basic kimlik doğrulaması). Jira Cloud için veya API Token alanında kişisel erişim belirteci (PAT) kullanıyorsanız boş bırakın.",
+        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your username",
+        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "password": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
         "jiraUrl": "Jira URL",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net veya https://jira.mycompany.domain",
-        "jiraUrlHelp": "Jira örneğinizin temel URL'si — Atlassian Cloud (https://your-site.atlassian.net) veya kendi barındırdığınız Server / Data Center (https://jira.mycompany.domain).",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
+        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
         "clientId": "Müşteri Kimliği",
         "clientIdPlaceholder": "OAuth İstemci Kimliğinizi girin.",
         "clientIdHelp": "OAuth uygulamanızdan alınan İstemci Kimliği.",
@@ -7711,9 +7711,9 @@
       "textBody": "TestPlanIt'e giriş yapın\n\nGiriş yapmak için aşağıdaki bağlantıya tıklayın:\n{url}\n\nGüvenliğiniz için bu bağlantı yalnızca bir kez kullanılabilir. Tekrar giriş yapmanız gerekirse yeni bir bağlantı isteyin.\n\nBu e-postayı siz talep etmediyseniz, güvenle yok sayabilirsiniz."
     },
     "passwordless": {
-      "codeIntro": "Bunu farklı bir cihazda mı açıyorsunuz? Bağlantıyı istediğiniz giriş ekranına bu kodu girin:",
-      "deviceNotice": "Bu bağlantı, istekte bulunduğunuz tarayıcıdan giriş yapmanızı sağlar. Başka bir yerde açarsanız, orijinal pencerenize girmeniz için yukarıdaki kod gösterilecektir.",
-      "textBody": "TestPlanIt'e giriş yapın\n\nGiriş yapmak için aşağıdaki bağlantıya tıklayın:\n{url}\n\nBunu farklı bir cihazda mı açıyorsunuz? Bağlantıyı istediğiniz giriş ekranına bu kodu girin: {code}\n\nBu e-postayı siz talep etmediyseniz, güvenle yok sayabilirsiniz."
+      "codeIntro": "Bunu farklı bir cihazda mı açıyorsunuz? Bu kodu, bağlantıyı istediğiniz giriş ekranına girin:",
+      "deviceNotice": "Bu bağlantı, sizi istediğiniz tarayıcıdan giriş yaptırır. Başka bir yerde açarsanız, orijinal pencerenizde girmeniz için yukarıdaki kod gösterilecektir.",
+      "textBody": "TestPlanIt'e giriş yapın\n\nGiriş yapmak için aşağıdaki bağlantıya tıklayın:\n{url}\n\nBunu farklı bir cihazda mı açıyorsunuz? Bu kodu, bağlantıyı istediğiniz giriş ekranına girin: {code}\n\nBu e-postayı siz istemediyseniz, güvenle yok sayabilirsiniz."
     }
   },
   "comments": {

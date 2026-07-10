@@ -1086,18 +1086,18 @@
         "backToSignIn": "Voltar para a página de login"
       },
       "passwordless": {
-        "waitingInstructions": "Clique no link do e-mail para entrar a partir deste navegador, ou insira o código do e-mail abaixo.",
-        "codeLabel": "Código de acesso",
+        "waitingInstructions": "Clique no link do e-mail para entrar por este navegador ou digite abaixo o código do e-mail.",
+        "codeLabel": "Código de login",
         "verifyCode": "Verificar código",
         "verifying": "Verificando...",
         "invalidCode": "Esse código não está correto. Verifique o e-mail e tente novamente.",
-        "codeExpired": "Esta solicitação de acesso expirou. Solicite um novo link.",
+        "codeExpired": "Essa solicitação de login expirou. Solicite um novo link.",
         "tooManyAttempts": "Muitas tentativas incorretas. Solicite um novo link para tentar novamente.",
-        "windowLost": "Esta janela não pode mais concluir o acesso. Solicite um novo link.",
-        "genericError": "Não foi possível concluir seu acesso. Solicite um novo link e tente novamente.",
-        "tooManyRequests": "Muitas solicitações de acesso. Aguarde um momento e tente novamente.",
-        "haveCode": "Já tem um código de acesso?",
-        "codeEntryDescription": "Insira o código do seu e-mail de acesso. Os códigos só funcionam no navegador onde você solicitou o link.",
+        "windowLost": "Esta janela não pode mais concluir o login. Solicite um novo link.",
+        "genericError": "Não foi possível fazer seu login. Solicite um novo link e tente novamente.",
+        "tooManyRequests": "Muitas solicitações de login. Aguarde um momento e tente novamente.",
+        "haveCode": "Já tem um código de login?",
+        "codeEntryDescription": "Digite o código do seu e-mail de login. Os códigos só funcionam no navegador em que você solicitou o link.",
         "backToRequest": "Solicitar um novo link em vez disso"
       },
       "twoFactor": {
@@ -1108,14 +1108,14 @@
       "contactAdmin": "Contate o administrador do sistema."
     },
     "passwordless": {
-      "completingSignIn": "Entrando...",
-      "completeErrorTitle": "Não foi possível concluir seu acesso",
+      "completingSignIn": "Fazendo seu login...",
+      "completeErrorTitle": "Não foi possível fazer seu login",
       "requestNewLink": "Solicitar um novo link",
-      "codeTitle": "Seu código de acesso",
-      "codeInstructions": "Você abriu o link de acesso em um dispositivo ou navegador diferente. Insira este código na tela de acesso onde você o solicitou originalmente.",
-      "codeCloseNotice": "Você pode fechar esta janela após inserir o código.",
-      "expiredTitle": "Este link de acesso não é mais válido",
-      "expiredBody": "O link pode ter expirado ou já ter sido usado. Solicite um novo na página de acesso — leva apenas um momento."
+      "codeTitle": "Seu código de login",
+      "codeInstructions": "Você abriu o link de login em um dispositivo ou navegador diferente. Digite este código na tela de login onde você o solicitou originalmente.",
+      "codeCloseNotice": "Você pode fechar esta janela depois de digitar o código.",
+      "expiredTitle": "Este link de login não é mais válido",
+      "expiredBody": "O link pode ter expirado ou já ter sido usado. Solicite um novo na página de login — é rápido."
     },
     "errors": {
       "accessDenied": "Acesso negado. Sua conta pode estar inativa ou você não tem permissão para fazer login.",
@@ -5210,19 +5210,19 @@
         "authType": "Tipo de autenticação",
         "authTypeHelp": "Escolha como autenticar com o serviço externo.",
         "emailPlaceholder": "seu-email@exemplo.com",
-        "emailHelp": "O endereço de e-mail da sua conta. Obrigatório para Jira Cloud (usado junto com um token de API abaixo). Não é usado no Jira Server / Data Center — deixe em branco e use apenas o campo \"Token da API\" (token de acesso pessoal) ou os campos \"Nome de usuário\" / \"Senha\" abaixo.",
+        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
         "apiToken": "Token da API",
         "apiTokenPlaceholder": "Insira seu token de API",
-        "apiTokenHelp": "Jira Cloud: gere um token de API nas configurações da sua conta Atlassian e use-o junto com seu e-mail acima. Jira Server / Data Center: cole um token de acesso pessoal (enviado como Bearer). Deixe este campo em branco se estiver usando os campos \"Nome de usuário\" / \"Senha\" abaixo.",
-        "username": "Nome de usuário",
-        "usernamePlaceholder": "Insira seu nome de usuário",
-        "usernameHelp": "Somente para Jira Server / Data Center — o nome de usuário da sua conta, usado junto com a senha abaixo (autenticação Basic). Deixe em branco para Jira Cloud ou ao usar um token de acesso pessoal (PAT) no campo \"Token da API\".",
-        "password": "Senha",
-        "passwordPlaceholder": "Insira sua senha",
-        "passwordHelp": "Somente para Jira Server / Data Center — a senha da sua conta, usada junto com o nome de usuário acima (autenticação Basic). Deixe em branco para Jira Cloud ou ao usar um token de acesso pessoal (PAT) no campo \"Token da API\".",
+        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your username",
+        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "password": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
         "jiraUrl": "URL do Jira",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net ou https://jira.mycompany.domain",
-        "jiraUrlHelp": "A URL base da sua instância do Jira — Atlassian Cloud (https://your-site.atlassian.net) ou Server / Data Center auto-hospedado (https://jira.mycompany.domain).",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
+        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
         "clientId": "ID do cliente",
         "clientIdPlaceholder": "Insira seu ID de cliente OAuth",
         "clientIdHelp": "O ID do cliente do seu aplicativo OAuth",
@@ -7711,9 +7711,9 @@
       "textBody": "Entre no TestPlanIt\n\nClique no link abaixo para entrar:\n{url}\n\nPara sua segurança, este link só pode ser usado uma vez. Solicite um novo link se precisar entrar novamente.\n\nSe você não solicitou este e-mail, pode ignorá-lo com segurança."
     },
     "passwordless": {
-      "codeIntro": "Abrindo isso em um dispositivo diferente? Insira este código na tela de acesso onde você solicitou o link:",
-      "deviceNotice": "Este link permite o acesso a partir do navegador onde você o solicitou. Se você abri-lo em outro lugar, o código acima será exibido para você inserir na sua janela original.",
-      "textBody": "Entre no TestPlanIt\n\nClique no link abaixo para entrar:\n{url}\n\nAbrindo isso em um dispositivo diferente? Insira este código na tela de acesso onde você solicitou o link: {code}\n\nSe você não solicitou este e-mail, pode ignorá-lo com segurança."
+      "codeIntro": "Abrindo isso em um dispositivo diferente? Digite este código na tela de login onde você solicitou o link:",
+      "deviceNotice": "Este link faz seu login no navegador onde você o solicitou. Se você o abrir em outro lugar, será exibido o código acima para digitar em sua janela original.",
+      "textBody": "Entrar no TestPlanIt\n\nClique no link abaixo para entrar:\n{url}\n\nAbrindo isso em um dispositivo diferente? Digite este código na tela de login onde você solicitou o link: {code}\n\nSe você não solicitou este e-mail, pode ignorá-lo com segurança."
     }
   },
   "comments": {

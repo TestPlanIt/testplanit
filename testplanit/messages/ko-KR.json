@@ -1086,19 +1086,19 @@
         "backToSignIn": "로그인 페이지로 돌아가기"
       },
       "passwordless": {
-        "waitingInstructions": "이메일의 링크를 클릭하여 이 브라우저에서 로그인하거나, 아래에 이메일의 코드를 입력하세요.",
+        "waitingInstructions": "이 브라우저에서 로그인하려면 이메일의 링크를 클릭하거나 아래에 이메일의 코드를 입력하세요.",
         "codeLabel": "로그인 코드",
         "verifyCode": "코드 확인",
         "verifying": "확인 중...",
         "invalidCode": "코드가 올바르지 않습니다. 이메일을 확인하고 다시 시도하세요.",
         "codeExpired": "이 로그인 요청이 만료되었습니다. 새 링크를 요청하세요.",
         "tooManyAttempts": "잘못된 시도가 너무 많습니다. 다시 시도하려면 새 링크를 요청하세요.",
-        "windowLost": "이 창에서는 로그인을 완료할 수 없습니다. 새 링크를 요청하세요.",
+        "windowLost": "이 창에서는 더 이상 로그인을 완료할 수 없습니다. 새 링크를 요청하세요.",
         "genericError": "로그인할 수 없습니다. 새 링크를 요청하고 다시 시도하세요.",
         "tooManyRequests": "로그인 요청이 너무 많습니다. 잠시 기다린 후 다시 시도하세요.",
         "haveCode": "이미 로그인 코드가 있으신가요?",
         "codeEntryDescription": "로그인 이메일의 코드를 입력하세요. 코드는 링크를 요청한 브라우저에서만 작동합니다.",
-        "backToRequest": "대신 새 링크 요청"
+        "backToRequest": "대신 새 링크 요청하기"
       },
       "twoFactor": {
         "title": "2단계 인증",
@@ -1108,14 +1108,14 @@
       "contactAdmin": "시스템 관리자에게 문의하십시오."
     },
     "passwordless": {
-      "completingSignIn": "로그인하는 중...",
+      "completingSignIn": "로그인 중...",
       "completeErrorTitle": "로그인할 수 없습니다",
       "requestNewLink": "새 링크 요청",
       "codeTitle": "로그인 코드",
-      "codeInstructions": "다른 기기나 브라우저에서 로그인 링크를 열었습니다. 원래 요청한 로그인 화면에서 이 코드를 입력하세요.",
+      "codeInstructions": "다른 기기 또는 브라우저에서 로그인 링크를 열었습니다. 처음 요청한 로그인 화면에서 이 코드를 입력하세요.",
       "codeCloseNotice": "코드를 입력한 후에는 이 창을 닫아도 됩니다.",
       "expiredTitle": "이 로그인 링크는 더 이상 유효하지 않습니다",
-      "expiredBody": "링크가 만료되었거나 이미 사용되었을 수 있습니다. 로그인 페이지에서 새 링크를 요청하세요 — 잠깐이면 됩니다."
+      "expiredBody": "링크가 만료되었거나 이미 사용되었을 수 있습니다. 로그인 페이지에서 새 링크를 요청하세요. 잠깐이면 됩니다."
     },
     "errors": {
       "accessDenied": "접근이 거부되었습니다. 계정이 비활성화되었거나 로그인 권한이 없을 수 있습니다.",
@@ -5210,19 +5210,19 @@
         "authType": "인증 유형",
         "authTypeHelp": "외부 서비스와의 인증 방법을 선택하세요",
         "emailPlaceholder": "your-email@example.com",
-        "emailHelp": "계정의 이메일 주소입니다. Jira Cloud에서는 필수입니다(아래 API 토큰과 함께 사용). Jira Server / Data Center에서는 사용되지 않습니다 — 비워 두고 API 토큰 필드만 사용(개인 액세스 토큰)하거나 아래의 사용자 이름/비밀번호 필드를 사용하세요.",
+        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
         "apiToken": "API 토큰",
         "apiTokenPlaceholder": "API 토큰을 입력하세요",
-        "apiTokenHelp": "Jira Cloud: Atlassian 계정 설정에서 API 토큰을 생성하고 위의 이메일과 함께 사용하세요. Jira Server / Data Center: 개인 액세스 토큰을 붙여넣으세요(Bearer로 전송됨). 아래의 사용자 이름/비밀번호 필드를 대신 사용하는 경우 이 필드는 비워 두세요.",
-        "username": "사용자 이름",
-        "usernamePlaceholder": "사용자 이름을 입력하세요",
-        "usernameHelp": "Jira Server / Data Center 전용 — 아래 비밀번호와 함께 사용하는 계정의 사용자 이름입니다(Basic 인증). Jira Cloud를 사용하거나 API 토큰 필드에 개인 액세스 토큰(PAT)을 사용하는 경우 비워 두세요.",
-        "password": "비밀번호",
-        "passwordPlaceholder": "비밀번호를 입력하세요",
-        "passwordHelp": "Jira Server / Data Center 전용 — 위의 사용자 이름과 함께 사용하는 계정의 비밀번호입니다(Basic 인증). Jira Cloud를 사용하거나 API 토큰 필드에 개인 액세스 토큰(PAT)을 사용하는 경우 비워 두세요.",
+        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your username",
+        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "password": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
         "jiraUrl": "지라 URL",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net 또는 https://jira.mycompany.domain",
-        "jiraUrlHelp": "Jira 인스턴스의 기본 URL — Atlassian Cloud(https://your-site.atlassian.net) 또는 자체 호스팅 Server / Data Center(https://jira.mycompany.domain).",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
+        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
         "clientId": "클라이언트 ID",
         "clientIdPlaceholder": "OAuth 클라이언트 ID를 입력하세요.",
         "clientIdHelp": "OAuth 애플리케이션의 클라이언트 ID",
@@ -7711,9 +7711,9 @@
       "textBody": "TestPlanIt에 로그인\n\n로그인하려면 아래 링크를 클릭하세요:\n{url}\n\n보안을 위해 이 링크는 한 번만 사용할 수 있습니다. 다시 로그인해야 하는 경우 새 링크를 요청하세요.\n\n이 이메일을 요청하지 않으셨다면 무시하셔도 안전합니다."
     },
     "passwordless": {
-      "codeIntro": "다른 기기에서 여셨나요? 링크를 요청한 로그인 화면에서 이 코드를 입력하세요:",
-      "deviceNotice": "이 링크는 요청한 브라우저에서 로그인됩니다. 다른 곳에서 열면 원래 창에 입력할 위의 코드가 표시됩니다.",
-      "textBody": "TestPlanIt에 로그인\n\n로그인하려면 아래 링크를 클릭하세요:\n{url}\n\n다른 기기에서 여셨나요? 링크를 요청한 로그인 화면에서 다음 코드를 입력하세요: {code}\n\n이 이메일을 요청하지 않으셨다면 무시하셔도 안전합니다."
+      "codeIntro": "다른 기기에서 열고 계신가요? 링크를 요청한 로그인 화면에서 이 코드를 입력하세요:",
+      "deviceNotice": "이 링크는 요청한 브라우저에서 로그인합니다. 다른 곳에서 열면 원래 창에 입력할 위의 코드가 표시됩니다.",
+      "textBody": "TestPlanIt에 로그인\n\n로그인하려면 아래 링크를 클릭하세요:\n{url}\n\n다른 기기에서 열고 계신가요? 링크를 요청한 로그인 화면에서 이 코드를 입력하세요: {code}\n\n이 이메일을 요청하지 않으셨다면 무시하셔도 됩니다."
     }
   },
   "comments": {
