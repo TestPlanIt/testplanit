@@ -1,3 +1,9 @@
+## [0.41.4](https://github.com/TestPlanIt/testplanit/compare/v0.41.3...v0.41.4) (2026-07-10)
+
+### Performance Improvements
+
+* **zenstack:** stop generating unused CRUD input schemas — 12.6 GB -> 2.5 GB, 4.5 min -> 40 s ([#511](https://github.com/TestPlanIt/testplanit/issues/511)) ([02d48a2](https://github.com/TestPlanIt/testplanit/commit/02d48a2db030e48b19499f29e7712318cb005c60))
+
 ## [0.41.3](https://github.com/TestPlanIt/testplanit/compare/v0.41.2...v0.41.3) (2026-07-08)
 
 ### Bug Fixes
