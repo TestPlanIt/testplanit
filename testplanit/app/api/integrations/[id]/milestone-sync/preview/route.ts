@@ -49,9 +49,7 @@ export const GET = withAuditContext(
         );
       }
       let kind = (kindParam ?? undefined) as
-        | "RELEASE"
-        | "ITERATION"
-        | undefined;
+        "RELEASE" | "ITERATION" | undefined;
 
       const includeClosed = searchParams.get("includeClosed") === "true";
       const pageToken = searchParams.get("pageToken") ?? undefined;

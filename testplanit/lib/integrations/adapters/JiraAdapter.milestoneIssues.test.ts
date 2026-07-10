@@ -65,7 +65,7 @@ describe("JiraAdapter.getMilestoneIssues", () => {
       const [calledUrl] = mockFetch.mock.calls[0];
       const params = new URL(calledUrl).searchParams;
       expect(params.get("jql")).toContain("fixVersion = 10000");
-      expect(params.get("jql")).not.toContain("fixVersion = \"");
+      expect(params.get("jql")).not.toContain('fixVersion = "');
     });
 
     it("builds a sprint = <id> clause for an ITERATION ref (numeric id, not name)", async () => {

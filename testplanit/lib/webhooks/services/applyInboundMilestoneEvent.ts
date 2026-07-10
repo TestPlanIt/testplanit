@@ -373,11 +373,8 @@ export async function applyInboundMilestoneEvent(
   // the dedup row is already committed, and the next webhook event (or a
   // manual sync) reconciles.
   let finalOutcome:
-    | "refreshed"
-    | "imported"
-    | "converted"
-    | "unmatched"
-    | "error" = "unmatched";
+    "refreshed" | "imported" | "converted" | "unmatched" | "error" =
+    "unmatched";
   let milestoneId: number | undefined;
   try {
     const resolved = await resolveMilestoneEventProject(ref);

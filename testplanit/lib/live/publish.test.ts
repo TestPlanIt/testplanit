@@ -215,9 +215,8 @@ describe("publishMilestoneWakeUp (no valkeyConnection)", () => {
     vi.doMock("~/lib/multiTenantDb", () => ({
       getCurrentTenantId: () => "acme",
     }));
-    const { publishMilestoneWakeUp: publishWithNullConn } = await import(
-      "./publish"
-    );
+    const { publishMilestoneWakeUp: publishWithNullConn } =
+      await import("./publish");
     publishWithNullConn({
       event: "milestone.updated",
       milestoneId: 1,

@@ -91,10 +91,7 @@ export async function GET(
     select: { id: true },
   });
   if (!accessibleMilestone) {
-    return NextResponse.json(
-      { error: "Milestone not found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Milestone not found" }, { status: 404 });
   }
 
   const tenantId = getCurrentTenantId() ?? "default";

@@ -41,7 +41,9 @@ import { GET } from "./route";
 const params = { params: Promise.resolve({ id: "4" }) };
 
 const createRequest = (search: Record<string, string>): NextRequest => {
-  const url = new URL("http://localhost/api/integrations/4/milestone-sync/preview");
+  const url = new URL(
+    "http://localhost/api/integrations/4/milestone-sync/preview"
+  );
   for (const [k, v] of Object.entries(search)) url.searchParams.set(k, v);
   return new NextRequest(url.toString());
 };
@@ -140,8 +142,16 @@ describe("milestone-sync preview route — multi-mapping union", () => {
       config: {},
     });
     (baseDb.integrationProject.findMany as any).mockResolvedValue([
-      { id: "map-abt", externalProjectKey: "ABT", externalProjectName: "Allego Bug Tracking" },
-      { id: "map-adm", externalProjectKey: "ADM", externalProjectName: "Admin Tools" },
+      {
+        id: "map-abt",
+        externalProjectKey: "ABT",
+        externalProjectName: "Allego Bug Tracking",
+      },
+      {
+        id: "map-adm",
+        externalProjectKey: "ADM",
+        externalProjectName: "Admin Tools",
+      },
     ]);
     (integrationManager.getAdapter as any).mockResolvedValue({
       getExternalMilestones,
@@ -153,11 +163,21 @@ describe("milestone-sync preview route — multi-mapping union", () => {
       items:
         projectKey === "ABT"
           ? [{ id: "v-1", kind: "RELEASE", name: "Icebox", state: "FUTURE" }]
-          : [{ id: "s-1", kind: "ITERATION", name: "Admin 9.2 S1", state: "ACTIVE" }],
+          : [
+              {
+                id: "s-1",
+                kind: "ITERATION",
+                name: "Admin 9.2 S1",
+                state: "ACTIVE",
+              },
+            ],
       hasMore: false,
     }));
 
-    const res = await GET(createRequest({ projectMappingId: "map-abt" }), params);
+    const res = await GET(
+      createRequest({ projectMappingId: "map-abt" }),
+      params
+    );
     expect(res.status).toBe(200);
     const body = await res.json();
 
@@ -176,11 +196,16 @@ describe("milestone-sync preview route — multi-mapping union", () => {
 
   it("dedupes a shared-board sprint and records both sources", async () => {
     getExternalMilestones.mockResolvedValue({
-      items: [{ id: "s-9", kind: "ITERATION", name: "Shared", state: "ACTIVE" }],
+      items: [
+        { id: "s-9", kind: "ITERATION", name: "Shared", state: "ACTIVE" },
+      ],
       hasMore: false,
     });
 
-    const res = await GET(createRequest({ projectMappingId: "map-abt" }), params);
+    const res = await GET(
+      createRequest({ projectMappingId: "map-abt" }),
+      params
+    );
     const body = await res.json();
     expect(body.items).toHaveLength(1);
     expect(body.items[0].sourceProjects.map((sp: any) => sp.key)).toEqual([
@@ -198,7 +223,10 @@ describe("milestone-sync preview route — multi-mapping union", () => {
       };
     });
 
-    const res = await GET(createRequest({ projectMappingId: "map-abt" }), params);
+    const res = await GET(
+      createRequest({ projectMappingId: "map-abt" }),
+      params
+    );
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.items).toHaveLength(1);
@@ -207,7 +235,10 @@ describe("milestone-sync preview route — multi-mapping union", () => {
 
   it("fails with 500 only when every mapping's fetch fails", async () => {
     getExternalMilestones.mockRejectedValue(new Error("HTTP 401: nope"));
-    const res = await GET(createRequest({ projectMappingId: "map-abt" }), params);
+    const res = await GET(
+      createRequest({ projectMappingId: "map-abt" }),
+      params
+    );
     expect(res.status).toBe(500);
   });
 });

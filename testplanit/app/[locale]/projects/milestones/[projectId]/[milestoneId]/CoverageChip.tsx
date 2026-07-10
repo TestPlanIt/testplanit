@@ -37,9 +37,7 @@ export function hasCompletedCoverage(
   breakdown: CoverageBreakdown | undefined
 ): boolean {
   return (
-    !!breakdown &&
-    !breakdown.uncovered &&
-    (breakdown.statuses?.length ?? 0) > 0
+    !!breakdown && !breakdown.uncovered && (breakdown.statuses?.length ?? 0) > 0
   );
 }
 

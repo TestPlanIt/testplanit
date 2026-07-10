@@ -55,7 +55,10 @@ export function testRunProjectChannel(
  * Per-milestone wake-up channel (D-13/D-14). Mirrors `testRunChannel`
  * exactly — the milestone detail page subscribes here.
  */
-export function milestoneChannel(tenantId: string, milestoneId: number): string {
+export function milestoneChannel(
+  tenantId: string,
+  milestoneId: number
+): string {
   if (!tenantId) {
     throw new Error("live/channels.milestoneChannel: tenantId is required");
   }

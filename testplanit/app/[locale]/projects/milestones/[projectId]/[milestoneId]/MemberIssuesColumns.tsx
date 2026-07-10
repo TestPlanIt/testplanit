@@ -287,7 +287,8 @@ export function useMemberIssueColumns({
       {
         id: "status",
         accessorKey: "issue.externalStatus",
-        accessorFn: (row) => row.issue?.externalStatus ?? row.issue?.status ?? "",
+        accessorFn: (row) =>
+          row.issue?.externalStatus ?? row.issue?.status ?? "",
         header: tStatus,
         enableSorting: true,
         enableResizing: true,
@@ -319,7 +320,9 @@ export function useMemberIssueColumns({
           <div className="text-center" data-testid="member-issue-case-count">
             <CasesListDisplay
               count={row.original.coverage?.linkedCaseCount}
-              filter={{ caseIssues: { some: { issueId: row.original.issueId } } }}
+              filter={{
+                caseIssues: { some: { issueId: row.original.issueId } },
+              }}
               isLoading={!row.original.coverage}
             />
           </div>

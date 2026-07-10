@@ -93,7 +93,8 @@ export function MilestoneIssueManager({
 
   const { mutateAsync: createMilestoneIssue } =
     useClientQueries(schema).milestoneIssue.useCreate();
-  const { mutateAsync: upsertIssue } = useClientQueries(schema).issue.useUpsert();
+  const { mutateAsync: upsertIssue } =
+    useClientQueries(schema).issue.useUpsert();
 
   // MLINK-03: manual linking works on ANY milestone, synced or local. A
   // LOCAL milestone has no integrationId of its own, but the search dialog

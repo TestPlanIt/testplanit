@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -326,7 +332,9 @@ describe("ImportMilestonesDialog — multi-project picker", () => {
       name: "Android Icebox",
       state: "FUTURE",
       rawState: "future",
-      sourceProjects: [{ id: "map-abt", key: "ABT", name: "Allego Bug Tracking" }],
+      sourceProjects: [
+        { id: "map-abt", key: "ABT", name: "Allego Bug Tracking" },
+      ],
     },
     {
       id: "s-1",
@@ -367,8 +375,12 @@ describe("ImportMilestonesDialog — multi-project picker", () => {
     render(<ImportMilestonesDialog {...baseProps} />);
     await screen.findByText("Android Icebox");
 
-    expect(screen.getByTestId("import-milestones-project-all")).toBeInTheDocument();
-    expect(screen.getAllByTestId("import-milestones-project-chip")).toHaveLength(2);
+    expect(
+      screen.getByTestId("import-milestones-project-all")
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByTestId("import-milestones-project-chip")
+    ).toHaveLength(2);
     const sources = screen.getAllByTestId("import-milestone-source");
     expect(sources.map((el) => el.textContent)).toEqual([
       "ABT",
@@ -432,8 +444,8 @@ describe("ImportMilestonesDialog — multi-project picker", () => {
     });
     render(<ImportMilestonesDialog {...baseProps} />);
     await screen.findByText("Admin 9.2 S1");
-    expect(screen.getByTestId("import-milestones-warnings").textContent).toContain(
-      "ABT: HTTP 400: boom"
-    );
+    expect(
+      screen.getByTestId("import-milestones-warnings").textContent
+    ).toContain("ABT: HTTP 400: boom");
   });
 });

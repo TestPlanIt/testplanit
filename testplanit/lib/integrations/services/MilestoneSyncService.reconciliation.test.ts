@@ -63,8 +63,7 @@ vi.mock("../IntegrationManager", () => ({
       }),
       getExternalMilestones: (...args: any[]) =>
         mockGetExternalMilestones(...args),
-      getMilestoneIssues: (...args: any[]) =>
-        mockGetMilestoneIssues(...args),
+      getMilestoneIssues: (...args: any[]) => mockGetMilestoneIssues(...args),
     }),
   },
 }));
@@ -122,7 +121,12 @@ beforeEach(() => {
   mockMilestoneIssueDeleteMany.mockResolvedValue({ count: 0 });
   mockMilestoneIssueFindMany.mockResolvedValue([]);
   mockUpsertIssueFromExternal.mockImplementation(
-    async (_db: any, _integrationId: number, _projectId: number, issueData: any) => ({
+    async (
+      _db: any,
+      _integrationId: number,
+      _projectId: number,
+      issueData: any
+    ) => ({
       id: issueData.id === "ext-1" ? 900 : 901,
       created: true,
     })
@@ -147,7 +151,9 @@ describe("MilestoneSyncService reconciliation — departed members", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           milestoneId: 1,
-          issueId: expect.objectContaining({ in: expect.arrayContaining([777]) }),
+          issueId: expect.objectContaining({
+            in: expect.arrayContaining([777]),
+          }),
           source: "SYNCED",
         }),
       })
@@ -223,7 +229,11 @@ describe("MilestoneSyncService reconciliation — departed members", () => {
   it("never deletes a MANUAL link for a departed issue — deleteMany where-clause is scoped to source: SYNCED, excluding MANUAL rows", async () => {
     mockMilestoneIssueFindMany.mockResolvedValue([
       { issueId: 777, source: "SYNCED", issue: { externalId: "ext-departed" } },
-      { issueId: 778, source: "MANUAL", issue: { externalId: "ext-manual-only" } },
+      {
+        issueId: 778,
+        source: "MANUAL",
+        issue: { externalId: "ext-manual-only" },
+      },
     ]);
     mockGetMilestoneIssues.mockResolvedValue({
       issues: [makeExtIssue({ id: "ext-1" })],

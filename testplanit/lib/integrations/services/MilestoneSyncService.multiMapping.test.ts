@@ -149,9 +149,7 @@ describe("performMilestoneImport — union across multiple project mappings", ()
     mockGetExternalMilestones.mockImplementation(
       async ({ projectKey }: { projectKey: string }) => ({
         items:
-          projectKey === "ABT" || projectKey === "ADM"
-            ? [SHARED_SPRINT]
-            : [],
+          projectKey === "ABT" || projectKey === "ADM" ? [SHARED_SPRINT] : [],
         hasMore: false,
       })
     );

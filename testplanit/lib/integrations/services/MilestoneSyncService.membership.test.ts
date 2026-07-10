@@ -54,7 +54,10 @@ vi.mock("../IntegrationManager", () => ({
       // Present only when the mock capability declares it — tests toggle
       // this per-case to simulate adapters that omit getMilestoneIssues.
       ...(mockAdapterCapabilities.milestones
-        ? { getMilestoneIssues: (...args: any[]) => mockGetMilestoneIssues(...args) }
+        ? {
+            getMilestoneIssues: (...args: any[]) =>
+              mockGetMilestoneIssues(...args),
+          }
         : {}),
     })),
   },

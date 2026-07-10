@@ -33,7 +33,9 @@ const {
     mockCreateMilestoneIssue: vi.fn(),
     mockDeleteMilestoneIssue: vi.fn(),
     mockUpsertIssue: vi.fn(),
-    mockFindFirstProjectIntegration: vi.fn((..._args: any[]) => ({ data: undefined }) as any),
+    mockFindFirstProjectIntegration: vi.fn(
+      (..._args: any[]) => ({ data: undefined }) as any
+    ),
   };
 });
 
@@ -47,7 +49,8 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
       useUpsert: () => ({ mutateAsync: mockUpsertIssue }),
     },
     projectIntegration: {
-      useFindFirst: (...args: any[]) => mockFindFirstProjectIntegration(...args),
+      useFindFirst: (...args: any[]) =>
+        mockFindFirstProjectIntegration(...args),
     },
   }),
 }));
@@ -95,7 +98,9 @@ vi.mock("@/components/ui/alert-dialog", () => ({
     <button {...props}>{children}</button>
   ),
   AlertDialogAction: ({ children, onClick, ...props }: any) => (
-    <button onClick={onClick} {...props}>{children}</button>
+    <button onClick={onClick} {...props}>
+      {children}
+    </button>
   ),
 }));
 
@@ -107,7 +112,12 @@ vi.mock("./search-issues-dialog", () => ({
         <button
           type="button"
           onClick={() =>
-            onIssueSelected({ isExternal: false, id: 55, name: "PROJ-1", title: "Existing internal issue" })
+            onIssueSelected({
+              isExternal: false,
+              id: 55,
+              name: "PROJ-1",
+              title: "Existing internal issue",
+            })
           }
           data-testid="select-internal-issue"
         >
@@ -280,7 +290,9 @@ describe("MemberIssueRowActions", () => {
     );
 
     expect(screen.getByTestId("member-issue-synced-lock")).toBeInTheDocument();
-    expect(screen.queryByTestId("member-issue-row-actions")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("member-issue-row-actions")
+    ).not.toBeInTheDocument();
     expect(mockDeleteMilestoneIssue).not.toHaveBeenCalled();
   });
 });

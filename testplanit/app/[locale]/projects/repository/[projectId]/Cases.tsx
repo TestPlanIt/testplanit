@@ -4078,7 +4078,9 @@ export default function Cases({
           open
           onClose={() => setCreateRunSeedIds(null)}
           initialSelectedCaseIds={createRunSeedIds}
-          onSelectedCasesChange={(cases: number[]) => setCreateRunSeedIds(cases)}
+          onSelectedCasesChange={(cases: number[]) =>
+            setCreateRunSeedIds(cases)
+          }
         />
       )}
     </Card>
