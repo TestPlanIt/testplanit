@@ -529,6 +529,66 @@ describe("IntegrationManager", () => {
       expect(cachedAdapter).toBe(adapter);
     });
 
+    it("forwards credentials.username/password to authData for Jira Data Center Basic auth", async () => {
+      // Regression guard for the documented DC Basic flow: a saved
+      // integration's `credentials` (the shape the admin form now collects
+      // via the username/password fields) must reach the adapter's
+      // authenticate() call — previously only email/apiToken/
+      // personalAccessToken were forwarded, so this credential shape could
+      // never reach production even though the adapter/route supported it.
+      const mockIntegration = {
+        id: 6,
+        name: "Test Jira DC",
+        provider: "JIRA",
+        status: "ACTIVE",
+        authType: "API_KEY",
+        credentials: {
+          username: "alice",
+          password: "secret",
+        },
+        settings: {
+          baseUrl: "https://jira.mycompany.domain",
+        },
+        userIntegrationAuths: [],
+      };
+
+      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+
+      const mockFetch = vi.fn().mockImplementation((url: string) => {
+        if (url === "https://jira.mycompany.domain/rest/api/3/myself") {
+          return Promise.resolve({
+            ok: false,
+            status: 404,
+            statusText: "Not Found",
+          });
+        }
+        if (url === "https://jira.mycompany.domain/rest/api/2/serverInfo") {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ deploymentType: "Server" }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ name: "alice" }),
+        });
+      });
+      global.fetch = mockFetch;
+
+      const adapter = await manager.getAdapter("6");
+
+      expect(adapter).toBeInstanceOf(JiraAdapter);
+      const v2MyselfCall = mockFetch.mock.calls.find(
+        (c: any[]) => c[0] === "https://jira.mycompany.domain/rest/api/2/myself"
+      );
+      expect(v2MyselfCall).toBeTruthy();
+      const auth = (v2MyselfCall![1] as any).headers.Authorization;
+      expect(auth).toMatch(/^Basic /);
+      expect(Buffer.from(auth.slice(6), "base64").toString("utf8")).toBe(
+        "alice:secret"
+      );
+    });
+
     it("should create GitHub adapter with PAT auth", async () => {
       const mockIntegration = {
         id: 2,
