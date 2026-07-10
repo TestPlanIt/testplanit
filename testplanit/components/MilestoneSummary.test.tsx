@@ -37,6 +37,9 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     status: {
       useFindFirst: () => ({ data: null }),
     },
+    milestoneIssue: {
+      useFindMany: () => ({ data: [], isLoading: false }),
+    },
   }),
 }));
 

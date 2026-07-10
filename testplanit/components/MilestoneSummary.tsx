@@ -5,10 +5,17 @@ import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import {
   ArrowUpDown,
   Bug,
@@ -18,6 +25,7 @@ import {
   FlaskConical,
   HelpCircle,
   ListChecks,
+  Loader2,
   MessageSquare,
   SquarePlay,
   Target,
@@ -37,9 +45,10 @@ interface MilestoneSummaryProps {
   className?: ClassValue;
   // Detail page only: makes the count chips clickable, scrolling to and
   // expanding the corresponding Issues card section. Omitted on the
-  // milestones LIST page (MilestoneItemCard), where the chips render as
-  // plain text — the whole card is already a clickable row there, and a
-  // nested interactive chip would create a nested-link/click conflict.
+  // milestones LIST page (MilestoneItemCard), where each chip instead opens
+  // a popover revealing its issue list (the pre-consolidation behavior) —
+  // clicks stopPropagation so the clickable card row underneath never
+  // navigates.
   onScopeChipClick?: () => void;
   onFoundInTestingChipClick?: () => void;
 }
@@ -72,6 +81,20 @@ export function MilestoneSummary({
   });
 
   const [sortMode, setSortMode] = useState<"date" | "status">("date");
+
+  // List-page scope chip popover (no click handler wired): lazily fetch the
+  // member issues only when the popover actually opens — the summary payload
+  // carries just the count.
+  const [scopeListOpen, setScopeListOpen] = useState(false);
+  const { data: scopeLinks, isLoading: isLoadingScopeLinks } = useClientQueries(
+    schema
+  ).milestoneIssue.useFindMany(
+    {
+      where: { milestoneId },
+      include: { issue: { include: { integration: true } } },
+    },
+    { enabled: scopeListOpen && !onScopeChipClick }
+  );
 
   const sortedSegments = useMemo(
     () =>
@@ -440,11 +463,56 @@ export function MilestoneSummary({
                       count: summaryData.scopeCount,
                     })}
                     data-testid="milestone-summary-scope-chip"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <Badge className="text-xs px-1.5 py-0">
-                      <Target className="w-3 h-3 me-0.5 shrink-0" />
-                      {summaryData.scopeCount}
-                    </Badge>
+                    <Popover
+                      modal={false}
+                      open={scopeListOpen}
+                      onOpenChange={setScopeListOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <Badge className="cursor-pointer text-xs px-1.5 py-0">
+                          <Target className="w-3 h-3 me-0.5 shrink-0" />
+                          {summaryData.scopeCount}
+                        </Badge>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-auto max-w-md p-2"
+                        onOpenAutoFocus={(e) => e.preventDefault()}
+                      >
+                        {isLoadingScopeLinks ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : (
+                          <div className="flex flex-wrap gap-1 max-w-full">
+                            {(scopeLinks ?? []).map((link) => (
+                              <IssuesDisplay
+                                key={link.issue.id}
+                                id={link.issue.id}
+                                name={link.issue.name}
+                                externalId={link.issue.externalId}
+                                externalUrl={link.issue.externalUrl}
+                                title={link.issue.title}
+                                description={link.issue.description}
+                                status={link.issue.externalStatus}
+                                priority={link.issue.priority}
+                                lastSyncedAt={link.issue.lastSyncedAt}
+                                projectIds={
+                                  projectId != null ? [Number(projectId)] : []
+                                }
+                                size="small"
+                                data={link.issue.data}
+                                integrationProvider={
+                                  link.issue.integration?.provider
+                                }
+                                integrationId={link.issue.integration?.id}
+                                issueTypeName={link.issue.issueTypeName}
+                                issueTypeIconUrl={link.issue.issueTypeIconUrl}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </PopoverContent>
+                    </Popover>
                   </span>
                 ))}
               {summaryData.issues &&
@@ -480,11 +548,12 @@ export function MilestoneSummary({
                       count: summaryData.issues.length,
                     })}
                     data-testid="milestone-summary-found-chip"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <Badge className="text-xs px-1.5 py-0">
-                      <Bug className="w-3 h-3 me-0.5 shrink-0" />
-                      {summaryData.issues.length}
-                    </Badge>
+                    <IssuesListDisplay
+                      issues={summaryData.issues}
+                      size="small"
+                    />
                   </span>
                 ))}
             </div>
