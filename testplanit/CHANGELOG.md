@@ -1,3 +1,9 @@
+## [0.41.5](https://github.com/TestPlanIt/testplanit/compare/v0.41.4...v0.41.5) (2026-07-10)
+
+### Performance Improvements
+
+* **build:** right-size Node heap caps and update memory docs ([#513](https://github.com/TestPlanIt/testplanit/issues/513)) ([05de4b6](https://github.com/TestPlanIt/testplanit/commit/05de4b6942c82a68133cae69dddca114d6652585)), closes [#511](https://github.com/TestPlanIt/testplanit/issues/511)
+
 ## [0.41.4](https://github.com/TestPlanIt/testplanit/compare/v0.41.3...v0.41.4) (2026-07-10)
 
 ### Performance Improvements
