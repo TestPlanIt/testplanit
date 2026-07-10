@@ -1,18 +1,23 @@
 import { renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  __resetMilestoneStreamsForTests,
   useMilestoneLiveStream,
   useProjectMilestoneStream,
 } from "./useMilestoneLiveStream";
 
 /**
- * Mirrors `hooks/useTestRunLiveStream.test.tsx` verbatim per D-14/D-15
- * (mirror Test Runs, not the Issue-badge singleton-manager pattern — no
- * high-multiplicity-mount problem to solve here).
+ * The hook pair shares EventSources through a refcounted registry (one
+ * connection per stream URL per window, D-14/D-15): multiple subscribers of
+ * the same milestone/project stream — detail page + overflow panel, or
+ * StrictMode double-mounts — must never hold more than one connection, and
+ * closing is deferred by a short grace period so remount churn reuses the
+ * live connection. Per-mount EventSources previously saturated the
+ * browser's ~6-connection-per-origin HTTP/1.1 cap across tabs, starving
+ * ordinary fetches (the hover Jira-details regression).
  *
- * See: .planning/phases/19-webhooks-lifecycle/19-VALIDATION.md
- *      (19-02-T3), 19-PATTERNS.md (hook analog, latest-ref pattern,
- *      per-entity vs per-project subscribe/cleanup).
+ * See: .planning/phases/19-webhooks-lifecycle/19-VALIDATION.md (19-02-T3),
+ *      hooks/issueUpdateStreamManager.ts (the pattern being mirrored).
  */
 
 interface MockEventSource {
@@ -26,6 +31,7 @@ const created: MockEventSource[] = [];
 const OriginalEventSource = globalThis.EventSource;
 
 beforeEach(() => {
+  vi.useFakeTimers();
   created.length = 0;
   // Replace with a constructor that records each instance.
   (globalThis as { EventSource: unknown }).EventSource = function (
@@ -43,9 +49,17 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  __resetMilestoneStreamsForTests();
+  vi.runOnlyPendingTimers();
+  vi.useRealTimers();
   (globalThis as { EventSource: unknown }).EventSource =
     OriginalEventSource as unknown;
 });
+
+/** Flush the registry's deferred-close grace window. */
+function flushCloseGrace() {
+  vi.advanceTimersByTime(300);
+}
 
 describe("useMilestoneLiveStream", () => {
   it("opens an EventSource on /api/milestones/{milestoneId}/stream for a valid milestoneId", () => {
@@ -102,12 +116,57 @@ describe("useMilestoneLiveStream", () => {
     spy.mockRestore();
   });
 
-  it("closes the EventSource on unmount", () => {
+  it("SHARES one EventSource across multiple subscribers of the same milestone (detail page + overflow panel, D-14)", () => {
+    const a = vi.fn();
+    const b = vi.fn();
+    renderHook(() => useMilestoneLiveStream({ milestoneId: 7, onWakeUp: a }));
+    renderHook(() => useMilestoneLiveStream({ milestoneId: 7, onWakeUp: b }));
+    expect(created).toHaveLength(1);
+    created[0]!.onmessage!({
+      data: '{"event":"milestone.updated","milestoneId":7,"projectId":3}',
+    } as MessageEvent);
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(b).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the stream open while any subscriber remains, closes after the last unmount (post grace)", () => {
+    const first = renderHook(() =>
+      useMilestoneLiveStream({ milestoneId: 7, onWakeUp: vi.fn() })
+    );
+    const second = renderHook(() =>
+      useMilestoneLiveStream({ milestoneId: 7, onWakeUp: vi.fn() })
+    );
+    const es = created[0]!;
+    first.unmount();
+    flushCloseGrace();
+    expect(es.close).not.toHaveBeenCalled();
+    second.unmount();
+    flushCloseGrace();
+    expect(es.close).toHaveBeenCalled();
+  });
+
+  it("reuses the live connection across unmount/remount churn within the grace window (StrictMode)", () => {
+    const first = renderHook(() =>
+      useMilestoneLiveStream({ milestoneId: 7, onWakeUp: vi.fn() })
+    );
+    first.unmount();
+    // Remount immediately — before the grace window elapses.
+    renderHook(() =>
+      useMilestoneLiveStream({ milestoneId: 7, onWakeUp: vi.fn() })
+    );
+    flushCloseGrace();
+    expect(created).toHaveLength(1);
+    expect(created[0]!.close).not.toHaveBeenCalled();
+  });
+
+  it("closes the EventSource after unmount once the grace window elapses", () => {
     const { unmount } = renderHook(() =>
       useMilestoneLiveStream({ milestoneId: 7, onWakeUp: vi.fn() })
     );
     const es = created[0]!;
     unmount();
+    expect(es.close).not.toHaveBeenCalled(); // deferred
+    flushCloseGrace();
     expect(es.close).toHaveBeenCalled();
   });
 
@@ -122,8 +181,9 @@ describe("useMilestoneLiveStream", () => {
     expect(created[0]!.url).toBe("/api/milestones/1/stream");
     rerender({ milestoneId: 2 });
     expect(created).toHaveLength(2);
-    expect(created[0]!.close).toHaveBeenCalled();
     expect(created[1]!.url).toBe("/api/milestones/2/stream");
+    flushCloseGrace();
+    expect(created[0]!.close).toHaveBeenCalled();
   });
 
   it("does not recreate the connection when onWakeUp identity changes (latest-ref pattern)", () => {
@@ -209,12 +269,24 @@ describe("useProjectMilestoneStream", () => {
     spy.mockRestore();
   });
 
-  it("closes the EventSource on unmount", () => {
+  it("SHARES one EventSource across multiple subscribers of the same project", () => {
+    renderHook(() =>
+      useProjectMilestoneStream({ projectId: 5, onWakeUp: vi.fn() })
+    );
+    renderHook(() =>
+      useProjectMilestoneStream({ projectId: 5, onWakeUp: vi.fn() })
+    );
+    expect(created).toHaveLength(1);
+  });
+
+  it("closes the EventSource after unmount once the grace window elapses", () => {
     const { unmount } = renderHook(() =>
       useProjectMilestoneStream({ projectId: 1, onWakeUp: vi.fn() })
     );
     const es = created[0]!;
     unmount();
+    expect(es.close).not.toHaveBeenCalled(); // deferred
+    flushCloseGrace();
     expect(es.close).toHaveBeenCalled();
   });
 
@@ -229,15 +301,15 @@ describe("useProjectMilestoneStream", () => {
     expect(created[0]!.url).toBe("/api/projects/1/milestones/stream");
     rerender({ projectId: 2 });
     expect(created).toHaveLength(2);
-    expect(created[0]!.close).toHaveBeenCalled();
     expect(created[1]!.url).toBe("/api/projects/2/milestones/stream");
+    flushCloseGrace();
+    expect(created[0]!.close).toHaveBeenCalled();
   });
 
   it("does not recreate the connection when onWakeUp identity changes (latest-ref pattern)", () => {
     // Regression: invalidate-on-wake-up loops change the callback's
     // identity on every wake-up. Without the latest-ref pattern, every
-    // wake-up would close + reopen the EventSource — the exact server
-    // thrash this whole pattern is meant to prevent.
+    // wake-up would resubscribe — the exact thrash this pattern prevents.
     const { rerender } = renderHook(
       (args: { onWakeUp: () => void }) =>
         useProjectMilestoneStream({ projectId: 1, onWakeUp: args.onWakeUp }),
@@ -252,12 +324,15 @@ describe("useProjectMilestoneStream", () => {
 
   // D-15: all milestone surfaces (list cards, detail fields/badge/member
   // table/coverage, import picker) subscribe via this SAME hook pair —
-  // demonstrated by the two describe blocks above being the ONLY exports
-  // of this module (no bespoke third variant).
+  // the only additional export is the test-only registry reset.
   it("is the single shared hook pair for all milestone live-update surfaces — no bespoke third variant per D-15", async () => {
     const moduleExports = await import("./useMilestoneLiveStream");
     expect(Object.keys(moduleExports).sort()).toEqual(
-      ["useMilestoneLiveStream", "useProjectMilestoneStream"].sort()
+      [
+        "__resetMilestoneStreamsForTests",
+        "useMilestoneLiveStream",
+        "useProjectMilestoneStream",
+      ].sort()
     );
   });
 });
