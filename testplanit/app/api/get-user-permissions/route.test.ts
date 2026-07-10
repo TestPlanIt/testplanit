@@ -27,6 +27,7 @@ vi.mock("~/lib/db", () => {
     },
     projects: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
     },
     userProjectPermission: {
       findUnique: vi.fn(),
@@ -64,6 +65,10 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
       defaultAccessType: "NO_ACCESS",
       defaultRole: null,
     });
+    // Backs authorizeProjectAdminForProject's isProjectAdmin computation —
+    // default to "not a project admin" so existing assertions on hasAccess/
+    // effectiveRole/permissions are unaffected.
+    (baseDb as any).projects.findFirst.mockResolvedValue(null);
     (baseDb as any).userProjectPermission.findUnique.mockResolvedValue(null);
     (baseDb as any).groupProjectPermission.findMany.mockResolvedValue([]);
   });
@@ -175,6 +180,58 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
     expect((baseDb as any).user.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "target-user" } })
     );
+  });
+
+  it("includes isProjectAdmin: true in the response for a system ADMIN caller", async () => {
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "admin-user", access: "ADMIN" },
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      makeRequest({ userId: "admin-user", projectId: 42 })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.isProjectAdmin).toBe(true);
+  });
+
+  it("includes isProjectAdmin: false for a caller who is not a project admin", async () => {
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "caller-user", access: "NONE" },
+    });
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).projects.findFirst.mockResolvedValue(null);
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      makeRequest({ userId: "caller-user", projectId: 42 })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.isProjectAdmin).toBe(false);
+  });
+
+  it("includes isProjectAdmin: true for a caller who is the project's Project Admin", async () => {
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "caller-user", access: "NONE" },
+    });
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).projects.findFirst.mockResolvedValue({ id: 42 });
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      makeRequest({ userId: "caller-user", projectId: 42 })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.isProjectAdmin).toBe(true);
   });
 
   it("returns 400 for invalid body shape after passing auth", async () => {

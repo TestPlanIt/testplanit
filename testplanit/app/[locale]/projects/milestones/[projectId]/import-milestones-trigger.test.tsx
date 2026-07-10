@@ -61,6 +61,7 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 vi.stubGlobal("fetch", mockFetch);
 
 let canAddEdit = true;
+let isProjectAdmin = true;
 
 vi.mock("~/hooks/useRequireAuth", () => ({
   useRequireAuth: () => ({
@@ -73,6 +74,7 @@ vi.mock("~/hooks/useRequireAuth", () => ({
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: () => ({
     permissions: { canAddEdit },
+    isProjectAdmin,
     isLoading: false,
   }),
 }));
@@ -139,6 +141,7 @@ describe("Milestones page — Import from Jira trigger", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     canAddEdit = true;
+    isProjectAdmin = true;
     mockFindFirstProjects.mockReturnValue({
       data: { id: 42, name: "Demo Project", iconUrl: null },
       isLoading: false,
@@ -259,5 +262,61 @@ describe("Milestones page — Import from Jira trigger", () => {
     expect(
       screen.queryByTestId("new-milestone-button")
     ).not.toBeInTheDocument();
+  });
+
+  it("does not render the Import button for a non-project-admin who has canAddEdit (New Milestone stays visible)", async () => {
+    isProjectAdmin = false;
+    mockFindManyProjectIntegration.mockReturnValue({
+      data: [
+        {
+          id: "pi-1",
+          integrationId: 9,
+          config: { milestoneSync: { enabled: true } },
+        },
+      ],
+    });
+    mockFindManyIntegrationProject.mockReturnValue({
+      data: [{ id: "mapping-9" }],
+    });
+
+    await act(async () => {
+      renderWithQueryClient(
+        <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
+      );
+    });
+
+    await waitFor(() =>
+      expect(mockFindManyProjectIntegration).toHaveBeenCalled()
+    );
+    expect(
+      screen.queryByTestId("import-milestones-button")
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("new-milestone-button")).toBeInTheDocument();
+  });
+
+  it("renders the Import button for a project admin even without exercising canAddEdit separately", async () => {
+    isProjectAdmin = true;
+    mockFindManyProjectIntegration.mockReturnValue({
+      data: [
+        {
+          id: "pi-1",
+          integrationId: 9,
+          config: { milestoneSync: { enabled: true } },
+        },
+      ],
+    });
+    mockFindManyIntegrationProject.mockReturnValue({
+      data: [{ id: "mapping-9" }],
+    });
+
+    await act(async () => {
+      renderWithQueryClient(
+        <ProjectMilestones params={Promise.resolve({ projectId: "42" })} />
+      );
+    });
+
+    expect(
+      await screen.findByTestId("import-milestones-button")
+    ).toBeInTheDocument();
   });
 });

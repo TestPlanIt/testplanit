@@ -65,6 +65,7 @@ vi.mock("~/hooks/useRequireAuth", () => ({
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: () => ({
     permissions: { canAddEdit: true },
+    isProjectAdmin: true,
     isLoading: false,
   }),
 }));

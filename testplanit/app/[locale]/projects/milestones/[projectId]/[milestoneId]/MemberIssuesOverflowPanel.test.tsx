@@ -31,6 +31,15 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+let mockIsProjectAdmin = true;
+vi.mock("~/hooks/useProjectPermissions", () => ({
+  useProjectPermissions: () => ({
+    permissions: null,
+    isProjectAdmin: mockIsProjectAdmin,
+    isLoading: false,
+  }),
+}));
+
 function jsonResponse(body: unknown, ok = true) {
   return { ok, json: async () => body };
 }
@@ -38,6 +47,7 @@ function jsonResponse(body: unknown, ok = true) {
 describe("MemberIssuesOverflowPanel", () => {
   beforeEach(() => {
     mockFetch.mockReset();
+    mockIsProjectAdmin = true;
   });
 
   it("always fetches the overflow route on mount", async () => {
@@ -45,7 +55,9 @@ describe("MemberIssuesOverflowPanel", () => {
       jsonResponse({ members: [], linkedCount: 0, cap: 1000, overflowTotal: 0 })
     );
 
-    renderWithQueryClient(<MemberIssuesOverflowPanel milestoneId={42} />);
+    renderWithQueryClient(
+      <MemberIssuesOverflowPanel milestoneId={42} projectId={7} />
+    );
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
@@ -60,7 +72,7 @@ describe("MemberIssuesOverflowPanel", () => {
     );
 
     const { container } = renderWithQueryClient(
-      <MemberIssuesOverflowPanel milestoneId={42} />
+      <MemberIssuesOverflowPanel milestoneId={42} projectId={7} />
     );
 
     await waitFor(() => {
@@ -74,14 +86,23 @@ describe("MemberIssuesOverflowPanel", () => {
   it("renders the panel with the capped badge when linkedCount >= cap and overflowTotal > 0", async () => {
     mockFetch.mockResolvedValue(
       jsonResponse({
-        members: [{ id: "ext-1", key: "PROJ-9", title: "Overflowed issue", status: "To Do" }],
+        members: [
+          {
+            id: "ext-1",
+            key: "PROJ-9",
+            title: "Overflowed issue",
+            status: "To Do",
+          },
+        ],
         linkedCount: 1000,
         cap: 1000,
         overflowTotal: 12,
       })
     );
 
-    renderWithQueryClient(<MemberIssuesOverflowPanel milestoneId={42} />);
+    renderWithQueryClient(
+      <MemberIssuesOverflowPanel milestoneId={42} projectId={7} />
+    );
 
     await waitFor(() => {
       expect(
@@ -97,14 +118,23 @@ describe("MemberIssuesOverflowPanel", () => {
   it("renders the plain drift badge when overflowTotal > 0 but linkedCount < cap", async () => {
     mockFetch.mockResolvedValue(
       jsonResponse({
-        members: [{ id: "ext-2", key: "PROJ-10", title: "Drifted issue", status: "Done" }],
+        members: [
+          {
+            id: "ext-2",
+            key: "PROJ-10",
+            title: "Drifted issue",
+            status: "Done",
+          },
+        ],
         linkedCount: 3,
         cap: 1000,
         overflowTotal: 1,
       })
     );
 
-    renderWithQueryClient(<MemberIssuesOverflowPanel milestoneId={42} />);
+    renderWithQueryClient(
+      <MemberIssuesOverflowPanel milestoneId={42} projectId={7} />
+    );
 
     await waitFor(() => {
       expect(
@@ -121,7 +151,14 @@ describe("MemberIssuesOverflowPanel", () => {
       if (!init) {
         return Promise.resolve(
           jsonResponse({
-            members: [{ id: "ext-1", key: "PROJ-9", title: "Overflowed issue", status: "To Do" }],
+            members: [
+              {
+                id: "ext-1",
+                key: "PROJ-9",
+                title: "Overflowed issue",
+                status: "To Do",
+              },
+            ],
             linkedCount: 1000,
             cap: 1000,
             overflowTotal: 12,
@@ -131,7 +168,9 @@ describe("MemberIssuesOverflowPanel", () => {
       return Promise.resolve(jsonResponse({ success: true }));
     });
 
-    renderWithQueryClient(<MemberIssuesOverflowPanel milestoneId={42} />);
+    renderWithQueryClient(
+      <MemberIssuesOverflowPanel milestoneId={42} projectId={7} />
+    );
 
     const importButton = await screen.findByTestId(
       "member-issues-overflow-import-button"
@@ -144,5 +183,38 @@ describe("MemberIssuesOverflowPanel", () => {
         { method: "POST" }
       );
     });
+  });
+
+  it("hides the Import & link button for a non-project-admin but still shows the informational panel", async () => {
+    mockIsProjectAdmin = false;
+    mockFetch.mockResolvedValue(
+      jsonResponse({
+        members: [
+          {
+            id: "ext-1",
+            key: "PROJ-9",
+            title: "Overflowed issue",
+            status: "To Do",
+          },
+        ],
+        linkedCount: 1000,
+        cap: 1000,
+        overflowTotal: 12,
+      })
+    );
+
+    renderWithQueryClient(
+      <MemberIssuesOverflowPanel milestoneId={42} projectId={7} />
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("member-issues-overflow-capped-badge")
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByText("PROJ-9", { exact: false })).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("member-issues-overflow-import-button")
+    ).not.toBeInTheDocument();
   });
 });

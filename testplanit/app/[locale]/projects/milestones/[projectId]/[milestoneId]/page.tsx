@@ -644,13 +644,14 @@ export default function MilestoneDetailsPage() {
                   ) : (
                     milestone?.name
                   )}
+                  {!isEditMode && milestone && (
+                    <MilestoneSourceBadge
+                      milestone={milestone}
+                      projectId={Number(projectId)}
+                      className="mt-2"
+                    />
+                  )}
                 </CardTitle>
-                {!isEditMode && milestone && (
-                  <MilestoneSourceBadge
-                    milestone={milestone}
-                    className="mt-2"
-                  />
-                )}
               </div>
               <div className="flex flex-col gap-2 ms-4">
                 {isEditMode ? (

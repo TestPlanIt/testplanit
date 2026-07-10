@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemberIssuesTable } from "./MemberIssuesTable";
@@ -50,13 +56,35 @@ vi.mock("@/components/iterations/IterationStatusLegendPopover", () => ({
 }));
 
 vi.mock("~/zenstack/schema", () => ({ schema: {} }));
+vi.mock("~/zenstack/models", () => ({
+  ApplicationArea: { Milestones: "Milestones" },
+}));
 
 // MilestoneIssueManager (the "Add issue" entry point + upsert/link logic) has
 // its own dedicated component test — stub it here to keep this file focused
 // on MemberIssuesTable's own data-shaping/filter/render behavior.
 vi.mock("@/components/issues/MilestoneIssueManager", () => ({
-  MilestoneIssueManager: () => <div data-testid="milestone-issue-manager-stub" />,
-  MemberIssueRowActions: () => <div data-testid="member-issue-row-actions-stub" />,
+  MilestoneIssueManager: () => (
+    <div data-testid="milestone-issue-manager-stub" />
+  ),
+  MemberIssueRowActions: () => (
+    <div data-testid="member-issue-row-actions-stub" />
+  ),
+}));
+
+vi.mock("./MemberIssuesOverflowPanel", () => ({
+  MemberIssuesOverflowPanel: () => (
+    <div data-testid="member-issues-overflow-panel-stub" />
+  ),
+}));
+
+let mockCanAddEdit = true;
+vi.mock("~/hooks/useProjectPermissions", () => ({
+  useProjectPermissions: () => ({
+    permissions: { canAddEdit: mockCanAddEdit },
+    isProjectAdmin: false,
+    isLoading: false,
+  }),
 }));
 
 vi.stubGlobal("fetch", mockFetch);
@@ -107,7 +135,9 @@ vi.mock("@/components/tables/CaseListDisplay", () => ({
 }));
 
 vi.mock("@/components/tables/IssuesDisplay", () => ({
-  IssuesDisplay: ({ name }: any) => <span data-testid="issues-display">{name}</span>,
+  IssuesDisplay: ({ name }: any) => (
+    <span data-testid="issues-display">{name}</span>
+  ),
 }));
 
 vi.mock("@/components/IssueStatusDisplay", () => ({
@@ -125,7 +155,9 @@ vi.mock("@/components/ui/select", () => ({
   Select: ({ children }: any) => <div data-testid="select">{children}</div>,
   SelectContent: ({ children }: any) => <div>{children}</div>,
   SelectItem: ({ children }: any) => <div>{children}</div>,
-  SelectTrigger: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  SelectTrigger: ({ children, ...props }: any) => (
+    <div {...props}>{children}</div>
+  ),
   SelectValue: () => <div />,
 }));
 
@@ -201,6 +233,7 @@ function buildRow(overrides: Partial<any> = {}) {
 
 describe("MemberIssuesTable", () => {
   beforeEach(() => {
+    mockCanAddEdit = true;
     mockFindManyMilestoneIssue.mockReset();
     mockFindFirstMilestones.mockReset();
     mockFindFirstMilestones.mockReturnValue({
@@ -255,7 +288,9 @@ describe("MemberIssuesTable", () => {
     renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith("/api/milestones/42/members/coverage");
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/milestones/42/members/coverage"
+      );
     });
     await waitFor(() => {
       expect(screen.getByText("PROJ-1")).toBeInTheDocument();
@@ -273,7 +308,9 @@ describe("MemberIssuesTable", () => {
     renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("member-issues-empty")).toHaveTextContent("empty");
+      expect(screen.getByTestId("member-issues-empty")).toHaveTextContent(
+        "empty"
+      );
     });
   });
 
@@ -287,7 +324,9 @@ describe("MemberIssuesTable", () => {
 
     renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
 
-    expect(screen.getByTestId("member-issues-syncing-badge")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("member-issues-syncing-badge")
+    ).toBeInTheDocument();
   });
 
   it("does not show the syncing badge when nothing is in flight", async () => {
@@ -306,7 +345,9 @@ describe("MemberIssuesTable", () => {
       expect(mockFetch).toHaveBeenCalled();
     });
     await waitFor(() => {
-      expect(screen.queryByTestId("member-issues-syncing-badge")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("member-issues-syncing-badge")
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -320,7 +361,9 @@ describe("MemberIssuesTable", () => {
       isFetching: false,
       refetch: vi.fn(),
     });
-    renderWithQueryClient(<MemberIssuesTable milestoneId={450} projectId={370} />);
+    renderWithQueryClient(
+      <MemberIssuesTable milestoneId={450} projectId={370} />
+    );
     expect(screen.getByTestId("member-issues-count")).toHaveTextContent("2");
   });
 
@@ -374,7 +417,9 @@ describe("MemberIssuesTable", () => {
       }),
     });
 
-    renderWithQueryClient(<MemberIssuesTable milestoneId={450} projectId={370} />);
+    renderWithQueryClient(
+      <MemberIssuesTable milestoneId={450} projectId={370} />
+    );
 
     // The strip can render early (pre-coverage every row counts as
     // uncovered) — wait for the aggregated status pips specifically.
@@ -384,8 +429,12 @@ describe("MemberIssuesTable", () => {
     const strip = screen.getByTestId("member-issues-coverage-totals");
     // Passed 2+1=3, Failed 1, Untested 1, 1 uncovered issue.
     expect(within(strip).getByLabelText("Failed: 1")).toBeInTheDocument();
-    expect(within(strip).getByLabelText("labels.untested: 1")).toBeInTheDocument();
-    expect(screen.getByTestId("member-issues-totals-uncovered")).toBeInTheDocument();
+    expect(
+      within(strip).getByLabelText("labels.untested: 1")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("member-issues-totals-uncovered")
+    ).toBeInTheDocument();
   });
 
   it("collapses the section and remembers the preference in localStorage", async () => {
@@ -404,17 +453,23 @@ describe("MemberIssuesTable", () => {
 
     fireEvent.click(screen.getByTestId("member-issues-collapse-toggle"));
     await waitFor(() =>
-      expect(screen.queryByTestId("member-issues-search")).not.toBeInTheDocument()
+      expect(
+        screen.queryByTestId("member-issues-search")
+      ).not.toBeInTheDocument()
     );
     expect(
       window.localStorage.getItem("tpi.milestone.memberIssues.collapsed")
     ).toBe("true");
 
     first.unmount();
-    renderWithQueryClient(<MemberIssuesTable milestoneId={450} projectId={370} />);
+    renderWithQueryClient(
+      <MemberIssuesTable milestoneId={450} projectId={370} />
+    );
     // The post-mount effect reads the stored preference and collapses.
     await waitFor(() =>
-      expect(screen.queryByTestId("member-issues-search")).not.toBeInTheDocument()
+      expect(
+        screen.queryByTestId("member-issues-search")
+      ).not.toBeInTheDocument()
     );
     window.localStorage.removeItem("tpi.milestone.memberIssues.collapsed");
   });
@@ -430,8 +485,12 @@ describe("MemberIssuesTable", () => {
     renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
 
     expect(screen.getByTestId("member-issues-search")).toBeInTheDocument();
-    expect(screen.getByTestId("member-issues-coverage-filter")).toBeInTheDocument();
-    expect(screen.getByTestId("member-issues-source-filter")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("member-issues-coverage-filter")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("member-issues-source-filter")
+    ).toBeInTheDocument();
     expect(screen.getByTestId("member-issues-type-filter")).toBeInTheDocument();
   });
 
@@ -449,6 +508,73 @@ describe("MemberIssuesTable", () => {
     // should reference `syncStatus`.
     expect(document.body.innerHTML).not.toMatch(/syncStatus/);
   });
+
+  describe("Milestones canAddEdit gating", () => {
+    it("shows the Link Issue control and per-row actions column when canAddEdit is true", () => {
+      mockCanAddEdit = true;
+      mockFindManyMilestoneIssue.mockReturnValue({
+        data: [buildRow()],
+        isLoading: false,
+        isFetching: false,
+        refetch: vi.fn(),
+      });
+
+      renderWithQueryClient(
+        <MemberIssuesTable milestoneId={42} projectId={7} />
+      );
+
+      expect(
+        screen.getByTestId("milestone-issue-manager-stub")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("member-issue-row-actions-stub")
+      ).toBeInTheDocument();
+    });
+
+    it("hides the Link Issue control and per-row actions column when canAddEdit is false", () => {
+      mockCanAddEdit = false;
+      mockFindManyMilestoneIssue.mockReturnValue({
+        data: [buildRow()],
+        isLoading: false,
+        isFetching: false,
+        refetch: vi.fn(),
+      });
+
+      renderWithQueryClient(
+        <MemberIssuesTable milestoneId={42} projectId={7} />
+      );
+
+      expect(
+        screen.queryByTestId("milestone-issue-manager-stub")
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("member-issue-row-actions-stub")
+      ).not.toBeInTheDocument();
+      // Read-only surfaces stay visible.
+      expect(screen.getByText("PROJ-1")).toBeInTheDocument();
+    });
+
+    it("hides the empty-state Link Issue control when canAddEdit is false", async () => {
+      mockCanAddEdit = false;
+      mockFindManyMilestoneIssue.mockReturnValue({
+        data: [],
+        isLoading: false,
+        isFetching: false,
+        refetch: vi.fn(),
+      });
+
+      renderWithQueryClient(
+        <MemberIssuesTable milestoneId={42} projectId={7} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("member-issues-empty")).toBeInTheDocument();
+      });
+      expect(
+        screen.queryByTestId("milestone-issue-manager-stub")
+      ).not.toBeInTheDocument();
+    });
+  });
 });
 
 describe("MemberIssuesTable — create test run from selected issues", () => {
@@ -458,6 +584,7 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
     JSON.parse(new URL(url, "http://localhost").searchParams.get("q") ?? "{}");
 
   beforeEach(() => {
+    mockCanAddEdit = true;
     mockFindManyMilestoneIssue.mockReset();
     mockFindFirstMilestones.mockReset();
     mockFindFirstMilestones.mockReturnValue({
@@ -504,7 +631,12 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
     mockFetch.mockImplementation(async (url: string) => {
       if (url.includes("/members/coverage")) return respond({});
       if (url.includes("/members/overflow"))
-        return respond({ members: [], linkedCount: 0, cap: 0, overflowTotal: 0 });
+        return respond({
+          members: [],
+          linkedCount: 0,
+          cap: 0,
+          overflowTotal: 0,
+        });
       if (url.includes("repositoryCases/count")) {
         return respond({ data: linkedCaseIds.length });
       }
@@ -522,7 +654,9 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
         return respond({ data: eligibleCaseIds.map((id) => ({ id })) });
       }
       if (url.includes("projects/findFirst")) {
-        return respond({ data: { excludeNotStartedFromRuns: excludeNotStarted } });
+        return respond({
+          data: { excludeNotStartedFromRuns: excludeNotStarted },
+        });
       }
       return respond({});
     });
@@ -534,7 +668,9 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
     renderWithQueryClient(<MemberIssuesTable milestoneId={42} projectId={7} />);
 
     // No selection -> no button.
-    expect(screen.queryByTestId("member-issues-create-run")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("member-issues-create-run")
+    ).not.toBeInTheDocument();
 
     const checkboxes = await screen.findAllByTestId("member-issue-row-select");
     fireEvent.click(checkboxes[0]);
@@ -640,7 +776,12 @@ describe("MemberIssuesTable — create test run from selected issues", () => {
       if (url.includes("repositoryCases/findMany"))
         return { ok: false, status: 500, json: async () => ({}) };
       if (url.includes("/members/overflow"))
-        return respond({ members: [], linkedCount: 0, cap: 0, overflowTotal: 0 });
+        return respond({
+          members: [],
+          linkedCount: 0,
+          cap: 0,
+          overflowTotal: 0,
+        });
       return respond({});
     });
 
@@ -664,6 +805,7 @@ describe("MemberIssuesTable — range select and case counts", () => {
     JSON.parse(new URL(url, "http://localhost").searchParams.get("q") ?? "{}");
 
   beforeEach(() => {
+    mockCanAddEdit = true;
     mockFindManyMilestoneIssue.mockReset();
     mockFindFirstMilestones.mockReset();
     mockFindFirstMilestones.mockReturnValue({
@@ -698,11 +840,34 @@ describe("MemberIssuesTable — range select and case counts", () => {
     mockFetch.mockImplementation(async (url: string) => {
       if (url.includes("/members/coverage"))
         return respond({
-          10: { linkedCaseCount: 3, passed: 0, failed: 0, inProgress: 0, notRun: 3, uncovered: false, statuses: [], untested: 3 },
-          11: { linkedCaseCount: 0, passed: 0, failed: 0, inProgress: 0, notRun: 0, uncovered: true, statuses: [], untested: 0 },
+          10: {
+            linkedCaseCount: 3,
+            passed: 0,
+            failed: 0,
+            inProgress: 0,
+            notRun: 3,
+            uncovered: false,
+            statuses: [],
+            untested: 3,
+          },
+          11: {
+            linkedCaseCount: 0,
+            passed: 0,
+            failed: 0,
+            inProgress: 0,
+            notRun: 0,
+            uncovered: true,
+            statuses: [],
+            untested: 0,
+          },
         });
       if (url.includes("/members/overflow"))
-        return respond({ members: [], linkedCount: 0, cap: 0, overflowTotal: 0 });
+        return respond({
+          members: [],
+          linkedCount: 0,
+          cap: 0,
+          overflowTotal: 0,
+        });
       if (url.includes("repositoryCases/count")) return respond({ data: 7 });
       if (url.includes("repositoryCases/findMany"))
         return respond({ data: [{ id: 101 }] });

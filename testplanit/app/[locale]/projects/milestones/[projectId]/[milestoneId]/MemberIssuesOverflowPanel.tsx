@@ -12,9 +12,11 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import type { MemberOverflowResponse } from "~/app/api/milestones/[milestoneId]/members/overflow/route";
 import { useMilestoneLiveStream } from "~/hooks/useMilestoneLiveStream";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 
 interface MemberIssuesOverflowPanelProps {
   milestoneId: number;
+  projectId: number;
   /** Called after a successful "Import & link" so the caller can refetch
    * member rows/coverage. */
   onImported?: () => void;
@@ -37,11 +39,13 @@ interface MemberIssuesOverflowPanelProps {
  */
 export function MemberIssuesOverflowPanel({
   milestoneId,
+  projectId,
   onImported,
 }: MemberIssuesOverflowPanelProps) {
   const t = useTranslations("milestones.members");
   const queryClient = useQueryClient();
   const [isImporting, setIsImporting] = useState(false);
+  const { isProjectAdmin } = useProjectPermissions(projectId);
 
   const { data, isLoading, refetch } = useQuery<MemberOverflowResponse>({
     queryKey: ["milestoneMemberOverflow", milestoneId],
@@ -117,14 +121,11 @@ export function MemberIssuesOverflowPanel({
   };
 
   return (
-    <Card
-      data-testid="member-issues-overflow-panel"
-      className="border-amber-300 dark:border-amber-800"
-    >
+    <Card data-testid="member-issues-overflow-panel" className="border-warning">
       <CardHeader>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <CardTitle className="flex items-center gap-2 text-base">
-            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+            <AlertTriangle className="h-4 w-4 text-warning" />
             {t("overflowTitle")}
           </CardTitle>
           {isTrueCapHit ? (
@@ -147,9 +148,11 @@ export function MemberIssuesOverflowPanel({
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Alert variant="default" className="border-amber-300 dark:border-amber-800">
-          <PackageOpen className="h-4 w-4" />
-          <AlertDescription>{t("overflowDescription")}</AlertDescription>
+        <Alert variant="default" className="border-warning">
+          <div className="flex items-center gap-2">
+            <PackageOpen className="h-4 w-4" />
+            <AlertDescription>{t("overflowDescription")}</AlertDescription>
+          </div>
         </Alert>
 
         <ScrollArea className="max-h-[280px] rounded-md border">
@@ -184,18 +187,20 @@ export function MemberIssuesOverflowPanel({
           </div>
         </ScrollArea>
 
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => void handleImport()}
-            disabled={isImporting}
-            data-testid="member-issues-overflow-import-button"
-          >
-            {isImporting && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t("overflowImportAction")}
-          </Button>
-        </div>
+        {isProjectAdmin && (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void handleImport()}
+              disabled={isImporting}
+              data-testid="member-issues-overflow-import-button"
+            >
+              {isImporting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {t("overflowImportAction")}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

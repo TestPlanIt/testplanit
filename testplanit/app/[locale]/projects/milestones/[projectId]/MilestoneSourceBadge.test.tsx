@@ -34,6 +34,15 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+let mockIsProjectAdmin = true;
+vi.mock("~/hooks/useProjectPermissions", () => ({
+  useProjectPermissions: () => ({
+    permissions: null,
+    isProjectAdmin: mockIsProjectAdmin,
+    isLoading: false,
+  }),
+}));
+
 import { MilestoneSourceBadge } from "./MilestoneSourceBadge";
 
 const synced = {
@@ -60,6 +69,7 @@ describe("MilestoneSourceBadge", () => {
     mockFindFirstMilestones.mockReturnValue({ data: undefined });
     mockRouterRefresh.mockReset();
     mockRouterPush.mockReset();
+    mockIsProjectAdmin = true;
     global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
   });
 
@@ -141,9 +151,7 @@ describe("MilestoneSourceBadge", () => {
 
     fireEvent.click(screen.getByTestId("milestone-source-badge"));
 
-    expect(mockRouterPush).toHaveBeenCalledWith(
-      "/projects/milestones/7/100"
-    );
+    expect(mockRouterPush).toHaveBeenCalledWith("/projects/milestones/7/100");
   });
 
   it("a merged badge whose target is NOT tracked locally is not clickable", () => {
@@ -240,5 +248,63 @@ describe("MilestoneSourceBadge", () => {
     fireEvent.click(screen.getByTestId("milestone-source-unlink-cancel"));
 
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  describe("non-project-admin gating", () => {
+    beforeEach(() => {
+      mockIsProjectAdmin = false;
+    });
+
+    it("renders a plain badge with no dropdown menu for a non-project-admin", () => {
+      render(<MilestoneSourceBadge milestone={synced} projectId={7} />);
+
+      const badge = screen.getByTestId("milestone-source-badge");
+      expect(badge).toBeInTheDocument();
+      expect(screen.queryByTestId("milestone-source-menu-open")).toBeNull();
+      expect(screen.queryByTestId("milestone-source-menu-unlink")).toBeNull();
+    });
+
+    it("clicking the badge opens the tracker directly (no menu step) for a non-project-admin", () => {
+      const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+      render(<MilestoneSourceBadge milestone={synced} projectId={7} />);
+
+      fireEvent.click(screen.getByTestId("milestone-source-badge"));
+
+      expect(openSpy).toHaveBeenCalledWith(
+        synced.externalUrl,
+        "_blank",
+        "noopener,noreferrer"
+      );
+      openSpy.mockRestore();
+    });
+
+    it("a non-project-admin cannot reach the unlink route — no confirm dialog, no fetch", () => {
+      render(<MilestoneSourceBadge milestone={synced} projectId={7} />);
+
+      fireEvent.click(screen.getByTestId("milestone-source-badge"));
+
+      expect(
+        screen.queryByTestId("milestone-source-unlink-confirm")
+      ).toBeNull();
+      expect(global.fetch).not.toHaveBeenCalledWith(
+        "/api/milestones/42/unlink",
+        expect.anything()
+      );
+    });
+
+    it("does not open the tracker for an unsafe URL even when clicked", () => {
+      const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+      render(
+        <MilestoneSourceBadge
+          milestone={{ ...synced, externalUrl: "javascript:alert(1)" }}
+          projectId={7}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("milestone-source-badge"));
+
+      expect(openSpy).not.toHaveBeenCalled();
+      openSpy.mockRestore();
+    });
   });
 });

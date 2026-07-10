@@ -15,6 +15,15 @@ vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
 }));
 
+let mockIsProjectAdmin = true;
+vi.mock("~/hooks/useProjectPermissions", () => ({
+  useProjectPermissions: () => ({
+    permissions: null,
+    isProjectAdmin: mockIsProjectAdmin,
+    isLoading: false,
+  }),
+}));
+
 vi.stubGlobal("fetch", mockFetch);
 
 // Mock sub-components that fetch data or have complex deps
@@ -216,6 +225,7 @@ const mockCallbacks = () => ({
 });
 
 beforeEach(() => {
+  mockIsProjectAdmin = true;
   // Translation: return last key segment
   mockUseTranslations.mockReturnValue((key: string, _opts?: any) => {
     const parts = key.split(".");
@@ -854,6 +864,38 @@ describe("MilestoneItemCard", () => {
       );
 
       expect(screen.queryByTestId("milestone-open-in-tracker")).toBeNull();
+    });
+
+    it("renders no unlink menu item for a non-project-admin, but still opens the tracker on click", () => {
+      mockIsProjectAdmin = false;
+      const openSpy = vi
+        .spyOn(window, "open")
+        .mockImplementation(() => null as any);
+      const milestone = createMilestone({
+        integrationId: 5,
+        externalId: "10001",
+        externalUrl: "https://jira.example.com/versions/10001",
+      });
+      const cbs = mockCallbacks();
+      render(
+        <MilestoneItemCard
+          milestone={milestone}
+          session={adminSession}
+          colorMap={mockColorMap}
+          theme="light"
+          projectId={42}
+          {...cbs}
+        />
+      );
+
+      expect(screen.queryByTestId("milestone-source-menu-unlink")).toBeNull();
+      fireEvent.click(screen.getByTestId("milestone-source-badge"));
+      expect(openSpy).toHaveBeenCalledWith(
+        "https://jira.example.com/versions/10001",
+        "_blank",
+        "noopener,noreferrer"
+      );
+      openSpy.mockRestore();
     });
   });
 

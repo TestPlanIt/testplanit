@@ -25,6 +25,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "~/lib/navigation";
 import { siJira } from "simple-icons";
 import { toast } from "sonner";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 
 /**
  * A synced milestone's `externalUrl` is tracker-provided and written through
@@ -46,6 +47,7 @@ export interface MilestoneSourceBadgeMilestone {
 
 interface MilestoneSourceBadgeProps {
   milestone: MilestoneSourceBadgeMilestone;
+  projectId?: number;
   className?: string;
 }
 
@@ -153,8 +155,10 @@ function RemovedOrMergedBadge({
  *
  * Otherwise (actively synced: `integrationId` set, `detachedAt` null)
  * renders the normal badge with a dropdown menu (D-09): "Open in
- * {provider}" and "Unlink from {provider}" (project-admin only — the
- * server authorizes the actual mutation; a 403 is the backstop).
+ * {provider}" and "Unlink from {provider}". The unlink item is
+ * project-admin only client-side (mirrors the server authorization on the
+ * unlink route — a 403 is the backstop). Non-admins see a plain
+ * open-in-tracker badge instead of a single-item menu.
  *
  * When the badge is squeezed by its flex row it collapses segment by
  * segment — state first, then kind, then the provider name — down to the
@@ -164,6 +168,7 @@ function RemovedOrMergedBadge({
  */
 export function MilestoneSourceBadge({
   milestone,
+  projectId,
   className,
 }: MilestoneSourceBadgeProps) {
   const t = useTranslations("milestones");
@@ -176,6 +181,7 @@ export function MilestoneSourceBadge({
   const [level, setLevel] = useState(3);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
+  const { isProjectAdmin } = useProjectPermissions(projectId ?? 0);
 
   // RESEARCH.md Pitfall 3: a converted (detached) milestone keeps
   // integrationId set, so the render guard must also admit detachedAt-set
@@ -275,6 +281,23 @@ export function MilestoneSourceBadge({
     return <RemovedOrMergedBadge milestone={milestone} className={className} />;
   }
 
+  const badgeSegments = (
+    <>
+      <span className="flex shrink-0 items-center">
+        <JiraGlyph />
+      </span>
+      {level >= 1 && <span>{provider}</span>}
+      {level >= 2 && <span>{`· ${kind}`}</span>}
+      {level >= 3 && state && <span>{`· ${state}`}</span>}
+      {safeExternalUrl && (
+        <ExternalLink
+          data-testid="milestone-open-in-tracker"
+          className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity"
+        />
+      )}
+    </>
+  );
+
   return (
     <span
       ref={wrapRef}
@@ -287,7 +310,7 @@ export function MilestoneSourceBadge({
         aria-hidden="true"
         className="invisible h-0 overflow-hidden"
       >
-        <Badge variant="secondary" className="text-xs gap-1 whitespace-nowrap">
+        <Badge variant="outline" className="text-xs gap-1 whitespace-nowrap">
           <span data-seg className="flex items-center">
             <JiraGlyph />
           </span>
@@ -297,72 +320,87 @@ export function MilestoneSourceBadge({
           {safeExternalUrl && <ExternalLink className="h-3 w-3" />}
         </Badge>
       </span>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Badge
-            data-testid="milestone-source-badge"
-            variant="secondary"
-            role={safeExternalUrl ? "link" : undefined}
-            title={safeExternalUrl ? t("sync.openInJira") : badgeLabel}
-            aria-label={badgeLabel}
-            className={`text-xs max-w-full gap-1 whitespace-nowrap group cursor-pointer hover:bg-secondary/80`}
-          >
-            <span className="flex shrink-0 items-center">
-              <JiraGlyph />
-            </span>
-            {level >= 1 && <span>{provider}</span>}
-            {level >= 2 && <span>{`· ${kind}`}</span>}
-            {level >= 3 && state && <span>{`· ${state}`}</span>}
-            {safeExternalUrl && (
-              <ExternalLink
-                data-testid="milestone-open-in-tracker"
-                className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity"
-              />
-            )}
-          </Badge>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
-          <DropdownMenuItem
-            disabled={!safeExternalUrl}
-            onClick={openInTracker}
-            data-testid="milestone-source-menu-open"
-          >
-            <ExternalLink className="h-4 w-4" />
-            {t("sync.openInJira")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
-            onClick={() => setConfirmOpen(true)}
-            data-testid="milestone-source-menu-unlink"
-          >
-            <Unlink className="h-4 w-4" />
-            {t("sync.unlinkMenuItem", { provider })}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("sync.unlinkConfirmTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("sync.unlinkConfirmDescription")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel data-testid="milestone-source-unlink-cancel">
-              {tCommon("cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              disabled={isUnlinking}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => void handleUnlink()}
-              data-testid="milestone-source-unlink-confirm"
+      {isProjectAdmin ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Badge
+              data-testid="milestone-source-badge"
+              variant="outline"
+              role={safeExternalUrl ? "link" : undefined}
+              title={safeExternalUrl ? t("sync.openInJira") : badgeLabel}
+              aria-label={badgeLabel}
+              className={`text-xs max-w-full gap-1 whitespace-nowrap group cursor-pointer hover:bg-secondary/80`}
             >
-              {t("sync.unlinkConfirmAction")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              {badgeSegments}
+            </Badge>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenuItem
+              disabled={!safeExternalUrl}
+              className="gap-1"
+              onClick={openInTracker}
+              data-testid="milestone-source-menu-open"
+            >
+              <ExternalLink className="h-4 w-4" />
+              {t("sync.openInJira")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="gap-1 text-destructive focus:text-destructive"
+              onClick={() => setConfirmOpen(true)}
+              data-testid="milestone-source-menu-unlink"
+            >
+              <Unlink className="h-4 w-4" />
+              {t("sync.unlinkMenuItem", { provider })}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <Badge
+          data-testid="milestone-source-badge"
+          variant="outline"
+          role={safeExternalUrl ? "link" : undefined}
+          title={safeExternalUrl ? t("sync.openInJira") : badgeLabel}
+          aria-label={badgeLabel}
+          className={`text-xs max-w-full gap-1 whitespace-nowrap group ${
+            safeExternalUrl
+              ? "cursor-pointer hover:bg-secondary/80"
+              : "cursor-default"
+          }`}
+          onClick={safeExternalUrl ? openInTracker : undefined}
+        >
+          {badgeSegments}
+        </Badge>
+      )}
+      {isProjectAdmin && (
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t("sync.unlinkConfirmTitle")}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("sync.unlinkConfirmDescription")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel data-testid="milestone-source-unlink-cancel">
+                {tCommon("cancel")}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                disabled={isUnlinking}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => void handleUnlink()}
+                data-testid="milestone-source-unlink-confirm"
+              >
+                {t("sync.unlinkConfirmAction")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </span>
   );
 }

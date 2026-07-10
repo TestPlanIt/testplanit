@@ -54,8 +54,11 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     isAuthenticated,
   } = useRequireAuth();
 
-  const { permissions, isLoading: isLoadingPermissions } =
-    useProjectPermissions(projectId, ApplicationArea.Milestones);
+  const {
+    permissions,
+    isProjectAdmin,
+    isLoading: isLoadingPermissions,
+  } = useProjectPermissions(projectId, ApplicationArea.Milestones);
   const canAddEdit = permissions?.canAddEdit ?? false;
   const queryClient = useQueryClient();
 
@@ -91,9 +94,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   );
   const isImportPolling = pendingImportIds !== null;
   const isMilestonePolling = isImportPolling;
-  const importPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
+  const importPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startImportPolling = React.useCallback((externalIds: string[]) => {
     setPendingImportIds(new Set(externalIds));
     if (importPollTimerRef.current) clearTimeout(importPollTimerRef.current);
@@ -129,52 +130,54 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
 
   const { data: incompleteMilestones } = useClientQueries(
     schema
-  ).milestones.useFindMany({
-    where: {
-      AND: [
-        { projectId: Number(projectId) },
-        { isCompleted: false },
-        { isDeleted: false },
+  ).milestones.useFindMany(
+    {
+      where: {
+        AND: [
+          { projectId: Number(projectId) },
+          { isCompleted: false },
+          { isDeleted: false },
+        ],
+      },
+      orderBy: [
+        { startedAt: "asc" },
+        { completedAt: "asc" },
+        { isStarted: "asc" },
       ],
-    },
-    orderBy: [
-      { startedAt: "asc" },
-      { completedAt: "asc" },
-      { isStarted: "asc" },
-    ],
-    include: {
-      milestoneType: { include: { icon: true } },
-      children: {
-        include: {
-          milestoneType: true,
+      include: {
+        milestoneType: { include: { icon: true } },
+        children: {
+          include: {
+            milestoneType: true,
+          },
         },
       },
     },
-  },
-  { refetchInterval: isMilestonePolling ? 3000 : false }
+    { refetchInterval: isMilestonePolling ? 3000 : false }
   );
 
   const { data: completedMilestones } = useClientQueries(
     schema
-  ).milestones.useFindMany({
-    where: {
-      AND: [
-        { projectId: Number(projectId) },
-        { isCompleted: true },
-        { isDeleted: false },
-      ],
-    },
-    orderBy: [{ completedAt: "desc" }],
-    include: {
-      milestoneType: { include: { icon: true } },
-      children: {
-        include: {
-          milestoneType: true,
+  ).milestones.useFindMany(
+    {
+      where: {
+        AND: [
+          { projectId: Number(projectId) },
+          { isCompleted: true },
+          { isDeleted: false },
+        ],
+      },
+      orderBy: [{ completedAt: "desc" }],
+      include: {
+        milestoneType: { include: { icon: true } },
+        children: {
+          include: {
+            milestoneType: true,
+          },
         },
       },
     },
-  },
-  { refetchInterval: isMilestonePolling ? 3000 : false }
+    { refetchInterval: isMilestonePolling ? 3000 : false }
   );
 
   // Mark queued imports as landed once their externalIds show up in the
@@ -294,7 +297,9 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   const importProjectMappingId = importIntegrationProjects?.[0]?.id;
 
   const canImportFromJira =
-    canAddEdit && !!importCapableProjectIntegration && !!importProjectMappingId;
+    isProjectAdmin &&
+    !!importCapableProjectIntegration &&
+    !!importProjectMappingId;
 
   const hasFiredPassiveRefresh = useRef(false);
 

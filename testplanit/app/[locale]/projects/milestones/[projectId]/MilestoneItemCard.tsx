@@ -161,7 +161,10 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                 milestone={milestone}
                 projectId={projectId}
               />
-              <MilestoneSourceBadge milestone={milestone} />
+              <MilestoneSourceBadge
+                milestone={milestone}
+                projectId={projectId}
+              />
             </div>
             <p
               className={`${compact ? "hidden" : "hidden sm:block"} text-md text-muted-foreground ms-7`}
