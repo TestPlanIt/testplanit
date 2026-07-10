@@ -112,7 +112,10 @@ export class JiraAdapter extends BaseAdapter {
     // Optional explicit deployment / auth-scheme overrides (e.g. from
     // integration settings). When set, auto-detection is skipped so admins
     // can force Cloud vs Server/Data Center behavior.
-    if (config.deploymentType === "cloud" || config.deploymentType === "server") {
+    if (
+      config.deploymentType === "cloud" ||
+      config.deploymentType === "server"
+    ) {
       this.deployment = config.deploymentType;
       this.apiVersion = config.deploymentType === "server" ? "2" : "3";
       this.deploymentResolved = true;
@@ -163,7 +166,10 @@ export class JiraAdapter extends BaseAdapter {
       // once the deployment is known, so an email + PAT combo on Data
       // Center switches from Basic to Bearer (a DC PAT is always Bearer,
       // even when an email was supplied).
-      this.authScheme = resolveAuthScheme(this.authCreds, this.authSchemeOverride);
+      this.authScheme = resolveAuthScheme(
+        this.authCreds,
+        this.authSchemeOverride
+      );
       this.baseUrl = baseUrl;
 
       let authHeader = buildAuthHeader(this.authCreds, this.authScheme);
@@ -202,18 +208,20 @@ export class JiraAdapter extends BaseAdapter {
         // only ships /rest/api/2; detect via serverInfo and retry on v2.
         // Detect via v3 /myself with redirect: "manual" so a Data Center
         // instance that redirects unknown v3 paths to the login page (302→200)
-        // is NOT misread as a successful Cloud probe. Any non-OK v3 result
-        // (404, 401, or the opaque redirect) triggers serverInfo detection.
-        const v3Response = await fetch(
-          `${this.baseUrl}/rest/api/3/myself`,
-          { headers, redirect: "manual" }
-        );
+        // is NOT misread as a successful Cloud probe. With redirect: "manual",
+        // server-side fetch (undici) returns the 3xx response itself, which
+        // is non-OK; any non-OK v3 result (404, 401, or that 3xx) triggers
+        // serverInfo detection.
+        const v3Response = await fetch(`${this.baseUrl}/rest/api/3/myself`, {
+          headers,
+          redirect: "manual",
+        });
         if (v3Response.ok) {
           this.deployment = "cloud";
           this.apiVersion = "3";
           this.deploymentResolved = true;
           this.apiKeyAuthActive = true;
-        } else if (!v3Response.ok) {
+        } else {
           const detected = await detectJiraDeployment(this.baseUrl!, {
             Authorization: authHeader,
           });
@@ -250,10 +258,6 @@ export class JiraAdapter extends BaseAdapter {
               `Jira API authentication failed: ${v3Response.statusText}`
             );
           }
-        } else {
-          throw new Error(
-            `Jira API authentication failed: ${v3Response.statusText}`
-          );
         }
       }
     } else if (authData.type === "oauth") {
@@ -476,7 +480,10 @@ export class JiraAdapter extends BaseAdapter {
 
       // Cloud: Basic email:apiToken. Data Center PAT: Bearer <token>.
       // Data Center Basic: Basic username:password.
-      headers["Authorization"] = buildAuthHeader(this.authCreds, this.authScheme);
+      headers["Authorization"] = buildAuthHeader(
+        this.authCreds,
+        this.authScheme
+      );
 
       const response = await fetch(url, {
         ...options,
@@ -617,10 +624,13 @@ export class JiraAdapter extends BaseAdapter {
       );
     }
 
-    await this.makeRequest<any>(this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}`), {
-      method: "PUT",
-      body: JSON.stringify(updatePayload),
-    });
+    await this.makeRequest<any>(
+      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}`),
+      {
+        method: "PUT",
+        body: JSON.stringify(updatePayload),
+      }
+    );
 
     // Handle status transition separately if provided
     if (data.status !== undefined) {
@@ -640,11 +650,15 @@ export class JiraAdapter extends BaseAdapter {
       // read side can surface formatting instead of raw markup. Cloud returns
       // ADF and is parsed by adfToHtml, so it doesn't need this.
       expand:
-        this.deployment === "server" ? "names,schema,renderedFields" : "names,schema",
+        this.deployment === "server"
+          ? "names,schema,renderedFields"
+          : "names,schema",
     });
 
     const response = await this.makeRequest<any>(
-      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}?${params.toString()}`)
+      this.buildUrl(
+        `/rest/api/${this.apiVersion}/issue/${issueId}?${params.toString()}`
+      )
     );
 
     return this.mapJiraIssue(response);
@@ -657,7 +671,9 @@ export class JiraAdapter extends BaseAdapter {
       });
       const encodedId = encodeURIComponent(issueId);
       const response = await this.makeRequest<any>(
-        this.buildUrl(`/rest/api/${this.apiVersion}/issue/${encodedId}?${params.toString()}`)
+        this.buildUrl(
+          `/rest/api/${this.apiVersion}/issue/${encodedId}?${params.toString()}`
+        )
       );
       return this.mapLinkedIssues(response);
     } catch (error) {
@@ -864,7 +880,9 @@ export class JiraAdapter extends BaseAdapter {
 
     // Execute the transition
     await this.makeRequest(
-      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}/transitions`),
+      this.buildUrl(
+        `/rest/api/${this.apiVersion}/issue/${issueId}/transitions`
+      ),
       {
         method: "POST",
         body: JSON.stringify({
@@ -1257,7 +1275,9 @@ export class JiraAdapter extends BaseAdapter {
   ): Promise<Array<{ id: string; name: string }>> {
     try {
       // First, get the project details to get available issue types
-      const projectUrl = this.buildUrl(`/rest/api/${this.apiVersion}/project/${projectKey}`);
+      const projectUrl = this.buildUrl(
+        `/rest/api/${this.apiVersion}/project/${projectKey}`
+      );
       const project = await this.makeRequest<any>(projectUrl);
 
       // Extract issue types from the project
@@ -1271,7 +1291,9 @@ export class JiraAdapter extends BaseAdapter {
       console.error("Failed to fetch issue types:", error);
       // If that fails, try to get all issue types and filter by project
       try {
-        const allTypesUrl = this.buildUrl(`/rest/api/${this.apiVersion}/issuetype`);
+        const allTypesUrl = this.buildUrl(
+          `/rest/api/${this.apiVersion}/issuetype`
+        );
         const allTypes = await this.makeRequest<any[]>(allTypesUrl);
 
         // For now, return all non-subtask issue types as a fallback
@@ -1393,9 +1415,7 @@ export class JiraAdapter extends BaseAdapter {
       input !== null &&
       (input as { type?: string }).type === "doc";
     const isHtml =
-      typeof input === "string" &&
-      input.includes("<") &&
-      input.includes(">");
+      typeof input === "string" && input.includes("<") && input.includes(">");
 
     if (this.deployment === "server") {
       if (!input) return "";
@@ -1925,8 +1945,12 @@ export class JiraAdapter extends BaseAdapter {
       // 2. Try general search
       let endpoint: string;
       if (projectKey && !isEmail) {
-        // Search assignable users for the project
-        endpoint = `/rest/api/${this.apiVersion}/user/assignable/search?project=${projectKey}&query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
+        // Search assignable users for the project. Server/DC filters this
+        // endpoint by `username` and silently ignores the Cloud-only
+        // `query` param (verified on DC 10.3.13: query= returns the full
+        // unfiltered assignable list).
+        const userParam = this.deployment === "server" ? "username" : "query";
+        endpoint = `/rest/api/${this.apiVersion}/user/assignable/search?project=${projectKey}&${userParam}=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
       } else {
         // General user search
         endpoint = `/rest/api/${this.apiVersion}/user/search?${this.deployment === "server" ? "username" : "query"}=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;

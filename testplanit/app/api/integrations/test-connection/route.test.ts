@@ -620,11 +620,23 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
       json: async () => ({ deploymentType: "Server", version: "10.3.13" }),
     });
     // v2 /myself -> ok
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
     // v2 /search -> ok
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ issues: [] }) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ issues: [] }),
+    });
     // v2 /issue/picker -> ok
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
 
     const response = await POST(
       createRequest({
@@ -647,15 +659,21 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
       "https://jira.mycompany.domain/rest/api/3/myself"
     );
     const calledUrls = mockFetch.mock.calls.map((c: any[]) => c[0]);
-    expect(calledUrls).toContain("https://jira.mycompany.domain/rest/api/2/myself");
+    expect(calledUrls).toContain(
+      "https://jira.mycompany.domain/rest/api/2/myself"
+    );
     expect(calledUrls).toEqual(
       expect.arrayContaining([
-        expect.stringContaining("https://jira.mycompany.domain/rest/api/2/search?"),
+        expect.stringContaining(
+          "https://jira.mycompany.domain/rest/api/2/search?"
+        ),
       ])
     );
     expect(calledUrls).toEqual(
       expect.arrayContaining([
-        expect.stringContaining("https://jira.mycompany.domain/rest/api/2/issue/picker"),
+        expect.stringContaining(
+          "https://jira.mycompany.domain/rest/api/2/issue/picker"
+        ),
       ])
     );
     // Every Jira call must use Bearer (PAT, no email).
@@ -676,9 +694,21 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
       ok: true,
       json: async () => ({ deploymentType: "Server" }),
     });
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ issues: [] }) });
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ issues: [] }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
 
     const response = await POST(
       createRequest({
@@ -704,7 +734,11 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
 
   it("honors an explicit settings.deploymentType=server and skips the v3 probe", async () => {
     // No v3 call should happen — server override probes v2 directly.
-    mockFetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
 
     const response = await POST(
       createRequest({
@@ -724,10 +758,14 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
     expect(calledUrls).not.toContain(
       "https://jira.mycompany.domain/rest/api/3/myself"
     );
-    expect(calledUrls).toContain("https://jira.mycompany.domain/rest/api/2/myself");
+    expect(calledUrls).toContain(
+      "https://jira.mycompany.domain/rest/api/2/myself"
+    );
     expect(calledUrls).toEqual(
       expect.arrayContaining([
-        expect.stringContaining("https://jira.mycompany.domain/rest/api/2/search?"),
+        expect.stringContaining(
+          "https://jira.mycompany.domain/rest/api/2/search?"
+        ),
       ])
     );
   });
@@ -746,9 +784,21 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
       ok: true,
       json: async () => ({ deploymentType: "Server" }),
     });
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ issues: [] }) });
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ issues: [] }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
 
     const response = await POST(
       createRequest({
@@ -765,19 +815,22 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
       (c: any[]) => c[0] === "https://jira.rapidsoft.ru/rest/api/2/myself"
     );
     expect(myselfCall).toBeTruthy();
-    expect((myselfCall![1] as any).headers.Authorization).toBe("Bearer pat-123");
+    expect((myselfCall![1] as any).headers.Authorization).toBe(
+      "Bearer pat-123"
+    );
   });
 
-  it("detects Data Center when v3 /myself redirects to the login page (302→opaque)", async () => {
+  it("detects Data Center when v3 /myself redirects to the login page (302)", async () => {
     // Reproduces jira.rapidsoft.ru: /rest/api/3/myself returns 302 (redirect
-    // to login.jsp). With redirect: "manual" the probe sees a non-OK opaque
-    // response (status 0) instead of a misleading 200, so detection falls
-    // through to serverInfo → Server, and the v2 probe authenticates.
-    // v3 /myself → opaque redirect (non-OK, status 0)
+    // to login.jsp). With redirect: "manual" server-side fetch (undici)
+    // returns the 302 response itself (non-OK) instead of following it to a
+    // misleading 200, so detection falls through to serverInfo → Server, and
+    // the v2 probe authenticates.
+    // v3 /myself → 302 redirect (non-OK)
     mockFetch.mockResolvedValueOnce({
       ok: false,
-      status: 0,
-      statusText: "",
+      status: 302,
+      statusText: "Found",
       json: async () => ({}),
     });
     // serverInfo → Server (hostname fallback would also work, but here the
@@ -787,9 +840,21 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
       json: async () => ({ deploymentType: "Server" }),
     });
     // v2 /myself, /search, /issue/picker
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ issues: [] }) });
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ issues: [] }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
 
     const response = await POST(
       createRequest({
@@ -836,9 +901,21 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
         ok: true,
         json: async () => ({ deploymentType: "Server" }),
       });
-      mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
-      mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ issues: [] }) });
-      mockFetch.mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ issues: [] }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      });
 
       const response = await POST(createRequest({ integrationId: 42 }));
       const data = await response.json();
@@ -873,7 +950,11 @@ describe("POST /api/integrations/test-connection — Jira Data Center", () => {
         },
       });
 
-      mockFetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      });
 
       const response = await POST(createRequest({ integrationId: 43 }));
       const data = await response.json();

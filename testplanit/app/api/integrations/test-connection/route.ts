@@ -203,15 +203,17 @@ async function testJiraConnection(
     } else {
       // Detect via v3 /myself with redirect: "manual" so a Data Center
       // instance that redirects unknown v3 paths to the login page (302→200)
-      // is NOT misread as a successful Cloud probe. Any non-OK v3 result
-      // (404, 401, or the opaque redirect) triggers a serverInfo detection.
+      // is NOT misread as a successful Cloud probe. With redirect: "manual",
+      // server-side fetch (undici) returns the 3xx response itself, which is
+      // non-OK; any non-OK v3 result (404, 401, or that 3xx) triggers a
+      // serverInfo detection.
       const v3Probe = await probe(`${baseUrl}/rest/api/3/myself`, {
         headers,
         redirect: "manual",
       });
       if (v3Probe.ok) {
         connection = v3Probe;
-      } else if (!v3Probe.ok) {
+      } else {
         // Data Center only exposes /rest/api/2 — confirm via serverInfo.
         const detected = await detectJiraDeployment(baseUrl, {
           Authorization: authHeaderValue,
@@ -239,8 +241,6 @@ async function testJiraConnection(
         } else {
           connection = v3Probe;
         }
-      } else {
-        connection = v3Probe;
       }
     }
 

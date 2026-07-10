@@ -2048,7 +2048,9 @@ describe("JiraAdapter Data Center / Server", () => {
     expect(url).toBe("https://jira.mycompany.domain/rest/api/2/myself");
     expect(init.headers.Authorization).toMatch(/^Basic /);
     expect(
-      Buffer.from(init.headers.Authorization.slice(6), "base64").toString("utf8")
+      Buffer.from(init.headers.Authorization.slice(6), "base64").toString(
+        "utf8"
+      )
     ).toBe("alice:secret");
   });
 
@@ -2214,7 +2216,9 @@ describe("JiraAdapter Data Center / Server", () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            transitions: [{ id: "21", name: "Start", to: { name: "In Progress" } }],
+            transitions: [
+              { id: "21", name: "Start", to: { name: "In Progress" } },
+            ],
           }),
       })
       // POST /issue/{id}/transitions (execute) -> 204
@@ -2544,6 +2548,58 @@ describe("JiraAdapter Data Center / Server", () => {
     });
   });
 
+  it("searchUsers: assignable search uses ?username= (not ?query=) on Data Center", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice" }),
+    });
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    // Server/DC /user/assignable/search filters by `username` and silently
+    // ignores the Cloud-only `query` param (verified live on DC 10.3.13:
+    // query= returns the full unfiltered assignable list).
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve([
+          {
+            key: "JIRAUSER16307",
+            name: "testplanit",
+            emailAddress: "testplanit@rapidsoft.ru",
+            displayName: "TestPlanIt",
+          },
+        ]),
+    });
+
+    const result = await adapter.searchUsers("testplanit", "TITP");
+
+    const call = mockFetch.mock.calls.find(
+      (c: any[]) =>
+        typeof c[0] === "string" &&
+        c[0].includes("/rest/api/2/user/assignable/search?")
+    );
+    expect(call).toBeTruthy();
+    expect(call![0]).toContain("project=TITP");
+    expect(call![0]).toContain("username=testplanit");
+    expect(call![0]).not.toContain("query=");
+    expect(result).toEqual({
+      users: [
+        {
+          accountId: "testplanit",
+          displayName: "TestPlanIt",
+          emailAddress: "testplanit@rapidsoft.ru",
+          avatarUrls: undefined,
+        },
+      ],
+      total: 1,
+    });
+  });
+
   it("addComment: sends a plain-string body (not ADF) on Data Center", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -2613,7 +2669,10 @@ describe("JiraAdapter Data Center / Server", () => {
             self: "https://jira.mycompany.domain/rest/api/2/issue/20001",
           }),
       })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(dcIssue) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(dcIssue),
+      });
 
     // TipTap doc as emitted by the rich-text editor: a paragraph with a bold
     // run and a link, then a bullet list.
@@ -2645,13 +2704,19 @@ describe("JiraAdapter Data Center / Server", () => {
               {
                 type: "listItem",
                 content: [
-                  { type: "paragraph", content: [{ type: "text", text: "one" }] },
+                  {
+                    type: "paragraph",
+                    content: [{ type: "text", text: "one" }],
+                  },
                 ],
               },
               {
                 type: "listItem",
                 content: [
-                  { type: "paragraph", content: [{ type: "text", text: "two" }] },
+                  {
+                    type: "paragraph",
+                    content: [{ type: "text", text: "two" }],
+                  },
                 ],
               },
             ],
@@ -2689,7 +2754,10 @@ describe("JiraAdapter Data Center / Server", () => {
     // PUT -> 204, then getIssue
     mockFetch
       .mockResolvedValueOnce({ ok: true, status: 204 })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(dcIssue) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(dcIssue),
+      });
 
     await adapter.updateIssue("DC-1", {
       description: {
@@ -2697,7 +2765,9 @@ describe("JiraAdapter Data Center / Server", () => {
         content: [
           {
             type: "paragraph",
-            content: [{ type: "text", text: "now italic", marks: [{ type: "italic" }] }],
+            content: [
+              { type: "text", text: "now italic", marks: [{ type: "italic" }] },
+            ],
           },
         ],
       } as any,
@@ -2742,8 +2812,7 @@ describe("JiraAdapter Data Center / Server", () => {
 
     const getCall = mockFetch.mock.calls.find(
       (c: any[]) =>
-        typeof c[0] === "string" &&
-        c[0].includes("/rest/api/2/issue/DC-1?")
+        typeof c[0] === "string" && c[0].includes("/rest/api/2/issue/DC-1?")
     );
     expect(getCall).toBeTruthy();
     // expand must include renderedFields (URLSearchParams encodes the comma)
@@ -2785,8 +2854,7 @@ describe("JiraAdapter Data Center / Server", () => {
     const comments = await adapter.getIssueComments("DC-1");
 
     const getCall = mockFetch.mock.calls.find(
-      (c: any[]) =>
-        typeof c[0] === "string" && c[0].includes("/comment")
+      (c: any[]) => typeof c[0] === "string" && c[0].includes("/comment")
     );
     expect(getCall).toBeTruthy();
     expect(getCall![0] as string).toContain("expand=renderedBody");
