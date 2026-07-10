@@ -35,6 +35,11 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
   function IssuesCard({ milestoneId, projectId }, ref) {
     const t = useTranslations("milestones.members");
     const cardRef = useRef<HTMLDivElement>(null);
+    // Section wrappers (NOT the keyed children) so each chip scrolls to its
+    // own accordion trigger — the wrappers survive the force-expand key bump
+    // below, keeping the scroll target stable across the remount.
+    const inScopeRef = useRef<HTMLDivElement>(null);
+    const foundInTestingRef = useRef<HTMLDivElement>(null);
     const [memberIssueIds, setMemberIssueIds] = useState<number[]>([]);
     // Bumped to force-expand a section (and re-persist the new open state)
     // when a summary chip is clicked while that section is collapsed.
@@ -46,8 +51,8 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
     // jsdom (unit tests) has no scrollIntoView implementation — guard so the
     // imperative handle stays callable in that environment instead of
     // throwing before the localStorage/expand side effects run.
-    const scrollToCard = () => {
-      cardRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    const scrollToSection = (target: HTMLDivElement | null) => {
+      target?.scrollIntoView?.({ behavior: "smooth", block: "start" });
     };
 
     useImperativeHandle(ref, () => ({
@@ -58,7 +63,7 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
           // Persistence is best-effort.
         }
         setForceOpen((prev) => ({ ...prev, inScope: prev.inScope + 1 }));
-        scrollToCard();
+        scrollToSection(inScopeRef.current);
       },
       expandFoundInTesting: () => {
         try {
@@ -70,7 +75,7 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
           ...prev,
           foundInTesting: prev.foundInTesting + 1,
         }));
-        scrollToCard();
+        scrollToSection(foundInTestingRef.current);
       },
     }));
 
@@ -80,17 +85,21 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
           <CardTitle>{t("cardTitle")}</CardTitle>
         </div>
         <div className="divide-y">
-          <MemberIssuesTable
-            key={`in-scope-${forceOpen.inScope}`}
-            milestoneId={milestoneId}
-            projectId={projectId}
-            onMemberIssueIdsChange={setMemberIssueIds}
-          />
-          <FoundInTestingIssues
-            key={`found-in-testing-${forceOpen.foundInTesting}`}
-            milestoneId={milestoneId}
-            memberIssueIds={memberIssueIds}
-          />
+          <div ref={inScopeRef} className="scroll-mt-16">
+            <MemberIssuesTable
+              key={`in-scope-${forceOpen.inScope}`}
+              milestoneId={milestoneId}
+              projectId={projectId}
+              onMemberIssueIdsChange={setMemberIssueIds}
+            />
+          </div>
+          <div ref={foundInTestingRef} className="scroll-mt-16">
+            <FoundInTestingIssues
+              key={`found-in-testing-${forceOpen.foundInTesting}`}
+              milestoneId={milestoneId}
+              memberIssueIds={memberIssueIds}
+            />
+          </div>
         </div>
       </Card>
     );
