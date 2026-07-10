@@ -349,8 +349,7 @@ describe("MilestoneSourceBadge", () => {
         const release = {
           ...synced,
           externalKind: "RELEASE",
-          externalUrl:
-            "https://jira.example.com/projects/ADM/versions/10099",
+          externalUrl: "https://jira.example.com/projects/ADM/versions/10099",
         };
         expect(resolveMilestoneProjectSpace(release, [abt, adm])).toEqual({
           name: "Acme Admin",
@@ -369,10 +368,9 @@ describe("MilestoneSourceBadge", () => {
 
       it("returns null for a local milestone or when no mappings are provided", () => {
         expect(
-          resolveMilestoneProjectSpace(
-            { ...synced, integrationId: null },
-            [abt]
-          )
+          resolveMilestoneProjectSpace({ ...synced, integrationId: null }, [
+            abt,
+          ])
         ).toBeNull();
         expect(resolveMilestoneProjectSpace(synced, undefined)).toBeNull();
       });

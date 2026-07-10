@@ -367,7 +367,15 @@ export function MilestoneSourceBadge({
     const ro = new ResizeObserver(compute);
     ro.observe(wrap);
     return () => ro.disconnect();
-  }, [isLocal, provider, kind, state, safeExternalUrl, projectName, projectShort]);
+  }, [
+    isLocal,
+    provider,
+    kind,
+    state,
+    safeExternalUrl,
+    projectName,
+    projectShort,
+  ]);
 
   if (isLocal) return null;
 
