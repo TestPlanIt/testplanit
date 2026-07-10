@@ -1,3 +1,9 @@
+## [0.41.6](https://github.com/TestPlanIt/testplanit/compare/v0.41.5...v0.41.6) (2026-07-10)
+
+### Bug Fixes
+
+* **jira:** Jira Server / Data Center support (REST v2, PAT/Basic auth, wiki markup) ([#510](https://github.com/TestPlanIt/testplanit/issues/510)) ([c18d812](https://github.com/TestPlanIt/testplanit/commit/c18d812cbc488a83a71b43ceb00b742a41d0edf2))
+
 ## [0.41.5](https://github.com/TestPlanIt/testplanit/compare/v0.41.4...v0.41.5) (2026-07-10)
 
 ### Performance Improvements
