@@ -681,7 +681,7 @@ export function MemberIssuesTable({
               </div>
             )}
         </CardHeader>
-        <CollapsibleContent>
+        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-slide-down data-[state=closed]:animate-slide-up">
           <CardContent>
             <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap mb-4">
               <Filter
