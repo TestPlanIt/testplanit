@@ -22,7 +22,7 @@ The TestPlanIt Team will be offering a hosted solution for users who do not want
 
 TestPlanIt requires:
 
-- **RAM** 24GB to build, 8GB to run the whole stack
+- **RAM** 8GB to build (peaks around 7GB), 8GB to run the whole stack
 - **Disk** 25GB+ space for data and file attachments
 - **Node.js** 24 or later
 - **PostgreSQL** 14 or later

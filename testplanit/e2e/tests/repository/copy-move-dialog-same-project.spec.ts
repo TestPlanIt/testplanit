@@ -32,7 +32,7 @@ import { expect, test } from "../../fixtures/index";
  *
  * Run protocol (CLAUDE.md mandatory):
  *   cd testplanit
- *   NODE_OPTIONS='--max-old-space-size=16382' pnpm build
+ *   pnpm build
  *   E2E_PROD=on pnpm test:e2e e2e/tests/repository/copy-move-dialog-same-project.spec.ts
  */
 

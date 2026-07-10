@@ -47,7 +47,7 @@ RUN if [ -f ".docker-version.json" ]; then \
         node scripts/generate-version.js || echo "Version generation skipped (git info not available)"; \
     fi
 
-ENV NODE_OPTIONS="--max-old-space-size=16384"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN pnpm zenstack generate
 RUN node scripts/fix-zenstack-symlink.js
 RUN apk del .gyp
@@ -123,7 +123,7 @@ RUN cd /app/deploy/node_modules/.pnpm && \
 FROM base AS build
 ARG BASE_DOMAIN
 ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=16384"
+ENV NODE_OPTIONS="--max-old-space-size=8192"
 ENV VALKEY_URL=valkey://dummy:6379
 ENV DATABASE_URL=postgresql://dummy:dummy@dummy:5432/dummy
 ENV NEXTAUTH_SECRET=dummy-build-secret-min-32-characters-long
