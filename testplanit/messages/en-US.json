@@ -2188,8 +2188,17 @@
       "sourceRemoved": "source removed in {provider}",
       "mergedInto": "merged into {target}"
     },
+    "summary": {
+      "inScope": "{count, plural, one {# in scope} other {# in scope}}",
+      "foundInTesting": "{count, plural, one {# found in testing} other {# found in testing}}",
+      "includesChildMilestones": "Includes child milestones"
+    },
     "members": {
-      "sectionTitle": "Issues",
+      "cardTitle": "Issues",
+      "inScope": "In scope",
+      "foundInTesting": "Found in testing",
+      "foundInTestingEmpty": "No issues found in testing yet.",
+      "inScopeCrossBadge": "In scope",
       "syncing": "Syncing…",
       "refresh": "Refresh",
       "columnKey": "Name",

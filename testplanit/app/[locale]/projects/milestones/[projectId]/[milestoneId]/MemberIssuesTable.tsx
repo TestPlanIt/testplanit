@@ -7,7 +7,7 @@ import { useDebounce } from "@/components/Debounce";
 import { Filter } from "@/components/tables/Filter";
 import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
@@ -50,6 +50,10 @@ const MEMBER_ISSUES_COLLAPSED_KEY = "tpi.milestone.memberIssues.collapsed";
 interface MemberIssuesTableProps {
   milestoneId: number;
   projectId: number;
+  // Reports this milestone's member issueIds up to the enclosing IssuesCard
+  // so the sibling "Found in testing" section can compute its "In scope"
+  // cross-badge (an issue appearing in both sections).
+  onMemberIssueIdsChange?: (issueIds: number[]) => void;
 }
 
 /**
@@ -84,15 +88,19 @@ function matchesCoverageState(
 }
 
 /**
- * Member Issues section for the milestone detail page (MLINK-04, D-07/D-08).
- * A VirtualizedDataTable of this milestone's `MilestoneIssue` rows (D-15:
- * this milestone's members only, never descendant-scoped) joined with the
- * per-issue coverage breakdown from the 18-05 coverage route. Mirrors the
- * project Issues page's VirtualizedDataTable wiring and column patterns.
+ * "In scope" accordion section of the Issues card on the milestone detail
+ * page (MLINK-04, D-07/D-08). A VirtualizedDataTable of this milestone's
+ * `MilestoneIssue` rows (D-15: this milestone's members only, never
+ * descendant-scoped) joined with the per-issue coverage breakdown from the
+ * 18-05 coverage route. Mirrors the project Issues page's
+ * VirtualizedDataTable wiring and column patterns. Rendered as a bare
+ * section (no owning Card) — the parent `IssuesCard` supplies the outer
+ * card and pairs this with the sibling "Found in testing" section.
  */
 export function MemberIssuesTable({
   milestoneId,
   projectId,
+  onMemberIssueIdsChange,
 }: MemberIssuesTableProps) {
   const t = useTranslations("milestones.members");
   const tCommon = useTranslations("common");
@@ -176,6 +184,25 @@ export function MemberIssuesTable({
       coverage: coverageData?.[row.issueId],
     }));
   }, [memberRows, coverageData]);
+
+  // Report member issueIds up for the sibling "Found in testing" section's
+  // cross-badge — content-keyed so this only fires when the actual id set
+  // changes, not on every unrelated re-render.
+  const memberIssueIdsKey = useMemo(
+    () =>
+      rows
+        .map((row) => row.issueId)
+        .sort((a, b) => a - b)
+        .join(","),
+    [rows]
+  );
+  useEffect(() => {
+    if (!onMemberIssueIdsChange) return;
+    const ids = memberIssueIdsKey
+      ? memberIssueIdsKey.split(",").map(Number)
+      : [];
+    onMemberIssueIdsChange(ids);
+  }, [memberIssueIdsKey, onMemberIssueIdsChange]);
 
   // Milestone-total coverage: aggregate every member issue's per-status
   // counts (matrix pips) + one Untested total + how many issues are
@@ -544,11 +571,11 @@ export function MemberIssuesTable({
   };
 
   return (
-    <Card data-testid="member-issues-section">
+    <div data-testid="member-issues-section">
       <Collapsible open={!isCollapsed} onOpenChange={handleCollapsedChange}>
-        <CardHeader>
+        <div className="flex flex-col space-y-1.5 px-6 py-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <CardTitle className="flex items-center gap-2">
+            <div className="flex items-center gap-2 font-semibold leading-none tracking-tight">
               <CollapsibleTrigger asChild>
                 <Button
                   type="button"
@@ -556,7 +583,7 @@ export function MemberIssuesTable({
                   size="sm"
                   className="h-6 w-6 p-0 text-muted-foreground"
                   aria-expanded={!isCollapsed}
-                  aria-label={t("sectionTitle")}
+                  aria-label={t("inScope")}
                   data-testid="member-issues-collapse-toggle"
                 >
                   <ChevronDown
@@ -566,7 +593,7 @@ export function MemberIssuesTable({
                   />
                 </Button>
               </CollapsibleTrigger>
-              {t("sectionTitle")}
+              {t("inScope")}
               {!isLoadingMembers && (
                 <Badge variant="secondary" data-testid="member-issues-count">
                   {rows.length}
@@ -582,7 +609,7 @@ export function MemberIssuesTable({
                   {t("syncing")}
                 </Badge>
               )}
-            </CardTitle>
+            </div>
             <div className="flex items-center gap-2">
               {selectedIssueIds.length > 0 && (
                 <Button
@@ -680,7 +707,7 @@ export function MemberIssuesTable({
                 <IterationStatusLegendPopover projectId={projectId} />
               </div>
             )}
-        </CardHeader>
+        </div>
         <CollapsibleContent className="overflow-hidden data-[state=open]:animate-slide-down data-[state=closed]:animate-slide-up">
           <CardContent>
             {rows.length > 0 && (
@@ -838,6 +865,6 @@ export function MemberIssuesTable({
           defaultMilestoneId={milestoneId}
         />
       )}
-    </Card>
+    </div>
   );
 }

@@ -48,7 +48,7 @@ import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useParams, useSearchParams } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
@@ -70,7 +70,7 @@ import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
 import ChildMilestoneItem from "./ChildMilestoneItem";
 import { MilestoneSourceBadge } from "../MilestoneSourceBadge";
-import { MemberIssuesTable } from "./MemberIssuesTable";
+import { IssuesCard, type IssuesCardHandle } from "./IssuesCard";
 import MilestoneFormControls from "./MilestoneFormControls";
 import { buildMilestoneUpdatePayload } from "./milestoneUpdatePayload";
 
@@ -105,6 +105,7 @@ export default function MilestoneDetailsPage() {
     useState<MilestoneForecastData | null>(null);
   const [isLoadingForecast, setIsLoadingForecast] = useState(false);
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  const issuesCardRef = useRef<IssuesCardHandle>(null);
   const router = useRouter();
   const { resolvedTheme } = useTheme();
 
@@ -214,6 +215,11 @@ export default function MilestoneDetailsPage() {
       });
       void queryClient.invalidateQueries({
         queryKey: ["milestoneMemberOverflow", Number(milestoneId)],
+      });
+      // Both the MilestoneSummary chips (scopeCount) and the sibling "Found
+      // in testing" section (issues) read this same cache entry.
+      void queryClient.invalidateQueries({
+        queryKey: ["milestoneSummary", Number(milestoneId)],
       });
     }, [queryClient, milestoneId]),
   });
@@ -754,17 +760,25 @@ export default function MilestoneDetailsPage() {
                 <MilestoneSummary
                   milestoneId={milestone.id}
                   projectId={projectId}
+                  onScopeChipClick={() =>
+                    issuesCardRef.current?.expandInScope()
+                  }
+                  onFoundInTestingChipClick={() =>
+                    issuesCardRef.current?.expandFoundInTesting()
+                  }
                 />
               </div>
             )}
 
-            {/* Member Issues section (MLINK-04, D-07) — what's in this
-                milestone (via MilestoneIssue links) and how its testing is
-                going. Distinct from MilestoneSummary's linked-defect list
-                above (D-16 vocabulary). */}
+            {/* Issues card (MLINK-04, D-07) — "In scope" (MilestoneIssue
+                links, this-milestone-only) and "Found in testing"
+                (test-run/session-linked defects, descendant-inclusive) as
+                two independently collapsible sections of one card (D-16
+                vocabulary). */}
             {!isEditMode && milestone && (
               <div className="mb-6">
-                <MemberIssuesTable
+                <IssuesCard
+                  ref={issuesCardRef}
                   milestoneId={milestone.id}
                   projectId={Number(projectId)}
                 />
