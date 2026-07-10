@@ -683,89 +683,93 @@ export function MemberIssuesTable({
         </CardHeader>
         <CollapsibleContent className="overflow-hidden data-[state=open]:animate-slide-down data-[state=closed]:animate-slide-up">
           <CardContent>
-            <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap mb-4">
-              <Filter
-                key="member-issues-filter"
-                placeholder={tGlobal("admin.issues.filterPlaceholder")}
-                initialSearchString={searchString}
-                onSearchChange={setSearchString}
-                dataTestId="member-issues-search"
-                className="grow shrink basis-[120px] min-w-[120px] max-w-lg"
-              />
-              <Select
-                value={coverageFilter || "all"}
-                onValueChange={(value) =>
-                  setCoverageFilter(
-                    value === "all" ? "" : (value as CoverageStateFilter)
-                  )
-                }
-              >
-                <SelectTrigger
-                  className="w-[160px] shrink-0"
-                  data-testid="member-issues-coverage-filter"
+            {rows.length > 0 && (
+              <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap mb-4">
+                <Filter
+                  key="member-issues-filter"
+                  placeholder={tGlobal("admin.issues.filterPlaceholder")}
+                  initialSearchString={searchString}
+                  onSearchChange={setSearchString}
+                  dataTestId="member-issues-search"
+                  className="grow shrink basis-[120px] min-w-[120px] max-w-lg"
+                />
+                <Select
+                  value={coverageFilter || "all"}
+                  onValueChange={(value) =>
+                    setCoverageFilter(
+                      value === "all" ? "" : (value as CoverageStateFilter)
+                    )
+                  }
                 >
-                  <SelectValue placeholder={t("filterAllCoverage")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("filterAllCoverage")}</SelectItem>
-                  <SelectItem value="UNCOVERED">
-                    {t("coverageUncovered")}
-                  </SelectItem>
-                  <SelectItem value="UNTESTED">
-                    {t("filterHasUntested")}
-                  </SelectItem>
-                  {coverageTotals.statuses.map((entry) => (
-                    <SelectItem
-                      key={`filter-status-${entry.statusId}`}
-                      value={`status:${entry.statusId}`}
-                    >
-                      {entry.name}
+                  <SelectTrigger
+                    className="w-[160px] shrink-0"
+                    data-testid="member-issues-coverage-filter"
+                  >
+                    <SelectValue placeholder={t("filterAllCoverage")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      {t("filterAllCoverage")}
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={sourceFilter || "all"}
-                onValueChange={(value) =>
-                  setSourceFilter(
-                    value === "all" ? "" : (value as SourceFilter)
-                  )
-                }
-              >
-                <SelectTrigger
-                  className="w-[140px] shrink-0"
-                  data-testid="member-issues-source-filter"
-                >
-                  <SelectValue placeholder={t("filterAllSources")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("filterAllSources")}</SelectItem>
-                  <SelectItem value="SYNCED">{t("sourceSynced")}</SelectItem>
-                  <SelectItem value="MANUAL">{t("sourceManual")}</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                value={issueTypeFilter || "all"}
-                onValueChange={(value) =>
-                  setIssueTypeFilter(value === "all" ? "" : value)
-                }
-              >
-                <SelectTrigger
-                  className="w-[140px] shrink-0"
-                  data-testid="member-issues-type-filter"
-                >
-                  <SelectValue placeholder={t("filterAllTypes")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("filterAllTypes")}</SelectItem>
-                  {issueTypes.map((typeName) => (
-                    <SelectItem key={typeName} value={typeName}>
-                      {typeName}
+                    <SelectItem value="UNCOVERED">
+                      {t("coverageUncovered")}
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                    <SelectItem value="UNTESTED">
+                      {t("filterHasUntested")}
+                    </SelectItem>
+                    {coverageTotals.statuses.map((entry) => (
+                      <SelectItem
+                        key={`filter-status-${entry.statusId}`}
+                        value={`status:${entry.statusId}`}
+                      >
+                        {entry.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={sourceFilter || "all"}
+                  onValueChange={(value) =>
+                    setSourceFilter(
+                      value === "all" ? "" : (value as SourceFilter)
+                    )
+                  }
+                >
+                  <SelectTrigger
+                    className="w-[140px] shrink-0"
+                    data-testid="member-issues-source-filter"
+                  >
+                    <SelectValue placeholder={t("filterAllSources")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("filterAllSources")}</SelectItem>
+                    <SelectItem value="SYNCED">{t("sourceSynced")}</SelectItem>
+                    <SelectItem value="MANUAL">{t("sourceManual")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={issueTypeFilter || "all"}
+                  onValueChange={(value) =>
+                    setIssueTypeFilter(value === "all" ? "" : value)
+                  }
+                >
+                  <SelectTrigger
+                    className="w-[140px] shrink-0"
+                    data-testid="member-issues-type-filter"
+                  >
+                    <SelectValue placeholder={t("filterAllTypes")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("filterAllTypes")}</SelectItem>
+                    {issueTypes.map((typeName) => (
+                      <SelectItem key={typeName} value={typeName}>
+                        {typeName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {!isLoading && sortedRows.length === 0 ? (
               <div

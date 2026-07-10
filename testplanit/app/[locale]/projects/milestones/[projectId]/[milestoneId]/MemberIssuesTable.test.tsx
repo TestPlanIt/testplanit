@@ -449,12 +449,16 @@ describe("MemberIssuesTable", () => {
       <MemberIssuesTable milestoneId={450} projectId={370} />
     );
 
-    expect(screen.getByTestId("member-issues-search")).toBeInTheDocument();
+    // With zero members the filter row is hidden, so the empty state is the
+    // expanded-content indicator (it appears once the coverage query settles).
+    expect(
+      await screen.findByTestId("member-issues-empty")
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("member-issues-collapse-toggle"));
     await waitFor(() =>
       expect(
-        screen.queryByTestId("member-issues-search")
+        screen.queryByTestId("member-issues-empty")
       ).not.toBeInTheDocument()
     );
     expect(
@@ -468,7 +472,7 @@ describe("MemberIssuesTable", () => {
     // The post-mount effect reads the stored preference and collapses.
     await waitFor(() =>
       expect(
-        screen.queryByTestId("member-issues-search")
+        screen.queryByTestId("member-issues-empty")
       ).not.toBeInTheDocument()
     );
     window.localStorage.removeItem("tpi.milestone.memberIssues.collapsed");
