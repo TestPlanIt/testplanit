@@ -28,6 +28,14 @@ import {
 const JIRA_BOARD_PROJECT_CACHE_TTL_SECONDS = 6 * 60 * 60; // 6 hours
 
 /**
+ * Whether a board supports sprints is a property of its type (Scrum vs
+ * Kanban) and effectively never changes for an existing board. Caching the
+ * negative answer stops every sync pass from re-probing each Kanban board
+ * (a guaranteed 400 + a warn log per board per pass).
+ */
+const JIRA_BOARD_NO_SPRINTS_CACHE_TTL_SECONDS = 24 * 60 * 60; // 24 hours
+
+/**
  * Jira integration adapter implementing OAuth authentication
  */
 /**
@@ -895,8 +903,22 @@ export class JiraAdapter extends BaseAdapter {
     const bySprintId = new Map<string, ExternalMilestone>();
     let failedBoards = 0;
     let firstBoardError: unknown = null;
+    const integrationId = this.config?.integrationId;
 
     for (const boardId of boardIds) {
+      // Skip boards already known to be sprint-less (Kanban) — fail-open on
+      // any cache problem so a Valkey blip never hides sprints.
+      const noSprintsKey =
+        integrationId != null
+          ? `jira-board-no-sprints:${integrationId}:${boardId}`
+          : null;
+      if (noSprintsKey && valkeyConnection) {
+        try {
+          if (await valkeyConnection.exists(noSprintsKey)) continue;
+        } catch {
+          // fall through to the live probe
+        }
+      }
       try {
         let startAt = 0;
         const maxResults = 50;
@@ -943,10 +965,22 @@ export class JiraAdapter extends BaseAdapter {
         // previews its versions cleanly instead of erroring out.
         if (status === 400) {
           console.warn(
-            `[JiraAdapter] board %s does not support sprints — skipped (project %s)`,
+            `[JiraAdapter] board %s does not support sprints — skipped and cached (project %s)`,
             boardId,
             projectKey
           );
+          if (noSprintsKey && valkeyConnection) {
+            try {
+              await valkeyConnection.set(
+                noSprintsKey,
+                "1",
+                "EX",
+                JIRA_BOARD_NO_SPRINTS_CACHE_TTL_SECONDS
+              );
+            } catch {
+              // cache write failure just means we probe again next pass
+            }
+          }
           continue;
         }
         const level = status === null || status >= 500 ? "error" : "warn";

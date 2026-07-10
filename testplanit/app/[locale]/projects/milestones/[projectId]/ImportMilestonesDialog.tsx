@@ -73,7 +73,11 @@ export function ImportMilestonesDialog({
 
   // Already-linked external ids for this integration in this project, so
   // the picker can disable+badge rows the same way search-issues-dialog
-  // does for already-linked issues.
+  // does for already-linked issues. Detached milestones (converted to
+  // local by upstream removal or manual unlink) keep their externalId /
+  // integrationId for re-link detection, but they are NOT linked — the
+  // artifact must show as importable again, and importing re-attaches the
+  // existing row (D-12) instead of creating a duplicate.
   const { data: linkedMilestones } = useClientQueries(
     schema
   ).milestones.useFindMany(
@@ -83,6 +87,7 @@ export function ImportMilestonesDialog({
         integrationId,
         isDeleted: false,
         externalId: { not: null },
+        detachedAt: null,
       },
       select: { externalId: true },
     },
@@ -184,9 +189,7 @@ export function ImportMilestonesDialog({
     selectableIds.every((id) => selectedIds.has(id));
 
   const toggleSelectAll = () => {
-    setSelectedIds(
-      allSelectableSelected ? new Set() : new Set(selectableIds)
-    );
+    setSelectedIds(allSelectableSelected ? new Set() : new Set(selectableIds));
   };
 
   const toggleSelected = (id: string) => {
