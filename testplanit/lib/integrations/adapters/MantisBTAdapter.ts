@@ -110,6 +110,7 @@ export class MantisBTAdapter extends BaseAdapter {
       attachments: false,
       linkedIssues: true,
       comments: true,
+      milestones: false,
     };
   }
 

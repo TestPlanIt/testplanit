@@ -216,6 +216,7 @@ describe("useProjectPermissions", () => {
     );
     expect(result.current.isLoading).toBe(true);
     expect(result.current.permissions).toBeNull();
+    expect(result.current.isProjectAdmin).toBe(false);
     expect(result.current.error).toBeNull();
   });
 
@@ -232,6 +233,7 @@ describe("useProjectPermissions", () => {
     expect(result.current.permissions).toEqual(
       defaultFalseSingleAreaPermissions
     );
+    expect(result.current.isProjectAdmin).toBe(false);
     expect(result.current.error).toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -246,6 +248,7 @@ describe("useProjectPermissions", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.permissions).toEqual(defaultFalseAllAreaPermissions);
+    expect(result.current.isProjectAdmin).toBe(false);
     expect(result.current.error).toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -261,6 +264,7 @@ describe("useProjectPermissions", () => {
     expect(result.current.permissions).toEqual(
       defaultFalseSingleAreaPermissions
     );
+    expect(result.current.isProjectAdmin).toBe(false);
     expect(result.current.error).toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -277,6 +281,7 @@ describe("useProjectPermissions", () => {
     expect(result.current.permissions).toEqual(
       defaultFalseSingleAreaPermissions
     );
+    expect(result.current.isProjectAdmin).toBe(false);
     expect(result.current.error).toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -296,6 +301,7 @@ describe("useProjectPermissions", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.permissions).toEqual(mockSingleAreaPermissions);
+    expect(result.current.isProjectAdmin).toBe(false);
     expect(result.current.error).toBeNull();
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(mockFetch).toHaveBeenCalledWith("/api/get-user-permissions", {
@@ -323,6 +329,7 @@ describe("useProjectPermissions", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.permissions).toEqual(mockAllAreaPermissions);
+    expect(result.current.isProjectAdmin).toBe(false);
     expect(result.current.error).toBeNull();
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(mockFetch).toHaveBeenCalledWith("/api/get-user-permissions", {
@@ -334,6 +341,47 @@ describe("useProjectPermissions", () => {
         // No area property when fetching all
       }),
     });
+  });
+
+  it("should extract isProjectAdmin from the response envelope when present", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        hasAccess: true,
+        effectiveRole: "Project Admin",
+        permissions: mockSingleAreaPermissions,
+        isProjectAdmin: true,
+      }),
+      text: async () => "",
+    });
+    const wrapper = createWrapper();
+    const { result } = renderHook(
+      () => useProjectPermissions(mockProjectId, mockArea),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.permissions).toEqual(mockSingleAreaPermissions);
+    expect(result.current.isProjectAdmin).toBe(true);
+  });
+
+  it("should default isProjectAdmin to false when the response omits it (back-compat)", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ ...mockSingleAreaPermissions }),
+      text: async () => "",
+    });
+    const wrapper = createWrapper();
+    const { result } = renderHook(
+      () => useProjectPermissions(mockProjectId, mockArea),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.permissions).toEqual(mockSingleAreaPermissions);
+    expect(result.current.isProjectAdmin).toBe(false);
   });
 
   it("should handle fetch errors", async () => {

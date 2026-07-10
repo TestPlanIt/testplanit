@@ -75,6 +75,31 @@ interface JiraIssueDetails {
 // Entries are cleared when the popover closes, so they only hold in-flight data.
 const issuePopoverOpen = new Map<number, boolean>();
 const issueJiraCache = new Map<number, JiraIssueDetails>();
+// Last hover-sync attempt per issue id. Module-level (not a ref) because a
+// parent refetch can remount this component while the cursor never left the
+// badge — a per-mount ref forgets the attempt and the re-fired mouseover
+// would POST /sync again on every remount. The server's freshness gate
+// (300s) is authoritative; this only suppresses the redundant round-trips.
+const issueSyncAttempts = new Map<number, number>();
+const SYNC_ATTEMPT_THROTTLE_MS = 30_000;
+// Client mirror of the server's ?trigger=hover freshness window (300s in
+// SyncService.performIssueRefresh): when the row data already says the
+// issue was synced inside the window, skip the POST entirely instead of
+// paying a round-trip just to hear "cached: true".
+const HOVER_SYNC_FRESHNESS_MS = 300_000;
+
+// Entries older than the throttle window are dead weight — prune them
+// whenever the map grows past a small bound so a long-lived tab that
+// renders many issue tables doesn't accumulate ids forever (WR-05).
+const SYNC_ATTEMPTS_PRUNE_THRESHOLD = 500;
+function pruneStaleSyncAttempts(now: number): void {
+  if (issueSyncAttempts.size < SYNC_ATTEMPTS_PRUNE_THRESHOLD) return;
+  for (const [issueId, attemptedAt] of issueSyncAttempts) {
+    if (now - attemptedAt >= SYNC_ATTEMPT_THROTTLE_MS) {
+      issueSyncAttempts.delete(issueId);
+    }
+  }
+}
 
 export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   id,
@@ -132,6 +157,20 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   const triggerSyncIfNeeded = () => {
     if (syncTriggeredRef.current) return;
     if (!integrationId || !integrationProvider) return;
+    const now = Date.now();
+    // Already fresh per the data we're rendering — no request needed.
+    if (lastSyncedAt) {
+      const syncedAgoMs = now - new Date(lastSyncedAt).getTime();
+      if (syncedAgoMs >= 0 && syncedAgoMs < HOVER_SYNC_FRESHNESS_MS) {
+        return;
+      }
+    }
+    const lastAttempt = issueSyncAttempts.get(id);
+    if (lastAttempt && now - lastAttempt < SYNC_ATTEMPT_THROTTLE_MS) {
+      return;
+    }
+    pruneStaleSyncAttempts(now);
+    issueSyncAttempts.set(id, now);
     syncTriggeredRef.current = true;
 
     // Fire and forget — the server returns `cached: true` cheaply when the

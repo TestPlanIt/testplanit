@@ -18,7 +18,14 @@ vi.mock("~/lib/db", () => ({
     reviewRequest: {
       findMany: vi.fn(),
     },
+    milestoneIssue: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
   },
+}));
+
+vi.mock("~/lib/services/milestoneMemberCoverage", () => ({
+  getMemberCoverage: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock("~/lib/services/milestoneDescendants", () => ({
@@ -34,12 +41,18 @@ vi.mock("~/lib/services/milestoneSummary", () => ({
 
 import { baseDb } from "~/lib/db";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
+import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import {
   calculateMilestoneCompletion,
   getMilestoneLinkedIssues,
   getSessionSegments,
   getTestRunSegments,
 } from "~/lib/services/milestoneSummary";
+const mockGetVisibleMilestone = vi.fn();
+vi.mock("~/lib/services/milestoneAccess", () => ({
+  getVisibleMilestone: (...args: any[]) => mockGetVisibleMilestone(...args),
+}));
+
 import { getServerSession } from "next-auth";
 import { GET } from "./route";
 
@@ -112,6 +125,7 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
     (getSessionSegments as any).mockResolvedValue([]);
     (calculateMilestoneCompletion as any).mockResolvedValue(0);
     (getMilestoneLinkedIssues as any).mockResolvedValue([]);
+    mockGetVisibleMilestone.mockResolvedValue({ id: 1, projectId: 10 });
     (baseDb.milestones.findUnique as any).mockResolvedValue(baseMilestone);
     (baseDb.milestones.findMany as any).mockResolvedValue([]);
     (baseDb.reviewRequest.findMany as any).mockResolvedValue([]);
@@ -236,6 +250,78 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
   });
 
   describe("Empty milestone", () => {
+    it("includes member issues with per-status coverage and aggregated totals", async () => {
+      (baseDb.milestoneIssue.findMany as any).mockResolvedValue([
+        {
+          issueId: 501,
+          source: "SYNCED",
+          issue: {
+            id: 501,
+            name: "ABT-1",
+            title: "Story one",
+            externalKey: "ABT-1",
+            externalStatus: "Closed",
+            status: "closed",
+          },
+        },
+        {
+          issueId: 502,
+          source: "MANUAL",
+          issue: {
+            id: 502,
+            name: "ABT-2",
+            title: "Story two",
+            externalKey: "ABT-2",
+            externalStatus: "Open",
+            status: "open",
+          },
+        },
+      ]);
+      (getMemberCoverage as any).mockResolvedValue({
+        501: {
+          linkedCaseCount: 3,
+          passed: 2,
+          failed: 0,
+          inProgress: 0,
+          notRun: 1,
+          uncovered: false,
+          statuses: [{ statusId: 1, name: "Passed", color: "#0f0", count: 2 }],
+          untested: 1,
+        },
+        502: {
+          linkedCaseCount: 0,
+          passed: 0,
+          failed: 0,
+          inProgress: 0,
+          notRun: 0,
+          uncovered: true,
+          statuses: [],
+          untested: 0,
+        },
+      });
+
+      const [req, ctx] = createRequest("1");
+      const body = await (await GET(req, ctx)).json();
+
+      expect(body.memberIssues).toHaveLength(2);
+      const synced = body.memberIssues.find((m: any) => m.key === "ABT-1");
+      expect(synced).toMatchObject({
+        source: "SYNCED",
+        uncovered: false,
+        untested: 1,
+        coverageStatuses: [
+          { statusName: "Passed", count: 2, colorValue: "#0f0" },
+        ],
+      });
+      const manual = body.memberIssues.find((m: any) => m.key === "ABT-2");
+      expect(manual).toMatchObject({ source: "MANUAL", uncovered: true });
+      expect(body.memberCoverageTotals).toMatchObject({
+        untested: 1,
+        uncoveredIssues: 1,
+        statuses: [{ statusName: "Passed", count: 2, colorValue: "#0f0" }],
+      });
+    });
+
     it("returns empty sections and skips the review query when there is no data", async () => {
       (getServerSession as any).mockResolvedValue(adminSession);
 

@@ -1,6 +1,9 @@
+import { getServerSession } from "next-auth";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { getVisibleMilestone } from "~/lib/services/milestoneAccess";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
+import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 
 export async function GET(
@@ -17,7 +20,22 @@ export async function GET(
     );
   }
 
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
+    // Policy-scoped visibility gate: unauthorized users get the same 404
+    // as a missing milestone.
+    const milestone = await getVisibleMilestone(session, numericMilestoneId);
+    if (!milestone) {
+      return NextResponse.json(
+        { error: "Milestone not found" },
+        { status: 404 }
+      );
+    }
+
     // 1. Get the current milestone ID and all its descendant IDs
     const descendantIds =
       await getAllDescendantMilestoneIds(numericMilestoneId);

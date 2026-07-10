@@ -77,8 +77,27 @@ Which filtering happens at the tracker depends on the provider. Jira, GitHub, an
 Only system administrators and project administrators can import issues — the same audience that can manage the project's integrations.
 :::
 
+## Milestone Sync
+
+For milestone-capable providers (currently Jira), a **Milestone Sync** card appears below **Linked External Projects** once the active integration supports it:
+
+- **Enable milestone sync** — turns sync on. Once enabled, the project's [Milestones](../milestones.md) page gains an **Import from Jira** button that previews Fix Versions and Sprints across all of this integration's linked Jira projects.
+- **Kinds to sync** — choose which of the tracker's time-based artifacts to sync as Milestones: **Releases** (Jira Fix Versions) and/or **Sprints**.
+- **Automatically add new ones** (auto-track) — when on, newly created unreleased versions and active/future sprints are imported automatically as they appear, without anyone opening the Import dialog. Auto-tracked imports are attributed to the admin who enabled sync (or auto-track), not to whoever's page load happens to trigger the pass.
+
+Enabling milestone sync also provisions the **Release** and **Sprint** [milestone types](../../milestone-types.md) for the project.
+
+A manual **Sync now** always fetches the latest state from the tracker immediately. Page loads passively refresh already-linked milestones at most once every 5 minutes. When [inbound webhooks](../../webhooks.md#milestone-sync-events-versionsprint) are configured and the tracker sends version/sprint events, refreshes happen within seconds of the upstream change.
+
+See [Milestones](../milestones.md) and [Milestone Details](../milestone-details.md#source-badge) for what a synced milestone looks like, and [Webhooks → Milestone sync events](../../webhooks.md#milestone-sync-events-versionsprint) for the event-driven path.
+
+:::info
+Enabling or changing milestone sync settings, running **Sync now**, and **Import from Jira** all require **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../../permissions-guide.md).
+:::
+
 ## Related pages
 
 - [Issue Integrations (Administration)](../../integrations.md) — create and authorize integrations globally.
-- [Webhooks](../../webhooks.md) — receive issue updates and push events for this project.
+- [Webhooks](../../webhooks.md) — receive issue updates and push events for this project, including [milestone sync events](../../webhooks.md#milestone-sync-events-versionsprint) (version/sprint) for projects with synced Milestones.
 - [Advanced settings](advanced.md) — optionally require a linked issue when recording a failure.
+- [Milestones](../milestones.md) and [Milestone Details](../milestone-details.md) — where synced milestones appear once milestone sync is enabled here.

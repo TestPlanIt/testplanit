@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { AdapterType } from "~/zenstack/models";
+import { isMilestoneEventType } from "./types";
 import type {
   ParsedWebhookPayload,
   VerifyResult,
@@ -38,6 +39,16 @@ interface JiraWebhookPayload {
     key?: string;
     fields?: { status?: { name?: string } };
   };
+  // Version/sprint payloads (jira:version_* / sprint_*) — no `issue` field
+  // at all. `project.id` is only present on version events; sprint events
+  // carry no project reference (Pitfall 2), only `originBoardId`.
+  project?: { id?: string | number };
+  version?: { id?: string | number };
+  sprint?: { id?: string | number; originBoardId?: string | number };
+  // Present on `jira:version_deleted` ONLY when the version was merged into
+  // another rather than truly deleted — Atlassian's docs confirm merges are
+  // NOT a distinct wire event (RESEARCH.md A2).
+  mergedTo?: string | number;
   // NOTE: `metadata.synthetic` is intentionally NOT modeled here. Any
   // caller with a valid HMAC could otherwise set `metadata.synthetic` to
   // `true` and silently suppress production Issue updates.
@@ -62,10 +73,43 @@ function parsePayload(rawBody: Buffer): JiraWebhookPayload | null {
   }
 }
 
+/**
+ * jira:version_* / sprint_* payloads carry no `issue` object at all — the
+ * pre-existing issue-shaped extraction (`issue.key` + `issue.fields.status`)
+ * always returns null for these, which is exactly Pitfall 1 (the current
+ * silent-drop bug). This builder produces a milestone-shaped
+ * `ParsedWebhookPayload` instead: `issueKey`/`externalStatus` are left as
+ * empty-string placeholders (never read by the milestone apply path — only
+ * `extractMilestoneEventRef` reads `payload.data`), and `data: p` carries
+ * the raw payload through for the extractor.
+ */
+function buildMilestoneEventPayload(
+  p: JiraWebhookPayload,
+  eventType: string
+): ParsedWebhookPayload {
+  return {
+    eventType,
+    // Not applicable to version/sprint events — applyInboundMilestoneEvent
+    // never reads these two denormalized fields, only `data`.
+    issueKey: "",
+    externalStatus: "",
+    synthetic: false,
+    data: p,
+  };
+}
+
 function buildPayload(p: JiraWebhookPayload): ParsedWebhookPayload | null {
+  const eventType = p.webhookEvent ?? "jira:unknown";
+
+  // Branch BEFORE the issue-shaped extraction (Pattern 1) — version/sprint
+  // payloads have no `issue` object and would otherwise always fail the
+  // `!issueKey || !externalStatus` check below and silently no-op (Pitfall 1).
+  if (isMilestoneEventType(eventType)) {
+    return buildMilestoneEventPayload(p, eventType);
+  }
+
   const issueKey = p.issue?.key;
   const externalStatus = p.issue?.fields?.status?.name;
-  const eventType = p.webhookEvent ?? "jira:unknown";
   if (!issueKey || !externalStatus) return null;
   return {
     eventType,
@@ -138,5 +182,67 @@ export const jiraAdapter: WebhookAdapter = {
     };
     const name = p.issue?.fields?.status?.name;
     return typeof name === "string" ? name : null;
+  },
+
+  extractMilestoneEventRef(payload, eventType) {
+    const raw = (payload as ParsedWebhookPayload).data ?? payload;
+    const p = raw as JiraWebhookPayload;
+
+    if (eventType.startsWith("sprint_")) {
+      const externalId = p.sprint?.id;
+      const originBoardId = p.sprint?.originBoardId;
+      if (
+        (typeof externalId !== "string" && typeof externalId !== "number") ||
+        (typeof originBoardId !== "string" && typeof originBoardId !== "number")
+      ) {
+        return null;
+      }
+      // Jira board ids are integers. `originBoardId` is attacker-influenced
+      // wire input (any holder of a valid webhook HMAC) that downstream gets
+      // interpolated into the Jira REST path (`/rest/agile/1.0/board/{id}`)
+      // AND into the Valkey cache key — a non-numeric value like
+      // "1/../../api/3/x?y=" would otherwise become an authenticated
+      // request-forgery primitive against the integration's Jira host.
+      if (!/^\d+$/.test(String(originBoardId))) {
+        return null;
+      }
+      return {
+        kind: "ITERATION",
+        externalId: String(externalId),
+        originBoardId: String(originBoardId),
+      };
+    }
+
+    if (eventType.startsWith("jira:version_")) {
+      const externalId = p.version?.id;
+      const externalProjectId = p.project?.id;
+      if (typeof externalId !== "string" && typeof externalId !== "number") {
+        return null;
+      }
+      if (
+        typeof externalProjectId !== "string" &&
+        typeof externalProjectId !== "number"
+      ) {
+        return null;
+      }
+      // Merge discriminator: `jira:version_deleted` with `mergedTo` present
+      // is a merge, not a true delete (RESEARCH.md Code Examples — verified
+      // Atlassian docs quote). Also accept a literal `jira:version_merged`
+      // eventType as a defensive alias (A2) in case a live instance ever
+      // sends that distinct string.
+      const mergedTo = p.mergedTo;
+      const hasMergedTo =
+        typeof mergedTo === "string" || typeof mergedTo === "number";
+      const merge = hasMergedTo || eventType === "jira:version_merged";
+      return {
+        kind: "RELEASE",
+        externalId: String(externalId),
+        externalProjectId: String(externalProjectId),
+        merge,
+        ...(hasMergedTo ? { mergedToExternalId: String(mergedTo) } : {}),
+      };
+    }
+
+    return null;
   },
 };

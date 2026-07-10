@@ -11,6 +11,7 @@ import { Link } from "~/lib/navigation";
 import { DeferredIssueManager } from "./DeferredIssueManager";
 import { ManageExternalIssues } from "./ManageExternalIssues";
 import { ManageSimpleUrlIssues } from "./ManageSimpleUrlIssues";
+import { MilestoneIssueManager } from "./MilestoneIssueManager";
 
 interface UnifiedIssueManagerProps {
   projectId: number;
@@ -22,7 +23,8 @@ interface UnifiedIssueManagerProps {
     | "session"
     | "testRunResult"
     | "testRunStepResult"
-    | "sessionResult";
+    | "sessionResult"
+    | "milestone";
   entityId?: number;
   maxBadgeWidth?: string; // Tailwind max-width class for issue badges (e.g., "max-w-xs", "max-w-full")
   /**
@@ -71,6 +73,32 @@ export function UnifiedIssueManager({
 
   // Check for new integration system first
   const activeIntegration = project?.projectIntegrations?.[0];
+
+  // `MilestoneIssue` is an explicit join table with a `source` discriminator
+  // (SYNCED|MANUAL) — route it to MilestoneIssueManager BEFORE the
+  // ManageExternalIssues/ManageSimpleUrlIssues branches below, which write
+  // via /api/integrations/jira/link-issue and are designed for the implicit
+  // m2m relations on TestCase/TestRun/Session (D-09). `entityId` here is the
+  // milestoneId.
+  if (entityType === "milestone") {
+    if (!entityId) {
+      return null;
+    }
+    const integrationIdNum = activeIntegration?.integration
+      ? typeof activeIntegration.integration.id === "string"
+        ? parseInt(activeIntegration.integration.id)
+        : activeIntegration.integration.id
+      : undefined;
+    return (
+      <MilestoneIssueManager
+        milestoneId={entityId}
+        projectId={projectId}
+        integrationId={integrationIdNum}
+        linkedIssueIds={linkedIssueIds}
+        onLinked={() => setLinkedIssueIds(linkedIssueIds)}
+      />
+    );
+  }
 
   if (activeIntegration?.integration) {
     const integrationId =
@@ -185,6 +213,31 @@ export function SimpleUnifiedIssueManager({
   entityId,
 }: SimpleUnifiedIssueManagerProps) {
   const t = useTranslations();
+
+  // See UnifiedIssueManager's identical branch above — MilestoneIssue is an
+  // explicit join table and must never fall through to ManageExternalIssues.
+  if (entityType === "milestone") {
+    if (!entityId) {
+      return null;
+    }
+    const activeIntegration = projectData.projectIntegrations?.find(
+      (pi) => pi.isActive
+    );
+    const integrationIdNum = activeIntegration
+      ? typeof activeIntegration.integration.id === "string"
+        ? parseInt(activeIntegration.integration.id)
+        : activeIntegration.integration.id
+      : undefined;
+    return (
+      <MilestoneIssueManager
+        milestoneId={entityId}
+        projectId={projectId}
+        integrationId={integrationIdNum}
+        linkedIssueIds={linkedIssueIds}
+        onLinked={() => setLinkedIssueIds(linkedIssueIds)}
+      />
+    );
+  }
 
   // Check for new integration system first
   const activeIntegration = projectData.projectIntegrations?.find(

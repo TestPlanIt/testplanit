@@ -300,3 +300,200 @@ describe("jiraAdapter — widened interface", () => {
     expect(status).toBe("In Review");
   });
 });
+
+describe("jiraAdapter — version/sprint milestone events (Pitfall 1 fix)", () => {
+  it("a jira:version_updated payload no longer yields missing-required-field — parses via the pre-issue-extraction branch", () => {
+    const versionPayload = {
+      webhookEvent: "jira:version_updated",
+      version: { id: "10100", name: "v1.0" },
+      project: { id: "10050", key: "DEMO" },
+    };
+    const body = bodyOf(versionPayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (result.valid) {
+      expect(result.payload.eventType).toBe("jira:version_updated");
+      expect(result.payload.synthetic).toBe(false);
+    }
+  });
+
+  it("a sprint_updated payload parses and carries originBoardId via extractMilestoneEventRef", () => {
+    const sprintPayload = {
+      webhookEvent: "sprint_updated",
+      sprint: { id: 55, originBoardId: 3, name: "Sprint 12" },
+    };
+    const body = bodyOf(sprintPayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    expect(jiraAdapter.extractMilestoneEventRef).toBeDefined();
+    const ref = jiraAdapter.extractMilestoneEventRef!(
+      result.payload,
+      result.payload.eventType
+    );
+    expect(ref).toEqual({
+      kind: "ITERATION",
+      externalId: "55",
+      originBoardId: "3",
+    });
+  });
+
+  it("a jira:version_deleted payload WITHOUT mergedTo is flagged as a true delete (merge: false)", () => {
+    const deletePayload = {
+      webhookEvent: "jira:version_deleted",
+      version: { id: "10100", name: "v1.0" },
+      project: { id: "10050", key: "DEMO" },
+    };
+    const body = bodyOf(deletePayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const ref = jiraAdapter.extractMilestoneEventRef!(
+      result.payload,
+      result.payload.eventType
+    );
+    expect(ref).toEqual({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+  });
+
+  it("a jira:version_deleted payload WITH mergedTo is flagged as a merge (merge: true) carrying the target id", () => {
+    const mergePayload = {
+      webhookEvent: "jira:version_deleted",
+      version: { id: "10100", name: "v1.0" },
+      project: { id: "10050", key: "DEMO" },
+      mergedTo: "10200",
+    };
+    const body = bodyOf(mergePayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const ref = jiraAdapter.extractMilestoneEventRef!(
+      result.payload,
+      result.payload.eventType
+    );
+    expect(ref).toEqual({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: true,
+      mergedToExternalId: "10200",
+    });
+  });
+
+  it("a literal jira:version_merged eventType alias is ALSO treated as a merge (A2 defensive alias)", () => {
+    const aliasPayload = {
+      webhookEvent: "jira:version_merged",
+      version: { id: "10100", name: "v1.0" },
+      project: { id: "10050", key: "DEMO" },
+    };
+    const body = bodyOf(aliasPayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const ref = jiraAdapter.extractMilestoneEventRef!(
+      result.payload,
+      result.payload.eventType
+    );
+    expect(ref?.kind).toBe("RELEASE");
+    if (ref?.kind === "RELEASE") {
+      expect(ref.merge).toBe(true);
+    }
+  });
+
+  it("REGRESSION (WR-06): a sprint payload with a NON-NUMERIC originBoardId returns null — the value is later interpolated into the Jira REST path and must never carry path traversal", () => {
+    const forgedPayload = {
+      webhookEvent: "sprint_updated",
+      sprint: { id: 55, originBoardId: "1/../../api/3/anything?x=" },
+    };
+    const body = bodyOf(forgedPayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const ref = jiraAdapter.extractMilestoneEventRef!(
+      result.payload,
+      result.payload.eventType
+    );
+    expect(ref).toBeNull();
+  });
+
+  it("WR-06: a numeric-string originBoardId still extracts (the guard rejects shape, not type)", () => {
+    const sprintPayload = {
+      webhookEvent: "sprint_updated",
+      sprint: { id: 55, originBoardId: "17" },
+    };
+    const body = bodyOf(sprintPayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const ref = jiraAdapter.extractMilestoneEventRef!(
+      result.payload,
+      result.payload.eventType
+    );
+    expect(ref).toEqual({
+      kind: "ITERATION",
+      externalId: "55",
+      originBoardId: "17",
+    });
+  });
+
+  it("a sprint_deleted payload without a valid sprint.id returns null from extractMilestoneEventRef (defensive guard)", () => {
+    const malformedPayload = {
+      webhookEvent: "sprint_deleted",
+      sprint: { name: "no id or board" },
+    };
+    const body = bodyOf(malformedPayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const ref = jiraAdapter.extractMilestoneEventRef!(
+      result.payload,
+      result.payload.eventType
+    );
+    expect(ref).toBeNull();
+  });
+
+  it("REGRESSION: issue events (jira:issue_updated) are unaffected — still parse via the issue-shaped branch, extractMilestoneEventRef returns null", () => {
+    const body = bodyOf(validJiraPayload);
+    const sig = signBody(body, SECRET);
+    const headers = new Headers({ "x-hub-signature-256": sig });
+    const result = jiraAdapter.verify(body, headers, SECRET);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    expect(result.payload.issueKey).toBe("DEMO-1");
+    expect(result.payload.externalStatus).toBe("Done");
+
+    const ref = jiraAdapter.extractMilestoneEventRef!(
+      result.payload,
+      result.payload.eventType
+    );
+    expect(ref).toBeNull();
+  });
+});

@@ -710,39 +710,62 @@ model ProjectWorkflowAssignment {
 }
 
 model Milestones {
-    id                  Int            @id @default(autoincrement())
+    id                  Int                    @id @default(autoincrement())
     projectId           Int
-    project             Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    project             Projects               @relation(fields: [projectId], references: [id], onDelete: Cascade)
     rootId              Int?
-    root                Milestones?    @relation("MilestoneRoot", fields: [rootId], references: [id])
-    descendants         Milestones[]   @relation("MilestoneRoot")
+    root                Milestones?            @relation("MilestoneRoot", fields: [rootId], references: [id])
+    descendants         Milestones[]           @relation("MilestoneRoot")
     parentId            Int?
-    parent              Milestones?    @relation("MilestoneParent", fields: [parentId], references: [id], onDelete: Cascade)
-    children            Milestones[]   @relation("MilestoneParent")
-    milestoneType       MilestoneTypes @relation(fields: [milestoneTypesId], references: [id])
+    parent              Milestones?            @relation("MilestoneParent", fields: [parentId], references: [id], onDelete: Cascade)
+    children            Milestones[]           @relation("MilestoneParent")
+    milestoneType       MilestoneTypes         @relation(fields: [milestoneTypesId], references: [id])
     milestoneTypesId    Int
-    name                String         @length(1)
-    note                Json?
+    name                String                 @length(1) @deny('update', integrationId != null && detachedAt == null)
+    note                Json?                  @deny('update', integrationId != null && detachedAt == null)
     docs                Json?
-    isStarted           Boolean        @default(false)
-    isCompleted         Boolean        @default(false)
-    isDeleted           Boolean        @default(false)
-    automaticCompletion Boolean        @default(false)
-    notifyDaysBefore    Int            @default(0)
-    startedAt           DateTime?      @db.Timestamptz(6)
-    completedAt         DateTime?      @db.Timestamptz(6)
-    createdAt           DateTime       @default(now()) @db.Timestamptz(6)
-    creator             User           @relation(fields: [createdBy], references: [id])
+    isStarted           Boolean                @default(false) @deny('update', integrationId != null && detachedAt == null)
+    isCompleted         Boolean                @default(false) @deny('update', integrationId != null && detachedAt == null)
+    isDeleted           Boolean                @default(false)
+    automaticCompletion Boolean                @default(false)
+    notifyDaysBefore    Int                    @default(0)
+    startedAt           DateTime?              @db.Timestamptz(6) @deny('update', integrationId != null && detachedAt == null)
+    completedAt         DateTime?              @db.Timestamptz(6) @deny('update', integrationId != null && detachedAt == null)
+    createdAt           DateTime               @default(now()) @db.Timestamptz(6)
+    creator             User                   @relation(fields: [createdBy], references: [id])
     createdBy           String
     sessions            Sessions[]
     testRuns            TestRuns[]
     comments            Comment[]
+    externalId          String?
+    externalKind        MilestoneExternalKind?
+    externalState       String?
+    externalUrl         String?                @url
+    integrationId       Int?
+    integration         Integration?           @relation(fields: [integrationId], references: [id], onDelete: SetNull)
+    lastSyncedAt        DateTime?              @db.Timestamptz(6)
+    // Lifecycle marker: set (raw-db only, never via the enhanced client) when
+    // an upstream Jira version/sprint is deleted or merged away, or an admin
+    // manually unlinks. Three orthogonal, independently-queryable states:
+    // tracked (isDeleted == false && detachedAt == null), tombstoned
+    // (isDeleted == true), detached (detachedAt != null — was synced, now
+    // permanently local, tracker-owned field locks lift, integrationId stays
+    // non-null for badge/re-link/[externalId,integrationId] identity).
+    detachedAt          DateTime?              @db.Timestamptz(6)
+    // D-08 merge target: the external id of the version/sprint this
+    // milestone was merged into upstream. Populated only on the merge
+    // variant of conversion; null for delete/manual_unlink.
+    mergedToExternalId  String?
+    milestoneIssues     MilestoneIssue[]
 
+    @@unique([externalId, integrationId])
     @@index([projectId, isDeleted])
     @@index([parentId])
     @@index([isCompleted, isDeleted])
     @@index([isCompleted, automaticCompletion, completedAt])
     @@index([isCompleted, notifyDaysBefore, completedAt])
+    @@index([externalId])
+    @@index([integrationId])
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
 
@@ -810,6 +833,58 @@ model MilestoneTypesAssignment {
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
+}
+
+model MilestoneIssue {
+    milestoneId Int
+    milestone   Milestones           @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+    issueId     Int
+    issue       Issue                @relation(fields: [issueId], references: [id], onDelete: Cascade)
+    source      MilestoneIssueSource @default(MANUAL)
+    createdAt   DateTime             @default(now()) @db.Timestamptz(6)
+
+    @@id([milestoneId, issueId])
+    @@index([issueId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@deny('read', milestone.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        milestone.project.creator == auth() ||
+        milestone.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        milestone.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        milestone.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+        (milestone.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (milestone.project.assignedUsers?[user == auth()] &&
+         milestone.project.defaultAccessType == 'SPECIFIC_ROLE' && milestone.project.defaultRole != null) ||
+        (milestone.project.defaultAccessType == 'SPECIFIC_ROLE' && milestone.project.defaultRole != null && auth().access != 'NONE') ||
+        (milestone.project.defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+    )
+
+    @@allow('create,update,delete',
+        milestone.project.creator == auth() ||
+        milestone.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'Milestones' && canAddEdit])] ||
+        milestone.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        milestone.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  ((accessType == 'SPECIFIC_ROLE' &&
+                                    role.rolePermissions?[area == 'Milestones' && canAddEdit]) ||
+                                   (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                    auth().role.rolePermissions?[area == 'Milestones' && canAddEdit]))]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+    // Tracker contract: the sync service owns SYNCED membership. Block
+    // enhanced-client create/delete so users cannot forge or remove a
+    // tracker-derived link. The sync service uses the raw prisma client
+    // and bypasses these policies; see MilestoneSyncService.
+    @@deny('create,delete', source == SYNCED)
 }
 
 model FieldIcon {
@@ -3416,6 +3491,7 @@ model Issue {
     project            Projects?             @relation(fields: [projectId], references: [id], onDelete: Cascade)
     integrationId      Int?
     integration        Integration?          @relation(fields: [integrationId], references: [id], onDelete: SetNull)
+    milestoneIssues    MilestoneIssue[]
 
     @@unique([externalId, integrationId])
     @@index([externalId])
@@ -3443,6 +3519,24 @@ enum IntegrationProvider {
     GITEA
     REDMINE
     MANTISBT
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum MilestoneExternalKind {
+    RELEASE
+    ITERATION
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum MilestoneIssueSource {
+    SYNCED
+    MANUAL
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')
@@ -3545,6 +3639,7 @@ model Integration {
     userIntegrationAuths UserIntegrationAuth[]
     projectIntegrations  ProjectIntegration[]
     issues               Issue[]
+    milestones           Milestones[]
 
     @@unique([name])
     @@index([provider, status])

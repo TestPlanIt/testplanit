@@ -1086,19 +1086,19 @@
         "backToSignIn": "Giriş sayfasına geri dön"
       },
       "passwordless": {
-        "waitingInstructions": "Bu tarayıcıdan giriş yapmak için e-postadaki bağlantıya tıklayın veya aşağıya e-postadaki kodu girin.",
+        "waitingInstructions": "E-postadaki bağlantıya tıklayarak bu tarayıcıdan giriş yapın veya aşağıya e-postadaki kodu girin.",
         "codeLabel": "Giriş kodu",
         "verifyCode": "Kodu doğrula",
         "verifying": "Doğrulanıyor...",
         "invalidCode": "Bu kod doğru değil. E-postayı kontrol edin ve tekrar deneyin.",
         "codeExpired": "Bu giriş isteğinin süresi doldu. Yeni bir bağlantı isteyin.",
-        "tooManyAttempts": "Çok fazla yanlış deneme yapıldı. Tekrar denemek için yeni bir bağlantı isteyin.",
+        "tooManyAttempts": "Çok fazla hatalı deneme yapıldı. Tekrar denemek için yeni bir bağlantı isteyin.",
         "windowLost": "Bu pencere artık girişi tamamlayamıyor. Yeni bir bağlantı isteyin.",
-        "genericError": "Girişinizi tamamlayamadık. Yeni bir bağlantı isteyip tekrar deneyin.",
-        "tooManyRequests": "Çok fazla giriş isteği yapıldı. Lütfen bir süre bekleyip tekrar deneyin.",
-        "haveCode": "Zaten bir giriş kodunuz mu var?",
+        "genericError": "Giriş yapamadık. Yeni bir bağlantı isteyin ve tekrar deneyin.",
+        "tooManyRequests": "Çok fazla giriş isteği yapıldı. Lütfen biraz bekleyip tekrar deneyin.",
+        "haveCode": "Zaten bir giriş kodunuz var mı?",
         "codeEntryDescription": "Giriş e-postanızdaki kodu girin. Kodlar yalnızca bağlantıyı istediğiniz tarayıcıda çalışır.",
-        "backToRequest": "Bunun yerine yeni bir bağlantı iste"
+        "backToRequest": "Bunun yerine yeni bir bağlantı isteyin"
       },
       "twoFactor": {
         "title": "İki Faktörlü Kimlik Doğrulama",
@@ -1109,13 +1109,13 @@
     },
     "passwordless": {
       "completingSignIn": "Giriş yapılıyor...",
-      "completeErrorTitle": "Girişinizi tamamlayamadık",
-      "requestNewLink": "Yeni bir bağlantı iste",
+      "completeErrorTitle": "Giriş yapamadık",
+      "requestNewLink": "Yeni bir bağlantı isteyin",
       "codeTitle": "Giriş kodunuz",
-      "codeInstructions": "Giriş bağlantısını farklı bir cihazda veya tarayıcıda açtınız. Bu kodu, orijinal olarak istekte bulunduğunuz giriş ekranına girin.",
+      "codeInstructions": "Giriş bağlantısını farklı bir cihaz veya tarayıcıda açtınız. Bu kodu, bağlantıyı ilk istediğiniz giriş ekranına girin.",
       "codeCloseNotice": "Kodu girdikten sonra bu pencereyi kapatabilirsiniz.",
       "expiredTitle": "Bu giriş bağlantısı artık geçerli değil",
-      "expiredBody": "Bağlantının süresi dolmuş veya zaten kullanılmış olabilir. Giriş sayfasından yeni bir tane isteyin — yalnızca bir dakikanızı alır."
+      "expiredBody": "Bağlantının süresi dolmuş veya zaten kullanılmış olabilir. Giriş sayfasından yeni bir bağlantı isteyin — bu sadece bir dakikanızı alır."
     },
     "errors": {
       "accessDenied": "Erişim engellendi. Hesabınız devre dışı olabilir veya oturum açma izniniz olmayabilir.",
@@ -1379,7 +1379,18 @@
           "importStart": "İçe Aktar",
           "importStarted": "İçe aktarma başladı. Sorunlar kısa süre içinde görünecek.",
           "importFailed": "İçe aktarma başarısız oldu",
-          "importPreviewFailed": "Eşleşmeler tahmin edilemedi"
+          "importPreviewFailed": "Eşleşmeler tahmin edilemedi",
+          "milestoneSync": {
+            "title": "Kilometre Taşı Senkronizasyonu",
+            "description": "TestPlanIt Kilometre Taşlarını bu takip sisteminin zamana dayalı yapılarından senkronize edin.",
+            "enableLabel": "Kilometre taşı senkronizasyonunu etkinleştir",
+            "releasesLabel": "Sürümler",
+            "sprintsLabel": "Sprintler",
+            "kindsLabel": "Senkronize edilecek türler",
+            "autoTrackLabel": "Yenilerini otomatik olarak ekle",
+            "settingsSaved": "Kilometre taşı senkronizasyon ayarları kaydedildi",
+            "saveError": "Kilometre taşı senkronizasyon ayarları kaydedilemedi"
+          }
         },
         "integrationAssigned": "Entegrasyon başarıyla atandı.",
         "integrationAssignError": "Sorun entegrasyonu projeye atanamadı.",
@@ -2138,6 +2149,94 @@
     "notifications": {
       "dueSoon": "\"{name}\" dönüm noktası {dueDate} tarihinde teslim edilecek.",
       "overdue": "\"{name}\" dönüm noktasının teslim tarihi {dueDate} idi."
+    },
+    "import": {
+      "importTitle": "Jira'dan içe aktar",
+      "importDescription": "TestPlanIt Kilometre Taşları olarak senkronize edilecek Jira Fix Version ve Sprint'leri seçin.",
+      "showClosed": "Kapatılanları göster",
+      "alreadyLinked": "Zaten bağlantılı",
+      "selectedCount": "{count, plural, one {# seçili} other {# seçili}}",
+      "confirmSelection": "Seçilenleri İçe Aktar",
+      "empty": "Kilometre taşı bulunamadı",
+      "previewFailed": "Jira'dan kilometre taşları yüklenemedi",
+      "importFailed": "Seçilen kilometre taşları içe aktarılamadı",
+      "importStarted": "İçe aktarma başlatıldı",
+      "kindRelease": "Sürüm",
+      "kindSprint": "Koşu",
+      "selectAll": "Tümünü seç",
+      "searchPlaceholder": "Sürümlerde ve sprintlerde ara...",
+      "emptyFiltered": "Filtrelerinize uyan kilometre taşı bulunamadı.",
+      "partialWarning": "Bazı Jira projeleri alınamadı:",
+      "importing": "Jira'dan {count, plural, one {# kilometre taşı} other {# kilometre taşı}} içe aktarılıyor…",
+      "completed": "Jira'dan {count, plural, one {# kilometre taşı} other {# kilometre taşı}} içe aktarıldı",
+      "stillRunning": "İçe aktarma işlemi arka planda devam ediyor — tamamlandığında kilometre taşları görünecektir."
+    },
+    "sync": {
+      "managedByJira": "Jira tarafından yönetiliyor",
+      "managedByJiraDescription": "Bu kilometre taşının adı, tarihleri ve durumu Jira tarafından yönetilmektedir. Bunları burada güncellemek için orada değişiklik yapın.",
+      "lastSynced": "Son senkronizasyon {time}",
+      "openInJira": "Jira'da aç",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "Şimdi senkronize et",
+      "unlinkMenuItem": "{provider} bağlantısını kaldır",
+      "unlinkConfirmTitle": "Kilometre taşı bağlantısı kaldırılsın mı?",
+      "unlinkConfirmDescription": "Bu işlem, takip sistemiyle senkronizasyonu durdurur: alanlar yeniden düzenlenebilir hale gelir, senkronize edilen sorun bağlantıları manuel hale gelir (saklamak veya kaldırmak size kalır) ve bu yapıyı yeniden içe aktararak daha sonra yeniden bağlantı kurulabilir.",
+      "unlinkConfirmAction": "Bağlantıyı kaldır",
+      "unlinkSuccess": "Kilometre taşının takip sistemiyle bağlantısı kaldırıldı.",
+      "unlinkError": "Kilometre taşının bağlantısı kaldırılamadı.",
+      "sourceRemoved": "{provider} içinde kaynak kaldırıldı",
+      "mergedInto": "{target} ile birleştirildi"
+    },
+    "summary": {
+      "inScope": "{count, plural, one {# kapsamda} other {# kapsamda}}",
+      "foundInTesting": "{count, plural, one {# testte bulundu} other {# testte bulundu}}",
+      "includesChildMilestones": "Alt kilometre taşlarını içerir"
+    },
+    "members": {
+      "cardTitle": "Sorunlar",
+      "inScope": "Kapsamda",
+      "foundInTesting": "Testte bulundu",
+      "foundInTestingEmpty": "Testte bulunan sorun yok.",
+      "inScopeCrossBadge": "Kapsamda",
+      "refresh": "Yenile",
+      "columnKey": "İsim",
+      "columnStatus": "Durum",
+      "columnCoverage": "Kapsama",
+      "columnSource": "Kaynak",
+      "sourceSynced": "Senkronize edildi",
+      "sourceManual": "Manuel",
+      "coveragePassed": "Geçti",
+      "coverageFailed": "Başarısız",
+      "coverageInProgress": "Devam Ediyor",
+      "coverageNotRun": "Çalıştırılmadı",
+      "coverageUncovered": "Kapsanmayan",
+      "filterAllCoverage": "Tüm kapsamlar",
+      "filterAllSources": "Tüm kaynaklar",
+      "filterAllTypes": "Tüm türler",
+      "empty": "Bu kilometre taşına henüz bağlı sorun yok.",
+      "emptyFiltered": "Mevcut filtrelere uyan sorun bulunamadı.",
+      "unlink": "Bağlantıyı kaldır",
+      "managedByJira": "Jira tarafından yönetiliyor — Jira'daki sürüm/sprint'ten kaldırın",
+      "linkSuccess": "Sorun bu kilometre taşına bağlandı.",
+      "linkError": "Sorun bu kilometre taşına bağlanamadı.",
+      "unlinkSuccess": "Sorun bu kilometre taşından kaldırıldı.",
+      "unlinkError": "Sorun bu kilometre taşından kaldırılamadı.",
+      "overflowTitle": "Jira'da daha fazla sorun",
+      "overflowDescription": "Bu sorunlar bağlı Jira sürümünde/sprintinde bulunuyor ancak burada henüz bağlanmadı.",
+      "overflowCapped": "{cap, number} ile sınırlandı — Jira'da {overflowTotal, number} daha fazla var",
+      "overflowMoreAvailable": "Jira'da {overflowTotal, number} daha fazla mevcut",
+      "overflowImportAction": "İçe aktar ve bağla",
+      "overflowImportSuccess": "İçe aktarma başlatıldı — sorunlar senkronize edildikçe görünecektir.",
+      "overflowImportError": "Jira'dan üye sorunları içe aktarılamadı.",
+      "emptyCta": "Başlamak için bir sorun bağlayın.",
+      "columnDescription": "Açıklama",
+      "unlinkConfirmTitle": "Sorun bağlantısı kaldırılsın mı?",
+      "unlinkConfirmDescription": "Bu işlem sorunu bu kilometre taşından kaldırır. Sorunun kendisi saklanır ve daha sonra yeniden bağlanabilir.",
+      "totalsUncovered": "{count, plural, one {# kapsanmayan sorun} other {# kapsanmayan sorun}}",
+      "filterHasUntested": "Test edilmemiş durumlar içerir",
+      "createRunNoCases": "Seçilen sorunların hiçbirinde bağlı test durumu yok.",
+      "createTestRunDetailed": "Test çalıştırması oluştur ({issues, plural, one {# sorun} other {# sorun}} · {cases, plural, one {# durum} other {# durum}})"
     }
   },
   "sessions": {
@@ -5258,6 +5357,7 @@
         "encrypted": "Şifrelenmiş",
         "encryptedHelp": "Bu alan şifrelenmiş ve güvenli bir şekilde saklanmaktadır.",
         "changeCredential": "Değiştirmek",
+        "leaveBlankToKeep": "Mevcut değeri korumak için boş bırakın",
         "apiKeyWarningTitle": "API Anahtarı Kimlik Doğrulama Bildirimi",
         "apiKeyWarningDescription": "API anahtarı kimlik doğrulamasıyla, oluşturulan sorunlardaki raporu hazırlayan kişi, e-posta adresleri eşleşse bile, sorunları oluşturan TestPlanIt kullanıcısıyla aynı olmayabilir:",
         "apiKeyWarningPoint1": "Jira raporlayıcısını ayarlamak için API belirteci hesabının Jira yöneticisi (\"Raporlayıcıyı Değiştir\") iznine sahip olması gerekir. Bu izin olmadan Jira raporlayıcıyı yok sayar ve API belirteci sahibi oluşturucu olarak kaydedilir.",
@@ -7705,9 +7805,9 @@
       "textBody": "TestPlanIt'e giriş yapın\n\nGiriş yapmak için aşağıdaki bağlantıya tıklayın:\n{url}\n\nGüvenliğiniz için bu bağlantı yalnızca bir kez kullanılabilir. Tekrar giriş yapmanız gerekirse yeni bir bağlantı isteyin.\n\nBu e-postayı siz talep etmediyseniz, güvenle yok sayabilirsiniz."
     },
     "passwordless": {
-      "codeIntro": "Bunu farklı bir cihazda mı açıyorsunuz? Bağlantıyı istediğiniz giriş ekranına bu kodu girin:",
-      "deviceNotice": "Bu bağlantı, istekte bulunduğunuz tarayıcıdan giriş yapmanızı sağlar. Başka bir yerde açarsanız, orijinal pencerenize girmeniz için yukarıdaki kod gösterilecektir.",
-      "textBody": "TestPlanIt'e giriş yapın\n\nGiriş yapmak için aşağıdaki bağlantıya tıklayın:\n{url}\n\nBunu farklı bir cihazda mı açıyorsunuz? Bağlantıyı istediğiniz giriş ekranına bu kodu girin: {code}\n\nBu e-postayı siz talep etmediyseniz, güvenle yok sayabilirsiniz."
+      "codeIntro": "Bunu farklı bir cihazda mı açıyorsunuz? Bu kodu, bağlantıyı istediğiniz giriş ekranına girin:",
+      "deviceNotice": "Bu bağlantı, sizi istediğiniz tarayıcıdan giriş yaptırır. Başka bir yerde açarsanız, orijinal pencerenizde girmeniz için yukarıdaki kod gösterilecektir.",
+      "textBody": "TestPlanIt'e giriş yapın\n\nGiriş yapmak için aşağıdaki bağlantıya tıklayın:\n{url}\n\nBunu farklı bir cihazda mı açıyorsunuz? Bu kodu, bağlantıyı istediğiniz giriş ekranına girin: {code}\n\nBu e-postayı siz istemediyseniz, güvenle yok sayabilirsiniz."
     }
   },
   "comments": {

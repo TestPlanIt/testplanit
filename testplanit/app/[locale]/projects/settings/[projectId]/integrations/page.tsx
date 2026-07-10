@@ -16,6 +16,7 @@ import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect } from "react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
+import { MilestoneSyncSettings } from "./milestone-sync-settings";
 import { ProjectIntegrationSettings } from "./project-integration-settings";
 
 export default function ProjectIntegrationsPage() {
@@ -197,10 +198,16 @@ export default function ProjectIntegrationsPage() {
           </Card>
 
           {currentIntegration && (
-            <ProjectIntegrationSettings
-              projectIntegration={currentIntegration}
-              integration={currentIntegration.integration}
-            />
+            <>
+              <ProjectIntegrationSettings
+                projectIntegration={currentIntegration}
+                integration={currentIntegration.integration}
+              />
+              <MilestoneSyncSettings
+                projectIntegration={currentIntegration}
+                integration={currentIntegration.integration}
+              />
+            </>
           )}
         </CardContent>
       </Card>

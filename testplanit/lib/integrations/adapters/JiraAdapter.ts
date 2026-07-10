@@ -1,7 +1,9 @@
+import valkeyConnection from "~/lib/valkey";
 import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
   CreateIssueData,
+  ExternalMilestone,
   IssueAdapterCapabilities,
   IssueComment,
   IssueData,
@@ -9,10 +11,53 @@ import {
   LinkedIssueRef,
   UpdateIssueData,
 } from "./IssueAdapter";
+import {
+  buildJiraAuthHeader,
+  JiraApiVersion,
+  JiraCredentials,
+  JiraDeploymentType,
+  jiraApiVersion,
+  resolveJiraDeployment,
+} from "./jiraDeployment";
+
+/**
+ * Board -> project ownership is near-static (boards rarely move between
+ * projects), so a multi-hour TTL avoids a per-event upstream call during
+ * sprint webhook bursts without risking long-lived staleness.
+ */
+const JIRA_BOARD_PROJECT_CACHE_TTL_SECONDS = 6 * 60 * 60; // 6 hours
+
+/**
+ * Whether a board supports sprints is a property of its type (Scrum vs
+ * Kanban) and effectively never changes for an existing board. Caching the
+ * negative answer stops every sync pass from re-probing each Kanban board
+ * (a guaranteed 400 + a warn log per board per pass).
+ */
+const JIRA_BOARD_NO_SPRINTS_CACHE_TTL_SECONDS = 24 * 60 * 60; // 24 hours
 
 /**
  * Jira integration adapter implementing OAuth authentication
  */
+/**
+ * Upstream error bodies surface in UI alerts (search fan-out, import
+ * picker warnings). Proxies/CDNs answer with full HTML error pages (e.g.
+ * CloudFront 414 on an oversized JQL URL) — strip markup and truncate so
+ * users see "HTTP 414: The request could not be satisfied…", not a page
+ * of raw HTML.
+ */
+const UPSTREAM_ERROR_EXCERPT_MAX = 300;
+function sanitizeUpstreamErrorBody(body: string): string {
+  const text = /<[a-z!/][^>]*>/i.test(body)
+    ? body
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+    : body.trim();
+  return text.length > UPSTREAM_ERROR_EXCERPT_MAX
+    ? `${text.slice(0, UPSTREAM_ERROR_EXCERPT_MAX)}…`
+    : text;
+}
+
 export class JiraAdapter extends BaseAdapter {
   public supportsOAuth = true;
 
@@ -23,6 +68,16 @@ export class JiraAdapter extends BaseAdapter {
   private apiEmail?: string;
   private apiToken?: string;
   private baseUrl?: string;
+  /** Cloud vs Server/Data Center. Explicit integration setting
+   *  (settings.deploymentType); absent means Cloud — Server support did not
+   *  exist before the setting did, so every legacy integration is Cloud. */
+  private deployment: JiraDeploymentType = "cloud";
+  /** REST API version implied by the deployment: v3 on Cloud, v2 on Server. */
+  private apiVersion: JiraApiVersion = "3";
+  /** API-key credentials (Cloud email+apiToken, Server PAT, or Server
+   *  username+password). The Authorization scheme is derived from which
+   *  fields are present — see buildJiraAuthHeader. */
+  private apiKeyCreds: JiraCredentials = {};
 
   /**
    * Translate the priority value passed by the create-issue dialog to the
@@ -90,6 +145,12 @@ export class JiraAdapter extends BaseAdapter {
     if (config.baseUrl) {
       this.baseUrl = config.baseUrl;
     }
+
+    // Deployment type from integration settings (merged into the adapter
+    // config by IntegrationManager.buildAdapterConfig). Anything but an
+    // explicit "server" is Cloud.
+    this.deployment = resolveJiraDeployment(config.deploymentType);
+    this.apiVersion = jiraApiVersion(this.deployment);
   }
 
   getCapabilities(): IssueAdapterCapabilities {
@@ -104,6 +165,7 @@ export class JiraAdapter extends BaseAdapter {
       attachments: true,
       linkedIssues: true,
       comments: true,
+      milestones: { kinds: ["RELEASE", "ITERATION"], webhooks: true },
     };
   }
 
@@ -111,8 +173,21 @@ export class JiraAdapter extends BaseAdapter {
     authData: AuthenticationData
   ): Promise<void> {
     if (authData.type === "api_key") {
-      // Handle API key authentication
-      if (!authData.email || !authData.apiToken || !authData.baseUrl) {
+      // Handle API key authentication. Cloud requires email + apiToken (the
+      // pre-existing contract, preserved for backward compatibility); Server
+      // / Data Center accepts a Personal Access Token (apiToken alone) or a
+      // username + password pair — buildJiraAuthHeader derives the scheme
+      // from whichever fields are present.
+      if (this.deployment === "server") {
+        if (
+          !authData.baseUrl ||
+          (!authData.apiToken && !(authData.username && authData.password))
+        ) {
+          throw new Error(
+            "API key authentication requires a baseUrl and either a Personal Access Token or a username and password"
+          );
+        }
+      } else if (!authData.email || !authData.apiToken || !authData.baseUrl) {
         throw new Error(
           "API key authentication requires email, apiToken, and baseUrl"
         );
@@ -121,14 +196,26 @@ export class JiraAdapter extends BaseAdapter {
       this.apiEmail = authData.email;
       this.apiToken = authData.apiToken;
       this.baseUrl = authData.baseUrl;
+      this.apiKeyCreds = {
+        email: authData.email,
+        apiToken: authData.apiToken,
+        username: authData.username,
+        password: authData.password,
+      };
 
-      // Test the connection
-      const response = await fetch(`${this.baseUrl}/rest/api/3/myself`, {
-        headers: {
-          Authorization: `Basic ${Buffer.from(`${this.apiEmail}:${this.apiToken}`).toString("base64")}`,
-          Accept: "application/json",
-        },
-      });
+      const authHeader = buildJiraAuthHeader(this.deployment, this.apiKeyCreds);
+
+      // Test the connection against the deployment's API version — v3 on
+      // Cloud, v2 on Server (v3 does not exist there).
+      const response = await fetch(
+        `${this.baseUrl}/rest/api/${this.apiVersion}/myself`,
+        {
+          headers: {
+            Authorization: authHeader,
+            Accept: "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(
@@ -166,13 +253,16 @@ export class JiraAdapter extends BaseAdapter {
   async getProjects(): Promise<
     Array<{ id: string; key: string; name: string }>
   > {
-    if (this.apiEmail && this.apiToken && this.baseUrl) {
+    if (this.baseUrl && (this.apiToken || this.apiKeyCreds.password)) {
       // API key authentication
       const response = await fetch(
-        `${this.baseUrl}/rest/api/3/project/search`,
+        `${this.baseUrl}/rest/api/${this.apiVersion}/project/search`,
         {
           headers: {
-            Authorization: `Basic ${Buffer.from(`${this.apiEmail}:${this.apiToken}`).toString("base64")}`,
+            Authorization: buildJiraAuthHeader(
+              this.deployment,
+              this.apiKeyCreds
+            ),
             Accept: "application/json",
           },
         }
@@ -189,7 +279,11 @@ export class JiraAdapter extends BaseAdapter {
         name: project.name,
       }));
     } else if (this.authData?.accessToken && this.cloudId) {
-      // OAuth authentication
+      // OAuth authentication. Intentionally hardcoded to v3 — Atlassian's
+      // OAuth 2.0 (3LO) gateway (api.atlassian.com/ex/jira/{cloudId}) only
+      // exists for Cloud; Server/Data Center has no OAuth 3LO, so this path
+      // never runs under a Server deployment and this.apiVersion would
+      // always be "3" here regardless.
       const response = await this.makeRequest<any>(
         `https://api.atlassian.com/ex/jira/${this.cloudId}/rest/api/3/project/search`
       );
@@ -326,7 +420,7 @@ export class JiraAdapter extends BaseAdapter {
 
   protected buildUrl(path: string): string {
     // For API key auth, use the base URL directly
-    if (this.apiEmail && this.apiToken && this.baseUrl) {
+    if (this.baseUrl && this.hasApiKeyCredentials()) {
       return `${this.baseUrl}${path}`;
     }
 
@@ -345,18 +439,19 @@ export class JiraAdapter extends BaseAdapter {
     options: RequestInit = {}
   ): Promise<T> {
     // If using API key auth, bypass the base class and handle it directly
-    if (this.apiEmail && this.apiToken) {
+    if (this.hasApiKeyCredentials()) {
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
         Accept: "application/json",
         ...((options.headers as any) || {}),
       };
 
-      // Jira uses Basic auth with email:apiToken
-      const credentials = Buffer.from(
-        `${this.apiEmail}:${this.apiToken}`
-      ).toString("base64");
-      headers["Authorization"] = `Basic ${credentials}`;
+      // Cloud: Basic email:apiToken. Server: Bearer PAT or Basic
+      // username:password — derived from which credential fields exist.
+      headers["Authorization"] = buildJiraAuthHeader(
+        this.deployment,
+        this.apiKeyCreds
+      );
 
       const response = await fetch(url, {
         ...options,
@@ -365,7 +460,9 @@ export class JiraAdapter extends BaseAdapter {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        throw new Error(
+          `HTTP ${response.status}: ${sanitizeUpstreamErrorBody(errorText)}`
+        );
       }
 
       return response.json();
@@ -373,6 +470,20 @@ export class JiraAdapter extends BaseAdapter {
 
     // Otherwise use the base class implementation for OAuth
     return super.makeRequest<T>(url, options);
+  }
+
+  /**
+   * True once performAuthentication has set usable API-key credentials for
+   * the current deployment (Cloud email+apiToken, Server PAT, or Server
+   * username+password). Replaces the old `apiEmail && apiToken` gate, which
+   * never matched Server credentials (no email on Server).
+   */
+  private hasApiKeyCredentials(): boolean {
+    return Boolean(
+      (this.apiKeyCreds.email && this.apiKeyCreds.apiToken) ||
+      this.apiKeyCreds.apiToken ||
+      (this.apiKeyCreds.username && this.apiKeyCreds.password)
+    );
   }
 
   async createIssue(data: CreateIssueData): Promise<IssueData> {
@@ -452,7 +563,7 @@ export class JiraAdapter extends BaseAdapter {
 
     try {
       const response = await this.makeRequest<any>(
-        this.buildUrl("/rest/api/3/issue"),
+        this.buildUrl(`/rest/api/${this.apiVersion}/issue`),
         {
           method: "POST",
           body: JSON.stringify(jiraPayload),
@@ -543,10 +654,13 @@ export class JiraAdapter extends BaseAdapter {
       Object.assign(updatePayload.fields, data.customFields);
     }
 
-    await this.makeRequest<any>(this.buildUrl(`/rest/api/3/issue/${issueId}`), {
-      method: "PUT",
-      body: JSON.stringify(updatePayload),
-    });
+    await this.makeRequest<any>(
+      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}`),
+      {
+        method: "PUT",
+        body: JSON.stringify(updatePayload),
+      }
+    );
 
     // Handle status transition separately if provided
     if (data.status !== undefined) {
@@ -565,7 +679,9 @@ export class JiraAdapter extends BaseAdapter {
     });
 
     const response = await this.makeRequest<any>(
-      this.buildUrl(`/rest/api/3/issue/${issueId}?${params.toString()}`)
+      this.buildUrl(
+        `/rest/api/${this.apiVersion}/issue/${issueId}?${params.toString()}`
+      )
     );
 
     return this.mapJiraIssue(response);
@@ -578,7 +694,9 @@ export class JiraAdapter extends BaseAdapter {
       });
       const encodedId = encodeURIComponent(issueId);
       const response = await this.makeRequest<any>(
-        this.buildUrl(`/rest/api/3/issue/${encodedId}?${params.toString()}`)
+        this.buildUrl(
+          `/rest/api/${this.apiVersion}/issue/${encodedId}?${params.toString()}`
+        )
       );
       return this.mapLinkedIssues(response);
     } catch (error) {
@@ -597,7 +715,7 @@ export class JiraAdapter extends BaseAdapter {
     try {
       const encodedId = encodeURIComponent(issueId);
       const response = await this.makeRequest<any>(
-        this.buildUrl(`/rest/api/3/issue/${encodedId}/comment`)
+        this.buildUrl(`/rest/api/${this.apiVersion}/issue/${encodedId}/comment`)
       );
       return this.mapJiraComments(response);
     } catch (error) {
@@ -610,6 +728,511 @@ export class JiraAdapter extends BaseAdapter {
       );
       return [];
     }
+  }
+
+  /**
+   * Fetch RELEASE (project versions) and/or ITERATION (sprints, via board
+   * auto-discovery) milestones for the given project. Routes through
+   * `this.apiVersion` for the versions endpoint (v3 Cloud / v2 Server); the
+   * Agile API (`/rest/agile/1.0/...`) is deployment-agnostic and never
+   * versioned (Assumption A3).
+   *
+   * ITERATION discovers ALL boards for the project and fetches sprints from
+   * each, deduping by sprint id (D5, locked design) — a Jira project can
+   * have multiple boards (e.g. a Kanban + a Scrum board) whose sprint lists
+   * overlap.
+   *
+   * Error semantics: a PARTIAL board failure degrades gracefully (sprints
+   * from healthy boards are still returned), and a 404 from board discovery
+   * is treated as "no agile support". But hard failures — versions endpoint
+   * errors, board-discovery auth/server errors, or every board's sprint
+   * fetch failing — PROPAGATE, so callers can distinguish a broken
+   * connection from a genuinely empty result.
+   */
+  async getExternalMilestones(options: {
+    projectKey: string;
+    kind?: "RELEASE" | "ITERATION";
+    includeClosed?: boolean;
+    pageToken?: string;
+  }): Promise<{
+    items: ExternalMilestone[];
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    const { projectKey, kind, includeClosed = false } = options;
+    const items: ExternalMilestone[] = [];
+
+    if (!kind || kind === "RELEASE") {
+      items.push(...(await this.fetchJiraVersions(projectKey)));
+    }
+
+    if (!kind || kind === "ITERATION") {
+      items.push(...(await this.fetchJiraSprints(projectKey)));
+    }
+
+    const filtered = includeClosed
+      ? items
+      : items.filter((item) => item.state !== "CLOSED");
+
+    // Both upstream fetches page internally and return their full result
+    // set (versions: numeric-scale per project; sprints: bounded by board
+    // count), so there is nothing left to paginate at this level.
+    return {
+      items: filtered,
+      hasMore: false,
+    };
+  }
+
+  /**
+   * RELEASE milestones: page through the project-versions endpoint
+   * (offset-based startAt/maxResults/total per research Open Question 3)
+   * and map each version to an ExternalMilestone.
+   */
+  private async fetchJiraVersions(
+    projectKey: string
+  ): Promise<ExternalMilestone[]> {
+    const versions: ExternalMilestone[] = [];
+    let startAt = 0;
+    const maxResults = 50;
+
+    try {
+      while (true) {
+        const params = new URLSearchParams({
+          startAt: startAt.toString(),
+          maxResults: maxResults.toString(),
+        });
+        const response = await this.makeRequest<any>(
+          this.buildUrl(
+            `/rest/api/${this.apiVersion}/project/${encodeURIComponent(
+              projectKey
+            )}/version?${params.toString()}`
+          )
+        );
+
+        // Older Jira Server/DC deployments return a bare JSON array (the
+        // non-paginated versions shape) instead of the `{ values, isLast }`
+        // envelope — treat a bare array as a single, complete page.
+        const isBareArray = Array.isArray(response);
+        const pageValues: any[] = isBareArray
+          ? response
+          : Array.isArray(response?.values)
+            ? response.values
+            : [];
+        for (const raw of pageValues) {
+          const mapped = this.mapJiraVersion(raw, projectKey);
+          if (mapped) versions.push(mapped);
+        }
+
+        const isLast = isBareArray
+          ? true
+          : typeof response?.isLast === "boolean"
+            ? response.isLast
+            : pageValues.length < maxResults;
+        if (isLast || pageValues.length === 0) break;
+        startAt += pageValues.length;
+      }
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[JiraAdapter] fetchJiraVersions failed for %s:`,
+        projectKey,
+        error
+      );
+      // Propagate instead of returning [] — an auth/permission/network
+      // failure must be distinguishable from "project has no versions" so
+      // callers can surface a real error instead of an empty picker.
+      throw error;
+    }
+
+    return versions;
+  }
+
+  /** Admin-entered baseUrl may carry a trailing slash — strip for link building. */
+  private userFacingBaseUrl(): string {
+    return (this.baseUrl ?? "").replace(/\/+$/, "");
+  }
+
+  private mapJiraVersion(
+    raw: any,
+    projectKey: string
+  ): ExternalMilestone | null {
+    if (!raw || raw.id == null) return null;
+
+    const released = raw.released === true;
+    const archived = raw.archived === true;
+    let state: ExternalMilestone["state"];
+    let rawState: string;
+    if (archived) {
+      state = "CLOSED";
+      rawState = "archived";
+    } else if (released) {
+      state = "CLOSED";
+      rawState = "released";
+    } else {
+      const startDate = raw.startDate ? new Date(raw.startDate) : undefined;
+      const isFuture = !startDate || startDate.getTime() > Date.now();
+      state = isFuture ? "FUTURE" : "ACTIVE";
+      rawState = isFuture ? "future" : "active";
+    }
+
+    return {
+      id: String(raw.id),
+      kind: "RELEASE",
+      name: raw.name ?? String(raw.id),
+      description: raw.description,
+      startDate: raw.startDate ? new Date(raw.startDate) : undefined,
+      endDate: raw.releaseDate ? new Date(raw.releaseDate) : undefined,
+      state,
+      rawState,
+      // raw.self is the REST resource (JSON) — link users to the project's
+      // releases page for this version instead. Same path on Cloud and DC.
+      url: `${this.userFacingBaseUrl()}/projects/${encodeURIComponent(projectKey)}/versions/${encodeURIComponent(String(raw.id))}`,
+    };
+  }
+
+  /**
+   * ITERATION milestones: discover every board for the project, fetch
+   * sprints per board, and dedupe by sprint id (D5) since a Jira project
+   * can have multiple boards whose sprint lists overlap.
+   */
+  private async fetchJiraSprints(
+    projectKey: string
+  ): Promise<ExternalMilestone[]> {
+    const boardIds = await this.discoverJiraBoards(projectKey);
+    const bySprintId = new Map<string, ExternalMilestone>();
+    let failedBoards = 0;
+    let firstBoardError: unknown = null;
+    const integrationId = this.config?.integrationId;
+
+    for (const boardId of boardIds) {
+      // Skip boards already known to be sprint-less (Kanban) — fail-open on
+      // any cache problem so a Valkey blip never hides sprints.
+      const noSprintsKey =
+        integrationId != null
+          ? `jira-board-no-sprints:${integrationId}:${boardId}`
+          : null;
+      if (noSprintsKey && valkeyConnection) {
+        try {
+          if (await valkeyConnection.exists(noSprintsKey)) continue;
+        } catch {
+          // fall through to the live probe
+        }
+      }
+      try {
+        let startAt = 0;
+        const maxResults = 50;
+        while (true) {
+          const params = new URLSearchParams({
+            startAt: startAt.toString(),
+            maxResults: maxResults.toString(),
+          });
+          const response = await this.makeRequest<any>(
+            this.buildUrl(
+              `/rest/agile/1.0/board/${boardId}/sprint?${params.toString()}`
+            )
+          );
+
+          // Same bare-array tolerance as fetchJiraVersions — some Server/DC
+          // responses omit the `{ values, isLast }` pagination envelope.
+          const isBareArray = Array.isArray(response);
+          const pageValues: any[] = isBareArray
+            ? response
+            : Array.isArray(response?.values)
+              ? response.values
+              : [];
+          for (const raw of pageValues) {
+            const mapped = this.mapJiraSprint(raw);
+            if (mapped && !bySprintId.has(mapped.id)) {
+              bySprintId.set(mapped.id, mapped);
+            }
+          }
+
+          const isLast = isBareArray
+            ? true
+            : typeof response?.isLast === "boolean"
+              ? response.isLast
+              : pageValues.length < maxResults;
+          if (isLast || pageValues.length === 0) break;
+          startAt += pageValues.length;
+        }
+      } catch (error) {
+        const status = this.parseStatusFromError(error);
+        // A 400 from the sprint endpoint means the board type doesn't
+        // support sprints (Kanban boards) — an expected per-board
+        // condition, not a fetch failure. Skip it WITHOUT counting toward
+        // failedBoards, so a project whose only board is Kanban still
+        // previews its versions cleanly instead of erroring out.
+        if (status === 400) {
+          console.warn(
+            `[JiraAdapter] board %s does not support sprints — skipped and cached (project %s)`,
+            boardId,
+            projectKey
+          );
+          if (noSprintsKey && valkeyConnection) {
+            try {
+              await valkeyConnection.set(
+                noSprintsKey,
+                "1",
+                "EX",
+                JIRA_BOARD_NO_SPRINTS_CACHE_TTL_SECONDS
+              );
+            } catch {
+              // cache write failure just means we probe again next pass
+            }
+          }
+          continue;
+        }
+        const level = status === null || status >= 500 ? "error" : "warn";
+        console[level](
+          `[JiraAdapter] fetchJiraSprints failed for board %s (project %s):`,
+          boardId,
+          projectKey,
+          error
+        );
+        // Continue with remaining boards — a single board failure should
+        // not drop sprints discovered on other boards.
+        failedBoards += 1;
+        if (firstBoardError === null) firstBoardError = error;
+      }
+    }
+
+    // Partial board failures degrade gracefully, but when EVERY board fetch
+    // failed the caller must see the failure — otherwise a credential or
+    // permission problem is indistinguishable from "no sprints".
+    if (boardIds.length > 0 && failedBoards === boardIds.length) {
+      throw firstBoardError;
+    }
+
+    return Array.from(bySprintId.values());
+  }
+
+  /**
+   * Board discovery for the project: `/rest/agile/1.0/board?projectKeyOrId=`,
+   * paginated. Returns board ids only — sprint-fetching is done separately
+   * per board so a single board's failure doesn't abort discovery of the
+   * rest.
+   */
+  private async discoverJiraBoards(projectKey: string): Promise<string[]> {
+    const boardIds: string[] = [];
+    let startAt = 0;
+    const maxResults = 50;
+
+    try {
+      while (true) {
+        const params = new URLSearchParams({
+          projectKeyOrId: projectKey,
+          startAt: startAt.toString(),
+          maxResults: maxResults.toString(),
+        });
+        const response = await this.makeRequest<any>(
+          this.buildUrl(`/rest/agile/1.0/board?${params.toString()}`)
+        );
+
+        const pageValues: any[] = Array.isArray(response?.values)
+          ? response.values
+          : [];
+        for (const board of pageValues) {
+          if (board?.id != null) boardIds.push(String(board.id));
+        }
+
+        const isLast =
+          typeof response?.isLast === "boolean"
+            ? response.isLast
+            : pageValues.length < maxResults;
+        if (isLast || pageValues.length === 0) break;
+        startAt += pageValues.length;
+      }
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      if (status === 404) {
+        // Agile API unavailable (no Jira Software on this instance) — treat
+        // as "no boards" rather than a hard failure so RELEASE-only fetches
+        // and kind-less previews still work.
+        console.warn(
+          `[JiraAdapter] discoverJiraBoards: agile API unavailable for %s:`,
+          projectKey,
+          error
+        );
+        return boardIds;
+      }
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[JiraAdapter] discoverJiraBoards failed for %s:`,
+        projectKey,
+        error
+      );
+      // Propagate auth/permission/server failures so an empty sprint list
+      // is never silently returned for a broken connection.
+      throw error;
+    }
+
+    return boardIds;
+  }
+
+  /**
+   * Resolve a single board's owning project — the INVERSE direction of
+   * `discoverJiraBoards` (project -> boards). Sprint webhook payloads only
+   * carry `originBoardId` (Pitfall 2), never a project reference, so
+   * `applyInboundMilestoneEvent` needs this direct board -> project lookup
+   * to resolve which TestPlanIt project a `sprint_*` event belongs to.
+   *
+   * `GET /rest/agile/1.0/board/{boardId}` returns `location.projectId` /
+   * `location.projectKey` (RESEARCH.md A1 — MEDIUM confidence, verified via
+   * multiple independent community payload examples, not a schema-verified
+   * response contract). The parse is deliberately defensive: any absent or
+   * differently-shaped `location` degrades to `null` (the D-03 unmatched/
+   * ack-and-drop path) rather than a thrown error, since a malformed/legacy
+   * response here must never surface as a 500 to the Jira webhook sender.
+   *
+   * Cached in Valkey (`jira-board-project:<integrationId>:<boardId>`, a
+   * multi-hour TTL) since board->project ownership is near-static and a
+   * cache hit avoids a per-event upstream call during sprint webhook bursts
+   * (T-19-04-03). Fail-open without a Valkey connection — fetch directly,
+   * skip caching, mirroring `MilestoneSyncService`'s lock-key idiom.
+   */
+  async resolveBoardProject(
+    boardId: string
+  ): Promise<{ projectId: string; projectKey: string } | null> {
+    // Jira board ids are integers. `boardId` originates from webhook wire
+    // input (sprint.originBoardId) and is interpolated into the REST path
+    // and the cache key below — reject anything non-numeric here too
+    // (defense in depth behind the extraction-time guard in
+    // lib/webhooks/adapters/jira.ts) so this method can never be steered
+    // into an authenticated request to an arbitrary path.
+    if (!/^\d+$/.test(boardId)) {
+      console.debug(
+        `[JiraAdapter] resolveBoardProject: rejecting non-numeric board id %s`,
+        boardId
+      );
+      return null;
+    }
+
+    const integrationId = this.config?.integrationId;
+    const cacheKey =
+      integrationId != null
+        ? `jira-board-project:${integrationId}:${boardId}`
+        : null;
+
+    if (cacheKey) {
+      try {
+        const cached = await valkeyConnection?.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached) as {
+            projectId: string;
+            projectKey: string;
+          };
+        }
+      } catch (error) {
+        // Cache read failures (connection blip, bad JSON) fall through to a
+        // direct upstream fetch — never let a cache problem block resolution.
+        console.warn(
+          `[JiraAdapter] resolveBoardProject: cache read failed for board %s:`,
+          boardId,
+          error
+        );
+      }
+    }
+
+    let response: any;
+    try {
+      response = await this.makeRequest<any>(
+        this.buildUrl(`/rest/agile/1.0/board/${boardId}`)
+      );
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      if (status === 404 || status === 403 || status === 401) {
+        // Unmatched board / no permission — the D-03 ack-and-drop path.
+        // Never throw for this; the caller acks the webhook and drops it.
+        console.debug(
+          `[JiraAdapter] resolveBoardProject: board %s not found/unauthorized (status %s)`,
+          boardId,
+          status
+        );
+        return null;
+      }
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[JiraAdapter] resolveBoardProject failed for board %s:`,
+        boardId,
+        error
+      );
+      return null;
+    }
+
+    const projectId = response?.location?.projectId;
+    const projectKey = response?.location?.projectKey;
+    if (typeof projectId !== "string" && typeof projectId !== "number") {
+      console.debug(
+        `[JiraAdapter] resolveBoardProject: board %s response missing location.projectId — treating as unmatched`,
+        boardId
+      );
+      return null;
+    }
+
+    const result = {
+      projectId: String(projectId),
+      projectKey: typeof projectKey === "string" ? projectKey : "",
+    };
+
+    if (cacheKey && valkeyConnection) {
+      try {
+        await valkeyConnection.set(
+          cacheKey,
+          JSON.stringify(result),
+          "EX",
+          JIRA_BOARD_PROJECT_CACHE_TTL_SECONDS
+        );
+      } catch (error) {
+        console.warn(
+          `[JiraAdapter] resolveBoardProject: cache write failed for board %s:`,
+          boardId,
+          error
+        );
+      }
+    }
+
+    return result;
+  }
+
+  private mapJiraSprint(raw: any): ExternalMilestone | null {
+    if (!raw || raw.id == null) return null;
+
+    const rawState =
+      typeof raw.state === "string" ? raw.state.toLowerCase() : undefined;
+    let state: ExternalMilestone["state"];
+    switch (rawState) {
+      case "closed":
+        state = "CLOSED";
+        break;
+      case "active":
+        state = "ACTIVE";
+        break;
+      case "future":
+      default:
+        state = "FUTURE";
+        break;
+    }
+
+    return {
+      id: String(raw.id),
+      kind: "ITERATION",
+      name: raw.name ?? String(raw.id),
+      description: raw.goal,
+      startDate: raw.startDate ? new Date(raw.startDate) : undefined,
+      endDate: raw.endDate ? new Date(raw.endDate) : undefined,
+      state,
+      rawState,
+      // Sprints have no user-facing permalink in their payload; the origin
+      // board is the closest stable target. RapidBoard.jspa is a
+      // deployment-agnostic redirect (Cloud forwards to the modern board
+      // UI; Server/DC serves it directly).
+      ...(raw.originBoardId != null
+        ? {
+            url: `${this.userFacingBaseUrl()}/secure/RapidBoard.jspa?rapidView=${encodeURIComponent(String(raw.originBoardId))}&sprint=${encodeURIComponent(String(raw.id))}`,
+          }
+        : {}),
+    };
   }
 
   async searchIssues(options: IssueSearchOptions): Promise<{
@@ -679,13 +1302,22 @@ export class JiraAdapter extends BaseAdapter {
     const params = new URLSearchParams({
       jql: jqlString,
       maxResults: (options.limit || 50).toString(),
+      // `parent` included (D-14) so regular bulk-import issues capture
+      // hierarchy the same way membership import does — consistency across
+      // both synced-issue paths that feed buildSyncedIssueData.
       fields:
-        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated",
+        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated,parent",
     });
     if (options.pageToken) {
       params.set("nextPageToken", options.pageToken);
     }
 
+    // NOTE: intentionally NOT parameterized on this.apiVersion. Cloud's
+    // `/rest/api/3/search/jql` (opaque nextPageToken pagination) has no v2
+    // equivalent — Server/DC search uses `/rest/api/2/search` with
+    // startAt/total pagination, a materially different response shape.
+    // Server-side issue search is out of scope for this port (PR #496 left
+    // it Cloud-only too); revisit when Server searchIssues support lands.
     const searchUrl = this.buildUrl(
       `/rest/api/3/search/jql?${params.toString()}`
     );
@@ -720,9 +1352,76 @@ export class JiraAdapter extends BaseAdapter {
     };
   }
 
+  /**
+   * Membership fetch for a milestone (Jira Fix Version / Sprint). Mirrors
+   * searchIssues' pagination idiom but is a separate method rather than a
+   * searchIssues option — the JQL clause (fixVersion=/sprint=) and the
+   * `parent` field addition have no equivalent hook in searchIssues' filter
+   * set (D-14 / interfaces lock, IssueAdapter.ts:271-279).
+   */
+  async getMilestoneIssues(
+    ref: { id: string; kind: "RELEASE" | "ITERATION" },
+    options?: { pageToken?: string; limit?: number }
+  ): Promise<{
+    issues: IssueData[];
+    total?: number;
+    hasMore: boolean;
+    nextPageToken?: string;
+  }> {
+    // Cloud-only, same limitation as searchIssues' `/rest/api/3/search/jql`
+    // (no v2/Server equivalent) — clean no-op skip on Server/DC rather than
+    // throwing, per deferred-items.md.
+    if (this.deployment === "server") {
+      return { issues: [], hasMore: false };
+    }
+
+    const jqlClause =
+      ref.kind === "RELEASE" ? `fixVersion = ${ref.id}` : `sprint = ${ref.id}`;
+
+    const params = new URLSearchParams({
+      jql: jqlClause,
+      maxResults: (options?.limit || 50).toString(),
+      fields:
+        "summary,description,status,priority,issuetype,assignee,reporter,labels,created,updated,parent",
+    });
+    if (options?.pageToken) {
+      params.set("nextPageToken", options.pageToken);
+    }
+
+    // NOTE: intentionally NOT parameterized on this.apiVersion — same
+    // Cloud-only rationale as searchIssues above (`/rest/api/3/search/jql`
+    // has no v2 equivalent; Server/DC is handled by the no-op guard above).
+    const searchUrl = this.buildUrl(
+      `/rest/api/3/search/jql?${params.toString()}`
+    );
+
+    const response = await this.makeRequest<any>(searchUrl);
+
+    const issues = (response.issues || []).map((issue: any) =>
+      this.mapJiraIssue(issue)
+    );
+    const nextPageToken: string | undefined = response.nextPageToken;
+    const hasMore =
+      typeof response.isLast === "boolean"
+        ? !response.isLast
+        : nextPageToken
+          ? true
+          : typeof response.total === "number"
+            ? (response.startAt || 0) + issues.length < response.total
+            : issues.length >= (options?.limit || 50);
+
+    return {
+      issues,
+      total:
+        typeof response.total === "number" ? response.total : issues.length,
+      hasMore,
+      nextPageToken,
+    };
+  }
+
   protected async addComment(issueId: string, comment: string): Promise<void> {
     await this.makeRequest(
-      this.buildUrl(`/rest/api/3/issue/${issueId}/comment`),
+      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}/comment`),
       {
         method: "POST",
         body: JSON.stringify({
@@ -752,7 +1451,7 @@ export class JiraAdapter extends BaseAdapter {
   ): Promise<void> {
     // Get available transitions
     const transitions = await this.makeRequest<any>(
-      this.buildUrl(`/rest/api/3/issue/${issueId}/transitions`)
+      this.buildUrl(`/rest/api/${this.apiVersion}/issue/${issueId}/transitions`)
     );
 
     // Find the transition that leads to the target status
@@ -766,7 +1465,9 @@ export class JiraAdapter extends BaseAdapter {
 
     // Execute the transition
     await this.makeRequest(
-      this.buildUrl(`/rest/api/3/issue/${issueId}/transitions`),
+      this.buildUrl(
+        `/rest/api/${this.apiVersion}/issue/${issueId}/transitions`
+      ),
       {
         method: "POST",
         body: JSON.stringify({
@@ -839,6 +1540,13 @@ export class JiraAdapter extends BaseAdapter {
             .filter((n: string | null): n is string => n !== null)
         : [],
       customFields: this.extractCustomFields(fields),
+      // Parent ref (D-14): mirrors the mapLinkedIssues guard below — only
+      // set when the source issue actually has a parent (sub-task / epic
+      // child). Requires the request's `fields` param to include `parent`.
+      parent:
+        fields.parent && fields.parent.id
+          ? { id: String(fields.parent.id), key: fields.parent.key }
+          : undefined,
       createdAt: new Date(fields.created),
       updatedAt: new Date(fields.updated),
       url: `${jiraIssue.self.split("/rest/")[0]}/browse/${jiraIssue.key}`,
@@ -1145,7 +1853,9 @@ export class JiraAdapter extends BaseAdapter {
   ): Promise<Array<{ id: string; name: string }>> {
     try {
       // First, get the project details to get available issue types
-      const projectUrl = this.buildUrl(`/rest/api/3/project/${projectKey}`);
+      const projectUrl = this.buildUrl(
+        `/rest/api/${this.apiVersion}/project/${projectKey}`
+      );
       const project = await this.makeRequest<any>(projectUrl);
 
       // Extract issue types from the project
@@ -1159,7 +1869,9 @@ export class JiraAdapter extends BaseAdapter {
       console.error("Failed to fetch issue types:", error);
       // If that fails, try to get all issue types and filter by project
       try {
-        const allTypesUrl = this.buildUrl(`/rest/api/3/issuetype`);
+        const allTypesUrl = this.buildUrl(
+          `/rest/api/${this.apiVersion}/issuetype`
+        );
         const allTypes = await this.makeRequest<any[]>(allTypesUrl);
 
         // For now, return all non-subtask issue types as a fallback
@@ -1183,7 +1895,7 @@ export class JiraAdapter extends BaseAdapter {
     try {
       // Get create issue metadata for the specific issue type
       const url = this.buildUrl(
-        `/rest/api/3/issue/createmeta?projectKeys=${projectKey}&issuetypeIds=${issueTypeId}&expand=projects.issuetypes.fields`
+        `/rest/api/${this.apiVersion}/issue/createmeta?projectKeys=${projectKey}&issuetypeIds=${issueTypeId}&expand=projects.issuetypes.fields`
       );
 
       const metadata = await this.makeRequest<any>(url);
@@ -1716,7 +2428,7 @@ export class JiraAdapter extends BaseAdapter {
         try {
           // Try the user/search endpoint with email
           const emailSearchUrl = this.buildUrl(
-            `/rest/api/3/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`
+            `/rest/api/${this.apiVersion}/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`
           );
           // console.log(`[JiraAdapter.searchUsers] Trying email search: ${emailSearchUrl}`);
           const emailUsers = await this.makeRequest<any[]>(emailSearchUrl);
@@ -1724,7 +2436,7 @@ export class JiraAdapter extends BaseAdapter {
 
           // Also try searching by accountId with the email (sometimes works)
           const accountSearchUrl = this.buildUrl(
-            `/rest/api/3/user/search?accountId=${encodeURIComponent(query)}`
+            `/rest/api/${this.apiVersion}/user/search?accountId=${encodeURIComponent(query)}`
           );
           // console.log(`[JiraAdapter.searchUsers] Trying account search with email: ${accountSearchUrl}`);
           try {
@@ -1744,10 +2456,10 @@ export class JiraAdapter extends BaseAdapter {
       let endpoint: string;
       if (projectKey && !isEmail) {
         // Search assignable users for the project
-        endpoint = `/rest/api/3/user/assignable/search?project=${projectKey}&query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
+        endpoint = `/rest/api/${this.apiVersion}/user/assignable/search?project=${projectKey}&query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
       } else {
         // General user search
-        endpoint = `/rest/api/3/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
+        endpoint = `/rest/api/${this.apiVersion}/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
       }
 
       // console.log(`[JiraAdapter.searchUsers] Using general endpoint: ${endpoint}`);
@@ -1802,7 +2514,7 @@ export class JiraAdapter extends BaseAdapter {
   } | null> {
     try {
       // console.log(`[JiraAdapter.getCurrentUser] Getting current authenticated user`);
-      const url = this.buildUrl("/rest/api/3/myself");
+      const url = this.buildUrl(`/rest/api/${this.apiVersion}/myself`);
       const user = await this.makeRequest<any>(url);
 
       // console.log(`[JiraAdapter.getCurrentUser] Current user: ${user.displayName} (${user.accountId}) - Email: ${user.emailAddress || 'NOT AVAILABLE'}`);

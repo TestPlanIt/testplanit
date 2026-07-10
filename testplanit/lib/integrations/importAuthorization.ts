@@ -91,3 +91,113 @@ export async function authorizeProjectImport(
 
   return { ok: true, status: 200, projectId, provider: integration.provider };
 }
+
+export interface MilestoneSyncAuthResult {
+  ok: boolean;
+  status: number;
+  error?: string;
+  projectId?: number;
+  provider?: string;
+}
+
+/**
+ * The bare project-ADMIN check against a KNOWN projectId — no mapping
+ * validation, no SIMPLE_URL rejection. Mirrors the `ProjectIntegration`
+ * `@@allow('create,update,delete', …)` ACL condition (schema.zmodel
+ * ~4788-4794):
+ *   project.creator == auth()
+ *   || project.userPermissions?[... accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin']
+ *   || project.assignedUsers?[... auth().access == 'PROJECTADMIN']
+ *   || auth().access == 'ADMIN'
+ *
+ * Exported for callers whose projectId does NOT come from an active
+ * IntegrationProject mapping — e.g. the milestone unlink route, whose
+ * escape-hatch semantics must keep working after the mapping (or the whole
+ * ProjectIntegration) has been deactivated, since that is exactly the
+ * orphaned-but-still-locked state unlink exists to resolve (WR-05).
+ */
+export async function authorizeProjectAdminForProject(
+  session: Session,
+  projectId: number
+): Promise<MilestoneSyncAuthResult> {
+  const userId = session.user?.id;
+  if (!userId) {
+    return { ok: false, status: 401, error: "Unauthorized" };
+  }
+
+  // System admins are always project admins.
+  if (session.user!.access === "ADMIN") {
+    return { ok: true, status: 200, projectId };
+  }
+
+  const isAdmin = await baseDb.projects.findFirst({
+    where: {
+      id: projectId,
+      isDeleted: false,
+      OR: [
+        { creator: { id: userId } },
+        {
+          userPermissions: {
+            some: {
+              userId,
+              accessType: "SPECIFIC_ROLE",
+              role: { name: "Project Admin" },
+            },
+          },
+        },
+        ...(session.user!.access === "PROJECTADMIN"
+          ? [{ assignedUsers: { some: { userId } } }]
+          : []),
+      ],
+    },
+    select: { id: true },
+  });
+
+  if (!isAdmin) {
+    return { ok: false, status: 403, error: "Forbidden" };
+  }
+
+  return { ok: true, status: 200, projectId };
+}
+
+/**
+ * Authorize the three milestone-sync routes (preview/import/now). Layers an
+ * EXPLICIT project-ADMIN check on top of `authorizeProjectImport` — the
+ * latter allows ANY project member (userPermissions/groupPermissions/
+ * assignedUsers membership), which is intentionally too weak for milestone
+ * sync (T-17-05-01). The admin condition itself lives in
+ * `authorizeProjectAdminForProject` above.
+ *
+ * Reuses `authorizeProjectImport` for mapping validation + projectId
+ * resolution + SIMPLE_URL rejection, so this function's own DB check only
+ * needs to answer "is this user a project admin for the resolved project?".
+ */
+export async function authorizeProjectMilestoneSyncAdmin(
+  session: Session,
+  integrationId: number,
+  integrationProjectId: string
+): Promise<MilestoneSyncAuthResult> {
+  const base = await authorizeProjectImport(
+    session,
+    integrationId,
+    integrationProjectId
+  );
+  if (!base.ok) {
+    return base;
+  }
+
+  const adminCheck = await authorizeProjectAdminForProject(
+    session,
+    base.projectId!
+  );
+  if (!adminCheck.ok) {
+    return adminCheck;
+  }
+
+  return {
+    ok: true,
+    status: 200,
+    projectId: base.projectId,
+    provider: base.provider,
+  };
+}

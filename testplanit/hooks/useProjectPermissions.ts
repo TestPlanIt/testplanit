@@ -37,11 +37,13 @@ export function useProjectPermissions(
   area: ApplicationArea
 ): {
   permissions: AreaPermissions | null;
+  isProjectAdmin: boolean;
   isLoading: boolean;
   error: Error | null;
 };
 export function useProjectPermissions(projectId: string | number): {
   permissions: AllAreaPermissions | null;
+  isProjectAdmin: boolean;
   isLoading: boolean;
   error: Error | null;
 };
@@ -51,13 +53,14 @@ export function useProjectPermissions(projectId: string | number): {
  *
  * @param projectId The ID of the project.
  * @param area Optional. The specific ApplicationArea to fetch permissions for. If omitted, fetches permissions for all areas.
- * @returns An object containing the fetched permissions, loading state, and error state.
+ * @returns An object containing the fetched permissions, project-admin flag, loading state, and error state.
  */
 export function useProjectPermissions(
   projectId: string | number,
   area?: ApplicationArea
 ): {
   permissions: AreaPermissions | AllAreaPermissions | null;
+  isProjectAdmin: boolean;
   isLoading: boolean;
   error: Error | null;
 } {
@@ -78,7 +81,10 @@ export function useProjectPermissions(
     : ["userPermissions", numericProjectId, userId, "all"];
 
   const { data, isLoading, error } = useQuery<
-    AreaPermissions | AllAreaPermissions,
+    {
+      permissions: AreaPermissions | AllAreaPermissions;
+      isProjectAdmin: boolean;
+    },
     Error
   >({
     queryKey: queryKey,
@@ -115,9 +121,14 @@ export function useProjectPermissions(
       }
 
       const result = await response.json();
-      // The API returns { hasAccess, effectiveRole, permissions }
-      // We only need the permissions part
-      return result.permissions || result;
+      // The API returns { hasAccess, effectiveRole, permissions, isProjectAdmin }.
+      // Older mocks/callers may return the permissions shape directly (no
+      // envelope) — fall back to the raw result in that case for backward
+      // compatibility.
+      return {
+        permissions: result.permissions || result,
+        isProjectAdmin: result.isProjectAdmin ?? false,
+      };
     },
     enabled: isEnabled, // Use the pre-calculated enabled flag
     staleTime: 5 * 60 * 1000, // Cache permissions for 5 minutes
@@ -131,6 +142,7 @@ export function useProjectPermissions(
   if (!isEnabled) {
     return {
       permissions: getDefaultPermissions(area),
+      isProjectAdmin: false,
       isLoading: sessionStatus === "loading",
       error: null,
     };
@@ -138,7 +150,8 @@ export function useProjectPermissions(
 
   // If query is enabled, return the result from useQuery
   // Ensure we return null initially or on error, matching original behavior
-  const permissions = data ?? null;
+  const permissions = data?.permissions ?? null;
+  const isProjectAdmin = data?.isProjectAdmin ?? false;
 
-  return { permissions, isLoading, error: error ?? null };
+  return { permissions, isProjectAdmin, isLoading, error: error ?? null };
 }

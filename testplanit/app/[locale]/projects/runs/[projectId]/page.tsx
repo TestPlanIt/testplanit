@@ -161,6 +161,12 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   const [modalSelectedTestCases, setModalSelectedTestCases] = useState<
     number[]
   >([]);
+  // Optional handoff extras (create-run-from-milestone-issues): issues to
+  // pre-link and the milestone to pre-select on the Add Run form.
+  const [modalLinkedIssueIds, setModalLinkedIssueIds] = useState<number[]>([]);
+  const [modalDefaultMilestoneId, setModalDefaultMilestoneId] = useState<
+    number | undefined
+  >(undefined);
 
   // Debug: Log when modalSelectedTestCases changes
   useEffect(() => {
@@ -174,8 +180,12 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     router.replace(pathname, { scroll: false });
     // Clear sessionStorage when modal closes
     sessionStorage.removeItem("createTestRun_selectedCases");
+    sessionStorage.removeItem("createTestRun_linkedIssues");
+    sessionStorage.removeItem("createTestRun_milestoneId");
     // Clear selected test cases
     setModalSelectedTestCases([]);
+    setModalLinkedIssueIds([]);
+    setModalDefaultMilestoneId(undefined);
   }, [router, setIsAddTestRunModalOpen, pathname]);
 
   // New state for DuplicateTestRunDialog and subsequent AddTestRunModal for duplication
@@ -254,6 +264,22 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
       // console.log("Parsed cases from storage:", casesFromStorage);
       setModalSelectedTestCases(casesFromStorage);
+
+      const storedIssues = sessionStorage.getItem("createTestRun_linkedIssues");
+      const issuesFromStorage = storedIssues ? JSON.parse(storedIssues) : [];
+      setModalLinkedIssueIds(
+        Array.isArray(issuesFromStorage) ? issuesFromStorage : []
+      );
+
+      const storedMilestoneId = sessionStorage.getItem(
+        "createTestRun_milestoneId"
+      );
+      const parsedMilestoneId = storedMilestoneId
+        ? Number(storedMilestoneId)
+        : NaN;
+      setModalDefaultMilestoneId(
+        Number.isInteger(parsedMilestoneId) ? parsedMilestoneId : undefined
+      );
 
       // Don't clear sessionStorage here - clear it when modal closes to avoid fast refresh issues
     }
@@ -1611,6 +1637,8 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
             onClose={handleCloseAddTestRunModal}
             initialSelectedCaseIds={modalSelectedTestCases}
             onSelectedCasesChange={setModalSelectedTestCases}
+            initialLinkedIssueIds={modalLinkedIssueIds}
+            defaultMilestoneId={modalDefaultMilestoneId}
           />
         )}
       </SimpleDndProvider>

@@ -5,6 +5,7 @@ import type { Roles } from "~/zenstack/models";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { baseDb } from "~/lib/db";
+import { authorizeProjectAdminForProject } from "~/lib/integrations/importAuthorization";
 import { getServerAuthSession } from "~/server/auth";
 
 // Define the input schema using Zod
@@ -307,6 +308,11 @@ export async function POST(request: Request) {
     }
 
     // Otherwise return the detailed permissions
+    const isProjectAdminResult = await authorizeProjectAdminForProject(
+      session,
+      projectId
+    );
+
     return NextResponse.json({
       hasAccess:
         isSystemAdmin ||
@@ -319,6 +325,7 @@ export async function POST(request: Request) {
           : effectiveRole?.name || null,
       effectiveRoleId,
       permissions: resultData,
+      isProjectAdmin: isProjectAdminResult.ok,
     });
   } catch (error) {
     console.error("Error fetching permissions:", error);

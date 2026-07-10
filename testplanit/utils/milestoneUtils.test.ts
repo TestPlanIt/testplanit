@@ -269,6 +269,14 @@ const baseMockMilestone: Milestones = {
   createdBy: "user1",
   automaticCompletion: false,
   notifyDaysBefore: 0,
+  externalId: null,
+  externalKind: null,
+  externalState: null,
+  externalUrl: null,
+  integrationId: null,
+  lastSyncedAt: null,
+  detachedAt: null,
+  mergedToExternalId: null,
 };
 
 // Mock Milestone Type and Icon for MilestonesWithTypes

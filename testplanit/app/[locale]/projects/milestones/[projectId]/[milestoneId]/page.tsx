@@ -32,7 +32,7 @@ import {
 } from "@/projects/sessions/[projectId]/[sessionId]/CompleteSessionDialog";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ApplicationArea } from "~/zenstack/models";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   CircleCheckBig,
@@ -48,7 +48,7 @@ import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useParams, useSearchParams } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
@@ -58,6 +58,7 @@ import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { useExportMilestonePdf } from "~/hooks/pdf/useExportMilestonePdf";
+import { useMilestoneLiveStream } from "~/hooks/useMilestoneLiveStream";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { Link, useRouter } from "~/lib/navigation";
 import {
@@ -68,7 +69,10 @@ import {
 import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
 import ChildMilestoneItem from "./ChildMilestoneItem";
+import { MilestoneSourceBadge } from "../MilestoneSourceBadge";
+import { IssuesCard, type IssuesCardHandle } from "./IssuesCard";
 import MilestoneFormControls from "./MilestoneFormControls";
+import { buildMilestoneUpdatePayload } from "./milestoneUpdatePayload";
 
 interface MilestoneForecastData {
   manualEstimate: number;
@@ -101,6 +105,7 @@ export default function MilestoneDetailsPage() {
     useState<MilestoneForecastData | null>(null);
   const [isLoadingForecast, setIsLoadingForecast] = useState(false);
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  const issuesCardRef = useRef<IssuesCardHandle>(null);
   const router = useRouter();
   const { resolvedTheme } = useTheme();
 
@@ -189,6 +194,34 @@ export default function MilestoneDetailsPage() {
         },
       },
     },
+  });
+
+  const queryClient = useQueryClient();
+
+  // D-15/D-16: subscribe this detail page to its per-entity milestone
+  // stream so the fields, badge, member table, and coverage all react live
+  // on a wake-up — no bespoke 45s passive-refresh window exists on this
+  // page today, so this is a net-new subscriber, not a retirement.
+  useMilestoneLiveStream({
+    milestoneId: Number(milestoneId),
+    onWakeUp: React.useCallback(() => {
+      void queryClient.invalidateQueries({
+        predicate: (query) =>
+          JSON.stringify(query.queryKey).includes("Milestones") ||
+          JSON.stringify(query.queryKey).includes("MilestoneIssue"),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["milestoneMemberCoverage", Number(milestoneId)],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["milestoneMemberOverflow", Number(milestoneId)],
+      });
+      // Both the MilestoneSummary chips (scopeCount) and the sibling "Found
+      // in testing" section (issues) read this same cache entry.
+      void queryClient.invalidateQueries({
+        queryKey: ["milestoneSummary", Number(milestoneId)],
+      });
+    }, [queryClient, milestoneId]),
   });
 
   const { data: milestoneTypes, isLoading: isTypesLoading } = useClientQueries(
@@ -310,20 +343,36 @@ export default function MilestoneDetailsPage() {
     [milestoneTestRuns]
   );
 
-  // Batch-fetch test run summaries for all test runs
+  // Batch-fetch test run summaries for all test runs. The route caps a
+  // batch at 100 ids — milestones with many runs (especially via nested
+  // child milestones, D-06) exceed that, so chunk and merge.
   const { data: batchSummaries } = useQuery<BatchTestRunSummaryResponse>({
     queryKey: ["batchTestRunSummaries", testRunIds],
     queryFn: async () => {
       if (testRunIds.length === 0) {
         return { summaries: {} };
       }
-      const response = await fetch(
-        `/api/test-runs/summaries?testRunIds=${testRunIds.join(",")}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch batch test run summaries");
+      const CHUNK_SIZE = 100;
+      const chunks: number[][] = [];
+      for (let i = 0; i < testRunIds.length; i += CHUNK_SIZE) {
+        chunks.push(testRunIds.slice(i, i + CHUNK_SIZE));
       }
-      return response.json();
+      const responses = await Promise.all(
+        chunks.map(async (chunk) => {
+          const response = await fetch(
+            `/api/test-runs/summaries?testRunIds=${chunk.join(",")}`
+          );
+          if (!response.ok) {
+            throw new Error("Failed to fetch batch test run summaries");
+          }
+          return response.json() as Promise<BatchTestRunSummaryResponse>;
+        })
+      );
+      const merged: BatchTestRunSummaryResponse = { summaries: {} };
+      for (const part of responses) {
+        Object.assign(merged.summaries, part.summaries);
+      }
+      return merged;
     },
     enabled: testRunIds.length > 0,
     staleTime: 30000, // Cache for 30 seconds
@@ -433,17 +482,14 @@ export default function MilestoneDetailsPage() {
 
     setIsSubmitting(true);
     try {
-      // Transform enableNotifications checkbox to notifyDaysBefore value
-      const { enableNotifications, ...restData } = data;
-      const updateData = {
-        ...restData,
-        parentId: data.parentId ? Number(data.parentId) : null,
-        automaticCompletion: data.completedAt
-          ? data.automaticCompletion
-          : false,
-        notifyDaysBefore:
-          data.completedAt && enableNotifications ? data.notifyDaysBefore : 0,
-      };
+      // Transforms enableNotifications into notifyDaysBefore, and strips the
+      // tracker-owned fields (name/note/dates/state) for synced milestones —
+      // those are locked by field-level @deny rules and their mere presence
+      // in the payload would reject the whole update.
+      const updateData = buildMilestoneUpdatePayload(
+        data,
+        milestone.integrationId != null
+      );
 
       await updateMilestone({
         where: { id: Number(milestoneId) },
@@ -583,7 +629,7 @@ export default function MilestoneDetailsPage() {
                     </Button>
                   </Link>
                 )}
-                <CardTitle className="w-full text-xl md:text-2xl">
+                <CardTitle className="grow min-w-0 text-xl md:text-2xl">
                   {isEditMode ? (
                     <FormField
                       control={methods.control}
@@ -593,6 +639,7 @@ export default function MilestoneDetailsPage() {
                           <FormControl>
                             <Textarea
                               {...field}
+                              disabled={milestone?.integrationId != null}
                               className="text-xl md:text-2xl w-full"
                             />
                           </FormControl>
@@ -602,6 +649,13 @@ export default function MilestoneDetailsPage() {
                     />
                   ) : (
                     milestone?.name
+                  )}
+                  {!isEditMode && milestone && (
+                    <MilestoneSourceBadge
+                      milestone={milestone}
+                      projectId={Number(projectId)}
+                      className="mt-2"
+                    />
                   )}
                 </CardTitle>
               </div>
@@ -706,6 +760,27 @@ export default function MilestoneDetailsPage() {
                 <MilestoneSummary
                   milestoneId={milestone.id}
                   projectId={projectId}
+                  onScopeChipClick={() =>
+                    issuesCardRef.current?.expandInScope()
+                  }
+                  onFoundInTestingChipClick={() =>
+                    issuesCardRef.current?.expandFoundInTesting()
+                  }
+                />
+              </div>
+            )}
+
+            {/* Issues card (MLINK-04, D-07) — "In scope" (MilestoneIssue
+                links, this-milestone-only) and "Found in testing"
+                (test-run/session-linked defects, descendant-inclusive) as
+                two independently collapsible sections of one card (D-16
+                vocabulary). */}
+            {!isEditMode && milestone && (
+              <div className="mb-6">
+                <IssuesCard
+                  ref={issuesCardRef}
+                  milestoneId={milestone.id}
+                  projectId={Number(projectId)}
                 />
               </div>
             )}

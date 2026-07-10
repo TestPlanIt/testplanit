@@ -486,7 +486,11 @@ export class GeminiAdapter extends BaseLlmAdapter {
         response.statusText,
         errorText
       );
-      console.error("Gemini test connection error:", response.status, errorText);
+      console.error(
+        "Gemini test connection error:",
+        response.status,
+        errorText
+      );
       return false;
     } catch (error) {
       this.lastTestConnectionError = this.describeConnectionError(

@@ -57,6 +57,24 @@ export type MilestoneExportIssue = {
   status: string | null;
 };
 
+export type MilestoneExportMemberIssue = {
+  key: string;
+  title: string;
+  status: string | null;
+  source: "SYNCED" | "MANUAL";
+  /** Completed-outcome counts per real project status (matrix model). */
+  coverageStatuses: { statusName: string; count: number; colorValue: string }[];
+  untested: number;
+  /** No completed outcome in scope (issue-level gap state). */
+  uncovered: boolean;
+};
+
+export type MilestoneExportMemberCoverageTotals = {
+  statuses: { statusName: string; count: number; colorValue: string }[];
+  untested: number;
+  uncoveredIssues: number;
+};
+
 export type MilestoneExportReviewDecision = {
   entityType: "RUN" | "SESSION";
   entityId: number;
@@ -84,6 +102,8 @@ export type MilestoneExportData = {
   sessions: MilestoneExportSession[];
   descendants: MilestoneExportDescendant[];
   issues: MilestoneExportIssue[];
+  memberIssues: MilestoneExportMemberIssue[];
+  memberCoverageTotals: MilestoneExportMemberCoverageTotals;
   reviewDecisions: MilestoneExportReviewDecision[];
   generatedAt: string;
   projectId: number;

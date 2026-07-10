@@ -586,6 +586,9 @@ describe("performIssueRefreshSystem — SSE wake-up publish", () => {
       provider: "JIRA",
     });
     mockIssueFindFirst.mockResolvedValue(null);
+    // Auto-create: the issue must not pre-exist — the pre-upsert existence
+    // check drives the created/updated SSE event choice (WR-02).
+    mockIssueFindUnique.mockResolvedValueOnce(null);
     // Auto-create now goes through upsert; surface the resurrected/new
     // row's id so the SSE payload assertion gets the right value.
     mockIssueUpsert.mockResolvedValueOnce({ id: 99 });

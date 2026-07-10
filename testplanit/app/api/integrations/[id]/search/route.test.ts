@@ -99,6 +99,16 @@ describe("GET /api/integrations/[id]/search", () => {
       expect(response.status).toBe(400);
       expect(data.error).toContain("required");
     });
+
+    it("rejects an oversized query with a clean 400 instead of forwarding it upstream", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+
+      const response = await GET(createRequest("x".repeat(600)), params);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toContain("too long");
+    });
   });
 
   describe("Integration lookup", () => {

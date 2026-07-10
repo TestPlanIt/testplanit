@@ -52,6 +52,7 @@ describe("MantisBTAdapter", () => {
         attachments: false,
         linkedIssues: true,
         comments: true,
+        milestones: false,
       });
     });
   });

@@ -6,9 +6,11 @@ import type { NextRequest } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { getAdapter } from "~/lib/webhooks/adapters";
+import { isMilestoneEventType } from "~/lib/webhooks/adapters/types";
 import type { VerifyResult } from "~/lib/webhooks/adapters/types";
 import { redactToken } from "~/lib/webhooks/redaction";
 import { applyInboundIssueUpdate } from "~/lib/webhooks/services/applyInboundIssueUpdate";
+import { applyInboundMilestoneEvent } from "~/lib/webhooks/services/applyInboundMilestoneEvent";
 import { decrypt } from "~/utils/encryption";
 
 /**
@@ -196,17 +198,36 @@ async function handleWebhookReceive(
   //    itself looks up the adapter and runs the linked-ref + external-status
   //    extractors — the receiver shell stays adapter-agnostic and does NOT
   //    call extractors directly.
-  const result = await applyInboundIssueUpdate({
-    webhookConfigId: webhookConfig.id,
-    projectId: webhookConfig.projectId,
-    adapterType: webhookConfig.adapterType,
-    eventType: verify.payload.eventType,
-    payload: verify.payload,
-    payloadDigest,
-    receivedAt,
-    latencyMs,
-    statusCode: 200,
-  });
+  //
+  //    Dispatch on eventType SHAPE (isMilestoneEventType), not a hardcoded
+  //    provider check — a jira:version_*/sprint_* eventType routes to
+  //    applyInboundMilestoneEvent (HOOK-01/HOOK-02, resolves its OWN project
+  //    from the payload, never webhookConfig.projectId — Pitfall 6); every
+  //    other eventType continues to applyInboundIssueUpdate UNCHANGED. Both
+  //    services return a DeliveryOutcome-shaped result the tail below maps
+  //    to 200/500 identically.
+  const result = isMilestoneEventType(verify.payload.eventType)
+    ? await applyInboundMilestoneEvent({
+        webhookConfigId: webhookConfig.id,
+        adapterType: webhookConfig.adapterType,
+        eventType: verify.payload.eventType,
+        payload: verify.payload,
+        payloadDigest,
+        receivedAt,
+        latencyMs,
+        statusCode: 200,
+      })
+    : await applyInboundIssueUpdate({
+        webhookConfigId: webhookConfig.id,
+        projectId: webhookConfig.projectId,
+        adapterType: webhookConfig.adapterType,
+        eventType: verify.payload.eventType,
+        payload: verify.payload,
+        payloadDigest,
+        receivedAt,
+        latencyMs,
+        statusCode: 200,
+      });
 
   if (result.outcome === "error") {
     console.error(

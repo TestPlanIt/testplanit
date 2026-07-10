@@ -44,6 +44,9 @@ export type MilestoneSummaryData = {
   commentsCount: number;
   segments: MilestoneSegment[];
   issues: MilestoneIssue[];
+  // Count of `MilestoneIssue` rows for THIS milestone only (D-15 — never
+  // descendant-scoped), unlike `issues` above which rolls up children.
+  scopeCount: number;
 };
 
 export async function calculateMilestoneCompletion(

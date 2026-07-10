@@ -1,5 +1,6 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import AddTestRunModal from "@/[locale]/projects/runs/[projectId]/AddTestRunModal";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
 import { useDebounce } from "@/components/Debounce";
@@ -3552,6 +3553,11 @@ export default function Cases({
     }
   };
 
+  // In-place Add Test Run wizard seed — non-null mounts the modal.
+  const [createRunSeedIds, setCreateRunSeedIds] = useState<number[] | null>(
+    null
+  );
+
   // Add the handler for the new button
   const handleCreateTestRun = useCallback(async () => {
     if (selectedCaseIdsForBulkEdit.length === 0 || !isValidProjectId) return;
@@ -3597,18 +3603,12 @@ export default function Cases({
       }
     }
 
-    sessionStorage.setItem(
-      "createTestRun_selectedCases",
-      JSON.stringify(idsToSeed)
-    );
-
-    const queryParams = new URLSearchParams({
-      openAddRun: "true",
-    });
-    router.push(`/projects/runs/${projectId}?${queryParams.toString()}`);
+    // Open the Add Test Run wizard in place — no navigation to the runs
+    // page, so cancelling doesn't strand the user; the wizard's own toasts
+    // report success/failure.
+    setCreateRunSeedIds(idsToSeed);
   }, [
     selectedCaseIdsForBulkEdit,
-    router,
     projectId,
     isValidProjectId,
     excludeNotStartedFromRuns,
@@ -4070,6 +4070,17 @@ export default function Cases({
               : addResultModalState.steps
           }
           configuration={addResultModalState.configuration}
+        />
+      )}
+
+      {createRunSeedIds && (
+        <AddTestRunModal
+          open
+          onClose={() => setCreateRunSeedIds(null)}
+          initialSelectedCaseIds={createRunSeedIds}
+          onSelectedCasesChange={(cases: number[]) =>
+            setCreateRunSeedIds(cases)
+          }
         />
       )}
     </Card>

@@ -1086,19 +1086,19 @@
         "backToSignIn": "返回登录页面"
       },
       "passwordless": {
-        "waitingInstructions": "点击邮件中的链接从此浏览器登录，或在下方输入邮件中的验证码。",
-        "codeLabel": "登录验证码",
-        "verifyCode": "验证码",
+        "waitingInstructions": "点击电子邮件中的链接以从此浏览器登录，或在下方输入电子邮件中的代码。",
+        "codeLabel": "登录代码",
+        "verifyCode": "验证代码",
         "verifying": "正在核实……",
-        "invalidCode": "该验证码不正确。请检查邮件后重试。",
-        "codeExpired": "此登录请求已过期。请申请新链接。",
-        "tooManyAttempts": "错误尝试次数过多。请申请新链接以重试。",
-        "windowLost": "此窗口无法再完成登录。请申请新链接。",
-        "genericError": "我们无法为您登录。请申请新链接后重试。",
+        "invalidCode": "该代码不正确。请检查电子邮件并重试。",
+        "codeExpired": "此登录请求已过期。请请求新链接。",
+        "tooManyAttempts": "错误尝试次数过多。请请求新链接以重试。",
+        "windowLost": "此窗口已无法完成登录。请请求新链接。",
+        "genericError": "我们无法为您登录。请请求新链接并重试。",
         "tooManyRequests": "登录请求过多。请稍候片刻后重试。",
-        "haveCode": "已有登录验证码？",
-        "codeEntryDescription": "请输入登录邮件中的验证码。验证码仅在您请求该链接的浏览器中有效。",
-        "backToRequest": "改为申请新链接"
+        "haveCode": "已经有登录代码了？",
+        "codeEntryDescription": "请输入登录电子邮件中的代码。代码仅在您请求链接的浏览器中有效。",
+        "backToRequest": "改为请求新链接"
       },
       "twoFactor": {
         "title": "双因素身份验证",
@@ -1110,12 +1110,12 @@
     "passwordless": {
       "completingSignIn": "正在为您登录……",
       "completeErrorTitle": "我们无法为您登录",
-      "requestNewLink": "申请新链接",
-      "codeTitle": "您的登录验证码",
-      "codeInstructions": "您在其他设备或浏览器上打开了登录链接。请在您最初请求该链接的登录界面上输入此验证码。",
-      "codeCloseNotice": "输入验证码后，您可以关闭此窗口。",
+      "requestNewLink": "请求新链接",
+      "codeTitle": "您的登录代码",
+      "codeInstructions": "您在不同的设备或浏览器上打开了登录链接。请在您最初请求链接的登录界面上输入此代码。",
+      "codeCloseNotice": "输入代码后，您可以关闭此窗口。",
       "expiredTitle": "此登录链接已失效",
-      "expiredBody": "该链接可能已过期或已被使用。请从登录页面申请一个新链接 — 只需片刻即可完成。"
+      "expiredBody": "该链接可能已过期或已被使用。请从登录页面请求一个新链接——这只需要片刻。"
     },
     "errors": {
       "accessDenied": "访问被拒绝。您的帐户可能已停用或您没有登录权限。",
@@ -1379,7 +1379,18 @@
           "importStart": "导入",
           "importStarted": "导入已开始。问题将很快出现。",
           "importFailed": "导入失败",
-          "importPreviewFailed": "无法估算匹配数量"
+          "importPreviewFailed": "无法估算匹配数量",
+          "milestoneSync": {
+            "title": "里程碑同步",
+            "description": "从此跟踪工具的基于时间的工件同步 TestPlanIt 里程碑。",
+            "enableLabel": "启用里程碑同步",
+            "releasesLabel": "版本",
+            "sprintsLabel": "迭代",
+            "kindsLabel": "要同步的类型",
+            "autoTrackLabel": "自动添加新项目",
+            "settingsSaved": "里程碑同步设置已保存",
+            "saveError": "保存里程碑同步设置失败"
+          }
         },
         "integrationAssigned": "集成任务已成功分配",
         "integrationAssignError": "未能将问题集成分配给项目",
@@ -2138,6 +2149,94 @@
     "notifications": {
       "dueSoon": "里程碑“{name}”将于 {dueDate}到期。",
       "overdue": "里程碑“{name}”应于 {dueDate}日到期。"
+    },
+    "import": {
+      "importTitle": "从 Jira 导入",
+      "importDescription": "选择要作为 TestPlanIt 里程碑同步的 Jira 修复版本和迭代。",
+      "showClosed": "显示已关闭的",
+      "alreadyLinked": "已链接",
+      "selectedCount": "{count, plural, other {已选择 #}}",
+      "confirmSelection": "导入所选项",
+      "empty": "未找到里程碑",
+      "previewFailed": "无法从 Jira 加载里程碑",
+      "importFailed": "导入所选里程碑失败",
+      "importStarted": "导入已开始",
+      "kindRelease": "版本",
+      "kindSprint": "迭代",
+      "selectAll": "全选",
+      "searchPlaceholder": "搜索版本和迭代……",
+      "emptyFiltered": "没有符合您筛选条件的里程碑。",
+      "partialWarning": "部分 Jira 项目无法获取：",
+      "importing": "正在从 Jira 导入 {count, plural, other {# 个里程碑}}…",
+      "completed": "已从 Jira 导入 {count, plural, other {# 个里程碑}}",
+      "stillRunning": "导入仍在后台运行——完成后里程碑将会出现。"
+    },
+    "sync": {
+      "managedByJira": "由 Jira 管理",
+      "managedByJiraDescription": "此里程碑的名称、日期和状态由 Jira 管理。请在那里进行更改以在此处更新它们。",
+      "lastSynced": "上次同步于 {time}",
+      "openInJira": "在 Jira 中打开",
+      "providerJira": "吉拉",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "立即同步",
+      "unlinkMenuItem": "从 {provider} 取消链接",
+      "unlinkConfirmTitle": "取消链接里程碑？",
+      "unlinkConfirmDescription": "这将停止与跟踪工具的同步：字段将再次变为可编辑，同步的问题链接将变为手动（由您保留或移除），并且可以稍后通过再次导入此工件重新链接。",
+      "unlinkConfirmAction": "取消链接",
+      "unlinkSuccess": "里程碑已从跟踪工具取消链接。",
+      "unlinkError": "取消链接里程碑失败。",
+      "sourceRemoved": "来源已在 {provider} 中被移除",
+      "mergedInto": "已合并到 {target}"
+    },
+    "summary": {
+      "inScope": "{count, plural, other {# 个在范围内}}",
+      "foundInTesting": "{count, plural, other {# 个在测试中发现}}",
+      "includesChildMilestones": "包括子里程碑"
+    },
+    "members": {
+      "cardTitle": "问题",
+      "inScope": "在范围内",
+      "foundInTesting": "在测试中发现",
+      "foundInTestingEmpty": "未在测试中发现问题。",
+      "inScopeCrossBadge": "在范围内",
+      "refresh": "刷新",
+      "columnKey": "名称",
+      "columnStatus": "状态",
+      "columnCoverage": "覆盖率",
+      "columnSource": "来源",
+      "sourceSynced": "已同步",
+      "sourceManual": "手动",
+      "coveragePassed": "已通过",
+      "coverageFailed": "失败",
+      "coverageInProgress": "进行中",
+      "coverageNotRun": "未运行",
+      "coverageUncovered": "未覆盖",
+      "filterAllCoverage": "所有覆盖率",
+      "filterAllSources": "所有来源",
+      "filterAllTypes": "所有类型",
+      "empty": "尚无问题链接到此里程碑。",
+      "emptyFiltered": "没有问题符合当前筛选条件。",
+      "unlink": "取消链接",
+      "managedByJira": "由 Jira 管理——请在 Jira 中的版本/迭代中移除它",
+      "linkSuccess": "问题已链接到此里程碑。",
+      "linkError": "将问题链接到此里程碑失败。",
+      "unlinkSuccess": "问题已从此里程碑中移除。",
+      "unlinkError": "从此里程碑中移除问题失败。",
+      "overflowTitle": "Jira 中更多问题",
+      "overflowDescription": "这些问题在已链接的 Jira 版本/迭代中，但尚未在此处链接。",
+      "overflowCapped": "已上限为 {cap, number} 个——Jira 中还有 {overflowTotal, number} 个",
+      "overflowMoreAvailable": "Jira 中还有 {overflowTotal, number} 个可用",
+      "overflowImportAction": "导入并链接",
+      "overflowImportSuccess": "导入已开始——问题将在同步时出现。",
+      "overflowImportError": "从 Jira 导入成员问题失败。",
+      "emptyCta": "链接一个问题以开始使用。",
+      "columnDescription": "描述",
+      "unlinkConfirmTitle": "取消链接问题？",
+      "unlinkConfirmDescription": "这将从此里程碑中移除该问题。该问题本身会被保留，可以稍后再次链接。",
+      "totalsUncovered": "{count, plural, other {# 个未覆盖的问题}}",
+      "filterHasUntested": "有未测试的用例",
+      "createRunNoCases": "所选问题均未链接测试用例。",
+      "createTestRunDetailed": "创建测试运行（{issues, plural, other {# 个问题}} · {cases, plural, other {# 个用例}}）"
     }
   },
   "sessions": {
@@ -2281,7 +2380,7 @@
   "home": {
     "dashboard": {
       "title": "您的仪表盘",
-      "users": "There {count, plural, =1 {is # User} other {are # Users}}",
+      "users": "有 {count, plural, =1 {# 个用户} other {# 个用户}}",
       "yourProjects": "您的项目",
       "projects": "您有权访问 {count, plural, =1 {# 项目} other {# 项目集}}",
       "loading": "正在加载仪表盘...",
@@ -2755,7 +2854,7 @@
       "activeRunWarningMessage": "此测试用例属于 {count, plural, =1 {# 活动测试运行} other {# 活动测试运行}}。删除它会将这些运行标记为已删除。"
     },
     "deleteFolder": {
-      "confirmMessage": "{count, plural, =0 {Deleting this folder will also delete all subfolders. Are you sure?} one {Deleting this folder will also delete 1 test case in this folder and all subfolders. Are you sure?} other {Deleting this folder will also delete # test cases in this folder and all subfolders. Are you sure?}}",
+      "confirmMessage": "{count, plural, =0 {删除此文件夹将同时删除所有子文件夹。您确定要继续吗？} other {删除此文件夹将同时删除该文件夹及其所有子文件夹中的 # 个测试用例。您确定要继续吗？}}",
       "warning": "此文件夹及其所有测试用例将从项目中移除。这些测试用例的历史数据（包括结果）仍将保留在项目中。",
       "confirm": "确认删除文件夹",
       "success": "文件夹及其所有子文件夹/案例已成功删除。"
@@ -5258,6 +5357,7 @@
         "encrypted": "加密",
         "encryptedHelp": "该字段已加密并安全存储。",
         "changeCredential": "改变",
+        "leaveBlankToKeep": "留空以保留现有值",
         "apiKeyWarningTitle": "API密钥认证通知",
         "apiKeyWarningDescription": "使用 API 密钥身份验证时，即使电子邮件地址匹配，创建问题的报告者也可能与创建该问题的 TestPlanIt 用户不符：",
         "apiKeyWarningPoint1": "设置 Jira 报告人需要 API 令牌帐户拥有 Jira 管理员（“修改报告人”）权限。否则，Jira 将忽略该报告人，并将 API 令牌所有者记录为创建者。",
@@ -7705,9 +7805,9 @@
       "textBody": "登录 TestPlanIt\n\n点击下方链接登录：\n{url}\n\n为了您的安全，此链接只能使用一次。如需再次登录，请申请新链接。\n\n如果您没有请求此邮件，可以放心忽略它。"
     },
     "passwordless": {
-      "codeIntro": "正在其他设备上打开吗？请在您请求该链接的登录界面上输入以下验证码：",
-      "deviceNotice": "此链接会在您请求它的浏览器中为您登录。如果您在其他地方打开它，系统将显示上方的验证码，供您在原始窗口中输入。",
-      "textBody": "登录 TestPlanIt\n\n点击下方链接登录：\n{url}\n\n正在其他设备上打开吗？请在您请求该链接的登录界面上输入以下验证码：{code}\n\n如果您没有请求此邮件，可以放心忽略它。"
+      "codeIntro": "在不同设备上打开此链接？请在您请求链接的登录界面上输入以下代码：",
+      "deviceNotice": "此链接会从您请求它的浏览器为您登录。如果您在其他地方打开它，系统会向您显示上方的代码，供您在原始窗口中输入。",
+      "textBody": "登录 TestPlanIt\n\n点击下方链接登录：\n{url}\n\n在不同设备上打开此链接？请在您请求链接的登录界面上输入此代码：{code}\n\n如果您没有请求此电子邮件，可以放心忽略它。"
     }
   },
   "comments": {

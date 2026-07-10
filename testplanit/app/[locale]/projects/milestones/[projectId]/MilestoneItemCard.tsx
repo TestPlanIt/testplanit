@@ -7,6 +7,7 @@ import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
 import TextFromJson from "@/components/TextFromJson";
 import { Badge } from "@/components/ui/badge";
+import { MilestoneSourceBadge } from "./MilestoneSourceBadge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -125,6 +126,11 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
     theme || "light",
     colorMap
   );
+  // Start/Stop/Complete/Reopen write isStarted/isCompleted/startedAt/
+  // completedAt, all locked by @deny('update', integrationId != null) for
+  // synced milestones — hide those actions instead of offering ones that
+  // always fail. The tracker owns a synced milestone's lifecycle.
+  const isSynced = milestone.integrationId != null;
 
   return (
     <div
@@ -150,7 +156,16 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <MilestoneIconAndName milestone={milestone} projectId={projectId} />
+            <div className="flex items-center gap-2">
+              <MilestoneIconAndName
+                milestone={milestone}
+                projectId={projectId}
+              />
+              <MilestoneSourceBadge
+                milestone={milestone}
+                projectId={projectId}
+              />
+            </div>
             <p
               className={`${compact ? "hidden" : "hidden sm:block"} text-md text-muted-foreground ms-7`}
             >
@@ -209,23 +224,27 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuGroup>
-                  {!milestone.isStarted && !milestone.isCompleted && (
-                    <DropdownMenuItem
-                      onSelect={() => onStartMilestone(milestone)}
-                    >
-                      <SquarePlay className="w-5 h-5 me-2" />
-                      {tGlobal("common.actions.start")}
-                    </DropdownMenuItem>
-                  )}
-                  {milestone.isStarted && !milestone.isCompleted && (
-                    <DropdownMenuItem
-                      onSelect={() => onStopMilestone(milestone)}
-                    >
-                      <StopCircle className="w-5 h-5 me-2" />
-                      {t("status.stop")}
-                    </DropdownMenuItem>
-                  )}
-                  {milestone.isCompleted && (
+                  {!isSynced &&
+                    !milestone.isStarted &&
+                    !milestone.isCompleted && (
+                      <DropdownMenuItem
+                        onSelect={() => onStartMilestone(milestone)}
+                      >
+                        <SquarePlay className="w-5 h-5 me-2" />
+                        {tGlobal("common.actions.start")}
+                      </DropdownMenuItem>
+                    )}
+                  {!isSynced &&
+                    milestone.isStarted &&
+                    !milestone.isCompleted && (
+                      <DropdownMenuItem
+                        onSelect={() => onStopMilestone(milestone)}
+                      >
+                        <StopCircle className="w-5 h-5 me-2" />
+                        {t("status.stop")}
+                      </DropdownMenuItem>
+                    )}
+                  {!isSynced && milestone.isCompleted && (
                     <DropdownMenuItem
                       onSelect={() => onReopenMilestone(milestone)}
                       disabled={isParentCompleted(milestone.parentId)}
@@ -240,14 +259,16 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                       {tCommon("actions.edit")}
                     </div>
                   </DropdownMenuItem>
-                  {milestone.isStarted && !milestone.isCompleted && (
-                    <DropdownMenuItem
-                      onSelect={() => onOpenCompleteDialog(milestone)}
-                    >
-                      <CheckCircle className="w-5 h-5 me-2" />
-                      {tGlobal("common.actions.complete")}
-                    </DropdownMenuItem>
-                  )}
+                  {!isSynced &&
+                    milestone.isStarted &&
+                    !milestone.isCompleted && (
+                      <DropdownMenuItem
+                        onSelect={() => onOpenCompleteDialog(milestone)}
+                      >
+                        <CheckCircle className="w-5 h-5 me-2" />
+                        {tGlobal("common.actions.complete")}
+                      </DropdownMenuItem>
+                    )}
                   <DropdownMenuItem
                     onSelect={() => onOpenDeleteModal(milestone)}
                     className="text-destructive hover:text-destructive-foreground"

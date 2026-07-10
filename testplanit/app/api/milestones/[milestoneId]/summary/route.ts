@@ -9,6 +9,7 @@ import {
   getTestRunSegments,
   type MilestoneSummaryData,
 } from "~/lib/services/milestoneSummary";
+import { getVisibleMilestone } from "~/lib/services/milestoneAccess";
 import { authOptions } from "~/server/auth";
 
 export type { MilestoneSummaryData };
@@ -33,11 +34,10 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify milestone exists and get project ID
-    const milestone = await baseDb.milestones.findUnique({
-      where: { id: milestoneId },
-      select: { id: true, projectId: true },
-    });
+    // Policy-scoped visibility gate: the enhanced client's project-scoped
+    // read ACL decides access; unauthorized users get the same 404 as a
+    // missing milestone.
+    const milestone = await getVisibleMilestone(session, milestoneId);
 
     if (!milestone) {
       return NextResponse.json(
@@ -93,6 +93,13 @@ export async function GET(
       milestone.projectId
     );
 
+    // Scope count: this milestone's own MilestoneIssue links only (D-15,
+    // never descendant-scoped) — distinct from `issues` above, which rolls
+    // up test-run/session defects across the whole descendant tree.
+    const scopeCount = await baseDb.milestoneIssue.count({
+      where: { milestoneId },
+    });
+
     const response: MilestoneSummaryData = {
       milestoneId,
       totalItems,
@@ -102,6 +109,7 @@ export async function GET(
       commentsCount,
       segments: allSegments,
       issues,
+      scopeCount,
     };
 
     return NextResponse.json(response);

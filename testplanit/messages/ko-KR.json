@@ -1086,19 +1086,19 @@
         "backToSignIn": "로그인 페이지로 돌아가기"
       },
       "passwordless": {
-        "waitingInstructions": "이메일의 링크를 클릭하여 이 브라우저에서 로그인하거나, 아래에 이메일의 코드를 입력하세요.",
+        "waitingInstructions": "이 브라우저에서 로그인하려면 이메일의 링크를 클릭하거나 아래에 이메일의 코드를 입력하세요.",
         "codeLabel": "로그인 코드",
         "verifyCode": "코드 확인",
         "verifying": "확인 중...",
         "invalidCode": "코드가 올바르지 않습니다. 이메일을 확인하고 다시 시도하세요.",
         "codeExpired": "이 로그인 요청이 만료되었습니다. 새 링크를 요청하세요.",
         "tooManyAttempts": "잘못된 시도가 너무 많습니다. 다시 시도하려면 새 링크를 요청하세요.",
-        "windowLost": "이 창에서는 로그인을 완료할 수 없습니다. 새 링크를 요청하세요.",
+        "windowLost": "이 창에서는 더 이상 로그인을 완료할 수 없습니다. 새 링크를 요청하세요.",
         "genericError": "로그인할 수 없습니다. 새 링크를 요청하고 다시 시도하세요.",
         "tooManyRequests": "로그인 요청이 너무 많습니다. 잠시 기다린 후 다시 시도하세요.",
         "haveCode": "이미 로그인 코드가 있으신가요?",
         "codeEntryDescription": "로그인 이메일의 코드를 입력하세요. 코드는 링크를 요청한 브라우저에서만 작동합니다.",
-        "backToRequest": "대신 새 링크 요청"
+        "backToRequest": "대신 새 링크 요청하기"
       },
       "twoFactor": {
         "title": "2단계 인증",
@@ -1108,14 +1108,14 @@
       "contactAdmin": "시스템 관리자에게 문의하십시오."
     },
     "passwordless": {
-      "completingSignIn": "로그인하는 중...",
+      "completingSignIn": "로그인 중...",
       "completeErrorTitle": "로그인할 수 없습니다",
       "requestNewLink": "새 링크 요청",
       "codeTitle": "로그인 코드",
-      "codeInstructions": "다른 기기나 브라우저에서 로그인 링크를 열었습니다. 원래 요청한 로그인 화면에서 이 코드를 입력하세요.",
+      "codeInstructions": "다른 기기 또는 브라우저에서 로그인 링크를 열었습니다. 처음 요청한 로그인 화면에서 이 코드를 입력하세요.",
       "codeCloseNotice": "코드를 입력한 후에는 이 창을 닫아도 됩니다.",
       "expiredTitle": "이 로그인 링크는 더 이상 유효하지 않습니다",
-      "expiredBody": "링크가 만료되었거나 이미 사용되었을 수 있습니다. 로그인 페이지에서 새 링크를 요청하세요 — 잠깐이면 됩니다."
+      "expiredBody": "링크가 만료되었거나 이미 사용되었을 수 있습니다. 로그인 페이지에서 새 링크를 요청하세요. 잠깐이면 됩니다."
     },
     "errors": {
       "accessDenied": "접근이 거부되었습니다. 계정이 비활성화되었거나 로그인 권한이 없을 수 있습니다.",
@@ -1379,7 +1379,18 @@
           "importStart": "가져오기",
           "importStarted": "가져오기가 시작되었습니다. 이슈가 곧 표시됩니다.",
           "importFailed": "가져오기 실패",
-          "importPreviewFailed": "일치 항목을 추정할 수 없습니다"
+          "importPreviewFailed": "일치 항목을 추정할 수 없습니다",
+          "milestoneSync": {
+            "title": "마일스톤 동기화",
+            "description": "이 트래커의 시간 기반 아티팩트에서 TestPlanIt 마일스톤을 동기화합니다.",
+            "enableLabel": "마일스톤 동기화 활성화",
+            "releasesLabel": "릴리스",
+            "sprintsLabel": "스프린트",
+            "kindsLabel": "동기화할 종류",
+            "autoTrackLabel": "새로운 항목 자동 추가",
+            "settingsSaved": "마일스톤 동기화 설정이 저장되었습니다",
+            "saveError": "마일스톤 동기화 설정을 저장하는 데 실패했습니다"
+          }
         },
         "integrationAssigned": "통합 작업이 성공적으로 완료되었습니다.",
         "integrationAssignError": "이슈 통합을 프로젝트에 할당하는 데 실패했습니다.",
@@ -2138,6 +2149,94 @@
     "notifications": {
       "dueSoon": "마일스톤 \"{name}\"은 {dueDate}에 완료될 예정입니다.",
       "overdue": "마일스톤 \"{name}\"은 {dueDate}에 완료될 예정이었습니다."
+    },
+    "import": {
+      "importTitle": "Jira에서 가져오기",
+      "importDescription": "TestPlanIt 마일스톤으로 동기화할 Jira 수정 버전 및 스프린트를 선택하세요.",
+      "showClosed": "닫힌 항목 표시",
+      "alreadyLinked": "이미 연결됨",
+      "selectedCount": "{count, plural, other {# 선택됨}}",
+      "confirmSelection": "선택 항목 가져오기",
+      "empty": "마일스톤을 찾을 수 없습니다",
+      "previewFailed": "Jira에서 마일스톤을 불러오는 데 실패했습니다",
+      "importFailed": "선택한 마일스톤을 가져오는 데 실패했습니다",
+      "importStarted": "가져오기가 시작되었습니다",
+      "kindRelease": "릴리스",
+      "kindSprint": "스프린트",
+      "selectAll": "모두 선택",
+      "searchPlaceholder": "릴리스 및 스프린트 검색...",
+      "emptyFiltered": "필터 조건에 맞는 마일스톤이 없습니다.",
+      "partialWarning": "일부 Jira 프로젝트를 가져올 수 없습니다:",
+      "importing": "Jira에서 {count, plural, other {# 마일스톤}}을(를) 가져오는 중…",
+      "completed": "Jira에서 {count, plural, other {# 마일스톤}}을(를) 가져왔습니다",
+      "stillRunning": "가져오기가 백그라운드에서 계속 실행 중입니다. 완료되면 마일스톤이 표시됩니다."
+    },
+    "sync": {
+      "managedByJira": "Jira에서 관리됨",
+      "managedByJiraDescription": "이 마일스톤의 이름, 날짜, 상태는 Jira에서 관리됩니다. 여기에서도 업데이트하려면 Jira에서 변경하세요.",
+      "lastSynced": "마지막 동기화 {time}",
+      "openInJira": "Jira에서 열기",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "지금 동기화",
+      "unlinkMenuItem": "{provider}에서 연결 해제",
+      "unlinkConfirmTitle": "마일스톤 연결을 해제하시겠습니까?",
+      "unlinkConfirmDescription": "이렇게 하면 트래커와의 동기화가 중지됩니다. 필드가 다시 편집 가능해지고, 동기화된 이슈 링크는 수동으로 전환되며(유지 또는 삭제 가능), 이후 이 아티팩트를 다시 가져와서 재연결할 수 있습니다.",
+      "unlinkConfirmAction": "연결 해제",
+      "unlinkSuccess": "마일스톤이 트래커에서 연결 해제되었습니다.",
+      "unlinkError": "마일스톤 연결 해제에 실패했습니다.",
+      "sourceRemoved": "{provider}에서 원본이 삭제됨",
+      "mergedInto": "{target}으로 병합됨"
+    },
+    "summary": {
+      "inScope": "{count, plural, other {# 범위 내}}",
+      "foundInTesting": "{count, plural, other {# 테스트에서 발견됨}}",
+      "includesChildMilestones": "하위 마일스톤 포함"
+    },
+    "members": {
+      "cardTitle": "이슈",
+      "inScope": "범위 내",
+      "foundInTesting": "테스트에서 발견됨",
+      "foundInTestingEmpty": "테스트에서 발견된 이슈가 없습니다.",
+      "inScopeCrossBadge": "범위 내",
+      "refresh": "새로 고침",
+      "columnKey": "이름",
+      "columnStatus": "상태",
+      "columnCoverage": "커버리지",
+      "columnSource": "원본",
+      "sourceSynced": "동기화됨",
+      "sourceManual": "수동",
+      "coveragePassed": "통과됨",
+      "coverageFailed": "실패함",
+      "coverageInProgress": "진행 중",
+      "coverageNotRun": "실행되지 않음",
+      "coverageUncovered": "커버되지 않음",
+      "filterAllCoverage": "모든 커버리지",
+      "filterAllSources": "모든 원본",
+      "filterAllTypes": "모든 유형",
+      "empty": "이 마일스톤에 아직 연결된 이슈가 없습니다.",
+      "emptyFiltered": "현재 필터 조건에 맞는 이슈가 없습니다.",
+      "unlink": "연결 해제",
+      "managedByJira": "Jira에서 관리됨 — Jira의 버전/스프린트에서 제거하세요",
+      "linkSuccess": "이슈가 이 마일스톤에 연결되었습니다.",
+      "linkError": "이슈를 이 마일스톤에 연결하는 데 실패했습니다.",
+      "unlinkSuccess": "이슈가 이 마일스톤에서 제거되었습니다.",
+      "unlinkError": "이슈를 이 마일스톤에서 제거하는 데 실패했습니다.",
+      "overflowTitle": "Jira에 더 많은 이슈",
+      "overflowDescription": "이 이슈들은 연결된 Jira 버전/스프린트에 있지만 아직 여기에는 연결되지 않았습니다.",
+      "overflowCapped": "{cap, number}개로 제한됨 — Jira에 {overflowTotal, number}개 더 있음",
+      "overflowMoreAvailable": "Jira에 {overflowTotal, number}개 더 있음",
+      "overflowImportAction": "가져오기 및 연결",
+      "overflowImportSuccess": "가져오기가 시작되었습니다 — 동기화되면 이슈가 표시됩니다.",
+      "overflowImportError": "Jira에서 구성원 이슈를 가져오는 데 실패했습니다.",
+      "emptyCta": "시작하려면 이슈를 연결하세요.",
+      "columnDescription": "설명",
+      "unlinkConfirmTitle": "이슈 연결을 해제하시겠습니까?",
+      "unlinkConfirmDescription": "이렇게 하면 이 마일스톤에서 이슈가 제거됩니다. 이슈 자체는 유지되며 나중에 다시 연결할 수 있습니다.",
+      "totalsUncovered": "{count, plural, other {# 커버되지 않은 이슈}}",
+      "filterHasUntested": "테스트되지 않은 케이스 있음",
+      "createRunNoCases": "선택한 이슈 중 연결된 테스트 케이스가 있는 것이 없습니다.",
+      "createTestRunDetailed": "테스트 실행 생성 ({issues, plural, other {# 이슈}} · {cases, plural, other {# 케이스}})"
     }
   },
   "sessions": {
@@ -5258,6 +5357,7 @@
         "encrypted": "암호화됨",
         "encryptedHelp": "이 필드는 암호화되어 안전하게 저장됩니다.",
         "changeCredential": "변화",
+        "leaveBlankToKeep": "기존 값을 유지하려면 비워 두십시오",
         "apiKeyWarningTitle": "API 키 인증 알림",
         "apiKeyWarningDescription": "API 키 인증을 사용하는 경우, 이메일 주소가 일치하더라도 생성된 이슈의 보고자가 해당 이슈를 생성한 TestPlanIt 사용자와 일치하지 않을 수 있습니다.",
         "apiKeyWarningPoint1": "Jira 리포터를 설정하려면 API 토큰 계정에 Jira 관리자 권한(\"리포터 수정\")이 있어야 합니다. 이 권한이 없으면 Jira는 리포터를 무시하고 API 토큰 소유자를 생성자로 기록합니다.",
@@ -7705,9 +7805,9 @@
       "textBody": "TestPlanIt에 로그인\n\n로그인하려면 아래 링크를 클릭하세요:\n{url}\n\n보안을 위해 이 링크는 한 번만 사용할 수 있습니다. 다시 로그인해야 하는 경우 새 링크를 요청하세요.\n\n이 이메일을 요청하지 않으셨다면 무시하셔도 안전합니다."
     },
     "passwordless": {
-      "codeIntro": "다른 기기에서 여셨나요? 링크를 요청한 로그인 화면에서 이 코드를 입력하세요:",
-      "deviceNotice": "이 링크는 요청한 브라우저에서 로그인됩니다. 다른 곳에서 열면 원래 창에 입력할 위의 코드가 표시됩니다.",
-      "textBody": "TestPlanIt에 로그인\n\n로그인하려면 아래 링크를 클릭하세요:\n{url}\n\n다른 기기에서 여셨나요? 링크를 요청한 로그인 화면에서 다음 코드를 입력하세요: {code}\n\n이 이메일을 요청하지 않으셨다면 무시하셔도 안전합니다."
+      "codeIntro": "다른 기기에서 열고 계신가요? 링크를 요청한 로그인 화면에서 이 코드를 입력하세요:",
+      "deviceNotice": "이 링크는 요청한 브라우저에서 로그인합니다. 다른 곳에서 열면 원래 창에 입력할 위의 코드가 표시됩니다.",
+      "textBody": "TestPlanIt에 로그인\n\n로그인하려면 아래 링크를 클릭하세요:\n{url}\n\n다른 기기에서 열고 계신가요? 링크를 요청한 로그인 화면에서 이 코드를 입력하세요: {code}\n\n이 이메일을 요청하지 않으셨다면 무시하셔도 됩니다."
     }
   },
   "comments": {

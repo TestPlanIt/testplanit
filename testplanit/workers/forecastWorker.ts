@@ -299,6 +299,17 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
               completedAt: {
                 lte: now, // Due date has passed
               },
+              // LOCK-04 (Phase 17) + HOOK-02 (Phase 19, Pitfall 4): skip
+              // ONLY actively-synced milestones — integrationId set AND
+              // detachedAt null. MilestoneSyncService is the sole writer of
+              // isCompleted for an actively-synced row; without this filter
+              // the completion worker would race it and overwrite the
+              // tracker's state. A CONVERTED (detached) milestone keeps
+              // integrationId non-null for identity/badge purposes (Pitfall
+              // 3) but is no longer tracker-owned — it must become eligible
+              // for auto-completion again, so `integrationId != null` alone
+              // is no longer a valid "skip" signal post-conversion.
+              OR: [{ integrationId: null }, { detachedAt: { not: null } }],
             },
             select: {
               id: true,

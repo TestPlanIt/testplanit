@@ -43,6 +43,45 @@ export interface VerifyFail {
 
 export type VerifyResult = VerifyOk | VerifyFail;
 
+/**
+ * Discriminated ref extracted from a jira:version_* / sprint_* payload —
+ * everything `applyInboundMilestoneEvent` needs to resolve the event's OWN
+ * project (Pitfall 6) and dispatch refresh vs convert (Pattern 3).
+ */
+export type MilestoneEventRef =
+  | {
+      kind: "RELEASE";
+      externalId: string;
+      /** Present on version events; absent on sprint events (Pitfall 2). */
+      externalProjectId: string;
+      /** True on `jira:version_deleted` when `mergedTo` is present, or a
+       *  literal `jira:version_merged` eventType alias (RESEARCH.md A2). */
+      merge: boolean;
+      /** The merge target's external version id, when `merge` is true. */
+      mergedToExternalId?: string;
+    }
+  | {
+      kind: "ITERATION";
+      externalId: string;
+      /** Sprints carry no project field — only the origin board id, which
+       *  the caller resolves to a project via JiraAdapter.resolveBoardProject. */
+      originBoardId: string;
+    };
+
+/**
+ * Shared eventType-shape predicate for the receiver route's dispatch branch
+ * (version/sprint -> applyInboundMilestoneEvent, else -> applyInboundIssueUpdate).
+ * Lives at the adapter/service boundary — NOT inlined in the route — so the
+ * route stays provider-agnostic (dispatches on eventType SHAPE, never a
+ * hardcoded Jira object-shape check) and the prefix logic has exactly one
+ * source of truth shared with `buildPayload`'s own branch in `jira.ts`.
+ */
+export function isMilestoneEventType(eventType: string): boolean {
+  return (
+    eventType.startsWith("jira:version_") || eventType.startsWith("sprint_")
+  );
+}
+
 export interface WebhookAdapter {
   readonly adapterType: AdapterType;
   /**
@@ -57,6 +96,18 @@ export interface WebhookAdapter {
   } | null;
 
   extractExternalStatus(payload: unknown, eventType: string): string | null;
+
+  /**
+   * Extracts the milestone identity + project-resolution fields from a
+   * jira:version_* / sprint_* payload. Optional — only adapters with
+   * milestone-sync support (Jira today) implement this; the receiver route
+   * dispatches to it only for eventTypes matching the version_/sprint_
+   * prefix shape.
+   */
+  extractMilestoneEventRef?(
+    payload: unknown,
+    eventType: string
+  ): MilestoneEventRef | null;
 }
 
 export interface OutboundEnvelope {

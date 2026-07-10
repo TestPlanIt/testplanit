@@ -13,6 +13,34 @@ export interface IssueAdapterCapabilities {
   attachments: boolean;
   linkedIssues: boolean;
   comments: boolean;
+  /**
+   * Whether this adapter can fetch time-based tracker artifacts (Jira Fix
+   * Versions / Sprints, or the provider's equivalent) for milestone sync.
+   * `false` for adapters with no such concept; otherwise the supported
+   * kinds and whether the provider can push webhook events for them.
+   */
+  milestones:
+    false | { kinds: Array<"RELEASE" | "ITERATION">; webhooks: boolean };
+}
+
+/**
+ * A time-based tracker artifact (Jira Fix Version / Sprint, or the
+ * provider's equivalent) normalized into a provider-neutral shape for
+ * milestone sync. See ADPT-01/ADPT-02.
+ */
+export interface ExternalMilestone {
+  id: string;
+  kind: "RELEASE" | "ITERATION";
+  name: string;
+  description?: string;
+  startDate?: Date;
+  endDate?: Date;
+  /** Normalized 3-value state. */
+  state: "FUTURE" | "ACTIVE" | "CLOSED";
+  /** Provider-raw state string preserved for display/debugging, e.g.
+   *  "released", "archived", "closed", "active", "future". */
+  rawState?: string;
+  url?: string;
 }
 
 export interface IssueSearchOptions {
@@ -73,6 +101,13 @@ export interface IssueData {
    */
   components?: string[];
   customFields?: Record<string, any>;
+  /**
+   * Parent issue ref (Jira sub-task/child-of-epic `fields.parent`, or the
+   * provider's equivalent hierarchy pointer). Present only when the source
+   * issue has a parent — mirrors mapLinkedIssues' `fields.parent && fields.parent.id`
+   * guard, surfaced here for the membership-import path (D-14).
+   */
+  parent?: { id: string; key?: string };
   createdAt: Date;
   updatedAt: Date;
   url?: string;
@@ -211,6 +246,57 @@ export interface IssueAdapter {
    * omit this method and declare `comments: false` in their capabilities.
    */
   getIssueComments?(issueId: string): Promise<IssueComment[]>;
+
+  /**
+   * Fetch time-based tracker artifacts (Jira Fix Versions / Sprints, or the
+   * provider's equivalent) for milestone sync. Adapters without the
+   * `milestones` capability omit this method and declare `milestones: false`.
+   *
+   * `projectKey` is required: every Jira endpoint this method calls
+   * (`/project/{key}/version`, board discovery's `projectKeyOrId`) is
+   * project-scoped, and the adapter instance itself is integration-scoped,
+   * not project-scoped — the same reason `getIssueTypes`/`searchUsers` take
+   * `projectKey` as an explicit caller parameter rather than reading it off
+   * adapter config.
+   */
+  getExternalMilestones?(options: {
+    projectKey: string;
+    kind?: "RELEASE" | "ITERATION";
+    includeClosed?: boolean;
+    pageToken?: string;
+  }): Promise<{
+    items: ExternalMilestone[];
+    hasMore: boolean;
+    nextPageToken?: string;
+  }>;
+
+  /**
+   * Get the issues that belong to a given external milestone (Jira Fix
+   * Version / Sprint membership, or the provider's equivalent). Interface
+   * only this phase — Jira implementation lands in Phase 18.
+   */
+  getMilestoneIssues?(
+    ref: { id: string; kind: "RELEASE" | "ITERATION" },
+    options?: { pageToken?: string; limit?: number }
+  ): Promise<{
+    issues: IssueData[];
+    total?: number;
+    hasMore: boolean;
+    nextPageToken?: string;
+  }>;
+
+  /**
+   * Resolve a single board's owning project — sprint webhook payloads carry
+   * only `originBoardId` (no project reference), so `applyInboundMilestoneEvent`
+   * needs board->project resolution to find which TestPlanIt project a
+   * `sprint_*` event belongs to. Optional — only adapters with ITERATION
+   * milestone support (Jira today) implement this. Returns `null` (never
+   * throws) when the board is unmatched/unauthorized — the D-03
+   * ack-and-drop path.
+   */
+  resolveBoardProject?(
+    boardId: string
+  ): Promise<{ projectId: string; projectKey: string } | null>;
 
   /**
    * Register a webhook for receiving updates

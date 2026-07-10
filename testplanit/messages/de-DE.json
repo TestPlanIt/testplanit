@@ -1036,7 +1036,7 @@
     "plural": {
       "case": "{count, plural, =1 {Fall} other {Fälle}}",
       "result": "{count, plural, =1 {Ergebnis} other {Ergebnisse}}",
-      "run": "{count, plural, =1 {run} other {runs}}",
+      "run": "{count, plural, =1 {Durchlauf} other {Durchläufe}}",
       "comment": "{count, plural, =1 {# Kommentar} other {# Kommentare}}"
     },
     "success": {
@@ -1086,13 +1086,13 @@
         "backToSignIn": "Zurück zur Anmeldeseite"
       },
       "passwordless": {
-        "waitingInstructions": "Klicken Sie auf den Link in der E-Mail, um sich in diesem Browser anzumelden, oder geben Sie unten den Code aus der E-Mail ein.",
+        "waitingInstructions": "Klicken Sie auf den Link in der E-Mail, um sich in diesem Browser anzumelden, oder geben Sie den Code aus der E-Mail unten ein.",
         "codeLabel": "Anmeldecode",
         "verifyCode": "Code überprüfen",
         "verifying": "Überprüfung läuft...",
         "invalidCode": "Dieser Code ist nicht richtig. Überprüfen Sie die E-Mail und versuchen Sie es erneut.",
         "codeExpired": "Diese Anmeldeanfrage ist abgelaufen. Fordern Sie einen neuen Link an.",
-        "tooManyAttempts": "Zu viele fehlgeschlagene Versuche. Fordern Sie einen neuen Link an, um es erneut zu versuchen.",
+        "tooManyAttempts": "Zu viele fehlerhafte Versuche. Fordern Sie einen neuen Link an, um es erneut zu versuchen.",
         "windowLost": "Dieses Fenster kann die Anmeldung nicht mehr abschließen. Fordern Sie einen neuen Link an.",
         "genericError": "Wir konnten Sie nicht anmelden. Fordern Sie einen neuen Link an und versuchen Sie es erneut.",
         "tooManyRequests": "Zu viele Anmeldeanfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
@@ -1115,7 +1115,7 @@
       "codeInstructions": "Sie haben den Anmeldelink auf einem anderen Gerät oder Browser geöffnet. Geben Sie diesen Code auf dem Anmeldebildschirm ein, auf dem Sie ihn ursprünglich angefordert haben.",
       "codeCloseNotice": "Sie können dieses Fenster schließen, sobald Sie den Code eingegeben haben.",
       "expiredTitle": "Dieser Anmeldelink ist nicht mehr gültig",
-      "expiredBody": "Der Link ist möglicherweise abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen von der Anmeldeseite an — das dauert nur einen Moment."
+      "expiredBody": "Der Link ist möglicherweise abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen von der Anmeldeseite an — es dauert nur einen Moment."
     },
     "errors": {
       "accessDenied": "Zugriff verweigert. Ihr Konto ist möglicherweise inaktiv oder Sie haben keine Berechtigung zum Anmelden.",
@@ -1379,7 +1379,18 @@
           "importStart": "Importieren",
           "importStarted": "Import gestartet. Probleme werden in Kürze angezeigt.",
           "importFailed": "Import fehlgeschlagen",
-          "importPreviewFailed": "Übereinstimmungen konnten nicht geschätzt werden"
+          "importPreviewFailed": "Übereinstimmungen konnten nicht geschätzt werden",
+          "milestoneSync": {
+            "title": "Meilenstein-Synchronisierung",
+            "description": "Synchronisieren Sie TestPlanIt-Meilensteine aus den zeitbasierten Artefakten dieses Trackers.",
+            "enableLabel": "Meilenstein-Synchronisierung aktivieren",
+            "releasesLabel": "Versionen",
+            "sprintsLabel": "Sprints",
+            "kindsLabel": "Zu synchronisierende Arten",
+            "autoTrackLabel": "Neue automatisch hinzufügen",
+            "settingsSaved": "Einstellungen für die Meilenstein-Synchronisierung gespeichert",
+            "saveError": "Einstellungen für die Meilenstein-Synchronisierung konnten nicht gespeichert werden"
+          }
         },
         "integrationAssigned": "Integration erfolgreich zugewiesen",
         "integrationAssignError": "Fehler beim Zuordnen der Problemintegration zum Projekt",
@@ -2138,6 +2149,94 @@
     "notifications": {
       "dueSoon": "Meilenstein \"{name}\" ist fällig am {dueDate}",
       "overdue": "Der Meilenstein \"{name}\" war am {dueDate} fällig."
+    },
+    "import": {
+      "importTitle": "Aus Jira importieren",
+      "importDescription": "Wählen Sie die Jira Fix Versions und Sprints aus, die als TestPlanIt-Meilensteine synchronisiert werden sollen.",
+      "showClosed": "Geschlossene anzeigen",
+      "alreadyLinked": "Bereits verlinkt",
+      "selectedCount": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
+      "confirmSelection": "Auswahl importieren",
+      "empty": "Keine Meilensteine gefunden",
+      "previewFailed": "Meilensteine konnten nicht aus Jira geladen werden",
+      "importFailed": "Ausgewählte Meilensteine konnten nicht importiert werden",
+      "importStarted": "Import gestartet",
+      "kindRelease": "Version",
+      "kindSprint": "Sprint",
+      "selectAll": "Alle auswählen",
+      "searchPlaceholder": "Releases und Sprints suchen...",
+      "emptyFiltered": "Keine Meilensteine entsprechen Ihren Filtern.",
+      "partialWarning": "Einige Jira-Projekte konnten nicht abgerufen werden:",
+      "importing": "{count, plural, one {# Meilenstein} other {# Meilensteine}} werden aus Jira importiert…",
+      "completed": "{count, plural, one {# Meilenstein} other {# Meilensteine}} aus Jira importiert",
+      "stillRunning": "Der Import läuft noch im Hintergrund — Meilensteine werden angezeigt, wenn er abgeschlossen ist."
+    },
+    "sync": {
+      "managedByJira": "Verwaltet von Jira",
+      "managedByJiraDescription": "Name, Termine und Status dieses Meilensteins werden von Jira verwaltet. Nehmen Sie dort Änderungen vor, um diese hier zu aktualisieren.",
+      "lastSynced": "Zuletzt synchronisiert: {time}",
+      "openInJira": "In Jira öffnen",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "Jetzt synchronisieren",
+      "unlinkMenuItem": "Verknüpfung mit {provider} aufheben",
+      "unlinkConfirmTitle": "Meilenstein-Verknüpfung aufheben?",
+      "unlinkConfirmDescription": "Dadurch wird die Synchronisierung mit dem Tracker beendet: Felder werden wieder bearbeitbar, synchronisierte Problem-Verknüpfungen werden manuell (Sie können sie beibehalten oder entfernen), und eine erneute Verknüpfung ist später möglich, indem Sie dieses Artefakt erneut importieren.",
+      "unlinkConfirmAction": "Verknüpfung aufheben",
+      "unlinkSuccess": "Meilenstein-Verknüpfung mit dem Tracker aufgehoben.",
+      "unlinkError": "Die Verknüpfung des Meilensteins konnte nicht aufgehoben werden.",
+      "sourceRemoved": "Quelle entfernt in {provider}",
+      "mergedInto": "zusammengeführt in {target}"
+    },
+    "summary": {
+      "inScope": "{count, plural, one {# im Geltungsbereich} other {# im Geltungsbereich}}",
+      "foundInTesting": "{count, plural, one {# beim Testen gefunden} other {# beim Testen gefunden}}",
+      "includesChildMilestones": "Enthält untergeordnete Meilensteine"
+    },
+    "members": {
+      "cardTitle": "Probleme",
+      "inScope": "Im Geltungsbereich",
+      "foundInTesting": "Beim Testen gefunden",
+      "foundInTestingEmpty": "Keine Probleme beim Testen gefunden.",
+      "inScopeCrossBadge": "Im Geltungsbereich",
+      "refresh": "Aktualisieren",
+      "columnKey": "Name",
+      "columnStatus": "Status",
+      "columnCoverage": "Abdeckung",
+      "columnSource": "Quelle",
+      "sourceSynced": "Synchronisiert",
+      "sourceManual": "Manuell",
+      "coveragePassed": "Bestanden",
+      "coverageFailed": "Fehlgeschlagen",
+      "coverageInProgress": "In Bearbeitung",
+      "coverageNotRun": "Nicht ausgeführt",
+      "coverageUncovered": "Nicht abgedeckt",
+      "filterAllCoverage": "Alle Abdeckungen",
+      "filterAllSources": "Alle Quellen",
+      "filterAllTypes": "Alle Arten",
+      "empty": "Diesem Meilenstein sind noch keine Probleme zugeordnet.",
+      "emptyFiltered": "Keine Probleme entsprechen den aktuellen Filtern.",
+      "unlink": "Verknüpfung aufheben",
+      "managedByJira": "Verwaltet von Jira — entfernen Sie es aus der Version/dem Sprint in Jira",
+      "linkSuccess": "Problem mit diesem Meilenstein verknüpft.",
+      "linkError": "Das Problem konnte nicht mit diesem Meilenstein verknüpft werden.",
+      "unlinkSuccess": "Problem von diesem Meilenstein entfernt.",
+      "unlinkError": "Das Problem konnte nicht von diesem Meilenstein entfernt werden.",
+      "overflowTitle": "Weitere Probleme in Jira",
+      "overflowDescription": "Diese Probleme befinden sich in der verknüpften Jira-Version/dem Sprint, sind aber hier noch nicht verknüpft.",
+      "overflowCapped": "Begrenzt auf {cap, number} — {overflowTotal, number} weitere in Jira",
+      "overflowMoreAvailable": "{overflowTotal, number} weitere verfügbar in Jira",
+      "overflowImportAction": "Importieren & verknüpfen",
+      "overflowImportSuccess": "Import gestartet — Probleme werden angezeigt, sobald sie synchronisiert sind.",
+      "overflowImportError": "Mitgliederprobleme konnten nicht aus Jira importiert werden.",
+      "emptyCta": "Verknüpfen Sie ein Problem, um zu beginnen.",
+      "columnDescription": "Beschreibung",
+      "unlinkConfirmTitle": "Problem-Verknüpfung aufheben?",
+      "unlinkConfirmDescription": "Dadurch wird das Problem von diesem Meilenstein entfernt. Das Problem selbst bleibt erhalten und kann später erneut verknüpft werden.",
+      "totalsUncovered": "{count, plural, one {# nicht abgedecktes Problem} other {# nicht abgedeckte Probleme}}",
+      "filterHasUntested": "Hat ungetestete Fälle",
+      "createRunNoCases": "Keines der ausgewählten Probleme hat verknüpfte Testfälle.",
+      "createTestRunDetailed": "Testlauf erstellen ({issues, plural, one {# Problem} other {# Probleme}} · {cases, plural, one {# Fall} other {# Fälle}})"
     }
   },
   "sessions": {
@@ -5258,6 +5357,7 @@
         "encrypted": "Verschlüsselt",
         "encryptedHelp": "Dieses Feld ist verschlüsselt und sicher gespeichert.",
         "changeCredential": "Ändern",
+        "leaveBlankToKeep": "Leer lassen, um den bestehenden Wert zu behalten",
         "apiKeyWarningTitle": "Hinweis zur API-Schlüsselauthentifizierung",
         "apiKeyWarningDescription": "Bei der API-Schlüssel-Authentifizierung stimmt der Melder erstellter Probleme möglicherweise nicht mit dem TestPlanIt-Benutzer überein, der sie erstellt hat – selbst wenn die E-Mail-Adressen übereinstimmen:",
         "apiKeyWarningPoint1": "Für die Festlegung des Jira-Melders muss das API-Token-Konto über die Jira-Administratorberechtigung („Melder bearbeiten“) verfügen. Andernfalls ignoriert Jira den Melder, und der API-Token-Inhaber wird als Ersteller erfasst.",
@@ -7706,7 +7806,7 @@
     },
     "passwordless": {
       "codeIntro": "Öffnen Sie dies auf einem anderen Gerät? Geben Sie diesen Code auf dem Anmeldebildschirm ein, auf dem Sie den Link angefordert haben:",
-      "deviceNotice": "Dieser Link meldet Sie in dem Browser an, in dem Sie ihn angefordert haben. Wenn Sie ihn an einem anderen Ort öffnen, wird Ihnen der obige Code angezeigt, den Sie in Ihrem ursprünglichen Fenster eingeben können.",
+      "deviceNotice": "Dieser Link meldet Sie in dem Browser an, in dem Sie ihn angefordert haben. Wenn Sie ihn anderswo öffnen, wird Ihnen der obige Code angezeigt, den Sie in Ihrem ursprünglichen Fenster eingeben können.",
       "textBody": "Bei TestPlanIt anmelden\n\nKlicken Sie auf den folgenden Link, um sich anzumelden:\n{url}\n\nÖffnen Sie dies auf einem anderen Gerät? Geben Sie diesen Code auf dem Anmeldebildschirm ein, auf dem Sie den Link angefordert haben: {code}\n\nWenn Sie diese E-Mail nicht angefordert haben, können Sie sie ignorieren."
     }
   },
