@@ -80,6 +80,7 @@ overrides:
   joi: ^17.13.4
 
 patchedDependencies:
+  '@acid-info/docusaurus-og@1.0.3-beta.2': beddb9454387dac2126078c1626f4582ba524500d1c488c358685c5365660068
   gray-matter@4.0.3: 82198c3ee34e2823c4e9793c5209cf97bd566d5610c3f6582dc3f044ca423d6f
   read-yaml-file@1.1.0: 488393f543748b1b0a4fbe3524f9536a55b385493bcf9c0c7c94a2e624ebf4f6
 
@@ -153,7 +154,7 @@ importers:
     dependencies:
       '@acid-info/docusaurus-og':
         specifier: 1.0.3-beta.2
-        version: 1.0.3-beta.2(@mdx-js/react@3.1.1(@types/react@19.2.17)(react@19.2.7))(esbuild@0.28.1)(postcss@8.5.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3)
+        version: 1.0.3-beta.2(patch_hash=beddb9454387dac2126078c1626f4582ba524500d1c488c358685c5365660068)(@mdx-js/react@3.1.1(@types/react@19.2.17)(react@19.2.7))(esbuild@0.28.1)(postcss@8.5.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3)
       '@docusaurus/core':
         specifier: 3.10.1
         version: 3.10.1(@mdx-js/react@3.1.1(@types/react@19.2.17)(react@19.2.7))(esbuild@0.28.1)(postcss@8.5.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3)
@@ -17246,7 +17247,7 @@ packages:
 
 snapshots:
 
-  '@acid-info/docusaurus-og@1.0.3-beta.2(@mdx-js/react@3.1.1(@types/react@19.2.17)(react@19.2.7))(esbuild@0.28.1)(postcss@8.5.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3)':
+  '@acid-info/docusaurus-og@1.0.3-beta.2(patch_hash=beddb9454387dac2126078c1626f4582ba524500d1c488c358685c5365660068)(@mdx-js/react@3.1.1(@types/react@19.2.17)(react@19.2.7))(esbuild@0.28.1)(postcss@8.5.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3)':
     dependencies:
       '@docusaurus/core': 3.8.1(@mdx-js/react@3.1.1(@types/react@19.2.17)(react@19.2.7))(esbuild@0.28.1)(postcss@8.5.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3)
       '@docusaurus/module-type-aliases': 3.8.1(esbuild@0.28.1)(postcss@8.5.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

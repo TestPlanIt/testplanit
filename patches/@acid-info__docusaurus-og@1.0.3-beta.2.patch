@@ -1,0 +1,18 @@
+diff --git a/lib/server/blog.plugin.js b/lib/server/blog.plugin.js
+index 56d77463ad3299e030ee0ccad07195a8d331a425..b1ef6ac31693c10c4ae8e8dc46fa4fe4b5e56b6b 100644
+--- a/lib/server/blog.plugin.js
++++ b/lib/server/blog.plugin.js
+@@ -53,7 +53,12 @@ class BlogPlugin {
+     loadInstance = async (plugin) => {
+         const content = plugin.content;
+         const options = plugin.options;
+-        content.blogListPaginated.forEach((value) => {
++        // Docusaurus 3.10 removed `blogListPaginated` from the blog plugin's
++        // loaded content (paginated list pages are derived at route creation
++        // now), so it is undefined at postBuild time. Guard it: blog list
++        // pages fall back to the site's static social card instead of a
++        // generated OG image; per-post images below are unaffected.
++        (content.blogListPaginated ?? []).forEach((value) => {
+             this.pages.push({
+                 data: value,
+                 plugin: options,
