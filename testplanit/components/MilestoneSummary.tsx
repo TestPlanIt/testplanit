@@ -20,6 +20,7 @@ import {
   ListChecks,
   MessageSquare,
   SquarePlay,
+  Target,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -400,7 +401,10 @@ export function MilestoneSummary({
               links, D-15 — this milestone only) vs. what testing turned up
               (test-run/session-linked defects, rolled up through
               descendants). Two unrelated counts that both used to render as
-              one "issues" chip, which confused users when they diverged. */}
+              one "issues" chip, which confused users when they diverged.
+              Icon + count only — the full label lives in the tooltip and
+              aria-label, and the same icons head the matching accordion
+              sections (Target = in scope, Bug = found in testing). */}
           {(summaryData.scopeCount > 0 ||
             (summaryData.issues && summaryData.issues.length > 0)) && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -412,32 +416,37 @@ export function MilestoneSummary({
                       e.stopPropagation();
                       onScopeChipClick();
                     }}
-                    className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                    className="inline-flex items-center hover:text-foreground transition-colors"
+                    title={tMilestones("summary.inScope", {
+                      count: summaryData.scopeCount,
+                    })}
+                    aria-label={tMilestones("summary.inScope", {
+                      count: summaryData.scopeCount,
+                    })}
                     data-testid="milestone-summary-scope-chip"
                   >
                     <Badge className="cursor-pointer text-xs px-1.5 py-0">
+                      <Target className="w-3 h-3 me-0.5 shrink-0" />
                       {summaryData.scopeCount}
                     </Badge>
-                    {tMilestones("summary.inScope", {
-                      count: summaryData.scopeCount,
-                    })}
                   </button>
                 ) : (
                   <span
-                    className="inline-flex items-center gap-1"
+                    className="inline-flex items-center"
+                    title={tMilestones("summary.inScope", {
+                      count: summaryData.scopeCount,
+                    })}
+                    aria-label={tMilestones("summary.inScope", {
+                      count: summaryData.scopeCount,
+                    })}
                     data-testid="milestone-summary-scope-chip"
                   >
                     <Badge className="text-xs px-1.5 py-0">
+                      <Target className="w-3 h-3 me-0.5 shrink-0" />
                       {summaryData.scopeCount}
                     </Badge>
-                    {tMilestones("summary.inScope", {
-                      count: summaryData.scopeCount,
-                    })}
                   </span>
                 ))}
-              {summaryData.scopeCount > 0 &&
-                summaryData.issues &&
-                summaryData.issues.length > 0 && <span>{"·"}</span>}
               {summaryData.issues &&
                 summaryData.issues.length > 0 &&
                 (onFoundInTestingChipClick ? (
@@ -447,29 +456,35 @@ export function MilestoneSummary({
                       e.stopPropagation();
                       onFoundInTestingChipClick();
                     }}
-                    className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                    className="inline-flex items-center hover:text-foreground transition-colors"
+                    title={tMilestones("summary.foundInTesting", {
+                      count: summaryData.issues.length,
+                    })}
+                    aria-label={tMilestones("summary.foundInTesting", {
+                      count: summaryData.issues.length,
+                    })}
                     data-testid="milestone-summary-found-chip"
                   >
                     <Badge className="cursor-pointer text-xs px-1.5 py-0">
                       <Bug className="w-3 h-3 me-0.5 shrink-0" />
                       {summaryData.issues.length}
                     </Badge>
-                    {tMilestones("summary.foundInTesting", {
-                      count: summaryData.issues.length,
-                    })}
                   </button>
                 ) : (
                   <span
-                    className="inline-flex items-center gap-1"
+                    className="inline-flex items-center"
+                    title={tMilestones("summary.foundInTesting", {
+                      count: summaryData.issues.length,
+                    })}
+                    aria-label={tMilestones("summary.foundInTesting", {
+                      count: summaryData.issues.length,
+                    })}
                     data-testid="milestone-summary-found-chip"
                   >
                     <Badge className="text-xs px-1.5 py-0">
                       <Bug className="w-3 h-3 me-0.5 shrink-0" />
                       {summaryData.issues.length}
                     </Badge>
-                    {tMilestones("summary.foundInTesting", {
-                      count: summaryData.issues.length,
-                    })}
                   </span>
                 ))}
             </div>

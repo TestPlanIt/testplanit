@@ -22,7 +22,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { RowSelectionState, VisibilityState } from "@tanstack/react-table";
-import { ChevronDown, Loader2, PlayCircle, RefreshCw } from "lucide-react";
+import {
+  ChevronDown,
+  Loader2,
+  PlayCircle,
+  RefreshCw,
+  Target,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -593,6 +599,7 @@ export function MemberIssuesTable({
                   />
                 </Button>
               </CollapsibleTrigger>
+              <Target className="h-4 w-4 text-muted-foreground shrink-0" />
               {t("inScope")}
               {!isLoadingMembers && (
                 <Badge variant="secondary" data-testid="member-issues-count">

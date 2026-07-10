@@ -8,7 +8,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { Bug, ChevronDown, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import type { MilestoneIssue } from "~/lib/services/milestoneSummary";
@@ -92,20 +92,26 @@ export function FoundInTestingIssues({
                   />
                 </Button>
               </CollapsibleTrigger>
+              <Bug className="h-4 w-4 text-muted-foreground shrink-0" />
               {t("foundInTesting")}
               {!isLoading && (
-                <Badge variant="secondary" data-testid="found-in-testing-count">
-                  {issues.length}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  <Badge
+                    variant="secondary"
+                    data-testid="found-in-testing-count"
+                  >
+                    {issues.length}
+                  </Badge>
+                  <p className="text-xs text-muted-foreground">
+                    {tMilestones("summary.includesChildMilestones")}
+                  </p>
+                </div>
               )}
               {isLoading && (
                 <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
               )}
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {tMilestones("summary.includesChildMilestones")}
-          </p>
         </div>
         <CollapsibleContent className="overflow-hidden data-[state=open]:animate-slide-down data-[state=closed]:animate-slide-up">
           <div className="px-6 pb-6">
