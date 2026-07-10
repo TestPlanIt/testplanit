@@ -154,6 +154,11 @@ export class IntegrationManager {
       // Add API key auth data from credentials
       if (credentials.email) authData.email = credentials.email;
       if (credentials.apiToken) authData.apiToken = credentials.apiToken;
+      // Jira Server / Data Center Basic auth (username + password) — see
+      // jiraDeployment.ts. Harmless for every other provider, which never
+      // populates these credential keys.
+      if (credentials.username) authData.username = credentials.username;
+      if (credentials.password) authData.password = credentials.password;
       // For GitHub PAT authentication
       if (credentials.personalAccessToken)
         authData.apiKey = credentials.personalAccessToken;

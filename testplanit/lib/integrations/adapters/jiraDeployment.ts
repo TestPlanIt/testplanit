@@ -1,162 +1,211 @@
-/**
- * Deployment-specific behavior for the Jira integration.
- *
- * Jira ships as two materially different products behind one brand:
- *
- * - **Cloud** (`*.atlassian.net`): REST API v3, users addressed by
- *   `accountId`, API-key auth is `Basic email:apiToken`, rich text is
- *   Atlassian Document Format (ADF), OAuth 2.0 (3LO) routes through the
- *   `api.atlassian.com/ex/jira/{cloudId}` gateway, search pagination uses
- *   an opaque `nextPageToken`.
- * - **Server / Data Center** (self-hosted): REST API v2 only (v3 does not
- *   exist), users addressed by `name`/`key`, auth is either a Personal
- *   Access Token sent as `Bearer` or `Basic username:password`, rich text
- *   is wiki markup strings, no OAuth 3LO, search pagination uses
- *   `startAt`/`total`.
- *
- * The deployment type is an explicit integration setting
- * (`settings.deploymentType`), chosen by the admin and validated by the
- * test-connection route against `/rest/api/2/serverInfo`. It is NOT
- * auto-detected per request: every pre-existing integration is Cloud
- * (Server never worked before this setting existed), so the absence of the
- * setting means Cloud, and adapters never spend round-trips probing.
- */
+import { Buffer } from "node:buffer";
 
+/**
+ * Jira deployment flavors supported by the adapter.
+ *
+ * - `cloud` — Atlassian Cloud. REST API v3 (`/rest/api/3`), users addressed
+ *   by `accountId`, API-key auth is `Basic email:apiToken`, OAuth routes
+ *   through the `api.atlassian.com/ex/jira/{cloudId}` gateway.
+ * - `server` — Jira Server / Data Center. REST API v2 (`/rest/api/2`), users
+ *   addressed by `name`/`key`, Personal Access Tokens authenticate via
+ *   `Bearer`, and Basic auth uses `username:password`.
+ */
 export type JiraDeploymentType = "cloud" | "server";
 export type JiraApiVersion = "3" | "2";
 
-export interface JiraCredentials {
-  /** Cloud: Atlassian account email (Basic auth user half). */
+export interface JiraDeploymentInfo {
+  type: JiraDeploymentType;
+  apiVersion: JiraApiVersion;
+}
+
+export interface JiraAuthCredentials {
   email?: string;
-  /** Cloud: API token (Basic auth secret half). Server: Personal Access
-   *  Token, sent as `Bearer`. */
-  apiToken?: string;
-  /** Server only: username for Basic auth. */
   username?: string;
-  /** Server only: password for Basic auth. */
+  apiToken?: string;
   password?: string;
 }
 
-/**
- * Normalize a raw `settings.deploymentType` value. Anything other than an
- * explicit "server" is Cloud — the safe default for every integration that
- * predates the setting.
- */
-export function resolveJiraDeployment(value: unknown): JiraDeploymentType {
-  return value === "server" ? "server" : "cloud";
-}
+export type JiraAuthScheme = "basic" | "bearer";
 
-export function jiraApiVersion(deployment: JiraDeploymentType): JiraApiVersion {
-  return deployment === "server" ? "2" : "3";
-}
+const SERVER_INFO_TIMEOUT_MS = 10000;
 
 /**
- * Build the `Authorization` header for a Jira credential set. The scheme is
- * fully determined by the deployment and which fields are present — there is
- * no heuristic that can misfire:
+ * Detect the Jira deployment flavor by probing `/rest/api/2/serverInfo`,
+ * which exists on both Cloud and Server/Data Center. The response's
+ * `deploymentType` field is `"Cloud"` for Cloud and `"Server"` (or
+ * `"Data Center"`) for self-hosted instances.
  *
- * - Server + username & password → `Basic username:password`
- * - Server + apiToken            → `Bearer <PAT>` (a Data Center PAT is
- *   never valid as the password half of Basic auth, so Bearer is the only
- *   correct scheme even if an email/username happens to be present)
- * - Cloud + email & apiToken     → `Basic email:apiToken`
- *
- * Throws when the required fields for the deployment are missing so callers
- * fail at authentication time with an actionable message instead of sending
- * a malformed header.
+ * When the probe fails (network error, auth rejected, non-JSON body), fall
+ * back to a hostname heuristic: `*.atlassian.net` → Cloud, anything else →
+ * Server. This keeps Cloud installations working when the probe is blocked
+ * and lets a Data Center instance be identified even if `serverInfo` is
+ * temporarily unreachable.
  */
-export function buildJiraAuthHeader(
-  deployment: JiraDeploymentType,
-  creds: JiraCredentials
-): string {
+export async function detectJiraDeployment(
+  baseUrl: string,
+  authHeaders: Record<string, string> = {}
+): Promise<JiraDeploymentInfo> {
+  const normalizedBase = (baseUrl || "").replace(/\/$/, "");
+
+  try {
+    const signal = AbortSignal.timeout(SERVER_INFO_TIMEOUT_MS);
+    const response = await fetch(`${normalizedBase}/rest/api/2/serverInfo`, {
+      headers: { Accept: "application/json", ...authHeaders },
+      signal,
+    });
+    if (response.ok) {
+      const body = await response.json();
+      const deploymentType = String(body?.deploymentType ?? "").toLowerCase();
+      if (deploymentType === "cloud") {
+        return { type: "cloud", apiVersion: "3" };
+      }
+      if (
+        deploymentType === "server" ||
+        deploymentType === "data center" ||
+        deploymentType === "datacenter"
+      ) {
+        return { type: "server", apiVersion: "2" };
+      }
+    }
+  } catch {
+    // fall through to the hostname heuristic
+  }
+
+  try {
+    const host = new URL(normalizedBase).hostname.toLowerCase();
+    if (host.endsWith(".atlassian.net") || host.endsWith(".jiracloud.com")) {
+      return { type: "cloud", apiVersion: "3" };
+    }
+  } catch {
+    /* malformed baseUrl — default to server below */
+  }
+
+  return { type: "server", apiVersion: "2" };
+}
+
+/**
+ * Resolve the authentication scheme for a Jira credential set.
+ *
+ * - On **Server / Data Center** a Personal Access Token is *always* sent as
+ *   `Bearer`, even when an email happens to be supplied — Jira DC does not
+ *   accept a PAT as the password half of Basic auth. A username + password
+ *   pair uses `Basic`.
+ * - On **Cloud** an API token is paired with an email as `Basic`.
+ * - When the deployment is unknown (before detection), a bare token with no
+ *   email/username is treated as a PAT (`Bearer`); anything paired is
+ *   `Basic`. Once the deployment is known, callers should re-resolve with
+ *   the `deployment` argument so an email + PAT combo is handled correctly
+ *   on Data Center.
+ *
+ * An explicit `override` (from `settings.authScheme`) wins over everything
+ * so admins can force a scheme when the heuristic is wrong.
+ */
+export function resolveAuthScheme(
+  creds: JiraAuthCredentials,
+  override?: string,
+  deployment?: JiraDeploymentType
+): JiraAuthScheme {
+  if (override === "bearer") return "bearer";
+  if (override === "basic") return "basic";
   if (deployment === "server") {
-    if (creds.username && creds.password) {
-      return `Basic ${Buffer.from(`${creds.username}:${creds.password}`).toString("base64")}`;
-    }
-    if (creds.apiToken) {
-      return `Bearer ${creds.apiToken}`;
-    }
-    throw new Error(
-      "Jira Server / Data Center authentication requires a Personal Access Token or a username and password"
-    );
+    // DC: a PAT (apiToken without a password) is Bearer; username+password
+    // is Basic. An email is ignored for scheme selection on DC.
+    if (creds.apiToken && !creds.password) return "bearer";
+    return "basic";
   }
-  if (creds.email && creds.apiToken) {
-    return `Basic ${Buffer.from(`${creds.email}:${creds.apiToken}`).toString("base64")}`;
+  if (deployment === "cloud") {
+    // Cloud: API token + email is Basic. A bare token (no email) is treated
+    // as a PAT-style Bearer, though Cloud normally doesn't use PATs.
+    if (creds.apiToken && !creds.email && !creds.username) return "bearer";
+    return "basic";
   }
-  throw new Error(
-    "Jira Cloud authentication requires an email and an API token"
-  );
+  // Deployment unknown: a PAT is a bare token with no email/username pairing.
+  if (creds.apiToken && !creds.email && !creds.username) return "bearer";
+  return "basic";
 }
 
 /**
- * Pick the identifier Jira uses to address a user object it returned.
- * Cloud users carry `accountId`; Server / Data Center users carry `name`
- * (and `key` on older instances).
+ * Build the `Authorization` header value for a Jira credential set.
+ *
+ * - `bearer` → `Bearer <apiToken>` (Data Center Personal Access Token).
+ * - `basic`  → `Basic base64(email|username : apiToken|password)`. Cloud
+ *   pairs an email with an API token; Data Center pairs a username with a
+ *   password. We prefer `email` then `username` for the user half, and
+ *   `apiToken` then `password` for the secret half.
  */
-export function jiraUserId(
+export function buildAuthHeader(
+  creds: JiraAuthCredentials,
+  scheme: JiraAuthScheme
+): string {
+  if (scheme === "bearer") {
+    return `Bearer ${creds.apiToken ?? creds.password ?? ""}`;
+  }
+  const user = creds.email ?? creds.username ?? "";
+  const pass = creds.apiToken ?? creds.password ?? "";
+  return `Basic ${Buffer.from(`${user}:${pass}`).toString("base64")}`;
+}
+
+/**
+ * Pick the user identifier Jira expects for the deployment. Cloud uses
+ * `accountId`; Server/Data Center uses `name` (falling back to `key`).
+ */
+export function pickUserId(
   user: { accountId?: string; name?: string; key?: string } | null | undefined,
   deployment: JiraDeploymentType
 ): string | undefined {
   if (!user) return undefined;
-  if (deployment === "server") return user.name ?? user.key ?? user.accountId;
+  if (deployment === "server") {
+    return user.name ?? user.key ?? user.accountId;
+  }
   return user.accountId ?? user.name ?? user.key;
 }
 
 /**
- * Build the user-reference payload for assignee/reporter fields.
- * Cloud accepts `{ accountId }` (or `{ id }`); Server accepts `{ name }`.
+ * Build the user-reference object for reporter/assignee fields. Cloud
+ * accepts `{ accountId }`; Server/Data Center accepts `{ name }`.
  */
-export function jiraUserRef(
-  id: string,
+export function userRefField(
+  user: { accountId?: string; name?: string; key?: string } | null | undefined,
   deployment: JiraDeploymentType
-): { id: string } | { name: string } {
-  return deployment === "server" ? { name: id } : { id };
+): { accountId: string } | { name: string } | undefined {
+  const id = pickUserId(user, deployment);
+  if (!id) return undefined;
+  if (deployment === "server") return { name: id };
+  return { accountId: id };
 }
 
-export interface JiraServerInfo {
-  deploymentType: JiraDeploymentType;
-  version?: string;
+function isUserRefValue(
+  value: unknown
+): value is { accountId?: string; name?: string; key?: string } {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    typeof (value as { accountId?: unknown }).accountId === "string"
+  );
 }
 
 /**
- * Probe `/rest/api/2/serverInfo` — available on Cloud and Server alike, and
- * anonymously readable on most instances — to learn what the base URL really
- * is. Used by the test-connection route to catch a deployment-type
- * misconfiguration before it surfaces as a cryptic 404 at first use; NOT
- * used on the adapter request path.
- *
- * Returns null when the probe is unreachable or the response is not
- * recognizable, so callers treat detection as advisory.
+ * Remap custom-field values shaped like a user reference through
+ * `userRefField`. The create-issue form (and the reporter lookup in the
+ * create-issue route) always emit a user-picker value as `{ accountId }` —
+ * Jira's own Cloud convention — regardless of deployment. On Cloud that
+ * shape is already correct and passes through untouched; on Server/Data
+ * Center it must become `{ name }`, or Jira rejects the write. Every other
+ * custom-field value (option/priority/version/component refs, plain
+ * strings, arrays) is passed through unchanged.
  */
-export async function detectJiraDeployment(
-  baseUrl: string,
-  headers: Record<string, string> = {}
-): Promise<JiraServerInfo | null> {
-  try {
-    const response = await fetch(
-      `${baseUrl.replace(/\/$/, "")}/rest/api/2/serverInfo`,
-      {
-        headers: { Accept: "application/json", ...headers },
-        signal: AbortSignal.timeout(10000),
-        // A Server instance that requires auth redirects API paths to its
-        // login page; following it would misreport a 200. Surface the
-        // redirect as-is instead.
-        redirect: "manual",
-      }
-    );
-    if (!response.ok) return null;
-    const body = await response.json();
-    const type = String(body?.deploymentType ?? "").toLowerCase();
-    if (type === "cloud") {
-      return { deploymentType: "cloud", version: body?.version };
-    }
-    // Self-hosted instances report "Server" regardless of Server vs Data
-    // Center licensing.
-    if (type === "server" || type === "data center" || type === "datacenter") {
-      return { deploymentType: "server", version: body?.version };
-    }
-    return null;
-  } catch {
-    return null;
+export function mapCustomFieldUserRefs(
+  customFields: Record<string, unknown> | undefined,
+  deployment: JiraDeploymentType
+): Record<string, unknown> {
+  if (!customFields) return {};
+  if (deployment !== "server") return customFields;
+  const mapped: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(customFields)) {
+    mapped[key] = isUserRefValue(value)
+      ? userRefField(value, deployment)
+      : value;
   }
+  return mapped;
 }

@@ -213,6 +213,41 @@ describe("POST /api/integrations/test-connection", () => {
       expect(data.error).toContain("401");
     });
 
+    it("returns a clear error for a bare API token against Jira Cloud (no email/username)", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      // v3 /myself -> rejected (a bare token was guessed as Bearer, which
+      // Cloud's API-key auth does not accept).
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+        json: async () => ({}),
+      });
+      // serverInfo probe (same bad header) also fails -> detection falls to
+      // the hostname heuristic, which still resolves *.atlassian.net as cloud.
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+        json: async () => ({}),
+      });
+
+      const response = await POST(
+        createRequest({
+          provider: "JIRA",
+          authType: "API_KEY",
+          credentials: { apiToken: "bare-token" },
+          settings: { baseUrl: "https://mycompany.atlassian.net" },
+        })
+      );
+      const data = await response.json();
+
+      expect(data.success).toBe(false);
+      expect(data.error).toContain(
+        "Jira Cloud authentication requires an email address paired with the API token"
+      );
+    });
+
     it("returns failure when Jira API_KEY missing required fields", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
 
@@ -560,6 +595,382 @@ describe("POST /api/integrations/test-connection", () => {
           data: expect.objectContaining({ status: "ACTIVE" }),
         })
       );
+    });
+  });
+});
+
+describe("POST /api/integrations/test-connection — Jira Data Center", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+    (getServerSession as any).mockResolvedValue(mockSession);
+    (baseDb.integration.update as any).mockResolvedValue({});
+  });
+
+  it("auto-detects Data Center and authenticates a PAT as Bearer on /rest/api/2", async () => {
+    // v3 /myself -> 404 (Data Center has no v3)
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      json: async () => ({}),
+    });
+    // serverInfo -> Server
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ deploymentType: "Server", version: "10.3.13" }),
+    });
+    // v2 /myself -> ok
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+    // v2 /search -> ok
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ issues: [] }),
+    });
+    // v2 /issue/picker -> ok
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { apiToken: "pat-123" },
+        settings: { baseUrl: "https://jira.mycompany.domain" },
+      })
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.capabilities?.connection?.ok).toBe(true);
+    expect(data.capabilities?.searchIssues?.ok).toBe(true);
+    expect(data.capabilities?.readIssue?.ok).toBe(true);
+
+    // v3 was attempted first, then v2.
+    expect(mockFetch.mock.calls[0][0]).toBe(
+      "https://jira.mycompany.domain/rest/api/3/myself"
+    );
+    const calledUrls = mockFetch.mock.calls.map((c: any[]) => c[0]);
+    expect(calledUrls).toContain(
+      "https://jira.mycompany.domain/rest/api/2/myself"
+    );
+    expect(calledUrls).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          "https://jira.mycompany.domain/rest/api/2/search?"
+        ),
+      ])
+    );
+    expect(calledUrls).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          "https://jira.mycompany.domain/rest/api/2/issue/picker"
+        ),
+      ])
+    );
+    // Every Jira call must use Bearer (PAT, no email).
+    for (const call of mockFetch.mock.calls) {
+      const auth = (call[1] as any)?.headers?.Authorization;
+      expect(auth).toBe("Bearer pat-123");
+    }
+  });
+
+  it("authenticates Data Center Basic (username + password) on /rest/api/2", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      json: async () => ({}),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ deploymentType: "Server" }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ issues: [] }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { username: "alice", password: "secret" },
+        settings: { baseUrl: "https://jira.mycompany.domain" },
+      })
+    );
+    const data = await response.json();
+
+    expect(data.success).toBe(true);
+    const myselfCall = mockFetch.mock.calls.find(
+      (c: any[]) => c[0] === "https://jira.mycompany.domain/rest/api/2/myself"
+    );
+    expect(myselfCall).toBeTruthy();
+    const auth = (myselfCall![1] as any).headers.Authorization;
+    expect(auth).toMatch(/^Basic /);
+    expect(Buffer.from(auth.slice(6), "base64").toString("utf8")).toBe(
+      "alice:secret"
+    );
+  });
+
+  it("honors an explicit settings.deploymentType=server and skips the v3 probe", async () => {
+    // No v3 call should happen — server override probes v2 directly.
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { email: "alice", apiToken: "secret" },
+        settings: {
+          baseUrl: "https://jira.mycompany.domain",
+          deploymentType: "server",
+        },
+      })
+    );
+    const data = await response.json();
+
+    expect(data.success).toBe(true);
+    const calledUrls = mockFetch.mock.calls.map((c: any[]) => c[0]);
+    expect(calledUrls).not.toContain(
+      "https://jira.mycompany.domain/rest/api/3/myself"
+    );
+    expect(calledUrls).toContain(
+      "https://jira.mycompany.domain/rest/api/2/myself"
+    );
+    expect(calledUrls).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          "https://jira.mycompany.domain/rest/api/2/search?"
+        ),
+      ])
+    );
+  });
+
+  it("uses Bearer for an email + PAT combo on Data Center (not Basic)", async () => {
+    // Reproduces the user's report: email supplied alongside a PAT. The v3
+    // probe 404s (DC has no v3); after detection the v2 probe must use
+    // Bearer, not Basic email:PAT (which Jira DC rejects with 401).
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      json: async () => ({}),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ deploymentType: "Server" }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ issues: [] }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { email: "testplanit@rapidsoft.ru", apiToken: "pat-123" },
+        settings: { baseUrl: "https://jira.rapidsoft.ru" },
+      })
+    );
+    const data = await response.json();
+
+    expect(data.success).toBe(true);
+    const myselfCall = mockFetch.mock.calls.find(
+      (c: any[]) => c[0] === "https://jira.rapidsoft.ru/rest/api/2/myself"
+    );
+    expect(myselfCall).toBeTruthy();
+    expect((myselfCall![1] as any).headers.Authorization).toBe(
+      "Bearer pat-123"
+    );
+  });
+
+  it("detects Data Center when v3 /myself redirects to the login page (302)", async () => {
+    // Reproduces jira.rapidsoft.ru: /rest/api/3/myself returns 302 (redirect
+    // to login.jsp). With redirect: "manual" server-side fetch (undici)
+    // returns the 302 response itself (non-OK) instead of following it to a
+    // misleading 200, so detection falls through to serverInfo → Server, and
+    // the v2 probe authenticates.
+    // v3 /myself → 302 redirect (non-OK)
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 302,
+      statusText: "Found",
+      json: async () => ({}),
+    });
+    // serverInfo → Server (hostname fallback would also work, but here the
+    // instance returns deploymentType on a 401-fallback path)
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ deploymentType: "Server" }),
+    });
+    // v2 /myself, /search, /issue/picker
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ issues: [] }),
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+
+    const response = await POST(
+      createRequest({
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { apiToken: "pat-123" },
+        settings: { baseUrl: "https://jira.rapidsoft.ru" },
+      })
+    );
+    const data = await response.json();
+
+    expect(data.success).toBe(true);
+    // The v3 probe must have used redirect: "manual".
+    const v3Call = mockFetch.mock.calls.find(
+      (c: any[]) => c[0] === "https://jira.rapidsoft.ru/rest/api/3/myself"
+    );
+    expect(v3Call).toBeTruthy();
+    expect((v3Call![1] as any).redirect).toBe("manual");
+    const calledUrls = mockFetch.mock.calls.map((c: any[]) => c[0]);
+    expect(calledUrls).toContain("https://jira.rapidsoft.ru/rest/api/2/myself");
+  });
+
+  describe("D4: persists resolved deploymentType/authScheme", () => {
+    beforeEach(() => {
+      (isEncrypted as any).mockReturnValue(false);
+    });
+
+    it("fills in deploymentType/authScheme on a successful test when unset", async () => {
+      (baseDb.integration.findUnique as any).mockResolvedValue({
+        id: 42,
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { apiToken: "pat-123" },
+        settings: { baseUrl: "https://jira.mycompany.domain" },
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        json: async () => ({}),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ deploymentType: "Server" }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ issues: [] }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      });
+
+      const response = await POST(createRequest({ integrationId: 42 }));
+      const data = await response.json();
+
+      expect(data.success).toBe(true);
+      expect(baseDb.integration.update).toHaveBeenCalledWith({
+        where: { id: 42 },
+        data: expect.objectContaining({
+          status: "ACTIVE",
+          settings: expect.objectContaining({
+            baseUrl: "https://jira.mycompany.domain",
+            deploymentType: "server",
+            authScheme: "bearer",
+          }),
+        }),
+      });
+    });
+
+    it("never overwrites already-resolved settings keys (fill-missing-only)", async () => {
+      // deploymentType=server is an explicit override, so the route skips
+      // v3/serverInfo detection entirely and probes v2 directly.
+      (baseDb.integration.findUnique as any).mockResolvedValue({
+        id: 43,
+        provider: "JIRA",
+        authType: "API_KEY",
+        credentials: { apiToken: "pat-123" },
+        settings: {
+          baseUrl: "https://jira.mycompany.domain",
+          deploymentType: "server",
+          authScheme: "bearer",
+          customSetting: "must-survive",
+        },
+      });
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      });
+
+      const response = await POST(createRequest({ integrationId: 43 }));
+      const data = await response.json();
+
+      expect(data.success).toBe(true);
+      expect(baseDb.integration.update).toHaveBeenCalledWith({
+        where: { id: 43 },
+        data: expect.objectContaining({
+          settings: expect.objectContaining({
+            baseUrl: "https://jira.mycompany.domain",
+            deploymentType: "server",
+            authScheme: "bearer",
+            customSetting: "must-survive",
+          }),
+        }),
+      });
     });
   });
 });
