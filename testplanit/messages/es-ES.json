@@ -1086,18 +1086,18 @@
         "backToSignIn": "Volver a iniciar sesión"
       },
       "passwordless": {
-        "waitingInstructions": "Haga clic en el enlace del correo electrónico para iniciar sesión desde este navegador, o introduzca el código del correo electrónico a continuación.",
+        "waitingInstructions": "Haz clic en el enlace del correo electrónico para iniciar sesión desde este navegador, o introduce el código del correo electrónico a continuación.",
         "codeLabel": "Código de inicio de sesión",
         "verifyCode": "Verificar código",
         "verifying": "Verificando...",
-        "invalidCode": "Ese código no es correcto. Revise el correo electrónico e inténtelo de nuevo.",
-        "codeExpired": "Esta solicitud de inicio de sesión ha expirado. Solicite un nuevo enlace.",
-        "tooManyAttempts": "Demasiados intentos incorrectos. Solicite un nuevo enlace para intentarlo de nuevo.",
-        "windowLost": "Esta ventana ya no puede completar el inicio de sesión. Solicite un nuevo enlace.",
-        "genericError": "No pudimos iniciar su sesión. Solicite un nuevo enlace e inténtelo de nuevo.",
-        "tooManyRequests": "Demasiadas solicitudes de inicio de sesión. Espere un momento e inténtelo de nuevo.",
-        "haveCode": "¿Ya tiene un código de inicio de sesión?",
-        "codeEntryDescription": "Introduzca el código de su correo electrónico de inicio de sesión. Los códigos solo funcionan en el navegador donde solicitó el enlace.",
+        "invalidCode": "Ese código no es correcto. Revisa el correo electrónico e inténtalo de nuevo.",
+        "codeExpired": "Esta solicitud de inicio de sesión ha expirado. Solicita un nuevo enlace.",
+        "tooManyAttempts": "Demasiados intentos incorrectos. Solicita un nuevo enlace para volver a intentarlo.",
+        "windowLost": "Esta ventana ya no puede completar el inicio de sesión. Solicita un nuevo enlace.",
+        "genericError": "No pudimos iniciar tu sesión. Solicita un nuevo enlace e inténtalo de nuevo.",
+        "tooManyRequests": "Demasiadas solicitudes de inicio de sesión. Espera un momento e inténtalo de nuevo.",
+        "haveCode": "¿Ya tienes un código de inicio de sesión?",
+        "codeEntryDescription": "Introduce el código de tu correo electrónico de inicio de sesión. Los códigos solo funcionan en el navegador donde solicitaste el enlace.",
         "backToRequest": "Solicitar un nuevo enlace en su lugar"
       },
       "twoFactor": {
@@ -1108,14 +1108,14 @@
       "contactAdmin": "Contacte al administrador del sistema"
     },
     "passwordless": {
-      "completingSignIn": "Iniciando su sesión...",
-      "completeErrorTitle": "No pudimos iniciar su sesión",
+      "completingSignIn": "Iniciando tu sesión...",
+      "completeErrorTitle": "No pudimos iniciar tu sesión",
       "requestNewLink": "Solicitar un nuevo enlace",
-      "codeTitle": "Su código de inicio de sesión",
-      "codeInstructions": "Abrió el enlace de inicio de sesión en un dispositivo o navegador diferente. Introduzca este código en la pantalla de inicio de sesión donde lo solicitó originalmente.",
-      "codeCloseNotice": "Puede cerrar esta ventana una vez que haya introducido el código.",
+      "codeTitle": "Tu código de inicio de sesión",
+      "codeInstructions": "Abriste el enlace de inicio de sesión en un dispositivo o navegador diferente. Introduce este código en la pantalla de inicio de sesión donde lo solicitaste originalmente.",
+      "codeCloseNotice": "Puedes cerrar esta ventana una vez que hayas introducido el código.",
       "expiredTitle": "Este enlace de inicio de sesión ya no es válido",
-      "expiredBody": "El enlace puede haber expirado o ya haberse utilizado. Solicite uno nuevo desde la página de inicio de sesión; solo toma un momento."
+      "expiredBody": "El enlace puede haber caducado o ya haber sido utilizado. Solicita uno nuevo desde la página de inicio de sesión; solo toma un momento."
     },
     "errors": {
       "accessDenied": "Acceso denegado. Es posible que tu cuenta esté inactiva o que no tengas permiso para iniciar sesión.",
@@ -1379,7 +1379,18 @@
           "importStart": "Importar",
           "importStarted": "Importación iniciada. Las incidencias aparecerán en breve.",
           "importFailed": "Error al importar",
-          "importPreviewFailed": "No se pudieron estimar las coincidencias"
+          "importPreviewFailed": "No se pudieron estimar las coincidencias",
+          "milestoneSync": {
+            "title": "Sincronización de hitos",
+            "description": "Sincroniza los hitos de TestPlanIt a partir de los artefactos basados en tiempo de este sistema de seguimiento.",
+            "enableLabel": "Habilitar sincronización de hitos",
+            "releasesLabel": "Versiones",
+            "sprintsLabel": "Iteraciones",
+            "kindsLabel": "Tipos a sincronizar",
+            "autoTrackLabel": "Añadir automáticamente los nuevos",
+            "settingsSaved": "Ajustes de sincronización de hitos guardados",
+            "saveError": "No se pudieron guardar los ajustes de sincronización de hitos"
+          }
         },
         "integrationAssigned": "Integración asignada correctamente",
         "integrationAssignError": "No se pudo asignar la integración de la incidencia al proyecto",
@@ -2138,6 +2149,94 @@
     "notifications": {
       "dueSoon": "El hito \"{name}\" vence el {dueDate}",
       "overdue": "El hito \"{name}\" debía cumplirse el {dueDate}"
+    },
+    "import": {
+      "importTitle": "Importar desde Jira",
+      "importDescription": "Selecciona las Fix Versions y los Sprints de Jira que quieres sincronizar como hitos de TestPlanIt.",
+      "showClosed": "Mostrar cerrados",
+      "alreadyLinked": "Ya vinculado",
+      "selectedCount": "{count, plural, one {# seleccionado} other {# seleccionados}}",
+      "confirmSelection": "Importar seleccionados",
+      "empty": "No se encontraron hitos",
+      "previewFailed": "Error al cargar los hitos de Jira",
+      "importFailed": "Error al importar los hitos seleccionados",
+      "importStarted": "Importación iniciada",
+      "kindRelease": "Versión",
+      "kindSprint": "Iteración",
+      "selectAll": "Seleccionar todo",
+      "searchPlaceholder": "Buscar versiones y sprints...",
+      "emptyFiltered": "No hay hitos que coincidan con tus filtros.",
+      "partialWarning": "No se pudieron obtener algunos proyectos de Jira:",
+      "importing": "Importando {count, plural, one {# hito} other {# hitos}} de Jira…",
+      "completed": "Se importaron {count, plural, one {# hito} other {# hitos}} de Jira",
+      "stillRunning": "La importación sigue ejecutándose en segundo plano; los hitos aparecerán cuando finalice."
+    },
+    "sync": {
+      "managedByJira": "Gestionado por Jira",
+      "managedByJiraDescription": "El nombre, las fechas y el estado de este hito son gestionados por Jira. Realiza los cambios allí para actualizarlos aquí.",
+      "lastSynced": "Última sincronización {time}",
+      "openInJira": "Abrir en Jira",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "Sincronizar ahora",
+      "unlinkMenuItem": "Desvincular de {provider}",
+      "unlinkConfirmTitle": "¿Desvincular hito?",
+      "unlinkConfirmDescription": "Esto detiene la sincronización con el sistema de seguimiento: los campos vuelven a ser editables, los enlaces de incidencias sincronizados se convierten en manuales (puedes conservarlos o eliminarlos) y podrás volver a vincularlo más adelante importando este artefacto de nuevo.",
+      "unlinkConfirmAction": "Desvincular",
+      "unlinkSuccess": "Hito desvinculado del sistema de seguimiento.",
+      "unlinkError": "Error al desvincular el hito.",
+      "sourceRemoved": "origen eliminado en {provider}",
+      "mergedInto": "fusionado en {target}"
+    },
+    "summary": {
+      "inScope": "{count, plural, one {# dentro del alcance} other {# dentro del alcance}}",
+      "foundInTesting": "{count, plural, one {# encontrado en pruebas} other {# encontrados en pruebas}}",
+      "includesChildMilestones": "Incluye hitos secundarios"
+    },
+    "members": {
+      "cardTitle": "Incidencias",
+      "inScope": "Dentro del alcance",
+      "foundInTesting": "Encontrado en pruebas",
+      "foundInTestingEmpty": "No se encontraron incidencias en las pruebas.",
+      "inScopeCrossBadge": "Dentro del alcance",
+      "refresh": "Refrescar",
+      "columnKey": "Nombre",
+      "columnStatus": "Estado",
+      "columnCoverage": "Cobertura",
+      "columnSource": "Fuente",
+      "sourceSynced": "Sincronizado",
+      "sourceManual": "Manual",
+      "coveragePassed": "Aprobado",
+      "coverageFailed": "Fallido",
+      "coverageInProgress": "En curso",
+      "coverageNotRun": "No ejecutado",
+      "coverageUncovered": "Sin cobertura",
+      "filterAllCoverage": "Toda la cobertura",
+      "filterAllSources": "Todas las fuentes",
+      "filterAllTypes": "Todos los tipos",
+      "empty": "Aún no hay incidencias vinculadas a este hito.",
+      "emptyFiltered": "No hay incidencias que coincidan con los filtros actuales.",
+      "unlink": "Desvincular",
+      "managedByJira": "Gestionado por Jira: elimínalo de la versión/sprint en Jira",
+      "linkSuccess": "Incidencia vinculada a este hito.",
+      "linkError": "Error al vincular la incidencia a este hito.",
+      "unlinkSuccess": "Incidencia eliminada de este hito.",
+      "unlinkError": "Error al eliminar la incidencia de este hito.",
+      "overflowTitle": "Más incidencias en Jira",
+      "overflowDescription": "Estas incidencias están en la versión/sprint vinculada de Jira, pero aún no están vinculadas aquí.",
+      "overflowCapped": "Limitado a {cap, number}: {overflowTotal, number} más en Jira",
+      "overflowMoreAvailable": "{overflowTotal, number} más disponibles en Jira",
+      "overflowImportAction": "Importar y vincular",
+      "overflowImportSuccess": "Importación iniciada: las incidencias aparecerán a medida que se sincronicen.",
+      "overflowImportError": "Error al importar las incidencias de los miembros desde Jira.",
+      "emptyCta": "Vincula una incidencia para empezar.",
+      "columnDescription": "Descripción",
+      "unlinkConfirmTitle": "¿Desvincular incidencia?",
+      "unlinkConfirmDescription": "Esto elimina la incidencia de este hito. La incidencia en sí se conserva y se puede volver a vincular más adelante.",
+      "totalsUncovered": "{count, plural, one {# incidencia sin cobertura} other {# incidencias sin cobertura}}",
+      "filterHasUntested": "Tiene casos sin probar",
+      "createRunNoCases": "Ninguna de las incidencias seleccionadas tiene casos de prueba vinculados.",
+      "createTestRunDetailed": "Crear ejecución de prueba ({issues, plural, one {# incidencia} other {# incidencias}} · {cases, plural, one {# caso} other {# casos}})"
     }
   },
   "sessions": {
@@ -5258,6 +5357,7 @@
         "encrypted": "Cifrado",
         "encryptedHelp": "Este campo está cifrado y almacenado de forma segura",
         "changeCredential": "Cambiar",
+        "leaveBlankToKeep": "Déjelo en blanco para conservar el valor existente",
         "apiKeyWarningTitle": "Aviso de autenticación de clave API",
         "apiKeyWarningDescription": "Con la autenticación mediante clave API, es posible que el informante de los problemas creados no coincida con el usuario de TestPlanIt que los creó, incluso cuando los correos electrónicos coinciden:",
         "apiKeyWarningPoint1": "Para configurar el reportero de Jira, la cuenta del token de API debe tener el permiso de administrador de Jira (\"Modificar reportero\"). Sin este permiso, Jira ignora al reportero y el propietario del token de API se registra como el creador.",
@@ -7705,9 +7805,9 @@
       "textBody": "Inicie sesión en TestPlanIt\n\nHaga clic en el siguiente enlace para iniciar sesión:\n{url}\n\nPor su seguridad, este enlace solo se puede usar una vez. Solicite un nuevo enlace si necesita iniciar sesión de nuevo.\n\nSi no solicitó este correo electrónico, puede ignorarlo con seguridad."
     },
     "passwordless": {
-      "codeIntro": "¿Está abriendo esto en un dispositivo diferente? Introduzca este código en la pantalla de inicio de sesión donde solicitó el enlace:",
-      "deviceNotice": "Este enlace inicia su sesión desde el navegador donde lo solicitó. Si lo abre en cualquier otro lugar, se le mostrará el código anterior para introducirlo en su ventana original.",
-      "textBody": "Inicie sesión en TestPlanIt\n\nHaga clic en el siguiente enlace para iniciar sesión:\n{url}\n\n¿Está abriendo esto en un dispositivo diferente? Introduzca este código en la pantalla de inicio de sesión donde solicitó el enlace: {code}\n\nSi no solicitó este correo electrónico, puede ignorarlo con seguridad."
+      "codeIntro": "¿Abriendo esto en un dispositivo diferente? Introduce este código en la pantalla de inicio de sesión donde solicitaste el enlace:",
+      "deviceNotice": "Este enlace inicia tu sesión desde el navegador donde lo solicitaste. Si lo abres en otro lugar, se te mostrará el código anterior para que lo introduzcas en tu ventana original.",
+      "textBody": "Inicia sesión en TestPlanIt\n\nHaz clic en el enlace a continuación para iniciar sesión:\n{url}\n\n¿Abriendo esto en un dispositivo diferente? Introduce este código en la pantalla de inicio de sesión donde solicitaste el enlace: {code}\n\nSi no solicitaste este correo electrónico, puedes ignorarlo sin problema."
     }
   },
   "comments": {

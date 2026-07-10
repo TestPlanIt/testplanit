@@ -1086,19 +1086,19 @@
         "backToSignIn": "Terug naar inloggen"
       },
       "passwordless": {
-        "waitingInstructions": "Klik op de link in de e-mail om u vanuit deze browser aan te melden, of voer de code uit de e-mail hieronder in.",
-        "codeLabel": "Aanmeldcode",
+        "waitingInstructions": "Klik op de link in de e-mail om vanuit deze browser aan te melden, of voer de code uit de e-mail hieronder in.",
+        "codeLabel": "Aanmeldingscode",
         "verifyCode": "Code verifiëren",
         "verifying": "Bezig met controleren...",
         "invalidCode": "Die code is niet juist. Controleer de e-mail en probeer het opnieuw.",
         "codeExpired": "Dit aanmeldingsverzoek is verlopen. Vraag een nieuwe link aan.",
         "tooManyAttempts": "Te veel onjuiste pogingen. Vraag een nieuwe link aan om het opnieuw te proberen.",
-        "windowLost": "Dit venster kan het aanmelden niet meer voltooien. Vraag een nieuwe link aan.",
+        "windowLost": "Dit venster kan de aanmelding niet meer voltooien. Vraag een nieuwe link aan.",
         "genericError": "We konden u niet aanmelden. Vraag een nieuwe link aan en probeer het opnieuw.",
         "tooManyRequests": "Te veel aanmeldingsverzoeken. Wacht even en probeer het opnieuw.",
-        "haveCode": "Hebt u al een aanmeldcode?",
-        "codeEntryDescription": "Voer de code uit uw aanmeldings-e-mail in. Codes werken alleen in de browser waar u de link hebt aangevraagd.",
-        "backToRequest": "Vraag in plaats daarvan een nieuwe link aan"
+        "haveCode": "Heeft u al een aanmeldingscode?",
+        "codeEntryDescription": "Voer de code uit uw aanmeldings-e-mail in. Codes werken alleen in de browser waar u de link heeft aangevraagd.",
+        "backToRequest": "In plaats daarvan een nieuwe link aanvragen"
       },
       "twoFactor": {
         "title": "Tweefactorauthenticatie",
@@ -1110,12 +1110,12 @@
     "passwordless": {
       "completingSignIn": "U wordt aangemeld...",
       "completeErrorTitle": "We konden u niet aanmelden",
-      "requestNewLink": "Vraag een nieuwe link aan",
-      "codeTitle": "Uw aanmeldcode",
-      "codeInstructions": "U hebt de aanmeldingslink geopend op een ander apparaat of in een andere browser. Voer deze code in op het aanmeldingsscherm waar u deze oorspronkelijk hebt aangevraagd.",
-      "codeCloseNotice": "U kunt dit venster sluiten zodra u de code hebt ingevoerd.",
+      "requestNewLink": "Een nieuwe link aanvragen",
+      "codeTitle": "Uw aanmeldingscode",
+      "codeInstructions": "U heeft de aanmeldingslink op een ander apparaat of in een andere browser geopend. Voer deze code in op het aanmeldingsscherm waar u deze oorspronkelijk heeft aangevraagd.",
+      "codeCloseNotice": "U kunt dit venster sluiten zodra u de code heeft ingevoerd.",
       "expiredTitle": "Deze aanmeldingslink is niet meer geldig",
-      "expiredBody": "De link is mogelijk verlopen of al gebruikt. Vraag een nieuwe aan via de aanmeldingspagina — dit duurt maar even."
+      "expiredBody": "De link is mogelijk verlopen of al gebruikt. Vraag een nieuwe aan via de aanmeldingspagina — dit duurt slechts een moment."
     },
     "errors": {
       "accessDenied": "Toegang geweigerd. Uw account is mogelijk inactief of u hebt geen toestemming om u aan te melden.",
@@ -1379,7 +1379,18 @@
           "importStart": "Importeren",
           "importStarted": "Import gestart. Issues verschijnen binnenkort.",
           "importFailed": "Importeren mislukt",
-          "importPreviewFailed": "Kan overeenkomsten niet schatten"
+          "importPreviewFailed": "Kan overeenkomsten niet schatten",
+          "milestoneSync": {
+            "title": "Mijlpaalsynchronisatie",
+            "description": "Synchroniseer TestPlanIt-mijlpalen vanuit de tijdgebaseerde artefacten van deze tracker.",
+            "enableLabel": "Mijlpaalsynchronisatie inschakelen",
+            "releasesLabel": "Releases",
+            "sprintsLabel": "Sprints",
+            "kindsLabel": "Soorten om te synchroniseren",
+            "autoTrackLabel": "Nieuwe automatisch toevoegen",
+            "settingsSaved": "Instellingen voor mijlpaalsynchronisatie opgeslagen",
+            "saveError": "Instellingen voor mijlpaalsynchronisatie konden niet worden opgeslagen"
+          }
         },
         "integrationAssigned": "Integratie succesvol toegewezen",
         "integrationAssignError": "Het is niet gelukt om de probleemintegratie aan het project toe te wijzen",
@@ -2138,6 +2149,94 @@
     "notifications": {
       "dueSoon": "Mijlpaal \"{name}\" moet op {dueDate} worden voltooid",
       "overdue": "Mijlpaal \"{name}\" moest op {dueDate} plaatsvinden"
+    },
+    "import": {
+      "importTitle": "Importeren uit Jira",
+      "importDescription": "Selecteer de Jira Fix Versions en Sprints om te synchroniseren als TestPlanIt-mijlpalen.",
+      "showClosed": "Gesloten weergeven",
+      "alreadyLinked": "Al gekoppeld",
+      "selectedCount": "{count, plural, one {# geselecteerd} other {# geselecteerd}}",
+      "confirmSelection": "Selectie importeren",
+      "empty": "Geen mijlpalen gevonden",
+      "previewFailed": "Het is niet gelukt om mijlpalen uit Jira te laden",
+      "importFailed": "Het is niet gelukt om de geselecteerde mijlpalen te importeren",
+      "importStarted": "Import gestart",
+      "kindRelease": "Release",
+      "kindSprint": "Sprint",
+      "selectAll": "Alles selecteren",
+      "searchPlaceholder": "Zoek releases en sprints...",
+      "emptyFiltered": "Er zijn geen mijlpalen die overeenkomen met uw filters.",
+      "partialWarning": "Sommige Jira-projecten konden niet worden opgehaald:",
+      "importing": "Bezig met importeren van {count, plural, one {# mijlpaal} other {# mijlpalen}} uit Jira…",
+      "completed": "{count, plural, one {# mijlpaal} other {# mijlpalen}} geïmporteerd uit Jira",
+      "stillRunning": "De import wordt nog op de achtergrond uitgevoerd — mijlpalen verschijnen zodra deze is voltooid."
+    },
+    "sync": {
+      "managedByJira": "Beheerd door Jira",
+      "managedByJiraDescription": "De naam, data en status van deze mijlpaal worden beheerd door Jira. Wijzig deze daar om ze hier bij te werken.",
+      "lastSynced": "Laatst gesynchroniseerd op {time}",
+      "openInJira": "Openen in Jira",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "Nu synchroniseren",
+      "unlinkMenuItem": "Loskoppelen van {provider}",
+      "unlinkConfirmTitle": "Mijlpaal loskoppelen?",
+      "unlinkConfirmDescription": "Dit stopt de synchronisatie met de tracker: velden worden weer bewerkbaar, gesynchroniseerde probleemkoppelingen worden handmatig (u kunt ze behouden of verwijderen), en opnieuw koppelen is later mogelijk door dit artefact opnieuw te importeren.",
+      "unlinkConfirmAction": "Loskoppelen",
+      "unlinkSuccess": "Mijlpaal losgekoppeld van de tracker.",
+      "unlinkError": "Het is niet gelukt om de mijlpaal los te koppelen.",
+      "sourceRemoved": "bron verwijderd in {provider}",
+      "mergedInto": "samengevoegd met {target}"
+    },
+    "summary": {
+      "inScope": "{count, plural, one {# binnen bereik} other {# binnen bereik}}",
+      "foundInTesting": "{count, plural, one {# gevonden tijdens testen} other {# gevonden tijdens testen}}",
+      "includesChildMilestones": "Inclusief onderliggende mijlpalen"
+    },
+    "members": {
+      "cardTitle": "Problemen",
+      "inScope": "Binnen bereik",
+      "foundInTesting": "Gevonden tijdens testen",
+      "foundInTestingEmpty": "Geen problemen gevonden tijdens testen.",
+      "inScopeCrossBadge": "Binnen bereik",
+      "refresh": "Vernieuwen",
+      "columnKey": "Naam",
+      "columnStatus": "Status",
+      "columnCoverage": "Dekking",
+      "columnSource": "Bron",
+      "sourceSynced": "Gesynchroniseerd",
+      "sourceManual": "Handmatig",
+      "coveragePassed": "Geslaagd",
+      "coverageFailed": "Mislukt",
+      "coverageInProgress": "In behandeling",
+      "coverageNotRun": "Niet uitgevoerd",
+      "coverageUncovered": "Niet gedekt",
+      "filterAllCoverage": "Alle dekking",
+      "filterAllSources": "Alle bronnen",
+      "filterAllTypes": "Alle soorten",
+      "empty": "Nog geen problemen gekoppeld aan deze mijlpaal.",
+      "emptyFiltered": "Geen problemen komen overeen met de huidige filters.",
+      "unlink": "Loskoppelen",
+      "managedByJira": "Beheerd door Jira — verwijder het uit de versie/sprint in Jira",
+      "linkSuccess": "Probleem gekoppeld aan deze mijlpaal.",
+      "linkError": "Het is niet gelukt om het probleem aan deze mijlpaal te koppelen.",
+      "unlinkSuccess": "Probleem verwijderd van deze mijlpaal.",
+      "unlinkError": "Het is niet gelukt om het probleem van deze mijlpaal te verwijderen.",
+      "overflowTitle": "Meer problemen in Jira",
+      "overflowDescription": "Deze problemen bevinden zich in de gekoppelde Jira-versie/sprint maar zijn hier nog niet gekoppeld.",
+      "overflowCapped": "Beperkt tot {cap, number} — {overflowTotal, number} meer in Jira",
+      "overflowMoreAvailable": "{overflowTotal, number} meer beschikbaar in Jira",
+      "overflowImportAction": "Importeren en koppelen",
+      "overflowImportSuccess": "Import gestart — problemen verschijnen zodra ze zijn gesynchroniseerd.",
+      "overflowImportError": "Het is niet gelukt om lidproblemen uit Jira te importeren.",
+      "emptyCta": "Koppel een probleem om te beginnen.",
+      "columnDescription": "Beschrijving",
+      "unlinkConfirmTitle": "Probleem loskoppelen?",
+      "unlinkConfirmDescription": "Dit verwijdert het probleem van deze mijlpaal. Het probleem zelf blijft bestaan en kan later opnieuw worden gekoppeld.",
+      "totalsUncovered": "{count, plural, one {# niet gedekt probleem} other {# niet gedekte problemen}}",
+      "filterHasUntested": "Heeft ongeteste gevallen",
+      "createRunNoCases": "Geen van de geselecteerde problemen heeft gekoppelde testgevallen.",
+      "createTestRunDetailed": "Testrun aanmaken ({issues, plural, one {# probleem} other {# problemen}} · {cases, plural, one {# geval} other {# gevallen}})"
     }
   },
   "sessions": {
@@ -5258,6 +5357,7 @@
         "encrypted": "Versleuteld",
         "encryptedHelp": "Dit veld is gecodeerd en veilig opgeslagen",
         "changeCredential": "Wijziging",
+        "leaveBlankToKeep": "Laat leeg om de bestaande waarde te behouden",
         "apiKeyWarningTitle": "Kennisgeving API-sleutelauthenticatie",
         "apiKeyWarningDescription": "Bij authenticatie met een API-sleutel komt de melder van aangemaakte problemen mogelijk niet overeen met de TestPlanIt-gebruiker die ze heeft aangemaakt, zelfs als de e-mailadressen overeenkomen:",
         "apiKeyWarningPoint1": "Voor het instellen van de Jira-reporter is het vereist dat het API-tokenaccount beheerdersrechten (\"Reporter wijzigen\") heeft voor Jira. Zonder deze rechten negeert Jira de reporter en wordt de eigenaar van het API-token als maker geregistreerd.",
@@ -7705,9 +7805,9 @@
       "textBody": "Aanmelden bij TestPlanIt\n\nKlik op de onderstaande link om u aan te melden:\n{url}\n\nVoor uw veiligheid kan deze link maar één keer worden gebruikt. Vraag een nieuwe link aan als u opnieuw moet aanmelden.\n\nAls u deze e-mail niet hebt aangevraagd, kunt u deze veilig negeren."
     },
     "passwordless": {
-      "codeIntro": "Open u dit op een ander apparaat? Voer deze code in op het aanmeldingsscherm waar u de link hebt aangevraagd:",
-      "deviceNotice": "Deze link meldt u aan vanuit de browser waar u deze hebt aangevraagd. Als u deze ergens anders opent, krijgt u de bovenstaande code te zien om in uw oorspronkelijke venster in te voeren.",
-      "textBody": "Aanmelden bij TestPlanIt\n\nKlik op de onderstaande link om u aan te melden:\n{url}\n\nOpent u dit op een ander apparaat? Voer deze code in op het aanmeldingsscherm waar u de link hebt aangevraagd: {code}\n\nAls u deze e-mail niet hebt aangevraagd, kunt u deze veilig negeren."
+      "codeIntro": "Opent u dit op een ander apparaat? Voer deze code in op het aanmeldingsscherm waar u de link heeft aangevraagd:",
+      "deviceNotice": "Deze link meldt u aan vanuit de browser waar u deze heeft aangevraagd. Als u deze ergens anders opent, wordt de code hierboven weergegeven om in uw oorspronkelijke venster in te voeren.",
+      "textBody": "Meld u aan bij TestPlanIt\n\nKlik op de onderstaande link om aan te melden:\n{url}\n\nOpent u dit op een ander apparaat? Voer deze code in op het aanmeldingsscherm waar u de link heeft aangevraagd: {code}\n\nAls u deze e-mail niet heeft aangevraagd, kunt u deze veilig negeren."
     }
   },
   "comments": {

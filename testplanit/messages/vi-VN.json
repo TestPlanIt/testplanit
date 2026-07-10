@@ -1090,15 +1090,15 @@
         "codeLabel": "Mã đăng nhập",
         "verifyCode": "Xác minh mã",
         "verifying": "Đang xác minh...",
-        "invalidCode": "Mã đó không đúng. Hãy kiểm tra email và thử lại.",
-        "codeExpired": "Yêu cầu đăng nhập này đã hết hạn. Hãy yêu cầu liên kết mới.",
-        "tooManyAttempts": "Quá nhiều lần thử không đúng. Hãy yêu cầu liên kết mới để thử lại.",
-        "windowLost": "Cửa sổ này không thể hoàn tất đăng nhập nữa. Hãy yêu cầu liên kết mới.",
-        "genericError": "Chúng tôi không thể đăng nhập cho bạn. Hãy yêu cầu liên kết mới và thử lại.",
-        "tooManyRequests": "Quá nhiều yêu cầu đăng nhập. Vui lòng chờ một chút và thử lại.",
+        "invalidCode": "Mã không đúng. Hãy kiểm tra email và thử lại.",
+        "codeExpired": "Yêu cầu đăng nhập này đã hết hạn. Hãy yêu cầu một liên kết mới.",
+        "tooManyAttempts": "Quá nhiều lần thử không đúng. Hãy yêu cầu một liên kết mới để thử lại.",
+        "windowLost": "Cửa sổ này không thể hoàn tất việc đăng nhập nữa. Hãy yêu cầu một liên kết mới.",
+        "genericError": "Chúng tôi không thể đăng nhập cho bạn. Hãy yêu cầu một liên kết mới và thử lại.",
+        "tooManyRequests": "Quá nhiều yêu cầu đăng nhập. Vui lòng đợi một chút và thử lại.",
         "haveCode": "Đã có mã đăng nhập?",
-        "codeEntryDescription": "Nhập mã từ email đăng nhập của bạn. Mã chỉ hoạt động trên trình duyệt nơi bạn đã yêu cầu liên kết.",
-        "backToRequest": "Yêu cầu liên kết mới thay thế"
+        "codeEntryDescription": "Nhập mã từ email đăng nhập của bạn. Mã chỉ hoạt động trong trình duyệt mà bạn đã yêu cầu liên kết.",
+        "backToRequest": "Yêu cầu một liên kết mới thay thế"
       },
       "twoFactor": {
         "title": "Xác thực hai yếu tố",
@@ -1110,12 +1110,12 @@
     "passwordless": {
       "completingSignIn": "Đang đăng nhập cho bạn...",
       "completeErrorTitle": "Chúng tôi không thể đăng nhập cho bạn",
-      "requestNewLink": "Yêu cầu liên kết mới",
+      "requestNewLink": "Yêu cầu một liên kết mới",
       "codeTitle": "Mã đăng nhập của bạn",
       "codeInstructions": "Bạn đã mở liên kết đăng nhập trên một thiết bị hoặc trình duyệt khác. Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu ban đầu.",
       "codeCloseNotice": "Bạn có thể đóng cửa sổ này sau khi đã nhập mã.",
       "expiredTitle": "Liên kết đăng nhập này không còn hợp lệ",
-      "expiredBody": "Liên kết có thể đã hết hạn hoặc đã được sử dụng. Hãy yêu cầu liên kết mới từ trang đăng nhập — chỉ mất một chút thời gian."
+      "expiredBody": "Liên kết có thể đã hết hạn hoặc đã được sử dụng. Hãy yêu cầu một liên kết mới từ trang đăng nhập — chỉ mất một chút thời gian."
     },
     "errors": {
       "accessDenied": "Truy cập bị từ chối. Tài khoản của bạn có thể không hoạt động hoặc bạn không có quyền đăng nhập.",
@@ -1379,7 +1379,18 @@
           "importStart": "Nhập",
           "importStarted": "Đã bắt đầu nhập. Các sự cố sẽ sớm xuất hiện.",
           "importFailed": "Nhập thất bại",
-          "importPreviewFailed": "Không thể ước tính số lượng khớp"
+          "importPreviewFailed": "Không thể ước tính số lượng khớp",
+          "milestoneSync": {
+            "title": "Đồng bộ hóa cột mốc",
+            "description": "Đồng bộ hóa Cột mốc TestPlanIt từ các đối tượng dựa trên thời gian của công cụ theo dõi này.",
+            "enableLabel": "Bật đồng bộ hóa cột mốc",
+            "releasesLabel": "Bản phát hành",
+            "sprintsLabel": "Sprint",
+            "kindsLabel": "Loại cần đồng bộ hóa",
+            "autoTrackLabel": "Tự động thêm các mục mới",
+            "settingsSaved": "Đã lưu cài đặt đồng bộ hóa cột mốc",
+            "saveError": "Không thể lưu cài đặt đồng bộ hóa cột mốc"
+          }
         },
         "integrationAssigned": "Quá trình tích hợp được thực hiện thành công.",
         "integrationAssignError": "Không thể gán việc tích hợp vấn đề cho dự án.",
@@ -2138,6 +2149,94 @@
     "notifications": {
       "dueSoon": "Mốc thời gian \"{name}\" sẽ đến hạn vào ngày {dueDate}",
       "overdue": "Cột mốc \"{name}\" dự kiến hoàn thành vào ngày {dueDate}"
+    },
+    "import": {
+      "importTitle": "Nhập từ Jira",
+      "importDescription": "Chọn các Fix Version và Sprint của Jira để đồng bộ hóa dưới dạng Cột mốc TestPlanIt.",
+      "showClosed": "Hiển thị đã đóng",
+      "alreadyLinked": "Đã được liên kết",
+      "selectedCount": "{count, plural, other {# đã chọn}}",
+      "confirmSelection": "Nhập các mục đã chọn",
+      "empty": "Không tìm thấy cột mốc nào",
+      "previewFailed": "Không thể tải cột mốc từ Jira",
+      "importFailed": "Không thể nhập các cột mốc đã chọn",
+      "importStarted": "Đã bắt đầu nhập",
+      "kindRelease": "Bản phát hành",
+      "kindSprint": "Sprint",
+      "selectAll": "Chọn tất cả",
+      "searchPlaceholder": "Tìm kiếm bản phát hành và sprint...",
+      "emptyFiltered": "Không có cột mốc nào phù hợp với bộ lọc của bạn.",
+      "partialWarning": "Một số dự án Jira không thể được lấy về:",
+      "importing": "Đang nhập {count, plural, other {# cột mốc}} từ Jira…",
+      "completed": "Đã nhập {count, plural, other {# cột mốc}} từ Jira",
+      "stillRunning": "Quá trình nhập vẫn đang chạy trong nền — các cột mốc sẽ xuất hiện khi hoàn tất."
+    },
+    "sync": {
+      "managedByJira": "Được quản lý bởi Jira",
+      "managedByJiraDescription": "Tên, ngày và trạng thái của cột mốc này được quản lý bởi Jira. Hãy thực hiện các thay đổi ở đó để cập nhật chúng ở đây.",
+      "lastSynced": "Đồng bộ hóa lần cuối {time}",
+      "openInJira": "Mở trong Jira",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "Đồng bộ hóa ngay",
+      "unlinkMenuItem": "Hủy liên kết từ {provider}",
+      "unlinkConfirmTitle": "Hủy liên kết cột mốc?",
+      "unlinkConfirmDescription": "Điều này sẽ ngừng đồng bộ hóa với công cụ theo dõi: các trường sẽ có thể chỉnh sửa lại, các liên kết vấn đề đã đồng bộ hóa sẽ trở thành thủ công (bạn có thể giữ lại hoặc xóa), và có thể liên kết lại sau bằng cách nhập lại đối tượng này.",
+      "unlinkConfirmAction": "Hủy liên kết",
+      "unlinkSuccess": "Cột mốc đã được hủy liên kết từ công cụ theo dõi.",
+      "unlinkError": "Không thể hủy liên kết cột mốc.",
+      "sourceRemoved": "nguồn đã bị xóa trong {provider}",
+      "mergedInto": "đã được hợp nhất vào {target}"
+    },
+    "summary": {
+      "inScope": "{count, plural, other {# trong phạm vi}}",
+      "foundInTesting": "{count, plural, other {# được phát hiện trong thử nghiệm}}",
+      "includesChildMilestones": "Bao gồm các cột mốc con"
+    },
+    "members": {
+      "cardTitle": "Vấn đề",
+      "inScope": "Trong phạm vi",
+      "foundInTesting": "Được phát hiện trong thử nghiệm",
+      "foundInTestingEmpty": "Không có vấn đề nào được phát hiện trong thử nghiệm.",
+      "inScopeCrossBadge": "Trong phạm vi",
+      "refresh": "Làm mới",
+      "columnKey": "Tên",
+      "columnStatus": "Trạng thái",
+      "columnCoverage": "Độ phủ",
+      "columnSource": "Nguồn",
+      "sourceSynced": "Đã đồng bộ hóa",
+      "sourceManual": "Thủ công",
+      "coveragePassed": "Đạt",
+      "coverageFailed": "Không đạt",
+      "coverageInProgress": "Đang tiến hành",
+      "coverageNotRun": "Chưa chạy",
+      "coverageUncovered": "Chưa được bao phủ",
+      "filterAllCoverage": "Tất cả độ phủ",
+      "filterAllSources": "Tất cả nguồn",
+      "filterAllTypes": "Tất cả các loại",
+      "empty": "Chưa có vấn đề nào được liên kết với cột mốc này.",
+      "emptyFiltered": "Không có vấn đề nào phù hợp với bộ lọc hiện tại.",
+      "unlink": "Hủy liên kết",
+      "managedByJira": "Được quản lý bởi Jira — hãy xóa nó từ version/sprint trong Jira",
+      "linkSuccess": "Vấn đề đã được liên kết với cột mốc này.",
+      "linkError": "Không thể liên kết vấn đề với cột mốc này.",
+      "unlinkSuccess": "Vấn đề đã được xóa khỏi cột mốc này.",
+      "unlinkError": "Không thể xóa vấn đề khỏi cột mốc này.",
+      "overflowTitle": "Thêm vấn đề trong Jira",
+      "overflowDescription": "Các vấn đề này nằm trong version/sprint Jira đã liên kết nhưng chưa được liên kết ở đây.",
+      "overflowCapped": "Giới hạn ở {cap, number} — còn {overflowTotal, number} nữa trong Jira",
+      "overflowMoreAvailable": "Còn {overflowTotal, number} khác có sẵn trong Jira",
+      "overflowImportAction": "Nhập & liên kết",
+      "overflowImportSuccess": "Đã bắt đầu nhập — các vấn đề sẽ xuất hiện khi được đồng bộ hóa.",
+      "overflowImportError": "Không thể nhập các vấn đề thành viên từ Jira.",
+      "emptyCta": "Liên kết một vấn đề để bắt đầu.",
+      "columnDescription": "Mô tả",
+      "unlinkConfirmTitle": "Hủy liên kết vấn đề?",
+      "unlinkConfirmDescription": "Điều này sẽ xóa vấn đề khỏi cột mốc này. Vấn đề vẫn được giữ lại và có thể được liên kết lại sau.",
+      "totalsUncovered": "{count, plural, other {# vấn đề chưa được bao phủ}}",
+      "filterHasUntested": "Có trường hợp chưa được thử nghiệm",
+      "createRunNoCases": "Không có vấn đề nào trong số các vấn đề đã chọn có trường hợp thử nghiệm liên kết.",
+      "createTestRunDetailed": "Tạo lần chạy thử nghiệm ({issues, plural, other {# vấn đề}} · {cases, plural, other {# trường hợp}})"
     }
   },
   "sessions": {
@@ -5258,6 +5357,7 @@
         "encrypted": "Đã mã hóa",
         "encryptedHelp": "Trường này được mã hóa và lưu trữ an toàn.",
         "changeCredential": "Thay đổi",
+        "leaveBlankToKeep": "Để trống nếu muốn giữ nguyên giá trị hiện có",
         "apiKeyWarningTitle": "Thông báo xác thực khóa API",
         "apiKeyWarningDescription": "Với xác thực bằng khóa API, người báo cáo sự cố được tạo có thể không trùng khớp với người dùng TestPlanIt đã tạo ra chúng — ngay cả khi địa chỉ email trùng khớp:",
         "apiKeyWarningPoint1": "Việc thiết lập người báo cáo Jira yêu cầu tài khoản có mã thông báo API phải có quyền quản trị Jira (\"Sửa đổi người báo cáo\"). Nếu không có quyền này, Jira sẽ bỏ qua người báo cáo và chủ sở hữu mã thông báo API sẽ được ghi nhận là người tạo.",
@@ -7705,9 +7805,9 @@
       "textBody": "Đăng nhập vào TestPlanIt\n\nNhấp vào liên kết bên dưới để đăng nhập:\n{url}\n\nĐể đảm bảo an toàn cho bạn, liên kết này chỉ có thể được sử dụng một lần. Hãy yêu cầu liên kết mới nếu bạn cần đăng nhập lại.\n\nNếu bạn không yêu cầu email này, bạn có thể yên tâm bỏ qua nó."
     },
     "passwordless": {
-      "codeIntro": "Mở liên kết này trên một thiết bị khác? Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu liên kết:",
-      "deviceNotice": "Liên kết này giúp bạn đăng nhập từ trình duyệt nơi bạn đã yêu cầu nó. Nếu bạn mở nó ở nơi khác, bạn sẽ được hiển thị mã ở trên để nhập vào cửa sổ ban đầu của bạn.",
-      "textBody": "Đăng nhập vào TestPlanIt\n\nNhấp vào liên kết bên dưới để đăng nhập:\n{url}\n\nMở liên kết này trên một thiết bị khác? Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu liên kết: {code}\n\nNếu bạn không yêu cầu email này, bạn có thể yên tâm bỏ qua nó."
+      "codeIntro": "Đang mở trên một thiết bị khác? Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu liên kết:",
+      "deviceNotice": "Liên kết này sẽ đăng nhập cho bạn từ trình duyệt nơi bạn đã yêu cầu nó. Nếu bạn mở nó ở nơi khác, bạn sẽ được hiển thị mã ở trên để nhập vào cửa sổ ban đầu của bạn.",
+      "textBody": "Đăng nhập vào TestPlanIt\n\nNhấp vào liên kết dưới đây để đăng nhập:\n{url}\n\nĐang mở trên một thiết bị khác? Hãy nhập mã này trên màn hình đăng nhập nơi bạn đã yêu cầu liên kết: {code}\n\nNếu bạn không yêu cầu email này, bạn có thể yên tâm bỏ qua nó."
     }
   },
   "comments": {

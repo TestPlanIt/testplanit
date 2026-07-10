@@ -1086,19 +1086,19 @@
         "backToSignIn": "Powrót do logowania"
       },
       "passwordless": {
-        "waitingInstructions": "Kliknij link w e-mailu, aby zalogować się z tej przeglądarki, lub wpisz poniżej kod z e-maila.",
+        "waitingInstructions": "Kliknij łącze w e-mailu, aby zalogować się w tej przeglądarce, lub wpisz kod z e-maila poniżej.",
         "codeLabel": "Kod logowania",
         "verifyCode": "Zweryfikuj kod",
         "verifying": "Weryfikowanie...",
         "invalidCode": "Ten kod jest nieprawidłowy. Sprawdź e-mail i spróbuj ponownie.",
-        "codeExpired": "To żądanie logowania wygasło. Poproś o nowy link.",
-        "tooManyAttempts": "Za dużo nieprawidłowych prób. Poproś o nowy link, aby spróbować ponownie.",
-        "windowLost": "To okno nie może już zakończyć logowania. Poproś o nowy link.",
-        "genericError": "Nie udało się Cię zalogować. Poproś o nowy link i spróbuj ponownie.",
+        "codeExpired": "To żądanie logowania wygasło. Poproś o nowe łącze.",
+        "tooManyAttempts": "Za dużo nieprawidłowych prób. Poproś o nowe łącze, aby spróbować ponownie.",
+        "windowLost": "To okno nie może już zakończyć logowania. Poproś o nowe łącze.",
+        "genericError": "Nie mogliśmy Cię zalogować. Poproś o nowe łącze i spróbuj ponownie.",
         "tooManyRequests": "Za dużo żądań logowania. Poczekaj chwilę i spróbuj ponownie.",
         "haveCode": "Masz już kod logowania?",
-        "codeEntryDescription": "Wpisz kod z e-maila logowania. Kody działają tylko w przeglądarce, w której poprosiłeś o link.",
-        "backToRequest": "Poproś o nowy link"
+        "codeEntryDescription": "Wpisz kod z e-maila logowania. Kody działają tylko w przeglądarce, w której poprosiłeś o łącze.",
+        "backToRequest": "Poproś o nowe łącze"
       },
       "twoFactor": {
         "title": "Uwierzytelnianie dwuskładnikowe",
@@ -1109,13 +1109,13 @@
     },
     "passwordless": {
       "completingSignIn": "Logowanie...",
-      "completeErrorTitle": "Nie udało się Cię zalogować",
-      "requestNewLink": "Poproś o nowy link",
+      "completeErrorTitle": "Nie mogliśmy Cię zalogować",
+      "requestNewLink": "Poproś o nowe łącze",
       "codeTitle": "Twój kod logowania",
-      "codeInstructions": "Otworzyłeś link do logowania na innym urządzeniu lub w innej przeglądarce. Wpisz ten kod na ekranie logowania, na którym pierwotnie o niego poprosiłeś.",
+      "codeInstructions": "Otworzyłeś łącze logowania na innym urządzeniu lub w innej przeglądarce. Wpisz ten kod na ekranie logowania, gdzie oryginalnie o niego poprosiłeś.",
       "codeCloseNotice": "Możesz zamknąć to okno po wpisaniu kodu.",
-      "expiredTitle": "Ten link do logowania nie jest już prawidłowy",
-      "expiredBody": "Link może wygasnąć lub zostać już wykorzystany. Poproś o nowy na stronie logowania — to zajmie tylko chwilę."
+      "expiredTitle": "To łącze logowania nie jest już aktywne",
+      "expiredBody": "Łącze mogło wygasnąć lub zostało już użyte. Poproś o nowe na stronie logowania — zajmie to tylko chwilę."
     },
     "errors": {
       "accessDenied": "Dostęp zabroniony. Twoje konto może być nieaktywne lub nie masz uprawnień do logowania.",
@@ -1379,7 +1379,18 @@
           "importStart": "Importuj",
           "importStarted": "Import rozpoczęty. Problemy pojawią się wkrótce.",
           "importFailed": "Import nie powiódł się",
-          "importPreviewFailed": "Nie udało się oszacować dopasowań"
+          "importPreviewFailed": "Nie udało się oszacować dopasowań",
+          "milestoneSync": {
+            "title": "Synchronizacja kamieni milowych",
+            "description": "Synchronizuj kamienie milowe TestPlanIt na podstawie elementów czasowych tego systemu śledzenia.",
+            "enableLabel": "Włącz synchronizację kamieni milowych",
+            "releasesLabel": "Wydania",
+            "sprintsLabel": "Sprinty",
+            "kindsLabel": "Rodzaje do synchronizacji",
+            "autoTrackLabel": "Automatycznie dodawaj nowe",
+            "settingsSaved": "Ustawienia synchronizacji kamieni milowych zapisane",
+            "saveError": "Nie udało się zapisać ustawień synchronizacji kamieni milowych"
+          }
         },
         "integrationAssigned": "Integracja przypisana pomyślnie",
         "integrationAssignError": "Nie udało się przypisać integracji problemu do projektu",
@@ -2138,6 +2149,94 @@
     "notifications": {
       "dueSoon": "Kamień milowy „{name}” ma zostać osiągnięty {dueDate}",
       "overdue": "Kamień milowy „{name}” miał zostać osiągnięty {dueDate}"
+    },
+    "import": {
+      "importTitle": "Importuj z Jira",
+      "importDescription": "Wybierz wersje docelowe Jira i sprinty do synchronizacji jako kamienie milowe TestPlanIt.",
+      "showClosed": "Pokaż zamknięte",
+      "alreadyLinked": "Już połączone",
+      "selectedCount": "{count, plural, one {# wybrano} few {# wybrano} many {# wybrano} other {# wybrano}}",
+      "confirmSelection": "Importuj wybrane",
+      "empty": "Nie znaleziono kamieni milowych",
+      "previewFailed": "Nie udało się wczytać kamieni milowych z Jira",
+      "importFailed": "Nie udało się zaimportować wybranych kamieni milowych",
+      "importStarted": "Import rozpoczęty",
+      "kindRelease": "Wydanie",
+      "kindSprint": "Sprint",
+      "selectAll": "Zaznacz wszystko",
+      "searchPlaceholder": "Szukaj wydań i sprintów...",
+      "emptyFiltered": "Brak kamieni milowych spełniających kryteria filtrów.",
+      "partialWarning": "Nie udało się pobrać niektórych projektów Jira:",
+      "importing": "Importowanie {count, plural, one {# kamienia milowego} few {# kamieni milowych} many {# kamieni milowych} other {# kamienia milowego}} z Jira…",
+      "completed": "Zaimportowano {count, plural, one {# kamień milowy} few {# kamienie milowe} many {# kamieni milowych} other {# kamienia milowego}} z Jira",
+      "stillRunning": "Import wciąż działa w tle — kamienie milowe pojawią się po jego zakończeniu."
+    },
+    "sync": {
+      "managedByJira": "Zarządzane przez Jira",
+      "managedByJiraDescription": "Nazwa, daty i status tego kamienia milowego są zarządzane przez Jira. Wprowadź zmiany tam, aby zaktualizować je tutaj.",
+      "lastSynced": "Ostatnio zsynchronizowano {time}",
+      "openInJira": "Otwórz w Jira",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "Synchronizuj teraz",
+      "unlinkMenuItem": "Odłącz od {provider}",
+      "unlinkConfirmTitle": "Odłączyć kamień milowy?",
+      "unlinkConfirmDescription": "To zatrzymuje synchronizację z systemem śledzenia: pola stają się ponownie edytowalne, zsynchronizowane łącza do problemów stają się ręczne (możesz je zachować lub usunąć), a ponowne połączenie jest możliwe później poprzez ponowny import tego elementu.",
+      "unlinkConfirmAction": "Odłącz",
+      "unlinkSuccess": "Kamień milowy odłączony od systemu śledzenia.",
+      "unlinkError": "Nie udało się odłączyć kamienia milowego.",
+      "sourceRemoved": "źródło usunięte w {provider}",
+      "mergedInto": "scalono z {target}"
+    },
+    "summary": {
+      "inScope": "{count, plural, one {# w zakresie} few {# w zakresie} many {# w zakresie} other {# w zakresie}}",
+      "foundInTesting": "{count, plural, one {# znaleziono w testach} few {# znaleziono w testach} many {# znaleziono w testach} other {# znaleziono w testach}}",
+      "includesChildMilestones": "Zawiera podrzędne kamienie milowe"
+    },
+    "members": {
+      "cardTitle": "Problemy",
+      "inScope": "W zakresie",
+      "foundInTesting": "Znalezione podczas testów",
+      "foundInTestingEmpty": "Nie znaleziono problemów podczas testów.",
+      "inScopeCrossBadge": "W zakresie",
+      "refresh": "Odśwież",
+      "columnKey": "Nazwa",
+      "columnStatus": "Status",
+      "columnCoverage": "Pokrycie",
+      "columnSource": "Źródło",
+      "sourceSynced": "Zsynchronizowane",
+      "sourceManual": "Ręczne",
+      "coveragePassed": "Zaliczony",
+      "coverageFailed": "Niezaliczony",
+      "coverageInProgress": "W trakcie",
+      "coverageNotRun": "Nie wykonano",
+      "coverageUncovered": "Nieobjęte",
+      "filterAllCoverage": "Wszystkie pokrycia",
+      "filterAllSources": "Wszystkie źródła",
+      "filterAllTypes": "Wszystkie typy",
+      "empty": "Żadne problemy nie są jeszcze powiązane z tym kamieniem milowym.",
+      "emptyFiltered": "Brak problemów pasujących do obecnych filtrów.",
+      "unlink": "Odłącz",
+      "managedByJira": "Zarządzane przez Jira — usuń to z wersji/sprintu w Jira",
+      "linkSuccess": "Problem powiązany z tym kamieniem milowym.",
+      "linkError": "Nie udało się powiązać problemu z tym kamieniem milowym.",
+      "unlinkSuccess": "Problem usunięty z tego kamienia milowego.",
+      "unlinkError": "Nie udało się usunąć problemu z tego kamienia milowego.",
+      "overflowTitle": "Więcej problemów w Jira",
+      "overflowDescription": "Te problemy znajdują się w powiązanej wersji/sprincie Jira, ale nie są jeszcze tutaj powiązane.",
+      "overflowCapped": "Ograniczono do {cap, number} — {overflowTotal, number} więcej w Jira",
+      "overflowMoreAvailable": "{overflowTotal, number} więcej dostępnych w Jira",
+      "overflowImportAction": "Importuj i połącz",
+      "overflowImportSuccess": "Import rozpoczęty — problemy pojawią się w miarę synchronizacji.",
+      "overflowImportError": "Nie udało się zaimportować powiązanych problemów z Jira.",
+      "emptyCta": "Połącz problem, aby zacząć.",
+      "columnDescription": "Opis",
+      "unlinkConfirmTitle": "Odłączyć problem?",
+      "unlinkConfirmDescription": "To usuwa problem z tego kamienia milowego. Sam problem zostaje zachowany i można go ponownie połączyć później.",
+      "totalsUncovered": "{count, plural, one {# nieobjęty problem} few {# nieobjęte problemy} many {# nieobjętych problemów} other {# nieobjętego problemu}}",
+      "filterHasUntested": "Ma nieprzetestowane przypadki",
+      "createRunNoCases": "Żaden z wybranych problemów nie ma powiązanych przypadków testowych.",
+      "createTestRunDetailed": "Utwórz przebieg testu ({issues, plural, one {# problem} few {# problemy} many {# problemów} other {# problemu}} · {cases, plural, one {# przypadek} few {# przypadki} many {# przypadków} other {# przypadku}})"
     }
   },
   "sessions": {
@@ -5258,6 +5357,7 @@
         "encrypted": "Zaszyfrowane",
         "encryptedHelp": "To pole jest szyfrowane i przechowywane bezpiecznie",
         "changeCredential": "Zmiana",
+        "leaveBlankToKeep": "Pozostaw puste, aby zachować istniejącą wartość",
         "apiKeyWarningTitle": "Powiadomienie o uwierzytelnianiu klucza API",
         "apiKeyWarningDescription": "W przypadku uwierzytelniania kluczem API osoba raportująca utworzone problemy może nie być zgodna z użytkownikiem TestPlanIt, który je utworzył — nawet jeśli adresy e-mail są zgodne:",
         "apiKeyWarningPoint1": "Aby skonfigurować reportera Jira, konto tokena API musi mieć uprawnienia administratora Jira („Modyfikuj Reportera”). Bez nich Jira ignoruje reportera, a właściciel tokena API jest rejestrowany jako twórca.",
@@ -7705,9 +7805,9 @@
       "textBody": "Zaloguj się do TestPlanIt\n\nKliknij poniższy link, aby się zalogować:\n{url}\n\nDla Twojego bezpieczeństwa ten link można wykorzystać tylko raz. Poproś o nowy link, jeśli chcesz się zalogować ponownie.\n\nJeśli nie prosiłeś o ten e-mail, możesz go bezpiecznie zignorować."
     },
     "passwordless": {
-      "codeIntro": "Otwierasz to na innym urządzeniu? Wpisz ten kod na ekranie logowania, na którym poprosiłeś o link:",
-      "deviceNotice": "Ten link loguje Cię z przeglądarki, w której o niego poprosiłeś. Jeśli otworzysz go gdzie indziej, zobaczysz powyższy kod do wpisania w oryginalnym oknie.",
-      "textBody": "Zaloguj się do TestPlanIt\n\nKliknij poniższy link, aby się zalogować:\n{url}\n\nOtwierasz to na innym urządzeniu? Wpisz ten kod na ekranie logowania, na którym poprosiłeś o link: {code}\n\nJeśli nie prosiłeś o ten e-mail, możesz go bezpiecznie zignorować."
+      "codeIntro": "Otwierasz to na innym urządzeniu? Wpisz ten kod na ekranie logowania, gdzie poprosiłeś o łącze:",
+      "deviceNotice": "To łącze loguje Cię z przeglądarki, w której o nie poprosiłeś. Jeśli otworzysz je gdzie indziej, zobaczysz powyższy kod do wpisania w oryginalnym oknie.",
+      "textBody": "Zaloguj się do TestPlanIt\n\nKliknij poniższe łącze, aby się zalogować:\n{url}\n\nOtwierasz to na innym urządzeniu? Wpisz ten kod na ekranie logowania, gdzie poprosiłeś o łącze: {code}\n\nJeśli nie prosiłeś o ten e-mail, możesz go bezpiecznie zignorować."
     }
   },
   "comments": {

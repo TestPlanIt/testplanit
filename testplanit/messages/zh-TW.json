@@ -1086,19 +1086,19 @@
         "backToSignIn": "返回登入頁面"
       },
       "passwordless": {
-        "waitingInstructions": "點按電子郵件中的連結以從此瀏覽器登入，或於下方輸入電子郵件中的代碼。",
-        "codeLabel": "登入代碼",
+        "waitingInstructions": "點擊電子郵件中的連結以在此瀏覽器登入，或輸入下方電子郵件中的驗證碼。",
+        "codeLabel": "登入驗證碼",
         "verifyCode": "驗證代碼",
-        "verifying": "正在驗證……",
-        "invalidCode": "該代碼不正確。請檢查電子郵件並再試一次。",
-        "codeExpired": "此登入請求已過期。請申請新的連結。",
-        "tooManyAttempts": "錯誤嘗試次數過多。請申請新的連結以再試一次。",
-        "windowLost": "此視窗已無法完成登入。請申請新的連結。",
-        "genericError": "我們無法讓您登入。請申請新的連結並再試一次。",
-        "tooManyRequests": "登入請求過多。請稍候片刻再試一次。",
-        "haveCode": "已經有登入代碼了嗎？",
-        "codeEntryDescription": "請輸入您登入電子郵件中的代碼。代碼僅在您申請連結時所使用的瀏覽器中有效。",
-        "backToRequest": "改為申請新的連結"
+        "verifying": "正在核實……",
+        "invalidCode": "此代碼不正確。請檢查電子郵件並重試。",
+        "codeExpired": "此登入請求已過期。請重新請求連結。",
+        "tooManyAttempts": "錯誤嘗試次數過多。請請求新連結以重試。",
+        "windowLost": "此視窗無法再完成登入。請請求新連結。",
+        "genericError": "我們無法為您登入。請請求新連結並重試。",
+        "tooManyRequests": "登入請求次數過多。請稍候片刻後再試。",
+        "haveCode": "已經有登入驗證碼？",
+        "codeEntryDescription": "輸入登入電子郵件中的驗證碼。驗證碼僅在您請求連結的瀏覽器中有效。",
+        "backToRequest": "改為請求新連結"
       },
       "twoFactor": {
         "title": "雙重身份驗證",
@@ -1109,13 +1109,13 @@
     },
     "passwordless": {
       "completingSignIn": "正在為您登入……",
-      "completeErrorTitle": "我們無法讓您登入",
-      "requestNewLink": "申請新的連結",
-      "codeTitle": "您的登入代碼",
-      "codeInstructions": "您在不同的裝置或瀏覽器上開啟了登入連結。請在您最初申請的登入畫面上輸入此代碼。",
-      "codeCloseNotice": "輸入代碼後，您即可關閉此視窗。",
+      "completeErrorTitle": "我們無法為您登入",
+      "requestNewLink": "請求新連結",
+      "codeTitle": "您的登入驗證碼",
+      "codeInstructions": "您在不同的裝置或瀏覽器上開啟了登入連結。請在您最初請求連結的登入畫面上輸入此代碼。",
+      "codeCloseNotice": "輸入代碼後，您可以關閉此視窗。",
       "expiredTitle": "此登入連結已失效",
-      "expiredBody": "此連結可能已過期或已被使用。請從登入頁面申請新的連結 — 這只需片刻。"
+      "expiredBody": "此連結可能已過期或已被使用。請從登入頁面請求新連結——只需片刻時間。"
     },
     "errors": {
       "accessDenied": "訪問被拒絕。您的帳戶可能已停用或您沒有登入權限。",
@@ -1379,7 +1379,18 @@
           "importStart": "匯入",
           "importStarted": "匯入已開始。問題將很快顯示。",
           "importFailed": "匯入失敗",
-          "importPreviewFailed": "無法估算符合項目"
+          "importPreviewFailed": "無法估算符合項目",
+          "milestoneSync": {
+            "title": "里程碑同步",
+            "description": "從此追蹤器的時間相關工作項目同步 TestPlanIt 里程碑。",
+            "enableLabel": "啟用里程碑同步",
+            "releasesLabel": "發行版本",
+            "sprintsLabel": "衝刺",
+            "kindsLabel": "要同步的類型",
+            "autoTrackLabel": "自動新增新項目",
+            "settingsSaved": "里程碑同步設定已儲存",
+            "saveError": "儲存里程碑同步設定失敗"
+          }
         },
         "integrationAssigned": "整合任務已成功分配",
         "integrationAssignError": "未能將問題整合分配給項目",
@@ -2138,6 +2149,94 @@
     "notifications": {
       "dueSoon": "里程碑「{name}」將於 {dueDate}到期。",
       "overdue": "里程碑「{name}」應於 {dueDate}日到期。"
+    },
+    "import": {
+      "importTitle": "從 Jira 匯入",
+      "importDescription": "選擇要同步為 TestPlanIt 里程碑的 Jira 修正版本和衝刺。",
+      "showClosed": "顯示已關閉",
+      "alreadyLinked": "已連結",
+      "selectedCount": "{count, plural, other {# 已選擇}}",
+      "confirmSelection": "匯入已選項目",
+      "empty": "未找到里程碑",
+      "previewFailed": "從 Jira 載入里程碑失敗",
+      "importFailed": "匯入已選里程碑失敗",
+      "importStarted": "匯入已開始",
+      "kindRelease": "發行版本",
+      "kindSprint": "衝刺",
+      "selectAll": "全選",
+      "searchPlaceholder": "搜尋發行版本和衝刺……",
+      "emptyFiltered": "沒有符合您篩選條件的里程碑。",
+      "partialWarning": "無法取得部分 Jira 專案：",
+      "importing": "{count, plural, other {正在從 Jira 匯入 # 個里程碑…}}",
+      "completed": "{count, plural, other {已從 Jira 匯入 # 個里程碑}}",
+      "stillRunning": "匯入仍在背景執行——完成後里程碑將會顯示。"
+    },
+    "sync": {
+      "managedByJira": "由 Jira 管理",
+      "managedByJiraDescription": "此里程碑的名稱、日期和狀態由 Jira 管理。請在 Jira 中進行更改，以在此處更新。",
+      "lastSynced": "上次同步時間 {time}",
+      "openInJira": "在 Jira 中開啟",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "立即同步",
+      "unlinkMenuItem": "從 {provider} 取消連結",
+      "unlinkConfirmTitle": "取消連結里程碑？",
+      "unlinkConfirmDescription": "這將停止與追蹤器同步：欄位將再次變為可編輯，已同步的問題連結將變為手動連結（您可自行保留或移除），並且稍後可透過重新匯入此工作項目來重新連結。",
+      "unlinkConfirmAction": "取消連結",
+      "unlinkSuccess": "里程碑已與追蹤器取消連結。",
+      "unlinkError": "取消連結里程碑失敗。",
+      "sourceRemoved": "來源已在 {provider} 中移除",
+      "mergedInto": "已合併至 {target}"
+    },
+    "summary": {
+      "inScope": "{count, plural, other {# 在範圍內}}",
+      "foundInTesting": "{count, plural, other {# 在測試中發現}}",
+      "includesChildMilestones": "包含子里程碑"
+    },
+    "members": {
+      "cardTitle": "問題",
+      "inScope": "在範圍內",
+      "foundInTesting": "在測試中發現",
+      "foundInTestingEmpty": "測試中未發現問題。",
+      "inScopeCrossBadge": "在範圍內",
+      "refresh": "重新整理",
+      "columnKey": "名稱",
+      "columnStatus": "狀態",
+      "columnCoverage": "覆蓋率",
+      "columnSource": "來源",
+      "sourceSynced": "已同步",
+      "sourceManual": "手動",
+      "coveragePassed": "通過",
+      "coverageFailed": "失敗",
+      "coverageInProgress": "進行中",
+      "coverageNotRun": "未執行",
+      "coverageUncovered": "未覆蓋",
+      "filterAllCoverage": "所有覆蓋率",
+      "filterAllSources": "所有來源",
+      "filterAllTypes": "所有類型",
+      "empty": "尚無問題連結至此里程碑。",
+      "emptyFiltered": "沒有符合目前篩選條件的問題。",
+      "unlink": "取消連結",
+      "managedByJira": "由 Jira 管理——請在 Jira 中的版本/衝刺中移除",
+      "linkSuccess": "問題已連結至此里程碑。",
+      "linkError": "將問題連結至此里程碑失敗。",
+      "unlinkSuccess": "問題已從此里程碑中移除。",
+      "unlinkError": "從此里程碑中移除問題失敗。",
+      "overflowTitle": "Jira 中的更多問題",
+      "overflowDescription": "這些問題位於已連結的 Jira 版本/衝刺中，但尚未在此處連結。",
+      "overflowCapped": "上限為 {cap, number} — Jira 中還有 {overflowTotal, number} 個",
+      "overflowMoreAvailable": "Jira 中還有 {overflowTotal, number} 個可用",
+      "overflowImportAction": "匯入並連結",
+      "overflowImportSuccess": "匯入已開始——問題將在同步時顯示。",
+      "overflowImportError": "從 Jira 匯入成員問題失敗。",
+      "emptyCta": "連結問題以開始。",
+      "columnDescription": "描述",
+      "unlinkConfirmTitle": "取消連結問題？",
+      "unlinkConfirmDescription": "這將從此里程碑中移除該問題。該問題本身將保留，並可稍後重新連結。",
+      "totalsUncovered": "{count, plural, other {# 個未覆蓋問題}}",
+      "filterHasUntested": "有未測試案例",
+      "createRunNoCases": "所選問題均未連結測試案例。",
+      "createTestRunDetailed": "建立測試運行（{issues, plural, other {# 個問題}} · {cases, plural, other {# 個案例}}）"
     }
   },
   "sessions": {
@@ -5258,6 +5357,7 @@
         "encrypted": "加密",
         "encryptedHelp": "該欄位已加密並安全儲存。",
         "changeCredential": "改變",
+        "leaveBlankToKeep": "留空以保留現有值",
         "apiKeyWarningTitle": "API金鑰認證通知",
         "apiKeyWarningDescription": "使用 API 金鑰驗證時，即使電子郵件地址相符，建立問題的報告者也可能與建立該問題的 TestPlanIt 使用者不符：",
         "apiKeyWarningPoint1": "設定 Jira 報告人需要 API 令牌帳戶擁有 Jira 管理員（「修改報告人」）權限。否則，Jira 將忽略該報告人，並將 API 令牌所有者記錄為建立者。",
@@ -7705,9 +7805,9 @@
       "textBody": "登入 TestPlanIt\n\n請點按下方連結登入：\n{url}\n\n為了您的安全，此連結只能使用一次。若您需要再次登入，請申請新的連結。\n\n若您沒有申請此電子郵件，可以安心忽略。"
     },
     "passwordless": {
-      "codeIntro": "在不同裝置上開啟此連結？請在您申請連結的登入畫面上輸入此代碼：",
-      "deviceNotice": "此連結會讓您從申請連結時所使用的瀏覽器登入。若您在其他地方開啟，將會顯示上方的代碼，供您在原始視窗中輸入。",
-      "textBody": "登入 TestPlanIt\n\n請點按下方連結登入：\n{url}\n\n在不同裝置上開啟此連結？請在您申請連結的登入畫面上輸入此代碼：{code}\n\n若您沒有申請此電子郵件，可以安心忽略。"
+      "codeIntro": "在不同裝置上開啟此內容？請在您請求連結的登入畫面上輸入此代碼：",
+      "deviceNotice": "此連結會從您請求連結的瀏覽器為您登入。如果您在其他地方開啟它，將顯示上方的代碼，供您在原始視窗中輸入。",
+      "textBody": "登入 TestPlanIt\n\n點擊下方連結以登入：\n{url}\n\n在不同裝置上開啟此內容？請在您請求連結的登入畫面上輸入此代碼：{code}\n\n如果您並未請求此電子郵件，可以安全地忽略它。"
     }
   },
   "comments": {

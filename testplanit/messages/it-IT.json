@@ -1086,7 +1086,7 @@
         "backToSignIn": "Torna alla pagina di accesso"
       },
       "passwordless": {
-        "waitingInstructions": "Fai clic sul link nell'email per accedere da questo browser, oppure inserisci il codice dall'email qui sotto.",
+        "waitingInstructions": "Fai clic sul link nell'email per accedere da questo browser, oppure inserisci il codice riportato nell'email qui sotto.",
         "codeLabel": "Codice di accesso",
         "verifyCode": "Verifica codice",
         "verifying": "Verifica in corso...",
@@ -1094,10 +1094,10 @@
         "codeExpired": "Questa richiesta di accesso è scaduta. Richiedi un nuovo link.",
         "tooManyAttempts": "Troppi tentativi errati. Richiedi un nuovo link per riprovare.",
         "windowLost": "Questa finestra non può più completare l'accesso. Richiedi un nuovo link.",
-        "genericError": "Non è stato possibile completare l'accesso. Richiedi un nuovo link e riprova.",
+        "genericError": "Non è stato possibile accedere. Richiedi un nuovo link e riprova.",
         "tooManyRequests": "Troppe richieste di accesso. Attendi un momento e riprova.",
         "haveCode": "Hai già un codice di accesso?",
-        "codeEntryDescription": "Inserisci il codice dalla tua email di accesso. I codici funzionano solo nel browser in cui hai richiesto il link.",
+        "codeEntryDescription": "Inserisci il codice ricevuto nell'email di accesso. I codici funzionano solo nel browser in cui hai richiesto il link.",
         "backToRequest": "Richiedi invece un nuovo link"
       },
       "twoFactor": {
@@ -1109,13 +1109,13 @@
     },
     "passwordless": {
       "completingSignIn": "Accesso in corso...",
-      "completeErrorTitle": "Non è stato possibile completare l'accesso",
+      "completeErrorTitle": "Non è stato possibile accedere",
       "requestNewLink": "Richiedi un nuovo link",
       "codeTitle": "Il tuo codice di accesso",
-      "codeInstructions": "Hai aperto il link di accesso su un dispositivo o browser diverso. Inserisci questo codice nella schermata di accesso da cui lo hai originariamente richiesto.",
+      "codeInstructions": "Hai aperto il link di accesso su un dispositivo o browser diverso. Inserisci questo codice nella schermata di accesso in cui l'hai originariamente richiesto.",
       "codeCloseNotice": "Puoi chiudere questa finestra una volta inserito il codice.",
       "expiredTitle": "Questo link di accesso non è più valido",
-      "expiredBody": "Il link potrebbe essere scaduto o già utilizzato. Richiedine uno nuovo dalla pagina di accesso — richiede solo un momento."
+      "expiredBody": "Il link potrebbe essere scaduto o già utilizzato. Richiedine uno nuovo dalla pagina di accesso — è questione di un momento."
     },
     "errors": {
       "accessDenied": "Accesso negato. Il tuo account potrebbe essere inattivo o non hai l'autorizzazione per accedere.",
@@ -1379,7 +1379,18 @@
           "importStart": "Importa",
           "importStarted": "Importazione avviata. I problemi appariranno a breve.",
           "importFailed": "Importazione non riuscita",
-          "importPreviewFailed": "Impossibile stimare le corrispondenze"
+          "importPreviewFailed": "Impossibile stimare le corrispondenze",
+          "milestoneSync": {
+            "title": "Sincronizzazione milestone",
+            "description": "Sincronizza le milestone di TestPlanIt con gli elementi temporali di questo tracker.",
+            "enableLabel": "Abilita la sincronizzazione delle milestone",
+            "releasesLabel": "Release",
+            "sprintsLabel": "Sprint",
+            "kindsLabel": "Tipi da sincronizzare",
+            "autoTrackLabel": "Aggiungi automaticamente i nuovi",
+            "settingsSaved": "Impostazioni di sincronizzazione delle milestone salvate",
+            "saveError": "Impossibile salvare le impostazioni di sincronizzazione delle milestone"
+          }
         },
         "integrationAssigned": "Integrazione assegnata con successo",
         "integrationAssignError": "Impossibile assegnare l'integrazione del problema al progetto",
@@ -2138,6 +2149,94 @@
     "notifications": {
       "dueSoon": "La tappa \"{name}\" è prevista per il {dueDate}",
       "overdue": "La tappa \"{name}\" era prevista per il {dueDate}"
+    },
+    "import": {
+      "importTitle": "Importa da Jira",
+      "importDescription": "Seleziona le Fix Versions e gli Sprint di Jira da sincronizzare come Milestone di TestPlanIt.",
+      "showClosed": "Mostra chiusi",
+      "alreadyLinked": "Già collegato",
+      "selectedCount": "{count, plural, one {# selezionato} other {# selezionati}}",
+      "confirmSelection": "Importa selezionati",
+      "empty": "Nessuna milestone trovata",
+      "previewFailed": "Impossibile caricare le milestone da Jira",
+      "importFailed": "Impossibile importare le milestone selezionate",
+      "importStarted": "Importazione avviata",
+      "kindRelease": "Rilascio",
+      "kindSprint": "Sprint",
+      "selectAll": "Seleziona tutto",
+      "searchPlaceholder": "Cerca release e sprint...",
+      "emptyFiltered": "Nessuna milestone corrisponde ai filtri selezionati.",
+      "partialWarning": "Alcuni progetti Jira non sono stati recuperati:",
+      "importing": "Importazione di {count, plural, one {# milestone} other {# milestone}} da Jira…",
+      "completed": "Importato {count, plural, one {# milestone} other {# milestone}} da Jira",
+      "stillRunning": "L'importazione è ancora in esecuzione in background: le milestone appariranno al termine."
+    },
+    "sync": {
+      "managedByJira": "Gestito da Jira",
+      "managedByJiraDescription": "Il nome, le date e lo stato di questa milestone sono gestiti da Jira. Apporta le modifiche lì per aggiornarli anche qui.",
+      "lastSynced": "Ultima sincronizzazione {time}",
+      "openInJira": "Apri in Jira",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "Sincronizza ora",
+      "unlinkMenuItem": "Scollega da {provider}",
+      "unlinkConfirmTitle": "Scollegare la milestone?",
+      "unlinkConfirmDescription": "Questo interrompe la sincronizzazione con il tracker: i campi diventano nuovamente modificabili, i collegamenti ai problemi sincronizzati diventano manuali (potrai conservarli o rimuoverli) ed è possibile ricollegare in seguito importando nuovamente questo elemento.",
+      "unlinkConfirmAction": "Scollega",
+      "unlinkSuccess": "Milestone scollegata dal tracker.",
+      "unlinkError": "Impossibile scollegare la milestone.",
+      "sourceRemoved": "origine rimossa in {provider}",
+      "mergedInto": "unita a {target}"
+    },
+    "summary": {
+      "inScope": "{count, plural, one {# nell'ambito} other {# nell'ambito}}",
+      "foundInTesting": "{count, plural, one {# trovato durante i test} other {# trovati durante i test}}",
+      "includesChildMilestones": "Include le milestone figlie"
+    },
+    "members": {
+      "cardTitle": "Problemi",
+      "inScope": "Nell'ambito",
+      "foundInTesting": "Trovato durante i test",
+      "foundInTestingEmpty": "Nessun problema trovato durante i test.",
+      "inScopeCrossBadge": "Nell'ambito",
+      "refresh": "Aggiorna",
+      "columnKey": "Nome",
+      "columnStatus": "Stato",
+      "columnCoverage": "Copertura",
+      "columnSource": "Fonte",
+      "sourceSynced": "Sincronizzato",
+      "sourceManual": "Manuale",
+      "coveragePassed": "Superato",
+      "coverageFailed": "Fallito",
+      "coverageInProgress": "In corso",
+      "coverageNotRun": "Non eseguito",
+      "coverageUncovered": "Non coperto",
+      "filterAllCoverage": "Tutta la copertura",
+      "filterAllSources": "Tutte le fonti",
+      "filterAllTypes": "Tutti i tipi",
+      "empty": "Nessun problema ancora collegato a questa milestone.",
+      "emptyFiltered": "Nessun problema corrisponde ai filtri correnti.",
+      "unlink": "Scollega",
+      "managedByJira": "Gestito da Jira — rimuovilo dalla versione/sprint in Jira",
+      "linkSuccess": "Problema collegato a questa milestone.",
+      "linkError": "Impossibile collegare il problema a questa milestone.",
+      "unlinkSuccess": "Problema rimosso da questa milestone.",
+      "unlinkError": "Impossibile rimuovere il problema da questa milestone.",
+      "overflowTitle": "Altri problemi in Jira",
+      "overflowDescription": "Questi problemi sono nella versione/sprint Jira collegata ma non sono ancora collegati qui.",
+      "overflowCapped": "Limitato a {cap, number} — altri {overflowTotal, number} in Jira",
+      "overflowMoreAvailable": "Altri {overflowTotal, number} disponibili in Jira",
+      "overflowImportAction": "Importa e collega",
+      "overflowImportSuccess": "Importazione avviata — i problemi appariranno man mano che vengono sincronizzati.",
+      "overflowImportError": "Impossibile importare i problemi membri da Jira.",
+      "emptyCta": "Collega un problema per iniziare.",
+      "columnDescription": "Descrizione",
+      "unlinkConfirmTitle": "Scollegare il problema?",
+      "unlinkConfirmDescription": "Questo rimuove il problema da questa milestone. Il problema stesso viene conservato e può essere collegato di nuovo in seguito.",
+      "totalsUncovered": "{count, plural, one {# problema non coperto} other {# problemi non coperti}}",
+      "filterHasUntested": "Ha casi non testati",
+      "createRunNoCases": "Nessuno dei problemi selezionati ha casi di test collegati.",
+      "createTestRunDetailed": "Crea esecuzione test ({issues, plural, one {# problema} other {# problemi}} · {cases, plural, one {# caso} other {# casi}})"
     }
   },
   "sessions": {
@@ -5258,6 +5357,7 @@
         "encrypted": "Criptato",
         "encryptedHelp": "Questo campo è crittografato e archiviato in modo sicuro",
         "changeCredential": "Modifica",
+        "leaveBlankToKeep": "Lascia vuoto per mantenere il valore esistente",
         "apiKeyWarningTitle": "Avviso di autenticazione della chiave API",
         "apiKeyWarningDescription": "Con l'autenticazione tramite chiave API, l'autore della segnalazione dei problemi creati potrebbe non corrispondere all'utente di TestPlanIt che li ha creati, anche se gli indirizzi email coincidono:",
         "apiKeyWarningPoint1": "Per impostare il reporter di Jira, l'account del token API deve disporre dell'autorizzazione di amministratore di Jira (\"Modifica reporter\"). In caso contrario, Jira ignora il reporter e il proprietario del token API viene registrato come creatore.",
@@ -7705,9 +7805,9 @@
       "textBody": "Accedi a TestPlanIt\n\nFai clic sul link seguente per accedere:\n{url}\n\nPer motivi di sicurezza, questo link può essere utilizzato solo una volta. Richiedi un nuovo link se devi accedere di nuovo.\n\nSe non hai richiesto questa email, puoi ignorarla in tutta sicurezza."
     },
     "passwordless": {
-      "codeIntro": "Stai aprendo questo link su un dispositivo diverso? Inserisci questo codice nella schermata di accesso da cui hai richiesto il link:",
-      "deviceNotice": "Questo link ti consente di accedere dal browser in cui lo hai richiesto. Se lo apri altrove, ti verrà mostrato il codice sopra da inserire nella finestra originale.",
-      "textBody": "Accedi a TestPlanIt\n\nFai clic sul link seguente per accedere:\n{url}\n\nStai aprendo questo link su un dispositivo diverso? Inserisci questo codice nella schermata di accesso da cui hai richiesto il link: {code}\n\nSe non hai richiesto questa email, puoi ignorarla in tutta sicurezza."
+      "codeIntro": "Stai aprendo questo su un dispositivo diverso? Inserisci questo codice nella schermata di accesso in cui hai richiesto il link:",
+      "deviceNotice": "Questo link ti consente di accedere dal browser in cui l'hai richiesto. Se lo apri altrove, ti verrà mostrato il codice sopra da inserire nella finestra originale.",
+      "textBody": "Accedi a TestPlanIt\n\nFai clic sul link seguente per accedere:\n{url}\n\nStai aprendo questo su un dispositivo diverso? Inserisci questo codice nella schermata di accesso in cui hai richiesto il link: {code}\n\nSe non hai richiesto questa email, puoi tranquillamente ignorarla."
     }
   },
   "comments": {
@@ -7891,7 +7991,7 @@
     "renameConfirm": "Rinominare",
     "renameNoRefsToast": "Parametro rinominato (nessun riferimento esistente)",
     "selectSourceWarningTitle": "Modificare l'origine SELECT per \"@{name}\"?",
-    "selectSourceWarningDescription": "Existing dataset values for this parameter may not exist in the new list. {invalidCount, plural, =1 {# row will} other {# rows will}} need attention after this change. Continue?",
+    "selectSourceWarningDescription": "I valori del set di dati esistenti per questo parametro potrebbero non essere presenti nella nuova lista. {invalidCount, plural, =1 {# riga richiederà} other {# righe richiederanno}} attenzione dopo questa modifica. Continuare?",
     "selectSourceConfirm": "Cambia sorgente",
     "datasetRowSelectAria": "Seleziona riga",
     "datasetSelectAllPageTooltip": "Fai clic per selezionare tutte le righe di questa pagina. Fai clic tenendo premuto Maiusc per selezionare tutte le righe di tutte le pagine.",
