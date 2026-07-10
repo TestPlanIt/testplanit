@@ -27,7 +27,9 @@ describe("jiraDeployment", () => {
           version: "1000.0.0",
         }),
       });
-      const result = await detectJiraDeployment("https://example.atlassian.net");
+      const result = await detectJiraDeployment(
+        "https://example.atlassian.net"
+      );
       expect(result).toEqual({ type: "cloud", apiVersion: "3" });
       expect(mockFetch).toHaveBeenCalledWith(
         "https://example.atlassian.net/rest/api/2/serverInfo",
@@ -43,7 +45,9 @@ describe("jiraDeployment", () => {
           version: "10.3.13",
         }),
       });
-      const result = await detectJiraDeployment("https://jira.mycompany.domain");
+      const result = await detectJiraDeployment(
+        "https://jira.mycompany.domain"
+      );
       expect(result).toEqual({ type: "server", apiVersion: "2" });
     });
 
@@ -52,7 +56,9 @@ describe("jiraDeployment", () => {
         ok: true,
         json: async () => ({ deploymentType: "Data Center" }),
       });
-      const result = await detectJiraDeployment("https://jira.mycompany.domain");
+      const result = await detectJiraDeployment(
+        "https://jira.mycompany.domain"
+      );
       expect(result).toEqual({ type: "server", apiVersion: "2" });
     });
 
@@ -62,13 +68,17 @@ describe("jiraDeployment", () => {
       expect(cloud).toEqual({ type: "cloud", apiVersion: "3" });
 
       mockFetch.mockResolvedValueOnce({ ok: false, statusText: "Not Found" });
-      const server = await detectJiraDeployment("https://jira.mycompany.domain");
+      const server = await detectJiraDeployment(
+        "https://jira.mycompany.domain"
+      );
       expect(server).toEqual({ type: "server", apiVersion: "2" });
     });
 
     it("falls back to server when serverInfo throws", async () => {
       mockFetch.mockRejectedValueOnce(new Error("network down"));
-      const result = await detectJiraDeployment("https://jira.mycompany.domain");
+      const result = await detectJiraDeployment(
+        "https://jira.mycompany.domain"
+      );
       expect(result).toEqual({ type: "server", apiVersion: "2" });
     });
 
@@ -161,9 +171,9 @@ describe("jiraDeployment", () => {
         "basic"
       );
       expect(header).toMatch(/^Basic /);
-      expect(
-        Buffer.from(header.slice(6), "base64").toString("utf8")
-      ).toBe("user@example.com:token");
+      expect(Buffer.from(header.slice(6), "base64").toString("utf8")).toBe(
+        "user@example.com:token"
+      );
     });
 
     it("builds a Basic header for username + password (Data Center)", () => {
@@ -171,9 +181,9 @@ describe("jiraDeployment", () => {
         { username: "user", password: "pass" },
         "basic"
       );
-      expect(
-        Buffer.from(header.slice(6), "base64").toString("utf8")
-      ).toBe("user:pass");
+      expect(Buffer.from(header.slice(6), "base64").toString("utf8")).toBe(
+        "user:pass"
+      );
     });
   });
 
@@ -200,9 +210,9 @@ describe("jiraDeployment", () => {
     });
 
     it("builds { name } for Server reporter", () => {
-      expect(userRefField({ accountId: "a-1", name: "alice" }, "server")).toEqual(
-        { name: "alice" }
-      );
+      expect(
+        userRefField({ accountId: "a-1", name: "alice" }, "server")
+      ).toEqual({ name: "alice" });
     });
 
     it("returns undefined for a missing user", () => {

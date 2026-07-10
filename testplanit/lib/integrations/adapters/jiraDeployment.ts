@@ -49,18 +49,13 @@ export async function detectJiraDeployment(
 
   try {
     const signal = AbortSignal.timeout(SERVER_INFO_TIMEOUT_MS);
-    const response = await fetch(
-      `${normalizedBase}/rest/api/2/serverInfo`,
-      {
-        headers: { Accept: "application/json", ...authHeaders },
-        signal,
-      }
-    );
+    const response = await fetch(`${normalizedBase}/rest/api/2/serverInfo`, {
+      headers: { Accept: "application/json", ...authHeaders },
+      signal,
+    });
     if (response.ok) {
       const body = await response.json();
-      const deploymentType = String(
-        body?.deploymentType ?? ""
-      ).toLowerCase();
+      const deploymentType = String(body?.deploymentType ?? "").toLowerCase();
       if (deploymentType === "cloud") {
         return { type: "cloud", apiVersion: "3" };
       }
@@ -155,10 +150,7 @@ export function buildAuthHeader(
  * `accountId`; Server/Data Center uses `name` (falling back to `key`).
  */
 export function pickUserId(
-  user:
-    | { accountId?: string; name?: string; key?: string }
-    | null
-    | undefined,
+  user: { accountId?: string; name?: string; key?: string } | null | undefined,
   deployment: JiraDeploymentType
 ): string | undefined {
   if (!user) return undefined;
@@ -173,10 +165,7 @@ export function pickUserId(
  * accepts `{ accountId }`; Server/Data Center accepts `{ name }`.
  */
 export function userRefField(
-  user:
-    | { accountId?: string; name?: string; key?: string }
-    | null
-    | undefined,
+  user: { accountId?: string; name?: string; key?: string } | null | undefined,
   deployment: JiraDeploymentType
 ): { accountId: string } | { name: string } | undefined {
   const id = pickUserId(user, deployment);

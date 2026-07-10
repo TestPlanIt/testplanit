@@ -579,8 +579,7 @@ describe("IntegrationManager", () => {
 
       expect(adapter).toBeInstanceOf(JiraAdapter);
       const v2MyselfCall = mockFetch.mock.calls.find(
-        (c: any[]) =>
-          c[0] === "https://jira.mycompany.domain/rest/api/2/myself"
+        (c: any[]) => c[0] === "https://jira.mycompany.domain/rest/api/2/myself"
       );
       expect(v2MyselfCall).toBeTruthy();
       const auth = (v2MyselfCall![1] as any).headers.Authorization;

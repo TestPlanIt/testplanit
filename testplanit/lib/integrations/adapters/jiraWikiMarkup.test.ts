@@ -56,7 +56,9 @@ describe("adfToWikiMarkup", () => {
       )
     ).toBe("[site|https://example.com]");
     expect(
-      adfToWikiMarkup(doc(para({ type: "text", text: "x", marks: [{ type: "link" }] })))
+      adfToWikiMarkup(
+        doc(para({ type: "text", text: "x", marks: [{ type: "link" }] }))
+      )
     ).toBe("x");
   });
 
@@ -68,10 +70,14 @@ describe("adfToWikiMarkup", () => {
 
   it("renders headings with the right level, clamped to h1..h6", () => {
     expect(
-      adfToWikiMarkup(doc({ type: "heading", attrs: { level: 2 }, content: [text("Title")] }))
+      adfToWikiMarkup(
+        doc({ type: "heading", attrs: { level: 2 }, content: [text("Title")] })
+      )
     ).toBe("h2. Title");
     expect(
-      adfToWikiMarkup(doc({ type: "heading", attrs: { level: 9 }, content: [text("Deep")] }))
+      adfToWikiMarkup(
+        doc({ type: "heading", attrs: { level: 9 }, content: [text("Deep")] })
+      )
     ).toBe("h6. Deep");
   });
 
@@ -129,14 +135,18 @@ describe("adfToWikiMarkup", () => {
 
   it("renders block quotes and horizontal rules", () => {
     expect(
-      adfToWikiMarkup(doc({ type: "blockquote", content: [para(text("quoted"))] }))
+      adfToWikiMarkup(
+        doc({ type: "blockquote", content: [para(text("quoted"))] })
+      )
     ).toBe("{quote}\nquoted\n{quote}");
     expect(adfToWikiMarkup(doc({ type: "rule" }))).toBe("----");
   });
 
   it("maps hard breaks to newlines within a paragraph", () => {
     expect(
-      adfToWikiMarkup(doc(para(text("line one"), { type: "hardBreak" }, text("line two"))))
+      adfToWikiMarkup(
+        doc(para(text("line one"), { type: "hardBreak" }, text("line two")))
+      )
     ).toBe("line one\nline two");
   });
 
