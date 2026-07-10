@@ -196,6 +196,29 @@ export default function MilestoneDetailsPage() {
     },
   });
 
+  // Active IntegrationProject mapping(s) for this milestone's integration,
+  // scoped to this project — feeds the source badge's Jira project ("space")
+  // segment. Only fires for synced milestones.
+  const { data: milestoneIntegrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
+    {
+      where: {
+        isActive: true,
+        projectIntegration: {
+          projectId: Number(projectId),
+          integrationId: milestone?.integrationId ?? undefined,
+        },
+      },
+      select: {
+        externalProjectKey: true,
+        externalProjectName: true,
+        projectIntegration: { select: { integrationId: true } },
+      },
+    },
+    { enabled: milestone?.integrationId != null }
+  );
+
   const queryClient = useQueryClient();
 
   // D-15/D-16: subscribe this detail page to its per-entity milestone
@@ -654,6 +677,7 @@ export default function MilestoneDetailsPage() {
                     <MilestoneSourceBadge
                       milestone={milestone}
                       projectId={Number(projectId)}
+                      integrationProjects={milestoneIntegrationProjects}
                       className="mt-2"
                     />
                   )}

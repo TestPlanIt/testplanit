@@ -7,7 +7,10 @@ import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
 import TextFromJson from "@/components/TextFromJson";
 import { Badge } from "@/components/ui/badge";
-import { MilestoneSourceBadge } from "./MilestoneSourceBadge";
+import {
+  MilestoneSourceBadge,
+  type MilestoneIntegrationProject,
+} from "./MilestoneSourceBadge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -47,6 +50,9 @@ interface MilestoneForecastData {
 interface MilestoneItemCardProps {
   milestone: MilestonesWithTypes;
   projectId?: number;
+  /** Active IntegrationProject mappings, forwarded to the source badge to
+   * render the Jira project ("space") segment. */
+  integrationProjects?: MilestoneIntegrationProject[] | null;
   theme: string | undefined;
   colorMap: ColorMap | null;
   session: Session | null;
@@ -64,6 +70,7 @@ interface MilestoneItemCardProps {
 const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
   milestone,
   projectId,
+  integrationProjects,
   theme,
   colorMap,
   session,
@@ -164,6 +171,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
               <MilestoneSourceBadge
                 milestone={milestone}
                 projectId={projectId}
+                integrationProjects={integrationProjects}
               />
             </div>
             <p

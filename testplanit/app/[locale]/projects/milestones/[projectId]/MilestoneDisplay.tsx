@@ -46,6 +46,41 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  // Distinct synced-integration ids among these milestones, so the mapping
+  // lookup below fires ONE request per integration for the whole list rather
+  // than one per milestone (the milestones-page passive-refresh does the same).
+  const integrationIds = React.useMemo(() => {
+    const ids = new Set<number>();
+    for (const m of milestones) {
+      if (m.integrationId != null) ids.add(m.integrationId);
+    }
+    return Array.from(ids);
+  }, [milestones]);
+
+  // Active IntegrationProject mappings (key + full name) for those
+  // integrations, scoped to THIS project so a shared integration doesn't leak
+  // another project's mappings. Threaded to each card's source badge to
+  // render the Jira project ("space") segment.
+  const { data: integrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
+    {
+      where: {
+        isActive: true,
+        projectIntegration: {
+          projectId,
+          integrationId: { in: integrationIds },
+        },
+      },
+      select: {
+        externalProjectKey: true,
+        externalProjectName: true,
+        projectIntegration: { select: { integrationId: true } },
+      },
+    },
+    { enabled: projectId != null && integrationIds.length > 0 }
+  );
+
   const [colorMap, setColorMap] = useState<ColorMap | null>(null);
   const [selectedMilestoneForAction, setSelectedMilestoneForAction] =
     useState<MilestonesWithTypes | null>(null);
@@ -121,6 +156,7 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           <MilestoneItemCard
             milestone={currentMilestone}
             projectId={projectId}
+            integrationProjects={integrationProjects}
             theme={resolvedTheme}
             colorMap={colorMap}
             session={session}
@@ -153,6 +189,7 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           key={currentMilestone.id}
           milestone={currentMilestone}
           projectId={projectId}
+          integrationProjects={integrationProjects}
           theme={resolvedTheme}
           colorMap={colorMap}
           session={session}

@@ -43,7 +43,10 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
   }),
 }));
 
-import { MilestoneSourceBadge } from "./MilestoneSourceBadge";
+import {
+  MilestoneSourceBadge,
+  resolveMilestoneProjectSpace,
+} from "./MilestoneSourceBadge";
 
 const synced = {
   id: 42,
@@ -305,6 +308,74 @@ describe("MilestoneSourceBadge", () => {
 
       expect(openSpy).not.toHaveBeenCalled();
       openSpy.mockRestore();
+    });
+  });
+
+  describe("Jira project (space) segment", () => {
+    const abt = {
+      externalProjectKey: "ABT",
+      externalProjectName: "Acme Billing Team",
+      projectIntegration: { integrationId: 9 },
+    };
+    const adm = {
+      externalProjectKey: "ADM",
+      externalProjectName: "Acme Admin",
+      projectIntegration: { integrationId: 9 },
+    };
+
+    it("renders the full project name (initial, uncollapsed) when a single mapping resolves", () => {
+      render(
+        <MilestoneSourceBadge milestone={synced} integrationProjects={[abt]} />
+      );
+      expect(screen.getByTestId("milestone-source-project")).toHaveTextContent(
+        "· Acme Billing Team"
+      );
+    });
+
+    it("renders no project segment when none is passed (unchanged behavior)", () => {
+      render(<MilestoneSourceBadge milestone={synced} />);
+      expect(screen.queryByTestId("milestone-source-project")).toBeNull();
+    });
+
+    describe("resolveMilestoneProjectSpace", () => {
+      it("uses the sole mapping for a sprint (no key in its URL)", () => {
+        expect(resolveMilestoneProjectSpace(synced, [abt])).toEqual({
+          name: "Acme Billing Team",
+          short: "ABT",
+        });
+      });
+
+      it("picks the mapping whose key is embedded in a version URL", () => {
+        const release = {
+          ...synced,
+          externalKind: "RELEASE",
+          externalUrl:
+            "https://jira.example.com/projects/ADM/versions/10099",
+        };
+        expect(resolveMilestoneProjectSpace(release, [abt, adm])).toEqual({
+          name: "Acme Admin",
+          short: "ADM",
+        });
+      });
+
+      it("returns null when multiple mappings are ambiguous (sprint, no URL key)", () => {
+        expect(resolveMilestoneProjectSpace(synced, [abt, adm])).toBeNull();
+      });
+
+      it("ignores mappings belonging to a different integration", () => {
+        const other = { ...abt, projectIntegration: { integrationId: 99 } };
+        expect(resolveMilestoneProjectSpace(synced, [other])).toBeNull();
+      });
+
+      it("returns null for a local milestone or when no mappings are provided", () => {
+        expect(
+          resolveMilestoneProjectSpace(
+            { ...synced, integrationId: null },
+            [abt]
+          )
+        ).toBeNull();
+        expect(resolveMilestoneProjectSpace(synced, undefined)).toBeNull();
+      });
     });
   });
 });

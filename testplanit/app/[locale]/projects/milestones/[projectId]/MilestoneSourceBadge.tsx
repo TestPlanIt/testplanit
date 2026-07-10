@@ -45,10 +45,76 @@ export interface MilestoneSourceBadgeMilestone {
   mergedToExternalId?: string | null;
 }
 
+/**
+ * A project's active `IntegrationProject` mapping — the external Jira project
+ * ("space") this integration is linked to, carrying both its full name and
+ * short key. Fetched ONCE per list/detail by the parent (keyed by the
+ * milestones' integration ids) rather than per badge, since the milestones
+ * list would otherwise fire one lookup per row.
+ */
+export interface MilestoneIntegrationProject {
+  externalProjectKey: string;
+  externalProjectName: string;
+  projectIntegration?: { integrationId: number | null } | null;
+}
+
 interface MilestoneSourceBadgeProps {
   milestone: MilestoneSourceBadgeMilestone;
   projectId?: number;
+  /**
+   * Active IntegrationProject mappings for the surrounding milestones'
+   * integration(s). Used to render the Jira project ("space") segment. When
+   * absent (or when the project can't be resolved unambiguously) the badge
+   * renders exactly as before, with no project segment.
+   */
+  integrationProjects?: MilestoneIntegrationProject[] | null;
   className?: string;
+}
+
+/**
+ * Jira embeds the project key in a version's URL
+ * (`.../projects/{KEY}/versions/{id}`) but NOT in a sprint's
+ * (`.../RapidBoard.jspa?rapidView=...&sprint=...`), so this resolves a key
+ * only for RELEASE-kind milestones; sprints fall through to the
+ * single-mapping case in {@link resolveMilestoneProjectSpace}.
+ */
+function projectKeyFromUrl(url: string | null): string | null {
+  if (!url) return null;
+  const match = url.match(/\/projects\/([^/?#]+)\/versions\//i);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/**
+ * Picks the Jira project ("space") a synced milestone belongs to from the
+ * project's active IntegrationProject mappings, returning its full `name` and
+ * `short` key. A single TPI project can map to MULTIPLE external projects on
+ * one integration (e.g. sprints on a shared board) and the milestone row does
+ * not persist which one it came from, so we: (1) trust the key embedded in a
+ * version URL when present; else (2) use the sole mapping when unambiguous;
+ * else (3) return null rather than display a possibly-wrong project.
+ */
+export function resolveMilestoneProjectSpace(
+  milestone: MilestoneSourceBadgeMilestone,
+  integrationProjects?: MilestoneIntegrationProject[] | null
+): { name: string; short: string } | null {
+  if (!integrationProjects || milestone.integrationId == null) return null;
+  const mappings = integrationProjects.filter(
+    (ip) => ip.projectIntegration?.integrationId === milestone.integrationId
+  );
+  if (mappings.length === 0) return null;
+
+  const urlKey = projectKeyFromUrl(milestone.externalUrl);
+  const chosen =
+    (urlKey &&
+      mappings.find(
+        (m) => m.externalProjectKey.toUpperCase() === urlKey.toUpperCase()
+      )) ||
+    (mappings.length === 1 ? mappings[0] : null);
+  if (!chosen) return null;
+
+  const name = chosen.externalProjectName?.trim() || chosen.externalProjectKey;
+  const short = chosen.externalProjectKey?.trim() || name;
+  return { name, short };
 }
 
 function JiraGlyph() {
@@ -160,15 +226,22 @@ function RemovedOrMergedBadge({
  * unlink route — a 403 is the backstop). Non-admins see a plain
  * open-in-tracker badge instead of a single-item menu.
  *
+ * When linked to an external project ("space"), a trailing project segment
+ * is appended after state. It renders the project's FULL name when there's
+ * room, swaps to the SHORT key as space tightens, then drops entirely —
+ * i.e. it is the first segment to collapse.
+ *
  * When the badge is squeezed by its flex row it collapses segment by
- * segment — state first, then kind, then the provider name — down to the
- * bare Jira glyph as its minimum width. An invisible full-width copy keeps
- * the wrapper requesting the expanded width, so the badge grows back as
- * soon as space returns; the full label stays available via aria-label.
+ * segment — project (full → short → gone) first, then state, then kind,
+ * then the provider name — down to the bare Jira glyph as its minimum
+ * width. An invisible full-width copy keeps the wrapper requesting the
+ * expanded width, so the badge grows back as soon as space returns; the
+ * full label stays available via aria-label.
  */
 export function MilestoneSourceBadge({
   milestone,
   projectId,
+  integrationProjects,
   className,
 }: MilestoneSourceBadgeProps) {
   const t = useTranslations("milestones");
@@ -176,9 +249,20 @@ export function MilestoneSourceBadge({
   const router = useRouter();
   const wrapRef = useRef<HTMLSpanElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
-  // Highest visible segment index: 0 = icon only, 1 = +provider,
-  // 2 = +kind, 3 = +state.
-  const [level, setLevel] = useState(3);
+  const projectSpace = resolveMilestoneProjectSpace(
+    milestone,
+    integrationProjects
+  );
+  // Primitive copies for the layout effect's dependency array — the resolver
+  // returns a fresh object each render, so depending on the object identity
+  // would re-run (and re-measure) on every render.
+  const projectName = projectSpace?.name ?? null;
+  const projectShort = projectSpace?.short ?? null;
+  // Highest visible segment index: 0 = icon only, 1 = +provider, 2 = +kind,
+  // 3 = +state, 4 = +project (short key), 5 = project (full name). Levels
+  // 4/5 only apply when a project space is resolved. Starts fully expanded
+  // and the layout effect collapses to fit before paint.
+  const [level, setLevel] = useState(projectSpace ? 5 : 3);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
   const { isProjectAdmin } = useProjectPermissions(projectId ?? 0);
@@ -195,7 +279,12 @@ export function MilestoneSourceBadge({
       ? t("import.kindRelease")
       : t("import.kindSprint");
   const state = milestone.externalState ?? "";
-  const badgeLabel = t("sync.sourceBadge", { provider, kind, state });
+  // Append the project's full name (locale-neutral `·` separator, matching
+  // the sourceBadge template) so the accessible label stays complete
+  // regardless of how far the visible badge has collapsed.
+  const badgeLabel =
+    t("sync.sourceBadge", { provider, kind, state }) +
+    (projectSpace ? ` · ${projectSpace.name}` : "");
 
   const safeExternalUrl =
     milestone.externalUrl && SAFE_EXTERNAL_URL_RE.test(milestone.externalUrl)
@@ -234,23 +323,41 @@ export function MilestoneSourceBadge({
     if (!wrap || !measure || typeof ResizeObserver === "undefined") return;
 
     const compute = () => {
-      const segs = Array.from(
-        measure.querySelectorAll<HTMLElement>("[data-seg]")
-      );
+      const width = (name: string) =>
+        measure
+          .querySelector<HTMLElement>(`[data-seg="${name}"]`)
+          ?.getBoundingClientRect().width ?? 0;
       const full = measure.getBoundingClientRect().width;
-      if (full === 0 || segs.length === 0) return; // hidden or non-visual env
-      const segWidths = segs.map((s) => s.getBoundingClientRect().width);
-      const segTotal = segWidths.reduce((sum, w) => sum + w, 0);
-      // Padding, inter-segment gaps, and the hover link-icon slot. Slightly
-      // overestimates for collapsed levels (fewer gaps), which only makes
-      // the collapse marginally eager — never an overflow.
-      const chrome = full - segTotal;
+      if (full === 0) return; // hidden or non-visual env
+
+      const iconW = width("icon");
+      const providerW = width("provider");
+      const kindW = width("kind");
+      const stateW = width("state");
+      const shortW = width("project-short");
+      const fullW = width("project-full");
+
+      // Everything the visible badge spends that isn't a measured segment:
+      // padding, inter-segment gaps, and the hover link-icon slot. The hidden
+      // copy carries BOTH project variants, so this over-counts by ~one gap —
+      // which only makes the collapse marginally eager, never an overflow.
+      const chrome =
+        full - (iconW + providerW + kindW + stateW + shortW + fullW);
       const available = wrap.getBoundingClientRect().width;
-      let cum = chrome;
+
+      // Incremental width unlocked at each level; index i => level i+1.
+      // 1:+provider 2:+kind 3:+state 4:+project(short key)
+      // 5:project(full name) — the last step is the short→full delta.
+      const steps = [providerW, kindW, stateW];
+      if (projectName) {
+        steps.push(shortW);
+        steps.push(fullW - shortW);
+      }
+      let cum = chrome + iconW;
       let next = 0;
-      for (let i = 0; i < segWidths.length; i++) {
-        cum += segWidths[i];
-        if (cum <= available + 0.5) next = i;
+      for (let i = 0; i < steps.length; i++) {
+        cum += steps[i];
+        if (cum <= available + 0.5) next = i + 1;
         else break;
       }
       setLevel(next);
@@ -260,7 +367,7 @@ export function MilestoneSourceBadge({
     const ro = new ResizeObserver(compute);
     ro.observe(wrap);
     return () => ro.disconnect();
-  }, [isLocal, provider, kind, state, safeExternalUrl]);
+  }, [isLocal, provider, kind, state, safeExternalUrl, projectName, projectShort]);
 
   if (isLocal) return null;
 
@@ -289,6 +396,11 @@ export function MilestoneSourceBadge({
       {level >= 1 && <span>{provider}</span>}
       {level >= 2 && <span>{`· ${kind}`}</span>}
       {level >= 3 && state && <span>{`· ${state}`}</span>}
+      {projectSpace && level >= 4 && (
+        <span data-testid="milestone-source-project">
+          {`· ${level >= 5 ? projectSpace.name : projectSpace.short}`}
+        </span>
+      )}
       {safeExternalUrl && (
         <ExternalLink
           data-testid="milestone-open-in-tracker"
@@ -311,12 +423,18 @@ export function MilestoneSourceBadge({
         className="invisible h-0 overflow-hidden"
       >
         <Badge variant="outline" className="text-xs gap-1 whitespace-nowrap">
-          <span data-seg className="flex items-center">
+          <span data-seg="icon" className="flex items-center">
             <JiraGlyph />
           </span>
-          <span data-seg>{provider}</span>
-          <span data-seg>{`· ${kind}`}</span>
-          {state && <span data-seg>{`· ${state}`}</span>}
+          <span data-seg="provider">{provider}</span>
+          <span data-seg="kind">{`· ${kind}`}</span>
+          {state && <span data-seg="state">{`· ${state}`}</span>}
+          {projectSpace && (
+            <span data-seg="project-short">{`· ${projectSpace.short}`}</span>
+          )}
+          {projectSpace && (
+            <span data-seg="project-full">{`· ${projectSpace.name}`}</span>
+          )}
           {safeExternalUrl && <ExternalLink className="h-3 w-3" />}
         </Badge>
       </span>
