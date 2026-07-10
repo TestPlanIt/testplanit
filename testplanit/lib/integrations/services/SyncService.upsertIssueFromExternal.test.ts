@@ -75,8 +75,8 @@ describe("SyncService.upsertIssueFromExternal (D-12 canonical upsert)", () => {
   });
 
   it("is exported as a public method callable without reaching into a private", async () => {
-    const module = await import("./SyncService");
-    const service = new module.SyncService();
+    const syncServiceModule = await import("./SyncService");
+    const service = new syncServiceModule.SyncService();
 
     // This assertion is the RED pin: today only `_createIssueFromExternal`
     // (private) exists. `upsertIssueFromExternal` must be a real, callable,
@@ -87,8 +87,8 @@ describe("SyncService.upsertIssueFromExternal (D-12 canonical upsert)", () => {
   it("returns { id, created: true } for a brand-new externalId_integrationId pair", async () => {
     mockIssueUpsert.mockResolvedValue({ id: 555 });
 
-    const module = await import("./SyncService");
-    const service = new module.SyncService();
+    const syncServiceModule = await import("./SyncService");
+    const service = new syncServiceModule.SyncService();
     const rawDbModule = await import("@/lib/rawDb");
 
     const result = await (service as any).upsertIssueFromExternal(
@@ -106,8 +106,8 @@ describe("SyncService.upsertIssueFromExternal (D-12 canonical upsert)", () => {
     // is expected to perform before the upsert to derive `created`.
     mockIssueUpsert.mockResolvedValue({ id: 555 });
 
-    const module = await import("./SyncService");
-    const service = new module.SyncService();
+    const syncServiceModule = await import("./SyncService");
+    const service = new syncServiceModule.SyncService();
     const rawDbModule = await import("@/lib/rawDb");
     const db = (rawDbModule as any).rawDb;
     // A pre-existing-row lookup path (findUnique) would resolve truthy in a
@@ -130,8 +130,8 @@ describe("SyncService.upsertIssueFromExternal (D-12 canonical upsert)", () => {
   it("writes via db.issue.upsert keyed on externalId_integrationId", async () => {
     mockIssueUpsert.mockResolvedValue({ id: 555 });
 
-    const module = await import("./SyncService");
-    const service = new module.SyncService();
+    const syncServiceModule = await import("./SyncService");
+    const service = new syncServiceModule.SyncService();
     const rawDbModule = await import("@/lib/rawDb");
 
     await (service as any).upsertIssueFromExternal(
@@ -156,8 +156,8 @@ describe("SyncService.upsertIssueFromExternal (D-12 canonical upsert)", () => {
   it("threads issueData.parent through buildSyncedIssueData into Issue.data when present", async () => {
     mockIssueUpsert.mockResolvedValue({ id: 555 });
 
-    const module = await import("./SyncService");
-    const service = new module.SyncService();
+    const syncServiceModule = await import("./SyncService");
+    const service = new syncServiceModule.SyncService();
     const rawDbModule = await import("@/lib/rawDb");
 
     await (service as any).upsertIssueFromExternal(
