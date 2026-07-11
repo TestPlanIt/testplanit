@@ -797,6 +797,36 @@ describe("applyInboundMilestoneEvent", () => {
     );
   });
 
+  it("PER-PROJECT OPT-OUT: a created event for an excluded tracker project is acked without importing", async () => {
+    const applyInboundMilestoneEvent = await importSut();
+    (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({
+      kind: "RELEASE",
+      externalId: "10100",
+      externalProjectId: "10050",
+      merge: false,
+    });
+    mocks.integrationProjectFindMany.mockResolvedValue([
+      activeIntegrationProject(),
+    ]);
+    mocks.projectIntegrationFindUnique.mockResolvedValue({
+      config: {
+        milestoneSync: {
+          autoTrack: true,
+          autoTrackAdminId: "admin-1",
+          autoTrackExcludedExternalProjectIds: ["10050"],
+        },
+      },
+    });
+
+    const result = await applyInboundMilestoneEvent(
+      baseInput({ eventType: "jira:version_created" })
+    );
+
+    expect(result.outcome).toBe("unmatched");
+    expect(result.reason).toBe("auto-track-project-excluded");
+    expect(mocks.performMilestoneImport).not.toHaveBeenCalled();
+  });
+
   it("a convert event for a milestone with no local row is dropped (unmatched) rather than erroring", async () => {
     const applyInboundMilestoneEvent = await importSut();
     (mocks.adapter.extractMilestoneEventRef as Mock).mockReturnValue({

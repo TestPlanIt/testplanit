@@ -24,6 +24,9 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
       useFindMany: (...args: any[]) => mockFindManyProjectIntegration(...args),
       useUpdate: () => ({ mutateAsync: vi.fn() }),
     },
+    integrationProject: {
+      useFindMany: () => ({ data: [] }),
+    },
     integration: {
       useFindMany: (...args: any[]) => mockFindManyIntegration(...args),
     },

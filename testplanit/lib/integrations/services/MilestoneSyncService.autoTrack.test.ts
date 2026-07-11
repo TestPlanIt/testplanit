@@ -339,6 +339,60 @@ describe("performProjectMilestoneSync — auto-track baseline (first pass)", () 
   });
 });
 
+describe("performProjectMilestoneSync — per-project scan opt-out", () => {
+  it("skips excluded tracker projects in discovery: their keys are never fetched and their artifacts never import", async () => {
+    mockProjectIntegrationFindUnique.mockResolvedValue({
+      config: {
+        milestoneSync: {
+          enabled: true,
+          kinds: ["RELEASE"],
+          autoTrack: true,
+          autoTrackAdminId: "admin-1",
+          autoTrackBaseline: [],
+          autoTrackExcludedExternalProjectIds: ["20060"],
+        },
+      },
+    });
+    mockIntegrationProjectFindMany.mockResolvedValue([
+      { externalProjectKey: "TEST", externalProjectId: "10050" },
+      { externalProjectKey: "ADM", externalProjectId: "20060" },
+    ]);
+    const ADM_ONLY = {
+      id: "adm-v1",
+      kind: "RELEASE" as const,
+      name: "ADM 1.0",
+      state: "FUTURE" as const,
+      rawState: "unreleased",
+    };
+    mockGetExternalMilestones.mockImplementation(
+      async ({ projectKey }: { projectKey: string }) => ({
+        items: projectKey === "ADM" ? [ADM_ONLY] : [V1, V2_NEW],
+        hasMore: false,
+      })
+    );
+
+    const result = await milestoneSyncService.performProjectMilestoneSync(
+      "triggering-user",
+      1,
+      100
+    );
+
+    expect(result.success).toBe(true);
+    // Discovery (includeClosed:false) never touches the excluded key…
+    const discoveryKeys = mockGetExternalMilestones.mock.calls
+      .filter((c) => c[0].includeClosed === false)
+      .map((c) => c[0].projectKey);
+    expect(discoveryKeys).toEqual(["TEST"]);
+    // …so the excluded project's artifact never imports, while the
+    // included project's new artifact still does.
+    const importedIds = mockMilestonesUpsert.mock.calls.map(
+      (c) => c[0].create.externalId
+    );
+    expect(importedIds).not.toContain("adm-v1");
+    expect(importedIds).toContain("v2-new");
+  });
+});
+
 describe("performProjectMilestoneSync — autoTrack=false", () => {
   it("does NOT import the same newly-appeared version when autoTrack is false", async () => {
     mockProjectIntegrationFindUnique.mockResolvedValue({

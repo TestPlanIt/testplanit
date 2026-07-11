@@ -67,6 +67,11 @@ interface ResolvedMilestoneTargets {
   /** Every active mapping matching the artifact's external project/board —
    *  the candidate projects a created event may auto-track into. */
   mappedProjects: Array<{ projectId: number; integrationId: number }>;
+  /** The tracker-side project the artifact belongs to (version events carry
+   *  it directly; sprint events resolve it via the origin board). Created
+   *  events check it against each target's
+   *  `autoTrackExcludedExternalProjectIds` opt-out. */
+  externalProjectId: string;
 }
 
 /**
@@ -170,7 +175,11 @@ async function resolveMilestoneEventTargets(
         }) => m.projectIntegration
       )
     );
-    return { tracked, mappedProjects };
+    return {
+      tracked,
+      mappedProjects,
+      externalProjectId: ref.externalProjectId,
+    };
   }
 
   // ITERATION (sprint): resolve originBoardId -> project via the Jira
@@ -245,7 +254,11 @@ async function resolveMilestoneEventTargets(
         )
     );
     if (tracked.length > 0 || mappedProjects.length > 0) {
-      return { tracked, mappedProjects };
+      return {
+        tracked,
+        mappedProjects,
+        externalProjectId: boardProject.projectId,
+      };
     }
   }
 
@@ -468,8 +481,11 @@ export async function applyInboundMilestoneEvent(
         // identity, EVERY mapped project with auto-track ON imports its
         // own independent row.
         let importedProjects = 0;
-        let skipReason: "auto-track-off" | "auto-track-admin-missing" | null =
-          null;
+        let skipReason:
+          | "auto-track-off"
+          | "auto-track-admin-missing"
+          | "auto-track-project-excluded"
+          | null = null;
         for (const target of resolved.mappedProjects) {
           const projectIntegration = await baseDb.projectIntegration.findUnique(
             {
@@ -489,6 +505,25 @@ export async function applyInboundMilestoneEvent(
               `[applyInboundMilestoneEvent] ${eventType} for project ${target.projectId} — auto-track is OFF, no-op (D-02)`
             );
             skipReason = skipReason ?? "auto-track-off";
+            continue;
+          }
+
+          // Per-mapping opt-out: the admin can exclude specific tracker
+          // projects from new-milestone scanning — mirror the sync pass's
+          // discovery filter so a webhook can't sneak in what the scheduled
+          // pass would skip.
+          const excludedExternalProjectIds: unknown =
+            milestoneSyncConfig.autoTrackExcludedExternalProjectIds;
+          if (
+            Array.isArray(excludedExternalProjectIds) &&
+            excludedExternalProjectIds
+              .map(String)
+              .includes(String(resolved.externalProjectId))
+          ) {
+            console.debug(
+              `[applyInboundMilestoneEvent] ${eventType} for project ${target.projectId} — tracker project ${resolved.externalProjectId} is excluded from auto-track, no-op`
+            );
+            skipReason = skipReason ?? "auto-track-project-excluded";
             continue;
           }
 

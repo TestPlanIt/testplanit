@@ -33,9 +33,15 @@ interface MilestoneSyncConfig {
   /** Written by the sync worker on the first auto-track pass: the artifact
    *  ids that already existed when auto-track came on. Auto-track imports
    *  only artifacts OUTSIDE this baseline ("newly created"), so enabling it
-   *  never backfills everything. Cleared here whenever auto-track flips on
-   *  so the worker re-baselines at that moment. */
+   *  never backfills everything. Cleared here whenever auto-track's scope
+   *  changes (flipped on, kinds changed, scanned projects changed) so the
+   *  worker re-baselines at that moment. */
   autoTrackBaseline?: string[];
+  /** Tracker projects opted OUT of new-milestone scanning. Absent/empty =
+   *  scan every mapped project (the default — a mapping added later is
+   *  included automatically). Keyed by the stable externalProjectId, not
+   *  the renamable key. */
+  autoTrackExcludedExternalProjectIds?: string[];
 }
 
 /**
@@ -67,6 +73,29 @@ export function MilestoneSyncSettings({
 
   const { mutateAsync: updateProjectIntegration } =
     useClientQueries(schema).projectIntegration.useUpdate();
+
+  // Mapped tracker projects for the per-project auto-track opt-out list.
+  const { data: mappings } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
+    {
+      where: {
+        projectIntegration: {
+          integrationId: projectIntegration.integrationId,
+          projectId: projectIntegration.projectId,
+        },
+        isActive: true,
+      },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        externalProjectId: true,
+        externalProjectKey: true,
+        externalProjectName: true,
+      },
+    },
+    { enabled: isMilestoneSyncCapable(integration.provider) }
+  );
 
   const config = useMemo(() => {
     const raw = (projectIntegration.config as Record<string, any>) || {};
@@ -126,7 +155,9 @@ export function MilestoneSyncSettings({
     const kinds = checked
       ? Array.from(new Set([...config.kinds, kind]))
       : config.kinds.filter((k) => k !== kind);
-    void persist({ ...config, kinds });
+    // Kind changes alter auto-track's scope — re-baseline so a newly
+    // enabled kind's existing artifacts aren't backfilled as "new".
+    void persist({ ...clearBaseline(config), kinds });
   };
 
   const handleAutoTrackToggle = (checked: boolean) => {
@@ -136,6 +167,24 @@ export function MilestoneSyncSettings({
       ...(checked && session?.user?.id
         ? { autoTrackAdminId: session.user.id }
         : {}),
+    });
+  };
+
+  const handleProjectScanToggle = (
+    externalProjectId: string,
+    checked: boolean
+  ) => {
+    const current = new Set(config.autoTrackExcludedExternalProjectIds ?? []);
+    if (checked) {
+      current.delete(externalProjectId);
+    } else {
+      current.add(externalProjectId);
+    }
+    // Scanned-projects changes alter auto-track's scope — re-baseline so a
+    // re-included project's existing artifacts aren't backfilled as "new".
+    void persist({
+      ...clearBaseline(config),
+      autoTrackExcludedExternalProjectIds: Array.from(current),
     });
   };
 
@@ -199,6 +248,37 @@ export function MilestoneSyncSettings({
                 {t("milestoneSync.autoTrackLabel")}
               </Label>
             </div>
+
+            {config.autoTrack && (mappings?.length ?? 0) > 0 && (
+              <div className="space-y-2 ps-8">
+                <Label className="text-sm text-muted-foreground">
+                  {t("milestoneSync.autoTrackProjectsLabel")}
+                </Label>
+                {(mappings ?? []).map((mapping) => {
+                  const included = !(
+                    config.autoTrackExcludedExternalProjectIds ?? []
+                  ).includes(mapping.externalProjectId);
+                  return (
+                    <div key={mapping.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`milestoneSyncScanProject-${mapping.id}`}
+                        checked={included}
+                        onCheckedChange={(checked) =>
+                          handleProjectScanToggle(
+                            mapping.externalProjectId,
+                            !!checked
+                          )
+                        }
+                      />
+                      <Label htmlFor={`milestoneSyncScanProject-${mapping.id}`}>
+                        {mapping.externalProjectName ||
+                          mapping.externalProjectKey}
+                      </Label>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
       </CardContent>

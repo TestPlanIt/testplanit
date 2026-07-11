@@ -1388,6 +1388,7 @@
             "sprintsLabel": "Sprints",
             "kindsLabel": "Kinds to sync",
             "autoTrackLabel": "Automatically add new ones",
+            "autoTrackProjectsLabel": "Scan these connected projects for new milestones",
             "settingsSaved": "Milestone sync settings saved",
             "saveError": "Failed to save milestone sync settings"
           }

@@ -958,22 +958,39 @@ export class MilestoneSyncService {
     integrationId: number,
     projectId: number
   ): Promise<string[]> {
+    const mappings = await this._resolveProjectMappings(
+      db,
+      integrationId,
+      projectId
+    );
+    return mappings.map((m) => m.externalProjectKey);
+  }
+
+  /**
+   * All active mappings for the project+integration, with the stable
+   * external project id alongside the key — the auto-track pass filters
+   * discovery by `milestoneSync.autoTrackExcludedExternalProjectIds`,
+   * which stores ids (keys can be renamed in the tracker).
+   */
+  private async _resolveProjectMappings(
+    db: DbClient,
+    integrationId: number,
+    projectId: number
+  ): Promise<Array<{ externalProjectKey: string; externalProjectId: string }>> {
     const integrationProjects = await db.integrationProject.findMany({
       where: {
         projectIntegration: { integrationId, projectId },
         isActive: true,
       },
       orderBy: { createdAt: "asc" },
-      select: { externalProjectKey: true },
+      select: { externalProjectKey: true, externalProjectId: true },
     });
     if (integrationProjects.length === 0) {
       throw new Error(
         `No active IntegrationProject mapping for integration ${integrationId} / project ${projectId}`
       );
     }
-    return integrationProjects.map(
-      (ip: { externalProjectKey: string }) => ip.externalProjectKey
-    );
+    return integrationProjects;
   }
 
   /**
@@ -1224,23 +1241,40 @@ export class MilestoneSyncService {
       const autoTrackAdminId: string | undefined =
         milestoneSyncConfig.autoTrackAdminId;
 
-      const projectKeys = await this._resolveProjectKeys(
+      const mappings = await this._resolveProjectMappings(
         db,
         integrationId,
         projectId
       );
+      // Auto-track scanning is opt-out PER MAPPED EXTERNAL PROJECT
+      // (`autoTrackExcludedExternalProjectIds`, absent = scan all — so a
+      // mapping added later is included by default). Exclusions gate only
+      // NEW-artifact discovery: explicit imports and refreshes of already
+      // linked milestones ignore them. The settings UI clears the baseline
+      // whenever this set changes, so re-including a project re-baselines
+      // its existing artifacts instead of backfilling them.
+      const excludedExternalProjectIds = new Set<string>(
+        Array.isArray(milestoneSyncConfig.autoTrackExcludedExternalProjectIds)
+          ? milestoneSyncConfig.autoTrackExcludedExternalProjectIds.map(String)
+          : []
+      );
+      const discoveryKeys = mappings
+        .filter(
+          (m) => !excludedExternalProjectIds.has(String(m.externalProjectId))
+        )
+        .map((m) => m.externalProjectKey);
       const adapter = await this._getAdapter(integrationId, db);
 
       // Current filter-matching artifacts (the same default import filter:
       // unreleased versions + active/future sprints), scoped to the
-      // configured kinds only (kinds gating), unioned across every active
-      // project-key mapping.
+      // configured kinds only (kinds gating), unioned across the active
+      // project-key mappings that auto-track is allowed to scan.
       const currentMatches: ExternalMilestone[] = [];
       for (const kind of kinds) {
         try {
           const items = await this._fetchKindAcrossKeys(
             adapter,
-            projectKeys,
+            discoveryKeys,
             kind,
             false
           );

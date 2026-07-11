@@ -3,18 +3,24 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- Stable mock refs via vi.hoisted() ---
-const { mockUpdatePI, mockUseSession } = vi.hoisted(() => {
-  return {
-    mockUpdatePI: vi.fn(),
-    mockUseSession: vi.fn(),
-  };
-});
+const { mockUpdatePI, mockUseSession, mockMappingsFindMany } = vi.hoisted(
+  () => {
+    return {
+      mockUpdatePI: vi.fn(),
+      mockUseSession: vi.fn(),
+      mockMappingsFindMany: vi.fn(),
+    };
+  }
+);
 
 // --- Mocks ---
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     projectIntegration: { useUpdate: () => ({ mutateAsync: mockUpdatePI }) },
+    integrationProject: {
+      useFindMany: (...args: any[]) => mockMappingsFindMany(...args),
+    },
   }),
 }));
 
@@ -77,6 +83,22 @@ describe("MilestoneSyncSettings", () => {
       data: { user: { id: "current-user-1" } },
     });
     mockUpdatePI.mockResolvedValue({});
+    mockMappingsFindMany.mockReturnValue({
+      data: [
+        {
+          id: "map-1",
+          externalProjectId: "10050",
+          externalProjectKey: "ABT",
+          externalProjectName: "Abstract",
+        },
+        {
+          id: "map-2",
+          externalProjectId: "20060",
+          externalProjectKey: "ADM",
+          externalProjectName: "Admin Tools",
+        },
+      ],
+    });
   });
 
   it("renders for a milestones-capable integration (JIRA)", () => {
@@ -252,5 +274,120 @@ describe("MilestoneSyncSettings", () => {
     expect(call.data.config.milestoneSync.autoTrackBaseline).toEqual([
       "kept-1",
     ]);
+  });
+
+  it("lists a checkbox per mapped tracker project when auto-track is on, all checked by default", () => {
+    render(
+      <MilestoneSyncSettings
+        projectIntegration={makeProjectIntegration({
+          milestoneSync: {
+            enabled: true,
+            kinds: ["RELEASE"],
+            autoTrack: true,
+            autoTrackAdminId: "admin-1",
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    const abt = screen.getByRole("checkbox", { name: "Abstract" });
+    const adm = screen.getByRole("checkbox", { name: "Admin Tools" });
+    expect(abt).toBeChecked();
+    expect(adm).toBeChecked();
+  });
+
+  it("unchecking a project persists it into autoTrackExcludedExternalProjectIds and clears the baseline", async () => {
+    render(
+      <MilestoneSyncSettings
+        projectIntegration={makeProjectIntegration({
+          milestoneSync: {
+            enabled: true,
+            kinds: ["RELEASE"],
+            autoTrack: true,
+            autoTrackAdminId: "admin-1",
+            autoTrackBaseline: ["stale-1"],
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Admin Tools" }));
+
+    await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
+
+    const call = mockUpdatePI.mock.calls[0][0];
+    expect(
+      call.data.config.milestoneSync.autoTrackExcludedExternalProjectIds
+    ).toEqual(["20060"]);
+    // Scope change re-baselines.
+    expect(call.data.config.milestoneSync).not.toHaveProperty(
+      "autoTrackBaseline"
+    );
+  });
+
+  it("re-checking an excluded project removes it from the exclusions and clears the baseline", async () => {
+    render(
+      <MilestoneSyncSettings
+        projectIntegration={makeProjectIntegration({
+          milestoneSync: {
+            enabled: true,
+            kinds: ["RELEASE"],
+            autoTrack: true,
+            autoTrackAdminId: "admin-1",
+            autoTrackBaseline: ["stale-1"],
+            autoTrackExcludedExternalProjectIds: ["20060"],
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    const adm = screen.getByRole("checkbox", { name: "Admin Tools" });
+    expect(adm).not.toBeChecked();
+    fireEvent.click(adm);
+
+    await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
+
+    const call = mockUpdatePI.mock.calls[0][0];
+    expect(
+      call.data.config.milestoneSync.autoTrackExcludedExternalProjectIds
+    ).toEqual([]);
+    // Re-including a project MUST re-baseline — its pre-existing artifacts
+    // were never baselined while excluded and would otherwise backfill.
+    expect(call.data.config.milestoneSync).not.toHaveProperty(
+      "autoTrackBaseline"
+    );
+  });
+
+  it("changing a kind clears the baseline (scope change) while updating kinds", async () => {
+    render(
+      <MilestoneSyncSettings
+        projectIntegration={makeProjectIntegration({
+          milestoneSync: {
+            enabled: true,
+            kinds: ["RELEASE"],
+            autoTrack: true,
+            autoTrackAdminId: "admin-1",
+            autoTrackBaseline: ["stale-1"],
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /sprintsLabel/i }));
+
+    await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
+
+    const call = mockUpdatePI.mock.calls[0][0];
+    expect(call.data.config.milestoneSync.kinds).toEqual([
+      "RELEASE",
+      "ITERATION",
+    ]);
+    expect(call.data.config.milestoneSync).not.toHaveProperty(
+      "autoTrackBaseline"
+    );
   });
 });
