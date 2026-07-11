@@ -2123,6 +2123,7 @@
     "delete": {
       "title": "Mijlpaal verwijderen",
       "confirmMessage": "Weet u zeker dat u de mijlpaal {name}wilt verwijderen?",
+      "childrenWarning": "{count, plural, one {Zijn # onderliggende mijlpaal} other {Zijn # onderliggende en afstammende mijlpalen}} worden ook verwijderd.",
       "warning": "Deze mijlpaal wordt uit het project verwijderd. Historische gegevens voor deze mijlpaal blijven wel in het project aanwezig.",
       "toast": {
         "loading": "Mijlpaal verwijderen...",

@@ -2123,6 +2123,7 @@
     "delete": {
       "title": "Kilometre taşını sil",
       "confirmMessage": "{name} kilometre taşını silmek istediğinizden emin misiniz?",
+      "childrenWarning": "{count, plural, one {# alt kilometre taşı da} other {# alt ve ast kilometre taşı da}} silinecek.",
       "warning": "Bu kilometre taşı projeden kaldırılacaktır. Bu kilometre taşına ait geçmiş veriler projede kalmaya devam edecektir.",
       "toast": {
         "loading": "Dönüm noktası siliniyor...",

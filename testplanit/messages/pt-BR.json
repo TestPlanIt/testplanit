@@ -2123,6 +2123,7 @@
     "delete": {
       "title": "Excluir marco",
       "confirmMessage": "Tem certeza de que deseja excluir o marco {name}?",
+      "childrenWarning": "{count, plural, one {Seu # marco filho também será excluído.} other {Seus # marcos filhos e descendentes também serão excluídos.}}",
       "warning": "Este marco será removido do projeto. Os dados históricos referentes a este marco permanecerão no projeto.",
       "toast": {
         "loading": "Excluindo marco...",

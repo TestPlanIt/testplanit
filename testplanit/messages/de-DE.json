@@ -2123,6 +2123,7 @@
     "delete": {
       "title": "Meilenstein löschen",
       "confirmMessage": "Möchten Sie den Meilenstein {name}wirklich löschen?",
+      "childrenWarning": "{count, plural, one {Sein # untergeordneter Meilenstein} other {Seine # untergeordneten und nachfolgenden Meilensteine}} werden ebenfalls gelöscht.",
       "warning": "Dieser Meilenstein wird aus dem Projekt entfernt. Die historischen Daten für diesen Meilenstein bleiben jedoch im Projekt erhalten.",
       "toast": {
         "loading": "Meilenstein wird gelöscht...",

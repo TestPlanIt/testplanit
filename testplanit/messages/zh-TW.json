@@ -2123,6 +2123,7 @@
     "delete": {
       "title": "刪除里程碑",
       "confirmMessage": "您確定要刪除里程碑 {name} 嗎？",
+      "childrenWarning": "{count, plural, one {Its # child milestone} other {Its # child and descendant milestones}} will also be deleted.",
       "warning": "此里程碑將從專案中移除。該里程碑的歷史數據仍將保留在專案中。",
       "toast": {
         "loading": "刪除里程碑…",

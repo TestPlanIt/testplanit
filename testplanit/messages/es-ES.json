@@ -2123,6 +2123,7 @@
     "delete": {
       "title": "Borrar hito",
       "confirmMessage": "¿Está seguro que desea eliminar el hito {name}?",
+      "childrenWarning": "{count, plural, one {También se eliminará su # hito secundario} other {También se eliminarán sus # hitos secundarios y descendientes}}.",
       "warning": "Este hito se eliminará del proyecto. Los datos históricos de este hito seguirán en el proyecto.",
       "toast": {
         "loading": "Eliminando hito...",

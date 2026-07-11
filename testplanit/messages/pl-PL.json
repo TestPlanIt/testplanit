@@ -2123,6 +2123,7 @@
     "delete": {
       "title": "Usuń kamień milowy",
       "confirmMessage": "Czy na pewno chcesz usunąć kamień milowy {name}?",
+      "childrenWarning": "{count, plural, one {Zostanie również usunięty jego # podrzędny kamień milowy.} few {Zostaną również usunięte jego # podrzędne i potomne kamienie milowe.} many {Zostanie również usuniętych jego # podrzędnych i potomnych kamieni milowych.} other {Zostanie również usuniętych jego # podrzędnych i potomnych kamieni milowych.}}",
       "warning": "Ten kamień milowy zostanie usunięty z projektu. Dane historyczne dla tego kamienia milowego nadal będą dostępne w projekcie.",
       "toast": {
         "loading": "Usuwanie kamienia milowego...",

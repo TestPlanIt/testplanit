@@ -2123,6 +2123,7 @@
     "delete": {
       "title": "Elimina Milestone",
       "confirmMessage": "Sei sicuro di voler eliminare la milestone {name}?",
+      "childrenWarning": "{count, plural, one {Verrà eliminata anche # milestone figlia} other {Verranno eliminate anche # milestone figlie e discendenti}}.",
       "warning": "Questa milestone verrà rimossa dal progetto. I dati storici relativi a questa milestone rimarranno comunque nel progetto.",
       "toast": {
         "loading": "Eliminazione della milestone in corso...",

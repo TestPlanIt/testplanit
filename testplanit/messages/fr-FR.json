@@ -2123,6 +2123,7 @@
     "delete": {
       "title": "Supprimer l'étape importante",
       "confirmMessage": "Êtes-vous sûr de vouloir supprimer l'étape {name}?",
+      "childrenWarning": "{count, plural, one {Son # jalon enfant sera également supprimé} other {Ses # jalons enfants et descendants seront également supprimés}}.",
       "warning": "Cette étape sera supprimée du projet. Les données historiques relatives à cette étape resteront toutefois disponibles dans le projet.",
       "toast": {
         "loading": "Suppression de l'étape importante...",

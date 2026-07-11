@@ -2123,6 +2123,7 @@
     "delete": {
       "title": "Xóa mốc thời gian",
       "confirmMessage": "Bạn có chắc chắn muốn xóa mốc {name} không?",
+      "childrenWarning": "{count, plural, other {# mốc con và các mốc con cháu của nó}} cũng sẽ bị xóa.",
       "warning": "Mốc thời gian này sẽ bị xóa khỏi dự án. Dữ liệu lịch sử liên quan đến mốc thời gian này vẫn sẽ được lưu giữ trong dự án.",
       "toast": {
         "loading": "Đang xóa mốc thời gian...",
