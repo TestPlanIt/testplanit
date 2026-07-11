@@ -167,6 +167,9 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
               <MilestoneIconAndName
                 milestone={milestone}
                 projectId={projectId}
+                // The full source badge renders right beside this — no
+                // duplicate glyph inside the name.
+                showSourceIcon={false}
               />
               <MilestoneSourceBadge
                 milestone={milestone}

@@ -13,6 +13,7 @@ import type {
   Milestones,
   MilestoneTypes,
 } from "~/zenstack/models";
+import { MilestoneSourceIcon } from "@/components/MilestoneSourceIcon";
 import { Milestone } from "lucide-react";
 import { useTheme } from "next-themes";
 import React, { useEffect, useState } from "react";
@@ -111,6 +112,7 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
                     />
                   </div>
                   <div>{milestone.name}</div>
+                  <MilestoneSourceIcon milestone={milestone} />
                 </div>
               </Badge>
             </div>

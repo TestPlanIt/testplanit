@@ -1,4 +1,5 @@
 import DynamicIcon from "@/components/DynamicIcon";
+import { MilestoneSourceIcon } from "@/components/MilestoneSourceIcon";
 import {
   Select,
   SelectContent,
@@ -20,6 +21,11 @@ export const transformMilestones = (
       icon?: { name: string } | null;
     };
     parentId: number | null;
+    // Tracker-linkage fields (optional — options without them just don't
+    // show the source icon).
+    integrationId?: number | null;
+    externalKind?: string | null;
+    detachedAt?: Date | string | null;
   }[]
 ) => {
   return (
@@ -32,6 +38,9 @@ export const transformMilestones = (
           : null,
       },
       parentId: milestone.parentId,
+      integrationId: milestone.integrationId,
+      externalKind: milestone.externalKind,
+      detachedAt: milestone.detachedAt,
     })) || []
   );
 };
@@ -46,6 +55,9 @@ export interface MilestoneSelectProps {
       icon?: { name?: IconName } | null;
     };
     parentId: number | null;
+    integrationId?: number | null;
+    externalKind?: string | null;
+    detachedAt?: Date | string | null;
   }[];
   isLoading?: boolean;
   placeholder?: string;
@@ -60,6 +72,9 @@ const renderMilestoneOptions = (
       icon?: { name?: IconName } | null;
     };
     parentId: number | null;
+    integrationId?: number | null;
+    externalKind?: string | null;
+    detachedAt?: Date | string | null;
   }[],
   parentId: number | null = null,
   level: number = 0
@@ -80,6 +95,7 @@ const renderMilestoneOptions = (
               />
             )}
             {milestone.label}
+            <MilestoneSourceIcon milestone={milestone} />
           </div>
         </SelectItem>
         {renderMilestoneOptions(
