@@ -1774,7 +1774,7 @@ export default function TestRunPage() {
                                       disabled
                                       className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
                                     >
-                                      <Save className="h-4 w-4 me-2" />{" "}
+                                      <Save className="h-4 w-4" />
                                       {t("common.actions.save")}
                                     </Button>
                                   </span>
@@ -1791,7 +1791,7 @@ export default function TestRunPage() {
                             onClick={handleCancel}
                             disabled={isSubmitting}
                           >
-                            <CircleSlash2 className="h-4 w-4 me-2" />{" "}
+                            <CircleSlash2 className="h-4 w-4" />
                             {t("common.cancel")}
                           </Button>
                         </div>
@@ -1804,7 +1804,7 @@ export default function TestRunPage() {
                             disabled={isSubmitting}
                             className="text-destructive"
                           >
-                            <Trash2 className="h-4 w-4 " />{" "}
+                            <Trash2 className="h-4 w-4 " />
                             {t("common.actions.delete")}
                           </Button>
                         )}
