@@ -6,7 +6,10 @@ import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
-import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
+import {
+  MilestoneSelect,
+  transformMilestones,
+} from "@/components/forms/MilestoneSelect";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
 import { MagicSelectButton } from "@/components/runs/MagicSelectButton";
@@ -1011,18 +1014,10 @@ export default function AddTestRunModal({
       })) || []
     );
   }, [workflows, firstGatedRunOrder]);
-  const milestonesOptions = (milestones || []).map((m: any) => ({
-    value: m.id.toString(),
-    label: m.name,
-    milestoneType: m.milestoneType
-      ? {
-          icon: m.milestoneType.icon
-            ? { name: m.milestoneType.icon.name as IconName }
-            : undefined,
-        }
-      : undefined,
-    parentId: m.parentId,
-  }));
+  // Shared transform (NOT a hand-rolled map): it carries the tracker
+  // linkage fields through, so the picker can mark Jira-synced milestones
+  // with the source icon.
+  const milestonesOptions = transformMilestones(milestones || []);
 
   // Dialog close handler — the parent conditionally mounts this component,
   // so React unmounts and discards form/local state on close. No manual reset
