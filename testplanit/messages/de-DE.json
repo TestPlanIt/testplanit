@@ -18,6 +18,7 @@
     "searchTags": "Nach Schlagwörtern suchen...",
     "searchRuns": "{count, plural, =0 {Suche Testläufe} one {Suche # Testläufe} other {Suche # Testläufe}}",
     "searchSessions": "{count, plural, =0 {Sitzungen durchsuchen} one {Sitzung Nr. durchsuchen} other {Sitzung Nr. durchsuchen}}",
+    "searchMilestones": "{count, plural, =0 {Meilensteine durchsuchen} one {# Meilenstein durchsuchen} other {# Meilensteine durchsuchen}}",
     "search": "Suchen...",
     "defaultOption": "Standardoption",
     "yes": "Ja",

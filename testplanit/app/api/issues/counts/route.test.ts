@@ -61,6 +61,7 @@ const issueRow = (
     testRuns = 0,
     testRunResults = [],
     testRunStepResults = [],
+    milestoneIssues = 0,
   }: {
     caseIssues?: number;
     sessions?: number;
@@ -68,6 +69,7 @@ const issueRow = (
     testRuns?: number;
     testRunResults?: Array<{ testRunId: number }>;
     testRunStepResults?: Array<{ testRunResult: { testRunId: number } | null }>;
+    milestoneIssues?: number;
   } = {}
 ) => ({
   id,
@@ -77,6 +79,9 @@ const issueRow = (
   testRuns: Array.from({ length: testRuns }, (_, i) => ({ id: i })),
   testRunResults,
   testRunStepResults,
+  milestoneIssues: Array.from({ length: milestoneIssues }, (_, i) => ({
+    milestoneId: i,
+  })),
 });
 
 const findManyArg = () => (baseDb.issue.findMany as any).mock.calls[0][0];
@@ -167,6 +172,7 @@ describe("Issues Counts Route", () => {
         repositoryCases: 3,
         sessions: 3, // 2 direct + 1 from sessionResults
         testRuns: 1,
+        milestones: 0,
       });
     });
 
@@ -186,11 +192,13 @@ describe("Issues Counts Route", () => {
         repositoryCases: 5,
         sessions: 1,
         testRuns: 3,
+        milestones: 0,
       });
       expect(data.counts[2]).toEqual({
         repositoryCases: 2,
         sessions: 0,
         testRuns: 1,
+        milestones: 0,
       });
     });
 
@@ -209,6 +217,7 @@ describe("Issues Counts Route", () => {
         repositoryCases: 0,
         sessions: 0,
         testRuns: 0,
+        milestones: 0,
       });
     });
 
@@ -236,6 +245,7 @@ describe("Issues Counts Route", () => {
       expect(
         select.testRunStepResults.where.testRunResult.testRun.isDeleted
       ).toBe(false);
+      expect(select.milestoneIssues.where.milestone.isDeleted).toBe(false);
     });
 
     it("applies projectId scope when provided", async () => {
@@ -248,6 +258,7 @@ describe("Issues Counts Route", () => {
       expect(select.caseIssues.where.case.projectId).toBe(99);
       expect(select.sessions.where.projectId).toBe(99);
       expect(select.testRuns.where.projectId).toBe(99);
+      expect(select.milestoneIssues.where.milestone.projectId).toBe(99);
     });
 
     it("does not add projectId filter when projectId not provided", async () => {
@@ -296,6 +307,19 @@ describe("Issues Counts Route", () => {
       // 0 direct + 0 from testRunResults + 1 distinct from step results
       expect(data.counts[7].testRuns).toBe(1);
     });
+
+    it("counts the milestones an issue is a member of", async () => {
+      (getServerSession as any).mockResolvedValue(mockAdminSession);
+      (baseDb.issue.findMany as any).mockResolvedValue([
+        issueRow(8, { milestoneIssues: 4 }),
+      ]);
+
+      const request = createMockRequest({ issueIds: [8] });
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(data.counts[8].milestones).toBe(4);
+    });
   });
 
   describe("Project access filtering", () => {
@@ -308,6 +332,9 @@ describe("Issues Counts Route", () => {
       const { select } = findManyArg();
       expect(select.caseIssues.where.case).not.toHaveProperty("project");
       expect(select.testRuns.where).not.toHaveProperty("project");
+      expect(select.milestoneIssues.where.milestone).not.toHaveProperty(
+        "project"
+      );
     });
 
     it("adds project access filter for non-admin users", async () => {
@@ -319,6 +346,7 @@ describe("Issues Counts Route", () => {
       const { select } = findManyArg();
       expect(select.caseIssues.where.case).toHaveProperty("project");
       expect(select.testRuns.where).toHaveProperty("project");
+      expect(select.milestoneIssues.where.milestone).toHaveProperty("project");
     });
   });
 

@@ -3,6 +3,7 @@ import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { MilestonesCountDisplay } from "@/components/tables/MilestonesCountDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
 import {
@@ -59,6 +60,7 @@ export interface ExtendedIssues extends Issue {
   repositoryCasesCount?: number;
   sessionsCount?: number;
   testRunsCount?: number;
+  milestonesCount?: number;
 }
 
 /**
@@ -79,6 +81,7 @@ export function useIssueColumns({
     testCases: string;
     sessions: string;
     testRuns: string;
+    milestones: string;
     integration: string;
   };
   isLoadingCounts?: boolean;
@@ -98,6 +101,7 @@ export function useIssueColumns({
     testCases: tTestCases,
     sessions: tSessions,
     testRuns: tTestRuns,
+    milestones: tMilestones,
   } = translations;
 
   return useMemo(() => {
@@ -448,6 +452,37 @@ export function useIssueColumns({
           );
         },
       },
+      {
+        id: "milestones",
+        accessorKey: "milestones",
+        accessorFn: (row) => row.milestonesCount ?? 0,
+        header: tMilestones,
+        enableSorting: true,
+        enableResizing: true,
+        sortingFn: "basic",
+        size: 75,
+        minSize: 60,
+        maxSize: 150,
+        cell: ({ row }) => {
+          const count = row.original.milestonesCount;
+          return (
+            <div className="text-center">
+              <MilestonesCountDisplay
+                count={count}
+                filter={{
+                  milestoneIssues: {
+                    some: {
+                      issueId: row.original.id,
+                    },
+                  },
+                  isDeleted: false,
+                }}
+                isLoading={isLoadingCounts}
+              />
+            </div>
+          );
+        },
+      },
     ];
 
     // Hide columns that are populated only via external API sync when the project
@@ -473,6 +508,7 @@ export function useIssueColumns({
     tTestCases,
     tSessions,
     tTestRuns,
+    tMilestones,
     hideSyncedFields,
     isLoadingCounts,
   ]);

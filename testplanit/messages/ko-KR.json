@@ -18,6 +18,7 @@
     "searchTags": "태그를 검색하세요...",
     "searchRuns": "{count, plural, =0 {테스트 실행 횟수 검색} one {테스트 실행 횟수 검색} other {테스트 실행 횟수 검색}}",
     "searchSessions": "{count, plural, =0 {검색 세션} one {검색 # 세션} other {검색 # 세션}}",
+    "searchMilestones": "{count, plural, =0 {마일스톤 검색} other {마일스톤 # 개 검색}}",
     "search": "찾다...",
     "defaultOption": "기본 옵션",
     "yes": "예",

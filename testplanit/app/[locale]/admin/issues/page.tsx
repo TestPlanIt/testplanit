@@ -206,6 +206,7 @@ function IssueList() {
         repositoryCases: number;
         sessions: number;
         testRuns: number;
+        milestones: number;
       }
     >
   >({});
@@ -289,6 +290,7 @@ function IssueList() {
         repositoryCasesCount: counts?.repositoryCases ?? 0,
         sessionsCount: counts?.sessions ?? 0,
         testRunsCount: counts?.testRuns ?? 0,
+        milestonesCount: counts?.milestones ?? 0,
       };
     });
   }, [issues, issueCounts, issueProjects]);

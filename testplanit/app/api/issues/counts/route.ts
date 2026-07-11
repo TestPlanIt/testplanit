@@ -138,12 +138,27 @@ export async function POST(request: Request) {
           },
           select: { testRunResult: { select: { testRunId: true } } },
         },
+        milestoneIssues: {
+          where: {
+            milestone: {
+              isDeleted: false,
+              ...projectFilter,
+              ...projectAccessWhere,
+            },
+          },
+          select: { milestoneId: true },
+        },
       },
     });
 
     const countsMap: Record<
       number,
-      { repositoryCases: number; sessions: number; testRuns: number }
+      {
+        repositoryCases: number;
+        sessions: number;
+        testRuns: number;
+        milestones: number;
+      }
     > = {};
 
     for (const issue of issues) {
@@ -170,13 +185,21 @@ export async function POST(request: Request) {
         repositoryCases: issue.caseIssues.length,
         sessions: directSessions + viaResultSessions,
         testRuns: directTestRuns + viaResultTestRuns + viaStepTestRuns,
+        // MilestoneIssue is keyed on (milestoneId, issueId), so each row is a
+        // distinct milestone membership — the length is the milestone count.
+        milestones: issue.milestoneIssues.length,
       };
     }
 
     // Ensure every requested id has an entry (issue not found / no links).
     for (const id of issueIds) {
       if (!countsMap[id]) {
-        countsMap[id] = { repositoryCases: 0, sessions: 0, testRuns: 0 };
+        countsMap[id] = {
+          repositoryCases: 0,
+          sessions: 0,
+          testRuns: 0,
+          milestones: 0,
+        };
       }
     }
 

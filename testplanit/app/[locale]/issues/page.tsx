@@ -32,7 +32,13 @@ const PAGE_SIZE = 50;
 // across pages without the full set in hand. Sorting by one fetches everything
 // once and renders it through the same virtualized table in full-set mode;
 // every other column is a real DB column and drives a genuine infinite fetch.
-const COUNT_SORT_COLUMNS = ["cases", "testRuns", "sessions", "projects"];
+const COUNT_SORT_COLUMNS = [
+  "cases",
+  "testRuns",
+  "sessions",
+  "milestones",
+  "projects",
+];
 
 export default function IssueList() {
   return <Issues />;
@@ -232,7 +238,12 @@ function Issues() {
   const [issueCounts, setIssueCounts] = useState<
     Record<
       number,
-      { repositoryCases: number; sessions: number; testRuns: number }
+      {
+        repositoryCases: number;
+        sessions: number;
+        testRuns: number;
+        milestones: number;
+      }
     >
   >({});
   const [issueProjects, setIssueProjects] = useState<
@@ -309,6 +320,7 @@ function Issues() {
         repositoryCasesCount: counts?.repositoryCases,
         sessionsCount: counts?.sessions,
         testRunsCount: counts?.testRuns,
+        milestonesCount: counts?.milestones,
       };
     });
 
@@ -328,6 +340,10 @@ function Issues() {
           case "sessions":
             aValue = a.sessionsCount ?? 0;
             bValue = b.sessionsCount ?? 0;
+            break;
+          case "milestones":
+            aValue = a.milestonesCount ?? 0;
+            bValue = b.milestonesCount ?? 0;
             break;
           case "projects":
             aValue = a.projects?.length ?? 0;
@@ -362,6 +378,7 @@ function Issues() {
       testCases: t("common.fields.testCases"),
       sessions: t("common.fields.sessions"),
       testRuns: t("common.fields.testRuns"),
+      milestones: t("common.fields.milestones"),
       projects: t("common.fields.projects"),
       integration: t("common.fields.integration"),
     },

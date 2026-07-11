@@ -3,6 +3,7 @@ import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { MilestonesCountDisplay } from "@/components/tables/MilestonesCountDisplay";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
@@ -43,6 +44,7 @@ export interface ExtendedIssues extends Issue {
   repositoryCasesCount?: number;
   sessionsCount?: number;
   testRunsCount?: number;
+  milestonesCount?: number;
 }
 
 /**
@@ -62,6 +64,7 @@ export function useIssueColumns({
     testCases: string;
     sessions: string;
     testRuns: string;
+    milestones: string;
     projects: string;
     integration: string;
   };
@@ -79,6 +82,7 @@ export function useIssueColumns({
     testCases: tTestCases,
     sessions: tSessions,
     testRuns: tTestRuns,
+    milestones: tMilestones,
     projects: tProjects,
     integration: tIntegration,
   } = translations;
@@ -415,6 +419,37 @@ export function useIssueColumns({
         },
       },
       {
+        id: "milestones",
+        accessorKey: "milestones",
+        accessorFn: (row) => row.milestonesCount ?? 0,
+        header: tMilestones,
+        enableSorting: true,
+        enableResizing: true,
+        sortingFn: "basic",
+        size: 75,
+        minSize: 60,
+        maxSize: 150,
+        cell: ({ row }) => {
+          const count = row.original.milestonesCount;
+          return (
+            <div className="text-center">
+              <MilestonesCountDisplay
+                count={count}
+                filter={{
+                  milestoneIssues: {
+                    some: {
+                      issueId: row.original.id,
+                    },
+                  },
+                  isDeleted: false,
+                }}
+                isLoading={isLoadingCounts}
+              />
+            </div>
+          );
+        },
+      },
+      {
         id: "projects",
         accessorKey: "projects",
         accessorFn: (row) => (row.projects || []).length,
@@ -469,6 +504,7 @@ export function useIssueColumns({
       tTestCases,
       tSessions,
       tTestRuns,
+      tMilestones,
       tProjects,
       tIntegration,
       isLoadingCounts,

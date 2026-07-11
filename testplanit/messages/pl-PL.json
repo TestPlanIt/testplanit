@@ -18,6 +18,7 @@
     "searchTags": "Wyszukaj tagi...",
     "searchRuns": "{count, plural, =0 {Wyszukaj przebiegi testowe} one {Wyszukaj # przebiegi testowe} other {Wyszukaj # przebiegi testowe}}",
     "searchSessions": "{count, plural, =0 {Wyszukaj sesje} one {Wyszukaj # sesję} other {Wyszukaj # sesje}}",
+    "searchMilestones": "{count, plural, =0 {Wyszukaj kamienie milowe} one {Wyszukaj # kamień milowy} few {Wyszukaj # kamienie milowe} many {Wyszukaj # kamieni milowych} other {Wyszukaj # kamienia milowego}}",
     "search": "Szukaj...",
     "defaultOption": "Opcja domyślna",
     "yes": "Tak",

@@ -18,6 +18,7 @@
     "searchTags": "البحث عن العلامات...",
     "searchRuns": "{count, plural, =0 {البحث في تشغيلات الاختبار} one {البحث في # تشغيل اختبار} other {البحث في # تشغيلات اختبار}}",
     "searchSessions": "{count, plural, =0 {البحث في الجلسات} one {البحث في # جلسة} other {البحث في # جلسات}}",
+    "searchMilestones": "{count, plural, =0 {البحث في المعالم} one {البحث عن معلم واحد} two {البحث عن معلمين} few {البحث عن # معالم} many {البحث عن # معلماً} other {البحث عن # معلم}}",
     "search": "بحث...",
     "defaultOption": "الخيار الافتراضي",
     "yes": "نعم",

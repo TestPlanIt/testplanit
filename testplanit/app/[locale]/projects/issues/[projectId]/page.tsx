@@ -35,7 +35,7 @@ const PAGE_SIZE = 50;
 // across pages without the full set in hand. Sorting by one fetches everything
 // once and renders it through the same virtualized table in full-set mode;
 // every other column is a real DB column and drives a genuine infinite fetch.
-const COUNT_SORT_COLUMNS = ["cases", "testRuns", "sessions"];
+const COUNT_SORT_COLUMNS = ["cases", "testRuns", "sessions", "milestones"];
 
 export default function ProjectIssueList() {
   return <ProjectIssues />;
@@ -359,6 +359,7 @@ function ProjectIssues() {
         repositoryCases: number;
         sessions: number;
         testRuns: number;
+        milestones: number;
       }
     >
   >({});
@@ -422,6 +423,7 @@ function ProjectIssues() {
         repositoryCasesCount: counts?.repositoryCases,
         sessionsCount: counts?.sessions,
         testRunsCount: counts?.testRuns,
+        milestonesCount: counts?.milestones,
       };
     });
 
@@ -443,6 +445,10 @@ function ProjectIssues() {
           case "sessions":
             aValue = a.sessionsCount ?? 0;
             bValue = b.sessionsCount ?? 0;
+            break;
+          case "milestones":
+            aValue = a.milestonesCount ?? 0;
+            bValue = b.milestonesCount ?? 0;
             break;
           default:
             return 0;
@@ -492,6 +498,7 @@ function ProjectIssues() {
       testCases: t("common.fields.testCases"),
       sessions: t("common.fields.sessions"),
       testRuns: t("common.fields.testRuns"),
+      milestones: t("common.fields.milestones"),
       integration: t("common.fields.integration"),
     },
     isLoadingCounts,

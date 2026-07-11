@@ -3,6 +3,7 @@ import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { MilestonesCountDisplay } from "@/components/tables/MilestonesCountDisplay";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
@@ -45,6 +46,7 @@ export interface ExtendedIssue extends Issue {
   repositoryCasesCount?: number;
   sessionsCount?: number;
   testRunsCount?: number;
+  milestonesCount?: number;
 }
 
 /**
@@ -385,6 +387,36 @@ export function useIssueColumns({
                       id: row.original.id,
                     },
                   },
+                }}
+                isLoading={isLoadingCounts}
+              />
+            </div>
+          );
+        },
+      },
+      {
+        id: "milestones",
+        accessorKey: "milestones",
+        accessorFn: (row) => row.milestonesCount ?? 0,
+        header: tCommon("fields.milestones"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 75,
+        minSize: 60,
+        maxSize: 150,
+        cell: ({ row }) => {
+          const count = row.original.milestonesCount;
+          return (
+            <div className="text-center">
+              <MilestonesCountDisplay
+                count={count}
+                filter={{
+                  milestoneIssues: {
+                    some: {
+                      issueId: row.original.id,
+                    },
+                  },
+                  isDeleted: false,
                 }}
                 isLoading={isLoadingCounts}
               />

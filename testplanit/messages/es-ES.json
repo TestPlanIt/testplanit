@@ -18,6 +18,7 @@
     "searchTags": "Buscar etiquetas...",
     "searchRuns": "{count, plural, =0 {Ejecuciones de pruebas de búsqueda} one {Ejecución de pruebas de búsqueda n.°} other {Ejecuciones de pruebas de búsqueda n.°}}",
     "searchSessions": "{count, plural, =0 {Buscar sesiones} one {Buscar # sesión} other {Buscar # sesiones}}",
+    "searchMilestones": "{count, plural, =0 {Buscar hitos} one {Buscar # hito} other {Buscar # hitos}}",
     "search": "Buscar...",
     "defaultOption": "Opción predeterminada",
     "yes": "Sí",

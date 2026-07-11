@@ -18,6 +18,7 @@
     "searchTags": "Поиск по тегам...",
     "searchRuns": "{count, plural, =0 {Поиск тестовых запусков} one {Поиск количества тестовых запусков} other {Поиск количества тестовых запусков}}",
     "searchSessions": "{count, plural, =0 {Поиск сессий} one {Поиск сессии №} other {Поиск сессий №}}",
+    "searchMilestones": "{count, plural, =0 {Поиск этапов} one {Поиск # этапа} few {Поиск # этапов} many {Поиск # этапов} other {Поиск # этапа}}",
     "search": "Поиск...",
     "defaultOption": "Вариант по умолчанию",
     "yes": "Да",

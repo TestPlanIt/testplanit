@@ -18,6 +18,7 @@
     "searchTags": "Zoeken naar tags...",
     "searchRuns": "{count, plural, =0 {Zoektestruns} one {Zoek # testrun} other {Zoek # testruns}}",
     "searchSessions": "{count, plural, =0 {Zoeksessies} one {Zoek # sessie} other {Zoek # sessies}}",
+    "searchMilestones": "{count, plural, =0 {Mijlpalen zoeken} one {Zoek # mijlpaal} other {Zoek # mijlpalen}}",
     "search": "Zoekopdracht...",
     "defaultOption": "Standaardoptie",
     "yes": "Ja",

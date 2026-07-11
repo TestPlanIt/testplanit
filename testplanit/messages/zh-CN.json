@@ -18,6 +18,7 @@
     "searchTags": "搜索标签...",
     "searchRuns": "{count, plural, =0 {搜索测试运行次数} one {搜索测试运行次数} other {搜索测试运行次数}}",
     "searchSessions": "{count, plural, =0 {搜索会话} one {搜索会话数} other {搜索会话数}}",
+    "searchMilestones": "{count, plural, =0 {Search milestones} one {Search # milestone} other {Search # milestones}}",
     "search": "搜索...",
     "defaultOption": "默认选项",
     "yes": "是的",
