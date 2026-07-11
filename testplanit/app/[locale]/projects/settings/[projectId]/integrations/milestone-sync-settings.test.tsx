@@ -191,4 +191,66 @@ describe("MilestoneSyncSettings", () => {
     const call = mockUpdatePI.mock.calls[0][0];
     expect(call.data.config.milestoneSync.autoTrack).toBe(false);
   });
+
+  it("turning autoTrack ON clears the persisted baseline so the worker re-baselines from that moment", async () => {
+    render(
+      <MilestoneSyncSettings
+        projectIntegration={makeProjectIntegration({
+          milestoneSync: {
+            enabled: true,
+            kinds: ["RELEASE"],
+            autoTrack: false,
+            autoTrackAdminId: "admin-1",
+            autoTrackBaseline: ["stale-1", "stale-2"],
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    const autoTrackSwitch = screen.getByRole("switch", {
+      name: /autoTrackLabel/i,
+    });
+    fireEvent.click(autoTrackSwitch);
+
+    await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
+
+    const call = mockUpdatePI.mock.calls[0][0];
+    expect(call.data.config.milestoneSync.autoTrack).toBe(true);
+    // "Newly created" means "since auto-track (re-)enabled" — a stale
+    // baseline from a previous enablement must not survive the ON flip.
+    expect(call.data.config.milestoneSync).not.toHaveProperty(
+      "autoTrackBaseline"
+    );
+  });
+
+  it("turning autoTrack OFF preserves the stored baseline (only the ON transition re-baselines)", async () => {
+    render(
+      <MilestoneSyncSettings
+        projectIntegration={makeProjectIntegration({
+          milestoneSync: {
+            enabled: true,
+            kinds: ["RELEASE"],
+            autoTrack: true,
+            autoTrackAdminId: "admin-1",
+            autoTrackBaseline: ["kept-1"],
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    const autoTrackSwitch = screen.getByRole("switch", {
+      name: /autoTrackLabel/i,
+    });
+    fireEvent.click(autoTrackSwitch);
+
+    await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
+
+    const call = mockUpdatePI.mock.calls[0][0];
+    expect(call.data.config.milestoneSync.autoTrack).toBe(false);
+    expect(call.data.config.milestoneSync.autoTrackBaseline).toEqual([
+      "kept-1",
+    ]);
+  });
 });

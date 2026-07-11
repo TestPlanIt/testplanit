@@ -5,8 +5,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  *
  *   - enabled=false -> no-op
  *   - autoTrack=true -> newly-appeared filter-matching artifacts (diffed
- *     against already-linked externalIds) are auto-imported, attributed to
- *     `autoTrackAdminId` (NOT the triggering user)
+ *     against already-linked externalIds AND the persisted first-pass
+ *     baseline) are auto-imported, attributed to `autoTrackAdminId` (NOT
+ *     the triggering user)
+ *   - first pass (no baseline) -> imports NOTHING; persists the currently
+ *     matching unlinked ids as `autoTrackBaseline` so auto-track only ever
+ *     imports artifacts created after it was enabled
  *   - autoTrack=false -> the same new artifact is skipped; only already-
  *     linked milestones refresh
  *   - kinds gating -> a newly-appeared artifact of a non-configured kind is
@@ -15,6 +19,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ─── Mocks ────────────────────────────────────────────────────────────────
 const mockProjectIntegrationFindUnique = vi.fn();
+const mockProjectIntegrationUpdate = vi.fn();
 const mockMilestonesFindMany = vi.fn();
 const mockMilestonesFindFirst = vi.fn();
 const mockMilestonesFindUnique = vi.fn();
@@ -27,6 +32,7 @@ vi.mock("@/lib/rawDb", () => ({
   rawDb: {
     projectIntegration: {
       findUnique: (...args: any[]) => mockProjectIntegrationFindUnique(...args),
+      update: (...args: any[]) => mockProjectIntegrationUpdate(...args),
     },
     milestones: {
       findMany: (...args: any[]) => mockMilestonesFindMany(...args),
@@ -96,6 +102,7 @@ beforeEach(() => {
     })
   );
   mockMilestoneTypesAssignmentUpsert.mockResolvedValue({});
+  mockProjectIntegrationUpdate.mockResolvedValue({});
   mockMilestonesFindUnique.mockResolvedValue(null);
   mockMilestonesUpsert.mockImplementation(async ({ create }: any) => ({
     id: 5000,
@@ -153,6 +160,7 @@ describe("performProjectMilestoneSync — autoTrack=true", () => {
           kinds: ["RELEASE"],
           autoTrack: true,
           autoTrackAdminId: "admin-who-enabled-sync",
+          autoTrackBaseline: [],
         },
       },
     });
@@ -186,6 +194,7 @@ describe("performProjectMilestoneSync — autoTrack=true", () => {
           kinds: ["RELEASE"],
           autoTrack: true,
           autoTrackAdminId: "admin-1",
+          autoTrackBaseline: [],
         },
       },
     });
@@ -219,6 +228,7 @@ describe("performProjectMilestoneSync — autoTrack=true", () => {
           kinds: ["RELEASE"],
           autoTrack: true,
           autoTrackAdminId: "admin-1",
+          autoTrackBaseline: [],
         },
       },
     });
@@ -232,6 +242,100 @@ describe("performProjectMilestoneSync — autoTrack=true", () => {
     expect(mockGetExternalMilestones).toHaveBeenCalledWith(
       expect.objectContaining({ includeClosed: false })
     );
+  });
+});
+
+describe("performProjectMilestoneSync — auto-track baseline (first pass)", () => {
+  it("FIRST pass (no baseline): imports NOTHING and persists the current unlinked ids as the baseline", async () => {
+    mockProjectIntegrationFindUnique.mockResolvedValue({
+      config: {
+        milestoneSync: {
+          enabled: true,
+          kinds: ["RELEASE"],
+          autoTrack: true,
+          autoTrackAdminId: "admin-1",
+        },
+      },
+    });
+
+    const result = await milestoneSyncService.performProjectMilestoneSync(
+      "triggering-user",
+      1,
+      100
+    );
+
+    expect(result.success).toBe(true);
+    // v2-new is unlinked but PRE-EXISTING — the first pass must not
+    // backfill it (the reported bug: enabling auto-track imported every
+    // existing artifact, swamping a deliberate selective import).
+    expect(result.autoImported).toBe(0);
+    const importUpsertCall = mockMilestonesUpsert.mock.calls.find(
+      (c) => c[0].create.externalId === "v2-new"
+    );
+    expect(importUpsertCall).toBeUndefined();
+
+    // The baseline persists the unlinked current matches (v2-new; v1 is
+    // linked so it is tracked via the linked set, not the baseline).
+    expect(mockProjectIntegrationUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          projectId_integrationId: { projectId: 100, integrationId: 1 },
+        },
+        data: {
+          config: expect.objectContaining({
+            milestoneSync: expect.objectContaining({
+              autoTrackBaseline: ["v2-new"],
+            }),
+          }),
+        },
+      })
+    );
+  });
+
+  it("later pass: a baselined (pre-existing) artifact is never imported, while a genuinely new one is", async () => {
+    mockProjectIntegrationFindUnique.mockResolvedValue({
+      config: {
+        milestoneSync: {
+          enabled: true,
+          kinds: ["RELEASE"],
+          autoTrack: true,
+          autoTrackAdminId: "admin-1",
+          autoTrackBaseline: ["v2-new"],
+        },
+      },
+    });
+    const V3_GENUINELY_NEW = {
+      id: "v3-post-enable",
+      kind: "RELEASE" as const,
+      name: "v3.0",
+      state: "FUTURE" as const,
+      rawState: "unreleased",
+    };
+    mockGetExternalMilestones.mockImplementation(
+      async ({ kind }: { kind: "RELEASE" | "ITERATION" }) => ({
+        items: kind === "RELEASE" ? [V1, V2_NEW, V3_GENUINELY_NEW] : [],
+        hasMore: false,
+      })
+    );
+
+    const result = await milestoneSyncService.performProjectMilestoneSync(
+      "triggering-user",
+      1,
+      100
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.autoImported).toBe(1);
+    const v2UpsertCall = mockMilestonesUpsert.mock.calls.find(
+      (c) => c[0].create.externalId === "v2-new"
+    );
+    expect(v2UpsertCall).toBeUndefined();
+    const v3UpsertCall = mockMilestonesUpsert.mock.calls.find(
+      (c) => c[0].create.externalId === "v3-post-enable"
+    );
+    expect(v3UpsertCall).toBeTruthy();
+    // No re-baselining once a baseline exists.
+    expect(mockProjectIntegrationUpdate).not.toHaveBeenCalled();
   });
 });
 
@@ -294,6 +398,7 @@ describe("performProjectMilestoneSync — tombstone semantics (soft-deleted sync
           kinds: ["RELEASE"],
           autoTrack: true,
           autoTrackAdminId: "admin-1",
+          autoTrackBaseline: [],
         },
       },
     });

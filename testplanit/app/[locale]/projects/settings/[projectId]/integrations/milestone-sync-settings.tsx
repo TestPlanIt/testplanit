@@ -30,6 +30,12 @@ interface MilestoneSyncConfig {
   kinds: MilestoneKind[];
   autoTrack: boolean;
   autoTrackAdminId?: string;
+  /** Written by the sync worker on the first auto-track pass: the artifact
+   *  ids that already existed when auto-track came on. Auto-track imports
+   *  only artifacts OUTSIDE this baseline ("newly created"), so enabling it
+   *  never backfills everything. Cleared here whenever auto-track flips on
+   *  so the worker re-baselines at that moment. */
+  autoTrackBaseline?: string[];
 }
 
 /**
@@ -94,9 +100,17 @@ export function MilestoneSyncSettings({
     }
   };
 
+  // Drop the persisted auto-track baseline so the worker's next pass
+  // re-baselines against what exists at THIS moment — "newly created"
+  // always means "since auto-track (re-)enabled".
+  const clearBaseline = ({
+    autoTrackBaseline: _drop,
+    ...rest
+  }: MilestoneSyncConfig): MilestoneSyncConfig => rest;
+
   const handleEnableToggle = (checked: boolean) => {
     const next: MilestoneSyncConfig = {
-      ...config,
+      ...(checked && config.autoTrack ? clearBaseline(config) : config),
       enabled: checked,
       // Attribution: record the admin who enabled sync so auto-added
       // milestones are attributed to them, not whoever's page-load later
@@ -117,7 +131,7 @@ export function MilestoneSyncSettings({
 
   const handleAutoTrackToggle = (checked: boolean) => {
     void persist({
-      ...config,
+      ...(checked ? clearBaseline(config) : config),
       autoTrack: checked,
       ...(checked && session?.user?.id
         ? { autoTrackAdminId: session.user.id }

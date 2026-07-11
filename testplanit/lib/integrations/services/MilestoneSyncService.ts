@@ -1270,26 +1270,60 @@ export class MilestoneSyncService {
         .map((row) => row.externalId as string);
 
       if (autoTrack) {
-        const newIds = currentMatches
-          .map((item) => item.id)
-          .filter((id) => !linkedExternalIds.has(id));
+        const baseline: unknown = milestoneSyncConfig.autoTrackBaseline;
+        if (!Array.isArray(baseline)) {
+          // FIRST auto-track pass (no baseline yet): auto-track means
+          // "import artifacts CREATED AFTER enabling", never a backfill of
+          // everything that already existed — a backfill would swamp a
+          // deliberate selective import with every pre-existing unreleased
+          // version/active sprint. Record the currently-matching unlinked
+          // ids as the baseline and import nothing this pass; the settings
+          // UI clears the baseline whenever auto-track flips on so
+          // re-enabling re-baselines at that moment.
+          const baselineIds = currentMatches
+            .map((item) => item.id)
+            .filter((id) => !linkedExternalIds.has(id));
+          const rawConfig =
+            (projectIntegration?.config as Record<string, any>) ?? {};
+          await db.projectIntegration.update({
+            where: { projectId_integrationId: { projectId, integrationId } },
+            data: {
+              config: {
+                ...rawConfig,
+                milestoneSync: {
+                  ...milestoneSyncConfig,
+                  autoTrackBaseline: baselineIds,
+                },
+              },
+            },
+          });
+        } else {
+          // Baseline ids are deliberately NEVER pruned: an artifact that
+          // leaves the filter window (released version, closed sprint) and
+          // later re-enters it existed before auto-track was enabled and
+          // must not suddenly count as "new".
+          const baselineSet = new Set(baseline.map(String));
+          const newIds = currentMatches
+            .map((item) => item.id)
+            .filter((id) => !linkedExternalIds.has(id) && !baselineSet.has(id));
 
-        if (newIds.length > 0) {
-          if (!autoTrackAdminId) {
-            errors.push(
-              `Cannot auto-import ${newIds.length} new milestone(s) for project ${projectId}: milestoneSync.autoTrackAdminId is not configured`
-            );
-          } else {
-            const importResult = await this.performMilestoneImport(
-              userId,
-              integrationId,
-              projectId,
-              { externalIds: newIds, kinds },
-              autoTrackAdminId,
-              serviceOptions
-            );
-            autoImported = importResult.imported;
-            errors.push(...importResult.errors);
+          if (newIds.length > 0) {
+            if (!autoTrackAdminId) {
+              errors.push(
+                `Cannot auto-import ${newIds.length} new milestone(s) for project ${projectId}: milestoneSync.autoTrackAdminId is not configured`
+              );
+            } else {
+              const importResult = await this.performMilestoneImport(
+                userId,
+                integrationId,
+                projectId,
+                { externalIds: newIds, kinds },
+                autoTrackAdminId,
+                serviceOptions
+              );
+              autoImported = importResult.imported;
+              errors.push(...importResult.errors);
+            }
           }
         }
       }

@@ -243,6 +243,9 @@ describe("performProjectMilestoneSync — union across multiple project mappings
           kinds: ["ITERATION"],
           autoTrack: true,
           autoTrackAdminId: "admin-1",
+          // Baseline already recorded (empty) — this exercises the
+          // steady-state auto-track diff, not the first-pass baseline.
+          autoTrackBaseline: [],
         },
       },
     });

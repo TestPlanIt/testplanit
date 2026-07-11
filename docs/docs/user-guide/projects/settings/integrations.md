@@ -83,7 +83,7 @@ For milestone-capable providers (currently Jira), a **Milestone Sync** card appe
 
 - **Enable milestone sync** — turns sync on. Once enabled, the project's [Milestones](../milestones.md) page gains an **Import from Jira** button that previews Fix Versions and Sprints across all of this integration's linked Jira projects.
 - **Kinds to sync** — choose which of the tracker's time-based artifacts to sync as Milestones: **Releases** (Jira Fix Versions) and/or **Sprints**.
-- **Automatically add new ones** (auto-track) — when on, newly created unreleased versions and active/future sprints are imported automatically as they appear, without anyone opening the Import dialog. Auto-tracked imports are attributed to the admin who enabled sync (or auto-track), not to whoever's page load happens to trigger the pass.
+- **Automatically add new ones** (auto-track) — when on, newly created unreleased versions and active/future sprints are imported automatically as they appear, without anyone opening the Import dialog. Only artifacts created **after** auto-track is enabled are imported — anything that already existed at that moment is left alone (use the Import dialog to pick those explicitly). Auto-tracked imports are attributed to the admin who enabled sync (or auto-track), not to whoever's page load happens to trigger the pass.
 
 Enabling milestone sync also provisions the **Release** and **Sprint** [milestone types](../../milestone-types.md) for the project.
 
