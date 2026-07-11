@@ -421,7 +421,12 @@ export function MilestoneSourceBadge({
   return (
     <span
       ref={wrapRef}
-      className={`flex min-w-8 shrink flex-col items-start overflow-hidden ${className ?? ""}`}
+      // shrink-[999]: the measuring copy below makes this wrapper request
+      // the full expanded-badge width, so it competes with the milestone
+      // name for row space. The overwhelming shrink weight makes the badge
+      // absorb the entire deficit (collapsing segments down to its min-w-8
+      // icon floor) before the name loses a single character to truncation.
+      className={`flex min-w-8 shrink-[999] flex-col items-start overflow-hidden ${className ?? ""}`}
     >
       {/* Invisible full copy: keeps the wrapper requesting the expanded
           width and provides per-segment measurements for the collapse. */}
