@@ -2157,7 +2157,7 @@ model CaseFieldValues {
 model CaseFieldVersionValues {
     id        Int                    @id @default(autoincrement())
     versionId Int
-    version   RepositoryCaseVersions @relation(fields: [versionId], references: [id])
+    version   RepositoryCaseVersions @relation(fields: [versionId], references: [id], onDelete: Cascade)
     field     String                 @length(1)
     value     Json?
 
@@ -3212,7 +3212,7 @@ model TestRunResults {
 model TestRunStepResults {
     id               Int             @id @default(autoincrement())
     testRunResultId  Int
-    testRunResult    TestRunResults  @relation(fields: [testRunResultId], references: [id])
+    testRunResult    TestRunResults  @relation(fields: [testRunResultId], references: [id], onDelete: Cascade)
     stepId           Int
     step             Steps           @relation(fields: [stepId], references: [id], onDelete: Cascade)
     sharedStepItemId Int?
@@ -4601,7 +4601,7 @@ enum CommentType {
 model ReviewRequest {
     id                String           @id @default(cuid())
     projectId         Int
-    project           Projects         @relation(fields: [projectId], references: [id])
+    project           Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
     // Polymorphic entity reference (no FK back-relation; mirrors ShareLink/AuditLog pattern). D-14.
     entityType        ReviewEntityType
@@ -5186,7 +5186,7 @@ model PromptConfigPrompt {
 model OllamaModelRegistry {
     id               String         @id @default(cuid())
     llmIntegrationId Int
-    llmIntegration   LlmIntegration @relation(fields: [llmIntegrationId], references: [id])
+    llmIntegration   LlmIntegration @relation(fields: [llmIntegrationId], references: [id], onDelete: Cascade)
 
     // Model information
     modelName        String   // e.g., "llama2", "mistral", "phi-2"
@@ -5308,7 +5308,7 @@ model LlmResponseCache {
     projectId        Int?
     project          Projects?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
     llmIntegrationId Int
-    llmIntegration   LlmIntegration @relation(fields: [llmIntegrationId], references: [id])
+    llmIntegration   LlmIntegration @relation(fields: [llmIntegrationId], references: [id], onDelete: Cascade)
 
     // Cache management
     hits             Int            @default(0) // Number of cache hits
