@@ -42,6 +42,12 @@ interface AsyncComboboxProps<T> {
   dropdownClassName?: ClassValue;
   pageSize?: number;
   showTotal?: boolean;
+  /** Hide the Previous/Next footer — for local (non-paged) option sources
+   *  where fetchOptions returns the full filtered list every time. */
+  showPagination?: boolean;
+  /** Minimum pixel width of the dropdown (defaults to 400; narrow form
+   *  fields can lower it so the dropdown hugs the trigger). */
+  minDropdownWidth?: number;
   showUnassigned?: boolean;
   unassignedLabel?: string;
   unassignedIcon?: React.ReactNode;
@@ -68,6 +74,8 @@ export function AsyncCombobox<T>({
   dropdownClassName,
   pageSize = 10,
   showTotal = false,
+  showPagination = true,
+  minDropdownWidth = 400,
   showUnassigned = false,
   unassignedLabel,
   unassignedIcon,
@@ -258,8 +266,11 @@ export function AsyncCombobox<T>({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className={cn(dropdownClassName || "p-0 min-w-[400px] max-w-[800px]")}
-        style={{ width: Math.max(width, 400) }}
+        className={cn(dropdownClassName || "p-0 max-w-[800px]")}
+        style={{
+          width: Math.max(width, minDropdownWidth),
+          minWidth: minDropdownWidth,
+        }}
       >
         <Command className="w-full" shouldFilter={false}>
           <CommandInput
@@ -324,44 +335,46 @@ export function AsyncCombobox<T>({
                 })}
               </CommandGroup>
             </CommandList>
-            <div className="flex items-center justify-between gap-2 border-t px-2 py-1 bg-muted">
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setPage((p) => Math.max(0, p - 1));
-                }}
-                disabled={page === 0 || loading}
-              >
-                {tCommon("actions.previous")}
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                {showTotal && total != null
-                  ? `Showing ${page * pageSize + 1}–${page * pageSize + options.length} of ${total}`
-                  : `Page ${page + 1}`}
-              </span>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setPage((p) => p + 1);
-                }}
-                disabled={
-                  loading ||
-                  (total != null
-                    ? (page + 1) * pageSize >= total
-                    : options.length < pageSize)
-                }
-              >
-                {tCommon("actions.next")}
-              </Button>
-            </div>
+            {showPagination && (
+              <div className="flex items-center justify-between gap-2 border-t px-2 py-1 bg-muted">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setPage((p) => Math.max(0, p - 1));
+                  }}
+                  disabled={page === 0 || loading}
+                >
+                  {tCommon("actions.previous")}
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {showTotal && total != null
+                    ? `Showing ${page * pageSize + 1}–${page * pageSize + options.length} of ${total}`
+                    : `Page ${page + 1}`}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setPage((p) => p + 1);
+                  }}
+                  disabled={
+                    loading ||
+                    (total != null
+                      ? (page + 1) * pageSize >= total
+                      : options.length < pageSize)
+                  }
+                >
+                  {tCommon("actions.next")}
+                </Button>
+              </div>
+            )}
           </div>
         </Command>
       </PopoverContent>

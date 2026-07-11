@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
@@ -23,6 +23,11 @@ vi.mock("@/components/DynamicIcon", () => ({
 }));
 
 import { MilestoneSelect, transformMilestones } from "./MilestoneSelect";
+
+// cmdk scrolls the highlighted item into view — jsdom has no implementation.
+beforeAll(() => {
+  Element.prototype.scrollIntoView = vi.fn();
+});
 
 describe("transformMilestones utility", () => {
   it("transforms milestones array to MilestoneSelectOption format", () => {
@@ -155,6 +160,86 @@ describe("MilestoneSelect", () => {
 
     const trigger = screen.getByRole("combobox");
     expect(trigger).not.toBeDisabled();
+  });
+
+  it("opens a searchable list and filters options by the typed query", async () => {
+    render(
+      <MilestoneSelect
+        value={null}
+        onChange={vi.fn()}
+        milestones={sampleMilestones}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+
+    // All options (plus None) visible while browsing.
+    await waitFor(() => {
+      expect(screen.getByText("Sprint 1")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Sprint 2")).toBeInTheDocument();
+    expect(screen.getByText("Sub Milestone")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText("Select Milestone"), {
+      target: { value: "sub" },
+    });
+
+    // The option source resolves asynchronously (AsyncCombobox fetch).
+    await waitFor(() => {
+      expect(screen.queryByText("Sprint 1")).toBeNull();
+    });
+    expect(screen.queryByText("Sprint 2")).toBeNull();
+    expect(screen.getByText("Sub Milestone")).toBeInTheDocument();
+  });
+
+  it("selecting an option calls onChange with its value and closes", async () => {
+    const onChange = vi.fn();
+    render(
+      <MilestoneSelect
+        value={null}
+        onChange={onChange}
+        milestones={sampleMilestones}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+    await waitFor(() => {
+      expect(screen.getByText("Sprint 2")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText("Sprint 2"));
+
+    expect(onChange).toHaveBeenCalledWith("2");
+  });
+
+  it("selecting None calls onChange(null)", async () => {
+    const onChange = vi.fn();
+    render(
+      <MilestoneSelect
+        value="1"
+        onChange={onChange}
+        milestones={sampleMilestones}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("combobox"));
+    await waitFor(() => {
+      expect(screen.getByText("None")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText("None"));
+
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  it("shows the selected milestone's label on the trigger", () => {
+    render(
+      <MilestoneSelect
+        value="1"
+        onChange={vi.fn()}
+        milestones={sampleMilestones}
+      />
+    );
+
+    expect(screen.getByRole("combobox")).toHaveTextContent("Sprint 1");
   });
 
   it("uses value=none when value prop is null", () => {

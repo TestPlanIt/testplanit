@@ -3,6 +3,10 @@ import { schema } from "~/zenstack/schema";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
+import {
+  MilestoneSelect,
+  transformMilestones,
+} from "@/components/forms/MilestoneSelect";
 import { UserDisplay } from "@/components/search/UserDisplay";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -150,44 +154,10 @@ export default function MilestoneFormControls({
     }));
   }, [milestoneTypes]);
 
-  const milestonesOptions = useMemo(() => {
-    if (!milestones) return [];
-    return milestones.map((m) => ({
-      value: m.id.toString(),
-      label: (
-        <div className="flex items-center">
-          <DynamicIcon
-            name={(m.milestoneType?.icon?.name as IconName) || "milestone"}
-            className="w-4 h-4 me-2"
-          />
-          <span>{m.name}</span>
-        </div>
-      ),
-      parentId: m.parentId,
-    }));
-  }, [milestones]);
-
-  const renderMilestoneOptions = (
-    milestones: {
-      value: string;
-      label: React.ReactElement;
-      parentId: number | null;
-    }[],
-    parentId: number | null = null,
-    level: number = 0
-  ) => {
-    const filteredMilestones = milestones.filter(
-      (m) => m.parentId === parentId
-    );
-    return filteredMilestones.map((m) => (
-      <React.Fragment key={m.value}>
-        <SelectItem value={m.value} className={`pl-${level * 4 + 2}`}>
-          {m.label}
-        </SelectItem>
-        {renderMilestoneOptions(milestones, Number(m.value), level + 1)}
-      </React.Fragment>
-    ));
-  };
+  const milestonesOptions = useMemo(
+    () => transformMilestones(milestones || []),
+    [milestones]
+  );
 
   // LOCK-01/04: tracker-owned fields (name/note/dates/started/completed) are
   // locked once a milestone is synced from Jira; automaticCompletion is
@@ -451,23 +421,16 @@ export default function MilestoneFormControls({
         render={({ field }) => (
           <FormItem>
             <FormLabel>{t("fields.parent")}</FormLabel>
-            <Select
-              disabled={!isEditMode || isSubmitting}
-              onValueChange={(value) =>
-                field.onChange(value === "none" ? null : Number(value))
-              }
-              value={field.value ? field.value.toString() : "none"}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("placeholders.selectParent")} />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="none">{tCommon("access.none")}</SelectItem>
-                {renderMilestoneOptions(milestonesOptions)}
-              </SelectContent>
-            </Select>
+            <FormControl>
+              <MilestoneSelect
+                value={field.value ?? null}
+                onChange={(value) =>
+                  field.onChange(value == null ? null : Number(value))
+                }
+                milestones={milestonesOptions}
+                disabled={!isEditMode || isSubmitting}
+              />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}

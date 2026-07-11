@@ -1,13 +1,6 @@
 import DynamicIcon from "@/components/DynamicIcon";
 import { MilestoneSourceIcon } from "@/components/MilestoneSourceIcon";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { IconName } from "~/types/globals";
@@ -45,68 +38,81 @@ export const transformMilestones = (
   );
 };
 
+interface MilestoneSelectOption {
+  value: string;
+  label: string;
+  milestoneType?: {
+    icon?: { name?: IconName } | null;
+  };
+  parentId: number | null;
+  integrationId?: number | null;
+  externalKind?: string | null;
+  detachedAt?: Date | string | null;
+  /** Nesting depth while browsing the tree; absent/0 for search results and
+   *  the trigger's selected-value rendering. */
+  level?: number;
+}
+
 export interface MilestoneSelectProps {
   value: string | number | null | undefined;
   onChange: (value: string | number | null | undefined) => void;
-  milestones: {
-    value: string;
-    label: string;
-    milestoneType?: {
-      icon?: { name?: IconName } | null;
-    };
-    parentId: number | null;
-    integrationId?: number | null;
-    externalKind?: string | null;
-    detachedAt?: Date | string | null;
-  }[];
+  milestones: MilestoneSelectOption[];
   isLoading?: boolean;
   placeholder?: string;
   disabled?: boolean;
 }
 
-const renderMilestoneOptions = (
-  milestones: {
-    value: string;
-    label: string;
-    milestoneType?: {
-      icon?: { name?: IconName } | null;
-    };
-    parentId: number | null;
-    integrationId?: number | null;
-    externalKind?: string | null;
-    detachedAt?: Date | string | null;
-  }[],
+/**
+ * Depth-first flatten preserving the parent → children ordering the old
+ * recursive <SelectItem> render produced, with the nesting level kept for
+ * indentation while browsing.
+ */
+const flattenMilestoneTree = (
+  milestones: MilestoneSelectOption[],
   parentId: number | null = null,
   level: number = 0
-): React.ReactElement[] => {
+): MilestoneSelectOption[] => {
   return milestones
     .filter((milestone) => milestone.parentId === parentId)
-    .map((milestone) => (
-      <React.Fragment key={milestone.value}>
-        <SelectItem
-          value={milestone.value}
-          style={{ paddingInlineStart: `${level * 20}px` }}
-        >
-          <div className="flex items-center gap-1">
-            {milestone.milestoneType?.icon?.name && (
-              <DynamicIcon
-                className="w-4 h-4 shrink-0"
-                name={milestone.milestoneType.icon.name as IconName}
-              />
-            )}
-            {milestone.label}
-            <MilestoneSourceIcon milestone={milestone} />
-          </div>
-        </SelectItem>
-        {renderMilestoneOptions(
-          milestones,
-          parseInt(milestone.value),
-          level + 1
-        )}
-      </React.Fragment>
-    ));
+    .flatMap((milestone) => [
+      { ...milestone, level },
+      ...flattenMilestoneTree(milestones, parseInt(milestone.value), level + 1),
+    ]);
 };
 
+const MilestoneOptionContent = ({
+  milestone,
+}: {
+  milestone: MilestoneSelectOption;
+}) => (
+  <div
+    className="flex min-w-0 items-center gap-1"
+    style={
+      milestone.level
+        ? { paddingInlineStart: `${milestone.level * 20}px` }
+        : undefined
+    }
+  >
+    {milestone.milestoneType?.icon?.name && (
+      <DynamicIcon
+        className="w-4 h-4 shrink-0"
+        name={milestone.milestoneType.icon.name as IconName}
+      />
+    )}
+    <span className="truncate">{milestone.label}</span>
+    <MilestoneSourceIcon milestone={milestone} />
+  </div>
+);
+
+/**
+ * Searchable milestone picker — a thin wrapper over the shared
+ * `AsyncCombobox`, fed by a LOCAL option source (the callers all have the
+ * full, small milestone list in memory): `fetchOptions` filters the
+ * flattened tree by the typed query and ignores paging. Browsing (empty
+ * query) keeps the parent → child indentation; an active search renders
+ * matches flat, since a child whose parent didn't match would indent under
+ * nothing. The external API is unchanged from the old Radix Select version.
+ */
 export const MilestoneSelect: React.FC<MilestoneSelectProps> = ({
   value,
   onChange,
@@ -117,25 +123,44 @@ export const MilestoneSelect: React.FC<MilestoneSelectProps> = ({
 }) => {
   const tCommon = useTranslations("common");
 
+  const flattened = React.useMemo(
+    () => flattenMilestoneTree(milestones),
+    [milestones]
+  );
+
+  const fetchOptions = React.useCallback(
+    async (query: string): Promise<MilestoneSelectOption[]> => {
+      const q = query.trim().toLowerCase();
+      if (!q) return flattened;
+      return flattened
+        .filter((m) => m.label.toLowerCase().includes(q))
+        .map((m) => ({ ...m, level: 0 }));
+    },
+    [flattened]
+  );
+
+  const selectedValue =
+    value !== null && value !== undefined ? value.toString() : null;
+  const selected = selectedValue
+    ? (milestones.find((m) => m.value === selectedValue) ?? null)
+    : null;
+
   return (
-    <Select
-      onValueChange={(val) => onChange(val === "none" ? null : val)}
-      value={value ? value.toString() : "none"}
+    <AsyncCombobox<MilestoneSelectOption>
+      value={selected}
+      onValueChange={(option) => onChange(option ? option.value : null)}
+      fetchOptions={fetchOptions}
+      renderOption={(option) => <MilestoneOptionContent milestone={option} />}
+      getOptionValue={(option) => option.value}
+      placeholder={tCommon("placeholders.selectMilestone")}
       disabled={disabled || isLoading || !milestones || milestones.length === 0}
-    >
-      <SelectTrigger>
-        <SelectValue placeholder={tCommon("placeholders.selectMilestone")} />
-      </SelectTrigger>
-      <SelectContent>
-        {isLoading ? (
-          <SelectItem value="loading">{tCommon("loading")}</SelectItem>
-        ) : (
-          <SelectGroup>
-            <SelectItem value="none">{tCommon("access.none")}</SelectItem>
-            {renderMilestoneOptions(milestones)}
-          </SelectGroup>
-        )}
-      </SelectContent>
-    </Select>
+      className="w-full justify-between bg-transparent font-normal hover:bg-muted"
+      showUnassigned
+      unassignedLabel={tCommon("access.none")}
+      unassignedIcon={<React.Fragment />}
+      showPagination={false}
+      minDropdownWidth={200}
+      pageSize={10000}
+    />
   );
 };
