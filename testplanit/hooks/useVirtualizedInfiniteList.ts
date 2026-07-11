@@ -170,8 +170,8 @@ export function useVirtualizedInfiniteList({
     s.onLoadMore();
   }, []);
 
-  // Release the guard only when a page actually lands (`loadGuardKey` grew) or
-  // the scope resets (shrank). Keying the reset on real data arrival, NOT on the
+  // Release the guard when a page actually lands (`loadGuardKey` grew) or the
+  // scope resets (shrank). Keying the reset on real data arrival, NOT on the
   // `isLoading` flag flickering, is what keeps it race-free: an isLoading-based
   // reset re-opens the exact double-fire window above. Using `loadGuardKey`
   // (raw item count) rather than the rendered `count` is what lets pagination
@@ -180,6 +180,29 @@ export function useVirtualizedInfiniteList({
   useEffect(() => {
     pendingLoadRef.current = false;
   }, [loadGuardKey]);
+
+  // Also release the guard when a fetch cycle settles WITHOUT the loaded count
+  // changing — `isLoading` fell from true back to false but no new page landed
+  // because the in-flight request was cancelled (e.g. a live-update
+  // invalidation refetching the base query mid-`fetchNextPage`), errored, or
+  // returned an already-seen page. Without this the guard above never fires
+  // (its `loadGuardKey` never moved), so `pendingLoadRef` latches at true and
+  // pagination deadlocks permanently — the list stalls a page or two in and no
+  // amount of scrolling loads more, even though `hasMore` is still true.
+  //
+  // Keying on the FALLING edge (true→false), never the rising edge, is what
+  // keeps this from re-opening the double-fire window the guard exists to close:
+  // the guard is held for the entire in-flight fetch (we only clear once we've
+  // observed `isLoading` go true and then false, i.e. a completed cycle), so a
+  // second trigger firing while the first request is in flight still bails.
+  // Mirrors the `wasResizingRef` falling-edge flush in VirtualizedDataTable.
+  const wasLoadingRef = useRef(false);
+  useEffect(() => {
+    if (wasLoadingRef.current && !isLoading) {
+      pendingLoadRef.current = false;
+    }
+    wasLoadingRef.current = isLoading;
+  }, [isLoading]);
 
   // Sentinel/fill path: defer to the shared guard, and only when the sentinel is
   // actually in view (short result set, or scrolled to the bottom).
