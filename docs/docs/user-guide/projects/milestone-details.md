@@ -39,17 +39,17 @@ In the default view mode:
 
 ## Source Badge
 
-A milestone synced from an external tracker (currently Jira) shows a badge next to its name with three segments, for example **Jira · Sprint · active**: the tracker's icon, the milestone's kind (**Release** or **Sprint**), and its current tracker-reported state.
+A milestone synced from an external tracker (currently Jira) shows a badge next to its name, for example **Jira · Sprint · active · Website**: the tracker's icon, the milestone's kind (**Release** or **Sprint**), its current tracker-reported state, and — space permitting — the Jira project the artifact belongs to.
 
 - **Project admins** see the badge as a menu trigger. Clicking it opens:
   - **Open in Jira** — opens the linked artifact in a new tab. Disabled if no external URL is stored for the milestone.
   - **Unlink from Jira** — detaches the milestone from the tracker after a confirmation dialog explaining the consequences: sync stops, the milestone's fields become editable again, its synced issue links become manual (yours to keep or remove), and the milestone can be re-linked later by importing the same artifact again from the [Milestones list](./milestones.md).
 - Everyone else sees the badge as a plain link to the tracker (or a static, non-clickable label if no URL is stored) — no menu.
-- On narrow layouts the badge collapses one segment at a time — state, then kind, then the provider name — down to just the tracker icon. The full label remains available on hover.
+- On narrow layouts the badge collapses one segment at a time — the Jira project, then state, then kind, then the provider name — down to just the tracker icon. The milestone name always wins the space contest: the badge gives up its segments before the name loses a single character. The full label remains available on hover.
 - If the milestone's upstream artifact is deleted or merged into another artifact in the tracker, the badge becomes permanent and non-dismissible, reading **source removed in Jira** or **merged into \{target\}** (the latter links to the target milestone when it's still resolvable). This badge no longer offers a menu — the milestone has become local.
 - A milestone that was **manually** unlinked shows **no badge at all**. Once you choose to unlink, the milestone behaves like any other local milestone with no residual marker.
 
-The same badge appears on milestone cards on the [Milestones list](./milestones.md).
+The same badge appears on milestone cards on the [Milestones list](./milestones.md). Everywhere else milestones appear — run and session groupings, child-milestone lists, milestone pickers, and the admin projects table — a synced milestone is marked with a compact tracker icon (hover it for the provider and kind) instead of the full badge.
 
 :::info Permissions Required
 Unlinking a milestone from Jira requires **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../permissions-guide.md).
@@ -106,7 +106,7 @@ Clicking the **Edit** button (or accessing via an edit link) activates Edit Mode
 - A **Delete** button (icon: Trash2) appears.
 - Fields in both panels become editable:
   - **Left Panel**: Milestone Name (Textarea), Documentation (`TipTapEditor`).
-  - **Right Panel**: Status Toggles (Started/Completed), Dates (`DatePickerField`), Description (`TipTapEditor`), Type (Select), Parent (Select), Auto-Complete, and Notification settings.
+  - **Right Panel**: Status Toggles (Started/Completed), Dates (`DatePickerField`), Description (`TipTapEditor`), Type (Select), Parent (searchable milestone picker), Auto-Complete, and Notification settings.
 - **Saving**: Click **Save** (icon: Save) to persist changes. A success/error toast message appears.
 - **Canceling**: Click **Cancel** (icon: CircleSlash2) to discard changes and revert to the last saved state.
 - **Deleting**: Click **Delete** to open the confirmation modal (cascades to children). On successful deletion, you are redirected back to the main Milestones list.

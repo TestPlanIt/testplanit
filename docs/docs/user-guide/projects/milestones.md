@@ -20,7 +20,7 @@ The page shows milestones as cards, grouped under two tabs:
 
 Within each tab, child milestones are nested and indented beneath their parent. Each card shows the milestone's name, type icon, status badge, start/due dates, a [summary bar](./milestone-details.md#summary) of its test run and session results, and a forecast estimate.
 
-A milestone synced from an external tracker (currently Jira) shows a [source badge](./milestone-details.md#source-badge) next to its name — for example **Jira · Sprint · active**.
+A milestone synced from an external tracker (currently Jira) shows a [source badge](./milestone-details.md#source-badge) next to its name — for example **Jira · Sprint · active · Website**.
 
 When a milestone has related issues, its summary bar carries the same paired count chips documented on the [Milestone Details](./milestone-details.md#summary) page — a **Target** icon for issues in scope and a **Bug** icon for issues found in testing. On this page, clicking a chip opens a popover listing its issues instead of navigating to the details page.
 
@@ -236,7 +236,7 @@ Product Launch (Root)
 
 **Deleting a Parent Milestone:**
 - **Cascade delete**: All child milestones are also deleted
-- Confirmation required before deletion
+- Confirmation required before deletion — the dialog states how many child and descendant milestones will be deleted along with the parent
 - Consider orphaning children by moving them first
 
 **Best Practice:**

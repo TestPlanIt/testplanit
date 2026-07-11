@@ -55,7 +55,7 @@ Displays the following session properties. In Edit mode, most fields become edit
 - **Template**: The selected [Session Template](../templates-fields.md).
 - **State**: The current [Workflow State](../workflows.md).
 - **Configuration**: The linked [Configuration](../configurations.md). In Edit mode, the dropdown lists only Configurations assigned to this project.
-- **Milestone**: The linked project [Milestone](./milestones.md). In Edit mode, only active milestones are shown; completed milestones are excluded.
+- **Milestone**: The linked project [Milestone](./milestones.md). In Edit mode, a searchable dropdown — type to filter; only active milestones are shown; completed milestones are excluded.
 - **Assigned To**: The user assigned to the session.
 - **Estimate**: The estimated duration for the session.
 - **Tags**: Assigned [Tags](../tags.md).

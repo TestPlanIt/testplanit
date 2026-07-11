@@ -30,7 +30,7 @@ The dialog uses a two-column layout:
 
 - **Template** (Required): Dropdown to select the [Session Template](../templates-fields.md) that defines the structure for recording results during the session.
 - **State** (Required): Dropdown to set the initial [Workflow State](../workflows.md) for the session (e.g., "To Do", "In Progress"). Defaults to the workflow's default starting state.
-- **Milestone**: Dropdown to link the session to a project [Milestone](./milestones.md) (or "None"). If opened from a milestone group, this defaults to that milestone. Only active (non-completed) milestones are shown in the dropdown.
+- **Milestone**: Searchable dropdown to link the session to a project [Milestone](./milestones.md) (or "None") — type to filter; Jira-synced milestones are marked with the Jira icon. If opened from a milestone group, this defaults to that milestone. Only active (non-completed) milestones are shown in the dropdown.
 - **Assigned To**: Dropdown to assign the session to a specific user in the project (or "None").
 - **Estimate**: Optional field to estimate the time required for the session (e.g., "1h 30m", "2d").
 - **Tags**: Allows selecting and assigning existing [Tags](../tags.md).
