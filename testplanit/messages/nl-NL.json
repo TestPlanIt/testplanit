@@ -810,7 +810,7 @@
       "goToPrevious": "Ga naar de vorige pagina",
       "goToNext": "Ga naar de volgende pagina",
       "all": "Alle artikelen",
-      "entries": "{count, plural, =1 {# item} other {# items}}",
+      "entries": "{count, plural, =1 {# onderdeel} other {# onderdelen}}",
       "pageSize": "Paginaformaat",
       "showing": "Tonen",
       "total": "totaal {count, plural, =1 {# items} other {# items}}",
@@ -1388,6 +1388,7 @@
             "sprintsLabel": "Sprints",
             "kindsLabel": "Soorten om te synchroniseren",
             "autoTrackLabel": "Nieuwe automatisch toevoegen",
+            "autoTrackProjectsLabel": "Deze gekoppelde projecten scannen op nieuwe mijlpalen",
             "settingsSaved": "Instellingen voor mijlpaalsynchronisatie opgeslagen",
             "saveError": "Instellingen voor mijlpaalsynchronisatie konden niet worden opgeslagen"
           }
@@ -7314,7 +7315,7 @@
       "loadingMore": "Meer laden...",
       "noRecords": "Geen gegevens gevonden",
       "error": "Het laden van records is mislukt.",
-      "recordCount": "{count, plural, =1 {# record} other {# records}}",
+      "recordCount": "{count, plural, =1 {# vermelding} other {# vermeldingen}}",
       "allRecords": "Alle records",
       "allLoaded": "Alle records geladen"
     },

@@ -1388,6 +1388,7 @@
             "sprintsLabel": "衝刺",
             "kindsLabel": "要同步的類型",
             "autoTrackLabel": "自動新增新項目",
+            "autoTrackProjectsLabel": "掃描這些已連接的專案以尋找新的里程碑",
             "settingsSaved": "里程碑同步設定已儲存",
             "saveError": "儲存里程碑同步設定失敗"
           }

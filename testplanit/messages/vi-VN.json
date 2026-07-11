@@ -1388,6 +1388,7 @@
             "sprintsLabel": "Sprint",
             "kindsLabel": "Loại cần đồng bộ",
             "autoTrackLabel": "Tự động thêm mục mới",
+            "autoTrackProjectsLabel": "Quét các dự án đã kết nối này để tìm các milestone mới",
             "settingsSaved": "Đã lưu cài đặt đồng bộ cột mốc",
             "saveError": "Không thể lưu cài đặt đồng bộ cột mốc"
           }

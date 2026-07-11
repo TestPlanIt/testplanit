@@ -1388,6 +1388,7 @@
             "sprintsLabel": "Sprinty",
             "kindsLabel": "Typy do synchronizacji",
             "autoTrackLabel": "Automatycznie dodawaj nowe",
+            "autoTrackProjectsLabel": "Skanuj te połączone projekty w poszukiwaniu nowych kamieni milowych",
             "settingsSaved": "Ustawienia synchronizacji kamieni milowych zapisane",
             "saveError": "Nie udało się zapisać ustawień synchronizacji kamieni milowych"
           }

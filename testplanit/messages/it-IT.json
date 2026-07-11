@@ -1388,6 +1388,7 @@
             "sprintsLabel": "Sprint",
             "kindsLabel": "Tipi da sincronizzare",
             "autoTrackLabel": "Aggiungi automaticamente i nuovi",
+            "autoTrackProjectsLabel": "Analizza questi progetti collegati per nuove milestone",
             "settingsSaved": "Impostazioni di sincronizzazione dei traguardi salvate",
             "saveError": "Impossibile salvare le impostazioni di sincronizzazione dei traguardi"
           }

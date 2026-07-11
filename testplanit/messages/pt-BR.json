@@ -1388,6 +1388,7 @@
             "sprintsLabel": "Sprints",
             "kindsLabel": "Tipos a sincronizar",
             "autoTrackLabel": "Adicionar novos automaticamente",
+            "autoTrackProjectsLabel": "Verificar esses projetos conectados em busca de novos marcos",
             "settingsSaved": "Configurações de sincronização de marcos salvas",
             "saveError": "Falha ao salvar as configurações de sincronização de marcos"
           }

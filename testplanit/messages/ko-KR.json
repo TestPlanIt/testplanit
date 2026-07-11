@@ -1388,6 +1388,7 @@
             "sprintsLabel": "스프린트",
             "kindsLabel": "동기화할 종류",
             "autoTrackLabel": "새 항목 자동 추가",
+            "autoTrackProjectsLabel": "연결된 프로젝트에서 새 마일스톤 검색",
             "settingsSaved": "마일스톤 동기화 설정이 저장되었습니다",
             "saveError": "마일스톤 동기화 설정 저장에 실패했습니다"
           }

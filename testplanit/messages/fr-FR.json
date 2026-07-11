@@ -1388,6 +1388,7 @@
             "sprintsLabel": "Sprints",
             "kindsLabel": "Types à synchroniser",
             "autoTrackLabel": "Ajouter automatiquement les nouveaux éléments",
+            "autoTrackProjectsLabel": "Analyser ces projets connectés pour trouver de nouveaux jalons",
             "settingsSaved": "Paramètres de synchronisation des étapes clés enregistrés",
             "saveError": "Impossible d'enregistrer les paramètres de synchronisation des étapes clés"
           }

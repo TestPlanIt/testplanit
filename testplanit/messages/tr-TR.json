@@ -1388,6 +1388,7 @@
             "sprintsLabel": "Sprintler",
             "kindsLabel": "Senkronize edilecek türler",
             "autoTrackLabel": "Yenilerini otomatik olarak ekle",
+            "autoTrackProjectsLabel": "Yeni kilometre taşları için bu bağlı projeleri tara",
             "settingsSaved": "Dönüm noktası senkronizasyon ayarları kaydedildi",
             "saveError": "Dönüm noktası senkronizasyon ayarları kaydedilemedi"
           }

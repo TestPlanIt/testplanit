@@ -1388,6 +1388,7 @@
             "sprintsLabel": "迭代",
             "kindsLabel": "要同步的类型",
             "autoTrackLabel": "自动添加新项目",
+            "autoTrackProjectsLabel": "扫描这些已连接的项目以查找新的里程碑",
             "settingsSaved": "里程碑同步设置已保存",
             "saveError": "保存里程碑同步设置失败"
           }

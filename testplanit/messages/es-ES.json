@@ -1388,6 +1388,7 @@
             "sprintsLabel": "Sprints",
             "kindsLabel": "Tipos a sincronizar",
             "autoTrackLabel": "Añadir nuevos automáticamente",
+            "autoTrackProjectsLabel": "Buscar hitos nuevos en estos proyectos conectados",
             "settingsSaved": "Configuración de sincronización de hitos guardada",
             "saveError": "No se pudo guardar la configuración de sincronización de hitos"
           }

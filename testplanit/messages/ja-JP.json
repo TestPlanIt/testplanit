@@ -1388,6 +1388,7 @@
             "sprintsLabel": "スプリント",
             "kindsLabel": "同期する種類",
             "autoTrackLabel": "新しいものを自動的に追加する",
+            "autoTrackProjectsLabel": "接続されたこれらのプロジェクトで新しいマイルストーンをスキャンする",
             "settingsSaved": "マイルストーン同期設定を保存しました",
             "saveError": "マイルストーン同期設定の保存に失敗しました"
           }

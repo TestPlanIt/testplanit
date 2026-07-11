@@ -1388,6 +1388,7 @@
             "sprintsLabel": "Sprints",
             "kindsLabel": "Zu synchronisierende Arten",
             "autoTrackLabel": "Neue automatisch hinzufügen",
+            "autoTrackProjectsLabel": "Diese verbundenen Projekte nach neuen Meilensteinen durchsuchen",
             "settingsSaved": "Einstellungen für die Meilenstein-Synchronisierung gespeichert",
             "saveError": "Einstellungen für die Meilenstein-Synchronisierung konnten nicht gespeichert werden"
           }

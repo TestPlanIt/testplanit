@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import type { Milestones } from "~/zenstack/models";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 interface DeleteMilestoneModalProps {
   milestone: Milestones;
@@ -37,6 +37,22 @@ export function DeleteMilestoneModal({
     useClientQueries(schema).milestones.useUpdate();
   const t = useTranslations("milestones.delete");
   const tCommon = useTranslations("common");
+
+  // Deleting a parent recursively soft-deletes every descendant (see
+  // updateDescendants below) — count them so the confirmation says so.
+  const descendantCount = useMemo(() => {
+    let count = 0;
+    const walk = (parentId: number) => {
+      for (const m of milestones) {
+        if (m.parentId === parentId) {
+          count += 1;
+          walk(m.id);
+        }
+      }
+    };
+    walk(milestone.id);
+    return count;
+  }, [milestone.id, milestones]);
 
   async function handleDelete() {
     setIsSubmitting(true);
@@ -88,6 +104,14 @@ export function DeleteMilestoneModal({
             {t("confirmMessage", {
               name: milestone.name,
             })}
+            {descendantCount > 0 && (
+              <>
+                {" "}
+                <span className="font-semibold">
+                  {t("childrenWarning", { count: descendantCount })}
+                </span>
+              </>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="bg-destructive text-destructive-foreground p-2">
