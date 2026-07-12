@@ -260,6 +260,85 @@ export async function GET(
       entityNameByKey
     );
 
+    // Per-case traceability matrix (READY, D4): each member issue × its linked
+    // cases × that case's latest in-scope result. Uncovered issues appear once
+    // with a null case (a coverage gap); a linked case with no in-scope result
+    // is left null ("Not run"). Same descendant-inclusive result scope as
+    // coverage; mirrors that query's linked_cases/latest_result CTEs.
+    const traceabilityRaw =
+      memberRows.length > 0
+        ? await baseDb.$queryRaw<
+            Array<{
+              externalKey: string | null;
+              title: string | null;
+              issueName: string | null;
+              caseName: string | null;
+              statusName: string | null;
+              statusColor: string | null;
+              runName: string | null;
+              completedAt: Date | null;
+              testRunCaseId: number | null;
+            }>
+          >`
+            WITH member_issues AS (
+              SELECT mi."issueId", i."externalKey", i.title, i.name AS "issueName"
+              FROM "MilestoneIssue" mi
+              JOIN "Issue" i ON i.id = mi."issueId"
+              WHERE mi."milestoneId" = ${milestoneId}
+            ),
+            linked_cases AS (
+              SELECT rci."issueId", rci."caseId", rc.name AS "caseName"
+              FROM "RepositoryCaseIssue" rci
+              JOIN "RepositoryCases" rc
+                ON rc.id = rci."caseId" AND rc."isDeleted" = false
+              WHERE rci."issueId" IN (SELECT "issueId" FROM member_issues)
+            ),
+            latest_result AS (
+              SELECT DISTINCT ON (lc."issueId", lc."caseId")
+                lc."issueId",
+                lc."caseId",
+                trc.id AS "testRunCaseId",
+                s.name AS "statusName",
+                col.value AS "statusColor",
+                tr.name AS "runName",
+                trc."completedAt" AS "completedAt"
+              FROM linked_cases lc
+              LEFT JOIN "TestRunCases" trc
+                ON trc."repositoryCaseId" = lc."caseId" AND trc."isDeleted" = false
+              LEFT JOIN "TestRuns" tr
+                ON tr.id = trc."testRunId"
+                AND tr."milestoneId" = ANY(${allMilestoneIds}::int[])
+              LEFT JOIN "Status" s ON s.id = trc."statusId"
+              LEFT JOIN "Color" col ON col.id = s."colorId"
+              WHERE tr.id IS NOT NULL OR trc.id IS NULL
+              ORDER BY lc."issueId", lc."caseId", trc."completedAt" DESC NULLS LAST, trc.id DESC
+            )
+            SELECT
+              mi."externalKey", mi.title, mi."issueName",
+              lc."caseName",
+              lr."statusName", lr."statusColor", lr."runName",
+              lr."completedAt", lr."testRunCaseId"
+            FROM member_issues mi
+            LEFT JOIN linked_cases lc ON lc."issueId" = mi."issueId"
+            LEFT JOIN latest_result lr
+              ON lr."issueId" = lc."issueId" AND lr."caseId" = lc."caseId"
+            ORDER BY mi."externalKey" NULLS LAST, mi."issueName", lc."caseName" NULLS FIRST
+          `
+        : [];
+    const traceability = traceabilityRaw.map((r) => ({
+      issueKey: r.externalKey || r.issueName || "",
+      issueTitle: r.title || r.issueName || "",
+      caseName: r.caseName ?? null,
+      // A row with a linked case but no in-scope TestRunCases id = "Not run".
+      statusName:
+        r.caseName != null && r.testRunCaseId != null
+          ? (r.statusName ?? null)
+          : null,
+      statusColor: r.statusColor ?? null,
+      runName: r.runName ?? null,
+      executedAt: r.completedAt ? r.completedAt.toISOString() : null,
+    }));
+
     const response: MilestoneExportData = {
       milestone: {
         id: milestone.id,
@@ -286,6 +365,7 @@ export async function GET(
       issues,
       memberIssues,
       memberCoverageTotals,
+      traceability,
       reviewDecisions,
       generatedAt: new Date().toISOString(),
       projectId: milestone.projectId,

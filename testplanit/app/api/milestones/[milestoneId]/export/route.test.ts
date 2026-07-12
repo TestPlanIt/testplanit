@@ -21,6 +21,8 @@ vi.mock("~/lib/db", () => ({
     milestoneIssue: {
       findMany: vi.fn().mockResolvedValue([]),
     },
+    // Traceability matrix raw query (READY, D4) — defaults to no rows.
+    $queryRaw: vi.fn().mockResolvedValue([]),
   },
 }));
 
@@ -320,6 +322,92 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
         uncoveredIssues: 1,
         statuses: [{ statusName: "Passed", count: 2, colorValue: "#0f0" }],
       });
+    });
+
+    it("shapes the per-case traceability matrix (executed / not-run / uncovered)", async () => {
+      (getServerSession as any).mockResolvedValue(adminSession);
+      (baseDb.milestoneIssue.findMany as any).mockResolvedValue([
+        {
+          issueId: 501,
+          source: "SYNCED",
+          issue: {
+            id: 501,
+            name: "ABT-1",
+            title: "Story one",
+            externalKey: "ABT-1",
+            externalStatus: "Open",
+            status: "open",
+          },
+        },
+      ]);
+      (baseDb.$queryRaw as any).mockResolvedValue([
+        {
+          externalKey: "ABT-1",
+          title: "Story one",
+          issueName: "ABT-1",
+          caseName: "Login works",
+          statusName: "Passed",
+          statusColor: "#0f0",
+          runName: "Sprint 1 Run",
+          completedAt: new Date("2026-07-01T10:00:00.000Z"),
+          testRunCaseId: 900,
+        },
+        {
+          externalKey: "ABT-1",
+          title: "Story one",
+          issueName: "ABT-1",
+          caseName: "Logout works",
+          statusName: null,
+          statusColor: null,
+          runName: null,
+          completedAt: null,
+          testRunCaseId: null,
+        },
+        {
+          externalKey: "ABT-2",
+          title: "Story two",
+          issueName: "ABT-2",
+          caseName: null,
+          statusName: null,
+          statusColor: null,
+          runName: null,
+          completedAt: null,
+          testRunCaseId: null,
+        },
+      ]);
+
+      const [req, ctx] = createRequest("1");
+      const body = await (await GET(req, ctx)).json();
+
+      expect(body.traceability).toEqual([
+        {
+          issueKey: "ABT-1",
+          issueTitle: "Story one",
+          caseName: "Login works",
+          statusName: "Passed",
+          statusColor: "#0f0",
+          runName: "Sprint 1 Run",
+          executedAt: "2026-07-01T10:00:00.000Z",
+        },
+        {
+          issueKey: "ABT-1",
+          issueTitle: "Story one",
+          caseName: "Logout works",
+          statusName: null,
+          statusColor: null,
+          runName: null,
+          executedAt: null,
+        },
+        {
+          issueKey: "ABT-2",
+          issueTitle: "Story two",
+          caseName: null,
+          statusName: null,
+          statusColor: null,
+          runName: null,
+          executedAt: null,
+        },
+      ]);
     });
 
     it("returns empty sections and skips the review query when there is no data", async () => {

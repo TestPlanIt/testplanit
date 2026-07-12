@@ -172,22 +172,9 @@ export function useExportMilestonePdf({
         });
       }
 
-      // --- Linked issues ---
-      if (data.issues.length > 0) {
-        pdf.renderSectionHeader(`Linked Issues (${data.issues.length})`);
-        pdf.renderTable({
-          columns: [
-            { header: "Issue", width: 2 },
-            { header: "Title", width: 5 },
-            { header: "Status", width: 2 },
-          ],
-          rows: data.issues.map((i) => [i.key, i.title, i.status ?? "—"]),
-        });
-      }
-
-      // --- Member Issues (milestone-sync Issues panel, MLINK-04) ---
+      // --- In Scope (milestone-sync Issues panel, MLINK-04) ---
       if (data.memberIssues.length > 0) {
-        pdf.renderSectionHeader(`Member Issues (${data.memberIssues.length})`);
+        pdf.renderSectionHeader(`In Scope (${data.memberIssues.length})`);
         const totals = data.memberCoverageTotals;
         const totalsTokens: StatusToken[] = [
           ...statusTokens(totals.statuses),
@@ -239,6 +226,53 @@ export function useExportMilestonePdf({
                     : []),
                 ] as StatusToken[]),
             member.source === "SYNCED" ? "Synced" : "Manual",
+          ]),
+        });
+      }
+
+      // --- Found in Testing (linked issues) ---
+      if (data.issues.length > 0) {
+        pdf.renderSectionHeader(`Found in Testing (${data.issues.length})`);
+        pdf.renderTable({
+          columns: [
+            { header: "Issue", width: 2 },
+            { header: "Title", width: 5 },
+            { header: "Status", width: 2 },
+          ],
+          rows: data.issues.map((i) => [i.key, i.title, i.status ?? "—"]),
+        });
+      }
+
+      // --- Traceability matrix (READY, D4): Issue → Case → latest result ---
+      if ((data.traceability?.length ?? 0) > 0) {
+        pdf.renderSectionHeader(`Traceability (${data.traceability.length})`);
+        pdf.renderTable({
+          columns: [
+            { header: "Issue", width: 1.8 },
+            { header: "Test Case", width: 3.5 },
+            { header: "Result", width: 1.8 },
+            { header: "Executed In", width: 2.4 },
+            { header: "Date", width: 1.6 },
+          ],
+          rows: data.traceability.map((row) => [
+            row.issueKey,
+            row.caseName ?? "—",
+            row.caseName == null
+              ? ([
+                  { text: "Uncovered", color: hexToRgb("#d97706") },
+                ] as StatusToken[])
+              : row.statusName
+                ? ([
+                    {
+                      text: row.statusName,
+                      color: hexToRgb(row.statusColor ?? "#6b7280"),
+                    },
+                  ] as StatusToken[])
+                : ([
+                    { text: "Not run", color: hexToRgb("#9ca3af") },
+                  ] as StatusToken[]),
+            row.runName ?? "—",
+            fmtDate(row.executedAt),
           ]),
         });
       }

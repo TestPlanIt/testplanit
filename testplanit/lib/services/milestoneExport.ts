@@ -75,6 +75,22 @@ export type MilestoneExportMemberCoverageTotals = {
   uncoveredIssues: number;
 };
 
+/**
+ * One row of the traceability matrix (READY, D4): a member issue paired with a
+ * linked test case and that case's latest in-scope result. Issues with no
+ * linked cases appear once with a null `caseName` (a coverage gap); a linked
+ * case with no in-scope result has a null `statusName` ("Not run").
+ */
+export type MilestoneExportTraceabilityRow = {
+  issueKey: string;
+  issueTitle: string;
+  caseName: string | null;
+  statusName: string | null;
+  statusColor: string | null;
+  runName: string | null;
+  executedAt: string | null;
+};
+
 export type MilestoneExportReviewDecision = {
   entityType: "RUN" | "SESSION";
   entityId: number;
@@ -104,6 +120,7 @@ export type MilestoneExportData = {
   issues: MilestoneExportIssue[];
   memberIssues: MilestoneExportMemberIssue[];
   memberCoverageTotals: MilestoneExportMemberCoverageTotals;
+  traceability: MilestoneExportTraceabilityRow[];
   reviewDecisions: MilestoneExportReviewDecision[];
   generatedAt: string;
   projectId: number;
