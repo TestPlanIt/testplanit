@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import DynamicIcon from "@/components/DynamicIcon";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import LoadingSpinnerPage from "@/components/LoadingSpinnerAlert";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
@@ -56,8 +57,10 @@ import { z } from "zod/v4";
 import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
 import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
+import type { IconName } from "~/types/globals";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import LoadingSpinner from "~/components/LoadingSpinner";
+import { VirtualizedCardList } from "~/components/VirtualizedCardList";
 import { useExportMilestonePdf } from "~/hooks/pdf/useExportMilestonePdf";
 import { useMilestoneLiveStream } from "~/hooks/useMilestoneLiveStream";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -635,6 +638,12 @@ export default function MilestoneDetailsPage() {
 
   if (!isFormReady || isLoading) return <Loading />;
 
+  // Completed milestones tint the outer card (below); the nested Issues, Test
+  // Runs, and Sessions cards take the same tint so they don't read as active.
+  const completedCardClassName = milestone?.isCompleted
+    ? "bg-muted-foreground/20 border-muted-foreground"
+    : undefined;
+
   return (
     <FormProvider {...methods}>
       <form
@@ -684,7 +693,16 @@ export default function MilestoneDetailsPage() {
                       )}
                     />
                   ) : (
-                    milestone?.name
+                    <span className="flex items-center gap-2 min-w-0">
+                      <DynamicIcon
+                        name={
+                          (milestone?.milestoneType?.icon?.name as IconName) ||
+                          "milestone"
+                        }
+                        className="h-6 w-6 shrink-0"
+                      />
+                      <span className="min-w-0">{milestone?.name}</span>
+                    </span>
                   )}
                   {!isEditMode && milestone && (
                     <MilestoneSourceBadge
@@ -810,21 +828,6 @@ export default function MilestoneDetailsPage() {
               </div>
             )}
 
-            {/* Issues card (MLINK-04, D-07) — "In scope" (MilestoneIssue
-                links, this-milestone-only) and "Found in testing"
-                (test-run/session-linked defects, descendant-inclusive) as
-                two independently collapsible sections of one card (D-16
-                vocabulary). */}
-            {!isEditMode && milestone && (
-              <div className="mb-6">
-                <IssuesCard
-                  ref={issuesCardRef}
-                  milestoneId={milestone.id}
-                  projectId={Number(projectId)}
-                />
-              </div>
-            )}
-
             <ResizablePanelGroup
               direction="horizontal"
               className="min-h-[400px]"
@@ -836,7 +839,7 @@ export default function MilestoneDetailsPage() {
                 defaultSize={80}
                 minSize={20}
               >
-                <div className="px-4 h-full space-y-4">
+                <div className="px-4 h-full space-y-4 pb-8">
                   <FormField
                     name="docs"
                     render={({ field }) => (
@@ -973,18 +976,38 @@ export default function MilestoneDetailsPage() {
                       </div>
                     )}
 
+                  {/* Issues, Test Runs, and Sessions stack as sibling cards in
+                      the left panel: in-scope + found-in-testing issues, then
+                      the milestone's test runs and sessions. */}
+                  {!isEditMode && milestone && (
+                    <IssuesCard
+                      ref={issuesCardRef}
+                      milestoneId={milestone.id}
+                      projectId={Number(projectId)}
+                      className={completedCardClassName}
+                    />
+                  )}
+
                   {!isEditMode && (
-                    <div className="mt-6">
-                      <Label className="flex items-center gap-1">
-                        <PlayCircle className="h-4 w-4" />
-                        {tCommon("labels.testRuns", {
-                          count: milestoneTestRuns?.length || 0,
-                        })}
-                      </Label>
-                      <div className="mt-2">
+                    <Card
+                      data-testid="milestone-test-runs-card"
+                      className={completedCardClassName}
+                    >
+                      <div className="px-6 pt-6">
+                        <CardTitle className="flex items-center gap-2">
+                          <PlayCircle className="h-5 w-5" />
+                          {tCommon("labels.testRuns", {
+                            count: milestoneTestRuns?.length || 0,
+                          })}
+                        </CardTitle>
+                      </div>
+                      <div className="px-6 pb-6 pt-2">
                         {milestoneTestRuns && milestoneTestRuns.length > 0 ? (
-                          <div className="space-y-2">
-                            {milestoneTestRuns.map((testRun) => {
+                          <VirtualizedCardList
+                            items={milestoneTestRuns}
+                            getKey={(testRun) => testRun.id}
+                            data-testid="milestone-test-runs-list"
+                            renderItem={(testRun) => {
                               const transformedTestRun: TestRunItemProps["testRun"] =
                                 {
                                   id: testRun.id,
@@ -1033,7 +1056,6 @@ export default function MilestoneDetailsPage() {
                                 };
                               return (
                                 <TestRunItem
-                                  key={testRun.id}
                                   testRun={transformedTestRun}
                                   showMilestone={
                                     testRun.milestoneId !== Number(milestoneId)
@@ -1043,31 +1065,38 @@ export default function MilestoneDetailsPage() {
                                   }
                                 />
                               );
-                            })}
-                          </div>
+                            }}
+                          />
                         ) : (
                           <div className="text-muted-foreground text-sm">
                             {t("empty.testRuns")}
                           </div>
                         )}
                       </div>
-                    </div>
+                    </Card>
                   )}
 
                   {!isEditMode && (
-                    <div className="mt-6">
-                      <Label className="flex items-center gap-1">
-                        <Compass className="h-4 w-4" />
-                        {tCommon("labels.sessions", {
-                          count: milestoneSessions?.length || 0,
-                        })}
-                      </Label>
-                      <div className="mt-2">
+                    <Card
+                      data-testid="milestone-sessions-card"
+                      className={completedCardClassName}
+                    >
+                      <div className="px-6 pt-6">
+                        <CardTitle className="flex items-center gap-2">
+                          <Compass className="h-5 w-5" />
+                          {tCommon("labels.sessions", {
+                            count: milestoneSessions?.length || 0,
+                          })}
+                        </CardTitle>
+                      </div>
+                      <div className="px-6 pb-6 pt-2">
                         {milestoneSessions && milestoneSessions.length > 0 ? (
-                          <div className="space-y-2">
-                            {milestoneSessions.map((testSession) => (
+                          <VirtualizedCardList
+                            items={milestoneSessions}
+                            getKey={(testSession) => testSession.id}
+                            data-testid="milestone-sessions-list"
+                            renderItem={(testSession) => (
                               <SessionItem
-                                key={testSession.id}
                                 testSession={testSession as SessionsWithDetails}
                                 isCompleted={testSession.isCompleted}
                                 onComplete={handleCompleteSession}
@@ -1077,15 +1106,15 @@ export default function MilestoneDetailsPage() {
                                   Number(milestoneId)
                                 }
                               />
-                            ))}
-                          </div>
+                            )}
+                          />
                         ) : (
                           <div className="text-muted-foreground text-sm">
                             {tGlobal("common.empty.sessions")}
                           </div>
                         )}
                       </div>
-                    </div>
+                    </Card>
                   )}
                 </div>
               </ResizablePanel>

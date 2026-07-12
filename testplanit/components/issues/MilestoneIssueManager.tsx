@@ -184,6 +184,7 @@ export function MilestoneIssueManager({
         onClick={() => setIsSearchOpen(true)}
         disabled={isLinking}
         data-testid="member-issues-add-button"
+        className="bg-inherit"
       >
         <Plus className="h-4 w-4" />
         {tIssues("linkIssue")}

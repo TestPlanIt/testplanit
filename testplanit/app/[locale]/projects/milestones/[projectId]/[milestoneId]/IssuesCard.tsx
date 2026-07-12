@@ -1,8 +1,16 @@
 "use client";
 
 import { Card, CardTitle } from "@/components/ui/card";
+import { Bug } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import {
+  forwardRef,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useMilestoneSummary } from "~/hooks/useMilestoneSummary";
 import { FoundInTestingIssues } from "./FoundInTestingIssues";
 import { MemberIssuesTable } from "./MemberIssuesTable";
 
@@ -19,6 +27,11 @@ export interface IssuesCardHandle {
 interface IssuesCardProps {
   milestoneId: number;
   projectId: number;
+  /**
+   * Extra classes for the card shell — the milestone detail page passes its
+   * completed-state tint so this card matches the outer milestone card.
+   */
+  className?: string;
 }
 
 /**
@@ -32,8 +45,8 @@ interface IssuesCardProps {
  * MilestoneSummary's count chips.
  */
 export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
-  function IssuesCard({ milestoneId, projectId }, ref) {
-    const t = useTranslations("milestones.members");
+  function IssuesCard({ milestoneId, projectId, className }, ref) {
+    const tCommon = useTranslations("common");
     const cardRef = useRef<HTMLDivElement>(null);
     // Section wrappers (NOT the keyed children) so each chip scrolls to its
     // own accordion trigger — the wrappers survive the force-expand key bump
@@ -41,6 +54,19 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
     const inScopeRef = useRef<HTMLDivElement>(null);
     const foundInTestingRef = useRef<HTMLDivElement>(null);
     const [memberIssueIds, setMemberIssueIds] = useState<number[]>([]);
+    // Distinct issue total for the header — the union of "In scope" member
+    // issues and "Found in testing" issues, deduped by id since a single issue
+    // can appear in both sections. Reuses the shared milestone-summary query
+    // the "Found in testing" section already fetches, so it costs no extra
+    // request.
+    const { data: summaryData } = useMilestoneSummary(milestoneId);
+    const totalIssueCount = useMemo(() => {
+      const ids = new Set<number>(memberIssueIds);
+      for (const issue of summaryData?.issues ?? []) {
+        ids.add(issue.id);
+      }
+      return ids.size;
+    }, [memberIssueIds, summaryData]);
     // Bumped to force-expand a section (and re-persist the new open state)
     // when a summary chip is clicked while that section is collapsed.
     const [forceOpen, setForceOpen] = useState<{
@@ -80,9 +106,12 @@ export const IssuesCard = forwardRef<IssuesCardHandle, IssuesCardProps>(
     }));
 
     return (
-      <Card ref={cardRef} data-testid="issues-card">
+      <Card ref={cardRef} data-testid="issues-card" className={className}>
         <div className="px-6 pt-6">
-          <CardTitle>{t("cardTitle")}</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Bug className="h-5 w-5" />
+            {tCommon("labels.issues", { count: totalIssueCount })}
+          </CardTitle>
         </div>
         <div className="divide-y">
           <div ref={inScopeRef} className="scroll-mt-16">

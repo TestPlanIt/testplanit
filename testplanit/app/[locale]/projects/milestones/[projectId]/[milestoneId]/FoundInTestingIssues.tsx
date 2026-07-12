@@ -216,19 +216,18 @@ export function FoundInTestingIssues({
                 </Button>
               </CollapsibleTrigger>
               <Bug className="h-4 w-4 text-muted-foreground shrink-0" />
-              {t("foundInTesting")}
-              {!isLoading && (
-                <div className="flex items-center gap-1">
-                  <Badge
-                    variant="secondary"
-                    data-testid="found-in-testing-count"
-                  >
+              <span className="flex items-center gap-1.5">
+                {!isLoading && (
+                  <span data-testid="found-in-testing-count">
                     {issues.length}
-                  </Badge>
-                  <p className="text-xs text-muted-foreground">
-                    {tMilestones("summary.includesChildMilestones")}
-                  </p>
-                </div>
+                  </span>
+                )}
+                {t("foundInTesting")}
+              </span>
+              {!isLoading && (
+                <p className="text-xs text-muted-foreground">
+                  {tMilestones("summary.includesChildMilestones")}
+                </p>
               )}
               {isLoading && (
                 <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />

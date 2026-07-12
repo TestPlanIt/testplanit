@@ -613,12 +613,12 @@ export function MemberIssuesTable({
                 </Button>
               </CollapsibleTrigger>
               <Target className="h-4 w-4 text-muted-foreground shrink-0" />
-              {t("inScope")}
-              {!isLoadingMembers && (
-                <Badge variant="secondary" data-testid="member-issues-count">
-                  {rows.length}
-                </Badge>
-              )}
+              <span className="flex items-center gap-1.5">
+                {!isLoadingMembers && (
+                  <span data-testid="member-issues-count">{rows.length}</span>
+                )}
+                {t("inScope")}
+              </span>
               {!isLoadingMembers &&
                 !isLoadingCoverage &&
                 readiness.total > 0 && (
