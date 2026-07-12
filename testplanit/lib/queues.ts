@@ -156,6 +156,9 @@ export function getEmailQueue(): Queue | null {
   _emailQueue = new Queue(EMAIL_QUEUE_NAME, {
     connection: valkeyConnection as any,
     prefix: BULLMQ_PREFIX,
+    // Bespoke (not STANDARD_RETRY): email delivery is critical and its failures
+    // are usually transient upstream (SMTP/provider) blips, so it gets more
+    // attempts (5 vs 3) on a slower backoff (10s vs 5s) and 30-day retention.
     defaultJobOptions: {
       attempts: 5,
       backoff: { type: "exponential", delay: 10000 },
