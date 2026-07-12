@@ -2086,6 +2086,11 @@
       "testRuns": "No test runs",
       "forecasts": "No forecast data available"
     },
+    "browser": {
+      "kindAll": "All milestones",
+      "kindReleases": "Synced releases",
+      "kindSprints": "Synced sprints"
+    },
     "statusLabels": {
       "NOT_STARTED": "Not Started",
       "IN_PROGRESS": "In Progress",
@@ -2241,6 +2246,8 @@
       "unlinkConfirmTitle": "Unlink issue?",
       "unlinkConfirmDescription": "This removes the issue from this milestone. The issue itself is kept and can be linked again later.",
       "totalsUncovered": "{count, plural, one {# uncovered issue} other {# uncovered issues}}",
+      "percentReady": "{percent, number}% ready",
+      "readinessSummary": "{passed, number} passed · {failed, number} failed · {inProgress, number} in progress · {notRun, number} not run · {uncovered, number} uncovered (of {total, number} issues)",
       "filterHasUntested": "Has untested cases",
       "createRunNoCases": "None of the selected issues have linked test cases.",
       "createTestRunDetailed": "Create test run ({issues, plural, one {# issue} other {# issues}} · {cases, plural, one {# case} other {# cases}})"

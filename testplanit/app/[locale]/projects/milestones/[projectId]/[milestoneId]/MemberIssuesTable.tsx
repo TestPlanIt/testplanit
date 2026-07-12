@@ -49,6 +49,7 @@ import type { ExtendedMemberIssue } from "./MemberIssuesColumns";
 import { useMemberIssueColumns } from "./MemberIssuesColumns";
 import { MemberIssuesOverflowPanel } from "./MemberIssuesOverflowPanel";
 import type { MemberCoverageResponse } from "~/app/api/milestones/[milestoneId]/members/coverage/route";
+import { aggregateMilestoneReadiness } from "./milestoneReadiness";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 
 const MEMBER_ISSUES_COLLAPSED_KEY = "tpi.milestone.memberIssues.collapsed";
@@ -190,6 +191,18 @@ export function MemberIssuesTable({
       coverage: coverageData?.[row.issueId],
     }));
   }, [memberRows, coverageData]);
+
+  // Release-readiness rollup (fast-follow READY, D4): each member issue rolls
+  // up to one state; "% ready" = fully-passing issues / total. Aggregated from
+  // the coverage already fetched above — no extra query.
+  const readiness = useMemo(
+    () =>
+      aggregateMilestoneReadiness(
+        coverageData,
+        rows.map((row) => row.issueId)
+      ),
+    [coverageData, rows]
+  );
 
   // Report member issueIds up for the sibling "Found in testing" section's
   // cross-badge — content-keyed so this only fires when the actual id set
@@ -606,6 +619,25 @@ export function MemberIssuesTable({
                   {rows.length}
                 </Badge>
               )}
+              {!isLoadingMembers &&
+                !isLoadingCoverage &&
+                readiness.total > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="font-semibold"
+                    data-testid="milestone-percent-ready"
+                    title={t("readinessSummary", {
+                      passed: readiness.passed,
+                      failed: readiness.failed,
+                      inProgress: readiness.inProgress,
+                      notRun: readiness.notRun,
+                      uncovered: readiness.uncovered,
+                      total: readiness.total,
+                    })}
+                  >
+                    {t("percentReady", { percent: readiness.percentReady })}
+                  </Badge>
+                )}
             </div>
             <div className="flex items-center gap-2">
               {selectedIssueIds.length > 0 && (
