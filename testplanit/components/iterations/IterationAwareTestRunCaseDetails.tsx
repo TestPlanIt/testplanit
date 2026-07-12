@@ -60,14 +60,15 @@ function deepEqual(a: unknown, b: unknown): boolean {
 }
 
 /**
- * Wraps the existing TestRunCaseDetails surface with the Phase 3 iteration
- * UI: sidebar (Surface A), header (B.2), values strip (B.3), and override
- * banner (B.4). Mounted only when the active test-run case has
- * `totalIterations > 0` (PARAM-07 invariant).
+ * Wraps the existing TestRunCaseDetails surface with the iteration UI:
+ * sidebar (Surface A), header (B.2), values strip (B.3), and override banner
+ * (B.4). Mounted only when the active test-run case has `totalIterations > 0`
+ * (PARAM-07 invariant).
  *
- * Override / Skip / Reset menu actions are stubbed for Wave 4 — Task 12
- * wires the Override dialog, Task 13 wires bulk-skip + single-iteration
- * skip + reset.
+ * The Override / Skip / Reset menu actions are wired here:
+ * `handleIterationMenuAction` opens the Override dialog, routes Skip through
+ * the bulk-confirm dialog (single-iteration skip reuses the bulk path), and
+ * runs Reset inline.
  */
 export function IterationAwareTestRunCaseDetails({
   testRunCaseId,
