@@ -23,18 +23,39 @@ export const isEmbeddableImage = (
   return EMBEDDABLE_IMAGE_TYPES.includes(mimeType.toLowerCase());
 };
 
-/** Sanitize text for PDF export by replacing problematic Unicode characters */
+/**
+ * Sanitize text for PDF export. The standard jsPDF fonts (Helvetica/WinAnsi)
+ * only cover Latin-1: any character outside it makes jsPDF fall back to a
+ * UTF-16 path that the standard font renders as byte-interleaved garbage
+ * (e.g. "V e r i f y \u2026" with stray glyphs like `\u00ff\u00fd`). So normalize Unicode
+ * whitespace + typographic punctuation to ASCII, and replace anything still
+ * outside Latin-1 with "?" rather than let it corrupt the whole line.
+ */
 export const sanitizeTextForPdf = (text: string): string => {
   if (!text) return text;
-  return text
-    .replace(/\u202f/g, " ")
-    .replace(/\u00a0/g, " ")
-    .replace(/\u2007/g, " ")
-    .replace(/\u2008/g, " ")
-    .replace(/\u2009/g, " ")
-    .replace(/\u200a/g, " ")
-    .replace(/\u200b/g, "")
-    .replace(/\u2060/g, "");
+  return (
+    text
+      // Unicode whitespace \u2192 plain space (no glyph in the standard fonts).
+      .replace(/\u202f/g, " ")
+      .replace(/\u00a0/g, " ")
+      .replace(/\u2007/g, " ")
+      .replace(/\u2008/g, " ")
+      .replace(/\u2009/g, " ")
+      .replace(/\u200a/g, " ")
+      .replace(/\u200b/g, "")
+      .replace(/\u2060/g, "")
+      // Typographic punctuation \u2192 ASCII (smart quotes, dashes, ellipsis, \u2026).
+      .replace(/[\u2018\u2019\u201a\u201b]/g, "'")
+      .replace(/[\u201c\u201d\u201e\u201f]/g, '"')
+      .replace(/[\u2013\u2014\u2015]/g, "-")
+      .replace(/\u2026/g, "...")
+      .replace(/[\u2022\u2023\u2043\u25e6]/g, "-")
+      .replace(/\u2122/g, "(TM)")
+      .replace(/\u20ac/g, "EUR")
+      // Catch-all: any remaining char outside Latin-1 has no glyph in the
+      // standard fonts \u2014 a safe placeholder beats a mangled line.
+      .replace(/[^\u0000-\u00ff]/g, "?")
+  );
 };
 
 /** Load an image from URL and convert to data URL for PDF embedding */
